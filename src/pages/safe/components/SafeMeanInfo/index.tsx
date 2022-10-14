@@ -9,6 +9,7 @@ import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
 import { IconArrowForward } from 'Icons';
 import { appConfig } from "index";
 import { NATIVE_SOL_MINT } from 'middleware/ids';
@@ -22,39 +23,29 @@ import { SafeInfo } from "../SafeInfo";
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
-  isProgramDetails: boolean;
-  isProposalDetails: boolean;
   loadingPrograms: boolean;
   loadingProposals: boolean;
   multisigClient: MeanMultisig | undefined;
   onDataToProgramView: any;
   onDataToSafeView: any;
   onEditMultisigClick: any;
-  onRefreshRequested: any;
-  proposalSelected?: any;
-  publicKey: PublicKey | null | undefined;
+  onNewProposalClicked?: any;
   safeBalanceInUsd: number | undefined;
   selectedMultisig?: any;
   selectedTab?: any;
-  vestingAccountsCount: number;
 }) => {
   const {
     connection,
-    isProgramDetails,
-    isProposalDetails,
     loadingPrograms,
     loadingProposals,
     multisigClient,
     onDataToProgramView,
     onDataToSafeView,
     onEditMultisigClick,
-    onRefreshRequested,
-    proposalSelected,
-    publicKey,
+    onNewProposalClicked,
     safeBalanceInUsd,
     selectedMultisig,
     selectedTab,
-    vestingAccountsCount,
   } = props;
   const { 
     programs,
@@ -74,8 +65,8 @@ export const SafeMeanInfo = (props: {
   const { address } = useParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
+  const { publicKey } = useWallet();
   const [loadingAssets, setLoadingAssets] = useState(true);
-  const [isBusy, setIsBusy] = useState(false);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [multisigAddress, setMultisigAddress] = useState('');
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
@@ -135,19 +126,11 @@ export const SafeMeanInfo = (props: {
       closeAuthority: undefined,
       address: selectedMultisig.id,
       decimals: 9
-
     } as any;
 
   }, [
     selectedMultisig, 
     multisigSolBalance
-  ]);
-
-  const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
-  }, [
-    isBusy,
-    fetchTxInfoStatus,
   ]);
 
   // Get Multisig Vaults
@@ -429,15 +412,13 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
-        isTxInProgress={isTxInProgress}
         onEditMultisigClick={onEditMultisigClick}
-        onRefreshTabsInfo={onRefreshRequested}
+        onNewProposalClicked={onNewProposalClicked}
         selectedMultisig={selectedMultisig}
         selectedTab={selectedTab}
         totalSafeBalance={safeBalanceInUsd}
         programsTabContent={programsTabContent()}
         proposalsTabContent={proposalsTabContent()}
-        vestingAccountsCount={vestingAccountsCount}
       />
     </>
   )

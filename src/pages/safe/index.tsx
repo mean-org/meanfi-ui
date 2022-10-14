@@ -62,13 +62,13 @@ const SafeView = (props: {
   appsProvider: AppsProvider | undefined;
   safeBalance?: number;
   solanaApps: App[];
-  vestingContracts?: Treasury[];
+  onNewProposalClicked?: any;
 }) => {
   const {
     appsProvider,
     safeBalance,
     solanaApps,
-    vestingContracts,
+    onNewProposalClicked,
   } = props;
   const {
     programs,
@@ -2068,33 +2068,28 @@ const SafeView = (props: {
             isProgramDetails={isProgramDetails}
             isProposalDetails={isProposalDetails}
             multisigClient={multisigSerumClient}
+            onNewProposalClicked={onNewProposalClicked}
             multisigTxs={[]}
             onDataToProgramView={goToProgramDetailsHandler}
             onDataToSafeView={goToProposalDetailsHandler}
             onEditMultisigClick={onEditMultisigClick}
             selectedMultisig={selectedMultisig}
-            vestingAccountsCount={vestingContracts ? vestingContracts.length : 0}
           />
         );
       } else {
         return (
           <SafeMeanInfo
             connection={connection}
-            isProgramDetails={isProgramDetails}
-            isProposalDetails={isProposalDetails}
             loadingPrograms={loadingPrograms}
             loadingProposals={loadingProposals}
             multisigClient={multisigClient}
-            safeBalanceInUsd={safeBalance}
             onDataToProgramView={goToProgramDetailsHandler}
             onDataToSafeView={goToProposalDetailsHandler}
             onEditMultisigClick={onEditMultisigClick}
-            onRefreshRequested={onRefresMultisigDetailTabs}
-            proposalSelected={selectedProposal}
-            publicKey={publicKey}
+            onNewProposalClicked={onNewProposalClicked}
+            safeBalanceInUsd={safeBalance}
             selectedMultisig={selectedMultisig}
             selectedTab={queryParamV}
-            vestingAccountsCount={vestingContracts ? vestingContracts.length : 0}
           />
         );
       }

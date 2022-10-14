@@ -1,25 +1,23 @@
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { Alert, Button, Col, Dropdown, Menu, Row, Tabs, Tooltip } from "antd";
-import { ItemType } from "antd/lib/menu/hooks/useItems";
+import { Alert, Button, Col, Row, Space, Tabs, Tooltip } from "antd";
 import { CopyExtLinkGroup } from "components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "components/MultisigOwnersView";
 import { RightInfoDetails } from "components/RightInfoDetails";
 import { SolBalanceModal } from "components/SolBalanceModal";
-import { MIN_SOL_BALANCE_REQUIRED, VESTING_ROUTE_BASE_PATH } from "constants/common";
+import { MIN_SOL_BALANCE_REQUIRED } from "constants/common";
 import { NATIVE_SOL } from "constants/tokens";
 import { useNativeAccount } from "contexts/accounts";
 import { AppStateContext } from "contexts/appstate";
-import { IconEllipsisVertical, IconLoading } from "Icons";
-import { consoleOut, isDev, isLocal, toUsCurrency } from "middleware/ui";
+import { IconLoading } from "Icons";
+import { consoleOut, toUsCurrency } from "middleware/ui";
 import { getAmountFromLamports, shortenAddress } from "middleware/utils";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 
 export const SafeInfo = (props: {
-  isTxInProgress?: any;
   onEditMultisigClick?: any;
-  onRefreshTabsInfo?: any;
+  onNewProposalClicked?: any;
   programsTabContent?: any;
   proposalsTabContent?: any;
   totalSafeBalance?: number;
@@ -28,12 +26,10 @@ export const SafeInfo = (props: {
   selectedMultisig?: MultisigInfo;
   selectedTab?: any;
   tabs?: Array<any>;
-  vestingAccountsCount: number;
 }) => {
   const {
-    isTxInProgress,
     onEditMultisigClick,
-    onRefreshTabsInfo,
+    onNewProposalClicked,
     programsTabContent,
     proposalsTabContent,
     totalSafeBalance,
@@ -42,25 +38,20 @@ export const SafeInfo = (props: {
     selectedMultisig,
     selectedTab,
     tabs,
-    vestingAccountsCount,
   } = props;
   const {
-    isWhitelisted,
     multisigVaults,
     selectedAccount,
     multisigSolBalance,
     refreshTokenBalance,
     setActiveTab,
   } = useContext(AppStateContext);
-  const navigate = useNavigate();
   const { address } = useParams();
   const { account } = useNativeAccount();
   const [,setSearchParams] = useSearchParams();
   const [selectedLabelName, setSelectedLabelName] = useState("");
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
-
-  const isUnderDevelopment = useMemo(() => isLocal() || (isDev() && isWhitelisted) ? true : false, [isWhitelisted]);
 
   ////////////////
   ///  MODALS  ///
@@ -182,50 +173,11 @@ export const SafeInfo = (props: {
     }
   ];
 
-  // Go to vesting
-  const goToVesting = () => {
-    if (selectedMultisig) {
-      navigate(`${VESTING_ROUTE_BASE_PATH}/contracts`);
-    }
-  }
-
   const onTabChanged = useCallback((tab: string) => {
     consoleOut('Setting tab to:', tab, 'blue');
     setActiveTab(tab);
     setSearchParams({v: tab as string});
   }, [setActiveTab, setSearchParams]);
-
-  const renderDropdownMenu = useCallback(() => {
-    const items: ItemType[] = [];
-    items.push({
-      key: '01-edit-safe',
-      label: (
-        <div onClick={() => onEditMultisigClick()}>
-          <span className="menu-item-text">Edit safe</span>
-        </div>
-      )
-    });
-    if (isUnderDevelopment) {
-      items.push({
-        key: '02-delete-safe',
-        label: (
-          <div onClick={() => consoleOut('Not implemented yet', '', 'red')}>
-            <span className="menu-item-text">Delete safe</span>
-          </div>
-        )
-      });
-    }
-    items.push({
-      key: '03-refresh',
-      label: (
-        <div onClick={() => onRefreshTabsInfo()}>
-          <span className="menu-item-text">Refresh</span>
-        </div>
-      )
-    });
-
-    return <Menu items={items} />;
-  }, [isUnderDevelopment, onEditMultisigClick, onRefreshTabsInfo]);
 
   const getSafeTabs = useCallback(() => {
     const items = [];
@@ -285,51 +237,28 @@ export const SafeInfo = (props: {
     <>
       <RightInfoDetails
         infoData={infoSafeData}
-      /> 
+      />
 
-      <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
-        <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+      <div className="flex-fixed-right cta-row mb-2">
+        <Space className="left" size="middle" wrap>
           <Button
             type="default"
             shape="round"
             size="small"
             className="thin-stroke"
-            onClick={() => {}}>
+            onClick={onNewProposalClicked}>
               New proposal
           </Button>
-
-          {vestingAccountsCount > 0 && (
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              onClick={() => goToVesting()}>
-                <div className="btn-content">
-                  Vesting
-                </div>
-            </Button>
-          )}
-        </Col>
-        
-        <Col xs={4} sm={6} md={4} lg={6}>
-          <Dropdown
-            overlay={renderDropdownMenu()}
-            placement="bottomRight"
-            trigger={["click"]}>
-            <span className="ellipsis-icon icon-button-container mr-1">
-              <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-                disabled={isTxInProgress()}
-                onClick={(e) => e.preventDefault()}
-              />
-            </span>
-          </Dropdown>
-        </Col>
-      </Row>
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            onClick={() => onEditMultisigClick()}>
+              Edit safe
+          </Button>
+        </Space>
+      </div>
 
       {multisigSolBalance !== undefined && (
         (multisigSolBalance / LAMPORTS_PER_SOL) <= MIN_SOL_BALANCE_REQUIRED ? (

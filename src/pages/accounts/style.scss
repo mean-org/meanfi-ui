@@ -18,6 +18,17 @@
             }
         }
     }
+    @media (min-width: 768px) {
+        .meanfi-two-panel-layout {
+            .meanfi-two-panel-left {
+                padding: 0;
+                .inner-container {
+                    height: calc(100% - 1.2rem);
+                    transform: translate(0.5rem, 1.6rem) !important;
+                }
+            }
+        }
+    }
 
     .ant-divider.ant-divider-horizontal.networth-separator {
         margin: 8px 0;

@@ -11,23 +11,23 @@ import { SafeInfo } from "../SafeInfo";
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;
-  isProposalDetails: boolean;
   isProgramDetails: boolean;
-  onDataToSafeView: any;
-  onDataToProgramView: any;
-  selectedMultisig?: any;
-  onEditMultisigClick: any;
+  isProposalDetails: boolean;
   multisigClient: Program<Idl>;
   multisigTxs: MultisigTransaction[];
-  vestingAccountsCount: number;
+  onDataToProgramView: any;
+  onDataToSafeView: any;
+  onEditMultisigClick: any;
+  onNewProposalClicked?: any;
+  selectedMultisig?: any;
 }) => {
-  const { 
+  const {
     connection,
     isProposalDetails,
-    selectedMultisig, 
-    onEditMultisigClick, 
     multisigTxs,
-    vestingAccountsCount,
+    onEditMultisigClick,
+    onNewProposalClicked,
+    selectedMultisig,
   } = props;
 
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
@@ -278,11 +278,11 @@ export const SafeSerumInfoView = (props: {
     <>
       <SafeInfo
         onEditMultisigClick={onEditMultisigClick}
+        onNewProposalClicked={onNewProposalClicked}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}
         selectedMultisig={selectedMultisig}
         tabs={tabs}
-        vestingAccountsCount={vestingAccountsCount}
        />
     </>
   )

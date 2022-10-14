@@ -78,7 +78,7 @@ import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'c
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconAdd, IconCoin, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'Icons';
+import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
@@ -88,7 +88,6 @@ import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter,
 import {
   formatThousands,
   getAmountFromLamports, getAmountWithSymbol, getSdkValue, getTxIxResume,
-  openLinkInNewTab,
   shortenAddress,
   toUiAmount
 } from 'middleware/utils';
@@ -465,7 +464,7 @@ export const AccountsView = () => {
 
   // New Proposal modal
   const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
-  const onNewProposalMultisigClick = useCallback(() => {
+  const onNewProposalClicked = useCallback(() => {
 
     if (!multisigClient) { return; }
 
@@ -4100,16 +4099,27 @@ export const AccountsView = () => {
     }
   }
 
+  const renderSelectedAccountSummaryInner = () => {
+    return (
+      <>
+        <div className="left">
+          <div className="font-bold font-size-110 line-height-110">{selectedAccount.name}</div>
+          <div className="font-regular font-size-80 line-height-110 fg-secondary-50">{shortenAddress(selectedAccount.address, 8)}</div>
+        </div>
+        <div className="font-bold font-size-110 right">
+          {loadingStreams || !canShowStreamingAccountBalance ? (
+            <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+          ) : renderNetworth()}
+        </div>
+      </>
+    );
+  }
+
   const renderNetworthCategory = () => {
     return (
-      <div className="networth-list-item-wrapper" key="networth-category">
+      <div className="networth-list-item-wrapper" key="account-summary-category">
         <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`}>
-          <div className="font-bold font-size-110 left">Net Worth</div>
-          <div className="font-bold font-size-110 right">
-            {loadingStreams || !canShowStreamingAccountBalance ? (
-                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-            ) : renderNetworth()}
-          </div>
+          {renderSelectedAccountSummaryInner()}
         </div>
         <Divider className="networth-separator" />
       </div>
@@ -4118,21 +4128,13 @@ export const AccountsView = () => {
 
   const renderSuperSafeCategory = () => {
     return (
-      <div className="networth-list-item-wrapper" key="super-safe-category">
+      <div className="networth-list-item-wrapper" key="account-summary-category">
         <div onClick={() => {
           setDetailsPanelOpen(true);
           setAutoOpenDetailsPanel(true);
           navigateToSafe();
         }} className={`networth-list-item flex-fixed-right ${selectedCategory === "super-safe" ? 'selected' : ''}`}>
-          <div className="left">
-            <div className="font-bold font-size-110 line-height-110">Treasury Balance</div>
-            <div className="font-regular font-size-80 line-height-110 fg-secondary-50">{renderPendinProposals()}</div>
-          </div>
-          <div className="font-bold font-size-110 right">
-            {loadingStreams || !canShowStreamingAccountBalance ? (
-                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-            ) : renderNetworth()}
-          </div>
+          {renderSelectedAccountSummaryInner()}
         </div>
         <Divider className="networth-separator" />
       </div>
@@ -4472,7 +4474,6 @@ export const AccountsView = () => {
         )
       });
     }
-    // Divider
     items.push({
       key: '02-suggest-asset',
       label: (
@@ -4836,7 +4837,7 @@ export const AccountsView = () => {
                 <div className="meanfi-two-panel-left">
                   <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
                   <div id="streams-refresh-reset-cta" onClick={onRefreshStreamsReset}></div>
-                  <div className="meanfi-panel-heading">
+                  {/* <div className="meanfi-panel-heading">
                     {!isInspectedAccountTheConnectedWallet() && isMultisigContext ? (
                       <>
                         {selectedMultisig ? (
@@ -4882,7 +4883,7 @@ export const AccountsView = () => {
                       <div id="account-assets-refresh-cta" onClick={reloadTokensAndActivity}></div>
                       <div id="account-assets-hard-refresh-cta" onClick={hardReloadTokensAndActivity}></div>
                     </div>
-                  </div>
+                  </div> */}
                   <div className="inner-container">
 
                     {/* Net Worth header (sticky) */}
@@ -4923,7 +4924,7 @@ export const AccountsView = () => {
                               className="flex-center"
                               type="primary"
                               shape="round"
-                              onClick={onNewProposalMultisigClick}>
+                              onClick={onNewProposalClicked}>
                               <IconSafe className="mean-svg-icons" style={{width: 24, height: 24}} />
                               <span className="ml-1">New proposal</span>
                             </Button>
@@ -5098,7 +5099,7 @@ export const AccountsView = () => {
                             appsProvider={appsProvider}
                             safeBalance={netWorth}
                             solanaApps={solanaApps}
-                            vestingContracts={vestingContracts}
+                            onNewProposalClicked={onNewProposalClicked}
                           />
                         </Suspense>
                       </>
