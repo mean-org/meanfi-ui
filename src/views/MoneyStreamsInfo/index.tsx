@@ -238,7 +238,7 @@ export const MoneyStreamsInfoView = (props: {
     if (token) {
       return token;
     } else {
-      return await readAccountInfo(connection, address)
+      return readAccountInfo(connection, address)
       .then(info => {
         if ((info as any).data["parsed"]) {
           const decimals = (info as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
@@ -363,8 +363,6 @@ export const MoneyStreamsInfoView = (props: {
         totalNet: 0
     };
 
-    // consoleOut('=========== Block start ===========', '', 'orange');
-
     for (const treasury of treasuryList) {
 
         const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2
@@ -387,7 +385,7 @@ export const MoneyStreamsInfoView = (props: {
 
         let amountChange = 0;
 
-        const token = getTokenByMintAddress(associatedToken as string);
+        const token = getTokenByMintAddress(associatedToken);
 
         if (token) {
           const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
@@ -399,9 +397,6 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     resume['totalAmount'] += treasuryList.length;
-
-    // consoleOut('totalNet in streaming accounts:', resume['totalNet'], 'blue');
-    // consoleOut('=========== Block ends ===========', '', 'orange');
 
     return resume;
 
@@ -438,7 +433,7 @@ export const MoneyStreamsInfoView = (props: {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream, undefined, false) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream, undefined, false);
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -461,7 +456,7 @@ export const MoneyStreamsInfoView = (props: {
         : false;
 
       // Get refreshed data
-      const freshStream = await msp.refreshStream(stream, undefined) as Stream;
+      const freshStream = await msp.refreshStream(stream);
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
@@ -520,7 +515,7 @@ export const MoneyStreamsInfoView = (props: {
         : false;
 
       // Get refreshed data
-      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream);
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -577,7 +572,7 @@ export const MoneyStreamsInfoView = (props: {
   ]);
 
   const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
-    return await calculateActionFeesV2(connection, action);
+    return calculateActionFeesV2(connection, action);
   }, [connection]);
 
   const isMultisigTreasury = useCallback((treasuryId: string) => {
@@ -740,7 +735,7 @@ export const MoneyStreamsInfoView = (props: {
 
         consoleOut('Starting Add Funds using MSP V1...', '', 'blue');
         // Create a transaction
-        return await ms.addFunds(
+        return ms.addFunds(
           publicKey,
           treasury,
           stream,
@@ -790,7 +785,7 @@ export const MoneyStreamsInfoView = (props: {
 
       if (!isMultisigTreasury(data.treasury) || !params.fundFromSafe) {
         if (data.stream === '') {
-          return await msp.addFunds(
+          return msp.addFunds(
             new PublicKey(data.payer),                    // payer
             new PublicKey(data.contributor),              // contributor
             new PublicKey(data.treasury),                 // treasury
@@ -799,7 +794,7 @@ export const MoneyStreamsInfoView = (props: {
           );
         }
 
-        return await msp.allocate(
+        return msp.allocate(
           new PublicKey(data.payer),                   // payer
           new PublicKey(data.contributor),             // treasurer
           new PublicKey(data.treasury),                // treasury
@@ -976,7 +971,7 @@ export const MoneyStreamsInfoView = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -1171,7 +1166,7 @@ export const MoneyStreamsInfoView = (props: {
       const treasuryType = data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock;
 
       if (!data.multisig) {
-        return await msp.createTreasury(
+        return msp.createTreasury(
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.associatedTokenAddress),       // associatedToken
@@ -1337,7 +1332,7 @@ export const MoneyStreamsInfoView = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -1430,18 +1425,14 @@ export const MoneyStreamsInfoView = (props: {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
       let beneficiary = '';
-      if (v1.version < 2) {
-        beneficiary = v1.beneficiaryAddress
-          ? typeof v1.beneficiaryAddress === "string"
-            ? (v1.beneficiaryAddress as string)
-            : (v1.beneficiaryAddress as PublicKey).toBase58()
-          : '';
+      if (item.version < 2) {
+        beneficiary = typeof v1.beneficiaryAddress === "string"
+          ? v1.beneficiaryAddress
+          : (v1.beneficiaryAddress as PublicKey).toBase58();
       } else {
-        beneficiary = v2.beneficiary
-          ? typeof v2.beneficiary === "string"
-            ? (v2.beneficiary as string)
-            : (v2.beneficiary as PublicKey).toBase58()
-          : '';
+        beneficiary = typeof v2.beneficiary === "string"
+          ? v2.beneficiary
+          : v2.beneficiary.toBase58();
       }
       return beneficiary === selectedAccount.address ? true : false
     }
@@ -1700,6 +1691,85 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, [loadingStreams, loadingTreasuries]);
 
+  const sortStreamsByWithdrawableAmount = useCallback((a, b) => {
+    const vA1 = a as StreamInfo;
+    const vA2 = a as Stream;
+    const vB1 = b as StreamInfo;
+    const vB2 = b as Stream;
+
+    const isNew = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
+      ? true
+      : false;
+
+    const associatedTokenA = isNew
+      ? vA2.associatedToken.toBase58()
+      : vA1.associatedToken as string;
+
+    const associatedTokenB = isNew
+      ? vB2.associatedToken.toBase58()
+      : vB1.associatedToken as string;
+
+    const tokenA = getTokenByMintAddress(associatedTokenA);
+    const tokenB = getTokenByMintAddress(associatedTokenB);
+
+    let tokenPriceA;
+    let tokenPriceB;
+
+    if (tokenA) {
+      tokenPriceA = getTokenPriceByAddress(tokenA.address) || getTokenPriceBySymbol(tokenA.symbol);
+    } else {
+      tokenPriceA = 0;
+    }
+
+    if (tokenB) {
+      tokenPriceB = getTokenPriceByAddress(tokenB.address) || getTokenPriceBySymbol(tokenB.symbol);
+    } else {
+      tokenPriceB = 0;
+    }
+
+    const priceB = isNew ? vB2.withdrawableAmount.muln(tokenPriceB) : new BN(vB1.escrowVestedAmount * tokenPriceB);
+    const priceA = isNew ? vA2.withdrawableAmount.muln(tokenPriceB) : new BN(vA1.escrowVestedAmount * tokenPriceB);
+
+    if (tokenPriceA && tokenPriceB) {
+      if (priceB.gt(priceA)) {
+        return 1;
+      } else {
+        return -1;
+      }
+    } else {
+      return 0;
+    }
+  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol]);
+
+  const sortStreamsByEstimatedDepletionDate = useCallback((a, b) => {
+    const vA1 = a as StreamInfo;
+    const vA2 = a as Stream;
+    const vB1 = b as StreamInfo;
+    const vB2 = b as Stream;
+
+    const isNew = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
+    ? true
+    : false;
+
+    const timeA = isNew 
+      ? new Date(vA2.estimatedDepletionDate).getTime()
+      : new Date(vA1.escrowEstimatedDepletionUtc as string).getTime();
+
+    const timeB = isNew 
+      ? new Date(vB2.estimatedDepletionDate).getTime()
+      : new Date(vB1.escrowEstimatedDepletionUtc as string).getTime();
+
+    if (timeA && timeB) {
+      if (timeA > timeB) {
+        return 1;
+      } else {
+        return -1;
+      }
+    } else {
+      return 0;
+    }
+  }, []);
+
   // Set the list of incoming and outgoing streams
   useEffect(() => {
     if (!publicKey || !streamList) {
@@ -1711,89 +1781,14 @@ export const MoneyStreamsInfoView = (props: {
 
     // Sort the list of incoming streams by withdrawal amount
     const onlyIncomings = streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream));
-    const sortedIncomingStreamsList = onlyIncomings.sort((a, b) => {
-      const vA1 = a as StreamInfo;
-      const vA2 = a as Stream;
-      const vB1 = b as StreamInfo;
-      const vB2 = b as Stream;
-
-      const isNew = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
-        ? true
-        : false;
-
-      const associatedTokenA = isNew
-        ? vA2.associatedToken.toBase58()
-        : vA1.associatedToken as string;
-
-      const associatedTokenB = isNew
-        ? vB2.associatedToken.toBase58()
-        : vB1.associatedToken as string;
-
-      const tokenA = getTokenByMintAddress(associatedTokenA as string);
-      const tokenB = getTokenByMintAddress(associatedTokenB as string);
-
-      let tokenPriceA;
-      let tokenPriceB;
-
-      if (tokenA) {
-        tokenPriceA = getTokenPriceByAddress(tokenA.address) || getTokenPriceBySymbol(tokenA.symbol);
-      } else {
-        tokenPriceA = 0;
-      }
-
-      if (tokenB) {
-        tokenPriceB = getTokenPriceByAddress(tokenB.address) || getTokenPriceBySymbol(tokenB.symbol);
-      } else {
-        tokenPriceB = 0;
-      }
-
-      const priceB = isNew ? vB2.withdrawableAmount.muln(tokenPriceB) : new BN(vB1.escrowVestedAmount * tokenPriceB);
-      const priceA = isNew ? vA2.withdrawableAmount.muln(tokenPriceB) : new BN(vA1.escrowVestedAmount * tokenPriceB);
-
-      if (tokenPriceA && tokenPriceB) {
-        if (priceB.gt(priceA)) {
-          return 1;
-        } else {
-          return -1;
-        }
-      } else {
-        return 0;
-      }
-    });
+    const sortedIncomingStreamsList = [...onlyIncomings].sort((a, b) => sortStreamsByWithdrawableAmount(a, b));
 
     consoleOut('incoming streams:', sortedIncomingStreamsList, 'crimson');
     setIncomingStreamList(sortedIncomingStreamsList);
 
     // Sort the list of outgoinng streams by estimated depletion date
     const onlyOuts = streamList.filter(item => !isInboundStream(item) && (item as any).category === 0);
-    const sortedOutgoingStreamsList = onlyOuts.sort((a, b) => {
-      const vA1 = a as StreamInfo;
-      const vA2 = a as Stream;
-      const vB1 = b as StreamInfo;
-      const vB2 = b as Stream;
-
-      const isNew = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
-      ? true
-      : false;
-
-      const timeA = isNew 
-        ? new Date(vA2.estimatedDepletionDate).getTime()
-        : new Date(vA1.escrowEstimatedDepletionUtc as string).getTime();
-
-      const timeB = isNew 
-        ? new Date(vB2.estimatedDepletionDate).getTime()
-        : new Date(vB1.escrowEstimatedDepletionUtc as string).getTime();
-
-      if (timeA && timeB) {
-        if (timeA > timeB) {
-          return 1;
-        } else {
-          return -1;
-        }
-      } else {
-        return 0;
-      }
-    });
+    const sortedOutgoingStreamsList = [...onlyOuts].sort((a, b) => sortStreamsByEstimatedDepletionDate(a, b));
 
     consoleOut('outgoing streams:', sortedOutgoingStreamsList, 'crimson');
     setOutgoingStreamList(sortedOutgoingStreamsList);
@@ -1815,7 +1810,6 @@ export const MoneyStreamsInfoView = (props: {
 
   // Outgoing amount
   useEffect(() => {
-    // if (!outgoingStreamList || !streamingAccountCombinedList) { return; }
 
     if (!outgoingStreamList) { return; }
 
@@ -2194,6 +2188,60 @@ export const MoneyStreamsInfoView = (props: {
     };
   }, []);
 
+  const renderWithdrawalBalance = () => {
+    if (withdrawalBalance) {
+      return toUsCurrency(withdrawalBalance);
+    }
+    return "$0.00";
+  }
+
+  const renderUnallocatedBalance = () => {
+    if (unallocatedBalance) {
+      return toUsCurrency(unallocatedBalance);
+    }
+    return "$0.00";
+  }
+
+  const renderIncomingRatePerSecond = () => {
+    if (rateIncomingPerSecond) {
+      return rateIncomingPerSecond > 0 && rateIncomingPerSecond < 0.01
+        ? `< $0.01/second`
+        : `+ $${cutNumber(rateIncomingPerSecond, 4)}/second`;
+    } else {
+      return "$0.00/second";
+    }
+  }
+
+  const renderIncomingRatePerDay = () => {
+    if (rateIncomingPerDay) {
+      return rateIncomingPerDay > 0 && rateIncomingPerDay < 0.01
+        ? `< $0.01/day`
+        : `+ $${cutNumber(rateIncomingPerDay, 4)}/day`;
+    } else {
+      return "$0.00/day";
+    }
+  }
+
+  const renderOutgoingRatePerSecond = () => {
+    if (rateOutgoingPerSecond) {
+      return rateOutgoingPerSecond > 0 && rateOutgoingPerSecond < 0.01
+        ? `< $0.01/second`
+        : `- $${cutNumber(rateOutgoingPerSecond, 4)}/second`;
+    } else {
+      return "$0.00/second";
+    }
+  }
+
+  const renderOutgoingRatePerDay = () => {
+    if (rateOutgoingPerDay) {
+      return rateOutgoingPerDay > 0 && rateOutgoingPerDay < 0.01
+        ? `< $0.01/day`
+        : `- $${cutNumber(rateOutgoingPerDay, 4)}/day`;
+    } else {
+      return "$0.00/day";
+    }
+  }
+
   const renderSummary = (
     <>
       <Row gutter={[8, 8]} className="ml-0 mr-0">
@@ -2234,18 +2282,12 @@ export const MoneyStreamsInfoView = (props: {
               {loadingTreasuries || loadingStreams ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : (
-                <span className="incoming-amount">{rateIncomingPerSecond ? (
-                    (rateIncomingPerSecond > 0 && rateIncomingPerSecond < 0.01) ? `< $0.01/second` : `+ $${cutNumber(rateIncomingPerSecond, 4)}/second`
-                  ) : "$0.00/second"}
-                </span>
+                <span className="incoming-amount">{renderIncomingRatePerSecond()}</span>
               )}
               {loadingTreasuries || loadingStreams ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
               ) : (
-                <span className="incoming-amount">{rateIncomingPerDay ? (
-                    (rateIncomingPerDay > 0 && rateIncomingPerDay < 0.01) ? `< $0.01/day` : `+ $${cutNumber(rateIncomingPerDay, 4)}/day`
-                  ) : "$0.00/day"}
-                </span>
+                <span className="incoming-amount">{renderIncomingRatePerDay()}</span>
               )}
             </div>
           </div>
@@ -2256,10 +2298,7 @@ export const MoneyStreamsInfoView = (props: {
             <div className="info-value">
               {loadingStreams || !canDisplayIncomingBalance ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-              ) : withdrawalBalance
-                ? toUsCurrency(withdrawalBalance)
-                : "$0.00"
-              }
+              ) : renderWithdrawalBalance()}
             </div>
           </div>
           {(!loadingTreasuries && !loadingStreams) && (
@@ -2318,18 +2357,12 @@ export const MoneyStreamsInfoView = (props: {
               {loadingTreasuries || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : (
-                  <span className="outgoing-amount">{rateOutgoingPerSecond ? (
-                      (rateOutgoingPerSecond > 0 && rateOutgoingPerSecond < 0.01) ? `< $0.01/second` : `- $${cutNumber(rateOutgoingPerSecond, 4)}/second`
-                    ) : "$0.00/second"}
-                  </span>
+                  <span className="outgoing-amount">{renderOutgoingRatePerSecond()}</span>
                 )}
                 {loadingTreasuries || loadingStreams ? (
                   <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
                 ) : (
-                  <span className="outgoing-amount">{rateOutgoingPerDay ? (
-                      (rateOutgoingPerDay > 0 && rateOutgoingPerDay < 0.01) ? `< $0.01/day` : `- $${cutNumber(rateOutgoingPerDay, 4)}/day`
-                    ) : "$0.00/day"}
-                  </span>
+                  <span className="outgoing-amount">{renderOutgoingRatePerDay()}</span>
                 )}
             </div>
           </div>
@@ -2340,10 +2373,7 @@ export const MoneyStreamsInfoView = (props: {
             <div className="info-value">
               {loadingStreams || loadingTreasuries || !canDisplayOutgoingBalance ? (
                 <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-              ) : unallocatedBalance
-                ? toUsCurrency(unallocatedBalance)
-                : "$0.00"
-              }
+              ) : renderUnallocatedBalance()}
             </div>
           </div>
           {(!loadingTreasuries && !loadingStreams) && (
@@ -2372,227 +2402,220 @@ export const MoneyStreamsInfoView = (props: {
   );
 
   // Incoming streams list
-  const renderListOfIncomingStreams = (
-    <>
-      {!loadingStreams ? (
-        (incomingStreamList !== undefined && incomingStreamList.length > 0) ? (
-          incomingStreamList.map((stream, index) => {
-            const onSelectStream = () => {
-              // Sends outgoing stream value to the parent component "Accounts"
-              onSendFromIncomingStreamInfo(stream);
-            };
-
-            const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-              event.currentTarget.src = FALLBACK_COIN_IMAGE;
-              event.currentTarget.className = "error";
-            };
-
-            const v1 = stream as StreamInfo;
-            const v2 = stream as Stream;
-            const isNew = stream.version >= 2 ? true : false;
-
-            const associatedToken = isNew ? (stream.associatedToken as PublicKey).toBase58() : stream.associatedToken as string;
-
-            const token = associatedToken ? getTokenByMintAddress(associatedToken) : undefined;
-
-            let img;
-
-            if (associatedToken) {
-              if (token && token.logoURI) {
-                img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
-              } else {
-                img = <Identicon address={associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-              }
-            } else {
-              img = <Identicon address={isNew ? v2.id.toBase58() : v1.id?.toString()} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-            }
-
-            const title = stream ? getStreamTitle(stream, t) : "Unknown incoming stream";
-            const subtitle = getStreamSubtitle(stream) || "0.00";
-            const status = getStreamStatus(stream);
-            const resume = getStreamResume(stream);
-
-            const withdrawResume = isNew
-              ? displayAmountWithSymbol(
-                  v2.withdrawableAmount,
-                  v2.associatedToken.toString(),
-                  token?.decimals || 9,
-                  splTokenList,
-                )
-              : getAmountWithSymbol(
-                  v1.escrowVestedAmount,
-                  v1.associatedToken as string,
-                  false,
-                  splTokenList,
-                  token?.decimals || 9,
-                );
-
-            return (
-              <div 
-                key={`incoming-stream-${index}`}
-                onClick={onSelectStream}
-                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
-                <ResumeItem
-                  id={index}
-                  img={img}
-                  title={title}
-                  subtitle={subtitle}
-                  resume={((isNew && v2.withdrawableAmount.gtn(0)) || (!isNew && v1.escrowVestedAmount > 0)) ? `${withdrawResume} available` : resume}
-                  status={status}
-                  hasRightIcon={true}
-                  rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                  isLink={true}
-                  isStream={true}
-                  classNameRightContent="resume-stream-row"
-                  classNameIcon="icon-stream-row"
-                />
-              </div>
-            )
-          })
-        ) : (
-          <span className="pl-1">You don't have any incoming streams</span>
-        )
-      ) : (
+  const renderListOfIncomingStreams = () => {
+    if (loadingStreams) {
+      return (
         <span className="pl-1">Loading incoming streams ...</span>
-      )}
-    </>
-  );
+      );
+    } else if (incomingStreamList === undefined || incomingStreamList.length === 0 ) {
+      return (
+        <span className="pl-1">You don't have any incoming streams</span>
+      );
+    }
+
+    return incomingStreamList.map((stream, index) => {
+      const onSelectStream = () => {
+        // Sends outgoing stream value to the parent component "Accounts"
+        onSendFromIncomingStreamInfo(stream);
+      };
+
+      const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        event.currentTarget.src = FALLBACK_COIN_IMAGE;
+        event.currentTarget.className = "error";
+      };
+
+      const v1 = stream as StreamInfo;
+      const v2 = stream as Stream;
+      const isNew = stream.version >= 2 ? true : false;
+
+      const associatedToken = isNew ? (stream.associatedToken as PublicKey).toBase58() : stream.associatedToken as string;
+
+      const token = associatedToken ? getTokenByMintAddress(associatedToken) : undefined;
+
+      let img;
+
+      if (associatedToken) {
+        if (token && token.logoURI) {
+          img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
+        } else {
+          img = <Identicon address={associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+        }
+      } else {
+        img = <Identicon address={isNew ? v2.id.toBase58() : v1.id?.toString()} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+      }
+
+      const title = stream ? getStreamTitle(stream, t) : "Unknown incoming stream";
+      const subtitle = getStreamSubtitle(stream) || "0.00";
+      const status = getStreamStatus(stream);
+      const resume = getStreamResume(stream);
+
+      const withdrawResume = isNew
+        ? displayAmountWithSymbol(
+            v2.withdrawableAmount,
+            v2.associatedToken.toString(),
+            token?.decimals || 9,
+            splTokenList,
+          )
+        : getAmountWithSymbol(
+            v1.escrowVestedAmount,
+            v1.associatedToken as string,
+            false,
+            splTokenList,
+            token?.decimals || 9,
+          );
+
+      return (
+        <div 
+          key={`incoming-stream-${index}`}
+          onClick={onSelectStream}
+          className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
+          <ResumeItem
+            id={index}
+            img={img}
+            title={title}
+            subtitle={subtitle}
+            resume={((isNew && v2.withdrawableAmount.gtn(0)) || (!isNew && v1.escrowVestedAmount > 0)) ? `${withdrawResume} available` : resume}
+            status={status}
+            hasRightIcon={true}
+            rightIcon={<IconArrowForward className="mean-svg-icons" />}
+            isLink={true}
+            isStream={true}
+            classNameRightContent="resume-stream-row"
+            classNameIcon="icon-stream-row"
+          />
+        </div>
+      )
+    });
+  }
 
   // Outgoing streams list
-  const renderListOfOutgoingStreams = (
-    <>
-      {!loadingStreams ? (
-        outgoingStreamList !== undefined && outgoingStreamList.length > 0 ? (
-          <>
-            {outgoingStreamList && outgoingStreamList.map((stream, index) => {
-              const onSelectStream = () => {
-                // Sends outgoing stream value to the parent component "Accounts"
-                onSendFromOutgoingStreamInfo(stream);
-              };
-
-              const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                event.currentTarget.src = FALLBACK_COIN_IMAGE;
-                event.currentTarget.className = "error";
-              };
-
-              const v1 = stream as StreamInfo;
-              const v2 = stream as Stream;
-              const isNew = stream.version >= 2 ? true : false;
-  
-              const associatedToken = isNew ? (stream.associatedToken as PublicKey).toBase58() : stream.associatedToken as string;
-              const token = associatedToken ? getTokenByMintAddress(associatedToken) : undefined;
-
-              let img;
-
-              if (associatedToken) {
-                if (token && token.logoURI) {
-                  img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
-                } else {
-                  img = <Identicon address={associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-                }
-              } else {
-                img = <Identicon address={isNew ? v2.id.toBase58() : v1.id?.toString()} style={{ width: "30", display: "inline-flex" }} className="token-img" />
-              }
-  
-              const title = stream ? getStreamTitle(stream, t) : "Unknown outgoing stream";
-              const subtitle = getStreamSubtitle(stream) || "0.00";
-              const status = getStreamStatus(stream);
-              const resume = getStreamResume(stream);
-
-              return (
-                <div
-                  key={`outgoing-stream-${index}}`}
-                  onClick={onSelectStream}
-                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
-                >
-                  <ResumeItem
-                    id={index}
-                    img={img}
-                    title={title}
-                    subtitle={subtitle}
-                    resume={resume}
-                    status={status}
-                    hasRightIcon={true}
-                    rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                    isLink={true}
-                    isStream={true}
-                    classNameRightContent="resume-stream-row"
-                    classNameIcon="icon-stream-row"
-                  />
-                </div>
-              )
-            })}
-          </>
-        ) : (
-          <span className="pl-1">You don't have any outgoing streams</span>
-        )
-      ) : (
+  const renderListOfOutgoingStreams = () => {
+    if (loadingStreams) {
+      return (
         <span className="pl-1">Loading outgoing streams ...</span>
-      )}
-    </>
-  );
+      );
+    } else if (outgoingStreamList === undefined || outgoingStreamList.length === 0 ) {
+      return (
+        <span className="pl-1">You don't have any outgoing streams</span>
+      );
+    }
+
+    return outgoingStreamList.map((stream, index) => {
+      const onSelectStream = () => {
+        // Sends outgoing stream value to the parent component "Accounts"
+        onSendFromOutgoingStreamInfo(stream);
+      };
+
+      const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        event.currentTarget.src = FALLBACK_COIN_IMAGE;
+        event.currentTarget.className = "error";
+      };
+
+      const v1 = stream as StreamInfo;
+      const v2 = stream as Stream;
+      const isNew = stream.version >= 2 ? true : false;
+
+      const associatedToken = isNew ? (stream.associatedToken as PublicKey).toBase58() : stream.associatedToken as string;
+      const token = associatedToken ? getTokenByMintAddress(associatedToken) : undefined;
+
+      let img;
+
+      if (associatedToken) {
+        if (token && token.logoURI) {
+          img = <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} className="token-img" />
+        } else {
+          img = <Identicon address={associatedToken} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+        }
+      } else {
+        img = <Identicon address={isNew ? v2.id.toBase58() : v1.id?.toString()} style={{ width: "30", display: "inline-flex" }} className="token-img" />
+      }
+
+      const title = stream ? getStreamTitle(stream, t) : "Unknown outgoing stream";
+      const subtitle = getStreamSubtitle(stream) || "0.00";
+      const status = getStreamStatus(stream);
+      const resume = getStreamResume(stream);
+
+      return (
+        <div
+          key={`outgoing-stream-${index}}`}
+          onClick={onSelectStream}
+          className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
+          <ResumeItem
+            id={index}
+            img={img}
+            title={title}
+            subtitle={subtitle}
+            resume={resume}
+            status={status}
+            hasRightIcon={true}
+            rightIcon={<IconArrowForward className="mean-svg-icons" />}
+            isLink={true}
+            isStream={true}
+            classNameRightContent="resume-stream-row"
+            classNameIcon="icon-stream-row"
+          />
+        </div>
+      );
+    });
+  };
 
   // Streaming accounts list
-  const renderListOfStreamingAccounts = (
-    <>
-      {(!loadingStreams && !loadingTreasuries) ? (
-        (treasuryList !== undefined && treasuryList.length > 0) ? (
-          <>
-            {(treasuryList && treasuryList.map((streamingAccount, index) => {
-                const v1 = streamingAccount as unknown as TreasuryInfo;
-                const v2 = streamingAccount as Treasury;
-                const isNewTreasury = streamingAccount && streamingAccount.version >= 2 ? true : false;
-
-                const onSelectedStreamingAccount = () => {
-                  // Sends outgoing stream value to the parent component "Accounts"
-                  onSendFromStreamingAccountInfo(streamingAccount);
-                }
-
-                const type = isNewTreasury
-                  ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
-                  : v1.type === TreasuryType.Open ? 'Open' : 'Locked';
-
-                const badges = [type];
-
-                const title = isNewTreasury ? v2.name : (v1.label ? v1.label : shortenAddress(v1.id as string, 8));
-                const subtitle = shortenAddress(streamingAccount.id as string, 8);
-                const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
-                const resume = amount > 1 ? "streams" : "stream";
-
-                return (
-                  <div
-                    key={`streaming-account-${index}`}
-                    onClick={onSelectedStreamingAccount}
-                    className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
-                  >
-                    <ResumeItem
-                      title={title}
-                      extraTitle={badges}
-                      classNameTitle="text-uppercase"
-                      subtitle={subtitle}
-                      amount={amount}
-                      resume={resume}
-                      className="simplelink"
-                      hasRightIcon={true}
-                      rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                      isLink={true}
-                      onClick={onSelectedStreamingAccount}
-                      classNameRightContent="resume-streaming-row"
-                      classNameIcon="icon-streaming-row"
-                    />
-                  </div>
-                )
-              })
-            )}
-          </>
-        ) : (
-          <span className="pl-1">You don't have any streaming accounts</span>
-        )
-      ) : (
+  const renderListOfStreamingAccounts = () => {
+    if (loadingStreams || loadingTreasuries) {
+      return (
         <span className="pl-1">Loading streaming accounts ...</span>
-      )}
-    </>
-  );
+      );
+    } else if (treasuryList === undefined || treasuryList.length === 0 ) {
+      return (
+        <span className="pl-1">You don't have any streaming accounts</span>
+      );
+    }
+
+    return treasuryList.map((streamingAccount, index) => {
+      const v1 = streamingAccount as unknown as TreasuryInfo;
+      const v2 = streamingAccount as Treasury;
+      const isNewTreasury = streamingAccount && streamingAccount.version >= 2 ? true : false;
+
+      const onSelectedStreamingAccount = () => {
+        // Sends outgoing stream value to the parent component "Accounts"
+        onSendFromStreamingAccountInfo(streamingAccount);
+      }
+
+      const tt = isNewTreasury ? v2.treasuryType : v1.type as TreasuryType;
+      const type = tt === TreasuryType.Open ? 'Open' : 'Locked';
+
+      const badges = [type];
+
+      const title = isNewTreasury ? v2.name : v1.label || shortenAddress(v1.id, 8);
+      const subtitle = shortenAddress(streamingAccount.id as string, 8);
+      const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
+      const resume = amount > 1 ? "streams" : "stream";
+
+      return (
+        <div
+          key={`streaming-account-${index}`}
+          onClick={onSelectedStreamingAccount}
+          className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
+        >
+          <ResumeItem
+            title={title}
+            extraTitle={badges}
+            classNameTitle="text-uppercase"
+            subtitle={subtitle}
+            amount={amount}
+            resume={resume}
+            className="simplelink"
+            hasRightIcon={true}
+            rightIcon={<IconArrowForward className="mean-svg-icons" />}
+            isLink={true}
+            onClick={onSelectedStreamingAccount}
+            classNameRightContent="resume-streaming-row"
+            classNameIcon="icon-streaming-row"
+          />
+        </div>
+      );
+    });
+  }
 
   // Tabs
   const tabs = [
