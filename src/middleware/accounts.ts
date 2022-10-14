@@ -433,29 +433,31 @@ const getTokenListForOwnedTokenAccounts = (accTks: AccountTokenParsedInfo[], lis
 }
 
 const updateTokenAccountBalancesInTokenList = (accTks: AccountTokenParsedInfo[], list: UserTokenAccount[], prices: TokenPrice[] | null) => {
+  const listCopy = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
   for (const item of accTks) {
     // Locate the token in input list
-    const tokenIndex = list.findIndex(i => i.address === item.parsedInfo.mint);
+    const tokenIndex = listCopy.findIndex(i => i.address === item.parsedInfo.mint);
     if (tokenIndex !== -1) {
-      const price = getPriceByAddressOrSymbol(prices, list[tokenIndex].address, list[tokenIndex].symbol);
+      const price = getPriceByAddressOrSymbol(prices, listCopy[tokenIndex].address, listCopy[tokenIndex].symbol);
       const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
       const valueInUSD = balance * price;
       // If we didn't already filled info for this associated token address
-      if (!list[tokenIndex].publicAddress) {
+      if (!listCopy[tokenIndex].publicAddress) {
         // Add it
-        list[tokenIndex].publicAddress = item.pubkey.toBase58();
-        list[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-        list[tokenIndex].valueInUsd = valueInUSD;
-      } else if (list[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
+        listCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
+        listCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+        listCopy[tokenIndex].valueInUsd = valueInUSD;
+      } else if (listCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
         // If we did and the publicAddress is different/new then duplicate this item with the new info
-        const newItem = Object.assign({}, list[tokenIndex]);
+        const newItem = Object.assign({}, listCopy[tokenIndex]);
         newItem.publicAddress = item.pubkey.toBase58();
         newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
         newItem.valueInUsd = valueInUSD;
-        list.splice(tokenIndex + 1, 0, newItem);
+        listCopy.splice(tokenIndex + 1, 0, newItem);
       }
     }
   }
+  return listCopy;
 }
 
 // Fetch all the owned token accounts with balances, also build duplicated token groups for later merge
@@ -525,20 +527,20 @@ export const getUserAccountTokens = async (
     intersectedList.push(sol);
 
     // Update balances in the mean token list
-    updateTokenAccountBalancesInTokenList(accTks, splTokenList, coinPrices);
+    const balancesUpdated = updateTokenAccountBalancesInTokenList(accTks, intersectedList, coinPrices);
 
     // Update displayIndex and isAta flag
     let listIndex = 0;
-    for await (const item of intersectedList) {
+    for await (const item of balancesUpdated) {
       item.displayIndex = listIndex;
       item.isAta = await updateAtaFlag(item, accountAddress);
       listIndex++;
     }
 
-    const sortedList = sortTokenAccountsByUsdValue(intersectedList);
+    const sortedList = sortTokenAccountsByUsdValue(balancesUpdated);
 
     const custom: UserTokenAccount[] = [];
-    // Build a list with all owned token accounts not already in intersectedList as custom tokens
+    // Build a list with all owned token accounts not already in sortedList as custom tokens
     accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
       if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
         const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
@@ -640,12 +642,12 @@ export const getTokensWithBalances = async (
     }
 
     // Update balances in the mean token list
-    updateTokenAccountBalancesInTokenList(accTks, splTokenList, coinPrices);
+    const balancesUpdated = updateTokenAccountBalancesInTokenList(accTks, intersectedList, coinPrices);
 
-    const sortedList = sortTokenAccountsByUsdValue(intersectedList);
+    const sortedList = sortTokenAccountsByUsdValue(balancesUpdated);
 
     const custom: UserTokenAccount[] = [];
-    // Build a list with all owned token accounts not already in intersectedList as custom tokens
+    // Build a list with all owned token accounts not already in sortedList as custom tokens
     accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
       if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
         const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
