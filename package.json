@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.21.6",
+  "version": "1.21.8",
   "private": true,
   "browserslist": {
     "production": [

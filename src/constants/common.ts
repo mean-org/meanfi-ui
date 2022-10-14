@@ -25,7 +25,6 @@ export const MAX_TOKEN_LIST_ITEMS = 100;
 export const MAX_MULTISIG_PARTICIPANTS = 10;
 export const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;
 export const CUSTOM_TOKEN_NAME = 'Custom token';
-export const INPUT_AMOUNT_PATTERN = /^\d*[.,]?\d*$/;
 export const INTEGER_INPUT_AMOUNT_PATTERN = /^[1-9]\d*$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
 export const TIMEPICKER_FORMAT = 'h:mm a';
