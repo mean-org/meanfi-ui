@@ -1,11 +1,11 @@
-import { useCallback, useContext, useState } from 'react';
-import './style.scss';
-import { Button, Dropdown } from "antd"
-import { useTranslation } from 'react-i18next';
 import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+import { Button, Dropdown } from "antd";
+import { AppStateContext } from 'contexts/appstate';
+import { IconThumbsDown, IconThumbsUp } from 'Icons';
+import { useCallback, useContext, useState } from 'react';
 import Countdown from 'react-countdown';
-import { IconThumbsUp, IconThumbsDown } from '../../Icons';
-import { AppStateContext } from '../../contexts/appstate';
+import { useTranslation } from 'react-i18next';
+import './style.scss';
 
 export const ResumeItem = (props: {
   id?: any;
@@ -24,7 +24,7 @@ export const ResumeItem = (props: {
   approved?: any;
   rejected?: any;
   userSigned?: any;
-  status?: number | string | undefined;
+  status?: number | string;
   content?: string;
   resume?: any;
   isDetailsPanel?: boolean;
@@ -173,9 +173,51 @@ export const ResumeItem = (props: {
       const minutesSpace = (minutes < 10) ? '0' : '';
       const secondsSpace = (seconds < 10) ? '0' : '';
 
-      return <span>{`Expires in ${`${daysSpace}${days}`}:${`${hoursSpace}${hours}`}:${`${minutesSpace}${minutes}`}:${`${secondsSpace}${seconds}`}`}</span>;
+      return <span>{`Expires in ${daysSpace}${days}:${hoursSpace}${hours}:${minutesSpace}${minutes}:${secondsSpace}${seconds}`}</span>;
     }
   };
+
+  const renderExecutedOnDisplay = () => {
+    if (status === 0 || status === 1) {
+      return (<Countdown className="align-middle" date={expires.toString()} renderer={renderer} />);
+    } else if (status === 4) {
+      return (<span>Voided</span>);
+    } else if (status === 5) {
+      return (<span>Expired on {expires.toDateString()}</span>);
+    }
+
+    return null;
+  }
+
+  const renderRightIcon = () => {
+    return rightIconHasDropdown ? (
+      <Dropdown
+        overlay={dropdownMenu}
+        placement="bottomRight"
+        trigger={["click"]}>
+        <span className="ellipsis-icon icon-button-container">
+          <Button
+            type="default"
+            shape="circle"
+            size="middle"
+            icon={rightIcon}
+            onClick={(e) => e.preventDefault()}
+          />
+        </span>
+      </Dropdown>
+    ) : (
+      <span className="icon-button-container">
+        <Button
+          type="default"
+          shape="circle"
+          size="middle"
+          icon={rightIcon}
+          onClick={onClick}
+          className={classNameIcon}
+        />
+      </span>
+    );
+  }
 
   return (
     <div className="d-flex">
@@ -186,7 +228,7 @@ export const ResumeItem = (props: {
               {src && (
                 <img src={src} alt={title} width={35} height={35} style={{borderRadius: "0.25em !important"}} />
               )}
-              {img && img}
+              {img || null}
             </div>
           )}
           <div className={`resume-left-text ${isDetailsPanel ? "pb-1" : ""}`}>
@@ -202,37 +244,24 @@ export const ResumeItem = (props: {
             </div>
 
             {version !== 0 && (
-              subtitle ? (
-                subtitle === "null" ? (
-                  <div className="info-label">
-                    <span className="subtitle"></span>
-                  </div>
-                ) : (
+              <>
+                {subtitle && (
                   <div className="info-label">
                     <span className="subtitle">{subtitle}</span>
                   </div>
-                )
-              ) : (
-                expires ? (
+                )}
+                {expires ? (
                   <div className="info-label">
                     {(executedOn || status === 2) ? (
                       <span>Executed on {executedOn}</span>
-                    ) : (
-                      (status === 0 || status === 1) ? (
-                        <Countdown className="align-middle" date={expires.toString()} renderer={renderer} />
-                      ) : status === 4 ? (
-                        <span>Voided</span>
-                      ) : status === 5 ? (
-                        <span>Expired on {expires.toDateString()}</span>
-                      ) : null
-                    )}
+                    ) : renderExecutedOnDisplay()}
                   </div>
                 ) : (
                   <div className="info-label">
                     <span className="subtitle">Does not expire</span>
                   </div>
-                )
-              )
+                )}
+              </>
             )}
           </div>
         </div>
@@ -283,35 +312,7 @@ export const ResumeItem = (props: {
               )}
             </>
           </div>
-          {hasRightIcon ? (
-            rightIconHasDropdown ? (
-              <Dropdown
-                overlay={dropdownMenu}
-                placement="bottomRight"
-                trigger={["click"]}>
-                <span className="ellipsis-icon icon-button-container">
-                  <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={rightIcon}
-                    onClick={(e) => e.preventDefault()}
-                  />
-                </span>
-              </Dropdown>
-            ) : (
-              <span className="icon-button-container">
-                <Button
-                  type="default"
-                  shape="circle"
-                  size="middle"
-                  icon={rightIcon}
-                  onClick={onClick}
-                  className={classNameIcon}
-                />
-              </span>
-            )
-          ) : null}
+          {hasRightIcon && renderRightIcon()}
         </div>
       </div>
     </div>
