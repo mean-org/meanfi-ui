@@ -1343,7 +1343,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       tokenListPerformanceCounter.reset();
     }
 
-  },[getCoinPrices, mapPrices]);
+  },[connectionConfig.cluster, getCoinPrices, mapPrices]);
 
   // Only get the token list once per page reload
   useEffect(() => {
