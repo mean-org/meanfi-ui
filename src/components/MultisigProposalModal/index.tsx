@@ -1,29 +1,27 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import "./style.scss";
-import { consoleOut, copyText, getTransactionOperationDescription } from '../../middleware/ui';
-import { useTranslation } from 'react-i18next';
-import { isError } from '../../middleware/transactions';
-import { TransactionStatus } from '../../models/enums';
-import { AppStateContext } from '../../contexts/appstate';
-import { useWallet } from '../../contexts/wallet';
-import { Modal, Button, Spin, Divider, Row, Col, Radio, Alert } from 'antd';
-import { StepSelector } from "../StepSelector";
-import { IconExternalLink } from "../../Icons";
-import { InputMean } from '../InputMean';
-import { SelectMean } from '../SelectMean';
-import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
-import { InputTextAreaMean } from '../InputTextAreaMean';
 import { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
-import BN from 'bn.js';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { CreateNewProposalParams, getMultisigInstructionSummary, NATIVE_LOADER, parseSerializedTx } from '../../models/multisig';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
-import { openNotification } from '../Notifications';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
-import { VESTING_ROUTE_BASE_PATH } from '../../pages/vesting';
+import { Alert, Button, Col, Divider, Modal, Radio, Row, Spin } from 'antd';
+import BN from 'bn.js';
+import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
+import { InputMean } from 'components/InputMean';
+import { InputTextAreaMean } from 'components/InputTextAreaMean';
+import { openNotification } from 'components/Notifications';
+import { SelectMean } from 'components/SelectMean';
+import { StepSelector } from 'components/StepSelector';
+import { ACCOUNTS_ROUTE_BASE_PATH, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VESTING_ROUTE_BASE_PATH } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { IconExternalLink } from "Icons";
+import { isError } from 'middleware/transactions';
+import { consoleOut, copyText, getTransactionOperationDescription } from 'middleware/ui';
+import { TransactionStatus } from 'models/enums';
+import { CreateNewProposalParams, getMultisigInstructionSummary, NATIVE_LOADER, parseSerializedTx } from 'models/multisig';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import "./style.scss";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -46,13 +44,11 @@ export const MultisigProposalModal = (props: {
   selectedMultisig?: any;
 }) => {
   const navigate = useNavigate();
-  const { address } = useParams();
   const { publicKey } = useWallet();
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const {
     theme,
-    isWhitelisted,
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
@@ -70,7 +66,6 @@ export const MultisigProposalModal = (props: {
   const [selectedApp, setSelectedApp] = useState<App>();
   const [selectedAppConfig, setSelectedAppConfig] = useState<AppConfig>();
   const [selectedUiIx, setSelectedUiIx] = useState<UiInstruction | undefined>();
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(isVisible);
   const [credixValue, setCredixValue] = useState<number | undefined>();
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -103,12 +98,12 @@ export const MultisigProposalModal = (props: {
 
   const onContinueStepOneButtonClick = () => {
     if (selectedApp?.name === "Payment Streaming") {
-      setIsModalVisible(false);
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/streaming/summary?account-type=multisig`;
+      handleClose();
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/summary`;
       navigate(url);
     } else if (selectedApp?.name === "Token Vesting") {
-      setIsModalVisible(false);
-      navigate(`${VESTING_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/contracts?account-type=multisig`);
+      handleClose();
+      navigate(VESTING_ROUTE_BASE_PATH);
     } else {
       setCurrentStep(1);  // Go to step 2
     }
@@ -381,8 +376,7 @@ export const MultisigProposalModal = (props: {
       title={<div className="modal-title">New proposal</div>}
       maskClosable={false}
       footer={null}
-      open={isModalVisible}
-      // onOk={onAcceptModal}
+      open={isVisible}
       onCancel={onCloseModal}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 

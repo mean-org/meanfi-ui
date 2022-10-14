@@ -1,5 +1,4 @@
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import ArrowDownOutlined from "@ant-design/icons/lib/icons/ArrowDownOutlined";
+import { ArrowDownOutlined, CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
@@ -9,7 +8,7 @@ import {
   STREAM_STATUS, TransactionFees
 } from '@mean-dao/msp';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Dropdown, Menu, Modal, Row, Spin } from "antd";
+import { Button, Dropdown, Menu, Modal, Space, Spin } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
 import { segmentAnalytics } from "App";
 import BN from "bn.js";
@@ -34,19 +33,16 @@ import { TokenInfo } from "models/SolanaTokenInfo";
 import { StreamWithdrawData } from "models/streams";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MoneyStreamsIncomingView = (props: {
-  accountAddress: string;
   loadingStreams: boolean;
   multisigAccounts: MultisigInfo[] | undefined;
   onSendFromIncomingStreamDetails?: any;
   streamSelected: Stream | StreamInfo | undefined;
 }) => {
   const {
-    accountAddress,
     loadingStreams,
     multisigAccounts,
     onSendFromIncomingStreamDetails,
@@ -55,6 +51,7 @@ export const MoneyStreamsIncomingView = (props: {
 
   const {
     splTokenList,
+    selectedAccount,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
@@ -72,7 +69,6 @@ export const MoneyStreamsIncomingView = (props: {
   const connectionConfig = useConnectionConfig();
   const { endpoint } = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
-  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
@@ -140,22 +136,13 @@ export const MoneyStreamsIncomingView = (props: {
     multisigAddressPK
   ]);
 
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
+
   /////////////////
   //  Callbacks  //
   /////////////////
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const isNewStream = useCallback(() => {
     if (streamSelected) {
@@ -272,7 +259,7 @@ export const MoneyStreamsIncomingView = (props: {
     const transferOwnership = async (dataStream: any) => {
       if (!msp || !publicKey || !streamSelected) { return null; }
 
-      if (param !== "multisig") {
+      if (!isMultisigContext) {
         consoleOut('Creating msp.transferStream() Tx...', '', 'blue');
         return await msp.transferStream(
           publicKey,                                       // beneficiary,
@@ -500,7 +487,6 @@ export const MoneyStreamsIncomingView = (props: {
     }
   }, [
     msp,
-    param,
     wallet,
     publicKey,
     connection,
@@ -509,6 +495,7 @@ export const MoneyStreamsIncomingView = (props: {
     multisigClient,
     mspV2AddressPK,
     multisigAccounts,
+    isMultisigContext,
     transactionCancelled,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
@@ -1073,8 +1060,8 @@ export const MoneyStreamsIncomingView = (props: {
           : (v2.beneficiary as PublicKey).toBase58()
         : '';
     }
-    return beneficiary === accountAddress ? true : false
-  }, [accountAddress]);
+    return beneficiary === selectedAccount.address ? true : false
+  }, [selectedAccount.address]);
 
   const getTokenOrCustomToken = useCallback(async (address: string) => {
 
@@ -1259,8 +1246,8 @@ export const MoneyStreamsIncomingView = (props: {
     if (!streamSelected) { return null; }
 
     return (
-      <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
-        <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+      <div className="flex-fixed-right cta-row mb-2 pl-1">
+        <Space className="left" size="middle" wrap>
           <Button
             type="default"
             shape="round"
@@ -1278,25 +1265,22 @@ export const MoneyStreamsIncomingView = (props: {
                 Withdraw funds
               </div>
           </Button>
-        </Col>
-
-        <Col xs={4} sm={6} md={4} lg={6}>
-          <Dropdown
-            overlay={renderDropdownMenu()}
-            placement="bottomRight"
-            trigger={["click"]}>
-            <span className="ellipsis-icon icon-button-container mr-1">
-              <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-                onClick={(e) => e.preventDefault()}
-              />
-            </span>
-          </Dropdown>
-        </Col>
-      </Row>
+        </Space>
+        <Dropdown
+          overlay={renderDropdownMenu()}
+          placement="bottomRight"
+          trigger={["click"]}>
+          <span className="ellipsis-icon icon-button-container mr-1">
+            <Button
+              type="default"
+              shape="circle"
+              size="middle"
+              icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+              onClick={(e) => e.preventDefault()}
+            />
+          </span>
+        </Dropdown>
+      </div>
     );
   }, [
     isBusy,
@@ -1313,7 +1297,7 @@ export const MoneyStreamsIncomingView = (props: {
     <>
       <Spin spinning={loadingStreams}>
         <MoneyStreamDetails
-          accountAddress={accountAddress}
+          accountAddress={selectedAccount.address}
           stream={streamSelected}
           hideDetailsHandler={hideDetailsHandler}
           infoData={infoData}

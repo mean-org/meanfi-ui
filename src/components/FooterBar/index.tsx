@@ -3,7 +3,7 @@ import { useWallet } from "../../contexts/wallet";
 import { AccountDetails } from "../AccountDetails";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from '../AppContextMenu';
-import { NotificationBell } from '../CurrentBalance';
+import { NotificationBell } from '../NotificationBell';
 
 export const FooterBar = (props: {
   onOpenDrawer?: any;

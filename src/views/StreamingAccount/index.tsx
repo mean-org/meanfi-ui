@@ -1,77 +1,75 @@
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigTransactionFees, MULTISIG_ACTIONS } from "@mean-dao/mean-multisig-sdk";
+import {
+  calculateActionFees, Constants, MoneyStreaming, MSP_ACTIONS, refreshTreasuryBalanceInstruction
+} from '@mean-dao/money-streaming';
 import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
 import {
-  Stream,
+  calculateActionFees as calculateActionFeesV2,
+  MSP, MSP_ACTIONS as MSP_ACTIONS_V2, Stream,
   STREAM_STATUS,
   TransactionFees,
-  Treasury,
-  MSP_ACTIONS as MSP_ACTIONS_V2,
-  calculateActionFees as calculateActionFeesV2,
-  MSP,
-  TreasuryType,
+  Treasury, TreasuryType,
   VestingTreasuryActivity,
-  VestingTreasuryActivityAction,
+  VestingTreasuryActivityAction
 } from "@mean-dao/msp";
-import {
-  MSP_ACTIONS,
-  calculateActionFees,
-  MoneyStreaming,
-  Constants,
-  refreshTreasuryBalanceInstruction
-} from '@mean-dao/money-streaming';
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { TokenInfo } from "models/SolanaTokenInfo";
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { Alert, Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
-import { ResumeItem } from "../../components/ResumeItem";
-import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, MSP_FEE_TREASURY, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { AppStateContext } from "../../contexts/appstate";
-import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../contexts/connection";
-import { useWallet } from "../../contexts/wallet";
-import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "../../Icons";
-import { OperationType, TransactionStatus } from "../../models/enums";
+import { Alert, Button, Dropdown, Menu, Row, Space, Spin, Tabs } from "antd";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
+import BN from "bn.js";
+import { CopyExtLinkGroup } from "components/CopyExtLinkGroup";
+import { Identicon } from "components/Identicon";
+import { ResumeItem } from "components/ResumeItem";
+import { SolBalanceModal } from "components/SolBalanceModal";
+import { TreasuryAddFundsModal } from "components/TreasuryAddFundsModal";
+import { TreasuryCloseModal } from "components/TreasuryCloseModal";
+import { TreasuryStreamCreateModal } from "components/TreasuryStreamCreateModal";
+import { TreasuryTransferFundsModal } from "components/TreasuryTransferFundsModal";
+import {
+  CUSTOM_TOKEN_NAME,
+  FALLBACK_COIN_IMAGE,
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  MSP_FEE_TREASURY,
+  NO_FEES,
+  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+  WRAPPED_SOL_MINT_ADDRESS
+} from "constants/common";
+import { NATIVE_SOL } from "constants/tokens";
+import { AppStateContext } from "contexts/appstate";
+import { getSolanaExplorerClusterParam, useConnectionConfig } from "contexts/connection";
+import { TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import useWindowSize from "hooks/useWindowResize";
+import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "Icons";
+import { appConfig, customLogger } from "index";
+import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from "middleware/accounts";
+import { NATIVE_SOL_MINT } from "middleware/ids";
+import { getStreamTitle } from "middleware/streams";
 import {
   consoleOut,
   getIntervalFromSeconds,
   getShortDate,
   getTransactionStatusForLogs,
-  isProd,
-} from "../../middleware/ui";
+  isProd
+} from "middleware/ui";
 import {
-  findATokenAddress,
-  formatThousands,
-  displayAmountWithSymbol,
-  getAmountWithSymbol,
+  displayAmountWithSymbol, findATokenAddress,
+  formatThousands, getAmountFromLamports, getAmountWithSymbol,
   getTxIxResume,
   makeInteger,
   openLinkInNewTab,
   shortenAddress,
-  toTokenAmountBn,
-  getAmountFromLamports,
-} from "../../middleware/utils";
-import useWindowSize from "../../hooks/useWindowResize";
-import { TreasuryTopupParams } from "../../models/common-types";
-import { TxConfirmationContext } from "../../contexts/transaction-status";
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigTransactionFees, MULTISIG_ACTIONS } from "@mean-dao/mean-multisig-sdk";
-import { NATIVE_SOL_MINT } from "../../middleware/ids";
-import { appConfig, customLogger } from "../..";
-import { TreasuryTransferFundsModal } from "../../components/TreasuryTransferFundsModal";
-import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
-import { useParams, useSearchParams } from "react-router-dom";
-import { TreasuryCloseModal } from "../../components/TreasuryCloseModal";
-import { Identicon } from "../../components/Identicon";
-import { SolBalanceModal } from "../../components/SolBalanceModal";
+  toTokenAmountBn
+} from "middleware/utils";
+import { TreasuryTopupParams } from "models/common-types";
+import { OperationType, TransactionStatus } from "models/enums";
+import { ZERO_FEES } from "models/multisig";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { AddFundsParams } from "models/vesting";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { isMobile } from "react-device-detect";
-import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from "../../middleware/accounts";
-import { NATIVE_SOL } from "../../constants/tokens";
-import { AddFundsParams, getCategoryLabelByValue } from "../../models/vesting";
-import BN from "bn.js";
-import { getStreamTitle } from "../../middleware/streams";
-import { ZERO_FEES } from "../../models/multisig";
-import { ItemType } from "antd/lib/menu/hooks/useItems";
+import { useTranslation } from "react-i18next";
+import { useParams, useSearchParams } from "react-router-dom";
 
 export const StreamingAccountView = (props: {
   multisigAccounts: MultisigInfo[] | undefined;
@@ -92,7 +90,7 @@ export const StreamingAccountView = (props: {
 
   const {
     splTokenList,
-    accountAddress,
+    selectedAccount,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
@@ -189,6 +187,11 @@ export const StreamingAccountView = (props: {
     publicKey,
     streamV2ProgramAddress
   ]);
+
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
+
 
   /////////////////////////
   // Callbacks & Getters //
@@ -350,9 +353,9 @@ export const StreamingAccountView = (props: {
     return false;
 
   }, [
-    multisigAccounts, 
     publicKey, 
-    streamingAccountSelected
+    multisigAccounts, 
+    streamingAccountSelected,
   ]);
 
   const getStreamingAccountActivity = useCallback((streamingAccountSelectedId: string, clearHistory = false) => {
@@ -731,7 +734,7 @@ export const StreamingAccountView = (props: {
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
   const showCreateStreamModal = useCallback(() => {
     resetTransactionStatus();
-    if (selectedMultisig) {
+    if (isMultisigContext && selectedMultisig) {
       refreshUserBalances(selectedMultisig.authority);
     } else {
       refreshUserBalances();
@@ -748,6 +751,7 @@ export const StreamingAccountView = (props: {
     setIsCreateStreamModalVisibility(true);
   }, [
     selectedMultisig,
+    isMultisigContext,
     refreshUserBalances,
     getTransactionFeesV2,
     resetTransactionStatus,
@@ -757,20 +761,20 @@ export const StreamingAccountView = (props: {
   const closeCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(false);
     resetContractValues();
-    if (selectedMultisig) {
+    if (isMultisigContext && selectedMultisig) {
       refreshUserBalances(selectedMultisig.authority);
     } else {
       refreshUserBalances();
     }
     resetTransactionStatus();
-  }, [refreshUserBalances, resetContractValues, resetTransactionStatus, selectedMultisig]);
+  }, [isMultisigContext, refreshUserBalances, resetContractValues, resetTransactionStatus, selectedMultisig]);
 
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
     getMultisigTxProposalFees();
-    if (selectedMultisig) {
+    if (isMultisigContext && selectedMultisig) {
       refreshUserBalances(selectedMultisig.authority);
     } else {
       refreshUserBalances();
@@ -796,6 +800,7 @@ export const StreamingAccountView = (props: {
     }
   }, [
     selectedMultisig,
+    isMultisigContext,
     streamingAccountSelected,
     getMultisigTxProposalFees,
     resetTransactionStatus,
@@ -812,7 +817,7 @@ export const StreamingAccountView = (props: {
 
   const onAddFundsTransactionFinished = () => {
     closeAddFundsModal();
-    if (selectedMultisig) {
+    if (isMultisigContext && selectedMultisig) {
       refreshUserBalances(selectedMultisig.authority);
     } else {
       refreshUserBalances();
@@ -1579,7 +1584,7 @@ export const StreamingAccountView = (props: {
 
   const onCloseTreasuryTransactionFinished = () => {
     hideCloseTreasuryModal();
-    if (selectedMultisig) {
+    if (isMultisigContext && selectedMultisig) {
       refreshUserBalances(selectedMultisig.authority);
     } else {
       refreshUserBalances();
@@ -1936,13 +1941,13 @@ export const StreamingAccountView = (props: {
 
   // Refresh account data
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
-    if (selectedMultisig) {
+    if (isMultisigContext && selectedMultisig) {
       refreshUserBalances(selectedMultisig.authority);
     } else {
       refreshUserBalances();
     }
     resetTransactionStatus();
-  },[refreshUserBalances, resetTransactionStatus, selectedMultisig]);
+  },[isMultisigContext, refreshUserBalances, resetTransactionStatus, selectedMultisig]);
   
   const onExecuteRefreshTreasuryBalance = useCallback(async() => {
 
@@ -2558,7 +2563,7 @@ export const StreamingAccountView = (props: {
                 <div
                   key={index}
                   onClick={onSelectStream}
-                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                   <ResumeItem
                     id={index}
                     img={img}
@@ -2601,7 +2606,7 @@ export const StreamingAccountView = (props: {
               <div
                 key={index}
                 onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`)}
-                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                 <ResumeItem
                   id={`${index}`}
                   title={title}
@@ -2727,8 +2732,8 @@ export const StreamingAccountView = (props: {
         )}
 
         {/* CTAs row */}
-        <Row gutter={[8, 8]} className="safe-btns-container mb-1 mr-0 ml-0">
-          <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+        <div className="flex-fixed-right cta-row mt-2 mb-2">
+          <Space className="left" size="middle" wrap>
             <Button
               type="default"
               shape="round"
@@ -2772,25 +2777,22 @@ export const StreamingAccountView = (props: {
                   </div>
               </Button>
             )}
-          </Col>
-
-          <Col xs={4} sm={6} md={4} lg={6}>
-            <Dropdown
-              overlay={renderDropdownMenu()}
-              placement="bottomRight"
-              trigger={["click"]}>
-              <span className="ellipsis-icon icon-button-container mr-1">
-                <Button
-                  type="default"
-                  shape="circle"
-                  size="middle"
-                  icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-                  onClick={(e) => e.preventDefault()}
-                />
-              </span>
-            </Dropdown>
-          </Col>
-        </Row>
+          </Space>
+          <Dropdown
+            overlay={renderDropdownMenu()}
+            placement="bottomRight"
+            trigger={["click"]}>
+            <span className="ellipsis-icon icon-button-container mr-1">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                onClick={(e) => e.preventDefault()}
+              />
+            </span>
+          </Dropdown>
+        </div>
 
         {/* Alert to offer refresh treasury */}
         {(streamingAccountSelected && hasBalanceChanged()) && (
@@ -2865,7 +2867,7 @@ export const StreamingAccountView = (props: {
           isBusy={isBusy}
           onReloadTokenBalances={(option: string) => {
             if (option === "safe") {
-              if (selectedMultisig) {
+              if (isMultisigContext && selectedMultisig) {
                 refreshUserBalances(selectedMultisig.authority);
               }
             } else {
@@ -2913,7 +2915,7 @@ export const StreamingAccountView = (props: {
       {isSolBalanceModalOpen && (
         <SolBalanceModal
           address={streamingAccountSelected ? streamingAccountSelected.id as string : ''}
-          accountAddress={accountAddress}
+          accountAddress={selectedAccount.address}
           multisigAddress={address as string}
           isVisible={isSolBalanceModalOpen}
           handleClose={hideSolBalanceModal}
@@ -2925,5 +2927,5 @@ export const StreamingAccountView = (props: {
         />
       )}
     </>
-  )
+  );
 }

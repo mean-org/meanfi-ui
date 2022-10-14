@@ -1,21 +1,21 @@
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
-import { useContext, useEffect, useState } from 'react';
+import { AccountDetails } from "components/AccountDetails";
+import { AppContextMenu } from "components/AppContextMenu";
+import { ConnectButton } from "components/ConnectButton";
+import { NotificationBell } from 'components/NotificationBell';
+import { DepositOptions } from 'components/DepositOptions';
+import { ACCOUNTS_ROUTE_BASE_PATH, STAKING_ROUTE_BASE_PATH } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnectionConfig } from 'contexts/connection';
+import { useWallet } from "contexts/wallet";
+import { CustomCSSProps } from 'middleware/css-custom-props';
+import { isProd } from 'middleware/ui';
+import { RoutingInfo } from 'models/common-types';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
-import { AppStateContext } from '../../contexts/appstate';
-import { useConnectionConfig } from '../../contexts/connection';
-import { useWallet } from "../../contexts/wallet";
-import { CustomCSSProps } from '../../middleware/css-custom-props';
-import { isProd } from '../../middleware/ui';
-import { RoutingInfo } from '../../models/common-types';
-import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
-import { STAKING_ROUTE_BASE_PATH } from '../../pages/staking';
-import { AccountDetails } from "../AccountDetails";
-import { AppContextMenu } from "../AppContextMenu";
-import { ConnectButton } from "../ConnectButton";
-import { NotificationBell } from '../CurrentBalance';
-import { DepositOptions } from '../DepositOptions';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
@@ -39,11 +39,6 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
     parent: 'root'
   },
   {
-    key: 'multisig',
-    path: '/multisig',
-    parent: 'root'
-  },
-  {
     key: 'stats',
     path: '/stats',
     parent: 'root'
@@ -57,14 +52,19 @@ export const AppBar = (props: {
 }) => {
   const location = useLocation();
   const connectionConfig = useConnectionConfig();
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const { t } = useTranslation("common");
   const {
+    selectedAccount,
     isDepositOptionsModalVisible,
     hideDepositOptionsModal,
   } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const dismissMenu = () => {
     const mobileMenuTrigger = document.getElementById("overlay-input");
@@ -127,43 +127,43 @@ export const AppBar = (props: {
     }
   }, [isMenuOpen]);
 
-  const mainNav = (
-    <Menu
-      selectedKeys={selectedItems}
-      mode="horizontal"
-      items={[
-        {
-          key: 'accounts',
-          label: (<Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>),
-        },
-        {
-          key: 'exchange',
-          label: (<Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>),
-        },
-        {
-          key: 'staking',
-          label: (<Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>),
-        },
-        {
-          key: 'vesting',
-          label: (<Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>),
-        },
-        {
-          key: 'multisig',
-          label: (<Link to="/multisig">{t('ui-menus.main-menu.multisig')}</Link>),
-        },
-        {
-          key: 'stats',
-          label: (<Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>),
-        },
-      ]}
-    />
-  );
+  const mainNav = () => {
+    const items: ItemType[] = [];
+    items.push({
+      key: 'accounts',
+      label: (<Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>),
+    });
+    if (!isMultisigContext) {
+      items.push({
+        key: 'exchange',
+        label: (<Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>),
+      });
+      items.push({
+        key: 'staking',
+        label: (<Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>),
+      });
+    }
+    items.push({
+      key: 'vesting',
+      label: (<Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>),
+    });
+    items.push({
+      key: 'stats',
+      label: (<Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>),
+    });
+    return (
+      <Menu
+        selectedKeys={selectedItems}
+        mode="horizontal"
+        items={items}
+      />
+    )
+  }
 
   if (props.menuType === 'desktop' ) {
     return (
       <>
-        <div className="App-Bar-left">{props.topNavVisible ? mainNav : (<span>&nbsp;</span>)}</div>
+        <div className="App-Bar-left">{props.topNavVisible ? mainNav() : (<span>&nbsp;</span>)}</div>
         <div className="App-Bar-right">
           {!isProd() && (
             <div className="cluster-indicator">
@@ -211,9 +211,6 @@ export const AppBar = (props: {
                 </li>
                 <li key="vesting" className={selectedItems.includes("vesting") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                   <Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>
-                </li>
-                <li key="multisig" className={selectedItems.includes("multisig") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
-                  <Link to="/multisig">{t('ui-menus.main-menu.multisig')}</Link>
                 </li>
                 <li key="stats" className={selectedItems.includes("stats") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
                   <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>

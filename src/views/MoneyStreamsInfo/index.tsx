@@ -1,33 +1,45 @@
-import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Dropdown, Menu, Row, Spin, Tabs } from "antd";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
-import { ResumeItem } from "../../components/ResumeItem";
-import { RightInfoDetails } from "../../components/RightInfoDetails";
-import { TreasuryStreamCreateModal } from "../../components/TreasuryStreamCreateModal";
-import { AppStateContext } from "../../contexts/appstate";
-import { useConnectionConfig } from "../../contexts/connection";
-import { useWallet } from "../../contexts/wallet";
-import { IconArrowForward, IconEllipsisVertical, IconLoading } from "../../Icons";
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { OperationType, TransactionStatus } from "../../models/enums";
-import "./style.scss";
-import { TxConfirmationContext } from "../../contexts/transaction-status";
-import Wave from 'react-wavify'
-import {
-  TransactionFees,
-  MSP_ACTIONS as MSP_ACTIONS_V2,
-  calculateActionFees as calculateActionFeesV2,
-  Treasury,
-  Stream,
-  MSP,
-  TreasuryType,
-  STREAM_STATUS
-} from '@mean-dao/msp';
-import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
+import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigInfo, MultisigTransactionFees, MULTISIG_ACTIONS } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "../../middleware/ui";
-import { TokenInfo } from "models/SolanaTokenInfo";
+import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
+import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
+import {
+  calculateActionFees as calculateActionFeesV2, MSP, MSP_ACTIONS as MSP_ACTIONS_V2, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType
+} from '@mean-dao/msp';
+import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
+import { Button, Col, Dropdown, Menu, Row, Space, Spin, Tabs } from "antd";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
+import BigNumber from "bignumber.js";
+import BN from "bn.js";
+import { CopyExtLinkGroup } from "components/CopyExtLinkGroup";
+import { Identicon } from "components/Identicon";
+import { openNotification } from "components/Notifications";
+import { ResumeItem } from "components/ResumeItem";
+import { RightInfoDetails } from "components/RightInfoDetails";
+import { SendAssetModal } from "components/SendAssetModal";
+import { StreamOpenModal } from "components/StreamOpenModal";
+import { TreasuryAddFundsModal } from "components/TreasuryAddFundsModal";
+import { TreasuryCreateModal } from "components/TreasuryCreateModal";
+import { TreasuryStreamCreateModal } from "components/TreasuryStreamCreateModal";
+import {
+  ACCOUNTS_ROUTE_BASE_PATH,
+  CUSTOM_TOKEN_NAME,
+  FALLBACK_COIN_IMAGE,
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  NO_FEES
+} from "constants/common";
+import { NATIVE_SOL } from "constants/tokens";
+import { useNativeAccount } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { useConnectionConfig } from "contexts/connection";
+import { TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import useWindowSize from "hooks/useWindowResize";
+import { IconArrowForward, IconEllipsisVertical, IconLoading } from "Icons";
+import { appConfig, customLogger } from "index";
+import { fetchAccountTokens, readAccountInfo } from "middleware/accounts";
+import { NATIVE_SOL_MINT } from "middleware/ids";
+import { getStreamTitle } from "middleware/streams";
+import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "middleware/ui";
 import {
   cutNumber,
   displayAmountWithSymbol,
@@ -38,38 +50,22 @@ import {
   shortenAddress,
   toTokenAmountBn,
   toUiAmount
-} from "../../middleware/utils";
-import { useTranslation } from "react-i18next";
-import { useNativeAccount } from "../../contexts/accounts";
-import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
-import { TreasuryCreateOptions, UserTreasuriesSummary } from "../../models/treasuries";
-import { customLogger } from "../..";
-import { NATIVE_SOL_MINT } from "../../middleware/ids";
-import BN from "bn.js";
-import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
-import { StreamOpenModal } from "../../components/StreamOpenModal";
-import { StreamsSummary } from "../../models/streams";
-import { Identicon } from "../../components/Identicon";
-import { openNotification } from "../../components/Notifications";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES } from "../../constants";
-import { TreasuryAddFundsModal } from "../../components/TreasuryAddFundsModal";
-import { TreasuryTopupParams } from "../../models/common-types";
-import useWindowSize from "../../hooks/useWindowResize";
+} from "middleware/utils";
+import { TreasuryTopupParams } from "models/common-types";
+import { OperationType, TransactionStatus } from "models/enums";
+import { ZERO_FEES } from "models/multisig";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { StreamsSummary } from "models/streams";
+import { TreasuryCreateOptions, UserTreasuriesSummary } from "models/treasuries";
+import { AddFundsParams } from "models/vesting";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { isMobile } from "react-device-detect";
-import { NATIVE_SOL } from "../../constants/tokens";
-import { fetchAccountTokens, readAccountInfo } from "../../middleware/accounts";
-import { AddFundsParams } from "../../models/vesting";
-import BigNumber from "bignumber.js";
-import { getStreamTitle } from "../../middleware/streams";
-import { appConfig } from '../..';
-import { ZERO_FEES } from "../../models/multisig";
-import { ItemType } from "antd/lib/menu/hooks/useItems";
-import { SendAssetModal } from "components/SendAssetModal";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import Wave from 'react-wavify';
+import "./style.scss";
 
 export const MoneyStreamsInfoView = (props: {
-  accountAddress: string;
   loadingStreams: boolean;
   loadingTreasuries: boolean;
   multisigAccounts: MultisigInfo[] | undefined;
@@ -82,7 +78,6 @@ export const MoneyStreamsInfoView = (props: {
   treasuryList: (Treasury | TreasuryInfo)[];
 }) => {
   const {
-    accountAddress,
     loadingStreams,
     loadingTreasuries,
     multisigAccounts,
@@ -99,6 +94,7 @@ export const MoneyStreamsInfoView = (props: {
     streamListv1,
     streamListv2,
     treasuryOption,
+    selectedAccount,
     transactionStatus,
     streamProgramAddress,
     streamV2ProgramAddress,
@@ -116,11 +112,9 @@ export const MoneyStreamsInfoView = (props: {
   } = useContext(TxConfirmationContext);
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
-  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const { width } = useWindowSize();
-  const { address } = useParams();
   const navigate = useNavigate();
 
   // Transactions
@@ -214,22 +208,13 @@ export const MoneyStreamsInfoView = (props: {
     streamV2ProgramAddress
   ]);
 
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
+
   /////////////////
   //  Callbacks  //
   /////////////////
-
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -439,8 +424,8 @@ export const MoneyStreamsInfoView = (props: {
       totalAmount: 0
     };
 
-    const treasurer = accountAddress
-      ? new PublicKey(accountAddress)
+    const treasurer = selectedAccount.address
+      ? new PublicKey(selectedAccount.address)
       : publicKey;
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
@@ -504,7 +489,7 @@ export const MoneyStreamsInfoView = (props: {
     publicKey,
     streamListv1,
     streamListv2,
-    accountAddress,
+    selectedAccount.address,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     getTokenPriceByAddress,
@@ -521,8 +506,8 @@ export const MoneyStreamsInfoView = (props: {
       totalAmount: 0
     };
 
-    const treasurer = accountAddress
-      ? new PublicKey(accountAddress)
+    const treasurer = selectedAccount.address
+      ? new PublicKey(selectedAccount.address)
       : publicKey;
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
@@ -585,7 +570,7 @@ export const MoneyStreamsInfoView = (props: {
     publicKey,
     streamListv1,
     streamListv2,
-    accountAddress,
+    selectedAccount.address,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
     getTokenPriceByAddress,
@@ -1130,7 +1115,7 @@ export const MoneyStreamsInfoView = (props: {
       const findStream = streamList.filter((stream: Stream | StreamInfo) => stream.id === e);
       const streamSelected = Object.assign({}, ...findStream);
 
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
 
       navigate(url);
     }
@@ -1441,7 +1426,7 @@ export const MoneyStreamsInfoView = (props: {
   };
 
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
-    if (item && publicKey && accountAddress) {
+    if (item && publicKey && selectedAccount.address) {
       const v1 = item as StreamInfo;
       const v2 = item as Stream;
       let beneficiary = '';
@@ -1458,10 +1443,10 @@ export const MoneyStreamsInfoView = (props: {
             : (v2.beneficiary as PublicKey).toBase58()
           : '';
       }
-      return beneficiary === accountAddress ? true : false
+      return beneficiary === selectedAccount.address ? true : false
     }
     return false;
-  }, [accountAddress, publicKey]);
+  }, [selectedAccount.address, publicKey]);
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let associatedToken = '';
@@ -1655,36 +1640,21 @@ export const MoneyStreamsInfoView = (props: {
   }, [getTimeRemaining, t]);
 
   const goToIncomingTabHandler = () => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/incoming`;
-
-    if (param) {
-      url += `?account-type=${param}`;
-    }
-
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming`;
     navigate(url);
   }
 
   const goToOutgoingTabHandler = () => {
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/outgoing`;
-
-    if (param) {
-      url += `?account-type=${param}`;
-    }
-
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing`;
     navigate(url);
   }
 
   const onTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
-    
-    let url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streaming/${activeKey}`;
 
-    if (param) {
-      url += `?account-type=${param}`;
-    }
-
+    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/${activeKey}`;
     navigate(url);
-  }, [accountAddress, navigate, param]);
+  }, [navigate]);
 
 
   /////////////////////
@@ -1861,7 +1831,7 @@ export const MoneyStreamsInfoView = (props: {
 
   // Live data calculation
   useEffect(() => {
-    if (!publicKey || !treasuryList || !address) { return; }
+    if (!publicKey || !treasuryList) { return; }
 
     if (!streamingAccountsSummary) {
       refreshTreasuriesSummary()
@@ -1888,11 +1858,11 @@ export const MoneyStreamsInfoView = (props: {
       clearTimeout(timeout);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey, treasuryList, address]);
+  }, [publicKey, treasuryList]);
 
   // Set refresh timeout for incomingStreamsSummary but get first time data
   useEffect(() => {
-    if (!publicKey || !streamList || (!streamListv1 && !streamListv2) || !address) { return; }
+    if (!publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
 
     if (!incomingStreamsSummary) {
       refreshIncomingStreamSummary()
@@ -1911,11 +1881,11 @@ export const MoneyStreamsInfoView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  }, [address, incomingStreamsSummary, publicKey, refreshIncomingStreamSummary, streamList, streamListv1, streamListv2]);
+  }, [incomingStreamsSummary, publicKey, refreshIncomingStreamSummary, streamList, streamListv1, streamListv2]);
 
   // Set refresh timeout for outgoingStreamsSummary but get first time data
   useEffect(() => {
-    if (!publicKey || !streamList || (!streamListv1 && !streamListv2) || !address || !streamingAccountsSummary) { return; }
+    if (!publicKey || !streamList || (!streamListv1 && !streamListv2) || !streamingAccountsSummary) { return; }
 
     if (!outgoingStreamsSummary) {
       refreshOutgoingStreamSummary()
@@ -1934,7 +1904,7 @@ export const MoneyStreamsInfoView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  }, [address, outgoingStreamsSummary, publicKey, refreshOutgoingStreamSummary, streamList, streamListv1, streamListv2, streamingAccountsSummary]);
+  }, [outgoingStreamsSummary, publicKey, refreshOutgoingStreamSummary, streamList, streamListv1, streamListv2, streamingAccountsSummary]);
 
   // Update incoming balance
   useEffect(() => {
@@ -2063,10 +2033,10 @@ export const MoneyStreamsInfoView = (props: {
 
   const renderProtocol = (
     <>
-      {accountAddress && (
+      {selectedAccount.address && (
         !isXsDevice ? (
           <CopyExtLinkGroup
-            content={accountAddress}
+            content={selectedAccount.address}
             number={8}
             externalLink={true}
             isTx={false}
@@ -2074,7 +2044,7 @@ export const MoneyStreamsInfoView = (props: {
           />
         ) : (
           <CopyExtLinkGroup
-            content={accountAddress}
+            content={selectedAccount.address}
             number={4}
             externalLink={true}
             isTx={false}
@@ -2142,28 +2112,16 @@ export const MoneyStreamsInfoView = (props: {
     }
     
     const divider = getlength(totalAccountBalance);
-
     const incomingDivider = parseFloat(`1${"0".repeat((divider && divider >= 2) ? divider - 2 : 1)}`);
-
-    // consoleOut("incomingDivider test", incomingDivider);
-
     const calculateScaleBalanceIncoming = withdrawalBalance / incomingDivider;
-    // const calculateScaleBalanceIncoming = withdrawalBalance.divn(incomingDivider);
-
     const calculateScaleInHeightIncoming = (calculateScaleBalanceIncoming * 30) / 100;
-    // const calculateScaleInHeightIncoming = calculateScaleBalanceIncoming.muln(30).divn(100);
 
     if (calculateScaleInHeightIncoming > 0 && calculateScaleInHeightIncoming <= 3) {
-    // if (calculateScaleInHeightIncoming.gtn(0) && calculateScaleInHeightIncoming.lten(3)) {
       setWithdrawalScale(3);
     } else if (calculateScaleInHeightIncoming === 0) {
-    // } else if (calculateScaleInHeightIncoming.eqn(0)) {
       setWithdrawalScale(0);
     } else {
       setWithdrawalScale(Math.ceil(calculateScaleInHeightIncoming));
-      // const convertScaleToBN = new BigNumber(calculateScaleInHeightIncoming.toString());
-      // const roundedScale = convertScaleToBN.integerValue(BigNumber.ROUND_CEIL);
-      // setWithdrawalScale(roundedScale.toNumber());
     }
 
   }, [totalAccountBalance, withdrawalBalance]);
@@ -2178,27 +2136,15 @@ export const MoneyStreamsInfoView = (props: {
     const divider = getlength(totalAccountBalance);
 
     const outgoingDivider = parseFloat(`1${"0".repeat((divider && divider >= 2) ? divider - 2 : 1)}`);
-    // const outgoingDivider = parseFloat(`1${"0".repeat(divider - 2)}`);
-
-    // consoleOut("outgoingDivider test", outgoingDivider);
-
     const calculateScaleBalanceOutgoing = unallocatedBalance / outgoingDivider;
-    // const calculateScaleBalanceOutgoing = unallocatedBalance.divn(outgoingDivider);
-
     const calculateScaleInHeightOutgoing = (calculateScaleBalanceOutgoing * 30) / 100;
-    // const calculateScaleInHeightOutgoing = calculateScaleBalanceOutgoing.muln(30).divn(100);
 
     if (calculateScaleInHeightOutgoing > 0 && calculateScaleInHeightOutgoing <= 3) {
-    // if (calculateScaleInHeightOutgoing.gtn(0) && calculateScaleInHeightOutgoing.lten(3)) {
       setUnallocatedScale(3);
     } else if (calculateScaleInHeightOutgoing === 0) {
-    // } else if (calculateScaleInHeightOutgoing.eqn(0)) {
       setUnallocatedScale(0);
     } else {
       setUnallocatedScale(Math.ceil(calculateScaleInHeightOutgoing));
-      // const convertScaleToBN = new BigNumber(calculateScaleInHeightOutgoing.toString());
-      // const roundedScale = convertScaleToBN.integerValue(BigNumber.ROUND_CEIL);
-      // setUnallocatedScale(roundedScale.toNumber());
     }
 
   }, [totalAccountBalance, unallocatedBalance]);
@@ -2219,15 +2165,12 @@ export const MoneyStreamsInfoView = (props: {
     setHeightGreenWave(`${withdrawalScale}vh`);
     setHeightRedWave(`${unallocatedScale}vh`);
 
-    // consoleOut("Height green withdrawal scale", withdrawalScale);
-    // consoleOut("Height red withdrawal scale", unallocatedScale);
-
   }, [unallocatedScale, withdrawalScale]);
 
   const [isPaused, setIsPaused] = useState(true);
 
   useEffect(() => {
-    if (!address) { return; }
+    if (!selectedAccount.address) { return; }
 
     const timeout = setTimeout(() => {
       setIsPaused(false);
@@ -2236,7 +2179,7 @@ export const MoneyStreamsInfoView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  }, [address]);
+  }, [selectedAccount.address]);
 
   // Clear state on unmount component
   useEffect(() => {
@@ -2254,7 +2197,7 @@ export const MoneyStreamsInfoView = (props: {
   const renderSummary = (
     <>
       <Row gutter={[8, 8]} className="ml-0 mr-0">
-        <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToIncomingTabHandler}>
+        <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink bg-secondary-02 hover-list" onClick={goToIncomingTabHandler}>
           {/* Background animation */}
           {(hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0) ? (
             (!loadingTreasuries && !loadingStreams) && (
@@ -2340,7 +2283,7 @@ export const MoneyStreamsInfoView = (props: {
             </div>
           )}
         </Col>
-        <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink background-gray hover-list" onClick={goToOutgoingTabHandler}>
+        <Col xs={11} sm={11} md={11} lg={11} className="background-card simplelink bg-secondary-02 hover-list" onClick={goToOutgoingTabHandler}>
           {/* Background animation */}
           {(hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0) ? (
             (!loadingTreasuries && !loadingStreams) && (
@@ -2488,7 +2431,7 @@ export const MoneyStreamsInfoView = (props: {
               <div 
                 key={`incoming-stream-${index}`}
                 onClick={onSelectStream}
-                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                 <ResumeItem
                   id={index}
                   img={img}
@@ -2560,7 +2503,7 @@ export const MoneyStreamsInfoView = (props: {
                 <div
                   key={`outgoing-stream-${index}}`}
                   onClick={onSelectStream}
-                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
                 >
                   <ResumeItem
                     id={index}
@@ -2620,7 +2563,7 @@ export const MoneyStreamsInfoView = (props: {
                   <div
                     key={`streaming-account-${index}`}
                     onClick={onSelectedStreamingAccount}
-                    className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                    className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
                   >
                     <ResumeItem
                       title={title}
@@ -2694,7 +2637,7 @@ export const MoneyStreamsInfoView = (props: {
 
   const renderDropdownMenu = useCallback(() => {
     const items: ItemType[] = [];
-    if (param === "multisig") {
+    if (isMultisigContext) {
       items.push({
         key: '01-create-stream',
         label: (
@@ -2715,7 +2658,7 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     return <Menu items={items} />;
-  }, [param, showCreateStreamModal, showOpenStreamModal]);
+  }, [isMultisigContext, showCreateStreamModal, showOpenStreamModal]);
 
   return (
     <>
@@ -2723,102 +2666,76 @@ export const MoneyStreamsInfoView = (props: {
 
         <RightInfoDetails infoData={infoData} />
 
-        <Row gutter={[8, 8]} className="safe-btns-container d-flex align-items-center mb-1 ml-0 mr-0">
-          <Col xs={isXsDevice ? 20 : 24} sm={isXsDevice ? 18 : 24} md={isXsDevice ? 20 : 24} lg={isXsDevice ? 18 : 24} className="btn-group">
+        <div className="flex-fixed-right cta-row mb-2 pl-1">
+          <Space className="left" size="middle" wrap>
             <Button
               type="default"
               shape="round"
               size="small"
               className="thin-stroke btn-min-width"
               onClick={showCreateTreasuryModal}>
-                <div className="btn-content">
-                  Create account
-                  {/* {param === "multisig" ? "Initiate streaming account" : "Create streaming account"} */}
-                </div>
+              Create account
             </Button>
-            {param !== "multisig" && (
+            {!isMultisigContext && (
               <Button
                 type="default"
                 shape="round"
                 size="small"
                 className="thin-stroke btn-min-width"
-                onClick={() => {
-                  param === "multisig"
-                    ? showCreateStreamModal()
-                    : showCreateMoneyStreamModal()
-                }}>
-                <div className="btn-content">
-                  {/* {param === "multisig" ? "Initiate stream" : "Create stream"} */}
-                  Create stream
-                </div>
+                onClick={showCreateMoneyStreamModal}>
+                Create stream
               </Button>
             )}
-            {param === "multisig" && (
+            {isMultisigContext && (
               <Button
                 type="default"
                 shape="round"
                 size="small"
                 className="thin-stroke btn-min-width"
                 onClick={showAddFundsModal}>
-                  <div className="btn-content">
-                    Fund account
-                  </div>
+                  Fund account
               </Button>
             )}
             {!isXsDevice && (
-              param === "multisig" && (
+              isMultisigContext && (
                 <Button
                   type="default"
                   shape="round"
                   size="small"
                   className="thin-stroke btn-min-width"
-                  onClick={() => {
-                    param === "multisig"
-                      ? showCreateStreamModal()
-                      : showCreateMoneyStreamModal()
-                  }}>
-                  <div className="btn-content">
-                    {/* {param === "multisig" ? "Initiate stream" : "Create stream"} */}
-                    Create stream
-                  </div>
+                  onClick={showCreateStreamModal}>
+                  Create stream
                 </Button>
               )
             )}
-            {!isXsDevice && (
-              param !== "multisig" && (
-                <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke btn-min-width"
-                  onClick={showOpenStreamModal}>
-                    <div className="btn-content">
-                      Find stream
-                    </div>
-                </Button>
-              )
+            {!isXsDevice && !isMultisigContext && (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke btn-min-width"
+                onClick={showOpenStreamModal}>
+                  Find stream
+              </Button>
             )}
-          </Col>
-
+          </Space>
           {isXsDevice && (
-            <Col xs={4} sm={6} md={4} lg={6}>
-              <Dropdown className="options-dropdown"
-                overlay={renderDropdownMenu()}
-                placement="bottomRight"
-                trigger={["click"]}>
-                <span className="icon-button-container ml-1">
-                  <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={<IconEllipsisVertical className="mean-svg-icons"/>}
-                    onClick={(e) => e.preventDefault()}
-                  />
-                </span>
-              </Dropdown>
-            </Col>
+            <Dropdown className="options-dropdown"
+              overlay={renderDropdownMenu()}
+              placement="bottomRight"
+              trigger={["click"]}>
+              <span className="icon-button-container ml-1">
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="middle"
+                  icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                  onClick={(e) => e.preventDefault()}
+                />
+              </span>
+            </Dropdown>
           )}
-        </Row>
+        </div>
 
         {renderTabset()}
       </Spin>
@@ -2859,7 +2776,7 @@ export const MoneyStreamsInfoView = (props: {
           handleClose={closeCreateTreasuryModal}
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
-          multisigAccounts={param === "multisig" ? multisigAccounts : undefined}
+          multisigAccounts={isMultisigContext ? multisigAccounts : undefined}
         />
       )}
 

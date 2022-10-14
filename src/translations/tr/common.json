@@ -5,7 +5,7 @@
 		"diagnosis-info": "Tanılama bilgisi",
 		"diagnosis-info-copied": "Tanılama bilgisi kopyalandı",
 		"diagnosis-info-not-copied": "Tanılama bilgisi kopyalanamıyor",
-		"disconnect": "Bağlantıyı kes",
+		"disconnect": "bağlantıyı kes",
 		"explorer-link": "Solana Explorer'da incele",
 		"modal-title": "Hesap",
 		"money-streams": "Para Aktarımları",
@@ -388,7 +388,7 @@
 		"secondary-action": "Kapat"
 	},
 	"multisig": {
-		"add-participant-cta": "Katılımcı ekle",
+		"add-participant-cta": "imzalayan ekle",
 		"back-to-multisig-accounts-cta": "Çoklu-imzalı hesaplara geri dön.",
 		"create-asset": {
 			"delete-multisig": "",
@@ -413,7 +413,7 @@
 			"multisig-label-input-label": "Çoklu-İmza ismi",
 			"multisig-label-placeholder": "Çoklu-İmza hesabınız için bir ad yazın",
 			"multisig-no-participants": "Şuana kadar katılımcı eklenmedi",
-			"multisig-participants": "({{maxParticipants}} katılımcıdan, {{numParticipants}} tanesi imzaladı)",
+			"multisig-participants": "İmzalayanlar ({{numParticipants}})",
 			"multisig-participants-warning message": "",
 			"multisig-participants-warning-message": "Aynı sayıda üyenin imzasını gerektiren bir başka çoklu-imza oluşturmak tavsiye edilmez",
 			"multisig-threshold-input-empty": "Minimum yeterli imza sayısını girin",

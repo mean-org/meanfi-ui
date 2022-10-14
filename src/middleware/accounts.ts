@@ -480,7 +480,7 @@ export const getUserAccountTokens = async (
   const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
   const pk = new PublicKey(accountAddress);
 
-  consoleOut('Fetching user account tokens for:', accountAddress, 'blue');
+  consoleOut('calling getUserAccountTokens() for:', accountAddress, 'blue');
 
   // Fetch SOL balance.
   const solBalance = await connection.getBalance(pk);
@@ -601,7 +601,7 @@ export const getTokensWithBalances = async (
   const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
   const pk = new PublicKey(accountAddress);
 
-  consoleOut('Fetching user account tokens for:', accountAddress, 'blue');
+  consoleOut('calling getTokensWithBalances() for:', accountAddress, 'blue');
 
   // Fetch SOL balance.
   const solBalance = await connection.getBalance(pk);

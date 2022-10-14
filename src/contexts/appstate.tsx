@@ -5,35 +5,36 @@ import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types'
 import { MSP, Stream } from "@mean-dao/msp";
 import { PublicKey } from "@solana/web3.js";
 import { BN } from "bn.js";
+import { isCacheItemExpired } from "cache/persistentCache";
+import { openNotification } from "components/Notifications";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "constants/common";
+import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from "constants/tokens";
+import { TREASURY_TYPE_OPTIONS } from "constants/treasury-type-options";
+import { appConfig, customLogger } from "index";
+import { getUserAccountTokens } from "middleware/accounts";
+import { getPrices, getSolanaTokenListKeyNameByCluster, getSolFlareTokenList, getSplTokens } from "middleware/api";
+import { MappedTransaction } from "middleware/history";
+import { PerformanceCounter } from "middleware/perf-counter";
+import { consoleOut, isProd, msToTime } from "middleware/ui";
+import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from "middleware/utils";
+import { AccountContext, AccountDetails, ProgramAccounts, UserTokenAccount, UserTokensResponse } from "models/accounts";
+import { DdcaFrequencyOption } from "models/ddca-models";
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "models/enums";
+import { MultisigVault } from "models/multisig";
 import { TokenInfo } from "models/SolanaTokenInfo";
+import { initialSummary, StreamsSummary } from "models/streams";
 import { TokenPrice } from "models/TokenPrice";
+import { TreasuryTypeOption } from "models/treasuries";
 import moment from "moment";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { appConfig, customLogger } from "..";
-import { isCacheItemExpired } from "../cache/persistentCache";
-import { openNotification } from "../components/Notifications";
 import {
-  DAO_CORE_TEAM_WHITELIST,
-  DDCA_FREQUENCY_OPTIONS, FIVETY_SECONDS_REFRESH_TIMEOUT, FIVE_MINUTES_REFRESH_TIMEOUT, FORTY_SECONDS_REFRESH_TIMEOUT, ONE_MINUTE_REFRESH_TIMEOUT, PERFORMANCE_THRESHOLD, SEVENTY_SECONDS_REFRESH_TIMEOUT, THIRTY_MINUTES_REFRESH_TIMEOUT, TRANSACTIONS_PER_PAGE,
-  WRAPPED_SOL_MINT_ADDRESS
+  DAO_CORE_TEAM_WHITELIST, DDCA_FREQUENCY_OPTIONS,
+  FIVETY_SECONDS_REFRESH_TIMEOUT, FIVE_MINUTES_REFRESH_TIMEOUT, FORTY_SECONDS_REFRESH_TIMEOUT,
+  ONE_MINUTE_REFRESH_TIMEOUT, PERFORMANCE_THRESHOLD, SEVENTY_SECONDS_REFRESH_TIMEOUT,
+  THIRTY_MINUTES_REFRESH_TIMEOUT, TRANSACTIONS_PER_PAGE, WRAPPED_SOL_MINT_ADDRESS
 } from "../constants";
-import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from "../constants/tokens";
-import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
-import { getUserAccountTokens } from "../middleware/accounts";
-import { getPrices, getSolanaTokenListKeyNameByCluster, getSplTokens, getSolFlareTokenList } from "../middleware/api";
-import { MappedTransaction } from "../middleware/history";
-import { PerformanceCounter } from "../middleware/perf-counter";
-import { consoleOut, isProd, msToTime } from "../middleware/ui";
-import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from "../middleware/utils";
-import { AccountDetails, ProgramAccounts, UserTokenAccount, UserTokensResponse } from "../models/accounts";
-import { DdcaFrequencyOption } from "../models/ddca-models";
-import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
-import { MultisigVault } from "../models/multisig";
-import { initialSummary, StreamsSummary } from "../models/streams";
-import { TreasuryTypeOption } from "../models/treasuries";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
 import { useAccountsContext } from "./accounts";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
 import { useWallet } from "./wallet";
@@ -45,6 +46,7 @@ const listStreamsV2PerformanceCounter = new PerformanceCounter();
 
 export type TpsAverageValues = number | null | undefined;
 export type StreamValues = Stream | StreamInfo | undefined;
+export const emptyAccount:AccountContext = { address: '', name: '', isMultisig: false, owner: '' };
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -53,6 +55,12 @@ export interface TransactionStatusInfo {
 }
 
 interface AppStateConfig {
+  // Account selection
+  isSelectingAccount: boolean;
+  selectedAccount: AccountContext;
+  lastUsedAccount: AccountContext | null;
+  rememberAccount: boolean;
+  // General
   theme: string | undefined;
   tpsAvg: TpsAverageValues;
   refreshInterval: number;
@@ -103,7 +111,7 @@ interface AppStateConfig {
   hasMoreStreamActivity: boolean;
   customStreamDocked: boolean;
   diagnosisInfo: AccountDetails | undefined;
-  // Accounts
+  // Accounts page
   shouldLoadTokens: boolean;
   loadingTokenAccounts: boolean;
   userTokensResponse: UserTokensResponse | null;
@@ -111,9 +119,7 @@ interface AppStateConfig {
   splTokenList: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
-  accountAddress: string;
   lastTxSignature: string;
-  addAccountPanelOpen: boolean;
   streamsSummary: StreamsSummary;
   lastStreamsSummary: StreamsSummary;
   // DDCAs
@@ -137,6 +143,12 @@ interface AppStateConfig {
   stakingMultiplier: number;
   // Routes
   previousRoute: string;
+  // Account selection
+  setIsSelectingAccount: (state: boolean) => void;
+  setSelectedAccount: (account: AccountContext, override?: boolean) => void;
+  setRememberAccount: (state: boolean) => void;
+  getAssetsByAccount: (address: string) => Promise<UserTokensResponse | null> | null;
+  // General
   setTheme: (name: string) => void;
   setTpsAvg: (value: TpsAverageValues) => void;
   showDepositOptionsModal: () => void;
@@ -187,12 +199,10 @@ interface AppStateConfig {
   getStreamActivity: (streamId: string, version: number, clearHistory?: boolean) => void;
   setCustomStreamDocked: (state: boolean) => void;
   setDiagnosisInfo: (info: AccountDetails | undefined) => void;
-  // Accounts
+  // Accounts page
   setShouldLoadTokens: (state: boolean) => void;
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
-  setAccountAddress: (address: string) => void;
-  setAddAccountPanelOpen: (state: boolean) => void;
   setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
   // DDCAs
@@ -201,7 +211,7 @@ interface AppStateConfig {
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
   setNeedReloadMultisigAccounts: (reload: boolean) => void;
-  refreshMultisigs: (reset: boolean) => Promise<MultisigInfo | undefined>;
+  refreshMultisigs: () => Promise<boolean>;
   setMultisigAccounts: (accounts: MultisigInfo[]) => void;
   setSelectedMultisig: (multisig: MultisigInfo | undefined) => void;
   setMultisigSolBalance: (balance: number | undefined) => void;
@@ -218,8 +228,14 @@ interface AppStateConfig {
 }
 
 const contextDefaultValues: AppStateConfig = {
+  // Account selection
+  isSelectingAccount: true,
+  selectedAccount: emptyAccount,
+  lastUsedAccount: null,
+  rememberAccount: true,
+  // General
   theme: undefined,
-  tpsAvg: undefined,
+  tpsAvg: undefined,  // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
   refreshInterval: ONE_MINUTE_REFRESH_TIMEOUT,
   isWhitelisted: false,
   isDepositOptionsModalVisible: false,
@@ -271,7 +287,7 @@ const contextDefaultValues: AppStateConfig = {
   hasMoreStreamActivity: true,
   customStreamDocked: false,
   diagnosisInfo: undefined,
-  // Accounts
+  // Accounts page
   shouldLoadTokens: true,
   loadingTokenAccounts: true,
   userTokensResponse: null,
@@ -279,9 +295,7 @@ const contextDefaultValues: AppStateConfig = {
   splTokenList: [],
   selectedAsset: undefined,
   transactions: undefined,
-  accountAddress: '',
   lastTxSignature: '',
-  addAccountPanelOpen: true,
   streamsSummary: initialSummary,
   lastStreamsSummary: initialSummary,
   // DDCAs
@@ -305,6 +319,12 @@ const contextDefaultValues: AppStateConfig = {
   stakingMultiplier: 1,
   // Routes
   previousRoute: '',
+  // Account selection
+  setIsSelectingAccount: () => {},
+  setSelectedAccount: () => {},
+  setRememberAccount: () => {},
+  getAssetsByAccount: () => null,
+  // General
   setTheme: () => {},
   setTpsAvg: () => {},
   showDepositOptionsModal: () => {},
@@ -355,12 +375,10 @@ const contextDefaultValues: AppStateConfig = {
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
   setDiagnosisInfo: () => { },
-  // Accounts
+  // Accounts page
   setShouldLoadTokens: () => {},
   setTransactions: () => {},
   setSelectedAsset: () => {},
-  setAccountAddress: () => {},
-  setAddAccountPanelOpen: () => {},
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
   // DDCAs
@@ -369,7 +387,7 @@ const contextDefaultValues: AppStateConfig = {
   setLoadingRecurringBuys: () => {},
   // Multisig
   setNeedReloadMultisigAccounts: () => {},
-  refreshMultisigs: async () => undefined,
+  refreshMultisigs: async () => false,
   setMultisigAccounts: () => {},
   setSelectedMultisig: () => {},
   setMultisigSolBalance: () => {},
@@ -395,6 +413,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   const { publicKey, connected } = useWallet();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
+  // Account selection
+  const [isSelectingAccount, updateIsSelectingAccount] = useState<boolean>(contextDefaultValues.isSelectingAccount);
+  const [rememberAccount, updateRememberAccount] = useLocalStorageState("rememberAccount", `${contextDefaultValues.rememberAccount}`);
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const today = new Date().toLocaleDateString("en-US");
   const tomorrow = moment().add(1, 'days').format('L');
@@ -456,12 +477,12 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-  const [accountAddress, updateAccountAddress] = useState('');
+  const [selectedAccount, updateSelectedAccount] = useState<AccountContext>(emptyAccount);
+  const [lastUsedAccount, updateLastUsedAccount] = useLocalStorageState("lastUsedAccount");
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
   const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
-  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
@@ -525,6 +546,14 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTheme(name);
   }
 
+  const setIsSelectingAccount = (state: boolean) => {
+    updateIsSelectingAccount(state);
+  }
+
+  const setRememberAccount = (state: boolean) => {
+    updateRememberAccount(state);
+  }
+
   /**
    * Auto reload timeout breakdown
    * 
@@ -552,6 +581,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateShouldLoadTokens(state);
   }
 
+  // Set theme option to html tag
   useEffect(() => {
     const applyTheme = (name?: string) => {
       const theme = name || 'dark';
@@ -1069,12 +1099,12 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    if (!accountAddress && !userAddress && !publicKey) {
+    if (!selectedAccount.address && !userAddress && !publicKey) {
       return;
     }
 
-    const fallback = accountAddress
-      ? new PublicKey(accountAddress)
+    const fallback = selectedAccount.address
+      ? new PublicKey(selectedAccount.address)
       : publicKey as PublicKey;
     const userPk = userAddress || fallback;
     consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
@@ -1102,6 +1132,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           ms.listStreams({ treasurer: userPk, beneficiary: userPk })
           .then(async streamsv1 => {
             listStreamsV1PerformanceCounter.stop();
+            consoleOut(`listStreams performance counter: ${tokenListPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
             streamAccumulator.push(...streamsv1);
             rawStreamsv1 = streamsv1;
             rawStreamsv1.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))) ? 1 : -1)
@@ -1138,7 +1169,6 @@ const AppStateProvider: React.FC = ({ children }) => {
           })
           .finally(() => {
             updateLoadingStreams(false);
-            consoleOut('listStreams performance counter:', 'Pending streamDetails...', 'crimson');
           });
         }).catch(err => {
           console.error(err);
@@ -1150,7 +1180,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     msp,
     publicKey,
     streamDetail,
-    accountAddress,
+    selectedAccount.address,
     loadingStreams,
     customStreamDocked,
   ]);
@@ -1163,20 +1193,27 @@ const AppStateProvider: React.FC = ({ children }) => {
    * and resume when TPS goes up again.
    */
   useEffect(() => {
+    if (!publicKey) { return; }
+
     let timer: any;
 
-    if (accountAddress && location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) && !customStreamDocked && !isDowngradedPerformance) {
+    if (selectedAccount.address && location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) && !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
         consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
         refreshStreamList();
       }, FIVE_MINUTES_REFRESH_TIMEOUT);
     }
 
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    }
   }, [
     location,
-    accountAddress,
+    publicKey,
     customStreamDocked,
+    selectedAccount.address,
     isDowngradedPerformance,
     refreshStreamList,
   ]);
@@ -1241,10 +1278,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     refreshTokenBalance
   ]);
 
-  const setAddAccountPanelOpen = (state: boolean) => {
-    updateAddAccountPanelOpen(state);
-  }
-
   const setTransactions = (map: MappedTransaction[] | undefined, addItems?: boolean) => {
     if (!addItems) {
       if (map && map.length === TRANSACTIONS_PER_PAGE) {
@@ -1279,9 +1312,14 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateSelectedAsset(asset);
   }
 
-  const setAccountAddress = (address: string) => {
+  const setSelectedAccount = (account: AccountContext, override = false) => {
     updateTransactions([]);
-    updateAccountAddress(address);
+    updateSelectedAccount(account);
+    if (override) {
+      consoleOut('Overriding lastUsedAccount with:', account, 'crimson');
+      updateLastUsedAccount(account);
+      setShouldLoadTokens(true);
+    }
   }
 
   // Fetch token list
@@ -1413,8 +1451,9 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     if (!connection ||
         !publicKey ||
-        !accountAddress ||
+        !selectedAccount.address ||
         !shouldLoadTokens ||
+        isSelectingAccount ||
         !splTokenList) {
       return;
     }
@@ -1422,10 +1461,11 @@ const AppStateProvider: React.FC = ({ children }) => {
     setLoadingTokenAccounts(true);
     updateShouldLoadTokens(false);
     setTokensLoaded(false);
+    consoleOut('calling getUserAccountTokens from:', 'AppState', 'darkgreen');
 
     getUserAccountTokens(
       connection,
-      accountAddress,
+      selectedAccount.address,
       priceList,
       splTokenList,
     ).then(response => {
@@ -1443,7 +1483,42 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     return () => {}
 
-  }, [accountAddress, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
+
+  // Same as above but on demand
+  const getAssetsByAccount = useCallback((account: string) => {
+
+    if (!connection ||
+        !publicKey ||
+        !account ||
+        !priceList
+    ) {
+      return null;
+    }
+
+    setLoadingTokenAccounts(true);
+    setTokensLoaded(false);
+    consoleOut('calling getUserAccountTokens from:', 'getAssetsByAccount', 'darkgreen');
+
+    return getUserAccountTokens(
+      connection,
+      account,
+      priceList,
+      splTokenList,
+    ).then(response => {
+      if (response) {
+        return response;
+      } else {
+        return null;
+      }
+    }).finally(() => {
+      setLoadingTokenAccounts(false);
+      setTokensLoaded(true);
+      return null;
+    });
+
+  }, [connection, priceList, publicKey, splTokenList]);
 
   ///////////////////////
   // Multisig accounts //
@@ -1457,10 +1532,10 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [loadingMultisigTxPendingCount, setLoadingMultisigTxPendingCount] = useState(contextDefaultValues.loadingMultisigTxPendingCount);
 
   // Refresh the list of multisigs and return a selection
-  const refreshMultisigs = useCallback(async (reset?: boolean) => {
+  const refreshMultisigs = useCallback(async () => {
 
     if (!publicKey || !multisigClient) {
-      return undefined;
+      return false;
     }
 
     setLoadingMultisigAccounts(true);
@@ -1470,28 +1545,15 @@ const AppStateProvider: React.FC = ({ children }) => {
       allInfo.sort((a: any, b: any) => new Date(b.createdOnUtc).getTime() - new Date(a.createdOnUtc).getTime());
       setMultisigAccounts(allInfo);
       consoleOut('multisigAccounts:', allInfo, 'darkorange');
-      if (allInfo.length > 0) {
-        if (reset) {
-          return allInfo[0];
-        } else {
-          const auth = selectedMultisig ? selectedMultisig.authority : undefined;
-          const item = auth ? allInfo.find(m => m.authority.equals(auth)) : undefined;
-          if (item) {
-            return item;
-          } else {
-            return allInfo[0];
-          }
-        }
-      }
-      return undefined;
+      return true;
     } catch (error) {
       console.error('refreshMultisigs ->', error);
-      return undefined;
+      return false;
     } finally {
       setLoadingMultisigAccounts(false);
     }
 
-  }, [multisigClient, publicKey, selectedMultisig]);
+  }, [multisigClient, publicKey]);
 
   // Automatically get a list of multisigs for the connected wallet
   useEffect(() => {
@@ -1508,18 +1570,19 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [multisigClient, needReloadMultisigAccounts, publicKey, refreshMultisigs]);
 
   useEffect(() => {
-    if (!publicKey || !multisigClient || patchedMultisigAccounts || loadingMultisigTxPendingCount || !multisigAccounts || multisigAccounts.length === 0) {
+    if (!publicKey || !multisigClient || patchedMultisigAccounts !== undefined || loadingMultisigTxPendingCount || !multisigAccounts || multisigAccounts.length === 0) {
+      return;
+    }
+
+    const multisigWithPendingTxs = multisigAccounts.filter(x => x.pendingTxsAmount > 0);
+    if (!multisigWithPendingTxs || multisigWithPendingTxs.length === 0) {
+      consoleOut('No safes found with pending Txs to work on!', 'moving on...', 'crimson');
       return;
     }
 
     (async () => {
-      consoleOut('Entering here god knows why...', '', 'crimson');
+      consoleOut('Searching for pending Txs across multisigs...', '', 'crimson');
       setLoadingMultisigTxPendingCount(true);
-
-      const multisigWithPendingTxs = multisigAccounts.filter(x => x.pendingTxsAmount > 0);
-      if (!multisigWithPendingTxs || multisigWithPendingTxs.length === 0) {
-         return;
-      }
 
       const multisigAccountsCopy = [...multisigAccounts];
       const multisigPendingStatus = [MultisigTransactionStatus.Active, MultisigTransactionStatus.Queued, MultisigTransactionStatus.Passed];
@@ -1570,6 +1633,10 @@ const AppStateProvider: React.FC = ({ children }) => {
   return (
     <AppStateContext.Provider
       value={{
+        isSelectingAccount,
+        rememberAccount,
+        selectedAccount,
+        lastUsedAccount,
         theme,
         tpsAvg,
         refreshInterval,
@@ -1628,9 +1695,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         selectedAsset,
         userTokensResponse,
         transactions,
-        accountAddress,
         lastTxSignature,
-        addAccountPanelOpen,
         streamsSummary,
         lastStreamsSummary,
         recurringBuys,
@@ -1649,6 +1714,10 @@ const AppStateProvider: React.FC = ({ children }) => {
         unstakeStartDate,
         stakingMultiplier,
         previousRoute,
+        setIsSelectingAccount,
+        setSelectedAccount,
+        setRememberAccount,
+        getAssetsByAccount,
         setTheme,
         setTpsAvg,
         setShouldLoadTokens,
@@ -1703,8 +1772,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setDiagnosisInfo,
         setTransactions,
         setSelectedAsset,
-        setAccountAddress,
-        setAddAccountPanelOpen,
         setStreamsSummary,
         setLastStreamsSummary,
         setRecurringBuys,

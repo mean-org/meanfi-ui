@@ -1,14 +1,13 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { useState } from 'react';
-import { Modal, Button } from 'antd';
-import { useTranslation } from 'react-i18next';
-import { isValidAddress } from '../../middleware/ui';
-import { useWallet } from '../../contexts/wallet';
-import { Stream } from '@mean-dao/msp';
 import { StreamInfo } from '@mean-dao/money-streaming';
+import { Stream } from '@mean-dao/msp';
+import { Button, Modal } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
-import { useSearchParams } from 'react-router-dom';
-import { InputMean } from '../InputMean';
+import { InputMean } from 'components/InputMean';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
+import { isValidAddress } from 'middleware/ui';
+import { useCallback, useContext, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const StreamTransferOpenModal = (props: {
   handleClose: any;
@@ -22,14 +21,20 @@ export const StreamTransferOpenModal = (props: {
     isVisible,
     streamDetail,
   } = props;
+
+  const {
+    selectedAccount,
+  } = useContext(AppStateContext);
+
   const [address, setAddress] = useState('');
-  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
-  const [queryAccountType, setQueryAccountType] = useState<string | undefined>(undefined);
   const [proposalTitle, setProposalTitle] = useState('');
+
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const isAddressTreasurer = useCallback((address: string): boolean => {
     if (streamDetail && address) {
@@ -119,36 +124,17 @@ export const StreamTransferOpenModal = (props: {
     setIsVerifiedRecipient(e.target.checked);
   }
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
-
-  useEffect(() => {
-    if (isVisible) {
-      setQueryAccountType(getQueryAccountType());
-    }
-  }, [getQueryAccountType, isVisible]);
-
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">{queryAccountType === "multisig" ? "Propose transfer stream" : t('transfer-stream.modal-title')}</div>}
+      title={<div className="modal-title">{isMultisigContext ? "Propose transfer stream" : t('transfer-stream.modal-title')}</div>}
       footer={null}
       open={isVisible}
       onCancel={onCloseModal}
       width={480}>
 
       {/* Proposal title */}
-      {queryAccountType === "multisig" && (
+      {isMultisigContext && (
         <div className="mb-3">
           <div className="form-label">{t('multisig.proposal-modal.title')}</div>
           <InputMean
@@ -207,9 +193,9 @@ export const StreamTransferOpenModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={param === "multisig" ? !isValidFormMultisig() : !isValidForm()}
+        disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
         onClick={onAcceptModal}>
-        {param === "multisig" ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel()}
+        {isMultisigContext ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel()}
       </Button>
     </Modal>
   );

@@ -1,4 +1,4 @@
-import { Language } from "../models/languages";
+import { Language } from "models/languages";
 
 // Intervals
 export const ONE_MINUTE_REFRESH_TIMEOUT = 60 * 1000;
@@ -57,6 +57,13 @@ export const MEANFI_SUPPORT_URL = 'https://help.meanfi.com/';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 export const FALLBACK_COIN_IMAGE = '/assets/coin-error.svg';
 export const MSP_FEE_TREASURY = '3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw';
+
+// Route base paths
+export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
+export const MULTISIG_ROUTE_BASE_PATH = '/accounts/super-safe';
+export const VESTING_ROUTE_BASE_PATH = '/vesting';
+export const STAKING_ROUTE_BASE_PATH = '/staking';
+export const CREATE_SAFE_ROUTE_PATH = '/create-safe';
 
 export const UNAUTHENTICATED_ROUTES = [
     '/stats',

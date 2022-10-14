@@ -10,6 +10,7 @@ import { MeanSystemInstructionCoder } from "./system-program-coder/instruction";
 import { appConfig } from "..";
 import { getAmountFromLamports } from "../middleware/utils";
 
+export const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 export const NATIVE_LOADER = new PublicKey("NativeLoader1111111111111111111111111111111");
 export const LAMPORTS_PER_SIG = 5000;
 export const DEFAULT_EXPIRATION_TIME_SECONDS = 604800;

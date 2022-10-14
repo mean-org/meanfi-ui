@@ -10,7 +10,7 @@ import {
   Space,
   Tooltip
 } from "antd";
-import { IconType } from "antd/lib/notification";
+import notification, { IconType } from "antd/lib/notification";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { AddressDisplay } from "components/AddressDisplay";
@@ -21,13 +21,14 @@ import { PreFooter } from "components/PreFooter";
 import { TextInput } from "components/TextInput";
 import { TokenDisplay } from "components/TokenDisplay";
 import { TokenListItem } from "components/TokenListItem";
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from "constants/common";
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS, MULTISIG_ROUTE_BASE_PATH } from "constants/common";
 import { NATIVE_SOL } from "constants/tokens";
 import { useNativeAccount } from "contexts/accounts";
 import { AppStateContext } from "contexts/appstate";
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "contexts/connection";
 import { useWallet } from "contexts/wallet";
 import { environment } from "environments/environment";
+import useWindowSize from "hooks/useWindowResize";
 import { IconCodeBlock, IconCoin, IconCopy, IconExternalLink, IconLoading, IconTrash, IconWallet } from "Icons";
 import { appConfig } from "index";
 import { getTokensWithBalances, readAccountInfo as getAccountInfo } from "middleware/accounts";
@@ -59,6 +60,7 @@ import "./style.scss";
 
 type TabOption = "first-tab" | "test-stream" | "account-info" | "multisig-tab" | "demo-notifications" | "misc-tab" | undefined;
 type StreamViewerOption = "treasurer" | "beneficiary";
+const notificationKey = 'updatable';
 
 const CRYPTO_VALUES: number[] = [
   0.0004, 0.000003, 0.00000012345678, 1200.5, 1500.000009, 100500.000009226,
@@ -68,8 +70,6 @@ const CRYPTO_VALUES: number[] = [
 const NUMBER_OF_ITEMS: number[] = [
   0, 1, 99, 157, 679, 1000, 1300, 1550, 99600, 154350, 600000, 1200000
 ];
-
-const sampleMultisig = 'H2r15H4hFn7xV5PQtnatqJaHo6ybM8qd1i5WnaadE1aX';
 
 export const PlaygroundView = () => {
   const { t } = useTranslation("common");
@@ -84,12 +84,12 @@ export const PlaygroundView = () => {
     coinPrices,
     splTokenList,
     isWhitelisted,
-    setHighLightableMultisigId,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
   const { account } = useNativeAccount();
+  const { width } = useWindowSize();
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -497,8 +497,7 @@ export const PlaygroundView = () => {
             shape="round"
             className="extra-small"
             onClick={() => {
-              const url = `/multisig/${sampleMultisig}?v=proposals`;
-              setHighLightableMultisigId(sampleMultisig);
+              const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
               navigate(url);
             }}>
             See proposals
@@ -1509,25 +1508,61 @@ export const PlaygroundView = () => {
     );
   }
 
+
+
+  const handleNotifWithUiInteraction = useCallback(() => {
+
+    const showcaseNewAccount = () => {
+      let element: HTMLElement | null = null;
+
+      if (width < 1200) {
+        element = document.querySelector("footer .account-selector-max-width");
+      } else {
+        element = document.querySelector("header .account-selector-max-width");
+      }
+      if (element) {
+        element.click();
+      } else {
+        console.log('could not query:', width < 1200 ? 'footer .account-selector-max-width' : 'header .account-selector-max-width', 'red');
+      }
+    };
+
+    const onNotifySuperSafeCreated = () => {
+      const btn = (
+        <Button
+          type="primary"
+          size="small"
+          shape="round"
+          className="extra-small"
+          onClick={() => {
+            showcaseNewAccount();
+            notification.close(notificationKey);
+          }}>
+          Show accounts
+        </Button>
+      );
+      notification.open({
+        type: "success",
+        message: 'SuperSafe account created',
+        description: (<div className="mb-1">Your SuperSafe account was successfully created.</div>),
+        btn,
+        key: notificationKey,
+        duration: null,
+        placement: "topRight",
+        top: 110,
+      });
+    };
+
+    onNotifySuperSafeCreated();
+
+  }, [width]);
+
   const renderRoutingDemo = (
     <>
       <div className="tabset-heading">Test routing</div>
       <div className="text-left mb-3">
         <div className="form-label">Go to my connected account</div>
         {renderRouteLink('With no params', '/accounts')}
-        <div className="form-label">Go to a different account</div>
-        {renderRouteLink('With only the address', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ')}
-        {renderRouteLink('With NO specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets')}
-        <div className="form-label">Preset a specific asset</div>
-        {renderRouteLink('With specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets/FQPAweWDZZbKjDQk3MCx285dUeZosLzF2FacqfyegrGC')}
-        <div className="form-label">View multisig vesting contracts</div>
-        {renderRouteLink('Send multisig to vesting', `/vesting/${sampleMultisig}/contracts?account-type=multisig`)}
-        <div className="form-label">View a multisig account assets</div>
-        {renderRouteLink('With specific asset preset', '/accounts/D9w3w6CQZvmAaqvQ9BsHSfg8vCa58dh3mXLND5dyDT1z/assets?account-type=multisig')}
-        <div className="form-label">View multisig account streaming</div>
-        {renderRouteLink('See multisig streaming accounts', `/accounts/${sampleMultisig}/streaming/summary?account-type=multisig`)}
-        {renderRouteLink('See multisig streaming accounts', `/accounts/8FZVqSVZ4o6QzQEn5eL3nsF9tt1PJozmj2S5uSYWiMw/streaming/summary?account-type=multisig`)}
-        {renderRouteLink('See multisig streaming accounts', `/accounts/JAPXPLLiMLrDdtEvovDGUt2umkP6G2aeaCikJWeFjyiB/streaming/summary?account-type=multisig`)}
       </div>
     </>
   );
@@ -1593,6 +1628,17 @@ export const PlaygroundView = () => {
             className="flat-button stroked"
             onClick={() => showNotificationByType("info", true)}>
             <span>With CTA</span>
+          </span>
+        </Space>
+      </div>
+
+      <div className="tabset-heading">Notification with UI interaction</div>
+      <div className="text-left mb-3">
+        <Space>
+          <span
+            className="flat-button stroked"
+            onClick={() => handleNotifWithUiInteraction()}>
+            <span>Show me</span>
           </span>
         </Space>
       </div>

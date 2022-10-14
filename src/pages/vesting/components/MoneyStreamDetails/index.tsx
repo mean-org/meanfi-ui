@@ -1,19 +1,23 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { Col, Row, Spin, Tabs } from 'antd';
 import BN from 'bn.js';
+import { AddressDisplay } from 'components/AddressDisplay';
+import { Identicon } from 'components/Identicon';
+import {
+  FALLBACK_COIN_IMAGE,
+  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
+  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION
+} from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { IconExternalLink } from 'Icons';
+import { getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from 'middleware/ui';
+import { displayAmountWithSymbol, shortenAddress } from 'middleware/utils';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AddressDisplay } from '../../../../components/AddressDisplay';
-import { Identicon } from '../../../../components/Identicon';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { useWallet } from '../../../../contexts/wallet';
-import { IconExternalLink } from '../../../../Icons';
-import { getIntervalFromSeconds, getReadableDate, getShortDate, getTimeToNow, relativeTimeFromDates } from '../../../../middleware/ui';
-import { displayAmountWithSymbol, shortenAddress } from '../../../../middleware/utils';
 import './style.scss';
 
 export type StreamDetailTab = "details" | "activity";
@@ -84,19 +88,19 @@ export const MoneyStreamDetails = (props: {
       }
       if (isInboundStream) {
         if (item.status === STREAM_STATUS.Scheduled) {
-          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${item.treasurer}`)})`;
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(item.treasurer)})`;
         } else if (item.status === STREAM_STATUS.Paused) {
-          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${item.treasurer}`)})`;
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(item.treasurer)})`;
         } else {
-          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${item.treasurer}`)})`;
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(item.treasurer)})`;
         }
       } else {
         if (item.status === STREAM_STATUS.Scheduled) {
-          title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${item.beneficiary}`)})`;
+          title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(item.beneficiary)})`;
         } else if (item.status === STREAM_STATUS.Paused) {
-          title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${item.beneficiary}`)})`;
+          title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(item.beneficiary)})`;
         } else {
-          title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${item.beneficiary}`)})`;
+          title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(item.beneficiary)})`;
         }
       }
     }
@@ -194,7 +198,7 @@ export const MoneyStreamDetails = (props: {
             content = t('streams.status.status-stopped');
           } else {
             bgClass = 'error';
-            content = t('streams.status.status-stopped');
+            content = t('vesting.status.status-stopped');
           }
           break;
         default:
@@ -430,7 +434,7 @@ export const MoneyStreamDetails = (props: {
                           : '--'
                       }
                     </div>
-                    <div className="interval">{getShortDate(item.utcDate as string, true)}</div>
+                    <div className="interval">{getShortDate(item.utcDate, true)}</div>
                   </div>
                   <div className="actions-cell">
                     <IconExternalLink className="mean-svg-icons" style={{ width: "15", height: "15" }} />
@@ -463,10 +467,14 @@ export const MoneyStreamDetails = (props: {
     );
   }, [getActivityAction, getActivityIcon, hasMoreStreamActivity, loadingStreamActivity, onLoadMoreActivities, selectedToken, splTokenList, streamActivity, t]);
 
+  const getStartDateLabel = useCallback((stream: Stream) => {
+    return isStartDateFuture(stream.startUtc) ? "Starting on:" : "Started on:";
+  }, []);
+
   // Tab details
   const detailsData = useMemo(() => [
     {
-      label: stream ? isStartDateFuture(stream.startUtc) ? "Starting on:" : "Started on:" : "--",
+      label: stream ? getStartDateLabel(stream) : "--",
       value: stream ? getReadableDate(stream.startUtc, true) : "--"
     },
     {

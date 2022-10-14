@@ -5,7 +5,7 @@
 		"diagnosis-info": "진단 정보",
 		"diagnosis-info-copied": "진단 정보 클립보드로 복사",
 		"diagnosis-info-not-copied": "진단 정보를 클립보드에 복사할 수 없습니다.",
-		"disconnect": "연결해제",
+		"disconnect": "연결 해제",
 		"explorer-link": "Solana Explore에서 보기",
 		"modal-title": "계좌",
 		"money-streams": "머니스트림",
@@ -479,8 +479,8 @@
 		"secondary-action": "종료"
 	},
 	"multisig": {
-		"add-participant-cta": "참가자 추가",
-		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+		"add-participant-cta": "서명자 추가",
+		"back-to-multisig-accounts-cta": "Back to SuperSafe",
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating vault",
@@ -501,14 +501,14 @@
 			"multisig-label-input-label": "다중서명 이름",
 			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "아직 추가된 참가자가 없습니다.",
-			"multisig-participants": "유효한 서명자({{maxParticipants}}명 중 {{numParticipants}}명)",
+			"multisig-participants": "서명자 ({{maxParticipants}})",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "최소 필수 서명 값 입력",
 			"multisig-threshold-input-label": "최소 필수 서명",
 			"multisig-threshold-input-max": "최대 서명은 10개 입니다",
 			"multisig-threshold-input-max-warn": "최대 서명 개수에 달했습니다",
 			"multisig-threshold-placeholder": "다중서명 계정에 필요한 최소 서명 입력",
-			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 signers are required to execute a transaction.",
 			"success-message": "당신의 다중서명 계좌가 성공적으로 생성되었습니다."
 		},
 		"create-new-multisig-account-cta": "Create safe",
@@ -565,7 +565,7 @@
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Vault details",
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"back-to-multisig-accounts-cta": "Back to SuperSafe",
 			"cta-change-multisig-authority": "Change Vault Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close vault",
@@ -593,7 +593,7 @@
 		},
 		"multisig-detail-heading": "다중서명 계좌 세부사항",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"back-to-multisig-accounts-cta": "Back to SuperSafe",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer ownership",

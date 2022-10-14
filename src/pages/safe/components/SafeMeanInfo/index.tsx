@@ -1,65 +1,51 @@
-import './style.scss';
-import { formatThousands, getAmountFromLamports, shortenAddress } from "../../../../middleware/utils";
-import { SafeInfo } from "../UI/SafeInfo";
 import { MeanMultisig, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { consoleOut } from '../../../../middleware/ui';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { TxConfirmationContext } from '../../../../contexts/transaction-status';
-import { useLocation, useParams } from 'react-router-dom';
-import { openNotification } from '../../../../components/Notifications';
-import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { useTranslation } from 'react-i18next';
-import { useNativeAccount } from '../../../../contexts/accounts';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
-import { ACCOUNT_LAYOUT } from '../../../../middleware/layouts';
+import { Connection, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { IconArrowForward } from '../../../../Icons';
-import { ResumeItem } from '../../../../components/ResumeItem';
-import { appConfig } from '../../../..';
+import { openNotification } from 'components/Notifications';
+import { ResumeItem } from 'components/ResumeItem';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
+import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { IconArrowForward } from 'Icons';
+import { appConfig } from "index";
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { ACCOUNT_LAYOUT } from 'middleware/layouts';
+import { consoleOut } from 'middleware/ui';
+import { formatThousands, getAmountFromLamports, shortenAddress } from "middleware/utils";
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation, useParams } from 'react-router-dom';
+import { SafeInfo } from "../SafeInfo";
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
-  isProgramDetails: boolean;
-  isProposalDetails: boolean;
   loadingPrograms: boolean;
   loadingProposals: boolean;
   multisigClient: MeanMultisig | undefined;
   onDataToProgramView: any;
   onDataToSafeView: any;
   onEditMultisigClick: any;
-  onNavigateAway: any;
-  onNewProposalMultisigClick: any;
-  onRefreshRequested: any;
-  proposalSelected?: any;
-  publicKey: PublicKey | null | undefined;
-  safeBalanceInUsd: number;
+  onNewProposalClicked?: any;
+  safeBalanceInUsd: number | undefined;
   selectedMultisig?: any;
   selectedTab?: any;
-  vestingAccountsCount: number;
 }) => {
   const {
     connection,
-    isProgramDetails,
-    isProposalDetails,
     loadingPrograms,
     loadingProposals,
     multisigClient,
     onDataToProgramView,
     onDataToSafeView,
     onEditMultisigClick,
-    onNavigateAway,
-    onNewProposalMultisigClick,
-    onRefreshRequested,
-    proposalSelected,
-    publicKey,
+    onNewProposalClicked,
     safeBalanceInUsd,
     selectedMultisig,
     selectedTab,
-    vestingAccountsCount,
   } = props;
   const { 
     programs,
@@ -79,14 +65,13 @@ export const SafeMeanInfo = (props: {
   const { address } = useParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
+  const { publicKey } = useWallet();
   const [loadingAssets, setLoadingAssets] = useState(true);
-  const [isBusy, setIsBusy] = useState(false);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [multisigAddress, setMultisigAddress] = useState('');
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  // const [assetsWithoutSol, setAssetsWithoutSol] = useState<MultisigVault[]>([]);
 
   // Tabs
   const [amountOfProposals, setAmountOfProposals] = useState<string>("");
@@ -141,19 +126,11 @@ export const SafeMeanInfo = (props: {
       closeAuthority: undefined,
       address: selectedMultisig.id,
       decimals: 9
-
     } as any;
 
   }, [
     selectedMultisig, 
     multisigSolBalance
-  ]);
-
-  const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
-  }, [
-    isBusy,
-    fetchTxInfoStatus,
   ]);
 
   // Get Multisig Vaults
@@ -346,7 +323,7 @@ export const SafeMeanInfo = (props: {
                 <div 
                   key={index}
                   onClick={onSelectProposal}
-                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                     <ResumeItem
                       id={proposal.id.toBase58()}
                       title={title}
@@ -393,7 +370,7 @@ export const SafeMeanInfo = (props: {
                 <div 
                   key={`${index + 1}`}
                   onClick={onSelectProgram}
-                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                  className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                     <ResumeItem
                       id={program.pubkey.toBase58()}
                       title={programTitle}
@@ -435,17 +412,13 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
-        isTxInProgress={isTxInProgress}
         onEditMultisigClick={onEditMultisigClick}
-        onNavigateAway={onNavigateAway}
-        onNewProposalMultisigClick={onNewProposalMultisigClick}
-        onRefreshTabsInfo={onRefreshRequested}
+        onNewProposalClicked={onNewProposalClicked}
         selectedMultisig={selectedMultisig}
         selectedTab={selectedTab}
         totalSafeBalance={safeBalanceInUsd}
         programsTabContent={programsTabContent()}
         proposalsTabContent={proposalsTabContent()}
-        vestingAccountsCount={vestingAccountsCount}
       />
     </>
   )

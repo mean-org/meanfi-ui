@@ -463,7 +463,7 @@ export const ProposalDetailsView = (props: {
             return (
               <div 
                 key={`${activity.index + 1}`}
-                className={`w-100 activities-list mr-1 pr-4 ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}>
+                className={`w-100 activities-list mr-1 pr-4 ${(activity.index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
                   <div className="resume-item-container">
                     <div className="d-flex">
                       <span className="mr-1">{title}</span>

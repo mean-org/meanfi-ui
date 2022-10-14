@@ -2,44 +2,37 @@ import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { Idl, Program } from '@project-serum/anchor';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { Button, Col, Row } from "antd";
+import { ResumeItem } from 'components/ResumeItem';
+import { IconArrowForward } from "Icons";
+import { consoleOut } from 'middleware/ui';
+import { ProgramAccounts } from "models/accounts";
 import { useCallback, useEffect, useState } from 'react';
-import { ResumeItem } from '../../../../components/ResumeItem';
-import { IconArrowForward } from "../../../../Icons";
-import { consoleOut } from '../../../../middleware/ui';
-import { ProgramAccounts } from "../../../../models/accounts";
-import { SafeInfo } from "../UI/SafeInfo";
-import './style.scss';
+import { SafeInfo } from "../SafeInfo";
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;
-  isProposalDetails: boolean;
   isProgramDetails: boolean;
-  onDataToSafeView: any;
-  onDataToProgramView: any;
-  onNavigateAway: any;
-  selectedMultisig?: any;
-  onEditMultisigClick: any;
-  onNewProposalMultisigClick: any;
+  isProposalDetails: boolean;
   multisigClient: Program<Idl>;
   multisigTxs: MultisigTransaction[];
-  vestingAccountsCount: number;
+  onDataToProgramView: any;
+  onDataToSafeView: any;
+  onEditMultisigClick: any;
+  onNewProposalClicked?: any;
+  selectedMultisig?: any;
 }) => {
-  const { 
+  const {
     connection,
     isProposalDetails,
-    selectedMultisig, 
-    onEditMultisigClick, 
-    onNewProposalMultisigClick,
-    onNavigateAway,
-    // multisigClient,
     multisigTxs,
-    vestingAccountsCount,
+    onEditMultisigClick,
+    onNewProposalClicked,
+    selectedMultisig,
   } = props;
 
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const safeSerumNameImg = "https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png";
   const safeSerumNameImgAlt = "Serum";
-  // const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
 
   // Proposals list
   const renderListOfProposals = (
@@ -61,7 +54,7 @@ export const SafeSerumInfoView = (props: {
             <div 
               key={tx.id.toBase58()}
               onClick={onSelectProposal}
-              className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
               >
                 <ResumeItem
                   id={tx.id.toBase58()}
@@ -114,7 +107,7 @@ export const SafeSerumInfoView = (props: {
   //           return (
   //             <div 
   //               key={activity.id}
-  //               className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
+  //               className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'bg-secondary-02'}`}
   //               >
   //                 <div className="list-item">
   //                   <span className="mr-2">
@@ -238,7 +231,7 @@ export const SafeSerumInfoView = (props: {
             <div 
               key={program.id}
               onClick={onSelectProgram}
-              className={`d-flex w-100 align-items-center simplelink ${program.id % 2 === 0 ? '' : 'background-gray'}`}
+              className={`d-flex w-100 align-items-center simplelink ${program.id % 2 === 0 ? '' : 'bg-secondary-02'}`}
               >
                 <Row className="list-item hover-list">
                   <Col>
@@ -285,13 +278,11 @@ export const SafeSerumInfoView = (props: {
     <>
       <SafeInfo
         onEditMultisigClick={onEditMultisigClick}
-        onNavigateAway={onNavigateAway}
-        onNewProposalMultisigClick={onNewProposalMultisigClick}
+        onNewProposalClicked={onNewProposalClicked}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}
         selectedMultisig={selectedMultisig}
         tabs={tabs}
-        vestingAccountsCount={vestingAccountsCount}
        />
     </>
   )

@@ -14,6 +14,7 @@ import { InfoIcon } from 'components/InfoIcon';
 import { StepSelector } from 'components/StepSelector';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
+  ACCOUNTS_ROUTE_BASE_PATH,
   DATEPICKER_FORMAT,
   MIN_SOL_BALANCE_REQUIRED,
   NO_FEES,
@@ -59,7 +60,6 @@ import { EventType, OperationType, PaymentRateType, TransactionStatus } from "mo
 import { PaymentRateTypeOption } from "models/PaymentRateTypeOption";
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import moment from "moment";
-import { ACCOUNTS_ROUTE_BASE_PATH } from 'pages/accounts';
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
@@ -125,7 +125,7 @@ export const RepeatingPayment = (props: {
     return selectedToken && selectedToken.address === NATIVE_SOL.address
       ? true
       : false;
-  }, []);
+  }, [selectedToken]);
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return calculateActionFees(connection, action);
@@ -653,7 +653,7 @@ export const RepeatingPayment = (props: {
     } else if (!isVerifiedRecipient) {
       return t('transactions.validation.verified-recipient-unchecked');
     } else if (nativeBalance < getMinSolBlanceRequired()) {
-      return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) });
+      return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinSolBlanceRequired(), 4) });
     } else {
       return t('transactions.validation.valid-approve');
     }

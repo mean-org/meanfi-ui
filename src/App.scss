@@ -429,6 +429,9 @@ h1, h2, h3, h4, h5, h6 {
 .bg-secondary {
   background-color: var(--color-secondary);
 }
+.bg-secondary-02 {
+  background-color: var(--color-secondary-alpha-02);
+}
 .bg-white {
   background-color: var(--color-white);
 }
@@ -589,27 +592,6 @@ footer.ant-layout-footer {
           letter-spacing: -0.5px;
           line-height: 1;
           color: var(--color-dark);
-        }
-      }
-      .wallet-wrapper {
-        display: flex;
-        align-items: center;
-        white-space: nowrap;
-        background-color: var(--wallet-wrapper-bg);
-        color: var(--wallet-wrapper-color);
-        border-radius: var(--custom-border-radius);
-        height: 100%;
-        .wallet-key {
-          font-size: 1rem;
-          font-weight: 600;
-          background-color: var(--color-primary);
-          border-radius: var(--custom-border-radius);
-          height: 100%;
-          display: inline-flex;
-          align-items: center;
-          padding: 0 6px;
-          margin-left: -1px;
-          cursor: pointer;
         }
       }
     }
@@ -1289,6 +1271,7 @@ footer.ant-layout-footer {
 
 // Notification icons
 .ant-notification {
+  z-index: 1040;
   .ant-notification-notice {
     padding: 16px;
     background-color: var(--color-section-contrast);
@@ -1959,68 +1942,6 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
     margin: 4px 0 0 6px;
   }
 }
-.connection-and-account-bar {
-  flex-direction: row;
-  align-items: center;
-  background-color: var(--color-network-bar);
-  border-radius: var(--custom-border-radius);
-  height: var(--custom-control-height);
-  margin-right: 8px;
-  padding: 0;
-  @media (max-width: 575.98px) {
-    display: none;
-  }
-  @media (min-width: 576px) {
-    display: flex;
-  }
-  .connected-network {
-    @media (max-width: 767.98px) {
-      display: none;
-    }
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    align-items: center;
-    margin-right: 8px;
-    margin-left: 4px;
-    .chain-logo {
-      align-items: center;
-      justify-content: center;
-      display: inline-flex;
-      margin-right: 4px;
-      > img {
-        margin: 0;
-      }
-    }
-    .account-balance {
-      font-size: 1rem;
-      font-weight: 400;
-      letter-spacing: -0.5px;
-    }
-  }
-  .wallet-wrapper {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-    background-color: var(--wallet-wrapper-bg);
-    color: var(--wallet-wrapper-color);
-    border-radius: var(--custom-border-radius);
-    height: 100%;
-    .wallet-key {
-      font-size: 1rem;
-      font-weight: 600;
-      background-color: var(--color-primary);
-      border-radius: var(--custom-border-radius);
-      height: 100%;
-      display: inline-flex;
-      align-items: center;
-      padding: 0 6px;
-      margin-left: -1px;
-      cursor: pointer;
-    }
-  }
-}
 
 .ant-tabs-nav-scroll {
   display: flex;
@@ -2049,6 +1970,58 @@ em {
     &.ant-alert-warning {
       border-color: rgba(233,160,16,0.87);
     }
+  }
+}
+
+.slider-container {
+  display: block;
+  position: relative;
+  margin: 4rem 0 3.2rem 0;
+  padding: 0 2rem;
+}
+.ant-slider.ant-slider-with-marks {
+  .ant-slider-rail {
+      height: 2px;
+      margin-top: 1px;
+  }
+  .ant-slider-handle.ant-tooltip-open {
+      width: 18px;
+      height: 18px;
+      margin-top: -7px;
+      border-color: var(--color-white);
+      background-color: var(--color-primary);
+  }
+  .ant-slider-mark {
+      .ant-slider-mark-text {
+          position: absolute;
+          display: inline-block;
+          color: var(--color-secondary-alpha-70);
+          text-align: center;
+          word-break: keep-all;
+          white-space: nowrap;
+          cursor: pointer;
+          -webkit-user-select: none;
+          user-select: none;
+          font-size: 80%;
+      }
+  }
+}
+.ant-slider-tooltip .ant-tooltip-inner {
+  min-width: unset;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  height: auto;
+  line-height: 1;
+  min-height: auto;
+  svg.tooltip-svg {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 3px;
+      width: 18px;
+      height: 18px;
+      color: var(--color-primary-highlight);
   }
 }
 
@@ -2764,19 +2737,19 @@ main section {
 
 .container-max-width-450 {
   width: 100%;
-  max-width: var(--container-max-width-450);
+  max-width: var(--container-max-width-450) !important;
 }
 .container-max-width-640 {
   width: 100%;
-  max-width: var(--container-max-width-640);
+  max-width: var(--container-max-width-640) !important;
 }
 .container-max-width-720 {
   width: 100%;
-  max-width: var(--container-max-width-720);
+  max-width: var(--container-max-width-720) !important;
 }
 .container-max-width-960 {
   width: 100%;
-  max-width: var(--container-max-width-960);
+  max-width: var(--container-max-width-960) !important;
 }
 
 .card {
@@ -3000,12 +2973,29 @@ main section {
 .ant-dropdown-menu {
   color: inherit;
   background-color: var(--color-component-background);
+  border: 1px solid var(--color-secondary-alpha-15);
   .ant-dropdown-menu-item-divider,
   .ant-dropdown-menu-submenu-title-divider {
     background-color: var(--color-secondary-alpha-15);
   }
+  .ant-dropdown-menu-item-group .ant-dropdown-menu-item-group-title .menu-item-text {
+    color: var(--color-secondary-alpha-50);
+    text-transform: uppercase;
+    font-size: 80%;
+  }
+  .ant-dropdown-menu-item {
+    .ant-dropdown-menu-title-content {
+      > a,
+      > div,
+      > span {
+        padding: 0 12px;
+        display: block;
+      }
+    }
+  }
   .ant-dropdown-menu-item,
   .ant-dropdown-menu-submenu-title {
+    padding: 5px 0;
     color: var(--color-secondary-alpha-80);
     .mean-svg-icons {
       display: inline-block;
@@ -3035,6 +3025,7 @@ main section {
 .ant-select-dropdown {
   color: inherit;
   background-color: var(--color-component-background);
+  border: 1px solid var(--color-secondary-alpha-15);
   .ant-select-item {
     color: inherit;
     &:not(.ant-select-item-option-selected) {
@@ -3262,7 +3253,8 @@ main section {
     min-height: 30px;
     margin-bottom: 6px;
     .general-text-input {
-      font-size: 14px;
+      font-size: 14px !important;
+      vertical-align: unset;
     }
   }
   &.fixed-height {
@@ -4048,13 +4040,10 @@ main section {
         .ant-modal-header {
           border: none;
           @media (max-width: 575.98px) {
-            padding: 40px 40px 20px 40px;
+            padding: 0 40px 0 40px;
           }
           @media (min-width: 576px) {
-            padding-right: 40px;
-            padding-left: 40px;
-            padding-top: 40px;
-            padding-bottom: 20px;
+            padding: 8px 40px 8px 40px;
           }
         }
       }
@@ -4220,10 +4209,6 @@ main section {
   align-items: flex-end;
 }
 
-#multisig-participants-max-height {
-  max-height: 210px;
-}
-
 .icon-button-container {
   display: inline-flex;
   justify-content: center;
@@ -4263,6 +4248,16 @@ main section {
   filter: grayscale(1);
 }
 // Account
+.account-selector-modal-content {
+  padding: 0.5rem 1.5rem 1rem;
+  max-height: 80vh;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+.account-selector-popover-content {
+  max-height: 70vh;
+  min-width: 340px;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
 .connect-wallet-modal {
   padding: 0 1rem 0;
   max-height: 80vh;
@@ -5450,6 +5445,12 @@ main section {
         button.ant-btn.ant-btn-round.ant-btn-sm {
           min-width: 90px;
         }
+      }
+      .scroll-wrapper {
+        margin-right: -1.55em;
+        max-height: 100%;
+        height: 100%;
+        overflow-y: auto;
       }
     }
     @media (min-width: 768px) {
@@ -7703,14 +7704,14 @@ code {
     }
     .ant-popover-arrow {
       .ant-popover-arrow-content {
-        background-color: var(--color-component-background);
+        background-color: var(--color-panel-background);
         &::before {
           background: inherit;
         }
       }
     }
     .ant-popover-inner {
-      background-color: var(--color-component-background);
+      background-color: var(--color-panel-background);
       .ant-popover-title {
         color: var(--color-secondary-alpha-70);
         border-bottom: 1px solid var(--color-secondary-alpha-20);
@@ -7729,7 +7730,19 @@ code {
       }
       .ant-popover-inner-content {
         color: var(--text-color);
-        background-color: var(--color-component-background);
+        background-color: var(--color-panel-background);
+        .inner-label {
+          width: 100%;
+          font-size: 0.7rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          line-height: 1.3rem;
+          margin-bottom: 8px;
+          color: var(--color-secondary-alpha-70);
+          &:not(:first-of-type) {
+              margin-top: 12px;
+          }
+        }
       }
     }
   }

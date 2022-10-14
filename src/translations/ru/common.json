@@ -5,7 +5,7 @@
 		"diagnosis-info": "Diagnosis info",
 		"diagnosis-info-copied": "Diagnosis info copied to the clipboard",
 		"diagnosis-info-not-copied": "Could not copy Diagnosis info to the clipboard",
-		"disconnect": "Disconnect",
+		"disconnect": "Отключить",
 		"explorer-link": "View on Solana Explorer",
 		"modal-title": "Account",
 		"money-streams": "Money Streams",
@@ -388,8 +388,8 @@
 		"secondary-action": "Close"
 	},
 	"multisig": {
-		"add-participant-cta": "Add participant",
-		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+		"add-participant-cta": "Добавить подписывающую сторону",
+		"back-to-multisig-accounts-cta": "Back to SuperSafe",
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating asset",
@@ -410,14 +410,14 @@
 			"multisig-label-input-label": "Multisig name",
 			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "No participants added yet",
-			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
+			"multisig-participants": "Подписанты ({{numParticipants}})",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-input-label": "Minimum required signatures",
 			"multisig-threshold-input-max": "Max number of signatures is 10",
 			"multisig-threshold-input-max-warn": "Max number of signatures reached (10)",
 			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
-			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 signers are required to execute a transaction.",
 			"success-message": "Your new multisig account was created successfully."
 		},
 		"create-new-multisig-account-cta": "Create safe",
@@ -474,7 +474,7 @@
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Asset details",
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"back-to-multisig-accounts-cta": "Back to SuperSafe",
 			"cta-change-multisig-authority": "Change Asset Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close asset",
@@ -502,7 +502,7 @@
 		},
 		"multisig-detail-heading": "Multisig account details",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"back-to-multisig-accounts-cta": "Back to SuperSafe",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer ownership",

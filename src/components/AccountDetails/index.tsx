@@ -1,220 +1,113 @@
-import { Button, Dropdown, Menu, Modal } from "antd";
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
-import { useCallback, useContext, useState } from 'react';
-import { useTranslation } from "react-i18next";
-import { segmentAnalytics } from '../../App';
-import { AppStateContext } from '../../contexts/appstate';
-import { useWallet } from "../../contexts/wallet";
+import { Popover } from "antd";
+import { segmentAnalytics } from 'App';
+import { AccountSelector } from "components/AccountSelector";
+import { ACCOUNTS_ROUTE_BASE_PATH, CREATE_SAFE_ROUTE_PATH } from "constants/common";
+import { AppStateContext, emptyAccount } from 'contexts/appstate';
+import { useWallet } from "contexts/wallet";
+import useWindowSize from "hooks/useWindowResize";
 import {
-  IconCopy,
-  IconUser,
-  IconWallet
-} from "../../Icons";
-import { AppUsageEvent } from '../../middleware/segment-service';
-import { copyText } from "../../middleware/ui";
-import { shortenAddress } from "../../middleware/utils";
-import { openNotification } from '../Notifications';
+  IconSafe
+} from "Icons";
+import { AppUsageEvent } from 'middleware/segment-service';
+import { shortenAddress } from "middleware/utils";
+import { useCallback, useContext, useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import "./style.scss";
 
 export const AccountDetails = () => {
 
-  const { t } = useTranslation("common");
   const {
-    diagnosisInfo,
-    setStreamList,
-    setSelectedStream,
+    selectedAccount,
+    setSelectedAccount
   } = useContext(AppStateContext);
+  const navigate = useNavigate();
+  const { width } = useWindowSize();
+  const { publicKey, provider, disconnect, resetWalletProvider } = useWallet();
+  const [popoverVisible, setPopoverVisible] = useState(false);
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const showAccount = useCallback(() => setIsModalVisible(true), []);
-  const close = useCallback(() => setIsModalVisible(false), []);
-  const { publicKey, provider, select, disconnect, resetWalletProvider } = useWallet();
+  const onCompleteAccountSelection = useCallback(() => {
+    setPopoverVisible(false);
+    navigate(ACCOUNTS_ROUTE_BASE_PATH);
+  }, [navigate]);
 
-  const switchWallet = useCallback(() => {
-    close();
-    setTimeout(() => {
-      select();
-    }, 500);
-    // Record user event in Segment Analytics
-    segmentAnalytics.recordEvent(AppUsageEvent.WalletChange);
-  }, [close, select]);
-
-  const onCopyAddress = () => {
-    if (copyText(publicKey)) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: "error"
-      });
-    }
-  }
-
-  const onCopyDiagnosisInfo = () => {
-    if (!diagnosisInfo) {
-      openNotification({
-        description: t('account-area.diagnosis-info-not-copied'),
-        type: "error"
-      });
-      return;
-    }
-    const debugInfo = `${diagnosisInfo.dateTime}\n${diagnosisInfo.clientInfo}\n${diagnosisInfo.networkInfo}\n${diagnosisInfo.accountInfo}\n${diagnosisInfo.appBuildInfo}`;
-    if (copyText(debugInfo)) {
-      openNotification({
-        description: t('account-area.diagnosis-info-copied'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('account-area.diagnosis-info-not-copied'),
-        type: "error"
-      });
-    }
-  }
+  const onCreateSafe = useCallback(() => {
+    setPopoverVisible(false);
+    navigate(CREATE_SAFE_ROUTE_PATH);
+  }, [navigate]);
 
   const onDisconnectWallet = useCallback(() => {
-    setSelectedStream(undefined);
-    setStreamList(undefined);
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
-    close();
     disconnect();
     resetWalletProvider();
-  }, [close, disconnect, resetWalletProvider, setSelectedStream, setStreamList]);
+    setSelectedAccount(emptyAccount);
+  }, [disconnect, resetWalletProvider, setSelectedAccount]);
+
+  const renderPersonalAccount = () => {
+    return (
+      <>
+        {provider && (
+          <img src={provider.icon} alt={provider.name} width="24" className="wallet-provider-icon" />
+        )}
+        <div className="account-descriptor">
+          <div className="account-name">Personal Account</div>
+          <div className="account-id">{shortenAddress(selectedAccount.address, 8)}</div>
+        </div>
+      </>
+    );
+  }
+
+  const renderSupersafeAccount = () => {
+    return (
+      <>
+        <IconSafe className="mean-svg-icons wallet-provider-icon" style={{ width: 24, height: 24 }} />
+        <div className="account-descriptor">
+          <div className="account-name">{selectedAccount.name}</div>
+          <div className="account-id">{shortenAddress(selectedAccount.address, 8)}</div>
+        </div>
+      </>
+    );
+  }
+
+  const isSmScreen = ():boolean => {
+    return width < 768 ? true : false;
+  }
+
+  const handlePopoverVisibleChange = (visibleChange: boolean) => {
+    setPopoverVisible(visibleChange);
+  };
+
+  const bodyContent = (
+    <>
+    <div className="account-selector-popover-content vertical-scroll">
+      <AccountSelector
+        onAccountSelected={onCompleteAccountSelection}
+        onCreateSafeClick={onCreateSafe}
+        onDisconnectWallet={onDisconnectWallet}
+      />
+    </div>
+    </>
+  );
 
   if (!publicKey) {
     return null;
   }
 
-  const renderDebugInfo = (
-    <div>
-      {diagnosisInfo && (
-        <>
-          {diagnosisInfo.dateTime && (
-            <div className="diagnosis-info-item">{diagnosisInfo.dateTime}</div>
-          )}
-          {diagnosisInfo.clientInfo && (
-            <div className="diagnosis-info-item">{diagnosisInfo.clientInfo}</div>
-          )}
-          {diagnosisInfo.networkInfo && (
-            <div className="diagnosis-info-item">{diagnosisInfo.networkInfo}</div>
-          )}
-          {diagnosisInfo.accountInfo && (
-            <div className="diagnosis-info-item">{diagnosisInfo.accountInfo}</div>
-          )}
-          {diagnosisInfo.appBuildInfo && (
-            <div className="diagnosis-info-item">{diagnosisInfo.appBuildInfo}</div>
-          )}
-        </>
-      )}
-    </div>
-  );
-
-  const getMenu = () => {
-    const items: ItemType[] = [];
-    items.push({
-      key: '01-wallet-provider',
-      label: (
-        <>
-          {provider ? (
-            <>
-              <img src={provider.icon} alt={provider.name} width="26" />
-              <span className="menu-item-text ml-1">Connected with {provider.name}</span>
-            </>
-          ) : (
-            <>
-              <IconWallet className="mean-svg-icons" />
-              <span className="menu-item-text ml-1">Unknown wallet</span>
-            </>
-          )}
-        </>
-      )
-    });
-    items.push({type: "divider"});
-    items.push({
-      key: '02-connected-account',
-      label: (
-        <div onClick={onCopyAddress}>
-          <IconUser className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">{shortenAddress(publicKey)}</span>
-        </div>
-      )
-    });
-    items.push({
-      key: '03-wallet-change',
-      label: (
-        <div onClick={switchWallet}>
-          <IconUser className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">{t('account-area.wallet-change')}</span>
-        </div>
-      )
-    });
-    items.push({
-      key: '04-diagnosis-info',
-      label: (
-        <div onClick={showAccount}>
-          <IconUser className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">{t('account-area.diagnosis-info')}</span>
-        </div>
-      )
-    });
-    items.push({
-      key: '05-disconnect',
-      label: (
-        <div onClick={onDisconnectWallet}>
-          <IconUser className="mean-svg-icons" />
-          <span className="menu-item-text ml-1">{t('account-area.disconnect')}</span>
-        </div>
-      )
-    });
-
-    return <Menu items={items} />;
-  }
-
   return (
     <>
-      <div className="wallet-wrapper">
-        <Dropdown overlay={getMenu()} placement="bottomRight" trigger={["click"]}>
+      <Popover
+        placement={isSmScreen() ? "topLeft" : "bottomRight"}
+        content={bodyContent}
+        open={popoverVisible}
+        onOpenChange={handlePopoverVisibleChange}
+        className="account-selector-max-width"
+        trigger="click">
+        <div className="wallet-wrapper">
           <span className="wallet-key">
-            {provider && (
-              <img src={provider.icon} alt={provider.name} width="22" className="wallet-provider-icon" />
-            )}
-            {shortenAddress(`${publicKey}`)}
+            {selectedAccount.isMultisig ? renderSupersafeAccount() : renderPersonalAccount()}
           </span>
-        </Dropdown>
-      </div>
-
-      <Modal
-        className="mean-modal simple-modal"
-        open={isModalVisible}
-        title={<div className="modal-title">{t('account-area.diagnosis-info')}</div>}
-        onCancel={close}
-        width={450}
-        footer={null}>
-        <div className="px-4 pb-4">
-          {diagnosisInfo && (
-            <>
-              <div className="mb-3">
-                {renderDebugInfo}
-              </div>
-              <div className="flex-center">
-                <Button
-                  type="default"
-                  shape="round"
-                  size="middle"
-                  className="thin-stroke"
-                  onClick={onCopyDiagnosisInfo}>
-                  <IconCopy className="mean-svg-icons" />
-                  <span className="icon-button-text">{t('general.cta-copy')}</span>
-                </Button>
-              </div>
-            </>
-          )}
         </div>
-      </Modal>
+      </Popover>
     </>
   );
 

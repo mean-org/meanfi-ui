@@ -479,8 +479,8 @@
 		"secondary-action": "Đóng"
 	},
 	"multisig": {
-		"add-participant-cta": "Thêm người tham gia",
-		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+		"add-participant-cta": "Thêm người ký",
+		"back-to-multisig-accounts-cta": "Back to SuperSafe",
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Tạo",
@@ -492,14 +492,14 @@
 			"multisig-label-input-label": "Tên multisig",
 			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "Chưa có người tham gia nào",
-			"multisig-participants": "Người ký hợp lệ ({{numParticipants}} trên {{maxParticipants}})",
+			"multisig-participants": "Người ký tên ({{numParticipants}})",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Nhập số lượng chữ ký bắt buộc tối thiểu",
 			"multisig-threshold-input-label": "Số lượng chữ ký bắt buộc tối thiểu",
 			"multisig-threshold-input-max": "Số lượng chữ ký tối đa là 10",
 			"multisig-threshold-input-max-warn": "Số lượng chữ ký tối đa đã đạt (10)",
 			"multisig-threshold-placeholder": "Nhập vào số lượng chữ ký yêu cầu tối thiểu cho tài khoản multisig của bạn",
-			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 signers are required to execute a transaction.",
 			"success-message": "Tài khoản multisig mới của bạn đã được tạo thành công"
 		},
 		"create-new-multisig-account-cta": "Create safe",
@@ -565,7 +565,7 @@
 		},
 		"multisig-detail-heading": "Chi tiết tài khoản multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"back-to-multisig-accounts-cta": "Back to SuperSafe",
 			"change-mint-authority-modal-title": "Thiết lập quyền hạn Mint",
 			"create-mint-modal-title": "Tạo mint",
 			"cta-change-mint-authority": "Chuyển quyền sở hữu",
@@ -665,7 +665,7 @@
 			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"back-to-multisig-accounts-cta": "Back to SuperSafe",
 			"cta-change-multisig-authority": "Chuyển quyền sở hữu",
 			"cta-change-multisig-authority-busy": "Đang thay đổi Multisig",
 			"cta-close": "Đóng vault",

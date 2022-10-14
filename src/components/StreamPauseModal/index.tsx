@@ -1,15 +1,14 @@
-import React, { useContext, useCallback, useEffect, useState } from 'react';
-import { Modal, Button, Row, Col } from 'antd';
 import { WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { useWallet } from '../../contexts/wallet';
-import { percentage, percentageBn } from '../../middleware/ui';
-import { getAmountWithSymbol, toUiAmount } from '../../middleware/utils';
-import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
-import { InputMean } from '../InputMean';
-import { useSearchParams } from 'react-router-dom';
-import { AppStateContext } from '../../contexts/appstate';
+import { Button, Col, Modal, Row } from 'antd';
+import { InputMean } from 'components/InputMean';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
+import { percentage, percentageBn } from 'middleware/ui';
+import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const StreamPauseModal = (props: {
   handleClose: any;
@@ -22,26 +21,17 @@ export const StreamPauseModal = (props: {
 }) => {
   const {
     theme,
+    selectedAccount,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const [searchParams] = useSearchParams();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [proposalTitle, setProposalTitle] = useState('');
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = getQueryAccountType();
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const amITreasurer = useCallback((): boolean => {
     if (props.streamDetail && publicKey) {
@@ -194,14 +184,13 @@ export const StreamPauseModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{param === "multisig" ? "Propose pause stream" : t('streams.pause-stream-modal-title')}</div>}
+      title={<div className="modal-title">{isMultisigContext ? "Propose pause stream" : t('streams.pause-stream-modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onCancel={onCloseModal}
       width={400}>
 
       <div className="transaction-progress p-0">
-        {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" /> */}
         <div className="text-center">
           {theme === 'light' ? (
             <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
@@ -229,7 +218,7 @@ export const StreamPauseModal = (props: {
         )}
 
         {/* Proposal title */}
-        {param === "multisig" && (
+        {isMultisigContext && (
           <div className="mb-3">
             <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
             <InputMean
@@ -244,22 +233,14 @@ export const StreamPauseModal = (props: {
         )}
 
         <div className="mt-3">
-          {/* <Button
-              className="mr-3"
-              type="text"
-              shape="round"
-              size="large"
-              onClick={onCloseModal}>
-              {t('close-stream.secondary-cta')}
-          </Button> */}
           <Button
             block
             type="primary"
             shape="round"
             size="large"
-            disabled={param === "multisig" && !isValidForm()}
+            disabled={isMultisigContext && !isValidForm()}
             onClick={() => onAcceptModal()}>
-            {param === "multisig" ? getTransactionStartButtonLabel() : t('streams.pause-stream-cta')}
+            {isMultisigContext ? getTransactionStartButtonLabel() : t('streams.pause-stream-cta')}
           </Button>
         </div>
       </div>
