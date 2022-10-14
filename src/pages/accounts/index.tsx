@@ -2878,7 +2878,7 @@ export const AccountsNewView = () => {
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userTokensResponse]);
+  }, [userTokensResponse, setAccountTokens]);
 
   // Load the transactions when signaled
   useEffect(() => {
