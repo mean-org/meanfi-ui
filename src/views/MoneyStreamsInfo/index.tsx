@@ -2629,21 +2629,21 @@ export const MoneyStreamsInfoView = (props: {
       label: `Accounts ${(!loadingTreasuries && !loadingStreams) 
         ? `(${streamingAccountsAmount && streamingAccountsAmount >= 0 && streamingAccountsAmount})` 
         : ""}`,
-      children: renderListOfStreamingAccounts
+      children: renderListOfStreamingAccounts()
     },
     {
       key: "incoming",
       label: `Incoming ${(!loadingTreasuries && !loadingStreams) 
         ? `(${incomingAmount && incomingAmount >= 0 && incomingAmount})` 
         : ""}`,
-      children: renderListOfIncomingStreams
+      children: renderListOfIncomingStreams()
     },
     {
       key: "outgoing",
       label: `Outgoing ${!loadingStreams
         ? `(${outgoingAmount && outgoingAmount >= 0 && outgoingAmount})` 
         : ""}`,
-      children: renderListOfOutgoingStreams
+      children: renderListOfOutgoingStreams()
     },
   ];
 

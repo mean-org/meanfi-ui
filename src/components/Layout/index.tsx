@@ -7,7 +7,6 @@ import { FooterBar } from "components/FooterBar";
 import { openNotification } from "components/Notifications";
 import { TransactionConfirmationHistory } from "components/TransactionConfirmationHistory";
 import {
-  ACCOUNTS_ROUTE_BASE_PATH,
   CREATE_SAFE_ROUTE_PATH,
   GOOGLE_ANALYTICS_PROD_TAG_ID,
   LANGUAGES,
