@@ -168,7 +168,7 @@ export const SafeSerumInfoView = (props: {
   // Programs list 
   const renderPrograms = (
     <>
-      {programs && programs.length && (
+      {programs && programs.length > 0 && (
         programs.map((program: any) => {
           const onSelectProgram = () => {
             // Sends isProgramDetails value to the parent component "SafeView"

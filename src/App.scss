@@ -1711,6 +1711,19 @@ footer.ant-layout-footer {
   }
 }
 
+.ant-spin-nested-loading {
+  .ant-spin-container {
+    &:after {
+      background: transparent;
+    }
+    .ant-spin-blur {
+      opacity: 0.8;
+      -webkit-filter: blur(1px) brightness(1) contrast(0.9) saturate(0.9);
+      filter: blur(1px) brightness(1) contrast(0.9) saturate(0.9);
+    }
+  }
+}
+
 .App-Bar-left {
   margin: 0px;
   display: flex;
