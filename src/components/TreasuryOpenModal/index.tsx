@@ -57,7 +57,7 @@ export const TreasuryOpenModal = (props: {
             e.dataset.tail = text?.slice(text.length - NUM_CHARS);
           }
         }
-      } else {
+        } else {
         if (ellipsisElements && ellipsisElements.length > 0) {
           const e = ellipsisElements[0] as HTMLElement;
           e.dataset.tail = '';

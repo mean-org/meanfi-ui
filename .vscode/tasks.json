@@ -24,6 +24,16 @@
 			"label": "npm: lint",
 			"detail": "eslint src --ext .js,.jsx,.ts,.tsx",
 			"isBackground": true
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"group": "build",
+			"label": "tsc: watch - tsconfig.json"
 		}
 	]
 }

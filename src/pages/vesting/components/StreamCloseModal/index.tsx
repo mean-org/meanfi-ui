@@ -1,18 +1,17 @@
-import React, { useContext } from 'react';
-import { useCallback, useEffect, useState } from 'react';
-import { Modal, Button, Row, Col, Radio } from 'antd';
 import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { useTranslation } from 'react-i18next';
 import { MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { PublicKey } from '@solana/web3.js';
-import { useConnection } from '../../../../contexts/connection';
-import { useWallet } from '../../../../contexts/wallet';
-import { StreamTreasuryType } from '../../../../models/treasuries';
-import { consoleOut, percentageBn } from '../../../../middleware/ui';
-import { getAmountWithSymbol, toUiAmount } from '../../../../middleware/utils';
-import { VestingContractCloseStreamOptions } from '../../../../models/vesting';
-import { AppStateContext } from '../../../../contexts/appstate';
+import { Button, Col, Modal, Radio, Row } from 'antd';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnection } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { consoleOut, percentageBn } from 'middleware/ui';
+import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { StreamTreasuryType } from 'models/treasuries';
+import { VestingContractCloseStreamOptions } from 'models/vesting';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;
@@ -227,23 +226,9 @@ export const StreamCloseModal = (props: {
     );
   }
 
-  return (
-    <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('close-stream.modal-title')}</div>}
-      footer={null}
-      open={isVisible}
-      onOk={handleOk}
-      onCancel={handleClose}
-      width={400}>
-
-      {loadingTreasuryDetails ? (
-        // The loading part
-        <div className="transaction-progress p-0">
-          <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
-          <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
-        </div>
-      ) : streamTreasuryType === "locked" && streamState === STREAM_STATUS.Running ? (
+  const renderModalContent = () => {
+    if (streamTreasuryType === "locked" && streamState === STREAM_STATUS.Running) {
+      return (
         // The user can't close the stream
         <div className="transaction-progress p-0">
           <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
@@ -258,7 +243,9 @@ export const StreamCloseModal = (props: {
             </Button>
           </div>
         </div>
-      ) : (
+      );
+    } else {
+      return (
         // The normal stuff
         <div className="transaction-progress p-0">
           <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
@@ -291,7 +278,7 @@ export const StreamCloseModal = (props: {
                 {amIBeneficiary() && localStreamDetail.withdrawableAmount.gtn(0) && infoRow(
                   t('transactions.transaction-info.transaction-fee') + ':',
                   `${feeAmount
-                    ? '~' + getAmountWithSymbol((feeAmount as number), selectedToken.address)
+                    ? '~' + getAmountWithSymbol(feeAmount, selectedToken.address)
                     : '0'
                   }`
                 )}
@@ -331,7 +318,27 @@ export const StreamCloseModal = (props: {
             </Button>
           </div>
         </div>
-      )}
+      );
+    }
+  }
+
+  return (
+    <Modal
+      className="mean-modal simple-modal"
+      title={<div className="modal-title">{t('close-stream.modal-title')}</div>}
+      footer={null}
+      open={isVisible}
+      onOk={handleOk}
+      onCancel={handleClose}
+      width={400}>
+
+      {loadingTreasuryDetails ? (
+        // The loading part
+        <div className="transaction-progress p-0">
+          <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
+          <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
+        </div>
+      ) : renderModalContent()}
 
     </Modal>
   );

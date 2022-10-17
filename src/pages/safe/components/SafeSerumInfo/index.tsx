@@ -2,49 +2,42 @@ import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { Idl, Program } from '@project-serum/anchor';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { Button, Col, Row } from "antd";
+import { ResumeItem } from 'components/ResumeItem';
+import { IconArrowForward } from "Icons";
+import { consoleOut } from 'middleware/ui';
+import { ProgramAccounts } from "models/accounts";
 import { useCallback, useEffect, useState } from 'react';
-import { ResumeItem } from '../../../../components/ResumeItem';
-import { IconArrowForward } from "../../../../Icons";
-import { consoleOut } from '../../../../middleware/ui';
-import { ProgramAccounts } from "../../../../models/accounts";
-import { SafeInfo } from "../UI/SafeInfo";
-import './style.scss';
+import { SafeInfo } from "../SafeInfo";
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;
-  isProposalDetails: boolean;
   isProgramDetails: boolean;
-  onDataToSafeView: any;
-  onDataToProgramView: any;
-  onNavigateAway: any;
-  selectedMultisig?: any;
-  onEditMultisigClick: any;
-  onNewProposalMultisigClick: any;
+  isProposalDetails: boolean;
   multisigClient: Program<Idl>;
   multisigTxs: MultisigTransaction[];
-  vestingAccountsCount: number;
+  onDataToProgramView: any;
+  onDataToSafeView: any;
+  onEditMultisigClick: any;
+  onNewProposalClicked?: any;
+  selectedMultisig?: any;
 }) => {
-  const { 
+  const {
     connection,
     isProposalDetails,
-    selectedMultisig, 
-    onEditMultisigClick, 
-    onNewProposalMultisigClick,
-    onNavigateAway,
-    // multisigClient,
     multisigTxs,
-    vestingAccountsCount,
+    onEditMultisigClick,
+    onNewProposalClicked,
+    selectedMultisig,
   } = props;
 
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const safeSerumNameImg = "https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png";
   const safeSerumNameImgAlt = "Serum";
-  // const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
 
   // Proposals list
   const renderListOfProposals = (
     <>
-      {multisigTxs && multisigTxs.length && (
+      {multisigTxs.length > 0 && (
         multisigTxs.map((tx, index) => {
           const onSelectProposal = () => {
             // Sends isProposalDetails value to the parent component "SafeView"
@@ -61,7 +54,7 @@ export const SafeSerumInfoView = (props: {
             <div 
               key={tx.id.toBase58()}
               onClick={onSelectProposal}
-              className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
               >
                 <ResumeItem
                   id={tx.id.toBase58()}
@@ -80,58 +73,6 @@ export const SafeSerumInfoView = (props: {
       )}
     </>
   );
-
-  // // Activities list 
-  // const renderActivities= (
-  //   <>
-  //     {proposals && proposals.length && (
-  //       proposals.map((proposal) => (
-  //         proposal.activities.map((activity: any) => {
-
-  //           let icon = null;
-
-  //           switch (activity.description) {
-  //             case 'approved':
-  //               icon = <IconApprove className="mean-svg-icons fg-green" />;
-  //               break;
-  //             case 'rejected':
-  //               icon = <IconCross className="mean-svg-icons fg-red" />;
-  //               break;
-  //             case 'passed':
-  //               icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
-  //               break;
-  //             case 'created':
-  //               icon = <IconCreated className="mean-svg-icons fg-purple" />;
-  //               break;
-  //             case 'deleted':
-  //               icon = <IconMinus className="mean-svg-icons fg-purple" />;
-  //               break;
-  //             default:
-  //               icon = "";
-  //               break;
-  //           }
-
-  //           return (
-  //             <div 
-  //               key={activity.id}
-  //               className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
-  //               >
-  //                 <div className="list-item">
-  //                   <span className="mr-2">
-  //                       {activity.date}
-  //                   </span>
-  //                   {icon}
-  //                   <span>
-  //                     {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
-  //                   </span>
-  //                 </div>
-  //             </div>
-  //           )
-  //         })
-  //       ))
-  //     )}
-  //   </>
-  // );
 
   // Programs list
   const getProgramsByUpgradeAuthority = useCallback(async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
@@ -154,9 +95,9 @@ export const SafeSerumInfoView = (props: {
 
     // 2. For each executable data account found in the previous step, fetch the corresponding program
     const programs: ProgramAccounts[] = [];
-    for (let i = 0; i < executableDataAccounts.length; i++) {
-      const executableData = executableDataAccounts[i].pubkey;
 
+    for (const item of executableDataAccounts) {
+      const executableData = item.pubkey;
       const executableAccountsFilter: MemcmpFilter = { memcmp: { offset: 4, bytes: executableData.toBase58() } }
       const executableAccounts = await connection.getProgramAccounts(
         BPFLoaderUpgradeab1e,
@@ -169,8 +110,8 @@ export const SafeSerumInfoView = (props: {
           filters: [
             executableAccountsFilter
           ]
-        });
-
+        }
+      );
       if (executableAccounts.length === 0) {
         continue;
       }
@@ -184,7 +125,7 @@ export const SafeSerumInfoView = (props: {
         owner: executableAccounts[0].account.owner,
         executable: executableData,
         upgradeAuthority: upgradeAuthority,
-        size: executableDataAccounts[i].account.data.byteLength
+        size: item.account.data.byteLength
 
       } as ProgramAccounts;
 
@@ -238,7 +179,7 @@ export const SafeSerumInfoView = (props: {
             <div 
               key={program.id}
               onClick={onSelectProgram}
-              className={`d-flex w-100 align-items-center simplelink ${program.id % 2 === 0 ? '' : 'background-gray'}`}
+              className={`d-flex w-100 align-items-center simplelink ${program.id % 2 === 0 ? '' : 'bg-secondary-02'}`}
               >
                 <Row className="list-item hover-list">
                   <Col>
@@ -285,13 +226,11 @@ export const SafeSerumInfoView = (props: {
     <>
       <SafeInfo
         onEditMultisigClick={onEditMultisigClick}
-        onNavigateAway={onNavigateAway}
-        onNewProposalMultisigClick={onNewProposalMultisigClick}
+        onNewProposalClicked={onNewProposalClicked}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}
         selectedMultisig={selectedMultisig}
         tabs={tabs}
-        vestingAccountsCount={vestingAccountsCount}
        />
     </>
   )

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import { UserTokenAccount } from "../../../../models/accounts";
+import { UserTokenAccount } from "models/accounts";
 import { VestingContractCreateForm } from '../VestingContractCreateForm';
 import { TransactionFees } from '@mean-dao/msp';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';

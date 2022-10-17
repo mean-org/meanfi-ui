@@ -3,6 +3,7 @@ import { Modal } from "antd";
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 export const ModalTemplate = (props: {
+  centered?: boolean;
   content?: JSX.Element;
   handleClose: any;
   heading?: string;
@@ -10,6 +11,7 @@ export const ModalTemplate = (props: {
   title: string;
 }) => {
   const {
+    centered,
     content,
     handleClose,
     heading,
@@ -21,6 +23,7 @@ export const ModalTemplate = (props: {
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{title}</div>}
+      centered={centered}
       footer={null}
       open={isVisible}
       onCancel={handleClose}

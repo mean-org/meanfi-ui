@@ -92,7 +92,7 @@ export const AccountsMergeModal = (props: {
           result: ''
         });
 
-        return await createTokenMergeTx(
+        return createTokenMergeTx(
           connection,
           mintPubkey,
           publicKey,
@@ -237,9 +237,7 @@ export const AccountsMergeModal = (props: {
         if (sent && !transactionCancelled) {
           const confirmed = await confirmTx();
           consoleOut('confirmed:', confirmed);
-          if (confirmed) {
-            setIsBusy(false);
-          } else { setIsBusy(false); }
+          setIsBusy(false);
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }

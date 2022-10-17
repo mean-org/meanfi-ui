@@ -1,0 +1,106 @@
+.account-selector {
+  .account-group-heading {
+    border-bottom: 1px solid var(--color-secondary-alpha-50);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.8rem;
+  }
+  .accounts-list {
+    &:not(:last-of-type) {
+      margin-bottom: 1.8rem;
+    }
+    .transaction-list-row {
+      margin: 0;
+      border: none;
+      border-radius: 6px !important;
+      background-color: var(--color-secondary-alpha-01);
+      &:not(:last-of-type) {
+        margin-bottom: 0.8rem;
+      }
+      &.selected {
+        background-color: var(--darken) !important;
+      }
+      .check-cell {
+        display: inline-flex;
+        flex: 0 0 28px;
+        width: 28px;
+        padding-right: 4px;
+      }
+      .icon-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: 0 0 30px;
+        width: 30px;
+        padding-right: 4px;
+        color: var(--color-secondary-alpha-85);
+        .mean-svg-icons {
+          width: auto;
+          height: auto;
+        }
+        .provider-icon {
+          padding: 3px;
+          background-color: var(--wallet-provider-background);
+          border-radius: 5px;
+        }
+      }
+      .description-cell {
+        flex: 1 1 auto !important;
+        display: grid;
+        padding: 0 10px 0 5px;
+        .title {
+          font-size: 0.85rem;
+          line-height: 1.25;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          .chunk1 {
+            font-weight: 900;
+            display: inline-block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 14px !important;
+            @media (max-width: 359.98px) {
+              max-width: 88px;
+            }
+            @media (min-width: 360px) and (max-width: 399.98px) {
+              max-width: 100px;
+            }
+            @media (min-width: 400px) and (max-width: 419.98px) {
+              max-width: 144px;
+            }
+            @media (min-width: 420px) and (max-width: 449.98px) {
+              max-width: 158px;
+            }
+            @media (min-width: 450px) and (max-width: 575.98px) {
+              max-width: 164px;
+            }
+            @media (min-width: 576px) {
+              max-width: 176px;
+            }
+          }
+          .chunk2 {
+            margin-left: 4px;
+            font-weight: 400;
+            display: inline-block;
+          }
+        }
+        .subtitle {
+          display: block;
+          color: var(--color-secondary-alpha-50);
+          font-size: inherit;
+          line-height: inherit;
+        }
+      }
+      .rate-cell {
+        flex: 0 0 auto !important;
+        .rate-amount {
+          font-size: 13px;
+        }
+        .interval {
+          margin-top: 4px;
+        }
+      }
+    }
+  }
+}

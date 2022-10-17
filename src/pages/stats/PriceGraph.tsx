@@ -156,13 +156,7 @@ export const PriceGraph = (props : {
             width={35}
             tickSize={0}
             tickMargin={5}
-            tickFormatter={(priceData) => {
-              if (priceData === 0) {
-                return priceData;
-              } else {
-                return priceData;
-              }
-            }}
+            tickFormatter={(priceData) => priceData || 0}
           />
           <Tooltip
             content={

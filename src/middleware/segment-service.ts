@@ -117,6 +117,8 @@ export enum AppUsageEvent {
     UnwrapSolCompleted = "Unwrap SOL Completed",
     UnwrapSolFailed = "Unwrap SOL Failed",
     // Multisig
+    CreateSuperSafeAccountCompleted = "Create SuperSafe account Completed",
+    CreateSuperSafeAccountFailed = "Create SuperSafe account Failed",
     CreateProposalCompleted = "Create Proposal Completed",
     CreateProposalFailed = "Create Proposal Failed",
     ApproveProposalCompleted = "Approve Proposal Completed",

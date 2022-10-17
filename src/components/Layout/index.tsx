@@ -1,33 +1,40 @@
+import { Connection } from "@solana/web3.js";
+import { Drawer, Empty, Layout } from "antd";
+import { segmentAnalytics } from "App";
+import { AccountSelectorModal } from "components/AccountSelectorModal";
+import { AppBar } from "components/AppBar";
+import { FooterBar } from "components/FooterBar";
+import { openNotification } from "components/Notifications";
+import { TransactionConfirmationHistory } from "components/TransactionConfirmationHistory";
+import {
+  ACCOUNTS_ROUTE_BASE_PATH,
+  CREATE_SAFE_ROUTE_PATH,
+  GOOGLE_ANALYTICS_PROD_TAG_ID,
+  LANGUAGES,
+  PERFORMANCE_SAMPLE_INTERVAL,
+  PERFORMANCE_THRESHOLD,
+  SOLANA_STATUS_PAGE
+} from "constants/common";
+import { useAccountsContext } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { useConnectionConfig } from "contexts/connection";
+import useOnlineStatus from "contexts/online-status";
+import { TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import { environment } from "environments/environment";
+import useLocalStorage from "hooks/useLocalStorage";
+import { gitInfo } from "index";
+import { reportConnectedAccount } from "middleware/api";
+import { AppUsageEvent } from "middleware/segment-service";
+import { consoleOut, isProd, isValidAddress } from "middleware/ui";
+import { isUnauthenticatedRoute } from "middleware/utils";
+import { AccountDetails } from "models/accounts";
 import React, { useCallback, useContext, useEffect, useState } from "react";
+import { browserName, deviceType, fullBrowserVersion, isDesktop, isMobile, isTablet, osName, osVersion } from "react-device-detect";
+import ReactGA from 'react-ga';
+import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./style.scss";
-import { gitInfo } from "../..";
-import { Drawer, Empty, Layout } from "antd";
-import { AppBar } from "../AppBar";
-import { FooterBar } from "../FooterBar";
-import { AppStateContext } from "../../contexts/appstate";
-import { useTranslation } from "react-i18next";
-import { useConnectionConfig } from "../../contexts/connection";
-import { useWallet } from "../../contexts/wallet";
-import { consoleOut, isProd, isValidAddress } from "../../middleware/ui";
-import ReactGA from 'react-ga';
-// import { InfluxDB, Point } from '@influxdata/influxdb-client';
-import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
-import { environment } from "../../environments/environment";
-import { GOOGLE_ANALYTICS_PROD_TAG_ID, LANGUAGES, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_THRESHOLD, SOLANA_STATUS_PAGE } from "../../constants";
-import useLocalStorage from "../../hooks/useLocalStorage";
-import { reportConnectedAccount } from "../../middleware/api";
-import { Connection } from "@solana/web3.js";
-import useOnlineStatus from "../../contexts/online-status";
-import { segmentAnalytics } from "../../App";
-import { AppUsageEvent } from "../../middleware/segment-service";
-import { openNotification } from "../Notifications";
-import { TxConfirmationContext } from "../../contexts/transaction-status";
-import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
-import { isUnauthenticatedRoute } from "../../middleware/utils";
-import { AccountDetails } from "../../models/accounts";
-import { useAccountsContext } from "contexts/accounts";
 
 const { Header, Content, Footer } = Layout;
 
@@ -38,11 +45,15 @@ export const AppLayout = React.memo((props: any) => {
     theme,
     tpsAvg,
     previousRoute,
+    selectedAccount,
+    lastUsedAccount,
+    isSelectingAccount,
     previousWalletConnectState,
     setPreviousWalletConnectState,
     setNeedReloadMultisigAccounts,
-    setShouldLoadTokens,
+    setIsSelectingAccount,
     refreshTokenBalance,
+    setSelectedAccount,
     setDiagnosisInfo,
     setPreviousRoute,
     setSelectedAsset,
@@ -57,28 +68,20 @@ export const AppLayout = React.memo((props: any) => {
   const { refreshAccount } = useAccountsContext();
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { wallet, provider, connected, publicKey, connecting, select } = useWallet();
+  const { wallet, provider, connected, publicKey, connecting, select, disconnect, isSelectingWallet } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
   const [language, setLanguage] = useState("");
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
-  // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
+  const [shouldSelectAccount, setShouldSelectAccount] = useState(false);
   const [needRefresh, setNeedRefresh] = useState(true);
 
-  // Clear cachedRpc on App destroy (window is being reloaded)
-  useEffect(() => {
-    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
-    return () => {
-        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
-    }
-  })
+  ///////////////
+  // Callbacks //
+  ///////////////
 
-  const handleTabClosingOrPageRefresh = () => {
-    window.localStorage.removeItem('cachedRpc');
-  }
-
-  // Callback to fetch performance data (TPS)
+  // Fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
 
     const serumRpc = "https://solana-api.projectserum.com";
@@ -114,6 +117,53 @@ export const AppLayout = React.memo((props: any) => {
       return null;
     }
   }, []);
+
+  const getPlatform = useCallback((): string => {
+    if (isDesktop) {
+      return 'Desktop';
+    } else if (isTablet) {
+      return 'Tablet';
+    } else if (isMobile) {
+      return 'Mobile';
+    } else {
+      return 'Other';
+    }
+  }, []);
+
+  const needAccountSelection = useCallback(() => {
+    if (!isUnauthenticatedRoute(location.pathname) && !isSelectingWallet) {
+      return false;
+    }
+
+    if (isSelectingAccount) { return true; }
+
+    if (
+      wallet &&
+      publicKey &&
+      connected &&
+      selectedAccount.address &&
+      lastUsedAccount &&
+      (lastUsedAccount.owner === publicKey.toBase58() || lastUsedAccount.address === publicKey.toBase58()) &&
+      selectedAccount.address === lastUsedAccount.address
+      // (!selectedAccount.address || (!lastUsedAccount || lastUsedAccount.owner !== publicKey.toBase58() || lastUsedAccount.address !== publicKey.toBase58()) )
+    ) {
+      return false;
+    }
+
+    return true;
+  }, [connected, isSelectingAccount, isSelectingWallet, lastUsedAccount, location.pathname, publicKey, selectedAccount.address, wallet]);
+
+  ////////////////
+  // UseEffects //
+  ////////////////
+
+  // Clear cachedRpc on App destroy (window is being reloaded)
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    return () => {
+        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    }
+  })
 
   // Get Performance Samples on a timeout
   useEffect(() => {
@@ -154,47 +204,6 @@ export const AppLayout = React.memo((props: any) => {
     getPerformanceSamples,
     setTpsAvg,
   ]);
-
-  const getPlatform = useCallback((): string => {
-    return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
-  }, []);
-
-  /*
-  const sendConnectionMetric = useCallback((address: string) => {
-    const url = appConfig.getConfig().influxDbUrl;
-    const token = appConfig.getConfig().influxDbToken;
-    const org = appConfig.getConfig().influxDbOrg;
-    const bucket = appConfig.getConfig().influxDbBucket;
-    const writeApi = new InfluxDB({url, token, timeout: 3000, writeOptions: {maxRetries: 0}}).getWriteApi(org, bucket);
-    const data = {
-      platform: getPlatform(),
-      browser: browserName,
-      'wallet_address': address,
-      'wallet_type': provider?.name || 'Other'
-    };
-    writeApi.useDefaultTags({
-      platform: getPlatform(),
-      browser: browserName
-    });
-
-    const point1 = new Point('wallet_account_connections')
-      .tag('wallet_address', address)
-      .tag('wallet_type', provider?.name || 'Other')
-      .intField('value', 1);
-
-    writeApi.writePoint(point1);
-
-    // flush pending writes and close writeApi
-    writeApi
-      .close()
-      .then(() => {
-        consoleOut('InfluxDB write API - WRITE FINISHED', data, 'green');
-      })
-      .catch(e => {
-        consoleOut('InfluxDB write API - WRITE FAILED', e, 'red');
-      })
-  }, [provider, getPlatform]);
-  */
 
   // Init Google Analytics
   useEffect(() => {
@@ -269,9 +278,6 @@ export const AppLayout = React.memo((props: any) => {
             language: language
           });
 
-          // if (!isLocal()) {
-          //   sendConnectionMetric(walletAddress);
-          // }
           setNeedRefresh(true);
 
           // Record pending referral, get referrals count and clear referralAddress from localStorage
@@ -332,31 +338,32 @@ export const AppLayout = React.memo((props: any) => {
   // Get referral address from query string params and save it to localStorage
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.has('ref')) {
-      const address = params.get('ref');
-      if (address && isValidAddress(address)) {
-        consoleOut('Referral address:', address, 'green');
-        setReferralAddress(address);
-        setTimeout(() => {
-          if (!publicKey) {
-            openNotification({
-              title: t('notifications.friend-referral-completed'),
-              description: t('referrals.address-processed'),
-              type: "info"
-            });
-          }
-        }, 1000);
-        navigate('/');
-      } else {
-        consoleOut('Invalid address', '', 'red');
-        openNotification({
-          title: t('notifications.error-title'),
-          description: t('referrals.address-invalid'),
-          type: "error"
-        });
-        navigate('/');
-      }
+    if (!params.has('ref')) { return; }
+
+    const address = params.get('ref');
+    if (address && isValidAddress(address)) {
+      consoleOut('Referral address:', address, 'green');
+      setReferralAddress(address);
+      setTimeout(() => {
+        if (!publicKey) {
+          openNotification({
+            title: t('notifications.friend-referral-completed'),
+            description: t('referrals.address-processed'),
+            type: "info"
+          });
+        }
+      }, 1000);
+      navigate('/');
+    } else {
+      consoleOut('Invalid address', '', 'red');
+      openNotification({
+        title: t('notifications.error-title'),
+        description: t('referrals.address-invalid'),
+        type: "error"
+      });
+      navigate('/');
     }
+
   }, [
     location,
     publicKey,
@@ -376,42 +383,25 @@ export const AppLayout = React.memo((props: any) => {
 
     addRouteNameClass();
 
-    if (location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
-      setShouldLoadTokens(true);
-    }
-
     return () => {
       if (bodyClass) {
         document.body.classList.remove(bodyClass);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   // Clear accounts state when leaving
   useEffect(() => {
-    const isAccountPage = location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH);
-
     if (location.pathname !== previousRoute) {
-      if (!isAccountPage) {
-        setPreviousRoute(location.pathname);
-      }
+      setPreviousRoute(location.pathname);
     }
   }, [location.pathname, previousRoute, setPreviousRoute]);
-
-  const showDrawer = () => {
-    setIsDrawerVisible(true);
-  };
-
-  const hideDrawer = () => {
-    setIsDrawerVisible(false);
-  };
 
   // Update diagnosis info
   useEffect(() => {
     if (connectionConfig && connectionConfig.endpoint && needRefresh) {
       const now = new Date();
-      const device = isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
+      const device = getPlatform();
       const dateTime = `Client time: ${now.toUTCString()}`;
       const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
       const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${tpsAvg || '-'}, latency: ${responseTime}ms`;
@@ -432,14 +422,85 @@ export const AppLayout = React.memo((props: any) => {
     isOnline,
     provider,
     publicKey,
+    needRefresh,
     responseTime,
     connectionConfig,
-    needRefresh,
     setDiagnosisInfo,
+    getPlatform,
     t
   ]);
 
+  useEffect(() => {
+    if (publicKey) {
+      const needAccount = needAccountSelection();
+      if (needAccount) {
+        consoleOut('Need account selection:', needAccount, 'crimson');
+        setShouldSelectAccount(true);
+      } else if (
+        lastUsedAccount &&
+        (lastUsedAccount.owner === publicKey.toBase58() || lastUsedAccount.address === publicKey.toBase58()) &&
+        (!selectedAccount.address || selectedAccount.address !== lastUsedAccount.address)
+      ) {
+        consoleOut('Auto select account:', lastUsedAccount, 'crimson');
+        setSelectedAccount(lastUsedAccount);
+        setShouldSelectAccount(false);
+        setIsSelectingAccount(false);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastUsedAccount, selectedAccount, needAccountSelection, publicKey]);
+
+  ////////////////////
+  // Event handlers //
+  ////////////////////
+
+  const onCreateSafe = () => {
+    setShouldSelectAccount(false);
+    setIsSelectingAccount(false);
+    navigate(CREATE_SAFE_ROUTE_PATH);
+  }
+
+  const handleTabClosingOrPageRefresh = () => {
+    window.localStorage.removeItem('cachedRpc');
+  }
+
+  const showDrawer = () => {
+    setIsDrawerVisible(true);
+  };
+
+  const hideDrawer = () => {
+    setIsDrawerVisible(false);
+  };
+
+  ///////////////
+  // Rendering //
+  ///////////////
+
+  // lastUsedAccount
+
   if ((wallet && connected) || isUnauthenticatedRoute(location.pathname)) {
+
+    // Launch the Account selector modal
+    if (shouldSelectAccount) {
+      return (
+        <>
+          <AccountSelectorModal
+            isVisible={shouldSelectAccount}
+            isFullWorkflowEnabled={true}
+            onAccountSelected={() => setShouldSelectAccount(false)}
+            onCreateSafe={onCreateSafe}
+            onGotoSelectWallet={() => {
+              setShouldSelectAccount(false);
+              disconnect();
+              navigate('/');
+              select();
+            }}
+          />
+        </>
+      );
+    }
+
+    // Render layout
     return (
       <>
         <div className="App">
@@ -489,12 +550,16 @@ export const AppLayout = React.memo((props: any) => {
         </Drawer>
       </>
     );
+
   } else {
 
+    // Launch wallet selector modal
     if (!wallet && !connected && !connecting) {
+      setIsSelectingAccount(true);
       select();
     }
 
+    // Render dark MEAN background
     return (
       <>
         <div className="background-logo-container">

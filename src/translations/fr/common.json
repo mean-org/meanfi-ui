@@ -388,7 +388,7 @@
 		"secondary-action": "Fermer"
 	},
 	"multisig": {
-		"add-participant-cta": "Ajouter un participant",
+		"add-participant-cta": "Ajouter un signataire",
 		"back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
 		"create-asset": {
 			"delete-multisig": "",
@@ -413,7 +413,7 @@
 			"multisig-label-input-label": "Nom multisignature",
 			"multisig-label-placeholder": "Tapez un nom pour votre compte multisig",
 			"multisig-no-participants": "Aucun participant ajouté pour le moment",
-			"multisig-participants": "Signataires valides ({{numParticipants}} sur {{maxParticipants}})",
+			"multisig-participants": "Signataires ({{numParticipants}})",
 			"multisig-participants-warning message": "",
 			"multisig-participants-warning-message": "Il n'est pas recommandé de créer un Multisig avec le même nombre de participants que de signatures requises",
 			"multisig-threshold-input-empty": "Saisissez une valeur minimale requise pour les signatures",

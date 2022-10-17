@@ -4,6 +4,7 @@ import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-d
 import { MSP, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Radio, Row } from 'antd';
+import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -12,10 +13,8 @@ import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { StreamTreasuryType } from 'models/treasuries';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import { InputMean } from 'components/InputMean';
 
 export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;
@@ -42,9 +41,9 @@ export const StreamCloseModal = (props: {
   const {
     theme,
     splTokenList,
+    selectedAccount,
     setTransactionStatus,
   } = useContext(AppStateContext);
-  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
@@ -56,6 +55,10 @@ export const StreamCloseModal = (props: {
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [streamState, setStreamState] = useState<STREAM_STATE | STREAM_STATUS | undefined>(undefined);
   const [proposalTitle, setProposalTitle] = useState("");
+
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const getTreasuryTypeByTreasuryId = useCallback(async (treasuryId: string, streamVersion: number): Promise<StreamTreasuryType | undefined> => {
     if (!connection || !publicKey || !mspClient) { return undefined; }
@@ -322,19 +325,6 @@ export const StreamCloseModal = (props: {
     );
   }
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = getQueryAccountType();
-
   const renderLoading = () => {
     return (
       <div className="transaction-progress p-0">
@@ -431,7 +421,7 @@ export const StreamCloseModal = (props: {
         )}
 
         {/* Proposal title */}
-        {param === "multisig" && (
+        {isMultisigContext && (
           <div className="mb-3 mt-3">
             <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
             <InputMean
@@ -451,9 +441,9 @@ export const StreamCloseModal = (props: {
             type="primary"
             shape="round"
             size="large"
-            disabled={param === "multisig" && !isValidForm()}
+            disabled={isMultisigContext && !isValidForm()}
             onClick={onAcceptModal}>
-            {param === "multisig" ? getTransactionStartButtonLabel() : t('close-stream.primary-cta')}
+            {isMultisigContext ? getTransactionStartButtonLabel() : t('close-stream.primary-cta')}
           </Button>
         </div>
       </div>
@@ -473,7 +463,7 @@ export const StreamCloseModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{param === "multisig" ? "Propose close stream" : t('close-stream.modal-title')}</div>}
+      title={<div className="modal-title">{isMultisigContext ? "Propose close stream" : t('close-stream.modal-title')}</div>}
       footer={null}
       open={isVisible}
       onCancel={onCloseModal}

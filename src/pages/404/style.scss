@@ -8,7 +8,7 @@
     .cta-container {
         margin-top: 3rem;
     }
-    .st0{font-family: 'Lato';}
+    .st0{font-family: "Lato","Liberation Mono","Courier New",monospace!important;}
     .st1{font-size: 83.0285px;}
     .st2{fill:gray;}
     svg{
@@ -46,15 +46,12 @@
     .message:after, .message:before {
       color: var(--color-primary);
       font-size: 20px;
+      animation-name: opacity;
+      animation-duration: 2s;
+      animation-iteration-count: infinite;
       -webkit-animation-name: opacity;
       -webkit-animation-duration: 2s;
       -webkit-animation-iteration-count: infinite;
-      -webkit-animation-name: opacity;
-              animation-name: opacity;
-      -webkit-animation-duration: 2s;
-              animation-duration: 2s;
-      -webkit-animation-iteration-count: infinite;
-              animation-iteration-count: infinite;
     }
 }
 

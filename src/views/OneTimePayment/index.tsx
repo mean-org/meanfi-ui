@@ -8,6 +8,7 @@ import { segmentAnalytics } from 'App';
 import BN from 'bn.js';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
+  ACCOUNTS_ROUTE_BASE_PATH,
   CUSTOM_TOKEN_NAME,
   DATEPICKER_FORMAT,
   MIN_SOL_BALANCE_REQUIRED,
@@ -38,7 +39,6 @@ import { EventType, OperationType, TransactionStatus } from "models/enums";
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { OtpTxParams } from 'models/transfers';
 import moment from "moment";
-import { ACCOUNTS_ROUTE_BASE_PATH } from 'pages/accounts';
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 

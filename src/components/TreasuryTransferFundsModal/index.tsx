@@ -1,38 +1,34 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import "./style.scss";
-import { Modal, Button, Spin } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from '../../middleware/ui';
-import { isError } from '../../middleware/transactions';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
+import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
+import { PublicKey } from '@solana/web3.js';
+import { Button, Modal, Spin } from 'antd';
+import Checkbox from 'antd/lib/checkbox/Checkbox';
+import { BN } from 'bn.js';
+import { Identicon } from 'components/Identicon';
+import { InputMean } from 'components/InputMean';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { FALLBACK_COIN_IMAGE } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { isError } from 'middleware/transactions';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
 import {
   displayAmountWithSymbol,
-  formatThousands,
-  getSdkValue,
-  getAmountWithSymbol,
-  isValidNumber,
+  formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber,
   makeInteger,
   shortenAddress,
   toTokenAmount,
   toTokenAmountBn,
   toUiAmount
-} from '../../middleware/utils';
-import { useWallet } from '../../contexts/wallet';
-import { PublicKey } from '@solana/web3.js';
-import { FALLBACK_COIN_IMAGE } from '../../constants';
-import { Identicon } from '../Identicon';
-import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
-import Checkbox from 'antd/lib/checkbox/Checkbox';
-import { TokenDisplay } from '../TokenDisplay';
-import { BN } from 'bn.js';
-import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { useSearchParams } from 'react-router-dom';
-import { InputMean } from '../InputMean';
+} from 'middleware/utils';
+import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import "./style.scss";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -60,7 +56,6 @@ export const TreasuryTransferFundsModal = (props: {
     multisigAccounts,
     selectedToken
   } = props;
-  const [searchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const {
@@ -69,6 +64,7 @@ export const TreasuryTransferFundsModal = (props: {
     tokenBalance,
     isWhitelisted,
     loadingPrices,
+    selectedAccount,
     transactionStatus,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
@@ -85,6 +81,10 @@ export const TreasuryTransferFundsModal = (props: {
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
   const [proposalTitle, setProposalTitle] = useState('');
+
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
     const treasuryInfo: any = treasury ?? treasuryDetails;
@@ -452,23 +452,10 @@ export const TreasuryTransferFundsModal = (props: {
     );
   };
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = getQueryAccountType();
-
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{param === "multisig" ? "Propose withdrawal" : t('treasuries.withdraw-funds.modal-title')}</div>}
+      title={<div className="modal-title">{isMultisigContext ? "Propose withdrawal" : t('treasuries.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
@@ -485,7 +472,7 @@ export const TreasuryTransferFundsModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Proposal title */}
-            {param === "multisig" && (
+            {isMultisigContext && (
               <div className="mb-3">
                 <div className="form-label">{t('multisig.proposal-modal.title')}</div>
                 <InputMean
@@ -690,7 +677,7 @@ export const TreasuryTransferFundsModal = (props: {
                   type="primary"
                   shape="round"
                   size="large"
-                  disabled={param === "multisig" ? !isValidFormMultisig() : !isValidForm()}
+                  disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                       onAcceptWithdrawTreasuryFunds();
@@ -703,7 +690,7 @@ export const TreasuryTransferFundsModal = (props: {
                   {isBusy
                     ? ('multisig.transfer-tokens.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                      ? (param === "multisig" ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel())
+                      ? (isMultisigContext ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel())
                       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                         ? t('general.cta-finish')
                         : t('general.refresh')

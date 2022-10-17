@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { TokenBalance } from "@solana/web3.js";
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
-import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { formatThousands, getAmountFromLamports, shortenAddress } from "../../middleware/utils";
-import { UserTokenAccount } from "../../models/accounts";
-import { NATIVE_SOL } from "../../constants/tokens";
+import { getSolanaExplorerClusterParam } from "contexts/connection";
+import { getAmountFromLamports, getAmountWithSymbol, shortenAddress } from "middleware/utils";
+import { UserTokenAccount } from "models/accounts";
+import { NATIVE_SOL } from "constants/tokens";
 import { Tooltip } from "antd";
-import { MappedTransaction } from "../../middleware/history";
-import { getRelativeDate } from "../../middleware/ui";
+import { MappedTransaction } from "middleware/history";
+import { getRelativeDate } from "middleware/ui";
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
 
 export const TransactionItemView = (props: {
   accountAddress: string;
@@ -120,60 +120,75 @@ export const TransactionItemView = (props: {
   }
 
   const getDisplayAmount = (): string => {
+    if (!props.selectedAsset) { return ''; }
+
     const displayAmount = postTokenBalance
         ? isNativeAccountSelected
-          ? formatThousands(
-              getAmountFromLamports(balanceChange), NATIVE_SOL.decimals, NATIVE_SOL.decimals
+          ? getAmountWithSymbol(
+              getAmountFromLamports(balanceChange),
+              NATIVE_SOL.address,
+              true,
             )
-          : formatThousands(
+          : getAmountWithSymbol(
               balanceChange,
-              postTokenBalance.uiTokenAmount.decimals,
+              postTokenBalance.mint,
+              true,
+              props.tokenAccounts,
               postTokenBalance.uiTokenAmount.decimals
             )
         : isNativeAccountSelected
-          ? formatThousands(
+          ? getAmountWithSymbol(
               getAmountFromLamports(balanceChange),
-              NATIVE_SOL.decimals,
-              NATIVE_SOL.decimals
+              NATIVE_SOL.address,
+              true
             )
-          : formatThousands(
-            balanceChange,
-            props.selectedAsset?.decimals || 0,
-            props.selectedAsset?.decimals || 0
-          );
-
+          : getAmountWithSymbol(
+              balanceChange,
+              props.selectedAsset.address,
+              true,
+              props.tokenAccounts,
+              props.selectedAsset.decimals || 0,
+            );
 
     return displayAmount;
   }
 
   const getDisplayPostBalance = (): string => {
+    if (!props.selectedAsset) { return ''; }
+
     return postTokenBalance
       ? isNativeAccountSelected
-        ? formatThousands(
+        ? getAmountWithSymbol(
             getAmountFromLamports(postBalance),
-            NATIVE_SOL.decimals,
+            NATIVE_SOL.address,
+            true,
+            undefined,
             NATIVE_SOL.decimals
           )
-        : formatThousands(
+        : getAmountWithSymbol(
             postTokenBalance ? postTokenBalance.uiTokenAmount.uiAmount || postBalance : postBalance,
+            postTokenBalance.mint,
+            true,
+            props.tokenAccounts,
             postTokenBalance
               ? postTokenBalance.uiTokenAmount.decimals || NATIVE_SOL.decimals
               : NATIVE_SOL.decimals,
-            postTokenBalance
-              ? postTokenBalance.uiTokenAmount.decimals || NATIVE_SOL.decimals
-              : NATIVE_SOL.decimals
           )
       : isNativeAccountSelected
-        ? formatThousands(
+        ? getAmountWithSymbol(
             getAmountFromLamports(postBalance),
-            NATIVE_SOL.decimals,
+            NATIVE_SOL.address,
+            true,
+            undefined,
             NATIVE_SOL.decimals
           )
-        : formatThousands(
-          balanceChange,
-          props.selectedAsset?.decimals || 0,
-          props.selectedAsset?.decimals || 0
-        );
+        : getAmountWithSymbol(
+            balanceChange,
+            props.selectedAsset.address,
+            true,
+            props.tokenAccounts,
+            props.selectedAsset.decimals || 0
+          );
   }
 
   const getTransactionItem = () => {

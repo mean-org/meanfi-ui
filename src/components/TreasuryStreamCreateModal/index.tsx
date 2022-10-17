@@ -48,10 +48,8 @@ import { PaymentRateTypeOption } from "models/PaymentRateTypeOption";
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { CreateStreamParams } from 'models/streams';
 import moment from "moment";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import "./style.scss";
 
 const { Option } = Select;
 type TreasuryValues = Treasury | TreasuryInfo | undefined;
@@ -88,7 +86,6 @@ export const TreasuryStreamCreateModal = (props: {
     withdrawTransactionFees,
   } = props;
   const { t } = useTranslation('common');
-  const [searchParams] = useSearchParams();
   const { wallet, publicKey } = useWallet();
   const { endpoint } = useConnectionConfig();
   const {
@@ -98,6 +95,7 @@ export const TreasuryStreamCreateModal = (props: {
     recipientNote,
     isWhitelisted,
     fromCoinAmount,
+    selectedAccount,
     recipientAddress,
     paymentStartDate,
     lockPeriodAmount,
@@ -153,6 +151,11 @@ export const TreasuryStreamCreateModal = (props: {
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
+
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -225,26 +228,12 @@ export const TreasuryStreamCreateModal = (props: {
     return parseFloat(inputAmount) * price;
   }, [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken]);
 
-  const getQueryAccountType = useCallback(() => {
-    let accountTypeInQuery: string | null = null;
-    if (searchParams) {
-      accountTypeInQuery = searchParams.get('account-type');
-      if (accountTypeInQuery) {
-        return accountTypeInQuery;
-      }
-    }
-    return undefined;
-  }, [searchParams]);
-
-  const param = useMemo(() => getQueryAccountType(), [getQueryAccountType]);
-
   const hasNoStreamingAccounts = useMemo(() => {
-    return  param === "multisig" &&
-            selectedMultisig &&
+    return  isMultisigContext && selectedMultisig &&
             (!treasuryList || treasuryList.length === 0)
       ? true
       : false;
-  }, [param, selectedMultisig, treasuryList]);
+  }, [isMultisigContext, selectedMultisig, treasuryList]);
 
   /////////////////
   //   Getters   //
@@ -364,7 +353,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabel = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (param === "multisig" && !proposalTitle) {
+    } else if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
     } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
@@ -390,7 +379,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabelInLocked = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (param === "multisig" && !proposalTitle) {
+    } else if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
     } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
@@ -418,7 +407,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepTwoContinueButtonLabel = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (param === "multisig" && !proposalTitle) {
+    } else if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
     } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
@@ -448,7 +437,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getTransactionStartButtonLabel = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (param === "multisig" && !proposalTitle) {
+    } else if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
     } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
@@ -473,7 +462,7 @@ export const TreasuryStreamCreateModal = (props: {
       return t('transactions.validation.verified-recipient-unchecked');
     } else if (nativeBalance < getMinBalanceRequired()) {
       return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) });
-    } else if (param === "multisig") {
+    } else if (isMultisigContext) {
       return 'Submit proposal';
     } else {
       return t('transactions.validation.valid-approve');
@@ -483,7 +472,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getTransactionStartButtonLabelInLocked = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (param === "multisig" && !proposalTitle) {
+    } else if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
     } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
@@ -509,7 +498,7 @@ export const TreasuryStreamCreateModal = (props: {
       return t('transactions.validation.verified-recipient-unchecked');
     } else if (nativeBalance < getMinBalanceRequired()) {
       return t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) });
-    } else if (param === "multisig") {
+    } else if (isMultisigContext) {
       return 'Submit proposal';
     } else {
       return t('transactions.validation.valid-approve');
@@ -1394,7 +1383,7 @@ export const TreasuryStreamCreateModal = (props: {
   //////////////////
 
   const isStreamingAccountSelected = (): boolean => {
-    const isMultisig = param === "multisig" && selectedMultisig ? true : false;
+    const isMultisig = isMultisigContext && selectedMultisig ? true : false;
     return !isMultisig || (isMultisig && selectedStreamingAccountId && isValidAddress(selectedStreamingAccountId))
       ? true
       : false;
@@ -1589,7 +1578,7 @@ export const TreasuryStreamCreateModal = (props: {
       className="mean-modal treasury-stream-create-modal"
       title={
         (workingTreasuryType === TreasuryType.Open)
-          ? (<div className="modal-title">{param === "multisig"
+          ? (<div className="modal-title">{isMultisigContext
             ? "Propose outgoing stream"
             : t('treasuries.treasury-streams.add-stream-modal-title')}</div>)
           : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)
@@ -1623,7 +1612,7 @@ export const TreasuryStreamCreateModal = (props: {
               )}
 
               {/* Proposal title */}
-              {param === "multisig" && (
+              {isMultisigContext && (
                 <div className="mb-3">
                   <div className="form-label">{t('multisig.proposal-modal.title')}</div>
                   <InputMean
@@ -1639,7 +1628,7 @@ export const TreasuryStreamCreateModal = (props: {
 
               {!enableMultipleStreamsOption && (
                 <>
-                  {param === "multisig" && selectedMultisig && !treasuryDetails && (
+                  {isMultisigContext && selectedMultisig && !treasuryDetails && (
                     <>
                       <div className="mb-3">
                         <div className="form-label icon-label">
@@ -2412,7 +2401,7 @@ export const TreasuryStreamCreateModal = (props: {
               onClick={onContinueStepOneButtonClick}
               disabled={(workingTreasuryType === TreasuryType.Lock) ? (
                 !publicKey ||
-                (param === "multisig" && !proposalTitle) ||
+                (isMultisigContext && !proposalTitle) ||
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
@@ -2421,7 +2410,7 @@ export const TreasuryStreamCreateModal = (props: {
                 !arePaymentSettingsValid()
               ) : (
                 !publicKey ||
-                (param === "multisig" && !proposalTitle) ||
+                (isMultisigContext && !proposalTitle) ||
                 (!enableMultipleStreamsOption && !isMemoValid()) ||
                 !isStreamingAccountSelected() ||
                 !isDestinationAddressValid() ||
@@ -2443,7 +2432,7 @@ export const TreasuryStreamCreateModal = (props: {
               onClick={workingTreasuryType === TreasuryType.Lock ? onContinueStepTwoButtonClick : onTransactionStart}
               disabled={workingTreasuryType === TreasuryType.Lock ? (
                 !publicKey ||
-                (param === "multisig" && !proposalTitle) ||
+                (isMultisigContext && !proposalTitle) ||
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
@@ -2453,7 +2442,7 @@ export const TreasuryStreamCreateModal = (props: {
                 parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
               ) : (
                 !publicKey ||
-                (param === "multisig" && !proposalTitle) ||
+                (isMultisigContext && !proposalTitle) ||
                 (!enableMultipleStreamsOption && !isMemoValid()) ||
                 !isStreamingAccountSelected() ||
                 !isDestinationAddressValid() ||
@@ -2488,7 +2477,7 @@ export const TreasuryStreamCreateModal = (props: {
               onClick={onTransactionStart}
               disabled={
                 !publicKey ||
-                (param === "multisig" && !proposalTitle) ||
+                (isMultisigContext && !proposalTitle) ||
                 !isMemoValid() ||
                 !isStreamingAccountSelected() ||
                 !isValidAddress(recipientAddress) ||
