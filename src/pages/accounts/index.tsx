@@ -868,17 +868,24 @@ export const AccountsView = () => {
     }
   }, []);
 
-  const fullAccountRefresh = () => {
+  const accountRefresh = () => {
     const fullRefreshCta = document.getElementById("account-refresh-cta");
     if (fullRefreshCta) {
       fullRefreshCta.click();
     }
   };
 
-  const reloadAssets = () => {
-    const tokensRefreshCta = document.getElementById("account-assets-hard-refresh-cta");
-    if (tokensRefreshCta) {
-      tokensRefreshCta.click();
+  const softReloadStreams = () => {
+    const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
+    if (streamsRefreshCta) {
+      streamsRefreshCta.click();
+    }
+  };
+
+  const hardReloadStreams = () => {
+    const streamsRefreshCta = document.getElementById("streams-refresh-reset-cta");
+    if (streamsRefreshCta) {
+      streamsRefreshCta.click();
     }
   };
 
@@ -889,27 +896,6 @@ export const AccountsView = () => {
     if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
       return;
     }
-
-    const softReloadAssets = () => {
-      const tokensRefreshCta = document.getElementById("account-assets-refresh-cta");
-      if (tokensRefreshCta) {
-        tokensRefreshCta.click();
-      }
-    };
-
-    const softReloadStreams = () => {
-      const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
-      if (streamsRefreshCta) {
-        streamsRefreshCta.click();
-      }
-    };
-
-    const hardReloadStreams = () => {
-      const streamsRefreshCta = document.getElementById("streams-refresh-reset-cta");
-      if (streamsRefreshCta) {
-        streamsRefreshCta.click();
-      }
-    };
 
     const turnOffLockWorkflow = () => {
       isWorkflowLocked = false;
@@ -971,11 +957,11 @@ export const AccountsView = () => {
         case OperationType.Unwrap:
         case OperationType.Transfer:
           setIsUnwrapping(false);
-          softReloadAssets();
+          accountRefresh();
           break;
         case OperationType.CreateAsset:
         case OperationType.CloseTokenAccount:
-          reloadAssets();
+          accountRefresh();
           break;
         case OperationType.DeleteAsset:
         case OperationType.SetAssetAuthority:
@@ -987,7 +973,7 @@ export const AccountsView = () => {
           break;
         case OperationType.StreamCreate:
           setTimeout(() => {
-            softReloadAssets();
+            accountRefresh();
             hardReloadStreams();
           }, 20);
           break;
@@ -1010,7 +996,7 @@ export const AccountsView = () => {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           }
-          softReloadAssets();
+          accountRefresh();
           softReloadStreams();
           break;
         case OperationType.StreamClose:
@@ -1055,8 +1041,8 @@ export const AccountsView = () => {
       } else if (item.operationType === OperationType.TransferTokens) {
         setIsBusy(false);
       }
-      fullAccountRefresh();
-      fullAccountRefresh();
+      accountRefresh();
+      accountRefresh();
     }
     resetTransactionStatus();
   }, [recordTxConfirmation, resetTransactionStatus]);
