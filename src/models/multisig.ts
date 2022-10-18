@@ -150,6 +150,12 @@ export type CreateMintPayload = {
   decimals: number;
 }
 
+export type SetProgramAuthPayload = {
+  programAddress: string;
+  programDataAddress: string;
+  newAuthAddress: string;
+}
+
 export type SetMintAuthPayload = {
   multisig: string;
   mint: string;
