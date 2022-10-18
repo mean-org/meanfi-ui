@@ -26,7 +26,7 @@ import { useWallet } from "contexts/wallet";
 import { IconArrowBack } from "Icons";
 import { appConfig, customLogger } from 'index';
 import { NATIVE_SOL_MINT } from "middleware/ids";
-import { consoleOut, getTransactionStatusForLogs, isLocal } from "middleware/ui";
+import { consoleOut, getTransactionStatusForLogs } from "middleware/ui";
 import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from "middleware/utils";
 import { OperationType, TransactionStatus } from "models/enums";
 import { SetProgramAuthPayload } from "models/multisig";
@@ -45,7 +45,6 @@ export const ProgramDetailsView = (props: {
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const {
-    isWhitelisted,
     transactionStatus,
     refreshTokenBalance,
     setTransactionStatus,
@@ -81,10 +80,6 @@ export const ProgramDetailsView = (props: {
     // Sends the value to the parent component "SafeView"
     onDataToProgramView();
   };
-
-  const isUnderDevelopment = () => {
-    return isLocal() || isWhitelisted ? true : false;
-  }
 
   /////////////////
   //  Init code  //
@@ -218,7 +213,7 @@ export const ProgramDetailsView = (props: {
           programDataAddress: data.programDataAddress,
           bufferAddress: data.bufferAddress
         };
-        
+
         consoleOut('data:', payload);
 
         // Log input data
@@ -990,7 +985,7 @@ export const ProgramDetailsView = (props: {
                   Set authority
                 </div>
             </Button>
-            {programSelected && isUnderDevelopment() && (
+            {programSelected && (
               <Tooltip title="This makes the program non-upgradable">
                 <Button
                   type="default"
