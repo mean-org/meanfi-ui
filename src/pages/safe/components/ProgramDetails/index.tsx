@@ -11,7 +11,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   Transaction
 } from "@solana/web3.js";
-import { Button, Col, Row } from "antd";
+import { Button, Col, Row, Tooltip } from "antd";
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { MultisigSetProgramAuthModal } from "components/MultisigSetProgramAuthModal";
 import { MultisigUpgradeProgramModal } from "components/MultisigUpgradeProgramModal";
@@ -26,9 +26,10 @@ import { useWallet } from "contexts/wallet";
 import { IconArrowBack } from "Icons";
 import { appConfig, customLogger } from 'index';
 import { NATIVE_SOL_MINT } from "middleware/ids";
-import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "middleware/ui";
+import { consoleOut, getTransactionStatusForLogs } from "middleware/ui";
 import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from "middleware/utils";
 import { OperationType, TransactionStatus } from "models/enums";
+import { SetProgramAuthPayload } from "models/multisig";
 import moment from 'moment';
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import ReactJson from 'react-json-view';
@@ -44,7 +45,6 @@ export const ProgramDetailsView = (props: {
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const {
-    isWhitelisted,
     transactionStatus,
     refreshTokenBalance,
     setTransactionStatus,
@@ -81,11 +81,7 @@ export const ProgramDetailsView = (props: {
     onDataToProgramView();
   };
 
-  const isUnderDevelopment = () => {
-    return isLocal() || (isDev() && isWhitelisted) ? true : false;
-  }
-
-    /////////////////
+  /////////////////
   //  Init code  //
   /////////////////
 
@@ -217,7 +213,7 @@ export const ProgramDetailsView = (props: {
           programDataAddress: data.programDataAddress,
           bufferAddress: data.bufferAddress
         };
-        
+
         consoleOut('data:', payload);
 
         // Log input data
@@ -396,7 +392,32 @@ export const ProgramDetailsView = (props: {
     setTransactionFees(fees);
   }, []);
 
-  const onAcceptSetProgramAuth = (params: any) => {
+  const setInmutableProgram = (programId: string) => {
+    const programAddress = new PublicKey(programId);
+    const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+    PublicKey.findProgramAddress(
+      [programAddress.toBuffer()],
+      BPF_LOADER_UPGRADEABLE_PID
+    )
+    .then((result: any) => {
+      const programDataAddress = result[0];
+      const fees = {
+        blockchainFee: 0.000005,
+        mspFlatFee: 0.000010,
+        mspPercentFee: 0
+      };
+      setTransactionFees(fees);
+      const params: SetProgramAuthPayload = {
+        programAddress: programId,
+        programDataAddress: programDataAddress.toBase58(),
+        newAuthAddress: '', // Empty to make program non-upgradable (inmutable)
+      };
+      onAcceptSetProgramAuth(params);
+    })
+    .catch(err => console.error(err));
+  }
+
+  const onAcceptSetProgramAuth = (params: SetProgramAuthPayload) => {
     consoleOut('params', params, 'blue');
     onExecuteSetProgramAuthTx(params);
   };
@@ -405,7 +426,7 @@ export const ProgramDetailsView = (props: {
     setIsSetProgramAuthModalVisible(false);
   },[]);
 
-  const onExecuteSetProgramAuthTx = useCallback(async (data: any) => {
+  const onExecuteSetProgramAuthTx = useCallback(async (params: SetProgramAuthPayload) => {
 
     let transaction: Transaction;
     let signature: any;
@@ -417,7 +438,7 @@ export const ProgramDetailsView = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const setProgramAuth = async (data: any) => {
+    const setProgramAuth = async (data: SetProgramAuthPayload) => {
 
       if (!multisigClient || !selectedMultisig || !publicKey) { return null; }
 
@@ -434,8 +455,12 @@ export const ProgramDetailsView = (props: {
           isSigner: false,
         },
         { pubkey: multisigSigner, isWritable: false, isSigner: true },
-        { pubkey: new PublicKey(data.newAuthAddress), isWritable: false, isSigner: false },
       ];
+
+      // If it is an authority change, add the account of the new authority otherwise the program will be inmutable
+      if (data.newAuthAddress) {
+        ixAccounts.push({ pubkey: new PublicKey(data.newAuthAddress), isWritable: false, isSigner: false });
+      }
 
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
@@ -457,7 +482,7 @@ export const ProgramDetailsView = (props: {
 
     const createTx = async (): Promise<boolean> => {
 
-      if (publicKey && data) {
+      if (publicKey && params) {
         consoleOut("Start transaction for create multisig", '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
@@ -466,19 +491,12 @@ export const ProgramDetailsView = (props: {
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        // Create a transaction
-        const payload = {
-          programAddress: data.programAddress,
-          programDataAddress: data.programDataAddress,
-          newAuthAddress: data.newAuthAddress
-        };
-        
-        consoleOut('data:', payload);
+        consoleOut('data:', params);
 
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: payload
+          inputs: params
         });
 
         transactionLog.push({
@@ -511,7 +529,7 @@ export const ProgramDetailsView = (props: {
           return false;
         }
 
-        return setProgramAuth(data)
+        return setProgramAuth(params)
           .then(value => {
             if (!value) { return false; }
             consoleOut('createTreasury returned transaction:', value);
@@ -967,18 +985,20 @@ export const ProgramDetailsView = (props: {
                   Set authority
                 </div>
             </Button>
-            {isUnderDevelopment() && (
-              <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke"
-                disabled={isTxInProgress()}
-                onClick={() => {}}>
-                  <div className="btn-content">
-                    Make immutable
-                  </div>
-              </Button>
+            {programSelected && (
+              <Tooltip title="This makes the program non-upgradable">
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  disabled={isTxInProgress()}
+                  onClick={() => setInmutableProgram(programSelected.pubkey.toBase58())}>
+                    <div className="btn-content">
+                      Make immutable
+                    </div>
+                </Button>
+              </Tooltip>
             )}
           </Col>
         </Row>
@@ -1007,7 +1027,7 @@ export const ProgramDetailsView = (props: {
           isVisible={isSetProgramAuthModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
-          handleOk={onAcceptSetProgramAuth}
+          handleOk={(params: SetProgramAuthPayload) => onAcceptSetProgramAuth(params)}
           handleClose={() => setIsSetProgramAuthModalVisible(false)}
           programId={programSelected?.pubkey.toBase58()}
           isBusy={isBusy}
