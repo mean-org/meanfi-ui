@@ -4904,7 +4904,7 @@ export const AccountsView = () => {
                         {renderMoneyStreamsSummary()}
                       </div>
 
-                      <div className="asset-category-title flex-row justify-content-center">
+                      <div className="asset-category-title text-center pt-1 pb-1">
                         <Segmented
                           size="small"
                           defaultValue={AssetGroups.Tokens}
@@ -4912,6 +4912,20 @@ export const AccountsView = () => {
                           options={getAssetsGroupOptions()}
                           onChange={(value: any) => setSelectedAssetsGroup(value)}
                         />
+                        <div className="mt-1">
+                          {selectedAssetsGroup === AssetGroups.Tokens && (
+                            <span>Estimated value of tokens: {toUsCurrency(totalTokenAccountsValue)}</span>
+                          )}
+                          {selectedAssetsGroup === AssetGroups.Nfts && (
+                            <span>Estimated value of NFTs: --</span>
+                          )}
+                          {selectedAssetsGroup === AssetGroups.Apps && (
+                            <span>Estimated value of App assets: --</span>
+                          )}
+                          {selectedAssetsGroup === AssetGroups.OtherAssets && (
+                            <span>Estimated value of other assets: --</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* <div className="asset-category-title flex-fixed-right">

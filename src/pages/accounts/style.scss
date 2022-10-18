@@ -125,6 +125,12 @@
             margin: 0 0 0.5rem -2.6%;
             padding: 3px calc(2.6% + 4px) 3px 2.6%;
         }
+        .asset-category-estimated {
+            margin-top: 5px;
+            color: var(--color-secondary-alpha-40);
+            font-size: 12px;
+            line-height: 1;
+        }
     }
 
     .asset-category {

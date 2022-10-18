@@ -3,6 +3,7 @@ import { MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionSta
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream } from "@mean-dao/msp";
+import { FindNftsByOwnerOutput } from "@metaplex-foundation/js";
 import { PublicKey } from "@solana/web3.js";
 import { BN } from "bn.js";
 import { isCacheItemExpired } from "cache/persistentCache";
@@ -11,7 +12,7 @@ import { ACCOUNTS_ROUTE_BASE_PATH } from "constants/common";
 import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from "constants/tokens";
 import { TREASURY_TYPE_OPTIONS } from "constants/treasury-type-options";
 import { appConfig, customLogger } from "index";
-import { getUserAccountTokens } from "middleware/accounts";
+import { getAccountNFTs, getUserAccountTokens } from "middleware/accounts";
 import { getPrices, getSolanaTokenListKeyNameByCluster, getSolFlareTokenList, getSplTokens } from "middleware/api";
 import { MappedTransaction } from "middleware/history";
 import { PerformanceCounter } from "middleware/perf-counter";
@@ -122,6 +123,7 @@ interface AppStateConfig {
   lastTxSignature: string;
   streamsSummary: StreamsSummary;
   lastStreamsSummary: StreamsSummary;
+  accountNfts: FindNftsByOwnerOutput | undefined;
   // DDCAs
   ddcaOption: DdcaFrequencyOption | undefined;
   recurringBuys: DdcaAccount[];
@@ -298,6 +300,7 @@ const contextDefaultValues: AppStateConfig = {
   lastTxSignature: '',
   streamsSummary: initialSummary,
   lastStreamsSummary: initialSummary,
+  accountNfts: undefined,
   // DDCAs
   ddcaOption: undefined,
   recurringBuys: [],
@@ -485,6 +488,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
+  const [accountNfts, setAccountNfts] = useState<FindNftsByOwnerOutput | undefined>(contextDefaultValues.accountNfts);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
   const [meanTokenList, setMeanTokenlist] = useState<UserTokenAccount[] | undefined>(undefined);
   const [tokensLoaded, setTokensLoaded] = useState(contextDefaultValues.tokensLoaded);
@@ -1486,6 +1490,29 @@ const AppStateProvider: React.FC = ({ children }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
 
+  // Get and populate the list of NFTs that the user holds
+  useEffect(() => {
+    if (
+      !connection ||
+      !publicKey ||
+      !selectedAccount.address ||
+      !shouldLoadTokens ||
+      isSelectingAccount
+    ) {
+      return;
+    }
+
+    getAccountNFTs(
+      connection,
+      selectedAccount.address
+    ).then(response => {
+      consoleOut('getAccountNFTs() response:', response, 'blue');
+      setAccountNfts(response)
+    })
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens]);
+
   // Same as above but on demand
   const getAssetsByAccount = useCallback((account: string) => {
 
@@ -1698,6 +1725,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         lastTxSignature,
         streamsSummary,
         lastStreamsSummary,
+        accountNfts,
         recurringBuys,
         loadingRecurringBuys,
         multisigAccounts,

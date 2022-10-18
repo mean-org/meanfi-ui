@@ -1,3 +1,4 @@
+import { Metaplex } from "@metaplex-foundation/js";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, AuthorityType, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
   AccountInfo,
@@ -11,8 +12,6 @@ import {
   Transaction,
   TransactionInstruction
 } from "@solana/web3.js";
-import { WRAPPED_SOL_MINT_ADDRESS } from "../constants";
-import { MEAN_TOKEN_LIST, NATIVE_SOL } from "../constants/tokens";
 import {
   AccountsDictionary,
   AccountTokenParsedInfo,
@@ -21,10 +20,12 @@ import {
   UserTokenAccount,
   UserTokensResponse
 } from "models/accounts";
-import { consoleOut } from "./ui";
-import { findATokenAddress, getAmountFromLamports, shortenAddress } from "./utils";
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { TokenPrice } from "models/TokenPrice";
+import { WRAPPED_SOL_MINT_ADDRESS } from "../constants";
+import { MEAN_TOKEN_LIST, NATIVE_SOL } from "../constants/tokens";
+import { consoleOut } from "./ui";
+import { findATokenAddress, getAmountFromLamports, shortenAddress } from "./utils";
 
 export async function getMultipleAccounts(
   connection: Connection,
@@ -460,7 +461,7 @@ const updateTokenAccountBalancesInTokenList = (accTks: AccountTokenParsedInfo[],
   return listCopy;
 }
 
-// Fetch all the owned token accounts with balances, also build duplicated token groups for later merge
+// Fetch all the token accounts that the user hold, also build duplicated token groups for later merge
 export const getUserAccountTokens = async (
   connection: Connection,
   accountAddress: string,
@@ -540,7 +541,7 @@ export const getUserAccountTokens = async (
     const sortedList = sortTokenAccountsByUsdValue(balancesUpdated);
 
     const custom: UserTokenAccount[] = [];
-    // Build a list with all owned token accounts not already in sortedList as custom tokens
+    // Build a list with all token accounts holded by the user not already in sortedList as custom tokens
     accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
       if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
         const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
@@ -566,7 +567,7 @@ export const getUserAccountTokens = async (
     // Sort by valueInUsd and then by token balance
     const sortedCustomTokenList = sortTokenAccountsByUsdValue(custom);
 
-    // Finally add all owned token accounts as custom tokens
+    // Finally add all token accounts holded by the user as custom tokens when they cannot be identified
     const finalList = sortedList.concat(sortedCustomTokenList);
 
     // Find Wrapped sol token account and update state with its balance
@@ -585,6 +586,7 @@ export const getUserAccountTokens = async (
   return response;
 }
 
+// Get a list of tokens along with a balance map optionally including only the tokens that the user holds
 export const getTokensWithBalances = async (
   connection: Connection,
   accountAddress: string,
@@ -647,7 +649,7 @@ export const getTokensWithBalances = async (
     const sortedList = sortTokenAccountsByUsdValue(balancesUpdated);
 
     const custom: UserTokenAccount[] = [];
-    // Build a list with all owned token accounts not already in sortedList as custom tokens
+    // Build a list with all token accounts holded by the user not already in sortedList as custom tokens
     accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
       if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
         const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
@@ -673,7 +675,7 @@ export const getTokensWithBalances = async (
     // Sort by valueInUsd and then by token balance
     const sortedCustomTokenList = sortTokenAccountsByBalance(custom);
 
-    // Finally add all owned token accounts as custom tokens
+    // Finally add all token accounts holded by the user not already in sortedList as custom tokens
     const finalList = sortedList.concat(sortedCustomTokenList);
 
     // Sort by token balance
@@ -698,4 +700,18 @@ export const getTokensWithBalances = async (
   }
 
   return response;
+}
+
+export const getAccountNFTs = async (
+  connection: Connection,
+  accountAddress: string,
+) => {
+  const owner = new PublicKey(accountAddress);
+  const metaplex = new Metaplex(connection);
+
+  consoleOut('reading NFTs for:', accountAddress, 'blue');
+  const myNfts = await metaplex.nfts().findAllByOwner({
+    owner: owner
+  });
+  return myNfts;
 }
