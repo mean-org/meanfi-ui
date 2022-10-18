@@ -12,6 +12,7 @@ import { getAmountWithSymbol } from '../../middleware/utils';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
+import { SetProgramAuthPayload } from 'models/multisig';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -81,11 +82,12 @@ export const MultisigSetProgramAuthModal = (props: {
   ]);
 
   const onAcceptModal = () => {
-    props.handleOk({
+    const params: SetProgramAuthPayload = {
       programAddress: programId,
       programDataAddress: programDataAddress,
       newAuthAddress: newAuthAddress,
-    });
+    };
+    props.handleOk(params);
   }
 
   const onCloseModal = () => {
