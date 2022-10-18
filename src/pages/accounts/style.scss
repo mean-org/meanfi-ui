@@ -101,14 +101,12 @@
     }
 
     .asset-category-title {
-        text-transform: uppercase;
-        font-weight: 600;
+        font-size: 0.8rem;
         color: var(--color-secondary-alpha-70);
         background-color: var(--color-section);
-        top: 0;
+        top: -1px;
         position: sticky;
         z-index: 1;
-
         .title {
             padding-left: 1rem;
         }
