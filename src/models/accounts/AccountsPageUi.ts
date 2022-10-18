@@ -44,8 +44,15 @@ export interface AssetCta {
 }
 
 export interface CategoryDisplayItem {
+    id: string;
     title: string;
     subtitle: string;
     mainValue: string;
     secondaryValue: string;
+}
+
+export interface SelectedCategoryItem {
+    id: string;                         // The way to know which item is selected
+    mainCategory: AccountsPageCategory;
+    subCategory: AssetGroups;
 }

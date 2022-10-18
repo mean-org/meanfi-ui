@@ -82,7 +82,7 @@ import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from 'middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports, getAmountWithSymbol, getSdkValue, getTxIxResume,
@@ -4125,36 +4125,42 @@ export const AccountsView = () => {
   const getAppsCategoryItems = () => {
     const options: CategoryDisplayItem[] = [
       {
+        id: 'staking',
         title: 'Mean Staking',
         subtitle: '????',
         mainValue: '$0.00',
         secondaryValue: '--',
       },
       {
+        id: 'streaming',
         title: 'Payment Streaming',
         subtitle: '????',
         mainValue: '$0.00',
         secondaryValue: '--',
       },
       {
+        id: 'super-safe',
         title: 'SuperSafe',
         subtitle: '????',
         mainValue: '$0.00',
         secondaryValue: '--',
       },
       {
+        id: 'credix',
         title: 'Credix',
         subtitle: '????',
         mainValue: '$0.00',
         secondaryValue: '--',
       },
       {
+        id: 'raydium',
         title: 'Raydium',
         subtitle: '????',
         mainValue: '$0.00',
         secondaryValue: '--',
       },
       {
+        id: 'orca',
         title: 'Orca',
         subtitle: '????',
         mainValue: '$0.00',
