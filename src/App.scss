@@ -1918,6 +1918,40 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
   background: var(--color-primary) !important;
 }
 
+.ant-segmented {
+  padding: 4px;
+  &.ant-segmented-sm {
+    padding: 3px;
+  }
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--color-secondary-alpha-50);
+  background-color: var(--color-whitesmoke);
+  &:not(.ant-segmented-disabled) {
+    &:hover,
+    &:focus {
+      background-color: var(--color-whitesmoke);
+    }
+  }
+  .ant-segmented-thumb {
+    background-color: var(--color-section);
+    border-radius: 8px;
+    box-shadow: none;
+  }
+  .ant-segmented-item.ant-segmented-item-selected {
+    color: var(--color-secondary-alpha-85);
+    background-color: var(--color-section);
+    border-radius: 8px;
+    box-shadow: none;
+  }
+  .ant-segmented-item:not(.ant-segmented-item-selected) {
+    &:hover, 
+    &:focus {
+      color: var(--color-secondary-alpha-80);
+    }
+  }
+}
+
 // Account / Connection info
 .cluster-indicator {
   color: var(--color-light-orange);

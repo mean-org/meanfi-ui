@@ -135,31 +135,6 @@ export enum EventType {
     TxConfirmTimeout = 'txTimedout',
 }
 
-export enum MetaInfoCtaAction {
-    Send = 0,
-    Buy = 1,
-    Exchange = 2,
-    Invest = 3,
-    Deposit = 4,
-    UnwrapSol = 5,
-    WrapSol = 6,
-    MergeAccounts = 7,
-    Divider = 10,
-    Refresh = 11,
-    CloseAccount = 12,
-    Share = 13,
-    Close = 14,
-    CopyAssetMintAddress = 15,
-    VestingContractCreateStreamOnce = 20,
-    VestingContractCreateStreamBulk = 21,
-    VestingContractAddFunds = 21,
-    VestingContractViewSolBalance = 22,
-    VestingContractWithdrawFunds = 23,
-    VestingContractRefreshAccount = 24,
-    VestingContractClose = 25,
-    VestingContractEditSettings = 26,
-}
-
 export type VestingContractCategory = {
     label: string;
     value: SubCategory;

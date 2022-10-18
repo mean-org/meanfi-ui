@@ -29,7 +29,7 @@ import {
   Transaction,
   TransactionInstruction
 } from '@solana/web3.js';
-import { Alert, Button, Col, Divider, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
+import { Alert, Button, Col, Divider, Dropdown, Empty, Menu, Row, Segmented, Space, Spin, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import notification from 'antd/lib/notification';
 import { segmentAnalytics } from 'App';
@@ -89,9 +89,9 @@ import {
   shortenAddress,
   toUiAmount
 } from 'middleware/utils';
-import { AccountTokenParsedInfo, AssetCta, UserTokenAccount } from "models/accounts";
+import { AccountTokenParsedInfo, AssetCta, AssetGroups, CategoryDisplayItem, MetaInfoCtaAction, UserTokenAccount } from "models/accounts";
 import { MetaInfoCta } from 'models/common-types';
-import { EventType, MetaInfoCtaAction, OperationType, TransactionStatus } from 'models/enums';
+import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { CreateNewProposalParams, CREDIX_PROGRAM, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from 'models/multisig';
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { initialSummary, StreamsSummary } from 'models/streams';
@@ -108,6 +108,7 @@ import { MoneyStreamsInfoView } from 'views/MoneyStreamsInfo';
 import { MoneyStreamsOutgoingView } from 'views/MoneyStreamsOutgoing';
 import { StreamingAccountView } from 'views/StreamingAccount';
 import "./style.scss";
+import { SegmentedLabeledOption } from 'antd/lib/segmented';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 
@@ -226,6 +227,7 @@ export const AccountsView = () => {
   const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
   const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+  const [selectedAssetsGroup, setSelectedAssetsGroup] = useState<AssetGroups>();
   // Multisig Apps
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
@@ -3149,6 +3151,7 @@ export const AccountsView = () => {
     if (location.pathname.indexOf('/assets') !== -1) {
       consoleOut('Setting category:', 'assets', 'crimson');
       setSelectedCategory("assets");
+      setSelectedAssetsGroup(AssetGroups.Tokens);
       if (!asset) {
         setPathParamAsset('');
       } else if (autoOpenDetailsPanel) {
@@ -3157,6 +3160,7 @@ export const AccountsView = () => {
     } else if (location.pathname.indexOf('/streaming') !== -1) {
       consoleOut('Setting category:', 'streaming', 'crimson');
       setSelectedCategory("streaming");
+      setSelectedAssetsGroup(undefined);
       if (!streamingItemId) {
         setPathParamTreasuryId('');
         setPathParamStreamId('');
@@ -3167,11 +3171,13 @@ export const AccountsView = () => {
     } else if (location.pathname.indexOf('/super-safe') !== -1) {
       consoleOut('Setting category:', 'super-safe', 'crimson');
       setSelectedCategory("super-safe");
+      setSelectedAssetsGroup(undefined);
       if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
     } else {
       setSelectedCategory(undefined);
+      setSelectedAssetsGroup(undefined);
     }
 
   }, [
@@ -4005,6 +4011,159 @@ export const AccountsView = () => {
     navigate(url);
   }
 
+  ////////////////
+  // Validators //
+  ////////////////
+
+  const isDeleteAssetValid = () => {
+    if (selectedAsset) {
+      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+
+      if (!isSol && selectedAsset.balance as number === 0) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  const isSendFundsValid = () => {
+    if (selectedAsset && selectedAsset.balance as number > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  const isTransferOwnershipValid = () => {
+    if (selectedAsset) {
+      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+      
+      if (!isSol) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  //////////////
+  //  Events  //
+  //////////////
+
+  const getLeftPanelOptions = () => {
+    const items: ItemType[] = [];
+    if (isMultisigContext) {
+      items.push({
+        key: '01-create-asset',
+        label: (
+          <div onClick={onShowCreateAssetModal}>
+            <IconAdd className="mean-svg-icons" />
+            <span className="menu-item-text">Create an asset</span>
+          </div>
+        )
+      });
+    }
+    items.push({
+      key: '02-suggest-asset',
+      label: (
+        <div onClick={showSuggestAssetModal}>
+          <IconLightBulb className="mean-svg-icons" />
+          <span className="menu-item-text">Suggest an asset</span>
+        </div>
+      )
+    });
+    if (accountTokens && accountTokens.length > 0) {
+      if (hideLowBalances) {
+        items.push({
+          key: '03-show-low-balances',
+          label: (
+            <div onClick={() => toggleHideLowBalances(false)}>
+              <IconEyeOn className="mean-svg-icons" />
+              <span className="menu-item-text">Show low balances</span>
+            </div>
+          )
+        });
+      } else {
+        items.push({
+          key: '04-hide-low-balances',
+          label: (
+            <div onClick={() => toggleHideLowBalances(true)}>
+              <IconEyeOff className="mean-svg-icons" />
+              <span className="menu-item-text">Hide low balances</span>
+            </div>
+          )
+        });
+      }
+    }
+    return <Menu items={items} />;
+  }
+
+  const getAssetsGroupOptions = () => {
+    const options: SegmentedLabeledOption[] = [
+      {
+        label: `Tokens (${accountTokens.length})`,
+        value: AssetGroups.Tokens
+      },
+      { // Learn how to differentiate NFTs from token accounts and apply knowledge here
+        label: `NFTs (${accountTokens.length > 99 ? '99+' : accountTokens.length})`,
+        value: AssetGroups.Nfts
+      },
+      {
+        label: `Apps (${accountTokens.length})`,
+        value: AssetGroups.Apps
+      },
+      {
+        label: `OtherAssets`,
+        value: AssetGroups.OtherAssets
+      },
+    ];
+    return options;
+  }
+
+  const getAppsCategoryItems = () => {
+    const options: CategoryDisplayItem[] = [
+      {
+        title: 'Mean Staking',
+        subtitle: '????',
+        mainValue: '$0.00',
+        secondaryValue: '--',
+      },
+      {
+        title: 'Payment Streaming',
+        subtitle: '????',
+        mainValue: '$0.00',
+        secondaryValue: '--',
+      },
+      {
+        title: 'SuperSafe',
+        subtitle: '????',
+        mainValue: '$0.00',
+        secondaryValue: '--',
+      },
+      {
+        title: 'Credix',
+        subtitle: '????',
+        mainValue: '$0.00',
+        secondaryValue: '--',
+      },
+      {
+        title: 'Raydium',
+        subtitle: '????',
+        mainValue: '$0.00',
+        secondaryValue: '--',
+      },
+      {
+        title: 'Orca',
+        subtitle: '????',
+        mainValue: '$0.00',
+        secondaryValue: '--',
+      },
+    ];
+    return options;
+  }
+
   ///////////////
   // Rendering //
   ///////////////
@@ -4388,54 +4547,6 @@ export const AccountsView = () => {
     } else return null;
   };
 
-  const getLeftPanelOptions = () => {
-    const items: ItemType[] = [];
-    if (isMultisigContext) {
-      items.push({
-        key: '01-create-asset',
-        label: (
-          <div onClick={onShowCreateAssetModal}>
-            <IconAdd className="mean-svg-icons" />
-            <span className="menu-item-text">Create an asset</span>
-          </div>
-        )
-      });
-    }
-    items.push({
-      key: '02-suggest-asset',
-      label: (
-        <div onClick={showSuggestAssetModal}>
-          <IconLightBulb className="mean-svg-icons" />
-          <span className="menu-item-text">Suggest an asset</span>
-        </div>
-      )
-    });
-    if (accountTokens && accountTokens.length > 0) {
-      if (hideLowBalances) {
-        items.push({
-          key: '03-show-low-balances',
-          label: (
-            <div onClick={() => toggleHideLowBalances(false)}>
-              <IconEyeOn className="mean-svg-icons" />
-              <span className="menu-item-text">Show low balances</span>
-            </div>
-          )
-        });
-      } else {
-        items.push({
-          key: '04-hide-low-balances',
-          label: (
-            <div onClick={() => toggleHideLowBalances(true)}>
-              <IconEyeOff className="mean-svg-icons" />
-              <span className="menu-item-text">Hide low balances</span>
-            </div>
-          )
-        });
-      }
-    }
-    return <Menu items={items} />;
-  }
-
   const renderUserAccountAssetMenu = () => {
     const ctas = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
     const items: ItemType[] = ctas.map((item: MetaInfoCta, index: number) => {
@@ -4448,39 +4559,6 @@ export const AccountsView = () => {
       }
     });
     return <Menu items={items} />;
-  }
-
-  const isDeleteAssetValid = () => {
-    if (selectedAsset) {
-      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
-
-      if (!isSol && selectedAsset.balance as number === 0) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-    return false;
-  }
-
-  const isSendFundsValid = () => {
-    if (selectedAsset && selectedAsset.balance as number > 0) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  const isTransferOwnershipValid = () => {
-    if (selectedAsset) {
-      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
-      
-      if (!isSol) {
-        return true;
-      } else {
-        return false;
-      }
-    }
   }
 
   const renderUserAccountAssetCtaRow = () => {
@@ -4778,9 +4856,9 @@ export const AccountsView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar"><span>previousRoute:</span><span className="ml-1">{previousRoute}</span></div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button
@@ -4826,10 +4904,20 @@ export const AccountsView = () => {
                         {renderMoneyStreamsSummary()}
                       </div>
 
-                      <div className="asset-category-title flex-fixed-right">
+                      <div className="asset-category-title flex-row justify-content-center">
+                        <Segmented
+                          size="small"
+                          defaultValue={AssetGroups.Tokens}
+                          value={selectedAssetsGroup}
+                          options={getAssetsGroupOptions()}
+                          onChange={(value: any) => setSelectedAssetsGroup(value)}
+                        />
+                      </div>
+
+                      {/* <div className="asset-category-title flex-fixed-right">
                         <div className="title">Tokens ({accountTokens.length})</div>
                         <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
-                      </div>
+                      </div> */}
                       <div className="asset-category flex-column">
                         {renderAssetsList()}
                       </div>
