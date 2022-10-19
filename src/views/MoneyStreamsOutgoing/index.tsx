@@ -10,6 +10,7 @@ import {
   TransactionFees, Treasury,
   TreasuryType
 } from "@mean-dao/msp";
+import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { AccountInfo, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Dropdown, Menu, Modal, Space, Spin } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
@@ -390,6 +391,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
   const onExecuteAddFundsTransaction = async (addFundsData: StreamTopupParams) => {
     let transaction: Transaction;
+    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     let multisigAuth = '';
@@ -765,6 +767,7 @@ export const MoneyStreamsOutgoingView = (props: {
         return false;
       }
 
+      consoleOut('onExecuteAddFundsTransaction ->','/src/views/MoneyStreamsOutgoingView', 'darkcyan');
       if (addFundsData.fundFromTreasury) {
         consoleOut('Starting allocate using MSP V2...', '', 'blue');
         return await fundFromTreasury({
@@ -786,22 +789,77 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     }
 
+    const signTx = async (): Promise<boolean> => {
+      if (wallet && publicKey && wallet.signTransaction && transaction) {
+        consoleOut('Signing transaction...');
+        return (wallet as SignerWalletAdapter).signTransaction(transaction)
+          .then(async (signed: Transaction) => {
+            consoleOut('signTransaction returned a signed transaction:', signed);
+            signedTransaction = signed;
+            // Try signature verification by serializing the transaction
+            try {
+              encodedTx = signedTransaction.serialize().toString('base64');
+              consoleOut('encodedTx:', encodedTx, 'orange');
+            } catch (error) {
+              console.error(error);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SignTransaction,
+                currentOperation: TransactionStatus.SignTransactionFailure
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+                result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
+              });
+              customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
+              return false;
+            }
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+              result: { signer: publicKey.toBase58() }
+            });
+            return true;
+          })
+          .catch((error: any) => {
+            console.error('Signing transaction failed!');
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
+            });
+            customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
     const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet.sendTransaction(transaction, connection, { minContextSlot })
+      if (wallet) {
+        return connection
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionSuccess
             });
             signature = sig;
             transactionLog.push({
@@ -821,7 +879,6 @@ export const MoneyStreamsOutgoingView = (props: {
               result: { error, encodedTx }
             });
             customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-            segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -835,7 +892,6 @@ export const MoneyStreamsOutgoingView = (props: {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -851,31 +907,35 @@ export const MoneyStreamsOutgoingView = (props: {
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.StreamAddFunds,
-            finality: "finalized",
-            txInfoFetchStatus: "fetching",
-            loadingTitle: "Confirming transaction",
-            loadingMessage: `Fund stream with ${formatThousands(
-              parseFloat(addFundsData.amount as string),
-              token.decimals
-            )} ${token.symbol}`,
-            completedTitle: "Transaction confirmed",
-            completedMessage: `Stream funded with ${formatThousands(
-              parseFloat(addFundsData.amount as string),
-              token.decimals
-            )} ${token.symbol}`,
-            extras: {
-              multisigAuthority: multisigAuth
-            }
-          });
-          setIsBusy(false);
-          onAddFundsTransactionFinished();
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamAddFunds,
+              finality: "finalized",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Fund stream with ${formatThousands(
+                parseFloat(addFundsData.amount as string),
+                token.decimals
+              )} ${token.symbol}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Stream funded with ${formatThousands(
+                parseFloat(addFundsData.amount as string),
+                token.decimals
+              )} ${token.symbol}`,
+              extras: {
+                multisigAuthority: multisigAuth
+              }
+            });
+            setIsBusy(false);
+            onAddFundsTransactionFinished();
+          } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
@@ -1155,7 +1215,7 @@ export const MoneyStreamsOutgoingView = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -1544,7 +1604,7 @@ export const MoneyStreamsOutgoingView = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -1984,7 +2044,7 @@ export const MoneyStreamsOutgoingView = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
