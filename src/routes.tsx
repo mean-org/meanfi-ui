@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { PageLoadingView } from "views/PageLoading";
 import { AppLayout } from "./components/Layout";
 import { AccountsProvider } from "./contexts/accounts";
@@ -39,8 +39,7 @@ export function AppRoutes() {
                 <AppStateProvider>
                   <AppLayout>
                     <Routes>
-                      <Route path="/" element={<Navigate replace to='/accounts' />} />
-                      {/* CreateSafeView */}
+                      <Route index path="/" element={<AccountsView />} />
                       <Route
                         path="/create-safe"
                         element={
@@ -49,33 +48,33 @@ export function AppRoutes() {
                           </React.Suspense>
                         }
                       />
-                      {/* Accounts routes */}
-                      <Route path="/accounts" element={<AccountsView />} />
-                      <Route path="/accounts/assets" element={<AccountsView />} />
-                      <Route path="/accounts/assets/:asset" element={<AccountsView />} />
-                      <Route path="/accounts/streaming" element={<AccountsView />} />
-                      <Route path="/accounts/streaming/:streamingTab" element={<AccountsView />} />
-                      <Route path="/accounts/streaming/:streamingTab/:streamingItemId" element={<AccountsView />} />
-                      <Route path="/accounts/super-safe" element={<AccountsView />} />
-                      <Route path="/accounts/super-safe/proposals/:id" element={<AccountsView />} />
-                      <Route path="/accounts/super-safe/programs/:id" element={<AccountsView />} />
-                      {/* Vesting routes */}
-                      <Route path="/vesting" element={<VestingView />} />
-                      <Route path="/vesting/:vestingContract" element={<VestingView />} />
-                      <Route path="/vesting/:vestingContract/:activeTab" element={<VestingView />} />
-                      {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
                       )}
-                      {/* All others */}
-                      <Route path="/staking" element={<StakingView />} />
-                      <Route path="/staking-rewards" element={<StakingRewardsView />} />
                       <Route path="/stats" element={<StatsView />} />
-                      <Route path="/custody" element={<CustodyView />} />
                       <Route path="/faucet" element={<FaucetView />} />
-                      <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
+                      <Route path="/custody" element={<CustodyView />} />
                       <Route path="/playground" element={<PlaygroundView />} />
+                      <Route path="/staking-rewards" element={<StakingRewardsView />} />
+                      {/* Assets and NFTs */}
+                      <Route path="/assets" element={<AccountsView />} />
+                      <Route path="/assets/:asset" element={<AccountsView />} />
+                      {/* Well known App routes */}
+                      <Route path="/staking" element={<StakingView />} />
+                      <Route path="/vesting" element={<VestingView />} />
+                      <Route path="/vesting/:vestingContract" element={<VestingView />} />
+                      <Route path="/vesting/:vestingContract/:activeTab" element={<VestingView />} />
+                      <Route path="/streaming" element={<AccountsView />} />
+                      <Route path="/streaming/:streamingTab" element={<AccountsView />} />
+                      <Route path="/streaming/:streamingTab/:streamingItemId" element={<AccountsView />} />
+                      <Route path="/super-safe" element={<AccountsView />} />
+                      <Route path="/super-safe/proposals/:id" element={<AccountsView />} />
+                      <Route path="/super-safe/programs/:id" element={<AccountsView />} />
+                      {/* Apps general route matcher */}
+                      <Route path="/:appId" element={<AccountsView />} />
+                      {/* Not found and service unavailable */}
+                      <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       <Route path='*' element={<NotFoundView />} />
                     </Routes>
                   </AppLayout>
