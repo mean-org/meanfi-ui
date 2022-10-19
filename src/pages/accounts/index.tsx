@@ -55,7 +55,6 @@ import { UnwrapSolModal } from 'components/UnwrapSolModal';
 import { WrapSolModal } from 'components/WrapSolModal';
 import {
   ACCOUNTS_LOW_BALANCE_LIMIT,
-  ACCOUNTS_ROUTE_BASE_PATH,
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   MIN_SOL_BALANCE_REQUIRED,
@@ -82,14 +81,14 @@ import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from 'middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports, getAmountWithSymbol, getSdkValue, getTxIxResume,
   shortenAddress,
   toUiAmount
 } from 'middleware/utils';
-import { AccountTokenParsedInfo, AssetCta, AssetGroups, CategoryDisplayItem, MetaInfoCtaAction, UserTokenAccount } from "models/accounts";
+import { AccountTokenParsedInfo, AssetCta, AssetGroups, CategoryDisplayItem, KNOWN_APPS, MetaInfoCtaAction, RegisteredApp, UserTokenAccount } from "models/accounts";
 import { MetaInfoCta } from 'models/common-types';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { CreateNewProposalParams, CREDIX_PROGRAM, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from 'models/multisig';
@@ -244,15 +243,14 @@ export const AccountsView = () => {
     if (!publicKey || !selectedAccount.address) { return; }
 
     consoleOut('pathname:', location.pathname, 'crimson');
-    // If no category specified (neither assets nor streaming) just assume assets
-    if (location.pathname.indexOf('/assets') === -1 &&
-        location.pathname.indexOf('/streaming') === -1 &&
-        location.pathname.indexOf('/super-safe') === -1) {
-      let url = `${ACCOUNTS_ROUTE_BASE_PATH}`;
+    // TODO: If no category specified (neither assets nor any known App) just assume assets
+    const isKnownApp = KNOWN_APPS.some(a => location.pathname.startsWith(`/${a}`));
+    if (location.pathname.indexOf('/assets') === -1 && !isKnownApp) {
+      let url = '';
       if (selectedAccount.isMultisig) {
-        url += '/super-safe?v=proposals';
+        url = `/${RegisteredApp.SuperSafe}?v=proposals`;
       } else {
-        url += '/assets';
+        url = '/assets';
       }
       consoleOut('No category specified, redirecting to:', url, 'crimson');
       setAutoOpenDetailsPanel(false);
@@ -261,7 +259,7 @@ export const AccountsView = () => {
       });
       navigate(url, { replace: true });
     } else {
-      // If an asset is specified or user goes inside any tab of the streaming category, enable it
+      // If user goes inside any tab of the streaming category, enable autoOpenDetailsPanel
       if (streamingTab) {
         setAutoOpenDetailsPanel(true);
       }
@@ -270,7 +268,13 @@ export const AccountsView = () => {
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, publicKey, selectedAccount.address, selectedAccount.isMultisig, streamingTab]);
+  }, [
+    publicKey,
+    streamingTab,
+    location.pathname,
+    selectedAccount.address,
+    selectedAccount.isMultisig,
+  ]);
 
   const connection = useMemo(() => new Connection(endpoint, {
     commitment: "confirmed",
@@ -723,9 +727,9 @@ export const AccountsView = () => {
     const isAccountNative = isSelectedAssetNativeAccount(asset);
     let url = '';
     if (isMyWallet && isAccountNative) {
-      url = `${ACCOUNTS_ROUTE_BASE_PATH}/assets`;
+      url = `/assets`;
     } else {
-      url = `${ACCOUNTS_ROUTE_BASE_PATH}/assets/${asset.publicAddress}`;
+      url = `/assets/${asset.publicAddress}`;
     }
     return url;
   }, [isInspectedAccountTheConnectedWallet, isSelectedAssetNativeAccount]);
@@ -746,12 +750,12 @@ export const AccountsView = () => {
 
   const navigateToSafe = useCallback(() => {
     consoleOut('calling navigateToSafe()', '...', 'crimson');
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/super-safe?v=proposals`;
+    const url = `/${RegisteredApp.PaymentStreaming}?v=proposals`;
     navigate(url);
   }, [navigate]);
 
   const navigateToStreaming = useCallback(() => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/summary`;
+    const url = `/${RegisteredApp.PaymentStreaming}/summary`;
     navigate(url);
   }, [navigate]);
 
@@ -894,11 +898,6 @@ export const AccountsView = () => {
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
-    const path = window.location.pathname;
-    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
-      return;
-    }
-
     const turnOffLockWorkflow = () => {
       isWorkflowLocked = false;
     }
@@ -1007,7 +1006,7 @@ export const AccountsView = () => {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing`;
+            const url = `/${RegisteredApp.PaymentStreaming}/outgoing`;
             navigate(url);
           }
           setTimeout(() => {
@@ -1019,7 +1018,7 @@ export const AccountsView = () => {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming`;
+            const url = `/${RegisteredApp.PaymentStreaming}/incoming`;
             navigate(url);
           }
           setTimeout(() => {
@@ -3076,7 +3075,7 @@ export const AccountsView = () => {
   useEffect(() => {
     if (publicKey && selectedAccount.address) {
 
-      if (!previousRoute.startsWith('/accounts')) {
+      if (!previousRoute.startsWith(`/${RegisteredApp.PaymentStreaming}`)) {
         clearStateData();
       }
       consoleOut('Loading treasuries...', 'selectedAccount changed!', 'purple');
@@ -3151,16 +3150,14 @@ export const AccountsView = () => {
     if (location.pathname.indexOf('/assets') !== -1) {
       consoleOut('Setting category:', 'assets', 'crimson');
       setSelectedCategory("assets");
-      setSelectedAssetsGroup(AssetGroups.Tokens);
       if (!asset) {
         setPathParamAsset('');
       } else if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
-    } else if (location.pathname.indexOf('/streaming') !== -1) {
+    } else if (location.pathname.indexOf(`/${RegisteredApp.PaymentStreaming}`) !== -1) {
       consoleOut('Setting category:', 'streaming', 'crimson');
       setSelectedCategory("streaming");
-      setSelectedAssetsGroup(undefined);
       if (!streamingItemId) {
         setPathParamTreasuryId('');
         setPathParamStreamId('');
@@ -3171,13 +3168,11 @@ export const AccountsView = () => {
     } else if (location.pathname.indexOf('/super-safe') !== -1) {
       consoleOut('Setting category:', 'super-safe', 'crimson');
       setSelectedCategory("super-safe");
-      setSelectedAssetsGroup(undefined);
       if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
     } else {
       setSelectedCategory(undefined);
-      setSelectedAssetsGroup(undefined);
     }
 
   }, [
@@ -3192,7 +3187,13 @@ export const AccountsView = () => {
     setDetailsPanelOpen,
   ]);
 
-  // Load streams on entering /accounts
+  /**
+   * Set tabset option based on the deducted category
+   */
+  // useEffect(() => {
+  // }, []);
+
+  // Load streams on entering page
   useEffect(() => {
     if (!publicKey || !selectedAccount.address) { return; }
 
@@ -3745,7 +3746,7 @@ export const AccountsView = () => {
     }
   }, [canSubscribe, isPageLoaded, onTxConfirmed, onTxTimedout]);
 
-  // Set page loaded on entering /accounts
+  // Set page loaded on entering page
   useEffect(() => {
     if (!isPageLoaded || !publicKey || !selectedAccount.address) { return; }
 
@@ -3978,7 +3979,7 @@ export const AccountsView = () => {
   //////////////
 
   const onBackButtonClicked = () => {
-    let url = ACCOUNTS_ROUTE_BASE_PATH;
+    let url = '';
 
     if (location.pathname.indexOf('/assets') !== -1) {
       setDetailsPanelOpen(false);
@@ -3994,18 +3995,18 @@ export const AccountsView = () => {
       setAutoOpenDetailsPanel(false);
       consoleOut('calling onBackButtonClicked() on:', '/super-safe', 'crimson');
       url += `/super-safe?v=proposals`;
-    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming/${streamingItemId}`) {
-      url += `/streaming/incoming`;
-    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing/${streamingItemId}`) {
-      url += `/streaming/outgoing`;
+    } else if (location.pathname === `/${RegisteredApp.PaymentStreaming}/incoming/${streamingItemId}`) {
+      url += `/${RegisteredApp.PaymentStreaming}/incoming`;
+    } else if (location.pathname === `/${RegisteredApp.PaymentStreaming}/outgoing/${streamingItemId}`) {
+      url += `/${RegisteredApp.PaymentStreaming}/outgoing`;
       setStreamDetail(undefined);
-    } else if (location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/streaming-accounts/${streamingItemId}`) {
-      url += `/streaming/streaming-accounts`;
+    } else if (location.pathname === `/${RegisteredApp.PaymentStreaming}/streaming-accounts/${streamingItemId}`) {
+      url += `/${RegisteredApp.PaymentStreaming}/streaming-accounts`;
     } else {
       consoleOut('calling onBackButtonClicked()', '...', 'crimson');
       setDetailsPanelOpen(false);
       setAutoOpenDetailsPanel(false);
-      url += `/streaming`;
+      url += `/${RegisteredApp.PaymentStreaming}`;
     }
 
     navigate(url);
@@ -4769,29 +4770,29 @@ export const AccountsView = () => {
   };
 
   const goToStreamIncomingDetailsHandler = (stream: any) => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming/${stream.id as string}`;
+    const url = `/${RegisteredApp.PaymentStreaming}/incoming/${stream.id as string}`;
     navigate(url);
   }
 
   const goToStreamOutgoingDetailsHandler = (stream: any) => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing/${stream.id as string}`;
+    const url = `/${RegisteredApp.PaymentStreaming}/outgoing/${stream.id as string}`;
     navigate(url);
   }
 
   const goToStreamingAccountDetailsHandler = (streamingTreasury: Treasury | TreasuryInfo | undefined) => {
     if (streamingTreasury) {
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/streaming-accounts/${streamingTreasury.id as string}`;
+      const url = `/${RegisteredApp.PaymentStreaming}/streaming-accounts/${streamingTreasury.id as string}`;
       navigate(url);
     }
   }
 
   const goToStreamingAccountStreamDetailsHandler = (stream: any) => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing/${stream.id as string}`;
+    const url = `/${RegisteredApp.PaymentStreaming}/outgoing/${stream.id as string}`;
     navigate(url);
   }
 
   const returnFromIncomingStreamDetailsHandler = () => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming`;
+    const url = `/${RegisteredApp.PaymentStreaming}/incoming`;
 
     setTimeout(() => {
       setStreamDetail(undefined);
@@ -4803,7 +4804,7 @@ export const AccountsView = () => {
   }
 
   const returnFromStreamingAccountDetailsHandler = () => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/streaming-accounts`;
+    const url = `/${RegisteredApp.PaymentStreaming}/streaming-accounts`;
     navigate(url);
   }
 
@@ -4862,9 +4863,9 @@ export const AccountsView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar"><span>previousRoute:</span><span className="ml-1">{previousRoute}</span></div>
-      )} */}
+      {isLocal() && (
+        <div className="debug-bar"><span>accountTokens:</span><span className="ml-1">{accountTokens ? accountTokens.length : '0'}</span></div>
+      )}
 
       {detailsPanelOpen && (
         <Button
@@ -4879,10 +4880,10 @@ export const AccountsView = () => {
         {/* SEO tags overrides */}
         <Helmet>
           <title>Accounts - Mean Finance</title>
-          <link rel="canonical" href="/accounts" />
+          <link rel="canonical" href="/" />
           <meta name="description" content="Accounts. Keep track of your assets and transactions" />
           <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
-          <meta name="keywords" content="assets, token accounts, transactions" />
+          <meta name="keywords" content="assets, transactions" />
         </Helmet>
         {/* This is a SEO mandatory h1 but it is not visible */}
         <h1 className="mandatory-h1">Keep track of your assets and transactions</h1>
@@ -4933,11 +4934,6 @@ export const AccountsView = () => {
                           )}
                         </div>
                       </div>
-
-                      {/* <div className="asset-category-title flex-fixed-right">
-                        <div className="title">Tokens ({accountTokens.length})</div>
-                        <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
-                      </div> */}
                       <div className="asset-category flex-column">
                         {renderAssetsList()}
                       </div>

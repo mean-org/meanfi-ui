@@ -21,7 +21,6 @@ import { TreasuryAddFundsModal } from "components/TreasuryAddFundsModal";
 import { TreasuryCreateModal } from "components/TreasuryCreateModal";
 import { TreasuryStreamCreateModal } from "components/TreasuryStreamCreateModal";
 import {
-  ACCOUNTS_ROUTE_BASE_PATH,
   CUSTOM_TOKEN_NAME,
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
@@ -51,6 +50,7 @@ import {
   toTokenAmountBn,
   toUiAmount
 } from "middleware/utils";
+import { RegisteredApp } from "models/accounts";
 import { TreasuryTopupParams } from "models/common-types";
 import { OperationType, TransactionStatus } from "models/enums";
 import { ZERO_FEES } from "models/multisig";
@@ -1110,7 +1110,7 @@ export const MoneyStreamsInfoView = (props: {
       const findStream = streamList.filter((stream: Stream | StreamInfo) => stream.id === e);
       const streamSelected = Object.assign({}, ...findStream);
 
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
+      const url = `/${RegisteredApp.PaymentStreaming}/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
 
       navigate(url);
     }
@@ -1631,19 +1631,19 @@ export const MoneyStreamsInfoView = (props: {
   }, [getTimeRemaining, t]);
 
   const goToIncomingTabHandler = () => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming`;
+    const url = `/${RegisteredApp.PaymentStreaming}/incoming`;
     navigate(url);
   }
 
   const goToOutgoingTabHandler = () => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing`;
+    const url = `/${RegisteredApp.PaymentStreaming}/outgoing`;
     navigate(url);
   }
 
   const onTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
 
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/${activeKey}`;
+    const url = `/${RegisteredApp.PaymentStreaming}/${activeKey}`;
     navigate(url);
   }, [navigate]);
 

@@ -8,7 +8,6 @@ import { PublicKey } from "@solana/web3.js";
 import { BN } from "bn.js";
 import { isCacheItemExpired } from "cache/persistentCache";
 import { openNotification } from "components/Notifications";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "constants/common";
 import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from "constants/tokens";
 import { TREASURY_TYPE_OPTIONS } from "constants/treasury-type-options";
 import { appConfig, customLogger } from "index";
@@ -1201,7 +1200,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     let timer: any;
 
-    if (selectedAccount.address && location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) && !customStreamDocked && !isDowngradedPerformance) {
+    if (selectedAccount.address && !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
         consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
         refreshStreamList();
@@ -1214,7 +1213,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       }
     }
   }, [
-    location,
     publicKey,
     customStreamDocked,
     selectedAccount.address,

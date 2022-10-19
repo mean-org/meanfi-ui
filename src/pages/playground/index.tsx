@@ -1562,7 +1562,7 @@ export const PlaygroundView = () => {
       <div className="tabset-heading">Test routing</div>
       <div className="text-left mb-3">
         <div className="form-label">Go to my connected account</div>
-        {renderRouteLink('With no params', '/accounts')}
+        {renderRouteLink('With no params', '/')}
       </div>
     </>
   );

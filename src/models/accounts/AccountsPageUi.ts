@@ -32,6 +32,16 @@ export enum AssetGroups {
     OtherAssets = "other-assets",
 }
 
+export enum RegisteredApp {
+    Staking = "staking",
+    PaymentStreaming = "streaming",
+    Vesting = "vesting",
+    SuperSafe = "super-safe",
+    Credix = "credix",
+    Raydium = "raydium",
+    Orca = "orca",
+}
+
 export interface AssetCta {
     action: MetaInfoCtaAction;
     isVisible: boolean;
@@ -56,3 +66,12 @@ export interface SelectedCategoryItem {
     mainCategory: AccountsPageCategory;
     subCategory: AssetGroups;
 }
+
+export const KNOWN_APPS: string[] = [
+    RegisteredApp.Staking,
+    RegisteredApp.PaymentStreaming,
+    RegisteredApp.SuperSafe,
+    RegisteredApp.Credix,
+    RegisteredApp.Raydium,
+    RegisteredApp.Orca,
+];

@@ -5,7 +5,7 @@ import { AppContextMenu } from "components/AppContextMenu";
 import { ConnectButton } from "components/ConnectButton";
 import { NotificationBell } from 'components/NotificationBell';
 import { DepositOptions } from 'components/DepositOptions';
-import { ACCOUNTS_ROUTE_BASE_PATH, STAKING_ROUTE_BASE_PATH } from 'constants/common';
+import { STAKING_ROUTE_BASE_PATH } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
 import { useWallet } from "contexts/wallet";
@@ -20,7 +20,7 @@ import { ItemType } from 'antd/lib/menu/hooks/useItems';
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
     key: 'accounts',
-    path: ACCOUNTS_ROUTE_BASE_PATH,
+    path: '/',
     parent: 'root'
   },
   {
@@ -131,7 +131,7 @@ export const AppBar = (props: {
     const items: ItemType[] = [];
     items.push({
       key: 'accounts',
-      label: (<Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>),
+      label: (<Link to="/">{t('ui-menus.main-menu.accounts')}</Link>),
     });
     if (!isMultisigContext) {
       items.push({
@@ -201,7 +201,7 @@ export const AppBar = (props: {
             <div className="h-100 w-100 flex-column flex-center vertical-scroll">
               <ul onClick={dismissMenu}>
                 <li key="accounts" className={selectedItems.includes("accounts") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
-                  <Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>
+                  <Link to="/">{t('ui-menus.main-menu.accounts')}</Link>
                 </li>
                 <li key="exchange" className={selectedItems.includes("exchange") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
                   <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>

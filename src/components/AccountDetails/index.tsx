@@ -1,7 +1,7 @@
 import { Popover } from "antd";
 import { segmentAnalytics } from 'App';
 import { AccountSelector } from "components/AccountSelector";
-import { ACCOUNTS_ROUTE_BASE_PATH, CREATE_SAFE_ROUTE_PATH } from "constants/common";
+import { CREATE_SAFE_ROUTE_PATH } from "constants/common";
 import { AppStateContext, emptyAccount } from 'contexts/appstate';
 import { useWallet } from "contexts/wallet";
 import useWindowSize from "hooks/useWindowResize";
@@ -27,7 +27,7 @@ export const AccountDetails = () => {
 
   const onCompleteAccountSelection = useCallback(() => {
     setPopoverVisible(false);
-    navigate(ACCOUNTS_ROUTE_BASE_PATH);
+    navigate('/');
   }, [navigate]);
 
   const onCreateSafe = useCallback(() => {
