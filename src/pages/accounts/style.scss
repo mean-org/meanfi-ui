@@ -25,6 +25,7 @@
                 .inner-container {
                     height: calc(100% - 1.2rem);
                     transform: translate(0.5rem, 1.6rem) !important;
+                    padding-left: 0;
                 }
             }
         }
@@ -48,6 +49,9 @@
             position: relative;
             @media (max-width: 575.98px) {
                 width: calc(100% - 13px);
+            }
+            @media (min-width: 768px) {
+                padding: 0 0 0 2.6%;
             }
         }
 
@@ -144,6 +148,9 @@
     .networth-list-item-wrapper {
         position: relative;
         width: calc(100% - 2.6%);
+        @media (min-width: 768px) {
+            padding-left: 2.6%;
+        }
     }
 
     .networth-list-item {
