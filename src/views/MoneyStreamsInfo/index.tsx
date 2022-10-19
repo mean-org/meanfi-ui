@@ -932,8 +932,8 @@ export const MoneyStreamsInfoView = (props: {
         return false;
       }
 
+      consoleOut('onExecuteAddFundsTransaction ->','/src/views/MoneyStreamsInfo', 'darkcyan');
       consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
-      consoleOut('onExecuteAddFundsTransaction ->','/src/views/MoneyStreamsInfo/index.tsx', 'darkcyan');
       // Create a transaction
       const result = await addFunds(data)
         .then((value: Transaction | null) => {
