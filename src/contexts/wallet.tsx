@@ -1,19 +1,6 @@
-import { Button, Modal } from "antd";
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { isUnauthenticatedRoute, useLocalStorageState } from "../middleware/utils";
-import { useTranslation } from "react-i18next";
-import { isDesktop, isSafari } from "react-device-detect";
 import { DownOutlined, UpOutlined } from "@ant-design/icons";
-import { segmentAnalytics } from "../App";
-import { AppUsageEvent } from "../middleware/segment-service";
-import { consoleOut, isProd } from "../middleware/ui";
+import { SentreWalletAdapter, SentreWalletName } from '@sentre/connector';
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import {
   BitKeepWalletAdapter,
   BitKeepWalletName,
@@ -44,13 +31,26 @@ import {
   TrustWalletAdapter,
   TrustWalletName
 } from "@solana/wallet-adapter-wallets";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { Button, Modal } from "antd";
+import { openNotification } from "components/Notifications";
+import { sentreAppId } from "constants/common";
+import { environment } from "environments/environment";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
+import { isDesktop, isSafari } from "react-device-detect";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getDefaultRpc } from "services/connections-hq";
-import { environment } from "environments/environment";
-import { openNotification } from "components/Notifications";
-import { SentreWalletAdapter, SentreWalletName } from '@sentre/connector';
-import { sentreAppId } from "constants/common";
+import { segmentAnalytics } from "../App";
+import { AppUsageEvent } from "../middleware/segment-service";
+import { consoleOut, isProd } from "../middleware/ui";
+import { isUnauthenticatedRoute, useLocalStorageState } from "../middleware/utils";
 
 export type MeanFiWallet = PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
                           | SlopeWalletAdapter | Coin98WalletAdapter | SolongWalletAdapter | SolletWalletAdapter
@@ -324,6 +324,7 @@ export function WalletProvider({ children = null as any }) {
   const navigate = useNavigate();
   const [autoConnect] = useState(true);
   const [walletName, setWalletName] = useLocalStorageState("walletName");
+  const [lastUsedAccount] = useLocalStorageState("lastUsedAccount");
   const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
@@ -437,8 +438,14 @@ export function WalletProvider({ children = null as any }) {
   // Setup listeners
   useEffect(() => {
     if (wallet) {
+
       wallet.on("connect", (pk) => {
-        if (wallet.publicKey) {
+        if (wallet.connected && !wallet.connecting && pk.toBase58() !== lastUsedAccount) {
+          setConnected(false);
+          wallet.removeAllListeners();
+          resetWalletProvider();
+          select();
+        } else if (wallet.publicKey) {
           setConnected(true);
           close();
         }
@@ -468,7 +475,7 @@ export function WalletProvider({ children = null as any }) {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wallet]);
+  }, [wallet, lastUsedAccount]);
 
   // Handle connect
   useEffect(() => {

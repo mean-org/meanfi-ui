@@ -869,36 +869,12 @@ export const RepeatingPayment = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+        customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
         return false;
       }
     }
 
     const sendTx = async (): Promise<boolean> => {
-
-      /* TODO: This approach fails only in this Tx (Repeating Payment)
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet.sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            // Perform logging
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            // Perform logging
-            return false;
-          });
-      }
-      */
 
       if (connection && wallet && wallet.publicKey && transaction && encodedTx) {
         return connection.sendEncodedTransaction(encodedTx)
