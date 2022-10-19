@@ -3074,15 +3074,11 @@ export const AccountsView = () => {
   // Load treasuries when account address changes
   useEffect(() => {
     if (publicKey && selectedAccount.address) {
-
-      if (!previousRoute.startsWith(`/${RegisteredApp.PaymentStreaming}`)) {
-        clearStateData();
-      }
       consoleOut('Loading treasuries...', 'selectedAccount changed!', 'purple');
       refreshTreasuries(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAccount.address, previousRoute, publicKey]);
+  }, [publicKey, selectedAccount.address]);
 
   // Treasury list refresh timeout
   useEffect(() => {
@@ -3147,7 +3143,7 @@ export const AccountsView = () => {
     }
 
     // The category is inferred from the route path
-    if (location.pathname.indexOf('/assets') !== -1) {
+    if (location.pathname.startsWith('/assets')) {
       consoleOut('Setting category:', 'assets', 'crimson');
       setSelectedCategory("assets");
       if (!asset) {
@@ -3155,7 +3151,7 @@ export const AccountsView = () => {
       } else if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
-    } else if (location.pathname.indexOf(`/${RegisteredApp.PaymentStreaming}`) !== -1) {
+    } else if (location.pathname.startsWith(`/${RegisteredApp.PaymentStreaming}`)) {
       consoleOut('Setting category:', 'streaming', 'crimson');
       setSelectedCategory("streaming");
       if (!streamingItemId) {
@@ -3165,7 +3161,7 @@ export const AccountsView = () => {
       if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
-    } else if (location.pathname.indexOf('/super-safe') !== -1) {
+    } else if (location.pathname.startsWith(`/${RegisteredApp.SuperSafe}`)) {
       consoleOut('Setting category:', 'super-safe', 'crimson');
       setSelectedCategory("super-safe");
       if (autoOpenDetailsPanel) {
@@ -3221,10 +3217,10 @@ export const AccountsView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userTokensResponse, setAccountTokens]);
 
-  // Load the transactions when signaled
+  // Load asset transactions when signaled
   useEffect(() => {
 
-    if (!connection || !publicKey || !selectedAsset || !tokensLoaded || !shouldLoadTransactions || selectedCategory !== "assets") { return; }
+    if (!connection || !publicKey || !selectedAsset || !tokensLoaded || !shouldLoadTransactions) { return; }
 
     if (!loadingTransactions && selectedAccount.address) {
 
@@ -3285,7 +3281,6 @@ export const AccountsView = () => {
     selectedAccount.address,
     lastTxSignature,
     solAccountItems,
-    selectedCategory,
     loadingTransactions,
     shouldLoadTransactions,
     getSolAccountItems,
@@ -4312,6 +4307,11 @@ export const AccountsView = () => {
       consoleOut('clicked on asset:', asset.publicAddress, 'blue');
       setAutoOpenDetailsPanel(true);
       navigateToAsset(asset);
+      if (selectedCategory !== "assets") {
+        setTimeout(() => {
+          reloadSwitch();
+        }, 100);
+      }
     }
 
     const priceByAddress = getTokenPriceByAddress(asset.address);
@@ -4385,13 +4385,14 @@ export const AccountsView = () => {
         </div>
       </div>
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     theme,
     selectedAsset,
     hideLowBalances,
     selectedCategory,
-    setDetailsPanelOpen,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
+    navigateToAsset,
     shouldHideAsset,
   ]);
 
