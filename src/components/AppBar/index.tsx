@@ -19,11 +19,6 @@ import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
-    key: 'accounts',
-    path: '/',
-    parent: 'root'
-  },
-  {
     key: 'exchange',
     path: '/exchange',
     parent: 'root'
@@ -41,6 +36,11 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
     key: 'stats',
     path: '/stats',
+    parent: 'root'
+  },
+  {
+    key: 'accounts',
+    path: '/',
     parent: 'root'
   },
 ];
@@ -77,7 +77,12 @@ export const AppBar = (props: {
     const selection: string[] = [];
 
     const getRouteInfoItem = () => {
-      return MENU_ITEMS_ROUTE_INFO.find(i => location.pathname.startsWith(i.path));
+      return MENU_ITEMS_ROUTE_INFO.find(i => {
+        if (i.path === location.pathname) {
+          return true;
+        }
+        return location.pathname.startsWith(i.path);
+      });
     }
 
     const route = getRouteInfoItem();
@@ -203,12 +208,16 @@ export const AppBar = (props: {
                 <li key="accounts" className={selectedItems.includes("accounts") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
                   <Link to="/">{t('ui-menus.main-menu.accounts')}</Link>
                 </li>
-                <li key="exchange" className={selectedItems.includes("exchange") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
-                  <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
-                </li>
-                <li key="staking" className={selectedItems.includes("staking") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
-                  <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>
-                </li>
+                {!isMultisigContext && (
+                  <>
+                    <li key="exchange" className={selectedItems.includes("exchange") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
+                      <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
+                    </li>
+                    <li key="staking" className={selectedItems.includes("staking") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
+                      <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>
+                    </li>
+                  </>
+                )}
                 <li key="vesting" className={selectedItems.includes("vesting") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                   <Link to="/vesting">{t('ui-menus.main-menu.vesting')}</Link>
                 </li>
