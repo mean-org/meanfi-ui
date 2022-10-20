@@ -88,7 +88,7 @@ import {
   shortenAddress,
   toUiAmount
 } from 'middleware/utils';
-import { AccountTokenParsedInfo, AssetCta, AssetGroups, CategoryDisplayItem, KNOWN_APPS, MetaInfoCtaAction, RegisteredApp, UserTokenAccount } from "models/accounts";
+import { AccountsPageCategory, AccountTokenParsedInfo, AssetCta, AssetGroups, KnownAppMetadata, KNOWN_APPS, MetaInfoCtaAction, RegisteredAppPaths, UserTokenAccount } from "models/accounts";
 import { MetaInfoCta } from 'models/common-types';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { CreateNewProposalParams, CREDIX_PROGRAM, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from 'models/multisig';
@@ -108,11 +108,11 @@ import { MoneyStreamsOutgoingView } from 'views/MoneyStreamsOutgoing';
 import { StreamingAccountView } from 'views/StreamingAccount';
 import "./style.scss";
 import { SegmentedLabeledOption } from 'antd/lib/segmented';
+import getAssetCategory from './getAssetCategory';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-export type CategoryOption = "networth" | "assets" | "streaming" | "super-safe" | undefined;
 let isWorkflowLocked = false;
 
 export const AccountsView = () => {
@@ -125,13 +125,13 @@ export const AccountsView = () => {
   const {
     theme,
     streamList,
+    accountNfts,
     tokensLoaded,
     streamListv1,
     streamListv2,
     streamDetail,
     transactions,
     splTokenList,
-    previousRoute,
     isWhitelisted,
     selectedAsset,
     loadingStreams,
@@ -184,7 +184,8 @@ export const AccountsView = () => {
   const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
   const [wSolBalance, setWsolBalance] = useState(0);
   const [refreshingBalance, setRefreshingBalance] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("assets");
+  const [selectedCategory, setSelectedCategory] = useState<AccountsPageCategory>("assets");
+  const [selectedCategoryItem, setSelectedCategoryItem] = useState<KnownAppMetadata>();
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [pathParamAsset, setPathParamAsset] = useState('');
   const [pathParamStreamId, setPathParamStreamId] = useState('');
@@ -243,12 +244,16 @@ export const AccountsView = () => {
     if (!publicKey || !selectedAccount.address) { return; }
 
     consoleOut('pathname:', location.pathname, 'crimson');
-    // TODO: If no category specified (neither assets nor any known App) just assume assets
-    const isKnownApp = KNOWN_APPS.some(a => location.pathname.startsWith(`/${a}`));
-    if (location.pathname.indexOf('/assets') === -1 && !isKnownApp) {
+    // If no category specified (neither assets nor any known App) just assume assets
+    const isKnownApp = KNOWN_APPS.some(a => location.pathname.startsWith(`/${a.path}`));
+    if (
+      location.pathname.indexOf('/assets') === -1 &&
+      location.pathname.indexOf('/my-account') === -1 &&
+      !isKnownApp
+    ) {
       let url = '';
       if (selectedAccount.isMultisig) {
-        url = `/${RegisteredApp.SuperSafe}?v=proposals`;
+        url = `/${RegisteredAppPaths.SuperSafe}?v=proposals`;
       } else {
         url = '/assets';
       }
@@ -750,12 +755,12 @@ export const AccountsView = () => {
 
   const navigateToSafe = useCallback(() => {
     consoleOut('calling navigateToSafe()', '...', 'crimson');
-    const url = `/${RegisteredApp.PaymentStreaming}?v=proposals`;
+    const url = `/${RegisteredAppPaths.SuperSafe}?v=proposals`;
     navigate(url);
   }, [navigate]);
 
   const navigateToStreaming = useCallback(() => {
-    const url = `/${RegisteredApp.PaymentStreaming}/summary`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
     navigate(url);
   }, [navigate]);
 
@@ -1006,7 +1011,7 @@ export const AccountsView = () => {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `/${RegisteredApp.PaymentStreaming}/outgoing`;
+            const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing`;
             navigate(url);
           }
           setTimeout(() => {
@@ -1018,7 +1023,7 @@ export const AccountsView = () => {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `/${RegisteredApp.PaymentStreaming}/incoming`;
+            const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
             navigate(url);
           }
           setTimeout(() => {
@@ -3142,8 +3147,23 @@ export const AccountsView = () => {
       }
     }
 
+    const isKnownApp = KNOWN_APPS.some(a => location.pathname.startsWith(`/${a.path}`));
+    const isAccountSummary = location.pathname.startsWith('/my-account') ||
+                             location.pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)
+      ? true
+      : false;
+
     // The category is inferred from the route path
-    if (location.pathname.startsWith('/assets')) {
+
+    if (isAccountSummary) {
+      // 1.- If the route starts with my-account or super-safe, set category to "account-summary"
+      consoleOut('Setting category:', 'account-summary', 'crimson');
+      setSelectedCategory("account-summary");
+      if (autoOpenDetailsPanel && isKnownApp) {
+        setDetailsPanelOpen(true);
+      }
+    } else if (location.pathname.startsWith('/assets')) {
+      // 2.- If the route starts with assets, set category to "assets"
       consoleOut('Setting category:', 'assets', 'crimson');
       setSelectedCategory("assets");
       if (!asset) {
@@ -3151,9 +3171,9 @@ export const AccountsView = () => {
       } else if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
-    } else if (location.pathname.startsWith(`/${RegisteredApp.PaymentStreaming}`)) {
-      consoleOut('Setting category:', 'streaming', 'crimson');
-      setSelectedCategory("streaming");
+    } else if (location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)) {
+      consoleOut('Setting category:', 'apps', 'crimson');
+      setSelectedCategory("apps");
       if (!streamingItemId) {
         setPathParamTreasuryId('');
         setPathParamStreamId('');
@@ -3161,14 +3181,12 @@ export const AccountsView = () => {
       if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
-    } else if (location.pathname.startsWith(`/${RegisteredApp.SuperSafe}`)) {
-      consoleOut('Setting category:', 'super-safe', 'crimson');
-      setSelectedCategory("super-safe");
+    } else if (isKnownApp && !isAccountSummary) {
+      consoleOut('Setting category:', 'apps', 'crimson');
+      setSelectedCategory("apps");
       if (autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
-    } else {
-      setSelectedCategory(undefined);
     }
 
   }, [
@@ -3186,8 +3204,38 @@ export const AccountsView = () => {
   /**
    * Set tabset option based on the deducted category
    */
-  // useEffect(() => {
-  // }, []);
+  useEffect(() => {
+    switch (selectedCategory) {
+      case "account-summary":
+        setSelectedAssetsGroup(AssetGroups.Tokens);
+        break;
+      // case "apps":
+      //   setSelectedAssetsGroup(AssetGroups.Apps);
+      //   break;
+      case "assets":
+        if (asset) {
+          const category = getAssetCategory(asset, selectedAccount, accountTokens, accountNfts);
+          consoleOut('category from getAssetCategory() ->', category, 'blue');
+          setSelectedAssetsGroup(category);
+        } else {
+          setSelectedAssetsGroup(AssetGroups.Tokens);
+        }
+        break;
+      default:
+        // setSelectedAssetsGroup(undefined);
+        break;
+    }
+  }, [accountNfts, accountTokens, asset, selectedAccount, selectedCategory]);
+
+  // Set an App based of current category and asset group
+  useEffect(() => {
+    if (selectedCategory === "apps" || selectedCategory === "account-summary") {
+      const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.path}`));
+      setSelectedCategoryItem(app);
+    } else {
+      setSelectedCategoryItem(undefined);
+    }
+  }, [location.pathname, selectedCategory]);
 
   // Load streams on entering page
   useEffect(() => {
@@ -3990,18 +4038,18 @@ export const AccountsView = () => {
       setAutoOpenDetailsPanel(false);
       consoleOut('calling onBackButtonClicked() on:', '/super-safe', 'crimson');
       url += `/super-safe?v=proposals`;
-    } else if (location.pathname === `/${RegisteredApp.PaymentStreaming}/incoming/${streamingItemId}`) {
-      url += `/${RegisteredApp.PaymentStreaming}/incoming`;
-    } else if (location.pathname === `/${RegisteredApp.PaymentStreaming}/outgoing/${streamingItemId}`) {
-      url += `/${RegisteredApp.PaymentStreaming}/outgoing`;
+    } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/incoming/${streamingItemId}`) {
+      url += `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
+    } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${streamingItemId}`) {
+      url += `/${RegisteredAppPaths.PaymentStreaming}/outgoing`;
       setStreamDetail(undefined);
-    } else if (location.pathname === `/${RegisteredApp.PaymentStreaming}/streaming-accounts/${streamingItemId}`) {
-      url += `/${RegisteredApp.PaymentStreaming}/streaming-accounts`;
+    } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingItemId}`) {
+      url += `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
     } else {
       consoleOut('calling onBackButtonClicked()', '...', 'crimson');
       setDetailsPanelOpen(false);
       setAutoOpenDetailsPanel(false);
-      url += `/${RegisteredApp.PaymentStreaming}`;
+      url += `/${RegisteredAppPaths.PaymentStreaming}`;
     }
 
     navigate(url);
@@ -4118,54 +4166,6 @@ export const AccountsView = () => {
     return options;
   }
 
-  const getAppsCategoryItems = () => {
-    const options: CategoryDisplayItem[] = [
-      {
-        id: 'staking',
-        title: 'Mean Staking',
-        subtitle: '????',
-        mainValue: '$0.00',
-        secondaryValue: '--',
-      },
-      {
-        id: 'streaming',
-        title: 'Payment Streaming',
-        subtitle: '????',
-        mainValue: '$0.00',
-        secondaryValue: '--',
-      },
-      {
-        id: 'super-safe',
-        title: 'SuperSafe',
-        subtitle: '????',
-        mainValue: '$0.00',
-        secondaryValue: '--',
-      },
-      {
-        id: 'credix',
-        title: 'Credix',
-        subtitle: '????',
-        mainValue: '$0.00',
-        secondaryValue: '--',
-      },
-      {
-        id: 'raydium',
-        title: 'Raydium',
-        subtitle: '????',
-        mainValue: '$0.00',
-        secondaryValue: '--',
-      },
-      {
-        id: 'orca',
-        title: 'Orca',
-        subtitle: '????',
-        mainValue: '$0.00',
-        secondaryValue: '--',
-      },
-    ];
-    return options;
-  }
-
   ///////////////
   // Rendering //
   ///////////////
@@ -4208,7 +4208,7 @@ export const AccountsView = () => {
   const renderNetworthCategory = () => {
     return (
       <div className="networth-list-item-wrapper" key="account-summary-category">
-        <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`}>
+        <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "account-summary" ? 'selected' : ''}`}>
           {renderSelectedAccountSummaryInner()}
         </div>
         <Divider className="networth-separator" />
@@ -4223,7 +4223,7 @@ export const AccountsView = () => {
           setDetailsPanelOpen(true);
           setAutoOpenDetailsPanel(true);
           navigateToSafe();
-        }} className={`networth-list-item flex-fixed-right ${selectedCategory === "super-safe" ? 'selected' : ''}`}>
+        }} className={`networth-list-item flex-fixed-right ${selectedCategory === "account-summary" ? 'selected' : ''}`}>
           {renderSelectedAccountSummaryInner()}
         </div>
         <Divider className="networth-separator" />
@@ -4247,7 +4247,7 @@ export const AccountsView = () => {
           <div key="streams-category" onClick={() => {
             setAutoOpenDetailsPanel(true);
             navigateToStreaming();
-          }} className={`transaction-list-row ${selectedCategory === "streaming" ? 'selected' : ''}`}>
+          }} className={`transaction-list-row ${selectedCategory === "apps" && selectedCategoryItem?.path === RegisteredAppPaths.PaymentStreaming ? 'selected' : ''}`}>
             <div className="icon-cell">
               {loadingStreams ? (
                 <div className="token-icon animate-border-loading">
@@ -4303,6 +4303,7 @@ export const AccountsView = () => {
   }
 
   const renderAsset = useCallback((asset: UserTokenAccount) => {
+
     const onTokenAccountClick = () => {
       consoleOut('clicked on asset:', asset.publicAddress, 'blue');
       setAutoOpenDetailsPanel(true);
@@ -4394,28 +4395,28 @@ export const AccountsView = () => {
     getTokenPriceBySymbol,
     navigateToAsset,
     shouldHideAsset,
+    reloadSwitch
   ]);
 
-  const renderAssetsList = () => {
-
-    const renderMessages = () => {
-      if (loadingTokenAccounts) {
-        return (
-          <div className="flex flex-center">
-            <Spin indicator={antIcon} />
-          </div>
-        );
-      } else if (tokensLoaded) {
-        return (
-          <div className="flex flex-center">
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          </div>
-        );
-      } else {
-        return null;
-      }
+  const renderLoadingOrNoTokensMessage = () => {
+    if (loadingTokenAccounts) {
+      return (
+        <div className="flex flex-center">
+          <Spin indicator={antIcon} />
+        </div>
+      );
+    } else if (tokensLoaded) {
+      return (
+        <div className="flex flex-center">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </div>
+      );
+    } else {
+      return null;
     }
+  }
 
+  const renderAssetsList = () => {
     return (
       <>
         {accountTokens && accountTokens.length > 0 ? (
@@ -4442,9 +4443,32 @@ export const AccountsView = () => {
             {/* Render user token accounts */}
             {accountTokens.map(asset => renderAsset(asset))}
           </>
-        ) : renderMessages()}
+        ) : renderLoadingOrNoTokensMessage()}
       </>
     );
+  }
+
+  const renderNftList = () => {
+    return (
+      <>
+        <p>NFTs goes here</p>
+      </>
+    );
+  }
+
+  const renderEstimatedValueByCategory = () => {
+    switch (selectedAssetsGroup) {
+      case AssetGroups.Tokens:
+        return (<span>Estimated value of tokens: {toUsCurrency(totalTokenAccountsValue)}</span>);
+      case AssetGroups.Nfts:
+        return (<span>Estimated value of NFTs: --</span>);
+      case AssetGroups.Apps:
+        return (<span>Estimated value of Apps: --</span>);
+      case AssetGroups.OtherAssets:
+        return (<span>Estimated value of other assets: --</span>);
+      default:
+        return (<span>Estimated value: --</span>);
+    }
   }
 
   const renderActivityList = () => {
@@ -4771,29 +4795,29 @@ export const AccountsView = () => {
   };
 
   const goToStreamIncomingDetailsHandler = (stream: any) => {
-    const url = `/${RegisteredApp.PaymentStreaming}/incoming/${stream.id as string}`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming/${stream.id as string}`;
     navigate(url);
   }
 
   const goToStreamOutgoingDetailsHandler = (stream: any) => {
-    const url = `/${RegisteredApp.PaymentStreaming}/outgoing/${stream.id as string}`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${stream.id as string}`;
     navigate(url);
   }
 
   const goToStreamingAccountDetailsHandler = (streamingTreasury: Treasury | TreasuryInfo | undefined) => {
     if (streamingTreasury) {
-      const url = `/${RegisteredApp.PaymentStreaming}/streaming-accounts/${streamingTreasury.id as string}`;
+      const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingTreasury.id as string}`;
       navigate(url);
     }
   }
 
   const goToStreamingAccountStreamDetailsHandler = (stream: any) => {
-    const url = `/${RegisteredApp.PaymentStreaming}/outgoing/${stream.id as string}`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${stream.id as string}`;
     navigate(url);
   }
 
   const returnFromIncomingStreamDetailsHandler = () => {
-    const url = `/${RegisteredApp.PaymentStreaming}/incoming`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
 
     setTimeout(() => {
       setStreamDetail(undefined);
@@ -4805,7 +4829,7 @@ export const AccountsView = () => {
   }
 
   const returnFromStreamingAccountDetailsHandler = () => {
-    const url = `/${RegisteredApp.PaymentStreaming}/streaming-accounts`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
     navigate(url);
   }
 
@@ -4865,7 +4889,11 @@ export const AccountsView = () => {
   return (
     <>
       {isLocal() && (
-        <div className="debug-bar"><span>accountTokens:</span><span className="ml-1">{accountTokens ? accountTokens.length : '0'}</span></div>
+        <div className="debug-bar">
+          <span>selectedCategory:</span><span className="mx-1 font-bold">{selectedCategory || 'undefined'}</span>
+          <span>selectedAssetsGroup:</span><span className="mx-1 font-bold">{selectedAssetsGroup || 'undefined'}</span>
+          <span>selectedCategoryItem:</span><span className="mx-1 font-bold">{selectedCategoryItem ? selectedCategoryItem.path : 'undefined'}</span>
+        </div>
       )}
 
       {detailsPanelOpen && (
@@ -4920,23 +4948,19 @@ export const AccountsView = () => {
                           options={getAssetsGroupOptions()}
                           onChange={(value: any) => setSelectedAssetsGroup(value)}
                         />
-                        <div className="mt-1">
-                          {selectedAssetsGroup === AssetGroups.Tokens && (
-                            <span>Estimated value of tokens: {toUsCurrency(totalTokenAccountsValue)}</span>
-                          )}
-                          {selectedAssetsGroup === AssetGroups.Nfts && (
-                            <span>Estimated value of NFTs: --</span>
-                          )}
-                          {selectedAssetsGroup === AssetGroups.Apps && (
-                            <span>Estimated value of App assets: --</span>
-                          )}
-                          {selectedAssetsGroup === AssetGroups.OtherAssets && (
-                            <span>Estimated value of other assets: --</span>
-                          )}
+                        <div className="asset-category-estimated">
+                          {renderEstimatedValueByCategory()}
                         </div>
                       </div>
                       <div className="asset-category flex-column">
-                        {renderAssetsList()}
+                        {selectedAssetsGroup === AssetGroups.Tokens && renderAssetsList()}
+                        {selectedAssetsGroup === AssetGroups.Nfts && renderNftList()}
+                        {selectedAssetsGroup === AssetGroups.Apps && (
+                          <span>Nothing here yet</span>
+                        )}
+                        {selectedAssetsGroup === AssetGroups.OtherAssets && (
+                          <span>Nothing here yet</span>
+                        )}
                       </div>
 
                     </div>
@@ -5052,7 +5076,7 @@ export const AccountsView = () => {
                       </>
                     )}
 
-                    {selectedCategory === "streaming" && (
+                    {selectedCategory === "apps" && selectedCategoryItem?.path === RegisteredAppPaths.PaymentStreaming && (
                       <>
                         {/* Refresh cta */}
                         <div className="float-top-right mr-1 mt-1">
@@ -5078,7 +5102,7 @@ export const AccountsView = () => {
                       </>
                     )}
 
-                    {selectedCategory === "super-safe" && (
+                    {selectedCategoryItem?.path === RegisteredAppPaths.SuperSafe && (
                       <>
                         <Suspense fallback={
                           <div className="h-100 flex-center">

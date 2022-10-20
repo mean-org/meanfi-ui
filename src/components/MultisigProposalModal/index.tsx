@@ -16,7 +16,7 @@ import { useWallet } from 'contexts/wallet';
 import { IconExternalLink } from "Icons";
 import { isError } from 'middleware/transactions';
 import { consoleOut, copyText, getTransactionOperationDescription } from 'middleware/ui';
-import { RegisteredApp } from "models/accounts";
+import { RegisteredAppPaths } from "models/accounts";
 import { TransactionStatus } from 'models/enums';
 import { CreateNewProposalParams, getMultisigInstructionSummary, NATIVE_LOADER, parseSerializedTx } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -100,7 +100,7 @@ export const MultisigProposalModal = (props: {
   const onContinueStepOneButtonClick = () => {
     if (selectedApp?.name === "Payment Streaming") {
       handleClose();
-      const url = `/${RegisteredApp.PaymentStreaming}/summary`;
+      const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
       navigate(url);
     } else if (selectedApp?.name === "Token Vesting") {
       handleClose();

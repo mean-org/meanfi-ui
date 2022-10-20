@@ -1,4 +1,4 @@
-export type AccountsPageCategory = "account-summary" | "favorites" | "assets" | undefined;
+export type AccountsPageCategory = "account-summary" | "assets" | "apps" | "other-assets" | undefined;
 
 export enum MetaInfoCtaAction {
     Send = 0,
@@ -32,7 +32,7 @@ export enum AssetGroups {
     OtherAssets = "other-assets",
 }
 
-export enum RegisteredApp {
+export enum RegisteredAppPaths {
     Staking = "staking",
     PaymentStreaming = "streaming",
     Vesting = "vesting",
@@ -63,15 +63,54 @@ export interface CategoryDisplayItem {
 
 export interface SelectedCategoryItem {
     id: string;                         // The way to know which item is selected
+    path: string;
     mainCategory: AccountsPageCategory;
     subCategory: AssetGroups;
 }
 
-export const KNOWN_APPS: string[] = [
-    RegisteredApp.Staking,
-    RegisteredApp.PaymentStreaming,
-    RegisteredApp.SuperSafe,
-    RegisteredApp.Credix,
-    RegisteredApp.Raydium,
-    RegisteredApp.Orca,
+export interface KnownAppMetadata {
+    appId: string;
+    title: string;
+    path: RegisteredAppPaths;
+}
+
+export const KNOWN_APPS: KnownAppMetadata[] = [
+    {
+        appId: '',
+        title: 'Mean Staking',
+        path: RegisteredAppPaths.Staking,
+    },
+    {
+        appId: '',
+        title: 'Payment Streaming',
+        path: RegisteredAppPaths.PaymentStreaming,
+    },
+    {
+        appId: '',
+        title: 'SuperSafe',
+        path: RegisteredAppPaths.SuperSafe,
+    },
+    {
+        appId: '',
+        title: 'Credix',
+        path: RegisteredAppPaths.Credix,
+    },
+    {
+        appId: '',
+        title: 'Raydium',
+        path: RegisteredAppPaths.Raydium,
+    },
+    {
+        appId: '',
+        title: 'Orca',
+        path: RegisteredAppPaths.Orca,
+    },
 ];
+
+export const getKnownAppById = (appId: string) => {
+    return KNOWN_APPS.find(a => a.appId === appId);
+}
+
+export const getKnownAppByPath = (path: string) => {
+    return KNOWN_APPS.find(a => a.path === path);
+}

@@ -28,7 +28,6 @@ import { TreasuryTypeOption } from "models/treasuries";
 import moment from "moment";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
 import {
   DAO_CORE_TEAM_WHITELIST, DDCA_FREQUENCY_OPTIONS,
   FIVETY_SECONDS_REFRESH_TIMEOUT, FIVE_MINUTES_REFRESH_TIMEOUT, FORTY_SECONDS_REFRESH_TIMEOUT,
@@ -408,7 +407,6 @@ const contextDefaultValues: AppStateConfig = {
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
 
 const AppStateProvider: React.FC = ({ children }) => {
-  const location = useLocation();
   const { t } = useTranslation('common');
   // Parent contexts
   const connection = useConnection();

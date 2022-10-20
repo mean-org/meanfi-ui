@@ -50,7 +50,7 @@ import {
   toTokenAmountBn,
   toUiAmount
 } from "middleware/utils";
-import { RegisteredApp } from "models/accounts";
+import { RegisteredAppPaths } from "models/accounts";
 import { TreasuryTopupParams } from "models/common-types";
 import { OperationType, TransactionStatus } from "models/enums";
 import { ZERO_FEES } from "models/multisig";
@@ -1110,7 +1110,7 @@ export const MoneyStreamsInfoView = (props: {
       const findStream = streamList.filter((stream: Stream | StreamInfo) => stream.id === e);
       const streamSelected = Object.assign({}, ...findStream);
 
-      const url = `/${RegisteredApp.PaymentStreaming}/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
+      const url = `/${RegisteredAppPaths.PaymentStreaming}/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
 
       navigate(url);
     }
@@ -1631,19 +1631,19 @@ export const MoneyStreamsInfoView = (props: {
   }, [getTimeRemaining, t]);
 
   const goToIncomingTabHandler = () => {
-    const url = `/${RegisteredApp.PaymentStreaming}/incoming`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
     navigate(url);
   }
 
   const goToOutgoingTabHandler = () => {
-    const url = `/${RegisteredApp.PaymentStreaming}/outgoing`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing`;
     navigate(url);
   }
 
   const onTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
 
-    const url = `/${RegisteredApp.PaymentStreaming}/${activeKey}`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/${activeKey}`;
     navigate(url);
   }, [navigate]);
 
