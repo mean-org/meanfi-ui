@@ -185,7 +185,7 @@ export const AccountsView = () => {
   const [wSolBalance, setWsolBalance] = useState(0);
   const [refreshingBalance, setRefreshingBalance] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<AccountsPageCategory>("assets");
-  const [selectedCategoryItem, setSelectedCategoryItem] = useState<KnownAppMetadata>();
+  const [selectedApp, setSelectedApp] = useState<KnownAppMetadata>();
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [pathParamAsset, setPathParamAsset] = useState('');
   const [pathParamStreamId, setPathParamStreamId] = useState('');
@@ -3231,9 +3231,9 @@ export const AccountsView = () => {
   useEffect(() => {
     if (selectedCategory === "apps" || selectedCategory === "account-summary") {
       const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.path}`));
-      setSelectedCategoryItem(app);
+      setSelectedApp(app);
     } else {
-      setSelectedCategoryItem(undefined);
+      setSelectedApp(undefined);
     }
   }, [location.pathname, selectedCategory]);
 
@@ -4247,7 +4247,7 @@ export const AccountsView = () => {
           <div key="streams-category" onClick={() => {
             setAutoOpenDetailsPanel(true);
             navigateToStreaming();
-          }} className={`transaction-list-row ${selectedCategory === "apps" && selectedCategoryItem?.path === RegisteredAppPaths.PaymentStreaming ? 'selected' : ''}`}>
+          }} className={`transaction-list-row ${selectedCategory === "apps" && selectedApp?.path === RegisteredAppPaths.PaymentStreaming ? 'selected' : ''}`}>
             <div className="icon-cell">
               {loadingStreams ? (
                 <div className="token-icon animate-border-loading">
@@ -4892,7 +4892,7 @@ export const AccountsView = () => {
         <div className="debug-bar">
           <span>selectedCategory:</span><span className="mx-1 font-bold">{selectedCategory || 'undefined'}</span>
           <span>selectedAssetsGroup:</span><span className="mx-1 font-bold">{selectedAssetsGroup || 'undefined'}</span>
-          <span>selectedCategoryItem:</span><span className="mx-1 font-bold">{selectedCategoryItem ? selectedCategoryItem.path : 'undefined'}</span>
+          <span>selectedApp:</span><span className="mx-1 font-bold">{selectedApp ? selectedApp.path : 'undefined'}</span>
         </div>
       )}
 
@@ -5076,7 +5076,7 @@ export const AccountsView = () => {
                       </>
                     )}
 
-                    {selectedCategory === "apps" && selectedCategoryItem?.path === RegisteredAppPaths.PaymentStreaming && (
+                    {selectedCategory === "apps" && selectedApp?.path === RegisteredAppPaths.PaymentStreaming && (
                       <>
                         {/* Refresh cta */}
                         <div className="float-top-right mr-1 mt-1">
@@ -5102,7 +5102,7 @@ export const AccountsView = () => {
                       </>
                     )}
 
-                    {selectedCategoryItem?.path === RegisteredAppPaths.SuperSafe && (
+                    {selectedApp?.path === RegisteredAppPaths.SuperSafe && (
                       <>
                         <Suspense fallback={
                           <div className="h-100 flex-center">

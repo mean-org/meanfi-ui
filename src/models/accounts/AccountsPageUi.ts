@@ -71,39 +71,54 @@ export interface SelectedCategoryItem {
 export interface KnownAppMetadata {
     appId: string;
     title: string;
+    subTitle: string;
     path: RegisteredAppPaths;
+    enabled: boolean;
+    logoURI?: string;
 }
 
 export const KNOWN_APPS: KnownAppMetadata[] = [
     {
         appId: '',
         title: 'Mean Staking',
+        subTitle: 'aaa',
         path: RegisteredAppPaths.Staking,
+        enabled: false,
     },
     {
         appId: '',
         title: 'Payment Streaming',
+        subTitle: 'bbb',
         path: RegisteredAppPaths.PaymentStreaming,
+        enabled: true,
     },
     {
         appId: '',
         title: 'SuperSafe',
+        subTitle: 'ccc',
         path: RegisteredAppPaths.SuperSafe,
+        enabled: true,
     },
     {
         appId: '',
         title: 'Credix',
+        subTitle: 'ddd',
         path: RegisteredAppPaths.Credix,
+        enabled: false,
     },
     {
         appId: '',
         title: 'Raydium',
+        subTitle: 'eee',
         path: RegisteredAppPaths.Raydium,
+        enabled: false,
     },
     {
         appId: '',
         title: 'Orca',
+        subTitle: 'fff',
         path: RegisteredAppPaths.Orca,
+        enabled: false,
     },
 ];
 
