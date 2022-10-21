@@ -88,14 +88,14 @@ export const NftPaginatedList = (props: {
                             {currentView.map((nft, index) => (
                                 <div
                                     key={`nft-${index}`}
-                                    className={`nft-grid-item${nft.address.toBase58() === assetInPath ? ' selected' : ''}`}
-                                    onClick={() => onNftItemClick(nft)}>
+                                    className={`nft-grid-item${nft.address.toBase58() === assetInPath ? ' selected' : ''}`}>
                                     <div className="nft-title text-shadow">{nft.name}</div>
                                     <img
                                         className="nft-image"
                                         src={nft.json?.image || fallbackImgSrc}
                                         onError={imageOnErrorHandler}
                                         alt={nft.json?.name}
+                                        onClick={() => onNftItemClick(nft)}
                                     />
                                 </div>
                             ))}
