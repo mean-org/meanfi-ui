@@ -29,7 +29,7 @@ import {
   Transaction,
   TransactionInstruction
 } from '@solana/web3.js';
-import { Alert, Button, Col, Divider, Dropdown, Empty, Menu, Row, Segmented, Space, Spin, Tooltip } from 'antd';
+import { Alert, Button, Col, Divider, Dropdown, Empty, Menu, Row, Segmented, Space, Spin, Tooltip, Image } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import notification from 'antd/lib/notification';
 import { segmentAnalytics } from 'App';
@@ -55,6 +55,7 @@ import { UnwrapSolModal } from 'components/UnwrapSolModal';
 import { WrapSolModal } from 'components/WrapSolModal';
 import {
   ACCOUNTS_LOW_BALANCE_LIMIT,
+  fallbackImgSrc,
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   MIN_SOL_BALANCE_REQUIRED,
@@ -109,6 +110,8 @@ import { StreamingAccountView } from 'views/StreamingAccount';
 import "./style.scss";
 import { SegmentedLabeledOption } from 'antd/lib/segmented';
 import getAssetCategory from './getAssetCategory';
+import { FindNftsByOwnerOutput, JsonMetadata, Metadata, Nft, NftWithToken, Sft, SftWithToken } from '@metaplex-foundation/js';
+import { NftPaginatedList } from 'views/NftPaginatedList';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 
@@ -744,6 +747,12 @@ export const AccountsView = () => {
     consoleOut('Asset selected, redirecting to:', url, 'orange');
     navigate(url);
   }, [getAssetPath, navigate])
+
+  const navigateToNft = useCallback((address: string) => {
+    const url = `/assets/${address}`;
+    consoleOut('NFT selected, redirecting to:', url, 'orange');
+    navigate(url);
+  }, [navigate])
 
   const reloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
@@ -4145,17 +4154,18 @@ export const AccountsView = () => {
   }
 
   const getAssetsGroupOptions = () => {
+    const nftCount = accountNfts ? accountNfts.length : 0;
     const options: SegmentedLabeledOption[] = [
       {
         label: `Tokens (${accountTokens.length})`,
         value: AssetGroups.Tokens
       },
       { // Learn how to differentiate NFTs from token accounts and apply knowledge here
-        label: `NFTs (${accountTokens.length > 99 ? '99+' : accountTokens.length})`,
+        label: `NFTs (${nftCount > 99 ? '99+' : nftCount})`,
         value: AssetGroups.Nfts
       },
       {
-        label: `Apps (${accountTokens.length})`,
+        label: `Apps (${KNOWN_APPS.length})`,
         value: AssetGroups.Apps
       },
       {
@@ -4418,7 +4428,7 @@ export const AccountsView = () => {
 
   const renderAssetsList = () => {
     return (
-      <>
+      <div className={`asset-category flex-column${!accountTokens || accountTokens.length === 0 ? ' h-75' : ''}`}>
         {accountTokens && accountTokens.length > 0 ? (
           <>
             {isInspectedAccountTheConnectedWallet() && wSolBalance > 0 && (
@@ -4444,15 +4454,96 @@ export const AccountsView = () => {
             {accountTokens.map(asset => renderAsset(asset))}
           </>
         ) : renderLoadingOrNoTokensMessage()}
-      </>
+      </div>
     );
   }
 
   const renderNftList = () => {
+    if (!accountNfts || accountNfts.length === 0) {
+      return (
+        <div className="asset-category flex-column h-75">
+          {renderLoadingOrNoTokensMessage()}
+        </div>
+      );
+    }
+
+    const onNftItemClick = (item: Nft | Sft | SftWithToken | NftWithToken) => {
+      consoleOut('clicked on NFT item:', item, 'blue');
+      // if (item.collectionDetails) {
+      //   consoleOut('clicked on NFT collection:', item.name, 'blue');
+      // } else {
+      //   consoleOut('clicked on NFT item:', item.address, 'blue');
+      // }
+      setAutoOpenDetailsPanel(true);
+      setSelectedApp(undefined);
+      navigateToNft(item.address.toBase58());
+      // if (selectedCategory !== "assets") {
+      //   setTimeout(() => {
+      //     reloadSwitch();
+      //   }, 100);
+      // }
+    }
+
     return (
       <>
-        <p>NFTs goes here</p>
+        <NftPaginatedList
+          assetInPath={asset}
+          connection={connection}
+          nftList={accountNfts}
+          onNftItemClick={(nft: Nft | Sft | SftWithToken | NftWithToken) => onNftItemClick(nft)}
+        />
       </>
+    );
+  }
+
+  const renderAppsList = () => {
+
+    const onAppClick = (app: KnownAppMetadata) => {
+      setSelectedApp(app);
+      const appUrl = `/${app.path}`;
+      navigate(appUrl);
+    }
+
+    const getSelectedClass = (app: KnownAppMetadata) => {
+      if (!app.enabled || (!isMultisigContext && app.path === RegisteredAppPaths.SuperSafe)) {
+        return 'disabled';
+      }
+      if (selectedApp && selectedApp.path === app.path) {
+        return 'selected';
+      }
+      return '';
+    }
+
+    return (
+      <div className="asset-category flex-column">
+        {KNOWN_APPS.map(app => {
+          return (
+            <>
+              <div key={`${app.path}`}
+                onClick={() => onAppClick(app)}
+                id={app.path}
+                className={`transaction-list-row ${getSelectedClass(app)}`
+                }>
+                <div className="icon-cell">
+                  <div className="token-icon">
+                    {app.logoURI ? (
+                      <img src={app.logoURI} alt={`${app.title}`} width={30} height={30} />
+                      ) : (
+                      <img src={fallbackImgSrc} alt={`${app.title}`} width={30} height={30} />
+                    )}
+                  </div>
+                </div>
+                <div className="description-cell">
+                  <div className="title">
+                    {app.title}
+                  </div>
+                  <div className="subtitle text-truncate">{app.subTitle}</div>
+                </div>
+              </div>
+            </>
+          );
+        })}
+      </div>
     );
   }
 
@@ -4463,9 +4554,9 @@ export const AccountsView = () => {
       case AssetGroups.Nfts:
         return (<span>Estimated value of NFTs: --</span>);
       case AssetGroups.Apps:
-        return (<span>Estimated value of Apps: --</span>);
+        return (<span>Estimated value in Apps: --</span>);
       case AssetGroups.OtherAssets:
-        return (<span>Estimated value of other assets: --</span>);
+        return (<span>Estimated value in other assets: --</span>);
       default:
         return (<span>Estimated value: --</span>);
     }
@@ -4952,16 +5043,18 @@ export const AccountsView = () => {
                           {renderEstimatedValueByCategory()}
                         </div>
                       </div>
-                      <div className="asset-category flex-column">
-                        {selectedAssetsGroup === AssetGroups.Tokens && renderAssetsList()}
-                        {selectedAssetsGroup === AssetGroups.Nfts && renderNftList()}
-                        {selectedAssetsGroup === AssetGroups.Apps && (
+
+                      {selectedAssetsGroup === AssetGroups.Tokens && renderAssetsList()}
+
+                      {selectedAssetsGroup === AssetGroups.Nfts && renderNftList()}
+
+                      {selectedAssetsGroup === AssetGroups.Apps && renderAppsList()}
+
+                      {selectedAssetsGroup === AssetGroups.OtherAssets && (
+                        <div className="asset-category flex-column">
                           <span>Nothing here yet</span>
-                        )}
-                        {selectedAssetsGroup === AssetGroups.OtherAssets && (
-                          <span>Nothing here yet</span>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
                     </div>
 
