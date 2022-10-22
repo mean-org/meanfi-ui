@@ -5,7 +5,7 @@ import { fallbackImgSrc } from "constants/common";
 import { IconArrowBack, IconArrowForward } from "Icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-const perPage = 1;
+const perPage = 4;
 
 export const NftPaginatedList = (props: {
     assetInPath: string | undefined;
@@ -43,7 +43,7 @@ export const NftPaginatedList = (props: {
             const startIndex = (currentPage - 1) * perPage;
             const endIndex = currentPage * perPage;
             const nfts = await loadData(startIndex, endIndex);
-
+            console.log('nfts:', nfts);
             setCurrentView(nfts);
             setLoading(false);
         };
@@ -65,7 +65,7 @@ export const NftPaginatedList = (props: {
 
     return (
         <>
-            <div className={`asset-category flex-column${loading ? ' h-75' : ''}`}>
+            <div key="asset-category-nft-items" className={`asset-category flex-column${loading ? ' h-75' : ''}`}>
                 <Spin spinning={loading}>
                     {currentView && (
                         <div className="nft-pagination">

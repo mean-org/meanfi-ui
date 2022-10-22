@@ -6,7 +6,6 @@ import {
   WarningFilled
 } from '@ant-design/icons';
 import { App, AppConfig, AppsProvider, Arg, NETWORK, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
-import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
 import { createProgram, getDepositIx, getTrancheDepositIx, getTrancheWithdrawIx, getWithdrawIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
@@ -17,6 +16,8 @@ import {
 } from '@mean-dao/mean-multisig-sdk';
 import { MoneyStreaming, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming';
 import { Category, MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { Nft, NftWithToken, Sft, SftWithToken } from '@metaplex-foundation/js';
+import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   Connection,
@@ -29,9 +30,10 @@ import {
   Transaction,
   TransactionInstruction
 } from '@solana/web3.js';
-import { Alert, Button, Col, Divider, Dropdown, Empty, Menu, Row, Segmented, Space, Spin, Tooltip, Image } from 'antd';
+import { Alert, Button, Col, Divider, Dropdown, Empty, Menu, Row, Segmented, Space, Spin, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import notification from 'antd/lib/notification';
+import { SegmentedLabeledOption } from 'antd/lib/segmented';
 import { segmentAnalytics } from 'App';
 import BigNumber from 'bignumber.js';
 import { AccountsCloseAssetModal } from 'components/AccountsCloseAssetModal';
@@ -103,15 +105,9 @@ import { isMobile } from 'react-device-detect';
 import { Helmet } from "react-helmet";
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { MoneyStreamsIncomingView } from 'views/MoneyStreamsIncoming';
-import { MoneyStreamsInfoView } from 'views/MoneyStreamsInfo';
-import { MoneyStreamsOutgoingView } from 'views/MoneyStreamsOutgoing';
-import { StreamingAccountView } from 'views/StreamingAccount';
-import "./style.scss";
-import { SegmentedLabeledOption } from 'antd/lib/segmented';
+import { MoneyStreamsIncomingView, MoneyStreamsInfoView, MoneyStreamsOutgoingView, NftDetails, NftPaginatedList, StreamingAccountView } from 'views';
 import getAssetCategory from './getAssetCategory';
-import { FindNftsByOwnerOutput, JsonMetadata, Metadata, Nft, NftWithToken, Sft, SftWithToken } from '@metaplex-foundation/js';
-import { NftPaginatedList } from 'views/NftPaginatedList';
+import "./style.scss";
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 
@@ -231,10 +227,10 @@ export const AccountsView = () => {
   const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
   const [selectedAssetsGroup, setSelectedAssetsGroup] = useState<AssetGroups>();
+  const [selectedNft, setSelectedNft] = useState<Nft | Sft | SftWithToken | NftWithToken | undefined>(undefined);
   // Multisig Apps
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
-
   // SOL Balance Modal
   const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
   const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
@@ -747,12 +743,6 @@ export const AccountsView = () => {
     consoleOut('Asset selected, redirecting to:', url, 'orange');
     navigate(url);
   }, [getAssetPath, navigate])
-
-  const navigateToNft = useCallback((address: string) => {
-    const url = `/assets/${address}`;
-    consoleOut('NFT selected, redirecting to:', url, 'orange');
-    navigate(url);
-  }, [navigate])
 
   const reloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
@@ -4016,6 +4006,11 @@ export const AccountsView = () => {
     }
   }
 
+
+  //////////////
+  //  Events  //
+  //////////////
+
   const onRefreshStreamsNoReset = () => {
     refreshStreamList(false);
     refreshTreasuries(false);
@@ -4025,10 +4020,6 @@ export const AccountsView = () => {
     refreshStreamList(true);
     refreshTreasuries(false);
   };
-
-  //////////////
-  //  Events  //
-  //////////////
 
   const onBackButtonClicked = () => {
     let url = '';
@@ -4063,6 +4054,25 @@ export const AccountsView = () => {
 
     navigate(url);
   }
+
+  const onGotoAssets = () => {
+    let url = '';
+    if (selectedAsset) {
+      url = getAssetPath(selectedAsset);
+    } else {
+      url += `/assets`;
+    }
+    navigate(url);
+  }
+
+  const onChangeAssetsGroup = (group: AssetGroups | undefined) => {
+    setSelectedAssetsGroup(group);
+    if (group === AssetGroups.Tokens) {
+      onGotoAssets();
+      reloadSwitch();
+    }
+  }
+
 
   ////////////////
   // Validators //
@@ -4100,10 +4110,6 @@ export const AccountsView = () => {
       }
     }
   }
-
-  //////////////
-  //  Events  //
-  //////////////
 
   const getLeftPanelOptions = () => {
     const items: ItemType[] = [];
@@ -4232,6 +4238,7 @@ export const AccountsView = () => {
         <div onClick={() => {
           setDetailsPanelOpen(true);
           setAutoOpenDetailsPanel(true);
+          setSelectedNft(undefined);
           navigateToSafe();
         }} className={`networth-list-item flex-fixed-right ${selectedCategory === "account-summary" ? 'selected' : ''}`}>
           {renderSelectedAccountSummaryInner()}
@@ -4318,6 +4325,7 @@ export const AccountsView = () => {
       consoleOut('clicked on asset:', asset.publicAddress, 'blue');
       setAutoOpenDetailsPanel(true);
       navigateToAsset(asset);
+      setSelectedNft(undefined);
       if (selectedCategory !== "assets") {
         setTimeout(() => {
           reloadSwitch();
@@ -4428,7 +4436,9 @@ export const AccountsView = () => {
 
   const renderAssetsList = () => {
     return (
-      <div className={`asset-category flex-column${!accountTokens || accountTokens.length === 0 ? ' h-75' : ''}`}>
+      <div
+        key="asset-category-token-items"
+        className={`asset-category flex-column${!accountTokens || accountTokens.length === 0 ? ' h-75' : ''}`}>
         {accountTokens && accountTokens.length > 0 ? (
           <>
             {isInspectedAccountTheConnectedWallet() && wSolBalance > 0 && (
@@ -4461,7 +4471,7 @@ export const AccountsView = () => {
   const renderNftList = () => {
     if (!accountNfts || accountNfts.length === 0) {
       return (
-        <div className="asset-category flex-column h-75">
+        <div key="asset-category-nft-items" className="asset-category flex-column h-75">
           {renderLoadingOrNoTokensMessage()}
         </div>
       );
@@ -4469,19 +4479,10 @@ export const AccountsView = () => {
 
     const onNftItemClick = (item: Nft | Sft | SftWithToken | NftWithToken) => {
       consoleOut('clicked on NFT item:', item, 'blue');
-      // if (item.collectionDetails) {
-      //   consoleOut('clicked on NFT collection:', item.name, 'blue');
-      // } else {
-      //   consoleOut('clicked on NFT item:', item.address, 'blue');
-      // }
       setAutoOpenDetailsPanel(true);
+      setSelectedCategory(undefined);
       setSelectedApp(undefined);
-      navigateToNft(item.address.toBase58());
-      // if (selectedCategory !== "assets") {
-      //   setTimeout(() => {
-      //     reloadSwitch();
-      //   }, 100);
-      // }
+      setSelectedNft(item);
     }
 
     return (
@@ -4500,6 +4501,7 @@ export const AccountsView = () => {
 
     const onAppClick = (app: KnownAppMetadata) => {
       setSelectedApp(app);
+      setSelectedNft(undefined);
       const appUrl = `/${app.path}`;
       navigate(appUrl);
     }
@@ -4515,7 +4517,7 @@ export const AccountsView = () => {
     }
 
     return (
-      <div className="asset-category flex-column">
+      <div key="asset-category-apps-items" className="asset-category flex-column">
         {KNOWN_APPS.map(app => {
           return (
             <>
@@ -4993,8 +4995,10 @@ export const AccountsView = () => {
           type="default"
           shape="circle"
           icon={<ArrowLeftOutlined />}
-          onClick={onBackButtonClicked}/>
+          onClick={onBackButtonClicked}
+        />
       )}
+
       <div className="container main-container accounts">
 
         {/* SEO tags overrides */}
@@ -5027,17 +5031,17 @@ export const AccountsView = () => {
                     {/* Middle area (vertically flexible block of items) */}
                     <div className={`item-block${!isXsDevice ? ' vertical-scroll' : ''}`}>
 
-                      <div className="asset-category">
+                      <div key="payment-streams-summary" className="asset-category">
                         {renderMoneyStreamsSummary()}
                       </div>
 
-                      <div className="asset-category-title text-center pt-1 pb-1">
+                      <div key="asset-category-title" className="asset-category-title text-center pt-1 pb-1">
                         <Segmented
                           size="small"
                           defaultValue={AssetGroups.Tokens}
                           value={selectedAssetsGroup}
                           options={getAssetsGroupOptions()}
-                          onChange={(value: any) => setSelectedAssetsGroup(value)}
+                          onChange={(value: any) => onChangeAssetsGroup(value)}
                         />
                         <div className="asset-category-estimated">
                           {renderEstimatedValueByCategory()}
@@ -5051,7 +5055,7 @@ export const AccountsView = () => {
                       {selectedAssetsGroup === AssetGroups.Apps && renderAppsList()}
 
                       {selectedAssetsGroup === AssetGroups.OtherAssets && (
-                        <div className="asset-category flex-column">
+                        <div key="asset-category-other-items" className="asset-category flex-column">
                           <span>Nothing here yet</span>
                         </div>
                       )}
@@ -5113,7 +5117,7 @@ export const AccountsView = () => {
                   <div className="inner-container">
 
 
-                    {selectedCategory === "assets" && (
+                    {selectedCategory === "assets" ? (
                       <>
                         {/* Refresh cta */}
                         <div className="float-top-right mr-1 mt-1">
@@ -5167,9 +5171,9 @@ export const AccountsView = () => {
                           </div>
                         )}
                       </>
-                    )}
+                    ) : null}
 
-                    {selectedCategory === "apps" && selectedApp?.path === RegisteredAppPaths.PaymentStreaming && (
+                    {selectedApp?.path === RegisteredAppPaths.PaymentStreaming ? (
                       <>
                         {/* Refresh cta */}
                         <div className="float-top-right mr-1 mt-1">
@@ -5193,9 +5197,9 @@ export const AccountsView = () => {
                           {renderPaymentStreamsContent()}
                         </div>
                       </>
-                    )}
+                    ) : null}
 
-                    {selectedApp?.path === RegisteredAppPaths.SuperSafe && (
+                    {selectedApp?.path === RegisteredAppPaths.SuperSafe ? (
                       <>
                         <Suspense fallback={
                           <div className="h-100 flex-center">
@@ -5210,7 +5214,17 @@ export const AccountsView = () => {
                           />
                         </Suspense>
                       </>
-                    )}
+                    ) : null}
+
+                    {selectedCategory === undefined && selectedAssetsGroup === AssetGroups.Nfts && selectedNft ? (
+                      <>
+                        <NftDetails
+                          accountTokens={accountTokens}
+                          nftList={accountNfts}
+                          selectedNft={selectedNft}
+                        />
+                      </>
+                    ) : null}
                   </div>
                 </div>
               </div>
