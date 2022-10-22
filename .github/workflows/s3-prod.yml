@@ -10,7 +10,7 @@ env:
   ROBOTS_TXT_FILE_NAME: "robots_allow.txt"
   ARTIFACT_NAME: mean-ui-build-production
   DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID_PROD }}
-  # AWS_S3_SKIP_FOLDERS: 3 # keep only last 3 deploys
+  AWS_S3_SKIP_FOLDERS: 5 # keep only last 5 deploys
   APPROVAL_ADMINS_PROD: MexicanSparker,supermean-ayaz,eydelrivero,micheltriana
   MINIMUM_APPROVALS: 1
 
@@ -105,11 +105,11 @@ jobs:
           AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
 
       # get list of folders and remove older ones
-      # - name: S3 Cleanup
-      #   run: |
-      #     FOLDERS_TO_DELETE="$(aws s3 ls s3://${{ env.BUCKET_NAME }} | awk -Fv '{print $2}' | awk -F/ '{print $1}' | sort -n -r | awk '{if(NR > ${{ env.AWS_S3_SKIP_FOLDERS }}) print $0}')"
-      #     for FOLDER_NO in $FOLDERS_TO_DELETE
-      #     do
-      #       echo "Removing s3://${{ env.BUCKET_NAME }}/v$FOLDER_NO ..."
-      #       aws s3 rm s3://${{ env.BUCKET_NAME }}/v$FOLDER_NO/ --recursive
-      #     done
+      - name: S3 Cleanup
+        run: |
+          FOLDERS_TO_DELETE="$(aws s3 ls s3://${{ env.BUCKET_NAME }} | awk -Fv '{print $2}' | awk -F/ '{print $1}' | sort -n -r | awk '{if(NR > ${{ env.AWS_S3_SKIP_FOLDERS }}) print $0}')"
+          for FOLDER_NO in $FOLDERS_TO_DELETE
+          do
+            echo "Removing s3://${{ env.BUCKET_NAME }}/v$FOLDER_NO ..."
+            aws s3 rm s3://${{ env.BUCKET_NAME }}/v$FOLDER_NO/ --recursive
+          done
