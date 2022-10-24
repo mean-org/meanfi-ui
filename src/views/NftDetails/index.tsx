@@ -1,11 +1,11 @@
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { Nft, NftWithToken, Sft, SftWithToken } from "@metaplex-foundation/js";
-import { Image, Space, Tooltip } from "antd";
+import { Image, Space, Tabs, Tooltip } from "antd";
 import { InfoIcon } from "components/InfoIcon";
 import { fallbackImgSrc } from "constants/common";
 import { useMint } from "contexts/accounts";
-import React, { useMemo } from "react";
-import { NftCreatorsPopover } from "./NftCreatorsPopover";
+import React, { useCallback, useMemo } from "react";
+import { NftCreators } from "./NftCreators";
 
 export const NftDetails = (props: {
     selectedNft: Nft | Sft | SftWithToken | NftWithToken;
@@ -92,11 +92,36 @@ export const NftDetails = (props: {
         );
     }
 
-    const renderAttributes = () => {
+    const renderCreatorsAndRoyalties = useCallback(() => {
+        return (
+            <>
+                <h3 className="nft-details-heading mb-2">Creators and Royalties</h3>
+                {infoRow(
+                    (
+                        <>
+                            <span className="shift-up-3px">Royalty</span>
+                            <InfoIcon
+                                placement="top"
+                                content={
+                                    <span>Royalties are shared to Creators at this rate if the asset is sold using Metaplex Auction program.</span>
+                                }>
+                                <InfoCircleOutlined />
+                            </InfoIcon>
+                        </>
+                    ),
+                    `${selectedNft.sellerFeeBasisPoints / 100}%`
+                )}
+                <NftCreators creators={selectedNft.creators} />
+            </>
+        );
+    }, [selectedNft.creators, selectedNft.sellerFeeBasisPoints]);
+
+    const renderAttributes = useCallback(() => {
         if (!selectedNft || !selectedNft.json) { return null; }
 
         return (
             <>
+                <h3 className="nft-details-heading mb-2">Attributes</h3>
                 {selectedNft.json.attributes ? (
                     <div className="nft-attributes-grid mb-2">
                         {selectedNft.json.attributes.map((attr, index) => {
@@ -114,7 +139,7 @@ export const NftDetails = (props: {
                 )}
             </>
         );
-    }
+    }, [selectedNft]);
 
     const infoRow = (label: React.ReactNode, content: React.ReactNode) => {
         return <div className="two-column-form-layout col30x70 mb-1">
@@ -126,6 +151,41 @@ export const NftDetails = (props: {
             </div>
         </div>;
     }
+
+    const renderProfile = () => {
+        return (
+            <>
+                <h3 className="nft-details-heading mb-2">Profile</h3>
+                <p>Profile here</p>
+            </>
+        );
+    }
+
+    const renderTabset = useCallback(() => {
+        const items = [];
+        items.push({
+            key: "profile",
+            label: "Profile",
+            children: renderProfile()
+        });
+        items.push({
+            key: "creators",
+            label: "Creators",
+            children: renderCreatorsAndRoyalties()
+        });
+        items.push({
+            key: "attributes",
+            label: "Attributes",
+            children: renderAttributes()
+        });
+
+        return (
+            <Tabs
+                items={items}
+                className="neutral"
+            />
+        );
+    }, [renderAttributes, renderCreatorsAndRoyalties]);
 
     return (
         <div className="nft-details">
@@ -153,7 +213,7 @@ export const NftDetails = (props: {
                         <div className="right">
                         {selectedNft.json ? (
                             <>
-                                {/* <h3 className="nft-details-heading">NFT Overview</h3> */}
+                                <h3 className="nft-details-heading">NFT Overview</h3>
                                 <div className="font-size-100 font-bold mb-1">
                                     <span>{selectedNft.name || 'No NFT name found'}</span>
                                     {selectedNft.json.symbol ? (
@@ -182,28 +242,9 @@ export const NftDetails = (props: {
                 <div className="bottom">
                     {selectedNft.json ? (
                         <div className="transaction-list-data-wrapper">
-                            {infoRow(
-                                (
-                                    <>
-                                        <span className="shift-up-3px">Royalty</span>
-                                        <InfoIcon
-                                            placement="top"
-                                            content={<span>Royalties are shared to Creators at this rate if the asset is sold using Metaplex Auction program.</span>}
-                                            >
-                                            <InfoCircleOutlined />
-                                        </InfoIcon>
-                                    </>
-                                ),
-                                `${selectedNft.sellerFeeBasisPoints / 100}%`
-                            )}
-
-                            <NftCreatorsPopover
-                                creators={selectedNft.creators}
-                                dropdownLabel="Creators"
-                            />
-
-                            <h3 className="nft-details-heading">Attributes</h3>
-                            {renderAttributes()}
+                            {/* CTAs row */}
+                            {/* Tabset */}
+                            {renderTabset()}
                         </div>
                     ) : (
                         <div className="transaction-list-data-wrapper h-100 flex-column">

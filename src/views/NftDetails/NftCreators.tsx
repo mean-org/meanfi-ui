@@ -1,29 +1,27 @@
 import { Creator } from "@metaplex-foundation/js";
-import { Popover, Tooltip } from "antd";
+import { Tooltip } from "antd";
 import { AddressDisplay } from "components/AddressDisplay";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "constants/common";
 import { getSolanaExplorerClusterParam } from "contexts/connection";
-import { IconCaretDown, IconCheck, IconInfoCircle } from "Icons";
+import useWindowSize from "hooks/useWindowResize";
+import { IconCheck, IconInfoCircle } from "Icons";
 
-export const NftCreatorsPopover = (props: {
+export const NftCreators = (props: {
     creators: Creator[];
-    dropdownLabel: string;
 }) => {
 
-    const {
-        creators,
-        dropdownLabel,
-    } = props;
+    const { creators } = props;
+    const { width } = useWindowSize();
 
-    const bodyContent = (
+    return (
         <div className="creators-table-wrapper">
             <div className="item-list-header compact dark">
                 <div className="header-row">
                     <div className="std-table-cell responsive-cell px-2 text-left">
                         <span>Creator address</span>
                     </div>
-                    <div className="std-table-cell fixed-width-90 px-2 text-right border-left">
-                        <span>% Royalty</span>
+                    <div className="std-table-cell fixed-width-80 px-2 text-right border-left">
+                        <span>Royalty</span>
                     </div>
                 </div>
             </div>
@@ -35,21 +33,28 @@ export const NftCreatorsPopover = (props: {
                             return (
                                 <div key={`${index}-${item.address.toBase58()}`} className="item-list-row">
                                     <div className="std-table-cell responsive-cell px-2 text-left">
-                                        {item.verified ? (
-                                            <IconCheck className="mean-svg-icons success align-middle mr-1" />
-                                        ) : (
-                                            <IconInfoCircle className="mean-svg-icons info align-middle mr-1" style={{width:24, height:20}} />
-                                        )}
+                                        <Tooltip title={item.verified ? 'Verified' : 'Unverified'}>
+                                            {item.verified ? (
+                                                <span>
+                                                    <IconCheck className="mean-svg-icons success align-middle" />
+                                                </span>
+                                            ) : (
+                                                <span>
+                                                    <IconInfoCircle className="mean-svg-icons info align-middle" style={{width:24, height:20}} />
+                                                </span>
+                                            )}
+                                        </Tooltip>
                                         <AddressDisplay
                                             address={item.address.toBase58()}
-                                            maxChars={12}
-                                            className="align-middle simplelink underline-on-hover"
+                                            maxChars={width < 400 ? 12 : undefined}
+                                            showFullAddress={width >= 400 ? true : false}
+                                            className="align-middle simplelink underline-on-hover ml-1"
                                             iconStyles={{ width: "15", height: "15" }}
                                             newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.address.toBase58()}${getSolanaExplorerClusterParam()}`}
                                         />
                                     </div>
-                                    <div className="std-table-cell fixed-width-90 px-2 text-right border-left">
-                                        {item.share}
+                                    <div className="std-table-cell fixed-width-80 px-2 text-right border-left">
+                                        {item.share}%
                                     </div>
                                 </div>
                             );
@@ -60,19 +65,5 @@ export const NftCreatorsPopover = (props: {
                 <div className="pl-1">No creators found</div>
             )}
         </div>
-    );
-
-    return (
-        <>
-            <Popover
-                placement="bottom"
-                content={bodyContent}
-                trigger="click">
-                <span className="flat-button tiny stroked">
-                    <span className="mr-1">{dropdownLabel || 'Creators'}</span>
-                    <IconCaretDown className="mean-svg-icons" />
-                </span>
-            </Popover>
-        </>
     );
 };

@@ -415,12 +415,10 @@
             border-radius: var(--custom-border-radius);
             padding: 8px 12px;
             .nft-attribute-name {
-                font-size: 0.8rem;
                 color: var(--color-secondary-alpha-60);
                 margin-bottom: 0.25rem;
             }
             .nft-attribute-value {
-                font-size: 1.1rem;
                 font-weight: 900;
             }
         }
@@ -495,15 +493,36 @@
 
     .creators-table-wrapper {
         min-width: 300px;
-        max-width: 450px;
+        max-width: 100%;
         width: auto;
+        .item-list-header.dark {
+            .header-row .std-table-cell {
+                vertical-align: bottom;
+                white-space: inherit;
+                &.border-right {
+                    border-right: 1px solid var(--color-secondary-alpha-05);
+                }
+                &.border-left {
+                    border-left: 1px solid var(--color-secondary-alpha-05);
+                }
+            }
+        }
+        .item-list-body.dark {
+            .item-list-row .std-table-cell {
+                &.border-right {
+                    border-right: 1px solid var(--color-secondary-alpha-05);
+                }
+                &.border-left {
+                    border-left: 1px solid var(--color-secondary-alpha-05);
+                }
+            }
+        }
     }
 
     .nft-details-heading {
         font-weight: 500;
         line-height: 1.2;
         color: var(--color-secondary-alpha-70);
-        margin-bottom: 8px;
     }
 }
 
