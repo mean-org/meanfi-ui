@@ -4984,13 +4984,13 @@ export const AccountsView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span>selectedCategory:</span><span className="mx-1 font-bold">{selectedCategory || 'undefined'}</span>
           <span>selectedAssetsGroup:</span><span className="mx-1 font-bold">{selectedAssetsGroup || 'undefined'}</span>
           <span>selectedApp:</span><span className="mx-1 font-bold">{selectedApp ? selectedApp.path : 'undefined'}</span>
         </div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button

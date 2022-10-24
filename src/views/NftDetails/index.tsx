@@ -70,7 +70,7 @@ export const NftDetails = (props: {
 
     const getIsMutablePill = (isMutable: boolean) => {
         return (
-            <span className="badge small font-bold text-uppercase fg-white bg-green">{isMutable ? 'Mutable' : 'Immutable'}</span>
+            <span className="badge medium font-bold text-uppercase fg-white bg-purple">{isMutable ? 'Mutable' : 'Immutable'}</span>
         );
     }
 
@@ -84,7 +84,7 @@ export const NftDetails = (props: {
         return (
             <>
                 <Tooltip title={hasPrimarySaleHappened ? secondaryMarketTooltip : primaryMarketTooltip}>
-                    <span className="badge small font-bold text-uppercase fg-white bg-green">
+                    <span className="badge medium font-bold text-uppercase fg-white bg-purple">
                         {hasPrimarySaleHappened ? 'Secondary Market' : 'Primary Market'}
                     </span>
                 </Tooltip>
@@ -98,7 +98,7 @@ export const NftDetails = (props: {
         return (
             <>
                 {selectedNft.json.attributes ? (
-                    <div className="nft-attributes-grid">
+                    <div className="nft-attributes-grid mb-2">
                         {selectedNft.json.attributes.map((attr, index) => {
                             if (!attr.trait_type || !attr.value) { return null; }
                             return (
@@ -128,8 +128,8 @@ export const NftDetails = (props: {
     }
 
     return (
-        <>
-            <div className="flexible-column-bottom">
+        <div className="nft-details">
+            <div className="flexible-column-bottom vertical-scroll">
                 <div className="top">
                     <div className="nft-header-layout">
                         <div className="left">
@@ -153,46 +153,25 @@ export const NftDetails = (props: {
                         <div className="right">
                         {selectedNft.json ? (
                             <>
-                                <div className="font-size-100 font-bold">
-                                    <span>{selectedNft.json.name || 'No NFT name found'}</span>
+                                {/* <h3 className="nft-details-heading">NFT Overview</h3> */}
+                                <div className="font-size-100 font-bold mb-1">
+                                    <span>{selectedNft.name || 'No NFT name found'}</span>
                                     {selectedNft.json.symbol ? (
                                         <span className="ml-1">({selectedNft.json.symbol})</span>
                                     ) : null}
                                 </div>
 
-                                <div className="font-size-100 mb-1">
-                                    <Space size="small">
+                                <div className="font-size-100 mb-2">
+                                    <Space size="small" align="center" wrap>
                                         {getEditionPill()}
                                         {isVerifiedCollection ? getVerifiedCollectionPill() : null}
-                                    </Space>
-                                </div>
-
-                                <div className="mb-1">
-                                    <Space size="small" align="center">
                                         {getIsMutablePill(selectedNft.isMutable)}
                                         {getSaleTypePill(selectedNft.primarySaleHappened)}
                                     </Space>
                                 </div>
 
-                                {infoRow(
-                                    (
-                                        <>
-                                            <span className="shift-up-3px">Royalty</span>
-                                            <InfoIcon
-                                                placement="top"
-                                                content={<span>Royalties are shared to Creators at this rate if the asset is sold using Metaplex Auction program.</span>}
-                                                >
-                                                <InfoCircleOutlined />
-                                            </InfoIcon>
-                                        </>
-                                    ),
-                                    `${selectedNft.sellerFeeBasisPoints / 100}%`
-                                )}
-
-                                <NftCreatorsPopover
-                                    creators={selectedNft.creators}
-                                    dropdownLabel="Creators"
-                                />
+                                <h3 className="nft-details-heading">Description</h3>
+                                <p>{selectedNft.json.description || 'No description in metadata'}</p>
                             </>
                         ) : (
                             <span>No metadata found</span>
@@ -202,17 +181,37 @@ export const NftDetails = (props: {
                 </div>
                 <div className="bottom">
                     {selectedNft.json ? (
-                        <>
-                            <h2 className="nft-details-heading">Description</h2>
-                            <p>{selectedNft.json.description || 'No description in metadata'}</p>
-                            <h2 className="nft-details-heading">Attributes</h2>
+                        <div className="transaction-list-data-wrapper">
+                            {infoRow(
+                                (
+                                    <>
+                                        <span className="shift-up-3px">Royalty</span>
+                                        <InfoIcon
+                                            placement="top"
+                                            content={<span>Royalties are shared to Creators at this rate if the asset is sold using Metaplex Auction program.</span>}
+                                            >
+                                            <InfoCircleOutlined />
+                                        </InfoIcon>
+                                    </>
+                                ),
+                                `${selectedNft.sellerFeeBasisPoints / 100}%`
+                            )}
+
+                            <NftCreatorsPopover
+                                creators={selectedNft.creators}
+                                dropdownLabel="Creators"
+                            />
+
+                            <h3 className="nft-details-heading">Attributes</h3>
                             {renderAttributes()}
-                        </>
+                        </div>
                     ) : (
-                        <span>No metadata found</span>
+                        <div className="transaction-list-data-wrapper h-100 flex-column">
+                            <span>No metadata found</span>
+                        </div>
                     )}
                 </div>
             </div>
-        </>
+        </div>
     );
 }
