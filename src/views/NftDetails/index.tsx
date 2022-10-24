@@ -8,7 +8,7 @@ import { useMint } from "contexts/accounts";
 import { AppStateContext } from "contexts/appstate";
 import { getSolanaExplorerClusterParam } from "contexts/connection";
 import useWindowSize from "hooks/useWindowResize";
-import React, { useCallback, useContext, useMemo } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { NftCreators } from "./NftCreators";
 
 export const NftDetails = (props: {
@@ -25,7 +25,8 @@ export const NftDetails = (props: {
 
     const collectionAddress = selectedNft.collection?.address;
     const collectionMintInfo = useMint(collectionAddress);
-    const { width } = useWindowSize();
+    const { width: browserInnerWidth } = useWindowSize();
+    const [shouldShortedAddresses, setShouldShortedAddresses] = useState<boolean>(false);
 
     const isVerifiedCollection = useMemo(() => {
         if (!selectedNft) { return false; }
@@ -151,13 +152,13 @@ export const NftDetails = (props: {
     }, [selectedNft]);
 
     const infoRow = (label: React.ReactNode, content: React.ReactNode) => {
-        return <div className="two-column-form-layout col30x70 mb-1">
+        return <div className="info-row-layout mb-2">
             <div className="left fg-secondary-60">{label}</div>
             <div className="right fg-secondary-60">{content}</div>
         </div>;
     }
 
-    const renderProfile = () => {
+    const renderProfile = useCallback(() => {
         if (!selectedNft || !selectedNft.mint) { return null; }
 
         return (
@@ -167,8 +168,8 @@ export const NftDetails = (props: {
                     (<span className="align-text-bottom">Token address</span>),
                     <AddressDisplay
                         address={selectedNft.address.toBase58()}
-                        maxChars={width < 400 ? 12 : undefined}
-                        showFullAddress={width >= 400 ? true : false}
+                        maxChars={shouldShortedAddresses ? 12 : undefined}
+                        showFullAddress={shouldShortedAddresses ? false : true}
                         iconStyles={{ width: "15", height: "15" }}
                         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.address.toBase58()}${getSolanaExplorerClusterParam()}`}
                     />
@@ -188,8 +189,8 @@ export const NftDetails = (props: {
                     ),
                     <AddressDisplay
                         address={selectedNft.mint.mintAuthorityAddress.toBase58()}
-                        maxChars={width < 400 ? 12 : undefined}
-                        showFullAddress={width >= 400 ? true : false}
+                        maxChars={shouldShortedAddresses ? 12 : undefined}
+                        showFullAddress={shouldShortedAddresses ? false : true}
                         iconStyles={{ width: "15", height: "15" }}
                         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.mint.mintAuthorityAddress.toBase58()}${getSolanaExplorerClusterParam()}`}
                     />
@@ -209,8 +210,8 @@ export const NftDetails = (props: {
                     ),
                     <AddressDisplay
                         address={selectedNft.updateAuthorityAddress.toBase58()}
-                        maxChars={width < 400 ? 12 : undefined}
-                        showFullAddress={width >= 400 ? true : false}
+                        maxChars={shouldShortedAddresses ? 12 : undefined}
+                        showFullAddress={shouldShortedAddresses ? false : true}
                         iconStyles={{ width: "15", height: "15" }}
                         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.updateAuthorityAddress.toBase58()}${getSolanaExplorerClusterParam()}`}
                     />
@@ -230,15 +231,15 @@ export const NftDetails = (props: {
                     ),
                     <AddressDisplay
                         address={selectedAccount.address}
-                        maxChars={width < 400 ? 12 : undefined}
-                        showFullAddress={width >= 400 ? true : false}
+                        maxChars={shouldShortedAddresses ? 12 : undefined}
+                        showFullAddress={shouldShortedAddresses ? false : true}
                         iconStyles={{ width: "15", height: "15" }}
                         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedAccount.address}${getSolanaExplorerClusterParam()}`}
                     />
                 ) : null}
             </>
         );
-    }
+    }, [selectedAccount, selectedNft, shouldShortedAddresses]);
 
     const renderTabset = useCallback(() => {
         const items = [];
@@ -264,7 +265,15 @@ export const NftDetails = (props: {
                 className="neutral"
             />
         );
-    }, [renderAttributes, renderCreatorsAndRoyalties]);
+    }, [renderAttributes, renderCreatorsAndRoyalties, renderProfile]);
+
+    useEffect(() => {
+        if (browserInnerWidth < 410) {
+            setShouldShortedAddresses(true);
+        } else {
+            setShouldShortedAddresses(false);
+        }
+    }, [browserInnerWidth]);
 
     return (
         <div className="nft-details">
