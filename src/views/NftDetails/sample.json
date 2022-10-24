@@ -1,0 +1,101 @@
+{
+    "model": "nft",
+    "updateAuthorityAddress": "9GNusqS5Qpg1YSQNy5qpJGfxJXUDHzBpZk9JQr54ncSa",
+    "json": {
+        "name": "Test Number #0001",
+        "symbol": "SNB",
+        "description": "Collection of 777 numbers on the blockchain. This is the number 1/777.",
+        "seller_fee_basis_points": 500,
+        "image": "https://www.arweave.net/nPR9XE8TdxA_OJEx1Edu4v077QVL_YNxAgO5BqzqEzk?ext=png",
+        "attributes": [
+            {
+                "trait_type": "Layer-1",
+                "value": "0"
+            },
+            {
+                "trait_type": "Layer-2",
+                "value": "0"
+            },
+            {
+                "trait_type": "Layer-3",
+                "value": "0"
+            },
+            {
+                "trait_type": "Layer-4",
+                "value": "1"
+            }
+        ],
+        "properties": {
+            "creators": [
+                {
+                    "address": "9GNusqS5Qpg1YSQNy5qpJGfxJXUDHzBpZk9JQr54ncSa",
+                    "share": 100
+                }
+            ],
+            "files": [
+                {
+                    "uri": "https://www.arweave.net/nPR9XE8TdxA_OJEx1Edu4v077QVL_YNxAgO5BqzqEzk?ext=png",
+                    "type": "image/png"
+                }
+            ]
+        },
+        "collection": {
+            "name": "numbers",
+            "family": "numbers"
+        }
+    },
+    "jsonLoaded": true,
+    "name": "Solana Dev King#48",
+    "symbol": "SNB",
+    "uri": "https://arweave.net/Pf5rjaSti5ZTmZi8KDjS4O_OTGthn7qf2JRJYgMly64",
+    "isMutable": true,
+    "primarySaleHappened": true,
+    "sellerFeeBasisPoints": 500,
+    "editionNonce": 255,
+    "creators": [
+        {
+            "address": "EFK4kZMQz5hgccz8ry9KwTW5A4XkWx465R8caHoijnLo",
+            "verified": true,
+            "share": 0
+        },
+        {
+            "address": "9GNusqS5Qpg1YSQNy5qpJGfxJXUDHzBpZk9JQr54ncSa",
+            "verified": false,
+            "share": 100
+        }
+    ],
+    "tokenStandard": 0,
+    "collection": null,
+    "collectionDetails": null,
+    "uses": null,
+    "address": "5fyB3WecDDnUFyt8eML5wPbCBsSZ5jbtq8JVGkRGqcwJ",
+    "metadataAddress": "JA28KQt9EmdWPazx1NYu97fAGJ8DexQv3q9cCBmdbEnw",
+    "mint": {
+        "model": "mint",
+        "address": "5fyB3WecDDnUFyt8eML5wPbCBsSZ5jbtq8JVGkRGqcwJ",
+        "mintAuthorityAddress": "GghbFTLrnG2CP56hYTtwsUSgaXaMnZQXmbNrZcwaWgDS",
+        "freezeAuthorityAddress": "GghbFTLrnG2CP56hYTtwsUSgaXaMnZQXmbNrZcwaWgDS",
+        "decimals": 0,
+        "supply": {
+            "basisPoints": "01",
+            "currency": {
+                "symbol": "SNB",
+                "decimals": 0,
+                "namespace": "spl-token"
+            }
+        },
+        "isWrappedSol": false,
+        "currency": {
+            "symbol": "SNB",
+            "decimals": 0,
+            "namespace": "spl-token"
+        }
+    },
+    "edition": {
+        "model": "nftEdition",
+        "isOriginal": true,
+        "address": "GghbFTLrnG2CP56hYTtwsUSgaXaMnZQXmbNrZcwaWgDS",
+        "supply": "00",
+        "maxSupply": "00"
+    }
+}

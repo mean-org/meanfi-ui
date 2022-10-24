@@ -4068,7 +4068,11 @@ export const AccountsView = () => {
   const onChangeAssetsGroup = (group: AssetGroups | undefined) => {
     setSelectedAssetsGroup(group);
     if (group === AssetGroups.Tokens) {
-      onGotoAssets();
+      if (location.pathname !== '/assets') {
+        onGotoAssets();
+      } else {
+        setSelectedCategory("assets");
+      }
       reloadSwitch();
     }
   }
@@ -4480,6 +4484,7 @@ export const AccountsView = () => {
     const onNftItemClick = (item: Nft | Sft | SftWithToken | NftWithToken) => {
       consoleOut('clicked on NFT item:', item, 'blue');
       setAutoOpenDetailsPanel(true);
+      setDetailsPanelOpen(true);
       setSelectedCategory(undefined);
       setSelectedApp(undefined);
       setSelectedNft(item);
@@ -4520,29 +4525,27 @@ export const AccountsView = () => {
       <div key="asset-category-apps-items" className="asset-category flex-column">
         {KNOWN_APPS.map(app => {
           return (
-            <>
-              <div key={`${app.path}`}
-                onClick={() => onAppClick(app)}
-                id={app.path}
-                className={`transaction-list-row ${getSelectedClass(app)}`
-                }>
-                <div className="icon-cell">
-                  <div className="token-icon">
-                    {app.logoURI ? (
-                      <img src={app.logoURI} alt={`${app.title}`} width={30} height={30} />
-                      ) : (
-                      <img src={fallbackImgSrc} alt={`${app.title}`} width={30} height={30} />
-                    )}
-                  </div>
-                </div>
-                <div className="description-cell">
-                  <div className="title">
-                    {app.title}
-                  </div>
-                  <div className="subtitle text-truncate">{app.subTitle}</div>
+            <div key={`${app.path}`}
+              onClick={() => onAppClick(app)}
+              id={app.path}
+              className={`transaction-list-row ${getSelectedClass(app)}`
+              }>
+              <div className="icon-cell">
+                <div className="token-icon">
+                  {app.logoURI ? (
+                    <img src={app.logoURI} alt={`${app.title}`} width={30} height={30} />
+                    ) : (
+                    <img src={fallbackImgSrc} alt={`${app.title}`} width={30} height={30} />
+                  )}
                 </div>
               </div>
-            </>
+              <div className="description-cell">
+                <div className="title">
+                  {app.title}
+                </div>
+                <div className="subtitle text-truncate">{app.subTitle}</div>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -5217,13 +5220,7 @@ export const AccountsView = () => {
                     ) : null}
 
                     {selectedCategory === undefined && selectedAssetsGroup === AssetGroups.Nfts && selectedNft ? (
-                      <>
-                        <NftDetails
-                          accountTokens={accountTokens}
-                          nftList={accountNfts}
-                          selectedNft={selectedNft}
-                        />
-                      </>
+                      <NftDetails selectedNft={selectedNft} />
                     ) : null}
                   </div>
                 </div>

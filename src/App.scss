@@ -709,11 +709,12 @@ footer.ant-layout-footer {
   white-space: nowrap;
   cursor: pointer;
   border-width: 0px;
+  user-select: none;
   text-decoration: none;
+  outline: none !important;
   border-radius: 4px;
   padding: 2px 6px;
   transition: background 0.1s ease-out 0s;
-  outline: none !important;
   color: var(--color-secondary-alpha-80);
   &.stroked.primary {
     border-color: var(--color-primary-highlight);
@@ -2136,8 +2137,17 @@ em {
   }
 }
 
-.ant-tooltip-inner {
-  white-space: pre-line;
+.ant-tooltip {
+  .ant-tooltip-content {
+    .ant-tooltip-inner {
+      white-space: pre-line;
+      color: var(--text-color);
+      background-color: var(--color-component-background) !important;
+    }
+    .ant-tooltip-arrow-content {
+      --antd-arrow-background-color: var(--color-component-background) !important;
+    }
+  }
 }
 
 .flex {
@@ -2349,6 +2359,16 @@ em {
     > .left,
     > .right {
       flex: 0 0 100%;
+    }
+  }
+  &.col30x70 {
+    @media (min-width: 576px) {
+      > .left {
+        flex: 1 1 30%;
+      }
+      > .right {
+        flex: 1 1 70%;
+      }
     }
   }
   &.col60x40 {
@@ -6039,6 +6059,9 @@ main section {
 }
 .mb-4 {
   margin-bottom: 2rem !important;
+}
+.shift-up-3px {
+  margin-top: -3px !important;
 }
 .shift-up-1 {
   margin-top: -0.5rem !important;

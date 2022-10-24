@@ -1,10 +1,11 @@
-.accounts {
+.assets {
 
     @media (max-width: 575.98px) {
         .meanfi-two-panel-layout {
             height: 100%;
             max-height: 100%;
             margin: 0;
+
             .inner-container {
                 display: flex;
                 flex-direction: column;
@@ -13,20 +14,24 @@
                 background: transparent;
                 max-height: 100%;
             }
+
             .meanfi-two-panel-left {
                 padding: 0;
             }
         }
     }
+
     @media (min-width: 768px) {
         .meanfi-two-panel-layout {
             .meanfi-two-panel-left {
                 padding: 0;
+
                 .inner-container {
                     height: calc(100% - 1.2rem);
                     transform: translate(0.5rem, 1.6rem) !important;
                     padding-left: 0;
                     padding-bottom: 0;
+
                     .bottom-ctas {
                         padding: 12px 0;
                         margin: 0;
@@ -52,9 +57,11 @@
         .item-block {
             padding-bottom: 0 !important;
             position: relative;
+
             @media (max-width: 575.98px) {
                 width: calc(100% - 13px);
             }
+
             @media (min-width: 768px) {
                 padding: 0 0 0 2.6%;
             }
@@ -67,7 +74,7 @@
             justify-content: center;
             align-items: center;
             padding-right: 1.8rem;
-    
+
             .primary-action {
                 flex: 0 1 60%;
                 width: 60%;
@@ -101,6 +108,7 @@
                     @media (min-width: 768px) and (max-width: 1199.98px) {
                         max-height: calc(58vh - 120px) !important;
                     }
+
                     @media (min-width: 1200px) {
                         max-height: calc(58vh - 60px) !important;
                     }
@@ -116,6 +124,7 @@
         top: -1px;
         position: sticky;
         z-index: 1;
+
         .title {
             padding-left: 1rem;
         }
@@ -123,6 +132,7 @@
         @media (max-width: 767.98px) {
             margin: 0.5rem -2.6%;
             padding: 3px 2.6%;
+
             .amount {
                 padding-right: 0.5rem;
             }
@@ -132,6 +142,7 @@
             margin: 0 0 0.5rem 0;
             padding: 4px 2.6%;
         }
+
         .asset-category-estimated {
             margin-top: 5px;
             color: var(--color-secondary-alpha-40);
@@ -143,6 +154,7 @@
     .asset-category {
         height: auto;
         min-height: 50px;
+
         @media (min-width: 768px) {
             padding-bottom: 0.5rem;
             padding-left: 2.6%;
@@ -152,6 +164,7 @@
     .networth-list-item-wrapper {
         position: relative;
         width: calc(100% - 2.6%);
+
         @media (min-width: 768px) {
             padding-left: 2.6%;
         }
@@ -192,6 +205,7 @@
             height: 34px;
             margin: 0;
             padding: 0;
+
             .ant-select-selection-search {
                 position: absolute;
                 top: 2px;
@@ -200,26 +214,32 @@
                 left: 4px;
             }
         }
+
         .transaction-list-row {
             margin-left: -2px !important;
             margin-right: 0 !important;
             border: none !important;
             padding: 0 !important;
             height: auto;
+
             .icon-cell {
                 position: relative;
                 flex: 0 0 24px;
                 display: flex;
             }
+
             .description-cell {
                 padding: 0 0 0 6px !important;
                 min-width: 100px;
+
                 @media (max-width: 575.98px) {
                     max-width: 190px;
                 }
             }
+
             .rate-cell {
                 padding: 0;
+
                 .interval {
                     font-size: 0.8rem;
                 }
@@ -233,10 +253,12 @@
         border-bottom: none;
         border-right: none;
         border-left: 4px solid transparent;
+
         .icon-cell {
             position: relative;
             flex: 0 0 40px;
             display: flex;
+
             .token-icon {
                 width: 100%;
                 height: 100%;
@@ -248,9 +270,11 @@
                 margin: 0;
                 vertical-align: unset;
                 background: transparent;
-                > img {
+
+                >img {
                     border-radius: 50%;
                 }
+
                 .streams-count {
                     line-height: 1.3;
                     display: flex;
@@ -265,6 +289,7 @@
                 }
             }
         }
+
         .description-cell {
             .title {
                 display: block;
@@ -273,6 +298,7 @@
                 line-height: 1.2;
                 color: var(--color-secondary-alpha-85);
             }
+
             .subtitle {
                 display: block;
                 color: var(--color-secondary-alpha-40);
@@ -280,10 +306,12 @@
                 line-height: 1;
             }
         }
+
         @media (min-width: 768px) {
             margin-right: 10px;
             padding-right: 4px !important;
         }
+
         &.selected {
             border-left-color: var(--color-primary-highlight);
             background-color: var(--color-secondary-alpha-02);
@@ -296,17 +324,21 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 0.5rem;
+
         @media (min-width: 768px) {
             padding-right: 2.6%;
         }
     }
+
     .nft-grid {
         display: grid;
         grid-gap: 10px;
         grid-template-columns: repeat(auto-fill, minmax(160px, 2.5fr));
+
         @media (min-width: 768px) {
             padding-right: 2.6%;
         }
+
         .nft-grid-item {
             position: relative;
             display: flex;
@@ -318,10 +350,12 @@
             border-radius: var(--custom-border-radius);
             padding: 10px;
             min-height: 160px;
+
             .nft-image {
                 border-radius: 3px;
                 cursor: pointer;
             }
+
             .nft-title {
                 background-color: var(--darken-40);
                 position: absolute;
@@ -333,9 +367,30 @@
                 text-align: center;
                 line-height: 1;
                 padding: 5px 2px;
-                color: var(--color-dark);
+                color: var(--color-white);
                 margin: 0;
                 z-index: 1;
+            }
+        }
+
+    }
+
+    .nft-attributes-grid{
+        display: grid;
+        grid-gap: 10px;
+        grid-template-columns: repeat(auto-fill,minmax(160px, 1fr))!important;
+        .nft-attribute {
+            background-color: var(--darken-20);
+            border-radius: var(--custom-border-radius);
+            padding: 8px 12px;
+            .nft-attribute-name {
+                font-size: 0.8rem;
+                color: var(--color-secondary-alpha-60);
+                margin-bottom: 0.25rem;
+            }
+            .nft-attribute-value {
+                font-size: 1.1rem;
+                font-weight: 900;
             }
         }
     }
@@ -343,18 +398,19 @@
     .nft-header-layout {
         display: flex;
 
-        > .left,
-        > .right {
-            margin-bottom: 20px;
-        }
-
         @media (max-width: 399.98px) {
             flex-direction: column;
 
             >.left,
             >.right {
                 padding: 0;
+                margin-bottom: 12px;
                 flex: 0 0 100%;
+            }
+
+            .nft-item {
+                width: 100%;
+                height: 100%;
             }
         }
 
@@ -362,7 +418,7 @@
             flex-direction: row;
 
             >.left {
-                flex: 1 0 150px;
+                flex: 0 0 150px;
             }
 
             >.right {
@@ -383,12 +439,14 @@
             background-color: var(--darken-10);
             border-radius: var(--custom-border-radius);
             padding: 8px;
+
             .nft-image {
                 width: 100%;
                 height: 100%;
                 border-radius: 3px;
                 cursor: pointer;
             }
+
             .nft-title {
                 background-color: var(--darken-40);
                 position: absolute;
@@ -405,16 +463,31 @@
                 z-index: 1;
             }
         }
+    }
 
+    .creators-table-wrapper {
+        min-width: 300px;
+        max-width: 450px;
+        width: auto;
+    }
+
+    .nft-details-heading {
+        font-size: 1.2rem;
+        font-weight: 500;
+        line-height: 1.2;
+        color: var(--color-secondary-alpha-70);
+        margin-bottom: 8px;
     }
 }
 
 .asset-btn-group {
     display: flex;
     flex-wrap: wrap !important;
+
     .asset-btn {
         width: fit-content !important;
         min-width: 90px !important;
+
         .btn-content {
             justify-content: center !important;
         }
