@@ -1,3 +1,4 @@
+import { CheckOutlined } from "@ant-design/icons";
 import { FindNftsByOwnerOutput, Metaplex, Nft, NftWithToken, Sft, SftWithToken } from "@metaplex-foundation/js";
 import { Connection } from "@solana/web3.js";
 import { Spin } from "antd";
@@ -12,6 +13,7 @@ export const NftPaginatedList = (props: {
     connection: Connection;
     nftList: FindNftsByOwnerOutput;
     onNftItemClick?: any;
+    selectedNft: Nft | Sft | SftWithToken | NftWithToken | undefined;
 }) => {
 
     const {
@@ -19,6 +21,7 @@ export const NftPaginatedList = (props: {
         connection,
         nftList,
         onNftItemClick,
+        selectedNft,
     } = props;
 
     const [loading, setLoading] = useState(false);
@@ -85,20 +88,28 @@ export const NftPaginatedList = (props: {
                     )}
                     {currentView && (
                         <div className="nft-grid">
-                            {currentView.map((nft, index) => (
-                                <div
-                                    key={`nft-${index}`}
-                                    className={`nft-grid-item${nft.address.toBase58() === assetInPath ? ' selected' : ''}`}>
-                                    <div className="nft-title text-shadow">{nft.name}</div>
-                                    <img
-                                        className="nft-image"
-                                        src={nft.json?.image || fallbackImgSrc}
-                                        onError={imageOnErrorHandler}
-                                        alt={nft.json?.name}
-                                        onClick={() => onNftItemClick(nft)}
-                                    />
-                                </div>
-                            ))}
+                            {currentView.map((nft, index) => {
+                                const isSelected = selectedNft && selectedNft.address.equals(nft.address);
+                                return (
+                                    <div
+                                        key={`nft-${index}`}
+                                        className={`nft-grid-item${isSelected ? ' selected' : ''}`}>
+                                        {isSelected ? (
+                                            <span className="checkmark">
+                                                <CheckOutlined />
+                                            </span>
+                                        ) : null}
+                                        <div className="nft-title text-shadow">{nft.name}</div>
+                                        <img
+                                            className="nft-image"
+                                            src={nft.json?.image || fallbackImgSrc}
+                                            onError={imageOnErrorHandler}
+                                            alt={nft.json?.name}
+                                            onClick={() => onNftItemClick(nft)}
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </Spin>

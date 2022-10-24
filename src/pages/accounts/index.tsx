@@ -4497,6 +4497,7 @@ export const AccountsView = () => {
           connection={connection}
           nftList={accountNfts}
           onNftItemClick={(nft: Nft | Sft | SftWithToken | NftWithToken) => onNftItemClick(nft)}
+          selectedNft={selectedNft}
         />
       </>
     );
