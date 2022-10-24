@@ -1,10 +1,14 @@
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { Nft, NftWithToken, Sft, SftWithToken } from "@metaplex-foundation/js";
 import { Image, Space, Tabs, Tooltip } from "antd";
+import { AddressDisplay } from "components/AddressDisplay";
 import { InfoIcon } from "components/InfoIcon";
-import { fallbackImgSrc } from "constants/common";
+import { fallbackImgSrc, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "constants/common";
 import { useMint } from "contexts/accounts";
-import React, { useCallback, useMemo } from "react";
+import { AppStateContext } from "contexts/appstate";
+import { getSolanaExplorerClusterParam } from "contexts/connection";
+import useWindowSize from "hooks/useWindowResize";
+import React, { useCallback, useContext, useMemo } from "react";
 import { NftCreators } from "./NftCreators";
 
 export const NftDetails = (props: {
@@ -15,8 +19,13 @@ export const NftDetails = (props: {
         selectedNft,
     } = props;
 
+    const {
+        selectedAccount,
+    } = useContext(AppStateContext);
+
     const collectionAddress = selectedNft.collection?.address;
     const collectionMintInfo = useMint(collectionAddress);
+    const { width } = useWindowSize();
 
     const isVerifiedCollection = useMemo(() => {
         if (!selectedNft) { return false; }
@@ -99,7 +108,7 @@ export const NftDetails = (props: {
                 {infoRow(
                     (
                         <>
-                            <span className="shift-up-3px">Royalty</span>
+                            <span className="align-text-bottom">Royalty</span>
                             <InfoIcon
                                 placement="top"
                                 content={
@@ -143,20 +152,90 @@ export const NftDetails = (props: {
 
     const infoRow = (label: React.ReactNode, content: React.ReactNode) => {
         return <div className="two-column-form-layout col30x70 mb-1">
-            <div className="left fg-secondary-60">
-                <span className="flex-row align-items-center">{label}</span>
-            </div>
-            <div className="right">
-                <span className="fg-secondary-60">{content}</span>
-            </div>
+            <div className="left fg-secondary-60">{label}</div>
+            <div className="right fg-secondary-60">{content}</div>
         </div>;
     }
 
     const renderProfile = () => {
+        if (!selectedNft || !selectedNft.mint) { return null; }
+
         return (
             <>
-                <h3 className="nft-details-heading mb-2">Profile</h3>
-                <p>Profile here</p>
+                <h3 className="nft-details-heading mb-2">NFT Token Profile</h3>
+                {infoRow(
+                    (<span className="align-text-bottom">Token address</span>),
+                    <AddressDisplay
+                        address={selectedNft.address.toBase58()}
+                        maxChars={width < 400 ? 12 : undefined}
+                        showFullAddress={width >= 400 ? true : false}
+                        iconStyles={{ width: "15", height: "15" }}
+                        newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.address.toBase58()}${getSolanaExplorerClusterParam()}`}
+                    />
+                )}
+                {selectedNft.mint.mintAuthorityAddress ? infoRow(
+                    (
+                        <>
+                            <span className="align-text-bottom">Mint Authority</span>
+                            <InfoIcon
+                                placement="top"
+                                content={
+                                    <span>Account permitted to mint this token.</span>
+                                }>
+                                <InfoCircleOutlined />
+                            </InfoIcon>
+                        </>
+                    ),
+                    <AddressDisplay
+                        address={selectedNft.mint.mintAuthorityAddress.toBase58()}
+                        maxChars={width < 400 ? 12 : undefined}
+                        showFullAddress={width >= 400 ? true : false}
+                        iconStyles={{ width: "15", height: "15" }}
+                        newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.mint.mintAuthorityAddress.toBase58()}${getSolanaExplorerClusterParam()}`}
+                    />
+                ) : null}
+                {selectedNft.updateAuthorityAddress ? infoRow(
+                    (
+                        <>
+                            <span className="align-text-bottom">Update Authority</span>
+                            <InfoIcon
+                                placement="top"
+                                content={
+                                    <span>Account permitted to issue update requests for this token's information.</span>
+                                }>
+                                <InfoCircleOutlined />
+                            </InfoIcon>
+                        </>
+                    ),
+                    <AddressDisplay
+                        address={selectedNft.updateAuthorityAddress.toBase58()}
+                        maxChars={width < 400 ? 12 : undefined}
+                        showFullAddress={width >= 400 ? true : false}
+                        iconStyles={{ width: "15", height: "15" }}
+                        newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.updateAuthorityAddress.toBase58()}${getSolanaExplorerClusterParam()}`}
+                    />
+                ) : null}
+                {selectedAccount ? infoRow(
+                    (
+                        <>
+                            <span className="align-text-bottom">Current Owner</span>
+                            <InfoIcon
+                                placement="top"
+                                content={
+                                    <span>The owner of this token!</span>
+                                }>
+                                <InfoCircleOutlined />
+                            </InfoIcon>
+                        </>
+                    ),
+                    <AddressDisplay
+                        address={selectedAccount.address}
+                        maxChars={width < 400 ? 12 : undefined}
+                        showFullAddress={width >= 400 ? true : false}
+                        iconStyles={{ width: "15", height: "15" }}
+                        newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedAccount.address}${getSolanaExplorerClusterParam()}`}
+                    />
+                ) : null}
             </>
         );
     }

@@ -2371,6 +2371,16 @@ em {
       }
     }
   }
+  &.col40x60 {
+    @media (min-width: 576px) {
+      > .left {
+        flex: 1 1 40%;
+      }
+      > .right {
+        flex: 1 1 60%;
+      }
+    }
+  }
   &.col60x40 {
     @media (min-width: 576px) {
       > .left {
@@ -5951,6 +5961,9 @@ main section {
 .align-middle {
   vertical-align: middle;
 }
+.align-text-bottom {
+  vertical-align: text-bottom;
+}
 // LIne height
 .line-height-100 {
   line-height: 1 !important;
@@ -6059,9 +6072,6 @@ main section {
 }
 .mb-4 {
   margin-bottom: 2rem !important;
-}
-.shift-up-3px {
-  margin-top: -3px !important;
 }
 .shift-up-1 {
   margin-top: -0.5rem !important;

@@ -4066,15 +4066,16 @@ export const AccountsView = () => {
   }
 
   const onChangeAssetsGroup = (group: AssetGroups | undefined) => {
-    setSelectedAssetsGroup(group);
     if (group === AssetGroups.Tokens) {
       if (location.pathname !== '/assets') {
         onGotoAssets();
+        reloadSwitch();
       } else {
         setSelectedCategory("assets");
       }
-      reloadSwitch();
+      setSelectedNft(undefined);
     }
+    setSelectedAssetsGroup(group);
   }
 
 
@@ -4267,6 +4268,7 @@ export const AccountsView = () => {
         {
           <div key="streams-category" onClick={() => {
             setAutoOpenDetailsPanel(true);
+            setSelectedNft(undefined);
             navigateToStreaming();
           }} className={`transaction-list-row ${selectedCategory === "apps" && selectedApp?.path === RegisteredAppPaths.PaymentStreaming ? 'selected' : ''}`}>
             <div className="icon-cell">
@@ -4558,13 +4560,13 @@ export const AccountsView = () => {
       case AssetGroups.Tokens:
         return (<span>Estimated value of tokens: {toUsCurrency(totalTokenAccountsValue)}</span>);
       case AssetGroups.Nfts:
-        return (<span>Estimated value of NFTs: --</span>);
+        return (<span>Enjoy your collections of NFTs</span>);
       case AssetGroups.Apps:
-        return (<span>Estimated value in Apps: --</span>);
+        return (<span>Explore supported Apps</span>);
       case AssetGroups.OtherAssets:
-        return (<span>Estimated value in other assets: --</span>);
+        return (<span>Other assets and programs</span>);
       default:
-        return (<span>Estimated value: --</span>);
+        return (<span>&nbsp;</span>);
     }
   }
 
@@ -4985,13 +4987,13 @@ export const AccountsView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
           <span>selectedCategory:</span><span className="mx-1 font-bold">{selectedCategory || 'undefined'}</span>
           <span>selectedAssetsGroup:</span><span className="mx-1 font-bold">{selectedAssetsGroup || 'undefined'}</span>
           <span>selectedApp:</span><span className="mx-1 font-bold">{selectedApp ? selectedApp.path : 'undefined'}</span>
         </div>
-      )} */}
+      )}
 
       {detailsPanelOpen && (
         <Button
@@ -5220,7 +5222,7 @@ export const AccountsView = () => {
                       </>
                     ) : null}
 
-                    {selectedCategory === undefined && selectedAssetsGroup === AssetGroups.Nfts && selectedNft ? (
+                    {selectedAssetsGroup === AssetGroups.Nfts && selectedNft ? (
                       <NftDetails selectedNft={selectedNft} />
                     ) : null}
                   </div>
