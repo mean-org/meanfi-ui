@@ -4573,7 +4573,9 @@ export const AccountsView = () => {
     }
 
     const getSelectedClass = (app: KnownAppMetadata) => {
-      if (!app.enabled || (!isMultisigContext && app.path === RegisteredAppPaths.SuperSafe)) {
+      if (!app.enabled ||
+        (!isMultisigContext && app.path === RegisteredAppPaths.SuperSafe) ||
+        (isMultisigContext && app.path === RegisteredAppPaths.Staking)) {
         return 'disabled';
       }
       if (selectedApp && selectedApp.path === app.path) {
