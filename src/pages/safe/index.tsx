@@ -10,7 +10,6 @@ import {
   MultisigTransactionFees,
   MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk';
-import { Treasury } from '@mean-dao/msp';
 import { AnchorProvider, BN, Program } from "@project-serum/anchor";
 import {
   ConfirmOptions,

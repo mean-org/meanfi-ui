@@ -22,7 +22,6 @@ import {
   VestingView
 } from "./pages";
 import { ServiceUnavailableView } from "./pages/service-unavailable";
-import { StakingView } from "./pages/staking";
 
 const CreateSafeView = React.lazy(() => import('views/CreateSafe'));
 
@@ -62,7 +61,7 @@ export function AppRoutes() {
                       <Route path="/assets" element={<AccountsView />} />
                       <Route path="/assets/:asset" element={<AccountsView />} />
                       {/* Well known App routes */}
-                      <Route path="/staking" element={<StakingView />} />
+                      <Route path="/staking" element={<AccountsView />} />
                       <Route path="/vesting" element={<VestingView />} />
                       <Route path="/vesting/:vestingContract" element={<VestingView />} />
                       <Route path="/vesting/:vestingContract/:activeTab" element={<VestingView />} />

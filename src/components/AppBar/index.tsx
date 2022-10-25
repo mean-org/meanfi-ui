@@ -5,7 +5,6 @@ import { AppContextMenu } from "components/AppContextMenu";
 import { ConnectButton } from "components/ConnectButton";
 import { NotificationBell } from 'components/NotificationBell';
 import { DepositOptions } from 'components/DepositOptions';
-import { STAKING_ROUTE_BASE_PATH } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
 import { useWallet } from "contexts/wallet";
@@ -21,11 +20,6 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
     key: 'exchange',
     path: '/exchange',
-    parent: 'root'
-  },
-  {
-    key: 'staking',
-    path: STAKING_ROUTE_BASE_PATH,
     parent: 'root'
   },
   {
@@ -143,10 +137,6 @@ export const AppBar = (props: {
         key: 'exchange',
         label: (<Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>),
       });
-      items.push({
-        key: 'staking',
-        label: (<Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>),
-      });
     }
     items.push({
       key: 'vesting',
@@ -212,9 +202,6 @@ export const AppBar = (props: {
                   <>
                     <li key="exchange" className={selectedItems.includes("exchange") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
                       <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
-                    </li>
-                    <li key="staking" className={selectedItems.includes("staking") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
-                      <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>
                     </li>
                   </>
                 )}

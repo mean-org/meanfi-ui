@@ -112,6 +112,7 @@ import "./style.scss";
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PersonalAccountSummary = React.lazy(() => import('../../views/WalletAccountSummary/index'));
+const StakingComponent = React.lazy(() => import('../staking/index'));
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let isWorkflowLocked = false;
@@ -3232,6 +3233,9 @@ export const AccountsView = () => {
               setSelectedAssetsGroup(AssetGroups.Tokens);
             }
             break;
+          case "apps":
+            setSelectedAssetsGroup(AssetGroups.Apps);
+            break;
           default:
             setSelectedAssetsGroup(AssetGroups.Tokens);
             break;
@@ -4223,10 +4227,9 @@ export const AccountsView = () => {
       return false;
     }
     const showWhenAssetsSelected = selectedAssetsGroup === AssetGroups.Tokens ? true : false;
-    const showWhenNoAppSelected = selectedAssetsGroup === AssetGroups.Apps && !selectedApp ? true : false;
     const showWhenOtherAssetsSelected = selectedAssetsGroup === AssetGroups.OtherAssets ? true : false;
     const showWhenNoNftSelected = selectedAssetsGroup === AssetGroups.Nfts && !selectedNft ? true : false;
-    if (selectedAsset && (showWhenAssetsSelected || showWhenNoNftSelected || showWhenOtherAssetsSelected || showWhenNoAppSelected)) {
+    if (selectedAsset && !selectedApp && (showWhenAssetsSelected || showWhenNoNftSelected || showWhenOtherAssetsSelected)) {
       return true;
     }
     return false;
@@ -5222,6 +5225,18 @@ export const AccountsView = () => {
                             solanaApps={solanaApps}
                             onNewProposalClicked={onNewProposalClicked}
                           />
+                        </Suspense>
+                      </>
+                    ) : null}
+
+                    {selectedApp?.path === RegisteredAppPaths.Staking ? (
+                      <>
+                        <Suspense fallback={
+                          <div className="h-100 flex-center">
+                            <Spin spinning={true} />
+                          </div>
+                        }>
+                          <StakingComponent />
                         </Suspense>
                       </>
                     ) : null}
