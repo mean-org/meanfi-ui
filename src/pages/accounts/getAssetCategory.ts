@@ -18,10 +18,13 @@ function getAssetCategory(
 
     const isNative = assetId === selectedAccount.address ? true : false;
     const isTokenAccount = accountTokens.some(t => t.publicAddress !== selectedAccount.address && t.publicAddress === assetId);
-    const isNft = accountNfts ? accountNfts.some(n => n.address.toBase58() === assetId) : false;
+    const isNftTokenAccount = isTokenAccount && accountTokens.some(
+        t => accountNfts ? accountNfts.some((n: any) => n.mintAddress.toBase58() === t.address) : false
+    );
+    const isNftMint = accountNfts ? accountNfts.some((n: any) => n.mintAddress.toBase58() === assetId) : false;
 
-    if (isNative || isTokenAccount || isNft) {
-        if (isNft) {
+    if (isNative || isTokenAccount || isNftTokenAccount || isNftMint) {
+        if (isNftTokenAccount || isNftMint) {
             return AssetGroups.Nfts;
         }
         return AssetGroups.Tokens;

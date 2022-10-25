@@ -107,6 +107,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MoneyStreamsIncomingView, MoneyStreamsInfoView, MoneyStreamsOutgoingView, NftDetails, NftPaginatedList, StreamingAccountView } from 'views';
 import getAssetCategory from './getAssetCategory';
+import getNftMint from './getNftMint';
 import "./style.scss";
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
@@ -755,6 +756,12 @@ export const AccountsView = () => {
   const navigateToSafe = useCallback(() => {
     consoleOut('calling navigateToSafe()', '...', 'crimson');
     const url = `/${RegisteredAppPaths.SuperSafe}?v=proposals`;
+    navigate(url);
+  }, [navigate]);
+
+  const navigateToNft = useCallback((address: string) => {
+    consoleOut('calling navigateToNft()', '...', 'crimson');
+    const url = `/assets/${address}`;
     navigate(url);
   }, [navigate]);
 
@@ -3204,27 +3211,40 @@ export const AccountsView = () => {
    * Set tabset option based on the deducted category
    */
   useEffect(() => {
-    switch (selectedCategory) {
-      case "account-summary":
+    if (!selectedAccount.address) { return; }
+
+    if (accountNfts && accountTokens) {
+      if (accountNfts.length === 0) {
         setSelectedAssetsGroup(AssetGroups.Tokens);
-        break;
-      // case "apps":
-      //   setSelectedAssetsGroup(AssetGroups.Apps);
-      //   break;
-      case "assets":
-        if (asset) {
-          const category = getAssetCategory(asset, selectedAccount, accountTokens, accountNfts);
-          consoleOut('category from getAssetCategory() ->', category, 'blue');
-          setSelectedAssetsGroup(category);
-        } else {
+      }
+      switch (selectedCategory) {
+        case "account-summary":
           setSelectedAssetsGroup(AssetGroups.Tokens);
-        }
-        break;
-      default:
-        // setSelectedAssetsGroup(undefined);
-        break;
+          break;
+        // case "apps":
+        //   setSelectedAssetsGroup(AssetGroups.Apps);
+        //   break;
+        case "assets":
+          if (asset) {
+            const category = getAssetCategory(asset, selectedAccount, accountTokens, accountNfts);
+            consoleOut('category from getAssetCategory() ->', category, 'blue');
+            setSelectedAssetsGroup(category);
+            if (category === AssetGroups.Nfts) {
+              setAutoOpenDetailsPanel(true);
+              setDetailsPanelOpen(true);
+            }
+          } else {
+            setSelectedAssetsGroup(AssetGroups.Tokens);
+          }
+          break;
+        default:
+          // setSelectedAssetsGroup(undefined);
+          break;
+      }
     }
-  }, [accountNfts, accountTokens, asset, selectedAccount, selectedCategory]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAccount.address, accountNfts]);
 
   // Set an App based of current category and asset group
   useEffect(() => {
@@ -4074,6 +4094,8 @@ export const AccountsView = () => {
         setSelectedCategory("assets");
       }
       setSelectedNft(undefined);
+    } else if (group === AssetGroups.Nfts) {
+      navigate('/assets');
     }
     setSelectedAssetsGroup(group);
   }
@@ -4485,17 +4507,20 @@ export const AccountsView = () => {
 
     const onNftItemClick = (item: Nft | Sft | SftWithToken | NftWithToken) => {
       consoleOut('clicked on NFT item:', item, 'blue');
-      setAutoOpenDetailsPanel(true);
-      setDetailsPanelOpen(true);
-      setSelectedCategory(undefined);
-      setSelectedApp(undefined);
       setSelectedNft(item);
+      // setAutoOpenDetailsPanel(true);
+      // setDetailsPanelOpen(true);
+      // setSelectedCategory(undefined);
+      // setSelectedApp(undefined);
+      navigateToNft(item.address.toBase58());
     }
+
+    const nftMint = asset ? getNftMint(asset, accountTokens, accountNfts) : undefined;
 
     return (
       <>
         <NftPaginatedList
-          assetInPath={asset}
+          presetNftMint={selectedNft ? undefined : nftMint}
           connection={connection}
           nftList={accountNfts}
           onNftItemClick={(nft: Nft | Sft | SftWithToken | NftWithToken) => onNftItemClick(nft)}
@@ -5122,63 +5147,6 @@ export const AccountsView = () => {
 
                   <div className="inner-container">
 
-
-                    {selectedCategory === "assets" ? (
-                      <>
-                        {/* Refresh cta */}
-                        <div className="float-top-right mr-1 mt-1">
-                          <span className="icon-button-container secondary-button">
-                            <Tooltip placement="bottom" title="Refresh assets and activity">
-                              <Button
-                                id="account-refresh-cta"
-                                type="default"
-                                shape="circle"
-                                size="middle"
-                                icon={<ReloadOutlined className="mean-svg-icons" />}
-                                onClick={reloadTokensAndActivity}
-                              />
-                            </Tooltip>
-                          </span>
-                        </div>
-
-                        {canShowBuyOptions() ? renderTokenBuyOptions() : (
-                          <div className="flexible-column-bottom">
-                            <div className="top">                              
-                              {renderUserAccountAssetMeta()}
-                              {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
-                            </div>
-                            {!isInspectedAccountTheConnectedWallet() && isMultisigContext && selectedMultisig && (
-                              (multisigSolBalance !== undefined && multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED) ? (
-                                <Row gutter={[8, 8]}>
-                                  <Col span={24} className={`alert-info-message pr-2 ${selectedMultisig ? "simplelink" : "disable-pointer"}`} onClick={showSolBalanceModal}>
-                                    <Alert message="SOL account balance is very low in the safe. Click here to add more SOL." type="info" showIcon />
-                                  </Col>
-                                </Row>
-                              ) : null
-                            )}
-                            <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
-                              {/* Activity table heading */}
-                              {hasItemsToRender() && (
-                                <div className="stats-row">
-                                  <div className="item-list-header compact">
-                                    <div className="header-row">
-                                      <div className="std-table-cell first-cell">&nbsp;</div>
-                                      <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
-                                      <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
-                                      <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
-                                      <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                              {/* Activity table content */}
-                              {selectedCategory === "assets" && renderActivityList()}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    ) : null}
-
                     {selectedApp?.path === RegisteredAppPaths.PaymentStreaming ? (
                       <>
                         {/* Refresh cta */}
@@ -5219,6 +5187,62 @@ export const AccountsView = () => {
                             onNewProposalClicked={onNewProposalClicked}
                           />
                         </Suspense>
+                      </>
+                    ) : null}
+
+                    {selectedAssetsGroup === AssetGroups.Tokens ? (
+                      <>
+                        {/* Refresh cta */}
+                        <div className="float-top-right mr-1 mt-1">
+                          <span className="icon-button-container secondary-button">
+                            <Tooltip placement="bottom" title="Refresh assets and activity">
+                              <Button
+                                id="account-refresh-cta"
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={<ReloadOutlined className="mean-svg-icons" />}
+                                onClick={reloadTokensAndActivity}
+                              />
+                            </Tooltip>
+                          </span>
+                        </div>
+
+                        {canShowBuyOptions() ? renderTokenBuyOptions() : (
+                          <div className="flexible-column-bottom">
+                            <div className="top">                              
+                              {renderUserAccountAssetMeta()}
+                              {renderUserAccountAssetCtaRow()}
+                            </div>
+                            {!isInspectedAccountTheConnectedWallet() && isMultisigContext && selectedMultisig && (
+                              (multisigSolBalance !== undefined && multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED) ? (
+                                <Row gutter={[8, 8]}>
+                                  <Col span={24} className={`alert-info-message pr-2 ${selectedMultisig ? "simplelink" : "disable-pointer"}`} onClick={showSolBalanceModal}>
+                                    <Alert message="SOL account balance is very low in the safe. Click here to add more SOL." type="info" showIcon />
+                                  </Col>
+                                </Row>
+                              ) : null
+                            )}
+                            <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
+                              {/* Activity table heading */}
+                              {hasItemsToRender() && (
+                                <div className="stats-row">
+                                  <div className="item-list-header compact">
+                                    <div className="header-row">
+                                      <div className="std-table-cell first-cell">&nbsp;</div>
+                                      <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
+                                      <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
+                                      <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
+                                      <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {/* Activity table content */}
+                              {renderActivityList()}
+                            </div>
+                          </div>
+                        )}
                       </>
                     ) : null}
 

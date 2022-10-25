@@ -6,10 +6,10 @@ import { fallbackImgSrc } from "constants/common";
 import { IconArrowBack, IconArrowForward } from "Icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-const perPage = 4;
+const pageSize = 4;
 
 export const NftPaginatedList = (props: {
-    assetInPath: string | undefined;
+    presetNftMint: string | undefined;
     connection: Connection;
     nftList: FindNftsByOwnerOutput;
     onNftItemClick?: any;
@@ -17,7 +17,7 @@ export const NftPaginatedList = (props: {
 }) => {
 
     const {
-        assetInPath,
+        presetNftMint,
         connection,
         nftList,
         onNftItemClick,
@@ -25,7 +25,8 @@ export const NftPaginatedList = (props: {
     } = props;
 
     const [loading, setLoading] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [shouldPresetItem, setShouldPresetItem] = useState<boolean>(true);
+    const [currentPage, setCurrentPage] = useState<number | undefined>(undefined);
     const [currentView, setCurrentView] = useState<(Nft | Sft | SftWithToken | NftWithToken)[] | null>(null);
 
     const mx = useMemo(() => new Metaplex(connection), [connection]);
@@ -37,30 +38,61 @@ export const NftPaginatedList = (props: {
         return Promise.all(promises);
     }, [mx, nftList]);
 
+    const calculatePageNumber = (pageSize: number, itemIndex: number) => {
+        return Math.ceil(++itemIndex / pageSize);
+    };
+
     useEffect(() => {
-        if (!nftList) {
+        if (!nftList || currentPage === undefined) {
             return;
         }
 
         const execute = async () => {
-            const startIndex = (currentPage - 1) * perPage;
-            const endIndex = currentPage * perPage;
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = currentPage * pageSize;
             const nfts = await loadData(startIndex, endIndex);
             console.log('nfts:', nfts);
+            if (shouldPresetItem && presetNftMint) {
+                setShouldPresetItem(false);
+                const item = nfts.find(i => i.address.toBase58() === presetNftMint);
+                if (item) {
+                    onNftItemClick(item);
+                }
+            }
             setCurrentView(nfts);
             setLoading(false);
         };
 
         setLoading(true);
         execute();
-    }, [currentPage, loadData, nftList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage, nftList, presetNftMint, shouldPresetItem]);
+
+    useEffect(() => {
+        if (!presetNftMint || !shouldPresetItem) {
+            if (!currentPage && nftList.length > 0) {
+                setCurrentPage(1);
+            }
+            return;
+        }
+
+        // Find nft given by presetNftMint in nftList
+        // Calculate and set page number
+        const itemIndex = nftList.findIndex((n: any) => n.mintAddress.toBase58() === presetNftMint);
+        if (itemIndex !== -1) {
+            const pageNumber = calculatePageNumber(pageSize, itemIndex);
+            setCurrentPage(pageNumber);
+        } else {
+            setCurrentPage(1);
+        }
+    }, [currentPage, nftList, presetNftMint, shouldPresetItem]);
 
     const changeCurrentPage = (operation: string) => {
         setLoading(true);
         if (operation === 'next') {
-            setCurrentPage((prevValue) => prevValue + 1);
+            setCurrentPage((prevValue) => (prevValue || 1) + 1);
         } else {
-            setCurrentPage((prevValue) => (prevValue > 1 ? prevValue - 1 : 1));
+            setCurrentPage((prevValue) => ((prevValue || 1) > 1 ? (prevValue || 1) - 1 : 1));
         }
     };
 
@@ -79,7 +111,7 @@ export const NftPaginatedList = (props: {
                                 <span className="ml-1">Prev Page</span>
                             </span>
                             <span
-                                className={`flat-button tiny${nftList && nftList.length / perPage === currentPage ? ' disabled' : ''}`}
+                                className={`flat-button tiny${nftList && nftList.length / pageSize === currentPage ? ' disabled' : ''}`}
                                 onClick={() => changeCurrentPage('next')}>
                                 <span className="mr-1">Next Page</span>
                                 <IconArrowForward className="mean-svg-icons" />
