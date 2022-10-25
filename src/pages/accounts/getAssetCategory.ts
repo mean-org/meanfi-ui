@@ -1,4 +1,5 @@
 import { FindNftsByOwnerOutput } from "@metaplex-foundation/js";
+import { consoleOut } from "middleware/ui";
 import { AccountContext, AssetGroups, KNOWN_APPS, UserTokenAccount } from "models/accounts";
 
 /**
@@ -18,10 +19,30 @@ function getAssetCategory(
 
     const isNative = assetId === selectedAccount.address ? true : false;
     const isTokenAccount = accountTokens.some(t => t.publicAddress !== selectedAccount.address && t.publicAddress === assetId);
-    const isNftTokenAccount = isTokenAccount && accountTokens.some(
-        t => accountNfts ? accountNfts.some((n: any) => n.mintAddress.toBase58() === t.address) : false
-    );
-    const isNftMint = accountNfts ? accountNfts.some((n: any) => n.mintAddress.toBase58() === assetId) : false;
+    let isNftMint = false;
+    let isNftTokenAccount = false;
+    let token: UserTokenAccount | undefined = undefined;
+
+    if (isTokenAccount) {
+        token = accountTokens.find(t => t.publicAddress === assetId);
+        if (token && token.address) {
+            const tAddr = token.address;
+            isNftTokenAccount = accountNfts ? accountNfts.some((n: any) => n.mintAddress.toBase58() === tAddr) : false;
+        }
+    } else {
+        isNftMint = accountNfts ? accountNfts.some((n: any) => n.mintAddress.toBase58() === assetId) : false;
+    }
+
+    /*
+    consoleOut('assetId:', assetId, 'blue');
+    consoleOut('selectedAccount:', selectedAccount.address, 'blue');
+    consoleOut('isNative:', isNative, 'blue');
+    consoleOut('isTokenAccount:', isTokenAccount, 'blue');
+    consoleOut('isNftTokenAccount:', isNftTokenAccount, 'blue');
+    consoleOut('isNftMint:', isNftMint, 'blue');
+    consoleOut('tokenAccount mints:', accountTokens.map(a => a.address), 'blue');
+    consoleOut('accountNfts mints:', accountNfts?.map((n: any) => n.mintAddress.toBase58()), 'blue');
+    */
 
     if (isNative || isTokenAccount || isNftTokenAccount || isNftMint) {
         if (isNftTokenAccount || isNftMint) {

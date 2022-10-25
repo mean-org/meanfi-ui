@@ -1939,16 +1939,19 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
     border-radius: 8px;
     box-shadow: none;
   }
-  .ant-segmented-item.ant-segmented-item-selected {
-    color: var(--color-secondary-alpha-85);
-    background-color: var(--color-section);
-    border-radius: 8px;
-    box-shadow: none;
-  }
-  .ant-segmented-item:not(.ant-segmented-item-selected) {
-    &:hover, 
-    &:focus {
-      color: var(--color-secondary-alpha-80);
+  .ant-segmented-item {
+    user-select: none;
+    &.ant-segmented-item-selected {
+      color: var(--color-secondary-alpha-85);
+      background-color: var(--color-section);
+      border-radius: 8px;
+      box-shadow: none;
+    }
+    &:not(.ant-segmented-item-selected) {
+      &:hover, 
+      &:focus {
+        color: var(--color-secondary-alpha-80);
+      }
     }
   }
 }

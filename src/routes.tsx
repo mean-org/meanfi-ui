@@ -48,6 +48,7 @@ export function AppRoutes() {
                           </React.Suspense>
                         }
                       />
+                      <Route path="/my-account" element={<AccountsView />} />
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />

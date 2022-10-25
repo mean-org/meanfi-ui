@@ -111,6 +111,7 @@ import getNftMint from './getNftMint';
 import "./style.scss";
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
+const PersonalAccountSummary = React.lazy(() => import('../../views/WalletAccountSummary/index'));
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let isWorkflowLocked = false;
@@ -255,7 +256,7 @@ export const AccountsView = () => {
       if (selectedAccount.isMultisig) {
         url = `/${RegisteredAppPaths.SuperSafe}?v=proposals`;
       } else {
-        url = '/assets';
+        url = '/my-account';
       }
       consoleOut('No category specified, redirecting to:', url, 'crimson');
       setAutoOpenDetailsPanel(false);
@@ -3216,30 +3217,25 @@ export const AccountsView = () => {
     if (accountNfts && accountTokens) {
       if (accountNfts.length === 0) {
         setSelectedAssetsGroup(AssetGroups.Tokens);
-      }
-      switch (selectedCategory) {
-        case "account-summary":
-          setSelectedAssetsGroup(AssetGroups.Tokens);
-          break;
-        // case "apps":
-        //   setSelectedAssetsGroup(AssetGroups.Apps);
-        //   break;
-        case "assets":
-          if (asset) {
-            const category = getAssetCategory(asset, selectedAccount, accountTokens, accountNfts);
-            consoleOut('category from getAssetCategory() ->', category, 'blue');
-            setSelectedAssetsGroup(category);
-            if (category === AssetGroups.Nfts) {
-              setAutoOpenDetailsPanel(true);
-              setDetailsPanelOpen(true);
+      } else {
+        switch (selectedCategory) {
+          case "assets":
+            if (asset) {
+              const category = getAssetCategory(asset, selectedAccount, accountTokens, accountNfts);
+              consoleOut('category from getAssetCategory() ->', category, 'blue');
+              setSelectedAssetsGroup(category);
+              if (category === AssetGroups.Nfts) {
+                setAutoOpenDetailsPanel(true);
+                setDetailsPanelOpen(true);
+              }
+            } else {
+              setSelectedAssetsGroup(AssetGroups.Tokens);
             }
-          } else {
+            break;
+          default:
             setSelectedAssetsGroup(AssetGroups.Tokens);
-          }
-          break;
-        default:
-          // setSelectedAssetsGroup(undefined);
-          break;
+            break;
+        }
       }
     }
 
@@ -3251,9 +3247,12 @@ export const AccountsView = () => {
     if (selectedCategory === "apps" || selectedCategory === "account-summary") {
       const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.path}`));
       setSelectedApp(app);
+      setSelectedNft(undefined);
+      setSelectedAsset(undefined);
     } else {
       setSelectedApp(undefined);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, selectedCategory]);
 
   // Load streams on entering page
@@ -3454,6 +3453,17 @@ export const AccountsView = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAccount.address, accountTokens, pathParamAsset]);
+
+  // Select the native account when there are conditions for it
+  useEffect(() => {
+    if (!selectedAsset && selectedCategory === "assets" && selectedAssetsGroup === AssetGroups.Tokens) {
+      const nativeAsset = accountTokens.find(t => t.publicAddress === selectedAccount.address);
+      if (nativeAsset) {
+        selectAsset(nativeAsset);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountTokens, selectedAccount.address, selectedAsset, selectedAssetsGroup, selectedCategory]);
 
   // Build CTAs
   useEffect(() => {
@@ -4086,17 +4096,16 @@ export const AccountsView = () => {
   }
 
   const onChangeAssetsGroup = (group: AssetGroups | undefined) => {
-    if (group === AssetGroups.Tokens) {
-      if (location.pathname !== '/assets') {
-        onGotoAssets();
-        reloadSwitch();
-      } else {
-        setSelectedCategory("assets");
-      }
-      setSelectedNft(undefined);
-    } else if (group === AssetGroups.Nfts) {
-      navigate('/assets');
-    }
+    // if (group === AssetGroups.Tokens) {
+    //   if (location.pathname !== '/assets') {
+    //     onGotoAssets();
+    //     reloadSwitch();
+    //   } else {
+    //     setSelectedCategory("assets");
+    //   }
+    // } else if (group === AssetGroups.Nfts) {
+    //   navigate('/assets');
+    // }
     setSelectedAssetsGroup(group);
   }
 
@@ -4209,6 +4218,34 @@ export const AccountsView = () => {
     return options;
   }
 
+  const canShowAssetDetails = () => {
+    if (selectedCategory === "account-summary") {
+      return false;
+    }
+    const showWhenAssetsSelected = selectedAssetsGroup === AssetGroups.Tokens ? true : false;
+    const showWhenNoAppSelected = selectedAssetsGroup === AssetGroups.Apps && !selectedApp ? true : false;
+    const showWhenOtherAssetsSelected = selectedAssetsGroup === AssetGroups.OtherAssets ? true : false;
+    const showWhenNoNftSelected = selectedAssetsGroup === AssetGroups.Nfts && !selectedNft ? true : false;
+    if (selectedAsset && (showWhenAssetsSelected || showWhenNoNftSelected || showWhenOtherAssetsSelected || showWhenNoAppSelected)) {
+      return true;
+    }
+    return false;
+  }
+
+  const canShowNftDetails = () => {
+    if (selectedCategory === "account-summary") {
+      return false;
+    }
+    const showIfTokensSelectedButNoAssetIsPreset = selectedAssetsGroup === AssetGroups.Tokens && !selectedAsset ? true : false;
+    const showWhenNftsSelected = selectedAssetsGroup === AssetGroups.Nfts ? true : false;
+    const showWhenNoAppSelected = selectedAssetsGroup === AssetGroups.Apps && !selectedApp ? true : false;
+    const showWhenOtherAssetsSelected = selectedAssetsGroup === AssetGroups.OtherAssets ? true : false;
+    if (selectedNft && (showWhenNftsSelected || showWhenNoAppSelected || showWhenOtherAssetsSelected || showIfTokensSelectedButNoAssetIsPreset)) {
+      return true;
+    }
+    return false;
+  }
+
   ///////////////
   // Rendering //
   ///////////////
@@ -4248,25 +4285,19 @@ export const AccountsView = () => {
     );
   }
 
-  const renderNetworthCategory = () => {
-    return (
-      <div className="networth-list-item-wrapper" key="account-summary-category">
-        <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "account-summary" ? 'selected' : ''}`}>
-          {renderSelectedAccountSummaryInner()}
-        </div>
-        <Divider className="networth-separator" />
-      </div>
-    );
-  };
-
-  const renderSuperSafeCategory = () => {
+  const renderSelectedAccountSummary = (type: string) => {
     return (
       <div className="networth-list-item-wrapper" key="account-summary-category">
         <div onClick={() => {
           setDetailsPanelOpen(true);
           setAutoOpenDetailsPanel(true);
           setSelectedNft(undefined);
-          navigateToSafe();
+          setSelectedAsset(undefined);
+          if (type === 'my-account') {
+            navigate('/my-account');
+          } else {
+            navigateToSafe();
+          }
         }} className={`networth-list-item flex-fixed-right ${selectedCategory === "account-summary" ? 'selected' : ''}`}>
           {renderSelectedAccountSummaryInner()}
         </div>
@@ -4508,10 +4539,8 @@ export const AccountsView = () => {
     const onNftItemClick = (item: Nft | Sft | SftWithToken | NftWithToken) => {
       consoleOut('clicked on NFT item:', item, 'blue');
       setSelectedNft(item);
-      // setAutoOpenDetailsPanel(true);
-      // setDetailsPanelOpen(true);
-      // setSelectedCategory(undefined);
-      // setSelectedApp(undefined);
+      setSelectedAsset(undefined);
+      setSelectedApp(undefined);
       navigateToNft(item.address.toBase58());
     }
 
@@ -4535,6 +4564,7 @@ export const AccountsView = () => {
     const onAppClick = (app: KnownAppMetadata) => {
       setSelectedApp(app);
       setSelectedNft(undefined);
+      setSelectedAsset(undefined);
       const appUrl = `/${app.path}`;
       navigate(appUrl);
     }
@@ -4576,6 +4606,14 @@ export const AccountsView = () => {
             </div>
           );
         })}
+      </div>
+    );
+  }
+
+  const renderOtherAssetsList = () => {
+    return (
+      <div key="asset-category-other-items" className="asset-category flex-column">
+        <span>Nothing here yet</span>
       </div>
     );
   }
@@ -5056,16 +5094,18 @@ export const AccountsView = () => {
 
                   <div className="inner-container">
 
-                    {/* Net Worth header (sticky) */}
-                    {isMultisigContext ? renderSuperSafeCategory() : renderNetworthCategory()}
+                    {/* Account summary (sticky) */}
+                    {isMultisigContext ? renderSelectedAccountSummary('super-safe') : renderSelectedAccountSummary('my-account')}
 
                     {/* Middle area (vertically flexible block of items) */}
                     <div className={`item-block${!isXsDevice ? ' vertical-scroll' : ''}`}>
 
+                      {/* Pinned Apps or Favorites */}
                       <div key="payment-streams-summary" className="asset-category">
                         {renderMoneyStreamsSummary()}
                       </div>
 
+                      {/* Assets tabset */}
                       <div key="asset-category-title" className="asset-category-title text-center pt-1 pb-1">
                         <Segmented
                           size="small"
@@ -5079,17 +5119,13 @@ export const AccountsView = () => {
                         </div>
                       </div>
 
-                      {selectedAssetsGroup === AssetGroups.Tokens && renderAssetsList()}
+                      {selectedAssetsGroup === AssetGroups.Tokens ? renderAssetsList() : null}
 
-                      {selectedAssetsGroup === AssetGroups.Nfts && renderNftList()}
+                      {selectedAssetsGroup === AssetGroups.Nfts ? renderNftList() : null}
 
-                      {selectedAssetsGroup === AssetGroups.Apps && renderAppsList()}
+                      {selectedAssetsGroup === AssetGroups.Apps ? renderAppsList() : null}
 
-                      {selectedAssetsGroup === AssetGroups.OtherAssets && (
-                        <div key="asset-category-other-items" className="asset-category flex-column">
-                          <span>Nothing here yet</span>
-                        </div>
-                      )}
+                      {selectedAssetsGroup === AssetGroups.OtherAssets ? renderOtherAssetsList() : null}
 
                     </div>
 
@@ -5190,7 +5226,19 @@ export const AccountsView = () => {
                       </>
                     ) : null}
 
-                    {selectedAssetsGroup === AssetGroups.Tokens ? (
+                    {selectedCategory === "account-summary" && location.pathname === '/my-account' ? (
+                      <>
+                        <Suspense fallback={
+                          <div className="h-100 flex-center">
+                            <Spin spinning={true} />
+                          </div>
+                        }>
+                          <PersonalAccountSummary accountBalance={netWorth} />
+                        </Suspense>
+                      </>
+                    ) : null}
+
+                    {canShowAssetDetails() ? (
                       <>
                         {/* Refresh cta */}
                         <div className="float-top-right mr-1 mt-1">
@@ -5244,9 +5292,7 @@ export const AccountsView = () => {
                           </div>
                         )}
                       </>
-                    ) : null}
-
-                    {selectedAssetsGroup === AssetGroups.Nfts && selectedNft ? (
+                    ) : canShowNftDetails() && selectedNft ? (
                       <NftDetails selectedNft={selectedNft} />
                     ) : null}
                   </div>
