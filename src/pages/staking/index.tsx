@@ -1,8 +1,7 @@
 import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { ConfirmOptions, PublicKey } from "@solana/web3.js";
-import { Col, Divider, Row } from "antd";
+import { Col, Row } from "antd";
 import { InfoIcon } from "components/InfoIcon";
-import { PreFooter } from "components/PreFooter";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "constants/common";
 import { MEAN_TOKEN_LIST } from "constants/tokens";
 import { useAccountsContext, useNativeAccount } from "contexts/accounts";
@@ -10,7 +9,7 @@ import { AppStateContext } from "contexts/appstate";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from 'contexts/connection';
 import { useWallet } from "contexts/wallet";
 import useWindowSize from 'hooks/useWindowResize';
-import { IconLoading, IconStats } from "Icons";
+import { IconLoading } from "Icons";
 import { IconHelpCircle } from "Icons/IconHelpCircle";
 import { getTokenAccountBalanceByAddress } from "middleware/accounts";
 import { consoleOut, isProd } from "middleware/ui";
@@ -343,6 +342,15 @@ const StakingView = () => {
     width,
     isSmallUpScreen,
   ]);
+
+  // Do unmounting stuff here
+  useEffect(() => {
+    return () => {
+      setSearchParams(undefined);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   return (
     <>

@@ -19,7 +19,6 @@ import {
   StakingRewardsView,
   StatsView,
   SwapView,
-  VestingView
 } from "./pages";
 import { ServiceUnavailableView } from "./pages/service-unavailable";
 
@@ -61,16 +60,16 @@ export function AppRoutes() {
                       <Route path="/assets" element={<AccountsView />} />
                       <Route path="/assets/:asset" element={<AccountsView />} />
                       {/* Well known App routes */}
-                      <Route path="/staking" element={<AccountsView />} />
-                      <Route path="/vesting" element={<VestingView />} />
-                      <Route path="/vesting/:vestingContract" element={<VestingView />} />
-                      <Route path="/vesting/:vestingContract/:activeTab" element={<VestingView />} />
+                      <Route path="/vesting" element={<AccountsView />} />
+                      <Route path="/vesting/:vestingContract" element={<AccountsView />} />
+                      <Route path="/vesting/:vestingContract/:activeTab" element={<AccountsView />} />
                       <Route path="/streaming" element={<AccountsView />} />
                       <Route path="/streaming/:streamingTab" element={<AccountsView />} />
                       <Route path="/streaming/:streamingTab/:streamingItemId" element={<AccountsView />} />
                       <Route path="/super-safe" element={<AccountsView />} />
                       <Route path="/super-safe/proposals/:id" element={<AccountsView />} />
                       <Route path="/super-safe/programs/:id" element={<AccountsView />} />
+                      <Route path="/staking" element={<AccountsView />} />
                       {/* Apps general route matcher */}
                       <Route path="/:appId" element={<AccountsView />} />
                       {/* Not found and service unavailable */}

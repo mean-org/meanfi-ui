@@ -8,4 +8,3 @@ export { PlaygroundView } from './playground';
 export { StakingRewardsView } from './staking-rewards';
 export { StatsView } from './stats';
 export { SwapView } from './exchange';
-export { VestingView } from './vesting';

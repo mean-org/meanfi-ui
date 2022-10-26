@@ -113,6 +113,7 @@ import "./style.scss";
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PersonalAccountSummary = React.lazy(() => import('../../views/WalletAccountSummary/index'));
 const StakingComponent = React.lazy(() => import('../staking/index'));
+const VestingComponent = React.lazy(() => import('../vesting/index'));
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let isWorkflowLocked = false;
@@ -247,7 +248,7 @@ export const AccountsView = () => {
 
     consoleOut('pathname:', location.pathname, 'crimson');
     // If no category specified (neither assets nor any known App) just assume assets
-    const isKnownApp = KNOWN_APPS.some(a => location.pathname.startsWith(`/${a.path}`));
+    const isKnownApp = KNOWN_APPS.some(a => location.pathname.startsWith(`/${a.slug}`));
     if (
       location.pathname.indexOf('/assets') === -1 &&
       location.pathname.indexOf('/my-account') === -1 &&
@@ -269,6 +270,9 @@ export const AccountsView = () => {
       // If user goes inside any tab of the streaming category, enable autoOpenDetailsPanel
       if (streamingTab) {
         setAutoOpenDetailsPanel(true);
+      } else if (location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)) {
+        const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
+        navigate(url);
       }
       setTimeout(() => {
         setIsPageLoaded(true);
@@ -3155,7 +3159,7 @@ export const AccountsView = () => {
       }
     }
 
-    const isKnownApp = KNOWN_APPS.some(a => location.pathname.startsWith(`/${a.path}`));
+    const isKnownApp = KNOWN_APPS.some(a => location.pathname.startsWith(`/${a.slug}`));
     const isAccountSummary = location.pathname.startsWith('/my-account') ||
                              location.pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)
       ? true
@@ -3249,7 +3253,7 @@ export const AccountsView = () => {
   // Set an App based of current category and asset group
   useEffect(() => {
     if (selectedCategory === "apps" || selectedCategory === "account-summary") {
-      const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.path}`));
+      const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.slug}`));
       setSelectedApp(app);
       setSelectedNft(undefined);
       setSelectedAsset(undefined);
@@ -4229,7 +4233,15 @@ export const AccountsView = () => {
     const showWhenAssetsSelected = selectedAssetsGroup === AssetGroups.Tokens ? true : false;
     const showWhenOtherAssetsSelected = selectedAssetsGroup === AssetGroups.OtherAssets ? true : false;
     const showWhenNoNftSelected = selectedAssetsGroup === AssetGroups.Nfts && !selectedNft ? true : false;
-    if (selectedAsset && !selectedApp && (showWhenAssetsSelected || showWhenNoNftSelected || showWhenOtherAssetsSelected)) {
+    const showWhenAppsSelectedAndNoAppActiveButAssetIsSelected = selectedAssetsGroup === AssetGroups.Apps && selectedAsset ? true : false;
+    if (
+      selectedAsset &&
+      !selectedApp &&
+      (showWhenAssetsSelected ||
+       showWhenNoNftSelected ||
+       showWhenAppsSelectedAndNoAppActiveButAssetIsSelected ||
+       showWhenOtherAssetsSelected)
+    ) {
       return true;
     }
     return false;
@@ -4326,7 +4338,7 @@ export const AccountsView = () => {
             setAutoOpenDetailsPanel(true);
             setSelectedNft(undefined);
             navigateToStreaming();
-          }} className={`transaction-list-row ${selectedCategory === "apps" && selectedApp?.path === RegisteredAppPaths.PaymentStreaming ? 'selected' : ''}`}>
+          }} className={`transaction-list-row ${selectedCategory === "apps" && selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? 'selected' : ''}`}>
             <div className="icon-cell">
               {loadingStreams ? (
                 <div className="token-icon animate-border-loading">
@@ -4542,7 +4554,6 @@ export const AccountsView = () => {
     const onNftItemClick = (item: Nft | Sft | SftWithToken | NftWithToken) => {
       consoleOut('clicked on NFT item:', item, 'blue');
       setSelectedNft(item);
-      setSelectedAsset(undefined);
       setSelectedApp(undefined);
       navigateToNft(item.address.toBase58());
     }
@@ -4565,20 +4576,21 @@ export const AccountsView = () => {
   const renderAppsList = () => {
 
     const onAppClick = (app: KnownAppMetadata) => {
-      setSelectedApp(app);
+      setSelectedApp(undefined);
       setSelectedNft(undefined);
       setSelectedAsset(undefined);
-      const appUrl = `/${app.path}`;
-      navigate(appUrl);
+      setTimeout(() => {
+        navigate(app.defaultPath);
+      }, 50);
     }
 
     const getSelectedClass = (app: KnownAppMetadata) => {
       if (!app.enabled ||
-        (!isMultisigContext && app.path === RegisteredAppPaths.SuperSafe) ||
-        (isMultisigContext && app.path === RegisteredAppPaths.Staking)) {
+        (!isMultisigContext && app.slug === RegisteredAppPaths.SuperSafe) ||
+        (isMultisigContext && app.slug === RegisteredAppPaths.Staking)) {
         return 'disabled';
       }
-      if (selectedApp && selectedApp.path === app.path) {
+      if (selectedApp && selectedApp.slug === app.slug) {
         return 'selected';
       }
       return '';
@@ -4588,9 +4600,9 @@ export const AccountsView = () => {
       <div key="asset-category-apps-items" className="asset-category flex-column">
         {KNOWN_APPS.map(app => {
           return (
-            <div key={`${app.path}`}
+            <div key={`${app.slug}`}
               onClick={() => onAppClick(app)}
-              id={app.path}
+              id={app.slug}
               className={`transaction-list-row ${getSelectedClass(app)}`
               }>
               <div className="icon-cell">
@@ -5059,7 +5071,7 @@ export const AccountsView = () => {
         <div className="debug-bar">
           <span>selectedCategory:</span><span className="mx-1 font-bold">{selectedCategory || 'undefined'}</span>
           <span>selectedAssetsGroup:</span><span className="mx-1 font-bold">{selectedAssetsGroup || 'undefined'}</span>
-          <span>selectedApp:</span><span className="mx-1 font-bold">{selectedApp ? selectedApp.path : 'undefined'}</span>
+          <span>selectedApp:</span><span className="mx-1 font-bold">{selectedApp ? selectedApp.slug : 'undefined'}</span>
         </div>
       )}
 
@@ -5188,7 +5200,7 @@ export const AccountsView = () => {
 
                   <div className="inner-container">
 
-                    {selectedApp?.path === RegisteredAppPaths.PaymentStreaming ? (
+                    {selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? (
                       <>
                         {/* Refresh cta */}
                         <div className="float-top-right mr-1 mt-1">
@@ -5214,7 +5226,7 @@ export const AccountsView = () => {
                       </>
                     ) : null}
 
-                    {selectedApp?.path === RegisteredAppPaths.SuperSafe ? (
+                    {selectedApp?.slug === RegisteredAppPaths.SuperSafe ? (
                       <>
                         <Suspense fallback={
                           <div className="h-100 flex-center">
@@ -5231,7 +5243,7 @@ export const AccountsView = () => {
                       </>
                     ) : null}
 
-                    {selectedApp?.path === RegisteredAppPaths.Staking ? (
+                    {selectedApp?.slug === RegisteredAppPaths.Staking && location.pathname.startsWith(`/${RegisteredAppPaths.Staking}`) ? (
                       <>
                         <Suspense fallback={
                           <div className="h-100 flex-center">
@@ -5239,6 +5251,18 @@ export const AccountsView = () => {
                           </div>
                         }>
                           <StakingComponent />
+                        </Suspense>
+                      </>
+                    ) : null}
+
+                    {selectedApp?.slug === RegisteredAppPaths.Vesting && location.pathname.startsWith(`/${RegisteredAppPaths.Vesting}`) ? (
+                      <>
+                        <Suspense fallback={
+                          <div className="h-100 flex-center">
+                            <Spin spinning={true} />
+                          </div>
+                        }>
+                          <VestingComponent />
                         </Suspense>
                       </>
                     ) : null}

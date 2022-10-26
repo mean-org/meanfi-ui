@@ -169,7 +169,7 @@ export const VestingContractList = (props: {
     };
 
     return (
-        <>
+        <div className="vesting-contract-list">
             {streamingAccounts && streamingAccounts.length > 0 ? (
                 streamingAccounts.map((item, index) => {
                     const associatedToken = item.associatedToken;
@@ -244,6 +244,6 @@ export const VestingContractList = (props: {
                     }/>
                 </div>
             )}
-        </>
+        </div>
     );
 };

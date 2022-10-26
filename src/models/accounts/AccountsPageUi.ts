@@ -72,7 +72,8 @@ export interface KnownAppMetadata {
     appId: string;
     title: string;
     subTitle: string;
-    path: RegisteredAppPaths;
+    defaultPath: string;
+    slug: RegisteredAppPaths;
     enabled: boolean;
     logoURI?: string;
 }
@@ -82,49 +83,56 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
         appId: '',
         title: 'Mean Staking',
         subTitle: 'aaa',
-        path: RegisteredAppPaths.Staking,
+        defaultPath: '/staking?option=stake',
+        slug: RegisteredAppPaths.Staking,
         enabled: true,
     },
     {
         appId: '',
         title: 'Mean Token Vesting',
         subTitle: 'bbb',
-        path: RegisteredAppPaths.Vesting,
+        defaultPath: '/vesting',
+        slug: RegisteredAppPaths.Vesting,
         enabled: true,
     },
     {
         appId: '',
         title: 'Payment Streaming',
         subTitle: 'ccc',
-        path: RegisteredAppPaths.PaymentStreaming,
+        defaultPath: '/streaming/summary',
+        slug: RegisteredAppPaths.PaymentStreaming,
         enabled: true,
     },
     {
         appId: '',
         title: 'SuperSafe',
         subTitle: 'ddd',
-        path: RegisteredAppPaths.SuperSafe,
+        defaultPath: '/super-safe',
+        slug: RegisteredAppPaths.SuperSafe,
         enabled: true,
     },
     {
         appId: '',
         title: 'Credix',
         subTitle: 'eee',
-        path: RegisteredAppPaths.Credix,
+        defaultPath: '/credix',
+        slug: RegisteredAppPaths.Credix,
         enabled: false,
     },
     {
         appId: '',
         title: 'Raydium',
         subTitle: 'fff',
-        path: RegisteredAppPaths.Raydium,
+        defaultPath: '/raydium',
+        slug: RegisteredAppPaths.Raydium,
         enabled: false,
     },
     {
         appId: '',
         title: 'Orca',
         subTitle: 'ggg',
-        path: RegisteredAppPaths.Orca,
+        defaultPath: '/orca',
+        slug: RegisteredAppPaths.Orca,
         enabled: false,
     },
 ];
@@ -133,6 +141,6 @@ export const getKnownAppById = (appId: string) => {
     return KNOWN_APPS.find(a => a.appId === appId);
 }
 
-export const getKnownAppByPath = (path: string) => {
-    return KNOWN_APPS.find(a => a.path === path);
+export const getKnownAppBySlug = (slug: string) => {
+    return KNOWN_APPS.find(a => a.slug === slug);
 }

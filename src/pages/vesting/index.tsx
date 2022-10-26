@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, ReloadOutlined, WarningFilled } from '@ant-design/icons';
+import { ReloadOutlined } from '@ant-design/icons';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MeanMultisig, MultisigTransactionFees, MULTISIG_ACTIONS } from '@mean-dao/mean-multisig-sdk';
 import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import {
@@ -10,12 +10,11 @@ import {
 } from '@mean-dao/msp';
 import { AccountLayout, u64 } from '@solana/spl-token';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
+import { Alert, Button, Dropdown, Menu, notification, Space, Spin, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import { BN } from 'bn.js';
 import { openNotification } from 'components/Notifications';
-import { PreFooter } from "components/PreFooter";
 import {
   CUSTOM_TOKEN_NAME,
   MIN_SOL_BALANCE_REQUIRED,
@@ -32,7 +31,7 @@ import { useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconMoneyTransfer, IconVerticalEllipsis } from "Icons";
+import { IconArrowBack, IconVerticalEllipsis } from "Icons";
 import { appConfig, customLogger } from 'index';
 import { getTokenAccountBalanceByAddress, getTokensWithBalances, readAccountInfo } from 'middleware/accounts';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from 'middleware/ids';
@@ -69,8 +68,6 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from 'react-router-dom';
-import { PageLoadingView } from 'views/PageLoading';
-import { PendingProposalsComponent } from './components/PendingProposalsComponent';
 import { VestingContractActivity } from './components/VestingContractActivity';
 import { VestingContractAddFundsModal } from './components/VestingContractAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
@@ -90,7 +87,7 @@ export type VestingAccountDetailTab = "overview" | "streams" | "activity" | unde
 let isWorkflowLocked = false;
 const notificationKey = 'updatable';
 
-export const VestingView = () => {
+const VestingView = () => {
   const {
     priceList,
     splTokenList,
@@ -100,7 +97,6 @@ export const VestingView = () => {
     multisigAccounts,
     transactionStatus,
     streamV2ProgramAddress,
-    pendingMultisigTxCount,
     loadingMultisigAccounts,
     previousWalletConnectState,
     setPendingMultisigTxCount,
@@ -166,8 +162,8 @@ export const VestingView = () => {
   const [availableStreamingBalance, setAvailableStreamingBalance] = useState(new BN(0));
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(new BN(0));
   const [associatedTokenDecimals, setAssociatedTokenDecimals] = useState(6);
+
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
-  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -557,6 +553,12 @@ export const VestingView = () => {
     return itsMe || isMultisigContext ? true : false;
   }, [selectedAccount, isMultisigContext, publicKey]);
 
+  const navigateToContracts = useCallback(() => {
+    setDetailsPanelOpen(false);
+    const url = `${VESTING_ROUTE_BASE_PATH}`;
+    navigate(url);
+  }, [navigate]);
+
   const navigateToVestingContract = useCallback((contractId: string) => {
     if (contractId) {
       let url = `${VESTING_ROUTE_BASE_PATH}/${contractId}`;
@@ -601,7 +603,6 @@ export const VestingView = () => {
   const onSelectVestingContract = useCallback((item: Treasury | undefined) => {
     if (selectedAccount.address && item) {
       navigateToVestingContract(item.id.toString());
-      setAutoOpenDetailsPanel(true);
     }
   }, [selectedAccount.address, navigateToVestingContract]);
 
@@ -634,17 +635,6 @@ export const VestingView = () => {
             name: vc.name.trim()
           })
         }));
-        if (contracts.length > 0) {
-          if (reset) {
-            const contractId = contracts[0].id.toString();
-            navigateToVestingContract(contractId);
-          } else if (vestingContract) {
-            const item = contracts.find(i => (i.id as string) === vestingContract);
-            if (item) {
-              navigateToVestingContract(item.id as string);
-            }
-          }
-        }
       })
       .catch(error => {
         console.error(error);
@@ -654,7 +644,7 @@ export const VestingView = () => {
         setTreasuriesLoaded(true);
       });
 
-  }, [selectedAccount.address, connection, getAllUserV2Accounts, msp, navigateToVestingContract, publicKey, vestingContract]);
+  }, [selectedAccount.address, connection, getAllUserV2Accounts, msp, publicKey]);
 
   const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
     if (!publicKey || !msp || loadingTreasuryStreams) { return; }
@@ -2718,16 +2708,6 @@ export const VestingView = () => {
   // Data management //
   /////////////////////
 
-  // Auto open details panel if auto flag is on
-  useEffect(() => {
-    if (!publicKey) { return; }
-
-    if (autoOpenDetailsPanel) {
-      setDetailsPanelOpen(true);
-    }
-
-  }, [publicKey, autoOpenDetailsPanel]);
-
   // Detect XS screen
   useEffect(() => {
     if (width < 576) {
@@ -2972,9 +2952,7 @@ export const VestingView = () => {
 
     const hasNoVestingAccounts = () => treasuriesLoaded && treasuryList && treasuryList.length === 0 ? true : false;
 
-    if (!vestingContract && treasuryList && treasuryList.length > 0) {
-      navigateToVestingContract(treasuryList[0].id as string);
-    } else if (vestingContract && treasuryList && treasuryList.length > 0) {
+    if (vestingContract && treasuryList && treasuryList.length > 0) {
       const item = treasuryList.find(i => i.id === vestingContract);
       if (item) {
         setSelectedVestingContract(item);
@@ -2983,9 +2961,7 @@ export const VestingView = () => {
         setContractActivity([]);
         setHasMoreContractActivity(true);
         consoleOut('selectedVestingContract:', item, 'blue');
-        if (autoOpenDetailsPanel) {
-          setDetailsPanelOpen(true);
-        }
+        setDetailsPanelOpen(true);
       } else {
         navigateToVestingContract(treasuryList[0].id as string);
       }
@@ -2999,7 +2975,6 @@ export const VestingView = () => {
     treasuryList,
     vestingContract,
     treasuriesLoaded,
-    autoOpenDetailsPanel,
     navigateToVestingContract,
     navigate
   ]);
@@ -3323,12 +3298,6 @@ export const VestingView = () => {
   //   Events and actions   //
   ////////////////////////////
 
-  const onBackButtonClicked = () => {
-    setDetailsPanelOpen(false);
-    setAutoOpenDetailsPanel(false);
-    navigate(-1);
-  }
-
   const onTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
     // /vesting/:vestingContract/:activeTab
@@ -3341,13 +3310,13 @@ export const VestingView = () => {
     getContractActivity(vestingContract);
   }, [getContractActivity, vestingContract]);
 
-  const reloadVestingContracts = (manual = false) => {
+  const reloadVestingContracts = useCallback((manual = false) => {
     if (manual) {
       refreshVestingContracts();
     } else {
       refreshVestingContracts(true)
     }
-  }
+  }, [refreshVestingContracts]);
 
 
   ///////////////
@@ -3522,10 +3491,54 @@ export const VestingView = () => {
     onTabChange,
   ]);
 
+  const renderRefreshCta = useCallback(() => {
+    return (
+      <div className="float-top-right mr-1 mt-1">
+        <span className="icon-button-container secondary-button">
+          <Tooltip placement="bottom" title={t('vesting.refresh-tooltip')}>
+            <Button
+              type="default"
+              shape="circle"
+              size="small"
+              icon={<ReloadOutlined />}
+              onClick={() => reloadVestingContracts(true)}
+            />
+          </Tooltip>
+          <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
+          <div id="soft-refresh-contracts-cta" onClick={() => refreshVestingContracts(false)}></div>
+        </span>
+      </div>
+    );
+  }, [refreshVestingContracts, reloadVestingContracts, t]);
+
   const renderCreateFirstVestingAccount = useCallback(() => {
     return (
       <>
-        <div className="container main-container">
+        {/* Refresh cta */}
+        {renderRefreshCta()}
+
+        <div className="scroll-wrapper vertical-scroll">
+          <VestingContractCreateForm
+            accountAddress={selectedAccount.address}
+            inModal={false}
+            isBusy={isBusy}
+            isMultisigContext={isMultisigContext}
+            loadingMultisigAccounts={loadingMultisigAccounts || loadingTreasuries}
+            token={workingToken}
+            selectedList={selectedList}
+            selectedMultisig={selectedMultisig}
+            userBalances={userBalances}
+            nativeBalance={nativeBalance}
+            onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
+            transactionFees={createVestingContractTxFees}
+            tokenChanged={(token: TokenInfo | undefined) => {
+              setWorkingToken(token);
+              setSelectedToken(token);
+            }}
+          />
+        </div>
+
+        {/* <div className="container main-container">
           <div className="interaction-area">
             <div className="title-and-subtitle mb-2">
               <div className="title">
@@ -3563,8 +3576,8 @@ export const VestingView = () => {
               </>
             </div>
           </div>
-        </div>
-        <PreFooter />
+        </div> */}
+
       </>
     );
   }, [
@@ -3573,57 +3586,16 @@ export const VestingView = () => {
     userBalances,
     nativeBalance,
     workingToken,
-    selectedAccount.address,
     selectedMultisig,
     isMultisigContext,
     loadingTreasuries,
+    selectedAccount.address,
     loadingMultisigAccounts,
     createVestingContractTxFees,
     onAcceptCreateVestingContract,
-    refreshVestingContracts,
     setSelectedToken,
-    t,
+    renderRefreshCta,
   ]);
-
-  // Unauthorized access or disconnected access
-  if (!publicKey || (publicKey && publicKey.toBase58() !== selectedAccount.address && !isMultisigContext)) {
-    return (
-      <>
-        <div className="container main-container">
-          <div className="interaction-area">
-            <div className={`title-and-subtitle ${isXsDevice ? 'w-100' : 'w-75 h-75'}`}>
-              <div className="title">
-                <IconMoneyTransfer className="mean-svg-icons" />
-                <div>{t('vesting.screen-title')}</div>
-              </div>
-              <div className="subtitle mt-1">
-                {t('vesting.screen-subtitle')}
-              </div>
-              <h3 className="text-center mb-0">
-                {t('vesting.user-instruction-headline')}
-              </h3>
-              <div className={`text-center flex-column flex-center ${isXsDevice ? 'w-100 h-100 p-2 mt-4' : 'w-50 h-100 p-4'}`}>
-                <div className="text-center mb-2">
-                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
-                </div>
-                {!publicKey ? (
-                  <h3 className="text-center">Please connect your wallet to see your vesting contracts</h3>
-                ) : (
-                  <div className="text-center">
-                    <h3 className="mb-3">You don't have access permission to view the vesting contracts for the wallet address specified.</h3>
-                    <p>Please reconnect with the authorized wallet ({shortenAddress(selectedAccount.address)})<br/>or <span className="simplelink underline" onClick={() => {
-                      window.location.href = VESTING_ROUTE_BASE_PATH;
-                    }}>click here</span> to show the vesting contracts for the connected wallet.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        <PreFooter />
-      </>
-    );
-  }
 
   // Render the On-boarding to Mean Vesting by helping the user on creating
   // the first Vesting Contract if the user has none
@@ -3631,164 +3603,76 @@ export const VestingView = () => {
     // Render normal UI
     return (
       <>
-        {detailsPanelOpen && (
-          <Button
-            id="back-button"
-            type="default"
-            shape="circle"
-            icon={<ArrowLeftOutlined />}
-            onClick={onBackButtonClicked}/>
-        )}
-        <div className="container main-container">
-          {publicKey ? (
-            <div className="interaction-area">
+        {/* Refresh cta */}
+        {renderRefreshCta()}
 
-              <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
-
-                {/* Left / top panel */}
-                <div className="meanfi-two-panel-left">
-  
-                  <div className="meanfi-panel-heading">
-                    {isMultisigContext ? (
-                      <div className="back-button">
-                        <span className="icon-button-container">
-                          <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<ArrowLeftOutlined />}
-                              onClick={() => {
-                                if (selectedMultisig) {
-                                  const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
-                                  navigate(url);
-                                }
-                              }}
-                            />
-                          </Tooltip>
-                        </span>
-                      </div>
-                    ) : null}
-                    <span className="title">{t('vesting.screen-title')} ({treasuryList.length})</span>
-
-                    <div className="user-address">
-                      <span className="fg-secondary">
-                        (<Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
-                          <span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(selectedAccount.address)}>
-                            {shortenAddress(selectedAccount.address, 5)}
-                          </span>
-                        </Tooltip>)
-                      </span>
-                      <Tooltip placement="bottom" title={t('vesting.refresh-tooltip')}>
-                        <span className="icon-button-container simplelink" onClick={() => reloadVestingContracts(true)}>
-                          <Button
-                            type="default"
-                            shape="circle"
-                            size="small"
-                            icon={<ReloadOutlined />}
-                            onClick={() => {}}
-                          />
-                        </span>
-                      </Tooltip>
-                      <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
-                      <div id="soft-refresh-contracts-cta" onClick={() => refreshVestingContracts(false)}></div>
-                    </div>
+        {/* Vesting contract details */}
+        {detailsPanelOpen ? (
+          <>
+            <div className="flexible-column-bottom">
+              <div className="top">
+                <div className="mb-2">
+                  <div onClick={navigateToContracts} className="back-button icon-button-container">
+                    <IconArrowBack className="mean-svg-icons" />
+                    <span className="ml-1">See all contracts</span>
                   </div>
+                </div>
+                <VestingContractDetails
+                  isXsDevice={isXsDevice}
+                  loadingVestingContractFlowRate={loadingVestingContractFlowRate}
+                  selectedToken={workingToken}
+                  streamTemplate={streamTemplate}
+                  vestingContract={selectedVestingContract}
+                  vestingContractFlowRate={vestingContractFlowRate}
+                />
+                {/* Render CTAs row here */}
+                {renderMetaInfoCtaRow()}
 
-                  <div className="inner-container">
-                    {isMultisigContext && (
-                      <PendingProposalsComponent
-                        extraClasses="no-pointer shift-up-1"
-                        pendingMultisigTxCount={pendingMultisigTxCount}
-                      />
+                {/* Alert to offer refresh vesting contract */}
+                {selectedVestingContract && hasBalanceChanged() && (
+                  <div className="alert-info-message mb-2">
+                    <Alert message={(
+                      <>
+                        <span>This vesting contract received an incoming funds transfer.&nbsp;</span>
+                        <span className="simplelink underline" onClick={() => onExecuteRefreshVestingContractBalance()}>Refresh the account data</span>
+                        <span>&nbsp;to update the account balance.</span>
+                      </>
                     )}
-                    <div className="item-block vertical-scroll">
-
-                      <div className="asset-category flex-column">
-                        <VestingContractList
-                          msp={msp}
-                          streamingAccounts={treasuryList}
-                          selectedAccount={selectedVestingContract}
-                          loadingVestingAccounts={loadingTreasuries}
-                          onAccountSelected={(item: Treasury | undefined) => onSelectVestingContract(item)}
-                        />
-                      </div>
-
-                    </div>
-
-                    {/* Bottom CTA */}
-                    <div className="bottom-ctas">
-                      <div className="primary-action">
-                        <Button
-                          block
-                          className="flex-center"
-                          type="primary"
-                          shape="round"
-                          onClick={showVestingContractCreateModal}>
-                          <span className="ml-1">Create vesting contract</span>
-                        </Button>
-                      </div>
-                    </div>
+                      type="info"
+                      showIcon
+                    />
                   </div>
-
-                </div>
-
-                {/* Right / down panel */}
-                <div className="meanfi-two-panel-right">
-                  <div className="meanfi-panel-heading"><span className="title">{t('vesting.vesting-account-details.panel-title')}</span></div>
-                  <div className="inner-container">
-                    <div className="flexible-column-bottom">
-                      <div className="top">
-                        <VestingContractDetails
-                          isXsDevice={isXsDevice}
-                          loadingVestingContractFlowRate={loadingVestingContractFlowRate}
-                          selectedToken={workingToken}
-                          streamTemplate={streamTemplate}
-                          vestingContract={selectedVestingContract}
-                          vestingContractFlowRate={vestingContractFlowRate}
-                        />
-                        {/* Render CTAs row here */}
-                        {renderMetaInfoCtaRow()}
-
-                        {/* Alert to offer refresh vesting contract */}
-                        {selectedVestingContract && hasBalanceChanged() && (
-                          <div className="alert-info-message mb-2">
-                            <Alert message={(
-                                <>
-                                  <span>This vesting contract received an incoming funds transfer.&nbsp;</span>
-                                  <span className="simplelink underline" onClick={() => onExecuteRefreshVestingContractBalance()}>Refresh the account data</span>
-                                  <span>&nbsp;to update the account balance.</span>
-                                </>
-                              )}
-                              type="info"
-                              showIcon
-                            />
-                          </div>
-                        )}
-
-                      </div>
-                      <div className="bottom">
-                        {renderTabset()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
+                )}
               </div>
-
-            </div>
-          ) : (
-            <div className="interaction-area">
-              <div className="w-75 h-100 p-5 text-center flex-column flex-center">
-                <div className="text-center mb-2">
-                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
-                </div>
-                <h3>{t('wallet-selector.connect-to-begin')}</h3>
+              <div className="bottom">
+                {renderTabset()}
               </div>
             </div>
-          )}
-        </div>
-        <PreFooter />
+          </>
+        ) : (
+          <>
+            <div className="scroll-wrapper vertical-scroll">
+              <div className="mb-3">
+                  <Button
+                    className="flex-center"
+                    type="primary"
+                    shape="round"
+                    onClick={showVestingContractCreateModal}>
+                    <span className="ml-1">Create vesting contract</span>
+                  </Button>
+              </div>
+              <div className="flex-column">
+                <VestingContractList
+                  msp={msp}
+                  streamingAccounts={treasuryList}
+                  selectedAccount={selectedVestingContract}
+                  loadingVestingAccounts={loadingTreasuries}
+                  onAccountSelected={(item: Treasury | undefined) => onSelectVestingContract(item)}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
         {isVestingContractCreateModalVisible && (
           <VestingContractCreateModal
@@ -3915,7 +3799,13 @@ export const VestingView = () => {
   } else if (treasuriesLoaded && treasuryList.length === 0 && !loadingTreasuries) {
     return renderCreateFirstVestingAccount();
   } else {
-    return <PageLoadingView />;
+    return (
+      <div className="h-100 flex-center">
+        <Spin spinning={true} />
+      </div>
+    );
   }
 
 };
+
+export default VestingView;
