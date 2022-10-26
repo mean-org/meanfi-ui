@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { PageLoadingView } from "views/PageLoading";
 import { AppLayout } from "./components/Layout";
 import { AccountsProvider } from "./contexts/accounts";
@@ -60,7 +60,9 @@ export function AppRoutes() {
                       <Route path="/assets" element={<AccountsView />} />
                       <Route path="/assets/:asset" element={<AccountsView />} />
                       {/* Well known App routes */}
-                      <Route path="/vesting" element={<AccountsView />} />
+                      <Route path="/vesting" element={<Navigate replace to='/vesting/summary' />} />
+                      <Route path="/vesting/summary" element={<AccountsView />} />
+                      <Route path="/vesting/contracts" element={<AccountsView />} />
                       <Route path="/vesting/:vestingContract" element={<AccountsView />} />
                       <Route path="/vesting/:vestingContract/:activeTab" element={<AccountsView />} />
                       <Route path="/streaming" element={<AccountsView />} />

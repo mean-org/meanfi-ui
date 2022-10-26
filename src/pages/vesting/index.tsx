@@ -71,7 +71,7 @@ import { AddFundsParams, CreateVestingStreamParams, CreateVestingTreasuryParams,
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { VestingContractActivity } from './components/VestingContractActivity';
 import { VestingContractAddFundsModal } from './components/VestingContractAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
@@ -123,6 +123,7 @@ const VestingView = () => {
   const {
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
+  const location = useLocation();
   const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
   const { vestingContract, activeTab } = useParams();
@@ -130,6 +131,7 @@ const VestingView = () => {
   const { width } = useWindowSize();
   const { publicKey, wallet, connected } = useWallet();
   const { account } = useNativeAccount();
+  const [mainFeatureTab, setMainFeatureTab] = useState("summary");
   const [loadingTreasuries, setLoadingTreasuries] = useState(true);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [treasuryList, setTreasuryList] = useState<Treasury[]>([]);
@@ -2770,6 +2772,16 @@ const VestingView = () => {
   // Data management //
   /////////////////////
 
+  // sdsdsd
+  useEffect(() => {
+    // setMainFeatureTab
+    if (location.pathname === `${VESTING_ROUTE_BASE_PATH}/summary`) {
+      setMainFeatureTab("summary");
+    } else if (location.pathname === `${VESTING_ROUTE_BASE_PATH}/contracts`) {
+      setMainFeatureTab("contracts");
+    }
+  }, [location.pathname]);
+
   // Detect XS screen
   useEffect(() => {
     if (width < 576) {
@@ -2859,7 +2871,6 @@ const VestingView = () => {
     splTokenList,
     workingToken,
     balancesSource,
-    setSelectedToken,
   ]);
 
   // Build CTAs
@@ -3407,12 +3418,19 @@ const VestingView = () => {
   //   Events and actions   //
   ////////////////////////////
 
-  const onTabChange = useCallback((activeKey: string) => {
+  const onVestingContractDetailTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
     // /vesting/:vestingContract/:activeTab
     const url = `${VESTING_ROUTE_BASE_PATH}/${vestingContract}/${activeKey}`;
     navigate(url);
   }, [navigate, vestingContract]);
+
+  const onMainFeatureTabChange = useCallback((newKey: string) => {
+    consoleOut('Selected tab option:', newKey, 'blue');
+
+    const url = `${VESTING_ROUTE_BASE_PATH}/${newKey}`;
+    navigate(url);
+  }, [navigate]);
 
   const loadMoreActivity = useCallback(() => {
     if (!vestingContract) { return; }
@@ -3513,6 +3531,59 @@ const VestingView = () => {
       </div>
     );
   };
+
+  const renderFeatureSummary = () => {
+    return (
+      <>
+        <div className="tab-inner-content-wrapper vertical-scroll">
+          <p>Token vesting allows teams and companies to release locked tokens over time according to a pre-determined contract release rate. Locked vesting contracts are perfect for investors and token locks as they can not be paused or cancelled.</p>
+          <p>Investors and recipients of the token vesting contracts will be able to redeem their tokens using MeanFi's Payment Streaming App under their accounts.</p>
+          <p>Links and Socials</p>
+          <span>t D M Gh ... Pending</span>
+        </div>
+      </>
+    );
+  }
+
+  const renderListOfContracts = () => {
+    return (
+      <div className="tab-inner-content-wrapper vertical-scroll">
+        <VestingContractList
+          msp={msp}
+          streamingAccounts={treasuryList}
+          selectedAccount={selectedVestingContract}
+          loadingVestingAccounts={loadingTreasuries}
+          onAccountSelected={(item: Treasury | undefined) => onSelectVestingContract(item)}
+        />
+      </div>
+    );
+  }
+
+  const renderFeatureTabset = () => {
+    const tabs = [
+      {
+        key: "summary",
+        label: "Summary",
+        children: renderFeatureSummary()
+      },
+      {
+        key: "contracts",
+        label: `Contracts ${!loadingTreasuries && !loadingStreams && treasuryList.length > 0
+          ? `(${treasuryList.length})`
+          : ""}`,
+        children: renderListOfContracts()
+      },
+    ];
+
+    return (
+      <Tabs
+        items={tabs}
+        activeKey={mainFeatureTab}
+        onChange={onMainFeatureTabChange}
+        className="neutral stretch-content"
+      />
+    );
+  }
 
   //#endregion
 
@@ -3656,7 +3727,7 @@ const VestingView = () => {
       <Tabs
         items={items}
         activeKey={activeTab}
-        onChange={onTabChange}
+        onChange={onVestingContractDetailTabChange}
         className="neutral stretch-content"
       />
     );
@@ -3683,7 +3754,7 @@ const VestingView = () => {
     availableStreamingBalance,
     isMultisigTreasury,
     loadMoreActivity,
-    onTabChange,
+    onVestingContractDetailTabChange,
   ]);
 
   //#endregion
@@ -3851,17 +3922,13 @@ const VestingView = () => {
           </>
         ) : (
           <>
-            <div className="scroll-wrapper vertical-scroll">
-              {renderVestingProtocolHeader()}
-              {renderFeatureCtaRow()}
-              <div className="flex-column">
-                <VestingContractList
-                  msp={msp}
-                  streamingAccounts={treasuryList}
-                  selectedAccount={selectedVestingContract}
-                  loadingVestingAccounts={loadingTreasuries}
-                  onAccountSelected={(item: Treasury | undefined) => onSelectVestingContract(item)}
-                />
+            <div className="flexible-column-bottom">
+              <div className="top">
+                {renderVestingProtocolHeader()}
+                {renderFeatureCtaRow()}
+              </div>
+              <div className="bottom">
+                {renderFeatureTabset()}
               </div>
             </div>
           </>
