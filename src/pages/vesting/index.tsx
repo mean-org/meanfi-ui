@@ -15,11 +15,13 @@ import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import BigNumber from 'bignumber.js';
 import { BN } from 'bn.js';
+import { writeToCache } from 'cache/persistentCache';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { AppSocialLinks } from 'components/AppSocialLinks';
 import { openNotification } from 'components/Notifications';
 import {
   CUSTOM_TOKEN_NAME,
+  HALF_MINUTE_REFRESH_TIMEOUT,
   MIN_SOL_BALANCE_REQUIRED,
   MSP_FEE_TREASURY,
   MULTISIG_ROUTE_BASE_PATH,
@@ -3358,12 +3360,18 @@ const VestingView = (props: {
   useEffect(() => {
     if (!publicKey || !treasuryList) { return; }
 
+    const saveTvl = (tvl: number) => {
+      const cacheEntryKey = 'vestingTvl';
+      writeToCache(cacheEntryKey, tvl.toString());
+    }
+
     if (!streamingAccountsSummary) {
       refreshTreasuriesSummary()
       .then(value => {
         if (value) {
           setStreamingAccountsSummary(value);
           setUnallocatedBalance(value.totalNet);
+          saveTvl(value.totalNet);
         }
         setCanDisplayMyTvl(true);
       });
@@ -3372,20 +3380,20 @@ const VestingView = (props: {
     const timeout = setTimeout(() => {
       refreshTreasuriesSummary()
       .then(value => {
-        consoleOut('streamingAccountsSummary:', value, 'orange');
         if (value) {
           setStreamingAccountsSummary(value);
           setUnallocatedBalance(value.totalNet);
+          saveTvl(value.totalNet);
         }
         setCanDisplayMyTvl(true);
       });
-    }, 1000);
+    }, HALF_MINUTE_REFRESH_TIMEOUT);
 
     return () => {
       clearTimeout(timeout);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey, treasuryList]);
+  }, [publicKey, streamingAccountsSummary, treasuryList]);
 
   // Setup event listeners
   useEffect(() => {

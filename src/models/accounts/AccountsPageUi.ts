@@ -82,6 +82,7 @@ export interface KnownAppMetadata {
     defaultPath: string;
     slug: RegisteredAppPaths;
     enabled: boolean;
+    visible: boolean;
     logoURI?: string;
     socials?: SocialMediaEntry[];
 }
@@ -94,6 +95,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
         defaultPath: '/staking?option=stake',
         slug: RegisteredAppPaths.Staking,
         enabled: true,
+        visible: true,
     },
     {
         appId: '',
@@ -102,6 +104,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
         defaultPath: '/vesting/summary',
         slug: RegisteredAppPaths.Vesting,
         enabled: true,
+        visible: true,
         socials: [
             {
                 network: SocialNetwork.Twitter,
@@ -128,6 +131,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
         defaultPath: '/streaming/summary',
         slug: RegisteredAppPaths.PaymentStreaming,
         enabled: true,
+        visible: true,
     },
     {
         appId: '',
@@ -136,6 +140,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
         defaultPath: '/super-safe',
         slug: RegisteredAppPaths.SuperSafe,
         enabled: true,
+        visible: true,
     },
     {
         appId: '',
@@ -144,6 +149,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
         defaultPath: '/credix',
         slug: RegisteredAppPaths.Credix,
         enabled: false,
+        visible: false,
     },
     {
         appId: '',
@@ -152,6 +158,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
         defaultPath: '/raydium',
         slug: RegisteredAppPaths.Raydium,
         enabled: false,
+        visible: false,
     },
     {
         appId: '',
@@ -160,6 +167,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
         defaultPath: '/orca',
         slug: RegisteredAppPaths.Orca,
         enabled: false,
+        visible: false,
     },
 ];
 

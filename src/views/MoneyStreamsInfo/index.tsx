@@ -10,6 +10,7 @@ import { Button, Col, Dropdown, Menu, Row, Space, Spin, Tabs } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
+import { writeToCache } from "cache/persistentCache";
 import { CopyExtLinkGroup } from "components/CopyExtLinkGroup";
 import { Identicon } from "components/Identicon";
 import { openNotification } from "components/Notifications";
@@ -1921,7 +1922,11 @@ export const MoneyStreamsInfoView = (props: {
 
   // Update total account balance
   useEffect(() => {
-      setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
+    const tAb = withdrawalBalance + unallocatedBalance;
+    setTotalAccountBalance(tAb);
+    // Every time the TVL is updated, save it in persistent store
+    const cacheEntryKey = 'streamingTvl';
+    writeToCache(cacheEntryKey, tAb.toString());
   }, [unallocatedBalance, withdrawalBalance]);
 
   // Calculate the rate per day for incoming streams

@@ -2,7 +2,6 @@
 export const MAX_CACHE_TTL = 86400; // 1 Day
 
 export type CacheItem = {
-    key: string;
     timestamp: number;
     data: any;
 }
@@ -25,7 +24,7 @@ export const readFromCache = (key: string): CacheItem | null => {
 export const writeToCache = (key: string, value: any) => {
 
     if (typeof window === 'undefined') {
-        return null;
+        return;
     }
 
     if (!key) {
@@ -36,7 +35,6 @@ export const writeToCache = (key: string, value: any) => {
     } else {
         try {
             const data: CacheItem = {
-                key,
                 timestamp: Date.now(),
                 data: value
             };

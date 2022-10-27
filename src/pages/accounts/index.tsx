@@ -105,7 +105,7 @@ import { isMobile } from 'react-device-detect';
 import { Helmet } from "react-helmet";
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { MoneyStreamsIncomingView, MoneyStreamsInfoView, MoneyStreamsOutgoingView, NftDetails, NftPaginatedList, StreamingAccountView } from 'views';
+import { AppsList, MoneyStreamsIncomingView, MoneyStreamsInfoView, MoneyStreamsOutgoingView, NftDetails, NftPaginatedList, StreamingAccountView } from 'views';
 import getAssetCategory from './getAssetCategory';
 import getNftMint from './getNftMint';
 import "./style.scss";
@@ -4577,46 +4577,12 @@ export const AccountsView = () => {
       }
     }
 
-    const getSelectedClass = (app: KnownAppMetadata) => {
-      if (!app.enabled ||
-        (!isMultisigContext && app.slug === RegisteredAppPaths.SuperSafe) ||
-        (isMultisigContext && app.slug === RegisteredAppPaths.Staking)) {
-        return 'disabled';
-      }
-      if (selectedApp && selectedApp.slug === app.slug) {
-        return 'selected';
-      }
-      return '';
-    }
-
     return (
-      <div key="asset-category-apps-items" className="asset-category flex-column">
-        {KNOWN_APPS.map(app => {
-          return (
-            <div key={`${app.slug}`}
-              onClick={() => onAppClick(app)}
-              id={app.slug}
-              className={`transaction-list-row ${getSelectedClass(app)}`
-              }>
-              <div className="icon-cell">
-                <div className="token-icon">
-                  {app.logoURI ? (
-                    <img src={app.logoURI} alt={`${app.title}`} width={30} height={30} />
-                    ) : (
-                    <img src={fallbackImgSrc} alt={`${app.title}`} width={30} height={30} />
-                  )}
-                </div>
-              </div>
-              <div className="description-cell">
-                <div className="title">
-                  {app.title}
-                </div>
-                <div className="subtitle text-truncate">{app.subTitle}</div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <AppsList
+        isMultisigContext={isMultisigContext}
+        selectedApp={selectedApp}
+        onAppClick={((selection: KnownAppMetadata) => onAppClick(selection))}
+      />
     );
   }
 

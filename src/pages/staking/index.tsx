@@ -1,6 +1,7 @@
 import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { ConfirmOptions, PublicKey } from "@solana/web3.js";
 import { Col, Row } from "antd";
+import { writeToCache } from "cache/persistentCache";
 import { InfoIcon } from "components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "constants/common";
 import { MEAN_TOKEN_LIST } from "constants/tokens";
@@ -156,6 +157,11 @@ const StakingView = () => {
 
   const refreshStakePoolInfo = useCallback((price: number) => {
 
+    const saveTvl = (tvl: number) => {
+      const cacheEntryKey = 'stakingTvl';
+      writeToCache(cacheEntryKey, tvl.toString());
+    }
+
     if (stakeClient && price) {
       setTimeout(() => {
         setRefreshingStakePoolInfo(true);
@@ -165,6 +171,7 @@ const StakingView = () => {
       .then((value) => {
         consoleOut('stakePoolInfo:', value, 'crimson');
         setStakePoolInfo(value);
+        saveTvl(value.tvl);
       })
       .catch((error) => {
         console.error('getStakePoolInfo error:', error);
