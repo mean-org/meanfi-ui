@@ -133,10 +133,6 @@ export const AppBar = (props: {
         label: (<Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>),
       });
     }
-    items.push({
-      key: 'stats',
-      label: (<Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>),
-    });
     return (
       <Menu
         selectedKeys={selectedItems}
@@ -196,9 +192,6 @@ export const AppBar = (props: {
                     </li>
                   </>
                 )}
-                <li key="stats" className={selectedItems.includes("stats") ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
-                  <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
-                </li>
               </ul>
             </div>
           </div>

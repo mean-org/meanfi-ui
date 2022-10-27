@@ -1,11 +1,10 @@
-import React, { useState } from "react";
-import { Button, Popover } from "antd";
-import { useTranslation } from "react-i18next";
 import { CloseOutlined } from "@ant-design/icons";
-import { shortenAddress } from "../../middleware/utils";
-import "./style.scss";
-import { IconDocument } from "../../Icons";
 import { MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
+import { Button, Popover } from "antd";
+import { IconDocument } from "Icons";
+import { shortenAddress } from "middleware/utils";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export const MultisigOwnersSigned = (props: {
   participants: MultisigParticipant[];

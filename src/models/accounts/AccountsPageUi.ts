@@ -81,16 +81,16 @@ export interface KnownAppMetadata {
 export const KNOWN_APPS: KnownAppMetadata[] = [
     {
         appId: '',
-        title: 'Mean Staking',
-        subTitle: 'aaa',
+        title: 'MEAN Staking',
+        subTitle: '?????',
         defaultPath: '/staking?option=stake',
         slug: RegisteredAppPaths.Staking,
         enabled: true,
     },
     {
         appId: '',
-        title: 'Mean Token Vesting',
-        subTitle: 'bbb',
+        title: 'Token Vesting',
+        subTitle: 'Solana Token Vesting Contracts',
         defaultPath: '/vesting',
         slug: RegisteredAppPaths.Vesting,
         enabled: true,
@@ -98,7 +98,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
     {
         appId: '',
         title: 'Payment Streaming',
-        subTitle: 'ccc',
+        subTitle: '?????',
         defaultPath: '/streaming/summary',
         slug: RegisteredAppPaths.PaymentStreaming,
         enabled: true,
@@ -106,7 +106,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
     {
         appId: '',
         title: 'SuperSafe',
-        subTitle: 'ddd',
+        subTitle: '?????',
         defaultPath: '/super-safe',
         slug: RegisteredAppPaths.SuperSafe,
         enabled: true,
@@ -122,7 +122,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
     {
         appId: '',
         title: 'Raydium',
-        subTitle: 'fff',
+        subTitle: '?????',
         defaultPath: '/raydium',
         slug: RegisteredAppPaths.Raydium,
         enabled: false,
@@ -130,7 +130,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
     {
         appId: '',
         title: 'Orca',
-        subTitle: 'ggg',
+        subTitle: '?????',
         defaultPath: '/orca',
         slug: RegisteredAppPaths.Orca,
         enabled: false,

@@ -3539,7 +3539,9 @@ const VestingView = () => {
           <p>Token vesting allows teams and companies to release locked tokens over time according to a pre-determined contract release rate. Locked vesting contracts are perfect for investors and token locks as they can not be paused or cancelled.</p>
           <p>Investors and recipients of the token vesting contracts will be able to redeem their tokens using MeanFi's Payment Streaming App under their accounts.</p>
           <p>Links and Socials</p>
-          <span>t D M Gh ... Pending</span>
+          <div className="flex-row align-items-center">
+            &nbsp;
+          </div>
         </div>
       </>
     );

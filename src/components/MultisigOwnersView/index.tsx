@@ -1,9 +1,8 @@
-import { useState } from "react";
-import { Button, Popover } from "antd";
-import { useTranslation } from "react-i18next";
 import { CloseOutlined } from "@ant-design/icons";
-import "./style.scss";
 import { MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
+import { Button, Popover } from "antd";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 
 export const MultisigOwnersView = (props: {

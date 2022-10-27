@@ -4289,6 +4289,26 @@ main section {
   align-items: flex-end;
 }
 
+.app-context-menu {
+  margin: 4px;
+  button.ant-btn-round.ant-btn-icon-only.settings-button {
+    width: 24px;
+    height: 24px;
+    .anticon.anticon-setting {
+      font-size: 20px;
+    }
+  }
+}
+
+button.ant-btn-round.ant-btn-icon-only.settings-button {
+  padding: 0;
+  border: none;
+  height: auto;
+  color: var(--color-secondary-alpha-70);
+  &:hover {
+    color: var(--color-secondary-alpha-85);
+  }
+}
 .icon-button-container {
   display: inline-flex;
   justify-content: center;
