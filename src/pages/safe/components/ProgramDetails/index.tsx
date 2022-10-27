@@ -255,7 +255,7 @@ export const ProgramDetailsView = (props: {
         return upgradeProgram(data)
           .then(value => {
             if (!value) { return false; }
-            consoleOut('createTreasury returned transaction:', value);
+            consoleOut('upgradeProgram returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
               currentOperation: TransactionStatus.SignTransaction
@@ -268,7 +268,7 @@ export const ProgramDetailsView = (props: {
             return true;
           })
           .catch(error => {
-            console.error('createTreasury error:', error);
+            console.error('upgradeProgram error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure
@@ -532,7 +532,7 @@ export const ProgramDetailsView = (props: {
         return setProgramAuth(params)
           .then(value => {
             if (!value) { return false; }
-            consoleOut('createTreasury returned transaction:', value);
+            consoleOut('setProgramAuth returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
               currentOperation: TransactionStatus.SignTransaction
@@ -545,7 +545,7 @@ export const ProgramDetailsView = (props: {
             return true;
           })
           .catch(error => {
-            console.error('createTreasury error:', error);
+            console.error('setProgramAuth error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure

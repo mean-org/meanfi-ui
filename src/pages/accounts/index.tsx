@@ -148,9 +148,7 @@ export const AccountsView = () => {
     loadingTokenAccounts,
     streamProgramAddress,
     streamV2ProgramAddress,
-    pendingMultisigTxCount,
     previousWalletConnectState,
-    loadingMultisigTxPendingCount,
     setPendingMultisigTxCount,
     showDepositOptionsModal,
     getTokenPriceByAddress,
@@ -3254,6 +3252,9 @@ export const AccountsView = () => {
   useEffect(() => {
     if (selectedCategory === "apps" || selectedCategory === "account-summary") {
       const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.slug}`));
+      if (app) {
+        setSelectedAssetsGroup(AssetGroups.Apps);
+      }
       setSelectedApp(app);
       setSelectedNft(undefined);
       setSelectedAsset(undefined);
@@ -4265,17 +4266,6 @@ export const AccountsView = () => {
   // Rendering //
   ///////////////
 
-  const renderPendinProposals = () => {
-    if (loadingMultisigTxPendingCount) {
-      return (<IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />);
-    }
-    if (pendingMultisigTxCount && pendingMultisigTxCount > 0) {
-      return (<span>{pendingMultisigTxCount} pending proposals on this account</span>);
-    } else {
-      return (<span>No pending proposals</span>);
-    }
-  };
-
   const renderNetworth = () => {
     if (netWorth) {
       return toUsCurrency(netWorth);
@@ -4577,11 +4567,14 @@ export const AccountsView = () => {
 
     const onAppClick = (app: KnownAppMetadata) => {
       setSelectedApp(undefined);
-      setSelectedNft(undefined);
       setSelectedAsset(undefined);
-      setTimeout(() => {
+      if (selectedApp?.slug === RegisteredAppPaths.Staking) {
+        setTimeout(() => {
+          navigate(app.defaultPath);
+        }, 50);
+      } else {
         navigate(app.defaultPath);
-      }, 50);
+      }
     }
 
     const getSelectedClass = (app: KnownAppMetadata) => {
@@ -5262,7 +5255,7 @@ export const AccountsView = () => {
                             <Spin spinning={true} />
                           </div>
                         }>
-                          <VestingComponent />
+                          <VestingComponent appSocialLinks={selectedApp.socials} />
                         </Suspense>
                       </>
                     ) : null}

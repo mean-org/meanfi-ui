@@ -16,6 +16,7 @@ import { segmentAnalytics } from 'App';
 import BigNumber from 'bignumber.js';
 import { BN } from 'bn.js';
 import { AddressDisplay } from 'components/AddressDisplay';
+import { AppSocialLinks } from 'components/AppSocialLinks';
 import { openNotification } from 'components/Notifications';
 import {
   CUSTOM_TOKEN_NAME,
@@ -61,7 +62,7 @@ import {
   toUsCurrency
 } from 'middleware/ui';
 import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from 'middleware/utils';
-import { MetaInfoCtaAction } from 'models/accounts';
+import { MetaInfoCtaAction, SocialMediaEntry } from 'models/accounts';
 import { MetaInfoCta } from 'models/common-types';
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import { ZERO_FEES } from 'models/multisig';
@@ -91,7 +92,10 @@ export type VestingAccountDetailTab = "overview" | "streams" | "activity" | unde
 let isWorkflowLocked = false;
 const notificationKey = 'updatable';
 
-const VestingView = () => {
+const VestingView = (props: {
+  appSocialLinks?: SocialMediaEntry[];
+}) => {
+  const { appSocialLinks } = props;
   const {
     priceList,
     splTokenList,
@@ -567,7 +571,7 @@ const VestingView = () => {
 
   const navigateToContracts = useCallback(() => {
     setDetailsPanelOpen(false);
-    const url = `${VESTING_ROUTE_BASE_PATH}`;
+    const url = `${VESTING_ROUTE_BASE_PATH}/contracts`;
     navigate(url);
   }, [navigate]);
 
@@ -3538,10 +3542,8 @@ const VestingView = () => {
         <div className="tab-inner-content-wrapper vertical-scroll">
           <p>Token vesting allows teams and companies to release locked tokens over time according to a pre-determined contract release rate. Locked vesting contracts are perfect for investors and token locks as they can not be paused or cancelled.</p>
           <p>Investors and recipients of the token vesting contracts will be able to redeem their tokens using MeanFi's Payment Streaming App under their accounts.</p>
-          <p>Links and Socials</p>
-          <div className="flex-row align-items-center">
-            &nbsp;
-          </div>
+          <div className="mb-1">Links and Socials</div>
+          <AppSocialLinks appSocialLinks={appSocialLinks} />
         </div>
       </>
     );

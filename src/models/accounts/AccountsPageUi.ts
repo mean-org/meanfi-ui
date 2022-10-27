@@ -1,3 +1,5 @@
+import { SocialNetwork } from "models/enums";
+
 export type AccountsPageCategory = "account-summary" | "assets" | "apps" | "other-assets" | undefined;
 
 export enum MetaInfoCtaAction {
@@ -68,6 +70,11 @@ export interface SelectedCategoryItem {
     subCategory: AssetGroups;
 }
 
+export interface SocialMediaEntry {
+    network: SocialNetwork;
+    linkUrl: string;
+}
+
 export interface KnownAppMetadata {
     appId: string;
     title: string;
@@ -76,6 +83,7 @@ export interface KnownAppMetadata {
     slug: RegisteredAppPaths;
     enabled: boolean;
     logoURI?: string;
+    socials?: SocialMediaEntry[];
 }
 
 export const KNOWN_APPS: KnownAppMetadata[] = [
@@ -91,9 +99,27 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
         appId: '',
         title: 'Token Vesting',
         subTitle: 'Solana Token Vesting Contracts',
-        defaultPath: '/vesting',
+        defaultPath: '/vesting/summary',
         slug: RegisteredAppPaths.Vesting,
         enabled: true,
+        socials: [
+            {
+                network: SocialNetwork.Twitter,
+                linkUrl: 'https://twitter.com/meanfinance/'
+            },
+            {
+                network: SocialNetwork.Discord,
+                linkUrl: 'https://discord.meanfi.com/'
+            },
+            {
+                network: SocialNetwork.Medium,
+                linkUrl: 'https://meandao.medium.com/'
+            },
+            {
+                network: SocialNetwork.Github,
+                linkUrl: 'https://github.com/mean-dao/'
+            },
+        ]
     },
     {
         appId: '',

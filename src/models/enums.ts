@@ -139,3 +139,15 @@ export type VestingContractCategory = {
     label: string;
     value: SubCategory;
 }
+
+export enum SocialNetwork {
+    Discord = 1,
+    Facebook = 2,
+    Github = 3,
+    Instagram = 4,
+    Linkedin = 5,
+    Medium = 6,
+    Telegram = 7,
+    Twitter = 8,
+    Whatsapp = 9,
+}
