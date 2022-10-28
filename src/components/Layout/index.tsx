@@ -522,7 +522,7 @@ export const AppLayout = React.memo((props: any) => {
                 </Link>
                 <AppBar menuType="desktop" onOpenDrawer={showDrawer} topNavVisible={(location.pathname === '/ido' || location.pathname === '/ido-live') ? false : true} />
               </div>
-              <AppBar menuType="mobile" topNavVisible={false} onOpenDrawer={showDrawer} />
+              {/* <AppBar menuType="mobile" topNavVisible={false} onOpenDrawer={showDrawer} /> */}
             </Header>
             <Content>{props.children}</Content>
             <Footer>

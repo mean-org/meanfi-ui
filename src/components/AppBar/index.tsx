@@ -1,5 +1,5 @@
 import { ThunderboltOutlined } from '@ant-design/icons';
-import { Menu } from 'antd';
+// import { Menu } from 'antd';
 import { AccountDetails } from "components/AccountDetails";
 import { AppContextMenu } from "components/AppContextMenu";
 import { ConnectButton } from "components/ConnectButton";
@@ -8,14 +8,14 @@ import { DepositOptions } from 'components/DepositOptions';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
 import { useWallet } from "contexts/wallet";
-import { CustomCSSProps } from 'middleware/css-custom-props';
+// import { CustomCSSProps } from 'middleware/css-custom-props';
 import { isProd } from 'middleware/ui';
-import { RoutingInfo } from 'models/common-types';
-import { useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link, useLocation } from 'react-router-dom';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { useContext } from 'react';
+// import { useTranslation } from 'react-i18next';
+// import { Link, useLocation } from 'react-router-dom';
+// import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
+/*
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
     key: 'exchange',
@@ -33,21 +33,24 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
     parent: 'root'
   },
 ];
+*/
 
 export const AppBar = (props: {
   menuType: string;
   topNavVisible: boolean;
   onOpenDrawer: any;
 }) => {
-  const location = useLocation();
+  // const location = useLocation();
   const connectionConfig = useConnectionConfig();
-  const { connected, publicKey } = useWallet();
-  const { t } = useTranslation("common");
+  const { connected } = useWallet();
+  // const { t } = useTranslation("common");
   const {
-    selectedAccount,
+    // selectedAccount,
     isDepositOptionsModalVisible,
     hideDepositOptionsModal,
   } = useContext(AppStateContext);
+
+  /*
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -145,7 +148,6 @@ export const AppBar = (props: {
   if (props.menuType === 'desktop' ) {
     return (
       <>
-        <div className="App-Bar-left">{props.topNavVisible ? mainNav() : (<span>&nbsp;</span>)}</div>
         <div className="App-Bar-right">
           {!isProd() && (
             <div className="cluster-indicator">
@@ -195,12 +197,42 @@ export const AppBar = (props: {
               </ul>
             </div>
           </div>
-          <DepositOptions
-            isVisible={isDepositOptionsModalVisible && props.menuType !== 'desktop'}
-            key="deposit-modal2"
-            handleClose={hideDepositOptionsModal} />
         </div>
       </>
     );
   }
+  */
+
+  return (
+    <>
+      <div className="App-Bar-left"><span>&nbsp;</span></div>
+      <div className="App-Bar-right">
+        {!isProd() && (
+          <div className="cluster-indicator">
+            <ThunderboltOutlined />
+            <span className="network-name">{connectionConfig.cluster}</span>
+          </div>
+        )}
+        <NotificationBell onOpenDrawer={props.onOpenDrawer}/>
+        {connected ? (
+          <div className="connection-and-account-bar">
+            <AccountDetails />
+          </div>
+        ) : (
+          <>
+            <ConnectButton />
+          </>
+        )}
+        <div className="app-context-menu">
+          <AppContextMenu />
+        </div>
+      </div>
+
+      <DepositOptions
+        isVisible={isDepositOptionsModalVisible}
+        key="deposit-modal2"
+        handleClose={hideDepositOptionsModal}
+      />
+    </>
+  );
 };
