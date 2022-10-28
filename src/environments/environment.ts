@@ -139,11 +139,39 @@ export class AppConfigService {
             meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD',
             multisigProgramAddress: 'MMSdTDhtwBs2w4MxGCbqfWLgerMQNbXazizghoh7uMJ'
         },
+        local_validator: {
+            appUrl: 'http://localhost:3000',
+            apiUrl: 'https://tempo-api-dev.meanops.com',
+            transakUrl: 'https://staging-global.transak.com',
+            transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
+            streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
+            streamV2ProgramAddress: 'MSPdQo5ZdrPh6rU1LsvUv5nRhAnj1mj6YQEqBUq8YwZ',
+            segmentAnalyticsKey: '',
+            influxDbUrl: '',
+            influxDbToken: '',
+            influxDbOrg: '',
+            influxDbBucket: '',
+            logglyCustomerKey: '',
+            logglyTag: '',
+            idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
+            idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
+            idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
+            exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
+            exchangeFlatFee: 0.25,
+            stakingRewardsAcl: [
+                'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1',
+                '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi',
+                'k9ykFu6UFHqotTtmEfoESf6JQKLYN9o72gEhK3Diyb1',
+                'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw'
+            ],
+            meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD',
+            multisigProgramAddress: 'MMSdTDhtwBs2w4MxGCbqfWLgerMQNbXazizghoh7uMJ'
+        },
     };
 
     constructor(private envName = '') {
         if (envName) {
-            environment = envName;
+            environment = envName.replace('-', '_');
         } else if (!environment) {
             environment = 'production';
         }
