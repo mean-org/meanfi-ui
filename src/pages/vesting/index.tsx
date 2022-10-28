@@ -1920,12 +1920,15 @@ const VestingView = (props: {
 
       consoleOut('createVestingStream received data:', data, 'blue');
 
+      const treasury = new PublicKey(data.treasury);
+      const beneficiary = new PublicKey(data.beneficiary);
+
       if (!data.multisig) {
         return msp.createStreamWithTemplate(
           publicKey,                                                                // payer
           publicKey,                                                                // treasurer
-          new PublicKey(data.treasury),                                             // treasury
-          new PublicKey(data.beneficiary),                                          // beneficiary
+          treasury,                                                                 // treasury
+          beneficiary,                                                              // beneficiary
           data.allocationAssigned,                                                  // allocationAssigned
           data.streamName                                                           // streamName
         );
@@ -1938,50 +1941,40 @@ const VestingView = (props: {
 
       if (!multisig) { return null; }
 
-      const timestampTostring = (Date.now() / 1000).toString();
-      const timeStampCounter = new u64(parseInt(timestampTostring));
-      consoleOut('timeStampCounter:', timeStampCounter.toString(), 'blue');
-      const [stream, streamBump] = await PublicKey.findProgramAddress(
-        [multisig.id.toBuffer(), timeStampCounter.toBuffer()],
-        multisigAddressPK
-      );
-
       consoleOut('data.treasury:', data.treasury, 'blue');
       consoleOut('data.treasuryAssociatedTokenMint:', data.treasuryAssociatedTokenMint, 'blue');
       consoleOut('selectedVestingContract:', selectedVestingContract, 'blue');
       consoleOut('associatedToken == treasuryAssociatedTokenMint?', selectedVestingContract?.associatedToken === data.treasuryAssociatedTokenMint ? 'true' : 'false', 'blue');
 
-      const createStreamTx = await msp.createStreamWithTemplateFromPda(
+      const [createStreamTx, streamAddress] = await msp.createStreamWithTemplate(
         publicKey,                                                                // payer
         multisig.authority,                                                       // treasurer
-        new PublicKey(data.treasury),                                             // treasury
-        stream,                                                                   // stream
-        new PublicKey(data.beneficiary),                                          // beneficiary
+        treasury,                                                                 // treasury
+        beneficiary,                                                              // beneficiary
         data.allocationAssigned,                                                  // allocationAssigned
         data.streamName,                                                          // streamName
+        true
       );
 
       const ixData = Buffer.from(createStreamTx.instructions[0].data);
       const ixAccounts = createStreamTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createMoneyStreamTransaction(
+      const tx = await multisigClient.createTransaction(
         publicKey,
         data.proposalTitle || "Create Vesting Stream",
         "", // description
         new Date(expirationTime * 1_000),
-        timeStampCounter.toNumber(),
-        streamBump,
         OperationType.TreasuryStreamCreate,
         multisig.id,
-        mspV2AddressPK, // program
+        mspV2AddressPK,     // program
         ixAccounts,         // keys o accounts of the Ix
         ixData,             // data of the Ix
       );
 
       if (!tx) { return null; }
 
-      return [tx, stream];
+      return [tx, streamAddress];
     };
 
     const createTx = async (): Promise<boolean> => {

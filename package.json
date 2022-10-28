@@ -32,6 +32,7 @@
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "start:local": "REACT_APP_ENV=local npm start",
+    "start:local-validator": "REACT_APP_ENV=local-validator npm start",
     "start:local:win": "set 'REACT_APP_ENV=local' && npm start",
     "start:dev": "REACT_APP_ENV=development npm start",
     "start:dev:win": "set \"REACT_APP_ENV=development\" && npm start",

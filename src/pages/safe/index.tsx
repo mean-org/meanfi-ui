@@ -1040,7 +1040,7 @@ const SafeView = (props: {
           data.transaction.operation === OperationType.TreasuryStreamCreate ||
           data.transaction.operation === OperationType.StreamCreateWithTemplate
       ) {
-        tx = await multisigClient.executeCreateMoneyStreamTransaction(publicKey, data.transaction.id);
+        tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
       }
 
       return tx;

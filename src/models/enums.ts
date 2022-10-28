@@ -3,7 +3,8 @@ import { SubCategory } from "@mean-dao/msp";
 export enum ChainID {
     MainnetBeta = 101,
     Testnet = 102,
-    Devnet = 103
+    Devnet = 103,
+    LocalValidator = 100
 }
 
 export enum PaymentStartPlan {
