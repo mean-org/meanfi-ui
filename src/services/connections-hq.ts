@@ -39,11 +39,20 @@ export const DEFAULT_RPCS: RpcConfig[] = [
     networkId: ChainID.Devnet,
     network: 'Devnet',
     id: 0
+  },
+  {
+    cluster: "local-validator",
+    httpProvider: "http://localhost:8899",
+    networkId: ChainID.LocalValidator,
+    network: 'Local Validator',
+    id: 0
   }
 ];
 
 export const getDefaultRpc = (): RpcConfig => {
   switch (environment) {
+    case 'local_validator':
+      return DEFAULT_RPCS[3];
     case 'local':
     case 'development':
     case 'staging':
