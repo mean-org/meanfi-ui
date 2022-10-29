@@ -10,7 +10,7 @@ export const saveAppData = (lsKey: string, data: any, accountAddress: string) =>
         if (typeof currentValue.data !== 'string') {
             const collection = currentValue.data;
             for (const key in collection) {
-                if (collection.hasOwn(collection, key)) {
+                if (collection[key]) {
                     keyValueData[key] = collection[key];
                 }
             }

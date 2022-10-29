@@ -3333,7 +3333,11 @@ export const AccountsView = () => {
         setTransactions(history.transactionMap, true);
         setStatus(FetchStatus.Fetched);
 
-        if (history.transactionMap && history.transactionMap.length && pk.toBase58() === selectedAccount.address) {
+        if (
+          history.transactionMap &&
+          history.transactionMap.length > 0 &&
+          pk.toBase58() === selectedAccount.address
+        ) {
           const validItems = getSolAccountItems(history.transactionMap);
           const nativeAccountTxItems = solAccountItems + validItems;
           setSolAccountItems(nativeAccountTxItems);

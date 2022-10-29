@@ -137,7 +137,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
         appId: '',
         title: 'SuperSafe',
         subTitle: '?????',
-        defaultPath: '/super-safe',
+        defaultPath: '/super-safe?v=proposals',
         slug: RegisteredAppPaths.SuperSafe,
         enabled: true,
         visible: true,

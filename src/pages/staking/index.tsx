@@ -135,8 +135,14 @@ const StakingView = () => {
 
     let balance = 0;
 
+    const saveTvl = (tvl: number) => {
+      const cacheEntryKey = 'stakingTvl';
+      saveAppData(cacheEntryKey, tvl.toString(), selectedAccount.address);
+    }
+
     if (!stakingPair || !stakingPair.stakedToken) {
       setSmeanBalance(balance);
+      saveTvl(balance);
       return;
     }
 
@@ -148,20 +154,17 @@ const StakingView = () => {
     }
     consoleOut('sMEAN balance:', balance, 'blue');
     setSmeanBalance(balance);
+    saveTvl(balance);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     accounts,
     publicKey,
     stakingPair,
+    selectedAccount.address,
   ]);
 
   const refreshStakePoolInfo = useCallback((price: number) => {
-
-    const saveTvl = (tvl: number) => {
-      const cacheEntryKey = 'stakingTvl';
-      saveAppData(cacheEntryKey, tvl.toString(), selectedAccount.address);
-    }
 
     if (stakeClient && price) {
       setTimeout(() => {
@@ -172,7 +175,6 @@ const StakingView = () => {
       .then((value) => {
         consoleOut('stakePoolInfo:', value, 'crimson');
         setStakePoolInfo(value);
-        saveTvl(value.tvl);
       })
       .catch((error) => {
         console.error('getStakePoolInfo error:', error);
@@ -180,7 +182,7 @@ const StakingView = () => {
       .finally(() => setRefreshingStakePoolInfo(false));
     }
 
-  }, [selectedAccount.address, stakeClient]);
+  }, [stakeClient]);
 
   const onTabChange = useCallback((option: StakeOption) => {
     setFromCoinAmount('');
