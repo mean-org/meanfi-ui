@@ -2032,12 +2032,13 @@ export const MoneyStreamsInfoView = (props: {
   // Protocol
   const listOfBadges = ["MSP", "DEFI", "Payment Streams"];
 
-  const renderProtocol = (
-    <>
-      {selectedAccount.address && (
-        !isXsDevice ? (
+  const renderProtocol = () => {
+    const protocolAddress = appConfig.getConfig().streamV2ProgramAddress;
+    return (
+      <>
+        {!isXsDevice ? (
           <CopyExtLinkGroup
-            content={selectedAccount.address}
+            content={protocolAddress}
             number={8}
             externalLink={true}
             isTx={false}
@@ -2045,21 +2046,21 @@ export const MoneyStreamsInfoView = (props: {
           />
         ) : (
           <CopyExtLinkGroup
-            content={selectedAccount.address}
+            content={protocolAddress}
             number={4}
             externalLink={true}
             isTx={false}
             classNameContainer="mb-1"
           />
-        )
-      )}
-      <div className="badge-container">
-        {listOfBadges.map((badge, index) => (
-          <span key={`${badge}+${index}`} className="badge darken small text-uppercase mr-1">{badge}</span>
-        ))}
-      </div>
-    </>
-  );
+        )}
+        <div className="badge-container">
+          {listOfBadges.map((badge, index) => (
+            <span key={`${badge}+${index}`} className="badge darken small text-uppercase mr-1">{badge}</span>
+          ))}
+        </div>
+      </>
+    );
+  }
 
   // Balance
   const renderBalance = (
@@ -2093,7 +2094,7 @@ export const MoneyStreamsInfoView = (props: {
     {
       name: "Protocol",
       value: t('account-area.money-streams'),
-      content: renderProtocol
+      content: renderProtocol()
     },
     {
       name: "Balance (My TVL)",
