@@ -1,8 +1,9 @@
 import { readFromCache } from "cache/persistentCache";
 import { fallbackImgSrc } from "constants/common";
+import { AppStateContext } from "contexts/appstate";
 import { toUsCurrency } from "middleware/ui";
 import { KnownAppMetadata, KNOWN_APPS, RegisteredAppPaths } from "models/accounts";
-import { useCallback } from "react";
+import { useCallback, useContext } from "react";
 
 export const AppsList = (props: {
     isMultisigContext: boolean;
@@ -16,14 +17,18 @@ export const AppsList = (props: {
         selectedApp,
     } = props;
 
+    const {
+        selectedAccount,
+    } = useContext(AppStateContext);
+
     const getCachedTvlByApp = useCallback((slug: string) => {
         const cacheEntryKey = `${slug}Tvl`;
         const result = readFromCache(cacheEntryKey);
         if (result === null) {
             return '--';
         }
-        return toUsCurrency(+result.data);
-    },[]);
+        return toUsCurrency(+result.data[selectedAccount.address]);
+    },[selectedAccount.address]);
 
     const getSelectedClass = (app: KnownAppMetadata) => {
         if (!app.enabled ||

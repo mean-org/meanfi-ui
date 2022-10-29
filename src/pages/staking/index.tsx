@@ -1,7 +1,6 @@
 import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { ConfirmOptions, PublicKey } from "@solana/web3.js";
 import { Col, Row } from "antd";
-import { writeToCache } from "cache/persistentCache";
 import { InfoIcon } from "components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "constants/common";
 import { MEAN_TOKEN_LIST } from "constants/tokens";
@@ -13,6 +12,7 @@ import useWindowSize from 'hooks/useWindowResize';
 import { IconLoading } from "Icons";
 import { IconHelpCircle } from "Icons/IconHelpCircle";
 import { getTokenAccountBalanceByAddress } from "middleware/accounts";
+import { saveAppData } from "middleware/appPersistedData";
 import { consoleOut, isProd } from "middleware/ui";
 import { findATokenAddress, formatThousands, getAmountFromLamports } from "middleware/utils";
 import { TokenInfo } from "models/SolanaTokenInfo";
@@ -34,6 +34,7 @@ type StakingPair = {
 const StakingView = () => {
   const {
     coinPrices,
+    selectedAccount,
     setIsVerifiedRecipient,
     getTokenPriceBySymbol,
     setFromCoinAmount,
@@ -159,7 +160,7 @@ const StakingView = () => {
 
     const saveTvl = (tvl: number) => {
       const cacheEntryKey = 'stakingTvl';
-      writeToCache(cacheEntryKey, tvl.toString());
+      saveAppData(cacheEntryKey, tvl.toString(), selectedAccount.address);
     }
 
     if (stakeClient && price) {
@@ -179,7 +180,7 @@ const StakingView = () => {
       .finally(() => setRefreshingStakePoolInfo(false));
     }
 
-  }, [stakeClient]);
+  }, [selectedAccount.address, stakeClient]);
 
   const onTabChange = useCallback((option: StakeOption) => {
     setFromCoinAmount('');

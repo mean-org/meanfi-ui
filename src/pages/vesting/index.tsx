@@ -8,14 +8,13 @@ import {
   Treasury, TreasuryType,
   VestingTreasuryActivity
 } from '@mean-dao/msp';
-import { AccountLayout, u64 } from '@solana/spl-token';
+import { AccountLayout } from '@solana/spl-token';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Alert, Button, Dropdown, Menu, notification, Space, Spin, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import BigNumber from 'bignumber.js';
 import { BN } from 'bn.js';
-import { writeToCache } from 'cache/persistentCache';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { AppSocialLinks } from 'components/AppSocialLinks';
 import { openNotification } from 'components/Notifications';
@@ -40,6 +39,7 @@ import useWindowSize from 'hooks/useWindowResize';
 import { IconArrowBack, IconLoading, IconVerticalEllipsis } from "Icons";
 import { appConfig, customLogger } from 'index';
 import { getTokenAccountBalanceByAddress, getTokensWithBalances, readAccountInfo } from 'middleware/accounts';
+import { saveAppData } from 'middleware/appPersistedData';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from 'middleware/ids';
 import {
   AppUsageEvent,
@@ -3355,7 +3355,7 @@ const VestingView = (props: {
 
     const saveTvl = (tvl: number) => {
       const cacheEntryKey = 'vestingTvl';
-      writeToCache(cacheEntryKey, tvl.toString());
+      saveAppData(cacheEntryKey, tvl.toString(), selectedAccount.address);
     }
 
     if (!streamingAccountsSummary) {

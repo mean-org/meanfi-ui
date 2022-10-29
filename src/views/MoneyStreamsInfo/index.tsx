@@ -10,7 +10,7 @@ import { Button, Col, Dropdown, Menu, Row, Space, Spin, Tabs } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
-import { writeToCache } from "cache/persistentCache";
+import { readFromCache, writeToCache } from "cache/persistentCache";
 import { CopyExtLinkGroup } from "components/CopyExtLinkGroup";
 import { Identicon } from "components/Identicon";
 import { openNotification } from "components/Notifications";
@@ -37,6 +37,7 @@ import useWindowSize from "hooks/useWindowResize";
 import { IconArrowForward, IconEllipsisVertical, IconLoading } from "Icons";
 import { appConfig, customLogger } from "index";
 import { fetchAccountTokens, readAccountInfo } from "middleware/accounts";
+import { saveAppData } from "middleware/appPersistedData";
 import { NATIVE_SOL_MINT } from "middleware/ids";
 import { getStreamTitle } from "middleware/streams";
 import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "middleware/ui";
@@ -64,6 +65,7 @@ import { isMobile } from "react-device-detect";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import Wave from 'react-wavify';
+import { LooseObject } from "types/LooseObject";
 import "./style.scss";
 
 export const MoneyStreamsInfoView = (props: {
@@ -1922,12 +1924,12 @@ export const MoneyStreamsInfoView = (props: {
 
   // Update total account balance
   useEffect(() => {
-    const tAb = withdrawalBalance + unallocatedBalance;
-    setTotalAccountBalance(tAb);
+    const tvl = withdrawalBalance + unallocatedBalance;
+    setTotalAccountBalance(tvl);
     // Every time the TVL is updated, save it in persistent store
     const cacheEntryKey = 'streamingTvl';
-    writeToCache(cacheEntryKey, tAb.toString());
-  }, [unallocatedBalance, withdrawalBalance]);
+    saveAppData(cacheEntryKey, tvl.toString(), selectedAccount.address);
+  }, [selectedAccount.address, unallocatedBalance, withdrawalBalance]);
 
   // Calculate the rate per day for incoming streams
   useEffect(() => {
