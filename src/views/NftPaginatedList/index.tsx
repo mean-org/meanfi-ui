@@ -111,7 +111,7 @@ export const NftPaginatedList = (props: {
                                 <span className="ml-1">Prev Page</span>
                             </span>
                             <span
-                                className={`flat-button tiny${nftList && nftList.length / pageSize === currentPage ? ' disabled' : ''}`}
+                                className={`flat-button tiny${nftList && nftList.length / pageSize <= (currentPage || 1) ? ' disabled' : ''}`}
                                 onClick={() => changeCurrentPage('next')}>
                                 <span className="mr-1">Next Page</span>
                                 <IconArrowForward className="mean-svg-icons" />
