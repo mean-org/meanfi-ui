@@ -149,6 +149,7 @@ export const AccountsView = () => {
     streamV2ProgramAddress,
     previousWalletConnectState,
     setPendingMultisigTxCount,
+    setPaymentStreamingStats,
     showDepositOptionsModal,
     getTokenPriceByAddress,
     setIsVerifiedRecipient,
@@ -3468,24 +3469,9 @@ export const AccountsView = () => {
       } else {
         consoleOut('WTF 1 ?', '', 'crimson');
       }
-    } else {
-      consoleOut('WTF 2 ?', '', 'crimson');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAccount.address, accountTokens, pathParamAsset, selectedAssetsGroup]);
-
-  // Select the native account when there are conditions for it
-  /*
-  useEffect(() => {
-    if (!selectedAsset && selectedCategory === "assets" && selectedAssetsGroup === AssetGroups.Tokens) {
-      const nativeAsset = accountTokens.find(t => t.publicAddress === selectedAccount.address);
-      if (nativeAsset) {
-        selectAsset(nativeAsset);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountTokens, selectedAccount.address, selectedAsset, selectedAssetsGroup, selectedCategory]);
-  */
 
   // Build CTAs
   useEffect(() => {
@@ -3789,6 +3775,22 @@ export const AccountsView = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, treasuryList]);
+
+  // Having the treasuriesSummary and stream stats, lets publish combined stats
+  useEffect(() => {
+    let totalStreamingAccounts = 0;
+    if (streamingAccountsSummary) {
+      totalStreamingAccounts = streamingAccountsSummary.totalAmount;
+    }
+    const paymentStreamingResume = {
+      totalStreamingAccounts,
+      incomingAmount,
+      outgoingAmount
+    };
+    setPaymentStreamingStats(paymentStreamingResume);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incomingAmount, outgoingAmount, streamingAccountsSummary]);
 
   // Update total account balance
   useEffect(() => {
