@@ -22,7 +22,7 @@ import { DdcaFrequencyOption } from "models/ddca-models";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "models/enums";
 import { MultisigVault } from "models/multisig";
 import { TokenInfo } from "models/SolanaTokenInfo";
-import { initialSummary, StreamsSummary } from "models/streams";
+import { initialStats, initialSummary, PaymentStreamingStats, StreamsSummary } from "models/streams";
 import { TokenPrice } from "models/TokenPrice";
 import { TreasuryTypeOption } from "models/treasuries";
 import moment from "moment";
@@ -121,6 +121,7 @@ interface AppStateConfig {
   lastTxSignature: string;
   streamsSummary: StreamsSummary;
   lastStreamsSummary: StreamsSummary;
+  paymentStreamingStats: PaymentStreamingStats;
   accountNfts: FindNftsByOwnerOutput | undefined;
   // DDCAs
   ddcaOption: DdcaFrequencyOption | undefined;
@@ -205,6 +206,7 @@ interface AppStateConfig {
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
+  setPaymentStreamingStats: (summary: PaymentStreamingStats) => void;
   // DDCAs
   setDdcaOption: (name: string) => void;
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
@@ -298,6 +300,7 @@ const contextDefaultValues: AppStateConfig = {
   lastTxSignature: '',
   streamsSummary: initialSummary,
   lastStreamsSummary: initialSummary,
+  paymentStreamingStats: initialStats,
   accountNfts: undefined,
   // DDCAs
   ddcaOption: undefined,
@@ -382,6 +385,7 @@ const contextDefaultValues: AppStateConfig = {
   setSelectedAsset: () => {},
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
+  setPaymentStreamingStats: () => {},
   // DDCAs
   setDdcaOption: () => {},
   setRecurringBuys: () => {},
@@ -485,6 +489,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
+  const [paymentStreamingStats, setPaymentStreamingStats] = useState<PaymentStreamingStats>(contextDefaultValues.paymentStreamingStats);
   const [accountNfts, setAccountNfts] = useState<FindNftsByOwnerOutput | undefined>(contextDefaultValues.accountNfts);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
   const [meanTokenList, setMeanTokenlist] = useState<UserTokenAccount[] | undefined>(undefined);
@@ -1721,6 +1726,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         lastTxSignature,
         streamsSummary,
         lastStreamsSummary,
+        paymentStreamingStats,
         accountNfts,
         recurringBuys,
         loadingRecurringBuys,
@@ -1798,6 +1804,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedAsset,
         setStreamsSummary,
         setLastStreamsSummary,
+        setPaymentStreamingStats,
         setRecurringBuys,
         setLoadingRecurringBuys,
         setNeedReloadMultisigAccounts,
