@@ -353,14 +353,6 @@ const StakingView = () => {
     isSmallUpScreen,
   ]);
 
-  // Do unmounting stuff here
-  useEffect(() => {
-    return () => {
-      setSearchParams(undefined);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
 
   return (
     <>
