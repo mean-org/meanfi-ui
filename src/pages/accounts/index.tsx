@@ -57,7 +57,6 @@ import { UnwrapSolModal } from 'components/UnwrapSolModal';
 import { WrapSolModal } from 'components/WrapSolModal';
 import {
   ACCOUNTS_LOW_BALANCE_LIMIT,
-  fallbackImgSrc,
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   MIN_SOL_BALANCE_REQUIRED,
@@ -3454,20 +3453,29 @@ export const AccountsView = () => {
       consoleOut('Presetting token based on url...', pathParamAsset, 'crimson');
       const inferredAsset = accountTokens.find(t => t.publicAddress === pathParamAsset);
       if (inferredAsset) {
+        consoleOut('selected:', inferredAsset.symbol, 'crimson');
         selectAsset(inferredAsset);
       } else {
         selectAsset(accountTokens[0]);
+        consoleOut('selected:', accountTokens[0].symbol, 'crimson');
       }
     } else if (!pathParamAsset && accountTokens && accountTokens.length > 0) {
+      consoleOut('No token in url, try selecting native account...', '', 'crimson');
       const inferredAsset = accountTokens.find(t => t.publicAddress === selectedAccount.address);
       if (inferredAsset) {
+        consoleOut('selected:', inferredAsset.symbol, 'crimson');
         selectAsset(inferredAsset);
+      } else {
+        consoleOut('WTF 1 ?', '', 'crimson');
       }
+    } else {
+      consoleOut('WTF 2 ?', '', 'crimson');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAccount.address, accountTokens, pathParamAsset]);
+  }, [selectedAccount.address, accountTokens, pathParamAsset, selectedAssetsGroup]);
 
   // Select the native account when there are conditions for it
+  /*
   useEffect(() => {
     if (!selectedAsset && selectedCategory === "assets" && selectedAssetsGroup === AssetGroups.Tokens) {
       const nativeAsset = accountTokens.find(t => t.publicAddress === selectedAccount.address);
@@ -3477,6 +3485,7 @@ export const AccountsView = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountTokens, selectedAccount.address, selectedAsset, selectedAssetsGroup, selectedCategory]);
+  */
 
   // Build CTAs
   useEffect(() => {
@@ -4105,20 +4114,20 @@ export const AccountsView = () => {
     } else {
       url += `/assets`;
     }
+    consoleOut('onGotoAssets ->', url, 'crimson');
     navigate(url);
   }
 
   const onChangeAssetsGroup = (group: AssetGroups | undefined) => {
-    // if (group === AssetGroups.Tokens) {
-    //   if (location.pathname !== '/assets') {
-    //     onGotoAssets();
-    //     reloadSwitch();
-    //   } else {
-    //     setSelectedCategory("assets");
-    //   }
-    // } else if (group === AssetGroups.Nfts) {
-    //   navigate('/assets');
-    // }
+    if (group === AssetGroups.Tokens) {
+      if (selectedAsset) {
+        onGotoAssets();
+      } else {
+        consoleOut('navigating to:', '/assets', 'crimson');
+        navigate('/assets');
+      }
+      reloadSwitch();
+    }
     setSelectedAssetsGroup(group);
   }
 
@@ -5030,13 +5039,13 @@ export const AccountsView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
           <span>selectedCategory:</span><span className="mx-1 font-bold">{selectedCategory || 'undefined'}</span>
           <span>selectedAssetsGroup:</span><span className="mx-1 font-bold">{selectedAssetsGroup || 'undefined'}</span>
           <span>selectedApp:</span><span className="mx-1 font-bold">{selectedApp ? selectedApp.slug : 'undefined'}</span>
         </div>
-      )} */}
+      )}
 
       {detailsPanelOpen && (
         <Button
