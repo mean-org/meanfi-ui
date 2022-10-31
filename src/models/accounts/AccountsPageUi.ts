@@ -91,7 +91,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
     {
         appId: '',
         title: 'MEAN Staking',
-        subTitle: '?????',
+        subTitle: 'Stake MEAN to Earn MEAN Rewards',
         defaultPath: '/staking?option=stake',
         slug: RegisteredAppPaths.Staking,
         enabled: true,
@@ -127,7 +127,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
     {
         appId: '',
         title: 'Payment Streaming',
-        subTitle: '?????',
+        subTitle: 'Real Time Payments',
         defaultPath: '/streaming/summary',
         slug: RegisteredAppPaths.PaymentStreaming,
         enabled: true,
@@ -136,7 +136,7 @@ export const KNOWN_APPS: KnownAppMetadata[] = [
     {
         appId: '',
         title: 'SuperSafe',
-        subTitle: '?????',
+        subTitle: 'Multisig Wallet',
         defaultPath: '/super-safe?v=proposals',
         slug: RegisteredAppPaths.SuperSafe,
         enabled: true,
