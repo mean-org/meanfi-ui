@@ -4,6 +4,7 @@ import { AppStateContext } from "contexts/appstate";
 import { toUsCurrency } from "middleware/ui";
 import { KnownAppMetadata, KNOWN_APPS, RegisteredAppPaths } from "models/accounts";
 import { useCallback, useContext } from "react";
+import { useTranslation } from "react-i18next";
 
 export const AppsList = (props: {
     isMultisigContext: boolean;
@@ -19,7 +20,10 @@ export const AppsList = (props: {
 
     const {
         selectedAccount,
+        paymentStreamingStats,
     } = useContext(AppStateContext);
+
+    const { t } = useTranslation('common');
 
     const getCachedTvlByApp = useCallback((slug: string) => {
         const cacheEntryKey = `${slug}Tvl`;
@@ -40,6 +44,36 @@ export const AppsList = (props: {
             return 'selected';
         }
         return '';
+    }
+
+    const getAppSubtitle = (app: KnownAppMetadata) => {
+        if (app.slug !== RegisteredAppPaths.PaymentStreaming) {
+            return app.subTitle;
+        }
+
+        if (
+            paymentStreamingStats.totalStreamingAccounts === 0 &&
+            paymentStreamingStats.incomingAmount === 0 &&
+            paymentStreamingStats.outgoingAmount === 0
+        ) {
+            return app.subTitle;
+        }
+
+        let subtitle = '';
+        if (paymentStreamingStats.totalStreamingAccounts > 0) {
+            subtitle += paymentStreamingStats.totalStreamingAccounts === 1
+                ? '1 account'
+                : `${paymentStreamingStats.totalStreamingAccounts} accounts`;
+        }
+
+        const streams = `${paymentStreamingStats.incomingAmount} incoming streams, ${paymentStreamingStats.outgoingAmount} outgoing streams`;
+        if (paymentStreamingStats.totalStreamingAccounts > 0) {
+            subtitle += '. ' + streams;
+        } else {
+            subtitle += streams;
+        }
+
+        return subtitle;
     }
 
     return (
@@ -66,7 +100,7 @@ export const AppsList = (props: {
                                 <div className="title">
                                     {app.title}
                                 </div>
-                                <div className="subtitle text-truncate">{app.subTitle}</div>
+                                <div className="subtitle text-truncate">{getAppSubtitle(app)}</div>
                             </div>
                             <div className="rate-cell">
                                 <div className="rate-amount">
