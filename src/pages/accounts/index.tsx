@@ -3461,17 +3461,19 @@ export const AccountsView = () => {
         consoleOut('selected:', accountTokens[0].symbol, 'crimson');
       }
     } else if (!pathParamAsset && accountTokens && accountTokens.length > 0) {
-      consoleOut('No token in url, try selecting native account...', '', 'crimson');
-      const inferredAsset = accountTokens.find(t => t.publicAddress === selectedAccount.address);
-      if (inferredAsset) {
-        consoleOut('selected:', inferredAsset.symbol, 'crimson');
-        selectAsset(inferredAsset);
-      } else {
-        consoleOut('WTF 1 ?', '', 'crimson');
+      if (!selectedAsset && location.pathname.startsWith('/assets')) {
+        consoleOut('No token in url, try selecting native account...', '', 'crimson');
+        const inferredAsset = accountTokens.find(t => t.publicAddress === selectedAccount.address);
+        if (inferredAsset) {
+          consoleOut('selected:', inferredAsset.symbol, 'crimson');
+          selectAsset(inferredAsset);
+        } else {
+          consoleOut('WTF 1 ?', '', 'crimson');
+        }
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAccount.address, accountTokens, pathParamAsset, selectedAssetsGroup]);
+  }, [selectedAccount.address, accountTokens, pathParamAsset, location.pathname]);
 
   // Build CTAs
   useEffect(() => {
@@ -4121,15 +4123,15 @@ export const AccountsView = () => {
   }
 
   const onChangeAssetsGroup = (group: AssetGroups | undefined) => {
-    if (group === AssetGroups.Tokens) {
-      if (selectedAsset) {
-        onGotoAssets();
-      } else {
-        consoleOut('navigating to:', '/assets', 'crimson');
-        navigate('/assets');
-      }
-      reloadSwitch();
-    }
+    // if (group === AssetGroups.Tokens) {
+    //   if (selectedAsset) {
+    //     onGotoAssets();
+    //   } else {
+    //     consoleOut('navigating to:', '/assets', 'crimson');
+    //     navigate('/assets');
+    //   }
+    //   reloadSwitch();
+    // }
     setSelectedAssetsGroup(group);
   }
 
