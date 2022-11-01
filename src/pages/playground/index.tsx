@@ -29,7 +29,7 @@ import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from "c
 import { useWallet } from "contexts/wallet";
 import { environment } from "environments/environment";
 import useWindowSize from "hooks/useWindowResize";
-import { IconCodeBlock, IconCoin, IconCopy, IconExternalLink, IconLoading, IconTrash, IconWallet } from "Icons";
+import { IconCodeBlock, IconCoin, IconCopy, IconExternalLink, IconEyeOn, IconLoading, IconTrash, IconWallet } from "Icons";
 import { appConfig } from "index";
 import { getTokensWithBalances, readAccountInfo as getAccountInfo } from "middleware/accounts";
 import { NATIVE_SOL_MINT, SYSTEM_PROGRAM_ID } from "middleware/ids";
@@ -49,7 +49,7 @@ import {
   shortenAddress,
   toUiAmount
 } from "middleware/utils";
-import { MultisigAsset } from "models/multisig";
+import { MultisigAsset, NATIVE_LOADER } from "models/multisig";
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -298,6 +298,13 @@ export const PlaygroundView = () => {
     if (publicKey) {
       setTargetAddress(publicKey.toBase58());
       readAccountInfo(publicKey.toBase58());
+    }
+  }
+
+  const onScanAddress = (address: string) => {
+    if (address) {
+      setTargetAddress(address);
+      readAccountInfo(address);
     }
   }
 
@@ -855,6 +862,62 @@ export const PlaygroundView = () => {
   }, [getTokenOrCustomToken, publicKey, streamParsedData, selectedToken]);
 
 
+  ////////////////////////
+  // Getters and values //
+  ////////////////////////
+
+  const isSystemAccount = useCallback((account: string) => {
+    const native = NATIVE_LOADER.toBase58();
+    const system = SYSTEM_PROGRAM_ID.toBase58();
+    return account === native || account === system;
+  }, []);
+
+  const isProgram = useMemo(() => {
+    return parsedAccountInfo &&
+           parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
+           parsedAccountInfo.data.parsed.type === 'program'
+      ? true
+      : false;
+  }, [parsedAccountInfo]);
+
+  const isProgramData = useMemo(() => {
+    return parsedAccountInfo &&
+           parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
+           parsedAccountInfo.data.parsed.type === 'programData'
+      ? true
+      : false;
+  }, [parsedAccountInfo]);
+
+  const isTokenAccount = useMemo(() => {
+    return parsedAccountInfo &&
+           parsedAccountInfo.data.program === 'spl-token' &&
+           parsedAccountInfo.data.parsed.type === 'account'
+      ? true
+      : false;
+  }, [parsedAccountInfo]);
+
+  const isTokenMint = useMemo(() => {
+    return parsedAccountInfo &&
+           parsedAccountInfo.data.program === 'spl-token' &&
+           parsedAccountInfo.data.parsed.type === 'mint'
+      ? true
+      : false;
+  }, [parsedAccountInfo]);
+
+  const selectedTokenDecimals = useMemo(() => {
+    if (parsedAccountInfo) {
+      if (isTokenMint) {
+        return parsedAccountInfo.data.parsed.info.decimals || 0;
+      } else if (isTokenAccount) {
+        return parsedAccountInfo.data.parsed.info.tokenAmount.decimals || 0;
+      } else {
+        return 0;
+      }
+    }
+    return 0;
+  }, [parsedAccountInfo, isTokenMint, isTokenAccount]);
+
+
   ///////////////
   // Rendering //
   ///////////////
@@ -978,9 +1041,16 @@ export const PlaygroundView = () => {
         <div className="left">
           <span className="font-size-75">{caption}</span>
         </div>
-        <div className="right">
+        <div className="right flex-row align-items-center">
           {isValidAddress(value) ? (
-            <code><AddressDisplay address={value} showFullAddress={true} /></code>
+            <>
+              {!isSystemAccount(value) ? (
+                <span className="flat-button tiny mr-1" onClick={() => onScanAddress(value)}>
+                  <IconEyeOn className="mean-svg-icons m-0" />
+                </span>
+              ) : null}
+              <code><AddressDisplay address={value} showFullAddress={true} /></code>
+            </>
           ) : (
             <code>{value}</code>
           )}
@@ -1097,43 +1167,6 @@ export const PlaygroundView = () => {
     );
   }
 
-  const isProgram = useMemo(() => {
-    return parsedAccountInfo &&
-           parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
-           parsedAccountInfo.data.parsed.type === 'program'
-      ? true
-      : false;
-  }, [parsedAccountInfo]);
-
-  const isTokenAccount = useMemo(() => {
-    return parsedAccountInfo &&
-           parsedAccountInfo.data.program === 'spl-token' &&
-           parsedAccountInfo.data.parsed.type === 'account'
-      ? true
-      : false;
-  }, [parsedAccountInfo]);
-
-  const isTokenMint = useMemo(() => {
-    return parsedAccountInfo &&
-           parsedAccountInfo.data.program === 'spl-token' &&
-           parsedAccountInfo.data.parsed.type === 'mint'
-      ? true
-      : false;
-  }, [parsedAccountInfo]);
-
-  const selectedTokenDecimals = useMemo(() => {
-    if (parsedAccountInfo) {
-      if (isTokenMint) {
-        return parsedAccountInfo.data.parsed.info.decimals || 0;
-      } else if (isTokenAccount) {
-        return parsedAccountInfo.data.parsed.info.tokenAmount.decimals || 0;
-      } else {
-        return 0;
-      }
-    }
-    return 0;
-  }, [parsedAccountInfo, isTokenMint, isTokenAccount]);
-
   const renderCurrentSupply = () => {
     if (parsedAccountInfo && isTokenMint) {
       return infoRow(
@@ -1188,6 +1221,12 @@ export const PlaygroundView = () => {
         {infoRow('Entity:', getParsedAccountType(parsedAccountInfo))}
         {isProgram && infoRow('Balance (SOL):', `◎${formatThousands(parsedAccountInfo.lamports / LAMPORTS_PER_SOL, 9, 9)}`)}
         {infoRow('Executable:', parsedAccountInfo.executable ? 'Yes' : 'No')}
+        {isProgramData && infoRow('Upgradeable:', parsedAccountInfo.data.parsed.info.authority ? 'Yes' : 'No')}
+        {
+          isProgramData && parsedAccountInfo.data.parsed.info.authority
+            ? infoRow('Upgrade Authority:', parsedAccountInfo.data.parsed.info.authority)
+            : null
+        }
         {renderCurrentSupply()}
         {renderCurrentBalance()}
         {isTokenMint && infoRow('Mint Authority:', parsedAccountInfo.data.parsed.info.mintAuthority)}

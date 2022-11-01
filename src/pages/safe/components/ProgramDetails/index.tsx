@@ -2,9 +2,11 @@ import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig } from "@mean-dao/mean-mu
 import { TransactionFees } from "@mean-dao/msp";
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import {
+  AccountInfo,
   ConfirmOptions,
   Connection,
   LAMPORTS_PER_SOL,
+  ParsedAccountData,
   ParsedTransactionWithMeta,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
@@ -25,6 +27,7 @@ import { TxConfirmationContext } from "contexts/transaction-status";
 import { useWallet } from "contexts/wallet";
 import { IconArrowBack } from "Icons";
 import { appConfig, customLogger } from 'index';
+import { readAccountInfo } from "middleware/accounts";
 import { NATIVE_SOL_MINT } from "middleware/ids";
 import { consoleOut, getTransactionStatusForLogs } from "middleware/ui";
 import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from "middleware/utils";
@@ -60,7 +63,6 @@ export const ProgramDetailsView = (props: {
     onDataToProgramView, 
     programSelected, 
     selectedMultisig
-
   } = props;
 
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
@@ -71,6 +73,8 @@ export const ProgramDetailsView = (props: {
   const [selectedProgramIdl, setSelectedProgramIdl] = useState<any>(null);
   const [loadingTxs, setLoadingTxs] = useState(true);
   const [programTransactions, setProgramTransactions] = useState<any>();
+  const [parsedAccountInfo, setParsedAccountInfo] = useState<AccountInfo<ParsedAccountData> | null>(null);
+
   const noIdlInfo = "The program IDL is not initialized. To load the IDL info please run `anchor idl init` with the required parameters from your program workspace.";
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -661,10 +665,8 @@ export const ProgramDetailsView = (props: {
   // Keep account balance updated
   useEffect(() => {
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
       refreshTokenBalance();
       setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
       setPreviousBalance(account?.lamports);
     }
   }, [
@@ -674,33 +676,71 @@ export const ProgramDetailsView = (props: {
     refreshTokenBalance
   ]);
 
+  const renderProgramLabel = useCallback(() => {
+    if (!selectedProgramIdl) {
+      return '--';
+    }
+    return selectedProgramIdl.name;
+  }, [selectedProgramIdl]);
+
   // Program Address
-  const renderProgramAddress = programSelected && (
-    <CopyExtLinkGroup
-      content={programSelected && programSelected.pubkey.toBase58()}
-      number={4}
-      externalLink={true}
-    />
-  );
+  const renderProgramAddress = () => {
+    if (!programSelected) {
+      return '--';
+    }
+    return (
+      <CopyExtLinkGroup
+        content={programSelected.pubkey.toBase58()}
+        number={4}
+        externalLink={true}
+      />
+    );
+  }
 
   // Upgradeable
   const [isUpgradeable, setIsUpgradeable] = useState<boolean>();
+  const [upgradeAuthority, setUpgradeAuthority] = useState<string | null>(null);
+
   useEffect(() => {
-    programSelected && programSelected.upgradeAuthority.toBase58() ? (
-      setIsUpgradeable(true)
-    ) : (
-      setIsUpgradeable(false)
-    )
-  }, [programSelected]);
+    if (!programSelected) { return; }
+
+    const doTheThing = async () => {
+      const programData = programSelected.executable.toBase58();
+      try {
+        const accountInfo = await readAccountInfo(connection, programData);
+        if ((accountInfo as any).data["parsed"]) {
+          const authority = (accountInfo as AccountInfo<ParsedAccountData>).data.parsed.info.authority as string | null;
+          setIsUpgradeable(authority !== null ? true : false);
+          setUpgradeAuthority(authority);
+        } else {
+          setIsUpgradeable(false);
+          setUpgradeAuthority(null);
+        }
+      } catch (error) {
+        console.error('Could not get programData info for:', programData);
+        setIsUpgradeable(false);
+        setUpgradeAuthority(null);
+      }
+    }
+
+    doTheThing();
+
+  }, [connection, programSelected]);
 
   // Upgrade Authority
-  const renderUpgradeAuthority = (
-    <CopyExtLinkGroup
-      content={programSelected && programSelected.upgradeAuthority.toBase58()}
-      number={4}
-      externalLink={true}
-    />
-  );
+  const renderUpgradeAuthority = () => {
+    if (!upgradeAuthority) {
+      return '--';
+    }
+
+    return (
+      <CopyExtLinkGroup
+        content={upgradeAuthority}
+        number={4}
+        externalLink={true}
+      />
+    );
+  }
 
   // // Executable
   // const [isExecutable, setIsExecutable] = useState<boolean>();
@@ -740,19 +780,19 @@ export const ProgramDetailsView = (props: {
   const infoProgramData = [
     {
       name: "Address label",
-      value: "--"
+      value: renderProgramLabel()
     },
     {
       name: "Program address",
-      value: renderProgramAddress ? renderProgramAddress : "--"
+      value: renderProgramAddress()
     },
     {
       name: "Upgradeable",
-      value: isUpgradeable ? "Yes" : "no"
+      value: isUpgradeable ? "Yes" : "No"
     },
     {
       name: "Upgrade authority",
-      value: renderUpgradeAuthority ? renderUpgradeAuthority : "--"
+      value: renderUpgradeAuthority()
     },
     // {
     //   name: "Executable",
@@ -963,36 +1003,40 @@ export const ProgramDetailsView = (props: {
 
         <Row gutter={[8, 8]} className="programs-btns safe-btns-container mt-2 mb-1 mr-0 ml-0">
           <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              disabled={isTxInProgress()}
-              onClick={showUpgradeProgramModal}>
-                <div className="btn-content">
-                  Upgrade / Deployment
-                </div>
-            </Button>
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              disabled={isTxInProgress()}
-              onClick={showSetProgramAuthModal}>
-                <div className="btn-content">
-                  Set authority
-                </div>
-            </Button>
+            <Tooltip title={isUpgradeable ? 'Update the executable data of this program' : 'This program is non-upgradeable'}>
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                disabled={isTxInProgress() || !isUpgradeable}
+                onClick={showUpgradeProgramModal}>
+                  <div className="btn-content">
+                    Upgrade / Deployment
+                  </div>
+              </Button>
+            </Tooltip>
+            <Tooltip title={isUpgradeable ? 'This changes the authority of this program' : 'This program is non-upgradeable'}>
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                disabled={isTxInProgress() || !isUpgradeable}
+                onClick={showSetProgramAuthModal}>
+                  <div className="btn-content">
+                    Set authority
+                  </div>
+              </Button>
+            </Tooltip>
             {programSelected && (
-              <Tooltip title="This makes the program non-upgradable">
+              <Tooltip title={isUpgradeable ? 'This makes the program non-upgradable' : 'This program is non-upgradeable'}>
                 <Button
                   type="default"
                   shape="round"
                   size="small"
                   className="thin-stroke"
-                  disabled={isTxInProgress()}
+                  disabled={isTxInProgress() || !isUpgradeable}
                   onClick={() => setInmutableProgram(programSelected.pubkey.toBase58())}>
                     <div className="btn-content">
                       Make immutable
