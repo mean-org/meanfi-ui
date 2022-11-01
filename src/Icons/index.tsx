@@ -54,6 +54,7 @@ export { IconMinus } from "./IconMinus";
 export { IconMoneyStreaming } from "./IconMoneyStreaming";
 export { IconMoneyTransfer } from "./IconMoneyTransfer";
 export { IconMoon } from "./IconMoon";
+export { IconNoItems } from "./IconNoItems";
 export { IconNotification } from "./IconNotification";
 export { IconOutgoingPaused } from "./IconOutgoingPaused";
 export { IconPause } from "./IconPause";

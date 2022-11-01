@@ -1,6 +1,7 @@
 import { readFromCache } from "cache/persistentCache";
 import { fallbackImgSrc } from "constants/common";
 import { AppStateContext } from "contexts/appstate";
+import { IconNoItems } from "Icons";
 import { toUsCurrency } from "middleware/ui";
 import { KnownAppMetadata, KNOWN_APPS, RegisteredAppPaths } from "models/accounts";
 import { useCallback, useContext } from "react";
@@ -92,7 +93,7 @@ export const AppsList = (props: {
                                     {app.logoURI ? (
                                         <img src={app.logoURI} alt={`${app.title}`} width={30} height={30} />
                                     ) : (
-                                        <img src={fallbackImgSrc} alt={`${app.title}`} width={30} height={30} />
+                                        <IconNoItems className="mean-svg-icons fg-secondary-50" style={{ width: 20, height: 20 }} />
                                     )}
                                 </div>
                             </div>

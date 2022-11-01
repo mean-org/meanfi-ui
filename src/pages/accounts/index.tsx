@@ -77,7 +77,7 @@ import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'c
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'Icons';
+import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconNoItems, IconSafe, IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
@@ -87,6 +87,7 @@ import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter,
 import {
   formatThousands,
   getAmountFromLamports, getAmountWithSymbol, getSdkValue, getTxIxResume,
+  openLinkInNewTab,
   shortenAddress,
   toUiAmount
 } from 'middleware/utils';
@@ -4515,6 +4516,37 @@ export const AccountsView = () => {
     }
   }
 
+  const renderLoadingOrNoNftsMessage = () => {
+    if (loadingTokenAccounts) {
+      return (
+        <div className="flex flex-center">
+          <Spin indicator={antIcon} />
+        </div>
+      );
+    } else if (tokensLoaded) {
+      return (
+        <div className="flex-column flex-center justify-content-center h-100">
+          <IconNoItems className="mean-svg-icons fg-secondary-50" style={{ width: 50, height: 50 }} />
+          <div className="font-size-120 font-bold fg-secondary-75 mt-2 mb-2">No NFTs</div>
+          <div className="font-size-110 fg-secondary-50 mb-3">Get started with your first NFT</div>
+          <div className="text-center">
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={() => openLinkInNewTab('https://magiceden.io/')}>
+              <span className="mr-1">Browse Magic Eden</span>
+              <IconExternalLink className="mean-svg-icons fg-secondary-70" style={{ width: 22, height: 22 }} />
+            </Button>
+          </div>
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
   const renderAssetsList = () => {
     return (
       <div
@@ -4553,7 +4585,7 @@ export const AccountsView = () => {
     if (!accountNfts || accountNfts.length === 0) {
       return (
         <div key="asset-category-nft-items" className="asset-category flex-column h-75">
-          {renderLoadingOrNoTokensMessage()}
+          {renderLoadingOrNoNftsMessage()}
         </div>
       );
     }
