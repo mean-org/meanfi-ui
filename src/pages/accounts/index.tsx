@@ -2343,13 +2343,13 @@ export const AccountsView = () => {
         .finally(() => setLoadingTreasuries(false));
     }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     ms,
     msp,
     publicKey,
     selectedAccount.address,
     isMultisigContext,
-    getAllUserV2Treasuries,
   ]);
 
   const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
@@ -3072,16 +3072,14 @@ export const AccountsView = () => {
 
   // Load treasuries when account address changes
   useEffect(() => {
-    if (publicKey && selectedAccount.address) {
 
-      if (!previousRoute.startsWith('/accounts')) {
-        clearStateData();
-      }
+    if (publicKey && selectedAccount.address) {
       consoleOut('Loading treasuries...', 'selectedAccount changed!', 'purple');
       refreshTreasuries(true);
     }
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAccount.address, previousRoute, publicKey]);
+  }, [selectedAccount.address, publicKey]);
 
   // Treasury list refresh timeout
   useEffect(() => {
