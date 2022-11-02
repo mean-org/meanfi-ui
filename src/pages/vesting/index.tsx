@@ -10,7 +10,7 @@ import {
 } from '@mean-dao/msp';
 import { AccountLayout } from '@solana/spl-token';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { Alert, Button, Dropdown, Menu, notification, Space, Spin, Tabs, Tooltip } from 'antd';
+import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import BigNumber from 'bignumber.js';
@@ -52,7 +52,6 @@ import {
 } from 'middleware/segment-service';
 import {
   consoleOut,
-  copyText,
   delay,
   getDurationUnitFromSeconds,
   getReadableDate,
@@ -70,7 +69,19 @@ import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'mo
 import { ZERO_FEES } from 'models/multisig';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { TreasuryWithdrawParams, UserTreasuriesSummary } from 'models/treasuries';
-import { AddFundsParams, CreateVestingStreamParams, CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from 'models/vesting';
+import {
+  AddFundsParams,
+  CreateVestingStreamParams,
+  CreateVestingTreasuryParams,
+  getCategoryLabelByValue,
+  VestingContractCreateOptions,
+  VestingContractEditOptions,
+  VestingContractStreamCreateOptions,
+  VestingContractTopupParams,
+  VestingContractWithdrawOptions,
+  VestingFlowRateInfo,
+  vestingFlowRatesCache
+} from 'models/vesting';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from "react-i18next";
@@ -78,7 +89,6 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { VestingContractActivity } from './components/VestingContractActivity';
 import { VestingContractAddFundsModal } from './components/VestingContractAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
-import { VestingContractCreateForm } from './components/VestingContractCreateForm';
 import { VestingContractCreateModal } from './components/VestingContractCreateModal';
 import { VestingContractCreateStreamModal } from './components/VestingContractCreateStreamModal';
 import { VestingContractDetails } from './components/VestingContractDetails';
@@ -695,24 +705,6 @@ const VestingView = (props: {
     publicKey,
     loadingTreasuryStreams,
   ]);
-
-  const copyAddressToClipboard = useCallback((address: any) => {
-
-    if (!address) { return; }
-
-    if (copyText(address.toString())) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: "error"
-      });
-    }
-
-  },[t])
 
   const isMultisigTreasury = useCallback((treasury?: Treasury) => {
 
@@ -3786,293 +3778,193 @@ const VestingView = (props: {
     );
   }, [refreshVestingContracts, reloadVestingContracts, t]);
 
-  const renderCreateFirstVestingAccount = useCallback(() => {
-    return (
-      <>
-        {/* Refresh cta */}
-        {renderRefreshCta()}
-
-        <div className="scroll-wrapper vertical-scroll">
-          <VestingContractCreateForm
-            accountAddress={selectedAccount.address}
-            inModal={false}
-            isBusy={isBusy}
-            isMultisigContext={isMultisigContext}
-            loadingMultisigAccounts={loadingMultisigAccounts || loadingTreasuries}
-            token={workingToken}
-            selectedList={selectedList}
-            selectedMultisig={selectedMultisig}
-            userBalances={userBalances}
-            nativeBalance={nativeBalance}
-            onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
-            transactionFees={createVestingContractTxFees}
-            tokenChanged={(token: TokenInfo | undefined) => {
-              setWorkingToken(token);
-              setSelectedToken(token);
-            }}
-          />
-        </div>
-
-        {/* <div className="container main-container">
-          <div className="interaction-area">
-            <div className="title-and-subtitle mb-2">
-              <div className="title">
-                <IconMoneyTransfer className="mean-svg-icons" />
-                <div>{t('vesting.screen-title')}</div>
-              </div>
-              <div className="subtitle mt-1">
-                {t('vesting.screen-subtitle')}
-              </div>
-              <h3 className="text-center mb-0">
-                {t('vesting.user-instruction-headline')}
-              </h3>
-            </div>
-            <div className="place-transaction-box flat mb-0">
-              <>
-                <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
-                <VestingContractCreateForm
-                  accountAddress={selectedAccount.address}
-                  inModal={false}
-                  isBusy={isBusy}
-                  isMultisigContext={isMultisigContext}
-                  loadingMultisigAccounts={loadingMultisigAccounts || loadingTreasuries}
-                  token={workingToken}
-                  selectedList={selectedList}
-                  selectedMultisig={selectedMultisig}
-                  userBalances={userBalances}
-                  nativeBalance={nativeBalance}
-                  onStartTransaction={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
-                  transactionFees={createVestingContractTxFees}
-                  tokenChanged={(token: TokenInfo | undefined) => {
-                    setWorkingToken(token);
-                    setSelectedToken(token);
-                  }}
-                />
-              </>
-            </div>
-          </div>
-        </div> */}
-
-      </>
-    );
-  }, [
-    isBusy,
-    selectedList,
-    userBalances,
-    nativeBalance,
-    workingToken,
-    selectedMultisig,
-    isMultisigContext,
-    loadingTreasuries,
-    selectedAccount.address,
-    loadingMultisigAccounts,
-    createVestingContractTxFees,
-    onAcceptCreateVestingContract,
-    setSelectedToken,
-    renderRefreshCta,
-  ]);
-
   //#endregion
 
-  // Main rendering logic - List / Details
-  if (treasuriesLoaded && treasuryList && treasuryList.length > 0 && !loadingTreasuries ) {
-    // Render normal UI
-    return (
-      <>
-        {/* Refresh cta */}
-        {renderRefreshCta()}
+  // Render normal UI
+  return (
+    <>
+      {/* Refresh cta */}
+      {renderRefreshCta()}
 
-        {/* Vesting contract details */}
-        {detailsPanelOpen ? (
-          <>
-            <div className="flexible-column-bottom">
-              <div className="top">
-                <div className="mb-2">
-                  <div onClick={navigateToContracts} className="back-button icon-button-container">
-                    <IconArrowBack className="mean-svg-icons" />
-                    <span className="ml-1">See all contracts</span>
-                  </div>
+      {/* Vesting contract details */}
+      {detailsPanelOpen ? (
+        <>
+          <div className="flexible-column-bottom">
+            <div className="top">
+              <div className="mb-2">
+                <div onClick={navigateToContracts} className="back-button icon-button-container">
+                  <IconArrowBack className="mean-svg-icons" />
+                  <span className="ml-1">See all contracts</span>
                 </div>
-                <VestingContractDetails
-                  isXsDevice={isXsDevice}
-                  loadingVestingContractFlowRate={loadingVestingContractFlowRate}
-                  selectedToken={workingToken}
-                  streamTemplate={streamTemplate}
-                  vestingContract={selectedVestingContract}
-                  vestingContractFlowRate={vestingContractFlowRate}
-                />
-                {/* Render CTAs row here */}
-                {renderVestingContractDetailCtaRow()}
+              </div>
+              <VestingContractDetails
+                isXsDevice={isXsDevice}
+                loadingVestingContractFlowRate={loadingVestingContractFlowRate}
+                selectedToken={workingToken}
+                streamTemplate={streamTemplate}
+                vestingContract={selectedVestingContract}
+                vestingContractFlowRate={vestingContractFlowRate}
+              />
+              {/* Render CTAs row here */}
+              {renderVestingContractDetailCtaRow()}
 
-                {/* Alert to offer refresh vesting contract */}
-                {selectedVestingContract && hasBalanceChanged() && (
-                  <div className="alert-info-message mb-2">
-                    <Alert message={(
-                      <>
-                        <span>This vesting contract received an incoming funds transfer.&nbsp;</span>
-                        <span className="simplelink underline" onClick={() => onExecuteRefreshVestingContractBalance()}>Refresh the account data</span>
-                        <span>&nbsp;to update the account balance.</span>
-                      </>
-                    )}
-                      type="info"
-                      showIcon
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="bottom">
-                {renderVestingContractDetailTabset()}
-              </div>
+              {/* Alert to offer refresh vesting contract */}
+              {selectedVestingContract && hasBalanceChanged() && (
+                <div className="alert-info-message mb-2">
+                  <Alert message={(
+                    <>
+                      <span>This vesting contract received an incoming funds transfer.&nbsp;</span>
+                      <span className="simplelink underline" onClick={() => onExecuteRefreshVestingContractBalance()}>Refresh the account data</span>
+                      <span>&nbsp;to update the account balance.</span>
+                    </>
+                  )}
+                    type="info"
+                    showIcon
+                  />
+                </div>
+              )}
             </div>
-          </>
-        ) : (
-          <>
-            <div className="flexible-column-bottom">
-              <div className="top">
-                {renderVestingProtocolHeader()}
-                {renderFeatureCtaRow()}
-              </div>
-              <div className="bottom">
-                {renderFeatureTabset()}
-              </div>
+            <div className="bottom">
+              {renderVestingContractDetailTabset()}
             </div>
-          </>
-        )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flexible-column-bottom">
+            <div className="top">
+              {renderVestingProtocolHeader()}
+              {renderFeatureCtaRow()}
+            </div>
+            <div className="bottom">
+              {renderFeatureTabset()}
+            </div>
+          </div>
+        </>
+      )}
 
-        {isVestingContractCreateModalVisible && (
-          <VestingContractCreateModal
-            accountAddress={selectedAccount.address}
-            handleClose={closeVestingContractCreateModal}
-            handleOk={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
-            isBusy={isBusy}
-            isMultisigContext={isMultisigContext}
-            isVisible={isVestingContractCreateModalVisible}
-            loadingMultisigAccounts={loadingMultisigAccounts}
-            nativeBalance={nativeBalance}
-            selectedList={selectedList}
-            selectedMultisig={selectedMultisig}
-            selectedToken={workingToken}
-            transactionFees={createVestingContractTxFees}
-            userBalances={userBalances}
-          />
-        )}
+      {isVestingContractCreateModalVisible && (
+        <VestingContractCreateModal
+          accountAddress={selectedAccount.address}
+          handleClose={closeVestingContractCreateModal}
+          handleOk={(options: VestingContractCreateOptions) => onAcceptCreateVestingContract(options)}
+          isBusy={isBusy}
+          isMultisigContext={isMultisigContext}
+          isVisible={isVestingContractCreateModalVisible}
+          loadingMultisigAccounts={loadingMultisigAccounts}
+          nativeBalance={nativeBalance}
+          selectedList={selectedList}
+          selectedMultisig={selectedMultisig}
+          selectedToken={workingToken}
+          transactionFees={createVestingContractTxFees}
+          userBalances={userBalances}
+        />
+      )}
 
-        {isAddFundsModalVisible && (
-          <VestingContractAddFundsModal
-            handleClose={closeAddFundsModal}
-            handleOk={(params: VestingContractTopupParams) => onAcceptAddFunds(params)}
-            isBusy={isBusy}
-            isVisible={isAddFundsModalVisible}
-            nativeBalance={nativeBalance}
-            minRequiredBalance={minRequiredBalance}
-            selectedMultisig={selectedMultisig}
-            selectedToken={workingToken}
-            streamTemplate={streamTemplate}
-            transactionFees={transactionFees}
-            treasuryStreams={treasuryStreams}
-            userBalances={userBalances}
-            vestingContract={selectedVestingContract}
-            withdrawTransactionFees={withdrawTransactionFees}
-            onReloadTokenBalances={(option: string) => {
-              consoleOut('setting balances source to:', option, 'blue');
-              if (option === "safe" && selectedMultisig) {
-                setBalancesSource(selectedMultisig.authority.toBase58());
-              } else {
-                setBalancesSource('');
-              }
-            }}
-          />
-        )}
+      {isAddFundsModalVisible && (
+        <VestingContractAddFundsModal
+          handleClose={closeAddFundsModal}
+          handleOk={(params: VestingContractTopupParams) => onAcceptAddFunds(params)}
+          isBusy={isBusy}
+          isVisible={isAddFundsModalVisible}
+          nativeBalance={nativeBalance}
+          minRequiredBalance={minRequiredBalance}
+          selectedMultisig={selectedMultisig}
+          selectedToken={workingToken}
+          streamTemplate={streamTemplate}
+          transactionFees={transactionFees}
+          treasuryStreams={treasuryStreams}
+          userBalances={userBalances}
+          vestingContract={selectedVestingContract}
+          withdrawTransactionFees={withdrawTransactionFees}
+          onReloadTokenBalances={(option: string) => {
+            consoleOut('setting balances source to:', option, 'blue');
+            if (option === "safe" && selectedMultisig) {
+              setBalancesSource(selectedMultisig.authority.toBase58());
+            } else {
+              setBalancesSource('');
+            }
+          }}
+        />
+      )}
 
-        {isEditContractSettingsModalOpen && vestingContract && (
-          <VestingContractEditModal
-            accountAddress={vestingContract || ''}
-            handleClose={hideEditContractSettingsModal}
-            isBusy={isBusy}
-            isMultisigContext={isMultisigContext}
-            isVisible={isEditContractSettingsModalOpen}
-            loadingMultisigAccounts={loadingMultisigAccounts}
-            nativeBalance={nativeBalance}
-            onTransactionStarted={(options: VestingContractEditOptions) => onAcceptEditContractSettings(options)}
-            selectedMultisig={selectedMultisig}
-            selectedToken={workingToken}
-            streamTemplate={streamTemplate}
-            transactionFees={transactionFees}
-            vestingContract={selectedVestingContract}
-          />
-        )}
+      {isEditContractSettingsModalOpen && vestingContract && (
+        <VestingContractEditModal
+          accountAddress={vestingContract || ''}
+          handleClose={hideEditContractSettingsModal}
+          isBusy={isBusy}
+          isMultisigContext={isMultisigContext}
+          isVisible={isEditContractSettingsModalOpen}
+          loadingMultisigAccounts={loadingMultisigAccounts}
+          nativeBalance={nativeBalance}
+          onTransactionStarted={(options: VestingContractEditOptions) => onAcceptEditContractSettings(options)}
+          selectedMultisig={selectedMultisig}
+          selectedToken={workingToken}
+          streamTemplate={streamTemplate}
+          transactionFees={transactionFees}
+          vestingContract={selectedVestingContract}
+        />
+      )}
 
-        {isVestingContractSolBalanceModalOpen && vestingContract && (
-          <VestingContractSolBalanceModal
-            address={vestingContract || ''}
-            isVisible={isVestingContractSolBalanceModalOpen}
-            handleClose={hideVestingContractSolBalanceModal}
-            treasuryBalance={treasuryEffectiveBalance}
-          />
-        )}
+      {isVestingContractSolBalanceModalOpen && vestingContract && (
+        <VestingContractSolBalanceModal
+          address={vestingContract || ''}
+          isVisible={isVestingContractSolBalanceModalOpen}
+          handleClose={hideVestingContractSolBalanceModal}
+          treasuryBalance={treasuryEffectiveBalance}
+        />
+      )}
 
-        {isCreateStreamModalVisible && selectedVestingContract && (
-          <VestingContractCreateStreamModal
-            handleClose={closeCreateStreamModal}
-            handleOk={(options: VestingContractStreamCreateOptions) => onAcceptCreateStream(options)}
-            isBusy={isBusy}
-            isMultisigTreasury={isMultisigTreasury()}
-            isVisible={isCreateStreamModalVisible}
-            isXsDevice={isXsDevice}
-            minRequiredBalance={minRequiredBalance}
-            nativeBalance={nativeBalance}
-            selectedMultisig={selectedMultisig}
-            selectedToken={workingToken}
-            streamTemplate={streamTemplate}
-            transactionFees={transactionFees}
-            vestingContract={selectedVestingContract}
-            withdrawTransactionFees={withdrawTransactionFees}
-          />
-        )}
+      {isCreateStreamModalVisible && selectedVestingContract && (
+        <VestingContractCreateStreamModal
+          handleClose={closeCreateStreamModal}
+          handleOk={(options: VestingContractStreamCreateOptions) => onAcceptCreateStream(options)}
+          isBusy={isBusy}
+          isMultisigTreasury={isMultisigTreasury()}
+          isVisible={isCreateStreamModalVisible}
+          isXsDevice={isXsDevice}
+          minRequiredBalance={minRequiredBalance}
+          nativeBalance={nativeBalance}
+          selectedMultisig={selectedMultisig}
+          selectedToken={workingToken}
+          streamTemplate={streamTemplate}
+          transactionFees={transactionFees}
+          vestingContract={selectedVestingContract}
+          withdrawTransactionFees={withdrawTransactionFees}
+        />
+      )}
 
-        {isVestingContractCloseModalOpen && selectedVestingContract && (
-          <VestingContractCloseModal
-            handleClose={hideVestingContractCloseModal}
-            handleOk={(title: string) => onAcceptCloseVestingContractModal(title)}
-            isBusy={isBusy}
-            isVisible={isVestingContractCloseModalOpen}
-            nativeBalance={nativeBalance}
-            selectedMultisig={isMultisigContext ? selectedMultisig : undefined}
-            transactionFees={transactionFees}
-            treasuryBalance={treasuryEffectiveBalance}
-            vestingContract={selectedVestingContract}
-          />
-        )}
+      {isVestingContractCloseModalOpen && selectedVestingContract && (
+        <VestingContractCloseModal
+          handleClose={hideVestingContractCloseModal}
+          handleOk={(title: string) => onAcceptCloseVestingContractModal(title)}
+          isBusy={isBusy}
+          isVisible={isVestingContractCloseModalOpen}
+          nativeBalance={nativeBalance}
+          selectedMultisig={isMultisigContext ? selectedMultisig : undefined}
+          transactionFees={transactionFees}
+          treasuryBalance={treasuryEffectiveBalance}
+          vestingContract={selectedVestingContract}
+        />
+      )}
 
-        {isVestingContractTransferFundsModalVisible && (
-          <VestingContractWithdrawFundsModal
-            handleClose={closeVestingContractTransferFundsModal}
-            handleOk={(options: VestingContractWithdrawOptions) => onAcceptVestingContractTransferFunds(options)}
-            isBusy={isBusy}
-            isMultisigTreasury={isMultisigTreasury()}
-            isVisible={isVestingContractTransferFundsModalVisible}
-            minRequiredBalance={minRequiredBalance}
-            nativeBalance={nativeBalance}
-            selectedMultisig={selectedMultisig}
-            transactionFees={transactionFees}
-            vestingContract={selectedVestingContract}
-          />
-        )}
+      {isVestingContractTransferFundsModalVisible && (
+        <VestingContractWithdrawFundsModal
+          handleClose={closeVestingContractTransferFundsModal}
+          handleOk={(options: VestingContractWithdrawOptions) => onAcceptVestingContractTransferFunds(options)}
+          isBusy={isBusy}
+          isMultisigTreasury={isMultisigTreasury()}
+          isVisible={isVestingContractTransferFundsModalVisible}
+          minRequiredBalance={minRequiredBalance}
+          nativeBalance={nativeBalance}
+          selectedMultisig={selectedMultisig}
+          transactionFees={transactionFees}
+          vestingContract={selectedVestingContract}
+        />
+      )}
 
-      </>
-    );
-  } else if (treasuriesLoaded && treasuryList.length === 0 && !loadingTreasuries) {
-    // Render the On-boarding to Mean Vesting by helping the user on creating
-    // the first Vesting Contract if the user has none
-    return renderCreateFirstVestingAccount();
-  } else {
-    // Render a spinner while loading
-    return (
-      <div className="h-100 flex-center">
-        <Spin spinning={true} />
-      </div>
-    );
-  }
+    </>
+  );
 
 };
 

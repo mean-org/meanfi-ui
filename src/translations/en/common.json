@@ -1333,7 +1333,8 @@
 		},
 		"screen-subtitle": "Realize the power of no-code token locks on Solana",
 		"screen-title": "Mean Vesting",
-		"user-instruction-headline": "Get started by creating a vesting contract below",
+		"no-contracts": "No vesting contracts",
+		"user-instruction-headline": "Get started by creating a vesting contract",
 		"create-account": {
 			"create-cta": "Create vesting contract",
 			"create-cta-busy": "Creating vesting contract",

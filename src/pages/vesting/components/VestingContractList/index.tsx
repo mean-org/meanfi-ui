@@ -1,15 +1,15 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Empty, Progress } from 'antd';
 import { MSP, StreamTemplate, Treasury } from '@mean-dao/msp';
-import { useTranslation } from 'react-i18next';
-import { Identicon } from '../../../../components/Identicon';
-import { FALLBACK_COIN_IMAGE } from '../../../../constants';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { formatThousands, getSdkValue, makeDecimal } from '../../../../middleware/utils';
 import { PublicKey } from '@solana/web3.js';
-import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd } from '../../../../middleware/ui';
-import { IconLoading } from '../../../../Icons';
+import { Progress } from 'antd';
 import BN from 'bn.js';
+import { Identicon } from 'components/Identicon';
+import { FALLBACK_COIN_IMAGE } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { IconLoading, IconNoItems } from 'Icons';
+import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd } from 'middleware/ui';
+import { formatThousands, getSdkValue, makeDecimal } from 'middleware/utils';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const VestingContractList = (props: {
     loadingVestingAccounts: boolean;
@@ -169,7 +169,7 @@ export const VestingContractList = (props: {
     };
 
     return (
-        <div className="vesting-contract-list">
+        <div className={`vesting-contract-list ${!loadingVestingAccounts && (!streamingAccounts || streamingAccounts.length === 0) ? 'h-75' : ''}`}>
             {streamingAccounts && streamingAccounts.length > 0 ? (
                 streamingAccounts.map((item, index) => {
                     const associatedToken = item.associatedToken;
@@ -238,10 +238,10 @@ export const VestingContractList = (props: {
                     );
                 })
             ) : (
-                <div className="flex-center h-100">
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={
-                        <p>{t('treasuries.treasury-list.no-treasuries')}</p>
-                    }/>
+                <div className="flex-column flex-center justify-content-center h-100">
+                    <IconNoItems className="mean-svg-icons fg-secondary-50" style={{ width: 42, height: 42 }} />
+                    <div className="font-size-120 font-bold fg-secondary-75 mt-2 mb-2">{t('vesting.no-contracts')}</div>
+                    <div className="font-size-110 fg-secondary-50 mb-3">{t('vesting.user-instruction-headline')}</div>
                 </div>
             )}
         </div>
