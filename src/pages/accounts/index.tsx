@@ -3217,33 +3217,31 @@ export const AccountsView = () => {
    */
   useEffect(() => {
     if (!selectedAccount.address) { return; }
+    let selection: AssetGroups | undefined = undefined;
 
     if (accountNfts && accountTokens) {
-      if (accountNfts.length === 0) {
-        setSelectedAssetsGroup(AssetGroups.Tokens);
-      } else {
-        switch (selectedCategory) {
-          case "assets":
-            if (asset) {
-              const category = getAssetCategory(asset, selectedAccount, accountTokens, accountNfts);
-              consoleOut('category from getAssetCategory() ->', category, 'blue');
-              setSelectedAssetsGroup(category);
-              if (category === AssetGroups.Nfts) {
-                setAutoOpenDetailsPanel(true);
-                setDetailsPanelOpen(true);
-              }
-            } else {
-              setSelectedAssetsGroup(AssetGroups.Tokens);
+      switch (selectedCategory) {
+        case "assets":
+          if (asset) {
+            selection = getAssetCategory(asset, selectedAccount, accountTokens, accountNfts);
+            consoleOut('category from getAssetCategory() ->', selection, 'blue');
+            if (selection === AssetGroups.Nfts) {
+              setAutoOpenDetailsPanel(true);
+              setDetailsPanelOpen(true);
             }
-            break;
-          case "apps":
-            setSelectedAssetsGroup(AssetGroups.Apps);
-            break;
-          default:
-            setSelectedAssetsGroup(AssetGroups.Tokens);
-            break;
-        }
+          } else {
+            selection = AssetGroups.Tokens;
+          }
+          break;
+        case "apps":
+          selection = AssetGroups.Apps;
+          break;
+        default:
+          selection = AssetGroups.Tokens;
+          break;
       }
+
+      setSelectedAssetsGroup(selection);
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
