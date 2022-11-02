@@ -48,7 +48,6 @@ function getAssetCategory(
         if (isNftTokenAccount || isNftMint) {
             return AssetGroups.Nfts;
         }
-        return AssetGroups.Tokens;
     } else {
         const isKnownApp = KNOWN_APPS.some(a => a.appId === assetId);
         if (isKnownApp) {
@@ -56,7 +55,7 @@ function getAssetCategory(
         }
     }
 
-    return AssetGroups.OtherAssets;
+    return AssetGroups.Tokens;
 }
 
 export default getAssetCategory;

@@ -733,16 +733,15 @@ export const AccountsView = () => {
   ]);
 
   const getAssetPath = useCallback((asset: UserTokenAccount) => {
-    const isMyWallet = isInspectedAccountTheConnectedWallet();
     const isAccountNative = isSelectedAssetNativeAccount(asset);
     let url = '';
-    if (isMyWallet && isAccountNative) {
+    if (isAccountNative) {
       url = `/assets`;
     } else {
       url = `/assets/${asset.publicAddress}`;
     }
     return url;
-  }, [isInspectedAccountTheConnectedWallet, isSelectedAssetNativeAccount]);
+  }, [isSelectedAssetNativeAccount]);
 
   const navigateToAsset = useCallback((asset: UserTokenAccount) => {
     const url = getAssetPath(asset);
@@ -3350,6 +3349,7 @@ export const AccountsView = () => {
       .finally(() => setLoadingTransactions(false));
     }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     connection,
@@ -3361,10 +3361,6 @@ export const AccountsView = () => {
     solAccountItems,
     loadingTransactions,
     shouldLoadTransactions,
-    getSolAccountItems,
-    setTransactions,
-    getScanAddress,
-    startSwitch
   ]);
 
   // Set a multisig based on address in context
@@ -3460,7 +3456,7 @@ export const AccountsView = () => {
         consoleOut('selected:', accountTokens[0].symbol, 'crimson');
       }
     } else if (!pathParamAsset && accountTokens && accountTokens.length > 0) {
-      if (!selectedAsset && location.pathname.startsWith('/assets')) {
+      if (location.pathname.startsWith('/assets')) {
         consoleOut('No token in url, try selecting native account...', '', 'crimson');
         const inferredAsset = accountTokens.find(t => t.publicAddress === selectedAccount.address);
         if (inferredAsset) {
@@ -3472,7 +3468,7 @@ export const AccountsView = () => {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAccount.address, accountTokens, pathParamAsset, location.pathname]);
+  }, [accountTokens, location.pathname, pathParamAsset, selectedAccount.address]);
 
   // Build CTAs
   useEffect(() => {
