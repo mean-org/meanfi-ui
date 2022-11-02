@@ -1,11 +1,10 @@
 import { readFromCache } from "cache/persistentCache";
-import { fallbackImgSrc } from "constants/common";
 import { AppStateContext } from "contexts/appstate";
 import { IconNoItems } from "Icons";
 import { toUsCurrency } from "middleware/ui";
 import { KnownAppMetadata, KNOWN_APPS, RegisteredAppPaths } from "models/accounts";
 import { useCallback, useContext } from "react";
-import { useTranslation } from "react-i18next";
+import "./style.scss";
 
 export const AppsList = (props: {
     isMultisigContext: boolean;
@@ -23,8 +22,6 @@ export const AppsList = (props: {
         selectedAccount,
         paymentStreamingStats,
     } = useContext(AppStateContext);
-
-    const { t } = useTranslation('common');
 
     const getCachedTvlByApp = useCallback((slug: string) => {
         const cacheEntryKey = `${slug}Tvl`;
@@ -79,7 +76,7 @@ export const AppsList = (props: {
 
     return (
         <>
-            <div key="asset-category-apps-items" className="asset-category flex-column">
+            <div key="asset-category-apps-items" className="asset-category flex-column apps-list">
                 {KNOWN_APPS.map(app => {
                     if (!app.visible) { return null; }  // Skip non visible apps
                     return (
@@ -93,7 +90,9 @@ export const AppsList = (props: {
                                     {app.logoURI ? (
                                         <img src={app.logoURI} alt={`${app.title}`} width={30} height={30} />
                                     ) : (
-                                        <IconNoItems className="mean-svg-icons fg-secondary-50" style={{ width: 20, height: 20 }} />
+                                        <div className="circle-flex-center bg-whitesmoke">
+                                            <IconNoItems className="mean-svg-icons fg-secondary-50" style={{ width: 18, height: 18 }} />
+                                        </div>
                                     )}
                                 </div>
                             </div>

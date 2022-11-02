@@ -457,6 +457,12 @@ h1, h2, h3, h4, h5, h6 {
 .bg-white {
   background-color: var(--color-white);
 }
+.bg-whitesmoke {
+  background-color: var(--color-whitesmoke);
+}
+.bg-almost-white {
+  background-color: var(--color-almost-white);
+}
 .bg-black {
   background-color: var(--color-black);
 }
@@ -2975,6 +2981,17 @@ main section {
   padding: 0 4px;
   color: var(--color-black);
 }
+
+.circle-flex-center {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+}
+
 .token-icon {
   border-radius: 50%;
   overflow: hidden;
