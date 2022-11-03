@@ -1943,7 +1943,7 @@ export const MoneyStreamsOutgoingView = (props: {
         consoleOut('createTxV2 received params:', closeTreasuryData, 'blue');
         const data = {
           title: closeTreasuryData.title,                              // title
-          payer: publicKey.toBase58(),                                 // payer
+          payer: selectedAccount.address,                              // payer
           stream: streamPublicKey.toBase58(),                          // stream
           closeTreasury: closeTreasuryData.closeTreasuryOption         // closeTreasury
         } as CloseStreamTransactionParams;

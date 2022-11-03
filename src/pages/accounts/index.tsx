@@ -4776,9 +4776,9 @@ export const AccountsView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar"><span>previousRoute:</span><span className="ml-1">{previousRoute}</span></div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button

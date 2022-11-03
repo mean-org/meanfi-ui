@@ -1612,7 +1612,7 @@ export const TreasuryStreamCreateModal = (props: {
                             {treasuryList && treasuryList.length > 0 && (
                               <Select className={`auto-height`} value={selectedStreamingAccountId}
                                 style={{width:"100%", maxWidth:'none'}}
-                                dropdownClassName="stream-select-dropdown"
+                                popupClassName="stream-select-dropdown"
                                 onChange={onStreamingAccountSelected}
                                 bordered={false}
                                 showArrow={false}

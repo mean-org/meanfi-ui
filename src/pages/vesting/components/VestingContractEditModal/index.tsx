@@ -289,7 +289,7 @@ export const VestingContractEditModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal unpadded-content"
+      className="mean-modal simple-modal"
       title={<div className="modal-title">Create Vesting Contract</div>}
       footer={null}
       open={isVisible}
@@ -297,7 +297,7 @@ export const VestingContractEditModal = (props: {
       width={480}>
 
       <Spin spinning={loadingMultisigAccounts}>
-        <div className={`scrollable-content pl-5 pr-4 py-2`}>
+        <div className={`scrollable-content`}>
 
           {/* Multisig in context */}
           {isMultisigContext && selectedMultisig && (

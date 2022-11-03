@@ -1,16 +1,13 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { AppStateContext } from '../../../../contexts/appstate';
 import { StreamTemplate, Treasury } from '@mean-dao/msp';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
-import { displayAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../middleware/utils';
-import { Identicon } from '../../../../components/Identicon';
-import { AddressDisplay } from '../../../../components/AddressDisplay';
-import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { getCategoryLabelByValue, VestingFlowRateInfo } from '../../../../models/vesting';
-import { useTranslation } from 'react-i18next';
+import { Progress } from 'antd';
+import BigNumber from 'bignumber.js';
 import BN from 'bn.js';
-import { IconLoading } from '../../../../Icons';
+import { AddressDisplay } from 'components/AddressDisplay';
+import { Identicon } from 'components/Identicon';
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import { IconLoading } from 'Icons';
 import {
     consoleOut,
     getIntervalFromSeconds,
@@ -19,11 +16,14 @@ import {
     getShortDate,
     getTimeEllapsed,
     percentageBn,
-    percentualBn,
-} from '../../../../middleware/ui';
-import { PaymentRateType } from '../../../../models/enums';
-import { Progress } from 'antd';
-import BigNumber from 'bignumber.js';
+    percentualBn
+} from 'middleware/ui';
+import { displayAmountWithSymbol, makeDecimal, shortenAddress } from 'middleware/utils';
+import { PaymentRateType } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { getCategoryLabelByValue, VestingFlowRateInfo } from 'models/vesting';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const VestingContractDetails = (props: {
     isXsDevice: boolean;
