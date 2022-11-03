@@ -1029,6 +1029,7 @@ export const TreasuryStreamCreateModal = (props: {
       consoleOut('Starting create stream using MSP V2...', '', 'blue');
       
       const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
+      const payer = new PublicKey(data.payer);
       const beneficiaryData = data.beneficiaries[0] as Beneficiary;
       const beneficiary = new PublicKey(beneficiaryData.address);
       const streamName = beneficiaryData.streamName;
@@ -1036,7 +1037,7 @@ export const TreasuryStreamCreateModal = (props: {
       if (!isSelectedStreamingAccountMultisigTreasury) {
 
         const createStreamTx = await msp.createStream(
-          new PublicKey(data.payer),                                          // payer
+          payer,                                                              // payer
           new PublicKey(data.treasurer),                                      // treasurer
           new PublicKey(data.treasury),                                       // treasury
           beneficiary,                                                        // beneficiary
@@ -1063,7 +1064,7 @@ export const TreasuryStreamCreateModal = (props: {
       );
 
       const createStreamTx = await msp.createStream(
-        publicKey,                                                          // payer
+        payer,                                                              // payer
         multisigSigner,                                                     // treasurer
         new PublicKey(data.treasury),                                       // treasury
         beneficiary,                                                        // beneficiary
@@ -1159,7 +1160,7 @@ export const TreasuryStreamCreateModal = (props: {
 
       // Create a transaction
       const data: CreateStreamParams = {
-        payer: publicKey.toBase58(),                                                // initializer
+        payer: selectedAccount.address,                                             // initializer
         treasurer: treasurer.toBase58(),                                            // treasurer
         treasury: treasury.toBase58(),                                              // treasury
         beneficiaries: [beneficiary],                                               // beneficiaries

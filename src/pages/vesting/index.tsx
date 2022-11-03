@@ -872,7 +872,7 @@ export const VestingView = () => {
 
       const treasuryAssociatedTokenMint = new PublicKey(data.associatedTokenAddress);
       const createTreasuryTx = await msp.createVestingTreasury(
-        publicKey,                                            // payer
+        multisig.authority,                                   // payer
         multisig.authority,                                   // treasurer
         data.label,                                           // label
         data.type,                                            // type
@@ -1886,7 +1886,7 @@ export const VestingView = () => {
       consoleOut('associatedToken == treasuryAssociatedTokenMint?', selectedVestingContract?.associatedToken === data.treasuryAssociatedTokenMint ? 'true' : 'false', 'blue');
 
       const [createStreamTx, streamAddress] = await msp.createStreamWithTemplate(
-        publicKey,                                                                // payer
+        multisig.authority,                                                       // payer
         multisig.authority,                                                       // treasurer
         treasury,                                                                 // treasury
         beneficiary,                                                              // beneficiary
@@ -2804,7 +2804,6 @@ export const VestingView = () => {
     splTokenList,
     workingToken,
     balancesSource,
-    setSelectedToken,
   ]);
 
   // Build CTAs
