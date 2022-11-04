@@ -3582,7 +3582,7 @@ export const VestingView = () => {
                   isBusy={isBusy}
                   isMultisigContext={isMultisigContext}
                   loadingMultisigAccounts={loadingMultisigAccounts || loadingTreasuries}
-                  token={workingToken}
+                  token={workingToken || selectedList[0]}
                   selectedList={selectedList}
                   selectedMultisig={selectedMultisig}
                   userBalances={userBalances}
