@@ -36,6 +36,7 @@ import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxRes
 import { StreamTopupParams, StreamTopupTxCreateParams } from "models/common-types";
 import { OperationType, TransactionStatus } from "models/enums";
 import { TokenInfo } from "models/SolanaTokenInfo";
+import { CloseStreamParams } from "models/streams";
 import { CloseStreamTransactionParams, StreamTreasuryType } from "models/treasuries";
 import { title } from "process";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -87,6 +88,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [userBalances, setUserBalances] = useState<any>();
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
+  const [lastOperationPayload, setLastOperationPayload] = useState<any>(undefined);
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
@@ -986,6 +988,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const onAcceptPauseStream = (title: string) => {
     consoleOut("Input title for pause stream:", title, 'blue');
     hidePauseStreamModal();
+    setLastOperationPayload(title);
     onExecutePauseStreamTransaction(title);
   };
 
@@ -1155,7 +1158,7 @@ export const MoneyStreamsOutgoingView = (props: {
       const data = {
         title: title as string,                           // title
         stream: streamPublicKey.toBase58(),               // stream
-        payer: publicKey.toBase58(),                      // payer
+        payer: selectedAccount.address,                   // payer
       }
 
       consoleOut('data:', data);
@@ -1312,9 +1315,9 @@ export const MoneyStreamsOutgoingView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionFinished
           });
-
           setIsPauseStreamModalVisibility(false);
           setOngoingOperation(undefined);
+          setLastOperationPayload(undefined);
           onTransactionFinished();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1376,6 +1379,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const onAcceptResumeStream = (title: string) => {
     consoleOut("Input title for resume stream:", title, 'blue');
     hideResumeStreamModal();
+    setLastOperationPayload(title);
     onExecuteResumeStreamTransaction(title);
   };
 
@@ -1544,7 +1548,7 @@ export const MoneyStreamsOutgoingView = (props: {
       const data = {
         title: title as string,                           // title
         stream: streamPublicKey.toBase58(),               // stream
-        payer: publicKey.toBase58(),                      // payer
+        payer: selectedAccount.address,                   // payer
       }
 
       consoleOut('data:', data);
@@ -1704,6 +1708,7 @@ export const MoneyStreamsOutgoingView = (props: {
           
           setIsResumeStreamModalVisibility(false);
           setOngoingOperation(undefined);
+          setLastOperationPayload(undefined);
           onTransactionFinished();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1762,7 +1767,7 @@ export const MoneyStreamsOutgoingView = (props: {
   ]);
 
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
-  const onAcceptCloseStream = (data: any) => {
+  const onAcceptCloseStream = (data: CloseStreamParams) => {
     consoleOut('onAcceptCloseStream params:', data, 'blue');
     hideCloseStreamModal();
     onExecuteCloseStreamTransaction(data);
@@ -1773,7 +1778,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const showCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(true), []);
   const hideCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(false), []);
 
-  const onExecuteCloseStreamTransaction = async (closeTreasuryData: any) => {
+  const onExecuteCloseStreamTransaction = async (closeTreasuryData: CloseStreamParams) => {
     let transaction: Transaction;
     let signature: any;
     let encodedTx: string;
@@ -1810,7 +1815,7 @@ export const MoneyStreamsOutgoingView = (props: {
           closeTreasury: data.autoCloseTreasury,
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
-          feeAmount: closeTreasuryData.feeAmount,
+          feeAmount: closeTreasuryData.feeAmount || 0,
           valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns)
         };
         consoleOut('segment data:', segmentData, 'brown');
@@ -1973,7 +1978,7 @@ export const MoneyStreamsOutgoingView = (props: {
           closeTreasury: data.closeTreasury,
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
-          feeAmount: closeTreasuryData.feeAmount,
+          feeAmount: closeTreasuryData.feeAmount || 0,
           valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns)
         };
         consoleOut('segment data:', segmentData, 'brown');
@@ -2611,7 +2616,7 @@ export const MoneyStreamsOutgoingView = (props: {
           transactionFees={transactionFees}
           tokenBalance={tokenBalance}
           streamDetail={streamSelected}
-          handleOk={onAcceptPauseStream}
+          handleOk={(param: string) => onAcceptPauseStream(param)}
           handleClose={hidePauseStreamModal}
           content={getStreamPauseMessage()}
         />
@@ -2623,7 +2628,7 @@ export const MoneyStreamsOutgoingView = (props: {
           transactionFees={transactionFees}
           tokenBalance={tokenBalance}
           streamDetail={streamSelected}
-          handleOk={onAcceptResumeStream}
+          handleOk={(param: string) => onAcceptResumeStream(param)}
           handleClose={hideResumeStreamModal}
           content={getStreamResumeMessage()}
         />
@@ -2642,7 +2647,7 @@ export const MoneyStreamsOutgoingView = (props: {
                 : msp
               : undefined
           }
-          handleOk={onAcceptCloseStream}
+          handleOk={(params: CloseStreamParams) => onAcceptCloseStream(params)}
           handleClose={hideCloseStreamModal}
           content={getStreamClosureMessage()}
         />
@@ -2866,9 +2871,9 @@ export const MoneyStreamsOutgoingView = (props: {
                       shape="round"
                       size="middle"
                       onClick={() => ongoingOperation === OperationType.StreamPause
-                        ? onExecutePauseStreamTransaction(title)
+                        ? onAcceptPauseStream(lastOperationPayload)
                         : ongoingOperation === OperationType.StreamResume
-                          ? onExecuteResumeStreamTransaction(title)
+                          ? onAcceptResumeStream(lastOperationPayload)
                           : hideTransactionExecutionModal()}>
                       {t('general.retry')}
                     </Button>

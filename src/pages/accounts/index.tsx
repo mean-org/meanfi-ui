@@ -82,7 +82,7 @@ import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from 'middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports, getAmountWithSymbol, getSdkValue, getTxIxResume,
@@ -131,7 +131,6 @@ export const AccountsView = () => {
     streamDetail,
     transactions,
     splTokenList,
-    previousRoute,
     isWhitelisted,
     selectedAsset,
     loadingStreams,
@@ -1707,6 +1706,7 @@ export const AccountsView = () => {
             loadingMessage: `Transferring ${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol} to ${shortenAddress(data.to)}`,
             completedTitle: 'Transaction confirmed',
             completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol}) successfully transferred to ${shortenAddress(data.to)}`,
+            completedMessageTimeout: isMultisigContext ? 8 : 5,
             extras: {
               multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
             }
@@ -1737,6 +1737,7 @@ export const AccountsView = () => {
     nativeBalance,
     multisigClient,
     selectedMultisig,
+    isMultisigContext,
     minRequiredBalance,
     transactionCancelled,
     transactionStatus.currentOperation,
@@ -1967,6 +1968,7 @@ export const AccountsView = () => {
             loadingMessage: "Transferring ownership",
             completedTitle: 'Transaction confirmed',
             completedMessage: `Asset ${selectedAsset.name} successfully transferred to ${shortenAddress(data.selectedAuthority)}`,
+            completedMessageTimeout: isMultisigContext ? 8 : 5,
             extras: {
               multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : ''
             }
@@ -1996,6 +1998,7 @@ export const AccountsView = () => {
     nativeBalance,
     multisigClient,
     selectedMultisig,
+    isMultisigContext,
     transactionCancelled,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
@@ -2230,6 +2233,7 @@ export const AccountsView = () => {
             loadingMessage: "Deleting asset",
             completedTitle: 'Transaction confirmed',
             completedMessage: 'Asset successfully deleted',
+            completedMessageTimeout: isMultisigContext ? 8 : 5,
             extras: {
               multisigAuthority: multisigAuth
             }
@@ -2255,6 +2259,7 @@ export const AccountsView = () => {
     selectedAsset,
     multisigClient,
     selectedMultisig,
+    isMultisigContext,
     transactionCancelled,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
@@ -3013,6 +3018,7 @@ export const AccountsView = () => {
             loadingMessage: `Create proposal: ${data.title}`,
             completedTitle: "Transaction confirmed",
             completedMessage: `Successfully created proposal: ${data.title}`,
+            completedMessageTimeout: isMultisigContext ? 8 : 5,
             extras: {
               multisigAuthority: data.multisigId
             }
@@ -3034,6 +3040,7 @@ export const AccountsView = () => {
     nativeBalance,
     multisigClient,
     selectedMultisig,
+    isMultisigContext,
     transactionCancelled,
     multisigTransactionFees.multisigFee,
     multisigTransactionFees.networkFee,
