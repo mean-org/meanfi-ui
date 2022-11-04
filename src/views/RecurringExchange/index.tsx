@@ -24,6 +24,7 @@ import { SwapSettings } from "components/SwapSettings";
 import { TextInput } from "components/TextInput";
 import { DEFAULT_SLIPPAGE_PERCENT } from "constants/common";
 import { MEAN_TOKEN_LIST } from "constants/tokens";
+import { useAccountsContext } from "contexts/accounts";
 import { AppStateContext } from "contexts/appstate";
 import { useWallet } from "contexts/wallet";
 import { environment } from "environments/environment";
@@ -59,7 +60,7 @@ export const RecurringExchange = (props: {
     setDdcaOption,
     refreshPrices,
   } = useContext(AppStateContext);
-  
+  const { refreshAccount } = useAccountsContext();
   const connection = useMemo(() => props.connection, [props.connection]);
   const [refreshing, setRefreshing] = useState(false);
   const [paramsProcessed, setParamsProcessed] = useState(false);
@@ -306,6 +307,18 @@ export const RecurringExchange = (props: {
     getMaxAllowedSwapAmount
   ]);
 
+  // Refresh native account upon entering view
+  useEffect(() => {
+    if (!publicKey) {
+      return;
+    }
+
+    consoleOut('Refreshing native account...', '', 'blue');
+    refreshAccount();
+
+  }, [publicKey, refreshAccount]);
+
+  // Set the default DDCA option
   useEffect(() => {
 
     if (!ddcaOption || ddcaOption.name !== defaultDdcaOption) {
