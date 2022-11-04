@@ -1,29 +1,30 @@
-import './style.scss';
-import { Button, Col, Row, Tooltip } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus, IconThumbsDown } from "../../../../Icons"
-import { shortenAddress } from '../../../../middleware/utils';
-import { TabsMean } from '../../../../components/TabsMean';
-import { useTranslation } from 'react-i18next';
-import { openNotification } from '../../../../components/Notifications';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { consoleOut, copyText } from '../../../../middleware/ui';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
-import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { MeanMultisig, MultisigParticipant, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
-import { useWallet } from '../../../../contexts/wallet';
-import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
-import { Idl } from '@project-serum/anchor';
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
-import { OperationType, TransactionStatus } from '../../../../models/enums';
-import moment from "moment";
-import { ResumeItem } from '../../../../components/ResumeItem';
-import { RejectCancelModal } from '../../../../components/RejectCancelModal';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { MeanMultisig, MultisigParticipant, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { IDL as SplTokenIdl } from '@project-serum/anchor/dist/cjs/spl/token';
-import { TxConfirmationContext } from '../../../../contexts/transaction-status';
-import { appConfig } from '../../../..';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { Button, Col, Row, Tooltip } from "antd";
+import BN from 'bn.js';
+import { openNotification } from 'components/Notifications';
+import { RejectCancelModal } from 'components/RejectCancelModal';
+import { ResumeItem } from 'components/ResumeItem';
+import { TabsMean } from 'components/TabsMean';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { IconApprove, IconArrowBack, IconCreated, IconCross, IconExternalLink, IconLightning, IconMinus, IconThumbsDown, IconThumbsUp, IconUser, IconUserClock } from "Icons";
+import { appConfig } from 'index';
+import { consoleOut, copyText, getDurationUnitFromSeconds } from 'middleware/ui';
+import { displayAmountWithSymbol, formatThousands, getTokenOrCustomToken, makeDecimal, shortenAddress } from 'middleware/utils';
+import { OperationType, TransactionStatus } from 'models/enums';
+import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx, parseMultisigSystemProposalIx } from 'models/multisig';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import moment from "moment";
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import './style.scss';
 
 export const ProposalDetailsView = (props: {
   appsProvider?: any;
@@ -43,7 +44,9 @@ export const ProposalDetailsView = (props: {
 }) => {
 
   const {
+    splTokenList,
     transactionStatus,
+    getTokenByMintAddress,
     setTransactionStatus,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -67,15 +70,13 @@ export const ProposalDetailsView = (props: {
   const { confirmationHistory } = useContext(TxConfirmationContext);
 
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [selectedProposalIdl, setSelectedProposalIdl] = useState<Idl | undefined>();
   const [proposalIxInfo, setProposalIxInfo] = useState<MultisigTransactionInstructionInfo | null>(null);
   const [proposalActivity, setProposalActivity] = useState<MultisigTransactionActivityItem[]>([]);
   const [needReloadActivity, setNeedReloadActivity] = useState<boolean>(false);
   const [loadingActivity, setLoadingActivity] = useState<boolean>(false);
-
   const [isCancelRejectModalVisible, setIsCancelRejectModalVisible] = useState(false);
-  
+  const [proposalIxAssociatedToken, setProposalIxAssociatedToken] = useState<TokenInfo | undefined>(undefined);
+
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   const resetTransactionStatus = useCallback(() => {
@@ -185,7 +186,6 @@ export const ProposalDetailsView = (props: {
         setProposalIxInfo(ixInfo);
         // console.log('ixInfo', ixInfo);
       } else if (proposalSelected.programId.equals(TOKEN_PROGRAM_ID)) {
-        setSelectedProposalIdl(SplTokenIdl);
         const program = createAnchorProgram(connection, TOKEN_PROGRAM_ID, SplTokenIdl);
         const ixInfo = parseMultisigProposalIx(proposalSelected, program);
         setProposalIxInfo(ixInfo);
@@ -197,7 +197,6 @@ export const ProposalDetailsView = (props: {
           .getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl)
           .then((config: AppConfig) => {
             const idl = config ? config.definition : undefined;
-            setSelectedProposalIdl(idl);
             const program = idl ? createAnchorProgram(connection, new PublicKey(proposalApp.id), idl) : undefined;
             const ixInfo = parseMultisigProposalIx(proposalSelected, program);
             setProposalIxInfo(ixInfo);
@@ -266,6 +265,23 @@ export const ProposalDetailsView = (props: {
     needReloadActivity,
   ])
 
+  useEffect(() => {
+    if (!proposalIxInfo || !proposalIxInfo.accounts || proposalIxInfo.accounts.length === 0) {
+      return undefined;
+    }
+    const idx = proposalIxInfo.accounts.findIndex(p => p.label === 'Associated Token');
+    if (idx !== -1) {
+      const associatedToken = proposalIxInfo.accounts[idx].value;
+      getTokenOrCustomToken(connection, associatedToken, getTokenByMintAddress)
+      .then(token => {
+        consoleOut('proposal Associated Token ->', token, 'blue');
+        setProposalIxAssociatedToken(token);
+      });
+    } else {
+      setProposalIxAssociatedToken(undefined);
+    }
+  }, [connection, getTokenByMintAddress, proposalIxInfo]);
+
   // const isUnderDevelopment = () => {
   //   return isLocal() || (isDev() && isWhitelisted) ? true : false;
   // }
@@ -292,6 +308,30 @@ export const ProposalDetailsView = (props: {
     }
 
   },[t]);
+
+  const getTokenAmountValue = (item: InstructionDataInfo) => {
+    switch (item.label) {
+      case 'CliffVestPercent':
+        return `${makeDecimal(new BN(item.value), 4)}%`;
+      case 'RateIntervalInSeconds':
+        return `${formatThousands(item.value)}s (${getDurationUnitFromSeconds(+item.value)})`;
+      case 'StartUtc':
+        return moment(+item.value).format("LLL").toLocaleString();
+      case 'Amount':
+      case 'RateAmountUnits':
+      case 'AllocationAssignedUnits':
+        return proposalIxAssociatedToken
+          ? displayAmountWithSymbol(
+              item.value,
+              proposalIxAssociatedToken.address,
+              proposalIxAssociatedToken.decimals,
+              splTokenList,
+            )
+          : item.value;
+      default:
+        return item.value;
+    }
+  }
 
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
@@ -409,7 +449,7 @@ export const ProposalDetailsView = (props: {
                   </Col>
                   <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
                     <span className="d-block info-data text-truncate" style={{cursor: 'pointer'}}>
-                      {item.value}
+                      {getTokenAmountValue(item)}
                     </span>
                   </Col>
                 </Row>
@@ -531,23 +571,24 @@ export const ProposalDetailsView = (props: {
     }
   ];
 
-  const anyoneCanExecuteTx = () => {
-    const allowedOperations = [
-      OperationType.StreamWithdraw,
-      OperationType.EditMultisig,
-      OperationType.TransferTokens,
-      OperationType.UpgradeProgram,
-      OperationType.SetMultisigAuthority,
-      OperationType.SetAssetAuthority,
-      OperationType.DeleteAsset,
-      OperationType.StreamTransferBeneficiary,
-      OperationType.CredixDepositFunds,
-      OperationType.CredixWithdrawFunds,
-      OperationType.CredixDepositTranche,
-      OperationType.CredixWithdrawTranche,
-    ];
-    return allowedOperations.includes(selectedProposal.operation);
-  };
+  // TODO: I believe that this boolean won't be needed anymore but there was a logic indeed.
+  // const anyoneCanExecuteTx = () => {
+  //   const allowedOperations = [
+  //     OperationType.StreamWithdraw,
+  //     OperationType.EditMultisig,
+  //     OperationType.TransferTokens,
+  //     OperationType.UpgradeProgram,
+  //     OperationType.SetMultisigAuthority,
+  //     OperationType.SetAssetAuthority,
+  //     OperationType.DeleteAsset,
+  //     OperationType.StreamTransferBeneficiary,
+  //     OperationType.CredixDepositFunds,
+  //     OperationType.CredixWithdrawFunds,
+  //     OperationType.CredixDepositTranche,
+  //     OperationType.CredixWithdrawTranche,
+  //   ];
+  //   return allowedOperations.includes(selectedProposal.operation);
+  // }
 
   const isProposer = (
     selectedProposal &&
@@ -602,25 +643,13 @@ export const ProposalDetailsView = (props: {
         <div className="safe-details-proposal">
           <div className="safe-details-proposal-left">
             {selectedProposal.status === MultisigTransactionStatus.Passed ? (
-              anyoneCanExecuteTx() ? (
-                <Col className="safe-details-left-container">
-                  <IconUserClock className="user-image mean-svg-icons bg-yellow" />
-                  <div className="proposal-resume-left-text">
-                    <div className="info-label">Pending execution by</div>
-                    {publicKey && (
-                      <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(publicKey, 4)}</span>
-                    )}
-                  </div>
-                </Col>
-              ) : (
-                <Col className="safe-details-left-container">
-                  <IconUserClock className="user-image mean-svg-icons bg-yellow" />
-                  <div className="proposal-resume-left-text">
-                    <div className="info-label">Pending execution by</div>
-                    <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
-                  </div>
-                </Col>
-              )
+              <Col className="safe-details-left-container">
+                <IconUserClock className="user-image mean-svg-icons bg-yellow" />
+                <div className="proposal-resume-left-text">
+                  <div className="info-label">Pending execution</div>
+                  <span>Proposed by {proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
+                </div>
+              </Col>
             ) : selectedProposal.status === MultisigTransactionStatus.Executed ? (
               <Col className="safe-details-left-container">
                 <IconLightning className="user-image mean-svg-icons bg-green" />
@@ -771,7 +800,6 @@ export const ProposalDetailsView = (props: {
                     className="thin-stroke d-flex justify-content-center align-items-center"
                     disabled={
                       hasMultisigPendingProposal || 
-                      (!isProposer && !anyoneCanExecuteTx()) ||
                       isBusy ||
                       isExecuteTxPendingConfirmation(selectedProposal.id) ||
                       loadingData
