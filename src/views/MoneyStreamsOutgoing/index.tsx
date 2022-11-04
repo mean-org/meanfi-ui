@@ -710,7 +710,7 @@ export const MoneyStreamsOutgoingView = (props: {
       setAddFundsPayload(addFundsData);
 
       const data = {
-        contributor: publicKey.toBase58(),                              // contributor
+        contributor: selectedAccount.address,                           // contributor
         treasury: treasury.toBase58(),                                  // treasury
         stream: stream.toBase58(),                                      // stream
         amount: `${amount} (${addFundsData.amount})`,                   // amount
@@ -771,8 +771,8 @@ export const MoneyStreamsOutgoingView = (props: {
       if (addFundsData.fundFromTreasury) {
         consoleOut('Starting allocate using MSP V2...', '', 'blue');
         return await fundFromTreasury({
-          payer: publicKey,
-          treasurer: publicKey,
+          payer: new PublicKey(data.contributor),
+          treasurer: new PublicKey(data.contributor),
           treasury: treasury,
           stream: stream,
           amount: amount
@@ -914,21 +914,36 @@ export const MoneyStreamsOutgoingView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            const fundTargetMultisig = 'fund stream with';
+            const fundTargetSingleSigner = 'Fund stream with';
+            const targetFundedSingleSigner = 'Stream funded with';
+            const loadingMessage = multisigAuth
+              ? `Create proposal to ${fundTargetMultisig} ${formatThousands(
+                  parseFloat(addFundsData.amount as string),
+                  token.decimals
+                )} ${token.symbol}`
+              : `${fundTargetSingleSigner} ${formatThousands(
+                  parseFloat(addFundsData.amount as string),
+                  token.decimals
+                )} ${token.symbol}`;
+            const completedMessage = multisigAuth
+              ? `Proposal to ${fundTargetMultisig} ${formatThousands(
+                  parseFloat(addFundsData.amount as string),
+                  token.decimals
+                )} ${token.symbol} was submitted for Multisig approval.`
+              : `${targetFundedSingleSigner} ${formatThousands(
+                  parseFloat(addFundsData.amount as string),
+                  token.decimals
+                )} ${token.symbol}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.StreamAddFunds,
               finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Fund stream with ${formatThousands(
-                parseFloat(addFundsData.amount as string),
-                token.decimals
-              )} ${token.symbol}`,
+              loadingMessage,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Stream funded with ${formatThousands(
-                parseFloat(addFundsData.amount as string),
-                token.decimals
-              )} ${token.symbol}`,
+              completedMessage,
               extras: {
                 multisigAuthority: multisigAuth
               }
