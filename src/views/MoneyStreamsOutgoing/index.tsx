@@ -710,7 +710,7 @@ export const MoneyStreamsOutgoingView = (props: {
       setAddFundsPayload(addFundsData);
 
       const data = {
-        contributor: selectedAccount.address,                           // contributor
+        contributor: publicKey.toBase58(),                              // contributor
         treasury: treasury.toBase58(),                                  // treasury
         stream: stream.toBase58(),                                      // stream
         amount: `${amount} (${addFundsData.amount})`,                   // amount
@@ -771,8 +771,8 @@ export const MoneyStreamsOutgoingView = (props: {
       if (addFundsData.fundFromTreasury) {
         consoleOut('Starting allocate using MSP V2...', '', 'blue');
         return await fundFromTreasury({
-          payer: new PublicKey(data.contributor),
-          treasurer: new PublicKey(data.contributor),
+          payer: publicKey,
+          treasurer: publicKey,
           treasury: treasury,
           stream: stream,
           amount: amount
