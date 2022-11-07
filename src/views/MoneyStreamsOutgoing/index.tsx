@@ -38,7 +38,6 @@ import { OperationType, TransactionStatus } from "models/enums";
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { CloseStreamParams } from "models/streams";
 import { CloseStreamTransactionParams, StreamTreasuryType } from "models/treasuries";
-import { title } from "process";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -712,7 +711,7 @@ export const MoneyStreamsOutgoingView = (props: {
       setAddFundsPayload(addFundsData);
 
       const data = {
-        contributor: publicKey.toBase58(),                              // contributor
+        contributor: selectedAccount.address,                           // contributor
         treasury: treasury.toBase58(),                                  // treasury
         stream: stream.toBase58(),                                      // stream
         amount: `${amount} (${addFundsData.amount})`,                   // amount
@@ -773,8 +772,8 @@ export const MoneyStreamsOutgoingView = (props: {
       if (addFundsData.fundFromTreasury) {
         consoleOut('Starting allocate using MSP V2...', '', 'blue');
         return await fundFromTreasury({
-          payer: publicKey,
-          treasurer: publicKey,
+          payer: new PublicKey(data.contributor),
+          treasurer: new PublicKey(data.contributor),
           treasury: treasury,
           stream: stream,
           amount: amount
