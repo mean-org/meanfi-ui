@@ -530,33 +530,6 @@ export const ProposalDetailsView = (props: {
     )
   )
 
-  const renderCoolOffPeriod = (
-    <div className="safe-details-cool-off-period-container">
-      <div className="info-label d-flex justify-content-center">Cool-off:</div>
-      <div className="d-flex">
-        <div className="center-cool-off-period-data">
-          <div className="number-cool-off-period-background">00</div>
-          <div className="form-label">day</div>
-        </div>
-        <div>:</div>
-        <div className="center-cool-off-period-data">
-          <span className="number-cool-off-period-background">00</span>
-          <span className="form-label">hrs</span>
-        </div>
-        <div>:</div>
-        <div className="center-cool-off-period-data">
-          <div className="number-cool-off-period-background">00</div>
-          <div className="form-label">min</div>
-        </div>
-        {/* <div>:</div>
-        <div className="center-cool-off-period-data">
-          <div className="number-cool-off-period-background">00</div>
-          <div className="form-label">sec</div>
-        </div> */}
-      </div>
-    </div>
-  );
-
   // Tabs
   const tabs = [
     {
@@ -570,25 +543,6 @@ export const ProposalDetailsView = (props: {
       render: renderActivities
     }
   ];
-
-  // TODO: I believe that this boolean won't be needed anymore but there was a logic indeed.
-  // const anyoneCanExecuteTx = () => {
-  //   const allowedOperations = [
-  //     OperationType.StreamWithdraw,
-  //     OperationType.EditMultisig,
-  //     OperationType.TransferTokens,
-  //     OperationType.UpgradeProgram,
-  //     OperationType.SetMultisigAuthority,
-  //     OperationType.SetAssetAuthority,
-  //     OperationType.DeleteAsset,
-  //     OperationType.StreamTransferBeneficiary,
-  //     OperationType.CredixDepositFunds,
-  //     OperationType.CredixWithdrawFunds,
-  //     OperationType.CredixDepositTranche,
-  //     OperationType.CredixWithdrawTranche,
-  //   ];
-  //   return allowedOperations.includes(selectedProposal.operation);
-  // }
 
   const isProposer = (
     selectedProposal &&
