@@ -704,7 +704,7 @@ export const ProgramDetailsView = (props: {
   useEffect(() => {
     if (!programSelected) { return; }
 
-    const doTheThing = async () => {
+    const getUpgradeAuthority = async () => {
       const programData = programSelected.executable.toBase58();
       try {
         const accountInfo = await readAccountInfo(connection, programData);
@@ -723,7 +723,7 @@ export const ProgramDetailsView = (props: {
       }
     }
 
-    doTheThing();
+    getUpgradeAuthority();
 
   }, [connection, programSelected]);
 
