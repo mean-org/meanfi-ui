@@ -569,9 +569,9 @@ export const getTokenOrCustomToken = async (
     return token;
   } else {
     try {
-      const tokeninfo = await readAccountInfo(connection, address);
-      if ((tokeninfo as any).data["parsed"]) {
-        const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
+      const tokeninfo = await readAccountInfo(connection, address) as AccountInfo<ParsedAccountData> | null;
+      if (tokeninfo?.data["parsed"]) {
+        const decimals = (tokeninfo).data.parsed.info.decimals as number;
         unkToken.decimals = decimals || 0;
         return unkToken as TokenInfo;
       } else {
