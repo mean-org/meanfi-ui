@@ -2822,6 +2822,14 @@ export const VestingView = () => {
     }
   }, [getTransactionFees, createVestingContractTxFees]);
 
+  // Set a default token if we have a list but none already set
+  useEffect(() => {
+    if (selectedList && !workingToken) {
+      consoleOut('Setting default token:', selectedList[0], 'blue');
+      setWorkingToken(selectedList[0]);
+    }
+  }, [selectedList, workingToken]);
+
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
 
