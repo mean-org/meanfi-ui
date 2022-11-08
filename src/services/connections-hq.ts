@@ -6,7 +6,7 @@ import { getRpcApiEndpoint } from "../middleware/api";
 import { ChainID } from "../models/enums";
 
 export interface RpcConfig {
-  cluster: Cluster;
+  cluster: Cluster | "local-validator";
   httpProvider: string;
   networkId: number;
   id: number,

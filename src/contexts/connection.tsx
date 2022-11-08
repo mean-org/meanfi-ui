@@ -18,7 +18,7 @@ export const failsafeConnectionConfig: ConnectionConfig = {
   confirmTransactionInitialTimeout: TRANSACTION_STATUS_RETRY_TIMEOUT
 }
 
-export const getNetworkIdByCluster = (cluster: Cluster) => {
+export const getNetworkIdByCluster = (cluster: Cluster | "local-validator") => {
   switch (cluster) {
     case "devnet":
       return ChainID.Devnet;
@@ -35,6 +35,8 @@ export const getNetworkIdByEnvironment = (env: string) => {
     case "staging":
     case "development":
       return ChainID.Devnet;
+    case "local-validator":
+      return ChainID.LocalValidator;
     case "production":
     default:
       return ChainID.MainnetBeta;
@@ -57,7 +59,7 @@ interface ConnectionProviderConfig {
   endpoint: string;
   slippage: number;
   setSlippage: (val: number) => void;
-  cluster: Cluster;
+  cluster: Cluster | "local-validator";
   tokens: TokenInfo[];
   tokenMap: Map<string, TokenInfo>;
 }
