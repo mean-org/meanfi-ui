@@ -1,7 +1,10 @@
 import { useCallback, useState } from "react";
 import { ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
+  AccountInfo,
+  Connection,
   LAMPORTS_PER_SOL,
+  ParsedAccountData,
   PublicKey,
   Transaction,
 } from "@solana/web3.js";
@@ -15,6 +18,7 @@ import { getNetworkIdByEnvironment } from "../contexts/connection";
 import { environment } from "../environments/environment";
 import { BigNumber } from "bignumber.js";
 import BN from "bn.js";
+import { readAccountInfo } from "./accounts";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -543,4 +547,39 @@ export function slugify(text: string): string {
   })
 
   return flattened
+}
+
+export const getTokenOrCustomToken = async (
+  connection: Connection,
+  address: string,
+  tokenFilterCallback: any,
+) => {
+
+  const token = tokenFilterCallback(address) as TokenInfo | undefined;
+
+  const unkToken = {
+    address: address,
+    name: CUSTOM_TOKEN_NAME,
+    chainId: 101,
+    decimals: 6,
+    symbol: `[${shortenAddress(address)}]`,
+  };
+
+  if (token) {
+    return token;
+  } else {
+    try {
+      const tokeninfo = await readAccountInfo(connection, address) as AccountInfo<ParsedAccountData> | null;
+      if (tokeninfo?.data["parsed"]) {
+        const decimals = (tokeninfo).data.parsed.info.decimals as number;
+        unkToken.decimals = decimals || 0;
+        return unkToken as TokenInfo;
+      } else {
+        return unkToken as TokenInfo;
+      }
+    } catch (error) {
+      console.error('Could not get token info:', error);
+      return unkToken as TokenInfo;
+    }
+  }
 }

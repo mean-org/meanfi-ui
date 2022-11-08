@@ -10,7 +10,6 @@ import {
   MultisigTransactionFees,
   MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk';
-import { Treasury } from '@mean-dao/msp';
 import { AnchorProvider, BN, Program } from "@project-serum/anchor";
 import {
   ConfirmOptions,
@@ -38,6 +37,7 @@ import {
   consoleOut, delay, getTransactionStatusForLogs
 } from 'middleware/ui';
 import {
+  formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
   getTxIxResume
@@ -1733,6 +1733,8 @@ const SafeView = (props: {
         throw new Error(`More than one program was found for program data account '${execDataAccount.pubkey.toBase58()}'`);
       }
 
+      consoleOut('programAccounts:', execAccounts, 'blue');
+
       programs.push({
           pubkey: execAccounts[0].pubkey,
           owner: execAccounts[0].account.owner,
@@ -1936,6 +1938,7 @@ const SafeView = (props: {
   useEffect(() => {
 
     if (!publicKey || !selectedMultisig || multisigTxs === undefined || !id) {
+      setIsProposalDetails(false);
       return;
     }
 
@@ -1959,6 +1962,7 @@ const SafeView = (props: {
   useEffect(() => {
 
     if (!publicKey || !selectedMultisig || programs === undefined || !id) {
+      setIsProgramDetails(false);
       return;
     }
 
@@ -1973,6 +1977,14 @@ const SafeView = (props: {
         setProgramSelected(filteredProgram);
         setIsProposalDetails(false);
         setIsProgramDetails(true);
+        consoleOut('filteredProgram:', filteredProgram, 'orange');
+        consoleOut('filteredProgram details:', {
+          pubkey: filteredProgram.pubkey.toBase58(),
+          owner: filteredProgram.owner.toBase58(),
+          upgradeAuthority: filteredProgram.upgradeAuthority.toBase58(),
+          executable: filteredProgram.executable.toBase58(),
+          size: formatThousands(filteredProgram.size),
+        }, 'orange');
       }
     }
 

@@ -8,7 +8,7 @@ import {
   Treasury, TreasuryType,
   VestingTreasuryActivity
 } from '@mean-dao/msp';
-import { AccountLayout, u64 } from '@solana/spl-token';
+import { AccountLayout } from '@solana/spl-token';
 import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -63,7 +63,19 @@ import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, Transacti
 import { ZERO_FEES } from 'models/multisig';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { TreasuryWithdrawParams } from 'models/treasuries';
-import { AddFundsParams, CreateVestingStreamParams, CreateVestingTreasuryParams, getCategoryLabelByValue, VestingContractCreateOptions, VestingContractEditOptions, VestingContractStreamCreateOptions, VestingContractTopupParams, VestingContractWithdrawOptions, VestingFlowRateInfo, vestingFlowRatesCache } from 'models/vesting';
+import {
+  AddFundsParams,
+  CreateVestingStreamParams,
+  CreateVestingTreasuryParams,
+  getCategoryLabelByValue,
+  VestingContractCreateOptions,
+  VestingContractEditOptions,
+  VestingContractStreamCreateOptions,
+  VestingContractTopupParams,
+  VestingContractWithdrawOptions,
+  VestingFlowRateInfo,
+  vestingFlowRatesCache
+} from 'models/vesting';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from "react-i18next";
@@ -368,7 +380,7 @@ export const VestingView = () => {
       });
     };
 
-    await delay(item.completedMessageTimeout ? (item.completedMessageTimeout * 1000) : 4000);
+    await delay(item.completedMessageTimeout ? (item.completedMessageTimeout * 1000) : 5000);
     notification.open({
       type: "info",
       message: <span></span>,
@@ -1143,6 +1155,7 @@ export const VestingView = () => {
             loadingMessage,
             completedTitle: "Transaction confirmed",
             completedMessage,
+            completedMessageTimeout: isMultisigContext ? 8 : 5,
             extras: {
               vestingContractId: generatedVestingContractId,
               multisigId: createOptions.multisig
@@ -1453,6 +1466,7 @@ export const VestingView = () => {
             loadingMessage,
             completedTitle: "Transaction confirmed",
             completedMessage,
+            completedMessageTimeout: isMultisigContext ? 8 : 5,
             extras: {
               vestingContractId: selectedVestingContract.id as string,
               multisigId: multisigAuthority
@@ -1799,6 +1813,7 @@ export const VestingView = () => {
             loadingMessage,
             completedTitle: "Transaction confirmed",
             completedMessage,
+            completedMessageTimeout: isMultisigContext ? 8 : 5,
             extras: {
               vestingContractId: selectedVestingContract.id as string,
               multisigId: multisigAuthority,
@@ -2114,6 +2129,7 @@ export const VestingView = () => {
             loadingMessage: params.txConfirmDescription,
             completedTitle: "Transaction confirmed",
             completedMessage: params.txConfirmedDescription,
+            completedMessageTimeout: isMultisigContext ? 8 : 5,
             extras: {
               vestingContractId: selectedVestingContract.id as string,
               multisigId: params.multisig,
@@ -2425,6 +2441,7 @@ export const VestingView = () => {
             )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name}`,
             completedTitle: "Transaction confirmed",
             completedMessage,
+            completedMessageTimeout: isMultisigContext ? 8 : 5,
             extras: {
               vestingContractId: selectedVestingContract.id as string,
               multisigId: multisigAuthority, // params.multisig
@@ -2663,6 +2680,7 @@ export const VestingView = () => {
             loadingMessage: `Refresh balance for vesting contract ${selectedVestingContract.name}`,
             completedTitle: "Transaction confirmed",
             completedMessage: `Refresh balance successful for vesting contract ${selectedVestingContract.name}`,
+            completedMessageTimeout: isMultisigContext ? 8 : 5,
             extras: {
               vestingContractId: selectedVestingContract.id as string,
               multisigId: ''
@@ -2682,6 +2700,7 @@ export const VestingView = () => {
     connection,
     nativeBalance,
     mspV2AddressPK,
+    isMultisigContext,
     transactionCancelled,
     selectedVestingContract,
     transactionStatus.currentOperation,
