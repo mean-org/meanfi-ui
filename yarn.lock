@@ -1975,10 +1975,10 @@
     "@solana/web3.js" "1.36.0"
     cross-fetch "^3.1.5"
 
-"@mean-dao/mean-multisig-sdk@1.16.1":
-  version "1.16.1"
-  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-sdk/-/mean-multisig-sdk-1.16.1.tgz#5aed483c68fa11eeb7184ddd27e6c841fd8f8478"
-  integrity sha512-caGeCHj/Q2XOK7A5yIU2/ptge2s9fUNQhLITc8HVXdJLHtns/WLWLu8FlmLdKK17DBIGQ3hi2I/O35pVhEsrZg==
+"@mean-dao/mean-multisig-sdk@1.17.0-alpha.15":
+  version "1.17.0-alpha.15"
+  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-sdk/-/mean-multisig-sdk-1.17.0-alpha.15.tgz#a942cf2d8a8327b93176ac32222e1fdcb57c6275"
+  integrity sha512-SypEHraaOW0UppzU78HOv8scIbjKQX+zsWtiDupL4F8uCXD7Z+/UOi77yxnDgxcoD2sXuk+MP0iI8gBivz3E0w==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@project-serum/anchor-cli" "^0.24.2"
