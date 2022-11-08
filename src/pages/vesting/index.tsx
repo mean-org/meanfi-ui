@@ -2838,11 +2838,11 @@ export const VestingView = () => {
       return;
     }
 
-    if (!publicKey || !splTokenList) {
+    if (!selectedAccount.address || !splTokenList) {
       return;
     }
 
-    const pk = balancesSource || publicKey.toBase58();
+    const pk = balancesSource || selectedAccount.address;
 
     const timeout = setTimeout(() => {
 
@@ -2869,11 +2869,11 @@ export const VestingView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     priceList,
-    publicKey,
     priceList,
     connection,
     splTokenList,
     balancesSource,
+    selectedAccount.address,
   ]);
 
   // Build CTAs
