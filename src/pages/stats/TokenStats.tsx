@@ -13,6 +13,7 @@ import { MEAN_TOKEN } from "../../constants/tokens";
 import { AppStateContext } from "../../contexts/appstate";
 import { openNotification } from "../../components/Notifications";
 import { InfoIcon } from "../../components/InfoIcon";
+import { MEANFI_DOCS_URL } from "constants/common";
 
 export const TokenStats = ({meanStats, smeanSupply, totalVolume24h}: any) => {
   return (
@@ -52,11 +53,11 @@ export const FirstCardsLayout = () => {
     {
       label: t('stats.summary.token-audits'),
       value: <span>
-        <a href="https://docs.meanfi.com/products/safety-and-security#audits"
+        <a href={`${MEANFI_DOCS_URL}mean/products/safety-and-security#audits`}
             target="_blank" title="CetriK" rel="noreferrer" className="audit-links">
           <img src="https://www.certik.com/certik-logotype-h-w.svg" alt="CetriK" />
         </a>
-        <a href="https://docs.meanfi.com/products/safety-and-security#audits"
+        <a href={`${MEANFI_DOCS_URL}mean/products/safety-and-security#audits`}
             target="_blank" title="Sec3" rel="noreferrer" className="audit-links">          
           <img src="https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg" alt="Sec3" />
         </a>
