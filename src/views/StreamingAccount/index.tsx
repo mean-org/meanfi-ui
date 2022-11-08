@@ -1049,10 +1049,10 @@ export const StreamingAccountView = (props: {
       const amount = params.tokenAmount.toString();
       consoleOut('raw amount:', params.tokenAmount, 'blue');
       consoleOut('amount.toString():', amount, 'blue');
-      const contributor = params.contributor || publicKey.toBase58();
+      const contributor = params.contributor || selectedAccount.address;
       const data = {
         proposalTitle: params.proposalTitle,                      // proposalTitle
-        payer: publicKey.toBase58(),                              // payer
+        payer: selectedAccount.address,                              // payer
         contributor: contributor,                                 // contributor
         treasury: treasury.toBase58(),                            // treasury
         associatedToken: associatedToken.toBase58(),              // associatedToken
@@ -1720,7 +1720,7 @@ export const StreamingAccountView = (props: {
       if (!multisig) { return null; }
 
       const closeTreasury = await msp.closeTreasury(
-        publicKey,                                  // payer
+        multisig.authority,                         // payer
         multisig.authority,                         // destination
         new PublicKey(data.treasury),               // treasury
         false                                       // autoWsol

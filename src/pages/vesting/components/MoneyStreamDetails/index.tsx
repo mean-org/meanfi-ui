@@ -469,7 +469,7 @@ export const MoneyStreamDetails = (props: {
 
   const getStartDateLabel = useCallback((stream: Stream) => {
     return isStartDateFuture(stream.startUtc) ? "Starting on:" : "Started on:";
-  }, []);
+  }, [isStartDateFuture]);
 
   // Tab details
   const detailsData = useMemo(() => [
@@ -520,13 +520,13 @@ export const MoneyStreamDetails = (props: {
   ], [
     stream,
     isInboundStream,
-    isStartDateFuture,
-    renderCliffVestAmount,
-    renderFundsLeftInAccount,
     renderFundsSendToRecipient,
-    renderPaymentRate,
-    renderReceivingFrom,
+    renderFundsLeftInAccount,
     renderReservedAllocation,
+    renderCliffVestAmount,
+    renderReceivingFrom,
+    renderPaymentRate,
+    getStartDateLabel,
     renderSendingTo,
     renderStreamId,
   ]);

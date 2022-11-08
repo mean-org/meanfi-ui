@@ -831,7 +831,12 @@ export const VestingView = () => {
 
   // Create vesting contract modal
   const [isVestingContractCreateModalVisible, setIsVestingContractCreateModalVisibility] = useState(false);
-  const showVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(true), []);
+  const showVestingContractCreateModal = useCallback(() => {
+    if (!workingToken) {
+      setWorkingToken(selectedList[0]);
+    }
+    setIsVestingContractCreateModalVisibility(true);
+  }, [selectedList, workingToken]);
   const closeVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(false), []);
 
   const onVestingContractCreated = useCallback(() => {
@@ -884,7 +889,7 @@ export const VestingView = () => {
 
       const treasuryAssociatedTokenMint = new PublicKey(data.associatedTokenAddress);
       const createTreasuryTx = await msp.createVestingTreasury(
-        publicKey,                                            // payer
+        multisig.authority,                                   // payer
         multisig.authority,                                   // treasurer
         data.label,                                           // label
         data.type,                                            // type
@@ -1164,7 +1169,14 @@ export const VestingView = () => {
           setIsBusy(false);
           resetTransactionStatus();
           onVestingContractCreated();
-        } else { setIsBusy(false); }
+        } else {
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: "error"
+          });
+          setIsBusy(false);
+        }
       } else { setIsBusy(false); }
     }
   },[
@@ -1259,7 +1271,7 @@ export const VestingView = () => {
       multisigAuthority = multisig.authority.toBase58();
 
       const closeTreasury = await msp.closeTreasury(
-        publicKey,                                  // payer
+        multisig.authority,                         // payer
         multisig.authority,                         // destination
         new PublicKey(data.treasury),               // treasury
         false
@@ -1302,7 +1314,7 @@ export const VestingView = () => {
       const treasury = new PublicKey(selectedVestingContract.id as string);
       const data = {
         proposalTitle,                                        // proposalTitle
-        treasurer: publicKey.toBase58(),                      // treasurer
+        treasurer: selectedAccount.address,                   // treasurer
         treasury: treasury.toBase58()                         // treasury
       }
       consoleOut('data:', data);
@@ -1474,7 +1486,14 @@ export const VestingView = () => {
           });
           setIsBusy(false);
           onCloseTreasuryTransactionFinished();
-        } else { setIsBusy(false); }
+        } else {
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: "error"
+          });
+          setIsBusy(false);
+        }
       } else { setIsBusy(false); }
     }
 
@@ -1625,7 +1644,7 @@ export const VestingView = () => {
 
       const data: AddFundsParams = {
         proposalTitle: params.proposalTitle,                      // proposalTitle
-        payer: publicKey.toBase58(),                              // payer
+        payer: contributor,                                       // payer
         contributor,                                              // contributor
         treasury: treasury.toBase58(),                            // treasury
         associatedToken: associatedToken.toBase58(),              // associatedToken
@@ -1822,7 +1841,14 @@ export const VestingView = () => {
           });
           setIsBusy(false);
           closeAddFundsModal();
-        } else { setIsBusy(false); }
+        } else {
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: "error"
+          });
+          setIsBusy(false);
+        }
       } else { setIsBusy(false); }
     }
 
@@ -1901,7 +1927,7 @@ export const VestingView = () => {
       consoleOut('associatedToken == treasuryAssociatedTokenMint?', selectedVestingContract?.associatedToken === data.treasuryAssociatedTokenMint ? 'true' : 'false', 'blue');
 
       const [createStreamTx, streamAddress] = await msp.createStreamWithTemplate(
-        publicKey,                                                                // payer
+        multisig.authority,                                                       // payer
         multisig.authority,                                                       // treasurer
         treasury,                                                                 // treasury
         beneficiary,                                                              // beneficiary
@@ -2138,7 +2164,14 @@ export const VestingView = () => {
           });
           setIsBusy(false);
           closeCreateStreamModal();
-        } else { setIsBusy(false); }
+        } else {
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: "error"
+          });
+          setIsBusy(false);
+        }
       } else { setIsBusy(false); }
     }
 
@@ -2266,7 +2299,7 @@ export const VestingView = () => {
 
       // Create a transaction
       const payload: TreasuryWithdrawParams = {
-        payer: publicKey.toBase58(),
+        payer: selectedAccount.address,
         destination: destinationPk.toBase58(),
         treasury: treasuryPk.toBase58(),
         amount: amount.toString()
@@ -2449,7 +2482,14 @@ export const VestingView = () => {
           });
           setIsBusy(false);
           closeVestingContractTransferFundsModal();
-        } else { setIsBusy(false); }
+        } else {
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: "error"
+          });
+          setIsBusy(false);
+        }
       } else { setIsBusy(false); }
     }
   };
@@ -2688,7 +2728,14 @@ export const VestingView = () => {
           });
           setIsBusy(false);
           onRefreshTreasuryBalanceTransactionFinished();
-        } else { setIsBusy(false); }
+        } else {
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: "error"
+          });
+          setIsBusy(false);
+        }
       } else { setIsBusy(false); }
     }
 
@@ -2708,6 +2755,7 @@ export const VestingView = () => {
     enqueueTransactionConfirmation,
     resetTransactionStatus,
     setTransactionStatus,
+    t
   ]);
 
   // Edit vesting contract settings
@@ -2774,6 +2822,14 @@ export const VestingView = () => {
     }
   }, [getTransactionFees, createVestingContractTxFees]);
 
+  // Set a default token if we have a list but none already set
+  useEffect(() => {
+    if (selectedList && !workingToken) {
+      consoleOut('Setting default token:', selectedList[0], 'blue');
+      setWorkingToken(selectedList[0]);
+    }
+  }, [selectedList, workingToken]);
+
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
 
@@ -2782,11 +2838,11 @@ export const VestingView = () => {
       return;
     }
 
-    if (!publicKey || !splTokenList) {
+    if (!selectedAccount.address || !splTokenList) {
       return;
     }
 
-    const pk = balancesSource || publicKey.toBase58();
+    const pk = balancesSource || selectedAccount.address;
 
     const timeout = setTimeout(() => {
 
@@ -2801,10 +2857,6 @@ export const VestingView = () => {
         if (response) {
           setSelectedList(response.tokenList);
           setUserBalances(response.balancesMap);
-          if (!workingToken) {
-            setWorkingToken(response.tokenList[0]);
-            setSelectedToken(response.tokenList[0]);
-          }  
         }
       });
 
@@ -2817,13 +2869,11 @@ export const VestingView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     priceList,
-    publicKey,
     priceList,
     connection,
     splTokenList,
-    workingToken,
     balancesSource,
-    setSelectedToken,
+    selectedAccount.address,
   ]);
 
   // Build CTAs

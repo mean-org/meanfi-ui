@@ -599,14 +599,14 @@ export const VestingContractCreateStreamModal = (props: {
 
     return (
         <Modal
-            className="mean-modal simple-modal unpadded-content"
+            className="mean-modal simple-modal"
             title={<div className="modal-title">{t('vesting.create-stream.modal-title')}</div>}
             footer={null}
             open={isVisible}
             onCancel={handleClose}
             width={480}>
 
-            <div className="scrollable-content pl-5 pr-4 py-2">
+            <div className="scrollable-content">
 
                 <WizardStepSelector
                     step={currentStep}
