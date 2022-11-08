@@ -484,9 +484,9 @@ export const VestingContractStreamList = (props: {
             const streamPublicKey = highlightedStream.id;
 
             const data = {
-                stream: streamPublicKey.toBase58(),                     // stream
-                payer: publicKey.toBase58(),                            // initializer
-                closeTreasury: closeStreamOptions.closeTreasuryOption        // closeTreasury
+                stream: streamPublicKey.toBase58(),                             // stream
+                payer: accountAddress,                                          // initializer
+                closeTreasury: closeStreamOptions.closeTreasuryOption           // closeTreasury
             }
             consoleOut('data:', data);
             const price = selectedToken
