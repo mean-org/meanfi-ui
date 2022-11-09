@@ -4949,13 +4949,6 @@ main section {
     justify-content: flex-start;
     max-height: calc(100% - 1rem);
     min-height: 346px;
-    // margin-right: -0.5rem;
-    .meanfi-two-panel-left,
-    .meanfi-two-panel-right {
-      // padding-right: 1rem;
-      transition: transform 0.5s ease-in-out;
-      height: 100%;
-    }
     &:not(.details-open) {
       overflow: auto;
       .meanfi-two-panel-left {
@@ -4976,6 +4969,8 @@ main section {
       left: 0;
       top: 0;
       transform: translateY(0%);
+      transition: transform 0.5s ease-in-out;
+      height: 100%;
       transform-origin: top;
       opacity: 1;
       z-index: 1;
@@ -4989,6 +4984,8 @@ main section {
       top: 0;
       width: 100%;
       transform: translateY(80%);
+      transition: transform 0.5s ease-in-out;
+      height: 100%;
       opacity: 0;
       transform-origin: top;
       z-index: 2;
