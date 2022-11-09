@@ -1297,15 +1297,21 @@ export const MoneyStreamsOutgoingView = (props: {
         consoleOut('sent:', sent);
         if (sent && !transactionCancelled) {
           consoleOut('Send Tx to confirmation queue:', signature);
+          const loadingMessage = multisigAuth
+            ? `Create proposal to pause stream ${streamName}`
+            : `Pause stream: ${streamName}`;
+          const completedMessage = multisigAuth
+            ? `Proposal to pause stream ${streamName} was submitted for Multisig approval.`
+            : `Successfully paused stream: ${streamName}`;
           enqueueTransactionConfirmation({
             signature: signature,
             operationType: OperationType.StreamPause,
             finality: "confirmed",
             txInfoFetchStatus: "fetching",
             loadingTitle: "Confirming transaction",
-            loadingMessage: `Pause stream: ${streamName}`,
+            loadingMessage,
             completedTitle: "Transaction confirmed",
-            completedMessage: `Successfully paused stream: ${streamName}`,
+            completedMessage,
             extras: {
               multisigAuthority: multisigAuth
             }
@@ -1687,15 +1693,21 @@ export const MoneyStreamsOutgoingView = (props: {
         consoleOut('sent:', sent);
         if (sent && !transactionCancelled) {
           consoleOut('Send Tx to confirmation queue:', signature);
+          const loadingMessage = multisigAuth
+            ? `Create proposal to resume stream ${streamName}`
+            : `Resume stream: ${streamName}`;
+          const completedMessage = multisigAuth
+            ? `Proposal to resume stream ${streamName} was submitted for Multisig approval.`
+            : `Successfully resumed stream: ${streamName}`;
           enqueueTransactionConfirmation({
             signature: signature,
             operationType: OperationType.StreamResume,
             finality: "confirmed",
             txInfoFetchStatus: "fetching",
             loadingTitle: "Confirming transaction",
-            loadingMessage: `Resume stream: ${streamName}`,
+            loadingMessage,
             completedTitle: "Transaction confirmed",
-            completedMessage: `Successfully resumed stream: ${streamName}`,
+            completedMessage,
             extras: {
               multisigAuthority: multisigAuth
             }
@@ -2130,15 +2142,21 @@ export const MoneyStreamsOutgoingView = (props: {
         consoleOut('sent:', sent);
         if (sent && !transactionCancelled) {
           consoleOut('Send Tx to confirmation queue:', signature);
+          const loadingMessage = multisigAuth
+            ? `Create proposal to close stream ${streamName}`
+            : `Close stream: ${streamName}`;
+          const completedMessage = multisigAuth
+            ? `Proposal to close stream ${streamName} was submitted for Multisig approval.`
+            : `Successfully closed stream: ${streamName}`;
           enqueueTransactionConfirmation({
             signature: signature,
             operationType: OperationType.StreamClose,
             finality: "confirmed",
             txInfoFetchStatus: "fetching",
             loadingTitle: "Confirming transaction",
-            loadingMessage: `Close stream: ${streamName}`,
+            loadingMessage,
             completedTitle: "Transaction confirmed",
-            completedMessage: `Successfully closed stream: ${streamName}`,
+            completedMessage,
             extras: {
               multisigAuthority: multisigAuth
             }
