@@ -194,11 +194,45 @@
 [data-theme="light"] {
   color-scheme: light;
   background-color: var(--bg-color);
+  .flat-button {
+    background-color: transparent;
+    &:not(.disabled) {
+      &:hover,
+      &.active,
+      &:focus {
+        background-color: var(--darken-05);
+        text-decoration: none;
+      }
+    }
+  }
+  .well {
+    &:not(.disabled):focus,
+    &:not(.disabled):hover {
+      background-color: var(--darken-10);
+    }
+  }
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
   background-color: var(--bg-color);
+  .flat-button {
+    background-color: var(--darken-10);
+    &:not(.disabled) {
+      &:hover,
+      &.active,
+      &:focus {
+        background-color: var(--darken-20);
+        text-decoration: none;
+      }
+    }
+  }
+  .well {
+    &:not(.disabled):focus,
+    &:not(.disabled):hover {
+      background-color: var(--darken-40);
+    }
+  }
 }
 
 body {
@@ -753,34 +787,6 @@ footer.ant-layout-footer {
   &.uppercase,
   &.change-button {
     text-transform: uppercase;
-  }
-}
-
-[data-theme="light"] {
-  .flat-button {
-    background-color: transparent;
-    &:not(.disabled) {
-      &:hover,
-      &.active,
-      &:focus {
-        background-color: var(--darken-05);
-        text-decoration: none;
-      }
-    }
-  }
-}
-
-[data-theme="dark"] {
-  .flat-button {
-    background-color: var(--darken-10);
-    &:not(.disabled) {
-      &:hover,
-      &.active,
-      &:focus {
-        background-color: var(--darken-20);
-        text-decoration: none;
-      }
-    }
   }
 }
 
@@ -1654,6 +1660,31 @@ footer.ant-layout-footer {
 }
 
 .ant-tabs {
+  color: inherit;
+  .ant-tabs-nav {
+    &::before {
+      border: none;
+    }
+  }
+  .ant-tabs-nav-list {
+    .ant-tabs-tab {
+      padding: 10px 0;
+      border-bottom: 3px solid transparent;
+      &:hover {
+        color: inherit;
+        border-bottom: 3px solid var(--color-secondary-alpha-05);
+      }
+      .ant-tabs-tab-btn {
+        color: inherit;
+        text-transform: uppercase;
+      }
+    }
+    .ant-tabs-ink-bar {
+      position: absolute;
+      background: var(--color-primary-highlight);
+      pointer-events: none;
+    }
+  }
   &.neutral {
     .ant-tabs-nav-list {
       padding-left: 0.25em;
@@ -1839,6 +1870,7 @@ footer.ant-layout-footer {
 .ant-picker-dropdown {
   color: var(--color-secondary-alpha-80);
 }
+
 .ant-picker-panel-container {
   background: var(--color-component-background);
   .ant-picker-panel-focused {
@@ -1856,6 +1888,11 @@ footer.ant-layout-footer {
     }
     .ant-picker-body {
       .ant-picker-content {
+        .ant-picker-content {
+          .ant-picker-time-panel-column:last-child::after {
+            height: auto;
+          }
+        }
         th,
         .ant-picker-cell-in-view {
           color: inherit;
@@ -1889,20 +1926,24 @@ footer.ant-layout-footer {
   }
 }
 
-.ant-picker-time-panel-column > li.ant-picker-time-panel-cell .ant-picker-time-panel-cell-inner {
-  color: inherit;
-}
-.ant-picker-time-panel-column > li.ant-picker-time-panel-cell-selected .ant-picker-time-panel-cell-inner {
-  background: var(--color-primary);
-}
-.ant-picker-time-panel-column > li.ant-picker-time-panel-cell .ant-picker-time-panel-cell-inner:hover {
-  background: var(--color-secondary);
-}
-.ant-picker-time-panel-column:not(:first-child) {
-  border-left: none !important;
-}
 .ant-picker-time-panel-column {
   width: 48px !important;
+  > li {
+    &.ant-picker-time-panel-cell {
+      .ant-picker-time-panel-cell-inner {
+        color: inherit;
+        &:hover {
+          background: var(--color-secondary);
+        }
+      }
+    }
+    &.ant-picker-time-panel-cell-selected .ant-picker-time-panel-cell-inner {
+      background: var(--color-primary);
+    }
+  }
+  &:not(:first-child) {
+    border-left: none !important;
+  }
 }
 
 .ant-picker-input {
@@ -2074,34 +2115,6 @@ em {
   }
 }
 
-.ant-tabs {
-  color: inherit;
-  .ant-tabs-nav {
-    &::before {
-      border: none;
-    }
-  }
-  .ant-tabs-nav-list {
-    .ant-tabs-tab {
-      padding: 10px 0;
-      border-bottom: 3px solid transparent;
-      &:hover {
-        color: inherit;
-        border-bottom: 3px solid var(--color-secondary-alpha-05);
-      }
-      .ant-tabs-tab-btn {
-        color: inherit;
-        text-transform: uppercase;
-      }
-    }
-    .ant-tabs-ink-bar {
-      position: absolute;
-      background: var(--color-primary-highlight);
-      pointer-events: none;
-    }
-  }
-}
-
 .ant-tooltip-inner {
   white-space: pre-line;
 }
@@ -2262,14 +2275,10 @@ em {
     flex-direction: row;
     > .left {
       padding-right: 8px;
-    }
-    > .right {
-      padding-left: 8px;
-    }
-    > .left {
       flex: 1 1 50%;
     }
     > .right {
+      padding-left: 8px;
       flex: 1 1 50%;
     }
   }
@@ -2351,14 +2360,10 @@ em {
     flex-direction: row;
     > .left {
       padding-right: 8px;
-    }
-    > .right {
-      padding-left: 8px;
-    }
-    > .left {
       flex: 1 1 50%;
     }
     > .right {
+      padding-left: 8px;
       flex: 1 1 50%;
     }
   }
@@ -2592,9 +2597,6 @@ main section {
   padding: 0;
   margin: 0;
   list-style: none;
-  &.dash-bullet {
-    padding-left: 20px;
-  }
   li {
     &.separator {
       margin-bottom: 0.4rem;
@@ -2604,6 +2606,7 @@ main section {
     }
   }
   &.dash-bullet {
+    padding-left: 20px;
     > li::before {
       content: '\2014';
       position: absolute;
@@ -3226,14 +3229,6 @@ main section {
   }
 }
 
-.ant-picker-panel-container {
-  .ant-picker-content {
-    .ant-picker-time-panel-column:last-child::after {
-      height: auto;
-    }
-  }
-}
-
 // Wells can glue togethwe in a group inside this container
 .well-group {
   display: block;
@@ -3336,6 +3331,7 @@ main section {
   }
   #payment-recipient-field,
   #payment-recipient-static-field {
+    top: 2px;
     position: absolute;
     line-height: 1.2rem;
     @media (max-width: 575.98px) {
@@ -3344,10 +3340,6 @@ main section {
     @media (min-width: 576px) {
       font-size: 16px !important;
     }
-  }
-  #payment-recipient-field,
-  #payment-recipient-static-field {
-    top: 2px;
   }
   .general-text-input {
     width: 100%;
@@ -3466,22 +3458,6 @@ main section {
     }
     @media (min-width: 576px) {
       font-size: 16px !important;
-    }
-  }
-}
-[data-theme="light"] {
-  .well {
-    &:not(.disabled):focus,
-    &:not(.disabled):hover {
-      background-color: var(--darken-10);
-    }
-  }
-}
-[data-theme="dark"] {
-  .well {
-    &:not(.disabled):focus,
-    &:not(.disabled):hover {
-      background-color: var(--darken-40);
     }
   }
 }
