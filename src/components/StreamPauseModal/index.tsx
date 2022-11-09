@@ -159,12 +159,10 @@ export const StreamPauseModal = (props: {
 
   const onAcceptModal = () => {
     props.handleOk(proposalTitle);
-    setTimeout(() => {
-      setProposalTitle('');
-    }, 50);
   }
 
   const onCloseModal = () => {
+    setProposalTitle('');
     props.handleClose();
   }
 
