@@ -144,9 +144,7 @@ export const AccountsView = () => {
     loadingTokenAccounts,
     streamProgramAddress,
     streamV2ProgramAddress,
-    pendingMultisigTxCount,
     previousWalletConnectState,
-    loadingMultisigTxPendingCount,
     setPendingMultisigTxCount,
     showDepositOptionsModal,
     getTokenPriceByAddress,
@@ -3080,15 +3078,11 @@ export const AccountsView = () => {
   // Load treasuries when account address changes
   useEffect(() => {
     if (publicKey && selectedAccount.address) {
-
-      if (!previousRoute.startsWith('/accounts')) {
-        clearStateData();
-      }
       consoleOut('Loading treasuries...', 'selectedAccount changed!', 'purple');
       refreshTreasuries(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAccount.address, previousRoute, publicKey]);
+  }, [selectedAccount.address, publicKey]);
 
   // Treasury list refresh timeout
   useEffect(() => {
@@ -4015,17 +4009,6 @@ export const AccountsView = () => {
   ///////////////
   // Rendering //
   ///////////////
-
-  const renderPendinProposals = () => {
-    if (loadingMultisigTxPendingCount) {
-      return (<IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />);
-    }
-    if (pendingMultisigTxCount && pendingMultisigTxCount > 0) {
-      return (<span>{pendingMultisigTxCount} pending proposals on this account</span>);
-    } else {
-      return (<span>No pending proposals</span>);
-    }
-  };
 
   const renderNetworth = () => {
     if (netWorth) {
