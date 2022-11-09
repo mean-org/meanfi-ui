@@ -51,12 +51,12 @@ import { segmentAnalytics } from "../App";
 import { AppUsageEvent } from "../middleware/segment-service";
 import { consoleOut, isProd } from "../middleware/ui";
 import { isUnauthenticatedRoute, useLocalStorageState } from "../middleware/utils";
+import { XnftWalletAdapter, XnftWalletName, isInXnftWallet } from '../integrations/xnft/xnft-wallet-adapter';
 
 export type MeanFiWallet = PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
                           | SlopeWalletAdapter | Coin98WalletAdapter | SolongWalletAdapter | SolletWalletAdapter
                           | SolletExtensionWalletAdapter | MathWalletAdapter | TrustWalletAdapter | LedgerWalletAdapter
-                          | BitKeepWalletAdapter | CoinbaseWalletAdapter | SentreWalletAdapter | BraveWalletAdapter
-                          | undefined;
+                          | BitKeepWalletAdapter | CoinbaseWalletAdapter | SentreWalletAdapter | BraveWalletAdapter |       XnftWalletAdapter | undefined;
 
 export interface WalletProviderEntry {
   name: string;
@@ -252,6 +252,18 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     isWebWallet: false,
     underDevelopment: false,
     hideIfUnavailable: true
+  },
+  {
+    name: XnftWalletName,
+    url: '',
+    icon: '',
+    adapter: XnftWalletAdapter,
+    adapterParams: undefined,
+    hideOnDesktop: true,
+    hideOnMobile: true,
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: true
   }
 ];
 
@@ -287,6 +299,8 @@ const getIsProviderInstalled = (provider: any): boolean => {
         return true;
       case BraveWalletName:
         return !!(window as any).braveSolana?.isBraveWallet;
+      case XnftWalletName:
+        return isInXnftWallet();
       default:
         return false;
     }
@@ -395,10 +409,19 @@ export function WalletProvider({ children = null as any }) {
           new TrustWalletAdapter(),
           new MathWalletAdapter(),
           new LedgerWalletAdapter(),
-          new SentreWalletAdapter({ appId: sentreAppId })
+          new SentreWalletAdapter({ appId: sentreAppId }),
+          new XnftWalletAdapter(),
       ],
       [network]
   );
+  
+  useEffect(()=>{
+    if(isInXnftWallet()) {
+      document.body.classList.add('in-xnft-wallet');
+      setWalletName(XnftWalletName);
+      setWallet(wallets.find(w => w.name === XnftWalletName));
+    }
+  }, [setWalletName, wallets]);
 
   useEffect(() => {
     if (wallets) {
@@ -507,7 +530,7 @@ export function WalletProvider({ children = null as any }) {
         centered
         className="mean-modal simple-modal"
         title={<div className="modal-title">{t(`wallet-selector.primary-action`)}</div>}
-        open={isSelectingWallet}
+        open={!isInXnftWallet() && isSelectingWallet}
         footer={null}
         maskClosable={connected}
         closable={connected}
