@@ -87,7 +87,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [userBalances, setUserBalances] = useState<any>();
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [lastOperationPayload, setLastOperationPayload] = useState<any>(undefined);
+  const [lastOperationPayload, setLastOperationPayload] = useState<string>('');
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   // Treasury related
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
@@ -1316,7 +1316,7 @@ export const MoneyStreamsOutgoingView = (props: {
           });
           setIsPauseStreamModalVisibility(false);
           setOngoingOperation(undefined);
-          setLastOperationPayload(undefined);
+          setLastOperationPayload('');
           onTransactionFinished();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1707,7 +1707,7 @@ export const MoneyStreamsOutgoingView = (props: {
           
           setIsResumeStreamModalVisibility(false);
           setOngoingOperation(undefined);
-          setLastOperationPayload(undefined);
+          setLastOperationPayload('');
           onTransactionFinished();
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
