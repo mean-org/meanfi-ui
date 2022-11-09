@@ -89,7 +89,7 @@ export const VestingContractAddFundsModal = (props: {
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
   const [, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
-  const [availableBalance, setAvailableBalance] = useState<any>();
+  const [availableBalance, setAvailableBalance] = useState(new BN(0));
   const [tokenAmount, setTokenAmount] = useState<any>(0);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [showQrCode, setShowQrCode] = useState(false);
@@ -158,7 +158,7 @@ export const VestingContractAddFundsModal = (props: {
         return maxAmount;
       }
     }
-    return selectedToken && availableBalance ? availableBalance : 0;
+    return selectedToken && availableBalance ? availableBalance : new BN(0);
   },[
     selectedToken,
     availableBalance,
@@ -704,7 +704,7 @@ export const VestingContractAddFundsModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal unpadded-content"
+      className="mean-modal simple-modal"
       title={
         <div className="modal-title">{getModalTitle()}</div>
       }
@@ -715,7 +715,7 @@ export const VestingContractAddFundsModal = (props: {
       onCancel={onCloseModal}
       afterClose={onAfterClose}
       width={getModalAdaptiveWidth()}>
-      <div className="scrollable-content pl-5 pr-4 py-2">
+      <div className="scrollable-content">
 
         {/* Panel1 */}
         <div className={getPanel1Classes()}>

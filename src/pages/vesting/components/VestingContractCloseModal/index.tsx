@@ -133,7 +133,7 @@ export const VestingContractCloseModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal unpadded-content"
+      className="mean-modal simple-modal"
       title={<div className="modal-title">{t('vesting.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
@@ -141,7 +141,7 @@ export const VestingContractCloseModal = (props: {
       onCancel={handleClose}
       width={360}>
 
-      <div className="scrollable-content pl-5 pr-4 py-2">
+      <div className="scrollable-content">
 
         <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
           {transactionStatus.currentOperation === TransactionStatus.Iddle && (
