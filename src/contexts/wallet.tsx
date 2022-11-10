@@ -211,9 +211,9 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     icon: '',
     adapter: TrustWalletAdapter,
     adapterParams: undefined,
-    hideOnDesktop: true,
+    hideOnDesktop: false,
     hideOnMobile: false,
-    isWebWallet: true,
+    isWebWallet: false,
     underDevelopment: false,
     hideIfUnavailable: false
   },
