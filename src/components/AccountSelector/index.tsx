@@ -294,21 +294,23 @@ export const AccountSelector = (props: {
             </div>
           </div>
           <div className="rate-cell">
-            <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
-              <span className="icon-button-container simplelink" onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onCopyAddress(selectedAccount.address);
-              }}>
-                <Button
-                  type="default"
-                  shape="circle"
-                  size="small"
-                  icon={<IconCopy className="mean-svg-icons fg-secondary-50" />}
-                  onClick={() => {}}
-                />
-              </span>
-            </Tooltip>
+            {publicKey ? (
+              <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+                <span className="icon-button-container simplelink" onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onCopyAddress(publicKey.toBase58());
+                }}>
+                  <Button
+                    type="default"
+                    shape="circle"
+                    size="small"
+                    icon={<IconCopy className="mean-svg-icons fg-secondary-50" />}
+                    onClick={() => {}}
+                  />
+                </span>
+              </Tooltip>
+            ) : null}
             {renderNativeAccountOptions()}
           </div>
         </div>
