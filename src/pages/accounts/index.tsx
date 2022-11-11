@@ -3363,7 +3363,7 @@ export const AccountsView = () => {
     connection,
     transactions,
     tokensLoaded,
-    selectedAsset,
+    selectedAsset?.publicAddress,
     selectedAccount.address,
     lastTxSignature,
     solAccountItems,
