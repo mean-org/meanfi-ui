@@ -111,6 +111,7 @@
     "react-share": "^4.4.0",
     "react-wavify": "^1.6.2",
     "recharts": "^2.1",
+    "sass": "^1.56.1",
     "tweetnacl": "^1.0.3",
     "web-vitals": "^2.1.0"
   },
@@ -138,7 +139,7 @@
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-react-hooks": "^4.4.0",
     "graceful-fs": "^4.2.10",
-    "node-sass": "^7.0.1",
+    "prettier": "^2.7.1",
     "process": "^0.11.10",
     "react-app-rewired": "^2.2.1",
     "react-git-info": "^2.0.1",
