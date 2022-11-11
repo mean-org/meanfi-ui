@@ -135,12 +135,12 @@ export const StakeTabView = (props: {
   ]);
 
   const isStakingFormValid = (): boolean => {
-    return  connected &&
-            selectedToken &&
-            meanBalance &&
-            fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= meanBalance
+    return connected &&
+      selectedToken &&
+      meanBalance &&
+      fromCoinAmount &&
+      parseFloat(fromCoinAmount) > 0 &&
+      parseFloat(fromCoinAmount) <= meanBalance
       ? true
       : false;
   }
@@ -257,7 +257,7 @@ export const StakeTabView = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -479,10 +479,10 @@ export const StakeTabView = (props: {
         setStakeQuote(value.sMeanOutUiAmount);
         consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
       })
-      .catch((error: any) => {
-        console.error(error);
-      })
-      .finally(() => setFetchingStakeQuote(false));
+        .catch((error: any) => {
+          console.error(error);
+        })
+        .finally(() => setFetchingStakeQuote(false));
     }
 
   }, [
@@ -516,8 +516,8 @@ export const StakeTabView = (props: {
       }
     }
   }, [
-    stakeClient, 
-    selectedToken, 
+    stakeClient,
+    selectedToken,
     smeanBalance,
     fromCoinAmount
   ]);
@@ -547,7 +547,7 @@ export const StakeTabView = (props: {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       setCanSubscribe(true);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ///////////////
@@ -582,7 +582,7 @@ export const StakeTabView = (props: {
           <div className="left">
             <span className="add-on">
               {selectedToken && (
-                <TokenDisplay onClick={() => {}}
+                <TokenDisplay onClick={() => { }}
                   mintAddress={selectedToken.address}
                   name={selectedToken.name}
                   className="click-disabled"
@@ -624,9 +624,9 @@ export const StakeTabView = (props: {
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span>
               {`${meanBalance && selectedToken
-                  ? getAmountWithSymbol(meanBalance, selectedToken?.address, true)
-                  : "0"
-              }`}
+                ? getAmountWithSymbol(meanBalance, selectedToken?.address, true)
+                : "0"
+                }`}
             </span>
           </div>
           <div className="right inner-label">
@@ -642,17 +642,17 @@ export const StakeTabView = (props: {
       <div className="p-2">
         {
           (!fetchingStakeQuote && fromCoinAmount && parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= meanBalance && stakeQuote > 0) &&
-            infoRow(
-              `${formatThousands(parseFloat(fromCoinAmount), getMaxDecimalsForValue(parseFloat(fromCoinAmount)))} MEAN ≈`,
-              `${formatThousands(stakeQuote, getMaxDecimalsForValue(stakeQuote))} sMEAN`
-            )
+          infoRow(
+            `${formatThousands(parseFloat(fromCoinAmount), getMaxDecimalsForValue(parseFloat(fromCoinAmount)))} MEAN ≈`,
+            `${formatThousands(stakeQuote, getMaxDecimalsForValue(stakeQuote))} sMEAN`
+          )
         }
         {
           stakedMeanPrice > 0 &&
-            infoRow(
-              `1 MEAN ≈`,
-              `${cutNumber(stakedMeanPrice, 6)} sMEAN`
-            )
+          infoRow(
+            `1 MEAN ≈`,
+            `${cutNumber(stakedMeanPrice, 6)} sMEAN`
+          )
         }
       </div>
 

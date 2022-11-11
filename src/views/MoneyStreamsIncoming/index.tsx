@@ -101,7 +101,7 @@ export const MoneyStreamsIncomingView = (props: {
     endpoint,
     streamProgramAddress
   ]);
-  
+
   // Create and cache Money Streaming Program V2 instance
   const msp = useMemo(() => {
     if (publicKey) {
@@ -168,9 +168,9 @@ export const MoneyStreamsIncomingView = (props: {
 
     return false;
   }, [
-      publicKey,
-      streamSelected,
-      multisigAccounts,
+    publicKey,
+    streamSelected,
+    multisigAccounts,
   ]);
 
   const resetTransactionStatus = useCallback(() => {
@@ -197,14 +197,14 @@ export const MoneyStreamsIncomingView = (props: {
   }
 
   const isError = (): boolean => {
-    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled
-            ? true
-            : false;
+    return transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+      transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+      transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+      transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+      transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ||
+      transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled
+      ? true
+      : false;
   }
 
   // Transfer stream modal
@@ -359,11 +359,9 @@ export const MoneyStreamsIncomingView = (props: {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${
-            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-          }) to pay for network fees (${
-            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-          })`
+          result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
         });
         customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
         segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
@@ -409,7 +407,7 @@ export const MoneyStreamsIncomingView = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -628,11 +626,9 @@ export const MoneyStreamsIncomingView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              })`
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
@@ -647,33 +643,33 @@ export const MoneyStreamsIncomingView = (props: {
           stream,
           amount
         )
-        .then(value => {
-          consoleOut('withdraw returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
+          .then(value => {
+            consoleOut('withdraw returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('withdraw error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
+            return false;
           });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('withdraw error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
-          return false;
-        });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -796,11 +792,9 @@ export const MoneyStreamsIncomingView = (props: {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${
-            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-          }) to pay for network fees (${
-            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-          })`
+          result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
         });
         customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
@@ -846,7 +840,7 @@ export const MoneyStreamsIncomingView = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -1038,7 +1032,7 @@ export const MoneyStreamsIncomingView = (props: {
     return isNew ? v2.withdrawableAmount : new BN(v1.escrowVestedAmount);
   }, []);
 
-  const canWithdraw = useCallback((stream: StreamInfo | Stream | undefined ) => {
+  const canWithdraw = useCallback((stream: StreamInfo | Stream | undefined) => {
     if (!stream) {
       return false;
     }
@@ -1125,7 +1119,7 @@ export const MoneyStreamsIncomingView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     ms,
     msp,
@@ -1161,10 +1155,10 @@ export const MoneyStreamsIncomingView = (props: {
 
     if (associatedToken && (!workingToken || workingToken.address !== associatedToken)) {
       getTokenOrCustomToken(associatedToken)
-      .then(token => {
-        consoleOut('getTokenOrCustomToken (MoneyStreamsIncomingView) ->', token, 'blue');
-        setWorkingToken(token);
-      });
+        .then(token => {
+          consoleOut('getTokenOrCustomToken (MoneyStreamsIncomingView) ->', token, 'blue');
+          setWorkingToken(token);
+        });
     }
   }, [getTokenOrCustomToken, publicKey, streamSelected, workingToken]);
 
@@ -1185,18 +1179,18 @@ export const MoneyStreamsIncomingView = (props: {
           {
             isNewStream()
               ? displayAmountWithSymbol(
-                  v2.withdrawableAmount,
-                  workingToken.address,
-                  workingToken.decimals,
-                  splTokenList,
-                )
+                v2.withdrawableAmount,
+                workingToken.address,
+                workingToken.decimals,
+                splTokenList,
+              )
               : getAmountWithSymbol(
-                  v1.escrowVestedAmount,
-                  workingToken.address,
-                  false,
-                  splTokenList,
-                  workingToken.decimals,
-                )
+                v1.escrowVestedAmount,
+                workingToken.address,
+                false,
+                splTokenList,
+                workingToken.decimals,
+              )
           }
         </span>
         <span className="info-icon">
@@ -1232,7 +1226,7 @@ export const MoneyStreamsIncomingView = (props: {
       key: '02-explorer-link',
       label: (
         <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`}
-           target="_blank" rel="noopener noreferrer">
+          target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">{t('account-area.explorer-link')}</span>
         </a>
       )
@@ -1261,9 +1255,9 @@ export const MoneyStreamsIncomingView = (props: {
               hasStreamPendingTx(OperationType.StreamWithdraw)
             }
             onClick={showWithdrawModal}>
-              <div className="btn-content">
-                Withdraw funds
-              </div>
+            <div className="btn-content">
+              Withdraw funds
+            </div>
           </Button>
         </Space>
         <Dropdown
@@ -1275,7 +1269,7 @@ export const MoneyStreamsIncomingView = (props: {
               type="default"
               shape="circle"
               size="middle"
-              icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+              icon={<IconEllipsisVertical className="mean-svg-icons" />}
               onClick={(e) => e.preventDefault()}
             />
           </span>
@@ -1380,7 +1374,8 @@ export const MoneyStreamsIncomingView = (props: {
                       feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
-                      )})
+                      )
+                    })
                     }
                   </h4>
                 </>
@@ -1455,7 +1450,8 @@ export const MoneyStreamsIncomingView = (props: {
                     feeAmount: getAmountWithSymbol(
                       transactionFees.blockchainFee + transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
-                    )})
+                    )
+                  })
                   }
                 </h4>
               ) : (

@@ -138,7 +138,7 @@ export const AccountsMergeModal = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -322,13 +322,13 @@ export const AccountsMergeModal = (props: {
           </div>
         )}
         {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
-         transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
-          <div className="transaction-progress">
-            <CloseCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-            <h4 className="font-bold">Merge token accounts failed</h4>
-            <div className="operation">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</div>
-          </div>
-        )}
+          transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
+            <div className="transaction-progress">
+              <CloseCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              <h4 className="font-bold">Merge token accounts failed</h4>
+              <div className="operation">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</div>
+            </div>
+          )}
       </div>
 
       <div className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>

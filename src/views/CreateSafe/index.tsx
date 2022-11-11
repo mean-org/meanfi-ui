@@ -41,7 +41,7 @@ const CreateSafeView = () => {
     } = useContext(AppStateContext);
     const {
         enqueueTransactionConfirmation,
-      } = useContext(TxConfirmationContext);
+    } = useContext(TxConfirmationContext);
     const { width } = useWindowSize();
     const [isXsDevice, setIsXsDevice] = useState<boolean>(false);
     const [multisigLabel, setMultisigLabel] = useState('');
@@ -409,7 +409,7 @@ const CreateSafeView = () => {
             if (connection && wallet && wallet.publicKey && transaction) {
                 const {
                     context: { slot: minContextSlot },
-                    value: { blockhash, lastValidBlockHeight },
+                    value: { blockhash },
                 } = await connection.getLatestBlockhashAndContext();
 
                 transaction.feePayer = wallet.publicKey;
@@ -622,7 +622,7 @@ const CreateSafeView = () => {
                                 max={rangeMax}
                                 included={false}
                                 disabled={isSliderDisabled()}
-                                tooltip={{formatter: sliderTooltipFormatter, open: true}}
+                                tooltip={{ formatter: sliderTooltipFormatter, open: true }}
                                 value={multisigThreshold}
                                 onChange={onSliderChange}
                                 dots={true} />

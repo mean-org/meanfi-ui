@@ -130,9 +130,9 @@ export const UnwrapSolModal = (props: {
       setPreviousBalance(account?.lamports);
     }
   }, [
-    account, 
-    nativeBalance, 
-    previousBalance, 
+    account,
+    nativeBalance,
+    previousBalance,
     refreshTokenBalance
   ]);
 
@@ -218,7 +218,7 @@ export const UnwrapSolModal = (props: {
       consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
       setPageInitialized(false);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Events and actions
@@ -230,7 +230,7 @@ export const UnwrapSolModal = (props: {
       TransactionStatus.TransactionFinished
     );
 
-  },[
+  }, [
     transactionStatus.currentOperation
   ]);
 
@@ -382,7 +382,7 @@ export const UnwrapSolModal = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -595,7 +595,7 @@ export const UnwrapSolModal = (props: {
           disabled={!isUnwrapValid() || isUnwrapping}
           onClick={onStartUnwrapTx}>
           {isUnwrapping && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isUnwrapping
             ? 'Unwrapping SOL'

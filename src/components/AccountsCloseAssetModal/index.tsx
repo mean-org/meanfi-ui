@@ -178,7 +178,7 @@ export const AccountsCloseAssetModal = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -269,28 +269,28 @@ export const AccountsCloseAssetModal = (props: {
   // Validation
   const isEnterYesWordValid = (): boolean => {
     return enterYesWord &&
-           enterYesWord.toLocaleLowerCase() === "yes"
+      enterYesWord.toLocaleLowerCase() === "yes"
       ? true
       : false;
   }
 
   const isOperationValidIfWrapSol = (): boolean => {
     return publicKey &&
-           nativeBalance &&
-           nativeBalance > feeAmount &&
-           asset &&
-           isEnterYesWordValid() &&
-           isDisclaimerAccepted
+      nativeBalance &&
+      nativeBalance > feeAmount &&
+      asset &&
+      isEnterYesWordValid() &&
+      isDisclaimerAccepted
       ? true
       : false;
   };
 
   const isOperationValid = (): boolean => {
     return publicKey &&
-           nativeBalance &&
-           nativeBalance > feeAmount &&
-           asset &&
-           isDisclaimerAccepted
+      nativeBalance &&
+      nativeBalance > feeAmount &&
+      asset &&
+      isDisclaimerAccepted
       ? true
       : false;
   };
@@ -411,7 +411,7 @@ export const AccountsCloseAssetModal = (props: {
           disabled={((asset.balance && asset.balance > 0 && asset.name !== "Wrapped SOL") ? !isOperationValidIfWrapSol() : !isOperationValid()) || isBusy}
           onClick={onStartTransaction}>
           {isBusy && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {renderMainCtaLabel()}
         </Button>
