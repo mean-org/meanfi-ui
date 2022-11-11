@@ -283,29 +283,29 @@ export const OneTimePayment = (props: {
       let mint = '';
       let owner = '';
       getInfo(recipientAddress)
-      .then(info => {
-        if (info) {
-          if ((info as any).data["program"] &&
+        .then(info => {
+          if (info) {
+            if ((info as any).data["program"] &&
               (info as any).data["program"] === "spl-token" &&
               (info as any).data["parsed"] &&
               (info as any).data["parsed"]["type"]) {
-            type = (info as any).data["parsed"]["type"];
-          }
-          if ((info as any).data["program"] &&
+              type = (info as any).data["parsed"]["type"];
+            }
+            if ((info as any).data["program"] &&
               (info as any).data["program"] === "spl-token" &&
               (info as any).data["parsed"] &&
               (info as any).data["parsed"]["type"] &&
               (info as any).data["parsed"]["type"] === "account") {
-            mint = (info as any).data["parsed"]["info"]["mint"];
-            owner = (info as any).data["parsed"]["info"]["owner"];
+              mint = (info as any).data["parsed"]["info"]["mint"];
+              owner = (info as any).data["parsed"]["info"]["owner"];
+            }
           }
-        }
-        setRecipientAddressInfo({
-          type,
-          mint,
-          owner
-        });
-      })
+          setRecipientAddressInfo({
+            type,
+            mint,
+            owner
+          });
+        })
     }
   }, [connection, recipientAddress]);
 
@@ -344,7 +344,7 @@ export const OneTimePayment = (props: {
       const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
       for (const element of ellipsisElements) {
         const e = element as HTMLElement;
-        if (e.offsetWidth < e.scrollWidth){
+        if (e.offsetWidth < e.scrollWidth) {
           const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
         }
@@ -389,7 +389,7 @@ export const OneTimePayment = (props: {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       setCanSubscribe(true);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /////////////////////////////
@@ -453,9 +453,9 @@ export const OneTimePayment = (props: {
     if (recipientAddressInfo.type === "mint") {
       return 'Recipient cannot be a mint address'
     } else if (recipientAddressInfo.type === "account" &&
-               recipientAddressInfo.mint &&
-               recipientAddressInfo.mint === selectedToken?.address &&
-               recipientAddressInfo.owner === publicKey?.toBase58()) {
+      recipientAddressInfo.mint &&
+      recipientAddressInfo.mint === selectedToken?.address &&
+      recipientAddressInfo.owner === publicKey?.toBase58()) {
       return 'Recipient cannot be the selected token mint';
     }
     return '';
@@ -466,9 +466,9 @@ export const OneTimePayment = (props: {
       return false;
     }
     if (recipientAddressInfo.type === "account" &&
-               recipientAddressInfo.mint &&
-               recipientAddressInfo.mint === selectedToken?.address &&
-               recipientAddressInfo.owner === publicKey?.toBase58()) {
+      recipientAddressInfo.mint &&
+      recipientAddressInfo.mint === selectedToken?.address &&
+      recipientAddressInfo.owner === publicKey?.toBase58()) {
       return false;
     }
     return true;
@@ -482,7 +482,7 @@ export const OneTimePayment = (props: {
 
   const isAddressOwnAccount = (): boolean => {
     return recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58()
-           ? true : false;
+      ? true : false;
   }
 
   const isSendAmountValid = (): boolean => {
@@ -491,13 +491,13 @@ export const OneTimePayment = (props: {
     const inputAmount = getInputAmountBn();
 
     return connected &&
-           inputAmount.gtn(0) &&
-           tokenBalanceBn.gtn(0) &&
-           nativeBalance >= getMinSolBlanceRequired() &&
-           ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
-            (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
-    ? true
-    : false;
+      inputAmount.gtn(0) &&
+      tokenBalanceBn.gtn(0) &&
+      nativeBalance >= getMinSolBlanceRequired() &&
+      ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+        (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
+      ? true
+      : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -518,7 +518,7 @@ export const OneTimePayment = (props: {
     } else if (!fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()) {
       return t('transactions.validation.no-amount');
     } else if (((isNative && parseFloat(fromCoinAmount) > getMaxAmount()) ||
-                (!isNative && tokenBalanceBn.lt(inputAmount)))) {
+      (!isNative && tokenBalanceBn.lt(inputAmount)))) {
       return t('transactions.validation.amount-high');
     } else if (!paymentStartDate) {
       return t('transactions.validation.no-valid-date');
@@ -714,7 +714,7 @@ export const OneTimePayment = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -875,9 +875,9 @@ export const OneTimePayment = (props: {
                   placeholder={t('transactions.recipient.placeholder')}
                   required={true}
                   spellCheck="false"
-                  value={recipientAddress}/>
+                  value={recipientAddress} />
                 <span id="payment-recipient-static-field"
-                      className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                  className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
                   {recipientAddress || t('transactions.recipient.placeholder')}
                 </span>
               </span>
@@ -886,21 +886,21 @@ export const OneTimePayment = (props: {
               <span>&nbsp;</span>
             </div>
           </div>
-            {recipientAddress && !isValidAddress(recipientAddress) && (
-              <span className="form-field-error">
-                {t('transactions.validation.address-validation')}
-              </span>
-            )}
-            {isAddressOwnAccount() && (
-              <span className="form-field-error">
-                {t('transactions.recipient.recipient-is-own-account')}
-              </span>
-            )}
-            {recipientAddress && !isRecipientAddressValid() && (
-              <span className="form-field-error">
-                {getRecipientAddressValidation()}
-              </span>
-            )}
+          {recipientAddress && !isValidAddress(recipientAddress) && (
+            <span className="form-field-error">
+              {t('transactions.validation.address-validation')}
+            </span>
+          )}
+          {isAddressOwnAccount() && (
+            <span className="form-field-error">
+              {t('transactions.recipient.recipient-is-own-account')}
+            </span>
+          )}
+          {recipientAddress && !isRecipientAddressValid() && (
+            <span className="form-field-error">
+              {getRecipientAddressValidation()}
+            </span>
+          )}
         </div>
 
         {/* Send amount */}
@@ -920,16 +920,15 @@ export const OneTimePayment = (props: {
                   </>
                 )}
                 {selectedToken && tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
-                  <div className="token-max simplelink" onClick={() =>
-                    {
-                      console.log('decimals:', selectedToken.decimals);
-                      if (selectedToken.address === NATIVE_SOL.address) {
-                        const amount = nativeBalance - getMinSolBlanceRequired();
-                        setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-                      } else {
-                        setFromCoinAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
-                      }
-                    }}>
+                  <div className="token-max simplelink" onClick={() => {
+                    console.log('decimals:', selectedToken.decimals);
+                    if (selectedToken.address === NATIVE_SOL.address) {
+                      const amount = nativeBalance - getMinSolBlanceRequired();
+                      setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                    } else {
+                      setFromCoinAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
+                    }
+                  }}>
                     MAX
                   </div>
                 ) : null}
@@ -1027,15 +1026,15 @@ export const OneTimePayment = (props: {
         {isWhitelisted && (
           <>
             <div className="form-label">Schedule transfer for: (For dev team only)</div>
-              <div className="well">
-                <Select value={fixedScheduleValue} bordered={false} onChange={onFixedScheduleValueChange} style={{ width: '100%' }}>
-                  <Option value={0}>No fixed scheduling</Option>
-                  <Option value={5}>5 minutes from now</Option>
-                  <Option value={10}>10 minutes from now</Option>
-                  <Option value={15}>15 minutes from now</Option>
-                  <Option value={20}>20 minutes from now</Option>
-                  <Option value={30}>30 minutes from now</Option>
-                </Select>
+            <div className="well">
+              <Select value={fixedScheduleValue} bordered={false} onChange={onFixedScheduleValueChange} style={{ width: '100%' }}>
+                <Option value={0}>No fixed scheduling</Option>
+                <Option value={5}>5 minutes from now</Option>
+                <Option value={10}>10 minutes from now</Option>
+                <Option value={15}>15 minutes from now</Option>
+                <Option value={20}>20 minutes from now</Option>
+                <Option value={30}>30 minutes from now</Option>
+              </Select>
               <div className="form-field-hint">Selecting a value will override your date selection</div>
             </div>
           </>

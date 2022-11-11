@@ -33,7 +33,6 @@ function App() {
       loadAnalytics();
     }
 
-    // loadAnalytics();
   }, [writeKey]);
 
   // Use the preferred theme or dark as a default

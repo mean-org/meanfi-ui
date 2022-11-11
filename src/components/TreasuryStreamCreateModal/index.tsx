@@ -1233,7 +1233,7 @@ export const TreasuryStreamCreateModal = (props: {
 
       const {
         context: { slot: minContextSlot },
-        value: { blockhash, lastValidBlockHeight },
+        value: { blockhash },
       } = await connection.getLatestBlockhashAndContext();
 
       const promises: Promise<string>[] = [];
