@@ -9,7 +9,7 @@ import {
   VestingTreasuryActivity
 } from '@mean-dao/msp';
 import { AccountLayout } from '@solana/spl-token';
-import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
@@ -17,7 +17,6 @@ import { BN } from 'bn.js';
 import { openNotification } from 'components/Notifications';
 import { PreFooter } from "components/PreFooter";
 import {
-  CUSTOM_TOKEN_NAME,
   MIN_SOL_BALANCE_REQUIRED,
   MSP_FEE_TREASURY,
   MULTISIG_ROUTE_BASE_PATH,
@@ -34,7 +33,7 @@ import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconMoneyTransfer, IconVerticalEllipsis } from "Icons";
 import { appConfig, customLogger } from 'index';
-import { getTokenAccountBalanceByAddress, getTokensWithBalances, readAccountInfo } from 'middleware/accounts';
+import { getTokenAccountBalanceByAddress, getTokensWithBalances } from 'middleware/accounts';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from 'middleware/ids';
 import {
   AppUsageEvent,
@@ -57,7 +56,7 @@ import {
   isValidAddress,
   toTimestamp
 } from 'middleware/ui';
-import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from 'middleware/utils';
+import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTokenOrCustomToken, getTxIxResume, shortenAddress, toUiAmount } from 'middleware/utils';
 import { MetaInfoCta } from 'models/common-types';
 import { EventType, MetaInfoCtaAction, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import { ZERO_FEES } from 'models/multisig';
@@ -271,37 +270,6 @@ export const VestingView = () => {
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return calculateActionFees(connection, action);
   }, [connection]);
-
-  const getTokenOrCustomToken = useCallback(async (address: string) => {
-
-    const token = getTokenByMintAddress(address);
-
-    const unkToken = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: `[${shortenAddress(address)}]`,
-    };
-
-    if (token) {
-      return token;
-    } else {
-      try {
-        const tokeninfo = await readAccountInfo(connection, address);
-        if ((tokeninfo as any).data["parsed"]) {
-          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
-          unkToken.decimals = decimals || 9;
-          return unkToken as TokenInfo;
-        } else {
-          return unkToken as TokenInfo;
-        }
-      } catch (error) {
-        console.error('Could not get token info, assuming decimals = 6');
-        return unkToken as TokenInfo;
-      }
-    }
-  }, [connection, getTokenByMintAddress]);
 
   const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
     let event: any;
@@ -3057,17 +3025,18 @@ export const VestingView = () => {
   useEffect(() => {
     if (!publicKey) { return; }
     if (selectedVestingContract?.associatedToken) {
-      getTokenOrCustomToken(selectedVestingContract.associatedToken as string)
+      const associatedToken = selectedVestingContract.associatedToken as string;
+      getTokenOrCustomToken(
+        connection,
+        associatedToken,
+        getTokenByMintAddress
+      )
         .then(token => {
           consoleOut('getTokenOrCustomToken (VestingView) ->', token, 'blue');
           setWorkingToken(token);
         });
     }
-  }, [
-    getTokenOrCustomToken,
-    publicKey,
-    selectedVestingContract?.associatedToken
-  ]);
+  }, [connection, getTokenByMintAddress, publicKey, selectedVestingContract?.associatedToken]);
 
   // Get the vesting flow rate
   useEffect(() => {
@@ -3307,7 +3276,7 @@ export const VestingView = () => {
       setAssociatedTokenDecimals(workingToken.decimals);
     }
 
-  }, [getTokenOrCustomToken, workingToken, selectedVestingContract]);
+  }, [selectedVestingContract, workingToken]);
 
   // Hook on wallet connect/disconnect
   useEffect(() => {

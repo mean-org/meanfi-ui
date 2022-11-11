@@ -7,7 +7,7 @@ import {
   calculateActionFees as calculateActionFeesV2, MSP, MSP_ACTIONS as MSP_ACTIONS_V2, Stream,
   STREAM_STATUS, TransactionFees
 } from '@mean-dao/msp';
-import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Dropdown, Menu, Modal, Space, Spin } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
 import { segmentAnalytics } from "App";
@@ -15,7 +15,7 @@ import BN from "bn.js";
 import { MoneyStreamDetails } from "components/MoneyStreamDetails";
 import { StreamTransferOpenModal } from "components/StreamTransferOpenModal";
 import { StreamWithdrawModal } from "components/StreamWithdrawModal";
-import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "constants/common";
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "constants/common";
 import { useNativeAccount } from "contexts/accounts";
 import { AppStateContext } from "contexts/appstate";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "contexts/connection";
@@ -23,11 +23,10 @@ import { TxConfirmationContext } from "contexts/transaction-status";
 import { useWallet } from "contexts/wallet";
 import { IconEllipsisVertical } from "Icons";
 import { appConfig, customLogger } from "index";
-import { readAccountInfo } from "middleware/accounts";
 import { NATIVE_SOL_MINT } from "middleware/ids";
 import { AppUsageEvent, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "middleware/segment-service";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "middleware/ui";
-import { displayAmountWithSymbol, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress } from "middleware/utils";
+import { displayAmountWithSymbol, getAmountFromLamports, getAmountWithSymbol, getTokenOrCustomToken, getTxIxResume, shortenAddress } from "middleware/utils";
 import { OperationType, TransactionStatus } from "models/enums";
 import { TokenInfo } from "models/SolanaTokenInfo";
 import { StreamWithdrawData } from "models/streams";
@@ -1057,37 +1056,6 @@ export const MoneyStreamsIncomingView = (props: {
     return beneficiary === selectedAccount.address ? true : false
   }, [selectedAccount.address]);
 
-  const getTokenOrCustomToken = useCallback(async (address: string) => {
-
-    const token = getTokenByMintAddress(address);
-
-    const unkToken = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: `[${shortenAddress(address)}]`,
-    };
-
-    if (token) {
-      return token;
-    } else {
-      try {
-        const tokeninfo = await readAccountInfo(connection, address);
-        if ((tokeninfo as any).data["parsed"]) {
-          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
-          unkToken.decimals = decimals || 0;
-          return unkToken as TokenInfo;
-        } else {
-          return unkToken as TokenInfo;
-        }
-      } catch (error) {
-        console.error('Could not get token info, assuming decimals = 6');
-        return unkToken as TokenInfo;
-      }
-    }
-  }, [connection, getTokenByMintAddress]);
-
 
   /////////////////////
   // Data management //
@@ -1154,13 +1122,17 @@ export const MoneyStreamsIncomingView = (props: {
     }
 
     if (associatedToken && (!workingToken || workingToken.address !== associatedToken)) {
-      getTokenOrCustomToken(associatedToken)
+      getTokenOrCustomToken(
+        connection,
+        associatedToken,
+        getTokenByMintAddress
+      )
         .then(token => {
           consoleOut('getTokenOrCustomToken (MoneyStreamsIncomingView) ->', token, 'blue');
           setWorkingToken(token);
         });
     }
-  }, [getTokenOrCustomToken, publicKey, streamSelected, workingToken]);
+  }, [connection, getTokenByMintAddress, publicKey, streamSelected, workingToken]);
 
 
   ///////////////

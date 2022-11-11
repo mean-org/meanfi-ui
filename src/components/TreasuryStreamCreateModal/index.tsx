@@ -1,9 +1,8 @@
 import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
-import { Beneficiary, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
-import { u64 } from '@solana/spl-token';
-import { AccountInfo, Connection, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
+import { Beneficiary, MSP, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, Col, DatePicker, Divider, Dropdown, Menu, Modal, Row, Select, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { BN } from 'bn.js';
@@ -12,14 +11,13 @@ import { InfoIcon } from 'components/InfoIcon';
 import { InputMean } from 'components/InputMean';
 import { StepSelector } from 'components/StepSelector';
 import { TokenDisplay } from 'components/TokenDisplay';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
+import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
 import { appConfig, customLogger } from 'index';
-import { readAccountInfo } from 'middleware/accounts';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import {
   consoleOut,
@@ -37,7 +35,11 @@ import {
 } from 'middleware/ui';
 import {
   displayAmountWithSymbol,
-  formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber,
+  formatThousands,
+  getAmountWithSymbol,
+  getSdkValue,
+  getTokenOrCustomToken,
+  isValidNumber,
   shortenAddress,
   toTokenAmount,
   toTokenAmountBn,
@@ -268,37 +270,6 @@ export const TreasuryStreamCreateModal = (props: {
       false
     )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
   }, [lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
-
-  const getTokenOrCustomToken = useCallback(async (address: string) => {
-
-    const token = getTokenByMintAddress(address);
-
-    const unkToken = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: `[${shortenAddress(address)}]`,
-    };
-
-    if (token) {
-      return token;
-    } else {
-      try {
-        const tokeninfo = await readAccountInfo(connection, address);
-        if ((tokeninfo as any).data["parsed"]) {
-          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
-          unkToken.decimals = decimals || 0;
-          return unkToken as TokenInfo;
-        } else {
-          return unkToken as TokenInfo;
-        }
-      } catch (error) {
-        console.error('Could not get token info, assuming decimals = 6');
-        return unkToken as TokenInfo;
-      }
-    }
-  }, [connection, getTokenByMintAddress]);
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
@@ -566,12 +537,16 @@ export const TreasuryStreamCreateModal = (props: {
     const v1 = workingTreasuryDetails as TreasuryInfo;
     const v2 = workingTreasuryDetails as Treasury;
     tokenAddress = workingTreasuryDetails.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-    getTokenOrCustomToken(tokenAddress)
+    getTokenOrCustomToken(
+      connection,
+      tokenAddress,
+      getTokenByMintAddress
+    )
       .then(token => {
         consoleOut('Treasury associated token:', token, 'blue');
         setSelectedToken(token);
       });
-  }, [getTokenOrCustomToken, hasNoStreamingAccounts, userBalances, workingTreasuryDetails]);
+  }, [connection, getTokenByMintAddress, hasNoStreamingAccounts, userBalances, workingTreasuryDetails]);
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
@@ -1404,13 +1379,17 @@ export const TreasuryStreamCreateModal = (props: {
       const v1 = item as TreasuryInfo;
       const v2 = item as Treasury;
       const tokenAddress = item.version < 2 ? v1.associatedTokenAddress as string : v2.associatedToken as string;
-      getTokenOrCustomToken(tokenAddress)
+      getTokenOrCustomToken(
+        connection,
+        tokenAddress,
+        getTokenByMintAddress
+      )
         .then(token => {
           consoleOut('Treasury associated token:', token, 'blue');
           setSelectedToken(token);
         });
     }
-  }, [getTokenOrCustomToken, treasuryList, userBalances]);
+  }, [connection, getTokenByMintAddress, treasuryList]);
 
   const isDestinationAddressValid = () => {
     if (!enableMultipleStreamsOption) {

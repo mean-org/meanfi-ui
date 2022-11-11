@@ -5,7 +5,7 @@ import { StreamInfo, STREAM_STATE, TreasuryInfo } from "@mean-dao/money-streamin
 import {
   calculateActionFees as calculateActionFeesV2, MSP, MSP_ACTIONS as MSP_ACTIONS_V2, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType
 } from '@mean-dao/msp';
-import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Dropdown, Menu, Row, Space, Spin, Tabs } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
 import BigNumber from "bignumber.js";
@@ -22,7 +22,6 @@ import { TreasuryCreateModal } from "components/TreasuryCreateModal";
 import { TreasuryStreamCreateModal } from "components/TreasuryStreamCreateModal";
 import {
   ACCOUNTS_ROUTE_BASE_PATH,
-  CUSTOM_TOKEN_NAME,
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   NO_FEES
@@ -36,7 +35,7 @@ import { useWallet } from "contexts/wallet";
 import useWindowSize from "hooks/useWindowResize";
 import { IconArrowForward, IconEllipsisVertical, IconLoading } from "Icons";
 import { appConfig, customLogger } from "index";
-import { fetchAccountTokens, readAccountInfo } from "middleware/accounts";
+import { fetchAccountTokens } from "middleware/accounts";
 import { NATIVE_SOL_MINT } from "middleware/ids";
 import { getStreamTitle } from "middleware/streams";
 import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "middleware/ui";
@@ -46,6 +45,7 @@ import {
   formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
+  getTokenOrCustomToken,
   getTxIxResume,
   shortenAddress,
   toTokenAmountBn,
@@ -223,38 +223,6 @@ export const MoneyStreamsInfoView = (props: {
     });
   }, [setTransactionStatus]);
 
-  const getTokenOrCustomToken = useCallback(async (address: string) => {
-
-    const token = getTokenByMintAddress(address);
-
-    const unkToken = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: shortenAddress(address),
-    };
-
-    if (token) {
-      return token;
-    } else {
-      return readAccountInfo(connection, address)
-      .then(info => {
-        if ((info as any).data["parsed"]) {
-          const decimals = (info as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
-          unkToken.decimals = decimals || 0;
-          return unkToken as TokenInfo;
-        } else {
-          return unkToken as TokenInfo;
-        }
-      })
-      .catch(err => {
-        console.error('Could not get token info, assuming decimals = 6');
-        return unkToken as TokenInfo;
-      });
-    }
-  }, [connection, getTokenByMintAddress]);
-
   const getMultisigTxProposalFees = useCallback(() => {
 
     if (!multisigClient) { return; }
@@ -288,35 +256,35 @@ export const MoneyStreamsInfoView = (props: {
     consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
 
     connection.getBalance(pk)
-    .then(solBalance => {
-      const uiBalance = getAmountFromLamports(solBalance);
-      balancesMap[NATIVE_SOL.address] = uiBalance;
-      setNativeBalance(uiBalance);
-    });
+      .then(solBalance => {
+        const uiBalance = getAmountFromLamports(solBalance);
+        balancesMap[NATIVE_SOL.address] = uiBalance;
+        setNativeBalance(uiBalance);
+      });
 
     fetchAccountTokens(connection, pk)
-    .then(accTks => {
-      if (accTks) {
-        for (const item of accTks) {
-          const address = item.parsedInfo.mint;
-          const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-          balancesMap[address] = balance;
+      .then(accTks => {
+        if (accTks) {
+          for (const item of accTks) {
+            const address = item.parsedInfo.mint;
+            const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+            balancesMap[address] = balance;
+          }
+        } else {
+          for (const t of splTokenList) {
+            balancesMap[t.address] = 0;
+          }
         }
-      } else {
+      })
+      .catch(error => {
+        console.error(error);
         for (const t of splTokenList) {
           balancesMap[t.address] = 0;
         }
-      }
-    })
-    .catch(error => {
-      console.error(error);
-      for (const t of splTokenList) {
-        balancesMap[t.address] = 0;
-      }
-    })
-    .finally(() => setUserBalances(balancesMap));
+      })
+      .finally(() => setUserBalances(balancesMap));
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     connection,
@@ -341,13 +309,13 @@ export const MoneyStreamsInfoView = (props: {
     }
 
     if (tsry) {
-        const decimals = assToken ? assToken.decimals : 9;
-        const unallocated = getUnallocatedBalance(tsry);
-        const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
-        const ub = isNewTreasury
-          ? new BigNumber(toUiAmount(unallocated, decimals)).toNumber()
-          : new BigNumber(unallocated.toString()).toNumber();
-        return ub;
+      const decimals = assToken ? assToken.decimals : 9;
+      const unallocated = getUnallocatedBalance(tsry);
+      const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
+      const ub = isNewTreasury
+        ? new BigNumber(toUiAmount(unallocated, decimals)).toNumber()
+        : new BigNumber(unallocated.toString()).toNumber();
+      return ub;
     }
     return 0;
   }, []);
@@ -357,43 +325,43 @@ export const MoneyStreamsInfoView = (props: {
     if (!treasuryList) { return; }
 
     const resume: UserTreasuriesSummary = {
-        totalAmount: 0,
-        openAmount: 0,
-        lockedAmount: 0,
-        totalNet: 0
+      totalAmount: 0,
+      openAmount: 0,
+      lockedAmount: 0,
+      totalNet: 0
     };
 
     for (const treasury of treasuryList) {
 
-        const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2
-            ? true
-            : false;
+      const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2
+        ? true
+        : false;
 
-        const treasuryType = isNew
-            ? (treasury as Treasury).treasuryType
-            : (treasury as TreasuryInfo).type as TreasuryType;
+      const treasuryType = isNew
+        ? (treasury as Treasury).treasuryType
+        : (treasury as TreasuryInfo).type as TreasuryType;
 
-        const associatedToken = isNew
-            ? (treasury as Treasury).associatedToken as string
-            : (treasury as TreasuryInfo).associatedTokenAddress as string;
+      const associatedToken = isNew
+        ? (treasury as Treasury).associatedToken as string
+        : (treasury as TreasuryInfo).associatedTokenAddress as string;
 
-        if (treasuryType === TreasuryType.Open) {
-            resume['openAmount'] += 1;
-        } else {
-            resume['lockedAmount'] += 1;
-        }
+      if (treasuryType === TreasuryType.Open) {
+        resume['openAmount'] += 1;
+      } else {
+        resume['lockedAmount'] += 1;
+      }
 
-        let amountChange = 0;
+      let amountChange = 0;
 
-        const token = getTokenByMintAddress(associatedToken);
+      const token = getTokenByMintAddress(associatedToken);
 
-        if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-          const amount = getTreasuryUnallocatedBalance(treasury, token);
-          amountChange = amount * tokenPrice;
-        }
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const amount = getTreasuryUnallocatedBalance(treasury, token);
+        amountChange = amount * tokenPrice;
+      }
 
-        resume['totalNet'] += amountChange;
+      resume['totalNet'] += amountChange;
     }
 
     resume['totalAmount'] += treasuryList.length;
@@ -715,7 +683,7 @@ export const MoneyStreamsInfoView = (props: {
 
         consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-  
+
         if (nativeBalance < minRequired) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
@@ -723,13 +691,11 @@ export const MoneyStreamsInfoView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
-            })`
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
+              })`
           });
-            customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -743,32 +709,32 @@ export const MoneyStreamsInfoView = (props: {
           amount,
           params.allocationType
         )
-        .then((value: any) => {
-          consoleOut('addFunds returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
+          .then((value: any) => {
+            consoleOut('addFunds returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch((error: any) => {
+            console.error('addFunds error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+            return false;
           });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch((error: any) => {
-          console.error('addFunds error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
-          return false;
-        });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -922,17 +888,15 @@ export const MoneyStreamsInfoView = (props: {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${
-            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-          }) to pay for network fees (${
-            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
-          })`
+          result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
+            })`
         });
         customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
         return false;
       }
 
-      consoleOut('onExecuteAddFundsTransaction ->','/src/views/MoneyStreamsInfo', 'darkcyan');
+      consoleOut('onExecuteAddFundsTransaction ->', '/src/views/MoneyStreamsInfo', 'darkcyan');
       consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
       // Create a transaction
       const result = await addFunds(data)
@@ -1019,8 +983,12 @@ export const MoneyStreamsInfoView = (props: {
       }
     }
 
-    if (publicKey && params) {
-      const token = await getTokenOrCustomToken(params.associatedToken);
+    if (connection && publicKey && params) {
+      const token = await getTokenOrCustomToken(
+        connection,
+        params.associatedToken,
+        getTokenByMintAddress
+      );
       consoleOut('onExecuteAddFundsTransaction token:', token, 'blue');
       const treasury = treasuryList.find(t => t.id === params.treasuryId);
       if (!treasury) { return null; }
@@ -1284,11 +1252,9 @@ export const MoneyStreamsInfoView = (props: {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${
-            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-          }) to pay for network fees (${
-            getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
-          })`
+          result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())
+            })`
         });
         customLogger.logWarning('Create streaming account transaction failed', { transcript: transactionLog });
         return false;
@@ -1569,15 +1535,15 @@ export const MoneyStreamsInfoView = (props: {
       const countDownDate = new Date(time).getTime();
       const now = new Date().getTime();
       const timeleft = countDownDate - now;
-  
+
       const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
       const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
       const hours = Math.floor((timeleft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const days = Math.floor(timeleft / (1000 * 60 * 60 * 24));
-      const weeks = Math.floor(days/7);
-      const months = Math.floor(days/30);
-      const years = Math.floor(days/365);
-  
+      const weeks = Math.floor(days / 7);
+      const months = Math.floor(days / 30);
+      const years = Math.floor(days / 365);
+
       if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes === 0 && seconds === 0) {
         return `out of funds`;
       } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes === 0 && seconds <= 60) {
@@ -1608,7 +1574,7 @@ export const MoneyStreamsInfoView = (props: {
       if (v1.version < 2) {
         switch (v1.state) {
           case STREAM_STATE.Schedule:
-            return t('streams.status.scheduled', {date: getShortDate(v1.startUtc as string)});
+            return t('streams.status.scheduled', { date: getShortDate(v1.startUtc as string) });
           case STREAM_STATE.Paused:
             return t('streams.status.stopped');
           default:
@@ -1748,14 +1714,14 @@ export const MoneyStreamsInfoView = (props: {
     const vB2 = b as Stream;
 
     const isNew = ((vA2.version && vA2.version >= 2) && (vB2.version && vB2.version >= 2))
-    ? true
-    : false;
+      ? true
+      : false;
 
-    const timeA = isNew 
+    const timeA = isNew
       ? new Date(vA2.estimatedDepletionDate).getTime()
       : new Date(vA1.escrowEstimatedDepletionUtc as string).getTime();
 
-    const timeB = isNew 
+    const timeB = isNew
       ? new Date(vB2.estimatedDepletionDate).getTime()
       : new Date(vB1.escrowEstimatedDepletionUtc as string).getTime();
 
@@ -1792,7 +1758,7 @@ export const MoneyStreamsInfoView = (props: {
 
     consoleOut('outgoing streams:', sortedOutgoingStreamsList, 'crimson');
     setOutgoingStreamList(sortedOutgoingStreamsList);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     streamList,
@@ -1829,29 +1795,29 @@ export const MoneyStreamsInfoView = (props: {
 
     if (!streamingAccountsSummary) {
       refreshTreasuriesSummary()
-      .then(value => {
-        if (value) {
-          setStreamingAccountsSummary(value);
-        }
-        setCanDisplayTotalAccountBalance(true);
-      });
+        .then(value => {
+          if (value) {
+            setStreamingAccountsSummary(value);
+          }
+          setCanDisplayTotalAccountBalance(true);
+        });
     }
 
     const timeout = setTimeout(() => {
       refreshTreasuriesSummary()
-      .then(value => {
-        consoleOut('streamingAccountsSummary:', value, 'orange');
-        if (value) {
-          setStreamingAccountsSummary(value);
-        }
-        setCanDisplayTotalAccountBalance(true);
-      });
+        .then(value => {
+          consoleOut('streamingAccountsSummary:', value, 'orange');
+          if (value) {
+            setStreamingAccountsSummary(value);
+          }
+          setCanDisplayTotalAccountBalance(true);
+        });
     }, 1000);
 
     return () => {
       clearTimeout(timeout);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, treasuryList]);
 
   // Set refresh timeout for incomingStreamsSummary but get first time data
@@ -1860,10 +1826,10 @@ export const MoneyStreamsInfoView = (props: {
 
     if (!incomingStreamsSummary) {
       refreshIncomingStreamSummary()
-      .then(value => {
-        setWithdrawalBalance(value ? value.totalNet : 0);
-        setCanDisplayIncomingBalance(true);
-      });
+        .then(value => {
+          setWithdrawalBalance(value ? value.totalNet : 0);
+          setCanDisplayIncomingBalance(true);
+        });
     }
 
     const timeout = setTimeout(() => {
@@ -1883,10 +1849,10 @@ export const MoneyStreamsInfoView = (props: {
 
     if (!outgoingStreamsSummary) {
       refreshOutgoingStreamSummary()
-      .then(value => {
-        setUnallocatedBalance(value ? value.totalNet + streamingAccountsSummary.totalNet : 0);
-        setCanDisplayOutgoingBalance(true);
-      });
+        .then(value => {
+          setUnallocatedBalance(value ? value.totalNet + streamingAccountsSummary.totalNet : 0);
+          setCanDisplayOutgoingBalance(true);
+        });
     }
 
     const timeout = setTimeout(() => {
@@ -1917,11 +1883,11 @@ export const MoneyStreamsInfoView = (props: {
     const convertToBN = new BigNumber(unallocatedTotalAmount.toFixed(2));
 
     setUnallocatedBalance(convertToBN.toNumber());
-  }, [ streamingAccountsSummary, outgoingStreamsSummary]);
+  }, [streamingAccountsSummary, outgoingStreamsSummary]);
 
   // Update total account balance
   useEffect(() => {
-      setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
+    setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
   }, [unallocatedBalance, withdrawalBalance]);
 
   // Calculate the rate per day for incoming streams
@@ -2105,7 +2071,7 @@ export const MoneyStreamsInfoView = (props: {
     const getlength = (number: any) => {
       return Math.round(number).toString().length;
     }
-    
+
     const divider = getlength(totalAccountBalance);
     const incomingDivider = parseFloat(`1${"0".repeat((divider && divider >= 2) ? divider - 2 : 1)}`);
     const calculateScaleBalanceIncoming = withdrawalBalance / incomingDivider;
@@ -2127,7 +2093,7 @@ export const MoneyStreamsInfoView = (props: {
     const getlength = (number: any) => {
       return Math.round(number).toString().length;
     }
-    
+
     const divider = getlength(totalAccountBalance);
 
     const outgoingDivider = parseFloat(`1${"0".repeat((divider && divider >= 2) ? divider - 2 : 1)}`);
@@ -2315,7 +2281,7 @@ export const MoneyStreamsInfoView = (props: {
                 }}>
                 <defs>
                   <linearGradient id="gradient1" gradientTransform="rotate(180)">
-                    <stop offset="10%"  stopColor="#006820" />
+                    <stop offset="10%" stopColor="#006820" />
                     <stop offset="100%" stopColor="#181a2a" />
                   </linearGradient>
                 </defs>
@@ -2356,15 +2322,15 @@ export const MoneyStreamsInfoView = (props: {
             </div>
             <div className="outgoing-stream-rates">
               {loadingTreasuries || loadingStreams ? (
-                  <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-                ) : (
-                  <span className="outgoing-amount">{renderOutgoingRatePerSecond()}</span>
-                )}
-                {loadingTreasuries || loadingStreams ? (
-                  <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
-                ) : (
-                  <span className="outgoing-amount">{renderOutgoingRatePerDay()}</span>
-                )}
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              ) : (
+                <span className="outgoing-amount">{renderOutgoingRatePerSecond()}</span>
+              )}
+              {loadingTreasuries || loadingStreams ? (
+                <IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }} />
+              ) : (
+                <span className="outgoing-amount">{renderOutgoingRatePerDay()}</span>
+              )}
             </div>
           </div>
           <div className="stream-balance">
@@ -2390,7 +2356,7 @@ export const MoneyStreamsInfoView = (props: {
                 }}>
                 <defs>
                   <linearGradient id="gradient2" gradientTransform="rotate(180)">
-                    <stop offset="10%"  stopColor="#b7001c" />
+                    <stop offset="10%" stopColor="#b7001c" />
                     <stop offset="100%" stopColor="#181a2a" />
                   </linearGradient>
                 </defs>
@@ -2408,7 +2374,7 @@ export const MoneyStreamsInfoView = (props: {
       return (
         <span className="pl-1">Loading incoming streams ...</span>
       );
-    } else if (incomingStreamList === undefined || incomingStreamList.length === 0 ) {
+    } else if (incomingStreamList === undefined || incomingStreamList.length === 0) {
       return (
         <span className="pl-1">You don't have any incoming streams</span>
       );
@@ -2452,21 +2418,21 @@ export const MoneyStreamsInfoView = (props: {
 
       const withdrawResume = isNew
         ? displayAmountWithSymbol(
-            v2.withdrawableAmount,
-            v2.associatedToken.toString(),
-            token?.decimals || 9,
-            splTokenList,
-          )
+          v2.withdrawableAmount,
+          v2.associatedToken.toString(),
+          token?.decimals || 9,
+          splTokenList,
+        )
         : getAmountWithSymbol(
-            v1.escrowVestedAmount,
-            v1.associatedToken as string,
-            false,
-            splTokenList,
-            token?.decimals || 9,
-          );
+          v1.escrowVestedAmount,
+          v1.associatedToken as string,
+          false,
+          splTokenList,
+          token?.decimals || 9,
+        );
 
       return (
-        <div 
+        <div
           key={`incoming-stream-${index}`}
           onClick={onSelectStream}
           className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
@@ -2495,7 +2461,7 @@ export const MoneyStreamsInfoView = (props: {
       return (
         <span className="pl-1">Loading outgoing streams ...</span>
       );
-    } else if (outgoingStreamList === undefined || outgoingStreamList.length === 0 ) {
+    } else if (outgoingStreamList === undefined || outgoingStreamList.length === 0) {
       return (
         <span className="pl-1">You don't have any outgoing streams</span>
       );
@@ -2566,7 +2532,7 @@ export const MoneyStreamsInfoView = (props: {
       return (
         <span className="pl-1">Loading streaming accounts ...</span>
       );
-    } else if (treasuryList === undefined || treasuryList.length === 0 ) {
+    } else if (treasuryList === undefined || treasuryList.length === 0) {
       return (
         <span className="pl-1">You don't have any streaming accounts</span>
       );
@@ -2627,22 +2593,22 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       key: "streaming-accounts",
-      label: `Accounts ${(!loadingTreasuries && !loadingStreams) 
-        ? `(${streamingAccountsAmount && streamingAccountsAmount >= 0 && streamingAccountsAmount})` 
+      label: `Accounts ${(!loadingTreasuries && !loadingStreams)
+        ? `(${streamingAccountsAmount && streamingAccountsAmount >= 0 && streamingAccountsAmount})`
         : ""}`,
       children: renderListOfStreamingAccounts()
     },
     {
       key: "incoming",
-      label: `Incoming ${(!loadingTreasuries && !loadingStreams) 
-        ? `(${incomingAmount && incomingAmount >= 0 && incomingAmount})` 
+      label: `Incoming ${(!loadingTreasuries && !loadingStreams)
+        ? `(${incomingAmount && incomingAmount >= 0 && incomingAmount})`
         : ""}`,
       children: renderListOfIncomingStreams()
     },
     {
       key: "outgoing",
       label: `Outgoing ${!loadingStreams
-        ? `(${outgoingAmount && outgoingAmount >= 0 && outgoingAmount})` 
+        ? `(${outgoingAmount && outgoingAmount >= 0 && outgoingAmount})`
         : ""}`,
       children: renderListOfOutgoingStreams()
     },
@@ -2717,7 +2683,7 @@ export const MoneyStreamsInfoView = (props: {
                 size="small"
                 className="thin-stroke btn-min-width"
                 onClick={showAddFundsModal}>
-                  Fund account
+                Fund account
               </Button>
             )}
             {!isXsDevice && (
@@ -2739,7 +2705,7 @@ export const MoneyStreamsInfoView = (props: {
                 size="small"
                 className="thin-stroke btn-min-width"
                 onClick={showOpenStreamModal}>
-                  Find stream
+                Find stream
               </Button>
             )}
           </Space>
@@ -2753,7 +2719,7 @@ export const MoneyStreamsInfoView = (props: {
                   type="default"
                   shape="circle"
                   size="middle"
-                  icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                  icon={<IconEllipsisVertical className="mean-svg-icons" />}
                   onClick={(e) => e.preventDefault()}
                 />
               </span>

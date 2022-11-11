@@ -13,7 +13,7 @@ import {
   VestingTreasuryActivityAction
 } from "@mean-dao/msp";
 import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Alert, Button, Dropdown, Menu, Row, Space, Spin, Tabs } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
 import BN from "bn.js";
@@ -26,7 +26,6 @@ import { TreasuryCloseModal } from "components/TreasuryCloseModal";
 import { TreasuryStreamCreateModal } from "components/TreasuryStreamCreateModal";
 import { TreasuryTransferFundsModal } from "components/TreasuryTransferFundsModal";
 import {
-  CUSTOM_TOKEN_NAME,
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   MSP_FEE_TREASURY,
@@ -42,7 +41,7 @@ import { useWallet } from "contexts/wallet";
 import useWindowSize from "hooks/useWindowResize";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from "Icons";
 import { appConfig, customLogger } from "index";
-import { fetchAccountTokens, getTokenAccountBalanceByAddress, readAccountInfo } from "middleware/accounts";
+import { fetchAccountTokens, getTokenAccountBalanceByAddress } from "middleware/accounts";
 import { NATIVE_SOL_MINT } from "middleware/ids";
 import { getStreamTitle } from "middleware/streams";
 import {
@@ -55,6 +54,7 @@ import {
 import {
   displayAmountWithSymbol, findATokenAddress,
   formatThousands, getAmountFromLamports, getAmountWithSymbol,
+  getTokenOrCustomToken,
   getTxIxResume,
   makeInteger,
   openLinkInNewTab,
@@ -203,37 +203,6 @@ export const StreamingAccountView = (props: {
       currentOperation: TransactionStatus.Iddle
     });
   }, [setTransactionStatus]);
-
-  const getTokenOrCustomToken = useCallback(async (address: string) => {
-
-    const token = getTokenByMintAddress(address);
-
-    const unkToken = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: `[${shortenAddress(address)}]`,
-    };
-
-    if (token) {
-      return token;
-    } else {
-      try {
-        const tokeninfo = await readAccountInfo(connection, address);
-        if ((tokeninfo as any).data["parsed"]) {
-          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
-          unkToken.decimals = decimals || 0;
-          return unkToken as TokenInfo;
-        } else {
-          return unkToken as TokenInfo;
-        }
-      } catch (error) {
-        console.error('Could not get token info, assuming decimals = 6');
-        return unkToken as TokenInfo;
-      }
-    }
-  }, [connection, getTokenByMintAddress]);
 
   const refreshUserBalances = useCallback((source?: PublicKey) => {
 
@@ -1199,7 +1168,11 @@ export const StreamingAccountView = (props: {
     }
 
     if (publicKey && streamingAccountSelected) {
-      const token = await getTokenOrCustomToken(params.associatedToken);
+      const token = await getTokenOrCustomToken(
+        connection,
+        params.associatedToken,
+        getTokenByMintAddress
+      );
       consoleOut('onExecuteAddFundsTransaction token:', token, 'blue');
       let created: boolean;
       if ((streamingAccountSelected as Treasury).version && (streamingAccountSelected as Treasury).version >= 2) {
@@ -2297,7 +2270,7 @@ export const StreamingAccountView = (props: {
 
   // Set selected token with the streaming account associated token as soon as streamingAccountSelected is available
   useEffect(() => {
-    if (!publicKey || !streamingAccountSelected) { return; }
+    if (!connection || !publicKey || !streamingAccountSelected) { return; }
 
     const v1 = streamingAccountSelected as TreasuryInfo;
     const v2 = streamingAccountSelected as Treasury;
@@ -2306,7 +2279,11 @@ export const StreamingAccountView = (props: {
       ? v2.associatedToken as string
       : v1.associatedTokenAddress as string;
 
-    getTokenOrCustomToken(ata)
+    getTokenOrCustomToken(
+      connection,
+      ata,
+      getTokenByMintAddress
+    )
       .then(token => {
         consoleOut('getTokenOrCustomToken (StreamingAccountView) ->', token, 'blue');
         if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
@@ -2318,7 +2295,7 @@ export const StreamingAccountView = (props: {
           setSelectedToken(token);
         }
       });
-  }, [getTokenOrCustomToken, publicKey, streamingAccountSelected]);
+  }, [connection, getTokenByMintAddress, publicKey, streamingAccountSelected]);
 
   // Reload streaming account streams whenever the selected streaming account changes
   useEffect(() => {
