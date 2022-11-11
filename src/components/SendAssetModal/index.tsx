@@ -127,10 +127,14 @@ export const SendAssetModal = (props: {
 
   // Set working local token from component inputs
   useEffect(() => {
-    if (isVisible && selectedToken) {
-      setToken(selectedToken);
+    if (isVisible) {
+      if (selectedToken) {
+        setToken(selectedToken);
+      } else if (selectedList) {
+        setToken(selectedList[0]);
+      }
     }
-  }, [isVisible, selectedToken]);
+  }, [isVisible, selectedList, selectedToken]);
 
   // Keep account balance updated
   useEffect(() => {

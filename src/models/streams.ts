@@ -57,3 +57,11 @@ export interface CreateStreamParams {
     cliffVestPercent?: number;
     feePayedByTreasurer?: boolean
 }
+
+export interface CloseStreamParams {
+    title: string;
+    closeTreasuryOption: boolean;
+    vestedReturns: number;
+    unvestedReturns: number;
+    feeAmount: number | null;
+}

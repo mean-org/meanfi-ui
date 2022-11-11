@@ -1,24 +1,24 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import "./style.scss";
-import { Modal, Button, Spin } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { TransactionStatus } from '../../../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from '../../../../middleware/ui';
-import { NATIVE_SOL_MINT } from '../../../../middleware/ids';
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from '../../../../middleware/utils';
-import { useWallet } from '../../../../contexts/wallet';
-import { FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { Treasury, TreasuryType } from '@mean-dao/msp';
+import { Button, Modal, Spin } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { BN } from 'bn.js';
-import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { Identicon } from '../../../../components/Identicon';
-import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { VestingContractWithdrawOptions } from '../../../../models/vesting';
+import { Identicon } from 'components/Identicon';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
+import { formatThousands, getAmountWithSymbol, getSdkValue, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from 'middleware/utils';
+import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
+import { VestingContractWithdrawOptions } from 'models/vesting';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import "./style.scss";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -156,7 +156,7 @@ export const VestingContractWithdrawFundsModal = (props: {
             selectedToken && 
             isVerifiedRecipient &&
             tokenAmount && tokenAmount.gtn(0) &&
-            unallocatedBalance.gt(tokenAmount) &&
+            unallocatedBalance.gte(tokenAmount) &&
             nativeBalance >= br
       ? true
       : false;

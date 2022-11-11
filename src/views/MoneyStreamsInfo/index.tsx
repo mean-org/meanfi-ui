@@ -1187,7 +1187,7 @@ export const MoneyStreamsInfoView = (props: {
       // Create Streaming account
       const treasuryAssociatedTokenMint = new PublicKey(data.associatedTokenAddress);
       const createTreasuryTx = await msp.createTreasury(
-        publicKey,                                        // payer
+        multisig.authority,                               // payer
         multisig.authority,                               // treasurer
         treasuryAssociatedTokenMint,                      // associatedToken
         data.label,                                       // label
@@ -1246,7 +1246,7 @@ export const MoneyStreamsInfoView = (props: {
       const associatedToken = createOptions.token;
       const payload = {
         title: createOptions.treasuryTitle,
-        treasurer: publicKey.toBase58(),                                                                  // treasurer
+        treasurer: selectedAccount.address,                                                               // treasurer
         label: createOptions.treasuryName,                                                                // label
         type: createOptions.treasuryType === TreasuryType.Open                                            // type
           ? 'Open'

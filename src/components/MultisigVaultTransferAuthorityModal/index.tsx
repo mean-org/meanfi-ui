@@ -235,7 +235,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                     <AutoComplete
                       bordered={false}
                       style={{ width: '100%' }}
-                      dropdownClassName="stream-select-dropdown"
+                      popupClassName="stream-select-dropdown"
                       options={renderMultisigSelectOptions()}
                       placeholder={t('multisig.transfer-authority.multisig-selector-placeholder')}
                       onChange={(inputValue, option) => {

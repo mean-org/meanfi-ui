@@ -12,6 +12,7 @@ import { consoleOut, percentage, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
+import { CloseStreamParams } from "models/streams";
 import { StreamTreasuryType } from 'models/treasuries';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -231,7 +232,7 @@ export const StreamCloseModal = (props: {
       if (localStreamDetail.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return toUiAmount(v2.withdrawableAmount, selectedToken?.decimals || 9);
+        return +toUiAmount(v2.withdrawableAmount, selectedToken?.decimals || 9);
       }
     }
     return 0;
@@ -249,7 +250,7 @@ export const StreamCloseModal = (props: {
       if (localStreamDetail.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return toUiAmount(v2.fundsLeftInStream, selectedToken?.decimals || 9);
+        return +toUiAmount(v2.fundsLeftInStream, selectedToken?.decimals || 9);
       }
     }
     return 0;
@@ -283,13 +284,14 @@ export const StreamCloseModal = (props: {
   }
 
   const onAcceptModal = () => {
-    handleOk({
+    const params: CloseStreamParams ={
       title: proposalTitle,
       closeTreasuryOption,
       vestedReturns: getWithdrawableAmount(),
       unvestedReturns: amITreasurer() ? getUnvested() : 0,
       feeAmount: amIBeneficiary() && getWithdrawableAmount() > 0 ? feeAmount : 0
-    });
+    };
+    handleOk(params);
   }
 
   const onCloseModal = () => {

@@ -821,7 +821,7 @@ export const VestingContractCreateForm = (props: {
     //#endregion
 
     const getFormContainerClasses = () => {
-        return inModal ? 'scrollable-content pl-5 pr-4 py-2' : 'elastic-form-container';
+        return inModal ? 'scrollable-content' : 'elastic-form-container';
     }
 
     const getPanel1Classes = () => {
@@ -1252,7 +1252,7 @@ export const VestingContractCreateForm = (props: {
         <>
             <Spin spinning={loadingMultisigAccounts}>
 
-                {renderPendingProposals()}
+                {isMultisigContext ? renderPendingProposals() : null}
 
                 <div className={getFormContainerClasses()}>
 

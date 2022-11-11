@@ -242,15 +242,19 @@ export const ResumeItem = (props: {
                 ))
               )}
             </div>
-
             {version !== 0 && (
-              <>
-                {subtitle && (
+              subtitle ? (
+                subtitle === "null" ? (
+                  <div className="info-label">
+                    <span className="subtitle"></span>
+                  </div>
+                ) : (
                   <div className="info-label">
                     <span className="subtitle">{subtitle}</span>
                   </div>
-                )}
-                {expires ? (
+                )
+              ) : (
+                expires ? (
                   <div className="info-label">
                     {(executedOn || status === 2) ? (
                       <span>Executed on {executedOn}</span>
@@ -260,8 +264,8 @@ export const ResumeItem = (props: {
                   <div className="info-label">
                     <span className="subtitle">Does not expire</span>
                   </div>
-                )}
-              </>
+                )
+              )
             )}
           </div>
         </div>
