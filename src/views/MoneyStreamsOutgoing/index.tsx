@@ -11,7 +11,7 @@ import {
   TreasuryType
 } from "@mean-dao/msp";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
-import { AccountInfo, ParsedAccountData, PublicKey, Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Dropdown, Menu, Modal, Space, Spin } from "antd";
 import { ItemType } from "antd/lib/menu/hooks/useItems";
 import { segmentAnalytics } from "App";
@@ -20,7 +20,7 @@ import { StreamAddFundsModal } from "components/StreamAddFundsModal";
 import { StreamCloseModal } from "components/StreamCloseModal";
 import { StreamPauseModal } from "components/StreamPauseModal";
 import { StreamResumeModal } from "components/StreamResumeModal";
-import { CUSTOM_TOKEN_NAME, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "constants/common";
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "constants/common";
 import { NATIVE_SOL } from "constants/tokens";
 import { AppStateContext } from "contexts/appstate";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "contexts/connection";
@@ -28,11 +28,11 @@ import { TxConfirmationContext } from "contexts/transaction-status";
 import { useWallet } from "contexts/wallet";
 import { IconEllipsisVertical } from "Icons";
 import { appConfig, customLogger } from "index";
-import { fetchAccountTokens, readAccountInfo } from "middleware/accounts";
+import { fetchAccountTokens } from "middleware/accounts";
 import { NATIVE_SOL_MINT } from "middleware/ids";
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from "middleware/segment-service";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "middleware/ui";
-import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from "middleware/utils";
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTokenOrCustomToken, getTxIxResume, shortenAddress, toUiAmount } from "middleware/utils";
 import { StreamTopupParams, StreamTopupTxCreateParams } from "models/common-types";
 import { OperationType, TransactionStatus } from "models/enums";
 import { TokenInfo } from "models/SolanaTokenInfo";
@@ -119,7 +119,7 @@ export const MoneyStreamsOutgoingView = (props: {
     endpoint,
     streamV2ProgramAddress
   ]);
-  
+
   // Create and cache Multisig client instance
   const multisigClient = useMemo(() => {
 
@@ -167,8 +167,8 @@ export const MoneyStreamsOutgoingView = (props: {
     return false;
 
   }, [
-    multisigAccounts, 
-    publicKey, 
+    multisigAccounts,
+    publicKey,
     treasuryDetails
   ]);
 
@@ -267,35 +267,35 @@ export const MoneyStreamsOutgoingView = (props: {
     consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
 
     connection.getBalance(pk)
-    .then(solBalance => {
-      const uiBalance = getAmountFromLamports(solBalance);
-      balancesMap[NATIVE_SOL.address] = uiBalance;
-      setNativeBalance(uiBalance);
-    });
+      .then(solBalance => {
+        const uiBalance = getAmountFromLamports(solBalance);
+        balancesMap[NATIVE_SOL.address] = uiBalance;
+        setNativeBalance(uiBalance);
+      });
 
     fetchAccountTokens(connection, pk)
-    .then(accTks => {
-      if (accTks) {
-        for (const item of accTks) {
-          const address = item.parsedInfo.mint;
-          const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-          balancesMap[address] = balance;
+      .then(accTks => {
+        if (accTks) {
+          for (const item of accTks) {
+            const address = item.parsedInfo.mint;
+            const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+            balancesMap[address] = balance;
+          }
+        } else {
+          for (const t of splTokenList) {
+            balancesMap[t.address] = 0;
+          }
         }
-      } else {
+      })
+      .catch(error => {
+        console.error(error);
         for (const t of splTokenList) {
           balancesMap[t.address] = 0;
         }
-      }
-    })
-    .catch(error => {
-      console.error(error);
-      for (const t of splTokenList) {
-        balancesMap[t.address] = 0;
-      }
-    })
-    .finally(() => setUserBalances(balancesMap));
+      })
+      .finally(() => setUserBalances(balancesMap));
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     connection,
@@ -310,14 +310,14 @@ export const MoneyStreamsOutgoingView = (props: {
   }
 
   const isError = (): boolean => {
-    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled
-            ? true
-            : false;
+    return transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+      transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+      transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+      transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+      transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ||
+      transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled
+      ? true
+      : false;
   }
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
@@ -420,33 +420,33 @@ export const MoneyStreamsOutgoingView = (props: {
         payload.amount,                                             // amount
         autoWSol                                                    // autoWSol
       )
-      .then(value => {
-        consoleOut('fundStream returned transaction:', value);
-        setTransactionStatus({
-          lastOperation: TransactionStatus.InitTransactionSuccess,
-          currentOperation: TransactionStatus.SignTransaction
+        .then(value => {
+          consoleOut('fundStream returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('fundStream error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
+          return false;
         });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-          result: getTxIxResume(value)
-        });
-        transaction = value;
-        return true;
-      })
-      .catch(error => {
-        console.error('fundStream error:', error);
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.InitTransactionFailure
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-          result: `${error}`
-        });
-        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
-        return false;
-      });
     }
 
     const allocateToStream = async (data: StreamTopupTxCreateParams) => {
@@ -527,46 +527,46 @@ export const MoneyStreamsOutgoingView = (props: {
         associatedToken: addFundsData.associatedToken
       };
       return await allocateToStream(data)
-      .then(value => {
-        if (!value) {
+        .then(value => {
+          if (!value) {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: 'Transaction could not be created'
+            });
+            customLogger.logError('Allocate transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
+            return false;
+          }
+          consoleOut('allocate returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('allocate error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: 'Transaction could not be created'
+            result: `${error}`
           });
           customLogger.logError('Allocate transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
           return false;
-        }
-        consoleOut('allocate returned transaction:', value);
-        setTransactionStatus({
-          lastOperation: TransactionStatus.InitTransactionSuccess,
-          currentOperation: TransactionStatus.SignTransaction
         });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-          result: getTxIxResume(value)
-        });
-        transaction = value;
-        return true;
-      })
-      .catch(error => {
-        console.error('allocate error:', error);
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.InitTransactionFailure
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-          result: `${error}`
-        });
-        customLogger.logError('Allocate transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
-        return false;
-      });
     }
 
     const createTxV1 = async (): Promise<boolean> => {
@@ -628,11 +628,9 @@ export const MoneyStreamsOutgoingView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              })`
           });
           customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
@@ -649,33 +647,33 @@ export const MoneyStreamsOutgoingView = (props: {
           amount,
           AllocationType.All
         )
-        .then(value => {
-          consoleOut('addFunds returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
+          .then(value => {
+            consoleOut('addFunds returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('addFunds error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
+            return false;
           });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('addFunds error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
-          return false;
-        });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -757,18 +755,16 @@ export const MoneyStreamsOutgoingView = (props: {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${
-            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-          }) to pay for network fees (${
-            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-          })`
+          result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
         });
         customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
         segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       }
 
-      consoleOut('onExecuteAddFundsTransaction ->','/src/views/MoneyStreamsOutgoingView', 'darkcyan');
+      consoleOut('onExecuteAddFundsTransaction ->', '/src/views/MoneyStreamsOutgoingView', 'darkcyan');
       if (addFundsData.fundFromTreasury) {
         consoleOut('Starting allocate using MSP V2...', '', 'blue');
         return await fundFromTreasury({
@@ -897,7 +893,7 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     }
 
-    if (wallet && streamSelected && workingToken ) {
+    if (wallet && streamSelected && workingToken) {
       const token = Object.assign({}, workingToken);
       showAddFundsTransactionModal();
       let created: boolean;
@@ -920,22 +916,22 @@ export const MoneyStreamsOutgoingView = (props: {
             const targetFundedSingleSigner = 'Stream funded with';
             const loadingMessage = multisigAuth
               ? `Create proposal to ${fundTargetMultisig} ${formatThousands(
-                  parseFloat(addFundsData.amount as string),
-                  token.decimals
-                )} ${token.symbol}`
+                parseFloat(addFundsData.amount as string),
+                token.decimals
+              )} ${token.symbol}`
               : `${fundTargetSingleSigner} ${formatThousands(
-                  parseFloat(addFundsData.amount as string),
-                  token.decimals
-                )} ${token.symbol}`;
+                parseFloat(addFundsData.amount as string),
+                token.decimals
+              )} ${token.symbol}`;
             const completedMessage = multisigAuth
               ? `Proposal to ${fundTargetMultisig} ${formatThousands(
-                  parseFloat(addFundsData.amount as string),
-                  token.decimals
-                )} ${token.symbol} was submitted for Multisig approval.`
+                parseFloat(addFundsData.amount as string),
+                token.decimals
+              )} ${token.symbol} was submitted for Multisig approval.`
               : `${targetFundedSingleSigner} ${formatThousands(
-                  parseFloat(addFundsData.amount as string),
-                  token.decimals
-                )} ${token.symbol}`;
+                parseFloat(addFundsData.amount as string),
+                token.decimals
+              )} ${token.symbol}`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.StreamAddFunds,
@@ -1039,11 +1035,9 @@ export const MoneyStreamsOutgoingView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              })`
           });
           customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
           return false;
@@ -1055,32 +1049,32 @@ export const MoneyStreamsOutgoingView = (props: {
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
         )
-        .then(value => {
-          consoleOut('pauseStream returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
+          .then(value => {
+            consoleOut('pauseStream returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('pauseStream error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+            return false;
           });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('pauseStream error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
-          return false;
-        });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -1151,7 +1145,7 @@ export const MoneyStreamsOutgoingView = (props: {
         lastOperation: TransactionStatus.TransactionStart,
         currentOperation: TransactionStatus.InitTransaction
       });
-      
+
       const streamPublicKey = new PublicKey(streamSelected.id as string);
 
       const data = {
@@ -1184,11 +1178,9 @@ export const MoneyStreamsOutgoingView = (props: {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${
-            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
-          }) to pay for network fees (${
-            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
-          })`
+          result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58(), false, splTokenList)
+            }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58(), false, splTokenList)
+            })`
         });
         customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
         return false;
@@ -1436,11 +1428,9 @@ export const MoneyStreamsOutgoingView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              })`
           });
           customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
           return false;
@@ -1452,32 +1442,32 @@ export const MoneyStreamsOutgoingView = (props: {
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
         )
-        .then(value => {
-          consoleOut('resumeStream returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
+          .then(value => {
+            consoleOut('resumeStream returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('resumeStream error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
+            return false;
           });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('resumeStream error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
-          return false;
-        });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -1580,11 +1570,9 @@ export const MoneyStreamsOutgoingView = (props: {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${
-            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-          }) to pay for network fees (${
-            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-          })`
+          result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
         });
         customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
         return false;
@@ -1716,7 +1704,7 @@ export const MoneyStreamsOutgoingView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionFinished
           });
-          
+
           setIsResumeStreamModalVisibility(false);
           setOngoingOperation(undefined);
           setLastOperationPayload('');
@@ -1854,11 +1842,9 @@ export const MoneyStreamsOutgoingView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              })`
           });
           customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
@@ -1872,33 +1858,33 @@ export const MoneyStreamsOutgoingView = (props: {
           streamPublicKey,                                    // Stream ID
           closeTreasuryData.closeTreasuryOption               // closeTreasury
         )
-        .then(value => {
-          consoleOut('closeStream returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
+          .then(value => {
+            consoleOut('closeStream returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('closeStream error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
+            return false;
           });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('closeStream error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
-          return false;
-        });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -1916,7 +1902,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       if (!msp) { return null; }
 
-      if (!isMultisigTreasury()) {        
+      if (!isMultisigTreasury()) {
         return await msp.closeStream(
           new PublicKey(data.payer),              // payer
           new PublicKey(data.payer),              // destination
@@ -2017,11 +2003,9 @@ export const MoneyStreamsOutgoingView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              })`
           });
           customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
@@ -2031,33 +2015,33 @@ export const MoneyStreamsOutgoingView = (props: {
         consoleOut('Starting closeStream using MSP V2...', '', 'blue');
         // Create a transaction
         const result = await closeStream(data)
-        .then(value => {
-          if (!value) { return false; }
-          consoleOut('closeStream returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
+          .then(value => {
+            if (!value) { return false; }
+            consoleOut('closeStream returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('closeStream error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            return false;
           });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('closeStream error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-          return false;
-        });
 
         return result;
       } else {
@@ -2200,9 +2184,9 @@ export const MoneyStreamsOutgoingView = (props: {
             treasury: shortenAddress(treasury)
           });
         } else {
-          message = t('close-stream.context-treasurer-single-beneficiary', {beneficiary: shortenAddress(beneficiary)});
+          message = t('close-stream.context-treasurer-single-beneficiary', { beneficiary: shortenAddress(beneficiary) });
         }
-      } else if (beneficiary === me)  {  // If I am the beneficiary
+      } else if (beneficiary === me) {  // If I am the beneficiary
         message = t('close-stream.context-beneficiary', { beneficiary: shortenAddress(beneficiary) });
       }
 
@@ -2249,37 +2233,6 @@ export const MoneyStreamsOutgoingView = (props: {
     refreshTokenBalance,
     resetTransactionStatus,
   ]);
-
-  const getTokenOrCustomToken = useCallback(async (address: string) => {
-
-    const token = getTokenByMintAddress(address);
-
-    const unkToken = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: `[${shortenAddress(address)}]`,
-    };
-
-    if (token) {
-      return token;
-    } else {
-      try {
-        const tokeninfo = await readAccountInfo(connection, address);
-        if ((tokeninfo as any).data["parsed"]) {
-          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
-          unkToken.decimals = decimals || 0;
-          return unkToken as TokenInfo;
-        } else {
-          return unkToken as TokenInfo;
-        }
-      } catch (error) {
-        console.error('Could not get token info, assuming decimals = 6');
-        return unkToken as TokenInfo;
-      }
-    }
-  }, [connection, getTokenByMintAddress]);
 
   const isNewStream = useCallback(() => {
     if (streamSelected) {
@@ -2351,7 +2304,7 @@ export const MoneyStreamsOutgoingView = (props: {
       clearTimeout(timeout);
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ms, msp, publicKey, streamSelected]);
 
   // Refresh stream data
@@ -2380,7 +2333,7 @@ export const MoneyStreamsOutgoingView = (props: {
     return () => {
       clearTimeout(timeout);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     ms,
     msp,
@@ -2399,13 +2352,17 @@ export const MoneyStreamsOutgoingView = (props: {
     }
 
     if (associatedToken && (!workingToken || workingToken.address !== associatedToken)) {
-      getTokenOrCustomToken(associatedToken)
-      .then(token => {
-        consoleOut('getTokenOrCustomToken (MoneyStreamsOutgoingView) ->', token, 'blue');
-        setWorkingToken(token);
-      });
+      getTokenOrCustomToken(
+        connection,
+        associatedToken,
+        getTokenByMintAddress
+      )
+        .then(token => {
+          consoleOut('getTokenOrCustomToken (MoneyStreamsOutgoingView) ->', token, 'blue');
+          setWorkingToken(token);
+        });
     }
-  }, [getTokenOrCustomToken, publicKey, streamSelected, workingToken]);
+  }, [connection, getTokenByMintAddress, publicKey, streamSelected, workingToken]);
 
 
   ///////////////
@@ -2444,7 +2401,7 @@ export const MoneyStreamsOutgoingView = (props: {
   }, []);
 
   const renderFundsLeftInAccount = () => {
-    if (!streamSelected || !workingToken) {return "--";}
+    if (!streamSelected || !workingToken) { return "--"; }
 
     const v1 = streamSelected as StreamInfo;
     const v2 = streamSelected as Stream;
@@ -2500,7 +2457,7 @@ export const MoneyStreamsOutgoingView = (props: {
       key: '02-explorer-link',
       label: (
         <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`}
-           target="_blank" rel="noopener noreferrer">
+          target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">{t('account-area.explorer-link')}</span>
         </a>
       )
@@ -2529,9 +2486,9 @@ export const MoneyStreamsOutgoingView = (props: {
               getTreasuryType() === "locked"
             }
             onClick={showAddFundsModal}>
-              <div className="btn-content">
-                Add funds
-              </div>
+            <div className="btn-content">
+              Add funds
+            </div>
           </Button>
           {(streamSelected && treasuryDetails && getTreasuryType() === "open") && (
             (getStreamStatus(streamSelected) === "stopped-manually") ? (
@@ -2542,9 +2499,9 @@ export const MoneyStreamsOutgoingView = (props: {
                 className="thin-stroke btn-min-width"
                 disabled={isBusy || hasStreamPendingTx()}
                 onClick={showResumeStreamModal}>
-                  <div className="btn-content">
-                    Resume stream
-                  </div>
+                <div className="btn-content">
+                  Resume stream
+                </div>
               </Button>
             ) : (getStreamStatus(streamSelected) === "running") ? (
               <Button
@@ -2554,9 +2511,9 @@ export const MoneyStreamsOutgoingView = (props: {
                 className="thin-stroke btn-min-width"
                 disabled={isBusy || hasStreamPendingTx()}
                 onClick={showPauseStreamModal}>
-                  <div className="btn-content">
-                    Pause stream
-                  </div>
+                <div className="btn-content">
+                  Pause stream
+                </div>
               </Button>
             ) : null
           )}
@@ -2570,7 +2527,7 @@ export const MoneyStreamsOutgoingView = (props: {
               type="default"
               shape="circle"
               size="middle"
-              icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+              icon={<IconEllipsisVertical className="mean-svg-icons" />}
               onClick={(e) => e.preventDefault()}
             />
           </span>
@@ -2686,11 +2643,11 @@ export const MoneyStreamsOutgoingView = (props: {
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(
-                  parseFloat(addFundsPayload ? addFundsPayload.amount as string : '0'),
-                  getStreamAssociatedTokenAddress() || '',
-                  false,
-                  splTokenList
-                )}
+                parseFloat(addFundsPayload ? addFundsPayload.amount as string : '0'),
+                getStreamAssociatedTokenAddress() || '',
+                false,
+                splTokenList
+              )}
               </h5>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                 <div className="indication">{t('transactions.status.instructions')}</div>
@@ -2727,7 +2684,8 @@ export const MoneyStreamsOutgoingView = (props: {
                       NATIVE_SOL_MINT.toBase58(),
                       false,
                       splTokenList
-                    )})
+                    )
+                  })
                   }
                 </h4>
               ) : (
@@ -2798,7 +2756,8 @@ export const MoneyStreamsOutgoingView = (props: {
                     feeAmount: getAmountWithSymbol(
                       transactionFees.blockchainFee + transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
-                    )})
+                    )
+                  })
                   }
                 </h4>
               ) : (
@@ -2871,7 +2830,8 @@ export const MoneyStreamsOutgoingView = (props: {
                     feeAmount: getAmountWithSymbol(
                       transactionFees.blockchainFee + transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58()
-                    )})
+                    )
+                  })
                   }
                 </h4>
               ) : (

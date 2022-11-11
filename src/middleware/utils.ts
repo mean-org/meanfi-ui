@@ -1,10 +1,8 @@
 import { useCallback, useState } from "react";
 import { ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
-  AccountInfo,
   Connection,
   LAMPORTS_PER_SOL,
-  ParsedAccountData,
   PublicKey,
   Transaction,
 } from "@solana/web3.js";
@@ -18,7 +16,7 @@ import { getNetworkIdByEnvironment } from "../contexts/connection";
 import { environment } from "../environments/environment";
 import { BigNumber } from "bignumber.js";
 import BN from "bn.js";
-import { readAccountInfo } from "./accounts";
+import { resolveParsedAccountInfo } from "./accounts";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -182,7 +180,7 @@ export function isValidNumber(str: string | null | undefined): boolean {
 }
 
 export function isValidInteger(str: string): boolean {
-  if (str === null || str === undefined ) { return false; }
+  if (str === null || str === undefined) { return false; }
   return INTEGER_INPUT_AMOUNT_PATTERN.test(str);
 }
 
@@ -400,7 +398,7 @@ export function getTxIxResume(tx: Transaction) {
       programIds.push(programId);
     }
   });
-  return {numIxs: tx.instructions.length, programIds: programIds};
+  return { numIxs: tx.instructions.length, programIds: programIds };
 }
 
 export async function findATokenAddress(
@@ -410,12 +408,12 @@ export async function findATokenAddress(
 ): Promise<PublicKey> {
 
   return (await PublicKey.findProgramAddress(
-      [
-        walletAddress.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        tokenMintAddress.toBuffer(),
-      ],
-      ASSOCIATED_TOKEN_PROGRAM_ID
+    [
+      walletAddress.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      tokenMintAddress.toBuffer(),
+    ],
+    ASSOCIATED_TOKEN_PROGRAM_ID
   ))[0];
 }
 
@@ -469,7 +467,7 @@ export const toTokenAmount = (amount: number | string, decimals: number, asStrin
   const value = new BigNumber(amount);
   if (asString) {
     const result = value.multipliedBy(multiplier).integerValue();
-    return result.toNumber().toLocaleString('fullwide', {useGrouping:false});
+    return result.toNumber().toLocaleString('fullwide', { useGrouping: false });
   }
   return value.multipliedBy(multiplier);
 }
@@ -502,15 +500,15 @@ export const makeInteger = (amount: number, decimals: number): BN => {
 }
 
 export const addSeconds = (date: Date, seconds: number) => {
-  return new Date(date.getTime() + seconds*1000);
+  return new Date(date.getTime() + seconds * 1000);
 }
 
 export const addDays = (date: Date, days: number) => {
-  return new Date(date.getTime() + days*24*60*60*1000);
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
 export const openLinkInNewTab = (address: string) => {
-  window.open(address, '_blank','noreferrer');
+  window.open(address, '_blank', 'noreferrer');
 }
 
 export const tabNameFormat = (str: string) => {
@@ -533,7 +531,7 @@ export function slugify(text: string): string {
  * Returns:
  *   { a: 1, c: 2}
  */
- export const flattenObject = (obj: any) => {
+export const flattenObject = (obj: any) => {
   const flattened: any = {};
 
   Object.keys(obj).forEach((key) => {
@@ -569,14 +567,10 @@ export const getTokenOrCustomToken = async (
     return token;
   } else {
     try {
-      const tokeninfo = await readAccountInfo(connection, address) as AccountInfo<ParsedAccountData> | null;
-      if (tokeninfo?.data["parsed"]) {
-        const decimals = (tokeninfo).data.parsed.info.decimals as number;
-        unkToken.decimals = decimals || 0;
-        return unkToken as TokenInfo;
-      } else {
-        return unkToken as TokenInfo;
-      }
+      const tokeninfo = await resolveParsedAccountInfo(connection, address);
+      const decimals = tokeninfo.data.parsed.info.decimals as number;
+      unkToken.decimals = decimals || 0;
+      return unkToken as TokenInfo;
     } catch (error) {
       console.error('Could not get token info:', error);
       return unkToken as TokenInfo;
