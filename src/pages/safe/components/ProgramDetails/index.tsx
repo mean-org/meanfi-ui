@@ -700,7 +700,9 @@ export const ProgramDetailsView = (props: {
     const programData = programSelected.executable.toBase58() as string;
     resolveParsedAccountInfo(connection, programData)
       .then(accountInfo => {
-        const authority = (accountInfo as AccountInfo<ParsedAccountData>).data.parsed.info.authority as string | null;
+        const authority = accountInfo.data.parsed.info.authority as
+          | string
+          | null;
         setUpgradeAuthority(authority);
       })
       .catch(error => setUpgradeAuthority(null));
