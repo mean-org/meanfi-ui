@@ -27,7 +27,7 @@ import { TxConfirmationContext } from "contexts/transaction-status";
 import { useWallet } from "contexts/wallet";
 import { IconArrowBack } from "Icons";
 import { appConfig, customLogger } from 'index';
-import { readAccountInfo } from "middleware/accounts";
+import { resolveParsedAccountInfo } from "middleware/accounts";
 import { NATIVE_SOL_MINT } from "middleware/ids";
 import { consoleOut, getTransactionStatusForLogs } from "middleware/ui";
 import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from "middleware/utils";
@@ -58,10 +58,10 @@ export const ProgramDetailsView = (props: {
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
 
-  const { 
+  const {
     // isProgramDetails, 
-    onDataToProgramView, 
-    programSelected, 
+    onDataToProgramView,
+    programSelected,
     selectedMultisig
   } = props;
 
@@ -148,7 +148,7 @@ export const ProgramDetailsView = (props: {
 
   const onProgramUpgraded = useCallback(() => {
     setIsUpgradeProgramModalVisible(false);
-  },[]);
+  }, []);
 
   const onExecuteUpgradeProgramsTx = useCallback(async (data: any) => {
 
@@ -243,14 +243,12 @@ export const ProgramDetailsView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(
-                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(
+                transactionFees.blockchainFee + transactionFees.mspFlatFee,
                 NATIVE_SOL_MINT.toBase58()
               )
-            })`
+              })`
           });
           customLogger.logWarning('Upgrade Program transaction failed', { transcript: transactionLog });
           return false;
@@ -403,22 +401,22 @@ export const ProgramDetailsView = (props: {
       [programAddress.toBuffer()],
       BPF_LOADER_UPGRADEABLE_PID
     )
-    .then((result: any) => {
-      const programDataAddress = result[0];
-      const fees = {
-        blockchainFee: 0.000005,
-        mspFlatFee: 0.000010,
-        mspPercentFee: 0
-      };
-      setTransactionFees(fees);
-      const params: SetProgramAuthPayload = {
-        programAddress: programId,
-        programDataAddress: programDataAddress.toBase58(),
-        newAuthAddress: '', // Empty to make program non-upgradable (inmutable)
-      };
-      onAcceptSetProgramAuth(params);
-    })
-    .catch(err => console.error(err));
+      .then((result: any) => {
+        const programDataAddress = result[0];
+        const fees = {
+          blockchainFee: 0.000005,
+          mspFlatFee: 0.000010,
+          mspPercentFee: 0
+        };
+        setTransactionFees(fees);
+        const params: SetProgramAuthPayload = {
+          programAddress: programId,
+          programDataAddress: programDataAddress.toBase58(),
+          newAuthAddress: '', // Empty to make program non-upgradable (inmutable)
+        };
+        onAcceptSetProgramAuth(params);
+      })
+      .catch(err => console.error(err));
   }
 
   const onAcceptSetProgramAuth = (params: SetProgramAuthPayload) => {
@@ -428,7 +426,7 @@ export const ProgramDetailsView = (props: {
 
   const onProgramAuthSet = useCallback(() => {
     setIsSetProgramAuthModalVisible(false);
-  },[]);
+  }, []);
 
   const onExecuteSetProgramAuthTx = useCallback(async (params: SetProgramAuthPayload) => {
 
@@ -520,14 +518,12 @@ export const ProgramDetailsView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(
-                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(
+                transactionFees.blockchainFee + transactionFees.mspFlatFee,
                 NATIVE_SOL_MINT.toBase58()
               )
-            })`
+              })`
           });
           customLogger.logWarning('Set program authority transaction failed', { transcript: transactionLog });
           return false;
@@ -701,21 +697,13 @@ export const ProgramDetailsView = (props: {
   useEffect(() => {
     if (!programSelected) { return; }
 
-    (async ()=> {
-      const programData = programSelected.executable.toBase58();
-      try {
-        const accountInfo = await readAccountInfo(connection, programData);
-        if ((accountInfo as any).data["parsed"]) {
-          const authority = (accountInfo as AccountInfo<ParsedAccountData>).data.parsed.info.authority as string | null;
-          setUpgradeAuthority(authority);
-        } else {
-          setUpgradeAuthority(null);
-        }
-      } catch (error) {
-        console.error('Could not get programData info for:', programData);
-        setUpgradeAuthority(null);
-      }
-    })();
+    const programData = programSelected.executable.toBase58() as string;
+    resolveParsedAccountInfo(connection, programData)
+      .then(accountInfo => {
+        const authority = (accountInfo as AccountInfo<ParsedAccountData>).data.parsed.info.authority as string | null;
+        setUpgradeAuthority(authority);
+      })
+      .catch(error => setUpgradeAuthority(null));
 
   }, [connection, programSelected]);
 
@@ -756,8 +744,8 @@ export const ProgramDetailsView = (props: {
       .then(balance => {
         setBalanceSol(
           formatThousands(
-            balance / LAMPORTS_PER_SOL, 
-            NATIVE_SOL.decimals, 
+            balance / LAMPORTS_PER_SOL,
+            NATIVE_SOL.decimals,
             NATIVE_SOL.decimals
           )
         );
@@ -765,7 +753,7 @@ export const ProgramDetailsView = (props: {
       .catch(error => console.error(error));
 
   }, [
-    connection, 
+    connection,
     programSelected
   ]);
 
@@ -797,7 +785,7 @@ export const ProgramDetailsView = (props: {
   ];
 
   // Get transactions
-  const getProgramTxs = useCallback(async() => {
+  const getProgramTxs = useCallback(async () => {
 
     if (!connection || !programSelected) { return null; }
 
@@ -815,7 +803,7 @@ export const ProgramDetailsView = (props: {
     return txs.filter(tx => tx !== null);
 
   }, [
-    connection, 
+    connection,
     programSelected
   ]);
 
@@ -835,7 +823,7 @@ export const ProgramDetailsView = (props: {
     }
 
   }, [
-    connection, 
+    connection,
     programSelected,
     loadingTxs,
     getProgramTxs
@@ -845,7 +833,7 @@ export const ProgramDetailsView = (props: {
     <>
       <div className="item-list-header compact mt-2 mr-1">
         <Row gutter={[8, 8]} className="d-flex header-row pb-2">
-          <Col span={14}  className="std-table-cell pr-1">Signatures</Col>
+          <Col span={14} className="std-table-cell pr-1">Signatures</Col>
           <Col span={5} className="std-table-cell pl-3 pr-1">Slots</Col>
           <Col span={5} className="std-table-cell pl-3 pr-1">Time</Col>
         </Row>
@@ -855,7 +843,7 @@ export const ProgramDetailsView = (props: {
           programTransactions.map((tx: ParsedTransactionWithMeta) => (
             <Row gutter={[8, 8]} className="item-list-body compact hover-list w-100 pt-1" key={tx.blockTime}>
               <Col span={14} className="std-table-cell pr-1 simplelink signature">
-                <CopyExtLinkGroup 
+                <CopyExtLinkGroup
                   content={tx.transaction.signatures.slice(0, 1).shift() || ""}
                   externalLink={true}
                   className="text-truncate"
@@ -864,7 +852,7 @@ export const ProgramDetailsView = (props: {
                 />
               </Col>
               <Col span={5} className="std-table-cell pr-1 simplelink">
-                <CopyExtLinkGroup 
+                <CopyExtLinkGroup
                   content={formatThousands(tx.slot)}
                   externalLink={false}
                   className="text-truncate"
@@ -914,8 +902,8 @@ export const ProgramDetailsView = (props: {
     return Program.fetchIdl(programSelected.pubkey, provider);
 
   }, [
-    connection, 
-    programSelected, 
+    connection,
+    programSelected,
     publicKey
   ]);
 
@@ -942,12 +930,12 @@ export const ProgramDetailsView = (props: {
     }
 
   }, [
-    connection, 
-    getProgramIDL, 
-    programSelected, 
+    connection,
+    getProgramIDL,
+    programSelected,
     publicKey
   ]);
-  
+
   const renderIdlTree = () => {
     return !selectedProgramIdl ? <div className={"no-idl-info"}>{noIdlInfo}</div> : (
       <ReactJson theme={"ocean"} enableClipboard={false} src={selectedProgramIdl} />
@@ -960,7 +948,7 @@ export const ProgramDetailsView = (props: {
       id: "transactions",
       name: "Transactions",
       render: renderTransactions
-    }, 
+    },
     {
       id: "anchor-idl",
       name: "Anchor IDL",
@@ -1003,9 +991,9 @@ export const ProgramDetailsView = (props: {
                 className="thin-stroke"
                 disabled={isTxInProgress() || !upgradeAuthority}
                 onClick={showUpgradeProgramModal}>
-                  <div className="btn-content">
-                    Upgrade / Deployment
-                  </div>
+                <div className="btn-content">
+                  Upgrade / Deployment
+                </div>
               </Button>
             </Tooltip>
             <Tooltip title={upgradeAuthority ? 'This changes the authority of this program' : 'This program is non-upgradeable'}>
@@ -1016,9 +1004,9 @@ export const ProgramDetailsView = (props: {
                 className="thin-stroke"
                 disabled={isTxInProgress() || !upgradeAuthority}
                 onClick={showSetProgramAuthModal}>
-                  <div className="btn-content">
-                    Set authority
-                  </div>
+                <div className="btn-content">
+                  Set authority
+                </div>
               </Button>
             </Tooltip>
             {programSelected && (
@@ -1030,9 +1018,9 @@ export const ProgramDetailsView = (props: {
                   className="thin-stroke"
                   disabled={isTxInProgress() || !upgradeAuthority}
                   onClick={() => setInmutableProgram(programSelected.pubkey.toBase58())}>
-                    <div className="btn-content">
-                      Make immutable
-                    </div>
+                  <div className="btn-content">
+                    Make immutable
+                  </div>
                 </Button>
               </Tooltip>
             )}
