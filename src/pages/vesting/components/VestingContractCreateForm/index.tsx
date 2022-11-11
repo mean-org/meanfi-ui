@@ -1252,7 +1252,7 @@ export const VestingContractCreateForm = (props: {
         <>
             <Spin spinning={loadingMultisigAccounts}>
 
-                {renderPendingProposals()}
+                {isMultisigContext ? renderPendingProposals() : null}
 
                 <div className={getFormContainerClasses()}>
 

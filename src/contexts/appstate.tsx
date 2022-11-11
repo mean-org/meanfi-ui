@@ -14,6 +14,7 @@ import { appConfig, customLogger } from "index";
 import { getUserAccountTokens } from "middleware/accounts";
 import { getPrices, getSolanaTokenListKeyNameByCluster, getSolFlareTokenList, getSplTokens } from "middleware/api";
 import { MappedTransaction } from "middleware/history";
+import { SYSTEM_PROGRAM_ID } from "middleware/ids";
 import { PerformanceCounter } from "middleware/perf-counter";
 import { consoleOut, isProd, msToTime } from "middleware/ui";
 import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from "middleware/utils";
@@ -592,6 +593,31 @@ const AppStateProvider: React.FC = ({ children }) => {
     applyTheme(theme);
     return () => {};
   }, [theme, updateTheme]);
+
+  useEffect(() => {
+    // lastUsedAccount
+    if (publicKey && selectedAccount && lastUsedAccount) {
+      const selectedAddress = selectedAccount.address;
+      const lastAddress = (lastUsedAccount as AccountContext).address
+      if (
+        selectedAddress &&
+        !selectedAccount.isMultisig &&
+        lastAddress &&
+        lastAddress !== selectedAddress &&
+        lastAddress !== publicKey.toBase58()
+      ) {
+        const account: AccountContext = {
+          name: 'Personal account',
+          address: publicKey.toBase58(),
+          isMultisig: false,
+          owner: SYSTEM_PROGRAM_ID.toBase58()
+        };
+        consoleOut('Stored account different than current wallet!', '', 'crimson');
+        consoleOut('Setting account to connected wallet!', '', 'crimson');
+        updateLastUsedAccount(account);
+      }
+    }
+  }, [lastUsedAccount, publicKey, selectedAccount, updateLastUsedAccount]);
 
   // Update isWhitelisted
   useEffect(() => {

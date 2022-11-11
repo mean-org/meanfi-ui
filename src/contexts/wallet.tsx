@@ -338,7 +338,7 @@ export function WalletProvider({ children = null as any }) {
   const navigate = useNavigate();
   const [autoConnect] = useState(true);
   const [walletName, setWalletName] = useLocalStorageState("walletName");
-  const [lastUsedAccount] = useLocalStorageState("lastUsedAccount");
+  const [lastUsedAccount, setLastUsedAccount] = useLocalStorageState("lastUsedAccount");
   const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
@@ -463,11 +463,11 @@ export function WalletProvider({ children = null as any }) {
     if (wallet) {
 
       wallet.on("connect", (pk) => {
+        consoleOut('Wallet connect event fired:', pk.toBase58(), 'blue');
         if (wallet.connected && !wallet.connecting && pk.toBase58() !== lastUsedAccount) {
-          setConnected(false);
-          wallet.removeAllListeners();
           resetWalletProvider();
-          select();
+          setLastUsedAccount(null);
+          window.location.href = '/';
         } else if (wallet.publicKey) {
           setConnected(true);
           close();
