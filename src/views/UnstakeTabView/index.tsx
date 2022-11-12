@@ -79,7 +79,7 @@ export const UnstakeTabView = (props: {
   const onChangeValue = (value: string) => {
     setPercentageValue(value);
     setCanFetchUnstakeQuote(true);
-  };  
+  };
 
   const handleFromCoinAmountChange = (e: any) => {
 
@@ -137,9 +137,9 @@ export const UnstakeTabView = (props: {
   ]);
 
   const isUnstakingFormValid = (): boolean => {
-    return  fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= tokenBalance
+    return fromCoinAmount &&
+      parseFloat(fromCoinAmount) > 0 &&
+      parseFloat(fromCoinAmount) <= props.tokenBalance
       ? true
       : false;
   }
@@ -471,8 +471,8 @@ export const UnstakeTabView = (props: {
       }
     }
   }, [
-    stakeClient, 
-    selectedToken, 
+    stakeClient,
+    selectedToken,
     tokenBalance,
     fromCoinAmount
   ]);
@@ -504,22 +504,22 @@ export const UnstakeTabView = (props: {
   ]);
 
   useEffect(() => {
-    const percentageFromCoinAmount = tokenBalance > 0 ? `${(tokenBalance*parseFloat(percentageValue)/100).toFixed(selectedToken?.decimals || 9)}` : '';
+    const percentageFromCoinAmount = props.tokenBalance > 0 ? `${(props.tokenBalance * parseFloat(percentageValue) / 100).toFixed(props.selectedToken?.decimals || 9)}` : '';
 
     if (percentageValue) {
       setFromCoinAmount(percentageFromCoinAmount);
       setPercentageValue("");
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentageValue]);
 
   /**
    * The UnstakeQuote method returns sMeanToMeanRateUiAmount which is (MEAN/sMEAN rate)
    * So we calculate the USD Amount relative to the input sMEAN: sMEAN x sMeanToMeanRateUiAmount x MEAN_current_price
    */
-   const getUsdAmountForSmeanInput = useCallback(() => {
-    if (fromCoinAmount && parseFloat(fromCoinAmount) > 0 && sMeanToMeanRate && meanPrice ) {
+  const getUsdAmountForSmeanInput = useCallback(() => {
+    if (fromCoinAmount && parseFloat(fromCoinAmount) > 0 && sMeanToMeanRate && meanPrice) {
       const usdAmount = parseFloat(fromCoinAmount) * sMeanToMeanRate * meanPrice;
       return usdAmount;
     }
@@ -551,7 +551,7 @@ export const UnstakeTabView = (props: {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       setCanSubscribe(true);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ///////////////
@@ -585,10 +585,10 @@ export const UnstakeTabView = (props: {
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
-              {selectedToken && (
-                <TokenDisplay onClick={() => {}}
-                  mintAddress={selectedToken.address}
-                  name={selectedToken.name}
+              {props.selectedToken && (
+                <TokenDisplay onClick={() => { }}
+                  mintAddress={props.selectedToken.address}
+                  name={props.selectedToken.name}
                   className="click-disabled"
                 />
               )}
@@ -616,10 +616,10 @@ export const UnstakeTabView = (props: {
           <div className="left inner-label">
             <span>{t('staking.panel-right.tabset.unstake.send-amount.label-right')}:</span>
             <span>
-              {`${tokenBalance && selectedToken
-                  ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
-                  : "0"
-              }`}
+              {`${props.tokenBalance && props.selectedToken
+                ? getAmountWithSymbol(props.tokenBalance, props.selectedToken?.address, true)
+                : "0"
+                }`}
             </span>
           </div>
           <div className="right inner-label">

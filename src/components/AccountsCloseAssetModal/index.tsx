@@ -16,6 +16,7 @@ import { closeTokenAccount } from 'middleware/accounts';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import { getAmountFromLamports, getTxIxResume } from 'middleware/utils';
 import { UserTokenAccount } from "models/accounts";
+import { CreateTxResult } from 'models/CreateTxResult';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from "react-i18next";
@@ -89,89 +90,124 @@ export const AccountsCloseAssetModal = (props: {
     handleOk();
   }, [handleOk, resetTransactionStatus]);
 
+  const createCloseAccountTx = useCallback(async (): Promise<CreateTxResult> => {
+    const txLog: any[] = [];
+
+    if (publicKey && asset && asset.publicAddress) {
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction,
+      });
+
+      const data = {
+        tokenPubkey: asset.publicAddress,
+        owred: publicKey.toBase58(),
+      };
+
+      consoleOut('closeTokenAccount data:', data, 'blue');
+
+      // Log input data
+      txLog.push({
+        action: getTransactionStatusForLogs(
+          TransactionStatus.TransactionStart
+        ),
+        inputs: data,
+      });
+
+      txLog.push({
+        action: getTransactionStatusForLogs(
+          TransactionStatus.InitTransaction
+        ),
+        result: "",
+      });
+
+      return closeTokenAccount(
+        connection,                             // connection
+        new PublicKey(asset.publicAddress),     // tokenPubkey
+        publicKey                               // owner
+      )
+        .then((value: Transaction | null) => {
+          if (!value) {
+            console.error('could not initialize closeTokenAccount Tx');
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            txLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: 'could not initialize closeTokenAccount Tx'
+            });
+            return {
+              transaction: null,
+              log: txLog
+            };
+          }
+          consoleOut("closeTokenAccount returned transaction:", value);
+          // Stage 1 completed - The transaction is created and returned
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction,
+          });
+          txLog.push({
+            action: getTransactionStatusForLogs(
+              TransactionStatus.InitTransactionSuccess
+            ),
+            result: getTxIxResume(value),
+          });
+          return {
+            transaction: value,
+            log: txLog
+          };
+        })
+        .catch((error) => {
+          console.error("closeTokenAccount transaction init error:", error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure,
+          });
+          txLog.push({
+            action: getTransactionStatusForLogs(
+              TransactionStatus.InitTransactionFailure
+            ),
+            result: `${error}`,
+          });
+          return {
+            transaction: null,
+            log: txLog
+          };
+        });
+    } else {
+      txLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: "Cannot start transaction! Wallet not found!",
+      });
+      customLogger.logError("Close Account transaction failed", {
+        transcript: txLog,
+      });
+      return {
+        transaction: null,
+        log: txLog
+      };
+    }
+  }, [asset, connection, publicKey, setTransactionStatus, transactionStatus.currentOperation]);
+
+
   const onStartTransaction = async () => {
     let transaction: Transaction;
     let signature: any;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && asset && asset.publicAddress) {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction,
-        });
-
-        const data = {
-          tokenPubkey: asset.publicAddress,
-          owred: publicKey.toBase58(),
-        };
-
-        consoleOut('closeTokenAccount data:', data, 'blue');
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart
-          ),
-          inputs: data,
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction
-          ),
-          result: "",
-        });
-
-        return closeTokenAccount(
-          connection,                             // connection
-          new PublicKey(asset.publicAddress),     // tokenPubkey
-          publicKey                               // owner
-        )
-          .then((value: Transaction | null) => {
-            if (!value) { return false; }
-            consoleOut("closeTokenAccount returned transaction:", value);
-            // Stage 1 completed - The transaction is created and returned
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess
-              ),
-              result: getTxIxResume(value),
-            });
-            transaction = value;
-            return true;
-          })
-          .catch((error) => {
-            console.error("closeTokenAccount transaction init error:", error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure
-              ),
-              result: `${error}`,
-            });
-            customLogger.logError("Close Account transaction failed", {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: "Cannot start transaction! Wallet not found!",
-        });
+      const createdTx = await createCloseAccountTx();
+      if (createdTx.transaction === null) {
         customLogger.logError("Close Account transaction failed", {
-          transcript: transactionLog,
+          transcript: createdTx.log,
         });
         return false;
       }
+      transactionLog = transactionLog.concat(createdTx.log);
+      transaction = createdTx.transaction;
+      return true;
     };
 
     const sendTx = async (): Promise<boolean> => {
@@ -269,28 +305,28 @@ export const AccountsCloseAssetModal = (props: {
   // Validation
   const isEnterYesWordValid = (): boolean => {
     return enterYesWord &&
-           enterYesWord.toLocaleLowerCase() === "yes"
+      enterYesWord.toLocaleLowerCase() === "yes"
       ? true
       : false;
   }
 
   const isOperationValidIfWrapSol = (): boolean => {
     return publicKey &&
-           nativeBalance &&
-           nativeBalance > feeAmount &&
-           asset &&
-           isEnterYesWordValid() &&
-           isDisclaimerAccepted
+      nativeBalance &&
+      nativeBalance > feeAmount &&
+      asset &&
+      isEnterYesWordValid() &&
+      isDisclaimerAccepted
       ? true
       : false;
   };
 
   const isOperationValid = (): boolean => {
     return publicKey &&
-           nativeBalance &&
-           nativeBalance > feeAmount &&
-           asset &&
-           isDisclaimerAccepted
+      nativeBalance &&
+      nativeBalance > feeAmount &&
+      asset &&
+      isDisclaimerAccepted
       ? true
       : false;
   };
@@ -411,7 +447,7 @@ export const AccountsCloseAssetModal = (props: {
           disabled={((asset.balance && asset.balance > 0 && asset.name !== "Wrapped SOL") ? !isOperationValidIfWrapSol() : !isOperationValid()) || isBusy}
           onClick={onStartTransaction}>
           {isBusy && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {renderMainCtaLabel()}
         </Button>

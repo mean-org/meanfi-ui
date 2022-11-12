@@ -78,7 +78,7 @@ export const AccountsInitAtaModal = (props: {
         );
       };
 
-      const showFromList = !searchString 
+      const showFromList = !searchString
         ? selectedList
         : selectedList.filter((t: any) => filter(t));
 
@@ -86,7 +86,7 @@ export const AccountsInitAtaModal = (props: {
 
     });
 
-    return () => { 
+    return () => {
       clearTimeout(timeout);
     }
 
@@ -184,7 +184,7 @@ export const AccountsInitAtaModal = (props: {
     setTokenFilter('');
     updateTokenListByFilter('');
     setSelectedToken(undefined);
-  },[
+  }, [
     updateTokenListByFilter
   ]);
 
@@ -194,7 +194,7 @@ export const AccountsInitAtaModal = (props: {
     setTokenFilter(newValue);
     updateTokenListByFilter(newValue);
 
-  },[
+  }, [
     updateTokenListByFilter
   ]);
 
@@ -211,7 +211,7 @@ export const AccountsInitAtaModal = (props: {
 
     return ownedTokenAccounts.some(ta => selectedToken.address === ta.parsedInfo.mint);
 
-  },[ownedTokenAccounts, selectedToken]);
+  }, [ownedTokenAccounts, selectedToken]);
 
   const onTransactionFinished = useCallback(() => {
     resetTransactionStatus();
@@ -399,11 +399,11 @@ export const AccountsInitAtaModal = (props: {
 
   const isOperationValid = (): boolean => {
     return publicKey &&
-           nativeBalance &&
-           nativeBalance > feeAmount &&
-           selectedToken &&
-           selectedToken.decimals >= 0 &&
-           !isTokenAlreadyOwned()
+      nativeBalance &&
+      nativeBalance > feeAmount &&
+      selectedToken &&
+      selectedToken.decimals >= 0 &&
+      !isTokenAlreadyOwned()
       ? true
       : false;
   };
@@ -499,10 +499,10 @@ export const AccountsInitAtaModal = (props: {
               }
               if (accountInfo) {
                 if ((accountInfo as any).data["program"] &&
-                    (accountInfo as any).data["program"] === "spl-token" &&
-                    (accountInfo as any).data["parsed"] &&
-                    (accountInfo as any).data["parsed"]["type"] &&
-                    (accountInfo as any).data["parsed"]["type"] === "mint") {
+                  (accountInfo as any).data["program"] === "spl-token" &&
+                  (accountInfo as any).data["parsed"] &&
+                  (accountInfo as any).data["parsed"]["type"] &&
+                  (accountInfo as any).data["parsed"]["type"] === "mint") {
                   decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
                 } else {
                   decimals = -2;
@@ -591,7 +591,7 @@ export const AccountsInitAtaModal = (props: {
           disabled={!isOperationValid() || isBusy}
           onClick={onStartTransaction}>
           {isBusy && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
             ? 'Initializing ATA'

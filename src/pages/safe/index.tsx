@@ -180,7 +180,7 @@ const SafeView = (props: {
     );
 
   }, [
-    connection, 
+    connection,
     wallet
   ]);
 
@@ -240,7 +240,7 @@ const SafeView = (props: {
     if (!selectedMultisigRef || !selectedMultisigRef.current) { return false; }
     const isTheReference = (item: TxConfirmationInfo) => {
       if ((item && item.extras && item.extras.multisigAuthority && item.extras.multisigAuthority === selectedMultisigRef.current?.authority.toBase58()) ||
-          (item && item.extras && item.extras.multisigId && item.extras.multisigId === selectedMultisigRef.current?.authority.toBase58())) {
+        (item && item.extras && item.extras.multisigId && item.extras.multisigId === selectedMultisigRef.current?.authority.toBase58())) {
         return true;
       }
       return false;
@@ -268,7 +268,7 @@ const SafeView = (props: {
       duration: 10,
       type: "success"
     });
-  },[
+  }, [
     resetTransactionStatus
   ]);
 
@@ -295,7 +295,7 @@ const SafeView = (props: {
     resetTransactionStatus();
     setIsEditMultisigModalVisible(true);
 
-  },[multisigClient, resetTransactionStatus]);
+  }, [multisigClient, resetTransactionStatus]);
 
   const onExecuteEditMultisigTx = useCallback(async (data: any) => {
 
@@ -414,14 +414,12 @@ const SafeView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(
-                minRequired, 
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(
+                minRequired,
                 NATIVE_SOL_MINT.toBase58()
               )
-            })`
+              })`
           });
           customLogger.logWarning('Edit multisig transaction failed', { transcript: transactionLog });
           return false;
@@ -583,7 +581,7 @@ const SafeView = (props: {
       if (!selectedMultisig || !multisigClient || !publicKey) { return null; }
 
       const tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
-  
+
       return tx;
     };
 
@@ -597,7 +595,7 @@ const SafeView = (props: {
         });
 
         // Create a transaction
-        const payload = { transaction: data.transaction };        
+        const payload = { transaction: data.transaction };
         consoleOut('data:', payload);
 
         // Log input data
@@ -624,14 +622,12 @@ const SafeView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(
-                minRequired, 
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(
+                minRequired,
                 NATIVE_SOL_MINT.toBase58()
               )
-            })`
+              })`
           });
           customLogger.logWarning('Multisig Approve transaction failed', { transcript: transactionLog });
           openNotification({
@@ -643,13 +639,14 @@ const SafeView = (props: {
               feeAmount: getAmountWithSymbol(
                 minRequired,
                 NATIVE_SOL_MINT.toBase58()
-              )}),
+              )
+            }),
             type: "info"
           });
           return false;
         }
 
-        return  approveTx(payload)
+        return approveTx(payload)
           .then(value => {
             if (!value) { return false; }
             consoleOut('approveTx returned transaction:', value);
@@ -769,18 +766,18 @@ const SafeView = (props: {
     }
 
   }, [
-    resetTransactionStatus, 
-    wallet, 
-    selectedMultisig, 
-    multisigClient, 
-    publicKey, 
-    setTransactionStatus, 
-    nativeBalance, 
-    transactionStatus.currentOperation, 
-    t, 
-    connection, 
-    transactionCancelled, 
-    enqueueTransactionConfirmation, 
+    resetTransactionStatus,
+    wallet,
+    selectedMultisig,
+    multisigClient,
+    publicKey,
+    setTransactionStatus,
+    nativeBalance,
+    transactionStatus.currentOperation,
+    t,
+    connection,
+    transactionCancelled,
+    enqueueTransactionConfirmation,
   ]);
 
   const onExecuteRejectTx = useCallback(async (data: any) => {
@@ -799,7 +796,7 @@ const SafeView = (props: {
       if (!selectedMultisig || !multisigClient || !publicKey) { return null; }
 
       const tx = await multisigClient.rejectTransaction(publicKey, data.transaction.id);
-  
+
       return tx;
     };
 
@@ -813,7 +810,7 @@ const SafeView = (props: {
         });
 
         // Create a transaction
-        const payload = { transaction: data.transaction };        
+        const payload = { transaction: data.transaction };
         consoleOut('data:', payload);
 
         // Log input data
@@ -840,14 +837,12 @@ const SafeView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(
-                minRequired, 
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(
+                minRequired,
                 NATIVE_SOL_MINT.toBase58()
               )
-            })`
+              })`
           });
           customLogger.logWarning('Multisig Reject transaction failed', { transcript: transactionLog });
           openNotification({
@@ -859,7 +854,8 @@ const SafeView = (props: {
               feeAmount: getAmountWithSymbol(
                 minRequired,
                 NATIVE_SOL_MINT.toBase58()
-              )}),
+              )
+            }),
             type: "info"
           });
           return false;
@@ -1013,7 +1009,7 @@ const SafeView = (props: {
     } else {
       resetTransactionStatus();
     }
-  },[
+  }, [
     showErrorReportingModal,
     resetTransactionStatus,
     setTransactionStatus,
@@ -1038,8 +1034,8 @@ const SafeView = (props: {
       let tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
 
       if (data.transaction.operation === OperationType.StreamCreate ||
-          data.transaction.operation === OperationType.TreasuryStreamCreate ||
-          data.transaction.operation === OperationType.StreamCreateWithTemplate
+        data.transaction.operation === OperationType.TreasuryStreamCreate ||
+        data.transaction.operation === OperationType.StreamCreateWithTemplate
       ) {
         tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
       }
@@ -1084,14 +1080,12 @@ const SafeView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(
-                minRequired, 
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(
+                minRequired,
                 NATIVE_SOL_MINT.toBase58()
               )
-            })`
+              })`
           });
           customLogger.logWarning('Finish Approoved transaction failed', { transcript: transactionLog });
           const notifContent = t('transactions.status.tx-start-failure', {
@@ -1102,7 +1096,8 @@ const SafeView = (props: {
             feeAmount: getAmountWithSymbol(
               minRequired,
               NATIVE_SOL_MINT.toBase58()
-            )});
+            )
+          });
           openNotification({
             description: notifContent,
             type: "info"
@@ -1207,8 +1202,8 @@ const SafeView = (props: {
             if (data.transaction.operation === OperationType.StreamClose) {
               accountIndex = 5;
             } else if (data.transaction.operation === OperationType.TreasuryStreamCreate ||
-                       data.transaction.operation === OperationType.StreamCreate ||
-                       data.transaction.operation === OperationType.StreamCreateWithTemplate) {
+              data.transaction.operation === OperationType.StreamCreate ||
+              data.transaction.operation === OperationType.StreamCreateWithTemplate) {
               accountIndex = 2;
             } else {
               accountIndex = 3;
@@ -1226,8 +1221,8 @@ const SafeView = (props: {
           } else if (error.toString().indexOf('0x1797') !== -1) {
             let accountIndex = 0;
             if (data.transaction.operation === OperationType.StreamCreate ||
-                data.transaction.operation === OperationType.TreasuryStreamCreate ||
-                data.transaction.operation === OperationType.StreamCreateWithTemplate) {
+              data.transaction.operation === OperationType.TreasuryStreamCreate ||
+              data.transaction.operation === OperationType.StreamCreateWithTemplate) {
               accountIndex = 2;
             } else if (data.transaction.operation === OperationType.TreasuryWithdraw) {
               accountIndex = 5;
@@ -1253,7 +1248,7 @@ const SafeView = (props: {
             txStatus.customError = {
               message: 'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token and LP Token Accounts of the Investor.\n',
               data: selectedMultisig?.authority.toBase58()
-            }; 
+            };
           } else if (error.toString().indexOf('0x1') !== -1) {
             const accountIndex = data.transaction.operation === OperationType.TransferTokens || data.transaction.operation === OperationType.Transfer
               ? 0
@@ -1320,15 +1315,15 @@ const SafeView = (props: {
 
   }, [
     t,
-    wallet, 
-    publicKey, 
-    nativeBalance, 
-    connection, 
+    wallet,
+    publicKey,
+    nativeBalance,
+    connection,
     multisigClient,
     selectedMultisig,
     transactionCancelled,
     transactionStatus.currentOperation,
-    enqueueTransactionConfirmation, 
+    enqueueTransactionConfirmation,
     onExecuteFinishTxCancelled,
     resetTransactionStatus,
     setTransactionStatus,
@@ -1348,10 +1343,10 @@ const SafeView = (props: {
     const cancelTx = async (data: any) => {
 
       if (
-        !publicKey || 
+        !publicKey ||
         !multisigClient ||
-        !selectedMultisig || 
-        selectedMultisig.id.toBase58() !== data.transaction.multisig.toBase58() || 
+        !selectedMultisig ||
+        selectedMultisig.id.toBase58() !== data.transaction.multisig.toBase58() ||
         data.transaction.proposer.toBase58() !== publicKey.toBase58() ||
         data.transaction.executedOn
       ) {
@@ -1376,7 +1371,7 @@ const SafeView = (props: {
         });
 
         // Create a transaction
-        const payload = { transaction: data.transaction };  
+        const payload = { transaction: data.transaction };
         consoleOut('data:', payload);
 
         // Log input data
@@ -1403,14 +1398,12 @@ const SafeView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getAmountWithSymbol(
-                minRequired, 
+            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              }) to pay for network fees (${getAmountWithSymbol(
+                minRequired,
                 NATIVE_SOL_MINT.toBase58()
               )
-            })`
+              })`
           });
           customLogger.logWarning('Finish Cancel transaction failed', { transcript: transactionLog });
           return false;
@@ -1679,7 +1672,7 @@ const SafeView = (props: {
     }
 
     refreshMultisigs()
-    .then(() => proposalLoadStatusRegister.clear());
+      .then(() => proposalLoadStatusRegister.clear());
 
   }, [publicKey, refreshMultisigs]);
 
@@ -1688,14 +1681,14 @@ const SafeView = (props: {
     if (!connection || !selectedMultisig || !selectedMultisig.authority) { return []; }
 
     const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
-    const execDataAccountsFilter: MemcmpFilter = { 
-      memcmp: { offset: 13, bytes: selectedMultisig.authority.toBase58() } 
+    const execDataAccountsFilter: MemcmpFilter = {
+      memcmp: { offset: 13, bytes: selectedMultisig.authority.toBase58() }
     };
 
     const execDataAccounts = await connection.getProgramAccounts(
       BPFLoaderUpgradeab1e, {
-        filters: [execDataAccountsFilter]
-      }
+      filters: [execDataAccountsFilter]
+    }
     );
 
     if (execDataAccounts.length === 0) { return []; }
@@ -1716,15 +1709,15 @@ const SafeView = (props: {
 
     const getProgramAccountsPromise = async (execDataAccount: any) => {
 
-      const execAccountsFilter: MemcmpFilter = { 
-        memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() } 
+      const execAccountsFilter: MemcmpFilter = {
+        memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() }
       };
 
       const execAccounts = await connection.getProgramAccounts(
         BPFLoaderUpgradeab1e, {
-          dataSlice: { offset: 0, length: 0 },
-          filters: [execAccountsFilter]
-        }
+        dataSlice: { offset: 0, length: 0 },
+        filters: [execAccountsFilter]
+      }
       );
 
       if (execAccounts.length === 0) { return; }
@@ -1736,12 +1729,12 @@ const SafeView = (props: {
       consoleOut('programAccounts:', execAccounts, 'blue');
 
       programs.push({
-          pubkey: execAccounts[0].pubkey,
-          owner: execAccounts[0].account.owner,
-          executable: execDataAccount.pubkey,
-          upgradeAuthority: selectedMultisig.authority,
-          size: execDataAccount.account.data.byteLength
-        } as ProgramAccounts
+        pubkey: execAccounts[0].pubkey,
+        owner: execAccounts[0].account.owner,
+        executable: execDataAccount.pubkey,
+        upgradeAuthority: selectedMultisig.authority,
+        size: execDataAccount.account.data.byteLength
+      } as ProgramAccounts
       );
     }
 
@@ -1760,8 +1753,8 @@ const SafeView = (props: {
 
     return programs;
 
-  },[
-    connection, 
+  }, [
+    connection,
     selectedMultisig
   ]);
 
@@ -1773,11 +1766,11 @@ const SafeView = (props: {
   const getMultisigProposals = useCallback(async (multisig: MultisigInfo) => {
 
     if (
-      !connection || 
-      !publicKey || 
-      !multisigClient || 
+      !connection ||
+      !publicKey ||
+      !multisigClient ||
       !multisig
-    ) { 
+    ) {
       return {
         multisigAuth: multisig.authority.toBase58(),
         transactions: []
@@ -1797,9 +1790,9 @@ const SafeView = (props: {
     return response;
 
   }, [
-    connection, 
-    multisigClient, 
-    publicKey, 
+    connection,
+    multisigClient,
+    publicKey,
   ]);
 
 
@@ -1864,11 +1857,11 @@ const SafeView = (props: {
   useEffect(() => {
 
     if (
-      !publicKey || 
-      !multisigClient || 
+      !publicKey ||
+      !multisigClient ||
       !needRefreshTxs ||
       !selectedMultisig
-    ) { 
+    ) {
       return;
     }
 
@@ -1896,7 +1889,7 @@ const SafeView = (props: {
       })
       .finally(() => setProposalsLoading(false));
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     multisigClient,
@@ -2024,7 +2017,7 @@ const SafeView = (props: {
       setCanSubscribe(true);
       proposalLoadStatusRegister.clear();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -2176,7 +2169,7 @@ const SafeView = (props: {
                     ? t('multisig.multisig-accounts.loading-multisig-accounts')
                     : t('multisig.multisig-account-detail.no-multisig-loaded')
                 }
-                </p>}
+              </p>}
               />
             </Spin>
           </div>

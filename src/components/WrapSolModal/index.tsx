@@ -64,9 +64,9 @@ export const WrapSolModal = (props: {
       setPreviousBalance(account?.lamports);
     }
   }, [
-    account, 
-    nativeBalance, 
-    previousBalance, 
+    account,
+    nativeBalance,
+    previousBalance,
     refreshTokenBalance
   ]);
 
@@ -97,7 +97,7 @@ export const WrapSolModal = (props: {
       TransactionStatus.TransactionFinished
     );
 
-  },[
+  }, [
     transactionStatus.currentOperation
   ]);
 
@@ -173,33 +173,33 @@ export const WrapSolModal = (props: {
           publicKey as PublicKey, // from
           amount // amount
         )
-        .then((value) => {
-          consoleOut("wrapSol returned transaction:", value);
-          // Stage 1 completed - The transaction is created and returned
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction,
+          .then((value) => {
+            consoleOut("wrapSol returned transaction:", value);
+            // Stage 1 completed - The transaction is created and returned
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch((error) => {
+            console.error("wrapSol transaction init error:", error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+            return false;
           });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch((error) => {
-          console.error("wrapSol transaction init error:", error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-          return false;
-        });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -383,7 +383,7 @@ export const WrapSolModal = (props: {
             <div className="left">
               <span className="add-on">
                 {wSol && (
-                  <TokenDisplay onClick={() => {}}
+                  <TokenDisplay onClick={() => { }}
                     mintAddress={wSol.address}
                     symbol="SOL"
                     name={wSol.name}
@@ -423,9 +423,9 @@ export const WrapSolModal = (props: {
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>
                 {`${nativeBalance && wSol
-                    ? getAmountWithSymbol(nativeBalance, wSol.address, true)
-                    : "0"
-                }`}
+                  ? getAmountWithSymbol(nativeBalance, wSol.address, true)
+                  : "0"
+                  }`}
               </span>
             </div>
             <div className="right inner-label">
@@ -444,18 +444,17 @@ export const WrapSolModal = (props: {
           {isValidInput() &&
             infoRow(
               t('faucet.wrapped-amount') + ":",
-              `${
-                wrapAmount
-                  ? "~" +
-                    getAmountWithSymbol(
-                      parseFloat(wrapAmount) >=
-                        (MIN_SOL_BALANCE_REQUIRED as number)
-                        ? parseFloat(wrapAmount)
-                        : 0,
-                      WRAPPED_SOL_MINT_ADDRESS,
-                      false
-                    )
-                  : "0"
+              `${wrapAmount
+                ? "~" +
+                getAmountWithSymbol(
+                  parseFloat(wrapAmount) >=
+                    (MIN_SOL_BALANCE_REQUIRED as number)
+                    ? parseFloat(wrapAmount)
+                    : 0,
+                  WRAPPED_SOL_MINT_ADDRESS,
+                  false
+                )
+                : "0"
               }`
             )
           }
@@ -470,7 +469,7 @@ export const WrapSolModal = (props: {
           disabled={!isWrapValid()}
           onClick={onTransactionStart}>
           {isBusy && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
             ? t('transactions.status.tx-wrap-operation')

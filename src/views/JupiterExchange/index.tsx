@@ -42,7 +42,7 @@ export const JupiterExchange = (props: {
     connection: Connection;
     inModal?: boolean;
     swapExecuted?: any;
-  }) => {
+}) => {
 
     const { t } = useTranslation("common");
     const { publicKey, wallet, connected } = useWallet();
@@ -606,15 +606,15 @@ export const JupiterExchange = (props: {
                 ? Math.round(inputAmount * 10 ** inputToken.decimals)
                 : 0; // Lamports based on token decimals
             const routes = inputToken && outputToken
-                ?   await jupiter.computeRoutes({
-                        inputMint: new PublicKey(inputToken.address),
-                        outputMint: new PublicKey(outputToken.address),
-                        inputAmount: inputAmountLamports,
-                        onlyDirectRoutes: isFromSol() || isToSol(),
-                        slippage,
-                        forceFetch: true,
-                    })
-                :   null;
+                ? await jupiter.computeRoutes({
+                    inputMint: new PublicKey(inputToken.address),
+                    outputMint: new PublicKey(outputToken.address),
+                    inputAmount: inputAmountLamports,
+                    onlyDirectRoutes: isFromSol() || isToSol(),
+                    slippage,
+                    forceFetch: true,
+                })
+                : null;
 
             if (routes && routes.routesInfos) {
                 consoleOut('routesInfos:', routes.routesInfos, 'blue');
@@ -961,9 +961,9 @@ export const JupiterExchange = (props: {
         const splitted = newValue.toString().split('.');
         const left = splitted[0];
         if (left.length > 1) {
-          const number = splitted[0] - 0;
-          splitted[0] = `${number}`;
-          newValue = splitted.join('.');
+            const number = splitted[0] - 0;
+            splitted[0] = `${number}`;
+            newValue = splitted.join('.');
         }
 
         if (newValue === null || newValue === undefined || newValue === "") {
@@ -1140,13 +1140,13 @@ export const JupiterExchange = (props: {
         const sendTx = async (): Promise<boolean> => {
             if (connection && wallet && wallet.publicKey && transaction) {
                 const {
-                  context: { slot: minContextSlot },
-                  value: { blockhash },
+                    context: { slot: minContextSlot },
+                    value: { blockhash },
                 } = await connection.getLatestBlockhashAndContext();
-        
+
                 transaction.feePayer = wallet.publicKey;
                 transaction.recentBlockhash = blockhash;
-        
+
                 return wallet.sendTransaction(transaction, connection, { minContextSlot })
                     .then((sig) => {
                         consoleOut("sendEncodedTransaction returned a signature:", sig);
@@ -1339,7 +1339,7 @@ export const JupiterExchange = (props: {
                         t('transactions.transaction-info.minimum-received'),
                         `${formatThousands(
                             selectedRoute?.outAmountWithSlippage /
-                              10 ** outputToken.decimals || 1,
+                            10 ** outputToken.decimals || 1,
                             outputToken.decimals
                         )} ${outputToken.symbol}`
                     )

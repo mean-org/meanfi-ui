@@ -289,7 +289,7 @@ export const StakingRewardsView = () => {
       setCanSubscribe(true);
       setPageInitialized(false);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ///////////////////
@@ -330,39 +330,39 @@ export const StakingRewardsView = () => {
         return stakeClient.depositTransaction(
           depositPercentage             // depositPercentage
         )
-        .then((value) => {
-          consoleOut("depositTransaction returned transaction:", value);
-          // Stage 1 completed - The transaction is created and returned
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction,
+          .then((value) => {
+            consoleOut("depositTransaction returned transaction:", value);
+            // Stage 1 completed - The transaction is created and returned
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.InitTransactionSuccess
+              ),
+              result: getTxIxResume(value),
+            });
+            transaction = value;
+            return true;
+          })
+          .catch((error) => {
+            console.error("depositTransaction init error:", error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.InitTransactionFailure
+              ),
+              result: `${error}`,
+            });
+            customLogger.logError("Deposit transaction failed", {
+              transcript: transactionLog,
+            });
+            return false;
           });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.InitTransactionSuccess
-            ),
-            result: getTxIxResume(value),
-          });
-          transaction = value;
-          return true;
-        })
-        .catch((error) => {
-          console.error("depositTransaction init error:", error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.InitTransactionFailure
-            ),
-            result: `${error}`,
-          });
-          customLogger.logError("Deposit transaction failed", {
-            transcript: transactionLog,
-          });
-          return false;
-        });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -504,12 +504,12 @@ export const StakingRewardsView = () => {
   // Validation functions
 
   const isValidInput = (): boolean => {
-    return  aprPercentGoal &&
-            nativeBalance &&
-            meanBalance &&
-            parseFloat(aprPercentGoal) >= 0.01 &&
-            parseFloat(aprPercentGoal) <= 100 &&
-            meanBalance >= getTotalMeanAdded()
+    return aprPercentGoal &&
+      nativeBalance &&
+      meanBalance &&
+      parseFloat(aprPercentGoal) >= 0.01 &&
+      parseFloat(aprPercentGoal) <= 100 &&
+      meanBalance >= getTotalMeanAdded()
       ? true
       : false;
   };
@@ -530,13 +530,13 @@ export const StakingRewardsView = () => {
           <div className="header-row">
             <div className="std-table-cell responsive-cell px-2 text-left">Date</div>
             <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">
-              <span>Total Staked +<br/>Rewards before</span>
+              <span>Total Staked +<br />Rewards before</span>
             </div>
             <div className="std-table-cell responsive-cell px-3 text-right border-right">
-              <span>Deposited<br/>Percentage</span>
+              <span>Deposited<br />Percentage</span>
             </div>
             <div className="std-table-cell responsive-cell px-3 text-right">
-              <span>Deposited<br/>Amount</span>
+              <span>Deposited<br />Amount</span>
             </div>
           </div>
         </div>

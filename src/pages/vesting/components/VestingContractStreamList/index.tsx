@@ -268,7 +268,7 @@ export const VestingContractStreamList = (props: {
 
             let rateAmount = item.rateAmount.gtn(0) ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
             if (item.rateAmount.gtn(0)) {
-              rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), false, t);
+                rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), false, t);
             }
 
             if (isInbound) {
@@ -577,13 +577,13 @@ export const VestingContractStreamList = (props: {
         const sendTx = async (): Promise<boolean> => {
             if (connection && wallet && wallet.publicKey && transaction) {
                 const {
-                  context: { slot: minContextSlot },
-                  value: { blockhash },
+                    context: { slot: minContextSlot },
+                    value: { blockhash },
                 } = await connection.getLatestBlockhashAndContext();
-        
+
                 transaction.feePayer = wallet.publicKey;
                 transaction.recentBlockhash = blockhash;
-        
+
                 return wallet.sendTransaction(transaction, connection, { minContextSlot })
                     .then(sig => {
                         consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -725,9 +725,9 @@ export const VestingContractStreamList = (props: {
 
         const timeout = setTimeout(() => {
             msp.refreshStreams(streamList || [])
-            .then(streams => {
-                setStreamList(streams);
-            })
+                .then(streams => {
+                    setStreamList(streams);
+                })
         }, 1000);
 
         return () => {
@@ -833,8 +833,8 @@ export const VestingContractStreamList = (props: {
                         shape="round"
                         size="middle"
                         onClick={() => ongoingOperation === OperationType.StreamClose
-                                    ? onCloseStreamTransactionFinished()
-                                    : hideTransactionExecutionModal()}>
+                            ? onCloseStreamTransactionFinished()
+                            : hideTransactionExecutionModal()}>
                         {t('general.cta-finish')}
                     </Button>
                 </>
@@ -871,8 +871,8 @@ export const VestingContractStreamList = (props: {
                                     shape="round"
                                     size="middle"
                                     onClick={() => ongoingOperation === OperationType.StreamClose
-                                                ? onExecuteCloseStreamTransaction(retryOperationPayload)
-                                                : hideTransactionExecutionModal()}>
+                                        ? onExecuteCloseStreamTransaction(retryOperationPayload)
+                                        : hideTransactionExecutionModal()}>
                                     {t('general.retry')}
                                 </Button>
                             </div>

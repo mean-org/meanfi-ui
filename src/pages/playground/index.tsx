@@ -31,7 +31,7 @@ import { environment } from "environments/environment";
 import useWindowSize from "hooks/useWindowResize";
 import { IconCodeBlock, IconCoin, IconCopy, IconExternalLink, IconEyeOn, IconLoading, IconTrash, IconWallet } from "Icons";
 import { appConfig } from "index";
-import { getTokensWithBalances, readAccountInfo as getAccountInfo } from "middleware/accounts";
+import { getTokensWithBalances } from "middleware/accounts";
 import { NATIVE_SOL_MINT, SYSTEM_PROGRAM_ID } from "middleware/ids";
 import { ACCOUNT_LAYOUT } from "middleware/layouts";
 import { getStreamForDebug } from "middleware/stream-debug-middleware";
@@ -46,6 +46,7 @@ import {
   formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
+  getTokenOrCustomToken,
   shortenAddress,
   toUiAmount
 } from "middleware/utils";
@@ -177,7 +178,7 @@ export const PlaygroundView = () => {
   }, [msp]);
 
   const navigateToTab = useCallback((tab: TabOption) => {
-    setSearchParams({option: tab as string});
+    setSearchParams({ option: tab as string });
   }, [setSearchParams]);
 
   const getParsedAccountType = (acc: AccountInfo<ParsedAccountData>) => {
@@ -194,7 +195,7 @@ export const PlaygroundView = () => {
     }
   }
 
-  const readAccountInfo = useCallback(async (address?: string) => {
+  const getAccountInfoByAddress = useCallback(async (address?: string) => {
     if (!targetAddress && !address) {
       return;
     }
@@ -232,7 +233,7 @@ export const PlaygroundView = () => {
     }
   }, [connection, targetAddress]);
 
-  const getMultisigInfo =  useCallback(async (filter: string) => {
+  const getMultisigInfo = useCallback(async (filter: string) => {
 
     if (!publicKey || !multisigClient || !filter) {
       return undefined;
@@ -297,21 +298,21 @@ export const PlaygroundView = () => {
   const onScanMyAddress = () => {
     if (publicKey) {
       setTargetAddress(publicKey.toBase58());
-      readAccountInfo(publicKey.toBase58());
+      getAccountInfoByAddress(publicKey.toBase58());
     }
   }
 
   const onScanAddress = (address: string) => {
     if (address) {
       setTargetAddress(address);
-      readAccountInfo(address);
+      getAccountInfoByAddress(address);
     }
   }
 
   const onScanAssetAddress = (asset: TokenInfo) => {
     if (asset) {
       setTargetAddress(asset.address);
-      readAccountInfo(asset.address);
+      getAccountInfoByAddress(asset.address);
     }
   }
 
@@ -543,7 +544,7 @@ export const PlaygroundView = () => {
 
     const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
       filters: [
-        { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, 
+        { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } },
         { dataSize: ACCOUNT_LAYOUT.span }
       ],
     });
@@ -558,7 +559,7 @@ export const PlaygroundView = () => {
 
     return results;
 
-  },[multisigAddressPK]);
+  }, [multisigAddressPK]);
 
   const solToken = useMemo(() => {
 
@@ -581,40 +582,9 @@ export const PlaygroundView = () => {
     } as MultisigAsset;
 
   }, [
-    selectedMultisig, 
+    selectedMultisig,
     multisigSolBalance
   ]);
-
-  const getTokenOrCustomToken = useCallback(async (address: string) => {
-
-    const token = getTokenByMintAddress(address);
-
-    const unkToken = {
-      address: address,
-      name: CUSTOM_TOKEN_NAME,
-      chainId: 101,
-      decimals: 6,
-      symbol: `[${shortenAddress(address)}]`,
-    };
-
-    if (token) {
-      return token;
-    } else {
-      try {
-        const tokeninfo = await getAccountInfo(connection, address);
-        if ((tokeninfo as any).data["parsed"]) {
-          const decimals = (tokeninfo as AccountInfo<ParsedAccountData>).data.parsed.info.decimals as number;
-          unkToken.decimals = decimals || 9;
-          return unkToken as TokenInfo;
-        } else {
-          return unkToken as TokenInfo;
-        }
-      } catch (error) {
-        console.error('Could not get token info, assuming decimals = 9');
-        return unkToken as TokenInfo;
-      }
-    }
-  }, [connection, getTokenByMintAddress]);
 
   // Stream detail modal
   const [isStreamDetailModalVisible, setIsStreamDetailModalVisibility] = useState(false);
@@ -668,7 +638,7 @@ export const PlaygroundView = () => {
         break;
       default:
         setCurrentTab("first-tab");
-        setSearchParams({option: "first-tab"}, { replace: true });
+        setSearchParams({ option: "first-tab" }, { replace: true });
         break;
     }
   }, [location.search, searchParams, setSearchParams]);
@@ -696,15 +666,15 @@ export const PlaygroundView = () => {
         splTokenList,
         false
       )
-      .then(response => {
-        if (response) {
-          setSelectedList(response.tokenList);
-          setUserBalances(response.balancesMap);
-          if (!selectedToken) {
-            setSelectedToken(response.tokenList[0]);
+        .then(response => {
+          if (response) {
+            setSelectedList(response.tokenList);
+            setUserBalances(response.balancesMap);
+            if (!selectedToken) {
+              setSelectedToken(response.tokenList[0]);
+            }
           }
-        }
-      });
+        });
 
     });
 
@@ -753,10 +723,10 @@ export const PlaygroundView = () => {
     if (!connection || !selectedMultisig) { return; }
 
     connection.getBalance(selectedMultisig.authority)
-    .then(balance => {
-      consoleOut('multisigSolBalance', balance, 'orange');
-      setMultisigSolBalance(balance);
-    })
+      .then(balance => {
+        consoleOut('multisigSolBalance', balance, 'orange');
+        setMultisigSolBalance(balance);
+      })
 
   }, [
     connection,
@@ -773,11 +743,11 @@ export const PlaygroundView = () => {
       getMultisigAssets(connection, selectedMultisig.id)
         .then(result => {
           const modifiedResults = new Array<any>();
-          modifiedResults.push(solToken);  
+          modifiedResults.push(solToken);
           result.forEach(item => {
             modifiedResults.push(item);
           });
-          setMultisigAssets(modifiedResults);  
+          setMultisigAssets(modifiedResults);
           consoleOut('Multisig assets', modifiedResults, 'blue');
         })
         .catch(err => {
@@ -791,8 +761,8 @@ export const PlaygroundView = () => {
       clearTimeout(timeout);
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
     connection,
     loadingAssets,
     multisigClient,
@@ -811,7 +781,7 @@ export const PlaygroundView = () => {
       setAssetsAmount('(0 assets)');
     }
   }, [
-    multisigAssets, 
+    multisigAssets,
     selectedMultisig
   ]);
 
@@ -829,7 +799,7 @@ export const PlaygroundView = () => {
 
     for (const asset of multisigAssets) {
       const token = getTokenByMintAddress(asset.mint.toBase58());
-      
+
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         if (!tokenPrice) {
@@ -857,13 +827,17 @@ export const PlaygroundView = () => {
     const associatedToken = streamParsedData.associatedToken.toBase58();
 
     if (associatedToken && (!selectedToken || selectedToken.address !== associatedToken)) {
-      getTokenOrCustomToken(associatedToken)
-      .then(token => {
-        consoleOut('getTokenOrCustomToken (PlaygroundView) ->', token, 'blue');
-        setSelectedToken(token);
-      });
+      getTokenOrCustomToken(
+        connection,
+        associatedToken,
+        getTokenByMintAddress
+      )
+        .then(token => {
+          consoleOut('getTokenOrCustomToken (PlaygroundView) ->', token, 'blue');
+          setSelectedToken(token);
+        });
     }
-  }, [getTokenOrCustomToken, publicKey, streamParsedData, selectedToken]);
+  }, [connection, getTokenByMintAddress, publicKey, selectedToken, streamParsedData]);
 
 
   ////////////////////////
@@ -878,32 +852,32 @@ export const PlaygroundView = () => {
 
   const isProgram = useMemo(() => {
     return parsedAccountInfo &&
-           parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
-           parsedAccountInfo.data.parsed.type === 'program'
+      parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
+      parsedAccountInfo.data.parsed.type === 'program'
       ? true
       : false;
   }, [parsedAccountInfo]);
 
   const isProgramData = useMemo(() => {
     return parsedAccountInfo &&
-           parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
-           parsedAccountInfo.data.parsed.type === 'programData'
+      parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
+      parsedAccountInfo.data.parsed.type === 'programData'
       ? true
       : false;
   }, [parsedAccountInfo]);
 
   const isTokenAccount = useMemo(() => {
     return parsedAccountInfo &&
-           parsedAccountInfo.data.program === 'spl-token' &&
-           parsedAccountInfo.data.parsed.type === 'account'
+      parsedAccountInfo.data.program === 'spl-token' &&
+      parsedAccountInfo.data.parsed.type === 'account'
       ? true
       : false;
   }, [parsedAccountInfo]);
 
   const isTokenMint = useMemo(() => {
     return parsedAccountInfo &&
-           parsedAccountInfo.data.program === 'spl-token' &&
-           parsedAccountInfo.data.parsed.type === 'mint'
+      parsedAccountInfo.data.program === 'spl-token' &&
+      parsedAccountInfo.data.parsed.type === 'mint'
       ? true
       : false;
   }, [parsedAccountInfo]);
@@ -939,9 +913,9 @@ export const PlaygroundView = () => {
           <div className="std-table-cell responsive-cell text-monospace text-right px-1">
             {selectedToken
               ? `${formatThousands(
-                    value,
-                    friendlyDisplayDecimalPlaces(value, selectedToken.decimals)
-                  )} ${selectedToken.symbol}`
+                value,
+                friendlyDisplayDecimalPlaces(value, selectedToken.decimals)
+              )} ${selectedToken.symbol}`
               : ""}
           </div>
           <div className="std-table-cell responsive-cell text-monospace text-right px-1">
@@ -971,10 +945,10 @@ export const PlaygroundView = () => {
             <div className="table-cell-flex-content">
               <div className="icon-cell">
                 <div className="token-icon">
-                    <div className="streams-count">
-                      <span className="font-size-75 font-bold text-shadow">{formatAmount(value, 0, true) || 0}</span>
-                    </div>
+                  <div className="streams-count">
+                    <span className="font-size-75 font-bold text-shadow">{formatAmount(value, 0, true) || 0}</span>
                   </div>
+                </div>
               </div>
             </div>
           </div>
@@ -982,10 +956,10 @@ export const PlaygroundView = () => {
             <div className="table-cell-flex-content">
               <div className="icon-cell">
                 <div className="token-icon">
-                    <div className="streams-count">
-                      <span className="font-size-75 font-bold text-shadow">{kFormatter(value, 1) || 0}</span>
-                    </div>
+                  <div className="streams-count">
+                    <span className="font-size-75 font-bold text-shadow">{kFormatter(value, 1) || 0}</span>
                   </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1106,7 +1080,7 @@ export const PlaygroundView = () => {
                       placeholder="Introduce stream id (required)"
                       required={true}
                       spellCheck="false"
-                      value={streamId}/>
+                      value={streamId} />
                   </span>
                 </div>
                 <div className="right">
@@ -1324,9 +1298,9 @@ export const PlaygroundView = () => {
                       placeholder={t('transactions.recipient.placeholder')}
                       required={true}
                       spellCheck="false"
-                      value={targetAddress}/>
+                      value={targetAddress} />
                     <span id="payment-recipient-static-field"
-                          className={`${targetAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                      className={`${targetAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
                       {targetAddress || t('transactions.recipient.placeholder')}
                     </span>
                   </span>
@@ -1355,7 +1329,7 @@ export const PlaygroundView = () => {
                   type="primary"
                   shape="round"
                   size="large"
-                  onClick={() => readAccountInfo()}>
+                  onClick={() => getAccountInfoByAddress()}>
                   Get info
                 </Button>
               </div>
@@ -1398,7 +1372,7 @@ export const PlaygroundView = () => {
     return (
       totalSafeBalance === undefined ? (
         <>
-          <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+          <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }} />
         </>
       ) : toUsCurrency(totalSafeBalance)
     );
@@ -1465,9 +1439,9 @@ export const PlaygroundView = () => {
                       placeholder={t('transactions.recipient.placeholder')}
                       required={true}
                       spellCheck="false"
-                      value={targetAddress}/>
+                      value={targetAddress} />
                     <span id="payment-recipient-static-field"
-                          className={`${targetAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                      className={`${targetAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
                       {targetAddress || t('transactions.recipient.placeholder')}
                     </span>
                   </span>
@@ -2007,10 +1981,10 @@ export const PlaygroundView = () => {
                 }
                 if (accountInfo) {
                   if ((accountInfo as any).data["program"] &&
-                      (accountInfo as any).data["program"] === "spl-token" &&
-                      (accountInfo as any).data["parsed"] &&
-                      (accountInfo as any).data["parsed"]["type"] &&
-                      (accountInfo as any).data["parsed"]["type"] === "mint") {
+                    (accountInfo as any).data["program"] === "spl-token" &&
+                    (accountInfo as any).data["parsed"] &&
+                    (accountInfo as any).data["parsed"]["type"] &&
+                    (accountInfo as any).data["parsed"]["type"] === "mint") {
                     decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
                   } else {
                     decimals = -2;

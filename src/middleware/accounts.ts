@@ -208,8 +208,8 @@ export async function closeTokenAccount(
 
   // If the account has balance, burn the tokens
   if (info.mint !== NATIVE_SOL.address &&
-      info.mint !== WRAPPED_SOL_MINT_ADDRESS &&
-     (info.tokenAmount.uiAmount || 0) > 0) {
+    info.mint !== WRAPPED_SOL_MINT_ADDRESS &&
+    (info.tokenAmount.uiAmount || 0) > 0) {
     ixs.push(
       Token.createBurnInstruction(
         TOKEN_PROGRAM_ID,
@@ -272,11 +272,11 @@ export async function setAccountOwner(
     ),
     [owner]
   )
-  .then(() => true)
-  .catch(error => {
-    console.error(error);
-    return false;
-  });
+    .then(() => true)
+    .catch(error => {
+      console.error(error);
+      return false;
+    });
 }
 
 export async function readAccountInfo(
@@ -301,6 +301,17 @@ export async function readAccountInfo(
   } else {
     return null;
   }
+}
+
+export async function resolveParsedAccountInfo(
+  connection: Connection,
+  address?: string
+) {
+  const accInfo = await readAccountInfo(connection, address) as AccountInfo<ParsedAccountData> | null;
+  if (!accInfo?.data.parsed) {
+    throw new Error("Could not get account info");
+  }
+  return accInfo;
 }
 
 export const getTokenAccountBalanceByAddress = async (connection: Connection, tokenAddress: PublicKey | undefined | null): Promise<TokenAmount | null> => {
@@ -360,10 +371,10 @@ const getPriceByAddressOrSymbol = (prices: TokenPrice[] | null, address: string,
 
 const sortTokenAccountsByUsdValue = (tokens: UserTokenAccount[]) => {
   const sortedList = [...tokens].sort((a, b) => {
-    if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
-       return -1;
-    } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
-       return 1;
+    if ((a.valueInUsd || 0) > (b.valueInUsd || 0)) {
+      return -1;
+    } else if ((a.valueInUsd || 0) < (b.valueInUsd || 0)) {
+      return 1;
     } else {
       return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
     }
@@ -374,9 +385,9 @@ const sortTokenAccountsByUsdValue = (tokens: UserTokenAccount[]) => {
 const sortTokenAccountsByBalance = (tokens: UserTokenAccount[]) => {
   const sortedList = [...tokens].sort((a, b) => {
     if ((b.balance || 0) < (a.balance || 0)) {
-       return -1;
-    } else if((b.balance || 0) > (a.balance || 0)){
-       return 1;
+      return -1;
+    } else if ((b.balance || 0) > (a.balance || 0)) {
+      return 1;
     } else {
       return 0;
     }
