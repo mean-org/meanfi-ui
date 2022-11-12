@@ -19,7 +19,6 @@ import { AddressDisplay } from 'components/AddressDisplay';
 import { AppSocialLinks } from 'components/AppSocialLinks';
 import { openNotification } from 'components/Notifications';
 import {
-  CUSTOM_TOKEN_NAME,
   HALF_MINUTE_REFRESH_TIMEOUT,
   MIN_SOL_BALANCE_REQUIRED,
   MSP_FEE_TREASURY,
@@ -38,7 +37,7 @@ import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconArrowBack, IconLoading, IconVerticalEllipsis } from "Icons";
 import { appConfig, customLogger } from 'index';
-import { getTokenAccountBalanceByAddress, getTokensWithBalances, readAccountInfo } from 'middleware/accounts';
+import { getTokenAccountBalanceByAddress, getTokensWithBalances } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from 'middleware/ids';
 import {
@@ -62,8 +61,8 @@ import {
   toTimestamp,
   toUsCurrency
 } from 'middleware/ui';
-import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume, shortenAddress, toUiAmount } from 'middleware/utils';
-import { MetaInfoCtaAction, SocialMediaEntry } from 'models/accounts';
+import { findATokenAddress, formatThousands, getAmountFromLamports, getAmountWithSymbol, getTokenOrCustomToken, getTxIxResume, toUiAmount } from 'middleware/utils';
+import { MetaInfoCtaAction, SocialMediaEntry } from 'models/accounts/AccountsPageUi';
 import { MetaInfoCta } from 'models/common-types';
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import { ZERO_FEES } from 'models/multisig';
@@ -781,14 +780,13 @@ const VestingView = (props: {
     return isStartDateGone(streamTemplate.startUtc.toString());
   }, [isStartDateGone, publicKey, selectedVestingContract, streamTemplate]);
 
+  const getUnallocatedBalance = useCallback((details: Treasury) => {
+    const balance = new BN(details.balance);
+    const allocationAssigned = new BN(details.allocationAssigned);
+    return balance.sub(allocationAssigned);
+  }, []);
+
   const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury, assToken: TokenInfo | undefined) => {
-
-    const getUnallocatedBalance = (details: Treasury) => {
-      const balance = new BN(details.balance);
-      const allocationAssigned = new BN(details.allocationAssigned);
-      return balance.sub(allocationAssigned);
-    }
-
     if (tsry) {
       const decimals = assToken ? assToken.decimals : 9;
       const unallocated = getUnallocatedBalance(tsry);
@@ -796,7 +794,7 @@ const VestingView = (props: {
       return ub;
     }
     return 0;
-  }, []);
+  }, [getUnallocatedBalance]);
 
   const refreshTreasuriesSummary = useCallback(async () => {
 
@@ -3312,12 +3310,6 @@ const VestingView = (props: {
       return;
     }
 
-    const getUnallocatedBalance = (details: Treasury) => {
-      const balance = new BN(details.balance);
-      const allocationAssigned = new BN(details.allocationAssigned);
-      return balance.sub(allocationAssigned);
-    }
-
     if (selectedVestingContract.associatedToken && workingToken && workingToken.address === selectedVestingContract.associatedToken) {
       streamingBalance = getUnallocatedBalance(selectedVestingContract);
       consoleOut('Available streaming balance:', toUiAmount(streamingBalance, workingToken.decimals), 'blue');
@@ -3326,7 +3318,7 @@ const VestingView = (props: {
       setAssociatedTokenDecimals(workingToken.decimals);
     }
 
-  }, [selectedVestingContract, workingToken]);
+  }, [getUnallocatedBalance, selectedVestingContract, workingToken]);
 
   // Hook on wallet connect/disconnect
   useEffect(() => {

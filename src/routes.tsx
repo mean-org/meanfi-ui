@@ -41,7 +41,7 @@ export function AppRoutes() {
                         <Route
                           path="/create-safe"
                           element={
-                            <React.Suspense fallback={<PageLoadingView />}>
+                            <React.Suspense fallback={<PageLoadingView addWrapper={true} />}>
                               <CreateSafeView />
                             </React.Suspense>
                           }
