@@ -5,55 +5,61 @@ import CardStats from './components/CardStats';
 
 const items = [
   {
-    name: "USD Coin",
-    symbol: "https://www.orca.so/static/media/usdc.3b5972c1.svg",
-    address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    name: 'USD Coin',
+    symbol: 'https://www.orca.so/static/media/usdc.3b5972c1.svg',
+    address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     amount: 3653778.8,
-    token: "USDC",
-    value: 365366553
+    token: 'USDC',
+    value: 365366553,
   },
   {
-    name: "MEAN",
-    symbol: "https://www.gate.io/images/coin_icon/64/mean.png",
-    address: "MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD",
+    name: 'MEAN',
+    symbol: 'https://www.gate.io/images/coin_icon/64/mean.png',
+    address: 'MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD',
     amount: 190000000,
-    token: "MEAN",
-    value: 14040430000
-  }
+    token: 'MEAN',
+    value: 14040430000,
+  },
 ];
 
 const transactions = [
   {
     slot: 115534798,
-    token: "MEAN",
-    signature: "45n19mmfh1kkLfKY68ESM6TWqUV1TGu66HZVdbbTRMXSfoUD2MrLTd7Ka4Vm8KGUjHHNsrRKk3Z2W6Upeb3vuiMD"
+    token: 'MEAN',
+    signature:
+      '45n19mmfh1kkLfKY68ESM6TWqUV1TGu66HZVdbbTRMXSfoUD2MrLTd7Ka4Vm8KGUjHHNsrRKk3Z2W6Upeb3vuiMD',
   },
   {
     slot: 115534529,
-    token: "MEAN",
-    signature: "xSX65F5BAqk4SgYhcFCwwov3vuKi5vtBK3ec6gN6XvGB1Hop8Wvbc579UU8urYi86ikujzvjZMVYVobLKKUuRRo"
+    token: 'MEAN',
+    signature:
+      'xSX65F5BAqk4SgYhcFCwwov3vuKi5vtBK3ec6gN6XvGB1Hop8Wvbc579UU8urYi86ikujzvjZMVYVobLKKUuRRo',
   },
   {
     slot: 112757513,
-    token: "MEAN",
-    signature: "4X7CwhbegXpH4SEZq1x97NVgzCaEyiQjFNR11nwnKtWCJFccJh5bc68qfFnyrvr9JAD82aW26FVxFvi8hkv9Cd99"
+    token: 'MEAN',
+    signature:
+      '4X7CwhbegXpH4SEZq1x97NVgzCaEyiQjFNR11nwnKtWCJFccJh5bc68qfFnyrvr9JAD82aW26FVxFvi8hkv9Cd99',
   },
   {
     slot: 112757184,
-    token: "MEAN",
-    signature: "okhvHtmaRwYzMpbTCGtsVdKL3DBhFsLEJtH5szJDRWYAcJQqYir9QMAGJz6xKN5mDNYmAitmsbTf9ktNCUGoTKF"
+    token: 'MEAN',
+    signature:
+      'okhvHtmaRwYzMpbTCGtsVdKL3DBhFsLEJtH5szJDRWYAcJQqYir9QMAGJz6xKN5mDNYmAitmsbTf9ktNCUGoTKF',
   },
   {
     slot: 112707500,
-    token: "MEAN",
-    signature: "4eb6FsYa41uLs76ufT6L99uLDpR3RQrM6nwagPoF3iGbFWrRr2A2NzqmBk1NmMfsEWai7gUP2yxVSKvtHU5nHqWY"
+    token: 'MEAN',
+    signature:
+      '4eb6FsYa41uLs76ufT6L99uLDpR3RQrM6nwagPoF3iGbFWrRr2A2NzqmBk1NmMfsEWai7gUP2yxVSKvtHU5nHqWY',
   },
   {
     slot: 112705254,
-    token: "MEAN",
-    signature: "3Nnoz6HsMtjq5iXnmrGapUsvtK4DTTc9sVPakJiD7yEEGgfiLFXLs6i9nYcCwzVvZewTygq6rSLU6vjNJ5y84EDU"
+    token: 'MEAN',
+    signature:
+      '3Nnoz6HsMtjq5iXnmrGapUsvtK4DTTc9sVPakJiD7yEEGgfiLFXLs6i9nYcCwzVvZewTygq6rSLU6vjNJ5y84EDU',
   },
-]
+];
 
 const MeanDaoStats = () => {
   const totalTreasuryValue = items.reduce((accumulator, item) => {
@@ -76,7 +82,9 @@ const MeanDaoStats = () => {
             <h3>{item.name}</h3>
           </div>
           <div className="item-content">
-            <span>{formatThousands(item.amount)} {item.token}</span>
+            <span>
+              {formatThousands(item.amount)} {item.token}
+            </span>
             <span>$ {formatThousands(item.value)}</span>
           </div>
         </div>
@@ -109,7 +117,7 @@ const MeanDaoStats = () => {
               <td className="">
                 <span className="">{transaction.token}</span>
               </td>
-              <td className="">     
+              <td className="">
                 <span className="icon-button-container">
                   <Button
                     type="default"
@@ -131,22 +139,22 @@ const MeanDaoStats = () => {
     {
       header: renderHeaderTreasury,
       body: renderBodyTreasury,
-      className: "treasury-card"
+      className: 'treasury-card',
     },
     {
       header: renderHeaderEmissions,
       body: renderBodyEmissions,
-      className: "emissions-card"
-    }
+      className: 'emissions-card',
+    },
   ];
 
   return (
     <>
       <Row gutter={[8, 8]}>
-        <CardStats 
-          xs={24} 
-          sm={24} 
-          md={24} 
+        <CardStats
+          xs={24}
+          sm={24}
+          md={24}
           lg={24}
           header={cards[0].header}
           body={cards[0].body}
@@ -155,10 +163,10 @@ const MeanDaoStats = () => {
       </Row>
       <Divider />
       <Row gutter={[8, 8]}>
-        <CardStats 
-          xs={24} 
-          sm={24} 
-          md={24} 
+        <CardStats
+          xs={24}
+          sm={24}
+          md={24}
           lg={24}
           header={cards[1].header}
           body={cards[1].body}

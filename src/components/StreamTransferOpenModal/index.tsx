@@ -15,16 +15,9 @@ export const StreamTransferOpenModal = (props: {
   isVisible: boolean;
   streamDetail: Stream | StreamInfo | undefined;
 }) => {
-  const {
-    handleClose,
-    handleOk,
-    isVisible,
-    streamDetail,
-  } = props;
+  const { handleClose, handleOk, isVisible, streamDetail } = props;
 
-  const {
-    selectedAccount,
-  } = useContext(AppStateContext);
+  const { selectedAccount } = useContext(AppStateContext);
 
   const [address, setAddress] = useState('');
   const { t } = useTranslation('common');
@@ -36,30 +29,36 @@ export const StreamTransferOpenModal = (props: {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
 
-  const isAddressTreasurer = useCallback((address: string): boolean => {
-    if (streamDetail && address) {
-      const v1 = streamDetail as StreamInfo;
-      const v2 = streamDetail as Stream;
-      if ((v1.version < 2 && v1.treasurerAddress === address) ||
-          (v2.version >= 2 && v2.treasurer.toBase58() === address)) {
-        return true;
+  const isAddressTreasurer = useCallback(
+    (address: string): boolean => {
+      if (streamDetail && address) {
+        const v1 = streamDetail as StreamInfo;
+        const v2 = streamDetail as Stream;
+        if (
+          (v1.version < 2 && v1.treasurerAddress === address) ||
+          (v2.version >= 2 && v2.treasurer.toBase58() === address)
+        ) {
+          return true;
+        }
       }
-    }
-    return false;
-  }, [streamDetail]);
+      return false;
+    },
+    [streamDetail],
+  );
 
   const onTitleInputValueChange = (e: any) => {
     setProposalTitle(e.target.value);
-  }
+  };
 
   const handleAddressChange = (e: any) => {
     setAddress(e.target.value);
-  }
+  };
 
   const isAddressOwnAccount = (): boolean => {
     return address && publicKey && address === publicKey.toBase58()
-      ? true : false;
-  }
+      ? true
+      : false;
+  };
 
   // Validation
   const isValidForm = (): boolean => {
@@ -70,7 +69,7 @@ export const StreamTransferOpenModal = (props: {
       isVerifiedRecipient
       ? true
       : false;
-  }
+  };
 
   // Validation if multisig
   const isValidFormMultisig = (): boolean => {
@@ -82,57 +81,67 @@ export const StreamTransferOpenModal = (props: {
       isVerifiedRecipient
       ? true
       : false;
-  }
+  };
 
   const getTransactionStartButtonLabel = () => {
     return !address
-        ? t('transfer-stream.streamid-empty')
-        : (!isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address))
-          ? 'Invalid address'
-          : !isVerifiedRecipient
-            ? t('transactions.validation.verified-recipient-unchecked')
-            : t('transfer-stream.streamid-open-cta')
-  }
+      ? t('transfer-stream.streamid-empty')
+      : !isValidAddress(address) ||
+        isAddressOwnAccount() ||
+        isAddressTreasurer(address)
+      ? 'Invalid address'
+      : !isVerifiedRecipient
+      ? t('transactions.validation.verified-recipient-unchecked')
+      : t('transfer-stream.streamid-open-cta');
+  };
 
   const getTransactionStartButtonLabelMultisig = () => {
     return !proposalTitle
-      ? "Add a proposal title"
+      ? 'Add a proposal title'
       : !address
-        ? t('transfer-stream.streamid-empty')
-        : (!isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address))
-          ? 'Invalid address'
-          : !isVerifiedRecipient
-            ? t('transactions.validation.verified-recipient-unchecked')
-            : 'Sign proposal'
-  }
+      ? t('transfer-stream.streamid-empty')
+      : !isValidAddress(address) ||
+        isAddressOwnAccount() ||
+        isAddressTreasurer(address)
+      ? 'Invalid address'
+      : !isVerifiedRecipient
+      ? t('transactions.validation.verified-recipient-unchecked')
+      : 'Sign proposal';
+  };
 
   const onAcceptModal = () => {
     handleOk({
       title: proposalTitle,
-      address: address
+      address: address,
     });
-  }
+  };
 
   const onCloseModal = () => {
     setAddress('');
-    setProposalTitle("");
+    setProposalTitle('');
     setIsVerifiedRecipient(false);
     handleClose();
-  }
+  };
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
-  }
+  };
 
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">{isMultisigContext ? "Propose transfer stream" : t('transfer-stream.modal-title')}</div>}
+      title={
+        <div className="modal-title">
+          {isMultisigContext
+            ? 'Propose transfer stream'
+            : t('transfer-stream.modal-title')}
+        </div>
+      }
       footer={null}
       open={isVisible}
       onCancel={onCloseModal}
-      width={480}>
-
+      width={480}
+    >
       {/* Proposal title */}
       {isMultisigContext && (
         <div className="mb-3">
@@ -148,12 +157,15 @@ export const StreamTransferOpenModal = (props: {
         </div>
       )}
 
-      <div className="form-label">{t('transfer-stream.label-streamid-input')}</div>
+      <div className="form-label">
+        {t('transfer-stream.label-streamid-input')}
+      </div>
       <div className="well">
         <div className="flex-fixed-right">
           <div className="left position-relative">
             <span className="recipient-field-wrapper">
-              <input id="stream-transfer-input"
+              <input
+                id="stream-transfer-input"
                 className="general-text-input"
                 autoComplete="on"
                 autoCorrect="off"
@@ -162,29 +174,33 @@ export const StreamTransferOpenModal = (props: {
                 placeholder={t('transfer-stream.streamid-placeholder')}
                 required={true}
                 spellCheck="false"
-                value={address}/>
+                value={address}
+              />
             </span>
           </div>
         </div>
-        {
-          address && !isValidAddress(address) ? (
-            <span className="form-field-error">
-              {t('transactions.validation.address-validation')}
-            </span>
-          ) : isAddressOwnAccount() ? (
-            <span className="form-field-error">
-              {t('transfer-stream.destination-is-own-account')}
-            </span>
-          ) : isAddressTreasurer(address) ? (
-            <span className="form-field-error">
-              {t('transfer-stream.destination-address-is-sender')}
-            </span>
-          ) : (null)
-        }
+        {address && !isValidAddress(address) ? (
+          <span className="form-field-error">
+            {t('transactions.validation.address-validation')}
+          </span>
+        ) : isAddressOwnAccount() ? (
+          <span className="form-field-error">
+            {t('transfer-stream.destination-is-own-account')}
+          </span>
+        ) : isAddressTreasurer(address) ? (
+          <span className="form-field-error">
+            {t('transfer-stream.destination-address-is-sender')}
+          </span>
+        ) : null}
       </div>
 
       <div className="ml-1 mb-3">
-        <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfer-stream.streamid-checkbox')}</Checkbox>
+        <Checkbox
+          checked={isVerifiedRecipient}
+          onChange={onIsVerifiedRecipientChange}
+        >
+          {t('transfer-stream.streamid-checkbox')}
+        </Checkbox>
       </div>
 
       <Button
@@ -194,8 +210,11 @@ export const StreamTransferOpenModal = (props: {
         shape="round"
         size="large"
         disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
-        onClick={onAcceptModal}>
-        {isMultisigContext ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel()}
+        onClick={onAcceptModal}
+      >
+        {isMultisigContext
+          ? getTransactionStartButtonLabelMultisig()
+          : getTransactionStartButtonLabel()}
       </Button>
     </Modal>
   );

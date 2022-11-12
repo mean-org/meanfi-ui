@@ -1,47 +1,52 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { setProgramIds } from "../middleware/ids";
-import { cache, getMultipleAccounts, MintParser } from "./accounts";
-import { MEAN_TOKEN_LIST } from "../constants/tokens";
-import { environment } from "../environments/environment";
-import { Cluster, Connection, ConnectionConfig, PublicKey } from "@solana/web3.js";
-import { DEFAULT_RPCS, RpcConfig } from "../services/connections-hq";
-import { useLocalStorageState } from "../middleware/utils";
-import { TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
-import { ChainID } from "models/enums";
-import { TokenInfo } from "models/SolanaTokenInfo";
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { setProgramIds } from '../middleware/ids';
+import { cache, getMultipleAccounts, MintParser } from './accounts';
+import { MEAN_TOKEN_LIST } from '../constants/tokens';
+import { environment } from '../environments/environment';
+import {
+  Cluster,
+  Connection,
+  ConnectionConfig,
+  PublicKey,
+} from '@solana/web3.js';
+import { DEFAULT_RPCS, RpcConfig } from '../services/connections-hq';
+import { useLocalStorageState } from '../middleware/utils';
+import { TRANSACTION_STATUS_RETRY_TIMEOUT } from '../constants';
+import { ChainID } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
 const DEFAULT = DEFAULT_RPCS[0].httpProvider;
 const DEFAULT_SLIPPAGE = 0.25;
 
 export const failsafeConnectionConfig: ConnectionConfig = {
-  commitment: "recent",
-  confirmTransactionInitialTimeout: TRANSACTION_STATUS_RETRY_TIMEOUT
-}
+  commitment: 'recent',
+  confirmTransactionInitialTimeout: TRANSACTION_STATUS_RETRY_TIMEOUT,
+};
 
-export const getNetworkIdByCluster = (cluster: Cluster | "local-validator") => {
+export const getNetworkIdByCluster = (cluster: Cluster | 'local-validator') => {
   switch (cluster) {
-    case "devnet":
+    case 'devnet':
       return ChainID.Devnet;
-    case "testnet":
+    case 'testnet':
       return ChainID.Testnet;
     default:
       return ChainID.MainnetBeta;
   }
-}
+};
 
 export const getNetworkIdByEnvironment = (env: string) => {
   switch (env) {
-    case "local":
-    case "staging":
-    case "development":
+    case 'local':
+    case 'staging':
+    case 'development':
       return ChainID.Devnet;
-    case "local-validator":
+    case 'local-validator':
       return ChainID.LocalValidator;
-    case "production":
+    case 'production':
     default:
       return ChainID.MainnetBeta;
   }
-}
+};
 
 export const getSolanaExplorerClusterParam = (): string => {
   switch (environment) {
@@ -52,14 +57,14 @@ export const getSolanaExplorerClusterParam = (): string => {
     default:
       return '';
   }
-}
+};
 
 interface ConnectionProviderConfig {
   connection: Connection;
   endpoint: string;
   slippage: number;
   setSlippage: (val: number) => void;
-  cluster: Cluster | "local-validator";
+  cluster: Cluster | 'local-validator';
   tokens: TokenInfo[];
   tokenMap: Map<string, TokenInfo>;
 }
@@ -68,25 +73,25 @@ const ConnectionContext = React.createContext<ConnectionProviderConfig>({
   endpoint: DEFAULT,
   slippage: DEFAULT_SLIPPAGE,
   setSlippage: (val: number) => {},
-  connection: new Connection(DEFAULT, "recent"),
+  connection: new Connection(DEFAULT, 'recent'),
   cluster: DEFAULT_RPCS[0].cluster,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
 });
 
 export function ConnectionProvider({ children = undefined as any }) {
-
-  const [cachedRpcJson] = useLocalStorageState("cachedRpc");
-  const cachedRpc = (cachedRpcJson as RpcConfig);
+  const [cachedRpcJson] = useLocalStorageState('cachedRpc');
+  const cachedRpc = cachedRpcJson as RpcConfig;
 
   const [slippage, setSlippage] = useLocalStorageState(
-    "slippage",
-    DEFAULT_SLIPPAGE.toString()
+    'slippage',
+    DEFAULT_SLIPPAGE.toString(),
   );
 
-  const connection = useMemo(() => new Connection(cachedRpc.httpProvider, failsafeConnectionConfig), [
-    cachedRpc,
-  ]);
+  const connection = useMemo(
+    () => new Connection(cachedRpc.httpProvider, failsafeConnectionConfig),
+    [cachedRpc],
+  );
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
@@ -94,40 +99,41 @@ export function ConnectionProvider({ children = undefined as any }) {
   useEffect(() => {
     // fetch token files
     (async () => {
-      const list = MEAN_TOKEN_LIST.filter(t => t.chainId === cachedRpc.networkId);
+      const list = MEAN_TOKEN_LIST.filter(
+        t => t.chainId === cachedRpc.networkId,
+      );
       const knownMints = list.reduce((map, item) => {
         map.set(item.address, item);
         return map;
       }, new Map<string, TokenInfo>());
 
       try {
-        const accounts = await getMultipleAccounts(connection, [...knownMints.keys()], 'recent');
+        const accounts = await getMultipleAccounts(
+          connection,
+          [...knownMints.keys()],
+          'recent',
+        );
         if (accounts) {
           cache.clear();
           accounts.keys.forEach((key, index) => {
             const account = accounts.array[index];
-            if(!account) {
+            if (!account) {
               return;
             }
             cache.add(new PublicKey(key), account, MintParser);
-          })
+          });
         }
       } catch (error) {
         console.error('Cache update failed.', error);
-        throw(error);
+        throw error;
       }
 
       setTokenMap(knownMints);
       setTokens(list);
-
     })();
 
-    return () => { }
-
-  }, [
-    cachedRpc.networkId,
-    connection
-  ]);
+    return () => {};
+  }, [cachedRpc.networkId, connection]);
 
   setProgramIds(cachedRpc.cluster);
 
@@ -136,7 +142,7 @@ export function ConnectionProvider({ children = undefined as any }) {
       value={{
         endpoint: cachedRpc.httpProvider,
         slippage: parseFloat(slippage),
-        setSlippage: (val) => setSlippage(val.toString()),
+        setSlippage: val => setSlippage(val.toString()),
         connection,
         tokens,
         tokenMap,

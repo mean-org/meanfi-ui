@@ -1,9 +1,9 @@
-import { useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount } from "../../middleware/utils";
-import { TokenInfo } from "@mean-dao/hybrid-liquidity-ag/lib/types";
-import { TokenDisplay } from "../TokenDisplay";
+import { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { AppStateContext } from '../../contexts/appstate';
+import { formatAmount } from '../../middleware/utils';
+import { TokenInfo } from '@mean-dao/hybrid-liquidity-ag/lib/types';
+import { TokenDisplay } from '../TokenDisplay';
 
 export const ExchangeOutput = (props: {
   fromToken: TokenInfo | undefined;
@@ -17,19 +17,16 @@ export const ExchangeOutput = (props: {
   clients: any[];
   showLpList: boolean;
 }) => {
-
-  const { t } = useTranslation("common");
-  const {
-    loadingPrices,
-    getTokenPriceBySymbol,
-    refreshPrices,
-  } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
+  const { loadingPrices, getTokenPriceBySymbol, refreshPrices } =
+    useContext(AppStateContext);
   const [selectedClient, setSelectedClient] = useState<any>();
   const [savings, setSavings] = useState(0);
 
   useEffect(() => {
-
-    if (!props.clients || !props.clients.length) { return; }
+    if (!props.clients || !props.clients.length) {
+      return;
+    }
 
     const timeout = setTimeout(() => {
       setSelectedClient(props.clients[0]);
@@ -37,20 +34,15 @@ export const ExchangeOutput = (props: {
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  }, [
-    props.clients
-  ]);
+    };
+  }, [props.clients]);
 
   useEffect(() => {
-
     if (!props.clients || !props.clients.length) {
       return;
     }
 
     const timeout = setTimeout(() => {
-    
       if (props.clients.length === 1) {
         setSavings(0);
         return;
@@ -60,26 +52,22 @@ export const ExchangeOutput = (props: {
         .filter(c => c.exchange)
         .map(c => c.exchange);
 
-      const firstInfo =  exchangeInfos[0];
+      const firstInfo = exchangeInfos[0];
       const lastInfo = exchangeInfos[exchangeInfos.length - 1];
       const fromAmount = parseFloat(props.fromTokenAmount);
       const bestAmountOut = fromAmount * (firstInfo?.outPrice || 0);
       const worstAmountOut = fromAmount * (lastInfo?.outPrice || 0);
-      const showBadge = exchangeInfos.length > 1 && bestAmountOut > worstAmountOut;
+      const showBadge =
+        exchangeInfos.length > 1 && bestAmountOut > worstAmountOut;
       const saveAmount = showBadge ? bestAmountOut - worstAmountOut : 0;
 
       setSavings(saveAmount);
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  }, [
-    props.clients, 
-    props.fromTokenAmount
-  ]);
+    };
+  }, [props.clients, props.fromTokenAmount]);
 
   // useEffect(() => {
   //     if (props.clients && props.clients.length &&
@@ -102,29 +90,47 @@ export const ExchangeOutput = (props: {
               {`${
                 props.toToken && props.toTokenBalance
                   ? props.toTokenBalance
-                  : "0"
+                  : '0'
               }`}
             </span>
             {props.toTokenBalance && (
-              <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>
+              <span
+                className={`balance-amount ${
+                  loadingPrices
+                    ? 'click-disabled fg-orange-red pulsate'
+                    : 'simplelink'
+                }`}
+                onClick={() => refreshPrices()}
+              >
                 {`(~$${
                   props.toToken && props.toTokenBalance
                     ? formatAmount(
                         parseFloat(props.toTokenBalance) *
                           getTokenPriceBySymbol(props.toToken.symbol),
-                        2
+                        2,
                       )
-                    : "0.00"
+                    : '0.00'
                 })`}
               </span>
             )}
           </div>
           <div className="right inner-label">
-            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-              ~${props.toToken && props.toTokenBalance
-                ? formatAmount(parseFloat(props.toTokenBalance) * getTokenPriceBySymbol(props.toToken.symbol), 2)
-                : "0.00"
+            <span
+              className={
+                loadingPrices
+                  ? 'click-disabled fg-orange-red pulsate'
+                  : 'simplelink'
               }
+              onClick={() => refreshPrices()}
+            >
+              ~$
+              {props.toToken && props.toTokenBalance
+                ? formatAmount(
+                    parseFloat(props.toTokenBalance) *
+                      getTokenPriceBySymbol(props.toToken.symbol),
+                    2,
+                  )
+                : '0.00'}
             </span>
           </div>
         </div>
@@ -133,21 +139,22 @@ export const ExchangeOutput = (props: {
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on simplelink">
-              <TokenDisplay onClick={props.onSelectToken}
-                  mintAddress={props.toToken ? props.toToken.address : ''}
-                  name={props.toToken ? props.toToken.name : ''}
-                  className="simplelink"
-                  noTokenLabel={t('swap.token-select-destination')}
-                  showName={false}
-                  showCaretDown={true}
+              <TokenDisplay
+                onClick={props.onSelectToken}
+                mintAddress={props.toToken ? props.toToken.address : ''}
+                name={props.toToken ? props.toToken.name : ''}
+                className="simplelink"
+                noTokenLabel={t('swap.token-select-destination')}
+                showName={false}
+                showCaretDown={true}
               />
             </span>
           </div>
           <div className="right">
             {props.showLpList &&
-             props.toTokenAmount &&
-             props.clients &&
-             props.clients.length > 1 ? (
+            props.toTokenAmount &&
+            props.clients &&
+            props.clients.length > 1 ? (
               <span>&nbsp;</span>
             ) : (
               <div className="static-data-field text-right">
@@ -158,80 +165,81 @@ export const ExchangeOutput = (props: {
         </div>
 
         {props.fromTokenAmount &&
-         props.showLpList &&
-         props.clients &&
-         props.clients.length > 0 && (
-          <div className="mt-2" style={{marginTop:'2rem'}}>
-            {props.clients.map((c: any, index: number) => {
-              if (c.exchange) {
+          props.showLpList &&
+          props.clients &&
+          props.clients.length > 0 && (
+            <div className="mt-2" style={{ marginTop: '2rem' }}>
+              {props.clients.map((c: any, index: number) => {
+                if (c.exchange) {
+                  const fromAmount = parseFloat(props.fromTokenAmount);
+                  const amountOut = c.exchange.amountOut * fromAmount;
+                  const firstInfo = props.clients[0].exchange;
+                  const lastInfo =
+                    props.clients[props.clients.length - 1].exchange;
 
-                const fromAmount = parseFloat(props.fromTokenAmount);
-                const amountOut = c.exchange.amountOut * fromAmount;
-                const firstInfo = props.clients[0].exchange;
-                const lastInfo = props.clients[props.clients.length - 1].exchange;
+                  // Savings
+                  const showBadge =
+                    props.clients.length > 1 &&
+                    (firstInfo.amountOut || 0) > (lastInfo?.amountOut || 0);
+                  let selected =
+                    selectedClient &&
+                    selectedClient.exchange.fromAmm === c.exchange.fromAmm;
 
-                // Savings
-                const showBadge = props.clients.length > 1 && (firstInfo.amountOut || 0) > (lastInfo?.amountOut || 0);
-                let selected = 
-                  selectedClient &&
-                  selectedClient.exchange.fromAmm === c.exchange.fromAmm;
+                  if (selected && selectedClient.pool && c.pool) {
+                    selected = selectedClient.pool.name === c.pool.name;
+                  }
 
-                if (selected && selectedClient.pool && c.pool) {
-                  selected = selectedClient.pool.name === c.pool.name;
-                }
-
-                return (
-                  <div
-                    key={`${index}`}
-                    className={
-                      selected
-                        ? "swap-client-card selected"
-                        : "swap-client-card"
-                    }
-                    onClick={() => {
-                      setSelectedClient(c);
-                      props.onSelectedClient(c);
-                    }}
-                  >
-                    <div className="card-content">
-                      {index === 0 && showBadge && (
-                        <span
-                          className={`badge ${
-                            selected ? "bg-orange-red" : "disabled"
-                          }`}
-                        >
-                          {t('swap.routes-best-price-label')}:{" "}
-                          {formatAmount(
-                            savings,
-                            props.toToken?.decimals || 2
-                          )}
-                        </span>
-                      )}
-                      <div className="highlight flex-column">
-                        <span className="font-size-100 font-bold">
-                          {c.exchange.fromAmm}
-                        </span>
-                        {/* TODO: Update route when routes are available */}
-                        <span>
-                          {props.fromToken?.symbol} →{" "}
-                          {props.toToken?.symbol}
-                        </span>
-                      </div>
-                      <div className="amount">
-                        {formatAmount(
-                          amountOut,
-                          props.toToken?.decimals || 2
+                  return (
+                    <div
+                      key={`${index}`}
+                      className={
+                        selected
+                          ? 'swap-client-card selected'
+                          : 'swap-client-card'
+                      }
+                      onClick={() => {
+                        setSelectedClient(c);
+                        props.onSelectedClient(c);
+                      }}
+                    >
+                      <div className="card-content">
+                        {index === 0 && showBadge && (
+                          <span
+                            className={`badge ${
+                              selected ? 'bg-orange-red' : 'disabled'
+                            }`}
+                          >
+                            {t('swap.routes-best-price-label')}:{' '}
+                            {formatAmount(
+                              savings,
+                              props.toToken?.decimals || 2,
+                            )}
+                          </span>
                         )}
+                        <div className="highlight flex-column">
+                          <span className="font-size-100 font-bold">
+                            {c.exchange.fromAmm}
+                          </span>
+                          {/* TODO: Update route when routes are available */}
+                          <span>
+                            {props.fromToken?.symbol} → {props.toToken?.symbol}
+                          </span>
+                        </div>
+                        <div className="amount">
+                          {formatAmount(
+                            amountOut,
+                            props.toToken?.decimals || 2,
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              } else {
-                return null;
-              }
-            })}
-          </div>
-        )}
+                  );
+                } else {
+                  return null;
+                }
+              })}
+            </div>
+          )}
       </div>
     </>
   );

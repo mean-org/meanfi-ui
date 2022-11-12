@@ -1,16 +1,25 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { environment } from '../../environments/environment';
-import { Button, Drawer, Modal } from "antd";
-import { useTranslation } from "react-i18next";
-import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
+import { Button, Drawer, Modal } from 'antd';
+import { useTranslation } from 'react-i18next';
+import {
+  getNetworkIdByEnvironment,
+  useConnection,
+} from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
-import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import {
+  AccountInfo,
+  Connection,
+  LAMPORTS_PER_SOL,
+  ParsedAccountData,
+  PublicKey,
+} from '@solana/web3.js';
 import { consoleOut, isProd, isValidAddress } from '../../middleware/ui';
 import { LoadingOutlined } from '@ant-design/icons';
-import { AccountTokenParsedInfo } from "../../models/accounts";
+import { AccountTokenParsedInfo } from '../../models/accounts';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { NATIVE_SOL } from '../../constants/tokens';
 import { TokenListItem } from '../TokenListItem';
@@ -29,63 +38,70 @@ export const MultisigAddAssetModal = (props: {
   isBusy: boolean;
   selectedMultisig: MultisigInfo | undefined;
 }) => {
-  const { isVisible, handleClose, handleOk, ownedTokenAccounts, isBusy, selectedMultisig } = props;
-  const { t } = useTranslation("common");
+  const {
+    isVisible,
+    handleClose,
+    handleOk,
+    ownedTokenAccounts,
+    isBusy,
+    selectedMultisig,
+  } = props;
+  const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const {
-    tokenList,
-    splTokenList,
-  } = useContext(AppStateContext);
+  const { tokenList, splTokenList } = useContext(AppStateContext);
 
   const { account } = useNativeAccount();
   const { tokenAccounts } = useUserAccounts();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [tokenFilter, setTokenFilter] = useState("");
+  const [tokenFilter, setTokenFilter] = useState('');
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [transactionFees] = useState<TransactionFees>({
     blockchainFee: 5000 / LAMPORTS_PER_SOL,
     mspFlatFee: 0.00001,
-    mspPercentFee: 0
+    mspPercentFee: 0,
   });
-  const [feeAmount] = useState<number>(transactionFees.blockchainFee + transactionFees.mspFlatFee);
-  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+  const [feeAmount] = useState<number>(
+    transactionFees.blockchainFee + transactionFees.mspFlatFee,
+  );
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(
+    undefined,
+  );
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
 
   // Callbacks
 
   // Updates the token list everytime is filtered
-  const updateTokenListByFilter = useCallback((searchString: string) => {
+  const updateTokenListByFilter = useCallback(
+    (searchString: string) => {
+      if (!selectedList) {
+        return;
+      }
 
-    if (!selectedList) {
-      return;
-    }
+      const timeout = setTimeout(() => {
+        const filter = (t: any) => {
+          return (
+            t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+            t.name.toLowerCase().includes(searchString.toLowerCase()) ||
+            t.address.toLowerCase().includes(searchString.toLowerCase())
+          );
+        };
 
-    const timeout = setTimeout(() => {
+        const showFromList = !searchString
+          ? selectedList
+          : selectedList.filter((t: any) => filter(t));
 
-      const filter = (t: any) => {
-        return (
-          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
-          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
-          t.address.toLowerCase().includes(searchString.toLowerCase())
-        );
+        setFilteredTokenList(showFromList);
+      });
+
+      return () => {
+        clearTimeout(timeout);
       };
-
-      const showFromList = !searchString 
-        ? selectedList
-        : selectedList.filter((t: any) => filter(t));
-
-      setFilteredTokenList(showFromList);
-
-    });
-
-    return () => { 
-      clearTimeout(timeout);
-    }
-
-  }, [selectedList]);
+    },
+    [selectedList],
+  );
 
   // Effects
 
@@ -95,7 +111,9 @@ export const MultisigAddAssetModal = (props: {
       const finalList = new Array<TokenInfo>();
 
       // Make a copy of the MeanFi favorite tokens
-      const meanTokensCopy = JSON.parse(JSON.stringify(tokenList)) as TokenInfo[];
+      const meanTokensCopy = JSON.parse(
+        JSON.stringify(tokenList),
+      ) as TokenInfo[];
 
       // Add all other items but excluding those in meanTokensCopy (only in mainnet)
       if (isProd()) {
@@ -125,24 +143,31 @@ export const MultisigAddAssetModal = (props: {
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-  ]);
+  }, [account, nativeBalance, previousBalance]);
 
   // First time token list
   useEffect(() => {
-    if (selectedList.length > 0 && !tokenFilter && filteredTokenList.length === 0) {
+    if (
+      selectedList.length > 0 &&
+      !tokenFilter &&
+      filteredTokenList.length === 0
+    ) {
       consoleOut('Initializing filtered list...', '', 'blue');
       updateTokenListByFilter('');
     }
-  }, [filteredTokenList.length, selectedList.length, tokenFilter, updateTokenListByFilter]);
+  }, [
+    filteredTokenList.length,
+    selectedList.length,
+    tokenFilter,
+    updateTokenListByFilter,
+  ]);
 
   // Events and actions
 
   const setModalBodyMinHeight = useCallback((addMinHeight: boolean) => {
-    const modalBody = document.querySelector(".exchange-modal .ant-modal-content");
+    const modalBody = document.querySelector(
+      '.exchange-modal .ant-modal-content',
+    );
     if (modalBody) {
       if (addMinHeight) {
         modalBody.classList.add('drawer-open');
@@ -153,7 +178,7 @@ export const MultisigAddAssetModal = (props: {
   }, []);
 
   const autoFocusInput = useCallback(() => {
-    const input = document.getElementById("token-search-otp");
+    const input = document.getElementById('token-search-otp');
     if (input) {
       setTimeout(() => {
         input.focus();
@@ -179,42 +204,41 @@ export const MultisigAddAssetModal = (props: {
     setTokenFilter('');
     updateTokenListByFilter('');
     setSelectedToken(undefined);
-  },[
-    updateTokenListByFilter
-  ]);
+  }, [updateTokenListByFilter]);
 
-  const onTokenSearchInputChange = useCallback((e: any) => {
-
-    const newValue = e.target.value;
-    setTokenFilter(newValue);
-    updateTokenListByFilter(newValue);
-
-  },[
-    updateTokenListByFilter
-  ]);
+  const onTokenSearchInputChange = useCallback(
+    (e: any) => {
+      const newValue = e.target.value;
+      setTokenFilter(newValue);
+      updateTokenListByFilter(newValue);
+    },
+    [updateTokenListByFilter],
+  );
 
   const onAcceptModal = () => {
     handleOk({ token: selectedToken });
-  }
+  };
 
   const isTokenAlreadyOwned = useCallback(() => {
+    if (!selectedToken || !ownedTokenAccounts) {
+      return false;
+    }
 
-    if (!selectedToken || !ownedTokenAccounts) { return false; }
-
-    return ownedTokenAccounts.some(ta => selectedToken.address === ta.parsedInfo.mint);
-
-  },[ownedTokenAccounts, selectedToken]);
+    return ownedTokenAccounts.some(
+      ta => selectedToken.address === ta.parsedInfo.mint,
+    );
+  }, [ownedTokenAccounts, selectedToken]);
 
   // Validation
 
   const isOperationValid = (): boolean => {
     return publicKey &&
-           selectedMultisig &&
-           nativeBalance &&
-           nativeBalance > feeAmount &&
-           selectedToken &&
-           selectedToken.decimals >= 0 &&
-           !isTokenAlreadyOwned()
+      selectedMultisig &&
+      nativeBalance &&
+      nativeBalance > feeAmount &&
+      selectedToken &&
+      selectedToken.decimals >= 0 &&
+      !isTokenAlreadyOwned()
       ? true
       : false;
   };
@@ -223,28 +247,27 @@ export const MultisigAddAssetModal = (props: {
     return !publicKey
       ? t('transactions.validation.not-connected')
       : nativeBalance === 0
-        ? t('transactions.validation.amount-sol-low')
-        : nativeBalance < feeAmount
-          ? t('transactions.validation.amount-sol-low')
-          : !selectedToken
-            ? 'No asset selected'
-            : isTokenAlreadyOwned() || selectedToken.decimals < 0
-              ? 'Invalid selection'
-              : t('multisig.create-asset.main-cta');
-  }
+      ? t('transactions.validation.amount-sol-low')
+      : nativeBalance < feeAmount
+      ? t('transactions.validation.amount-sol-low')
+      : !selectedToken
+      ? 'No asset selected'
+      : isTokenAlreadyOwned() || selectedToken.decimals < 0
+      ? 'Invalid selection'
+      : t('multisig.create-asset.main-cta');
+  };
 
   const renderTokenList = (
     <>
-      {(filteredTokenList.length > 0) && (
+      {filteredTokenList.length > 0 &&
         filteredTokenList.map((t, index) => {
-
           if (t.address === NATIVE_SOL.address) {
             return null;
           }
 
           const onClick = function () {
             setSelectedToken(t);
-            consoleOut("token selected:", t.symbol, 'blue');
+            consoleOut('token selected:', t.symbol, 'blue');
             onCloseTokenSelector();
           };
 
@@ -255,7 +278,11 @@ export const MultisigAddAssetModal = (props: {
                 name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
-                className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
+                className={
+                  selectedToken && selectedToken.address === t.address
+                    ? 'selected'
+                    : 'simplelink'
+                }
                 onClick={onClick}
                 balance={0}
               />
@@ -263,8 +290,7 @@ export const MultisigAddAssetModal = (props: {
           } else {
             return null;
           }
-        })
-      )}
+        })}
     </>
   );
 
@@ -283,57 +309,73 @@ export const MultisigAddAssetModal = (props: {
             tokenFilter && selectedToken && selectedToken.decimals === -1
               ? 'Account not found'
               : tokenFilter && selectedToken && selectedToken.decimals === -2
-                ? 'Account is not a token mint'
-                : ''
+              ? 'Account is not a token mint'
+              : ''
           }
         />
       </div>
       <div className="token-list">
         {filteredTokenList.length > 0 && renderTokenList}
-        {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
-          <TokenListItem
-            key={tokenFilter}
-            name={CUSTOM_TOKEN_NAME}
-            mintAddress={tokenFilter}
-            className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-            onClick={async () => {
-              const address = tokenFilter;
-              let decimals = -1;
-              let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
-              try {
-                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
-                consoleOut('accountInfo:', accountInfo, 'blue');
-              } catch (error) {
-                console.error(error);
+        {tokenFilter &&
+          isValidAddress(tokenFilter) &&
+          filteredTokenList.length === 0 && (
+            <TokenListItem
+              key={tokenFilter}
+              name={CUSTOM_TOKEN_NAME}
+              mintAddress={tokenFilter}
+              className={
+                selectedToken && selectedToken.address === tokenFilter
+                  ? 'selected'
+                  : 'simplelink'
               }
-              if (accountInfo) {
-                if ((accountInfo as any).data["program"] &&
-                    (accountInfo as any).data["program"] === "spl-token" &&
-                    (accountInfo as any).data["parsed"] &&
-                    (accountInfo as any).data["parsed"]["type"] &&
-                    (accountInfo as any).data["parsed"]["type"] === "mint") {
-                  decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
-                } else {
-                  decimals = -2;
+              onClick={async () => {
+                const address = tokenFilter;
+                let decimals = -1;
+                let accountInfo: AccountInfo<
+                  Buffer | ParsedAccountData
+                > | null = null;
+                try {
+                  accountInfo = (
+                    await connection.getParsedAccountInfo(
+                      new PublicKey(address),
+                    )
+                  ).value;
+                  consoleOut('accountInfo:', accountInfo, 'blue');
+                } catch (error) {
+                  console.error(error);
                 }
-              }
-              const uknwnToken: TokenInfo = {
-                address,
-                name: CUSTOM_TOKEN_NAME,
-                chainId: getNetworkIdByEnvironment(environment),
-                decimals,
-                symbol: shortenAddress(address),
-              };
-              setSelectedToken(uknwnToken);
-              consoleOut("token selected:", uknwnToken, 'blue');
-              // Do not close on errors (-1 or -2)
-              if (decimals >= 0) {
-                onCloseTokenSelector();
-              }
-            }}
-            balance={0}
-          />
-        )}
+                if (accountInfo) {
+                  if (
+                    (accountInfo as any).data['program'] &&
+                    (accountInfo as any).data['program'] === 'spl-token' &&
+                    (accountInfo as any).data['parsed'] &&
+                    (accountInfo as any).data['parsed']['type'] &&
+                    (accountInfo as any).data['parsed']['type'] === 'mint'
+                  ) {
+                    decimals = (accountInfo as any).data['parsed']['info'][
+                      'decimals'
+                    ];
+                  } else {
+                    decimals = -2;
+                  }
+                }
+                const uknwnToken: TokenInfo = {
+                  address,
+                  name: CUSTOM_TOKEN_NAME,
+                  chainId: getNetworkIdByEnvironment(environment),
+                  decimals,
+                  symbol: shortenAddress(address),
+                };
+                setSelectedToken(uknwnToken);
+                consoleOut('token selected:', uknwnToken, 'blue');
+                // Do not close on errors (-1 or -2)
+                if (decimals >= 0) {
+                  onCloseTokenSelector();
+                }
+              }}
+              balance={0}
+            />
+          )}
       </div>
     </div>
   );
@@ -347,12 +389,14 @@ export const MultisigAddAssetModal = (props: {
       open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
-      width={370}>
-
+      width={370}
+    >
       <div className="px-4 pb-3">
         {/* Asset picker */}
         <div className="form-label">Select token</div>
-        <div className={`well ${(!selectedMultisig || isBusy) ? "disabled" : ""}`}>
+        <div
+          className={`well ${!selectedMultisig || isBusy ? 'disabled' : ''}`}
+        >
           <div className="flex-fixed-left">
             <div className="left">
               <span className="add-on simplelink">
@@ -362,7 +406,9 @@ export const MultisigAddAssetModal = (props: {
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showCaretDown={true}
-                    showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                    showName={
+                      selectedToken.name === CUSTOM_TOKEN_NAME ? true : false
+                    }
                     fullTokenInfo={selectedToken}
                   />
                 ) : (
@@ -382,7 +428,9 @@ export const MultisigAddAssetModal = (props: {
           ) : selectedToken && selectedToken.decimals === -1 ? (
             <span className="form-field-error">Account not found</span>
           ) : selectedToken && selectedToken.decimals === -2 ? (
-            <span className="form-field-error">Account is not a token mint</span>
+            <span className="form-field-error">
+              Account is not a token mint
+            </span>
           ) : null}
         </div>
 
@@ -393,18 +441,19 @@ export const MultisigAddAssetModal = (props: {
           shape="round"
           size="large"
           disabled={!isOperationValid() || isBusy || !selectedMultisig}
-          onClick={onAcceptModal}>
+          onClick={onAcceptModal}
+        >
           {(isBusy || !selectedMultisig) && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            <span className="mr-1">
+              <LoadingOutlined style={{ fontSize: '16px' }} />
+            </span>
           )}
-          {!selectedMultisig 
-            ? "Initializing..."
+          {!selectedMultisig
+            ? 'Initializing...'
             : isBusy
-              ? "Creating asset..."
-              : getCtaLabel()
-          }
+            ? 'Creating asset...'
+            : getCtaLabel()}
         </Button>
-
       </div>
 
       <Drawer
@@ -414,10 +463,10 @@ export const MultisigAddAssetModal = (props: {
         onClose={onCloseTokenSelector}
         open={isTokenSelectorVisible}
         getContainer={false}
-        style={{ position: 'absolute' }}>
+        style={{ position: 'absolute' }}
+      >
         {renderTokenSelectorInner}
       </Drawer>
-
     </Modal>
   );
 };

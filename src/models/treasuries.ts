@@ -1,47 +1,47 @@
-import { TreasuryType } from "@mean-dao/money-streaming/lib/types";
-import { TokenInfo } from "models/SolanaTokenInfo";
+import { TreasuryType } from '@mean-dao/money-streaming/lib/types';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
 export interface TreasuryTypeOption {
-    name: string;
-    type: TreasuryType;
-    translationId: string;
-    disabled: boolean;
+  name: string;
+  type: TreasuryType;
+  translationId: string;
+  disabled: boolean;
 }
 
-export type StreamTreasuryType = "open" | "locked" | "unknown";
+export type StreamTreasuryType = 'open' | 'locked' | 'unknown';
 
 export interface TreasuryCreateOptions {
-    treasuryTitle: string;
-    treasuryName: string;
-    treasuryType: TreasuryType;
-    multisigId: string;
-    token: TokenInfo;
+  treasuryTitle: string;
+  treasuryName: string;
+  treasuryType: TreasuryType;
+  multisigId: string;
+  token: TokenInfo;
 }
 
 export interface CloseStreamTransactionParams {
-    title: string,
-    payer: string;
-    stream: string;
-    closeTreasury: boolean;
+  title: string;
+  payer: string;
+  stream: string;
+  closeTreasury: boolean;
 }
 
 export interface TreasuryWithdrawParams {
-    payer: string;
-    destination: string;
-    treasury: string;
-    amount: number | string;
+  payer: string;
+  destination: string;
+  treasury: string;
+  amount: number | string;
 }
 
 export interface UserTreasuriesSummary {
-    totalAmount: number;
-    openAmount: number;
-    lockedAmount: number;
-    totalNet: number;
+  totalAmount: number;
+  openAmount: number;
+  lockedAmount: number;
+  totalNet: number;
 }
 
 export const INITIAL_TREASURIES_SUMMARY: UserTreasuriesSummary = {
-    totalAmount: 0,
-    openAmount: 0,
-    lockedAmount: 0,
-    totalNet: 0
-}
+  totalAmount: 0,
+  openAmount: 0,
+  lockedAmount: 0,
+  totalNet: 0,
+};

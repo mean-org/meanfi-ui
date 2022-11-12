@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { Modal } from "antd";
-import { useTranslation } from "react-i18next";
-import { LANGUAGES } from "../../constants";
-import "./style.scss";
+import React, { useEffect, useState } from 'react';
+import { Modal } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { LANGUAGES } from '../../constants';
+import './style.scss';
 
 export const LanguageSelector = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
 }) => {
-  const { t, i18n } = useTranslation("common");
+  const { t, i18n } = useTranslation('common');
   const [selectedLanguage] = useState<string>(i18n.language);
-  const [language, setLanguage] = useState<string>("");
+  const [language, setLanguage] = useState<string>('');
 
   const changeLanguageByCode = (code: string) => {
     if (language === code) {
@@ -20,7 +20,7 @@ export const LanguageSelector = (props: {
       setLanguage(code);
       props.handleOk(code);
     }
-  }
+  };
 
   useEffect(() => {
     if (!language && selectedLanguage) {
@@ -30,9 +30,9 @@ export const LanguageSelector = (props: {
 
   const getLanguageCode = (fullCode: string): string => {
     if (!fullCode) {
-      return "en";
+      return 'en';
     }
-    const splitted = fullCode.split("-");
+    const splitted = fullCode.split('-');
     if (splitted.length > 1) {
       return splitted[0];
     }
@@ -49,24 +49,33 @@ export const LanguageSelector = (props: {
       open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
-      width={300}>
+      width={300}
+    >
       <div className="language-select">
         <div className="item-list-body medium">
-          {LANGUAGES && LANGUAGES.map(item => {
-            return (
-              <div
-                key={item.code}
-                className={item.code === language ? 'item-list-row selected' : 'item-list-row simplelink'}
-                onClick={() => changeLanguageByCode(item.code)}>
-                <div className="std-table-cell first-cell">
-                  <span className="flag-wrapper">
-                    <img src={item.flag} alt={getLanguageCode(item.code)} />
-                  </span>
+          {LANGUAGES &&
+            LANGUAGES.map(item => {
+              return (
+                <div
+                  key={item.code}
+                  className={
+                    item.code === language
+                      ? 'item-list-row selected'
+                      : 'item-list-row simplelink'
+                  }
+                  onClick={() => changeLanguageByCode(item.code)}
+                >
+                  <div className="std-table-cell first-cell">
+                    <span className="flag-wrapper">
+                      <img src={item.flag} alt={getLanguageCode(item.code)} />
+                    </span>
+                  </div>
+                  <div className="std-table-cell responsive-cell">
+                    {item.name}
+                  </div>
                 </div>
-                <div className="std-table-cell responsive-cell">{item.name}</div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
     </Modal>

@@ -480,10 +480,7 @@
           {
             "name": "idoName",
             "type": {
-              "array": [
-                "u8",
-                10
-              ]
+              "array": ["u8", 10]
             }
           },
           {
@@ -637,10 +634,7 @@
           {
             "name": "idoName",
             "type": {
-              "array": [
-                "u8",
-                10
-              ]
+              "array": ["u8", 10]
             }
           },
           {
