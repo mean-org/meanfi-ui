@@ -1,5 +1,5 @@
 import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
-import { Button, Dropdown } from "antd";
+import { Button, Dropdown } from 'antd';
 import { AppStateContext } from 'contexts/appstate';
 import { IconThumbsDown, IconThumbsUp } from 'Icons';
 import { useCallback, useContext, useState } from 'react';
@@ -42,11 +42,9 @@ export const ResumeItem = (props: {
   md?: number;
   lg?: number;
 }) => {
-  const {
-    theme
-  } = useContext(AppStateContext);
+  const { theme } = useContext(AppStateContext);
 
-  const { 
+  const {
     src,
     img,
     version,
@@ -80,83 +78,86 @@ export const ResumeItem = (props: {
   const { t } = useTranslation('common');
   const [counterKey] = useState(new Date().getTime());
 
-  const getTransactionStatusAction = useCallback((status: number) => {
+  const getTransactionStatusAction = useCallback(
+    (status: number) => {
+      if (status === MultisigTransactionStatus.Active) {
+        return t('multisig.multisig-transactions.tx-active');
+      }
 
-    if (status === MultisigTransactionStatus.Active) {
-      return t("multisig.multisig-transactions.tx-active");
-    } 
-    
-    if (status === MultisigTransactionStatus.Passed) {
-      return t("multisig.multisig-transactions.tx-passed");
-    }
+      if (status === MultisigTransactionStatus.Passed) {
+        return t('multisig.multisig-transactions.tx-passed');
+      }
 
-    if (status === MultisigTransactionStatus.Executed) {
-      return t("multisig.multisig-transactions.tx-executed");
-    }
-    
-    if (status === MultisigTransactionStatus.Voided) {
-      return t("multisig.multisig-transactions.tx-voided");
-    }
+      if (status === MultisigTransactionStatus.Executed) {
+        return t('multisig.multisig-transactions.tx-executed');
+      }
 
-    if (status === MultisigTransactionStatus.Expired) {
-      return t("multisig.multisig-transactions.tx-expired");
-    }
+      if (status === MultisigTransactionStatus.Voided) {
+        return t('multisig.multisig-transactions.tx-voided');
+      }
 
-    return t("multisig.multisig-transactions.tx-failed");
+      if (status === MultisigTransactionStatus.Expired) {
+        return t('multisig.multisig-transactions.tx-expired');
+      }
 
-  },[t]);
+      return t('multisig.multisig-transactions.tx-failed');
+    },
+    [t],
+  );
 
-  const getTransactionStatusBackgroundColor = useCallback((status: number) => {
+  const getTransactionStatusBackgroundColor = useCallback(
+    (status: number) => {
+      if (status === MultisigTransactionStatus.Active) {
+        return 'bg-purple';
+      }
 
-    if (status === MultisigTransactionStatus.Active) {
-      return "bg-purple";
-    } 
-    
-    if (status === MultisigTransactionStatus.Passed) {
-      return "bg-green";
-    }
+      if (status === MultisigTransactionStatus.Passed) {
+        return 'bg-green';
+      }
 
-    if (status === MultisigTransactionStatus.Executed) {
-      return "bg-green-dark";
-    }
-    
-    if (status === MultisigTransactionStatus.Voided) {
-      return "bg-orange-dark";
-    }
+      if (status === MultisigTransactionStatus.Executed) {
+        return 'bg-green-dark';
+      }
 
-    if (status === MultisigTransactionStatus.Failed) {
-      return "bg-red";
-    }
+      if (status === MultisigTransactionStatus.Voided) {
+        return 'bg-orange-dark';
+      }
 
-    if (status === MultisigTransactionStatus.Expired) {
-      return theme === 'light' ? "bg-gray-light" : "bg-gray-dark";
-    }
+      if (status === MultisigTransactionStatus.Failed) {
+        return 'bg-red';
+      }
 
-    return "";
+      if (status === MultisigTransactionStatus.Expired) {
+        return theme === 'light' ? 'bg-gray-light' : 'bg-gray-dark';
+      }
 
-  },[theme]);
+      return '';
+    },
+    [theme],
+  );
 
-  const getStreamStatusBackgroundColor = useCallback((status: string) => {
+  const getStreamStatusBackgroundColor = useCallback(
+    (status: string) => {
+      if (status === 'Scheduled') {
+        return 'bg-purple';
+      }
 
-    if (status === "Scheduled") {
-      return "bg-purple";
-    } 
-    
-    if (status === "Running") {
-      return "bg-green";
-    }
+      if (status === 'Running') {
+        return 'bg-green';
+      }
 
-    if (status === "Paused") {
-      return theme === 'light' ? "bg-gray-light" : "bg-gray-dark";
-    }
+      if (status === 'Paused') {
+        return theme === 'light' ? 'bg-gray-light' : 'bg-gray-dark';
+      }
 
-    if (status === "Stopped") {
-      return "bg-red";
-    }
+      if (status === 'Stopped') {
+        return 'bg-red';
+      }
 
-    return "";
-
-  },[theme]);
+      return '';
+    },
+    [theme],
+  );
 
   // Random component
   const Completionist = () => <span>Expired on {expires.toDateString()}</span>;
@@ -168,40 +169,49 @@ export const ResumeItem = (props: {
       return <Completionist />;
     } else {
       // Render a countdown
-      const daysSpace = (days < 10) ? '0' : '';
-      const hoursSpace = (hours < 10) ? '0' : '';
-      const minutesSpace = (minutes < 10) ? '0' : '';
-      const secondsSpace = (seconds < 10) ? '0' : '';
+      const daysSpace = days < 10 ? '0' : '';
+      const hoursSpace = hours < 10 ? '0' : '';
+      const minutesSpace = minutes < 10 ? '0' : '';
+      const secondsSpace = seconds < 10 ? '0' : '';
 
-      return <span>{`Expires in ${daysSpace}${days}:${hoursSpace}${hours}:${minutesSpace}${minutes}:${secondsSpace}${seconds}`}</span>;
+      return (
+        <span>{`Expires in ${daysSpace}${days}:${hoursSpace}${hours}:${minutesSpace}${minutes}:${secondsSpace}${seconds}`}</span>
+      );
     }
   };
 
   const renderExecutedOnDisplay = () => {
     if (status === 0 || status === 1) {
-      return (<Countdown className="align-middle" date={expires.toString()} renderer={renderer} />);
+      return (
+        <Countdown
+          className="align-middle"
+          date={expires.toString()}
+          renderer={renderer}
+        />
+      );
     } else if (status === 4) {
-      return (<span>Voided</span>);
+      return <span>Voided</span>;
     } else if (status === 5) {
-      return (<span>Expired on {expires.toDateString()}</span>);
+      return <span>Expired on {expires.toDateString()}</span>;
     }
 
     return null;
-  }
+  };
 
   const renderRightIcon = () => {
     return rightIconHasDropdown ? (
       <Dropdown
         overlay={dropdownMenu}
         placement="bottomRight"
-        trigger={["click"]}>
+        trigger={['click']}
+      >
         <span className="ellipsis-icon icon-button-container">
           <Button
             type="default"
             shape="circle"
             size="middle"
             icon={rightIcon}
-            onClick={(e) => e.preventDefault()}
+            onClick={e => e.preventDefault()}
           />
         </span>
       </Dropdown>
@@ -217,34 +227,52 @@ export const ResumeItem = (props: {
         />
       </span>
     );
-  }
+  };
 
   return (
     <div className="d-flex">
-      <div key={`resume-item-${counterKey}`} onClick={onClick} className={`resume-item-container mr-0 ml-0 ${className} ${isLink ? "" : "align-items-end"} ${isDetailsPanel ? "pl-1 pr-2" : ""}`}>
+      <div
+        key={`resume-item-${counterKey}`}
+        onClick={onClick}
+        className={`resume-item-container mr-0 ml-0 ${className} ${
+          isLink ? '' : 'align-items-end'
+        } ${isDetailsPanel ? 'pl-1 pr-2' : ''}`}
+      >
         <div className="resume-left-container">
           {(src || img) && (
             <div className="img-container">
               {src && (
-                <img src={src} alt={title} width={35} height={35} style={{borderRadius: "0.25em !important"}} />
+                <img
+                  src={src}
+                  alt={title}
+                  width={35}
+                  height={35}
+                  style={{ borderRadius: '0.25em !important' }}
+                />
               )}
               {img || null}
             </div>
           )}
-          <div className={`resume-left-text ${isDetailsPanel ? "pb-1" : ""}`}>
-            <div className={`resume-title ${isDetailsPanel ? "big-title" : ""} ${classNameTitle}`}>
+          <div className={`resume-left-text ${isDetailsPanel ? 'pb-1' : ''}`}>
+            <div
+              className={`resume-title ${
+                isDetailsPanel ? 'big-title' : ''
+              } ${classNameTitle}`}
+            >
               {title}
-              {extraTitle && (
+              {extraTitle &&
                 extraTitle.map((badge: any, index: number) => (
-                  <span key={`badge-${index}`} className="ml-1 badge darken small text-uppercase">
+                  <span
+                    key={`badge-${index}`}
+                    className="ml-1 badge darken small text-uppercase"
+                  >
                     {badge}
                   </span>
-                ))
-              )}
+                ))}
             </div>
-            {version !== 0 && (
-              subtitle ? (
-                subtitle === "null" ? (
+            {version !== 0 &&
+              (subtitle ? (
+                subtitle === 'null' ? (
                   <div className="info-label">
                     <span className="subtitle"></span>
                   </div>
@@ -253,66 +281,82 @@ export const ResumeItem = (props: {
                     <span className="subtitle">{subtitle}</span>
                   </div>
                 )
+              ) : expires ? (
+                <div className="info-label">
+                  {executedOn || status === 2 ? (
+                    <span>Executed on {executedOn}</span>
+                  ) : (
+                    renderExecutedOnDisplay()
+                  )}
+                </div>
               ) : (
-                expires ? (
-                  <div className="info-label">
-                    {(executedOn || status === 2) ? (
-                      <span>Executed on {executedOn}</span>
-                    ) : renderExecutedOnDisplay()}
-                  </div>
-                ) : (
-                  <div className="info-label">
-                    <span className="subtitle">Does not expire</span>
-                  </div>
-                )
-              )
-            )}
+                <div className="info-label">
+                  <span className="subtitle">Does not expire</span>
+                </div>
+              ))}
           </div>
         </div>
-        <div className={`resume-right-container ${isDetailsPanel ? "mr-2" : "mr-1"} ${classNameRightContent}`}>
+        <div
+          className={`resume-right-container ${
+            isDetailsPanel ? 'mr-2' : 'mr-1'
+          } ${classNameRightContent}`}
+        >
           <div className="resume-right-text">
             <>
               <div className={`resume-right-text-up`}>
                 {approved > 0 && (
-                  <div className="thumbs-up" title={userSigned === true ? "You approved this proposal" : ""}>
+                  <div
+                    className="thumbs-up"
+                    title={
+                      userSigned === true ? 'You approved this proposal' : ''
+                    }
+                  >
                     <span>{approved}</span>
                     <IconThumbsUp className="mean-svg-icons" />
                   </div>
                 )}
-                {rejected > 0 && (
-                  version !== 0 && (
-                  <div className="thumbs-down" title={userSigned === false ? "You rejected this proposal" : ""}>
+                {rejected > 0 && version !== 0 && (
+                  <div
+                    className="thumbs-down"
+                    title={
+                      userSigned === false ? 'You rejected this proposal' : ''
+                    }
+                  >
                     <IconThumbsDown className="mean-svg-icons" />
                     <span>{rejected}</span>
                   </div>
-                  )
                 )}
-                {status !== undefined && (
-                  (!isStream) ? (
-                    <div className={`badge-container ${getTransactionStatusBackgroundColor(status as number)}`}>
-                      <span className="badge darken small text-uppercase">{getTransactionStatusAction(status as number)}</span>
+                {status !== undefined &&
+                  (!isStream ? (
+                    <div
+                      className={`badge-container ${getTransactionStatusBackgroundColor(
+                        status as number,
+                      )}`}
+                    >
+                      <span className="badge darken small text-uppercase">
+                        {getTransactionStatusAction(status as number)}
+                      </span>
                     </div>
                   ) : (
-                    <div className={`badge-container ${getStreamStatusBackgroundColor(status as string)}`}>
+                    <div
+                      className={`badge-container ${getStreamStatusBackgroundColor(
+                        status as string,
+                      )}`}
+                    >
                       <span className="badge darken small text-uppercase">
                         {status}
                       </span>
                     </div>
-                  )
-                )}
-                {amount && (
-                  <div className="rate-amount">
-                    {amount}
-                  </div>
-                )}
-                {content && (
-                  <div className="info-label">
-                    {content}
-                  </div>
-                )}
+                  ))}
+                {amount && <div className="rate-amount">{amount}</div>}
+                {content && <div className="info-label">{content}</div>}
               </div>
               {resume && (
-                <div className={`${!isStreamingAccount ? "info-label" : ""} mb-0`}>{resume}</div>
+                <div
+                  className={`${!isStreamingAccount ? 'info-label' : ''} mb-0`}
+                >
+                  {resume}
+                </div>
               )}
             </>
           </div>
@@ -320,5 +364,5 @@ export const ResumeItem = (props: {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

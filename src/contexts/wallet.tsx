@@ -1,6 +1,6 @@
-import { DownOutlined, UpOutlined } from "@ant-design/icons";
+import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { SentreWalletAdapter, SentreWalletName } from '@sentre/connector';
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
   BitKeepWalletAdapter,
   BitKeepWalletName,
@@ -29,34 +29,49 @@ import {
   SolongWalletAdapter,
   SolongWalletName,
   TrustWalletAdapter,
-  TrustWalletName
-} from "@solana/wallet-adapter-wallets";
-import { Button, Modal } from "antd";
-import { openNotification } from "components/Notifications";
-import { sentreAppId } from "constants/common";
-import { environment } from "environments/environment";
+  TrustWalletName,
+} from '@solana/wallet-adapter-wallets';
+import { Button, Modal } from 'antd';
+import { openNotification } from 'components/Notifications';
+import { sentreAppId } from 'constants/common';
+import { environment } from 'environments/environment';
 import React, {
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
-  useState
-} from "react";
-import { isDesktop, isSafari } from "react-device-detect";
-import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate } from "react-router-dom";
-import { getDefaultRpc } from "services/connections-hq";
-import { segmentAnalytics } from "../App";
-import { AppUsageEvent } from "../middleware/segment-service";
-import { consoleOut, isProd } from "../middleware/ui";
-import { isUnauthenticatedRoute, useLocalStorageState } from "../middleware/utils";
+  useState,
+} from 'react';
+import { isDesktop, isSafari } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getDefaultRpc } from 'services/connections-hq';
+import { segmentAnalytics } from '../App';
+import { AppUsageEvent } from '../middleware/segment-service';
+import { consoleOut, isProd } from '../middleware/ui';
+import {
+  isUnauthenticatedRoute,
+  useLocalStorageState,
+} from '../middleware/utils';
 
-export type MeanFiWallet = PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
-                          | SlopeWalletAdapter | Coin98WalletAdapter | SolongWalletAdapter | SolletWalletAdapter
-                          | SolletExtensionWalletAdapter | MathWalletAdapter | TrustWalletAdapter | LedgerWalletAdapter
-                          | BitKeepWalletAdapter | CoinbaseWalletAdapter | SentreWalletAdapter | BraveWalletAdapter
-                          | undefined;
+export type MeanFiWallet =
+  | PhantomWalletAdapter
+  | ExodusWalletAdapter
+  | SolflareWalletAdapter
+  | SlopeWalletAdapter
+  | Coin98WalletAdapter
+  | SolongWalletAdapter
+  | SolletWalletAdapter
+  | SolletExtensionWalletAdapter
+  | MathWalletAdapter
+  | TrustWalletAdapter
+  | LedgerWalletAdapter
+  | BitKeepWalletAdapter
+  | CoinbaseWalletAdapter
+  | SentreWalletAdapter
+  | BraveWalletAdapter
+  | undefined;
 
 export interface WalletProviderEntry {
   name: string;
@@ -82,7 +97,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: false
+    hideIfUnavailable: false,
   },
   {
     name: BraveWalletName,
@@ -94,7 +109,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: true
+    hideIfUnavailable: true,
   },
   {
     name: ExodusWalletName,
@@ -106,7 +121,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: true,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: false
+    hideIfUnavailable: false,
   },
   {
     name: SolflareWalletName,
@@ -118,7 +133,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: false
+    hideIfUnavailable: false,
   },
   // These ones go into the [more] CTA
   {
@@ -131,7 +146,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: false
+    hideIfUnavailable: false,
   },
   {
     name: CoinbaseWalletName,
@@ -143,7 +158,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: false
+    hideIfUnavailable: false,
   },
   {
     name: SlopeWalletName,
@@ -155,7 +170,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: true
+    hideIfUnavailable: true,
   },
   {
     name: Coin98WalletName,
@@ -167,7 +182,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: true
+    hideIfUnavailable: true,
   },
   {
     name: SolongWalletName,
@@ -179,19 +194,26 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: true,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: true
+    hideIfUnavailable: true,
   },
   {
     name: SolletWalletName,
     url: '',
     icon: '',
     adapter: SolletWalletAdapter,
-    adapterParams: { provider: 'https://www.sollet.io', timeout: 10000, network: environment === 'production' ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet },
+    adapterParams: {
+      provider: 'https://www.sollet.io',
+      timeout: 10000,
+      network:
+        environment === 'production'
+          ? WalletAdapterNetwork.Mainnet
+          : WalletAdapterNetwork.Devnet,
+    },
     hideOnDesktop: false,
     hideOnMobile: false,
     isWebWallet: true,
     underDevelopment: false,
-    hideIfUnavailable: false
+    hideIfUnavailable: false,
   },
   {
     name: SolletExtensionWalletName,
@@ -203,7 +225,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: true,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: true
+    hideIfUnavailable: true,
   },
   {
     name: TrustWalletName,
@@ -215,7 +237,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: false
+    hideIfUnavailable: false,
   },
   {
     name: SentreWalletName,
@@ -227,7 +249,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: false
+    hideIfUnavailable: false,
   },
   {
     name: MathWalletName,
@@ -239,7 +261,7 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: true
+    hideIfUnavailable: true,
   },
   {
     name: LedgerWalletName,
@@ -251,8 +273,8 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
-    hideIfUnavailable: true
-  }
+    hideIfUnavailable: true,
+  },
 ];
 
 const getIsProviderInstalled = (provider: any): boolean => {
@@ -265,10 +287,16 @@ const getIsProviderInstalled = (provider: any): boolean => {
       case ExodusWalletName:
         return !!(window as any).exodus?.solana;
       case SlopeWalletName:
-        return typeof (window as any).Slope === 'function' || (window as any).slopeApp ? true : false;
+        return typeof (window as any).Slope === 'function' ||
+          (window as any).slopeApp
+          ? true
+          : false;
       case SolletWalletName:
       case SolletExtensionWalletName:
-        return !!(window as any).sollet && typeof (window as any).sollet?.postMessage === 'function';
+        return (
+          !!(window as any).sollet &&
+          typeof (window as any).sollet?.postMessage === 'function'
+        );
       case SolongWalletName:
         return !!(window as any).solong;
       case MathWalletName:
@@ -276,13 +304,19 @@ const getIsProviderInstalled = (provider: any): boolean => {
       case Coin98WalletName:
         return !!(window as any).coin98?.sol;
       case SolflareWalletName:
-        return !!(window as any).solflare?.isSolflare || !!(window as any).SolflareApp;
+        return (
+          !!(window as any).solflare?.isSolflare ||
+          !!(window as any).SolflareApp
+        );
       case BitKeepWalletName:
         return !!(window as any).bitkeep?.solana;
       case CoinbaseWalletName:
         return !!(window as any).coinbaseSolana;
       case TrustWalletName:
-        return !!(window as any).trustwallet?.isTrustWallet || !!(window as any).trustwallet?.solana?.isTrust;
+        return (
+          !!(window as any).trustwallet?.isTrustWallet ||
+          !!(window as any).trustwallet?.solana?.isTrust
+        );
       case LedgerWalletName:
         return true;
       case BraveWalletName:
@@ -319,12 +353,13 @@ const defaultCtxValues: WalletContextState = {
 const WalletContext = React.createContext<WalletContextState>(defaultCtxValues);
 
 export function WalletProvider({ children = null as any }) {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
   const location = useLocation();
   const navigate = useNavigate();
   const [autoConnect] = useState(true);
-  const [walletName, setWalletName] = useLocalStorageState("walletName");
-  const [lastUsedAccount, setLastUsedAccount] = useLocalStorageState("lastUsedAccount");
+  const [walletName, setWalletName] = useLocalStorageState('walletName');
+  const [lastUsedAccount, setLastUsedAccount] =
+    useLocalStorageState('lastUsedAccount');
   const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
@@ -335,7 +370,9 @@ export function WalletProvider({ children = null as any }) {
   const close = useCallback(() => {
     setIsModalVisible(false);
   }, []);
-  const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
+  const [walletListExpanded, setWalletListExpanded] = useState(
+    isDesktop ? false : true,
+  );
 
   // Live reference to the wallet adapter
   const walletRef = useRef(wallet);
@@ -350,17 +387,18 @@ export function WalletProvider({ children = null as any }) {
   }, [setWalletName]);
 
   const connectOnDemand = useCallback(() => {
-    if (!wallet) { return; }
+    if (!wallet) {
+      return;
+    }
 
-    wallet.connect()
-    .catch(error => {
+    wallet.connect().catch(error => {
       console.error('wallet.connect() error', error);
       if (error.toString().indexOf('WalletNotReadyError') !== -1) {
         console.warn('Enforcing wallet selection...');
         openNotification({
-          type: "info",
+          type: 'info',
           title: 'Wallet adapter not configured',
-          description: `Cannot connect to ${wallet.name}. Wallet is not configured or enabled in your browser.`
+          description: `Cannot connect to ${wallet.name}. Wallet is not configured or enabled in your browser.`,
         });
         forgetWallet();
       }
@@ -369,35 +407,36 @@ export function WalletProvider({ children = null as any }) {
 
   const resetWalletProvider = () => {
     setWalletName(null);
-  }
+  };
 
   const provider = useMemo(() => {
     const item = WALLET_PROVIDERS.find(({ name }) => name === walletName);
     return item;
-  },
-    [walletName]
-  );
+  }, [walletName]);
 
-  const network = environment === 'production' ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet;
+  const network =
+    environment === 'production'
+      ? WalletAdapterNetwork.Mainnet
+      : WalletAdapterNetwork.Devnet;
   const wallets = useMemo(
-      () => [
-          new PhantomWalletAdapter(),
-          new BraveWalletAdapter(),
-          new ExodusWalletAdapter(),
-          new SolflareWalletAdapter({ network }),
-          new BitKeepWalletAdapter(),
-          new CoinbaseWalletAdapter(),
-          new SlopeWalletAdapter(),
-          new Coin98WalletAdapter(),
-          new SolongWalletAdapter(),
-          new SolletWalletAdapter(),
-          new SolletExtensionWalletAdapter(),
-          new TrustWalletAdapter(),
-          new MathWalletAdapter(),
-          new LedgerWalletAdapter(),
-          new SentreWalletAdapter({ appId: sentreAppId })
-      ],
-      [network]
+    () => [
+      new PhantomWalletAdapter(),
+      new BraveWalletAdapter(),
+      new ExodusWalletAdapter(),
+      new SolflareWalletAdapter({ network }),
+      new BitKeepWalletAdapter(),
+      new CoinbaseWalletAdapter(),
+      new SlopeWalletAdapter(),
+      new Coin98WalletAdapter(),
+      new SolongWalletAdapter(),
+      new SolletWalletAdapter(),
+      new SolletExtensionWalletAdapter(),
+      new TrustWalletAdapter(),
+      new MathWalletAdapter(),
+      new LedgerWalletAdapter(),
+      new SentreWalletAdapter({ appId: sentreAppId }),
+    ],
+    [network],
   );
 
   useEffect(() => {
@@ -438,10 +477,13 @@ export function WalletProvider({ children = null as any }) {
   // Setup listeners
   useEffect(() => {
     if (wallet) {
-
-      wallet.on("connect", (pk) => {
+      wallet.on('connect', pk => {
         consoleOut('Wallet connect event fired:', pk.toBase58(), 'blue');
-        if (wallet.connected && !wallet.connecting && pk.toBase58() !== lastUsedAccount) {
+        if (
+          wallet.connected &&
+          !wallet.connecting &&
+          pk.toBase58() !== lastUsedAccount
+        ) {
           resetWalletProvider();
           setLastUsedAccount(null);
           window.location.href = '/';
@@ -451,14 +493,14 @@ export function WalletProvider({ children = null as any }) {
         }
       });
 
-      wallet.on("disconnect", () => {
+      wallet.on('disconnect', () => {
         setConnected(false);
         if (!isUnauthenticatedRoute(location.pathname)) {
           navigate('/');
         }
       });
 
-      wallet.on("error", (errorEvent) => {
+      wallet.on('error', errorEvent => {
         if (wallet.connecting) {
           setConnected(false);
           wallet.removeAllListeners();
@@ -474,12 +516,11 @@ export function WalletProvider({ children = null as any }) {
         wallet.disconnect();
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet, lastUsedAccount]);
 
   // Handle connect
   useEffect(() => {
-
     // When a wallet is created, selected and the autoConnect is ON, lets connect
     if (wallet && autoConnect) {
       consoleOut('Auto-connecting...', '', 'blue');
@@ -487,7 +528,7 @@ export function WalletProvider({ children = null as any }) {
     }
 
     return () => {};
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet, autoConnect]);
 
   return (
@@ -500,43 +541,57 @@ export function WalletProvider({ children = null as any }) {
         provider,
         autoConnect,
         resetWalletProvider,
-        isSelectingWallet
-      }}>
+        isSelectingWallet,
+      }}
+    >
       {children}
       <Modal
         centered
         className="mean-modal simple-modal"
-        title={<div className="modal-title">{t(`wallet-selector.primary-action`)}</div>}
+        title={
+          <div className="modal-title">
+            {t(`wallet-selector.primary-action`)}
+          </div>
+        }
         open={isSelectingWallet}
         footer={null}
         maskClosable={connected}
         closable={connected}
         onCancel={close}
-        width={450}>
+        width={450}
+      >
         <div className="connect-wallet-modal vertical-scroll">
           <div className="mb-3 text-center">
             <h2>{t('wallet-selector.connect-to-begin')}</h2>
           </div>
-          <div className={`wallet-providers ${walletListExpanded ? 'expanded' : ''}`}>
+          <div
+            className={`wallet-providers ${
+              walletListExpanded ? 'expanded' : ''
+            }`}
+          >
             {WALLET_PROVIDERS.map((item, index) => {
-
               const isInstalled = getIsProviderInstalled(item);
 
               const shouldHideItem = () => {
-                if ((item.hideOnDesktop && isDesktop) || (item.hideOnMobile && !isDesktop)) {
+                if (
+                  (item.hideOnDesktop && isDesktop) ||
+                  (item.hideOnMobile && !isDesktop)
+                ) {
                   return true;
                 } else {
                   return false;
                 }
-              }
+              };
 
               // Skip items that won't show up
-              if ((item.underDevelopment && isProd()) || (item.hideIfUnavailable && !isInstalled)) {
+              if (
+                (item.underDevelopment && isProd()) ||
+                (item.hideIfUnavailable && !isInstalled)
+              ) {
                 return null;
               }
 
               const onClick = function () {
-
                 if (wallet) {
                   wallet.disconnect();
                 }
@@ -544,7 +599,7 @@ export function WalletProvider({ children = null as any }) {
                 // Record user event in Segment Analytics
                 segmentAnalytics.recordEvent(AppUsageEvent.WalletSelected, {
                   walletProvider: item.name,
-                  isWebWallet: item.isWebWallet
+                  isWebWallet: item.isWebWallet,
                 });
 
                 // If not installed take the user to its extension url
@@ -555,14 +610,15 @@ export function WalletProvider({ children = null as any }) {
                 consoleOut('Selected wallet:', item.name, 'blue');
                 setWalletName(item.name);
                 setWallet(wallets.find(w => w.name === item.name));
-
               };
 
               return (
                 <Button
                   block
                   size="large"
-                  className={`wallet-provider thin-stroke${shouldHideItem() ? ' hidden' : ''}`}
+                  className={`wallet-provider thin-stroke${
+                    shouldHideItem() ? ' hidden' : ''
+                  }`}
                   shape="round"
                   type="ghost"
                   onClick={onClick}
@@ -575,7 +631,8 @@ export function WalletProvider({ children = null as any }) {
                       src={item.icon}
                       style={{ marginRight: 8 }}
                     />
-                  }>
+                  }
+                >
                   <span className="align-middle">{item.name}</span>
                 </Button>
               );
@@ -590,12 +647,13 @@ export function WalletProvider({ children = null as any }) {
               type="ghost"
               onClick={() => setWalletListExpanded(state => !state)}
               icon={walletListExpanded ? <UpOutlined /> : <DownOutlined />}
-              key="more-options">
-              <span className="align-middle">{
-                walletListExpanded
+              key="more-options"
+            >
+              <span className="align-middle">
+                {walletListExpanded
                   ? t('wallet-selector.more-options-expanded')
-                  : t('wallet-selector.more-options-collapsed')
-              }</span>
+                  : t('wallet-selector.more-options-collapsed')}
+              </span>
             </Button>
           )}
         </div>
@@ -605,7 +663,16 @@ export function WalletProvider({ children = null as any }) {
 }
 
 export function useWallet() {
-  const { wallet, connected, connecting, provider, autoConnect, resetWalletProvider, select, isSelectingWallet } = useContext(WalletContext);
+  const {
+    wallet,
+    connected,
+    connecting,
+    provider,
+    autoConnect,
+    resetWalletProvider,
+    select,
+    isSelectingWallet,
+  } = useContext(WalletContext);
 
   return {
     wallet,
@@ -617,7 +684,7 @@ export function useWallet() {
     resetWalletProvider,
     publicKey: wallet?.publicKey,
     connect() {
-      if  (wallet) {
+      if (wallet) {
         wallet.connect();
       } else {
         select();
@@ -628,6 +695,6 @@ export function useWallet() {
       wallet?.disconnect();
       resetWalletProvider();
     },
-    isSelectingWallet
+    isSelectingWallet,
   };
 }

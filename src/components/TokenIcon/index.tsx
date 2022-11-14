@@ -1,7 +1,7 @@
-import React, { useContext } from "react";
-import { Identicon } from "../Identicon";
-import { PublicKey } from "@solana/web3.js";
-import { AppStateContext } from "../../contexts/appstate";
+import React, { useContext } from 'react';
+import { Identicon } from '../Identicon';
+import { PublicKey } from '@solana/web3.js';
+import { AppStateContext } from '../../contexts/appstate';
 
 export const TokenIcon = (props: {
   mintAddress?: string | PublicKey;
@@ -9,14 +9,10 @@ export const TokenIcon = (props: {
   size?: number;
   className?: string;
 }) => {
-  const {
-    mintAddress,
-    style,
-    size,
-    className,
-  } = props;
+  const { mintAddress, style, size, className } = props;
   const { getTokenByMintAddress } = useContext(AppStateContext);
-  const address = typeof mintAddress === "string" ? mintAddress : mintAddress?.toBase58();
+  const address =
+    typeof mintAddress === 'string' ? mintAddress : mintAddress?.toBase58();
 
   if (!address) {
     return null;
@@ -35,10 +31,10 @@ export const TokenIcon = (props: {
         height={style?.height || defaultSize.toString()}
         src={token.logoURI}
         style={{
-          margin: "0",
-          borderRadius: "50%",
-          backgroundColor: "transparent",
-          backgroundClip: "padding-box",
+          margin: '0',
+          borderRadius: '50%',
+          backgroundColor: 'transparent',
+          backgroundClip: 'padding-box',
           ...style,
         }}
       />
@@ -49,7 +45,7 @@ export const TokenIcon = (props: {
     <Identicon
       address={mintAddress}
       style={{
-        marginRight: "0.5rem",
+        marginRight: '0.5rem',
         width: defaultSize,
         height: defaultSize,
         marginTop: 2,
@@ -67,10 +63,10 @@ export const PoolIcon = (props: {
 }) => {
   const { mintA, mintB, style, className } = props;
   return (
-    <div className={className} style={{ display: "flex" }}>
+    <div className={className} style={{ display: 'flex' }}>
       <TokenIcon
         mintAddress={mintA}
-        style={{ marginRight: "-0.5rem", ...style }}
+        style={{ marginRight: '-0.5rem', ...style }}
       />
       <TokenIcon mintAddress={mintB} />
     </div>

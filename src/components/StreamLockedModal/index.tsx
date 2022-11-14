@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Modal, Button } from 'antd';
-import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { TreasuryInfo, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream, Treasury, MSP, TreasuryType } from '@mean-dao/msp';
@@ -20,43 +20,51 @@ export const StreamLockedModal = (props: {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
+  const [localStreamDetail, setLocalStreamDetail] = useState<
+    Stream | StreamInfo | undefined
+  >(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
 
-  const getTreasuryTypeByTreasuryId = useCallback(async (treasuryId: string, streamVersion: number): Promise<StreamTreasuryType | undefined> => {
-    if (!connection || !publicKey || !props.mspClient) { return undefined; }
-
-    const mspInstance = streamVersion < 2 ? props.mspClient as MoneyStreaming : props.mspClient as MSP;
-    const treasueyPk = new PublicKey(treasuryId);
-
-    try {
-      const details = await mspInstance.getTreasury(treasueyPk);
-      if (details) {
-        consoleOut('treasuryDetails:', details, 'blue');
-        const v1 = details as TreasuryInfo;
-        const v2 = details as Treasury;
-        const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-        const type = isNewTreasury ? v2.treasuryType : v1.type;
-        if (type === TreasuryType.Lock) {
-          return "locked";
-        } else {
-          return "open";
-        }
-      } else {
-        return "unknown";
+  const getTreasuryTypeByTreasuryId = useCallback(
+    async (
+      treasuryId: string,
+      streamVersion: number,
+    ): Promise<StreamTreasuryType | undefined> => {
+      if (!connection || !publicKey || !props.mspClient) {
+        return undefined;
       }
-    } catch (error) {
-      console.error(error);
-      return "unknown";
-    } finally {
-      setLoadingTreasuryDetails(false);
-    }
 
-  }, [
-    publicKey,
-    connection,
-    props.mspClient,
-  ]);
+      const mspInstance =
+        streamVersion < 2
+          ? (props.mspClient as MoneyStreaming)
+          : (props.mspClient as MSP);
+      const treasueyPk = new PublicKey(treasuryId);
+
+      try {
+        const details = await mspInstance.getTreasury(treasueyPk);
+        if (details) {
+          consoleOut('treasuryDetails:', details, 'blue');
+          const v1 = details as TreasuryInfo;
+          const v2 = details as Treasury;
+          const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+          const type = isNewTreasury ? v2.treasuryType : v1.type;
+          if (type === TreasuryType.Lock) {
+            return 'locked';
+          } else {
+            return 'open';
+          }
+        } else {
+          return 'unknown';
+        }
+      } catch (error) {
+        console.error(error);
+        return 'unknown';
+      } finally {
+        setLoadingTreasuryDetails(false);
+      }
+    },
+    [publicKey, connection, props.mspClient],
+  );
 
   // Set treasury type
   useEffect(() => {
@@ -65,56 +73,64 @@ export const StreamLockedModal = (props: {
       const v2 = localStreamDetail as Stream;
       consoleOut('fetching treasury details...', '', 'blue');
       getTreasuryTypeByTreasuryId(
-        localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury.toBase58(),
-        localStreamDetail.version
+        localStreamDetail.version < 2
+          ? (v1.treasuryAddress as string)
+          : v2.treasury.toBase58(),
+        localStreamDetail.version,
       ).then(value => {
         consoleOut('streamTreasuryType:', value, 'crimson');
       });
     }
-  }, [
-    props.isVisible,
-    localStreamDetail,
-    getTreasuryTypeByTreasuryId
-  ]);
+  }, [props.isVisible, localStreamDetail, getTreasuryTypeByTreasuryId]);
 
   // Read and keep the input copy of the stream
   useEffect(() => {
     if (props.isVisible && !localStreamDetail && props.streamDetail) {
       setLocalStreamDetail(props.streamDetail);
     }
-  }, [
-    props.isVisible,
-    localStreamDetail,
-    props.streamDetail,
-  ]);
+  }, [props.isVisible, localStreamDetail, props.streamDetail]);
 
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t("streams.locked-stream-modal-title")}</div>}
+      title={
+        <div className="modal-title">
+          {t('streams.locked-stream-modal-title')}
+        </div>
+      }
       footer={null}
       open={props.isVisible}
       onCancel={props.handleClose}
-      width={400}>
-
+      width={400}
+    >
       {loadingTreasuryDetails ? (
         // The loading part
         <div className="transaction-progress">
-          <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
-          <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
+          <LoadingOutlined
+            style={{ fontSize: 48 }}
+            className="icon mt-0"
+            spin
+          />
+          <h4 className="operation">
+            {t('close-stream.loading-treasury-message')}
+          </h4>
         </div>
       ) : (
         // The user can't top-up the stream from a locked treasury
         <div className="transaction-progress">
-          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+          <ExclamationCircleOutlined
+            style={{ fontSize: 48 }}
+            className="icon mt-0"
+          />
           <h4 className="operation">{t('streams.locked-stream-message')}</h4>
           <div className="mt-3">
             <Button
-                type="primary"
-                shape="round"
-                size="large"
-                onClick={props.handleClose}>
-                {t('general.cta-close')}
+              type="primary"
+              shape="round"
+              size="large"
+              onClick={props.handleClose}
+            >
+              {t('general.cta-close')}
             </Button>
           </div>
         </div>

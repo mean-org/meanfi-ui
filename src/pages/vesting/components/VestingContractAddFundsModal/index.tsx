@@ -1,7 +1,17 @@
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import {
+  CheckOutlined,
+  InfoCircleOutlined,
+  LoadingOutlined,
+} from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { AllocationType, Stream, StreamTemplate, Treasury, TreasuryType } from '@mean-dao/msp';
+import {
+  AllocationType,
+  Stream,
+  StreamTemplate,
+  Treasury,
+  TreasuryType,
+} from '@mean-dao/msp';
 import { Button, Modal, Radio, Spin } from 'antd';
 import BN from 'bn.js';
 import { AddressDisplay } from 'components/AddressDisplay';
@@ -10,7 +20,7 @@ import { TokenDisplay } from 'components/TokenDisplay';
 import {
   MIN_SOL_BALANCE_REQUIRED,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
-  WRAPPED_SOL_MINT_ADDRESS
+  WRAPPED_SOL_MINT_ADDRESS,
 } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { AppStateContext } from 'contexts/appstate';
@@ -21,14 +31,14 @@ import { isError } from 'middleware/transactions';
 import {
   consoleOut,
   getTransactionOperationDescription,
-  toUsCurrency
+  toUsCurrency,
 } from 'middleware/ui';
 import {
   cutNumber,
   getAmountWithSymbol,
   isValidNumber,
   toTokenAmount,
-  toUiAmount
+  toUiAmount,
 } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
@@ -87,7 +97,9 @@ export const VestingContractAddFundsModal = (props: {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
-  const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
+  const [allocationOption, setAllocationOption] = useState<AllocationType>(
+    AllocationType.None,
+  );
   const [, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [availableBalance, setAvailableBalance] = useState(new BN(0));
   const [tokenAmount, setTokenAmount] = useState<any>(0);
@@ -95,7 +107,7 @@ export const VestingContractAddFundsModal = (props: {
   const [showQrCode, setShowQrCode] = useState(false);
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
   const [fundFromSafeOption, setFundFromSafeOption] = useState(false);
-  const [proposalTitle, setProposalTitle] = useState("");
+  const [proposalTitle, setProposalTitle] = useState('');
 
   /////////////////
   //   Getters   //
@@ -105,82 +117,112 @@ export const VestingContractAddFundsModal = (props: {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
 
-  const getTokenPrice = useCallback((inputAmount: string) => {
-    if (!selectedToken) { return 0; }
-    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+  const getTokenPrice = useCallback(
+    (inputAmount: string) => {
+      if (!selectedToken) {
+        return 0;
+      }
+      const price =
+        getTokenPriceByAddress(selectedToken.address) ||
+        getTokenPriceBySymbol(selectedToken.symbol);
 
-    return parseFloat(inputAmount) * price;
-  }, [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken]);
+      return parseFloat(inputAmount) * price;
+    },
+    [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken],
+  );
 
-  const getSelectedStream = useCallback((id?: string) => {
-    if (!treasuryStreams || treasuryStreams.length === 0 || (!id && !highLightableStreamId)) {
+  const getSelectedStream = useCallback(
+    (id?: string) => {
+      if (
+        !treasuryStreams ||
+        treasuryStreams.length === 0 ||
+        (!id && !highLightableStreamId)
+      ) {
+        return undefined;
+      }
+
+      if (id) {
+        return treasuryStreams.find(ts => ts.id.toBase58() === id);
+      } else if (highLightableStreamId) {
+        return treasuryStreams.find(
+          ts => ts.id.toBase58() === highLightableStreamId,
+        );
+      }
+
       return undefined;
-    }
-
-    if (id) {
-      return treasuryStreams.find(ts => ts.id.toBase58() === id);
-    } else if (highLightableStreamId) {
-      return treasuryStreams.find(ts => ts.id.toBase58() === highLightableStreamId);
-    }
-
-    return undefined;
-  }, [
-    treasuryStreams,
-    highLightableStreamId
-  ]);
+    },
+    [treasuryStreams, highLightableStreamId],
+  );
 
   const getMaxPossibleSolAmount = () => {
     const maxPossibleAmount = nativeBalance - minRequiredBalance;
 
-    return maxPossibleAmount > 0
-      ? maxPossibleAmount : nativeBalance;
-  }
+    return maxPossibleAmount > 0 ? maxPossibleAmount : nativeBalance;
+  };
 
-  const getMaxAmount = useCallback((preSetting = false) => {
-    if (withdrawTransactionFees && allocationOption === AllocationType.Specific && highLightableStreamId) {
-      const stream = getSelectedStream();
-      if (stream && ((stream as any).feePayedByTreasurer || preSetting)) {
+  const getMaxAmount = useCallback(
+    (preSetting = false) => {
+      if (
+        withdrawTransactionFees &&
+        allocationOption === AllocationType.Specific &&
+        highLightableStreamId
+      ) {
+        const stream = getSelectedStream();
+        if (stream && ((stream as any).feePayedByTreasurer || preSetting)) {
+          const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
+          const feeNumerator =
+            withdrawTransactionFees.mspPercentFee *
+            BASE_100_TO_BASE_1_MULTIPLIER;
+          const feeDenaminator = 1000000;
+          const badStreamMaxAllocation = availableBalance
+            .mul(new BN(feeDenaminator))
+            .div(new BN(feeNumerator + feeDenaminator));
 
-        const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
-        const feeNumerator = withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
-        const feeDenaminator = 1000000;
-        const badStreamMaxAllocation = availableBalance
-          .mul(new BN(feeDenaminator))
-          .div(new BN(feeNumerator + feeDenaminator));
+          const feeAmount = badStreamMaxAllocation
+            .mul(new BN(feeNumerator))
+            .div(new BN(feeDenaminator));
 
-        const feeAmount = badStreamMaxAllocation
-          .mul(new BN(feeNumerator))
-          .div(new BN(feeDenaminator));
+          const goodStreamMaxAllocation = availableBalance.sub(feeAmount);
+          const maxAmount = goodStreamMaxAllocation;
 
-        const goodStreamMaxAllocation = availableBalance.sub(feeAmount);
-        const maxAmount = goodStreamMaxAllocation;
-
-        return maxAmount;
+          return maxAmount;
+        }
       }
-    }
-    return selectedToken && availableBalance ? availableBalance : new BN(0);
-  },[
-    selectedToken,
-    availableBalance,
-    allocationOption,
-    highLightableStreamId,
-    withdrawTransactionFees,
-    getSelectedStream
-  ]);
+      return selectedToken && availableBalance ? availableBalance : new BN(0);
+    },
+    [
+      selectedToken,
+      availableBalance,
+      allocationOption,
+      highLightableStreamId,
+      withdrawTransactionFees,
+      getSelectedStream,
+    ],
+  );
 
   const selectFromTokenBalance = useCallback(() => {
-    if (!selectedToken) { return nativeBalance; }
+    if (!selectedToken) {
+      return nativeBalance;
+    }
     if (fundFromSafeOption) {
-      const fromUserBalances = userBalances ? userBalances[NATIVE_SOL.address] || 0 : 0;
+      const fromUserBalances = userBalances
+        ? userBalances[NATIVE_SOL.address] || 0
+        : 0;
       return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
         ? fromUserBalances
-        : tokenBalance
+        : tokenBalance;
     } else {
       return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
         ? nativeBalance
-        : tokenBalance
+        : tokenBalance;
     }
-  }, [fundFromSafeOption, nativeBalance, selectedToken, tokenBalance, userBalances]);
+  }, [
+    fundFromSafeOption,
+    nativeBalance,
+    selectedToken,
+    tokenBalance,
+    userBalances,
+  ]);
 
   /////////////////////
   // Data management //
@@ -188,12 +230,11 @@ export const VestingContractAddFundsModal = (props: {
 
   // When modal goes visible, Set available balance in BN either from user's wallet or from treasury if a streams is being funded
   useEffect(() => {
-
     const getUnallocatedBalance = (details: Treasury) => {
       const balance = new BN(details.balance);
       const allocationAssigned = new BN(details.allocationAssigned);
       return balance.sub(allocationAssigned);
-    }
+    };
 
     if (isVisible && vestingContract && selectedToken && userBalances) {
       const decimals = selectedToken.decimals;
@@ -234,37 +275,34 @@ export const VestingContractAddFundsModal = (props: {
 
   // When modal goes visible, update allocation type option
   useEffect(() => {
-    if (!vestingContract) { return; }
+    if (!vestingContract) {
+      return;
+    }
     setTreasuryType(vestingContract.treasuryType);
     if (highLightableStreamId) {
       setAllocationOption(AllocationType.Specific);
     } else {
       setAllocationOption(AllocationType.None);
     }
-  }, [
-    vestingContract,
-    treasuryStreams,
-    highLightableStreamId,
-  ]);
+  }, [vestingContract, treasuryStreams, highLightableStreamId]);
 
   // When modal goes visible, set template data
   useEffect(() => {
     if (isVisible && streamTemplate) {
       setIsFeePaidByTreasurer(streamTemplate.feePayedByTreasurer);
     }
-  }, [
-    isVisible,
-    streamTemplate,
-  ]);
+  }, [isVisible, streamTemplate]);
 
   // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
-      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      const ellipsisElements = document.querySelectorAll(
+        '.overflow-ellipsis-middle',
+      );
       for (const element of ellipsisElements) {
         const e = element as HTMLElement;
-        if (e.offsetWidth < e.scrollWidth){
+        if (e.offsetWidth < e.scrollWidth) {
           const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
         }
@@ -280,7 +318,7 @@ export const VestingContractAddFundsModal = (props: {
     return () => {
       // remove resize listener
       window.removeEventListener('resize', resizeListener);
-    }
+    };
   }, []);
 
   useEffect(() => {
@@ -297,28 +335,34 @@ export const VestingContractAddFundsModal = (props: {
   ////////////////
 
   const onAcceptModal = () => {
-    if (!selectedToken) { return; }
+    if (!selectedToken) {
+      return;
+    }
     const params: VestingContractTopupParams = {
       amount: topupAmount,
       tokenAmount: tokenAmount,
       allocationType: allocationOption,
-      associatedToken: selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-        ? NATIVE_SOL
-        : selectedToken,
-      streamId: highLightableStreamId && allocationOption === AllocationType.Specific
-                ? highLightableStreamId : '',
-      contributor: fundFromSafeOption && selectedMultisig
-        ? selectedMultisig.authority.toBase58()
-        : '',
+      associatedToken:
+        selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+          ? NATIVE_SOL
+          : selectedToken,
+      streamId:
+        highLightableStreamId && allocationOption === AllocationType.Specific
+          ? highLightableStreamId
+          : '',
+      contributor:
+        fundFromSafeOption && selectedMultisig
+          ? selectedMultisig.authority.toBase58()
+          : '',
       fundFromSafe: fundFromSafeOption,
-      proposalTitle: proposalTitle || ''
+      proposalTitle: proposalTitle || '',
     };
     handleOk(params);
-  }
+  };
 
   const onCloseModal = () => {
     handleClose();
-  }
+  };
 
   const onAfterClose = () => {
     setTimeout(() => {
@@ -326,18 +370,17 @@ export const VestingContractAddFundsModal = (props: {
       setTokenAmount(new BN(0));
     }, 50);
     setTransactionStatus({
-        lastOperation: TransactionStatus.Iddle,
-        currentOperation: TransactionStatus.Iddle
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle,
     });
-  }
+  };
 
   const refreshPage = () => {
     handleClose();
     window.location.reload();
-  }
+  };
 
   const handleAmountChange = (e: any) => {
-
     let newValue = e.target.value;
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
@@ -355,11 +398,11 @@ export const VestingContractAddFundsModal = (props: {
       newValue = splitted.join('.');
     }
 
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setTopupAmount("");
+    if (newValue === null || newValue === undefined || newValue === '') {
+      setTopupAmount('');
       setTokenAmount(0);
     } else if (newValue === '.') {
-      setTopupAmount(".");
+      setTopupAmount('.');
     } else if (isValidNumber(newValue)) {
       setTopupAmount(newValue);
       setTokenAmount(new BN(toTokenAmount(newValue, decimals).toString()));
@@ -368,7 +411,7 @@ export const VestingContractAddFundsModal = (props: {
 
   const onTitleInputValueChange = (e: any) => {
     setProposalTitle(e.target.value);
-  }
+  };
 
   const onFundFromSafeOptionChanged = (e: any) => {
     const newValue = e.target.value;
@@ -378,7 +421,7 @@ export const VestingContractAddFundsModal = (props: {
     } else {
       onReloadTokenBalances('wallet');
     }
-  }
+  };
 
   //////////////////
   //  Validation  //
@@ -386,36 +429,49 @@ export const VestingContractAddFundsModal = (props: {
 
   const isValidInput = (): boolean => {
     return publicKey &&
-          (!fundFromSafeOption || (isMultisigContext && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
-           selectedToken &&
-           ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && (availableBalance && (availableBalance as BN).gtn(0)))) &&
-           nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
-           tokenAmount && (tokenAmount as BN).gtn(0) &&
-           (tokenAmount as BN).lte(getMaxAmount())
-            ? true
-            : false;
-  }
+      (!fundFromSafeOption ||
+        (isMultisigContext &&
+          selectedMultisig &&
+          fundFromSafeOption &&
+          proposalTitle)) &&
+      selectedToken &&
+      ((fundFromSafeOption && tokenBalance) ||
+        (!fundFromSafeOption &&
+          availableBalance &&
+          (availableBalance as BN).gtn(0))) &&
+      nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
+      tokenAmount &&
+      (tokenAmount as BN).gtn(0) &&
+      (tokenAmount as BN).lte(getMaxAmount())
+      ? true
+      : false;
+  };
 
   const isTopupFormValid = () => {
     return publicKey &&
-           isValidInput() &&
-           ((allocationOption !== AllocationType.Specific) ||
-            (allocationOption === AllocationType.Specific && highLightableStreamId))
-          ? true
-          : false;
-  }
+      isValidInput() &&
+      (allocationOption !== AllocationType.Specific ||
+        (allocationOption === AllocationType.Specific && highLightableStreamId))
+      ? true
+      : false;
+  };
 
   const isProposalTitleRequired = () => {
-    return fundFromSafeOption && isMultisigContext && selectedMultisig && !proposalTitle
+    return fundFromSafeOption &&
+      isMultisigContext &&
+      selectedMultisig &&
+      !proposalTitle
       ? true
       : false;
-  }
+  };
 
   const isTokenBalanceEmpty = () => {
-    return !selectedToken || ((fundFromSafeOption && !tokenBalance) || (!fundFromSafeOption && availableBalance.isZero()))
+    return !selectedToken ||
+      (fundFromSafeOption && !tokenBalance) ||
+      (!fundFromSafeOption && availableBalance.isZero())
       ? true
       : false;
-  }
+  };
 
   const getTransactionStartButtonLabel = () => {
     if (!publicKey) {
@@ -430,18 +486,25 @@ export const VestingContractAddFundsModal = (props: {
       return t('transactions.validation.amount-high');
     } else if (nativeBalance <= MIN_SOL_BALANCE_REQUIRED) {
       return t('transactions.validation.amount-sol-low');
-    } else if (allocationOption === AllocationType.Specific && !highLightableStreamId) {
+    } else if (
+      allocationOption === AllocationType.Specific &&
+      !highLightableStreamId
+    ) {
       return t('transactions.validation.select-stream');
-    } else if (allocationOption === AllocationType.Specific && highLightableStreamId) {
+    } else if (
+      allocationOption === AllocationType.Specific &&
+      highLightableStreamId
+    ) {
       return t('treasuries.add-funds.main-cta-fund-stream');
     } else {
       return t('treasuries.add-funds.main-cta');
     }
-  }
+  };
 
   const getMainCtaLabel = () => {
     if (isBusy) {
-      return allocationOption === AllocationType.Specific && highLightableStreamId
+      return allocationOption === AllocationType.Specific &&
+        highLightableStreamId
         ? t('treasuries.add-funds.main-cta-fund-stream-busy')
         : t('treasuries.add-funds.main-cta-busy');
     } else {
@@ -449,18 +512,25 @@ export const VestingContractAddFundsModal = (props: {
         ? getTransactionStartButtonLabel()
         : t('general.refresh');
     }
-  }
+  };
 
   const getModalTitle = () => {
-    return highLightableStreamId ? t('treasuries.add-funds.modal-title-fund-stream') : t('vesting.add-funds.modal-title');
-  }
+    return highLightableStreamId
+      ? t('treasuries.add-funds.modal-title-fund-stream')
+      : t('vesting.add-funds.modal-title');
+  };
 
   const getModalAdaptiveWidth = () => {
-    return isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480;
-  }
+    return isBusy ||
+      transactionStatus.currentOperation !== TransactionStatus.Iddle
+      ? 380
+      : 480;
+  };
 
   const handleMaxClick = () => {
-    if (!selectedToken) { return; }
+    if (!selectedToken) {
+      return;
+    }
 
     const decimals = selectedToken.decimals;
     if (selectedToken.address === WRAPPED_SOL_MINT_ADDRESS) {
@@ -484,28 +554,38 @@ export const VestingContractAddFundsModal = (props: {
         setTokenAmount(new BN(maxAmount));
       }
     }
-  }
+  };
 
   const getPanel1Classes = () => {
-    return !isBusy ? "panel1 show" : "panel1 hide";
-  }
+    return !isBusy ? 'panel1 show' : 'panel1 hide';
+  };
 
   const getPanel2Classes = () => {
-    return isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide";
-  }
-
+    return isBusy &&
+      transactionStatus.currentOperation !== TransactionStatus.Iddle
+      ? 'panel2 show'
+      : 'panel2 hide';
+  };
 
   ///////////////
   // Rendering //
   ///////////////
 
   const renderFundFromSwitch = () => {
-    if (isMultisigContext && selectedMultisig && vestingContract && !highLightableStreamId) {
+    if (
+      isMultisigContext &&
+      selectedMultisig &&
+      vestingContract &&
+      !highLightableStreamId
+    ) {
       return (
         <div className="mb-2 flex-fixed-right">
           <div className="form-label left m-0">Get funds from:</div>
           <div className="right">
-            <Radio.Group onChange={onFundFromSafeOptionChanged} value={fundFromSafeOption}>
+            <Radio.Group
+              onChange={onFundFromSafeOptionChanged}
+              value={fundFromSafeOption}
+            >
               <Radio value={true}>Safe</Radio>
               <Radio value={false}>User wallet</Radio>
             </Radio.Group>
@@ -515,26 +595,31 @@ export const VestingContractAddFundsModal = (props: {
     } else {
       return null;
     }
-  }
+  };
 
   const renderProposalTitle = () => {
     if (isMultisigContext && selectedMultisig) {
       return (
         <div className="mb-3 mt-3">
-          <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+          <div className="form-label text-left">
+            {t('multisig.proposal-modal.title')}
+          </div>
           <InputMean
             id="proposal-title-field"
             name="Title"
-            className={`w-100 general-text-input${!fundFromSafeOption ? ' disabled' : ''}`}
+            className={`w-100 general-text-input${
+              !fundFromSafeOption ? ' disabled' : ''
+            }`}
             onChange={onTitleInputValueChange}
             placeholder="Title for the multisig proposal"
-            value={proposalTitle} />
+            value={proposalTitle}
+          />
         </div>
       );
     } else {
       return null;
     }
-  }
+  };
 
   const renderTopupAmount = () => {
     return (
@@ -544,7 +629,9 @@ export const VestingContractAddFundsModal = (props: {
           {highLightableStreamId ? (
             <>
               <p>{t('treasuries.add-funds.allocation-heading')}</p>
-              <div className="form-label">{t('treasuries.add-funds.allocation-amount-label')}</div>
+              <div className="form-label">
+                {t('treasuries.add-funds.allocation-amount-label')}
+              </div>
             </>
           ) : (
             <div className="form-label">{t('treasuries.add-funds.label')}</div>
@@ -554,7 +641,8 @@ export const VestingContractAddFundsModal = (props: {
               <div className="flex-fixed-left">
                 <div className="left">
                   <span className="add-on">
-                    <TokenDisplay onClick={() => { } }
+                    <TokenDisplay
+                      onClick={() => {}}
                       mintAddress={selectedToken.address}
                       showCaretDown={false}
                       fullTokenInfo={selectedToken}
@@ -563,7 +651,8 @@ export const VestingContractAddFundsModal = (props: {
                       <div
                         id="treasury-add-funds-max"
                         className="token-max simplelink"
-                        onClick={handleMaxClick}>
+                        onClick={handleMaxClick}
+                      >
                         MAX
                       </div>
                     ) : null}
@@ -583,7 +672,8 @@ export const VestingContractAddFundsModal = (props: {
                     minLength={1}
                     maxLength={79}
                     spellCheck="false"
-                    value={topupAmount} />
+                    value={topupAmount}
+                  />
                 </div>
               </div>
               <div className="flex-fixed-right">
@@ -591,25 +681,43 @@ export const VestingContractAddFundsModal = (props: {
                   {!highLightableStreamId ? (
                     <span>{t('add-funds.label-right')}:</span>
                   ) : (
-                    <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
+                    <span>
+                      {t(
+                        'treasuries.treasury-streams.available-unallocated-balance-label',
+                      )}
+                      :
+                    </span>
                   )}
                   <span>
-                    {`${availableBalance
-                      ? getAmountWithSymbol(
-                        toUiAmount(availableBalance, selectedToken.decimals),
-                        selectedToken.address,
-                        true,
-                        splTokenList,
-                        selectedToken.decimals
-                      )
-                      : "0"}`}
+                    {`${
+                      availableBalance
+                        ? getAmountWithSymbol(
+                            toUiAmount(
+                              availableBalance,
+                              selectedToken.decimals,
+                            ),
+                            selectedToken.address,
+                            true,
+                            splTokenList,
+                            selectedToken.decimals,
+                          )
+                        : '0'
+                    }`}
                   </span>
                 </div>
                 <div className="right inner-label">
-                  <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                    ~{topupAmount
+                  <span
+                    className={
+                      loadingPrices
+                        ? 'click-disabled fg-orange-red pulsate'
+                        : 'simplelink'
+                    }
+                    onClick={() => refreshPrices()}
+                  >
+                    ~
+                    {topupAmount
                       ? toUsCurrency(getTokenPrice(topupAmount))
-                      : "$0.00"}
+                      : '$0.00'}
                   </span>
                 </div>
               </div>
@@ -618,61 +726,78 @@ export const VestingContractAddFundsModal = (props: {
         </div>
       </>
     );
-  }
+  };
 
   const renderPanel1ProgressContent = () => {
     return (
       <div className="transaction-progress p-0">
         <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-        {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+        {transactionStatus.currentOperation ===
+        TransactionStatus.TransactionStartFailure ? (
           <h4 className="mb-4">
             {t('transactions.status.tx-start-failure', {
               accountBalance: getAmountWithSymbol(
                 nativeBalance,
-                NATIVE_SOL_MINT.toBase58()
+                NATIVE_SOL_MINT.toBase58(),
               ),
               feeAmount: getAmountWithSymbol(
                 transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                NATIVE_SOL_MINT.toBase58()
-              )
+                NATIVE_SOL_MINT.toBase58(),
+              ),
             })}
           </h4>
         ) : (
           <h4 className="font-bold mb-3">
-            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+            {getTransactionOperationDescription(
+              transactionStatus.currentOperation,
+              t,
+            )}
           </h4>
         )}
       </div>
     );
-  }
+  };
 
   const renderPanel2BusyContent = () => {
     return (
       <div className="transaction-progress">
         <Spin indicator={bigLoadingIcon} className="icon mt-0" />
         <h4 className="font-bold mb-1">
-          {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+          {getTransactionOperationDescription(
+            transactionStatus.currentOperation,
+            t,
+          )}
         </h4>
-        {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-          <div className="indication">{t('transactions.status.instructions')}</div>
+        {transactionStatus.currentOperation ===
+          TransactionStatus.SignTransaction && (
+          <div className="indication">
+            {t('transactions.status.instructions')}
+          </div>
         )}
       </div>
     );
-  }
+  };
 
   const renderCtas = () => {
     return (
       <div className="row two-col-ctas mt-3 transaction-progress p-0">
-        <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
+        <div
+          className={
+            !isError(transactionStatus.currentOperation) ? 'col-6' : 'col-12'
+          }
+        >
           <Button
             block
             type="text"
             shape="round"
             size="middle"
             className={isBusy ? 'inactive' : ''}
-            onClick={() => isError(transactionStatus.currentOperation)
-              ? onAcceptModal()
-              : onCloseModal()}>
+            onClick={() =>
+              isError(transactionStatus.currentOperation)
+                ? onAcceptModal()
+                : onCloseModal()
+            }
+          >
             {isError(transactionStatus.currentOperation)
               ? t('general.retry')
               : t('general.cta-close')}
@@ -688,43 +813,43 @@ export const VestingContractAddFundsModal = (props: {
               size="middle"
               disabled={!isTopupFormValid()}
               onClick={() => {
-                if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                if (
+                  transactionStatus.currentOperation === TransactionStatus.Iddle
+                ) {
                   onAcceptModal();
                 } else {
                   refreshPage();
                 }
-              } }>
+              }}
+            >
               {getMainCtaLabel()}
             </Button>
           </div>
         )}
       </div>
     );
-  }
+  };
 
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">{getModalTitle()}</div>
-      }
+      title={<div className="modal-title">{getModalTitle()}</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={getModalAdaptiveWidth()}>
+      width={getModalAdaptiveWidth()}
+    >
       <div className="scrollable-content">
-
         {/* Panel1 */}
         <div className={getPanel1Classes()}>
-
           {transactionStatus.currentOperation === TransactionStatus.Iddle && (
             <>
               {/* Fund from Wallet/Safe switch */}
               {renderFundFromSwitch()}
-      
+
               {/* Proposal title */}
               {renderProposalTitle()}
 
@@ -732,73 +857,82 @@ export const VestingContractAddFundsModal = (props: {
               {renderTopupAmount()}
             </>
           )}
-          {transactionStatus.currentOperation === TransactionStatus.TransactionFinished && (
+          {transactionStatus.currentOperation ===
+            TransactionStatus.TransactionFinished && (
             <>
               <div className="transaction-progress">
                 <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                <h4 className="font-bold">{t('treasuries.add-funds.success-message')}</h4>
+                <h4 className="font-bold">
+                  {t('treasuries.add-funds.success-message')}
+                </h4>
               </div>
             </>
           )}
           {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
-           transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
-            <>
-              {renderPanel1ProgressContent()}
-            </>
-          )}
-
+            transactionStatus.currentOperation !==
+              TransactionStatus.TransactionFinished && (
+              <>{renderPanel1ProgressContent()}</>
+            )}
         </div>
 
         {/* Panel2 */}
         <div className={getPanel2Classes()}>
           {isBusy && transactionStatus !== TransactionStatus.Iddle && (
-            <>
-              {renderPanel2BusyContent()}
-            </>
+            <>{renderPanel2BusyContent()}</>
           )}
         </div>
 
         {/* CTAs */}
         {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-          <>
-            {renderCtas()}
-          </>
+          <>{renderCtas()}</>
         )}
 
         {/* Funding options */}
-        {!isBusy && !highLightableStreamId && transactionStatus.currentOperation === TransactionStatus.Iddle && (
-          <div className={`buy-token-options text-center mt-4 mb-2`}>
-            <p>You can also fund this contract by sending {selectedToken?.symbol} tokens to:</p>
+        {!isBusy &&
+          !highLightableStreamId &&
+          transactionStatus.currentOperation === TransactionStatus.Iddle && (
+            <div className={`buy-token-options text-center mt-4 mb-2`}>
+              <p>
+                You can also fund this contract by sending{' '}
+                {selectedToken?.symbol} tokens to:
+              </p>
 
-            {showQrCode && vestingContract && (
-              <>
-                <div className="qr-container bg-white">
-                  <QRCodeSVG
-                    value={vestingContract.id as string}
-                    size={200}
+              {showQrCode && vestingContract && (
+                <>
+                  <div className="qr-container bg-white">
+                    <QRCodeSVG
+                      value={vestingContract.id as string}
+                      size={200}
+                    />
+                  </div>
+                </>
+              )}
+
+              {vestingContract && (
+                <div className="flex-center mb-2">
+                  <AddressDisplay
+                    address={vestingContract.id as string}
+                    showFullAddress={true}
+                    iconStyles={{ width: '15', height: '15' }}
+                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
+                      vestingContract.id as string
+                    }${getSolanaExplorerClusterParam()}`}
                   />
                 </div>
-              </>
-            )}
+              )}
 
-            {vestingContract && (
-              <div className="flex-center mb-2">
-                <AddressDisplay
-                  address={vestingContract.id as string}
-                  showFullAddress={true}
-                  iconStyles={{ width: "15", height: "15" }}
-                  newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${vestingContract.id as string}${getSolanaExplorerClusterParam()}`}
-                />
-              </div>
-            )}
-
-            {!showQrCode && (
-              <div className="simplelink underline" onClick={() => {setShowQrCode(true)}}>Scan QR code instead?</div>
-            )}
-
-          </div>
-        )}
-
+              {!showQrCode && (
+                <div
+                  className="simplelink underline"
+                  onClick={() => {
+                    setShowQrCode(true);
+                  }}
+                >
+                  Scan QR code instead?
+                </div>
+              )}
+            </div>
+          )}
       </div>
     </Modal>
   );

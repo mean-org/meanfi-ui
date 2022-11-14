@@ -1,19 +1,19 @@
-import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { Alert, Button, Col, Row, Space, Tabs, Tooltip } from "antd";
-import { CopyExtLinkGroup } from "components/CopyExtLinkGroup";
-import { MultisigOwnersView } from "components/MultisigOwnersView";
-import { RightInfoDetails } from "components/RightInfoDetails";
-import { SolBalanceModal } from "components/SolBalanceModal";
-import { MIN_SOL_BALANCE_REQUIRED } from "constants/common";
-import { NATIVE_SOL } from "constants/tokens";
-import { useNativeAccount } from "contexts/accounts";
-import { AppStateContext } from "contexts/appstate";
-import { IconLoading } from "Icons";
-import { consoleOut, toUsCurrency } from "middleware/ui";
-import { getAmountFromLamports, shortenAddress } from "middleware/utils";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Alert, Button, Col, Row, Space, Tabs, Tooltip } from 'antd';
+import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
+import { MultisigOwnersView } from 'components/MultisigOwnersView';
+import { RightInfoDetails } from 'components/RightInfoDetails';
+import { SolBalanceModal } from 'components/SolBalanceModal';
+import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
+import { NATIVE_SOL } from 'constants/tokens';
+import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { IconLoading } from 'Icons';
+import { consoleOut, toUsCurrency } from 'middleware/ui';
+import { getAmountFromLamports, shortenAddress } from 'middleware/utils';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 export const SafeInfo = (props: {
   onEditMultisigClick?: any;
@@ -48,8 +48,8 @@ export const SafeInfo = (props: {
   } = useContext(AppStateContext);
   const { address } = useParams();
   const { account } = useNativeAccount();
-  const [,setSearchParams] = useSearchParams();
-  const [selectedLabelName, setSelectedLabelName] = useState("");
+  const [, setSearchParams] = useSearchParams();
+  const [selectedLabelName, setSelectedLabelName] = useState('');
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
 
@@ -59,8 +59,14 @@ export const SafeInfo = (props: {
 
   // SOL Balance Modal
   const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
-  const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
-  const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
+  const hideSolBalanceModal = useCallback(
+    () => setIsSolBalanceModalOpen(false),
+    [],
+  );
+  const showSolBalanceModal = useCallback(
+    () => setIsSolBalanceModalOpen(true),
+    [],
+  );
 
   // Keep account balance updated
   useEffect(() => {
@@ -71,29 +77,30 @@ export const SafeInfo = (props: {
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshTokenBalance
-  ]);
+  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
 
   // Safe Name
   useEffect(() => {
     if (selectedMultisig) {
       if (selectedMultisig.label) {
-        setSelectedLabelName(selectedMultisig.label)
+        setSelectedLabelName(selectedMultisig.label);
       } else {
-        setSelectedLabelName(shortenAddress(selectedMultisig.id, 4))
+        setSelectedLabelName(shortenAddress(selectedMultisig.id, 4));
       }
     }
   }, [selectedMultisig]);
 
   const renderSafeName = (
     <Row className="d-flex align-items-center">
-      {(safeNameImg && safeNameImgAlt) && (
+      {safeNameImg && safeNameImgAlt && (
         <Tooltip placement="rightTop" title="Serum Multisig">
-          <img src={safeNameImg} alt={safeNameImgAlt} width={16} height={16} className="simplelink mr-1" />
+          <img
+            src={safeNameImg}
+            alt={safeNameImgAlt}
+            width={16}
+            height={16}
+            className="simplelink mr-1"
+          />
         </Tooltip>
       )}
       <div>{selectedLabelName}</div>
@@ -104,7 +111,11 @@ export const SafeInfo = (props: {
   const renderSecurity = (
     <>
       <span>Security</span>
-      <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig ? selectedMultisig.owners : []} />
+      <MultisigOwnersView
+        label="view"
+        className="ml-1"
+        participants={selectedMultisig ? selectedMultisig.owners : []}
+      />
     </>
   );
 
@@ -113,37 +124,27 @@ export const SafeInfo = (props: {
 
   // Show amount of assets
   useEffect(() => {
-    (selectedMultisig) && (
-      multisigVaults && multisigVaults.length > 0 ? (
-        multisigVaults.length > 1 ? (
-          setAssetsAmount(`(${multisigVaults.length} assets)`)
-        ) : (
-          setAssetsAmount(`(${multisigVaults.length} asset)`)
-        )
-      ) : (
-        setAssetsAmount("(0 assets)")
-      )
-    )
-  }, [
-    multisigVaults, 
-    selectedMultisig
-  ]);
+    selectedMultisig &&
+      (multisigVaults && multisigVaults.length > 0
+        ? multisigVaults.length > 1
+          ? setAssetsAmount(`(${multisigVaults.length} assets)`)
+          : setAssetsAmount(`(${multisigVaults.length} asset)`)
+        : setAssetsAmount('(0 assets)'));
+  }, [multisigVaults, selectedMultisig]);
 
-  const renderSafeBalance = (
+  const renderSafeBalance =
     totalSafeBalance === undefined ? (
       <>
-        <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+        <IconLoading
+          className="mean-svg-icons"
+          style={{ height: '15px', lineHeight: '15px' }}
+        />
       </>
     ) : totalSafeBalance === 0 ? (
-      <>
-        $0.00
-      </>
+      <>$0.00</>
     ) : (
-      <>
-        {toUsCurrency(totalSafeBalance)}
-      </>
-    )
-  );
+      <>{toUsCurrency(totalSafeBalance)}</>
+    );
 
   // Deposit Address
   const renderDepositAddress = (
@@ -156,28 +157,33 @@ export const SafeInfo = (props: {
 
   const infoSafeData = [
     {
-      name: "Safe name",
-      value: renderSafeName ? renderSafeName : "--"
+      name: 'Safe name',
+      value: renderSafeName ? renderSafeName : '--',
     },
     {
       name: renderSecurity,
-      value: selectedMultisig ? `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures` : "--"
+      value: selectedMultisig
+        ? `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures`
+        : '--',
     },
     {
       name: `Safe balance ${assetsAmout}`,
-      value: renderSafeBalance
+      value: renderSafeBalance,
     },
     {
-      name: "Deposit address",
-      value: renderDepositAddress ? renderDepositAddress : "--"
-    }
+      name: 'Deposit address',
+      value: renderDepositAddress ? renderDepositAddress : '--',
+    },
   ];
 
-  const onTabChanged = useCallback((tab: string) => {
-    consoleOut('Setting tab to:', tab, 'blue');
-    setActiveTab(tab);
-    setSearchParams({v: tab as string});
-  }, [setActiveTab, setSearchParams]);
+  const onTabChanged = useCallback(
+    (tab: string) => {
+      consoleOut('Setting tab to:', tab, 'blue');
+      setActiveTab(tab);
+      setSearchParams({ v: tab as string });
+    },
+    [setActiveTab, setSearchParams],
+  );
 
   const getSafeTabs = useCallback(() => {
     const items = [];
@@ -185,26 +191,26 @@ export const SafeInfo = (props: {
       items.push({
         key: proposalsTabContent.id,
         label: proposalsTabContent.name,
-        children: proposalsTabContent.render
+        children: proposalsTabContent.render,
       });
     } else {
       items.push({
-        key: "proposals",
-        label: "Proposals",
-        children: 'Loading...'
+        key: 'proposals',
+        label: 'Proposals',
+        children: 'Loading...',
       });
     }
     if (programsTabContent) {
       items.push({
         key: programsTabContent.id,
         label: programsTabContent.name,
-        children: programsTabContent.render
+        children: programsTabContent.render,
       });
     } else {
       items.push({
-        key: "programs",
-        label: "Programs",
-        children: 'Loading...'
+        key: 'programs',
+        label: 'Programs',
+        children: 'Loading...',
       });
     }
 
@@ -231,13 +237,11 @@ export const SafeInfo = (props: {
     } else {
       return getSafeTabs();
     }
-  }
+  };
 
   return (
     <>
-      <RightInfoDetails
-        infoData={infoSafeData}
-      />
+      <RightInfoDetails infoData={infoSafeData} />
 
       <div className="flex-fixed-right cta-row mb-2">
         <Space className="left" size="middle" wrap>
@@ -246,29 +250,38 @@ export const SafeInfo = (props: {
             shape="round"
             size="small"
             className="thin-stroke"
-            onClick={onNewProposalClicked}>
-              New proposal
+            onClick={onNewProposalClicked}
+          >
+            New proposal
           </Button>
           <Button
             type="default"
             shape="round"
             size="small"
             className="thin-stroke"
-            onClick={() => onEditMultisigClick()}>
-              Edit safe
+            onClick={() => onEditMultisigClick()}
+          >
+            Edit safe
           </Button>
         </Space>
       </div>
 
-      {multisigSolBalance !== undefined && (
-        (multisigSolBalance / LAMPORTS_PER_SOL) <= MIN_SOL_BALANCE_REQUIRED ? (
+      {multisigSolBalance !== undefined &&
+        (multisigSolBalance / LAMPORTS_PER_SOL <= MIN_SOL_BALANCE_REQUIRED ? (
           <Row gutter={[8, 8]} className="mr-0 ml-0">
-            <Col span={24} className="alert-info-message pr-6 simplelink" onClick={showSolBalanceModal}>
-              <Alert message="SOL account balance is very low in the safe. Click here to add more SOL." type="info" showIcon />
+            <Col
+              span={24}
+              className="alert-info-message pr-6 simplelink"
+              onClick={showSolBalanceModal}
+            >
+              <Alert
+                message="SOL account balance is very low in the safe. Click here to add more SOL."
+                type="info"
+                showIcon
+              />
             </Col>
           </Row>
-        ) : null
-      )}
+        ) : null)}
 
       {renderTabset()}
 
@@ -286,5 +299,5 @@ export const SafeInfo = (props: {
         />
       )}
     </>
-  )
-}
+  );
+};

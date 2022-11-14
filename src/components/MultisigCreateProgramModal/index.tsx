@@ -11,74 +11,103 @@ export const MultisigCreateProgramModal = (props: {
   handleOk: any;
   handleAfterClose: any;
   isVisible: boolean;
-  selectedMultisig: MultisigInfo
+  selectedMultisig: MultisigInfo;
 }) => {
   const { t } = useTranslation('common');
 
   const onAcceptModal = () => {
     props.handleOk();
-  }
+  };
 
   const onCloseModal = () => {
     props.handleClose();
-  }
+  };
 
   const onAfterClose = () => {
     props.handleAfterClose();
-  }
+  };
 
   // Copy address to clipboard
-  const copyAddressToClipboard = useCallback((address: any) => {
-
-    if (copyText(address.toString())) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: "error"
-      });
-    }
-
-  },[t])
+  const copyAddressToClipboard = useCallback(
+    (address: any) => {
+      if (copyText(address.toString())) {
+        openNotification({
+          description: t('notifications.account-address-copied-message'),
+          type: 'info',
+        });
+      } else {
+        openNotification({
+          description: t('notifications.account-address-not-copied-message'),
+          type: 'error',
+        });
+      }
+    },
+    [t],
+  );
 
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.multisig-programs.modal-title')}</div>}
+      title={
+        <div className="modal-title">
+          {t('multisig.multisig-programs.modal-title')}
+        </div>
+      }
       footer={null}
       open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={480}>
-
+      width={480}
+    >
       <div className="mb-3">
         <h3>Adding a program to your Multisig</h3>
-        <p>To use program upgrades for your on-chain program through the MeanFi Multisig you will need to set the upgrade authority of your program to this multisig account:</p>
+        <p>
+          To use program upgrades for your on-chain program through the MeanFi
+          Multisig you will need to set the upgrade authority of your program to
+          this multisig account:
+        </p>
         <div className="well small mb-2">
           <div className="flex-fixed-right">
             <div className="left position-relative">
               <span className="recipient-field-wrapper">
-                <span className="referral-link font-size-80 text-monospace">{props.selectedMultisig.authority.toBase58()}</span>
+                <span className="referral-link font-size-80 text-monospace">
+                  {props.selectedMultisig.authority.toBase58()}
+                </span>
               </span>
             </div>
             <div className="right">
-              <div className="add-on simplelink" onClick={() => copyAddressToClipboard(props.selectedMultisig.authority.toBase58())}>
+              <div
+                className="add-on simplelink"
+                onClick={() =>
+                  copyAddressToClipboard(
+                    props.selectedMultisig.authority.toBase58(),
+                  )
+                }
+              >
                 <IconCopy className="mean-svg-icons" />
               </div>
             </div>
           </div>
         </div>
-        <p>You can use the Solana CLI to set a program's upgrade authority, to learn more about this, <a className="simplelink underline"
-          href='https://docs.solana.com/cli/deploy-a-program#set-a-programs-upgrade-authority'
-          title="Set a program's upgrade authority"
-          target="_blank"
-          rel="noopener noreferrer">click here</a>
+        <p>
+          You can use the Solana CLI to set a program's upgrade authority, to
+          learn more about this,{' '}
+          <a
+            className="simplelink underline"
+            href="https://docs.solana.com/cli/deploy-a-program#set-a-programs-upgrade-authority"
+            title="Set a program's upgrade authority"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            click here
+          </a>
         </p>
-        <p>Once you complete this step you can refresh the list of programs and it will appear on the list and you can immediately start upgrading your progam.</p>
+        <p>
+          Once you complete this step you can refresh the list of programs and
+          it will appear on the list and you can immediately start upgrading
+          your progam.
+        </p>
       </div>
 
       <div className="transaction-progress">
@@ -86,11 +115,11 @@ export const MultisigCreateProgramModal = (props: {
           type="primary"
           shape="round"
           size="large"
-          onClick={onCloseModal}>
+          onClick={onCloseModal}
+        >
           {t('general.cta-close')}
         </Button>
       </div>
-
     </Modal>
   );
 };

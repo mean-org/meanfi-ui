@@ -1,7 +1,7 @@
-import moment from "moment";
-import { Button } from "antd";
-import { array, bool, str } from "@project-serum/borsh";
-import { useCallback, useContext, useEffect, useState } from "react";
+import moment from 'moment';
+import { Button } from 'antd';
+import { array, bool, str } from '@project-serum/borsh';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import {
   XAxis,
   YAxis,
@@ -10,20 +10,18 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-} from "recharts";
+} from 'recharts';
 
-import "./style.scss";
-import { MEAN_TOKEN } from "../../constants/tokens";
-import { getCoingeckoMarketChart } from "../../middleware/api";
-import { PriceGraphModel } from "../../models/price-graph";
-import { AppStateContext } from "contexts/appstate";
+import './style.scss';
+import { MEAN_TOKEN } from '../../constants/tokens';
+import { getCoingeckoMarketChart } from '../../middleware/api';
+import { PriceGraphModel } from '../../models/price-graph';
+import { AppStateContext } from 'contexts/appstate';
 
-const dateFormat = "MMM Do, YYYY";
-const buttons = ["24H", "7D", "30D"];
+const dateFormat = 'MMM Do, YYYY';
+const buttons = ['24H', '7D', '30D'];
 
-export const PriceGraph = (props : {
-  onPriceData: any;
-}) => {
+export const PriceGraph = (props: { onPriceData: any }) => {
   const [activeBtn, setActiveBtn] = useState(buttons[2]);
   const emptyArr: PriceGraphModel[] = [];
   const [priceChangeData, setPriceData] = useState(emptyArr);
@@ -47,7 +45,12 @@ export const PriceGraph = (props : {
         interval = 'hourly';
         days = Number(activeBtn.substring(0, activeBtn.length - 1)) / 24;
       }
-      const [marketPriceData] = await getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, days, interval);
+      const [marketPriceData] = await getCoingeckoMarketChart(
+        MEAN_TOKEN.extensions.coingeckoId,
+        MEAN_TOKEN.decimals,
+        days,
+        interval,
+      );
       if (marketPriceData && marketPriceData.length > 0) {
         setPriceData(marketPriceData);
         const lastItem = marketPriceData[marketPriceData.length - 1];
@@ -55,13 +58,13 @@ export const PriceGraph = (props : {
         setPriceShownOnTop(lastItem.priceData);
         props.onPriceData(lastItem.priceData);
       }
-    })()
+    })();
   }, [activeBtn, priceList]);
 
   /*********************** CUSTOM TOOLTIP *************************/
   const CustomToolTip = ({ active, payload, label }: any) => {
-    const [dateOnTooltip, setDateOnTooltip] = useState("");
-    const [priceOnTooltip, setPriceOnTooltip] = useState("");
+    const [dateOnTooltip, setDateOnTooltip] = useState('');
+    const [priceOnTooltip, setPriceOnTooltip] = useState('');
 
     useEffect(() => {
       if (active && payload && payload.length > 0) {
@@ -71,9 +74,9 @@ export const PriceGraph = (props : {
     }, [active, label, payload]);
 
     useEffect(() => {
-      window.addEventListener("click", onSelectedInfo);
+      window.addEventListener('click', onSelectedInfo);
       return () => {
-        window.removeEventListener("click", onSelectedInfo);
+        window.removeEventListener('click', onSelectedInfo);
       };
     });
 
@@ -99,12 +102,8 @@ export const PriceGraph = (props : {
     <>
       <div className="price-items">
         <div className="price-items_left">
-          <span className="price-items_price">
-            $ {priceShownOnTop}
-          </span>
-          <span className="price-items_date">
-            {dateShownOnTop}
-          </span>
+          <span className="price-items_price">$ {priceShownOnTop}</span>
+          <span className="price-items_date">{dateShownOnTop}</span>
         </div>
         <div className="price-items_right">
           {buttons.map((btn, index) => (
@@ -114,7 +113,7 @@ export const PriceGraph = (props : {
               shape="round"
               size="small"
               onClick={onClickHandler}
-              className={`thin-stroke ${activeBtn === btn ? "active" : ""}`}
+              className={`thin-stroke ${activeBtn === btn ? 'active' : ''}`}
             >
               {btn}
             </Button>
@@ -138,13 +137,13 @@ export const PriceGraph = (props : {
             tickMargin={25}
             angle={-50}
             height={50}
-            tickFormatter={(date) => {
+            tickFormatter={date => {
               const d = new Date(date);
 
-              if (activeBtn === "24H") {
-                return moment(d).format("hha");
+              if (activeBtn === '24H') {
+                return moment(d).format('hha');
               } else {
-                return moment(d).format("MMM, DD");
+                return moment(d).format('MMM, DD');
               }
             }}
           />
@@ -152,11 +151,11 @@ export const PriceGraph = (props : {
             dataKey="priceData"
             axisLine={false}
             tickLine={false}
-            domain={["auto", "auto"]}
+            domain={['auto', 'auto']}
             width={35}
             tickSize={0}
             tickMargin={5}
-            tickFormatter={(priceData) => priceData || 0}
+            tickFormatter={priceData => priceData || 0}
           />
           <Tooltip
             content={
