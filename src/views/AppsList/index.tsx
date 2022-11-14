@@ -1,6 +1,7 @@
 import { readFromCache } from "cache/persistentCache";
 import { AppStateContext } from "contexts/appstate";
-import { IconMoneyTransfer, IconNoItems, IconSafe, IconStats, IconTokenVesting } from "Icons";
+import { IconMoneyTransfer, IconNoItems, IconSafe, IconStats } from "Icons";
+import { IconPaymentStreaming } from "Icons/IconPaymentStreaming";
 import { toUsCurrency } from "middleware/ui";
 import { KnownAppMetadata, KNOWN_APPS, RegisteredAppPaths } from "models/accounts";
 import { useCallback, useContext } from "react";
@@ -49,10 +50,10 @@ export const AppsList = (props: {
                 appIcon = <IconSafe className={classes} style={styles} />;
                 break;
             case RegisteredAppPaths.Vesting:
-                appIcon = <IconTokenVesting className={classes} style={styles} />;
+                appIcon = <IconMoneyTransfer className={classes} style={styles} />;
                 break;
             case RegisteredAppPaths.PaymentStreaming:
-                appIcon = <IconMoneyTransfer className={classes} style={styles} />;
+                appIcon = <IconPaymentStreaming className={classes} style={styles} />;
                 break;
             default:
                 appIcon = <IconNoItems className={classes} style={styles} />;

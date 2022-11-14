@@ -1,6 +1,6 @@
 import { CSSProperties } from "react";
 
-export const IconTokenVesting = (props: {className: string; style?: CSSProperties;}) => {
+export const IconPaymentStreaming = (props: {className: string; style?: CSSProperties;}) => {
   return (
     <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 256 256" fill="none" fillRule="evenodd" clipRule="evenodd" xmlns="http://www.w3.org/2000/svg">
       <g fill="currentColor">
