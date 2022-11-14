@@ -9,13 +9,14 @@ import { InputTextAreaMean } from 'components/InputTextAreaMean';
 import { openNotification } from 'components/Notifications';
 import { SelectMean } from 'components/SelectMean';
 import { StepSelector } from 'components/StepSelector';
-import { ACCOUNTS_ROUTE_BASE_PATH, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VESTING_ROUTE_BASE_PATH } from 'constants/common';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VESTING_ROUTE_BASE_PATH } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { IconExternalLink } from "Icons";
 import { isError } from 'middleware/transactions';
 import { consoleOut, copyText, getTransactionOperationDescription } from 'middleware/ui';
+import { RegisteredAppPaths } from "models/accounts";
 import { TransactionStatus } from 'models/enums';
 import { CreateNewProposalParams, getMultisigInstructionSummary, NATIVE_LOADER, parseSerializedTx } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -99,7 +100,7 @@ export const MultisigProposalModal = (props: {
   const onContinueStepOneButtonClick = () => {
     if (selectedApp?.name === "Payment Streaming") {
       handleClose();
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/summary`;
+      const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
       navigate(url);
     } else if (selectedApp?.name === "Token Vesting") {
       handleClose();

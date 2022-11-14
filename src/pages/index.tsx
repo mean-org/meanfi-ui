@@ -6,7 +6,5 @@ export { HomeView } from "./home";
 export { NotFoundView } from './404';
 export { PlaygroundView } from './playground';
 export { StakingRewardsView } from './staking-rewards';
-export { StakingView } from './staking';
 export { StatsView } from './stats';
 export { SwapView } from './exchange';
-export { VestingView } from './vesting';

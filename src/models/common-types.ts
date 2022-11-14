@@ -1,6 +1,6 @@
 import { AllocationType } from "@mean-dao/msp";
 import BN from "bn.js";
-import { MetaInfoCtaAction } from "./enums";
+import { MetaInfoCtaAction } from "./accounts";
 import { StreamTreasuryType } from "./treasuries";
 
 export interface RoutingInfo {

@@ -21,7 +21,6 @@ import { TreasuryAddFundsModal } from "components/TreasuryAddFundsModal";
 import { TreasuryCreateModal } from "components/TreasuryCreateModal";
 import { TreasuryStreamCreateModal } from "components/TreasuryStreamCreateModal";
 import {
-  ACCOUNTS_ROUTE_BASE_PATH,
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   NO_FEES
@@ -36,6 +35,7 @@ import useWindowSize from "hooks/useWindowResize";
 import { IconArrowForward, IconEllipsisVertical, IconLoading } from "Icons";
 import { appConfig, customLogger } from "index";
 import { fetchAccountTokens } from "middleware/accounts";
+import { saveAppData } from "middleware/appPersistedData";
 import { NATIVE_SOL_MINT } from "middleware/ids";
 import { getStreamTitle } from "middleware/streams";
 import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, toUsCurrency } from "middleware/ui";
@@ -51,6 +51,7 @@ import {
   toTokenAmountBn,
   toUiAmount
 } from "middleware/utils";
+import { RegisteredAppPaths } from "models/accounts/AccountsPageUi";
 import { TreasuryTopupParams } from "models/common-types";
 import { OperationType, TransactionStatus } from "models/enums";
 import { ZERO_FEES } from "models/multisig";
@@ -300,6 +301,10 @@ export const MoneyStreamsInfoView = (props: {
     return new BN(0);
   }, []);
 
+  const isNewTreasury = useCallback((tsry: Treasury | TreasuryInfo): boolean => {
+    return tsry.version >= 2 ? true : false;
+  }, []);
+
   const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
 
     const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
@@ -311,14 +316,13 @@ export const MoneyStreamsInfoView = (props: {
     if (tsry) {
       const decimals = assToken ? assToken.decimals : 9;
       const unallocated = getUnallocatedBalance(tsry);
-      const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
-      const ub = isNewTreasury
+      const ub = isNewTreasury(tsry)
         ? new BigNumber(toUiAmount(unallocated, decimals)).toNumber()
         : new BigNumber(unallocated.toString()).toNumber();
       return ub;
     }
     return 0;
-  }, []);
+  }, [isNewTreasury]);
 
   const refreshTreasuriesSummary = useCallback(async () => {
 
@@ -333,9 +337,7 @@ export const MoneyStreamsInfoView = (props: {
 
     for (const treasury of treasuryList) {
 
-      const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2
-        ? true
-        : false;
+      const isNew = isNewTreasury(treasury);
 
       const treasuryType = isNew
         ? (treasury as Treasury).treasuryType
@@ -370,6 +372,7 @@ export const MoneyStreamsInfoView = (props: {
 
   }, [
     treasuryList,
+    isNewTreasury,
     getTokenByMintAddress,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
@@ -549,7 +552,7 @@ export const MoneyStreamsInfoView = (props: {
 
     const treasury = treasuryList.find(t => t.id === treasuryId);
     if (treasury) {
-      const isNew = treasury.version >= 2 ? true : false;
+      const isNew = isNewTreasury(treasury);
       const v1 = treasury as TreasuryInfo;
       const v2 = treasury as Treasury;
       const treasurer = isNew ? v2.treasurer : v1.treasurerAddress;
@@ -565,6 +568,7 @@ export const MoneyStreamsInfoView = (props: {
     publicKey,
     treasuryList,
     multisigAccounts,
+    isNewTreasury
   ]);
 
   //////////////////////
@@ -1078,7 +1082,7 @@ export const MoneyStreamsInfoView = (props: {
       const findStream = streamList.filter((stream: Stream | StreamInfo) => stream.id === e);
       const streamSelected = Object.assign({}, ...findStream);
 
-      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
+      const url = `/${RegisteredAppPaths.PaymentStreaming}/${isInboundStream(streamSelected) ? "incoming" : "outgoing"}/${e}?v=details`;
 
       navigate(url);
     }
@@ -1597,19 +1601,19 @@ export const MoneyStreamsInfoView = (props: {
   }, [getTimeRemaining, t]);
 
   const goToIncomingTabHandler = () => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/incoming`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
     navigate(url);
   }
 
   const goToOutgoingTabHandler = () => {
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/outgoing`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing`;
     navigate(url);
   }
 
   const onTabChange = useCallback((activeKey: string) => {
     consoleOut('Selected tab option:', activeKey, 'blue');
 
-    const url = `${ACCOUNTS_ROUTE_BASE_PATH}/streaming/${activeKey}`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/${activeKey}`;
     navigate(url);
   }, [navigate]);
 
@@ -1887,8 +1891,12 @@ export const MoneyStreamsInfoView = (props: {
 
   // Update total account balance
   useEffect(() => {
-    setTotalAccountBalance(withdrawalBalance + unallocatedBalance);
-  }, [unallocatedBalance, withdrawalBalance]);
+    const tvl = withdrawalBalance + unallocatedBalance;
+    setTotalAccountBalance(tvl);
+    // Every time the TVL is updated, save it in persistent store
+    const cacheEntryKey = 'streamingTvl';
+    saveAppData(cacheEntryKey, tvl.toString(), selectedAccount.address);
+  }, [selectedAccount.address, unallocatedBalance, withdrawalBalance]);
 
   // Calculate the rate per day for incoming streams
   useEffect(() => {
@@ -2541,21 +2549,21 @@ export const MoneyStreamsInfoView = (props: {
     return treasuryList.map((streamingAccount, index) => {
       const v1 = streamingAccount as unknown as TreasuryInfo;
       const v2 = streamingAccount as Treasury;
-      const isNewTreasury = streamingAccount && streamingAccount.version >= 2 ? true : false;
+      const isNew = isNewTreasury(streamingAccount);
 
       const onSelectedStreamingAccount = () => {
         // Sends outgoing stream value to the parent component "Accounts"
         onSendFromStreamingAccountInfo(streamingAccount);
       }
 
-      const tt = isNewTreasury ? v2.treasuryType : v1.type as TreasuryType;
+      const tt = isNew ? v2.treasuryType : v1.type as TreasuryType;
       const type = tt === TreasuryType.Open ? 'Open' : 'Locked';
 
       const badges = [type];
 
-      const title = isNewTreasury ? v2.name : v1.label || shortenAddress(v1.id, 8);
+      const title = isNew ? v2.name : v1.label || shortenAddress(v1.id, 8);
       const subtitle = shortenAddress(streamingAccount.id as string, 8);
-      const amount = isNewTreasury ? v2.totalStreams : v1.streamsAmount;
+      const amount = isNew ? v2.totalStreams : v1.streamsAmount;
       const resume = amount > 1 ? "streams" : "stream";
 
       return (

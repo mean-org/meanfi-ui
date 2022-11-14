@@ -670,6 +670,9 @@ export const PlaygroundView = () => {
           if (response) {
             setSelectedList(response.tokenList);
             setUserBalances(response.balancesMap);
+            if (!selectedToken) {
+              setSelectedToken(response.tokenList[0]);
+            }
           }
         });
 
@@ -680,10 +683,11 @@ export const PlaygroundView = () => {
     }
 
   }, [
+    priceList,
     publicKey,
     connection,
-    priceList,
     splTokenList,
+    selectedToken,
   ]);
 
   // Reset results when the filter is cleared
@@ -966,7 +970,18 @@ export const PlaygroundView = () => {
 
   const renderDemoNumberFormatting = (
     <>
-      <div className="tabset-heading">Number Formatting</div>
+      <div className="flex-fixed-right">
+        <div className="left">
+          <div className="tabset-heading">Number Formatting</div>
+        </div>
+        <div className="right">
+          <Tooltip title="Pick one of my assets" trigger="hover">
+            <span className="flat-button change-button" onClick={showTokenSelector}>
+              <IconCoin className="mean-svg-icons" />
+            </span>
+          </Tooltip>
+        </div>
+      </div>
       <div className="item-list-header">
         <div className="header-row">
           <div className="std-table-cell responsive-cell text-right px-1">
@@ -1575,7 +1590,7 @@ export const PlaygroundView = () => {
       <div className="tabset-heading">Test routing</div>
       <div className="text-left mb-3">
         <div className="form-label">Go to my connected account</div>
-        {renderRouteLink('With no params', '/accounts')}
+        {renderRouteLink('With no params', '/')}
       </div>
     </>
   );

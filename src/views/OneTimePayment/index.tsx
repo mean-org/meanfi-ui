@@ -8,7 +8,6 @@ import { segmentAnalytics } from 'App';
 import BN from 'bn.js';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
-  ACCOUNTS_ROUTE_BASE_PATH,
   CUSTOM_TOKEN_NAME,
   DATEPICKER_FORMAT,
   MIN_SOL_BALANCE_REQUIRED,
@@ -167,11 +166,6 @@ export const OneTimePayment = (props: {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
-
-    const path = window.location.pathname;
-    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
-      return;
-    }
 
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     setIsBusy(false);

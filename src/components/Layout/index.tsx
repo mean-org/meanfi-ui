@@ -144,7 +144,6 @@ export const AppLayout = React.memo((props: any) => {
       lastUsedAccount &&
       (lastUsedAccount.owner === publicKey.toBase58() || lastUsedAccount.address === publicKey.toBase58()) &&
       selectedAccount.address === lastUsedAccount.address
-      // (!selectedAccount.address || (!lastUsedAccount || lastUsedAccount.owner !== publicKey.toBase58() || lastUsedAccount.address !== publicKey.toBase58()) )
     ) {
       return false;
     }
@@ -522,7 +521,6 @@ export const AppLayout = React.memo((props: any) => {
                 </Link>
                 <AppBar menuType="desktop" onOpenDrawer={showDrawer} topNavVisible={(location.pathname === '/ido' || location.pathname === '/ido-live') ? false : true} />
               </div>
-              <AppBar menuType="mobile" topNavVisible={false} onOpenDrawer={showDrawer} />
             </Header>
             <Content>{props.children}</Content>
             <Footer>

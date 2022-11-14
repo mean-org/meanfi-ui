@@ -1,4 +1,4 @@
-import { EllipsisOutlined } from "@ant-design/icons";
+import { EllipsisOutlined, SettingOutlined } from "@ant-design/icons";
 import { Button, Dropdown, Menu, Modal } from "antd";
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { LanguageSelector } from "components/LanguageSelector";
@@ -16,7 +16,8 @@ import {
   IconMoon,
   IconPulse,
   IconSettings,
-  IconShareBox
+  IconShareBox,
+  IconStats
 } from "Icons";
 import { copyText } from "middleware/ui";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -190,7 +191,16 @@ export const AppContextMenu = () => {
     });
     items.push({type: "divider"});
     items.push({
-      key: '04-diagnosis-info',
+      key: '04-stats',
+      label: (
+        <Link to="/stats">
+          <IconStats className="mean-svg-icons" />
+          <span className="menu-item-text">{t('ui-menus.main-menu.stats')}</span>
+        </Link>
+      ),
+    });
+    items.push({
+      key: '05-diagnosis-info',
       label: (
         <div onClick={showDiagnosisInfoModal}>
           <IconPulse className="mean-svg-icons" />
@@ -199,7 +209,7 @@ export const AppContextMenu = () => {
       )
     });
     items.push({
-      key: '05-docs',
+      key: '06-docs',
       label: (
         <a href={MEAN_DAO_GITBOOKS_URL} target="_blank" rel="noopener noreferrer">
           <IconBookOpen className="mean-svg-icons" />
@@ -208,7 +218,7 @@ export const AppContextMenu = () => {
       )
     });
     items.push({
-      key: '06-code',
+      key: '07-code',
       label: (
         <a href={MEAN_DAO_GITHUB_ORG_URL} target="_blank" rel="noopener noreferrer">
           <IconCodeBlock className="mean-svg-icons" />
@@ -217,7 +227,7 @@ export const AppContextMenu = () => {
       )
     });
     items.push({
-      key: '07-discord',
+      key: '08-discord',
       label: (
         <a href={MEAN_FINANCE_DISCORD_URL} target="_blank" rel="noopener noreferrer">
           <IconChat className="mean-svg-icons" />
@@ -226,7 +236,7 @@ export const AppContextMenu = () => {
       )
     });
     items.push({
-      key: '08-help',
+      key: '09-help',
       label: (
         <a href={MEANFI_SUPPORT_URL} target="_blank" rel="noopener noreferrer">
           <IconLiveHelp className="mean-svg-icons" />
@@ -268,10 +278,11 @@ export const AppContextMenu = () => {
         <Button
           shape="round"
           type="text"
-          size="middle"
-          className="ant-btn-shaded"
+          size="large"
+          className="settings-button"
           onClick={(e) => e.preventDefault()}
-          icon={<EllipsisOutlined />}/>
+          icon={<SettingOutlined />}
+        />
       </Dropdown>
       <LanguageSelector
         isVisible={isLanguageModalVisible}

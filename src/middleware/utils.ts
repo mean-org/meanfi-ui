@@ -84,6 +84,7 @@ export function getTokenIcon(
 }
 
 export const isUnauthenticatedRoute = (route: string) => {
+  if (route === '/') { return false; }
   return UNAUTHENTICATED_ROUTES.some(r => r.startsWith(route));
 }
 
