@@ -4226,6 +4226,7 @@ export const AccountsView = () => {
 
   const getAssetsGroupOptions = () => {
     const nftCount = accountNfts ? accountNfts.length : 0;
+    const visibleApps = KNOWN_APPS.filter(a => a.visible).length;
     const options: SegmentedLabeledOption[] = [
       {
         label: `Tokens (${accountTokens.length})`,
@@ -4236,7 +4237,7 @@ export const AccountsView = () => {
         value: AssetGroups.Nfts
       },
       {
-        label: `Apps (${KNOWN_APPS.length})`,
+        label: `Apps (${visibleApps})`,
         value: AssetGroups.Apps
       },
       {
