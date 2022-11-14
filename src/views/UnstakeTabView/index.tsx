@@ -30,6 +30,13 @@ export const UnstakeTabView = (props: {
   unstakedToken: TokenInfo | undefined;
 }) => {
   const {
+    stakeClient,
+    tokenBalance,
+    selectedToken,
+    unstakedToken,
+  } = props;
+
+  const {
     coinPrices,
     loadingPrices,
     transactionStatus,
@@ -72,13 +79,13 @@ export const UnstakeTabView = (props: {
   const onChangeValue = (value: string) => {
     setPercentageValue(value);
     setCanFetchUnstakeQuote(true);
-  };  
+  };
 
   const handleFromCoinAmountChange = (e: any) => {
 
     let newValue = e.target.value;
 
-    const decimals = props.selectedToken ? props.selectedToken.decimals : 0;
+    const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
 
@@ -112,27 +119,27 @@ export const UnstakeTabView = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-        ? `${t("staking.panel-right.tabset.unstake.unstake-button-busy")} ${props.selectedToken && props.selectedToken.symbol}`
-        : !props.selectedToken || !props.tokenBalance
-          ? `${t("staking.panel-right.tabset.unstake.unstake-button-unavailable")} ${props.selectedToken && props.selectedToken.symbol}`
+        ? `${t("staking.panel-right.tabset.unstake.unstake-button-busy")} ${selectedToken && selectedToken.symbol}`
+        : !selectedToken || !tokenBalance
+          ? `${t("staking.panel-right.tabset.unstake.unstake-button-unavailable")} ${selectedToken && selectedToken.symbol}`
           : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
             ? t('transactions.validation.no-amount')
-            : parseFloat(fromCoinAmount) > props.tokenBalance
+            : parseFloat(fromCoinAmount) > tokenBalance
               ? t('transactions.validation.amount-high')
-              : `${t("staking.panel-right.tabset.unstake.unstake-button-available")} ${props.selectedToken && props.selectedToken.symbol}`;
+              : `${t("staking.panel-right.tabset.unstake.unstake-button-available")} ${selectedToken && selectedToken.symbol}`;
   }, [
     fromCoinAmount,
-    props.selectedToken,
-    props.tokenBalance,
+    selectedToken,
+    tokenBalance,
     connected,
     isBusy,
     t,
   ]);
 
   const isUnstakingFormValid = (): boolean => {
-    return  fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= props.tokenBalance
+    return fromCoinAmount &&
+      parseFloat(fromCoinAmount) > 0 &&
+      parseFloat(fromCoinAmount) <= props.tokenBalance
       ? true
       : false;
   }
@@ -155,7 +162,7 @@ export const UnstakeTabView = (props: {
     resetTransactionStatus();
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && props.stakeClient && props.selectedToken) {
+      if (wallet && stakeClient && selectedToken) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction,
@@ -177,7 +184,7 @@ export const UnstakeTabView = (props: {
 
         // Report event to Segment analytics
         const segmentData: SegmentUnstakeMeanData = {
-          asset: props.selectedToken.symbol,
+          asset: selectedToken.symbol,
           assetPrice: sMeanToMeanRate,
           unstakedAsset: 'MEAN',
           unstakedAssetPrice: meanPrice,
@@ -188,7 +195,7 @@ export const UnstakeTabView = (props: {
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFormButton, segmentData);
 
-        return await props.stakeClient
+        return await stakeClient
           .unstakeTransaction(
             uiAmount // uiAmount
           )
@@ -239,7 +246,7 @@ export const UnstakeTabView = (props: {
       if (connection && wallet && wallet.publicKey && transaction) {
         const {
           context: { slot: minContextSlot },
-          value: { blockhash, lastValidBlockHeight },
+          value: { blockhash },
         } = await connection.getLatestBlockhashAndContext();
 
         transaction.feePayer = wallet.publicKey;
@@ -296,7 +303,7 @@ export const UnstakeTabView = (props: {
       }
     };
 
-    if (wallet && props.selectedToken) {
+    if (wallet && selectedToken) {
       setIsBusy(true);
       const create = await createTx();
       consoleOut("created:", create);
@@ -316,13 +323,13 @@ export const UnstakeTabView = (props: {
             loadingTitle: "Confirming transaction",
             loadingMessage: `Unstaking ${formatThousands(
               parseFloat(fromCoinAmount),
-              props.selectedToken.decimals
-            )} ${props.selectedToken.symbol}`,
+              selectedToken.decimals
+            )} ${selectedToken.symbol}`,
             completedTitle: "Transaction confirmed",
             completedMessage: `Successfully unstaked ${formatThousands(
               parseFloat(fromCoinAmount),
-              props.selectedToken.decimals
-            )} ${props.selectedToken.symbol}`,
+              selectedToken.decimals
+            )} ${selectedToken.symbol}`,
           });
           resetTransactionStatus();
           setFromCoinAmount("");
@@ -345,8 +352,8 @@ export const UnstakeTabView = (props: {
     fromCoinAmount,
     sMeanToMeanRate,
     unstakeMeanValue,
-    props.stakeClient,
-    props.selectedToken,
+    stakeClient,
+    selectedToken,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
     resetTransactionStatus,
@@ -430,22 +437,22 @@ export const UnstakeTabView = (props: {
   // Keep MEAN price updated
   useEffect(() => {
 
-    if (coinPrices && props.unstakedToken) {
-      const price = getTokenPriceBySymbol(props.unstakedToken.symbol);
+    if (coinPrices && unstakedToken) {
+      const price = getTokenPriceBySymbol(unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
       setMeanPrice(price);
     }
 
-  }, [coinPrices, getTokenPriceBySymbol, props.unstakedToken]);
+  }, [coinPrices, getTokenPriceBySymbol, unstakedToken]);
 
   // Unstake quote - For full unstaked balance
   useEffect(() => {
 
     const getMeanQuote = async (sMEAN: number) => {
-      if (!props.stakeClient) { return 0; }
+      if (!stakeClient) { return 0; }
 
       try {
-        const result = await props.stakeClient.getUnstakeQuote(sMEAN);
+        const result = await stakeClient.getUnstakeQuote(sMEAN);
         return result.meanOutUiAmount;
       } catch (error) {
         console.error(error);
@@ -453,10 +460,10 @@ export const UnstakeTabView = (props: {
       }
     }
 
-    if (props.selectedToken && props.selectedToken.symbol === "sMEAN") {
-      if (props.tokenBalance > 0) {
-        getMeanQuote(props.tokenBalance).then((value) => {
-          consoleOut(`Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value, props.selectedToken?.decimals)} MEAN`, 'blue');
+    if (selectedToken && selectedToken.symbol === "sMEAN") {
+      if (tokenBalance > 0) {
+        getMeanQuote(tokenBalance).then((value) => {
+          consoleOut(`Quote for ${formatThousands(tokenBalance, selectedToken?.decimals)} sMEAN`, `${formatThousands(value, selectedToken?.decimals)} MEAN`, 'blue');
           setMeanWorthOfsMean(value);
         })
       } else {
@@ -464,25 +471,25 @@ export const UnstakeTabView = (props: {
       }
     }
   }, [
-    props.stakeClient, 
-    props.selectedToken, 
-    props.tokenBalance,
+    stakeClient,
+    selectedToken,
+    tokenBalance,
     fromCoinAmount
   ]);
 
   // Stake quote - For input amount
   useEffect(() => {
-    if (!props.stakeClient) {
+    if (!stakeClient) {
       return;
     }
 
     if (parseFloat(fromCoinAmount) > 0 && canFetchUnstakeQuote) {
       setCanFetchUnstakeQuote(false);
 
-      props.stakeClient.getUnstakeQuote(parseFloat(fromCoinAmount)).then((value: UnstakeQuote) => {
+      stakeClient.getUnstakeQuote(parseFloat(fromCoinAmount)).then((value: UnstakeQuote) => {
         consoleOut('unStakeQuote:', value, 'blue');
         setUnstakeMeanValue(value.meanOutUiAmount.toString());
-        consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value.meanOutUiAmount, props.selectedToken?.decimals)} MEAN`, 'blue');
+        consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), selectedToken?.decimals)} sMEAN`, `${formatThousands(value.meanOutUiAmount, selectedToken?.decimals)} MEAN`, 'blue');
         setSMeanToMeanRate(value.sMeanToMeanRateUiAmount);
       }).catch((error: any) => {
         console.error(error);
@@ -491,28 +498,28 @@ export const UnstakeTabView = (props: {
 
   }, [
     fromCoinAmount,
-    props.stakeClient,
+    stakeClient,
     canFetchUnstakeQuote,
-    props.selectedToken,
+    selectedToken,
   ]);
 
   useEffect(() => {
-    const percentageFromCoinAmount = props.tokenBalance > 0 ? `${(props.tokenBalance*parseFloat(percentageValue)/100).toFixed(props.selectedToken?.decimals || 9)}` : '';
+    const percentageFromCoinAmount = props.tokenBalance > 0 ? `${(props.tokenBalance * parseFloat(percentageValue) / 100).toFixed(props.selectedToken?.decimals || 9)}` : '';
 
     if (percentageValue) {
       setFromCoinAmount(percentageFromCoinAmount);
       setPercentageValue("");
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentageValue]);
 
   /**
    * The UnstakeQuote method returns sMeanToMeanRateUiAmount which is (MEAN/sMEAN rate)
    * So we calculate the USD Amount relative to the input sMEAN: sMEAN x sMeanToMeanRateUiAmount x MEAN_current_price
    */
-   const getUsdAmountForSmeanInput = useCallback(() => {
-    if (fromCoinAmount && parseFloat(fromCoinAmount) > 0 && sMeanToMeanRate && meanPrice ) {
+  const getUsdAmountForSmeanInput = useCallback(() => {
+    if (fromCoinAmount && parseFloat(fromCoinAmount) > 0 && sMeanToMeanRate && meanPrice) {
       const usdAmount = parseFloat(fromCoinAmount) * sMeanToMeanRate * meanPrice;
       return usdAmount;
     }
@@ -544,7 +551,7 @@ export const UnstakeTabView = (props: {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
       setCanSubscribe(true);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ///////////////
@@ -556,9 +563,9 @@ export const UnstakeTabView = (props: {
       <div className="mb-2 px-1">
         <span className="info-label">
           {
-            props.tokenBalance
+            tokenBalance
               ? (
-                <span>You have {cutNumber(props.tokenBalance, 6)} sMEAN staked{meanWorthOfsMean ? ` which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.` : '.'}</span>
+                <span>You have {cutNumber(tokenBalance, 6)} sMEAN staked{meanWorthOfsMean ? ` which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.` : '.'}</span>
               )
               : t("staking.panel-right.tabset.unstake.notification-label-one-error")
           }
@@ -570,7 +577,7 @@ export const UnstakeTabView = (props: {
           <div className="token-group">
             {percentages.map((percentage, index) => (
               <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                <div className={`token-max simplelink ${props.tokenBalance !== 0 ? "active" : "disabled"}`} onClick={() => onChangeValue(percentage)}>{percentage}%</div>
+                <div className={`token-max simplelink ${tokenBalance !== 0 ? "active" : "disabled"}`} onClick={() => onChangeValue(percentage)}>{percentage}%</div>
               </div>
             ))}
           </div>
@@ -579,7 +586,7 @@ export const UnstakeTabView = (props: {
           <div className="left">
             <span className="add-on">
               {props.selectedToken && (
-                <TokenDisplay onClick={() => {}}
+                <TokenDisplay onClick={() => { }}
                   mintAddress={props.selectedToken.address}
                   name={props.selectedToken.name}
                   className="click-disabled"
@@ -610,9 +617,9 @@ export const UnstakeTabView = (props: {
             <span>{t('staking.panel-right.tabset.unstake.send-amount.label-right')}:</span>
             <span>
               {`${props.tokenBalance && props.selectedToken
-                  ? getAmountWithSymbol(props.tokenBalance, props.selectedToken?.address, true)
-                  : "0"
-              }`}
+                ? getAmountWithSymbol(props.tokenBalance, props.selectedToken?.address, true)
+                : "0"
+                }`}
             </span>
           </div>
           <div className="right inner-label">

@@ -14,6 +14,18 @@ export const initialSummary: StreamsSummary = {
     totalAmount: 0
 };
 
+export interface PaymentStreamingStats {
+    totalStreamingAccounts: number;
+    incomingAmount: number;
+    outgoingAmount: number;
+}
+
+export const initialStats: PaymentStreamingStats = {
+    totalStreamingAccounts: 0,
+    incomingAmount: 0,
+    outgoingAmount: 0,
+};
+
 export interface TreasuryStreamsBreakdown {
     total: number;
     scheduled: number;

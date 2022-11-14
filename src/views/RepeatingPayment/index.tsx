@@ -14,7 +14,6 @@ import { InfoIcon } from 'components/InfoIcon';
 import { StepSelector } from 'components/StepSelector';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
-  ACCOUNTS_ROUTE_BASE_PATH,
   DATEPICKER_FORMAT,
   MIN_SOL_BALANCE_REQUIRED,
   NO_FEES,
@@ -186,12 +185,6 @@ export const RepeatingPayment = (props: {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
-
-    const path = window.location.pathname;
-    if (!path.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
-      return;
-    }
-
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     setIsBusy(false);
     resetTransactionStatus();

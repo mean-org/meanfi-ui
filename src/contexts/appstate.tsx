@@ -3,15 +3,15 @@ import { MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionSta
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream } from "@mean-dao/msp";
+import { FindNftsByOwnerOutput } from "@metaplex-foundation/js";
 import { PublicKey } from "@solana/web3.js";
 import { BN } from "bn.js";
 import { isCacheItemExpired } from "cache/persistentCache";
 import { openNotification } from "components/Notifications";
-import { ACCOUNTS_ROUTE_BASE_PATH } from "constants/common";
 import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from "constants/tokens";
 import { TREASURY_TYPE_OPTIONS } from "constants/treasury-type-options";
 import { appConfig, customLogger } from "index";
-import { getUserAccountTokens } from "middleware/accounts";
+import { getAccountNFTs, getUserAccountTokens } from "middleware/accounts";
 import { getPrices, getSolanaTokenListKeyNameByCluster, getSolFlareTokenList, getSplTokens } from "middleware/api";
 import { MappedTransaction } from "middleware/history";
 import { SYSTEM_PROGRAM_ID } from "middleware/ids";
@@ -23,13 +23,12 @@ import { DdcaFrequencyOption } from "models/ddca-models";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "models/enums";
 import { MultisigVault } from "models/multisig";
 import { TokenInfo } from "models/SolanaTokenInfo";
-import { initialSummary, StreamsSummary } from "models/streams";
+import { initialStats, initialSummary, PaymentStreamingStats, StreamsSummary } from "models/streams";
 import { TokenPrice } from "models/TokenPrice";
 import { TreasuryTypeOption } from "models/treasuries";
 import moment from "moment";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
 import {
   DAO_CORE_TEAM_WHITELIST, DDCA_FREQUENCY_OPTIONS,
   FIVETY_SECONDS_REFRESH_TIMEOUT, FIVE_MINUTES_REFRESH_TIMEOUT, FORTY_SECONDS_REFRESH_TIMEOUT,
@@ -123,6 +122,8 @@ interface AppStateConfig {
   lastTxSignature: string;
   streamsSummary: StreamsSummary;
   lastStreamsSummary: StreamsSummary;
+  paymentStreamingStats: PaymentStreamingStats;
+  accountNfts: FindNftsByOwnerOutput | undefined;
   // DDCAs
   ddcaOption: DdcaFrequencyOption | undefined;
   recurringBuys: DdcaAccount[];
@@ -206,6 +207,7 @@ interface AppStateConfig {
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
+  setPaymentStreamingStats: (summary: PaymentStreamingStats) => void;
   // DDCAs
   setDdcaOption: (name: string) => void;
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
@@ -299,6 +301,8 @@ const contextDefaultValues: AppStateConfig = {
   lastTxSignature: '',
   streamsSummary: initialSummary,
   lastStreamsSummary: initialSummary,
+  paymentStreamingStats: initialStats,
+  accountNfts: undefined,
   // DDCAs
   ddcaOption: undefined,
   recurringBuys: [],
@@ -382,6 +386,7 @@ const contextDefaultValues: AppStateConfig = {
   setSelectedAsset: () => {},
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
+  setPaymentStreamingStats: () => {},
   // DDCAs
   setDdcaOption: () => {},
   setRecurringBuys: () => {},
@@ -407,7 +412,6 @@ const contextDefaultValues: AppStateConfig = {
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
 
 const AppStateProvider: React.FC = ({ children }) => {
-  const location = useLocation();
   const { t } = useTranslation('common');
   // Parent contexts
   const connection = useConnection();
@@ -486,6 +490,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
+  const [paymentStreamingStats, setPaymentStreamingStats] = useState<PaymentStreamingStats>(contextDefaultValues.paymentStreamingStats);
+  const [accountNfts, setAccountNfts] = useState<FindNftsByOwnerOutput | undefined>(contextDefaultValues.accountNfts);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
   const [meanTokenList, setMeanTokenlist] = useState<UserTokenAccount[] | undefined>(undefined);
   const [tokensLoaded, setTokensLoaded] = useState(contextDefaultValues.tokensLoaded);
@@ -1223,7 +1229,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     let timer: any;
 
-    if (selectedAccount.address && location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) && !customStreamDocked && !isDowngradedPerformance) {
+    if (selectedAccount.address && !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
         consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
         refreshStreamList();
@@ -1236,7 +1242,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       }
     }
   }, [
-    location,
     publicKey,
     customStreamDocked,
     selectedAccount.address,
@@ -1512,6 +1517,29 @@ const AppStateProvider: React.FC = ({ children }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
 
+  // Get and populate the list of NFTs that the user holds
+  useEffect(() => {
+    if (
+      !connection ||
+      !publicKey ||
+      !selectedAccount.address ||
+      !shouldLoadTokens ||
+      isSelectingAccount
+    ) {
+      return;
+    }
+
+    getAccountNFTs(
+      connection,
+      selectedAccount.address
+    ).then(response => {
+      consoleOut('getAccountNFTs() response:', response, 'blue');
+      setAccountNfts(response)
+    })
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens]);
+
   // Same as above but on demand
   const getAssetsByAccount = useCallback((account: string) => {
 
@@ -1724,6 +1752,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         lastTxSignature,
         streamsSummary,
         lastStreamsSummary,
+        paymentStreamingStats,
+        accountNfts,
         recurringBuys,
         loadingRecurringBuys,
         multisigAccounts,
@@ -1800,6 +1830,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedAsset,
         setStreamsSummary,
         setLastStreamsSummary,
+        setPaymentStreamingStats,
         setRecurringBuys,
         setLoadingRecurringBuys,
         setNeedReloadMultisigAccounts,

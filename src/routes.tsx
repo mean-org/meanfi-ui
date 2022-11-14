@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { PageLoadingView } from "views/PageLoading";
+import { PageLoadingView } from "views";
 import { AppLayout } from "./components/Layout";
 import { AccountsProvider } from "./contexts/accounts";
 import AppStateProvider from "./contexts/appstate";
@@ -19,10 +19,8 @@ import {
   StakingRewardsView,
   StatsView,
   SwapView,
-  VestingView
 } from "./pages";
 import { ServiceUnavailableView } from "./pages/service-unavailable";
-import { StakingView } from "./pages/staking";
 
 const CreateSafeView = React.lazy(() => import('views/CreateSafe'));
 
@@ -30,62 +28,64 @@ export function AppRoutes() {
 
   return (
     <>
-    <OnlineStatusProvider>
-      <BrowserRouter basename={"/"}>
-        <ConnectionProvider>
-          <WalletProvider>
-            <AccountsProvider>
-              <TxConfirmationProvider>
-                <AppStateProvider>
-                  <AppLayout>
-                    <Routes>
-                      <Route path="/" element={<Navigate replace to='/accounts' />} />
-                      {/* CreateSafeView */}
-                      <Route
-                        path="/create-safe"
-                        element={
-                          <React.Suspense fallback={<PageLoadingView />}>
-                            <CreateSafeView />
-                          </React.Suspense>
-                        }
-                      />
-                      {/* Accounts routes */}
-                      <Route path="/accounts" element={<AccountsView />} />
-                      <Route path="/accounts/assets" element={<AccountsView />} />
-                      <Route path="/accounts/assets/:asset" element={<AccountsView />} />
-                      <Route path="/accounts/streaming" element={<AccountsView />} />
-                      <Route path="/accounts/streaming/:streamingTab" element={<AccountsView />} />
-                      <Route path="/accounts/streaming/:streamingTab/:streamingItemId" element={<AccountsView />} />
-                      <Route path="/accounts/super-safe" element={<AccountsView />} />
-                      <Route path="/accounts/super-safe/proposals/:id" element={<AccountsView />} />
-                      <Route path="/accounts/super-safe/programs/:id" element={<AccountsView />} />
-                      {/* Vesting routes */}
-                      <Route path="/vesting" element={<VestingView />} />
-                      <Route path="/vesting/:vestingContract" element={<VestingView />} />
-                      <Route path="/vesting/:vestingContract/:activeTab" element={<VestingView />} />
-                      {/* Exchange */}
-                      <Route path="/exchange" element={<SwapView />} />
-                      {(isProd() || isLocal()) && (
-                        <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
-                      )}
-                      {/* All others */}
-                      <Route path="/staking" element={<StakingView />} />
-                      <Route path="/staking-rewards" element={<StakingRewardsView />} />
-                      <Route path="/stats" element={<StatsView />} />
-                      <Route path="/custody" element={<CustodyView />} />
-                      <Route path="/faucet" element={<FaucetView />} />
-                      <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
-                      <Route path="/playground" element={<PlaygroundView />} />
-                      <Route path='*' element={<NotFoundView />} />
-                    </Routes>
-                  </AppLayout>
-                </AppStateProvider>
-              </TxConfirmationProvider>
-            </AccountsProvider>
-          </WalletProvider>
-        </ConnectionProvider>
-      </BrowserRouter>
-    </OnlineStatusProvider>
+      <OnlineStatusProvider>
+        <BrowserRouter basename={"/"}>
+          <ConnectionProvider>
+            <WalletProvider>
+              <AccountsProvider>
+                <TxConfirmationProvider>
+                  <AppStateProvider>
+                    <AppLayout>
+                      <Routes>
+                        <Route index path="/" element={<AccountsView />} />
+                        <Route
+                          path="/create-safe"
+                          element={
+                            <React.Suspense fallback={<PageLoadingView addWrapper={true} />}>
+                              <CreateSafeView />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route path="/my-account" element={<AccountsView />} />
+                        <Route path="/exchange" element={<SwapView />} />
+                        {(isProd() || isLocal()) && (
+                          <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
+                        )}
+                        <Route path="/stats" element={<StatsView />} />
+                        <Route path="/faucet" element={<FaucetView />} />
+                        <Route path="/custody" element={<CustodyView />} />
+                        <Route path="/playground" element={<PlaygroundView />} />
+                        <Route path="/staking-rewards" element={<StakingRewardsView />} />
+                        {/* Assets and NFTs */}
+                        <Route path="/assets" element={<AccountsView />} />
+                        <Route path="/assets/:asset" element={<AccountsView />} />
+                        {/* Well known App routes */}
+                        <Route path="/vesting" element={<Navigate replace to='/vesting/summary' />} />
+                        <Route path="/vesting/summary" element={<AccountsView />} />
+                        <Route path="/vesting/contracts" element={<AccountsView />} />
+                        <Route path="/vesting/:vestingContract" element={<AccountsView />} />
+                        <Route path="/vesting/:vestingContract/:activeTab" element={<AccountsView />} />
+                        <Route path="/streaming" element={<AccountsView />} />
+                        <Route path="/streaming/:streamingTab" element={<AccountsView />} />
+                        <Route path="/streaming/:streamingTab/:streamingItemId" element={<AccountsView />} />
+                        <Route path="/super-safe" element={<AccountsView />} />
+                        <Route path="/super-safe/proposals/:id" element={<AccountsView />} />
+                        <Route path="/super-safe/programs/:id" element={<AccountsView />} />
+                        <Route path="/staking" element={<AccountsView />} />
+                        {/* Apps general route matcher */}
+                        <Route path="/:appId" element={<AccountsView />} />
+                        {/* Not found and service unavailable */}
+                        <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
+                        <Route path='*' element={<NotFoundView />} />
+                      </Routes>
+                    </AppLayout>
+                  </AppStateProvider>
+                </TxConfirmationProvider>
+              </AccountsProvider>
+            </WalletProvider>
+          </ConnectionProvider>
+        </BrowserRouter>
+      </OnlineStatusProvider>
     </>
   );
 }

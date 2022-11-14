@@ -1,20 +1,4 @@
 .vesting {
-    .VestingProgressChartComponent {
-        font-family: sans-serif;
-        text-align: center;
-    }
-
-    .vesting-pie-chart {
-        width: 100% !important;
-        cursor: pointer;
-    }
-
-    svg.recharts-surface {
-        display: block;
-        width: 100% !important;
-        margin: 0 !important;
-        overflow: visible;
-    }
 
     @media (max-width: 575.98px) {
         .meanfi-two-panel-layout {
@@ -35,104 +19,103 @@
         }
     }
 
-    .interaction-area {
-        .meanfi-two-panel-layout {
-            .meanfi-two-panel-left {
-                .transaction-list-row {
-                    border-radius: unset;
-                    border-top: none;
-                    border-bottom: none;
-                    border-right: none;
-                    border-left: 4px solid transparent;
-                    &.selected {
-                        border-left-color: var(--color-primary-highlight);
-                        background-color: var(--color-secondary-alpha-02);
+    .vesting-contract-list {
+        .transaction-list-row {
+            border-top: none;
+            border-bottom: none;
+            border-right: none;
+            border-left: 4px solid transparent;
+            margin: 0 6px 0 0;
+            &.selected {
+                border-left-color: var(--color-primary-highlight);
+                background-color: var(--color-secondary-alpha-02);
+            }
+        }
+    }
+
+    .meanfi-two-panel-layout {
+        .meanfi-two-panel-right {
+            .flexible-column-bottom {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                justify-content: flex-start;
+                .top {
+                    flex: 0 0 auto;
+                    .details-panel-meta {
+                        .transaction-list-row {
+                            .icon-cell {
+                                flex: 0 0 44px;
+                                .token-icon {
+                                    width: auto;
+                                    height: auto;
+                                    background-color: transparent;
+                                    > img {
+                                        border-radius: 50%;
+                                    }
+                                }
+                            }
+                            .description-cell {
+                                .subtitle {
+                                    font-size: 13px;
+                                    line-height: 1.3;
+                                    color: var(--color-secondary-alpha-50);
+                                }
+                            }
+                        }
+                        .vested-amount {
+                            line-height: 1.3;
+                            font-size: 0.85rem;
+                            color: var(--color-secondary-alpha-50);
+                            margin-top: 6px;
+                        }
+                        .vesting-progress {
+                            margin-top: -2px;
+                        }
+                    }
+                }
+                .bottom {
+                    flex: auto;
+                    .details-panel-meta {
+                        .progress-status-icon {
+                            color: var(--color-secondary-alpha-50);
+                            > span .anticon {
+                                margin-top: 4px;
+                            }
+                        }
                     }
                 }
             }
-            .meanfi-two-panel-right {
-                .flexible-column-bottom {
-                    display: flex;
-                    flex-direction: column;
-                    height: 100%;
-                    justify-content: flex-start;
-                    .top {
-                        flex: 0 0 auto;
-                        .details-panel-meta {
-                            .transaction-list-row {
-                                .icon-cell {
-                                    flex: 0 0 44px;
-                                    .token-icon {
-                                        width: auto;
-                                        height: auto;
-                                        background-color: transparent;
-                                        > img {
-                                            border-radius: 50%;
-                                        }
-                                    }
-                                }
-                                .description-cell {
-                                    .subtitle {
-                                        font-size: 13px;
-                                        line-height: 1.3;
-                                        color: var(--color-secondary-alpha-50);
-                                    }
-                                }
-                            }
-                            .vested-amount {
-                                line-height: 1.3;
-                                font-size: 0.85rem;
-                                color: var(--color-secondary-alpha-50);
-                                margin-top: 6px;
-                            }
-                            .vesting-progress {
-                                margin-top: -2px;
-                            }
+            .vesting-contract-streams {
+                .transaction-list-row {
+                    border-radius: unset;
+                    border: none;
+                    height: 50px;
+                    padding: 6px;
+                    &:not(.no-pointer) {
+                        cursor: auto;
+                    }
+                    .description-cell {
+                        .title {
+                            display: inline-block;
+                            font-size: 0.85rem;
+                            line-height: 1;
+                            color: var(--color-secondary-alpha-85);
+                            width: 100%;
+                        }
+                        .subtitle {
+                            font-size: 0.75rem;
+                            line-height: 1.2;
                         }
                     }
-                    .bottom {
-                        flex: auto;
-                        .details-panel-meta {
-                            .progress-status-icon {
-                                color: var(--color-secondary-alpha-50);
-                                > span .anticon {
-                                    margin-top: 4px;
-                                }
-                            }
+                    .rate-cell {
+                        .interval {
+                            margin-top: 2px;
                         }
                     }
-                }
-                .vesting-contract-streams {
-                    .transaction-list-row {
-                        border-radius: unset;
-                        border: none;
-                        height: 50px;
-                        padding: 6px;
-                        &:not(.no-pointer) {
-                            cursor: auto;
-                        }
-                        .description-cell {
-                            .title {
-                                display: inline-block;
-                                font-size: 0.85rem;
-                                line-height: 1;
-                                color: var(--color-secondary-alpha-85);
-                                width: 100%;
-                            }
-                            .subtitle {
-                                font-size: 0.75rem;
-                                line-height: 1.2;
-                            }
-                        }
-                        .rate-cell {
-                            .interval {
-                                margin-top: 2px;
-                            }
-                        }
-                        .actions-cell {
-                            flex: 0 0 24px !important;
-                            padding-left: 4px;
-                        }
+                    .actions-cell {
+                        flex: 0 0 24px !important;
+                        padding-left: 4px;
                     }
                 }
             }
@@ -157,7 +140,7 @@
         height: 100%;
     }
 
-    .interaction-area .elastic-form-container,
+    .elastic-form-container,
     .ant-modal-content {
         .cta-container {
             display: flex;
@@ -209,6 +192,7 @@
         }
     }
 
+    /*
     .transaction-list-row {
         .description-cell {
             flex: auto !important;
@@ -223,6 +207,7 @@
             padding: 0 !important;
         }
     }
+    */
 
     .vesting-list-progress-bar {
         &.large,

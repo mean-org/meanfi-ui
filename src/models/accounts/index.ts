@@ -2,7 +2,7 @@ export * from "./AccountContext";
 export * from "./AccountDetails";
 export * from "./AccountTokenParsedInfo";
 export * from "./AccountsDictionary";
-export * from "./AssetCta";
+export * from "./AccountsPageUi";
 export * from "./ProgramAccounts";
 export * from "./SimpleTokenInfo";
 export * from "./TokenAccount";
