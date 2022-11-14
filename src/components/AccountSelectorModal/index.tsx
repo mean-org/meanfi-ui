@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, Modal, Tooltip } from "antd";
 import { AccountSelector } from '../AccountSelector';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { isInXnftWallet } from 'integrations/xnft/xnft-wallet-adapter';
 
 export const AccountSelectorModal = (props: {
   isFullWorkflowEnabled?: boolean;
@@ -26,7 +27,7 @@ export const AccountSelectorModal = (props: {
       className="mean-modal simple-modal unpadded-content multi-step"
       title={
         <>
-          {isFullWorkflowEnabled && (
+          {!isInXnftWallet() && isFullWorkflowEnabled && (
             <div className="back-button ant-modal-close">
               <Tooltip placement="bottom" title="Back to wallet selection">
                 <Button

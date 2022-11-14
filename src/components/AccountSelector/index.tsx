@@ -5,6 +5,7 @@ import { openNotification } from "components/Notifications";
 import { AppStateContext } from "contexts/appstate";
 import { useWallet } from "contexts/wallet";
 import { IconCheck, IconCopy, IconLoading, IconVerticalEllipsis } from "Icons";
+import { isInXnftWallet } from "integrations/xnft/xnft-wallet-adapter";
 import { SYSTEM_PROGRAM_ID } from "middleware/ids";
 import { consoleOut, copyText, kFormatter, toUsCurrency } from "middleware/ui";
 import { shortenAddress } from "middleware/utils";
@@ -258,7 +259,7 @@ export const AccountSelector = (props: {
           <div className="left flex-row align-items-center">
             <span className="text-uppercase">Wallets</span>
           </div>
-          {!isFullWorkflowEnabled && (
+          {!isInXnftWallet() && !isFullWorkflowEnabled && (
             <div className="right">
               <span className="secondary-link underlined" onClick={onDisconnectWallet}>Disconnect</span>
             </div>

@@ -34,6 +34,7 @@ import ReactGA from 'react-ga';
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./style.scss";
+import "./xnft.scss";
 
 const { Header, Content, Footer } = Layout;
 

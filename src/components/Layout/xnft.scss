@@ -1,0 +1,19 @@
+.in-xnft-wallet {
+  .App-Bar {
+    padding-right: calc(87px + 16px + 16px);
+  }
+  .App-Bar
+    .mobile-menu
+    input[type='checkbox']#overlay-input:checked
+    ~ #overlay-button {
+    position: static;
+  }
+  @media (max-width: 575.98px) {
+    &.menu-open .app-title > .app-logo {
+      position: relative;
+      left: unset;
+      top: unset;
+      transform: unset;
+    }
+  }
+}
