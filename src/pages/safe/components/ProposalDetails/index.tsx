@@ -1,15 +1,9 @@
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
-import {
-  MeanMultisig,
-  MultisigParticipant,
-  MultisigTransaction,
-  MultisigTransactionActivityItem,
-  MultisigTransactionStatus,
-} from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MultisigParticipant, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { IDL as SplTokenIdl } from '@project-serum/anchor/dist/cjs/spl/token';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey, SystemProgram } from '@solana/web3.js';
-import { Button, Col, Row } from 'antd';
+import { Button, Col, Row } from "antd";
 import { openNotification } from 'components/Notifications';
 import { RejectCancelModal } from 'components/RejectCancelModal';
 import { ResumeItem } from 'components/ResumeItem';
@@ -30,18 +24,13 @@ import {
   IconThumbsDown,
   IconThumbsUp,
   IconUser,
-  IconUserClock,
-} from 'Icons';
+  IconUserClock
+} from "Icons";
 import { consoleOut, copyText } from 'middleware/ui';
 import { shortenAddress } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
-import {
-  createAnchorProgram,
-  MultisigTransactionInstructionInfo,
-  parseMultisigProposalIx,
-  parseMultisigSystemProposalIx,
-} from 'models/multisig';
-import moment from 'moment';
+import { createAnchorProgram, MultisigTransactionInstructionInfo, parseMultisigProposalIx, parseMultisigSystemProposalIx } from 'models/multisig';
+import moment from "moment";
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RenderInstructions } from './RenderInstructions';
@@ -63,8 +52,11 @@ export const ProposalDetailsView = (props: {
   selectedMultisig?: any;
   solanaApps?: any;
 }) => {
-  const { transactionStatus, setTransactionStatus } =
-    useContext(AppStateContext);
+
+  const {
+    transactionStatus,
+    setTransactionStatus,
+  } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const {
@@ -73,209 +65,148 @@ export const ProposalDetailsView = (props: {
     hasMultisigPendingProposal,
     isBusy,
     loadingData,
-    multisigClient,
-    onDataToSafeView,
+    multisigClient, 
+    onDataToSafeView, 
     onProposalApprove,
     onProposalCancel,
     onProposalExecute,
     onProposalReject,
-    proposalSelected,
-    selectedMultisig,
+    proposalSelected, 
+    selectedMultisig, 
     solanaApps,
   } = props;
   const { confirmationHistory } = useContext(TxConfirmationContext);
 
-  const [selectedProposal, setSelectedProposal] =
-    useState<MultisigTransaction>(proposalSelected);
-  const [proposalIxInfo, setProposalIxInfo] =
-    useState<MultisigTransactionInstructionInfo | null>(null);
-  const [proposalActivity, setProposalActivity] = useState<
-    MultisigTransactionActivityItem[]
-  >([]);
+  const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
+  const [proposalIxInfo, setProposalIxInfo] = useState<MultisigTransactionInstructionInfo | null>(null);
+  const [proposalActivity, setProposalActivity] = useState<MultisigTransactionActivityItem[]>([]);
   const [needReloadActivity, setNeedReloadActivity] = useState<boolean>(false);
   const [loadingActivity, setLoadingActivity] = useState<boolean>(false);
-  const [isCancelRejectModalVisible, setIsCancelRejectModalVisible] =
-    useState(false);
+  const [isCancelRejectModalVisible, setIsCancelRejectModalVisible] = useState(false);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
     });
-  }, [setTransactionStatus]);
+  }, [
+    setTransactionStatus
+  ]);
 
   const onAcceptCancelRejectProposalModal = () => {
     consoleOut('cancel reject proposal');
-    const operation = { transaction: selectedProposal };
+    const operation = { transaction: selectedProposal }
     onProposalCancel(operation);
   };
 
   // Determine if the ExecuteTransaction operation is in progress by searching
   // into the confirmation history
-  const isExecuteTxPendingConfirmation = useCallback(
-    (id?: PublicKey) => {
-      if (confirmationHistory && confirmationHistory.length > 0) {
-        if (id) {
-          return confirmationHistory.some(
-            h =>
-              h.operationType === OperationType.ExecuteTransaction &&
-              h.extras &&
-              h.extras.transactionId &&
-              (h.extras.transactionId as PublicKey).equals(id) &&
-              h.txInfoFetchStatus === 'fetching',
-          );
-        }
-        return confirmationHistory.some(
-          h =>
-            h.operationType === OperationType.ExecuteTransaction &&
-            h.txInfoFetchStatus === 'fetching',
+  const isExecuteTxPendingConfirmation = useCallback((id?: PublicKey) => {
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      if (id) {
+        return confirmationHistory.some(h => 
+          h.operationType === OperationType.ExecuteTransaction &&
+          h.extras && h.extras.transactionId && (h.extras.transactionId as PublicKey).equals(id) &&
+          h.txInfoFetchStatus === "fetching"
         );
       }
-      return false;
-    },
-    [confirmationHistory],
-  );
+      return confirmationHistory.some(h => h.operationType === OperationType.ExecuteTransaction && h.txInfoFetchStatus === "fetching");
+    }
+    return false;
+  }, [confirmationHistory]);
 
   // Determine if the ApproveTransaction operation is in progress by searching
   // into the confirmation history
-  const isApproveTxPendingConfirmation = useCallback(
-    (id?: PublicKey) => {
-      if (confirmationHistory && confirmationHistory.length > 0) {
-        if (id) {
-          return confirmationHistory.some(
-            h =>
-              h.operationType === OperationType.ApproveTransaction &&
-              h.extras &&
-              h.extras.transactionId &&
-              (h.extras.transactionId as PublicKey).equals(id) &&
-              h.txInfoFetchStatus === 'fetching',
-          );
-        }
-        return confirmationHistory.some(
-          h =>
-            h.operationType === OperationType.ApproveTransaction &&
-            h.txInfoFetchStatus === 'fetching',
+  const isApproveTxPendingConfirmation = useCallback((id?: PublicKey) => {
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      if (id) {
+        return confirmationHistory.some(h => 
+          h.operationType === OperationType.ApproveTransaction &&
+          h.extras && h.extras.transactionId && (h.extras.transactionId as PublicKey).equals(id) &&
+          h.txInfoFetchStatus === "fetching"
         );
       }
-      return false;
-    },
-    [confirmationHistory],
-  );
+      return confirmationHistory.some(h => h.operationType === OperationType.ApproveTransaction && h.txInfoFetchStatus === "fetching");
+    }
+    return false;
+  }, [confirmationHistory]);
 
   // Determine if the RejectTransaction operation is in progress by searching
   // into the confirmation history
-  const isRejectTxPendingConfirmation = useCallback(
-    (id?: PublicKey) => {
-      if (confirmationHistory && confirmationHistory.length > 0) {
-        if (id) {
-          return confirmationHistory.some(
-            h =>
-              h.operationType === OperationType.RejectTransaction &&
-              h.extras &&
-              h.extras.transactionId &&
-              (h.extras.transactionId as PublicKey).equals(id) &&
-              h.txInfoFetchStatus === 'fetching',
-          );
-        }
-        return confirmationHistory.some(
-          h =>
-            h.operationType === OperationType.RejectTransaction &&
-            h.txInfoFetchStatus === 'fetching',
+  const isRejectTxPendingConfirmation = useCallback((id?: PublicKey) => {
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      if (id) {
+        return confirmationHistory.some(h => 
+          h.operationType === OperationType.RejectTransaction &&
+          h.extras && h.extras.transactionId && (h.extras.transactionId as PublicKey).equals(id) &&
+          h.txInfoFetchStatus === "fetching"
         );
       }
-      return false;
-    },
-    [confirmationHistory],
-  );
+      return confirmationHistory.some(h => h.operationType === OperationType.RejectTransaction && h.txInfoFetchStatus === "fetching");
+    }
+    return false;
+  }, [confirmationHistory]);
 
   // Determine if the CancelTransaction operation is in progress by searching
   // into the confirmation history
-  const isCancelTxPendingConfirmation = useCallback(
-    (id?: PublicKey) => {
-      if (confirmationHistory && confirmationHistory.length > 0) {
-        if (id) {
-          return confirmationHistory.some(
-            h =>
-              h.operationType === OperationType.CancelTransaction &&
-              h.extras &&
-              h.extras.transactionId &&
-              (h.extras.transactionId as PublicKey).equals(id) &&
-              h.txInfoFetchStatus === 'fetching',
-          );
-        }
-        return confirmationHistory.some(
-          h =>
-            h.operationType === OperationType.CancelTransaction &&
-            h.txInfoFetchStatus === 'fetching',
+  const isCancelTxPendingConfirmation = useCallback((id?: PublicKey) => {
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      if (id) {
+        return confirmationHistory.some(h => 
+          h.operationType === OperationType.CancelTransaction &&
+          h.extras && h.extras.transactionId && (h.extras.transactionId as PublicKey).equals(id) &&
+          h.txInfoFetchStatus === "fetching"
         );
       }
-      return false;
-    },
-    [confirmationHistory],
-  );
+      return confirmationHistory.some(h => h.operationType === OperationType.CancelTransaction && h.txInfoFetchStatus === "fetching");
+    }
+    return false;
+  }, [confirmationHistory]);
 
   useEffect(() => {
-    if (
-      transactionStatus.currentOperation ===
-      TransactionStatus.ConfirmTransaction
-    ) {
+    if (transactionStatus.currentOperation === TransactionStatus.ConfirmTransaction) {
       setIsCancelRejectModalVisible(false);
     }
   }, [transactionStatus.currentOperation]);
 
   useEffect(() => {
-    if (!selectedMultisig || !proposalSelected) {
-      return;
-    }
+
+    if (!selectedMultisig || !proposalSelected) { return; }
     const timeout = setTimeout(() => setSelectedProposal(proposalSelected));
     return () => clearTimeout(timeout);
-  }, [selectedMultisig, proposalSelected]);
+
+  }, [
+    selectedMultisig, 
+    proposalSelected
+  ]);
 
   useEffect(() => {
-    if (
-      !selectedMultisig ||
-      !solanaApps ||
-      !appsProvider ||
-      !proposalSelected ||
-      !selectedProposal
-    ) {
-      return;
-    }
+
+    if (!selectedMultisig || !solanaApps || !appsProvider || !proposalSelected || !selectedProposal) { return; }
 
     const timeout = setTimeout(() => {
+
       if (proposalSelected.programId.equals(SystemProgram.programId)) {
         const ixInfo = parseMultisigSystemProposalIx(proposalSelected);
         setProposalIxInfo(ixInfo);
         // console.log('ixInfo', ixInfo);
       } else if (proposalSelected.programId.equals(TOKEN_PROGRAM_ID)) {
-        const program = createAnchorProgram(
-          connection,
-          TOKEN_PROGRAM_ID,
-          SplTokenIdl,
-        );
+        const program = createAnchorProgram(connection, TOKEN_PROGRAM_ID, SplTokenIdl);
         const ixInfo = parseMultisigProposalIx(proposalSelected, program);
         setProposalIxInfo(ixInfo);
         // console.log('ixInfo', ixInfo);
       } else {
-        const proposalApp = solanaApps.filter(
-          (app: App) => app.id === selectedProposal.programId.toBase58(),
-        )[0];
+        const proposalApp = solanaApps.filter((app: App) => app.id === selectedProposal.programId.toBase58())[0];
         if (proposalApp) {
           appsProvider
-            .getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl)
-            .then((config: AppConfig) => {
-              const idl = config ? config.definition : undefined;
-              const program = idl
-                ? createAnchorProgram(
-                    connection,
-                    new PublicKey(proposalApp.id),
-                    idl,
-                  )
-                : undefined;
-              const ixInfo = parseMultisigProposalIx(proposalSelected, program);
-              setProposalIxInfo(ixInfo);
-              // console.log('ixInfo', ixInfo);
-            });
+          .getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl)
+          .then((config: AppConfig) => {
+            const idl = config ? config.definition : undefined;
+            const program = idl ? createAnchorProgram(connection, new PublicKey(proposalApp.id), idl) : undefined;
+            const ixInfo = parseMultisigProposalIx(proposalSelected, program);
+            setProposalIxInfo(ixInfo);
+            // console.log('ixInfo', ixInfo);
+          });
         } else {
           const ixInfo = parseMultisigProposalIx(proposalSelected);
           setProposalIxInfo(ixInfo);
@@ -285,16 +216,18 @@ export const ProposalDetailsView = (props: {
     });
 
     return () => clearTimeout(timeout);
+
   }, [
-    appsProvider,
-    connection,
-    proposalSelected,
-    selectedMultisig,
-    selectedProposal,
-    solanaApps,
+    appsProvider, 
+    connection, 
+    proposalSelected, 
+    selectedMultisig, 
+    selectedProposal, 
+    solanaApps
   ]);
 
   useEffect(() => {
+
     const timeout = setTimeout(() => {
       if (selectedProposal) {
         setNeedReloadActivity(true);
@@ -303,14 +236,16 @@ export const ProposalDetailsView = (props: {
 
     return () => {
       clearTimeout(timeout);
-    };
-  }, [selectedProposal]);
+    }
+
+  },[
+    selectedProposal
+  ]);
 
   // Get transaction proposal activity
   useEffect(() => {
-    if (!multisigClient || !selectedProposal || !needReloadActivity) {
-      return;
-    }
+
+    if (!multisigClient || !selectedProposal || !needReloadActivity) { return; }
 
     const timeout = setTimeout(() => {
       setNeedReloadActivity(false);
@@ -327,8 +262,13 @@ export const ProposalDetailsView = (props: {
 
     return () => {
       clearTimeout(timeout);
-    };
-  }, [multisigClient, selectedProposal, needReloadActivity]);
+    }
+
+  }, [
+    multisigClient,
+    selectedProposal,
+    needReloadActivity,
+  ])
 
   // When back button is clicked, goes to Safe Info
   const hideProposalDetailsHandler = () => {
@@ -337,183 +277,127 @@ export const ProposalDetailsView = (props: {
   };
 
   // Copy address to clipboard
-  const copyAddressToClipboard = useCallback(
-    (address: any) => {
-      if (copyText(address.toString())) {
-        openNotification({
-          description: t('notifications.account-address-copied-message'),
-          type: 'info',
-        });
-      } else {
-        openNotification({
-          description: t('notifications.account-address-not-copied-message'),
-          type: 'error',
-        });
-      }
-    },
-    [t],
-  );
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (copyText(address.toString())) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t]);
 
   // Display the activities in the "Activity" tab, on safe details page
-  const renderActivities = !loadingActivity ? (
-    proposalActivity.length > 0 ? (
-      <Row>
-        {proposalActivity.map((activity: any) => {
-          let icon = null;
+  const renderActivities = (
+    !loadingActivity ? (
+      proposalActivity.length > 0 ? (
+        <Row>
+          {proposalActivity.map((activity: any) => {
+            let icon = null;
 
-          switch (activity.action) {
-            case 'created':
-              icon = (
-                <IconCreated className="mean-svg-icons fg-purple activity-icon" />
-              );
-              break;
-            case 'approved':
-              icon = (
-                <IconApprove className="mean-svg-icons fg-green activity-icon" />
-              );
-              break;
-            case 'executed':
-              icon = (
-                <IconApprove className="mean-svg-icons fg-green activity-icon" />
-              );
-              break;
-            case 'rejected':
-              icon = (
-                <IconCross className="mean-svg-icons fg-red activity-icon" />
-              );
-              break;
-            case 'deleted':
-              icon = (
-                <IconMinus className="mean-svg-icons fg-yellow activity-icon" />
-              );
-              break;
-            default:
-              icon = '';
-              break;
-          }
+            switch (activity.action) {
+              case 'created':
+                icon = <IconCreated className="mean-svg-icons fg-purple activity-icon" />;
+                break;
+              case 'approved':
+                icon = <IconApprove className="mean-svg-icons fg-green activity-icon" />;
+                break;
+              case 'executed':
+                icon = <IconApprove className="mean-svg-icons fg-green activity-icon" />;
+                break;
+              case 'rejected':
+                icon = <IconCross className="mean-svg-icons fg-red activity-icon" />;
+                break;
+              case 'deleted':
+                icon = <IconMinus className="mean-svg-icons fg-yellow activity-icon" />;
+                break;
+              default:
+                icon = "";
+                break;
+            }
 
-          const title = moment(activity.createdOn)
-            .format('LLL')
-            .toLocaleString();
-          const resume = (
-            <div className="d-flex align-items-center activity-container">
-              <div className="d-flex align-items-center">
-                {icon}{' '}
-                {`Proposal ${activity.action} by ${activity.owner.name} `}
-              </div>
-              <div
-                onClick={() => copyAddressToClipboard(activity.address)}
-                className="simplelink underline-on-hover activity-address ml-1"
-              >
+            const title = moment(activity.createdOn).format("LLL").toLocaleString();
+            const resume = <div className="d-flex align-items-center activity-container">
+              <div className="d-flex align-items-center">{icon} {`Proposal ${activity.action} by ${activity.owner.name} `}</div>
+              <div onClick={() => copyAddressToClipboard(activity.address)} className="simplelink underline-on-hover activity-address ml-1">
                 ({shortenAddress(activity.address, 4)})
               </div>
             </div>
-          );
 
-          return (
-            <div
-              key={`${activity.index + 1}`}
-              className={`w-100 activities-list mr-1 pr-4 ${
-                (activity.index + 1) % 2 === 0 ? '' : 'bg-secondary-02'
-              }`}
-            >
-              <div className="resume-item-container">
-                <div className="d-flex">
-                  <span className="mr-1">{title}</span>
-                  {resume}
-                </div>
-                <span className="icon-button-container icon-stream-row">
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${
-                      activity.address
-                    }${getSolanaExplorerClusterParam()}`}
-                  >
-                    <IconExternalLink className="mean-svg-icons external-icon ml-1" />
-                  </a>
-                </span>
+            return (
+              <div 
+                key={`${activity.index + 1}`}
+                className={`w-100 activities-list mr-1 pr-4 ${(activity.index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}>
+                  <div className="resume-item-container">
+                    <div className="d-flex">
+                      <span className="mr-1">{title}</span>
+                      {resume}
+                    </div>
+                    <span className="icon-button-container icon-stream-row">
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${activity.address}${getSolanaExplorerClusterParam()}`}>
+                        <IconExternalLink className="mean-svg-icons external-icon ml-1" />
+                      </a>
+                    </span>
+                  </div>
               </div>
-            </div>
-          );
-        })}
-      </Row>
+            )
+          })}
+        </Row>
+      ) : (
+        <span className="pl-1">This proposal has no activities</span>
+      )
     ) : (
-      <span className="pl-1">This proposal has no activities</span>
+      <span className="pl-1">Loading activities...</span>
     )
-  ) : (
-    <span className="pl-1">Loading activities...</span>
-  );
+  )
 
   // Tabs
   const tabs = [
     {
-      id: 'instruction',
-      name: 'Instruction',
-      render: (
-        <RenderInstructions
-          connection={connection}
-          proposalIxInfo={proposalIxInfo}
-        />
-      ),
-    },
+      id: "instruction",
+      name: "Instruction",
+      render: <RenderInstructions connection={connection} proposalIxInfo={proposalIxInfo} />
+    }, 
     {
-      id: 'activity',
-      name: 'Activity',
-      render: renderActivities,
-    },
+      id: "activity",
+      name: "Activity",
+      render: renderActivities
+    }
   ];
 
-  const isProposer =
+  const isProposer = (
     selectedProposal &&
-    selectedProposal.proposer &&
+    selectedProposal.proposer && 
     selectedProposal.proposer.toBase58() === publicKey?.toBase58()
-      ? true
-      : false;
+  ) ? true : false;
 
-  if (!selectedProposal || !selectedProposal.proposer) {
-    return <></>;
-  }
+  if (!selectedProposal || !selectedProposal.proposer) { return (<></>); }
 
-  const title = selectedProposal.details.title
-    ? selectedProposal.details.title
-    : 'Unknown proposal';
+  const title = selectedProposal.details.title ? selectedProposal.details.title : "Unknown proposal";
 
   // Number of participants who have already approved the Tx
-  const approvedSigners = selectedProposal.signers.filter(
-    (s: any) => s === true,
-  ).length;
-  const rejectedSigners = selectedProposal.signers.filter(
-    (s: any) => s === false,
-  ).length;
-  const expirationDate = selectedProposal.details.expirationDate
-    ? new Date(selectedProposal.details.expirationDate)
-    : '';
-  const executedOnDate = selectedProposal.executedOn
-    ? new Date(selectedProposal.executedOn).toDateString()
-    : '';
-  const proposedBy = (selectedMultisig.owners as MultisigParticipant[]).find(
-    (owner: MultisigParticipant) =>
-      owner.address === selectedProposal.proposer?.toBase58(),
-  );
-  const neededSigners = () => {
-    return selectedMultisig.threshold - approvedSigners;
-  };
-  const resume =
-    selectedProposal.status === 0 &&
-    neededSigners() > 0 &&
-    `Needs ${neededSigners()} ${
-      neededSigners() > 1 ? 'approvals' : 'approval'
-    } to pass`;
+  const approvedSigners = selectedProposal.signers.filter((s: any) => s === true).length;
+  const rejectedSigners = selectedProposal.signers.filter((s: any) => s === false).length;
+  const expirationDate = selectedProposal.details.expirationDate ? new Date(selectedProposal.details.expirationDate) : "";
+  const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : "";
+  const proposedBy = (selectedMultisig.owners as MultisigParticipant[]).find((owner: MultisigParticipant) => owner.address === selectedProposal.proposer?.toBase58());
+  const neededSigners = () => { return selectedMultisig.threshold - approvedSigners; };
+  const resume = (selectedProposal.status === 0 && neededSigners() > 0) && `Needs ${neededSigners()} ${neededSigners() > 1 ? "approvals" : "approval"} to pass`;
 
   return (
     <>
       <div className="safe-details-container">
         <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
-          <div
-            onClick={hideProposalDetailsHandler}
-            className="back-button icon-button-container"
-          >
+          <div onClick={hideProposalDetailsHandler} className="back-button icon-button-container">
             <IconArrowBack className="mean-svg-icons" />
             <span className="ml-1">Back</span>
           </div>
@@ -547,25 +431,15 @@ export const ProposalDetailsView = (props: {
                 <IconUserClock className="user-image mean-svg-icons bg-yellow" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Pending execution</div>
-                  <span>
-                    Proposed by{' '}
-                    {proposedBy && proposedBy.name
-                      ? proposedBy.name
-                      : shortenAddress(selectedProposal.proposer, 4)}
-                  </span>
+                  <span>Proposed by {proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
                 </div>
               </Col>
-            ) : selectedProposal.status ===
-              MultisigTransactionStatus.Executed ? (
+            ) : selectedProposal.status === MultisigTransactionStatus.Executed ? (
               <Col className="safe-details-left-container">
                 <IconLightning className="user-image mean-svg-icons bg-green" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Proposed by</div>
-                  <span>
-                    {proposedBy && proposedBy.name
-                      ? proposedBy.name
-                      : shortenAddress(selectedProposal.proposer, 4)}
-                  </span>
+                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
                 </div>
               </Col>
             ) : (
@@ -573,11 +447,7 @@ export const ProposalDetailsView = (props: {
                 <IconUser className="user-image mean-svg-icons" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Proposed by</div>
-                  <span>
-                    {proposedBy && proposedBy.name
-                      ? proposedBy.name
-                      : shortenAddress(selectedProposal.proposer, 4)}
-                  </span>
+                  <span>{proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}</span>
                 </div>
               </Col>
             )}
@@ -585,29 +455,37 @@ export const ProposalDetailsView = (props: {
           </div>
           <div>
             <div className="safe-details-right-container btn-group mr-1">
-              {(selectedProposal.status === MultisigTransactionStatus.Voided ||
-                selectedProposal.status === MultisigTransactionStatus.Failed ||
-                selectedProposal.status ===
-                  MultisigTransactionStatus.Expired) &&
-                isProposer && (
-                  <Button
-                    type="default"
-                    shape="round"
-                    size="small"
-                    className="thin-stroke d-flex justify-content-center align-items-center"
-                    disabled={
-                      hasMultisigPendingProposal ||
-                      isBusy ||
-                      isCancelTxPendingConfirmation(selectedProposal.id) ||
-                      isExecuteTxPendingConfirmation(selectedProposal.id) ||
-                      loadingData
-                    }
-                    onClick={() => setIsCancelRejectModalVisible(true)}
-                  >
-                    <div className="btn-content">Cancel</div>
-                  </Button>
-                )}
-              {selectedProposal.status === MultisigTransactionStatus.Active && (
+            {
+              (
+                (
+                  selectedProposal.status === MultisigTransactionStatus.Voided ||
+                  selectedProposal.status === MultisigTransactionStatus.Failed ||
+                  selectedProposal.status === MultisigTransactionStatus.Expired
+
+                ) && isProposer
+
+              ) && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke d-flex justify-content-center align-items-center"
+                  disabled={
+                    hasMultisigPendingProposal ||
+                    isBusy ||
+                    isCancelTxPendingConfirmation(selectedProposal.id) ||
+                    isExecuteTxPendingConfirmation(selectedProposal.id) ||
+                    loadingData
+                  }
+                  onClick={() => setIsCancelRejectModalVisible(true)}>
+                    <div className="btn-content">
+                      Cancel
+                    </div>
+                </Button>
+              )
+            }
+            {
+              selectedProposal.status === MultisigTransactionStatus.Active && (
                 <>
                   <Button
                     type="default"
@@ -626,19 +504,20 @@ export const ProposalDetailsView = (props: {
                     onClick={() => {
                       const operation = { transaction: selectedProposal };
                       onProposalApprove(operation);
-                    }}
-                  >
-                    {selectedProposal.didSigned !== true ? (
-                      <div className="btn-content">
-                        <IconThumbsUp className="mean-svg-icons" />
-                        Approve
-                      </div>
-                    ) : (
-                      <div className="btn-content">
-                        <IconApprove className="mean-svg-icons" />
-                        Approved
-                      </div>
-                    )}
+                    }}>
+                      {
+                        selectedProposal.didSigned !== true ? (
+                          <div className="btn-content">
+                            <IconThumbsUp className="mean-svg-icons" />
+                            Approve
+                          </div>
+                        ) : (
+                          <div className="btn-content">
+                            <IconApprove className="mean-svg-icons" />
+                            Approved
+                          </div>
+                        )
+                      }
                   </Button>
                   <Button
                     type="default"
@@ -657,40 +536,46 @@ export const ProposalDetailsView = (props: {
                     onClick={() => {
                       const operation = { transaction: selectedProposal };
                       onProposalReject(operation);
-                    }}
-                  >
-                    {selectedProposal.didSigned !== false ? (
-                      <div className="btn-content">
-                        <IconThumbsDown className="mean-svg-icons" />
-                        Reject
-                      </div>
-                    ) : (
-                      <div className="btn-content">
-                        <IconApprove className="mean-svg-icons" />
-                        Rejected
-                      </div>
-                    )}
-                  </Button>
-                  {isProposer && (
-                    <Button
-                      type="default"
-                      shape="round"
-                      size="small"
-                      className="thin-stroke d-flex justify-content-center align-items-center"
-                      disabled={
-                        hasMultisigPendingProposal ||
-                        isBusy ||
-                        isExecuteTxPendingConfirmation(selectedProposal.id) ||
-                        loadingData
+                    }}>
+                      {
+                        selectedProposal.didSigned !== false ? (
+                          <div className="btn-content">
+                            <IconThumbsDown className="mean-svg-icons" />
+                            Reject
+                          </div>
+                        ) : (
+                          <div className="btn-content">
+                            <IconApprove className="mean-svg-icons" />
+                            Rejected
+                          </div>
+                        )
                       }
-                      onClick={() => setIsCancelRejectModalVisible(true)}
-                    >
-                      <div className="btn-content">Cancel</div>
-                    </Button>
-                  )}
+                  </Button>
+                  {
+                    isProposer && (
+                      <Button
+                        type="default"
+                        shape="round"
+                        size="small"
+                        className="thin-stroke d-flex justify-content-center align-items-center"
+                        disabled={
+                          hasMultisigPendingProposal ||
+                          isBusy ||
+                          isExecuteTxPendingConfirmation(selectedProposal.id) ||
+                          loadingData
+                        }
+                        onClick={() => setIsCancelRejectModalVisible(true)}>
+                          <div className="btn-content">
+                            Cancel
+                          </div>
+                      </Button>
+                    )
+                  }
                 </>
-              )}
-              {selectedProposal.status === MultisigTransactionStatus.Passed && (
+              )
+            }
+            {
+              selectedProposal.status === MultisigTransactionStatus.Passed && (
                 <>
                   <Button
                     type="default"
@@ -698,49 +583,57 @@ export const ProposalDetailsView = (props: {
                     size="small"
                     className="thin-stroke d-flex justify-content-center align-items-center"
                     disabled={
-                      hasMultisigPendingProposal ||
+                      hasMultisigPendingProposal || 
                       isBusy ||
                       isExecuteTxPendingConfirmation(selectedProposal.id) ||
                       loadingData
                     }
                     onClick={() => {
-                      const operation = { transaction: selectedProposal };
+                      const operation = { transaction: selectedProposal }
                       onProposalExecute(operation);
-                    }}
-                  >
-                    <div className="btn-content">Execute</div>
+                    }}>
+                      <div className="btn-content">
+                        Execute
+                      </div>
                   </Button>
-                  {isProposer && (
-                    <Button
-                      type="default"
-                      shape="round"
-                      size="small"
-                      className="thin-stroke d-flex justify-content-center align-items-center"
-                      disabled={
-                        hasMultisigPendingProposal ||
-                        isBusy ||
-                        isExecuteTxPendingConfirmation(selectedProposal.id) ||
-                        isApproveTxPendingConfirmation(selectedProposal.id) ||
-                        isRejectTxPendingConfirmation(selectedProposal.id) ||
-                        isCancelTxPendingConfirmation(selectedProposal.id) ||
-                        loadingData
-                      }
-                      onClick={() => setIsCancelRejectModalVisible(true)}
-                    >
-                      <div className="btn-content">Cancel</div>
-                    </Button>
-                  )}
+                  {
+                    isProposer && (
+                      <Button
+                        type="default"
+                        shape="round"
+                        size="small"
+                        className="thin-stroke d-flex justify-content-center align-items-center"
+                        disabled={
+                          hasMultisigPendingProposal ||
+                          isBusy ||
+                          isExecuteTxPendingConfirmation(selectedProposal.id) ||
+                          isApproveTxPendingConfirmation(selectedProposal.id) ||
+                          isRejectTxPendingConfirmation(selectedProposal.id) ||
+                          isCancelTxPendingConfirmation(selectedProposal.id) ||
+                          loadingData
+                        }
+                        onClick={() => setIsCancelRejectModalVisible(true)}>
+                          <div className="btn-content">
+                            Cancel
+                          </div>
+                      </Button>
+                    )
+                  }
                 </>
-              )}
+              )
+            }
             </div>
           </div>
         </div>
 
-        <TabsMean tabs={tabs} defaultTab="instruction" />
+        <TabsMean
+          tabs={tabs}
+          defaultTab="instruction"
+        />
       </div>
 
       {isCancelRejectModalVisible && (
-        <RejectCancelModal
+        <RejectCancelModal 
           handleClose={() => {
             setIsCancelRejectModalVisible(false);
             resetTransactionStatus();
@@ -751,5 +644,5 @@ export const ProposalDetailsView = (props: {
         />
       )}
     </>
-  );
+  )
 };

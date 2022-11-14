@@ -1,3 +1,3 @@
 export type ReferralsParams = {
-  address: string;
+    address: string;
 };

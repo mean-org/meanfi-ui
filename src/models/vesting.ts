@@ -1,208 +1,207 @@
-import {
-  AllocationType,
-  SubCategory,
-  TimeUnit,
-  TreasuryType,
-} from '@mean-dao/msp';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { PublicKey } from '@solana/web3.js';
-import BN from 'bn.js';
+import { AllocationType, SubCategory, TimeUnit, TreasuryType } from "@mean-dao/msp";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { PublicKey } from "@solana/web3.js";
+import BN from "bn.js";
 
 export type VestingFlowRateInfo = {
-  amountBn: BN;
-  durationUnit: TimeUnit;
-  streamableAmountBn: BN;
-};
+    amountBn: BN;
+    durationUnit: TimeUnit;
+    streamableAmountBn: BN;
+}
 
 export type VestingContractCategory = {
-  label: string;
-  value: SubCategory;
-};
+    label: string;
+    value: SubCategory;
+}
 
 export const VESTING_CATEGORIES: VestingContractCategory[] = [
-  {
-    label: 'Advisor',
-    value: SubCategory.advisor,
-  },
-  {
-    label: 'Community',
-    value: SubCategory.community,
-  },
-  {
-    label: 'Development',
-    value: SubCategory.development,
-  },
-  {
-    label: 'Foundation',
-    value: SubCategory.foundation,
-  },
-  {
-    label: 'Investor',
-    value: SubCategory.investor,
-  },
-  {
-    label: 'Marketing',
-    value: SubCategory.marketing,
-  },
-  {
-    label: 'Partnership',
-    value: SubCategory.partnership,
-  },
-  {
-    label: 'Seed round',
-    value: SubCategory.seed,
-  },
-  {
-    label: 'Team',
-    value: SubCategory.team,
-  },
+    {
+        label: 'Advisor',
+        value: SubCategory.advisor
+    },
+    {
+        label: 'Community',
+        value: SubCategory.community
+    },
+    {
+        label: 'Development',
+        value: SubCategory.development
+    },
+    {
+        label: 'Foundation',
+        value: SubCategory.foundation
+    },
+    {
+        label: 'Investor',
+        value: SubCategory.investor
+    },
+    {
+        label: 'Marketing',
+        value: SubCategory.marketing
+    },
+    {
+        label: 'Partnership',
+        value: SubCategory.partnership
+    },
+    {
+        label: 'Seed round',
+        value: SubCategory.seed
+    },
+    {
+        label: 'Team',
+        value: SubCategory.team
+    }
 ];
 
 export const getCategoryLabelByValue = (value: SubCategory) => {
-  const item = VESTING_CATEGORIES.find(c => c.value === value);
-  if (item) {
-    return item.label;
-  }
-  return '-';
-};
+    const item = VESTING_CATEGORIES.find(c => c.value === value);
+    if (item) {
+        return item.label;
+    }
+    return '-';
+}
 
 export interface CreateVestingTreasuryParams {
-  payer: PublicKey;
-  treasurer: PublicKey;
-  label: string;
-  type: TreasuryType;
-  associatedTokenAddress: string;
-  duration: number;
-  durationUnit: TimeUnit;
-  startUtc: Date;
-  vestingCategory: SubCategory;
-  cliffVestPercent: number;
-  feePayedByTreasurer?: boolean | undefined;
-  multisig: string;
-  fundingAmount: string | number;
+    payer: PublicKey;
+    treasurer: PublicKey;
+    label: string;
+    type: TreasuryType;
+    associatedTokenAddress: string;
+    duration: number;
+    durationUnit: TimeUnit;
+    startUtc: Date;
+    vestingCategory: SubCategory;
+    cliffVestPercent: number;
+    feePayedByTreasurer?: boolean | undefined;
+    multisig: string;
+    fundingAmount: string | number;
 }
 
 export interface VestingContractCreateOptions {
-  vestingContractTitle: string;
-  vestingContractName: string;
-  vestingContractType: TreasuryType;
-  vestingCategory: SubCategory;
-  amount: string;
-  token: TokenInfo;
-  feePayedByTreasurer: boolean;
-  duration: number;
-  durationUnit: TimeUnit;
-  cliffVestPercent: number;
-  startDate: Date;
-  multisig: string;
-  fundingAmount: string | number;
+    vestingContractTitle: string;
+    vestingContractName: string;
+    vestingContractType: TreasuryType;
+    vestingCategory: SubCategory;
+    amount: string;
+    token: TokenInfo;
+    feePayedByTreasurer: boolean;
+    duration: number;
+    durationUnit: TimeUnit;
+    cliffVestPercent: number;
+    startDate: Date;
+    multisig: string;
+    fundingAmount: string | number;
 }
 
 export interface VestingContractEditOptions {
-  // vestingContractName: string;
-  // vestingCategory: SubCategory;
-  feePayedByTreasurer: boolean;
-  duration: number;
-  durationUnit: TimeUnit;
-  cliffVestPercent: number;
-  startDate: Date;
-  multisig: string;
+    // vestingContractName: string;
+    // vestingCategory: SubCategory;
+    feePayedByTreasurer: boolean;
+    duration: number;
+    durationUnit: TimeUnit;
+    cliffVestPercent: number;
+    startDate: Date;
+    multisig: string;
 }
 
 export interface VestingContractWithdrawOptions {
-  amount: string;
-  tokenAmount: BN;
-  destinationAccount: string;
-  associatedToken: TokenInfo | undefined;
-  multisig: string;
+    amount: string;
+    tokenAmount: BN;
+    destinationAccount: string;
+    associatedToken: TokenInfo | undefined;
+    multisig: string;
 }
 
 export interface VestingContractStreamCreateOptions {
-  associatedToken: TokenInfo | undefined;
-  beneficiaryAddress: string;
-  feePayedByTreasurer: boolean;
-  interval: string;
-  multisig: string;
-  rateAmount: number;
-  streamName: string;
-  tokenAmount: BN;
-  txConfirmDescription: string;
-  txConfirmedDescription: string;
-  proposalTitle?: string;
+    associatedToken: TokenInfo | undefined;
+    beneficiaryAddress: string;
+    feePayedByTreasurer: boolean;
+    interval: string;
+    multisig: string;
+    rateAmount: number;
+    streamName: string;
+    tokenAmount: BN;
+    txConfirmDescription: string;
+    txConfirmedDescription: string;
+    proposalTitle?: string;
 }
 
 export interface CreateVestingStreamParams {
-  proposalTitle?: string;
-  payer: string;
-  treasurer: string;
-  treasury: string;
-  beneficiary: string;
-  treasuryAssociatedTokenMint: string;
-  allocationAssigned: string;
-  streamName: string;
-  multisig: string;
+    proposalTitle?: string;
+    payer: string;
+    treasurer: string;
+    treasury: string;
+    beneficiary: string;
+    treasuryAssociatedTokenMint: string;
+    allocationAssigned: string;
+    streamName: string;
+    multisig: string;
 }
 
 export interface VestingContractCloseStreamOptions {
-  closeTreasuryOption: boolean;
-  vestedReturns: number | string;
-  unvestedReturns: number | string;
-  feeAmount: number;
+    closeTreasuryOption: boolean;
+    vestedReturns: number | string;
+    unvestedReturns: number | string;
+    feeAmount: number;
 }
 
 export interface VestingContractTopupParams {
-  amount: string;
-  tokenAmount: any;
-  allocationType: AllocationType;
-  streamId: string;
-  associatedToken: TokenInfo | undefined;
-  proposalTitle: string;
-  contributor?: string;
-  fundFromSafe?: boolean;
+    amount: string;
+    tokenAmount: any;
+    allocationType: AllocationType;
+    streamId: string;
+    associatedToken: TokenInfo | undefined;
+    proposalTitle: string;
+    contributor?: string;
+    fundFromSafe?: boolean;
 }
 
 export interface AddFundsParams {
-  proposalTitle?: string;
-  payer: string;
-  contributor: string;
-  treasury: string;
-  associatedToken: string;
-  stream: string;
-  amount: string;
+    proposalTitle?: string;
+    payer: string;
+    contributor: string;
+    treasury: string;
+    associatedToken: string;
+    stream: string;
+    amount: string;
 }
 
 // Map cache to maintain the vesting flow rates when switching vesting accounts
 const vfrCache = new Map<string, VestingFlowRateInfo>();
 
 export const vestingFlowRatesCache = {
-  add: (vcId: string, data: VestingFlowRateInfo) => {
-    if (!vcId || !data) {
-      return;
-    }
+    add: (
+        vcId: string,
+        data: VestingFlowRateInfo
+    ) => {
+        if (!vcId || !data) { return; }
 
-    const isNew = !vfrCache.has(vcId);
-    if (isNew) {
-      vfrCache.set(vcId, data);
-    }
-  },
-  get: (vcId: string) => {
-    return vfrCache.get(vcId);
-  },
-  delete: (vcId: string) => {
-    if (vfrCache.get(vcId)) {
-      vfrCache.delete(vcId);
-      return true;
-    }
-    return false;
-  },
-  update: (vcId: string, data: VestingFlowRateInfo) => {
-    if (vfrCache.get(vcId)) {
-      vfrCache.set(vcId, data);
-      return true;
-    }
-    return false;
-  },
-  clear: () => {
-    vfrCache.clear();
-  },
+        const isNew = !vfrCache.has(vcId);
+        if (isNew) {
+            vfrCache.set(vcId, data);
+        }
+    },
+    get: (vcId: string) => {
+        return vfrCache.get(vcId);
+    },
+    delete: (vcId: string) => {
+        if (vfrCache.get(vcId)) {
+            vfrCache.delete(vcId);
+            return true;
+        }
+        return false;
+    },
+    update: (
+        vcId: string,
+        data: VestingFlowRateInfo
+    ) => {
+        if (vfrCache.get(vcId)) {
+            vfrCache.set(vcId, data);
+            return true;
+        }
+        return false;
+    },
+    clear: () => {
+        vfrCache.clear();
+    },
 };

@@ -1,9 +1,9 @@
-import React, { useContext } from 'react';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { IconCaretDown } from '../../Icons';
-import { shortenAddress } from '../../middleware/utils';
-import { Identicon } from '../Identicon';
-import { AppStateContext } from '../../contexts/appstate';
+import React, { useContext } from "react";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { IconCaretDown } from "../../Icons";
+import { shortenAddress } from "../../middleware/utils";
+import { Identicon } from "../Identicon";
+import { AppStateContext } from "../../contexts/appstate";
 
 export const TokenDisplay = (props: {
   fullTokenInfo?: TokenInfo | undefined;
@@ -18,78 +18,37 @@ export const TokenDisplay = (props: {
   onClick: any;
   nameInfoLabel?: boolean;
 }) => {
-  const {
-    name,
-    icon,
-    className,
-    mintAddress,
-    showName,
-    showCaretDown,
-    noTokenLabel,
-    fullTokenInfo,
-    nameInfoLabel,
-  } = props;
+  const { name, icon, className, mintAddress, showName, showCaretDown, noTokenLabel, fullTokenInfo, nameInfoLabel } = props;
   const { getTokenByMintAddress } = useContext(AppStateContext);
 
   const token = getTokenByMintAddress(mintAddress);
 
   return (
     <div className="d-flex flex-column">
-      <div
-        title={mintAddress}
-        key={mintAddress}
-        className={`token-selector ${className || ''}`}
-        onClick={props.onClick}
-      >
+      <div title={mintAddress} key={mintAddress} className={`token-selector ${className || ''}`} onClick={props.onClick}>
         {mintAddress ? (
           <>
             <div className="token-icon mr-1">
               {fullTokenInfo ? (
                 <>
                   {fullTokenInfo && fullTokenInfo.logoURI ? (
-                    <img
-                      alt={`${fullTokenInfo.name}`}
-                      width={20}
-                      height={20}
-                      src={fullTokenInfo.logoURI}
-                    />
+                    <img alt={`${fullTokenInfo.name}`} width={20} height={20} src={fullTokenInfo.logoURI} />
                   ) : (
-                    <Identicon
-                      address={mintAddress}
-                      style={{ width: '24', display: 'inline-flex' }}
-                    />
+                    <Identicon address={mintAddress} style={{ width: "24", display: "inline-flex" }} />
                   )}
                 </>
-              ) : icon ? (
-                icon
-              ) : (
+              ) : icon ? icon : (
                 <>
                   {token && token.logoURI ? (
-                    <img
-                      alt={`${token.name}`}
-                      width={20}
-                      height={20}
-                      src={token.logoURI}
-                    />
+                    <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} />
                   ) : (
-                    <Identicon
-                      address={mintAddress}
-                      style={{ width: '24', display: 'inline-flex' }}
-                    />
+                    <Identicon address={mintAddress} style={{ width: "24", display: "inline-flex" }} />
                   )}
                 </>
               )}
             </div>
             {showName && (
-              <div className="token-name mr-1">
-                {fullTokenInfo
-                  ? fullTokenInfo.name
-                  : name
-                  ? `(${name})`
-                  : token
-                  ? `(${token.name})`
-                  : ''}
-              </div>
+              <div className="token-name mr-1">{fullTokenInfo ? fullTokenInfo.name : name ? `(${name})` : token ? `(${token.name})` : ''}</div>
             )}
             {fullTokenInfo ? (
               <div className="token-symbol mr-1">{fullTokenInfo.symbol}</div>
@@ -98,9 +57,7 @@ export const TokenDisplay = (props: {
             ) : token && token.symbol ? (
               <div className="token-symbol mr-1">{token.symbol}</div>
             ) : (
-              <div className="token-symbol mr-1">
-                {shortenAddress(mintAddress)}
-              </div>
+              <div className="token-symbol mr-1">{shortenAddress(mintAddress)}</div>
             )}
             {showCaretDown && (
               <span className="flex-center dropdown-arrow">
@@ -120,15 +77,7 @@ export const TokenDisplay = (props: {
         )}
       </div>
       {nameInfoLabel && (
-        <span className="info-label ml-3 mb-0 pl-1">
-          {fullTokenInfo
-            ? fullTokenInfo.name
-            : name
-            ? `(${name})`
-            : token
-            ? `(${token.name})`
-            : ''}
-        </span>
+        <span className="info-label ml-3 mb-0 pl-1">{fullTokenInfo ? fullTokenInfo.name : name ? `(${name})` : token ? `(${token.name})` : ''}</span>
       )}
     </div>
   );

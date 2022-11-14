@@ -1,48 +1,39 @@
-import { Connection } from '@solana/web3.js';
-import { Drawer, Empty, Layout } from 'antd';
-import { segmentAnalytics } from 'App';
-import { AccountSelectorModal } from 'components/AccountSelectorModal';
-import { AppBar } from 'components/AppBar';
-import { FooterBar } from 'components/FooterBar';
-import { openNotification } from 'components/Notifications';
-import { TransactionConfirmationHistory } from 'components/TransactionConfirmationHistory';
+import { Connection } from "@solana/web3.js";
+import { Drawer, Empty, Layout } from "antd";
+import { segmentAnalytics } from "App";
+import { AccountSelectorModal } from "components/AccountSelectorModal";
+import { AppBar } from "components/AppBar";
+import { FooterBar } from "components/FooterBar";
+import { openNotification } from "components/Notifications";
+import { TransactionConfirmationHistory } from "components/TransactionConfirmationHistory";
 import {
   CREATE_SAFE_ROUTE_PATH,
   GOOGLE_ANALYTICS_PROD_TAG_ID,
   LANGUAGES,
   PERFORMANCE_SAMPLE_INTERVAL,
   PERFORMANCE_THRESHOLD,
-  SOLANA_STATUS_PAGE,
-} from 'constants/common';
-import { useAccountsContext } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
-import useOnlineStatus from 'contexts/online-status';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import { environment } from 'environments/environment';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { gitInfo } from 'index';
-import { reportConnectedAccount } from 'middleware/api';
-import { AppUsageEvent } from 'middleware/segment-service';
-import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
-import { isUnauthenticatedRoute } from 'middleware/utils';
-import { AccountDetails } from 'models/accounts';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import {
-  browserName,
-  deviceType,
-  fullBrowserVersion,
-  isDesktop,
-  isMobile,
-  isTablet,
-  osName,
-  osVersion,
-} from 'react-device-detect';
+  SOLANA_STATUS_PAGE
+} from "constants/common";
+import { useAccountsContext } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { useConnectionConfig } from "contexts/connection";
+import useOnlineStatus from "contexts/online-status";
+import { TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import { environment } from "environments/environment";
+import useLocalStorage from "hooks/useLocalStorage";
+import { gitInfo } from "index";
+import { reportConnectedAccount } from "middleware/api";
+import { AppUsageEvent } from "middleware/segment-service";
+import { consoleOut, isProd, isValidAddress } from "middleware/ui";
+import { isUnauthenticatedRoute } from "middleware/utils";
+import { AccountDetails } from "models/accounts";
+import React, { useCallback, useContext, useEffect, useState } from "react";
+import { browserName, deviceType, fullBrowserVersion, isDesktop, isMobile, isTablet, osName, osVersion } from "react-device-detect";
 import ReactGA from 'react-ga';
-import { useTranslation } from 'react-i18next';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import './style.scss';
+import { useTranslation } from "react-i18next";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import "./style.scss";
 
 const { Header, Content, Footer } = Layout;
 
@@ -68,30 +59,19 @@ export const AppLayout = React.memo((props: any) => {
     setStreamList,
     setTpsAvg,
   } = useContext(AppStateContext);
-  const { confirmationHistory, clearConfirmationHistory } = useContext(
-    TxConfirmationContext,
-  );
-  const { t, i18n } = useTranslation('common');
+  const {
+    confirmationHistory,
+    clearConfirmationHistory
+  } = useContext(TxConfirmationContext);
+  const { t, i18n } = useTranslation("common");
   const { refreshAccount } = useAccountsContext();
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const {
-    wallet,
-    provider,
-    connected,
-    publicKey,
-    connecting,
-    select,
-    disconnect,
-    isSelectingWallet,
-  } = useWallet();
-  const [previousChain, setChain] = useState('');
+  const { wallet, provider, connected, publicKey, connecting, select, disconnect, isSelectingWallet } = useWallet();
+  const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
-  const [referralAddress, setReferralAddress] = useLocalStorage(
-    'pendingReferral',
-    '',
-  );
-  const [language, setLanguage] = useState('');
+  const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
+  const [language, setLanguage] = useState("");
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [shouldSelectAccount, setShouldSelectAccount] = useState(false);
   const [needRefresh, setNeedRefresh] = useState(true);
@@ -102,16 +82,15 @@ export const AppLayout = React.memo((props: any) => {
 
   // Fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
-    const serumRpc = 'https://solana-api.projectserum.com';
+
+    const serumRpc = "https://solana-api.projectserum.com";
     const connection = new Connection(serumRpc);
 
-    if (!connection) {
-      return null;
-    }
+    if (!connection) { return null; }
 
     const round = (series: number[]) => {
-      return series.map(n => Math.round(n));
-    };
+      return series.map((n) => Math.round(n));
+    }
 
     try {
       const samples = await connection.getRecentPerformanceSamples(60);
@@ -122,22 +101,18 @@ export const AppLayout = React.memo((props: any) => {
       }
 
       let tpsValues = samples
-        .filter(sample => {
-          return sample.numTransactions !== 0;
+        .filter((sample) => {
+            return sample.numTransactions !== 0;
         })
-        .map(sample => {
-          return sample.numTransactions / sample.samplePeriodSecs;
+        .map((sample) => {
+            return sample.numTransactions / sample.samplePeriodSecs;
         });
 
       tpsValues = round(tpsValues);
       const averageTps = Math.round(tpsValues[0]);
       return averageTps;
     } catch (error) {
-      consoleOut(
-        `getRecentPerformanceSamples failed for rpc:`,
-        serumRpc,
-        'darkred',
-      );
+      consoleOut(`getRecentPerformanceSamples failed for rpc:`, serumRpc, 'darkred');
       return null;
     }
   }, []);
@@ -159,9 +134,7 @@ export const AppLayout = React.memo((props: any) => {
       return false;
     }
 
-    if (isSelectingAccount) {
-      return true;
-    }
+    if (isSelectingAccount) { return true; }
 
     if (
       wallet &&
@@ -169,8 +142,7 @@ export const AppLayout = React.memo((props: any) => {
       connected &&
       selectedAccount.address &&
       lastUsedAccount &&
-      (lastUsedAccount.owner === publicKey.toBase58() ||
-        lastUsedAccount.address === publicKey.toBase58()) &&
+      (lastUsedAccount.owner === publicKey.toBase58() || lastUsedAccount.address === publicKey.toBase58()) &&
       selectedAccount.address === lastUsedAccount.address
       // (!selectedAccount.address || (!lastUsedAccount || lastUsedAccount.owner !== publicKey.toBase58() || lastUsedAccount.address !== publicKey.toBase58()) )
     ) {
@@ -178,16 +150,7 @@ export const AppLayout = React.memo((props: any) => {
     }
 
     return true;
-  }, [
-    connected,
-    isSelectingAccount,
-    isSelectingWallet,
-    lastUsedAccount,
-    location.pathname,
-    publicKey,
-    selectedAccount.address,
-    wallet,
-  ]);
+  }, [connected, isSelectingAccount, isSelectingWallet, lastUsedAccount, location.pathname, publicKey, selectedAccount.address, wallet]);
 
   ////////////////
   // UseEffects //
@@ -195,41 +158,51 @@ export const AppLayout = React.memo((props: any) => {
 
   // Clear cachedRpc on App destroy (window is being reloaded)
   useEffect(() => {
-    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh);
+    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
     return () => {
-      window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh);
-    };
-  });
+        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    }
+  })
 
   // Get Performance Samples on a timeout
   useEffect(() => {
+
     // Hoping this to happens once
     if (tpsAvg === undefined && needRefresh) {
       setTimeout(() => {
         setTpsAvg(null);
         setNeedRefresh(false);
       });
-      getPerformanceSamples().then(value => {
-        if (value) {
-          setTpsAvg(value);
-        }
-      });
+      getPerformanceSamples()
+        .then(value => {
+          if (value) {
+            setTpsAvg(value);
+          }
+        });
     }
 
     // Set to run every 30 sec
     const performanceInterval = setInterval(() => {
-      getPerformanceSamples().then(value => {
-        if (value) {
-          setNeedRefresh(true);
-          setTpsAvg(value);
-        }
-      });
-    }, PERFORMANCE_SAMPLE_INTERVAL);
+      getPerformanceSamples()
+        .then(value => {
+          if (value) {
+            setNeedRefresh(true);
+            setTpsAvg(value);
+          }
+        });
+      },
+      PERFORMANCE_SAMPLE_INTERVAL
+    );
 
     return () => {
       clearInterval(performanceInterval);
     };
-  }, [tpsAvg, needRefresh, getPerformanceSamples, setTpsAvg]);
+  }, [
+    tpsAvg,
+    needRefresh,
+    getPerformanceSamples,
+    setTpsAvg,
+  ]);
 
   // Init Google Analytics
   useEffect(() => {
@@ -237,8 +210,8 @@ export const AppLayout = React.memo((props: any) => {
       setGaInitialized(true);
       ReactGA.initialize(GOOGLE_ANALYTICS_PROD_TAG_ID, {
         gaOptions: {
-          siteSpeedSampleRate: 100,
-        },
+          siteSpeedSampleRate: 100
+        }
       });
     }
   }, [gaInitialized]);
@@ -250,8 +223,11 @@ export const AppLayout = React.memo((props: any) => {
       ReactGA.pageview(location.pathname);
     }
     // Report page view in Segment
-    segmentAnalytics.recordPageVisit(location.pathname);
-  }, [publicKey, location.pathname]);
+    segmentAnalytics.recordPageVisit(location.pathname)
+  }, [
+    publicKey,
+    location.pathname,
+  ]);
 
   // Effect Network change
   useEffect(() => {
@@ -260,14 +236,19 @@ export const AppLayout = React.memo((props: any) => {
       consoleOut('Cluster:', connectionConfig.cluster, 'brown');
       setNeedRefresh(true);
     }
-  }, [previousChain, connectionConfig]);
+  }, [
+    previousChain,
+    connectionConfig
+  ]);
 
   // Show Avg TPS on the console
   useEffect(() => {
     if (tpsAvg !== undefined) {
       setNeedRefresh(true);
     }
-  }, [tpsAvg]);
+  }, [
+    tpsAvg
+  ]);
 
   // Get the current ISO language used by the user
   useEffect(() => {
@@ -293,18 +274,14 @@ export const AppLayout = React.memo((props: any) => {
             browser: browserName,
             walletProvider: provider?.name || 'Other',
             theme: theme,
-            language: language,
+            language: language
           });
 
           setNeedRefresh(true);
 
           // Record pending referral, get referrals count and clear referralAddress from localStorage
           // Only record if referral address is valid and different from wallet address
-          if (
-            referralAddress &&
-            isValidAddress(referralAddress) &&
-            referralAddress !== walletAddress
-          ) {
+          if (referralAddress && isValidAddress(referralAddress) && referralAddress !== walletAddress) {
             reportConnectedAccount(walletAddress, referralAddress)
               .then(result => {
                 setReferralAddress('');
@@ -326,17 +303,13 @@ export const AppLayout = React.memo((props: any) => {
         refreshTokenBalance();
         // Send identity to Segment if no wallew connection
         if (!publicKey) {
-          segmentAnalytics.recordIdentity(
-            '',
-            {
-              connected: false,
-              platform: getPlatform(),
-              browser: browserName,
-            },
-            () => {
-              segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnected);
-            },
-          );
+          segmentAnalytics.recordIdentity('', {
+            connected: false,
+            platform: getPlatform(),
+            browser: browserName
+          }, () => {
+            segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnected);
+          });
         }
       }
     }
@@ -364,9 +337,7 @@ export const AppLayout = React.memo((props: any) => {
   // Get referral address from query string params and save it to localStorage
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (!params.has('ref')) {
-      return;
-    }
+    if (!params.has('ref')) { return; }
 
     const address = params.get('ref');
     if (address && isValidAddress(address)) {
@@ -377,7 +348,7 @@ export const AppLayout = React.memo((props: any) => {
           openNotification({
             title: t('notifications.friend-referral-completed'),
             description: t('referrals.address-processed'),
-            type: 'info',
+            type: "info"
           });
         }
       }, 1000);
@@ -387,11 +358,18 @@ export const AppLayout = React.memo((props: any) => {
       openNotification({
         title: t('notifications.error-title'),
         description: t('referrals.address-invalid'),
-        type: 'error',
+        type: "error"
       });
       navigate('/');
     }
-  }, [location, publicKey, setReferralAddress, navigate, t]);
+
+  }, [
+    location,
+    publicKey,
+    setReferralAddress,
+    navigate,
+    t,
+  ]);
 
   useEffect(() => {
     const bodyClass = location.pathname.split('/')[1];
@@ -400,7 +378,7 @@ export const AppLayout = React.memo((props: any) => {
       if (bodyClass) {
         document.body.classList.add(bodyClass);
       }
-    };
+    }
 
     addRouteNameClass();
 
@@ -425,24 +403,15 @@ export const AppLayout = React.memo((props: any) => {
       const device = getPlatform();
       const dateTime = `Client time: ${now.toUTCString()}`;
       const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
-      const networkInfo = `Cluster: ${connectionConfig.cluster} (${
-        connectionConfig.endpoint
-      }) TPS: ${tpsAvg || '-'}, latency: ${responseTime}ms`;
-      const accountInfo =
-        publicKey && provider
-          ? `Address: ${publicKey.toBase58()} (${provider.name})`
-          : '';
-      const appBuildInfo = `App package: ${
-        process.env.REACT_APP_VERSION
-      }, env: ${process.env.REACT_APP_ENV}, branch: ${
-        gitInfo.branch || '-'
-      }, build: [${gitInfo.commit.shortHash}] on ${gitInfo.commit.date}`;
+      const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${tpsAvg || '-'}, latency: ${responseTime}ms`;
+      const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
+      const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, branch: ${gitInfo.branch || '-'}, build: [${gitInfo.commit.shortHash}] on ${gitInfo.commit.date}`;
       const debugInfo: AccountDetails = {
         dateTime,
         clientInfo,
         networkInfo,
         accountInfo,
-        appBuildInfo,
+        appBuildInfo
       };
       setDiagnosisInfo(debugInfo);
       setNeedRefresh(false);
@@ -457,7 +426,7 @@ export const AppLayout = React.memo((props: any) => {
     connectionConfig,
     setDiagnosisInfo,
     getPlatform,
-    t,
+    t
   ]);
 
   useEffect(() => {
@@ -468,10 +437,8 @@ export const AppLayout = React.memo((props: any) => {
         setShouldSelectAccount(true);
       } else if (
         lastUsedAccount &&
-        (lastUsedAccount.owner === publicKey.toBase58() ||
-          lastUsedAccount.address === publicKey.toBase58()) &&
-        (!selectedAccount.address ||
-          selectedAccount.address !== lastUsedAccount.address)
+        (lastUsedAccount.owner === publicKey.toBase58() || lastUsedAccount.address === publicKey.toBase58()) &&
+        (!selectedAccount.address || selectedAccount.address !== lastUsedAccount.address)
       ) {
         consoleOut('Auto select account:', lastUsedAccount, 'crimson');
         setSelectedAccount(lastUsedAccount);
@@ -479,7 +446,7 @@ export const AppLayout = React.memo((props: any) => {
         setIsSelectingAccount(false);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastUsedAccount, selectedAccount, needAccountSelection, publicKey]);
 
   ////////////////////
@@ -490,11 +457,11 @@ export const AppLayout = React.memo((props: any) => {
     setShouldSelectAccount(false);
     setIsSelectingAccount(false);
     navigate(CREATE_SAFE_ROUTE_PATH);
-  };
+  }
 
   const handleTabClosingOrPageRefresh = () => {
     window.localStorage.removeItem('cachedRpc');
-  };
+  }
 
   const showDrawer = () => {
     setIsDrawerVisible(true);
@@ -511,6 +478,7 @@ export const AppLayout = React.memo((props: any) => {
   // lastUsedAccount
 
   if ((wallet && connected) || isUnauthenticatedRoute(location.pathname)) {
+
     // Launch the Account selector modal
     if (shouldSelectAccount) {
       return (
@@ -536,59 +504,29 @@ export const AppLayout = React.memo((props: any) => {
       <>
         <div className="App">
           <Layout>
-            {isProd() &&
-              tpsAvg !== undefined &&
-              tpsAvg !== null &&
-              tpsAvg < PERFORMANCE_THRESHOLD && (
-                <div id="performance-warning-bar">
-                  <div className="sitemessage">
-                    <a
-                      className="simplelink underline-on-hover"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href={SOLANA_STATUS_PAGE}
-                    >
-                      {t('notifications.network-performance-low')} [TPS:{' '}
-                      {tpsAvg}]
-                    </a>
-                  </div>
+            {(isProd() && (tpsAvg !== undefined && tpsAvg !== null) && tpsAvg < PERFORMANCE_THRESHOLD) && (
+              <div id="performance-warning-bar">
+                <div className="sitemessage">
+                  <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
+                    {t('notifications.network-performance-low')} [TPS: {tpsAvg}]
+                  </a>
                 </div>
-              )}
+              </div>
+            )}
             <Header className="App-Bar">
               <div className="app-bar-inner">
                 <Link to="/" className="flex-center">
                   <div className="app-title simplelink">
-                    <img
-                      className="app-logo"
-                      src={
-                        theme === 'dark'
-                          ? '/assets/mean-logo-color-light.svg'
-                          : '/assets/mean-logo-color-dark.svg'
-                      }
-                      alt="Mean Finance"
-                    />
+                    <img className="app-logo" src={theme === 'dark' ? '/assets/mean-logo-color-light.svg' : '/assets/mean-logo-color-dark.svg'} alt="Mean Finance" />
                   </div>
                 </Link>
-                <AppBar
-                  menuType="desktop"
-                  onOpenDrawer={showDrawer}
-                  topNavVisible={
-                    location.pathname === '/ido' ||
-                    location.pathname === '/ido-live'
-                      ? false
-                      : true
-                  }
-                />
+                <AppBar menuType="desktop" onOpenDrawer={showDrawer} topNavVisible={(location.pathname === '/ido' || location.pathname === '/ido-live') ? false : true} />
               </div>
-              <AppBar
-                menuType="mobile"
-                topNavVisible={false}
-                onOpenDrawer={showDrawer}
-              />
+              <AppBar menuType="mobile" topNavVisible={false} onOpenDrawer={showDrawer} />
             </Header>
             <Content>{props.children}</Content>
             <Footer>
-              <FooterBar onOpenDrawer={showDrawer} />
+              <FooterBar onOpenDrawer={showDrawer}/>
             </Footer>
           </Layout>
         </div>
@@ -598,30 +536,22 @@ export const AppLayout = React.memo((props: any) => {
           width={360}
           onClose={hideDrawer}
           className="recent-events"
-          open={isDrawerVisible}
-        >
+          open={isDrawerVisible}>
           {confirmationHistory && confirmationHistory.length > 0 ? (
-            <TransactionConfirmationHistory
-              confirmationHistory={confirmationHistory}
-            />
+            <TransactionConfirmationHistory confirmationHistory={confirmationHistory} />
           ) : (
             <div className="flex-center h-50">
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={
-                  <p>
-                    {connected
-                      ? t('account-area.no-recent-events')
-                      : t('general.not-connected')}
-                  </p>
-                }
-              />
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
+              ? t('account-area.no-recent-events')
+              : t('general.not-connected')}</p>} />
             </div>
           )}
         </Drawer>
       </>
     );
+
   } else {
+
     // Launch wallet selector modal
     if (!wallet && !connected && !connecting) {
       setIsSelectingAccount(true);
@@ -632,11 +562,7 @@ export const AppLayout = React.memo((props: any) => {
     return (
       <>
         <div className="background-logo-container">
-          <img
-            className="meanfi-bg-logo"
-            src="/assets/mean-square.svg"
-            alt=""
-          />
+          <img className="meanfi-bg-logo" src="/assets/mean-square.svg" alt="" />
         </div>
       </>
     );

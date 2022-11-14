@@ -1,5 +1,5 @@
-import { IconHelpCircle } from '../../Icons';
-import { InfoIcon } from '../InfoIcon';
+import { IconHelpCircle } from "../../Icons";
+import { InfoIcon } from "../InfoIcon";
 
 export const FormLabelWithIconInfo = (props: {
   label: string;
@@ -12,10 +12,10 @@ export const FormLabelWithIconInfo = (props: {
     <>
       <div className="form-label icon-label align-items-center">
         <span>{label}</span>
-        <InfoIcon content={tooltipText} placement={tooltipPlacement || 'top'}>
+        <InfoIcon content={tooltipText} placement={tooltipPlacement || "top"}>
           <IconHelpCircle className="mean-svg-icons" />
         </InfoIcon>
       </div>
     </>
-  );
-};
+  )
+}

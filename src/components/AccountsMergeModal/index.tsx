@@ -1,11 +1,6 @@
-import {
-  CheckOutlined,
-  CloseCircleOutlined,
-  LoadingOutlined,
-  WarningOutlined,
-} from '@ant-design/icons';
+import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Modal, Spin } from 'antd';
+import { Button, Modal, Spin } from "antd";
 import { TokenDisplay } from 'components/TokenDisplay';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
@@ -15,14 +10,10 @@ import {
   consoleOut,
   friendlyDisplayDecimalPlaces,
   getTransactionOperationDescription,
-  getTransactionStatusForLogs,
+  getTransactionStatusForLogs
 } from 'middleware/ui';
-import {
-  formatThousands,
-  getTxIxResume,
-  shortenAddress,
-} from 'middleware/utils';
-import { AccountTokenParsedInfo, UserTokenAccount } from 'models/accounts';
+import { formatThousands, getTxIxResume, shortenAddress } from 'middleware/utils';
+import { AccountTokenParsedInfo, UserTokenAccount } from "models/accounts";
 import { TransactionStatus } from 'models/enums';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -49,15 +40,17 @@ export const AccountsMergeModal = (props: {
   } = props;
   const { t } = useTranslation('common');
   const { publicKey, wallet } = useWallet();
-  const { transactionStatus, setTransactionStatus } =
-    useContext(AppStateContext);
+  const {
+    transactionStatus,
+    setTransactionStatus,
+  } = useContext(AppStateContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
   const onFinishedMergeAccountsTx = () => {
     setIsBusy(false);
     handleOk();
-  };
+  }
 
   const onExecuteMergeAccountsTx = async () => {
     let transaction: Transaction;
@@ -74,7 +67,7 @@ export const AccountsMergeModal = (props: {
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction,
+          currentOperation: TransactionStatus.InitTransaction
         });
 
         const mintPubkey = new PublicKey(tokenMint);
@@ -84,37 +77,36 @@ export const AccountsMergeModal = (props: {
           connection: connection.commitment,
           mint: tokenMint,
           owner: publicKey.toBase58(),
-          mergeGroup: tokenGroup,
+          mergeGroup: tokenGroup
         };
         consoleOut('data:', data, 'blue');
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
-          inputs: data,
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
-          result: '',
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
         });
 
-        return createTokenMergeTx(connection, mintPubkey, publicKey, tokenGroup)
+        return createTokenMergeTx(
+          connection,
+          mintPubkey,
+          publicKey,
+          tokenGroup
+        )
           .then(value => {
             consoleOut('createTokenMergeTx returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransaction
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
-              result: getTxIxResume(value),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
             });
             transaction = value;
             return true;
@@ -123,30 +115,24 @@ export const AccountsMergeModal = (props: {
             console.error('createTokenMergeTx error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure,
+              currentOperation: TransactionStatus.InitTransactionFailure
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
-              result: `${error}`,
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
             });
-            customLogger.logError('Token accounts merge transaction failed', {
-              transcript: transactionLog,
-            });
+            customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
+          result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Token accounts merge transaction failed', {
-          transcript: transactionLog,
-        });
+        customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
         return false;
       }
-    };
+    }
 
     const sendTx = async (): Promise<boolean> => {
       if (connection && wallet && wallet.publicKey && transaction) {
@@ -158,20 +144,17 @@ export const AccountsMergeModal = (props: {
         transaction.feePayer = wallet.publicKey;
         transaction.recentBlockhash = blockhash;
 
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
+              currentOperation: TransactionStatus.ConfirmTransaction
             });
             signature = sig;
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
             });
             return true;
           })
@@ -182,14 +165,10 @@ export const AccountsMergeModal = (props: {
               currentOperation: TransactionStatus.SendTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
             });
-            customLogger.logError('Token accounts merge transaction failed', {
-              transcript: transactionLog,
-            });
+            customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -200,68 +179,54 @@ export const AccountsMergeModal = (props: {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
+          result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Token accounts merge transaction failed', {
-          transcript: transactionLog,
-        });
+        customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
         return false;
       }
-    };
+    }
 
     const confirmTx = async (): Promise<boolean> => {
       return connection
-        .confirmTransaction(signature, 'confirmed')
+        .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
             setTransactionStatus({
               lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished,
+              currentOperation: TransactionStatus.TransactionFinished
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.TransactionFinished,
-              ),
-              result: '',
+              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+              result: ''
             });
             return true;
           } else {
             setTransactionStatus({
               lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure,
+              currentOperation: TransactionStatus.ConfirmTransactionFailure
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.ConfirmTransactionFailure,
-              ),
-              result: signature,
+              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+              result: signature
             });
-            customLogger.logError('Token accounts merge transaction failed', {
-              transcript: transactionLog,
-            });
-            throw (
-              result?.value?.err || new Error('Could not confirm transaction')
-            );
+            customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
+            throw (result?.value?.err || new Error("Could not confirm transaction"));
           }
         })
         .catch(e => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.ConfirmTransactionFailure,
-            ),
-            result: signature,
+            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+            result: signature
           });
-          customLogger.logError('Token accounts merge transaction failed', {
-            transcript: transactionLog,
-          });
+          customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
           return false;
         });
-    };
+    }
 
     if (wallet) {
       const create = await createTx();
@@ -273,13 +238,10 @@ export const AccountsMergeModal = (props: {
           const confirmed = await confirmTx();
           consoleOut('confirmed:', confirmed);
           setIsBusy(false);
-        } else {
-          setIsBusy(false);
-        }
-      } else {
-        setIsBusy(false);
-      }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
     }
+
   };
 
   const getMainCtaLabel = () => {
@@ -287,28 +249,23 @@ export const AccountsMergeModal = (props: {
       return 'Merging accounts';
     } else if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
       return 'Start merge';
-    } else if (
-      transactionStatus.currentOperation ===
-      TransactionStatus.TransactionFinished
-    ) {
+    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
       return 'Completed';
     } else {
       return 'Try again';
     }
-  };
+  }
 
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">{t('assets.merge-accounts-link')}</div>
-      }
+      title={<div className="modal-title">{t('assets.merge-accounts-link')}</div>}
       footer={null}
       open={isVisible}
       onCancel={handleClose}
-      width={400}
-    >
-      <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
+      width={400}>
+
+      <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle && (
           <>
             <div className="transaction-progress">
@@ -318,117 +275,68 @@ export const AccountsMergeModal = (props: {
             {/* List of token accounts that will be merged */}
             {tokenGroup && tokenGroup.length > 0 && (
               <div className="well merged-token-list">
-                {tokenGroup.map(
-                  (item: AccountTokenParsedInfo, index: number) => {
-                    if (index > 3) {
-                      return null;
-                    }
-                    const token = accountTokens.find(
-                      t => t.publicAddress === item.pubkey.toBase58(),
-                    );
-                    return (
-                      <div
-                        key={`${index}`}
-                        className="flex-fixed-right align-items-center merged-token-item"
-                      >
-                        <div className="left flex-column">
-                          <span className="add-on">
-                            {token && (
-                              <TokenDisplay
-                                onClick={() => {}}
-                                mintAddress={token.address}
-                                name={token.name}
-                                showName={true}
-                                showCaretDown={false}
-                              />
-                            )}
-                          </span>
-                          <div className="public-address">
-                            {shortenAddress(item.pubkey, 10)}
-                          </div>
-                        </div>
-                        <div className="right">
-                          {formatThousands(
-                            item.parsedInfo.tokenAmount.uiAmount || 0,
-                            friendlyDisplayDecimalPlaces(
-                              item.parsedInfo.tokenAmount.uiAmount || 0,
-                              item.parsedInfo.tokenAmount.decimals,
-                            ),
+                {tokenGroup.map((item: AccountTokenParsedInfo, index: number) => {
+                  if (index > 3) { return null; }
+                  const token = accountTokens.find(t => t.publicAddress === item.pubkey.toBase58());
+                  return (
+                    <div key={`${index}`} className="flex-fixed-right align-items-center merged-token-item">
+                      <div className="left flex-column">
+                        <span className="add-on">
+                          {token && (
+                            <TokenDisplay onClick={() => { }}
+                              mintAddress={token.address}
+                              name={token.name}
+                              showName={true}
+                              showCaretDown={false}
+                            />
                           )}
-                        </div>
+                        </span>
+                        <div className="public-address">{shortenAddress(item.pubkey, 10)}</div>
                       </div>
-                    );
-                  },
-                )}
+                      <div className="right">
+                        {
+                          formatThousands(
+                            item.parsedInfo.tokenAmount.uiAmount || 0,
+                            friendlyDisplayDecimalPlaces(item.parsedInfo.tokenAmount.uiAmount || 0, item.parsedInfo.tokenAmount.decimals)
+                          )
+                        }
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
             <div className="text-center">
-              <p>
-                <strong>WARNING</strong>: This action may break apps that depend
-                on your existing token accounts.
-              </p>
+              <p><strong>WARNING</strong>: This action may break apps that depend on your existing token accounts.</p>
               {tokenGroup && tokenGroup.length > 4 && (
-                <p>
-                  Up to 4 token accounts can be merged at once. Please review
-                  your remaining tokens after the merge and run merge again as
-                  needed.
-                </p>
+                <p>Up to 4 token accounts can be merged at once. Please review your remaining tokens after the merge and run merge again as needed.</p>
               )}
-              <p>
-                Merging your {tokenGroup && tokenGroup[0].description} token
-                accounts will send funds to the{' '}
-                <strong>Associated Token Account</strong>.
-              </p>
+              <p>Merging your {tokenGroup && tokenGroup[0].description} token accounts will send funds to the <strong>Associated Token Account</strong>.</p>
             </div>
           </>
         )}
-        {transactionStatus.currentOperation ===
-          TransactionStatus.TransactionFinished && (
+        {transactionStatus.currentOperation === TransactionStatus.TransactionFinished && (
           <div className="transaction-progress">
             <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-            <h4 className="font-bold">
-              Your tokens have been merged into the{' '}
-              <strong>Associated Token Account</strong>!
-            </h4>
+            <h4 className="font-bold">Your tokens have been merged into the <strong>Associated Token Account</strong>!</h4>
           </div>
         )}
         {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
-          transactionStatus.currentOperation !==
-            TransactionStatus.TransactionFinished && (
+          transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
             <div className="transaction-progress">
-              <CloseCircleOutlined
-                style={{ fontSize: 48 }}
-                className="icon mt-0"
-              />
+              <CloseCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               <h4 className="font-bold">Merge token accounts failed</h4>
-              <div className="operation">
-                {getTransactionOperationDescription(
-                  transactionStatus.currentOperation,
-                  t,
-                )}
-              </div>
+              <div className="operation">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</div>
             </div>
           )}
       </div>
 
-      <div
-        className={
-          isBusy &&
-          transactionStatus.currentOperation !== TransactionStatus.Iddle
-            ? 'panel2 show'
-            : 'panel2 hide'
-        }
-      >
+      <div className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
         {isBusy && transactionStatus !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold">Merging token accounts...</h4>
-            <div className="operation">
-              {getTransactionOperationDescription(
-                transactionStatus.currentOperation,
-                t,
-              )}
-            </div>
+            <div className="operation">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</div>
           </div>
         )}
       </div>
@@ -440,16 +348,12 @@ export const AccountsMergeModal = (props: {
         shape="round"
         size="large"
         onClick={() => {
-          if (
-            transactionStatus.currentOperation ===
-            TransactionStatus.TransactionFinished
-          ) {
+          if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
             onFinishedMergeAccountsTx();
           } else {
-            onExecuteMergeAccountsTx();
+            onExecuteMergeAccountsTx()
           }
-        }}
-      >
+        }}>
         {getMainCtaLabel()}
       </Button>
     </Modal>

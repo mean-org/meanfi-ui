@@ -92,7 +92,7 @@
       display: inline-flex;
       margin-right: 4px;
 
-      > img {
+      >img {
         margin: 0;
       }
     }
@@ -118,7 +118,7 @@
     font-size: inherit;
   }
 
-  > .ant-collapse-item {
+  >.ant-collapse-item {
     .ant-collapse-header {
       padding: 0 2px;
       color: inherit !important;

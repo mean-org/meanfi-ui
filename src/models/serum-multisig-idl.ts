@@ -1,98 +1,98 @@
-import { Idl } from '@project-serum/anchor';
+import { Idl } from "@project-serum/anchor";
 
 const SerumIDL: Idl = {
-  version: '0.0.0',
-  name: 'multisig',
+  version: "0.0.0",
+  name: "multisig",
   instructions: [
     {
-      name: 'createMultisig',
+      name: "createMultisig",
       accounts: [
         {
-          name: 'multisig',
+          name: "multisig",
           isMut: true,
           isSigner: false,
         },
         {
-          name: 'rent',
+          name: "rent",
           isMut: false,
           isSigner: false,
         },
       ],
       args: [
         {
-          name: 'owners',
+          name: "owners",
           type: {
-            vec: 'publicKey',
+            vec: "publicKey",
           },
         },
         {
-          name: 'threshold',
-          type: 'u64',
+          name: "threshold",
+          type: "u64",
         },
         {
-          name: 'nonce',
-          type: 'u8',
+          name: "nonce",
+          type: "u8",
         },
       ],
     },
     {
-      name: 'createTransaction',
+      name: "createTransaction",
       accounts: [
         {
-          name: 'multisig',
+          name: "multisig",
           isMut: false,
           isSigner: false,
         },
         {
-          name: 'transaction',
+          name: "transaction",
           isMut: true,
           isSigner: false,
         },
         {
-          name: 'proposer',
+          name: "proposer",
           isMut: false,
           isSigner: true,
         },
         {
-          name: 'rent',
+          name: "rent",
           isMut: false,
           isSigner: false,
         },
       ],
       args: [
         {
-          name: 'pid',
-          type: 'publicKey',
+          name: "pid",
+          type: "publicKey",
         },
         {
-          name: 'accs',
+          name: "accs",
           type: {
             vec: {
-              defined: 'TransactionAccount',
+              defined: "TransactionAccount",
             },
           },
         },
         {
-          name: 'data',
-          type: 'bytes',
+          name: "data",
+          type: "bytes",
         },
       ],
     },
     {
-      name: 'approve',
+      name: "approve",
       accounts: [
         {
-          name: 'multisig',
+          name: "multisig",
           isMut: false,
           isSigner: false,
         },
         {
-          name: 'transaction',
+          name: "transaction",
           isMut: true,
           isSigner: false,
         },
         {
-          name: 'owner',
+          name: "owner",
           isMut: false,
           isSigner: true,
         },
@@ -100,64 +100,64 @@ const SerumIDL: Idl = {
       args: [],
     },
     {
-      name: 'setOwners',
+      name: "setOwners",
       accounts: [
         {
-          name: 'multisig',
+          name: "multisig",
           isMut: true,
           isSigner: false,
         },
         {
-          name: 'multisigSigner',
+          name: "multisigSigner",
           isMut: false,
           isSigner: true,
         },
       ],
       args: [
         {
-          name: 'owners',
+          name: "owners",
           type: {
-            vec: 'publicKey',
+            vec: "publicKey",
           },
         },
       ],
     },
     {
-      name: 'changeThreshold',
+      name: "changeThreshold",
       accounts: [
         {
-          name: 'multisig',
+          name: "multisig",
           isMut: true,
           isSigner: false,
         },
         {
-          name: 'multisigSigner',
+          name: "multisigSigner",
           isMut: false,
           isSigner: true,
         },
       ],
       args: [
         {
-          name: 'threshold',
-          type: 'u64',
+          name: "threshold",
+          type: "u64",
         },
       ],
     },
     {
-      name: 'executeTransaction',
+      name: "executeTransaction",
       accounts: [
         {
-          name: 'multisig',
+          name: "multisig",
           isMut: false,
           isSigner: false,
         },
         {
-          name: 'multisigSigner',
+          name: "multisigSigner",
           isMut: false,
           isSigner: false,
         },
         {
-          name: 'transaction',
+          name: "transaction",
           isMut: true,
           isSigner: false,
         },
@@ -167,69 +167,69 @@ const SerumIDL: Idl = {
   ],
   accounts: [
     {
-      name: 'Multisig',
+      name: "Multisig",
       type: {
-        kind: 'struct',
+        kind: "struct",
         fields: [
           {
-            name: 'owners',
+            name: "owners",
             type: {
-              vec: 'publicKey',
+              vec: "publicKey",
             },
           },
           {
-            name: 'threshold',
-            type: 'u64',
+            name: "threshold",
+            type: "u64",
           },
           {
-            name: 'nonce',
-            type: 'u8',
+            name: "nonce",
+            type: "u8",
           },
           {
-            name: 'ownerSetSeqno',
-            type: 'u32',
+            name: "ownerSetSeqno",
+            type: "u32",
           },
         ],
       },
     },
     {
-      name: 'Transaction',
+      name: "Transaction",
       type: {
-        kind: 'struct',
+        kind: "struct",
         fields: [
           {
-            name: 'multisig',
-            type: 'publicKey',
+            name: "multisig",
+            type: "publicKey",
           },
           {
-            name: 'programId',
-            type: 'publicKey',
+            name: "programId",
+            type: "publicKey",
           },
           {
-            name: 'accounts',
+            name: "accounts",
             type: {
               vec: {
-                defined: 'TransactionAccount',
+                defined: "TransactionAccount",
               },
             },
           },
           {
-            name: 'data',
-            type: 'bytes',
+            name: "data",
+            type: "bytes",
           },
           {
-            name: 'signers',
+            name: "signers",
             type: {
-              vec: 'bool',
+              vec: "bool",
             },
           },
           {
-            name: 'didExecute',
-            type: 'bool',
+            name: "didExecute",
+            type: "bool",
           },
           {
-            name: 'ownerSetSeqno',
-            type: 'u32',
+            name: "ownerSetSeqno",
+            type: "u32",
           },
         ],
       },
@@ -237,21 +237,21 @@ const SerumIDL: Idl = {
   ],
   types: [
     {
-      name: 'TransactionAccount',
+      name: "TransactionAccount",
       type: {
-        kind: 'struct',
+        kind: "struct",
         fields: [
           {
-            name: 'pubkey',
-            type: 'publicKey',
+            name: "pubkey",
+            type: "publicKey",
           },
           {
-            name: 'isSigner',
-            type: 'bool',
+            name: "isSigner",
+            type: "bool",
           },
           {
-            name: 'isWritable',
-            type: 'bool',
+            name: "isWritable",
+            type: "bool",
           },
         ],
       },
@@ -260,38 +260,38 @@ const SerumIDL: Idl = {
   errors: [
     {
       code: 100,
-      name: 'InvalidOwner',
-      msg: 'The given owner is not part of this multisig.',
+      name: "InvalidOwner",
+      msg: "The given owner is not part of this multisig.",
     },
     {
       code: 101,
-      name: 'NotEnoughSigners',
-      msg: 'Not enough owners signed this transaction.',
+      name: "NotEnoughSigners",
+      msg: "Not enough owners signed this transaction.",
     },
     {
       code: 102,
-      name: 'TransactionAlreadySigned',
-      msg: 'Cannot delete a transaction that has been signed by an owner.',
+      name: "TransactionAlreadySigned",
+      msg: "Cannot delete a transaction that has been signed by an owner.",
     },
     {
       code: 103,
-      name: 'Overflow',
-      msg: 'Overflow when adding.',
+      name: "Overflow",
+      msg: "Overflow when adding.",
     },
     {
       code: 104,
-      name: 'UnableToDelete',
-      msg: 'Cannot delete a transaction the owner did not create.',
+      name: "UnableToDelete",
+      msg: "Cannot delete a transaction the owner did not create.",
     },
     {
       code: 105,
-      name: 'AlreadyExecuted',
-      msg: 'The given transaction has already been executed.',
+      name: "AlreadyExecuted",
+      msg: "The given transaction has already been executed.",
     },
     {
       code: 106,
-      name: 'InvalidThreshold',
-      msg: 'Threshold must be less than or equal to the number of owners.',
+      name: "InvalidThreshold",
+      msg: "Threshold must be less than or equal to the number of owners.",
     },
   ],
 };

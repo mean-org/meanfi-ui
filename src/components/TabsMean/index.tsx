@@ -1,8 +1,8 @@
-import { useCallback, useContext, useEffect } from 'react';
-import './style.scss';
-import { AppStateContext } from '../../contexts/appstate';
-import { tabNameFormat } from '../../middleware/utils';
-import { useSearchParams } from 'react-router-dom';
+import { useCallback, useContext, useEffect } from "react";
+import "./style.scss";
+import { AppStateContext } from "../../contexts/appstate";
+import { tabNameFormat } from "../../middleware/utils";
+import { useSearchParams } from "react-router-dom";
 
 export const TabsMean = (props: {
   containerClassName?: string;
@@ -12,23 +12,18 @@ export const TabsMean = (props: {
   selectedTab?: any;
   defaultTab: string;
 }) => {
-  const { activeTab, setActiveTab } = useContext(AppStateContext);
   const {
-    containerClassName,
-    headerClassName,
-    bodyClassName,
-    tabs,
-    defaultTab,
-  } = props;
+    activeTab,
+    setActiveTab,
+  } = useContext(AppStateContext);
+  const { containerClassName, headerClassName, bodyClassName, tabs, defaultTab } = props;
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const navigateToTab = useCallback(
-    (tab: string) => {
-      setSearchParams({ v: tab as string });
-    },
-    [setSearchParams],
-  );
+  const navigateToTab = useCallback((tab: string) => {
+    setSearchParams({v: tab as string});
+  }, [setSearchParams]);
+
 
   useEffect(() => {
     if (activeTab === '') {
@@ -50,42 +45,42 @@ export const TabsMean = (props: {
     }
     // Pre-select an option
     switch (optionInQuery) {
-      case 'proposals':
-        setActiveTab('proposals');
+      case "proposals":
+        setActiveTab("proposals");
         break;
-      case 'programs':
-        setActiveTab('programs');
+      case "programs":
+        setActiveTab("programs");
         break;
-      case 'instruction':
-        setActiveTab('instruction');
+      case "instruction":
+        setActiveTab("instruction");
         break;
-      case 'activity':
-        setActiveTab('activity');
+      case "activity":
+        setActiveTab("activity");
         break;
-      case 'transactions':
-        setActiveTab('transactions');
+      case "transactions":
+        setActiveTab("transactions");
         break;
-      case 'anchor-idl':
-        setActiveTab('anchor-idl');
+      case "anchor-idl":
+        setActiveTab("anchor-idl");
         break;
-      case 'summary':
-        setActiveTab('summary');
+      case "summary":
+        setActiveTab("summary");
         break;
-      case 'incoming':
-        setActiveTab('incoming');
+      case "incoming":
+        setActiveTab("incoming");
         break;
-      case 'outgoing':
-        setActiveTab('outgoing');
+      case "outgoing":
+        setActiveTab("outgoing");
         break;
-      case 'details':
-        setActiveTab('details');
+      case "details":
+        setActiveTab("details");
         break;
-      case 'streams':
-        setActiveTab('streams');
+      case "streams":
+        setActiveTab("streams");
         break;
       default:
         setActiveTab(defaultTab);
-        setSearchParams({ v: defaultTab }, { replace: true });
+        setSearchParams({v: defaultTab}, { replace: true });
         break;
     }
   }, [defaultTab, searchParams, setActiveTab, setSearchParams]);
@@ -101,20 +96,16 @@ export const TabsMean = (props: {
             };
 
             return (
-              <li
+              <li 
                 key={tab.id}
-                className={`ant-menu-item ${
-                  activeTab === tabNameFormat(tab.id)
-                    ? 'active ant-menu-item-selected'
-                    : ''
-                }`}
+                className={`ant-menu-item ${activeTab === tabNameFormat(tab.id) ? "active ant-menu-item-selected" : ""}`}
                 tabIndex={0}
                 onClick={onSelectTab}
               >
                 <span className="ant-menu-title-content">{tab.name}</span>
               </li>
-            );
-          })}
+            )
+            })}
         </ul>
       </div>
       <div className={bodyClassName}>
@@ -125,5 +116,5 @@ export const TabsMean = (props: {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}

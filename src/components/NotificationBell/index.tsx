@@ -3,7 +3,10 @@ import { useWallet } from '../../contexts/wallet';
 import { IconNotification } from '../../Icons';
 import useWindowSize from '../../hooks/useWindowResize';
 
-export const NotificationBell = (props: { onOpenDrawer: any }) => {
+export const NotificationBell = (props: {
+  onOpenDrawer: any;
+}) => {
+
   const { publicKey } = useWallet();
   const { width } = useWindowSize();
   // const { confirmationHistory } = useContext(TxConfirmationContext);
@@ -16,11 +19,8 @@ export const NotificationBell = (props: { onOpenDrawer: any }) => {
     return (
       <div className="connected-network">
         {!isLargeScreen() && (
-          <div
-            className="events-drawer-trigger lower"
-            onClick={props.onOpenDrawer}
-          >
-            <IconNotification className="mean-svg-icons" />
+          <div className="events-drawer-trigger lower" onClick={props.onOpenDrawer}>
+            <IconNotification className="mean-svg-icons"/>
             {/* <div className="magictime tinRightIn">
               <IconNotification className="mean-svg-icons"/>
             </div> */}
@@ -42,12 +42,9 @@ export const NotificationBell = (props: { onOpenDrawer: any }) => {
           </Tooltip>
         </span> */}
         {isLargeScreen() && (
-          <div
-            className="events-drawer-trigger upper"
-            onClick={props.onOpenDrawer}
-          >
+          <div className="events-drawer-trigger upper" onClick={props.onOpenDrawer}>
             {/* {confirmationHistory && confirmationHistory.length > 0} */}
-            <IconNotification className="mean-svg-icons" />
+            <IconNotification className="mean-svg-icons"/>
             {/* <div className="magictime tinRightIn">
               <IconNotification className="mean-svg-icons"/>
             </div> */}

@@ -1,17 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import {
-  CheckOutlined,
-  InfoCircleOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import {
-  getTransactionOperationDescription,
-  isValidAddress,
-} from '../../middleware/ui';
+import { getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
 import { isError } from '../../middleware/transactions';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
@@ -35,8 +28,10 @@ export const MultisigSetProgramAuthModal = (props: {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const { transactionStatus, setTransactionStatus } =
-    useContext(AppStateContext);
+  const {
+    transactionStatus,
+    setTransactionStatus
+  } = useContext(AppStateContext);
 
   const [programId, setProgramId] = useState('');
   const [programDataAddress, setProgramDataAddress] = useState('');
@@ -49,40 +44,42 @@ export const MultisigSetProgramAuthModal = (props: {
         setProgramId(props.programId);
       }
     }
-  }, [props.programId, props.isVisible]);
+  }, [
+    props.programId,
+    props.isVisible
+  ]);
 
   // Resolves programDataAddress
   useEffect(() => {
-    if (
-      !props.isVisible ||
-      !connection ||
-      !publicKey ||
-      !programId ||
-      !isValidAddress(programId)
-    ) {
+
+    if (!props.isVisible || !connection || !publicKey || !programId || !isValidAddress(programId)) {
       return;
     }
 
     const timeout = setTimeout(() => {
       const programAddress = new PublicKey(programId);
-      const BPF_LOADER_UPGRADEABLE_PID = new PublicKey(
-        'BPFLoaderUpgradeab1e11111111111111111111111',
-      );
+      const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
       PublicKey.findProgramAddress(
         [programAddress.toBuffer()],
-        BPF_LOADER_UPGRADEABLE_PID,
+        BPF_LOADER_UPGRADEABLE_PID
       )
-        .then((result: any) => {
-          const programDataAddress = result[0];
-          setProgramDataAddress(programDataAddress.toBase58());
-        })
-        .catch(err => console.error(err));
+      .then((result: any) => {
+        const programDataAddress = result[0];
+        setProgramDataAddress(programDataAddress.toBase58());
+      })
+      .catch(err => console.error(err));
     });
 
     return () => {
       clearTimeout(timeout);
-    };
-  }, [programId, publicKey, connection, props.isVisible]);
+    }
+
+  },[
+    programId,
+    publicKey,
+    connection,
+    props.isVisible
+  ]);
 
   const onAcceptModal = () => {
     const params: SetProgramAuthPayload = {
@@ -91,95 +88,85 @@ export const MultisigSetProgramAuthModal = (props: {
       newAuthAddress: newAuthAddress,
     };
     props.handleOk(params);
-  };
+  }
 
   const onCloseModal = () => {
     props.handleClose();
-  };
+  }
 
   const onAfterClose = () => {
+
     setTimeout(() => {
       setProgramId('');
       setProgramDataAddress('');
       setNewAuthAddress('');
+      
     }, 50);
-
+    
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+        lastOperation: TransactionStatus.Iddle,
+        currentOperation: TransactionStatus.Iddle
     });
-  };
+  }
 
   const onProgramChange = (e: any) => {
     const inputValue = e.target.value as string;
     const trimmedValue = inputValue.trim();
     setProgramId(trimmedValue);
-  };
+  }
 
   const onNewAuthChanged = (e: any) => {
     const inputValue = e.target.value as string;
     const trimmedValue = inputValue.trim();
     setNewAuthAddress(trimmedValue);
-  };
+  }
 
   const isValidForm = (): boolean => {
-    return programId &&
+    return (
+      programId &&
       newAuthAddress &&
       programDataAddress &&
       isValidAddress(programId) &&
       isValidAddress(newAuthAddress) &&
       isValidAddress(programDataAddress)
+    )
       ? true
       : false;
-  };
+  }
 
   const refreshPage = () => {
     props.handleClose();
     window.location.reload();
-  };
+  }
 
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">
-          {t('multisig.set-program-authority.modal-title')}
-        </div>
-      }
+      title={<div className="modal-title">{t('multisig.set-program-authority.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={
-        props.isBusy ||
-        transactionStatus.currentOperation !== TransactionStatus.Iddle
-          ? 380
-          : 480
-      }
-    >
-      <div className={!props.isBusy ? 'panel1 show' : 'panel1 hide'}>
+      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+
+      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Program address */}
-            <div className="form-label">
-              {t('multisig.upgrade-program.program-address-label')}
-            </div>
+            <div className="form-label">{t('multisig.upgrade-program.program-address-label')}</div>
             <div className={`well ${props.programId ? 'disabled' : ''}`}>
-              <input
-                id="token-address-field"
+              <input id="token-address-field"
                 className="general-text-input"
                 autoComplete="on"
                 autoCorrect="off"
                 type="text"
                 onChange={onProgramChange}
-                placeholder={t(
-                  'multisig.upgrade-program.program-address-placeholder',
-                )}
+                placeholder={t('multisig.upgrade-program.program-address-placeholder')}
                 required={true}
                 spellCheck="false"
-                value={programId}
-              />
+                value={programId}/>
               {programId && !isValidAddress(programId) && (
                 <span className="form-field-error">
                   {t('transactions.validation.address-validation')}
@@ -187,24 +174,18 @@ export const MultisigSetProgramAuthModal = (props: {
               )}
             </div>
             {/* New authority address */}
-            <div className="form-label">
-              {t('multisig.set-program-authority.new-authority-input-label')}
-            </div>
+            <div className="form-label">{t('multisig.set-program-authority.new-authority-input-label')}</div>
             <div className="well">
-              <input
-                id="mint-to-field"
+              <input id="mint-to-field"
                 className="general-text-input"
                 autoComplete="on"
                 autoCorrect="off"
                 type="text"
                 onChange={onNewAuthChanged}
-                placeholder={t(
-                  'multisig.set-program-authority.new-authority-input-placeholder',
-                )}
+                placeholder={t('multisig.set-program-authority.new-authority-input-placeholder')}
                 required={true}
                 spellCheck="false"
-                value={newAuthAddress}
-              />
+                value={newAuthAddress}/>
               {newAuthAddress && !isValidAddress(newAuthAddress) && (
                 <span className="form-field-error">
                   {t('transactions.validation.address-validation')}
@@ -212,75 +193,57 @@ export const MultisigSetProgramAuthModal = (props: {
               )}
             </div>
           </>
-        ) : transactionStatus.currentOperation ===
-          TransactionStatus.TransactionFinished ? (
+        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">
-                {t('multisig.upgrade-program.success-message')}
-              </h4>
+              <h4 className="font-bold">{t('multisig.upgrade-program.success-message')}</h4>
             </div>
           </>
         ) : (
           <>
             <div className="transaction-progress">
-              <InfoCircleOutlined
-                style={{ fontSize: 48 }}
-                className="icon mt-0"
-              />
-              {transactionStatus.currentOperation ===
-              TransactionStatus.TransactionStartFailure ? (
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
-                      NATIVE_SOL_MINT.toBase58(),
+                      NATIVE_SOL_MINT.toBase58()
                     ),
                     feeAmount: getAmountWithSymbol(
-                      props.transactionFees.blockchainFee +
-                        props.transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58(),
-                    ),
-                  })}
+                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                      NATIVE_SOL_MINT.toBase58()
+                    )})
+                  }
                 </h4>
               ) : (
                 <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(
-                    transactionStatus.currentOperation,
-                    t,
-                  )}
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
             </div>
           </>
         )}
+
       </div>
 
-      <div
+      <div 
         className={
-          props.isBusy &&
-          transactionStatus.currentOperation !== TransactionStatus.Iddle
-            ? 'panel2 show'
-            : 'panel2 hide'
-        }
-      >
+          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
+            ? "panel2 show" 
+            : "panel2 hide"
+          }>          
         {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
-          <div className="transaction-progress">
-            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-            <h4 className="font-bold mb-1">
-              {getTransactionOperationDescription(
-                transactionStatus.currentOperation,
-                t,
-              )}
-            </h4>
-            {transactionStatus.currentOperation ===
-              TransactionStatus.SignTransaction && (
-              <div className="indication">
-                {t('transactions.status.instructions')}
-              </div>
-            )}
-          </div>
+        <div className="transaction-progress">
+          <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+          <h4 className="font-bold mb-1">
+            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+          </h4>
+          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+            <div className="indication">{t('transactions.status.instructions')}</div>
+          )}
+        </div>
         )}
       </div>
 
@@ -292,15 +255,13 @@ export const MultisigSetProgramAuthModal = (props: {
             shape="round"
             size="middle"
             className={props.isBusy ? 'inactive' : ''}
-            onClick={() =>
-              isError(transactionStatus.currentOperation)
-                ? onAcceptModal()
-                : onCloseModal()
-            }
-          >
+            onClick={() => isError(transactionStatus.currentOperation)
+              ? onAcceptModal()
+              : onCloseModal()}>
             {isError(transactionStatus.currentOperation)
               ? t('general.retry')
-              : t('general.cta-close')}
+              : t('general.cta-close')
+            }
           </Button>
         </div>
         <div className="col-6">
@@ -312,31 +273,26 @@ export const MultisigSetProgramAuthModal = (props: {
             size="middle"
             disabled={!isValidForm()}
             onClick={() => {
-              if (
-                transactionStatus.currentOperation === TransactionStatus.Iddle
-              ) {
+              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                 onAcceptModal();
-              } else if (
-                transactionStatus.currentOperation ===
-                TransactionStatus.TransactionFinished
-              ) {
+              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                 onCloseModal();
               } else {
                 refreshPage();
               }
-            }}
-          >
+            }}>
             {props.isBusy
               ? t('multisig.set-program-authority.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-              ? t('multisig.set-program-authority.main-cta')
-              : transactionStatus.currentOperation ===
-                TransactionStatus.TransactionFinished
-              ? t('general.cta-finish')
-              : t('general.refresh')}
+                ? t('multisig.set-program-authority.main-cta')
+                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                  ? t('general.cta-finish')
+                  : t('general.refresh')
+            }
           </Button>
         </div>
       </div>
+
     </Modal>
   );
 };

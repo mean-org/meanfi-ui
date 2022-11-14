@@ -1,4 +1,5 @@
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import { TokenInfo } from "models/SolanaTokenInfo";
+
 
 export interface UserTokenAccount extends TokenInfo {
   publicAddress?: string; // Token Account Public Address

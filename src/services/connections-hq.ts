@@ -1,15 +1,15 @@
-import { Cluster, clusterApiUrl, Connection } from '@solana/web3.js';
-import { appConfig } from '..';
-import { requestOptions } from '../constants';
-import { environment } from '../environments/environment';
-import { getRpcApiEndpoint } from '../middleware/api';
-import { ChainID } from '../models/enums';
+import { Cluster, clusterApiUrl, Connection } from "@solana/web3.js";
+import { appConfig } from "..";
+import { requestOptions } from "../constants";
+import { environment } from "../environments/environment";
+import { getRpcApiEndpoint } from "../middleware/api";
+import { ChainID } from "../models/enums";
 
 export interface RpcConfig {
-  cluster: Cluster | 'local-validator';
+  cluster: Cluster | "local-validator";
   httpProvider: string;
   networkId: number;
-  id: number;
+  id: number,
   network?: string;
 }
 
@@ -20,33 +20,33 @@ export const GET_RPC_API_ENDPOINT = '/meanfi-rpcs';
 
 export const DEFAULT_RPCS: RpcConfig[] = [
   {
-    cluster: 'mainnet-beta',
-    httpProvider: 'https://solana-api.projectserum.com', // clusterApiUrl("mainnet-beta"),
+    cluster: "mainnet-beta",
+    httpProvider: 'https://solana-api.projectserum.com',  // clusterApiUrl("mainnet-beta"),
     networkId: ChainID.MainnetBeta,
     network: 'Mainnet Beta',
-    id: 0,
+    id: 0
   },
   {
-    cluster: 'testnet',
-    httpProvider: clusterApiUrl('testnet'),
+    cluster: "testnet",
+    httpProvider: clusterApiUrl("testnet"),
     networkId: ChainID.Testnet,
     network: 'Testnet',
-    id: 0,
+    id: 0
   },
   {
-    cluster: 'devnet',
-    httpProvider: clusterApiUrl('devnet'),
+    cluster: "devnet",
+    httpProvider: clusterApiUrl("devnet"),
     networkId: ChainID.Devnet,
     network: 'Devnet',
-    id: 0,
+    id: 0
   },
   {
-    cluster: 'local-validator',
-    httpProvider: 'http://localhost:8899',
+    cluster: "local-validator",
+    httpProvider: "http://localhost:8899",
     networkId: ChainID.LocalValidator,
     network: 'Local Validator',
-    id: 0,
-  },
+    id: 0
+  }
 ];
 
 export const getDefaultRpc = (): RpcConfig => {
@@ -61,7 +61,7 @@ export const getDefaultRpc = (): RpcConfig => {
     default:
       return DEFAULT_RPCS[0];
   }
-};
+}
 
 export const isRpcLive = async (rpcConfig: RpcConfig): Promise<boolean> => {
   try {
@@ -69,11 +69,9 @@ export const isRpcLive = async (rpcConfig: RpcConfig): Promise<boolean> => {
     if (!connection) {
       return false;
     }
-    return connection
-      .getLatestBlockhashAndContext('confirmed')
+    return connection.getLatestBlockhashAndContext("confirmed")
       .then((response: any) => {
-        const rpcTestPassed =
-          response && response.value && !response.value.err ? true : false;
+        const rpcTestPassed = response && response.value && !response.value.err ? true : false;
         return rpcTestPassed;
       })
       .catch(error => {
@@ -84,18 +82,12 @@ export const isRpcLive = async (rpcConfig: RpcConfig): Promise<boolean> => {
     console.error(error);
     return false;
   }
-};
+}
 
-export const getLiveRpc = async (
-  networkId?: number,
-  previousRpcId?: number,
-): Promise<RpcConfig | null> => {
+export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Promise<RpcConfig | null> => {
+
   networkId = networkId ?? getDefaultRpc().networkId;
-  const url = `${
-    appConfig.getConfig().apiUrl
-  }${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${
-    previousRpcId || 0
-  }`;
+  const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${previousRpcId || 0}`;
   const rpcConfig = await getRpcApiEndpoint(url, requestOptions);
   if (rpcConfig === null) {
     return null;
@@ -108,7 +100,7 @@ export const getLiveRpc = async (
   }
 
   return await getLiveRpc(networkId, rpcConfig.id);
-};
+}
 
 export const refreshCachedRpc = async () => {
   const cachedRpcJson = window.localStorage.getItem('cachedRpc');
@@ -124,4 +116,4 @@ export const refreshCachedRpc = async () => {
     const newRpc = (await getLiveRpc()) ?? getDefaultRpc();
     window.localStorage.setItem('cachedRpc', JSON.stringify(newRpc));
   }
-};
+}

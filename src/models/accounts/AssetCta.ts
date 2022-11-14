@@ -1,12 +1,12 @@
-import { MetaInfoCtaAction } from 'models/enums';
+import { MetaInfoCtaAction } from "models/enums";
 
 export interface AssetCta {
-  action: MetaInfoCtaAction;
-  isVisible: boolean;
-  disabled: boolean;
-  caption: string;
-  uiComponentType: 'button' | 'menuitem';
-  uiComponentId: string;
-  tooltip: string;
-  callBack?: any;
+    action: MetaInfoCtaAction;
+    isVisible: boolean;
+    disabled: boolean;
+    caption: string;
+    uiComponentType: "button" | "menuitem";
+    uiComponentId: string;
+    tooltip: string;
+    callBack?: any;
 }

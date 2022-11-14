@@ -1,9 +1,9 @@
-import { CheckOutlined } from '@ant-design/icons';
-import { Modal } from 'antd';
+import { CheckOutlined } from "@ant-design/icons";
+import { Modal } from "antd";
 import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 import { DDCA_FREQUENCY_OPTIONS } from '../../constants/ddca-frequency-options';
-import { AppStateContext } from '../../contexts/appstate';
+import { AppStateContext } from "../../contexts/appstate";
 import { getDayOfWeek, getOrdinalDay } from '../../middleware/ui';
 import { DdcaFrequencyOption } from '../../models/ddca-models';
 
@@ -13,7 +13,7 @@ export const DdcaFrequencySelectorModal = (props: {
   isVisible: boolean;
 }) => {
   const today = new Date();
-  const { t, i18n } = useTranslation('common');
+  const { t, i18n } = useTranslation("common");
   const [currentLocale, setCurrentLocale] = useState(i18n.language || 'en-US');
   const { ddcaOption, setDdcaOption } = useContext(AppStateContext);
 
@@ -26,43 +26,38 @@ export const DdcaFrequencySelectorModal = (props: {
   const handleSelection = (option: DdcaFrequencyOption) => {
     setDdcaOption(option.name);
     props.handleOk();
-  };
+  }
 
   const ddcaOptionsList = () => {
     return (
       <div className="items-card-list vertical-scroll">
         {DDCA_FREQUENCY_OPTIONS.map(option => {
-          if (option.dcaInterval < 2) {
-            return null;
-          }
+          if (option.dcaInterval < 2) { return null; }
           return (
-            <div
-              key={`${option.dcaInterval}`}
-              className={`item-card ${
-                option.name === ddcaOption?.name
-                  ? 'selected'
-                  : option.disabled
-                  ? 'disabled'
-                  : ''
-              }`}
-              onClick={() => {
-                if (!option.disabled) {
-                  handleSelection(option);
-                }
-              }}
-            >
+            <div key={`${option.dcaInterval}`} className={`item-card ${option.name === ddcaOption?.name
+              ? "selected"
+              : option.disabled
+              ? "disabled"
+              : ""
+            }`}
+            onClick={() => {
+              if (!option.disabled) {
+                handleSelection(option);
+              }
+            }}>
               <div className="checkmark">
                 <CheckOutlined />
               </div>
               <div className="item-meta">
-                <div className="item-name">
-                  {t(`ddca-selector.${option.translationId}.name`)}
-                </div>
+                <div className="item-name">{t(`ddca-selector.${option.translationId}.name`)}</div>
                 <div className="item-description">
-                  {t(`ddca-selector.${option.translationId}.description`, {
-                    ordinalDay: getOrdinalDay(today),
-                    dayOfWeek: getDayOfWeek(today, currentLocale),
-                  })}
+                  {t(
+                    `ddca-selector.${option.translationId}.description`,
+                    {
+                      ordinalDay: getOrdinalDay(today),
+                      dayOfWeek: getDayOfWeek(today, currentLocale)
+                    })
+                  }
                 </div>
               </div>
             </div>
@@ -70,20 +65,17 @@ export const DdcaFrequencySelectorModal = (props: {
         })}
       </div>
     );
-  };
+  }
 
   return (
     <Modal
       className="mean-modal"
-      title={
-        <div className="modal-title">{t('ddca-selector.modal-title')}</div>
-      }
+      title={<div className="modal-title">{t('ddca-selector.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
-      width={480}
-    >
+      width={480}>
       {ddcaOptionsList()}
     </Modal>
   );

@@ -1,50 +1,52 @@
-import * as BufferLayout from 'buffer-layout';
-import { Instruction, InstructionCoder } from '@project-serum/anchor';
-import BN from 'bn.js';
-import camelCase from 'camelcase';
-import { struct } from '@project-serum/borsh';
-import bs58 from 'bs58';
-import { AccountMeta } from '@solana/web3.js';
-import { InstructionDisplay } from '@project-serum/anchor/dist/cjs/coder/borsh/instruction';
-import { sentenceCase } from '../multisig';
+import * as BufferLayout from "buffer-layout";
+import { Instruction, InstructionCoder } from "@project-serum/anchor";
+import BN from "bn.js";
+import camelCase from "camelcase";
+import { struct } from "@project-serum/borsh";
+import bs58 from "bs58";
+import { AccountMeta } from "@solana/web3.js";
+import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
+import { sentenceCase } from "../multisig";
+
 
 export class MeanSystemInstructionCoder implements InstructionCoder {
+
   encode(ixName: string, ix: any): Buffer {
     switch (camelCase(ixName)) {
-      case 'createAccount': {
+      case "createAccount": {
         return encodeCreateAccount(ix);
       }
-      case 'assign': {
+      case "assign": {
         return encodeAssign(ix);
       }
-      case 'transfer': {
+      case "transfer": {
         return encodeTransfer(ix);
       }
-      case 'createAccountWithSeed': {
+      case "createAccountWithSeed": {
         return encodeCreateAccountWithSeed(ix);
       }
-      case 'advanceNonceAccount': {
+      case "advanceNonceAccount": {
         return encodeAdvanceNonceAccount(ix);
       }
-      case 'withdrawNonceAccount': {
+      case "withdrawNonceAccount": {
         return encodeWithdrawNonceAccount(ix);
       }
-      case 'initializeNonceAccount': {
+      case "initializeNonceAccount": {
         return encodeInitializeNonceAccount(ix);
       }
-      case 'authorizeNonceAccount': {
+      case "authorizeNonceAccount": {
         return encodeAuthorizeNonceAccount(ix);
       }
-      case 'allocate': {
+      case "allocate": {
         return encodeAllocate(ix);
       }
-      case 'allocateWithSeed': {
+      case "allocateWithSeed": {
         return encodeAllocateWithSeed(ix);
       }
-      case 'assignWithSeed': {
+      case "assignWithSeed": {
         return encodeAssignWithSeed(ix);
       }
-      case 'transferWithSeed': {
+      case "transferWithSeed": {
         return encodeTransferWithSeed(ix);
       }
       default: {
@@ -54,15 +56,17 @@ export class MeanSystemInstructionCoder implements InstructionCoder {
   }
 
   encodeState(_ixName: string, _ix: any): Buffer {
-    throw new Error('System does not have state');
+    throw new Error("System does not have state");
   }
 
   public decode(
     ix: Buffer | string,
-    encoding: 'hex' | 'base58' = 'hex',
+    encoding: "hex" | "base58" = "hex"
+
   ): Instruction | null {
-    if (typeof ix === 'string') {
-      ix = encoding === 'hex' ? Buffer.from(ix, 'hex') : bs58.decode(ix);
+
+    if (typeof ix === "string") {
+      ix = encoding === "hex" ? Buffer.from(ix, "hex") : bs58.decode(ix);
     }
 
     // console.log('ix', ix);
@@ -82,33 +86,29 @@ export class MeanSystemInstructionCoder implements InstructionCoder {
 
   public format(
     ix: Instruction,
-    accountMetas: AccountMeta[],
+    accountMetas: AccountMeta[]
+
   ): InstructionDisplay | null {
-    const variant: any = Object.values(LAYOUT.registry).filter(
-      (v: any) => v.property === ix.name,
-    )[0];
+
+    const variant: any = Object.values(LAYOUT.registry).filter((v: any) => v.property === ix.name)[0];
     // const idlIx = this.idl.instructions.filter(i => i.name === ix.name)[0];
     // console.log('idlIx', idlIx);
 
-    if (!variant) {
-      return null;
-    }
+    if (!variant) { return null; }
     // console.log('variant', variant);
     const args: any[] = [];
 
     for (const arg of Object.keys(ix.data)) {
       // console.log('arg', arg);
-      const field = variant.layout.fields.filter(
-        (f: any) => f.property === arg,
-      )[0] as any;
+      const field = variant.layout.fields.filter((f: any) => f.property === arg)[0] as any;
       // console.log('field', field);
       const value = (ix.data as any)[arg];
       // console.log('value', value);
       if (field && value) {
         args.push({
           name: field.property,
-          type: 'u64',
-          data: value.toString(),
+          type: "u64",
+          data: value.toString()
         });
       }
     }
@@ -129,11 +129,11 @@ class RustStringLayout extends BufferLayout.Layout<string | null> {
     }>
   >(
     [
-      BufferLayout.u32('length'),
-      BufferLayout.u32('lengthPadding'),
-      BufferLayout.blob(BufferLayout.offset(BufferLayout.u32(), -8), 'chars'),
+      BufferLayout.u32("length"),
+      BufferLayout.u32("lengthPadding"),
+      BufferLayout.blob(BufferLayout.offset(BufferLayout.u32(), -8), "chars"),
     ],
-    this.property,
+    this.property
   );
 
   constructor(public property?: string) {
@@ -146,7 +146,7 @@ class RustStringLayout extends BufferLayout.Layout<string | null> {
     }
 
     const data = {
-      chars: Buffer.from(src, 'utf8'),
+      chars: Buffer.from(src, "utf8"),
     };
 
     return this.layout.encode(data, b, offset);
@@ -154,14 +154,14 @@ class RustStringLayout extends BufferLayout.Layout<string | null> {
 
   decode(b: Buffer, offset = 0): string | null {
     const data = this.layout.decode(b, offset);
-    return data['chars'].toString();
+    return data["chars"].toString();
   }
 
   getSpan(b: Buffer, offset = 0): number {
     return (
       BufferLayout.u32().span +
       BufferLayout.u32().span +
-      new BN(new Uint8Array(b).slice(offset, offset + 4), 10, 'le').toNumber()
+      new BN(new Uint8Array(b).slice(offset, offset + 4), 10, "le").toNumber()
     );
   }
 }
@@ -209,7 +209,7 @@ function encodeCreateAccountWithSeed({
         owner: owner.toBuffer(),
       },
     },
-    LAYOUT.getVariant(3).span + seed.length,
+    LAYOUT.getVariant(3).span + seed.length
   );
 }
 
@@ -253,7 +253,7 @@ function encodeAllocateWithSeed({ base, seed, space, owner }: any): Buffer {
         owner: owner.toBuffer(),
       },
     },
-    LAYOUT.getVariant(9).span + seed.length,
+    LAYOUT.getVariant(9).span + seed.length
   );
 }
 
@@ -266,7 +266,7 @@ function encodeAssignWithSeed({ base, seed, owner }: any): Buffer {
         owner: owner.toBuffer(),
       },
     },
-    LAYOUT.getVariant(10).span + seed.length,
+    LAYOUT.getVariant(10).span + seed.length
   );
 }
 
@@ -279,89 +279,89 @@ function encodeTransferWithSeed({ lamports, seed, owner }: any): Buffer {
         owner: owner.toBuffer(),
       },
     },
-    LAYOUT.getVariant(11).span + seed.length,
+    LAYOUT.getVariant(11).span + seed.length
   );
 }
 
-const LAYOUT = BufferLayout.union(BufferLayout.u32('instruction'));
+const LAYOUT = BufferLayout.union(BufferLayout.u32("instruction"));
 LAYOUT.addVariant(
   0,
   BufferLayout.struct([
-    BufferLayout.ns64('lamports'),
-    BufferLayout.ns64('space'),
-    publicKey('owner'),
+    BufferLayout.ns64("lamports"),
+    BufferLayout.ns64("space"),
+    publicKey("owner"),
   ]),
-  'createAccount',
+  "createAccount"
 );
-LAYOUT.addVariant(1, BufferLayout.struct([publicKey('owner')]), 'assign');
+LAYOUT.addVariant(1, BufferLayout.struct([publicKey("owner")]), "assign");
 LAYOUT.addVariant(
   2,
-  BufferLayout.struct([BufferLayout.ns64('lamports')]),
-  'transfer',
+  BufferLayout.struct([BufferLayout.ns64("lamports")]),
+  "transfer"
 );
 LAYOUT.addVariant(
   3,
   BufferLayout.struct([
-    publicKey('base'),
-    rustStringLayout('seed'),
-    BufferLayout.ns64('lamports'),
-    BufferLayout.ns64('space'),
-    publicKey('owner'),
+    publicKey("base"),
+    rustStringLayout("seed"),
+    BufferLayout.ns64("lamports"),
+    BufferLayout.ns64("space"),
+    publicKey("owner"),
   ]),
-  'createAccountWithSeed',
+  "createAccountWithSeed"
 );
 LAYOUT.addVariant(
   4,
-  BufferLayout.struct([publicKey('authorized')]),
-  'advanceNonceAccount',
+  BufferLayout.struct([publicKey("authorized")]),
+  "advanceNonceAccount"
 );
 LAYOUT.addVariant(
   5,
-  BufferLayout.struct([BufferLayout.ns64('lamports')]),
-  'withdrawNonceAccount',
+  BufferLayout.struct([BufferLayout.ns64("lamports")]),
+  "withdrawNonceAccount"
 );
 LAYOUT.addVariant(
   6,
-  BufferLayout.struct([publicKey('authorized')]),
-  'initializeNonceAccount',
+  BufferLayout.struct([publicKey("authorized")]),
+  "initializeNonceAccount"
 );
 LAYOUT.addVariant(
   7,
-  BufferLayout.struct([publicKey('authorized')]),
-  'authorizeNonceAccount',
+  BufferLayout.struct([publicKey("authorized")]),
+  "authorizeNonceAccount"
 );
 LAYOUT.addVariant(
   8,
-  BufferLayout.struct([BufferLayout.ns64('space')]),
-  'allocate',
+  BufferLayout.struct([BufferLayout.ns64("space")]),
+  "allocate"
 );
 LAYOUT.addVariant(
   9,
   BufferLayout.struct([
-    publicKey('base'),
-    rustStringLayout('seed'),
-    BufferLayout.ns64('space'),
-    publicKey('owner'),
+    publicKey("base"),
+    rustStringLayout("seed"),
+    BufferLayout.ns64("space"),
+    publicKey("owner"),
   ]),
-  'allocateWithSeed',
+  "allocateWithSeed"
 );
 LAYOUT.addVariant(
   10,
   BufferLayout.struct([
-    publicKey('base'),
-    rustStringLayout('seed'),
-    publicKey('owner'),
+    publicKey("base"),
+    rustStringLayout("seed"),
+    publicKey("owner"),
   ]),
-  'assignWithSeed',
+  "assignWithSeed"
 );
 LAYOUT.addVariant(
   11,
   BufferLayout.struct([
-    BufferLayout.ns64('lamports'),
-    rustStringLayout('seed'),
-    publicKey('owner'),
+    BufferLayout.ns64("lamports"),
+    rustStringLayout("seed"),
+    publicKey("owner"),
   ]),
-  'transferWithSeed',
+  "transferWithSeed"
 );
 
 function encodeData(instruction: any, maxSpan?: number): Buffer {
@@ -376,17 +376,17 @@ function encodeData(instruction: any, maxSpan?: number): Buffer {
 }
 
 const instructionMaxSpan = Math.max(
-  ...Object.values(LAYOUT.registry).map((r: any) => r.span),
+  ...Object.values(LAYOUT.registry).map((r: any) => r.span)
 );
 
 const getIxAccounts = (name: string, keys: AccountMeta[]): any[] => {
+
   switch (name) {
-    case 'transfer':
+    case "transfer":
       return [
-        { name: sentenceCase('from'), ...keys[0] },
-        { name: sentenceCase('to'), ...keys[1] },
+        { name: sentenceCase("from"), ...keys[0] },
+        { name: sentenceCase("to"), ...keys[1] },
       ];
-    default:
-      return [];
+    default: return [];
   }
-};
+}

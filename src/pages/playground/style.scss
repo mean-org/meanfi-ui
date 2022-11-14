@@ -53,6 +53,7 @@
   }
 }
 
+
 /*
  * Animated CSS button
  * Copyright Alexander Bodin 2019-09-07
@@ -80,7 +81,7 @@
 }
 
 .animated-button-blue::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0px;
   left: 0px;
@@ -189,7 +190,7 @@
 }
 
 .animated-button-red::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0px;
   left: 0px;
@@ -298,7 +299,7 @@
 }
 
 .animated-button-green::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0px;
   left: 0px;
@@ -407,7 +408,7 @@
 }
 
 .animated-button-gold::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0px;
   left: 0px;
@@ -461,6 +462,7 @@
   animation: 2s animateRight linear -1s infinite;
 }
 
+
 .animated-button-gold span:nth-child(3) {
   bottom: 0px;
   left: 0px;
@@ -477,6 +479,7 @@
   -webkit-animation: 2s animateBottom linear infinite;
   animation: 2s animateBottom linear infinite;
 }
+
 
 .animated-button-gold span:nth-child(4) {
   top: 0px;
@@ -496,42 +499,42 @@
 }
 
 @keyframes animateLeft {
-  0% {
-    -webkit-transform: translateY(-100%);
-    transform: translateY(-100%);
-  }
-  100% {
-    -webkit-transform: translateY(100%);
-    transform: translateY(100%);
-  }
+    0% {
+      -webkit-transform: translateY(-100%);
+      transform: translateY(-100%);
+    }
+    100% {
+      -webkit-transform: translateY(100%);
+      transform: translateY(100%);
+    }
 }
 @keyframes animateRight {
-  0% {
-    -webkit-transform: translateY(100%);
-    transform: translateY(100%);
-  }
-  100% {
-    -webkit-transform: translateY(-100%);
-    transform: translateY(-100%);
-  }
+    0% {
+      -webkit-transform: translateY(100%);
+      transform: translateY(100%);
+    }
+    100% {
+      -webkit-transform: translateY(-100%);
+      transform: translateY(-100%);
+    }
 }
 @keyframes animateTop {
-  0% {
-    -webkit-transform: translateX(100%);
-    transform: translateX(100%);
-  }
-  100% {
-    -webkit-transform: translateX(-100%);
-    transform: translateX(-100%);
-  }
+    0% {
+      -webkit-transform: translateX(100%);
+      transform: translateX(100%);
+    }
+    100% {
+      -webkit-transform: translateX(-100%);
+      transform: translateX(-100%);
+    }
 }
 @keyframes animateBottom {
-  0% {
-    -webkit-transform: translateX(-100%);
-    transform: translateX(-100%);
-  }
-  100% {
-    -webkit-transform: translateX(100%);
-    transform: translateX(100%);
-  }
+    0% {
+      -webkit-transform: translateX(-100%);
+      transform: translateX(-100%);
+    }
+    100% {
+      -webkit-transform: translateX(100%);
+      transform: translateX(100%);
+    }
 }

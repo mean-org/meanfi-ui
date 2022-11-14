@@ -1,45 +1,27 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import {
-  MSP_ACTIONS,
-  TransactionFees,
-} from '@mean-dao/money-streaming/lib/types';
+import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Modal } from 'antd';
+import { Button, Modal } from "antd";
 import { openNotification } from 'components/Notifications';
 import {
   CUSTOM_TOKEN_NAME,
   MIN_SOL_BALANCE_REQUIRED,
   NO_FEES,
-  WRAPPED_SOL_MINT_ADDRESS,
+  WRAPPED_SOL_MINT_ADDRESS
 } from 'constants/common';
 import { useNativeAccount, useUserAccounts } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
-import {
-  confirmationEvents,
-  TxConfirmationContext,
-  TxConfirmationInfo,
-} from 'contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
-import { closeTokenAccount } from 'middleware/accounts';
-import {
-  consoleOut,
-  getTransactionStatusForLogs,
-  percentage,
-} from 'middleware/ui';
-import {
-  cutNumber,
-  formatThousands,
-  getAmountFromLamports,
-  getTxIxResume,
-  isValidNumber,
-  toUiAmount,
-} from 'middleware/utils';
+import { closeTokenAccount } from "middleware/accounts";
+import { consoleOut, getTransactionStatusForLogs, percentage } from 'middleware/ui';
+import { cutNumber, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber, toUiAmount } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
 export const UnwrapSolModal = (props: {
   handleOk: any;
@@ -47,7 +29,7 @@ export const UnwrapSolModal = (props: {
   isVisible: boolean;
 }) => {
   const { isVisible, handleClose, handleOk } = props;
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
   const {
@@ -58,18 +40,15 @@ export const UnwrapSolModal = (props: {
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
-  const [unwrapAmount, setUnwrapAmount] = useState<string>('');
+  const [unwrapAmount, setUnwrapAmount] = useState<string>("");
   const { account } = useNativeAccount();
   const { tokenAccounts } = useUserAccounts();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [wSolBalance, setWsolBalance] = useState(0);
-  const [wSolPubKey, setWsolPubKey] = useState<PublicKey | undefined>(
-    undefined,
-  );
+  const [wSolPubKey, setWsolPubKey] = useState<PublicKey | undefined>(undefined);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
-  const [transactionFees, setTransactionFees] =
-    useState<TransactionFees>(NO_FEES);
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
 
   // Get wSOL token info
@@ -79,77 +58,65 @@ export const UnwrapSolModal = (props: {
 
   // Callback methods
 
-  const getFeeAmount = useCallback(
-    (fees: TransactionFees, amount?: any): number => {
-      let fee = 0;
-      const inputAmount = amount ? parseFloat(amount) : 0;
-      if (fees) {
-        if (fees.mspPercentFee) {
-          fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
-        } else if (fees.mspFlatFee) {
-          fee = fees.mspFlatFee;
-        }
+  const getFeeAmount = useCallback((fees: TransactionFees, amount?: any): number => {
+    let fee = 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
+    if (fees) {
+      if (fees.mspPercentFee) {
+        fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
+      } else if (fees.mspFlatFee) {
+        fee = fees.mspFlatFee;
       }
-      return fee;
-    },
-    [],
-  );
+    }
+    return fee;
+  }, []);
 
-  const getDisplayAmount = useCallback(
-    (amount: number, addSymbol = false): string => {
-      if (wSol) {
-        const bareAmount = cutNumber(amount, wSol.decimals);
-        if (addSymbol) {
-          return wSol.name === CUSTOM_TOKEN_NAME
-            ? `${bareAmount} [${wSol.symbol}]`
-            : `${bareAmount} ${wSol.symbol}`;
-        }
-        return bareAmount;
+  const getDisplayAmount = useCallback((amount: number, addSymbol = false): string => {
+    if (wSol) {
+      const bareAmount = cutNumber(amount, wSol.decimals);
+      if (addSymbol) {
+        return wSol.name === CUSTOM_TOKEN_NAME ? `${bareAmount} [${wSol.symbol}]` : `${bareAmount} ${wSol.symbol}`;
       }
+      return bareAmount;
+    }
 
-      return '';
-    },
-    [wSol],
-  );
+    return '';
+  }, [wSol]);
 
-  const setPercentualValue = useCallback(
-    (value: number) => {
-      let newValue = '';
-      let fee = 0;
-      if (value === 100) {
-        fee = getFeeAmount(transactionFees, wSolBalance);
-        newValue = getDisplayAmount(wSolBalance);
-      } else {
-        const partialAmount = percentage(value, wSolBalance);
-        fee = getFeeAmount(transactionFees, partialAmount);
-        newValue = getDisplayAmount(partialAmount);
-      }
-      setUnwrapAmount(newValue);
-      setFeeAmount(fee);
-    },
-    [getDisplayAmount, getFeeAmount, wSolBalance, transactionFees],
-  );
+  const setPercentualValue = useCallback((value: number) => {
+    let newValue = '';
+    let fee = 0;
+    if (value === 100) {
+      fee = getFeeAmount(transactionFees, wSolBalance)
+      newValue = getDisplayAmount(wSolBalance);
+    } else {
+      const partialAmount = percentage(value, wSolBalance);
+      fee = getFeeAmount(transactionFees, partialAmount)
+      newValue = getDisplayAmount(partialAmount);
+    }
+    setUnwrapAmount(newValue);
+    setFeeAmount(fee);
+  }, [getDisplayAmount, getFeeAmount, wSolBalance, transactionFees]);
 
   const resetTransactionStatus = useCallback(() => {
+
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
     });
+
   }, [setTransactionStatus]);
 
-  const onUnwrapConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
-      consoleOut('onUnwrapConfirmed event executed!', '', 'crimson');
-      if (item && item.operationType === OperationType.Unwrap) {
-        setIsUnwrapping(false);
-        resetTransactionStatus();
-        setTimeout(() => {
-          refreshTokenBalance();
-        });
-      }
-    },
-    [refreshTokenBalance, resetTransactionStatus],
-  );
+  const onUnwrapConfirmed = useCallback((item: TxConfirmationInfo) => {
+    consoleOut("onUnwrapConfirmed event executed!", '', 'crimson');
+    if (item && item.operationType === OperationType.Unwrap) {
+      setIsUnwrapping(false);
+      resetTransactionStatus();
+      setTimeout(() => {
+        refreshTokenBalance();
+      });
+    }
+  }, [refreshTokenBalance, resetTransactionStatus]);
 
   // Effects
 
@@ -162,7 +129,12 @@ export const UnwrapSolModal = (props: {
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
-  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
 
   // Keep wSOL balance updated
   useEffect(() => {
@@ -173,9 +145,10 @@ export const UnwrapSolModal = (props: {
     let balance = 0;
 
     if (tokenAccounts && tokenAccounts.length > 0 && tokenList) {
-      const wSol = tokenAccounts.findIndex(t => {
+      const wSol = tokenAccounts.findIndex((t) => {
         const mint = t.info.mint.toBase58();
-        return !t.pubkey.equals(publicKey) && mint === WRAPPED_SOL_MINT_ADDRESS
+        return !t.pubkey.equals(publicKey) &&
+          mint === WRAPPED_SOL_MINT_ADDRESS
           ? true
           : false;
       });
@@ -183,7 +156,7 @@ export const UnwrapSolModal = (props: {
         const wSolInfo = tokenAccounts[wSol].info;
         const mint = wSolInfo.mint.toBase58();
         const amount = wSolInfo.amount.toNumber();
-        const token = tokenList.find(t => t.address === mint);
+        const token = tokenList.find((t) => t.address === mint);
         balance = token ? parseFloat(toUiAmount(amount, token.decimals)) : 0;
         setWsolPubKey(tokenAccounts[wSol].pubkey);
       }
@@ -197,7 +170,11 @@ export const UnwrapSolModal = (props: {
     if (!feeAmount && transactionFees) {
       setFeeAmount(getFeeAmount(transactionFees));
     }
-  }, [feeAmount, transactionFees, getFeeAmount]);
+  }, [
+    feeAmount,
+    transactionFees,
+    getFeeAmount
+  ]);
 
   // Get fees
   useEffect(() => {
@@ -206,9 +183,9 @@ export const UnwrapSolModal = (props: {
     };
 
     if (transactionFees.blockchainFee === 0) {
-      getTransactionFees().then(values => {
+      getTransactionFees().then((values) => {
         setTransactionFees(values);
-        consoleOut('unwrapFees:', values);
+        consoleOut("unwrapFees:", values);
       });
     }
   }, [connection, transactionFees]);
@@ -217,13 +194,14 @@ export const UnwrapSolModal = (props: {
   useEffect(() => {
     if (connection && publicKey && !pageInitialized) {
       confirmationEvents.on(EventType.TxConfirmSuccess, onUnwrapConfirmed);
-      consoleOut(
-        'Subscribed to event txConfirmed with:',
-        'onUnwrapConfirmed',
-        'blue',
-      );
+      consoleOut('Subscribed to event txConfirmed with:', 'onUnwrapConfirmed', 'blue');
     }
-  }, [publicKey, connection, pageInitialized, onUnwrapConfirmed]);
+  }, [
+    publicKey,
+    connection,
+    pageInitialized,
+    onUnwrapConfirmed,
+  ]);
 
   // Set when a page is initialized
   useEffect(() => {
@@ -246,15 +224,19 @@ export const UnwrapSolModal = (props: {
   // Events and actions
 
   const isSuccess = useCallback(() => {
+
     return (
       transactionStatus.currentOperation ===
       TransactionStatus.TransactionFinished
     );
-  }, [transactionStatus.currentOperation]);
+
+  }, [
+    transactionStatus.currentOperation
+  ]);
 
   const onTransactionFinished = useCallback(() => {
     if (isSuccess()) {
-      setUnwrapAmount('');
+      setUnwrapAmount("");
     }
     resetTransactionStatus();
     handleOk();
@@ -276,10 +258,10 @@ export const UnwrapSolModal = (props: {
       newValue = splitted.join('.');
     }
 
-    if (newValue === null || newValue === undefined || newValue === '') {
-      setUnwrapAmount('');
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setUnwrapAmount("");
     } else if (newValue === '.') {
-      setUnwrapAmount('.');
+      setUnwrapAmount(".");
     } else if (isValidNumber(newValue)) {
       setUnwrapAmount(newValue);
       setFeeAmount(getFeeAmount(transactionFees, newValue));
@@ -299,64 +281,58 @@ export const UnwrapSolModal = (props: {
           currentOperation: TransactionStatus.InitTransaction,
         });
 
-        const amount = parseFloat(unwrapAmount);
-        consoleOut('unwrapAmount:', amount, 'blue');
+        const amount = parseFloat(unwrapAmount)
+        consoleOut("unwrapAmount:", amount, "blue");
 
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
+            TransactionStatus.TransactionStart
           ),
           inputs: `unwrapAmount: ${amount}`,
         });
 
         transactionLog.push({
           action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
+            TransactionStatus.InitTransaction
           ),
-          result: '',
+          result: "",
         });
 
         if (!wSolPubKey) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure,
+            currentOperation: TransactionStatus.TransactionStartFailure
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.TransactionStartFailure,
-            ),
-            result: `Wrapped SOL token account not found for the currently connected wallet account`,
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Wrapped SOL token account not found for the currently connected wallet account`
           });
-          customLogger.logWarning('Unwrap transaction failed', {
-            transcript: transactionLog,
-          });
+          customLogger.logWarning('Unwrap transaction failed', { transcript: transactionLog });
           openNotification({
             title: 'Cannot unwrap SOL',
             description: `Wrapped SOL token account not found for the currently connected wallet account`,
-            type: 'info',
+            type: 'info'
           });
           return false;
         }
 
         return await closeTokenAccount(
-          connection, // connection
-          wSolPubKey, // tokenPubkey
-          publicKey as PublicKey, // owner
+          connection,                         // connection
+          wSolPubKey,                         // tokenPubkey
+          publicKey as PublicKey              // owner
         )
           .then((value: Transaction | null) => {
             if (value !== null) {
-              consoleOut('closeTokenAccount returned transaction:', value);
+              consoleOut("closeTokenAccount returned transaction:", value);
               // Stage 1 completed - The transaction is created and returned
               setTransactionStatus({
                 lastOperation: TransactionStatus.InitTransactionSuccess,
                 currentOperation: TransactionStatus.SignTransaction,
               });
               transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.InitTransactionSuccess,
-                ),
-                result: getTxIxResume(value),
+                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+                result: getTxIxResume(value)
               });
               transaction = value;
               return true;
@@ -367,27 +343,25 @@ export const UnwrapSolModal = (props: {
                 currentOperation: TransactionStatus.InitTransactionFailure,
               });
               transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.InitTransactionFailure,
-                ),
-                result: 'No transaction created',
+                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+                result: 'No transaction created'
               });
               return false;
             }
           })
-          .catch(error => {
-            console.error('closeTokenAccount transaction init error:', error);
+          .catch((error) => {
+            console.error("closeTokenAccount transaction init error:", error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
+                TransactionStatus.InitTransactionFailure
               ),
               result: `${error}`,
             });
-            customLogger.logError('Unwrap transaction failed', {
+            customLogger.logError("Unwrap transaction failed", {
               transcript: transactionLog,
             });
             return false;
@@ -395,9 +369,9 @@ export const UnwrapSolModal = (props: {
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
+          result: "Cannot start transaction! Wallet not found!",
         });
-        customLogger.logError('Unwrap transaction failed', {
+        customLogger.logError("Unwrap transaction failed", {
           transcript: transactionLog,
         });
         return false;
@@ -414,10 +388,9 @@ export const UnwrapSolModal = (props: {
         transaction.feePayer = wallet.publicKey;
         transaction.recentBlockhash = blockhash;
 
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
+          .then((sig) => {
+            consoleOut("sendEncodedTransaction returned a signature:", sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction,
@@ -425,13 +398,13 @@ export const UnwrapSolModal = (props: {
             signature = sig;
             transactionLog.push({
               action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
+                TransactionStatus.SendTransactionSuccess
               ),
               result: `signature: ${signature}`,
             });
             return true;
           })
-          .catch(error => {
+          .catch((error) => {
             console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
@@ -439,11 +412,11 @@ export const UnwrapSolModal = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
+                TransactionStatus.SendTransactionFailure
               ),
               result: { error, encodedTx },
             });
-            customLogger.logError('Unwrap transaction failed', {
+            customLogger.logError("Unwrap transaction failed", {
               transcript: transactionLog,
             });
             return false;
@@ -455,9 +428,9 @@ export const UnwrapSolModal = (props: {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
+          result: "Cannot send transaction! Wallet not found!",
         });
-        customLogger.logError('Unwrap transaction failed', {
+        customLogger.logError("Unwrap transaction failed", {
           transcript: transactionLog,
         });
         return false;
@@ -467,33 +440,33 @@ export const UnwrapSolModal = (props: {
     if (wallet && wSol) {
       setIsUnwrapping(true);
       const create = await createTx();
-      consoleOut('created:', create);
+      consoleOut("created:", create);
       if (create) {
         const sent = await sendTx();
-        consoleOut('sent:', sent);
+        consoleOut("sent:", sent);
         if (sent) {
           enqueueTransactionConfirmation({
             signature: signature,
             operationType: OperationType.Unwrap,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
             loadingMessage: `Unwrap ${formatThousands(
               parseFloat(unwrapAmount),
-              wSol.decimals,
+              wSol.decimals
             )} ${wSol.symbol}`,
-            completedTitle: 'Transaction confirmed',
+            completedTitle: "Transaction confirmed",
             completedMessage: `Successfully unwrapped ${formatThousands(
               parseFloat(unwrapAmount),
-              wSol.decimals,
+              wSol.decimals
             )} ${wSol.symbol}`,
           });
           onTransactionFinished();
         } else {
           openNotification({
-            title: t('notifications.error-title'),
-            description: t('notifications.error-sending-transaction'),
-            type: 'error',
+            title: t("notifications.error-title"),
+            description: t("notifications.error-sending-transaction"),
+            type: "error",
           });
           setIsUnwrapping(false);
         }
@@ -519,17 +492,17 @@ export const UnwrapSolModal = (props: {
     return !publicKey
       ? t('transactions.validation.not-connected')
       : nativeBalance === 0
-      ? t('transactions.validation.amount-sol-low')
-      : nativeBalance < (feeAmount || MIN_SOL_BALANCE_REQUIRED)
-      ? t('transactions.validation.amount-sol-low')
-      : !wSolBalance
-      ? t('transactions.validation.no-balance')
-      : !unwrapAmount || parseFloat(unwrapAmount) === 0
-      ? t('transactions.validation.no-amount')
-      : parseFloat(unwrapAmount) > wSolBalance
-      ? t('transactions.validation.invalid-amount')
-      : 'Unwrap SOL';
-  };
+        ? t('transactions.validation.amount-sol-low')
+        : nativeBalance < (feeAmount || MIN_SOL_BALANCE_REQUIRED)
+          ? t('transactions.validation.amount-sol-low')
+          : !wSolBalance
+            ? t('transactions.validation.no-balance')
+            : !unwrapAmount || parseFloat(unwrapAmount) === 0
+              ? t('transactions.validation.no-amount')
+              : parseFloat(unwrapAmount) > wSolBalance
+                ? t('transactions.validation.invalid-amount')
+                : 'Unwrap SOL';
+  }
 
   return (
     <Modal
@@ -539,23 +512,20 @@ export const UnwrapSolModal = (props: {
       open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
-      width={400}
-    >
+      width={400}>
+
       <div className="px-4 pb-3">
+
         <div className="well disabled">
           <div className="flex-fixed-right">
-            <div className="left inner-label">
-              {t('unwrap.current-wsol-balance')}:
-            </div>
+            <div className="left inner-label">{t('unwrap.current-wsol-balance')}:</div>
             <div className="right">&nbsp;</div>
           </div>
           <div className="flex-fixed-right">
             <div className="left static-data-field">
-              {formatThousands(
-                wSolBalance,
-                wSol?.decimals || 9,
-                wSol?.decimals || 9,
-              )}
+              {
+                formatThousands(wSolBalance, wSol?.decimals || 9, wSol?.decimals || 9)
+              }
             </div>
             <div className="right">&nbsp;</div>
           </div>
@@ -564,34 +534,28 @@ export const UnwrapSolModal = (props: {
         {/* Unwrap amount */}
         <div className={`well ${isUnwrapping ? 'disabled' : ''}`}>
           <div className="flex-fixed-right">
-            <div className="left inner-label">
-              {t('unwrap.label-input-amount')}
-            </div>
+            <div className="left inner-label">{t('unwrap.label-input-amount')}</div>
             <div className="right">
               <div className="addon">
                 <div className="token-group">
                   <div
                     className="token-max simplelink"
-                    onClick={() => setPercentualValue(25)}
-                  >
+                    onClick={() => setPercentualValue(25)}>
                     25%
                   </div>
                   <div
                     className="token-max simplelink"
-                    onClick={() => setPercentualValue(50)}
-                  >
+                    onClick={() => setPercentualValue(50)}>
                     50%
                   </div>
                   <div
                     className="token-max simplelink"
-                    onClick={() => setPercentualValue(75)}
-                  >
+                    onClick={() => setPercentualValue(75)}>
                     75%
                   </div>
                   <div
                     className="token-max simplelink"
-                    onClick={() => setPercentualValue(100)}
-                  >
+                    onClick={() => setPercentualValue(100)}>
                     100%
                   </div>
                 </div>
@@ -618,10 +582,8 @@ export const UnwrapSolModal = (props: {
             <div className="right">&nbsp;</div>
           </div>
           {parseFloat(unwrapAmount) > wSolBalance ? (
-            <span className="form-field-error">
-              Unwrap amount exceeds available balance
-            </span>
-          ) : null}
+            <span className="form-field-error">Unwrap amount exceeds available balance</span>
+          ) : (null)}
         </div>
 
         <Button
@@ -631,16 +593,18 @@ export const UnwrapSolModal = (props: {
           shape="round"
           size="large"
           disabled={!isUnwrapValid() || isUnwrapping}
-          onClick={onStartUnwrapTx}
-        >
+          onClick={onStartUnwrapTx}>
           {isUnwrapping && (
-            <span className="mr-1">
-              <LoadingOutlined style={{ fontSize: '16px' }} />
-            </span>
+            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
-          {isUnwrapping ? 'Unwrapping SOL' : getCtaLabel()}
+          {isUnwrapping
+            ? 'Unwrapping SOL'
+            : getCtaLabel()
+          }
         </Button>
+
       </div>
+
     </Modal>
   );
 };

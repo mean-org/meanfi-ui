@@ -1,34 +1,30 @@
 import React from 'react';
-import {
-  CustomerServiceOutlined,
-  SafetyOutlined,
-  TransactionOutlined,
-} from '@ant-design/icons';
-import { Avatar, Button, Col, Row } from 'antd';
-import { PreFooter } from '../../components/PreFooter';
-import { MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL } from '../../constants';
+import { CustomerServiceOutlined, SafetyOutlined, TransactionOutlined } from "@ant-design/icons";
+import { Avatar, Button, Col, Row } from "antd";
+import { PreFooter } from "../../components/PreFooter";
+import { MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL } from "../../constants";
 import { useTranslation } from 'react-i18next';
 
 export const CustodyView = () => {
   const { t } = useTranslation('common');
 
   const onApplyToMeanfiCustody = () => {
-    window.open(MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL, '_blank', 'noreferrer');
-  };
+    window.open(MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL, '_blank','noreferrer');
+  }
 
   return (
     <div className="solid-bg">
+
       <section className="hero">
-        <h1 className="heading">{t('custody.heading')}</h1>
-        <p className="subheading">{t('custody.subheading')}</p>
+        <h1 className="heading">{t("custody.heading")}</h1>
+        <p className="subheading">{t("custody.subheading")}</p>
         <Button
           className="main-cta"
           type="primary"
           shape="round"
           size="large"
-          onClick={() => onApplyToMeanfiCustody()}
-        >
-          {t('custody.custody-button')}
+          onClick={() => onApplyToMeanfiCustody()}>
+          {t("custody.custody-button")}
         </Button>
       </section>
 
@@ -43,13 +39,9 @@ export const CustodyView = () => {
                     icon={<SafetyOutlined />}
                   />
                 </div>
-                <h2 className="highlight-title">
-                  {t('custody.first-container.title-one')}
-                </h2>
+                <h2 className="highlight-title">{t("custody.first-container.title-one")}</h2>
                 <div className="text-container">
-                  <p className="highlight-text">
-                    {t('custody.first-container.text-one')}
-                  </p>
+                  <p className="highlight-text">{t("custody.first-container.text-one")}</p>
                 </div>
               </div>
             </Col>
@@ -61,13 +53,9 @@ export const CustodyView = () => {
                     icon={<TransactionOutlined />}
                   />
                 </div>
-                <h2 className="highlight-title">
-                  {t('custody.first-container.title-two')}
-                </h2>
+                <h2 className="highlight-title">{t("custody.first-container.title-two")}</h2>
                 <div className="text-container">
-                  <p className="highlight-text">
-                    {t('custody.first-container.text-two')}
-                  </p>
+                  <p className="highlight-text">{t("custody.first-container.text-two")}</p>
                 </div>
               </div>
             </Col>
@@ -79,13 +67,9 @@ export const CustodyView = () => {
                     icon={<CustomerServiceOutlined />}
                   />
                 </div>
-                <h2 className="highlight-title">
-                  {t('custody.first-container.title-three')}
-                </h2>
+                <h2 className="highlight-title">{t("custody.first-container.title-three")}</h2>
                 <div className="text-container">
-                  <p className="highlight-text">
-                    {t('custody.first-container.text-three')}
-                  </p>
+                  <p className="highlight-text">{t("custody.first-container.text-three")}</p>
                 </div>
               </div>
             </Col>
@@ -96,13 +80,9 @@ export const CustodyView = () => {
       <section className="content flex-center contrast-section min-section-height">
         <div className="container">
           <div className="highlight-box text-center">
-            <h2 className="highlight-title">
-              {t('custody.second-container.title')}
-            </h2>
+            <h2 className="highlight-title">{t("custody.second-container.title")}</h2>
             <div className="text-container">
-              <p className="highlight-text">
-                {t('custody.second-container.text')}
-              </p>
+              <p className="highlight-text">{t("custody.second-container.text")}</p>
             </div>
           </div>
         </div>
@@ -111,28 +91,23 @@ export const CustodyView = () => {
       <section className="content flex-center min-section-height">
         <div className="container">
           <div className="highlight-box text-center">
-            <h2 className="highlight-title">
-              {t('custody.third-container.title')}
-            </h2>
+            <h2 className="highlight-title">{t("custody.third-container.title")}</h2>
             <div className="text-container">
-              <p className="highlight-text">
-                {t('custody.third-container.text')}
-              </p>
+              <p className="highlight-text">{t("custody.third-container.text")}</p>
               <Button
                 className="main-cta"
                 type="primary"
                 shape="round"
                 size="large"
-                onClick={() => onApplyToMeanfiCustody()}
-              >
-                {t('custody.custody-button')}
+                onClick={() => onApplyToMeanfiCustody()}>
+                {t("custody.custody-button")}
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 
+{/* 
       <section className="content">
         <div className="container">
           <Row gutter={[24, 24]}>
@@ -191,4 +166,5 @@ export const CustodyView = () => {
       <PreFooter />
     </div>
   );
+
 };

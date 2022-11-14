@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { TransactionConfirmationStatus } from '@solana/web3.js';
-import { getSolanaExplorerClusterParam, useConnection } from './connection';
-import { fetchTransactionStatus } from '../middleware/transactions';
-import { consoleOut, delay } from '../middleware/ui';
-import { EventType, OperationType } from '../models/enums';
+import React, { useState, useEffect, useCallback } from "react";
+import { TransactionConfirmationStatus } from "@solana/web3.js";
+import { getSolanaExplorerClusterParam, useConnection } from "./connection";
+import { fetchTransactionStatus } from "../middleware/transactions";
+import { consoleOut, delay } from "../middleware/ui";
+import { EventType, OperationType } from "../models/enums";
 import {
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   TRANSACTION_STATUS_RETRY,
-  TRANSACTION_STATUS_RETRY_TIMEOUT,
-} from '../constants';
-import { useTranslation } from 'react-i18next';
-import { openNotification } from '../components/Notifications';
-import { notification } from 'antd';
-import { useAccountsContext } from './accounts';
+  TRANSACTION_STATUS_RETRY_TIMEOUT
+} from "../constants";
+import { useTranslation } from "react-i18next";
+import { openNotification } from "../components/Notifications";
+import { notification } from "antd";
+import { useAccountsContext } from "./accounts";
 
-export type TxStatus = 'fetching' | 'fetched' | 'error';
+export type TxStatus = "fetching" | "fetched" | "error";
 const key = 'updatable';
 
 export interface TxConfirmationInfo {
@@ -37,33 +37,34 @@ type Listener = (value: any) => void;
 type MapListener = Record<string, Listener[]>;
 
 class EventEmitter {
+
   private mapListener: MapListener = {};
 
-  public on(eventName: string, listener: Listener): void {
-    const listeners = this.eventExists(eventName)
-      ? this.mapListener[eventName]
-      : [];
+   public on(eventName: string, listener: Listener): void {
+      const listeners = this.eventExists(eventName)
+         ? this.mapListener[eventName]
+         : [];
 
-    this.mapListener[eventName] = [...listeners, listener];
-  }
+      this.mapListener[eventName] = [...listeners, listener];
+   }
 
-  public emit(eventName: string, value: any): void {
-    if (this.eventExists(eventName)) {
-      const listeners = this.mapListener[eventName];
-      listeners.forEach(listener => listener(value));
-    }
-  }
+   public emit(eventName: string, value: any): void {
+      if (this.eventExists(eventName)) {
+         const listeners = this.mapListener[eventName];
+         listeners.forEach(listener => listener(value));
+      }
+   }
 
-  public off(eventName: string, listener: Listener): void {
-    if (this.eventExists(eventName)) {
-      const listeners = this.mapListener[eventName];
-      this.mapListener[eventName] = listeners.filter(l => l !== listener);
-    }
-  }
+   public off(eventName: string, listener: Listener): void {
+      if (this.eventExists(eventName)) {
+         const listeners = this.mapListener[eventName];
+         this.mapListener[eventName] = listeners.filter(l => l !== listener);
+      }
+   }
 
-  private eventExists(eventName: string): boolean {
-    return eventName in this.mapListener;
-  }
+   private eventExists(eventName: string): boolean {
+      return eventName in this.mapListener;
+   }
 }
 
 export const confirmationEvents = new EventEmitter();
@@ -71,39 +72,44 @@ export const confirmationEvents = new EventEmitter();
 const txStatusCache = new Map<string, TxConfirmationInfo>();
 
 export const txConfirmationCache = {
-  add: (signature: string, data: TxConfirmationInfo, timestamp: number) => {
-    if (!signature || !data || !data.signature) {
-      return;
-    }
+  add: (
+    signature: string,
+    data: TxConfirmationInfo,
+    timestamp: number,
+  ) => {
+      if (!signature || !data || !data.signature) { return; }
 
-    const modifiedData = Object.assign({}, data, {
-      timestamp,
-    });
-    const isNew = !txStatusCache.has(signature);
-    if (isNew) {
-      txStatusCache.set(signature, modifiedData);
-    }
-    return modifiedData;
+      const modifiedData = Object.assign({}, data, {
+        timestamp
+      });
+      const isNew = !txStatusCache.has(signature);
+      if (isNew) {
+          txStatusCache.set(signature, modifiedData);
+      }
+      return modifiedData;
   },
   get: (signature: string) => {
-    return txStatusCache.get(signature);
+      return txStatusCache.get(signature);
   },
   delete: (signature: string) => {
-    if (txStatusCache.get(signature)) {
-      txStatusCache.delete(signature);
-      return true;
-    }
-    return false;
+      if (txStatusCache.get(signature)) {
+          txStatusCache.delete(signature);
+          return true;
+      }
+      return false;
   },
-  update: (signature: string, data: TxConfirmationInfo) => {
-    if (txStatusCache.get(signature)) {
-      txStatusCache.set(signature, data);
-      return true;
-    }
-    return false;
+  update: (
+    signature: string,
+    data: TxConfirmationInfo,
+  ) => {
+      if (txStatusCache.get(signature)) {
+          txStatusCache.set(signature, data);
+          return true;
+      }
+      return false;
   },
   clear: () => {
-    txStatusCache.clear();
+      txStatusCache.clear();
   },
 };
 
@@ -119,7 +125,7 @@ interface TxConfirmationState {
   startFetchTxSignatureInfo: (
     signature: string,
     finality: TransactionConfirmationStatus,
-    type: OperationType,
+    type: OperationType
   ) => void;
   setRecentlyCreatedVault: (ddcaAccountPda: string) => void;
   clearTxConfirmationContext: () => void;
@@ -139,8 +145,7 @@ const defaultCtxValues: TxConfirmationState = {
   clearTxConfirmationContext: () => {},
 };
 
-export const TxConfirmationContext =
-  React.createContext<TxConfirmationState>(defaultCtxValues);
+export const TxConfirmationContext = React.createContext<TxConfirmationState>(defaultCtxValues);
 
 const TxConfirmationProvider: React.FC = ({ children }) => {
   const today = new Date();
@@ -150,27 +155,13 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
 
   // Variables
   const [txTimestampAdded, setTxTimestampAdded] = useState(today.getTime());
-  const [lastSentTxSignature, setLastSentTxSignature] = useState<string>(
-    defaultCtxValues.lastSentTxSignature,
-  );
-  const [lastSentTxStatus, setLastSentTxStatus] = useState<
-    TransactionConfirmationStatus | undefined
-  >(defaultCtxValues.lastSentTxStatus);
-  const [lastSentTxOperationType, setLastSentTxOperationType] = useState<
-    OperationType | undefined
-  >(defaultCtxValues.lastSentTxOperationType);
-  const [fetchTxInfoStatus, setFetchingTxStatus] = useState<
-    TxStatus | undefined
-  >(defaultCtxValues.fetchTxInfoStatus);
-  const [finality, setExpectedFinality] = useState<
-    TransactionConfirmationStatus | undefined
-  >();
-  const [recentlyCreatedVault, updateRecentlyCreatedVault] = useState(
-    defaultCtxValues.recentlyCreatedVault,
-  );
-  const [confirmationHistory, setConfirmationHistory] = useState<
-    TxConfirmationInfo[]
-  >(defaultCtxValues.confirmationHistory);
+  const [lastSentTxSignature, setLastSentTxSignature] = useState<string>(defaultCtxValues.lastSentTxSignature);
+  const [lastSentTxStatus, setLastSentTxStatus] = useState<TransactionConfirmationStatus | undefined>(defaultCtxValues.lastSentTxStatus);
+  const [lastSentTxOperationType, setLastSentTxOperationType] = useState<OperationType | undefined>(defaultCtxValues.lastSentTxOperationType);
+  const [fetchTxInfoStatus, setFetchingTxStatus] = useState<TxStatus | undefined>(defaultCtxValues.fetchTxInfoStatus);
+  const [finality, setExpectedFinality] = useState<TransactionConfirmationStatus | undefined>();
+  const [recentlyCreatedVault, updateRecentlyCreatedVault] = useState(defaultCtxValues.recentlyCreatedVault);
+  const [confirmationHistory, setConfirmationHistory] = useState<TxConfirmationInfo[]>(defaultCtxValues.confirmationHistory);
 
   const clearConfirmationHistory = useCallback(() => {
     setConfirmationHistory([]);
@@ -178,13 +169,9 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
 
   const setRecentlyCreatedVault = (ddcaAccountPda: string) => {
     updateRecentlyCreatedVault(ddcaAccountPda);
-  };
+  }
 
-  const startFetchTxSignatureInfo = (
-    signature: string,
-    finality: TransactionConfirmationStatus,
-    type: OperationType,
-  ) => {
+  const startFetchTxSignatureInfo = (signature: string, finality: TransactionConfirmationStatus, type: OperationType) => {
     const now = new Date().getTime();
     setTxTimestampAdded(now);
     setLastSentTxSignature(signature);
@@ -194,12 +181,12 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     setFetchingTxStatus(undefined);
     openNotification({
       key,
-      type: 'info',
+      type: "info",
       title: t('transactions.status.tx-confirm'),
       duration: 0,
-      description: t('transactions.status.tx-confirmation-status-wait'),
+      description: t('transactions.status.tx-confirmation-status-wait')
     });
-  };
+  }
 
   const clearTxConfirmationContext = () => {
     setLastSentTxSignature('');
@@ -207,21 +194,16 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     setLastSentTxStatus(undefined);
     setLastSentTxOperationType(undefined);
     setFetchingTxStatus(undefined);
-  };
+  }
 
   const getTxStatus = useCallback(async () => {
-    if (!connection) {
-      return;
-    }
+    if (!connection) { return; }
 
     let lastResult: TransactionConfirmationStatus | undefined = undefined;
 
     const fetchStatus = async () => {
       try {
-        const result = await fetchTransactionStatus(
-          connection,
-          lastSentTxSignature,
-        );
+        const result = await fetchTransactionStatus(connection, lastSentTxSignature);
 
         // Success with no data, retry
         if (!result || (result && !result.info)) {
@@ -237,14 +219,11 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
         console.error(error);
         return undefined;
       }
-    };
+    }
 
     // If we don't get the result we want and there is still time to retry
     // consoleOut('Elapsed:', now - txTimestampAdded, 'blue');
-    while (
-      lastResult !== finality &&
-      new Date().getTime() - txTimestampAdded < TRANSACTION_STATUS_RETRY_TIMEOUT
-    ) {
+    while (lastResult !== finality && ((new Date().getTime()) - txTimestampAdded) < TRANSACTION_STATUS_RETRY_TIMEOUT) {
       lastResult = await fetchStatus();
       if (lastResult !== finality) {
         await delay(TRANSACTION_STATUS_RETRY);
@@ -252,226 +231,201 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     }
 
     return lastResult;
-  }, [finality, connection, txTimestampAdded, lastSentTxSignature]);
+
+  }, [
+    finality,
+    connection,
+    txTimestampAdded,
+    lastSentTxSignature
+  ]);
 
   useEffect(() => {
-    if (
-      !lastSentTxSignature ||
-      lastSentTxStatus === finality ||
-      fetchTxInfoStatus !== undefined
-    ) {
-      return;
-    }
+    if (!lastSentTxSignature || lastSentTxStatus === finality || fetchTxInfoStatus !== undefined) { return; }
 
-    setFetchingTxStatus('fetching');
+    setFetchingTxStatus("fetching");
 
     (async () => {
       const result = await getTxStatus();
       if (result === finality) {
-        setFetchingTxStatus('fetched');
+        setFetchingTxStatus("fetched");
         openNotification({
           key,
-          type: 'success',
+          type: "success",
           title: t('transactions.status.tx-confirmation-status-confirmed'),
           duration: 4,
           description: (
             <>
-              <a
-                className="secondary-link"
-                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t('notifications.check-transaction-in-explorer')} &gt;
+              <a className="secondary-link"
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}`}
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  {t('notifications.check-transaction-in-explorer')} &gt;
               </a>
             </>
-          ),
+          )
         });
       } else {
-        setFetchingTxStatus('error');
+        setFetchingTxStatus("error");
         notification.close(key);
       }
-      consoleOut(
-        'Total confirmation time (s):',
-        (new Date().getTime() - txTimestampAdded) / 1000,
-        'blue',
-      );
+      consoleOut('Total confirmation time (s):', ((new Date().getTime()) - txTimestampAdded) / 1000,'blue');
     })();
 
-    return () => {};
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     finality,
     lastSentTxStatus,
     fetchTxInfoStatus,
     lastSentTxSignature,
-    getTxStatus,
+    getTxStatus
   ]);
 
-  const fetchTxStatus = useCallback(
-    async (
-      signature: string,
-      targetFinality: TransactionConfirmationStatus,
-    ) => {
-      if (!connection) {
-        return;
-      }
+  const fetchTxStatus = useCallback(async (
+    signature: string,
+    targetFinality: TransactionConfirmationStatus,
+  ) => {
+    if (!connection) { return; }
 
-      const fetchStatus = async () => {
-        try {
-          const latestBlockHash = await connection.getLatestBlockhash();
-          const result = await connection.confirmTransaction(
-            {
-              signature: signature,
-              blockhash: latestBlockHash.blockhash,
-              lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-            },
-            targetFinality,
-          );
-          if (result && result.value && !result.value.err) {
-            setLastSentTxStatus(targetFinality);
-            return targetFinality;
-          }
-          return undefined;
-        } catch (error) {
-          console.error(error);
-          return undefined;
+    const fetchStatus = async () => {
+      try {
+        const latestBlockHash = await connection.getLatestBlockhash();
+        const result = await connection.confirmTransaction({
+          signature: signature,
+          blockhash: latestBlockHash.blockhash,
+          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight
+        }, targetFinality);
+        if (result && result.value && !result.value.err) {
+          setLastSentTxStatus(targetFinality);
+          return targetFinality;
         }
-      };
+        return undefined;
+      } catch (error) {
+        console.error(error);
+        return undefined;
+      }
+    }
 
-      return fetchStatus();
-    },
-    [connection],
-  );
+    return fetchStatus();
 
-  const enqueueTransactionConfirmation = useCallback(
-    async (data: TxConfirmationInfo) => {
-      const rebuildHistoryFromCache = () => {
-        const history = Array.from(txStatusCache.values());
-        setConfirmationHistory([...history].reverse());
-        consoleOut('confirmationHistory:', history, 'orange');
-      };
+  }, [connection]);
 
-      const now = new Date().getTime();
-      txConfirmationCache.add(data.signature, data, now);
+  const enqueueTransactionConfirmation = useCallback(async (data: TxConfirmationInfo) => {
+
+    const rebuildHistoryFromCache = () => {
+      const history = Array.from(txStatusCache.values());
+      setConfirmationHistory([...history].reverse());
+      consoleOut('confirmationHistory:', history, 'orange');
+    };
+
+    const now = new Date().getTime();
+    txConfirmationCache.add(data.signature, data, now);
+    openNotification({
+      key: data.signature,
+      type: "info",
+      title: data.loadingTitle ? data.loadingTitle : t('transactions.status.tx-confirm'),
+      duration: 0,
+      description: (
+        <>
+          <span className="mr-1">
+            {
+              data.loadingMessage
+                ? data.loadingMessage
+                : `${t('transactions.status.tx-confirmation-status-wait')} (${OperationType[data.operationType]})`
+            }
+          </span>
+          <div>
+            <a className="secondary-link"
+                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
+                target="_blank"
+                rel="noopener noreferrer">
+                {t('notifications.check-transaction-in-explorer')} &gt;
+            </a>
+          </div>
+        </>
+      )
+    });
+    rebuildHistoryFromCache();
+    const result = await fetchTxStatus(data.signature, data.finality);
+    if (result === data.finality) {
+      txConfirmationCache.update(
+        data.signature,
+        Object.assign({}, data, {
+          txInfoFetchStatus: "fetched",
+          timestampCompleted: new Date().getTime()
+        })
+      );
       openNotification({
         key: data.signature,
-        type: 'info',
-        title: data.loadingTitle
-          ? data.loadingTitle
-          : t('transactions.status.tx-confirm'),
-        duration: 0,
+        type: "success",
+        title: data.completedTitle,
+        duration: data.completedMessageTimeout || 5,
         description: (
           <>
             <span className="mr-1">
-              {data.loadingMessage
-                ? data.loadingMessage
-                : `${t('transactions.status.tx-confirmation-status-wait')} (${
-                    OperationType[data.operationType]
-                  })`}
+              {
+                data.completedMessage
+                  ? data.completedMessage
+                  : OperationType[data.operationType]
+              }
             </span>
             <div>
-              <a
-                className="secondary-link"
-                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${
-                  data.signature
-                }${getSolanaExplorerClusterParam()}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t('notifications.check-transaction-in-explorer')} &gt;
+              <a className="secondary-link"
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  {t('notifications.check-transaction-in-explorer')} &gt;
               </a>
             </div>
           </>
-        ),
+        )
       });
+      consoleOut('Emitting event:', EventType.TxConfirmSuccess, 'orange');
+      confirmationEvents.emit(EventType.TxConfirmSuccess, data);
       rebuildHistoryFromCache();
-      const result = await fetchTxStatus(data.signature, data.finality);
-      if (result === data.finality) {
-        txConfirmationCache.update(
-          data.signature,
-          Object.assign({}, data, {
-            txInfoFetchStatus: 'fetched',
-            timestampCompleted: new Date().getTime(),
-          }),
-        );
-        openNotification({
-          key: data.signature,
-          type: 'success',
-          title: data.completedTitle,
-          duration: data.completedMessageTimeout || 5,
-          description: (
-            <>
-              <span className="mr-1">
-                {data.completedMessage
-                  ? data.completedMessage
-                  : OperationType[data.operationType]}
-              </span>
-              <div>
-                <a
-                  className="secondary-link"
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${
-                    data.signature
-                  }${getSolanaExplorerClusterParam()}`}
+      refreshAccount();
+    } else {
+      txConfirmationCache.update(
+        data.signature,
+        Object.assign({}, data, {
+          txInfoFetchStatus: "error",
+          timestampCompleted: new Date().getTime()
+        })
+      );
+      openNotification({
+        key: data.signature,
+        type: "info",
+        title: t('transactions.status.tx-confirmation-status-timeout'),
+        duration: 5,
+        description: (
+          <>
+            <span className="mr-1">
+              {
+                data.loadingMessage
+                ? data.loadingMessage
+                : `${t('transactions.status.tx-confirmation-status-wait')} (${OperationType[data.operationType]})`
+              }
+            </span>
+            <div>
+              <a className="secondary-link"
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
                   target="_blank"
-                  rel="noopener noreferrer"
-                >
+                  rel="noopener noreferrer">
                   {t('notifications.check-transaction-in-explorer')} &gt;
-                </a>
-              </div>
-            </>
-          ),
-        });
-        consoleOut('Emitting event:', EventType.TxConfirmSuccess, 'orange');
-        confirmationEvents.emit(EventType.TxConfirmSuccess, data);
-        rebuildHistoryFromCache();
-        refreshAccount();
-      } else {
-        txConfirmationCache.update(
-          data.signature,
-          Object.assign({}, data, {
-            txInfoFetchStatus: 'error',
-            timestampCompleted: new Date().getTime(),
-          }),
-        );
-        openNotification({
-          key: data.signature,
-          type: 'info',
-          title: t('transactions.status.tx-confirmation-status-timeout'),
-          duration: 5,
-          description: (
-            <>
-              <span className="mr-1">
-                {data.loadingMessage
-                  ? data.loadingMessage
-                  : `${t('transactions.status.tx-confirmation-status-wait')} (${
-                      OperationType[data.operationType]
-                    })`}
-              </span>
-              <div>
-                <a
-                  className="secondary-link"
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${
-                    data.signature
-                  }${getSolanaExplorerClusterParam()}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t('notifications.check-transaction-in-explorer')} &gt;
-                </a>
-              </div>
-            </>
-          ),
-        });
-        consoleOut('Emitting event:', EventType.TxConfirmTimeout, 'orange');
-        confirmationEvents.emit(EventType.TxConfirmTimeout, data);
-        rebuildHistoryFromCache();
-        refreshAccount();
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    },
-    [t],
-  );
+              </a>
+            </div>
+          </>
+        )
+      });
+      consoleOut('Emitting event:', EventType.TxConfirmTimeout, 'orange');
+      confirmationEvents.emit(EventType.TxConfirmTimeout, data);
+      rebuildHistoryFromCache();
+      refreshAccount();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    t,
+  ]);
 
   return (
     <TxConfirmationContext.Provider
@@ -487,8 +441,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
         startFetchTxSignatureInfo,
         clearConfirmationHistory,
         setRecentlyCreatedVault,
-      }}
-    >
+      }}>
       {children}
     </TxConfirmationContext.Provider>
   );
