@@ -1,6 +1,6 @@
 import { readFromCache } from "cache/persistentCache";
 import { AppStateContext } from "contexts/appstate";
-import { IconNoItems } from "Icons";
+import { IconMoneyTransfer, IconNoItems, IconSafe, IconStats, IconTokenVesting } from "Icons";
 import { toUsCurrency } from "middleware/ui";
 import { KnownAppMetadata, KNOWN_APPS, RegisteredAppPaths } from "models/accounts";
 import { useCallback, useContext } from "react";
@@ -30,7 +30,41 @@ export const AppsList = (props: {
             return '--';
         }
         return toUsCurrency(+result.data[selectedAccount.address]);
-    },[selectedAccount.address]);
+    }, [selectedAccount.address]);
+
+    const getAppIcon = (app: KnownAppMetadata) => {
+        if (app.logoURI) {
+            return <img src={app.logoURI} alt={`${app.title}`} width={30} height={30} />;
+        }
+
+        const classes = 'mean-svg-icons fg-secondary-50';
+        const styles = { width: 18, height: 18 };
+        let appIcon: React.ReactNode;
+
+        switch (app.slug) {
+            case RegisteredAppPaths.Staking:
+                appIcon = <IconStats className={classes} style={styles} />;
+                break;
+            case RegisteredAppPaths.SuperSafe:
+                appIcon = <IconSafe className={classes} style={styles} />;
+                break;
+            case RegisteredAppPaths.Vesting:
+                appIcon = <IconTokenVesting className={classes} style={styles} />;
+                break;
+            case RegisteredAppPaths.PaymentStreaming:
+                appIcon = <IconMoneyTransfer className={classes} style={styles} />;
+                break;
+            default:
+                appIcon = <IconNoItems className={classes} style={styles} />;
+                break;
+        }
+
+        return (
+            <div className="circle-flex-center bg-whitesmoke">
+                {appIcon}
+            </div>
+        );
+    }
 
     const getSelectedClass = (app: KnownAppMetadata) => {
         if (!app.enabled ||
@@ -87,13 +121,7 @@ export const AppsList = (props: {
                             }>
                             <div className="icon-cell">
                                 <div className="token-icon">
-                                    {app.logoURI ? (
-                                        <img src={app.logoURI} alt={`${app.title}`} width={30} height={30} />
-                                    ) : (
-                                        <div className="circle-flex-center bg-whitesmoke">
-                                            <IconNoItems className="mean-svg-icons fg-secondary-50" style={{ width: 18, height: 18 }} />
-                                        </div>
-                                    )}
+                                    {getAppIcon(app)}
                                 </div>
                             </div>
                             <div className="description-cell">

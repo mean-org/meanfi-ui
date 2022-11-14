@@ -83,6 +83,7 @@ export { IconTelegram } from "./IconTelegram";
 export { IconThumbsDown } from "./IconThumbsDown";
 export { IconThumbsUp } from "./IconThumbsUp";
 export { IconTimer } from "./IconTimer";
+export { IconTokenVesting } from "./IconTokenVesting";
 export { IconTrash } from "./IconTrash";
 export { IconTwitter } from "./IconTwitter";
 export { IconUniversity } from "./IconUniversity";
