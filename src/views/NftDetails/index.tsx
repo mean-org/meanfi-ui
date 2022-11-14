@@ -1,5 +1,5 @@
 import { InfoCircleOutlined } from "@ant-design/icons";
-import { Nft, NftWithToken, Sft, SftWithToken } from "@metaplex-foundation/js";
+import { Nft } from "@metaplex-foundation/js";
 import { Image, Space, Tabs, Tooltip } from "antd";
 import { AddressDisplay } from "components/AddressDisplay";
 import { InfoIcon } from "components/InfoIcon";
@@ -8,11 +8,12 @@ import { useMint } from "contexts/accounts";
 import { AppStateContext } from "contexts/appstate";
 import { getSolanaExplorerClusterParam } from "contexts/connection";
 import useWindowSize from "hooks/useWindowResize";
+import { MeanNft } from "models/accounts/NftTypes";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { NftCreators } from "./NftCreators";
 
 export const NftDetails = (props: {
-    selectedNft: Nft | Sft | SftWithToken | NftWithToken;
+    selectedNft?: MeanNft;
 }) => {
 
     const {
@@ -23,7 +24,7 @@ export const NftDetails = (props: {
         selectedAccount,
     } = useContext(AppStateContext);
 
-    const collectionAddress = selectedNft.collection?.address;
+    const collectionAddress = selectedNft?.collection?.address;
     const collectionMintInfo = useMint(collectionAddress);
     const { width: browserInnerWidth } = useWindowSize();
     const [shouldShortedAddresses, setShouldShortedAddresses] = useState<boolean>(false);
@@ -103,6 +104,10 @@ export const NftDetails = (props: {
     }
 
     const renderCreatorsAndRoyalties = useCallback(() => {
+        if (!selectedNft) {
+            return null;
+        }
+
         return (
             <>
                 <h3 className="nft-details-heading mb-2">Creators and Royalties</h3>
@@ -124,7 +129,7 @@ export const NftDetails = (props: {
                 <NftCreators creators={selectedNft.creators} />
             </>
         );
-    }, [selectedNft.creators, selectedNft.sellerFeeBasisPoints]);
+    }, [selectedNft]);
 
     const renderAttributes = useCallback(() => {
         if (!selectedNft || !selectedNft.json) { return null; }
@@ -274,6 +279,10 @@ export const NftDetails = (props: {
             setShouldShortedAddresses(false);
         }
     }, [browserInnerWidth]);
+
+    if (!selectedNft) {
+        return null;
+    }
 
     return (
         <div className="nft-details">

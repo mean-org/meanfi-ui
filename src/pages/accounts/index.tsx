@@ -92,6 +92,7 @@ import {
   toUiAmount
 } from 'middleware/utils';
 import { AccountsPageCategory, AccountTokenParsedInfo, AssetCta, AssetGroups, KnownAppMetadata, KNOWN_APPS, MetaInfoCtaAction, RegisteredAppPaths, UserTokenAccount } from "models/accounts";
+import { MeanNft } from 'models/accounts/NftTypes';
 import { MetaInfoCta } from 'models/common-types';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { CreateNewProposalParams, CREDIX_PROGRAM, NATIVE_LOADER, parseSerializedTx, ZERO_FEES } from 'models/multisig';
@@ -230,7 +231,7 @@ export const AccountsView = () => {
   const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
   const [selectedAssetsGroup, setSelectedAssetsGroup] = useState<AssetGroups>();
-  const [selectedNft, setSelectedNft] = useState<Nft | Sft | SftWithToken | NftWithToken | undefined>(undefined);
+  const [selectedNft, setSelectedNft] = useState<MeanNft | undefined>(undefined);
   // Multisig Apps
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
