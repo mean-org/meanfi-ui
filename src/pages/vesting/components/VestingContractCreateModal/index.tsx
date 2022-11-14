@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Modal } from 'antd';
+import { Modal } from "antd";
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import { UserTokenAccount } from 'models/accounts';
+import { UserTokenAccount } from "models/accounts";
 import { VestingContractCreateForm } from '../VestingContractCreateForm';
 import { TransactionFees } from '@mean-dao/msp';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
@@ -51,23 +51,23 @@ export const VestingContractCreateModal = (props: {
       footer={null}
       open={isVisible}
       onCancel={handleClose}
-      width={480}
-    >
-      <VestingContractCreateForm
-        inModal={true}
-        token={token}
-        isBusy={isBusy}
-        loadingMultisigAccounts={loadingMultisigAccounts}
-        accountAddress={accountAddress}
-        isMultisigContext={isMultisigContext}
-        transactionFees={transactionFees}
-        onStartTransaction={handleOk}
-        tokenChanged={(t: TokenInfo) => setToken(t)}
-        userBalances={userBalances}
-        nativeBalance={nativeBalance}
-        selectedList={selectedList}
-        selectedMultisig={selectedMultisig}
-      />
+      width={480}>
+        <VestingContractCreateForm
+          inModal={true}
+          token={token}
+          isBusy={isBusy}
+          loadingMultisigAccounts={loadingMultisigAccounts}
+          accountAddress={accountAddress}
+          isMultisigContext={isMultisigContext}
+          transactionFees={transactionFees}
+          onStartTransaction={handleOk}
+          tokenChanged={(t: TokenInfo) => setToken(t)}
+          userBalances={userBalances}
+          nativeBalance={nativeBalance}
+          selectedList={selectedList}
+          selectedMultisig={selectedMultisig}
+        />
+
     </Modal>
   );
 };

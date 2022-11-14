@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { useAsync, UseAsyncReturn } from 'react-async-hook';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { useAsync, UseAsyncReturn } from "react-async-hook";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 const SOLLET_INFO_CACHE = new Map<string, SolletInfo>();
 const SWAP_MARKET_EXISTS_CACHE = new Map<string, boolean>();
@@ -16,11 +16,11 @@ type SolletInfo = {
 
 async function handleSwapApiResponse(resp: Response) {
   const json = await resp.json();
-
+  
   if (!json.success) {
     throw new SwapApiError(json.error, resp.status);
   }
-
+  
   return json.result;
 }
 
@@ -33,12 +33,12 @@ export function useSolletInfo(mint: PublicKey): UseAsyncReturn<SolletInfo> {
 // Fetches the token info from the sollet bridge.
 export async function fetchSolletInfo(mint: PublicKey): Promise<SolletInfo> {
   let info = SOLLET_INFO_CACHE.get(mint.toString());
-
+  
   if (info !== undefined) {
     return info;
   }
 
-  const infoRaw = await swapApiRequest('GET', `coins/sol/${mint.toString()}`);
+  const infoRaw = await swapApiRequest("GET", `coins/sol/${mint.toString()}`);
   info = { ...infoRaw, splMint: new PublicKey(infoRaw.splMint) };
   SOLLET_INFO_CACHE.set(mint.toString(), info!);
 
@@ -56,44 +56,53 @@ export async function requestWormholeSwapMarketIfNeeded(
   solletMint: PublicKey,
   wormholeMint: PublicKey,
   swapMarket: PublicKey,
-  solletInfo: SolletInfo,
+  solletInfo: SolletInfo
+  
 ): Promise<boolean> {
-  const cached = SWAP_MARKET_EXISTS_CACHE.get(swapMarket.toString());
 
+  const cached = SWAP_MARKET_EXISTS_CACHE.get(swapMarket.toString());
+  
   if (cached !== undefined) {
     return cached;
   }
-
+  
   const acc = await connection.getAccountInfo(swapMarket);
-
+  
   if (acc === null) {
     SWAP_MARKET_EXISTS_CACHE.set(swapMarket.toString(), false);
     const resource = `wormhole/pool/${
       solletInfo.ticker
     }/${swapMarket.toString()}/${solletMint.toString()}/${wormholeMint.toString()}`;
-
-    swapApiRequest('POST', resource).catch(console.error);
-
+     
+    swapApiRequest("POST", resource).catch(console.error);
+    
     return false;
+    
   } else {
     SWAP_MARKET_EXISTS_CACHE.set(swapMarket.toString(), true);
     return true;
   }
 }
 
-export async function swapApiRequest(method: string, path: string, body?: any) {
+export async function swapApiRequest(
+  method: string,
+  path: string,
+  body?: any
+  
+) {
+
   const headers: any = {};
   const params: any = { headers, method };
-
-  if (method === 'GET') {
-    params.cache = 'no-cache';
+  
+  if (method === "GET") {
+    params.cache = "no-cache";
   } else if (body) {
-    headers['Content-Type'] = 'application/json';
+    headers["Content-Type"] = "application/json";
     params.body = JSON.stringify(body);
   }
-
+  
   const resp = await fetch(`https://swap.sollet.io/api/${path}`, params);
-
+  
   return await handleSwapApiResponse(resp);
 }
 
@@ -102,7 +111,7 @@ export class SwapApiError extends Error {
   readonly status: number;
   constructor(msg: string, status: number) {
     super(msg);
-    this.name = 'SwapApiError';
+    this.name = "SwapApiError";
     this.status = status;
   }
 }

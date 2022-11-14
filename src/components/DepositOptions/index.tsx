@@ -1,17 +1,17 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Button, Col, Modal, Row, Tooltip } from 'antd';
+import { Button, Col, Modal, Row, Tooltip } from "antd";
 import { openNotification } from 'components/Notifications';
-import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from 'constants/common';
-import { useWallet } from 'contexts/wallet';
+import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from "constants/common";
+import { useWallet } from "contexts/wallet";
 import { environment } from 'environments/environment';
 import useScript from 'hooks/useScript';
-import { IconCopy, IconInfoTriangle, IconSolana } from 'Icons';
+import { IconCopy, IconInfoTriangle, IconSolana } from "Icons";
 import { appConfig } from 'index';
-import { consoleOut, copyText } from 'middleware/ui';
+import { consoleOut, copyText } from "middleware/ui";
 import { QRCodeSVG } from 'qrcode.react';
-import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import './style.scss';
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import "./style.scss";
 
 declare const TransakSDK: any;
 let transak: any = undefined;
@@ -20,11 +20,11 @@ export const DepositOptions = (props: {
   handleClose: any;
   isVisible: boolean;
 }) => {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
   const { publicKey, connected } = useWallet();
 
   // Load the Transak widget script asynchronously
-  const { status } = useScript(`https://global.transak.com/sdk/v1.1/widget.js`);
+  const {status} = useScript(`https://global.transak.com/sdk/v1.1/widget.js`);
 
   const [isSharingAddress, setIsSharingAddress] = useState(false);
 
@@ -36,53 +36,47 @@ export const DepositOptions = (props: {
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 250);
-  };
+  }
 
   const closePanels = () => {
     setIsSharingAddress(false);
-  };
+  }
 
   const getFtxPayLink = (): string => {
     return `https://ftx.us/pay/request?address=${publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false&memo=&allowTip=false`;
-  };
+  }
 
   const handleFtxPayButtonClick = () => {
     setTimeout(() => {
-      window.open(
-        getFtxPayLink(),
-        'newwindow',
-        'noreferrer,resizable,width=360,height=600',
-      );
+      window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
     }, 500);
     props.handleClose();
-  };
+  }
 
   const handleBridgeFromEthereumButtonClick = () => {
     setTimeout(() => {
       window.open(
         MEAN_FINANCE_APP_ALLBRIDGE_URL + '/bridge?from=ETH&to=SOL&asset=USDT',
-        '_blank',
-        'noreferrer',
+        '_blank','noreferrer'
       );
     }, 500);
     props.handleClose();
-  };
+  }
 
   const handleBridgeFromPolygonButtonClick = () => {
     setTimeout(() => {
       window.open(
         MEAN_FINANCE_APP_ALLBRIDGE_URL + '/bridge?from=POL&to=SOL&asset=USDT',
-        '_blank',
-        'noreferrer',
+        '_blank','noreferrer'
       );
     }, 500);
     props.handleClose();
-  };
+  }
 
   useEffect(() => {
     if (status === 'ready' && !transak) {
       transak = new TransakSDK.default({
-        apiKey: currentConfig?.transakApiKey, // Your API Key
+        apiKey: currentConfig?.transakApiKey,  // Your API Key
         environment: environment === 'production' ? 'PRODUCTION' : 'STAGING', // STAGING/PRODUCTION
         defaultCryptoCurrency: 'SOL',
         networks: 'SOLANA',
@@ -94,10 +88,14 @@ export const DepositOptions = (props: {
         redirectURL: '',
         hostURL: window.location.origin,
         widgetHeight: '634px',
-        widgetWidth: '100%',
+        widgetWidth: '100%'
       });
     }
-  }, [currentConfig, publicKey, status]);
+  }, [
+    currentConfig,
+    publicKey,
+    status
+  ]);
 
   const handleTransakButtonClick = () => {
     setTimeout(() => {
@@ -110,32 +108,30 @@ export const DepositOptions = (props: {
       }
     }, 300);
     props.handleClose();
-  };
+  }
 
   const onCopyAddress = () => {
     if (publicKey && copyText(publicKey)) {
       openNotification({
         description: t('notifications.account-address-copied-message'),
-        type: 'info',
+        type: "info"
       });
     } else {
       openNotification({
         description: t('notifications.account-address-not-copied-message'),
-        type: 'error',
+        type: "error"
       });
     }
-  };
+  }
 
   // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
-      const ellipsisElements = document.querySelectorAll(
-        '.overflow-ellipsis-middle',
-      );
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
       for (const element of ellipsisElements) {
         const e = element as HTMLElement;
-        if (e.offsetWidth < e.scrollWidth) {
+        if (e.offsetWidth < e.scrollWidth){
           const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
         }
@@ -151,7 +147,7 @@ export const DepositOptions = (props: {
     return () => {
       // remove resize listener
       window.removeEventListener('resize', resizeListener);
-    };
+    }
   }, []);
 
   return (
@@ -159,22 +155,19 @@ export const DepositOptions = (props: {
       className="mean-modal simple-modal multi-step"
       title={
         <>
-          {isSharingAddress && (
-            <div className="back-button ant-modal-close">
-              <Tooltip
-                placement="bottom"
-                title={t('deposits.back-to-deposit-options')}
-              >
-                <Button
-                  type="default"
-                  shape="circle"
-                  icon={<ArrowLeftOutlined />}
-                  onClick={closePanels}
-                />
-              </Tooltip>
-            </div>
-          )}
-          <div className="modal-title">{t('deposits.modal-title')}</div>
+        {isSharingAddress && (
+          <div className="back-button ant-modal-close">
+            <Tooltip placement="bottom" title={t('deposits.back-to-deposit-options')}>
+              <Button
+                type="default"
+                shape="circle"
+                icon={<ArrowLeftOutlined />}
+                onClick={closePanels}
+              />
+            </Tooltip>
+          </div>
+        )}
+        <div className="modal-title">{t('deposits.modal-title')}</div>
         </>
       }
       footer={null}
@@ -182,15 +175,9 @@ export const DepositOptions = (props: {
       onOk={props.handleClose}
       onCancel={props.handleClose}
       afterClose={closePanels}
-      width={450}
-    >
+      width={450}>
       <div className="deposit-selector">
-        <div
-          className={
-            isSharingAddress ? 'options-list hide' : 'options-list show'
-          }
-          id="options-list"
-        >
+        <div className={isSharingAddress ? "options-list hide" : "options-list show"} id="options-list">
           <p>{t('deposits.heading')}:</p>
           {!connected && (
             <p className="fg-error">{t('deposits.not-connected')}!</p>
@@ -204,13 +191,8 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 disabled={!connected}
-                onClick={handleFtxPayButtonClick}
-              >
-                <img
-                  src="/assets/deposit-partners/ftx.ico"
-                  className="deposit-partner-icon"
-                  alt={t('deposits.ftx-cta-label-enabled')}
-                />
+                onClick={handleFtxPayButtonClick}>
+                <img src="/assets/deposit-partners/ftx.ico" className="deposit-partner-icon" alt={t('deposits.ftx-cta-label-enabled')} />
                 {t('deposits.ftx-cta-label-enabled')}
               </Button>
             </Col>
@@ -222,17 +204,13 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 disabled={!connected}
-                onClick={enableAddressSharing}
-              >
-                <IconSolana className="deposit-partner-icon" />
+                onClick={enableAddressSharing}>
+                <IconSolana className="deposit-partner-icon"/>
                 {t('deposits.send-from-wallet-cta-label')}
               </Button>
             </Col>
             <Col span={24}>
-              <Tooltip
-                placement="bottom"
-                title={t('deposits.renbridge-cta-warning')}
-              >
+              <Tooltip placement="bottom" title={t('deposits.renbridge-cta-warning')}>
                 <Button
                   block
                   className="deposit-option"
@@ -240,13 +218,8 @@ export const DepositOptions = (props: {
                   shape="round"
                   size="middle"
                   disabled={status !== 'ready'}
-                  onClick={handleTransakButtonClick}
-                >
-                  <img
-                    src="/assets/deposit-partners/transak.png"
-                    className="deposit-partner-icon"
-                    alt={t('deposits.transak-cta-label')}
-                  />
+                  onClick={handleTransakButtonClick}>
+                  <img src="/assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t('deposits.transak-cta-label')} />
                   {t('deposits.transak-cta-label')}
                   <IconInfoTriangle className="mean-svg-icons warning" />
                 </Button>
@@ -259,13 +232,8 @@ export const DepositOptions = (props: {
                 type="ghost"
                 shape="round"
                 size="middle"
-                onClick={handleBridgeFromEthereumButtonClick}
-              >
-                <img
-                  src="/assets/deposit-partners/eth.png"
-                  className="deposit-partner-icon"
-                  alt={t('deposits.move-from-ethereum-cta-label')}
-                />
+                onClick={handleBridgeFromEthereumButtonClick}>
+                <img src="/assets/deposit-partners/eth.png" className="deposit-partner-icon" alt={t('deposits.move-from-ethereum-cta-label')} />
                 {t('deposits.move-from-ethereum-cta-label')}
               </Button>
             </Col>
@@ -276,42 +244,29 @@ export const DepositOptions = (props: {
                 type="ghost"
                 shape="round"
                 size="middle"
-                onClick={handleBridgeFromPolygonButtonClick}
-              >
-                <img
-                  src="/assets/deposit-partners/polygon.png"
-                  className="deposit-partner-icon"
-                  alt={t('deposits.move-from-polygon-cta-label')}
-                />
+                onClick={handleBridgeFromPolygonButtonClick}>
+                <img src="/assets/deposit-partners/polygon.png" className="deposit-partner-icon" alt={t('deposits.move-from-polygon-cta-label')} />
                 {t('deposits.move-from-polygon-cta-label')}
               </Button>
             </Col>
           </Row>
         </div>
-        <div
-          className={
-            isSharingAddress
-              ? 'option-detail-panel p-5 show'
-              : 'option-detail-panel hide'
-          }
-        >
+        <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>
           <div className="text-center">
-            <h3 className="font-bold mb-3">
-              {t('deposits.send-from-wallet-cta-label')}
-            </h3>
+            <h3 className="font-bold mb-3">{t('deposits.send-from-wallet-cta-label')}</h3>
             <div className="qr-container bg-white">
               {publicKey && (
-                <QRCodeSVG value={publicKey.toBase58()} size={200} />
+                <QRCodeSVG
+                  value={publicKey.toBase58()}
+                  size={200}
+                />
               )}
             </div>
             <div className="transaction-field medium">
               <div className="transaction-field-row main-row">
                 <span className="input-left recipient-field-wrapper">
                   {publicKey && (
-                    <span
-                      id="address-static-field"
-                      className="overflow-ellipsis-middle"
-                    >
+                    <span id="address-static-field" className="overflow-ellipsis-middle">
                       {publicKey.toBase58()}
                     </span>
                   )}
@@ -321,9 +276,7 @@ export const DepositOptions = (props: {
                 </div>
               </div>
             </div>
-            <div className="font-light font-size-75 px-4">
-              {t('deposits.address-share-disclaimer')}
-            </div>
+            <div className="font-light font-size-75 px-4">{t('deposits.address-share-disclaimer')}</div>
           </div>
         </div>
       </div>

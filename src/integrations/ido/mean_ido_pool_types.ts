@@ -1,1997 +1,2009 @@
 export type MeanIdoPool = {
-  version: '0.0.0';
-  name: 'mean_ido_pool';
-  instructions: [
+  "version": "0.0.0",
+  "name": "mean_ido_pool",
+  "instructions": [
     {
-      name: 'initializePool';
-      accounts: [
+      "name": "initializePool",
+      "accounts": [
         {
-          name: 'idoAuthority';
-          isMut: true;
-          isSigner: true;
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: 'idoAuthorityMean';
-          isMut: true;
-          isSigner: false;
+          "name": "idoAuthorityMean",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAccount';
-          isMut: true;
-          isSigner: false;
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'meanMint';
-          isMut: false;
-          isSigner: false;
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'usdcMint';
-          isMut: false;
-          isSigner: false;
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'meanPool';
-          isMut: true;
-          isSigner: false;
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'usdcPool';
-          isMut: true;
-          isSigner: false;
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'withdrawals';
-          isMut: true;
-          isSigner: false;
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram';
-          isMut: false;
-          isSigner: false;
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'rent';
-          isMut: false;
-          isSigner: false;
-        },
-      ];
-      args: [
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
         {
-          name: 'idoName';
-          type: 'string';
-        },
-        {
-          name: 'idoTimes';
-          type: {
-            defined: 'IdoTimes';
-          };
+          "name": "idoName",
+          "type": "string"
         },
         {
-          name: 'idoMeanAmount';
-          type: 'u64';
+          "name": "idoTimes",
+          "type": {
+            "defined": "IdoTimes"
+          }
         },
         {
-          name: 'bumps';
-          type: {
-            defined: 'PoolBumps';
-          };
+          "name": "idoMeanAmount",
+          "type": "u64"
         },
         {
-          name: 'meanPriceStart';
-          type: 'u64';
+          "name": "bumps",
+          "type": {
+            "defined": "PoolBumps"
+          }
         },
         {
-          name: 'meanPriceEnd';
-          type: 'u64';
+          "name": "meanPriceStart",
+          "type": "u64"
         },
         {
-          name: 'usdcPerUserMin';
-          type: 'u64';
+          "name": "meanPriceEnd",
+          "type": "u64"
         },
         {
-          name: 'usdcPerUserMaxStart';
-          type: 'u64';
+          "name": "usdcPerUserMin",
+          "type": "u64"
         },
         {
-          name: 'usdcPerUserMaxEnd';
-          type: 'u64';
+          "name": "usdcPerUserMaxStart",
+          "type": "u64"
         },
         {
-          name: 'usdcTotalMin';
-          type: 'u64';
+          "name": "usdcPerUserMaxEnd",
+          "type": "u64"
         },
         {
-          name: 'usdcTotalMax';
-          type: 'u64';
+          "name": "usdcTotalMin",
+          "type": "u64"
         },
         {
-          name: 'curveRefreshIntervalInSeconds';
-          type: 'u64';
+          "name": "usdcTotalMax",
+          "type": "u64"
         },
         {
-          name: 'coolOffPeriodInSeconds';
-          type: 'u64';
+          "name": "curveRefreshIntervalInSeconds",
+          "type": "u64"
         },
-      ];
+        {
+          "name": "coolOffPeriodInSeconds",
+          "type": "u64"
+        }
+      ]
     },
     {
-      name: 'depositUsdc';
-      accounts: [
+      "name": "depositUsdc",
+      "accounts": [
         {
-          name: 'userAuthority';
-          isMut: false;
-          isSigner: true;
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          name: 'userUsdc';
-          isMut: true;
-          isSigner: false;
+          "name": "userUsdc",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'userIdo';
-          isMut: true;
-          isSigner: false;
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAccount';
-          isMut: true;
-          isSigner: false;
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'usdcMint';
-          isMut: false;
-          isSigner: false;
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'usdcPool';
-          isMut: true;
-          isSigner: false;
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram';
-          isMut: false;
-          isSigner: false;
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
-        },
-      ];
-      args: [
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
         {
-          name: 'amount';
-          type: 'u64';
+          "name": "amount",
+          "type": "u64"
         },
         {
-          name: 'userIdoBump';
-          type: 'u8';
-        },
-      ];
+          "name": "userIdoBump",
+          "type": "u8"
+        }
+      ]
     },
     {
-      name: 'withdrawUsdc';
-      accounts: [
+      "name": "withdrawUsdc",
+      "accounts": [
         {
-          name: 'userAuthority';
-          isMut: false;
-          isSigner: true;
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          name: 'userUsdc';
-          isMut: true;
-          isSigner: false;
+          "name": "userUsdc",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'userIdo';
-          isMut: true;
-          isSigner: false;
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAccount';
-          isMut: true;
-          isSigner: false;
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'usdcMint';
-          isMut: false;
-          isSigner: false;
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'usdcPool';
-          isMut: true;
-          isSigner: false;
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'withdrawals';
-          isMut: true;
-          isSigner: false;
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram';
-          isMut: false;
-          isSigner: false;
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
-        },
-      ];
-      args: [
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
         {
-          name: 'amount';
-          type: 'u64';
-        },
-      ];
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     },
     {
-      name: 'simulateStatus';
-      accounts: [
+      "name": "simulateStatus",
+      "accounts": [
         {
-          name: 'idoAccount';
-          isMut: false;
-          isSigner: false;
-        },
-      ];
-      args: [];
+          "name": "idoAccount",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     },
     {
-      name: 'createIdoWithdrawals';
-      accounts: [
+      "name": "createIdoWithdrawals",
+      "accounts": [
         {
-          name: 'withdrawals';
-          isMut: true;
-          isSigner: false;
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'rent';
-          isMut: false;
-          isSigner: false;
-        },
-      ];
-      args: [];
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     },
     {
-      name: 'lpr';
-      accounts: [
+      "name": "lpr",
+      "accounts": [
         {
-          name: 'userAuthority';
-          isMut: false;
-          isSigner: true;
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          name: 'idoAccount';
-          isMut: true;
-          isSigner: false;
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'userIdo';
-          isMut: true;
-          isSigner: false;
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'userMean';
-          isMut: true;
-          isSigner: false;
+          "name": "userMean",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'meanMint';
-          isMut: false;
-          isSigner: false;
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'meanPool';
-          isMut: true;
-          isSigner: false;
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'withdrawals';
-          isMut: true;
-          isSigner: false;
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram';
-          isMut: false;
-          isSigner: false;
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'rent';
-          isMut: false;
-          isSigner: false;
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'associatedTokenProgram';
-          isMut: false;
-          isSigner: false;
-        },
-      ];
-      args: [];
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     },
     {
-      name: 'update';
-      accounts: [
+      "name": "update",
+      "accounts": [
         {
-          name: 'idoAuthority';
-          isMut: true;
-          isSigner: true;
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: 'idoAccount';
-          isMut: true;
-          isSigner: false;
-        },
-      ];
-      args: [
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
         {
-          name: 'lastContNumber';
-          type: 'u32';
+          "name": "lastContNumber",
+          "type": "u32"
         },
         {
-          name: 'lastContUsdcContributedBefore';
-          type: 'u64';
-        },
-      ];
+          "name": "lastContUsdcContributedBefore",
+          "type": "u64"
+        }
+      ]
     },
     {
-      name: 'withdrawDao';
-      accounts: [
+      "name": "withdrawDao",
+      "accounts": [
         {
-          name: 'idoAuthority';
-          isMut: true;
-          isSigner: true;
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: 'idoAuthorityMean';
-          isMut: true;
-          isSigner: false;
+          "name": "idoAuthorityMean",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAuthorityUsdc';
-          isMut: true;
-          isSigner: false;
+          "name": "idoAuthorityUsdc",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAccount';
-          isMut: true;
-          isSigner: false;
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'meanMint';
-          isMut: false;
-          isSigner: false;
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'usdcMint';
-          isMut: false;
-          isSigner: false;
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'meanPool';
-          isMut: true;
-          isSigner: false;
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'usdcPool';
-          isMut: true;
-          isSigner: false;
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram';
-          isMut: false;
-          isSigner: false;
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'rent';
-          isMut: false;
-          isSigner: false;
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'associatedTokenProgram';
-          isMut: false;
-          isSigner: false;
-        },
-      ];
-      args: [];
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     },
     {
-      name: 'redeem';
-      accounts: [
+      "name": "redeem",
+      "accounts": [
         {
-          name: 'userAuthority';
-          isMut: false;
-          isSigner: true;
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          name: 'userMean';
-          isMut: true;
-          isSigner: false;
+          "name": "userMean",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'userIdo';
-          isMut: true;
-          isSigner: false;
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAccount';
-          isMut: true;
-          isSigner: false;
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'meanMint';
-          isMut: false;
-          isSigner: false;
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'meanPool';
-          isMut: true;
-          isSigner: false;
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram';
-          isMut: false;
-          isSigner: false;
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'rent';
-          isMut: false;
-          isSigner: false;
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'associatedTokenProgram';
-          isMut: false;
-          isSigner: false;
-        },
-      ];
-      args: [];
-    },
-  ];
-  accounts: [
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
     {
-      name: 'idoAccount';
-      type: {
-        kind: 'struct';
-        fields: [
+      "name": "idoAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'idoAuthority';
-            type: 'publicKey';
+            "name": "idoAuthority",
+            "type": "publicKey"
           },
           {
-            name: 'idoName';
-            type: {
-              array: ['u8', 10];
-            };
+            "name": "idoName",
+            "type": {
+              "array": [
+                "u8",
+                10
+              ]
+            }
           },
           {
-            name: 'idoTimes';
-            type: {
-              defined: 'IdoTimes';
-            };
+            "name": "idoTimes",
+            "type": {
+              "defined": "IdoTimes"
+            }
           },
           {
-            name: 'idoMeanAmount';
-            type: 'u64';
+            "name": "idoMeanAmount",
+            "type": "u64"
           },
           {
-            name: 'bumps';
-            type: {
-              defined: 'PoolBumps';
-            };
+            "name": "bumps",
+            "type": {
+              "defined": "PoolBumps"
+            }
           },
           {
-            name: 'usdcMint';
-            type: 'publicKey';
+            "name": "usdcMint",
+            "type": "publicKey"
           },
           {
-            name: 'meanMint';
-            type: 'publicKey';
+            "name": "meanMint",
+            "type": "publicKey"
           },
           {
-            name: 'usdcPool';
-            type: 'publicKey';
+            "name": "usdcPool",
+            "type": "publicKey"
           },
           {
-            name: 'meanPool';
-            type: 'publicKey';
+            "name": "meanPool",
+            "type": "publicKey"
           },
           {
-            name: 'withdrawals';
-            type: 'publicKey';
+            "name": "withdrawals",
+            "type": "publicKey"
           },
           {
-            name: 'meanPriceStart';
-            type: 'u64';
+            "name": "meanPriceStart",
+            "type": "u64"
           },
           {
-            name: 'meanPriceEnd';
-            type: 'u64';
+            "name": "meanPriceEnd",
+            "type": "u64"
           },
           {
-            name: 'usdcPerUserMin';
-            type: 'u64';
+            "name": "usdcPerUserMin",
+            "type": "u64"
           },
           {
-            name: 'usdcPerUserMaxStart';
-            type: 'u64';
+            "name": "usdcPerUserMaxStart",
+            "type": "u64"
           },
           {
-            name: 'usdcPerUserMaxEnd';
-            type: 'u64';
+            "name": "usdcPerUserMaxEnd",
+            "type": "u64"
           },
           {
-            name: 'usdcTotalMin';
-            type: 'u64';
+            "name": "usdcTotalMin",
+            "type": "u64"
           },
           {
-            name: 'usdcTotalMax';
-            type: 'u64';
+            "name": "usdcTotalMax",
+            "type": "u64"
           },
           {
-            name: 'meanTotalMax';
-            type: 'u64';
+            "name": "meanTotalMax",
+            "type": "u64"
           },
           {
-            name: 'curveRefreshIntervalInSeconds';
-            type: 'u64';
+            "name": "curveRefreshIntervalInSeconds",
+            "type": "u64"
           },
           {
-            name: 'usdcNetDeposits';
-            type: 'u64';
+            "name": "usdcNetDeposits",
+            "type": "u64"
           },
           {
-            name: 'usdcNetWithdrawals';
-            type: 'u64';
+            "name": "usdcNetWithdrawals",
+            "type": "u64"
           },
           {
-            name: 'usdcTotalContributed';
-            type: 'u64';
+            "name": "usdcTotalContributed",
+            "type": "u64"
           },
           {
-            name: 'totalContributors';
-            type: 'u32';
+            "name": "totalContributors",
+            "type": "u32"
           },
           {
-            name: 'lastContributorNumber';
-            type: 'u32';
+            "name": "lastContributorNumber",
+            "type": "u32"
           },
           {
-            name: 'coolOffPeriodInSeconds';
-            type: 'u64';
+            "name": "coolOffPeriodInSeconds",
+            "type": "u64"
           },
           {
-            name: 'gaUsdcTotalContributed';
-            type: 'u64';
+            "name": "gaUsdcTotalContributed",
+            "type": "u64"
           },
           {
-            name: 'gaMeanTotalPurchased';
-            type: 'u64';
+            "name": "gaMeanTotalPurchased",
+            "type": "u64"
           },
           {
-            name: 'gaCloseMeanPrice';
-            type: 'u64';
+            "name": "gaCloseMeanPrice",
+            "type": "u64"
           },
           {
-            name: 'gaLastCloseStartTs';
-            type: 'u64';
+            "name": "gaLastCloseStartTs",
+            "type": "u64"
           },
           {
-            name: 'gaLastCloseEndTs';
-            type: 'u64';
+            "name": "gaLastCloseEndTs",
+            "type": "u64"
           },
           {
-            name: 'gaTotalClosedTimeInSeconds';
-            type: 'u64';
+            "name": "gaTotalClosedTimeInSeconds",
+            "type": "u64"
           },
           {
-            name: 'gaIsOpen';
-            type: 'bool';
+            "name": "gaIsOpen",
+            "type": "bool"
           },
           {
-            name: 'gaLastContributorNumber';
-            type: 'u32';
+            "name": "gaLastContributorNumber",
+            "type": "u32"
           },
           {
-            name: 'gaLastContributorUsdcContributedBefore';
-            type: 'u64';
+            "name": "gaLastContributorUsdcContributedBefore",
+            "type": "u64"
           },
           {
-            name: 'meanImpliedPrice';
-            type: 'u64';
+            "name": "meanImpliedPrice",
+            "type": "u64"
           },
           {
-            name: 'totalRedeems';
-            type: 'u32';
-          },
-        ];
-      };
-    },
-    {
-      name: 'userIdoAccount';
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'idoName';
-            type: {
-              array: ['u8', 10];
-            };
-          },
-          {
-            name: 'userAuthority';
-            type: 'publicKey';
-          },
-          {
-            name: 'bump';
-            type: 'u8';
-          },
-          {
-            name: 'contributionTs';
-            type: 'i64';
-          },
-          {
-            name: 'contributionUpdatedTs';
-            type: 'i64';
-          },
-          {
-            name: 'contributorNumber';
-            type: 'u32';
-          },
-          {
-            name: 'usdcNetDepositsSnapshot';
-            type: 'u64';
-          },
-          {
-            name: 'usdcNetWithdrawalsSnapshot';
-            type: 'u64';
-          },
-          {
-            name: 'usdcTotalContributedInclMine';
-            type: 'u64';
-          },
-          {
-            name: 'usdcContributedAmount';
-            type: 'u64';
-          },
-          {
-            name: 'meanPriceAtContributionTs';
-            type: 'u64';
-          },
-          {
-            name: 'meanPurchasedAmount';
-            type: 'u64';
-          },
-        ];
-      };
+            "name": "totalRedeems",
+            "type": "u32"
+          }
+        ]
+      }
     },
     {
-      name: 'idoWithdrawals';
-      type: {
-        kind: 'struct';
-        fields: [
+      "name": "userIdoAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'last';
-            type: 'u32';
+            "name": "idoName",
+            "type": {
+              "array": [
+                "u8",
+                10
+              ]
+            }
           },
           {
-            name: 'withdrawals';
-            type: {
-              array: [
+            "name": "userAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "contributionTs",
+            "type": "i64"
+          },
+          {
+            "name": "contributionUpdatedTs",
+            "type": "i64"
+          },
+          {
+            "name": "contributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "usdcNetDepositsSnapshot",
+            "type": "u64"
+          },
+          {
+            "name": "usdcNetWithdrawalsSnapshot",
+            "type": "u64"
+          },
+          {
+            "name": "usdcTotalContributedInclMine",
+            "type": "u64"
+          },
+          {
+            "name": "usdcContributedAmount",
+            "type": "u64"
+          },
+          {
+            "name": "meanPriceAtContributionTs",
+            "type": "u64"
+          },
+          {
+            "name": "meanPurchasedAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "idoWithdrawals",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "last",
+            "type": "u32"
+          },
+          {
+            "name": "withdrawals",
+            "type": {
+              "array": [
                 {
-                  defined: 'WithdrawalEntry';
+                  "defined": "WithdrawalEntry"
                 },
-                5000,
-              ];
-            };
-          },
-        ];
-      };
-    },
-  ];
-  types: [
+                5000
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
     {
-      name: 'IdoTimes';
-      type: {
-        kind: 'struct';
-        fields: [
+      "name": "IdoTimes",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'idoStartTs';
-            type: 'i64';
-          },
-          {
-            name: 'idoEndTs';
-            type: 'i64';
+            "name": "idoStartTs",
+            "type": "i64"
           },
           {
-            name: 'redeemStartTs';
-            type: 'i64';
+            "name": "idoEndTs",
+            "type": "i64"
           },
           {
-            name: 'redeemEndTs';
-            type: 'i64';
-          },
-        ];
-      };
-    },
-    {
-      name: 'PoolBumps';
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'idoAccount';
-            type: 'u8';
+            "name": "redeemStartTs",
+            "type": "i64"
           },
           {
-            name: 'meanPool';
-            type: 'u8';
+            "name": "redeemEndTs",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolBumps",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "idoAccount",
+            "type": "u8"
           },
           {
-            name: 'usdcPool';
-            type: 'u8';
-          },
-        ];
-      };
-    },
-    {
-      name: 'WithdrawalEntry';
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'contributorNumber';
-            type: 'u32';
+            "name": "meanPool",
+            "type": "u8"
           },
           {
-            name: 'amount';
-            type: 'u64';
-          },
-        ];
-      };
+            "name": "usdcPool",
+            "type": "u8"
+          }
+        ]
+      }
     },
     {
-      name: 'RpcWithdrawalEntry';
-      type: {
-        kind: 'struct';
-        fields: [
+      "name": "WithdrawalEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'contributorNumber';
-            type: 'u32';
+            "name": "contributorNumber",
+            "type": "u32"
           },
           {
-            name: 'amount';
-            type: 'u64';
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RpcWithdrawalEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contributorNumber",
+            "type": "u32"
           },
-        ];
-      };
-    },
-  ];
-  events: [
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ],
+  "events": [
     {
-      name: 'IdoStatusEvent';
-      fields: [
+      "name": "IdoStatusEvent",
+      "fields": [
         {
-          name: 'clusterTs';
-          type: 'u64';
-          index: false;
+          "name": "clusterTs",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'secondsFromIdoStart';
-          type: 'i64';
-          index: false;
+          "name": "secondsFromIdoStart",
+          "type": "i64",
+          "index": false
         },
         {
-          name: 'isRunning';
-          type: 'bool';
-          index: false;
+          "name": "isRunning",
+          "type": "bool",
+          "index": false
         },
         {
-          name: 'usdcTotalMax';
-          type: 'u64';
-          index: false;
+          "name": "usdcTotalMax",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'meanTotalMax';
-          type: 'u64';
-          index: false;
+          "name": "meanTotalMax",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'meanPriceCurrent';
-          type: 'u64';
-          index: false;
+          "name": "meanPriceCurrent",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'usdcPerUserMaxCurrent';
-          type: 'u64';
-          index: false;
+          "name": "usdcPerUserMaxCurrent",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'usdcNetDeposits';
-          type: 'u64';
-          index: false;
+          "name": "usdcNetDeposits",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'usdcNetWithdrawals';
-          type: 'u64';
-          index: false;
+          "name": "usdcNetWithdrawals",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'usdcTotalContributed';
-          type: 'u64';
-          index: false;
+          "name": "usdcTotalContributed",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'totalContributors';
-          type: 'u32';
-          index: false;
+          "name": "totalContributors",
+          "type": "u32",
+          "index": false
         },
         {
-          name: 'lastContributorNumber';
-          type: 'u32';
-          index: false;
+          "name": "lastContributorNumber",
+          "type": "u32",
+          "index": false
         },
         {
-          name: 'gaUsdcTotalContributed';
-          type: 'u64';
-          index: false;
+          "name": "gaUsdcTotalContributed",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'gaMeanTotalPurchased';
-          type: 'u64';
-          index: false;
+          "name": "gaMeanTotalPurchased",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'gaIsOpen';
-          type: 'bool';
-          index: false;
+          "name": "gaIsOpen",
+          "type": "bool",
+          "index": false
         },
         {
-          name: 'meanImpliedPrice';
-          type: 'u64';
-          index: false;
+          "name": "meanImpliedPrice",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'idoWithdrawalsAddress';
-          type: 'publicKey';
-          index: false;
-        },
-      ];
-    },
-  ];
-  errors: [
+          "name": "idoWithdrawalsAddress",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
+    }
+  ],
+  "errors": [
     {
-      code: 300;
-      name: 'IdoNameTooLong';
-      msg: 'IDO name is too long';
-    },
-    {
-      code: 301;
-      name: 'IdoFuture';
-      msg: 'IDO must start in the future';
+      "code": 300,
+      "name": "IdoNameTooLong",
+      "msg": "IDO name is too long"
     },
     {
-      code: 302;
-      name: 'SeqTimes';
-      msg: 'IDO times are non-sequential';
+      "code": 301,
+      "name": "IdoFuture",
+      "msg": "IDO must start in the future"
     },
     {
-      code: 303;
-      name: 'StartIdoTime';
-      msg: 'IDO has not started';
+      "code": 302,
+      "name": "SeqTimes",
+      "msg": "IDO times are non-sequential"
     },
     {
-      code: 304;
-      name: 'EndDepositsTime';
-      msg: 'Deposits period has ended';
+      "code": 303,
+      "name": "StartIdoTime",
+      "msg": "IDO has not started"
     },
     {
-      code: 305;
-      name: 'EndIdoTime';
-      msg: 'IDO has ended';
+      "code": 304,
+      "name": "EndDepositsTime",
+      "msg": "Deposits period has ended"
     },
     {
-      code: 306;
-      name: 'IdoNotOver';
-      msg: 'IDO has not finished yet';
+      "code": 305,
+      "name": "EndIdoTime",
+      "msg": "IDO has ended"
     },
     {
-      code: 307;
-      name: 'RedeemNotStarted';
-      msg: 'Redeem period has not started yet';
+      "code": 306,
+      "name": "IdoNotOver",
+      "msg": "IDO has not finished yet"
     },
     {
-      code: 308;
-      name: 'InvalidMeanDecimals';
-      msg: 'Invalid MEAM decimals';
+      "code": 307,
+      "name": "RedeemNotStarted",
+      "msg": "Redeem period has not started yet"
     },
     {
-      code: 309;
-      name: 'InvalidUsdcDecimals';
-      msg: 'Invalid USDC decimals';
+      "code": 308,
+      "name": "InvalidMeanDecimals",
+      "msg": "Invalid MEAM decimals"
     },
     {
-      code: 310;
-      name: 'InvalidNonce';
-      msg: 'Given nonce is invalid';
+      "code": 309,
+      "name": "InvalidUsdcDecimals",
+      "msg": "Invalid USDC decimals"
     },
     {
-      code: 311;
-      name: 'LowMean';
-      msg: 'Insufficient MEAN';
+      "code": 310,
+      "name": "InvalidNonce",
+      "msg": "Given nonce is invalid"
     },
     {
-      code: 312;
-      name: 'LowUsdc';
-      msg: 'Insufficient USDC';
+      "code": 311,
+      "name": "LowMean",
+      "msg": "Insufficient MEAN"
     },
     {
-      code: 313;
-      name: 'MinUsdcPerUser';
-      msg: 'USDC amount is less than minimum required contribution';
+      "code": 312,
+      "name": "LowUsdc",
+      "msg": "Insufficient USDC"
     },
     {
-      code: 314;
-      name: 'MaxUsdcPerUser';
-      msg: 'USDC amount exceeds max allowed contribution';
+      "code": 313,
+      "name": "MinUsdcPerUser",
+      "msg": "USDC amount is less than minimum required contribution"
     },
     {
-      code: 315;
-      name: 'InvalidAmountZero';
-      msg: 'mount must be greater than zero';
+      "code": 314,
+      "name": "MaxUsdcPerUser",
+      "msg": "USDC amount exceeds max allowed contribution"
     },
     {
-      code: 316;
-      name: 'ExceedsDepositedUsdc';
-      msg: 'Amount exceeds deposited USDC';
+      "code": 315,
+      "name": "InvalidAmountZero",
+      "msg": "mount must be greater than zero"
     },
     {
-      code: 317;
-      name: 'DepositedUsdcWouldBeLessThanMin';
-      msg: 'Deposited USDC would be less than the minimum allowed';
+      "code": 316,
+      "name": "ExceedsDepositedUsdc",
+      "msg": "Amount exceeds deposited USDC"
     },
     {
-      code: 318;
-      name: 'LowRedeemable';
-      msg: 'Insufficient redeemable tokens';
+      "code": 317,
+      "name": "DepositedUsdcWouldBeLessThanMin",
+      "msg": "Deposited USDC would be less than the minimum allowed"
     },
     {
-      code: 319;
-      name: 'UsdcNotEqRedeem';
-      msg: "USDC total and redeemable total don't match";
+      "code": 318,
+      "name": "LowRedeemable",
+      "msg": "Insufficient redeemable tokens"
     },
     {
-      code: 320;
-      name: 'MeanNotEqRedeem';
-      msg: "MEAN total and redeemable total don't match";
+      "code": 319,
+      "name": "UsdcNotEqRedeem",
+      "msg": "USDC total and redeemable total don't match"
     },
     {
-      code: 321;
-      name: 'WithdrawalsFull';
-      msg: 'Withdrawals list is full';
+      "code": 320,
+      "name": "MeanNotEqRedeem",
+      "msg": "MEAN total and redeemable total don't match"
     },
     {
-      code: 322;
-      name: 'CoolOffPeriod';
-      msg: 'Cool-off period sill active';
+      "code": 321,
+      "name": "WithdrawalsFull",
+      "msg": "Withdrawals list is full"
     },
-  ];
+    {
+      "code": 322,
+      "name": "CoolOffPeriod",
+      "msg": "Cool-off period sill active"
+    }
+  ]
 };
 
 export const IDL: MeanIdoPool = {
-  version: '0.0.0',
-  name: 'mean_ido_pool',
-  instructions: [
+  "version": "0.0.0",
+  "name": "mean_ido_pool",
+  "instructions": [
     {
-      name: 'initializePool',
-      accounts: [
+      "name": "initializePool",
+      "accounts": [
         {
-          name: 'idoAuthority',
-          isMut: true,
-          isSigner: true,
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: 'idoAuthorityMean',
-          isMut: true,
-          isSigner: false,
+          "name": "idoAuthorityMean",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAccount',
-          isMut: true,
-          isSigner: false,
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'meanMint',
-          isMut: false,
-          isSigner: false,
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'usdcMint',
-          isMut: false,
-          isSigner: false,
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'meanPool',
-          isMut: true,
-          isSigner: false,
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'usdcPool',
-          isMut: true,
-          isSigner: false,
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'withdrawals',
-          isMut: true,
-          isSigner: false,
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram',
-          isMut: false,
-          isSigner: false,
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'rent',
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
       ],
-      args: [
+      "args": [
         {
-          name: 'idoName',
-          type: 'string',
+          "name": "idoName",
+          "type": "string"
         },
         {
-          name: 'idoTimes',
-          type: {
-            defined: 'IdoTimes',
-          },
+          "name": "idoTimes",
+          "type": {
+            "defined": "IdoTimes"
+          }
         },
         {
-          name: 'idoMeanAmount',
-          type: 'u64',
+          "name": "idoMeanAmount",
+          "type": "u64"
         },
         {
-          name: 'bumps',
-          type: {
-            defined: 'PoolBumps',
-          },
+          "name": "bumps",
+          "type": {
+            "defined": "PoolBumps"
+          }
         },
         {
-          name: 'meanPriceStart',
-          type: 'u64',
+          "name": "meanPriceStart",
+          "type": "u64"
         },
         {
-          name: 'meanPriceEnd',
-          type: 'u64',
+          "name": "meanPriceEnd",
+          "type": "u64"
         },
         {
-          name: 'usdcPerUserMin',
-          type: 'u64',
+          "name": "usdcPerUserMin",
+          "type": "u64"
         },
         {
-          name: 'usdcPerUserMaxStart',
-          type: 'u64',
+          "name": "usdcPerUserMaxStart",
+          "type": "u64"
         },
         {
-          name: 'usdcPerUserMaxEnd',
-          type: 'u64',
+          "name": "usdcPerUserMaxEnd",
+          "type": "u64"
         },
         {
-          name: 'usdcTotalMin',
-          type: 'u64',
+          "name": "usdcTotalMin",
+          "type": "u64"
         },
         {
-          name: 'usdcTotalMax',
-          type: 'u64',
+          "name": "usdcTotalMax",
+          "type": "u64"
         },
         {
-          name: 'curveRefreshIntervalInSeconds',
-          type: 'u64',
+          "name": "curveRefreshIntervalInSeconds",
+          "type": "u64"
         },
         {
-          name: 'coolOffPeriodInSeconds',
-          type: 'u64',
-        },
-      ],
+          "name": "coolOffPeriodInSeconds",
+          "type": "u64"
+        }
+      ]
     },
     {
-      name: 'depositUsdc',
-      accounts: [
+      "name": "depositUsdc",
+      "accounts": [
         {
-          name: 'userAuthority',
-          isMut: false,
-          isSigner: true,
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          name: 'userUsdc',
-          isMut: true,
-          isSigner: false,
+          "name": "userUsdc",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'userIdo',
-          isMut: true,
-          isSigner: false,
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAccount',
-          isMut: true,
-          isSigner: false,
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'usdcMint',
-          isMut: false,
-          isSigner: false,
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'usdcPool',
-          isMut: true,
-          isSigner: false,
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram',
-          isMut: false,
-          isSigner: false,
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
       ],
-      args: [
+      "args": [
         {
-          name: 'amount',
-          type: 'u64',
+          "name": "amount",
+          "type": "u64"
         },
         {
-          name: 'userIdoBump',
-          type: 'u8',
-        },
-      ],
+          "name": "userIdoBump",
+          "type": "u8"
+        }
+      ]
     },
     {
-      name: 'withdrawUsdc',
-      accounts: [
+      "name": "withdrawUsdc",
+      "accounts": [
         {
-          name: 'userAuthority',
-          isMut: false,
-          isSigner: true,
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          name: 'userUsdc',
-          isMut: true,
-          isSigner: false,
+          "name": "userUsdc",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'userIdo',
-          isMut: true,
-          isSigner: false,
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAccount',
-          isMut: true,
-          isSigner: false,
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'usdcMint',
-          isMut: false,
-          isSigner: false,
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'usdcPool',
-          isMut: true,
-          isSigner: false,
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'withdrawals',
-          isMut: true,
-          isSigner: false,
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram',
-          isMut: false,
-          isSigner: false,
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
       ],
-      args: [
+      "args": [
         {
-          name: 'amount',
-          type: 'u64',
-        },
-      ],
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     },
     {
-      name: 'simulateStatus',
-      accounts: [
+      "name": "simulateStatus",
+      "accounts": [
         {
-          name: 'idoAccount',
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "idoAccount",
+          "isMut": false,
+          "isSigner": false
+        }
       ],
-      args: [],
+      "args": []
     },
     {
-      name: 'createIdoWithdrawals',
-      accounts: [
+      "name": "createIdoWithdrawals",
+      "accounts": [
         {
-          name: 'withdrawals',
-          isMut: true,
-          isSigner: false,
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'rent',
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
       ],
-      args: [],
+      "args": []
     },
     {
-      name: 'lpr',
-      accounts: [
+      "name": "lpr",
+      "accounts": [
         {
-          name: 'userAuthority',
-          isMut: false,
-          isSigner: true,
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          name: 'idoAccount',
-          isMut: true,
-          isSigner: false,
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'userIdo',
-          isMut: true,
-          isSigner: false,
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'userMean',
-          isMut: true,
-          isSigner: false,
+          "name": "userMean",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'meanMint',
-          isMut: false,
-          isSigner: false,
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'meanPool',
-          isMut: true,
-          isSigner: false,
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'withdrawals',
-          isMut: true,
-          isSigner: false,
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram',
-          isMut: false,
-          isSigner: false,
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'rent',
-          isMut: false,
-          isSigner: false,
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'associatedTokenProgram',
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
       ],
-      args: [],
+      "args": []
     },
     {
-      name: 'update',
-      accounts: [
+      "name": "update",
+      "accounts": [
         {
-          name: 'idoAuthority',
-          isMut: true,
-          isSigner: true,
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: 'idoAccount',
-          isMut: true,
-          isSigner: false,
-        },
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        }
       ],
-      args: [
+      "args": [
         {
-          name: 'lastContNumber',
-          type: 'u32',
+          "name": "lastContNumber",
+          "type": "u32"
         },
         {
-          name: 'lastContUsdcContributedBefore',
-          type: 'u64',
-        },
-      ],
+          "name": "lastContUsdcContributedBefore",
+          "type": "u64"
+        }
+      ]
     },
     {
-      name: 'withdrawDao',
-      accounts: [
+      "name": "withdrawDao",
+      "accounts": [
         {
-          name: 'idoAuthority',
-          isMut: true,
-          isSigner: true,
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          name: 'idoAuthorityMean',
-          isMut: true,
-          isSigner: false,
+          "name": "idoAuthorityMean",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAuthorityUsdc',
-          isMut: true,
-          isSigner: false,
+          "name": "idoAuthorityUsdc",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAccount',
-          isMut: true,
-          isSigner: false,
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'meanMint',
-          isMut: false,
-          isSigner: false,
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'usdcMint',
-          isMut: false,
-          isSigner: false,
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'meanPool',
-          isMut: true,
-          isSigner: false,
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'usdcPool',
-          isMut: true,
-          isSigner: false,
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram',
-          isMut: false,
-          isSigner: false,
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'rent',
-          isMut: false,
-          isSigner: false,
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'associatedTokenProgram',
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
       ],
-      args: [],
+      "args": []
     },
     {
-      name: 'redeem',
-      accounts: [
+      "name": "redeem",
+      "accounts": [
         {
-          name: 'userAuthority',
-          isMut: false,
-          isSigner: true,
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          name: 'userMean',
-          isMut: true,
-          isSigner: false,
+          "name": "userMean",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'userIdo',
-          isMut: true,
-          isSigner: false,
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'idoAccount',
-          isMut: true,
-          isSigner: false,
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'meanMint',
-          isMut: false,
-          isSigner: false,
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'meanPool',
-          isMut: true,
-          isSigner: false,
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: 'systemProgram',
-          isMut: false,
-          isSigner: false,
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'rent',
-          isMut: false,
-          isSigner: false,
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: 'associatedTokenProgram',
-          isMut: false,
-          isSigner: false,
-        },
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
       ],
-      args: [],
-    },
+      "args": []
+    }
   ],
-  accounts: [
+  "accounts": [
     {
-      name: 'idoAccount',
-      type: {
-        kind: 'struct',
-        fields: [
+      "name": "idoAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'idoAuthority',
-            type: 'publicKey',
+            "name": "idoAuthority",
+            "type": "publicKey"
           },
           {
-            name: 'idoName',
-            type: {
-              array: ['u8', 10],
-            },
+            "name": "idoName",
+            "type": {
+              "array": [
+                "u8",
+                10
+              ]
+            }
           },
           {
-            name: 'idoTimes',
-            type: {
-              defined: 'IdoTimes',
-            },
+            "name": "idoTimes",
+            "type": {
+              "defined": "IdoTimes"
+            }
           },
           {
-            name: 'idoMeanAmount',
-            type: 'u64',
+            "name": "idoMeanAmount",
+            "type": "u64"
           },
           {
-            name: 'bumps',
-            type: {
-              defined: 'PoolBumps',
-            },
+            "name": "bumps",
+            "type": {
+              "defined": "PoolBumps"
+            }
           },
           {
-            name: 'usdcMint',
-            type: 'publicKey',
+            "name": "usdcMint",
+            "type": "publicKey"
           },
           {
-            name: 'meanMint',
-            type: 'publicKey',
+            "name": "meanMint",
+            "type": "publicKey"
           },
           {
-            name: 'usdcPool',
-            type: 'publicKey',
+            "name": "usdcPool",
+            "type": "publicKey"
           },
           {
-            name: 'meanPool',
-            type: 'publicKey',
+            "name": "meanPool",
+            "type": "publicKey"
           },
           {
-            name: 'withdrawals',
-            type: 'publicKey',
+            "name": "withdrawals",
+            "type": "publicKey"
           },
           {
-            name: 'meanPriceStart',
-            type: 'u64',
+            "name": "meanPriceStart",
+            "type": "u64"
           },
           {
-            name: 'meanPriceEnd',
-            type: 'u64',
+            "name": "meanPriceEnd",
+            "type": "u64"
           },
           {
-            name: 'usdcPerUserMin',
-            type: 'u64',
+            "name": "usdcPerUserMin",
+            "type": "u64"
           },
           {
-            name: 'usdcPerUserMaxStart',
-            type: 'u64',
+            "name": "usdcPerUserMaxStart",
+            "type": "u64"
           },
           {
-            name: 'usdcPerUserMaxEnd',
-            type: 'u64',
+            "name": "usdcPerUserMaxEnd",
+            "type": "u64"
           },
           {
-            name: 'usdcTotalMin',
-            type: 'u64',
+            "name": "usdcTotalMin",
+            "type": "u64"
           },
           {
-            name: 'usdcTotalMax',
-            type: 'u64',
+            "name": "usdcTotalMax",
+            "type": "u64"
           },
           {
-            name: 'meanTotalMax',
-            type: 'u64',
+            "name": "meanTotalMax",
+            "type": "u64"
           },
           {
-            name: 'curveRefreshIntervalInSeconds',
-            type: 'u64',
+            "name": "curveRefreshIntervalInSeconds",
+            "type": "u64"
           },
           {
-            name: 'usdcNetDeposits',
-            type: 'u64',
+            "name": "usdcNetDeposits",
+            "type": "u64"
           },
           {
-            name: 'usdcNetWithdrawals',
-            type: 'u64',
+            "name": "usdcNetWithdrawals",
+            "type": "u64"
           },
           {
-            name: 'usdcTotalContributed',
-            type: 'u64',
+            "name": "usdcTotalContributed",
+            "type": "u64"
           },
           {
-            name: 'totalContributors',
-            type: 'u32',
+            "name": "totalContributors",
+            "type": "u32"
           },
           {
-            name: 'lastContributorNumber',
-            type: 'u32',
+            "name": "lastContributorNumber",
+            "type": "u32"
           },
           {
-            name: 'coolOffPeriodInSeconds',
-            type: 'u64',
+            "name": "coolOffPeriodInSeconds",
+            "type": "u64"
           },
           {
-            name: 'gaUsdcTotalContributed',
-            type: 'u64',
+            "name": "gaUsdcTotalContributed",
+            "type": "u64"
           },
           {
-            name: 'gaMeanTotalPurchased',
-            type: 'u64',
+            "name": "gaMeanTotalPurchased",
+            "type": "u64"
           },
           {
-            name: 'gaCloseMeanPrice',
-            type: 'u64',
+            "name": "gaCloseMeanPrice",
+            "type": "u64"
           },
           {
-            name: 'gaLastCloseStartTs',
-            type: 'u64',
+            "name": "gaLastCloseStartTs",
+            "type": "u64"
           },
           {
-            name: 'gaLastCloseEndTs',
-            type: 'u64',
+            "name": "gaLastCloseEndTs",
+            "type": "u64"
           },
           {
-            name: 'gaTotalClosedTimeInSeconds',
-            type: 'u64',
+            "name": "gaTotalClosedTimeInSeconds",
+            "type": "u64"
           },
           {
-            name: 'gaIsOpen',
-            type: 'bool',
+            "name": "gaIsOpen",
+            "type": "bool"
           },
           {
-            name: 'gaLastContributorNumber',
-            type: 'u32',
+            "name": "gaLastContributorNumber",
+            "type": "u32"
           },
           {
-            name: 'gaLastContributorUsdcContributedBefore',
-            type: 'u64',
+            "name": "gaLastContributorUsdcContributedBefore",
+            "type": "u64"
           },
           {
-            name: 'meanImpliedPrice',
-            type: 'u64',
+            "name": "meanImpliedPrice",
+            "type": "u64"
           },
           {
-            name: 'totalRedeems',
-            type: 'u32',
-          },
-        ],
-      },
+            "name": "totalRedeems",
+            "type": "u32"
+          }
+        ]
+      }
     },
     {
-      name: 'userIdoAccount',
-      type: {
-        kind: 'struct',
-        fields: [
+      "name": "userIdoAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'idoName',
-            type: {
-              array: ['u8', 10],
-            },
+            "name": "idoName",
+            "type": {
+              "array": [
+                "u8",
+                10
+              ]
+            }
           },
           {
-            name: 'userAuthority',
-            type: 'publicKey',
+            "name": "userAuthority",
+            "type": "publicKey"
           },
           {
-            name: 'bump',
-            type: 'u8',
+            "name": "bump",
+            "type": "u8"
           },
           {
-            name: 'contributionTs',
-            type: 'i64',
+            "name": "contributionTs",
+            "type": "i64"
           },
           {
-            name: 'contributionUpdatedTs',
-            type: 'i64',
+            "name": "contributionUpdatedTs",
+            "type": "i64"
           },
           {
-            name: 'contributorNumber',
-            type: 'u32',
+            "name": "contributorNumber",
+            "type": "u32"
           },
           {
-            name: 'usdcNetDepositsSnapshot',
-            type: 'u64',
+            "name": "usdcNetDepositsSnapshot",
+            "type": "u64"
           },
           {
-            name: 'usdcNetWithdrawalsSnapshot',
-            type: 'u64',
+            "name": "usdcNetWithdrawalsSnapshot",
+            "type": "u64"
           },
           {
-            name: 'usdcTotalContributedInclMine',
-            type: 'u64',
+            "name": "usdcTotalContributedInclMine",
+            "type": "u64"
           },
           {
-            name: 'usdcContributedAmount',
-            type: 'u64',
+            "name": "usdcContributedAmount",
+            "type": "u64"
           },
           {
-            name: 'meanPriceAtContributionTs',
-            type: 'u64',
+            "name": "meanPriceAtContributionTs",
+            "type": "u64"
           },
           {
-            name: 'meanPurchasedAmount',
-            type: 'u64',
-          },
-        ],
-      },
+            "name": "meanPurchasedAmount",
+            "type": "u64"
+          }
+        ]
+      }
     },
     {
-      name: 'idoWithdrawals',
-      type: {
-        kind: 'struct',
-        fields: [
+      "name": "idoWithdrawals",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'last',
-            type: 'u32',
+            "name": "last",
+            "type": "u32"
           },
           {
-            name: 'withdrawals',
-            type: {
-              array: [
+            "name": "withdrawals",
+            "type": {
+              "array": [
                 {
-                  defined: 'WithdrawalEntry',
+                  "defined": "WithdrawalEntry"
                 },
-                5000,
-              ],
-            },
-          },
-        ],
-      },
-    },
+                5000
+              ]
+            }
+          }
+        ]
+      }
+    }
   ],
-  types: [
+  "types": [
     {
-      name: 'IdoTimes',
-      type: {
-        kind: 'struct',
-        fields: [
+      "name": "IdoTimes",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'idoStartTs',
-            type: 'i64',
+            "name": "idoStartTs",
+            "type": "i64"
           },
           {
-            name: 'idoEndTs',
-            type: 'i64',
+            "name": "idoEndTs",
+            "type": "i64"
           },
           {
-            name: 'redeemStartTs',
-            type: 'i64',
+            "name": "redeemStartTs",
+            "type": "i64"
           },
           {
-            name: 'redeemEndTs',
-            type: 'i64',
-          },
-        ],
-      },
+            "name": "redeemEndTs",
+            "type": "i64"
+          }
+        ]
+      }
     },
     {
-      name: 'PoolBumps',
-      type: {
-        kind: 'struct',
-        fields: [
+      "name": "PoolBumps",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'idoAccount',
-            type: 'u8',
+            "name": "idoAccount",
+            "type": "u8"
           },
           {
-            name: 'meanPool',
-            type: 'u8',
+            "name": "meanPool",
+            "type": "u8"
           },
           {
-            name: 'usdcPool',
-            type: 'u8',
-          },
-        ],
-      },
+            "name": "usdcPool",
+            "type": "u8"
+          }
+        ]
+      }
     },
     {
-      name: 'WithdrawalEntry',
-      type: {
-        kind: 'struct',
-        fields: [
+      "name": "WithdrawalEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'contributorNumber',
-            type: 'u32',
+            "name": "contributorNumber",
+            "type": "u32"
           },
           {
-            name: 'amount',
-            type: 'u64',
-          },
-        ],
-      },
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
     },
     {
-      name: 'RpcWithdrawalEntry',
-      type: {
-        kind: 'struct',
-        fields: [
+      "name": "RpcWithdrawalEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: 'contributorNumber',
-            type: 'u32',
+            "name": "contributorNumber",
+            "type": "u32"
           },
           {
-            name: 'amount',
-            type: 'u64',
-          },
-        ],
-      },
-    },
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    }
   ],
-  events: [
+  "events": [
     {
-      name: 'IdoStatusEvent',
-      fields: [
+      "name": "IdoStatusEvent",
+      "fields": [
         {
-          name: 'clusterTs',
-          type: 'u64',
-          index: false,
+          "name": "clusterTs",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'secondsFromIdoStart',
-          type: 'i64',
-          index: false,
+          "name": "secondsFromIdoStart",
+          "type": "i64",
+          "index": false
         },
         {
-          name: 'isRunning',
-          type: 'bool',
-          index: false,
+          "name": "isRunning",
+          "type": "bool",
+          "index": false
         },
         {
-          name: 'usdcTotalMax',
-          type: 'u64',
-          index: false,
+          "name": "usdcTotalMax",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'meanTotalMax',
-          type: 'u64',
-          index: false,
+          "name": "meanTotalMax",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'meanPriceCurrent',
-          type: 'u64',
-          index: false,
+          "name": "meanPriceCurrent",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'usdcPerUserMaxCurrent',
-          type: 'u64',
-          index: false,
+          "name": "usdcPerUserMaxCurrent",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'usdcNetDeposits',
-          type: 'u64',
-          index: false,
+          "name": "usdcNetDeposits",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'usdcNetWithdrawals',
-          type: 'u64',
-          index: false,
+          "name": "usdcNetWithdrawals",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'usdcTotalContributed',
-          type: 'u64',
-          index: false,
+          "name": "usdcTotalContributed",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'totalContributors',
-          type: 'u32',
-          index: false,
+          "name": "totalContributors",
+          "type": "u32",
+          "index": false
         },
         {
-          name: 'lastContributorNumber',
-          type: 'u32',
-          index: false,
+          "name": "lastContributorNumber",
+          "type": "u32",
+          "index": false
         },
         {
-          name: 'gaUsdcTotalContributed',
-          type: 'u64',
-          index: false,
+          "name": "gaUsdcTotalContributed",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'gaMeanTotalPurchased',
-          type: 'u64',
-          index: false,
+          "name": "gaMeanTotalPurchased",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'gaIsOpen',
-          type: 'bool',
-          index: false,
+          "name": "gaIsOpen",
+          "type": "bool",
+          "index": false
         },
         {
-          name: 'meanImpliedPrice',
-          type: 'u64',
-          index: false,
+          "name": "meanImpliedPrice",
+          "type": "u64",
+          "index": false
         },
         {
-          name: 'idoWithdrawalsAddress',
-          type: 'publicKey',
-          index: false,
-        },
-      ],
-    },
+          "name": "idoWithdrawalsAddress",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
+    }
   ],
-  errors: [
+  "errors": [
     {
-      code: 300,
-      name: 'IdoNameTooLong',
-      msg: 'IDO name is too long',
+      "code": 300,
+      "name": "IdoNameTooLong",
+      "msg": "IDO name is too long"
     },
     {
-      code: 301,
-      name: 'IdoFuture',
-      msg: 'IDO must start in the future',
+      "code": 301,
+      "name": "IdoFuture",
+      "msg": "IDO must start in the future"
     },
     {
-      code: 302,
-      name: 'SeqTimes',
-      msg: 'IDO times are non-sequential',
+      "code": 302,
+      "name": "SeqTimes",
+      "msg": "IDO times are non-sequential"
     },
     {
-      code: 303,
-      name: 'StartIdoTime',
-      msg: 'IDO has not started',
+      "code": 303,
+      "name": "StartIdoTime",
+      "msg": "IDO has not started"
     },
     {
-      code: 304,
-      name: 'EndDepositsTime',
-      msg: 'Deposits period has ended',
+      "code": 304,
+      "name": "EndDepositsTime",
+      "msg": "Deposits period has ended"
     },
     {
-      code: 305,
-      name: 'EndIdoTime',
-      msg: 'IDO has ended',
+      "code": 305,
+      "name": "EndIdoTime",
+      "msg": "IDO has ended"
     },
     {
-      code: 306,
-      name: 'IdoNotOver',
-      msg: 'IDO has not finished yet',
+      "code": 306,
+      "name": "IdoNotOver",
+      "msg": "IDO has not finished yet"
     },
     {
-      code: 307,
-      name: 'RedeemNotStarted',
-      msg: 'Redeem period has not started yet',
+      "code": 307,
+      "name": "RedeemNotStarted",
+      "msg": "Redeem period has not started yet"
     },
     {
-      code: 308,
-      name: 'InvalidMeanDecimals',
-      msg: 'Invalid MEAM decimals',
+      "code": 308,
+      "name": "InvalidMeanDecimals",
+      "msg": "Invalid MEAM decimals"
     },
     {
-      code: 309,
-      name: 'InvalidUsdcDecimals',
-      msg: 'Invalid USDC decimals',
+      "code": 309,
+      "name": "InvalidUsdcDecimals",
+      "msg": "Invalid USDC decimals"
     },
     {
-      code: 310,
-      name: 'InvalidNonce',
-      msg: 'Given nonce is invalid',
+      "code": 310,
+      "name": "InvalidNonce",
+      "msg": "Given nonce is invalid"
     },
     {
-      code: 311,
-      name: 'LowMean',
-      msg: 'Insufficient MEAN',
+      "code": 311,
+      "name": "LowMean",
+      "msg": "Insufficient MEAN"
     },
     {
-      code: 312,
-      name: 'LowUsdc',
-      msg: 'Insufficient USDC',
+      "code": 312,
+      "name": "LowUsdc",
+      "msg": "Insufficient USDC"
     },
     {
-      code: 313,
-      name: 'MinUsdcPerUser',
-      msg: 'USDC amount is less than minimum required contribution',
+      "code": 313,
+      "name": "MinUsdcPerUser",
+      "msg": "USDC amount is less than minimum required contribution"
     },
     {
-      code: 314,
-      name: 'MaxUsdcPerUser',
-      msg: 'USDC amount exceeds max allowed contribution',
+      "code": 314,
+      "name": "MaxUsdcPerUser",
+      "msg": "USDC amount exceeds max allowed contribution"
     },
     {
-      code: 315,
-      name: 'InvalidAmountZero',
-      msg: 'mount must be greater than zero',
+      "code": 315,
+      "name": "InvalidAmountZero",
+      "msg": "mount must be greater than zero"
     },
     {
-      code: 316,
-      name: 'ExceedsDepositedUsdc',
-      msg: 'Amount exceeds deposited USDC',
+      "code": 316,
+      "name": "ExceedsDepositedUsdc",
+      "msg": "Amount exceeds deposited USDC"
     },
     {
-      code: 317,
-      name: 'DepositedUsdcWouldBeLessThanMin',
-      msg: 'Deposited USDC would be less than the minimum allowed',
+      "code": 317,
+      "name": "DepositedUsdcWouldBeLessThanMin",
+      "msg": "Deposited USDC would be less than the minimum allowed"
     },
     {
-      code: 318,
-      name: 'LowRedeemable',
-      msg: 'Insufficient redeemable tokens',
+      "code": 318,
+      "name": "LowRedeemable",
+      "msg": "Insufficient redeemable tokens"
     },
     {
-      code: 319,
-      name: 'UsdcNotEqRedeem',
-      msg: "USDC total and redeemable total don't match",
+      "code": 319,
+      "name": "UsdcNotEqRedeem",
+      "msg": "USDC total and redeemable total don't match"
     },
     {
-      code: 320,
-      name: 'MeanNotEqRedeem',
-      msg: "MEAN total and redeemable total don't match",
+      "code": 320,
+      "name": "MeanNotEqRedeem",
+      "msg": "MEAN total and redeemable total don't match"
     },
     {
-      code: 321,
-      name: 'WithdrawalsFull',
-      msg: 'Withdrawals list is full',
+      "code": 321,
+      "name": "WithdrawalsFull",
+      "msg": "Withdrawals list is full"
     },
     {
-      code: 322,
-      name: 'CoolOffPeriod',
-      msg: 'Cool-off period sill active',
-    },
-  ],
+      "code": 322,
+      "name": "CoolOffPeriod",
+      "msg": "Cool-off period sill active"
+    }
+  ]
 };

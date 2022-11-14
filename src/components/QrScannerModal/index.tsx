@@ -1,8 +1,8 @@
 import React from 'react';
-import { useContext, useEffect } from 'react';
-import { Modal } from 'antd';
-import { AppStateContext } from '../../contexts/appstate';
-import { useTranslation } from 'react-i18next';
+import { useContext, useEffect } from "react";
+import { Modal } from "antd";
+import { AppStateContext } from "../../contexts/appstate";
+import { useTranslation } from "react-i18next";
 
 export const QrScannerModal = (props: {
   handleClose: any;
@@ -20,13 +20,10 @@ export const QrScannerModal = (props: {
       const element = document.getElementById('qr-reader');
       const scanner = (window as any).Html5QrcodeScanner;
       if (props.isVisible && scanner && element) {
-        html5QrcodeScanner = new (window as any).Html5QrcodeScanner(
-          'qr-reader',
-          {
-            fps: 10,
-            qrbox: 250,
-          },
-        );
+        html5QrcodeScanner = new (window as any).Html5QrcodeScanner("qr-reader", {
+          fps: 10,
+          qrbox: 250,
+        });
 
         const onScanSuccess = (qrCodeMessage: any) => {
           if (qrCodeMessage !== recipientAddress) {
@@ -62,17 +59,12 @@ export const QrScannerModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={
-        <div className="modal-title">
-          {t('transactions.recipient.qr-scan-title')}
-        </div>
-      }
+      title={<div className="modal-title">{t('transactions.recipient.qr-scan-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
-      width={480}
-    >
+      width={480}>
       <div id="qr-reader"></div>
     </Modal>
   );

@@ -1,49 +1,34 @@
-import { WarningFilled } from '@ant-design/icons';
-import { DepositRecord, DepositsInfo, StakingClient } from '@mean-dao/staking';
-import { ConfirmOptions, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Spin } from 'antd';
-import { openNotification } from 'components/Notifications';
-import { PreFooter } from 'components/PreFooter';
-import { MEAN_TOKEN_LIST } from 'constants/tokens';
-import { useAccountsContext, useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import {
-  getNetworkIdByCluster,
-  useConnection,
-  useConnectionConfig,
-} from 'contexts/connection';
-import {
-  confirmationEvents,
-  TxConfirmationContext,
-} from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import { IconStats } from 'Icons';
-import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
-import {
-  consoleOut,
-  getTransactionStatusForLogs,
-  isProd,
-  relativeTimeFromDates,
-} from 'middleware/ui';
-import {
-  findATokenAddress,
-  formatThousands,
-  getAmountFromLamports,
-  getTxIxResume,
-  isValidNumber,
-} from 'middleware/utils';
-import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { WarningFilled } from "@ant-design/icons";
+import { DepositRecord, DepositsInfo, StakingClient } from "@mean-dao/staking";
+import { ConfirmOptions, PublicKey, Transaction } from "@solana/web3.js";
+import { Button, Spin } from "antd";
+import { openNotification } from "components/Notifications";
+import { PreFooter } from "components/PreFooter";
+import { MEAN_TOKEN_LIST } from "constants/tokens";
+import { useAccountsContext, useNativeAccount } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from 'contexts/connection';
+import { confirmationEvents, TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import { IconStats } from "Icons";
+import { getTokenAccountBalanceByAddress } from "middleware/accounts";
+import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from "middleware/ui";
+import { findATokenAddress, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber } from "middleware/utils";
+import { EventType, OperationType, TransactionStatus } from "models/enums";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { appConfig, customLogger } from '../..';
+import { appConfig, customLogger } from "../..";
 import './style.scss';
 
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
 export const StakingRewardsView = () => {
-  const { isWhitelisted, transactionStatus, setTransactionStatus } =
-    useContext(AppStateContext);
+  const {
+    isWhitelisted,
+    transactionStatus,
+    setTransactionStatus,
+  } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { cluster, endpoint } = useConnectionConfig();
   const connection = useConnection();
@@ -55,22 +40,15 @@ export const StakingRewardsView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [isDepositing, setIsDepositing] = useState(false);
-  const [aprPercentGoal, setAprPercentGoal] = useState(
-    DEFAULT_APR_PERCENT_GOAL,
-  );
-  const [depositsInfo, setDepositsInfo] = useState<DepositsInfo | undefined>(
-    undefined,
-  );
-  const [refreshingDepositsInfo, setRefreshingDepositsInfo] =
-    useState<boolean>(false);
-  const [shouldRefreshDepositsInfo, setShouldRefreshDepositsInfo] =
-    useState(true);
+  const [aprPercentGoal, setAprPercentGoal] = useState(DEFAULT_APR_PERCENT_GOAL);
+  const [depositsInfo, setDepositsInfo] = useState<DepositsInfo | undefined>(undefined);
+  const [refreshingDepositsInfo, setRefreshingDepositsInfo] = useState<boolean>(false);
+  const [shouldRefreshDepositsInfo, setShouldRefreshDepositsInfo] = useState(true);
   const [, setLastDepositSignature] = useState('');
   // Tokens and balances
   const [meanToken, setMeanToken] = useState<TokenInfo>();
   const [meanBalance, setMeanBalance] = useState<number | undefined>(undefined);
-  const [meanStakingVaultBalance, setMeanStakingVaultBalance] =
-    useState<number>(0);
+  const [meanStakingVaultBalance, setMeanStakingVaultBalance] = useState<number>(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
 
   // MEAN Staking Vault address
@@ -89,9 +67,8 @@ export const StakingRewardsView = () => {
 
   // Access rights
   const userHasAccess = useMemo(() => {
-    if (!publicKey) {
-      return false;
-    }
+
+    if (!publicKey) { return false; }
 
     const isUserAllowed = () => {
       if (isWhitelisted) {
@@ -99,16 +76,18 @@ export const StakingRewardsView = () => {
       }
 
       return canDepositRewards;
-    };
+    }
 
     return isUserAllowed();
+
   }, [canDepositRewards, isWhitelisted, publicKey]);
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
+
     const opts: ConfirmOptions = {
-      preflightCommitment: 'confirmed',
-      commitment: 'confirmed',
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
     };
 
     return new StakingClient(
@@ -116,22 +95,22 @@ export const StakingRewardsView = () => {
       endpoint,
       publicKey,
       opts,
-      isProd() ? false : true,
-    );
-  }, [cluster, endpoint, publicKey]);
+      isProd() ? false : true
+    )
+
+  }, [
+    cluster,
+    endpoint,
+    publicKey
+  ]);
 
   /////////////////
   //  Callbacks  //
   /////////////////
 
   const refreshMeanBalance = useCallback(async () => {
-    if (
-      !connection ||
-      !publicKey ||
-      !accounts ||
-      !accounts.tokenAccounts ||
-      !accounts.tokenAccounts.length
-    ) {
+
+    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
       return;
     }
 
@@ -144,22 +123,25 @@ export const StakingRewardsView = () => {
 
     const meanTokenPk = new PublicKey(meanToken.address);
     const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
-    const result = await getTokenAccountBalanceByAddress(
-      connection,
-      meanTokenAddress,
-    );
+    const result = await getTokenAccountBalanceByAddress(connection, meanTokenAddress);
     if (result) {
       balance = result.uiAmount || 0;
     }
     setMeanBalance(balance);
-  }, [accounts, meanToken, publicKey, connection]);
+
+  }, [
+    accounts,
+    meanToken,
+    publicKey,
+    connection,
+  ]);
 
   const refreshMeanStakingVaultBalance = useCallback(async () => {
     if (!connection || !meanStakingVault) return 0;
     let balance = 0;
     try {
       const tokenAccount = new PublicKey(meanStakingVault);
-      const tokenAmount = await connection.getTokenAccountBalance(tokenAccount);
+      const tokenAmount = (await connection.getTokenAccountBalance(tokenAccount));
       if (tokenAmount) {
         const value = tokenAmount.value;
         balance = value.uiAmount || 0;
@@ -177,25 +159,27 @@ export const StakingRewardsView = () => {
   }, [aprPercentGoal, meanStakingVaultBalance]);
 
   const resetTransactionStatus = useCallback(() => {
+
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
     });
+
   }, [setTransactionStatus]);
 
-  const onDepositTxConfirmed = useCallback(
-    (value: any) => {
-      consoleOut('onDepositTxConfirmed event executed:', value, 'crimson');
-      setIsDepositing(false);
-      resetTransactionStatus();
-      setTimeout(() => {
-        refreshMeanStakingVaultBalance();
-        setShouldRefreshDepositsInfo(true);
-      }, 100);
-      setLastDepositSignature('');
-    },
-    [refreshMeanStakingVaultBalance, resetTransactionStatus],
-  );
+  const onDepositTxConfirmed = useCallback((value: any) => {
+    consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
+    setIsDepositing(false);
+    resetTransactionStatus();
+    setTimeout(() => {
+      refreshMeanStakingVaultBalance();
+      setShouldRefreshDepositsInfo(true);
+    }, 100);
+    setLastDepositSignature('');
+  }, [
+    refreshMeanStakingVaultBalance,
+    resetTransactionStatus,
+  ]);
 
   /////////////////
   //   Effects   //
@@ -203,20 +187,21 @@ export const StakingRewardsView = () => {
 
   // Preset MEAN token
   useEffect(() => {
-    if (!connection) {
-      return;
-    }
+    if (!connection) { return; }
 
     if (!pageInitialized) {
-      const tokenList = MEAN_TOKEN_LIST.filter(
-        t => t.chainId === getNetworkIdByCluster(cluster),
-      );
+      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(cluster))
       const token = tokenList.find(t => t.symbol === 'MEAN');
 
       consoleOut('MEAN token', token, 'blue');
-      setMeanToken(token);
+      setMeanToken(token)
+
     }
-  }, [connection, pageInitialized, cluster]);
+  }, [
+    connection,
+    pageInitialized,
+    cluster
+  ]);
 
   // Keep native account balance updated
   useEffect(() => {
@@ -227,29 +212,33 @@ export const StakingRewardsView = () => {
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
-  }, [account, nativeBalance, previousBalance, refreshMeanStakingVaultBalance]);
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshMeanStakingVaultBalance
+  ]);
 
   // Keep MEAN balance updated
   useEffect(() => {
-    if (
-      !publicKey ||
-      !accounts ||
-      !accounts.tokenAccounts ||
-      !accounts.tokenAccounts.length
-    ) {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
       return;
     }
 
     if (meanToken) {
       refreshMeanBalance();
     }
-  }, [accounts, publicKey, meanToken, refreshMeanBalance]);
+
+  }, [
+    accounts,
+    publicKey,
+    meanToken,
+    refreshMeanBalance,
+  ]);
 
   // Refresh deposits info
   useEffect(() => {
-    if (!connection || !shouldRefreshDepositsInfo) {
-      return;
-    }
+    if (!connection || !shouldRefreshDepositsInfo) { return; }
 
     setTimeout(() => {
       setShouldRefreshDepositsInfo(false);
@@ -258,14 +247,14 @@ export const StakingRewardsView = () => {
 
     consoleOut('Refreshing deposits info...', '', 'blue');
     (async () => {
-      await stakeClient
-        .getDepositsInfo()
+      await stakeClient.getDepositsInfo()
         .then(deposits => {
           consoleOut('deposits:', deposits, 'blue');
           setDepositsInfo(deposits);
         })
         .finally(() => setRefreshingDepositsInfo(false));
     })();
+
   }, [connection, shouldRefreshDepositsInfo, stakeClient]);
 
   // Setup event listeners
@@ -273,20 +262,23 @@ export const StakingRewardsView = () => {
     if (pageInitialized && canSubscribe) {
       setCanSubscribe(false);
       confirmationEvents.on(EventType.TxConfirmSuccess, onDepositTxConfirmed);
-      consoleOut(
-        'Subscribed to event txConfirmed with:',
-        'onDepositTxConfirmed',
-        'blue',
-      );
+      consoleOut('Subscribed to event txConfirmed with:', 'onDepositTxConfirmed', 'blue');
     }
-  }, [canSubscribe, pageInitialized, onDepositTxConfirmed]);
+  }, [
+    canSubscribe,
+    pageInitialized,
+    onDepositTxConfirmed
+  ]);
 
   // Set when a page is initialized
   useEffect(() => {
     if (!pageInitialized && meanToken) {
       setPageInitialized(true);
     }
-  }, [meanToken, pageInitialized]);
+  }, [
+    meanToken,
+    pageInitialized,
+  ]);
 
   // Unsubscribe from events
   useEffect(() => {
@@ -318,29 +310,28 @@ export const StakingRewardsView = () => {
         });
 
         const depositPercentage = parseFloat(aprPercentGoal) / 100;
-        consoleOut('depositPercentage:', depositPercentage, 'blue');
+        consoleOut("depositPercentage:", depositPercentage, "blue");
 
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
+            TransactionStatus.TransactionStart
           ),
           inputs: `depositPercentage: ${depositPercentage}%`,
         });
 
         transactionLog.push({
           action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
+            TransactionStatus.InitTransaction
           ),
-          result: '',
+          result: "",
         });
 
-        return stakeClient
-          .depositTransaction(
-            depositPercentage, // depositPercentage
-          )
-          .then(value => {
-            consoleOut('depositTransaction returned transaction:', value);
+        return stakeClient.depositTransaction(
+          depositPercentage             // depositPercentage
+        )
+          .then((value) => {
+            consoleOut("depositTransaction returned transaction:", value);
             // Stage 1 completed - The transaction is created and returned
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -348,26 +339,26 @@ export const StakingRewardsView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
+                TransactionStatus.InitTransactionSuccess
               ),
               result: getTxIxResume(value),
             });
             transaction = value;
             return true;
           })
-          .catch(error => {
-            console.error('depositTransaction init error:', error);
+          .catch((error) => {
+            console.error("depositTransaction init error:", error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
+                TransactionStatus.InitTransactionFailure
               ),
               result: `${error}`,
             });
-            customLogger.logError('Deposit transaction failed', {
+            customLogger.logError("Deposit transaction failed", {
               transcript: transactionLog,
             });
             return false;
@@ -375,9 +366,9 @@ export const StakingRewardsView = () => {
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
+          result: "Cannot start transaction! Wallet not found!",
         });
-        customLogger.logError('Deposit transaction failed', {
+        customLogger.logError("Deposit transaction failed", {
           transcript: transactionLog,
         });
         return false;
@@ -394,10 +385,9 @@ export const StakingRewardsView = () => {
         transaction.feePayer = wallet.publicKey;
         transaction.recentBlockhash = blockhash;
 
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
+        return wallet.sendTransaction(transaction, connection, { minContextSlot })
+          .then((sig) => {
+            consoleOut("sendEncodedTransaction returned a signature:", sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction,
@@ -405,13 +395,13 @@ export const StakingRewardsView = () => {
             signature = sig;
             transactionLog.push({
               action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
+                TransactionStatus.SendTransactionSuccess
               ),
               result: `signature: ${signature}`,
             });
             return true;
           })
-          .catch(error => {
+          .catch((error) => {
             console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
@@ -419,11 +409,11 @@ export const StakingRewardsView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
+                TransactionStatus.SendTransactionFailure
               ),
               result: { error, encodedTx },
             });
-            customLogger.logError('Deposit transaction failed', {
+            customLogger.logError("Deposit transaction failed", {
               transcript: transactionLog,
             });
             return false;
@@ -435,9 +425,9 @@ export const StakingRewardsView = () => {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
+          result: "Cannot send transaction! Wallet not found!",
         });
-        customLogger.logError('Deposit transaction failed', {
+        customLogger.logError("Deposit transaction failed", {
           transcript: transactionLog,
         });
         return false;
@@ -447,36 +437,36 @@ export const StakingRewardsView = () => {
     if (wallet && meanToken) {
       setIsDepositing(true);
       const create = await createTx();
-      consoleOut('created:', create);
+      consoleOut("created:", create);
       if (create) {
         const sent = await sendTx();
-        consoleOut('sent:', sent);
+        consoleOut("sent:", sent);
         if (sent) {
           setLastDepositSignature(signature);
           const depositionMessage = `Depositing ${formatThousands(
             getTotalMeanAdded(),
-            meanToken.decimals,
+            meanToken.decimals
           )} ${meanToken.symbol} into the staking vault`;
           const depositSuccessMessage = `Successfully deposited ${formatThousands(
             getTotalMeanAdded(),
-            meanToken.decimals,
+            meanToken.decimals
           )} ${meanToken.symbol} into the staking vault`;
           enqueueTransactionConfirmation({
             signature: signature,
             operationType: OperationType.Deposit,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
+            finality: "confirmed",
+            txInfoFetchStatus: "fetching",
+            loadingTitle: "Confirming transaction",
             loadingMessage: depositionMessage,
-            completedTitle: 'Transaction confirmed',
+            completedTitle: "Transaction confirmed",
             completedMessage: depositSuccessMessage,
           });
           setAprPercentGoal(DEFAULT_APR_PERCENT_GOAL);
         } else {
           openNotification({
-            title: t('notifications.error-title'),
-            description: t('notifications.error-sending-transaction'),
-            type: 'error',
+            title: t("notifications.error-title"),
+            description: t("notifications.error-sending-transaction"),
+            type: "error",
           });
           setIsDepositing(false);
         }
@@ -502,10 +492,10 @@ export const StakingRewardsView = () => {
       newValue = splitted.join('.');
     }
 
-    if (newValue === null || newValue === undefined || newValue === '') {
+    if (newValue === null || newValue === undefined || newValue === "") {
       setAprPercentGoal('');
     } else if (newValue === '.') {
-      setAprPercentGoal('.');
+      setAprPercentGoal(".");
     } else if (isValidNumber(newValue)) {
       setAprPercentGoal(newValue);
     }
@@ -531,35 +521,22 @@ export const StakingRewardsView = () => {
   const getRelativeDate = (utcDate: string) => {
     const reference = new Date(utcDate);
     return relativeTimeFromDates(reference);
-  };
+  }
 
   const renderDepositHistory = (
     <>
       <div className="container-max-width-720 my-3">
         <div className="item-list-header compact dark">
           <div className="header-row">
-            <div className="std-table-cell responsive-cell px-2 text-left">
-              Date
-            </div>
+            <div className="std-table-cell responsive-cell px-2 text-left">Date</div>
             <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">
-              <span>
-                Total Staked +<br />
-                Rewards before
-              </span>
+              <span>Total Staked +<br />Rewards before</span>
             </div>
             <div className="std-table-cell responsive-cell px-3 text-right border-right">
-              <span>
-                Deposited
-                <br />
-                Percentage
-              </span>
+              <span>Deposited<br />Percentage</span>
             </div>
             <div className="std-table-cell responsive-cell px-3 text-right">
-              <span>
-                Deposited
-                <br />
-                Amount
-              </span>
+              <span>Deposited<br />Amount</span>
             </div>
           </div>
         </div>
@@ -568,30 +545,17 @@ export const StakingRewardsView = () => {
           <Spin spinning={refreshingDepositsInfo}>
             <div className="activity-list h-100">
               <div className="item-list-body compact dark">
-                {depositsInfo &&
+                {(depositsInfo &&
                   depositsInfo.depositRecords &&
-                  depositsInfo.depositRecords.length > 0 &&
-                  depositsInfo.depositRecords.map(
-                    (item: DepositRecord, index: number) => (
-                      <div key={`${index}`} className="item-list-row">
-                        <div className="std-table-cell responsive-cell px-2 text-left">
-                          <span className="capitalize-first-letter">
-                            {getRelativeDate(item.depositedUtc)}
-                          </span>
-                        </div>
-                        <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">
-                          {formatThousands(item.totalStakedPlusRewardsUiAmount)}{' '}
-                          MEAN
-                        </div>
-                        <div className="std-table-cell responsive-cell px-3 text-right border-right">
-                          {item.depositedPercentage * 100}%
-                        </div>
-                        <div className="std-table-cell responsive-cell px-3 text-right">
-                          {formatThousands(item.depositedUiAmount)} MEAN
-                        </div>
-                      </div>
-                    ),
-                  )}
+                  depositsInfo.depositRecords.length > 0) &&
+                  depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
+                    <div key={`${index}`} className="item-list-row">
+                      <div className="std-table-cell responsive-cell px-2 text-left"><span className="capitalize-first-letter">{getRelativeDate(item.depositedUtc)}</span></div>
+                      <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">{formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN</div>
+                      <div className="std-table-cell responsive-cell px-3 text-right border-right">{item.depositedPercentage * 100}%</div>
+                      <div className="std-table-cell responsive-cell px-3 text-right">{formatThousands(item.depositedUiAmount)} MEAN</div>
+                    </div>
+                  ))}
               </div>
             </div>
           </Spin>
@@ -609,7 +573,9 @@ export const StakingRewardsView = () => {
         </div>
         <div className="flex-fixed-right">
           <div className="left static-data-field">
-            {formatThousands(meanStakingVaultBalance, meanToken?.decimals || 9)}
+            {
+              formatThousands(meanStakingVaultBalance, meanToken?.decimals || 9)
+            }
           </div>
           <div className="right">&nbsp;</div>
         </div>
@@ -618,28 +584,14 @@ export const StakingRewardsView = () => {
   );
 
   const renderPercentGoalValidationErrors = () => {
-    if (
-      !aprPercentGoal ||
-      parseFloat(aprPercentGoal) < 0.01 ||
-      parseFloat(aprPercentGoal) > 100
-    ) {
-      return (
-        <span className="form-field-error">Valid values: from 0.01 to 100</span>
-      );
-    } else if (
-      meanStakingVaultBalance &&
-      meanBalance !== undefined &&
-      meanBalance < getTotalMeanAdded()
-    ) {
-      return (
-        <span className="form-field-error">
-          Insufficient balance for APR Percent Goal
-        </span>
-      );
+    if (!aprPercentGoal || parseFloat(aprPercentGoal) < 0.01 || parseFloat(aprPercentGoal) > 100) {
+      return (<span className="form-field-error">Valid values: from 0.01 to 100</span>);
+    } else if (meanStakingVaultBalance && meanBalance !== undefined && meanBalance < getTotalMeanAdded()) {
+      return (<span className="form-field-error">Insufficient balance for APR Percent Goal</span>);
     } else {
       return null;
     }
-  };
+  }
 
   const renderAddFundsToStakingRewardsVault = (
     <>
@@ -683,16 +635,13 @@ export const StakingRewardsView = () => {
         </div>
         <div className="flex-fixed-right">
           <div className="left static-data-field">
-            {formatThousands(getTotalMeanAdded(), meanToken?.decimals || 9)}
+            {
+              formatThousands(getTotalMeanAdded(), meanToken?.decimals || 9)
+            }
           </div>
           <div className="right">&nbsp;</div>
         </div>
-        <span className="form-field-hint">
-          User MEAN balance:{' '}
-          {meanBalance
-            ? formatThousands(meanBalance, meanToken?.decimals || 9)
-            : '0'}
-        </span>
+        <span className="form-field-hint">User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 9) : '0'}</span>
       </div>
     </>
   );
@@ -712,18 +661,12 @@ export const StakingRewardsView = () => {
               </div>
               <div className="w-50 h-100 p-5 text-center flex-column flex-center">
                 <div className="text-center mb-2">
-                  <WarningFilled
-                    style={{ fontSize: 48 }}
-                    className="icon fg-warning"
-                  />
+                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
                 </div>
                 {!publicKey ? (
                   <h3>Please connect your wallet to setup rewards</h3>
                 ) : (
-                  <h3>
-                    The content you are accessing is not available at this time
-                    or you don't have access permission
-                  </h3>
+                  <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
                 )}
               </div>
             </div>
@@ -758,15 +701,18 @@ export const StakingRewardsView = () => {
               shape="round"
               size="large"
               disabled={!isValidInput() || isDepositing || !canDepositRewards}
-              onClick={onStartDepositTx}
-            >
+              onClick={onStartDepositTx}>
               {isDepositing ? 'Funding Vault' : 'Fund Vault'}
             </Button>
           </div>
           <div className="title-and-subtitle">
-            <div className="subtitle text-center">Deposit history</div>
+            <div className="subtitle text-center">
+              Deposit history
+            </div>
           </div>
-          <div className="mb-3">{renderDepositHistory}</div>
+          <div className="mb-3">
+            {renderDepositHistory}
+          </div>
         </div>
       </div>
       <PreFooter />

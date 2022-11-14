@@ -13,7 +13,7 @@ export const ACCOUNT_LAYOUT = struct([
   u64('isNative'),
   u64('delegatedAmount'),
   u32('closeAuthorityOption'),
-  publicKey('closeAuthority'),
+  publicKey('closeAuthority')
 ]);
 
 export const MINT_LAYOUT = struct([
@@ -23,7 +23,7 @@ export const MINT_LAYOUT = struct([
   u8('decimals'),
   bool('initialized'),
   u32('freezeAuthorityOption'),
-  publicKey('freezeAuthority'),
+  publicKey('freezeAuthority')
 ]);
 
 export const AMM_INFO_LAYOUT = struct([
@@ -62,8 +62,8 @@ export const AMM_INFO_LAYOUT = struct([
   publicKey('poolWithdrawQueue'),
   publicKey('poolTempLpTokenAccount'),
   publicKey('ammOwner'),
-  publicKey('pnlOwner'),
-]);
+  publicKey('pnlOwner')
+])
 
 export const AMM_INFO_LAYOUT_V3 = struct([
   u64('status'),
@@ -105,8 +105,8 @@ export const AMM_INFO_LAYOUT_V3 = struct([
   publicKey('poolTempLpTokenAccount'),
   publicKey('ammOwner'),
   publicKey('pnlOwner'),
-  publicKey('srmTokenAccount'),
-]);
+  publicKey('srmTokenAccount')
+])
 
 export const AMM_INFO_LAYOUT_V4 = struct([
   u64('status'),
@@ -160,5 +160,5 @@ export const AMM_INFO_LAYOUT_V4 = struct([
   publicKey('poolWithdrawQueue'),
   publicKey('poolTempLpTokenAccount'),
   publicKey('ammOwner'),
-  publicKey('pnlOwner'),
+  publicKey('pnlOwner')
 ]);

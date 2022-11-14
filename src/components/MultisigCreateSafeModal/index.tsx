@@ -1,58 +1,31 @@
-import {
-  Button,
-  Col,
-  Divider,
-  Dropdown,
-  Menu,
-  Modal,
-  Row,
-  Spin,
-  Switch,
-  Tooltip,
-} from 'antd';
-import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { AppStateContext } from '../../contexts/appstate';
-import { useWallet } from '../../contexts/wallet';
-import { PaymentRateType, TransactionStatus } from '../../models/enums';
-import { StepSelector } from '../StepSelector';
-import './style.scss';
-import { IconCaretDown, IconInfoCircle, IconKey, IconLock } from '../../Icons';
-import {
-  MultisigInfo,
-  MultisigParticipant,
-  MultisigTransactionFees,
-} from '@mean-dao/mean-multisig-sdk';
-import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
-import { MultisigSafeOwners } from '../MultisigSafeOwners';
-import { CopyExtLinkGroup } from '../CopyExtLinkGroup';
-import {
-  CheckOutlined,
-  InfoCircleOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons';
-import {
-  addDays,
-  getAmountWithSymbol,
-  shortenAddress,
-} from '../../middleware/utils';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import {
-  getCoolOffPeriodOptionLabel,
-  getTransactionOperationDescription,
-  isValidAddress,
-} from '../../middleware/ui';
-import { PaymentRateTypeOption } from '../../models/PaymentRateTypeOption';
-import { isError } from '../../middleware/transactions';
-import { CreateNewSafeParams } from '../../models/multisig';
+import { Button, Col, Divider, Dropdown, Menu, Modal, Row, Spin, Switch, Tooltip } from "antd";
+import { useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { AppStateContext } from "../../contexts/appstate";
+import { useWallet } from "../../contexts/wallet";
+import { PaymentRateType, TransactionStatus } from "../../models/enums";
+import { StepSelector } from "../StepSelector";
+import "./style.scss";
+import { IconCaretDown, IconInfoCircle, IconKey, IconLock } from "../../Icons";
+import { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
+import { MAX_MULTISIG_PARTICIPANTS } from "../../constants";
+import { MultisigSafeOwners } from "../MultisigSafeOwners";
+import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { addDays, getAmountWithSymbol, shortenAddress } from "../../middleware/utils";
+import { NATIVE_SOL_MINT } from "../../middleware/ids";
+import { getCoolOffPeriodOptionLabel, getTransactionOperationDescription, isValidAddress } from "../../middleware/ui";
+import { PaymentRateTypeOption } from "../../models/PaymentRateTypeOption";
+import { isError } from "../../middleware/transactions";
+import { CreateNewSafeParams } from "../../models/multisig";
 import moment from 'moment';
-import { isMobile } from 'react-device-detect';
-import useWindowSize from '../../hooks/useWindowResize';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { isMobile } from "react-device-detect";
+import useWindowSize from "../../hooks/useWindowResize";
+import { ItemType } from "antd/lib/menu/hooks/useItems";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-const timeFormat = 'hh:mm A';
+const timeFormat="hh:mm A"
 
 export const MultisigCreateSafeModal = (props: {
   handleClose: any;
@@ -73,37 +46,23 @@ export const MultisigCreateSafeModal = (props: {
     setTransactionStatus,
   } = useContext(AppStateContext);
 
-  const date = addDays(new Date(), 1).toLocaleDateString('en-US');
+  const date = addDays(new Date(), 1).toLocaleDateString("en-US");
   const time = moment().format(timeFormat);
 
-  const {
-    handleClose,
-    handleOk,
-    isVisible,
-    isBusy,
-    nativeBalance,
-    transactionFees,
-    multisigAccounts,
-  } = props;
+  const { handleClose, handleOk, isVisible, isBusy, nativeBalance, transactionFees, multisigAccounts } = props;
 
   const [currentStep, setCurrentStep] = useState(0);
   const [safeName, setSafeName] = useState('');
   const [multisigThreshold, setMultisigThreshold] = useState(0);
-  const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>(
-    [],
-  );
+  const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
-  const [isAllowToRejectProposal, setAllowToRejectProposal] =
-    useState<boolean>(true);
-  const [feeAmount] = useState<number>(
-    transactionFees.multisigFee + transactionFees.rentExempt,
-  );
+  const [isAllowToRejectProposal, setAllowToRejectProposal] = useState<boolean>(true);
+  const [feeAmount] = useState<number>(transactionFees.multisigFee + transactionFees.rentExempt);
   const [coolOffDate, setCoolOffDate] = useState<string | undefined>(date);
   const [coolOffTime, setCoolOffTime] = useState<string | undefined>(time);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
-  const [isCoolOffPeriodEnable, setIsCoolOffPeriodEnable] =
-    useState<boolean>(true);
-  const [createdByName, setCreatedByName] = useState<string>('');
+  const [isCoolOffPeriodEnable, setIsCoolOffPeriodEnable] = useState<boolean>(true);
+  const [createdByName, setCreatedByName] = useState<string>("");
   const [coolOfPeriodAmount, setCoolOfPeriodAmount] = useState<number>(1);
 
   // Detect XS screen
@@ -117,36 +76,33 @@ export const MultisigCreateSafeModal = (props: {
 
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
-  };
+  }
 
   const onContinueStepOneButtonClick = () => {
-    setCurrentStep(1); // Go to step 2
-  };
+    setCurrentStep(1);  // Go to step 2
+  }
 
   const onContinueStepTwoButtonClick = () => {
-    setCurrentStep(2); // Go to step 3
-  };
+    setCurrentStep(2);  // Go to step 3
+  }
 
   const getStepTwoContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : t('Continue');
+      : t('Continue')
   };
 
   const getStepThreeContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : t('Create');
+      : t('Create')
   };
 
   const onSafeNameInputValueChange = (e: any) => {
     setSafeName(e.target.value);
-  };
+  }
 
-  const onTimePickerChange = (
-    time: moment.Moment | null,
-    timeString: string,
-  ) => {
+  const onTimePickerChange = (time: moment.Moment | null, timeString: string) => {
     if (time) {
       const shortTime = time.format(timeFormat);
       setCoolOffTime(shortTime);
@@ -155,16 +111,16 @@ export const MultisigCreateSafeModal = (props: {
 
   const handleDateChange = (date: string) => {
     setCoolOffDate(date);
-  };
+  }
 
   const todayAndPriorDatesDisabled = (current: any) => {
     // Can not select neither today nor days before today
     return current && current < moment().add(1, 'day').startOf('day');
-  };
+  }
 
   const onResetDate = () => {
     setCoolOffDate(date);
-  };
+  }
 
   const renderDatePickerExtraPanel = () => {
     return (
@@ -172,7 +128,7 @@ export const MultisigCreateSafeModal = (props: {
         <span className="mx-1">Reset</span>
       </span>
     );
-  };
+  }
 
   const onAcceptModal = () => {
     const options: CreateNewSafeParams = {
@@ -182,14 +138,14 @@ export const MultisigCreateSafeModal = (props: {
       isAllowToRejectProposal: isAllowToRejectProposal,
       isCoolOffPeriodEnable: isCoolOffPeriodEnable,
       coolOfPeriodAmount: coolOfPeriodAmount,
-      coolOffPeriodFrequency: coolOffPeriodFrequency,
-    };
+      coolOffPeriodFrequency: coolOffPeriodFrequency
+    }
     handleOk(options);
-  };
+  }
 
   const onCloseModal = () => {
     handleClose();
-  };
+  }
 
   const onAfterClose = () => {
     setTimeout(() => {
@@ -202,34 +158,32 @@ export const MultisigCreateSafeModal = (props: {
     }, 50);
 
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+        lastOperation: TransactionStatus.Iddle,
+        currentOperation: TransactionStatus.Iddle
     });
-  };
+  }
 
   const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
     const items = arr.map(i => i.address);
     return new Set(items).size === items.length ? true : false;
-  };
+  }
 
   const isOwnersListValid = () => {
-    return multisigOwners.every(
-      o => o.address.length > 0 && isValidAddress(o.address),
-    );
-  };
+    return multisigOwners.every(o => o.address.length > 0 && isValidAddress(o.address));
+  }
 
   const isFormValid = () => {
-    return multisigThreshold &&
-      multisigThreshold >= 1 &&
-      multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
-      safeName &&
-      multisigOwners.length >= multisigThreshold &&
-      multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
-      isOwnersListValid() &&
-      noDuplicateExists(multisigOwners)
+    return  multisigThreshold &&
+            multisigThreshold >= 1 &&
+            multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
+            safeName &&
+            multisigOwners.length >= multisigThreshold &&
+            multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
+            isOwnersListValid() &&
+            noDuplicateExists(multisigOwners)
       ? true
       : false;
-  };
+  }
 
   const onChangeRejectProposalRejectProposalSwitch = (value: boolean) => {
     setAllowToRejectProposal(value);
@@ -241,76 +195,67 @@ export const MultisigCreateSafeModal = (props: {
 
   const handleCoolOffPeriodAmountChange = (e: any) => {
     setCoolOfPeriodAmount(e.target.value);
-  };
+  }
 
   const handleCoolOffPeriodOptionChange = (val: PaymentRateType) => {
     setCoolOffPeriodFrequency(val);
-  };
+  }
 
-  const getCoolOffPeriodOptionsFromEnum = (
-    value: any,
-  ): PaymentRateTypeOption[] => {
+  const getCoolOffPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
     for (const enumMember in value) {
-      const mappedValue = parseInt(enumMember, 10);
-      if (!isNaN(mappedValue)) {
-        const item = new PaymentRateTypeOption(
-          index,
-          mappedValue,
-          getCoolOffPeriodOptionLabel(mappedValue, t),
-        );
-        options.push(item);
-      }
-      index++;
+        const mappedValue = parseInt(enumMember, 10);
+        if (!isNaN(mappedValue)) {
+            const item = new PaymentRateTypeOption(
+                index,
+                mappedValue,
+                getCoolOffPeriodOptionLabel(mappedValue, t)
+            );
+            options.push(item);
+        }
+        index++;
     }
     return options;
-  };
+  }
 
   const coolOffPeriodOptionsMenu = () => {
-    const items: ItemType[] = getCoolOffPeriodOptionsFromEnum(
-      PaymentRateType,
-    ).map((item, index) => {
+    const items: ItemType[] = getCoolOffPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
       return {
         key: `option-${index}`,
-        label: (
-          <span onClick={() => handleCoolOffPeriodOptionChange(item.value)}>
-            {item.text}
-          </span>
-        ),
+        label: (<span onClick={() => handleCoolOffPeriodOptionChange(item.value)}>{item.text}</span>)
       };
     });
 
     return <Menu items={items} />;
-  };
+  }
 
   // When modal goes visible, add current wallet address as first participant
   useEffect(() => {
     if (publicKey && isVisible) {
       setMultisigThreshold(1);
       const items: MultisigParticipant[] = [];
-      items.push(
-        {
-          name: `Owner 1`,
-          address: publicKey.toBase58(),
-        },
-        {
-          name: `Owner 2`,
-          address: '',
-        },
-      );
+      items.push({
+        name: `Owner 1`,
+        address: publicKey.toBase58()
+      }, {
+        name: `Owner 2`,
+        address: '' 
+      });
       setMultisigOwners(items);
       if (multisigAccounts && multisigAccounts.length > 0) {
         const msAddresses = multisigAccounts.map(ms => ms.id.toBase58());
         setMultisigAddresses(msAddresses);
       }
     }
-  }, [publicKey, isVisible, multisigAccounts]);
+  }, [
+    publicKey,
+    isVisible,
+    multisigAccounts
+  ]);
 
   useEffect(() => {
-    const owner = multisigOwners.filter(
-      owner => owner.address === publicKey?.toBase58(),
-    );
+    const owner = multisigOwners.filter((owner) => owner.address === publicKey?.toBase58());
     const ownerName = Object.assign({}, ...owner);
 
     setCreatedByName(ownerName.name);
@@ -319,31 +264,19 @@ export const MultisigCreateSafeModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal multisig-create-safe-modal"
-      title={
-        <div className="modal-title">
-          {currentStep === 0 ? 'Create multisig safe' : 'Add safe'}
-        </div>
-      }
+      title={<div className="modal-title">{currentStep === 0 ? "Create multisig safe" : "Add safe"}</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={
-        isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle
-          ? 380
-          : 480
-      }
-    >
-      <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+
+      <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             <div className="scrollable-content">
-              <StepSelector
-                step={currentStep}
-                steps={2}
-                onValueSelected={onStepperChange}
-              />
+              <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
               {/* <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
                 <>
@@ -368,7 +301,7 @@ export const MultisigCreateSafeModal = (props: {
                     </div>
                   </div> */}
 
-              {/* <Divider plain />
+                  {/* <Divider plain />
 
                   <div className="two-column-form-layout">
                     <div className="left">
@@ -387,26 +320,18 @@ export const MultisigCreateSafeModal = (props: {
                       </Button>
                     </div>
                   </div> */}
-              {/* </>
+                {/* </>
               </div> */}
 
               {/* <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}> */}
-              <div
-                className={
-                  currentStep === 0
-                    ? 'contract-wrapper panel1 show'
-                    : 'contract-wrapper panel1 hide'
-                }
-              >
+              <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
                 <>
                   <h3 className="left-title">Safe details</h3>
                   <Divider plain />
 
                   {/* Safe name */}
                   <div className="mb-3 mt-2">
-                    <div className="form-label">
-                      {t('multisig.create-multisig.multisig-label-input-label')}
-                    </div>
+                    <div className="form-label">{t('multisig.create-multisig.multisig-label-input-label')}</div>
                     <div className={`well ${isBusy ? 'disabled' : ''}`}>
                       <div className="flex-fixed-right">
                         <div className="left">
@@ -418,9 +343,7 @@ export const MultisigCreateSafeModal = (props: {
                             type="text"
                             maxLength={32}
                             onChange={onSafeNameInputValueChange}
-                            placeholder={t(
-                              'multisig.create-multisig.multisig-label-placeholder',
-                            )}
+                            placeholder={t('multisig.create-multisig.multisig-label-placeholder')}
                             value={safeName}
                           />
                         </div>
@@ -431,11 +354,9 @@ export const MultisigCreateSafeModal = (props: {
                   {/* Owners's name and address */}
                   <MultisigSafeOwners
                     participants={multisigOwners}
-                    label={'Valid owners'}
+                    label={"Valid owners"}
                     multisigAddresses={multisigAddresses}
-                    onParticipantsChanged={(e: MultisigParticipant[]) =>
-                      setMultisigOwners(e)
-                    }
+                    onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
                     isOwnersListValid={isOwnersListValid()}
                   />
 
@@ -451,52 +372,33 @@ export const MultisigCreateSafeModal = (props: {
 
                   {multisigThreshold > 0 && (
                     <div className="required-signatures-box">
-                      <div className="info-label">
-                        A proposal will pass with:
-                      </div>
+                      <div className="info-label">A proposal will pass with:</div>
                       <div className="required-signatures-icons">
                         {multisigOwners.map((icon, index) => {
                           const onMultisigThresholdNumber = () => {
                             setMultisigThreshold(index + 1);
-                          };
+                          }
 
                           const onChangeMultisigThreholdNumber = () => {
-                            if (
-                              multisigThreshold > 1 &&
-                              multisigThreshold === index + 1
-                            ) {
+                            if (multisigThreshold > 1 && multisigThreshold === index + 1) {
                               setMultisigThreshold(index);
                             }
-                          };
+                          }
 
                           return (
-                            <div
-                              className={`icon-container ${
-                                multisigOwners.length > 1
-                                  ? 'simplelink'
-                                  : 'not-allowed-cursor'
-                              } ${
-                                multisigThreshold >= index + 1
-                                  ? 'bg-green'
-                                  : 'bg-gray-light'
-                              }`}
-                              key={index}
-                              onClick={() => {
-                                onMultisigThresholdNumber();
-                                onChangeMultisigThreholdNumber();
-                              }}
-                            >
-                              {/* }}onClick={onMultisigThresholdNumber}> */}
-                              {multisigThreshold >= index + 1 ? (
-                                <IconKey className="mean-svg-icons key-icon" />
+                            <div className={`icon-container ${(multisigOwners.length > 1) ? "simplelink" : "not-allowed-cursor"} ${(multisigThreshold >= (index + 1)) ? "bg-green" : "bg-gray-light"}`} key={index} onClick={() => {
+                              onMultisigThresholdNumber();
+                              onChangeMultisigThreholdNumber();
+                            }}>
+                            {/* }}onClick={onMultisigThresholdNumber}> */}
+                              {(multisigThreshold >= (index + 1)) ? (
+                                <IconKey className="mean-svg-icons key-icon"/>
                               ) : (
-                                <IconLock className="mean-svg-icons lock-icon" />
+                                <IconLock className="mean-svg-icons lock-icon"/>
                               )}
-                              <span className="signatures-number">
-                                {index + 1}
-                              </span>
+                              <span className="signatures-number">{index + 1}</span>
                             </div>
-                          );
+                          )
                         })}
                       </div>
                     </div>
@@ -522,20 +424,16 @@ export const MultisigCreateSafeModal = (props: {
                   <div className="d-flex align-items-center mt-3">
                     <div className="form-label icon-label">
                       Enable cool-off period
-                      <Tooltip
-                        placement="bottom"
-                        title="Cool-off period is a time where no actions take place on a proposal that is passed already, and before it gets executed."
-                      >
+                      <Tooltip placement="bottom" title="Cool-off period is a time where no actions take place on a proposal that is passed already, and before it gets executed.">
                         <span className="icon-info-circle simplelink">
                           <IconInfoCircle className="mean-svg-icons" />
                         </span>
                       </Tooltip>
                     </div>
-                    <Switch
+                    <Switch 
                       size="small"
                       defaultChecked
-                      onChange={onChangeCoolOffPeriodSwitch}
-                    />
+                      onChange={onChangeCoolOffPeriodSwitch} />
                   </div>
 
                   {isCoolOffPeriodEnable && (
@@ -557,10 +455,7 @@ export const MultisigCreateSafeModal = (props: {
                                   onChange={handleCoolOffPeriodAmountChange}
                                   pattern="^[0-9]*[.,]?[0-9]*$"
                                   min={1}
-                                  placeholder={`Number of ${getCoolOffPeriodOptionLabel(
-                                    coolOffPeriodFrequency,
-                                    t,
-                                  )}`}
+                                  placeholder={`Number of ${getCoolOffPeriodOptionLabel(coolOffPeriodFrequency, t)}`}
                                   minLength={1}
                                   maxLength={79}
                                   spellCheck="false"
@@ -576,16 +471,10 @@ export const MultisigCreateSafeModal = (props: {
                               <div className="left">
                                 <Dropdown
                                   overlay={coolOffPeriodOptionsMenu()}
-                                  trigger={['click']}
-                                >
+                                  trigger={["click"]}>
                                   <span className="dropdown-trigger no-decoration flex-fixed-right large-dropdown-area ">
                                     <div className="left">
-                                      <span className="capitalize-first-letter">
-                                        {getCoolOffPeriodOptionLabel(
-                                          coolOffPeriodFrequency,
-                                          t,
-                                        )}{' '}
-                                      </span>
+                                      <span className="capitalize-first-letter">{getCoolOffPeriodOptionLabel(coolOffPeriodFrequency, t)}{" "}</span>
                                     </div>
                                     <div className="right">
                                       <IconCaretDown className="mean-svg-icons" />
@@ -661,13 +550,7 @@ export const MultisigCreateSafeModal = (props: {
               </div>
 
               {/* <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}> */}
-              <div
-                className={
-                  currentStep === 1
-                    ? 'contract-wrapper panel2 show'
-                    : 'contract-wrapper panel2 hide'
-                }
-              >
+              <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}> 
                 <>
                   <h3 className="left-title">Summary</h3>
                   <Divider plain />
@@ -696,10 +579,7 @@ export const MultisigCreateSafeModal = (props: {
                           </Col>
                           <Col span={16} className="text-left pl-1">
                             {createdByName ? (
-                              <span>{`${createdByName} (${shortenAddress(
-                                publicKey,
-                                4,
-                              )})`}</span>
+                              <span>{`${createdByName} (${shortenAddress(publicKey, 4)})`}</span>
                             ) : (
                               <span>{shortenAddress(publicKey, 4)}</span>
                             )}
@@ -710,17 +590,13 @@ export const MultisigCreateSafeModal = (props: {
 
                     {/* Signatures */}
                     <Row className="mb-1">
-                      {multisigThreshold && multisigOwners && (
+                      {(multisigThreshold && multisigOwners) && (
                         <>
                           <Col span={8} className="text-right pr-1">
                             <span className="info-label">Signatures:</span>
                           </Col>
                           <Col span={16} className="text-left pl-1">
-                            <span>{`${multisigThreshold}/${
-                              multisigOwners.length
-                            } ${
-                              multisigThreshold > 1 ? 'signatures' : 'signature'
-                            } to pass a proposal`}</span>
+                            <span>{`${multisigThreshold}/${multisigOwners.length} ${multisigThreshold > 1 ? "signatures" : "signature"} to pass a proposal`}</span>
                           </Col>
                         </>
                       )}
@@ -733,16 +609,11 @@ export const MultisigCreateSafeModal = (props: {
                           <span className="info-label">Cool-off period:</span>
                         </Col>
                         <Col span={16} className="text-left pl-1">
-                          {isCoolOffPeriodEnable &&
-                          coolOfPeriodAmount &&
-                          coolOffPeriodFrequency ? (
-                            <span>{`${coolOfPeriodAmount} ${getCoolOffPeriodOptionLabel(
-                              coolOffPeriodFrequency,
-                              t,
-                            )}`}</span>
-                          ) : (
-                            <span>disabled</span>
-                          )}
+                        {(isCoolOffPeriodEnable && coolOfPeriodAmount && coolOffPeriodFrequency) ? (
+                          <span>{`${coolOfPeriodAmount} ${getCoolOffPeriodOptionLabel(coolOffPeriodFrequency, t)}`}</span>
+                        ) : (
+                          <span>disabled</span>
+                        )}
                         </Col>
                       </>
                     </Row>
@@ -751,29 +622,14 @@ export const MultisigCreateSafeModal = (props: {
 
                     <div className="well mt-2 mb-1 proposal-summary-container vertical-scroll">
                       <div className="mb-1">
-                        {multisigOwners.map(
-                          (owner, index) =>
-                            owner.name &&
-                            owner.address && (
-                              <div key={index}>
-                                <span className="info-label">
-                                  {owner.name}:
-                                </span>
-                                <br />
-                                <span
-                                  className="info-data simplelink underline-on-hover"
-                                  onClick={() => (
-                                    <CopyExtLinkGroup
-                                      content={owner.address}
-                                      externalLink={false}
-                                    />
-                                  )}
-                                >
-                                  {owner.address}
-                                </span>
-                              </div>
-                            ),
-                        )}
+                        {multisigOwners.map((owner, index) => (
+                          owner.name && owner.address && (
+                            <div key={index}>
+                              <span className="info-label">{owner.name}:</span><br />
+                              <span className="info-data simplelink underline-on-hover" onClick={() => <CopyExtLinkGroup content={owner.address} externalLink={false} />}>{owner.address}</span>
+                            </div>
+                          )
+                        ))}
                       </div>
                       <div>
                         {`The creation will cost approximately ${feeAmount} SOL. The exact amount will be determined by your wallet.`}
@@ -787,13 +643,7 @@ export const MultisigCreateSafeModal = (props: {
             <Divider plain />
 
             {/* <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}> */}
-            <div
-              className={
-                currentStep === 0
-                  ? 'contract-wrapper panel1 show'
-                  : 'contract-wrapper panel1 hide'
-              }
-            >
+            <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
               <Row>
                 {/* <Col span={12} className="d-flex justify-content-center">
                   <Button
@@ -833,13 +683,7 @@ export const MultisigCreateSafeModal = (props: {
             </div>
 
             {/* <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}> */}
-            <div
-              className={
-                currentStep === 1
-                  ? 'contract-wrapper panel2 show'
-                  : 'contract-wrapper panel2 hide'
-              }
-            >
+            <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
               <Row>
                 <Col span={12} className="d-flex justify-content-center">
                   <Button
@@ -850,7 +694,9 @@ export const MultisigCreateSafeModal = (props: {
                     className="thin-stroke mr-1 center-text-in-btn"
                     // onClick={() => onStepperChange(1)}
                     onClick={() => onStepperChange(0)}
-                    disabled={!publicKey}
+                    disabled={
+                      !publicKey
+                    }
                   >
                     Back
                   </Button>
@@ -876,14 +722,11 @@ export const MultisigCreateSafeModal = (props: {
               </Row>
             </div>
           </>
-        ) : transactionStatus.currentOperation ===
-          TransactionStatus.TransactionFinished ? (
+        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
             <div className="transaction-progress p-2">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">
-                {t('multisig.update-multisig.success-message')}
-              </h4>
+              <h4 className="font-bold">{t('multisig.update-multisig.success-message')}</h4>
               <div className="row two-col-ctas mt-3 transaction-progress p-2">
                 <div className="col-12">
                   <Button
@@ -892,8 +735,7 @@ export const MultisigCreateSafeModal = (props: {
                     shape="round"
                     size="middle"
                     className={isBusy ? 'inactive' : ''}
-                    onClick={() => onCloseModal()}
-                  >
+                    onClick={() => onCloseModal()}>
                     {t('general.cta-close')}
                   </Button>
                 </div>
@@ -903,32 +745,23 @@ export const MultisigCreateSafeModal = (props: {
         ) : (
           <>
             <div className="transaction-progress p-2">
-              <InfoCircleOutlined
-                style={{ fontSize: 48 }}
-                className="icon mt-0"
-              />
-              {transactionStatus.currentOperation ===
-              TransactionStatus.TransactionStartFailure ? (
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(
                       nativeBalance,
-                      NATIVE_SOL_MINT.toBase58(),
+                      NATIVE_SOL_MINT.toBase58()
                     ),
                     feeAmount: getAmountWithSymbol(
-                      transactionFees.networkFee +
-                        transactionFees.multisigFee +
-                        transactionFees.rentExempt,
-                      NATIVE_SOL_MINT.toBase58(),
-                    ),
-                  })}
+                      transactionFees.networkFee + transactionFees.multisigFee + transactionFees.rentExempt,
+                      NATIVE_SOL_MINT.toBase58()
+                    )})
+                  }
                 </h4>
               ) : (
                 <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(
-                    transactionStatus.currentOperation,
-                    t,
-                  )}
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
               {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
@@ -940,19 +773,13 @@ export const MultisigCreateSafeModal = (props: {
                       shape="round"
                       size="middle"
                       className={isBusy ? 'inactive' : ''}
-                      onClick={() =>
-                        isError(transactionStatus.currentOperation) &&
-                        transactionStatus.currentOperation !==
-                          TransactionStatus.TransactionStartFailure
-                          ? onAcceptModal()
-                          : onCloseModal()
-                      }
-                    >
-                      {isError(transactionStatus.currentOperation) &&
-                      transactionStatus.currentOperation !==
-                        TransactionStatus.TransactionStartFailure
+                      onClick={() => (isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
+                        ? onAcceptModal()
+                        : onCloseModal()}>
+                      {(isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
                         ? t('general.retry')
-                        : t('general.cta-close')}
+                        : t('general.cta-close')
+                      }
                     </Button>
                   </div>
                 </div>
@@ -962,28 +789,19 @@ export const MultisigCreateSafeModal = (props: {
         )}
       </div>
 
-      <div
-        className={
-          isBusy &&
-          transactionStatus.currentOperation !== TransactionStatus.Iddle
-            ? 'panel2 show'
-            : 'panel2 hide'
-        }
-      >
+      <div className={
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
+            ? "panel2 show" 
+            : "panel2 hide"
+          }>
         {isBusy && transactionStatus !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon m-2" />
             <h4 className="font-bold mb-1">
-              {getTransactionOperationDescription(
-                transactionStatus.currentOperation,
-                t,
-              )}
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
-            {transactionStatus.currentOperation ===
-              TransactionStatus.SignTransaction && (
-              <div className="indication">
-                {t('transactions.status.instructions')}
-              </div>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}

@@ -1,4 +1,4 @@
 export type PriceGraphModel = {
-  priceData: string;
-  dateData: string;
-};
+    priceData: string;
+    dateData: string;
+}

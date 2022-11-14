@@ -1,1927 +1,1817 @@
-import {
-  InfoCircleOutlined,
-  LoadingOutlined,
-  ReloadOutlined,
-  SyncOutlined,
-  WarningFilled,
-} from '@ant-design/icons';
-import {
-  getPlatformFeeAccounts,
-  Jupiter,
-  RouteInfo,
-  TOKEN_LIST_URL,
-  TransactionFeeInfo,
-} from '@jup-ag/core';
-import { SignerWalletAdapter } from '@solana/wallet-adapter-base';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Divider, Drawer, Modal, Tooltip } from 'antd';
-import { Identicon } from 'components/Identicon';
-import { InfoIcon } from 'components/InfoIcon';
-import { JupiterExchangeInput } from 'components/JupiterExchangeInput';
-import { JupiterExchangeOutput } from 'components/JupiterExchangeOutput';
-import { openNotification } from 'components/Notifications';
-import { SwapSettings } from 'components/SwapSettings';
-import { TextInput } from 'components/TextInput';
-import { TokenDisplay } from 'components/TokenDisplay';
-import {
-  DEFAULT_SLIPPAGE_PERCENT,
-  MAX_TOKEN_LIST_ITEMS,
-  ONE_MINUTE_REFRESH_TIMEOUT,
-  WRAPPED_SOL_MINT_ADDRESS,
-} from 'constants/common';
-import { MEAN_TOKEN_LIST, NATIVE_SOL, PINNED_TOKENS } from 'constants/tokens';
-import { useNativeAccount, useUserAccounts } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { IconSwapFlip } from 'Icons';
-import { appConfig, customLogger } from 'index';
-import { closeTokenAccount } from 'middleware/accounts';
-import { getJupiterTokenList } from 'middleware/api';
-import { TOKEN_PROGRAM_ID } from 'middleware/ids';
-import { ACCOUNT_LAYOUT } from 'middleware/layouts';
-import { consoleOut, getTransactionStatusForLogs, isProd } from 'middleware/ui';
-import {
-  cutNumber,
-  formatThousands,
-  getAmountFromLamports,
-  getTxIxResume,
-  isValidNumber,
-  toTokenAmountBn,
-  toUiAmount,
-} from 'middleware/utils';
-import { OperationType, TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import './style.scss';
+import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
+import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
+import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
+import { Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { Button, Divider, Drawer, Modal, Tooltip } from "antd";
+import { Identicon } from "components/Identicon";
+import { InfoIcon } from "components/InfoIcon";
+import { JupiterExchangeInput } from "components/JupiterExchangeInput";
+import { JupiterExchangeOutput } from "components/JupiterExchangeOutput";
+import { openNotification } from "components/Notifications";
+import { SwapSettings } from "components/SwapSettings";
+import { TextInput } from "components/TextInput";
+import { TokenDisplay } from "components/TokenDisplay";
+import { DEFAULT_SLIPPAGE_PERCENT, MAX_TOKEN_LIST_ITEMS, ONE_MINUTE_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "constants/common";
+import { MEAN_TOKEN_LIST, NATIVE_SOL, PINNED_TOKENS } from "constants/tokens";
+import { useNativeAccount, useUserAccounts } from "contexts/accounts";
+import { AppStateContext } from "contexts/appstate";
+import { TxConfirmationContext } from "contexts/transaction-status";
+import { useWallet } from "contexts/wallet";
+import useLocalStorage from "hooks/useLocalStorage";
+import { IconSwapFlip } from "Icons";
+import { appConfig, customLogger } from "index";
+import { closeTokenAccount } from "middleware/accounts";
+import { getJupiterTokenList } from "middleware/api";
+import { TOKEN_PROGRAM_ID } from "middleware/ids";
+import { ACCOUNT_LAYOUT } from "middleware/layouts";
+import { consoleOut, getTransactionStatusForLogs, isProd } from "middleware/ui";
+import { cutNumber, formatThousands, getAmountFromLamports, getTxIxResume, isValidNumber, toTokenAmountBn, toUiAmount } from "middleware/utils";
+import { OperationType, TransactionStatus } from "models/enums";
+import { TokenInfo } from "models/SolanaTokenInfo";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import "./style.scss";
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
 let inputDebounceTimeout: any;
 
 export const JupiterExchange = (props: {
-  queryFromMint: string | null;
-  queryToMint: string | null;
-  connection: Connection;
-  inModal?: boolean;
-  swapExecuted?: any;
+    queryFromMint: string | null;
+    queryToMint: string | null;
+    connection: Connection;
+    inModal?: boolean;
+    swapExecuted?: any;
 }) => {
-  const { t } = useTranslation('common');
-  const { publicKey, wallet, connected } = useWallet();
-  const { account } = useNativeAccount();
-  const { tokenAccounts } = useUserAccounts();
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  const [nativeBalance, setNativeBalance] = useState(0);
-  const [wSolBalance, setWsolBalance] = useState(0);
-  const [wSolPubKey, setWsolPubKey] = useState<PublicKey | undefined>(
-    undefined,
-  );
-  const [userBalances, setUserBalances] = useState<any>();
-  const {
-    transactionStatus,
-    previousWalletConnectState,
-    setTransactionStatus,
-    refreshPrices,
-  } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
-  const [isBusy, setIsBusy] = useState(false);
-  const [isUnwrapping, setIsUnwrapping] = useState(false);
-  const [fromMint, setFromMint] = useState<string | undefined>();
-  const [toMint, setToMint] = useState<string | undefined>(undefined);
-  const [refreshingRoutes, setRefreshingRoutes] = useState(false);
-  const [jupiter, setJupiter] = useState<Jupiter | undefined>(undefined);
-  const [jupiterReady, setJupiterReady] = useState(false);
-  const [slippage, setSlippage] = useLocalStorage(
-    'slippage',
-    DEFAULT_SLIPPAGE_PERCENT,
-  );
-  const [fromAmount, setFromAmount] = useState('');
-  const [inputAmount, setInputAmount] = useState(0);
-  // The full list, any filtering should be against this one
-  const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
-  const [mintList, setMintList] = useState<any>({});
-  const [possiblePairsTokenInfo, setPossiblePairsTokenInfo] =
-    useState<any>(undefined);
-  const [inputToken, setInputToken] = useState<TokenInfo | undefined>(
-    undefined,
-  );
-  const [outputToken, setOutputToken] = useState<TokenInfo | undefined>(
-    undefined,
-  );
-  const [routes, setRoutes] = useState<RouteInfo[]>([]);
-  const [showFullRoutesList, setShowFullRoutesList] = useState(false);
-  const [selectedRoute, setSelectedRoute] = useState<RouteInfo>();
-  const [subjectTokenSelection, setSubjectTokenSelection] = useState('source');
-  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] =
-    useState(false);
-  const [showFromMintList, setShowFromMintList] = useState<any>({});
-  const [showToMintList, setShowToMintList] = useState<any>({});
-  const [tokenFilter, setTokenFilter] = useState('');
-  const [minInAmount, setMinInAmount] = useState<number | undefined>(undefined);
-  const [minOutAmount, setMinOutAmount] = useState<number | undefined>(
-    undefined,
-  );
-  const [transactionStartButtonLabel, setTransactionStartButtonLabel] =
-    useState('');
-  const [feeInfo, setFeeInfo] = useState<TransactionFeeInfo | undefined>(
-    undefined,
-  );
-  const [quickTokens, setQuickTokens] = useState<TokenInfo[]>([]);
-  const [swapRate, setSwapRate] = useState(false);
-  const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
 
-  const platformFeesOwner = appConfig.getConfig().exchangeFeeAccountOwner;
-  const platformFeeAmount = appConfig.getConfig().exchangeFlatFee;
+    const { t } = useTranslation("common");
+    const { publicKey, wallet, connected } = useWallet();
+    const { account } = useNativeAccount();
+    const { tokenAccounts } = useUserAccounts();
+    const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+    const [nativeBalance, setNativeBalance] = useState(0);
+    const [wSolBalance, setWsolBalance] = useState(0);
+    const [wSolPubKey, setWsolPubKey] = useState<PublicKey | undefined>(undefined);
+    const [userBalances, setUserBalances] = useState<any>();
+    const {
+        transactionStatus,
+        previousWalletConnectState,
+        setTransactionStatus,
+        refreshPrices,
+    } = useContext(AppStateContext);
+    const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
+    const [isBusy, setIsBusy] = useState(false);
+    const [isUnwrapping, setIsUnwrapping] = useState(false);
+    const [fromMint, setFromMint] = useState<string | undefined>();
+    const [toMint, setToMint] = useState<string | undefined>(undefined);
+    const [refreshingRoutes, setRefreshingRoutes] = useState(false);
+    const [jupiter, setJupiter] = useState<Jupiter | undefined>(undefined);
+    const [jupiterReady, setJupiterReady] = useState(false);
+    const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE_PERCENT);
+    const [fromAmount, setFromAmount] = useState("");
+    const [inputAmount, setInputAmount] = useState(0);
+    // The full list, any filtering should be against this one
+    const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
+    const [mintList, setMintList] = useState<any>({});
+    const [possiblePairsTokenInfo, setPossiblePairsTokenInfo] = useState<any>(undefined);
+    const [inputToken, setInputToken] = useState<TokenInfo | undefined>(undefined);
+    const [outputToken, setOutputToken] = useState<TokenInfo | undefined>(undefined);
+    const [routes, setRoutes] = useState<RouteInfo[]>([]);
+    const [showFullRoutesList, setShowFullRoutesList] = useState(false);
+    const [selectedRoute, setSelectedRoute] = useState<RouteInfo>();
+    const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
+    const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
+    const [showFromMintList, setShowFromMintList] = useState<any>({});
+    const [showToMintList, setShowToMintList] = useState<any>({});
+    const [tokenFilter, setTokenFilter] = useState("");
+    const [minInAmount, setMinInAmount] = useState<number | undefined>(undefined);
+    const [minOutAmount, setMinOutAmount] = useState<number | undefined>(undefined);
+    const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
+    const [feeInfo, setFeeInfo] = useState<TransactionFeeInfo | undefined>(undefined);
+    const [quickTokens, setQuickTokens] = useState<TokenInfo[]>([]);
+    const [swapRate, setSwapRate] = useState(false)
+    const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
 
-  const connection = useMemo(() => props.connection, [props.connection]);
+    const platformFeesOwner = appConfig.getConfig().exchangeFeeAccountOwner;
+    const platformFeeAmount = appConfig.getConfig().exchangeFlatFee;
 
-  const getPlatformFee = useCallback(async () => {
-    consoleOut('platformFeesOwner:', platformFeesOwner, 'green');
-    consoleOut('platformFeeAmount:', platformFeeAmount, 'green');
-    if (connection) {
-      return {
-        feeBps: platformFeeAmount * 100,
-        feeAccounts: await getPlatformFeeAccounts(
-          connection,
-          new PublicKey(platformFeesOwner),
-        ),
-      };
-    } else {
-      return undefined;
-    }
-  }, [connection, platformFeesOwner, platformFeeAmount]);
+    const connection = useMemo(() => props.connection, [props.connection]);
 
-  const sol = useMemo(() => {
-    return {
-      address: NATIVE_SOL.address,
-      chainId: 101,
-      decimals: NATIVE_SOL.decimals,
-      name: NATIVE_SOL.name,
-      symbol: NATIVE_SOL.symbol,
-      tags: NATIVE_SOL.tags,
-      logoURI: NATIVE_SOL.logoURI,
-    } as TokenInfo;
-  }, []);
-
-  const isFromSol = useCallback(() => {
-    return fromMint !== undefined &&
-      (fromMint === sol.address || fromMint === WRAPPED_SOL_MINT_ADDRESS)
-      ? true
-      : false;
-  }, [sol, fromMint]);
-
-  const isToSol = useCallback(() => {
-    return toMint !== undefined &&
-      (toMint === sol.address || toMint === WRAPPED_SOL_MINT_ADDRESS)
-      ? true
-      : false;
-  }, [sol, toMint]);
-
-  // Keep account balance updated
-  useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance]);
-
-  // Keep wSOL balance updated
-  useEffect(() => {
-    if (!publicKey) {
-      return;
-    }
-
-    let balance = 0;
-
-    if (tokenAccounts && tokenAccounts.length > 0 && tokenList) {
-      const wSol = tokenAccounts.findIndex(t => {
-        const mint = t.info.mint.toBase58();
-        return !t.pubkey.equals(publicKey) && mint === WRAPPED_SOL_MINT_ADDRESS
-          ? true
-          : false;
-      });
-      if (wSol !== -1) {
-        const wSolInfo = tokenAccounts[wSol].info;
-        const mint = wSolInfo.mint.toBase58();
-        const amount = wSolInfo.amount.toNumber();
-        const token = tokenList.find(t => t.address === mint);
-        balance = token ? parseFloat(toUiAmount(amount, token.decimals)) : 0;
-        setWsolPubKey(tokenAccounts[wSol].pubkey);
-      }
-    }
-
-    setWsolBalance(balance);
-  }, [publicKey, tokenList, tokenAccounts]);
-
-  // Set fromMint & toMint from query string if params are provided
-  useEffect(() => {
-    if (props.queryFromMint || props.queryToMint) {
-      consoleOut('props.queryFromMint:', props.queryFromMint, 'orange');
-      consoleOut('props.queryToMint:', props.queryToMint, 'orange');
-      if (props.queryFromMint) {
-        setFromMint(props.queryFromMint);
-      } else {
-        const from = MEAN_TOKEN_LIST.filter(
-          t => t.chainId === 101 && t.symbol === 'USDC',
-        );
-        if (from && from.length) {
-          setToMint(from[0].address);
+    const getPlatformFee = useCallback(async () => {
+        consoleOut('platformFeesOwner:', platformFeesOwner, 'green');
+        consoleOut('platformFeeAmount:', platformFeeAmount, 'green');
+        if (connection) {
+            return {
+                feeBps: platformFeeAmount * 100,
+                feeAccounts: await getPlatformFeeAccounts(
+                    connection,
+                    new PublicKey(platformFeesOwner)
+                )
+            };
+        } else {
+            return undefined;
         }
-      }
-      if (props.queryToMint) {
-        setToMint(props.queryToMint);
-      } else {
-        const to = MEAN_TOKEN_LIST.filter(
-          t => t.chainId === 101 && t.symbol === 'MEAN',
-        );
-        if (to && to.length) {
-          setToMint(to[0].address);
-        }
-      }
-    }
-  }, [props.queryToMint, props.queryFromMint]);
-
-  // Fetch token list from Jupiter API
-  useEffect(() => {
-    const loadJupiterTokenList = async () => {
-      try {
-        const tokens: TokenInfo[] = await getJupiterTokenList(
-          TOKEN_LIST_URL['mainnet-beta'],
-        );
-        consoleOut('tokenList:', tokens, 'orange');
-        setTokenList(tokens);
-      } catch (error) {
-        console.error(error);
-        setTokenList([]);
-      }
-    };
-
-    if (!tokenList || tokenList.length === 0) {
-      loadJupiterTokenList();
-    }
-  }, [tokenList]);
-
-  // Get a list of Quick Tokens based on a preferred list of symbols
-  useEffect(() => {
-    const qt: TokenInfo[] = [];
-    COMMON_EXCHANGE_TOKENS.forEach(symbol => {
-      const token = tokenList.find(t => t.symbol === symbol);
-      if (token) {
-        qt.push(token);
-      }
-    });
-    consoleOut('quickTokens:', qt, 'blue');
-    setQuickTokens(qt);
-  }, [tokenList]);
-
-  // Update all token balances on demmand
-  const refreshUserBalances = useCallback(() => {
-    if (!connection) {
-      return;
-    }
-
-    if (!publicKey || !tokenList) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      const balancesMap: any = {};
-
-      const tokenAddressesList = tokenList.map(
-        (t: any) => new PublicKey(t.address),
-      );
-
-      const error = (_error: any, tl: PublicKey[]) => {
-        console.error(_error);
-        for (const t of tl) {
-          balancesMap[t.toBase58()] = 0;
-        }
-      };
-
-      const success = (response: any) => {
-        for (const acc of response.value) {
-          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-          const address = decoded.mint.toBase58();
-          const item = tokenList.find(t => t.address === address);
-
-          if (address === WRAPPED_SOL_MINT_ADDRESS) {
-            balancesMap[address] = nativeBalance;
-          } else {
-            if (item) {
-              balancesMap[address] =
-                decoded.amount.toNumber() / 10 ** item.decimals;
-            } else {
-              balancesMap[address] = 0;
-            }
-          }
-        }
-        setUserBalances(balancesMap);
-      };
-
-      const promise = connection.getTokenAccountsByOwner(publicKey, {
-        programId: TOKEN_PROGRAM_ID,
-      });
-
-      promise
-        .then((response: any) => success(response))
-        .catch((_error: any) => error(_error, tokenAddressesList));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [publicKey, tokenList, connection, nativeBalance]);
-
-  // Automatically update all token balances
-  useEffect(() => {
-    if (fromMint && publicKey && account && tokenList) {
-      refreshUserBalances();
-    }
-  }, [fromMint, tokenList, account, publicKey, refreshUserBalances]);
-
-  /**
-   *  Token map for quick lookup.
-   *  Every time the balances change rebuild the list of source tokens this way
-   *
-   * - create dictionary with items with balances
-   *   loop through the mintList verifying against userBalances
-   *     add to dictionary if balance > 0 and not already in the list
-   * - add items from the pinned list to the dictionary
-   *   loop through pinned list
-   *     add to dictionary if item not already in the list
-   * - add the rest of the items to the dictionary
-   *   loop through the mintList (the full list)
-   *     add to dictionary if not already added
-   */
-  useEffect(() => {
-    if (!tokenList) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      const newList: any = {};
-
-      // First add those with balance
-      if (publicKey && userBalances) {
-        for (const token of tokenList) {
-          const mint = JSON.parse(JSON.stringify(token));
-          if (
-            mint.logoURI &&
-            token.address !== sol.address &&
-            userBalances[token.address] > 0
-          ) {
-            newList[mint.address] = mint;
-          }
-        }
-      }
-
-      // Then add tokens from pinned list not already in the dictionary
-      MEAN_TOKEN_LIST.filter(
-        t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol),
-      ).forEach(item => {
-        if (!newList[item.address]) {
-          newList[item.address] = item;
-        }
-      });
-
-      // Add all other tokens
-      tokenList.forEach(item => {
-        if (!newList[item.address]) {
-          newList[item.address] = item;
-        }
-      });
-
-      setMintList(newList);
-      setShowFromMintList(newList);
-      setShowToMintList(undefined);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [sol, publicKey, tokenList, userBalances]);
-
-  // Init the Jupiter instance
-  useEffect(() => {
-    const initJupiter = async () => {
-      return Jupiter.load({
+    }, [
         connection,
-        cluster: 'mainnet-beta',
-        user: publicKey || undefined,
-        // wrapUnwrapSOL: false,
-        platformFeeAndAccounts: await getPlatformFee(),
-      });
-    };
+        platformFeesOwner,
+        platformFeeAmount,
+    ]);
 
-    initJupiter()
-      .then(value => {
-        consoleOut('Jupiter ->', value);
-        setJupiter(value);
-      })
-      .catch(error => {
-        console.error(error);
-        setJupiter(undefined);
-      });
-  }, [publicKey, connection, getPlatformFee]);
+    const sol = useMemo(() => {
+        return {
+            address: NATIVE_SOL.address,
+            chainId: 101,
+            decimals: NATIVE_SOL.decimals,
+            name: NATIVE_SOL.name,
+            symbol: NATIVE_SOL.symbol,
+            tags: NATIVE_SOL.tags,
+            logoURI: NATIVE_SOL.logoURI
+        } as TokenInfo;
+    }, []);
 
-  const getPossiblePairsTokenInfo = ({
-    tokens,
-    routeMap,
-    inputToken,
-  }: {
-    tokens: TokenInfo[];
-    routeMap: Map<string, string[]>;
-    inputToken?: TokenInfo;
-  }) => {
-    if (!inputToken) {
-      return {};
-    }
+    const isFromSol = useCallback(() => {
+        return fromMint !== undefined && (fromMint === sol.address || fromMint === WRAPPED_SOL_MINT_ADDRESS)
+            ? true
+            : false;
+    }, [
+        sol,
+        fromMint
+    ])
 
-    const possiblePairs = inputToken
-      ? routeMap.get(inputToken.address) || []
-      : []; // return an array of token mints that can be swapped with the selected inputToken
+    const isToSol = useCallback(() => {
+        return toMint !== undefined && (toMint === sol.address || toMint === WRAPPED_SOL_MINT_ADDRESS)
+            ? true
+            : false;
+    }, [
+        sol,
+        toMint
+    ])
 
-    const possiblePairsTokenInfo: { [key: string]: TokenInfo | undefined } = {};
-    possiblePairs.forEach(address => {
-      const pick = tokens.find(t => t.address === address);
-      if (pick) {
-        possiblePairsTokenInfo[address] = pick;
-      }
-    });
-    return possiblePairsTokenInfo;
-  };
+    // Keep account balance updated
+    useEffect(() => {
+        if (account?.lamports !== previousBalance || !nativeBalance) {
+            setNativeBalance(getAmountFromLamports(account?.lamports));
+            // Update previous balance
+            setPreviousBalance(account?.lamports);
+        }
+    }, [
+        account,
+        nativeBalance,
+        previousBalance,
+    ]);
 
-  // Calculates the max allowed amount to swap
-  // Review the whole MAX amount story. Jupiter seems to always charge 0.05 SOL no matter what.
-  const getMaxAllowedSwapAmount = useCallback(() => {
-    if (!fromMint || !toMint || !userBalances) {
-      return 0;
-    }
+    // Keep wSOL balance updated
+    useEffect(() => {
+        if (!publicKey) { return; }
 
-    const balance =
-      fromMint === WRAPPED_SOL_MINT_ADDRESS
-        ? nativeBalance - MINIMUM_REQUIRED_SOL_BALANCE
-        : userBalances[fromMint] || 0;
+        let balance = 0;
 
-    return balance <= 0 ? 0 : balance;
-  }, [toMint, fromMint, userBalances, nativeBalance]);
+        if (tokenAccounts && tokenAccounts.length > 0 && tokenList) {
+            const wSol = tokenAccounts.findIndex(t => {
+                const mint = t.info.mint.toBase58();
+                return !t.pubkey.equals(publicKey) && mint === WRAPPED_SOL_MINT_ADDRESS
+                    ? true
+                    : false;
+            });
+            if (wSol !== -1) {
+                const wSolInfo = tokenAccounts[wSol].info;
+                const mint = wSolInfo.mint.toBase58();
+                const amount = wSolInfo.amount.toNumber();
+                const token = tokenList.find(t => t.address === mint);
+                balance = token ? parseFloat(toUiAmount(amount, token.decimals)) : 0;
+                setWsolPubKey(tokenAccounts[wSol].pubkey);
+            }
+        }
 
-  // Get routeMap, which maps each tokenMint and their respective tokenMints that are swappable
-  // const routeMap = jupiter.getRouteMap();
-  const routeMap = useMemo(() => {
-    let map = undefined;
-    if (jupiter) {
-      map = jupiter.getRouteMap();
-      consoleOut('routeMap:', map, 'blue');
-    }
-    return map;
-  }, [jupiter]);
+        setWsolBalance(balance);
 
-  // Establish the inputToken (changing the fromMint is enough to trigger this)
-  useEffect(() => {
-    if (fromMint) {
-      consoleOut('fromMint:', fromMint, 'blue');
-      const token = tokenList.find(t => t.address === fromMint);
-      consoleOut('token:', token, 'blue');
-      if (token) {
-        setInputToken(token);
-      }
-    }
-  }, [toMint, fromMint, tokenList, subjectTokenSelection]);
+    }, [
+        publicKey,
+        tokenList,
+        tokenAccounts,
+    ]);
 
-  // Establish the outputToken (changing the toMint is enough to trigger this)
-  useEffect(() => {
-    if (toMint) {
-      consoleOut('toMint:', toMint, 'blue');
-      const token = tokenList.find(t => t.address === toMint);
-      consoleOut('token:', token, 'blue');
-      if (token) {
-        setOutputToken(token);
-      }
-    }
-  }, [toMint, tokenList, subjectTokenSelection]);
+    // Set fromMint & toMint from query string if params are provided
+    useEffect(() => {
+        if (props.queryFromMint || props.queryToMint) {
+            consoleOut('props.queryFromMint:', props.queryFromMint, 'orange');
+            consoleOut('props.queryToMint:', props.queryToMint, 'orange');
+            if (props.queryFromMint) {
+                setFromMint(props.queryFromMint);
+            } else {
+                const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
+                if (from && from.length) {
+                    setToMint(from[0].address);
+                }
+            }
+            if (props.queryToMint) {
+                setToMint(props.queryToMint);
+            } else {
+                const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
+                if (to && to.length) {
+                    setToMint(to[0].address);
+                }
+            }
+        }
+    }, [
+        props.queryToMint,
+        props.queryFromMint
+    ]);
 
-  useEffect(() => {
-    if (inputToken) {
-      consoleOut('inputToken:', inputToken, 'blue');
-    }
-  }, [inputToken]);
+    // Fetch token list from Jupiter API
+    useEffect(() => {
+        const loadJupiterTokenList = async () => {
+            try {
+                const tokens: TokenInfo[] = await getJupiterTokenList(TOKEN_LIST_URL['mainnet-beta']);
+                consoleOut('tokenList:', tokens, 'orange');
+                setTokenList(tokens);
+            } catch (error) {
+                console.error(error);
+                setTokenList([]);
+            }
+        };
 
-  // Find all possible outputToken based on the inputToken
-  useEffect(() => {
-    if (!routeMap || !tokenList || !inputToken) {
-      return;
-    }
+        if (!tokenList || tokenList.length === 0) {
+            loadJupiterTokenList();
+        }
+    }, [tokenList]);
 
-    const getPairs = () => {
-      return getPossiblePairsTokenInfo({
-        tokens: tokenList,
+    // Get a list of Quick Tokens based on a preferred list of symbols
+    useEffect(() => {
+        const qt: TokenInfo[] = [];
+        COMMON_EXCHANGE_TOKENS.forEach(symbol => {
+            const token = tokenList.find(t => t.symbol === symbol);
+            if (token) {
+                qt.push(token);
+            }
+        });
+        consoleOut('quickTokens:', qt, 'blue');
+        setQuickTokens(qt);
+    }, [tokenList]);
+
+    // Update all token balances on demmand
+    const refreshUserBalances = useCallback(() => {
+
+        if (!connection) {
+            return;
+        }
+
+        if (!publicKey || !tokenList) {
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+
+            const balancesMap: any = {};
+
+            const tokenAddressesList = tokenList.map((t: any) => new PublicKey(t.address));
+
+            const error = (_error: any, tl: PublicKey[]) => {
+                console.error(_error);
+                for (const t of tl) {
+                    balancesMap[t.toBase58()] = 0;
+                }
+            };
+
+            const success = (response: any) => {
+                for (const acc of response.value) {
+                    const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
+                    const address = decoded.mint.toBase58();
+                    const item = tokenList.find(t => t.address === address);
+
+                    if (address === WRAPPED_SOL_MINT_ADDRESS) {
+                        balancesMap[address] = nativeBalance;
+                    } else {
+                        if (item) {
+                            balancesMap[address] = decoded.amount.toNumber() / (10 ** item.decimals);
+                        } else {
+                            balancesMap[address] = 0;
+                        }
+                    }
+                }
+                setUserBalances(balancesMap);
+            };
+
+            const promise = connection.getTokenAccountsByOwner(
+                publicKey, { programId: TOKEN_PROGRAM_ID }
+            );
+
+            promise
+                .then((response: any) => success(response))
+                .catch((_error: any) => error(_error, tokenAddressesList));
+
+        });
+
+        return () => {
+            clearTimeout(timeout);
+        }
+
+    }, [
+        publicKey,
+        tokenList,
+        connection,
+        nativeBalance,
+    ]);
+
+    // Automatically update all token balances
+    useEffect(() => {
+        if (fromMint && publicKey && account && tokenList) {
+            refreshUserBalances();
+        }
+    }, [
+        fromMint,
+        tokenList,
+        account,
+        publicKey,
+        refreshUserBalances
+    ]);
+
+    /**
+     *  Token map for quick lookup.
+     *  Every time the balances change rebuild the list of source tokens this way
+     * 
+     * - create dictionary with items with balances
+     *   loop through the mintList verifying against userBalances
+     *     add to dictionary if balance > 0 and not already in the list
+     * - add items from the pinned list to the dictionary
+     *   loop through pinned list
+     *     add to dictionary if item not already in the list
+     * - add the rest of the items to the dictionary
+     *   loop through the mintList (the full list)
+     *     add to dictionary if not already added
+     */
+    useEffect(() => {
+
+        if (!tokenList) { return; }
+
+        const timeout = setTimeout(() => {
+
+            const newList: any = {};
+
+            // First add those with balance
+            if (publicKey && userBalances) {
+
+                for (const token of tokenList) {
+                    const mint = JSON.parse(JSON.stringify(token));
+                    if (mint.logoURI && token.address !== sol.address && userBalances[token.address] > 0) {
+                        newList[mint.address] = mint;
+                    }
+                }
+
+            }
+
+            // Then add tokens from pinned list not already in the dictionary
+            MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol))
+                .forEach(item => {
+                    if (!newList[item.address]) {
+                        newList[item.address] = item;
+                    }
+                });
+
+            // Add all other tokens
+            tokenList.forEach(item => {
+                if (!newList[item.address]) {
+                    newList[item.address] = item;
+                }
+            });
+
+            setMintList(newList);
+            setShowFromMintList(newList);
+            setShowToMintList(undefined);
+        });
+
+        return () => {
+            clearTimeout(timeout);
+        }
+
+    }, [
+        sol,
+        publicKey,
+        tokenList,
+        userBalances,
+    ]);
+
+    // Init the Jupiter instance
+    useEffect(() => {
+
+        const initJupiter = async () => {
+            return Jupiter.load({
+                connection,
+                cluster: "mainnet-beta",
+                user: publicKey || undefined,
+                // wrapUnwrapSOL: false,
+                platformFeeAndAccounts: await getPlatformFee(),
+            });
+        }
+
+        initJupiter()
+            .then(value => {
+                consoleOut('Jupiter ->', value);
+                setJupiter(value);
+            })
+            .catch(error => {
+                console.error(error);
+                setJupiter(undefined);
+            });
+    }, [
+        publicKey,
+        connection,
+        getPlatformFee
+    ]);
+
+    const getPossiblePairsTokenInfo = ({
+        tokens,
         routeMap,
         inputToken,
-      });
-    };
-    const pairs = getPairs();
-    consoleOut('toMintList:', pairs, 'blue');
-
-    if (pairs) {
-      const toList: any = {};
-
-      // First add those with balance
-      if (publicKey && userBalances) {
-        for (const info of Object.values(pairs)) {
-          const mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
-          if (mint.logoURI && userBalances[mint.address] > 0) {
-            toList[mint.address] = mint;
-          }
-        }
-      }
-
-      // Then add tokens from pinned list not already in the dictionary
-      MEAN_TOKEN_LIST.filter(
-        t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol),
-      ).forEach(item => {
-        if (!toList[item.address] && pairs[item.address]) {
-          toList[item.address] = item;
-        }
-      });
-
-      // Add all other items
-      for (const info of Object.values(pairs)) {
-        const mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
-        if (mint.logoURI && !toList[mint.address]) {
-          toList[mint.address] = mint;
-        }
-      }
-
-      setShowToMintList(toList);
-      setPossiblePairsTokenInfo(toList);
-    } else {
-      setPossiblePairsTokenInfo(undefined);
-      setShowToMintList(undefined);
-    }
-  }, [
-    toMint,
-    routeMap,
-    publicKey,
-    tokenList,
-    inputToken,
-    userBalances,
-    subjectTokenSelection,
-  ]);
-
-  // Get routes on demmand based on input/output tokens, amount and slippage
-  // Routes are sorted based on outputAmount, so ideally the first route is the best.
-  const refreshRoutes = useCallback(() => {
-    const getJupiterRoutes = async ({
-      jupiter,
-      inputToken,
-      outputToken,
-      inputAmount,
-      slippage,
     }: {
-      jupiter: Jupiter;
-      inputToken?: TokenInfo;
-      outputToken?: TokenInfo;
-      inputAmount: number;
-      slippage: number;
+        tokens: TokenInfo[];
+        routeMap: Map<string, string[]>;
+        inputToken?: TokenInfo;
     }) => {
-      if (!inputToken || !outputToken) {
-        return null;
-      }
 
-      const inputAmountLamports = inputToken
-        ? Math.round(inputAmount * 10 ** inputToken.decimals)
-        : 0; // Lamports based on token decimals
-      const routes =
-        inputToken && outputToken
-          ? await jupiter.computeRoutes({
-              inputMint: new PublicKey(inputToken.address),
-              outputMint: new PublicKey(outputToken.address),
-              inputAmount: inputAmountLamports,
-              onlyDirectRoutes: isFromSol() || isToSol(),
-              slippage,
-              forceFetch: true,
-            })
-          : null;
+        if (!inputToken) { return {}; }
 
-      if (routes && routes.routesInfos) {
-        consoleOut('routesInfos:', routes.routesInfos, 'blue');
-        if (inputAmount) {
-          setMinInAmount(routes.routesInfos[0].marketInfos[0].minInAmount);
-          setMinOutAmount(routes.routesInfos[0].marketInfos[0].minOutAmount);
-          return routes;
-        } else {
-          setMinInAmount(undefined);
-          setMinOutAmount(undefined);
-          return null;
-        }
-      } else {
-        return null;
-      }
+        const possiblePairs = inputToken
+            ? routeMap.get(inputToken.address) || []
+            : []; // return an array of token mints that can be swapped with the selected inputToken
+
+        const possiblePairsTokenInfo: { [key: string]: TokenInfo | undefined } = {};
+        possiblePairs.forEach((address) => {
+            const pick = tokens.find((t) => t.address === address);
+            if (pick) {
+                possiblePairsTokenInfo[address] = pick;
+            }
+        });
+        return possiblePairsTokenInfo;
+
     };
 
-    if (!jupiter || !inputToken || !outputToken || !slippage) {
-      setRefreshingRoutes(false);
-      return;
-    }
+    // Calculates the max allowed amount to swap
+    // Review the whole MAX amount story. Jupiter seems to always charge 0.05 SOL no matter what.
+    const getMaxAllowedSwapAmount = useCallback(() => {
 
-    const getRoutes = async () => {
-      return getJupiterRoutes({
+        if (!fromMint || !toMint || !userBalances) {
+            return 0;
+        }
+
+        const balance = fromMint === WRAPPED_SOL_MINT_ADDRESS
+            ? nativeBalance - MINIMUM_REQUIRED_SOL_BALANCE
+            : userBalances[fromMint] || 0;
+
+        return balance <= 0 ? 0 : balance;
+
+    }, [
+        toMint,
+        fromMint,
+        userBalances,
+        nativeBalance,
+    ]);
+
+    // Get routeMap, which maps each tokenMint and their respective tokenMints that are swappable
+    // const routeMap = jupiter.getRouteMap();
+    const routeMap = useMemo(() => {
+        let map = undefined;
+        if (jupiter) {
+            map = jupiter.getRouteMap();
+            consoleOut('routeMap:', map, 'blue');
+        }
+        return map;
+    }, [jupiter]);
+
+    // Establish the inputToken (changing the fromMint is enough to trigger this)
+    useEffect(() => {
+        if (fromMint) {
+            consoleOut('fromMint:', fromMint, 'blue');
+            const token = tokenList.find((t) => t.address === fromMint);
+            consoleOut('token:', token, 'blue');
+            if (token) {
+                setInputToken(token);
+            }
+        }
+    }, [
+        toMint,
+        fromMint,
+        tokenList,
+        subjectTokenSelection
+    ]);
+
+    // Establish the outputToken (changing the toMint is enough to trigger this)
+    useEffect(() => {
+        if (toMint) {
+            consoleOut('toMint:', toMint, 'blue');
+            const token = tokenList.find((t) => t.address === toMint);
+            consoleOut('token:', token, 'blue');
+            if (token) {
+                setOutputToken(token);
+            }
+        }
+    }, [
+        toMint,
+        tokenList,
+        subjectTokenSelection
+    ]);
+
+    useEffect(() => {
+        if (inputToken) {
+            consoleOut('inputToken:', inputToken, 'blue');
+        }
+    }, [
+        inputToken
+    ]);
+
+    // Find all possible outputToken based on the inputToken
+    useEffect(() => {
+
+        if (!routeMap || !tokenList || !inputToken) { return; }
+
+        const getPairs = () => {
+            return getPossiblePairsTokenInfo({
+                tokens: tokenList,
+                routeMap,
+                inputToken,
+            })
+        }
+        const pairs = getPairs();
+        consoleOut('toMintList:', pairs, 'blue');
+
+        if (pairs) {
+
+            const toList: any = {};
+
+            // First add those with balance
+            if (publicKey && userBalances) {
+                for (const info of Object.values(pairs)) {
+                    const mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
+                    if (mint.logoURI && userBalances[mint.address] > 0) {
+                        toList[mint.address] = mint;
+                    }
+                }
+            }
+
+            // Then add tokens from pinned list not already in the dictionary
+            MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol))
+                .forEach(item => {
+                    if (!toList[item.address] && pairs[item.address]) {
+                        toList[item.address] = item;
+                    }
+                });
+
+            // Add all other items
+            for (const info of Object.values(pairs)) {
+                const mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
+                if (mint.logoURI && !toList[mint.address]) {
+                    toList[mint.address] = mint;
+                }
+            }
+
+            setShowToMintList(toList);
+            setPossiblePairsTokenInfo(toList);
+
+        } else {
+
+            setPossiblePairsTokenInfo(undefined);
+            setShowToMintList(undefined);
+        }
+    }, [
+        toMint,
+        routeMap,
+        publicKey,
+        tokenList,
+        inputToken,
+        userBalances,
+        subjectTokenSelection,
+    ]);
+
+    // Get routes on demmand based on input/output tokens, amount and slippage
+    // Routes are sorted based on outputAmount, so ideally the first route is the best.
+    const refreshRoutes = useCallback(() => {
+
+        const getJupiterRoutes = async ({
+            jupiter,
+            inputToken,
+            outputToken,
+            inputAmount,
+            slippage,
+        }: {
+            jupiter: Jupiter;
+            inputToken?: TokenInfo;
+            outputToken?: TokenInfo;
+            inputAmount: number;
+            slippage: number;
+        }) => {
+
+            if (!inputToken || !outputToken) { return null; }
+
+            const inputAmountLamports = inputToken
+                ? Math.round(inputAmount * 10 ** inputToken.decimals)
+                : 0; // Lamports based on token decimals
+            const routes = inputToken && outputToken
+                ? await jupiter.computeRoutes({
+                    inputMint: new PublicKey(inputToken.address),
+                    outputMint: new PublicKey(outputToken.address),
+                    inputAmount: inputAmountLamports,
+                    onlyDirectRoutes: isFromSol() || isToSol(),
+                    slippage,
+                    forceFetch: true,
+                })
+                : null;
+
+            if (routes && routes.routesInfos) {
+                consoleOut('routesInfos:', routes.routesInfos, 'blue');
+                if (inputAmount) {
+                    setMinInAmount(routes.routesInfos[0].marketInfos[0].minInAmount);
+                    setMinOutAmount(routes.routesInfos[0].marketInfos[0].minOutAmount);
+                    return routes;
+                } else {
+                    setMinInAmount(undefined);
+                    setMinOutAmount(undefined);
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        };
+
+        if (!jupiter || !inputToken || !outputToken || !slippage) {
+            setRefreshingRoutes(false);
+            return;
+        }
+
+        const getRoutes = async () => {
+            return getJupiterRoutes({
+                jupiter,
+                inputToken,
+                outputToken,
+                inputAmount,
+                slippage
+            });
+        }
+
+        if (!inputAmount) {
+            setRoutes([]);
+            setSelectedRoute(undefined);
+            return;
+        }
+
+        setRefreshingRoutes(true);
+        getRoutes()
+            .then(response => {
+                const routes = response ? response.routesInfos : [];
+                let filteredRoutes: RouteInfo[] = [];
+                if (routes.length) {
+                    filteredRoutes = routes.filter(r => r.outAmount);
+                    setSelectedRoute(filteredRoutes[0]);
+                    consoleOut(`Filtered ${filteredRoutes.length} possible routes:`, filteredRoutes, 'blue');
+                    consoleOut('Best route:', filteredRoutes[0], 'blue');
+                } else {
+                    setSelectedRoute(undefined);
+                }
+                setRoutes(filteredRoutes);
+            })
+            .catch(error => console.error(error))
+            .finally(() => setRefreshingRoutes(false));
+    }, [
         jupiter,
+        slippage,
         inputToken,
         outputToken,
         inputAmount,
+        isFromSol,
+        isToSol,
+    ]);
+
+    // Automatically get routes
+    useEffect(() => {
+
+        if (!jupiter || !inputToken || !outputToken || !slippage) {
+            setRefreshingRoutes(false);
+            return;
+        }
+
+        setRefreshingRoutes(true);
+        refreshRoutes();
+    }, [
+        jupiter,
         slippage,
-      });
-    };
+        inputToken,
+        outputToken,
+        inputAmount,
+        refreshRoutes
+    ]);
 
-    if (!inputAmount) {
-      setRoutes([]);
-      setSelectedRoute(undefined);
-      return;
-    }
-
-    setRefreshingRoutes(true);
-    getRoutes()
-      .then(response => {
-        const routes = response ? response.routesInfos : [];
-        let filteredRoutes: RouteInfo[] = [];
-        if (routes.length) {
-          filteredRoutes = routes.filter(r => r.outAmount);
-          setSelectedRoute(filteredRoutes[0]);
-          consoleOut(
-            `Filtered ${filteredRoutes.length} possible routes:`,
-            filteredRoutes,
-            'blue',
-          );
-          consoleOut('Best route:', filteredRoutes[0], 'blue');
-        } else {
-          setSelectedRoute(undefined);
+    // Hook on wallet connect/disconnect
+    useEffect(() => {
+        if (previousWalletConnectState !== connected) {
+            if (!previousWalletConnectState && connected && publicKey) {
+                consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+            } else if (previousWalletConnectState && !connected) {
+                consoleOut('User is disconnecting...', '', 'green');
+                setUserBalances(undefined);
+            }
         }
-        setRoutes(filteredRoutes);
-      })
-      .catch(error => console.error(error))
-      .finally(() => setRefreshingRoutes(false));
-  }, [
-    jupiter,
-    slippage,
-    inputToken,
-    outputToken,
-    inputAmount,
-    isFromSol,
-    isToSol,
-  ]);
+    }, [
+        connected,
+        publicKey,
+        previousWalletConnectState,
+    ]);
 
-  // Automatically get routes
-  useEffect(() => {
-    if (!jupiter || !inputToken || !outputToken || !slippage) {
-      setRefreshingRoutes(false);
-      return;
-    }
+    const isInAmountTooLow = useCallback(() => {
+        if (inputToken && inputAmount && minInAmount) {
+            const tokenAmount = toTokenAmountBn(inputAmount, inputToken.decimals);
+            return tokenAmount.ltn(minInAmount || 0) ? true : false;
+        }
+        return false;
+    }, [
+        inputToken,
+        inputAmount,
+        minInAmount,
+    ]);
 
-    setRefreshingRoutes(true);
-    refreshRoutes();
-  }, [jupiter, slippage, inputToken, outputToken, inputAmount, refreshRoutes]);
+    // Updates the label of the Swap button
+    useEffect(() => {
 
-  // Hook on wallet connect/disconnect
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'green');
-        setUserBalances(undefined);
-      }
-    }
-  }, [connected, publicKey, previousWalletConnectState]);
+        if (!connection) { return; }
 
-  const isInAmountTooLow = useCallback(() => {
-    if (inputToken && inputAmount && minInAmount) {
-      const tokenAmount = toTokenAmountBn(inputAmount, inputToken.decimals);
-      return tokenAmount.ltn(minInAmount || 0) ? true : false;
-    }
-    return false;
-  }, [inputToken, inputAmount, minInAmount]);
+        const timeout = setTimeout(() => {
 
-  // Updates the label of the Swap button
-  useEffect(() => {
-    if (!connection) {
-      return;
-    }
+            let label = '';
 
-    const timeout = setTimeout(() => {
-      let label = '';
+            if (!jupiterReady) {
+                label = 'Loading exchange';
+            } else if (!publicKey) {
+                label = t('transactions.validation.not-connected');
+            } else if (!inputToken || !fromMint || !toMint) {
+                label = t('transactions.validation.invalid-exchange');
+            } else if (inputAmount === 0) {
+                label = t('transactions.validation.no-amount');
+            } else if (isInAmountTooLow()) {
+                label = t('transactions.validation.minimum-swap-amount', {
+                    mintAmount: toUiAmount(minInAmount || 0, inputToken.decimals),
+                    fromMint: inputToken.symbol
+                });
+            } else if (inputAmount > getMaxAllowedSwapAmount()) {
+                label = t('transactions.validation.amount-low');
+            } else if (inputAmount > 0 && !selectedRoute && refreshingRoutes) {
+                label = t('swap.getting-routes');
+            } else if (inputAmount > 0 && !selectedRoute && !refreshingRoutes) {
+                label = t('transactions.validation.exchange-unavailable');
+            } else {
+                label = t('transactions.validation.valid-approve');
+            }
 
-      if (!jupiterReady) {
-        label = 'Loading exchange';
-      } else if (!publicKey) {
-        label = t('transactions.validation.not-connected');
-      } else if (!inputToken || !fromMint || !toMint) {
-        label = t('transactions.validation.invalid-exchange');
-      } else if (inputAmount === 0) {
-        label = t('transactions.validation.no-amount');
-      } else if (isInAmountTooLow()) {
-        label = t('transactions.validation.minimum-swap-amount', {
-          mintAmount: toUiAmount(minInAmount || 0, inputToken.decimals),
-          fromMint: inputToken.symbol,
+            setTransactionStartButtonLabel(label);
+
         });
-      } else if (inputAmount > getMaxAllowedSwapAmount()) {
-        label = t('transactions.validation.amount-low');
-      } else if (inputAmount > 0 && !selectedRoute && refreshingRoutes) {
-        label = t('swap.getting-routes');
-      } else if (inputAmount > 0 && !selectedRoute && !refreshingRoutes) {
-        label = t('transactions.validation.exchange-unavailable');
-      } else {
-        label = t('transactions.validation.valid-approve');
-      }
 
-      setTransactionStartButtonLabel(label);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [
-    t,
-    toMint,
-    fromMint,
-    publicKey,
-    connection,
-    inputToken,
-    inputAmount,
-    minInAmount,
-    jupiterReady,
-    selectedRoute,
-    refreshingRoutes,
-    getMaxAllowedSwapAmount,
-    isInAmountTooLow,
-  ]);
-
-  // Updates the token list everytime is filtered
-  const updateTokenListByFilter = useCallback(
-    (searchString?: string) => {
-      if (!connection) {
-        return;
-      }
-
-      if (!mintList) {
-        return;
-      }
-
-      const timeout = setTimeout(() => {
-        const filter = (t: any) => {
-          return (
-            t.symbol.toLowerCase().includes(searchString?.toLowerCase()) ||
-            t.name.toLowerCase().includes(searchString?.toLowerCase())
-          );
-        };
-
-        if (subjectTokenSelection === 'source') {
-          const showFromList = !searchString
-            ? mintList
-            : Object.values(mintList).filter((t: any) => filter(t));
-
-          setShowFromMintList(showFromList);
+        return () => {
+            clearTimeout(timeout);
         }
 
-        if (subjectTokenSelection === 'destination') {
-          const allPairs = possiblePairsTokenInfo
-            ? Object.values(possiblePairsTokenInfo).filter(t => t)
-            : {};
-          const matchedPairs = possiblePairsTokenInfo
-            ? Object.values(possiblePairsTokenInfo).filter((t: any) =>
-                filter(t),
-              )
-            : {};
-          const showToList = !searchString ? allPairs : matchedPairs;
-          setShowToMintList(showToList);
+    }, [
+        t,
+        toMint,
+        fromMint,
+        publicKey,
+        connection,
+        inputToken,
+        inputAmount,
+        minInAmount,
+        jupiterReady,
+        selectedRoute,
+        refreshingRoutes,
+        getMaxAllowedSwapAmount,
+        isInAmountTooLow,
+    ]);
+
+    // Updates the token list everytime is filtered
+    const updateTokenListByFilter = useCallback((searchString?: string) => {
+
+        if (!connection) { return; }
+
+        if (!mintList) { return; }
+
+        const timeout = setTimeout(() => {
+
+            const filter = (t: any) => {
+                return (
+                    t.symbol.toLowerCase().includes(searchString?.toLowerCase()) ||
+                    t.name.toLowerCase().includes(searchString?.toLowerCase())
+                );
+            };
+
+            if (subjectTokenSelection === 'source') {
+                const showFromList = !searchString
+                    ? mintList
+                    : Object.values(mintList)
+                        .filter((t: any) => filter(t));
+
+                setShowFromMintList(showFromList);
+            }
+
+            if (subjectTokenSelection === 'destination') {
+                const allPairs = possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter(t => t) : {};
+                const matchedPairs = possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter((t: any) => filter(t)) : {};
+                const showToList = !searchString ? allPairs : matchedPairs;
+                setShowToMintList(showToList);
+            }
+
+        });
+
+        return () => {
+            clearTimeout(timeout);
         }
-      });
 
-      return () => {
-        clearTimeout(timeout);
-      };
-    },
-    [mintList, connection, possiblePairsTokenInfo, subjectTokenSelection],
-  );
+    }, [
+        mintList,
+        connection,
+        possiblePairsTokenInfo,
+        subjectTokenSelection,
+    ]);
 
-  const setModalBodyMinHeight = useCallback((addMinHeight: boolean) => {
-    const modalBody = document.querySelector(
-      '.exchange-modal .ant-modal-content',
-    );
-    if (modalBody) {
-      if (addMinHeight) {
-        modalBody.classList.add('drawer-open');
-      } else {
-        modalBody.classList.remove('drawer-open');
-      }
-    }
-  }, []);
+    const setModalBodyMinHeight = useCallback((addMinHeight: boolean) => {
+        const modalBody = document.querySelector(".exchange-modal .ant-modal-content");
+        if (modalBody) {
+            if (addMinHeight) {
+                modalBody.classList.add('drawer-open');
+            } else {
+                modalBody.classList.remove('drawer-open');
+            }
+        }
+    }, []);
 
-  const autoFocusInput = useCallback(() => {
-    const input = document.getElementById('token-search-input');
-    if (input) {
-      setTimeout(() => {
-        input.focus();
-      }, 100);
-    }
-  }, []);
+    const autoFocusInput = useCallback(() => {
+        const input = document.getElementById("token-search-input");
+        if (input) {
+            setTimeout(() => {
+                input.focus();
+            }, 100);
+        }
+    }, []);
 
-  // Token selection modal
-  const showTokenSelector = useCallback(() => {
-    const timeout = setTimeout(() => {
-      setTokenFilter('');
-      updateTokenListByFilter('');
-      setTokenSelectorModalVisibility(true);
-      autoFocusInput();
-    });
+    // Token selection modal
+    const showTokenSelector = useCallback(() => {
 
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [autoFocusInput, updateTokenListByFilter]);
+        const timeout = setTimeout(() => {
 
-  const showDrawer = useCallback(() => {
-    setIsTokenSelectorVisible(true);
-    setModalBodyMinHeight(true);
-    autoFocusInput();
-  }, [autoFocusInput, setModalBodyMinHeight]);
+            setTokenFilter('');
+            updateTokenListByFilter('');
+            setTokenSelectorModalVisibility(true);
+            autoFocusInput();
 
-  const hideDrawer = useCallback(() => {
-    setIsTokenSelectorVisible(false);
-    setModalBodyMinHeight(false);
-  }, [setModalBodyMinHeight]);
+        });
 
-  // Token selection modal close
-  const onCloseTokenSelector = useCallback(() => {
-    const timeout = setTimeout(() => {
-      setTokenFilter('');
-      updateTokenListByFilter('');
-      hideDrawer();
-      setTokenSelectorModalVisibility(false);
-    });
+        return () => {
+            clearTimeout(timeout);
+        }
 
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [hideDrawer, updateTokenListByFilter]);
+    }, [autoFocusInput, updateTokenListByFilter]);
 
-  const onInputCleared = useCallback(() => {
-    setTokenFilter('');
-    updateTokenListByFilter('');
-  }, [updateTokenListByFilter]);
+    const showDrawer = useCallback(() => {
+        setIsTokenSelectorVisible(true);
+        setModalBodyMinHeight(true);
+        autoFocusInput();
+    }, [autoFocusInput, setModalBodyMinHeight]);
 
-  const onTokenSearchInputChange = useCallback(
-    (e: any) => {
-      const input = e.target.value;
-      if (input) {
-        setTokenFilter(input);
-        updateTokenListByFilter(input);
-      } else {
+    const hideDrawer = useCallback(() => {
+        setIsTokenSelectorVisible(false);
+        setModalBodyMinHeight(false);
+    }, [setModalBodyMinHeight]);
+
+    // Token selection modal close
+    const onCloseTokenSelector = useCallback(() => {
+
+        const timeout = setTimeout(() => {
+            setTokenFilter('');
+            updateTokenListByFilter('');
+            hideDrawer();
+            setTokenSelectorModalVisibility(false);
+        });
+
+        return () => {
+            clearTimeout(timeout);
+        }
+
+    }, [hideDrawer, updateTokenListByFilter]);
+
+    const onInputCleared = useCallback(() => {
         setTokenFilter('');
         updateTokenListByFilter('');
-      }
-    },
-    [updateTokenListByFilter],
-  );
+    }, [
+        updateTokenListByFilter
+    ]);
 
-  // Set fees
-  useEffect(() => {
-    if (selectedRoute) {
-      selectedRoute.getDepositAndFee().then(value => {
-        consoleOut('feeInfo:', value, 'blue');
-        setFeeInfo(value);
-      });
-    }
-  }, [selectedRoute]);
+    const onTokenSearchInputChange = useCallback((e: any) => {
 
-  // Getters
-
-  const areSameTokens = (
-    source: TokenInfo,
-    destination: TokenInfo,
-  ): boolean => {
-    return source &&
-      destination &&
-      source.name === destination.name &&
-      source.address === destination.address
-      ? true
-      : false;
-  };
-
-  // Event handling
-  const onShowLpListToggled = () => {
-    setShowFullRoutesList(value => !value);
-  };
-
-  const onSlippageChanged = (value: any) => {
-    setSlippage(value);
-  };
-
-  const debounceInputOnChange = (value: string) => {
-    clearTimeout(inputDebounceTimeout);
-    inputDebounceTimeout = setTimeout(() => {
-      consoleOut('input ====>', value, 'orange');
-      setInputAmount(parseFloat(value));
-    }, 500);
-  };
-
-  const handleSwapFromAmountChange = useCallback((e: any) => {
-    let newValue = e.target.value;
-
-    const splitted = newValue.toString().split('.');
-    const left = splitted[0];
-    if (left.length > 1) {
-      const number = splitted[0] - 0;
-      splitted[0] = `${number}`;
-      newValue = splitted.join('.');
-    }
-
-    if (newValue === null || newValue === undefined || newValue === '') {
-      setFromAmount('');
-      setInputAmount(0);
-    } else if (newValue === '.') {
-      setFromAmount('.');
-      setInputAmount(0);
-    } else if (isValidNumber(newValue)) {
-      setFromAmount(newValue);
-      debounceInputOnChange(newValue);
-    }
-  }, []);
-
-  const flipMintsCallback = useCallback(() => {
-    if (!toMint) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      const oldFrom = fromMint;
-      const oldTo = toMint;
-      setFromMint(oldTo);
-      setSelectedRoute(undefined);
-      setRoutes([]);
-      setToMint(oldFrom);
-      refreshUserBalances();
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [toMint, fromMint, refreshUserBalances]);
-
-  // Refresh routes every 30 seconds
-  useEffect(() => {
-    let timer: any;
-
-    if (jupiter && inputToken && outputToken && slippage && inputAmount) {
-      timer = setInterval(() => {
-        if (!isBusy) {
-          consoleOut(
-            `Trigger refresh routes after ${
-              ONE_MINUTE_REFRESH_TIMEOUT / 1000
-            } seconds`,
-          );
-          setRefreshingRoutes(true);
-          refreshRoutes();
-        }
-      }, ONE_MINUTE_REFRESH_TIMEOUT);
-    }
-
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [
-    isBusy,
-    jupiter,
-    slippage,
-    inputToken,
-    outputToken,
-    inputAmount,
-    refreshRoutes,
-  ]);
-
-  // Set Jupiter ready
-  useEffect(() => {
-    if (jupiter && routeMap && showToMintList) {
-      setJupiterReady(true);
-    }
-  }, [jupiter, routeMap, showToMintList]);
-
-  const onStartUnwrapTx = async () => {
-    let transaction: Transaction;
-    let signature: any;
-    let encodedTx: string;
-    const transactionLog: any[] = [];
-
-    const createTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction,
-        });
-
-        consoleOut('unwrapAmount:', wSolBalance, 'blue');
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
-          inputs: `unwrapAmount: ${wSolBalance}`,
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
-          result: '',
-        });
-
-        if (!wSolPubKey) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.TransactionStartFailure,
-            ),
-            result: `Wrapped SOL token account not found for the currently connected wallet account`,
-          });
-          customLogger.logWarning('Unwrap transaction failed', {
-            transcript: transactionLog,
-          });
-          openNotification({
-            title: 'Cannot unwrap SOL',
-            description: `Wrapped SOL token account not found for the currently connected wallet account`,
-            type: 'info',
-          });
-          return false;
+        const input = e.target.value;
+        if (input) {
+            setTokenFilter(input);
+            updateTokenListByFilter(input);
+        } else {
+            setTokenFilter('');
+            updateTokenListByFilter('');
         }
 
-        return closeTokenAccount(
-          connection, // connection
-          wSolPubKey, // tokenPubkey
-          publicKey, // owner
-        )
-          .then((value: Transaction | null) => {
-            if (value !== null) {
-              consoleOut('closeTokenAccount returned transaction:', value);
-              // Stage 1 completed - The transaction is created and returned
-              setTransactionStatus({
-                lastOperation: TransactionStatus.InitTransactionSuccess,
-                currentOperation: TransactionStatus.SignTransaction,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.InitTransactionSuccess,
-                ),
-                result: getTxIxResume(value),
-              });
-              transaction = value;
-              return true;
-            } else {
-              // Stage 1 failed - The transaction was not created
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.InitTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.InitTransactionFailure,
-                ),
-                result: 'No transaction created',
-              });
-              return false;
-            }
-          })
-          .catch(error => {
-            console.error('closeTokenAccount transaction init error:', error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
-              result: `${error}`,
-            });
-            customLogger.logError('Unwrap transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Unwrap transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
+    }, [
+        updateTokenListByFilter
+    ]);
+
+    // Set fees
+    useEffect(() => {
+        if (selectedRoute) {
+            selectedRoute.getDepositAndFee()
+                .then(value => {
+                    consoleOut('feeInfo:', value, 'blue');
+                    setFeeInfo(value);
+                });
+        }
+    }, [selectedRoute]);
+
+    // Getters
+
+    const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
+        return (
+            source &&
+            destination &&
+            source.name === destination.name &&
+            source.address === destination.address
+        ) ? true : false;
+    }
+
+    // Event handling
+    const onShowLpListToggled = () => {
+        setShowFullRoutesList(value => !value);
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Unwrap transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Unwrap transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
+    const onSlippageChanged = (value: any) => {
+        setSlippage(value);
     };
 
-    if (wallet) {
-      setIsUnwrapping(true);
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent) {
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.Unwrap,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: `Unwrap ${formatThousands(
-              wSolBalance,
-              sol.decimals,
-            )} SOL`,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: `Successfully unwrapped ${formatThousands(
-              wSolBalance,
-              sol.decimals,
-            )} SOL`,
-          });
-          setIsUnwrapping(false);
-          setInputAmount(0);
-          setFromAmount('');
-          setTimeout(() => {
+    const debounceInputOnChange = (value: string) => {
+        clearTimeout(inputDebounceTimeout);
+        inputDebounceTimeout = setTimeout(() => {
+            consoleOut('input ====>', value, 'orange');
+            setInputAmount(parseFloat(value));
+        }, 500);
+    }
+
+    const handleSwapFromAmountChange = useCallback((e: any) => {
+
+        let newValue = e.target.value;
+
+        const splitted = newValue.toString().split('.');
+        const left = splitted[0];
+        if (left.length > 1) {
+            const number = splitted[0] - 0;
+            splitted[0] = `${number}`;
+            newValue = splitted.join('.');
+        }
+
+        if (newValue === null || newValue === undefined || newValue === "") {
+            setFromAmount('');
+            setInputAmount(0);
+        } else if (newValue === '.') {
+            setFromAmount('.');
+            setInputAmount(0);
+        } else if (isValidNumber(newValue)) {
+            setFromAmount(newValue);
+            debounceInputOnChange(newValue);
+        }
+
+    }, []);
+
+    const flipMintsCallback = useCallback(() => {
+        if (!toMint) { return; }
+
+        const timeout = setTimeout(() => {
+            const oldFrom = fromMint;
+            const oldTo = toMint;
+            setFromMint(oldTo);
+            setSelectedRoute(undefined);
+            setRoutes([]);
+            setToMint(oldFrom);
             refreshUserBalances();
-          });
-        } else {
-          openNotification({
-            title: t('notifications.error-title'),
-            description: t('notifications.error-sending-transaction'),
-            type: 'error',
-          });
-          setIsUnwrapping(false);
+        });
+
+        return () => {
+            clearTimeout(timeout);
         }
-      } else {
-        setIsUnwrapping(false);
-      }
-    }
-  };
 
-  const onStartSwapTx = useCallback(async () => {
-    if (!jupiter || !wallet || !selectedRoute || !publicKey) {
-      return;
-    }
+    }, [
+        toMint,
+        fromMint,
+        refreshUserBalances
+    ]);
 
-    setIsBusy(true);
+    // Refresh routes every 30 seconds
+    useEffect(() => {
+        let timer: any;
 
-    // Prepare execute exchange
-    const { execute } = await jupiter.exchange({
-      routeInfo: selectedRoute,
-    });
-
-    // Execute swap
-    const swapResult: any = await execute({
-      wallet: wallet as SignerWalletAdapter,
-    });
-
-    if (swapResult.error) {
-      console.error(swapResult.error);
-    } else {
-      setInputAmount(0);
-      setFromAmount('');
-      refreshUserBalances();
-    }
-
-    setIsBusy(false);
-  }, [wallet, jupiter, publicKey, selectedRoute, refreshUserBalances]);
-
-  // Validation
-
-  const isExchangeValid = useCallback((): boolean => {
-    let result: boolean;
-
-    if (!publicKey) {
-      result = false;
-    } else if (!inputToken || !fromMint || !toMint) {
-      result = false;
-    } else if (inputAmount === 0) {
-      result = false;
-    } else if (isInAmountTooLow()) {
-      result = false;
-    } else if (inputAmount > getMaxAllowedSwapAmount()) {
-      result = false;
-    } else if (inputAmount > 0 && !selectedRoute) {
-      result = false;
-    } else {
-      result = true;
-    }
-
-    return result;
-  }, [
-    toMint,
-    fromMint,
-    publicKey,
-    inputToken,
-    inputAmount,
-    selectedRoute,
-    isInAmountTooLow,
-    getMaxAllowedSwapAmount,
-  ]);
-
-  // Rendering
-  const infoRow = (
-    caption: string,
-    value: string,
-    separator = '≈',
-    route = false,
-  ) => {
-    return (
-      <>
-        <div className="three-col-info-row">
-          <div className="left text-right">{caption}</div>
-          <div className="middle text-center">{separator}</div>
-          <div className="right text-left">{value}</div>
-        </div>
-      </>
-    );
-  };
-
-  // Info items will draw inside the popover
-  const txInfoContent = () => {
-    return fromMint && toMint && selectedRoute ? (
-      <>
-        {!refreshingRoutes &&
-          inputAmount > 0 &&
-          feeInfo &&
-          feeInfo.minimumSOLForTransaction === feeInfo.signatureFee &&
-          infoRow(
-            t('transactions.transaction-info.network-transaction-fee'),
-            `${toUiAmount(feeInfo.signatureFee, sol.decimals)} SOL`,
-          )}
-        {!refreshingRoutes &&
-          inputAmount > 0 &&
-          feeInfo &&
-          feeInfo.minimumSOLForTransaction > feeInfo.signatureFee &&
-          infoRow(
-            t('transactions.transaction-info.minimum-sol-for-transaction'),
-            `${toUiAmount(feeInfo.minimumSOLForTransaction, sol.decimals)} SOL`,
-          )}
-        {!refreshingRoutes &&
-          inputAmount > 0 &&
-          slippage > 0 &&
-          infoRow(
-            t('transactions.transaction-info.slippage'),
-            `${slippage.toFixed(2)}%`,
-          )}
-        {!refreshingRoutes &&
-          inputAmount > 0 &&
-          selectedRoute &&
-          infoRow(
-            t('transactions.transaction-info.price-impact'),
-            selectedRoute.priceImpactPct * 100 < 0.1
-              ? '0.1%'
-              : `${(selectedRoute.priceImpactPct * 100).toFixed(4)}%`,
-            selectedRoute.priceImpactPct * 100 < 0.1 ? '<' : '≈',
-          )}
-        {!refreshingRoutes &&
-          inputAmount > 0 &&
-          outputToken &&
-          infoRow(
-            t('transactions.transaction-info.minimum-received'),
-            `${formatThousands(
-              selectedRoute?.outAmountWithSlippage /
-                10 ** outputToken.decimals || 1,
-              outputToken.decimals,
-            )} ${outputToken.symbol}`,
-          )}
-      </>
-    ) : null;
-  };
-
-  const renderCommonTokens = () => {
-    return quickTokens.map((token: TokenInfo, index: number) => {
-      const onClick = () => {
-        if (subjectTokenSelection === 'source') {
-          if (!fromMint || fromMint !== token.address) {
-            setFromMint(token.address);
-            consoleOut('fromMint:', token.address, 'blue');
-            const selectedToken = showFromMintList[token.address];
-            consoleOut('selectedToken:', selectedToken, 'blue');
-            if (selectedToken) {
-              refreshUserBalances();
-            }
-          }
-          onCloseTokenSelector();
-        } else {
-          if (!toMint || toMint !== token.address) {
-            setToMint(token.address);
-            consoleOut('toMint:', token.address, 'blue');
-            const selectedToken = showToMintList[token.address] as TokenInfo;
-            consoleOut('selectedToken:', selectedToken, 'blue');
-            if (selectedToken) {
-              setOutputToken(selectedToken);
-              refreshUserBalances();
-            }
-          }
-          onCloseTokenSelector();
+        if (jupiter && inputToken && outputToken && slippage && inputAmount) {
+            timer = setInterval(() => {
+                if (!isBusy) {
+                    consoleOut(`Trigger refresh routes after ${ONE_MINUTE_REFRESH_TIMEOUT / 1000} seconds`);
+                    setRefreshingRoutes(true);
+                    refreshRoutes();
+                }
+            }, ONE_MINUTE_REFRESH_TIMEOUT);
         }
-      };
 
-      return (
-        <Button
-          key={`${index}`}
-          type="ghost"
-          shape="round"
-          size="small"
-          onClick={onClick}
-          className="no-stroke"
-        >
-          {token.address === WRAPPED_SOL_MINT_ADDRESS ? (
-            <TokenDisplay
-              className="inherit-font"
-              mintAddress={token.address}
-              symbol="SOL"
-              onClick={() => {}}
-            />
-          ) : (
-            <TokenDisplay
-              className="inherit-font"
-              mintAddress={token.address}
-              onClick={() => {}}
-            />
-          )}
-        </Button>
-      );
-    });
-  };
-
-  const getSourceTokenListItemClass = (item: TokenInfo) => {
-    if (fromMint && fromMint === item.address) {
-      return 'selected';
-    }
-    const destinationToken = toMint ? showFromMintList[toMint] : undefined;
-    return areSameTokens(item, destinationToken) ? 'disabled' : 'simplelink';
-  };
-
-  const renderTokenBalance = (token: TokenInfo) => {
-    if (
-      publicKey &&
-      userBalances &&
-      mintList[token.address] &&
-      userBalances[token.address]
-    ) {
-      if (token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        return formatThousands(nativeBalance, mintList[token.address].decimals);
-      }
-      return formatThousands(
-        userBalances[token.address],
-        mintList[token.address].decimals,
-      );
-    }
-    return <span>&nbsp;</span>;
-  };
-
-  const renderSourceTokenList = (
-    <>
-      {showFromMintList && Object.values(showFromMintList).length ? (
-        Object.values(showFromMintList).map((t: any, index) => {
-          const token = t as TokenInfo;
-          const onClick = () => {
-            if (!fromMint || fromMint !== token.address) {
-              setFromMint(token.address);
-              consoleOut('fromMint:', token.address, 'blue');
-              const selectedToken = showFromMintList[token.address];
-              consoleOut('selectedToken:', selectedToken, 'blue');
-              if (selectedToken) {
-                refreshUserBalances();
-              }
+        return () => {
+            if (timer) {
+                clearInterval(timer);
             }
-            onCloseTokenSelector();
-          };
+        };
+    }, [
+        isBusy,
+        jupiter,
+        slippage,
+        inputToken,
+        outputToken,
+        inputAmount,
+        refreshRoutes,
+    ]);
 
-          if (index < MAX_TOKEN_LIST_ITEMS) {
-            return (
-              <div
-                key={index + 100}
-                onClick={onClick}
-                className={`token-item ${getSourceTokenListItemClass(token)}`}
-              >
-                <div className="token-icon">
-                  {token.logoURI ? (
-                    <img
-                      alt={`${token.name}`}
-                      width={24}
-                      height={24}
-                      src={token.logoURI}
-                    />
-                  ) : (
-                    <Identicon
-                      address={token.address}
-                      style={{ width: '24', display: 'inline-flex' }}
-                    />
-                  )}
-                </div>
-                <div className="token-description">
-                  <div className="token-symbol">
-                    {token.address === WRAPPED_SOL_MINT_ADDRESS
-                      ? 'SOL'
-                      : token.symbol}
-                  </div>
-                  <div className="token-name m-0">
-                    {token.address === WRAPPED_SOL_MINT_ADDRESS
-                      ? 'Solana'
-                      : token.name}
-                  </div>
-                </div>
-                <div className="token-balance">{renderTokenBalance(token)}</div>
-              </div>
-            );
-          } else {
-            return null;
-          }
-        })
-      ) : (
-        <p>{t('token-selector.no-matches')}</p>
-      )}
-    </>
-  );
+    // Set Jupiter ready
+    useEffect(() => {
+        if (jupiter && routeMap && showToMintList) {
+            setJupiterReady(true);
+        }
+    }, [jupiter, routeMap, showToMintList]);
 
-  const getDestinationTokenListItemClass = (item: TokenInfo) => {
-    if (toMint && toMint === item.address) {
-      return 'selected';
-    }
-    const destinationToken = fromMint ? showToMintList[fromMint] : undefined;
-    return areSameTokens(item, destinationToken) ? 'disabled' : 'simplelink';
-  };
+    const onStartUnwrapTx = async () => {
+        let transaction: Transaction;
+        let signature: any;
+        let encodedTx: string;
+        const transactionLog: any[] = [];
 
-  const renderDestinationTokenList = (
-    <>
-      {showToMintList && Object.values(showToMintList).length ? (
-        Object.values(showToMintList).map((t: any, index) => {
-          const token = t as TokenInfo;
-          const onClick = () => {
-            if (!toMint || toMint !== token.address) {
-              setToMint(token.address);
-              consoleOut('toMint:', token.address, 'blue');
-              const selectedToken = showToMintList[token.address] as TokenInfo;
-              consoleOut('selectedToken:', selectedToken, 'blue');
-              if (selectedToken) {
-                refreshUserBalances();
-              }
+        const createTx = async (): Promise<boolean> => {
+            if (wallet && publicKey) {
+                setTransactionStatus({
+                    lastOperation: TransactionStatus.TransactionStart,
+                    currentOperation: TransactionStatus.InitTransaction,
+                });
+
+                consoleOut('unwrapAmount:', wSolBalance, 'blue')
+
+                // Log input data
+                transactionLog.push({
+                    action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+                    inputs: `unwrapAmount: ${wSolBalance}`
+                });
+
+                transactionLog.push({
+                    action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+                    result: ''
+                });
+
+                if (!wSolPubKey) {
+                    setTransactionStatus({
+                        lastOperation: transactionStatus.currentOperation,
+                        currentOperation: TransactionStatus.TransactionStartFailure
+                    });
+                    transactionLog.push({
+                        action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+                        result: `Wrapped SOL token account not found for the currently connected wallet account`
+                    });
+                    customLogger.logWarning('Unwrap transaction failed', { transcript: transactionLog });
+                    openNotification({
+                        title: 'Cannot unwrap SOL',
+                        description: `Wrapped SOL token account not found for the currently connected wallet account`,
+                        type: 'info'
+                    });
+                    return false;
+                }
+
+                return closeTokenAccount(
+                    connection,                         // connection
+                    wSolPubKey,                         // tokenPubkey
+                    publicKey                           // owner
+                )
+                    .then((value: Transaction | null) => {
+                        if (value !== null) {
+                            consoleOut("closeTokenAccount returned transaction:", value);
+                            // Stage 1 completed - The transaction is created and returned
+                            setTransactionStatus({
+                                lastOperation: TransactionStatus.InitTransactionSuccess,
+                                currentOperation: TransactionStatus.SignTransaction,
+                            });
+                            transactionLog.push({
+                                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+                                result: getTxIxResume(value)
+                            });
+                            transaction = value;
+                            return true;
+                        } else {
+                            // Stage 1 failed - The transaction was not created
+                            setTransactionStatus({
+                                lastOperation: transactionStatus.currentOperation,
+                                currentOperation: TransactionStatus.InitTransactionFailure,
+                            });
+                            transactionLog.push({
+                                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+                                result: 'No transaction created'
+                            });
+                            return false;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("closeTokenAccount transaction init error:", error);
+                        setTransactionStatus({
+                            lastOperation: transactionStatus.currentOperation,
+                            currentOperation: TransactionStatus.InitTransactionFailure,
+                        });
+                        transactionLog.push({
+                            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+                            result: `${error}`
+                        });
+                        customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+                        return false;
+                    });
+            } else {
+                transactionLog.push({
+                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+                    result: 'Cannot start transaction! Wallet not found!'
+                });
+                customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+                return false;
             }
-            onCloseTokenSelector();
-          };
+        };
 
-          if (index < MAX_TOKEN_LIST_ITEMS) {
-            return (
-              <div
-                key={index + 100}
-                onClick={onClick}
-                className={`token-item ${getDestinationTokenListItemClass(
-                  token,
-                )}`}
-              >
-                <div className="token-icon">
-                  {token.logoURI ? (
-                    <img
-                      alt={`${token.name}`}
-                      width={24}
-                      height={24}
-                      src={token.logoURI}
-                    />
-                  ) : (
-                    <Identicon
-                      address={token.address}
-                      style={{ width: '24', display: 'inline-flex' }}
-                    />
-                  )}
-                </div>
-                <div className="token-description">
-                  <div className="token-symbol">
-                    {token.address === WRAPPED_SOL_MINT_ADDRESS
-                      ? 'SOL'
-                      : token.symbol}
-                  </div>
-                  <div className="token-name m-0">
-                    {token.address === WRAPPED_SOL_MINT_ADDRESS
-                      ? 'Solana'
-                      : token.name}
-                  </div>
-                </div>
-                <div className="token-balance">{renderTokenBalance(token)}</div>
-              </div>
-            );
-          } else {
-            return null;
-          }
-        })
-      ) : (
-        <p>{t('token-selector.no-matches')}</p>
-      )}
-    </>
-  );
+        const sendTx = async (): Promise<boolean> => {
+            if (connection && wallet && wallet.publicKey && transaction) {
+                const {
+                    context: { slot: minContextSlot },
+                    value: { blockhash },
+                } = await connection.getLatestBlockhashAndContext();
 
-  const renderTokenSelectorInner = (
-    <div className="token-selector-wrapper">
-      <div className="token-search-wrapper">
-        <TextInput
-          value={tokenFilter}
-          allowClear={true}
-          extraClass="mb-1"
-          onInputClear={onInputCleared}
-          placeholder={t('token-selector.exchange-search-input-placeholder')}
-          onInputChange={onTokenSearchInputChange}
-        />
-      </div>
-      <div className="common-token-shortcuts">{renderCommonTokens()}</div>
-      <Divider />
-      <div className="token-list">
-        {subjectTokenSelection === 'source'
-          ? renderSourceTokenList
-          : renderDestinationTokenList}
-      </div>
-    </div>
-  );
+                transaction.feePayer = wallet.publicKey;
+                transaction.recentBlockhash = blockhash;
 
-  const getDisplayInputTokenBalance = () => {
-    if (fromMint && userBalances && mintList[fromMint]) {
-      return (mintList[fromMint] as TokenInfo).address ===
-        WRAPPED_SOL_MINT_ADDRESS
-        ? nativeBalance
-        : userBalances[fromMint];
-    }
-
-    return '';
-  };
-
-  const getDisplayOutputTokenBalance = () => {
-    if (toMint && userBalances && mintList[toMint]) {
-      return (mintList[toMint] as TokenInfo).address ===
-        WRAPPED_SOL_MINT_ADDRESS
-        ? nativeBalance
-        : userBalances[toMint];
-    }
-
-    return '';
-  };
-
-  const getDisplayOutputTokenAmount = () => {
-    if (isFromSol()) {
-      return fromAmount;
-    }
-    return selectedRoute && outputToken
-      ? toUiAmount(selectedRoute.outAmount, outputToken.decimals)
-      : '';
-  };
-
-  return (
-    <>
-      {wSolBalance > 0 && (
-        <div className="swap-wrapper">
-          <div className="well mb-1">
-            <div className="flex-fixed-right align-items-center">
-              <div className="left">
-                You have {formatThousands(wSolBalance, sol.decimals)}{' '}
-                <strong>wrapped SOL</strong> in your wallet. Click to unwrap to
-                native SOL.
-              </div>
-              <div className="right">
-                <Button
-                  type="primary"
-                  shape="round"
-                  disabled={isUnwrapping}
-                  onClick={onStartUnwrapTx}
-                  size="small"
-                >
-                  {isUnwrapping ? 'Unwrapping SOL' : 'Unwrap SOL'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      <div className="swap-wrapper">
-        {/* Source token / amount */}
-        {fromMint && (
-          <JupiterExchangeInput
-            token={inputToken}
-            tokenBalance={getDisplayInputTokenBalance()}
-            tokenAmount={fromAmount}
-            onInputChange={handleSwapFromAmountChange}
-            onMaxAmount={() => {
-              const maxFromAmount = getMaxAllowedSwapAmount();
-              if (toMint && mintList[fromMint] && maxFromAmount > 0) {
-                setInputAmount(maxFromAmount);
-                const formattedAmount = cutNumber(
-                  maxFromAmount,
-                  mintList[fromMint].decimals,
-                );
-                setFromAmount(formattedAmount);
-              }
-            }}
-            onSelectToken={() => {
-              setSubjectTokenSelection('source');
-              props.inModal ? showDrawer() : showTokenSelector();
-            }}
-            hint={
-              inputToken && inputToken.address === WRAPPED_SOL_MINT_ADDRESS
-                ? t('transactions.validation.minimum-balance-required')
-                : ''
+                return wallet.sendTransaction(transaction, connection, { minContextSlot })
+                    .then((sig) => {
+                        consoleOut("sendEncodedTransaction returned a signature:", sig);
+                        setTransactionStatus({
+                            lastOperation: TransactionStatus.SendTransactionSuccess,
+                            currentOperation: TransactionStatus.ConfirmTransaction,
+                        });
+                        signature = sig;
+                        transactionLog.push({
+                            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+                            result: `signature: ${signature}`
+                        });
+                        return true;
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                        setTransactionStatus({
+                            lastOperation: TransactionStatus.SendTransaction,
+                            currentOperation: TransactionStatus.SendTransactionFailure,
+                        });
+                        transactionLog.push({
+                            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+                            result: { error, encodedTx }
+                        });
+                        customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+                        return false;
+                    });
+            } else {
+                setTransactionStatus({
+                    lastOperation: TransactionStatus.SendTransaction,
+                    currentOperation: TransactionStatus.WalletNotFound,
+                });
+                transactionLog.push({
+                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+                    result: 'Cannot send transaction! Wallet not found!'
+                });
+                customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+                return false;
             }
-            className="mb-0"
-            disabled={!jupiterReady}
-            onBalanceClick={() => refreshUserBalances()}
-          />
-        )}
+        };
 
-        {jupiterReady &&
-        inputToken &&
-        outputToken &&
-        inputAmount &&
-        isInAmountTooLow() ? (
-          <div className="input-amount-too-low flex-row flex-center">
-            <InfoCircleOutlined className="font-size-75" />
-            <span>
-              Minimum swap is at least{' '}
-              {toUiAmount(minInAmount || 0, inputToken.decimals)}{' '}
-              {inputToken.symbol} for{' '}
-              {toUiAmount(minOutAmount || 0, outputToken.decimals)}{' '}
-              {outputToken.symbol}
-            </span>
-          </div>
-        ) : null}
+        if (wallet) {
+            setIsUnwrapping(true);
+            const create = await createTx();
+            consoleOut("created:", create);
+            if (create) {
+                const sent = await sendTx();
+                consoleOut("sent:", sent);
+                if (sent) {
+                    enqueueTransactionConfirmation({
+                        signature: signature,
+                        operationType: OperationType.Unwrap,
+                        finality: "confirmed",
+                        txInfoFetchStatus: "fetching",
+                        loadingTitle: 'Confirming transaction',
+                        loadingMessage: `Unwrap ${formatThousands(wSolBalance, sol.decimals)} SOL`,
+                        completedTitle: 'Transaction confirmed',
+                        completedMessage: `Successfully unwrapped ${formatThousands(wSolBalance, sol.decimals)} SOL`
+                    });
+                    setIsUnwrapping(false);
+                    setInputAmount(0);
+                    setFromAmount('');
+                    setTimeout(() => {
+                        refreshUserBalances();
+                    });
+                } else {
+                    openNotification({
+                        title: t('notifications.error-title'),
+                        description: t('notifications.error-sending-transaction'),
+                        type: "error"
+                    });
+                    setIsUnwrapping(false);
+                }
+            } else { setIsUnwrapping(false); }
+        }
+    }
 
-        <div className="flip-button-container">
-          {/* Flip button */}
-          <div className="flip-button" onClick={flipMintsCallback}>
-            <IconSwapFlip className="mean-svg-icons" />
-          </div>
-          {/* Settings icon */}
-          <span className="flex-fixed-right flex align-items-center pl-3 pr-3">
-            <div className="left flex-row text-left align-items-center">
-              {inputToken &&
-              outputToken &&
-              selectedRoute &&
-              selectedRoute.outAmount ? (
-                <>
-                  <span
-                    className="simplelink underline-on-hover"
-                    onClick={() => setSwapRate(!swapRate)}
-                  >
-                    {swapRate ? (
-                      <>
-                        1 {inputToken.symbol} ≈{' '}
-                        {(
-                          parseFloat(
-                            toUiAmount(
-                              selectedRoute.outAmount,
-                              outputToken.decimals,
-                            ),
-                          ) / inputAmount
-                        ).toFixed(outputToken.decimals)}{' '}
-                        {outputToken.symbol}
-                      </>
-                    ) : (
-                      <>
-                        1 {outputToken.symbol} ≈{' '}
-                        {(
-                          inputAmount /
-                          parseFloat(
-                            toUiAmount(
-                              selectedRoute.outAmount,
-                              outputToken.decimals,
-                            ),
-                          )
-                        ).toFixed(outputToken.decimals)}{' '}
-                        {inputToken.symbol}
-                      </>
-                    )}
-                  </span>
-                  {fromAmount && (
-                    <InfoIcon content={txInfoContent()} placement="bottom">
-                      <InfoCircleOutlined style={{ lineHeight: 0 }} />
-                    </InfoIcon>
-                  )}
-                  {/* Refresh routes */}
-                  <span className="icon-button-container">
-                    {refreshingRoutes || isBusy ? (
-                      <span className="icon-container">
-                        <SyncOutlined spin />
-                      </span>
-                    ) : (
-                      <Tooltip placement="bottom" title="Refresh routes">
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="small"
-                          icon={<ReloadOutlined />}
-                          onClick={() => {
-                            setRefreshingRoutes(true);
-                            refreshRoutes();
-                          }}
-                        />
-                      </Tooltip>
-                    )}
-                  </span>
-                </>
-              ) : (
-                <span>&nbsp;</span>
-              )}
-            </div>
-            <div className="right">
-              <SwapSettings
-                currentValue={slippage}
-                onValueSelected={onSlippageChanged}
-              />
-            </div>
-          </span>
-        </div>
+    const onStartSwapTx = useCallback(async () => {
+        if (!jupiter || !wallet || !selectedRoute || !publicKey) { return; }
 
-        {fromMint && (
-          <JupiterExchangeOutput
-            fromToken={inputToken || undefined}
-            toToken={outputToken || undefined}
-            toTokenBalance={getDisplayOutputTokenBalance()}
-            toTokenAmount={getDisplayOutputTokenAmount()}
-            mintList={mintList}
-            onBalanceClick={() => refreshUserBalances()}
-            onSelectToken={() => {
-              setSubjectTokenSelection('destination');
-              props.inModal ? showDrawer() : showTokenSelector();
-            }}
-            className="mb-2"
-            disabled={!jupiterReady}
-            routes={routes}
-            onSelectedRoute={(route: any) => {
-              consoleOut('onSelectedRoute:', route, 'blue');
-              setSelectedRoute(route);
-            }}
-            isBusy={isBusy || refreshingRoutes || !jupiterReady}
-            showAllRoutes={showFullRoutesList}
-            onToggleShowFullRouteList={onShowLpListToggled}
-          />
-        )}
+        setIsBusy(true);
 
-        {/* Action button */}
-        <Button
-          className={`main-cta ${isBusy ? 'inactive' : ''}`}
-          block
-          type="primary"
-          shape="round"
-          size="large"
-          onClick={onStartSwapTx}
-          disabled={!isExchangeValid() || !isProd() || refreshingRoutes}
-        >
-          {isBusy && (
-            <span className="mr-1">
-              <LoadingOutlined style={{ fontSize: '16px' }} />
-            </span>
-          )}
-          {isBusy ? 'Swapping' : transactionStartButtonLabel}
-        </Button>
+        // Prepare execute exchange
+        const { execute } = await jupiter.exchange({
+            routeInfo: selectedRoute,
+        });
 
-        {/* Warning */}
-        {!isProd() && (
-          <div className="mt-3">
-            <div
-              data-show="true"
-              className="ant-alert ant-alert-warning"
-              role="alert"
-            >
-              <span
-                role="img"
-                aria-label="exclamation-circle"
-                className="anticon anticon-exclamation-circle ant-alert-icon"
-              >
-                <WarningFilled />
-              </span>
-              <div className="ant-alert-content">
-                <div className="ant-alert-message">
-                  {t('swap.exchange-warning')}&nbsp;
-                  <a
-                    className="primary-link"
-                    href={`${
-                      appConfig.getConfig('production').appUrl
-                    }/exchange`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    MAINNET
-                  </a>
-                  <span className="ml-1">
-                    (
-                    <a
-                      className="simplelink underline-on-hover"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href="https://docs.meanfi.com/tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet"
-                    >
-                      Why?
-                    </a>
+        // Execute swap
+        const swapResult: any = await execute({
+            wallet: wallet as SignerWalletAdapter,
+        });
+
+        if (swapResult.error) {
+            console.error(swapResult.error);
+        } else {
+            setInputAmount(0);
+            setFromAmount('');
+            refreshUserBalances();
+        }
+
+        setIsBusy(false);
+
+    }, [
+        wallet,
+        jupiter,
+        publicKey,
+        selectedRoute,
+        refreshUserBalances
+    ]);
+
+    // Validation
+
+    const isExchangeValid = useCallback((): boolean => {
+        let result: boolean;
+
+        if (!publicKey) {
+            result = false;
+        } else if (!inputToken || !fromMint || !toMint) {
+            result = false;
+        } else if (inputAmount === 0) {
+            result = false;
+        } else if (isInAmountTooLow()) {
+            result = false;
+        } else if (inputAmount > getMaxAllowedSwapAmount()) {
+            result = false;
+        } else if (inputAmount > 0 && !selectedRoute) {
+            result = false;
+        } else {
+            result = true;
+        }
+
+        return result;
+    }, [
+        toMint,
+        fromMint,
+        publicKey,
+        inputToken,
+        inputAmount,
+        selectedRoute,
+        isInAmountTooLow,
+        getMaxAllowedSwapAmount
+    ]);
+
+    // Rendering
+    const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
+        return (
+            <>
+                <div className="three-col-info-row">
+                    <div className="left text-right">{caption}</div>
+                    <div className="middle text-center">{separator}</div>
+                    <div className="right text-left">{value}</div>
+                </div>
+            </>
+        );
+    };
+
+    // Info items will draw inside the popover
+    const txInfoContent = () => {
+        return fromMint && toMint && selectedRoute ? (
+            <>
+                {
+                    !refreshingRoutes && inputAmount > 0 && feeInfo && feeInfo.minimumSOLForTransaction === feeInfo.signatureFee && infoRow(
+                        t('transactions.transaction-info.network-transaction-fee'),
+                        `${toUiAmount(feeInfo.signatureFee, sol.decimals)} SOL`
                     )
-                  </span>
-                </div>
-                <div className="ant-alert-description"></div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      {props.inModal && (
-        <Drawer
-          title={t('token-selector.modal-title')}
-          placement="bottom"
-          closable={true}
-          onClose={onCloseTokenSelector}
-          open={isTokenSelectorVisible}
-          getContainer={false}
-          style={{ position: 'absolute' }}
-        >
-          {renderTokenSelectorInner}
-        </Drawer>
-      )}
+                }
+                {
+                    !refreshingRoutes && inputAmount > 0 && feeInfo && feeInfo.minimumSOLForTransaction > feeInfo.signatureFee && infoRow(
+                        t('transactions.transaction-info.minimum-sol-for-transaction'),
+                        `${toUiAmount(feeInfo.minimumSOLForTransaction, sol.decimals)} SOL`
+                    )
+                }
+                {
+                    !refreshingRoutes && inputAmount > 0 && slippage > 0 && infoRow(
+                        t('transactions.transaction-info.slippage'),
+                        `${slippage.toFixed(2)}%`
+                    )
+                }
+                {
+                    !refreshingRoutes && inputAmount > 0 && selectedRoute && infoRow(
+                        t('transactions.transaction-info.price-impact'),
+                        selectedRoute.priceImpactPct * 100 < 0.1
+                            ? '0.1%'
+                            : `${(selectedRoute.priceImpactPct * 100).toFixed(4)}%`,
+                        selectedRoute.priceImpactPct * 100 < 0.1 ? '<' : '≈'
+                    )
+                }
+                {
+                    !refreshingRoutes && inputAmount > 0 && outputToken && infoRow(
+                        t('transactions.transaction-info.minimum-received'),
+                        `${formatThousands(
+                            selectedRoute?.outAmountWithSlippage /
+                            10 ** outputToken.decimals || 1,
+                            outputToken.decimals
+                        )} ${outputToken.symbol}`
+                    )
+                }
+            </>
+        ) : null;
+    }
 
-      {/* Token selection modal */}
-      {!props.inModal && isTokenSelectorModalVisible && (
-        <Modal
-          className="mean-modal unpadded-content"
-          open={isTokenSelectorModalVisible}
-          title={
-            <div className="modal-title">{t('token-selector.modal-title')}</div>
-          }
-          onCancel={onCloseTokenSelector}
-          width={420}
-          footer={null}
-        >
-          {renderTokenSelectorInner}
-        </Modal>
-      )}
-    </>
-  );
+    const renderCommonTokens = () => {
+        return quickTokens.map((token: TokenInfo, index: number) => {
+            const onClick = () => {
+                if (subjectTokenSelection === "source") {
+                    if (!fromMint || fromMint !== token.address) {
+                        setFromMint(token.address);
+                        consoleOut('fromMint:', token.address, 'blue');
+                        const selectedToken = showFromMintList[token.address];
+                        consoleOut('selectedToken:', selectedToken, 'blue');
+                        if (selectedToken) {
+                            refreshUserBalances();
+                        }
+                    }
+                    onCloseTokenSelector();
+                } else {
+                    if (!toMint || toMint !== token.address) {
+                        setToMint(token.address);
+                        consoleOut('toMint:', token.address, 'blue');
+                        const selectedToken = showToMintList[token.address] as TokenInfo;
+                        consoleOut('selectedToken:', selectedToken, 'blue');
+                        if (selectedToken) {
+                            setOutputToken(selectedToken);
+                            refreshUserBalances();
+                        }
+                    }
+                    onCloseTokenSelector();
+                }
+            };
+
+            return (
+                <Button
+                    key={`${index}`}
+                    type="ghost"
+                    shape="round"
+                    size="small"
+                    onClick={onClick}
+                    className="no-stroke">
+                    {token.address === WRAPPED_SOL_MINT_ADDRESS ? (
+                        <TokenDisplay className="inherit-font" mintAddress={token.address} symbol="SOL" onClick={() => { }} />
+                    ) : (
+                        <TokenDisplay className="inherit-font" mintAddress={token.address} onClick={() => { }} />
+                    )}
+                </Button>
+            );
+        })
+    }
+
+    const getSourceTokenListItemClass = (item: TokenInfo) => {
+        if (fromMint && fromMint === item.address) {
+            return 'selected';
+        }
+        const destinationToken = toMint ? showFromMintList[toMint] : undefined;
+        return areSameTokens(item, destinationToken) ? 'disabled' : 'simplelink';
+    }
+
+    const renderTokenBalance = (token: TokenInfo) => {
+        if (publicKey && userBalances && mintList[token.address] && userBalances[token.address]) {
+            if (token.address === WRAPPED_SOL_MINT_ADDRESS) {
+                return formatThousands(nativeBalance, mintList[token.address].decimals);
+            }
+            return formatThousands(userBalances[token.address], mintList[token.address].decimals);
+        }
+        return (<span>&nbsp;</span>);
+    }
+
+    const renderSourceTokenList = (
+        <>
+            {showFromMintList && Object.values(showFromMintList).length ? (
+                Object.values(showFromMintList).map((t: any, index) => {
+                    const token = t as TokenInfo;
+                    const onClick = () => {
+                        if (!fromMint || fromMint !== token.address) {
+                            setFromMint(token.address);
+                            consoleOut('fromMint:', token.address, 'blue');
+                            const selectedToken = showFromMintList[token.address];
+                            consoleOut('selectedToken:', selectedToken, 'blue');
+                            if (selectedToken) {
+                                refreshUserBalances();
+                            }
+                        }
+                        onCloseTokenSelector();
+                    };
+
+                    if (index < MAX_TOKEN_LIST_ITEMS) {
+                        return (
+                            <div
+                                key={index + 100}
+                                onClick={onClick}
+                                className={`token-item ${getSourceTokenListItemClass(token)}`}>
+                                <div className="token-icon">
+                                    {token.logoURI ? (
+                                        <img
+                                            alt={`${token.name}`}
+                                            width={24}
+                                            height={24}
+                                            src={token.logoURI}
+                                        />
+                                    ) : (
+                                        <Identicon
+                                            address={token.address}
+                                            style={{ width: "24", display: "inline-flex" }}
+                                        />
+                                    )}
+                                </div>
+                                <div className="token-description">
+                                    <div className="token-symbol">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'SOL' : token.symbol}</div>
+                                    <div className="token-name m-0">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'Solana' : token.name}</div>
+                                </div>
+                                <div className="token-balance">
+                                    {renderTokenBalance(token)}
+                                </div>
+                            </div>
+                        );
+                    } else {
+                        return null;
+                    }
+                })
+            ) : (
+                <p>{t('token-selector.no-matches')}</p>
+            )}
+        </>
+    );
+
+    const getDestinationTokenListItemClass = (item: TokenInfo) => {
+        if (toMint && toMint === item.address) {
+            return 'selected';
+        }
+        const destinationToken = fromMint ? showToMintList[fromMint] : undefined;
+        return areSameTokens(item, destinationToken) ? 'disabled' : 'simplelink';
+    }
+
+    const renderDestinationTokenList = (
+        <>
+            {showToMintList && Object.values(showToMintList).length ? (
+                Object.values(showToMintList).map((t: any, index) => {
+                    const token = t as TokenInfo;
+                    const onClick = () => {
+                        if (!toMint || toMint !== token.address) {
+                            setToMint(token.address);
+                            consoleOut('toMint:', token.address, 'blue');
+                            const selectedToken = showToMintList[token.address] as TokenInfo;
+                            consoleOut('selectedToken:', selectedToken, 'blue');
+                            if (selectedToken) {
+                                refreshUserBalances();
+                            }
+                        }
+                        onCloseTokenSelector();
+                    };
+
+                    if (index < MAX_TOKEN_LIST_ITEMS) {
+                        return (
+                            <div
+                                key={index + 100}
+                                onClick={onClick}
+                                className={`token-item ${getDestinationTokenListItemClass(token)}`}>
+                                <div className="token-icon">
+                                    {token.logoURI ? (
+                                        <img
+                                            alt={`${token.name}`}
+                                            width={24}
+                                            height={24}
+                                            src={token.logoURI}
+                                        />
+                                    ) : (
+                                        <Identicon
+                                            address={token.address}
+                                            style={{ width: "24", display: "inline-flex" }}
+                                        />
+                                    )}
+                                </div>
+                                <div className="token-description">
+                                    <div className="token-symbol">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'SOL' : token.symbol}</div>
+                                    <div className="token-name m-0">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'Solana' : token.name}</div>
+                                </div>
+                                <div className="token-balance">
+                                    {renderTokenBalance(token)}
+                                </div>
+                            </div>
+                        );
+                    } else {
+                        return null;
+                    }
+                })
+            ) : (
+                <p>{t('token-selector.no-matches')}</p>
+            )}
+        </>
+    );
+
+    const renderTokenSelectorInner = (
+        <div className="token-selector-wrapper">
+            <div className="token-search-wrapper">
+                <TextInput
+                    value={tokenFilter}
+                    allowClear={true}
+                    extraClass="mb-1"
+                    onInputClear={onInputCleared}
+                    placeholder={t('token-selector.exchange-search-input-placeholder')}
+                    onInputChange={onTokenSearchInputChange} />
+            </div>
+            <div className="common-token-shortcuts">
+                {renderCommonTokens()}
+            </div>
+            <Divider />
+            <div className="token-list">
+                {subjectTokenSelection === "source"
+                    ? renderSourceTokenList
+                    : renderDestinationTokenList}
+            </div>
+        </div>
+    );
+
+    const getDisplayInputTokenBalance = () => {
+        if (fromMint && userBalances && mintList[fromMint]) {
+            return (mintList[fromMint] as TokenInfo).address === WRAPPED_SOL_MINT_ADDRESS
+                ? nativeBalance
+                : userBalances[fromMint]
+        }
+
+        return '';
+    }
+
+    const getDisplayOutputTokenBalance = () => {
+        if (toMint && userBalances && mintList[toMint]) {
+            return (mintList[toMint] as TokenInfo).address === WRAPPED_SOL_MINT_ADDRESS
+                ? nativeBalance
+                : userBalances[toMint]
+        }
+
+        return '';
+    }
+
+    const getDisplayOutputTokenAmount = () => {
+        if (isFromSol()) {
+            return fromAmount;
+        }
+        return selectedRoute && outputToken
+            ? toUiAmount(selectedRoute.outAmount, outputToken.decimals)
+            : '';
+    }
+
+    return (
+        <>
+            {wSolBalance > 0 && (
+                <div className="swap-wrapper">
+                    <div className="well mb-1">
+                        <div className="flex-fixed-right align-items-center">
+                            <div className="left">You have {formatThousands(wSolBalance, sol.decimals)} <strong>wrapped SOL</strong> in your wallet. Click to unwrap to native SOL.</div>
+                            <div className="right">
+                                <Button
+                                    type="primary"
+                                    shape="round"
+                                    disabled={isUnwrapping}
+                                    onClick={onStartUnwrapTx}
+                                    size="small">
+                                    {isUnwrapping ? 'Unwrapping SOL' : 'Unwrap SOL'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            <div className="swap-wrapper">
+
+                {/* Source token / amount */}
+                {fromMint && (
+                    <JupiterExchangeInput
+                        token={inputToken}
+                        tokenBalance={getDisplayInputTokenBalance()}
+                        tokenAmount={fromAmount}
+                        onInputChange={handleSwapFromAmountChange}
+                        onMaxAmount={
+                            () => {
+                                const maxFromAmount = getMaxAllowedSwapAmount();
+                                if (toMint && mintList[fromMint] && maxFromAmount > 0) {
+                                    setInputAmount(maxFromAmount);
+                                    const formattedAmount = cutNumber(maxFromAmount, mintList[fromMint].decimals);
+                                    setFromAmount(formattedAmount);
+                                }
+                            }
+                        }
+                        onSelectToken={() => {
+                            setSubjectTokenSelection("source");
+                            props.inModal ? showDrawer() : showTokenSelector();
+                        }}
+                        hint={
+                            inputToken && inputToken.address === WRAPPED_SOL_MINT_ADDRESS
+                                ? t('transactions.validation.minimum-balance-required')
+                                : ''
+                        }
+                        className="mb-0"
+                        disabled={!jupiterReady}
+                        onBalanceClick={() => refreshUserBalances()}
+                    />
+                )}
+
+                {(jupiterReady && inputToken && outputToken && inputAmount && isInAmountTooLow()) ? (
+                    <div className="input-amount-too-low flex-row flex-center">
+                        <InfoCircleOutlined className="font-size-75" />
+                        <span>Minimum swap is at least {toUiAmount(minInAmount || 0, inputToken.decimals)} {inputToken.symbol} for {toUiAmount(minOutAmount || 0, outputToken.decimals)} {outputToken.symbol}</span>
+                    </div>
+                ) : null}
+
+                <div className="flip-button-container">
+                    {/* Flip button */}
+                    <div className="flip-button" onClick={flipMintsCallback}>
+                        <IconSwapFlip className="mean-svg-icons" />
+                    </div>
+                    {/* Settings icon */}
+                    <span className="flex-fixed-right flex align-items-center pl-3 pr-3">
+                        <div className="left flex-row text-left align-items-center">
+                            {
+                                inputToken && outputToken && selectedRoute && selectedRoute.outAmount ? (
+                                    <>
+                                        <span className="simplelink underline-on-hover" onClick={() => setSwapRate(!swapRate)}>
+                                            {swapRate ? (
+                                                <>
+                                                    1 {inputToken.symbol} ≈{' '}
+                                                    {(parseFloat(toUiAmount(selectedRoute.outAmount, outputToken.decimals)) / inputAmount).toFixed(outputToken.decimals)}
+                                                    {' '}
+                                                    {outputToken.symbol}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    1 {outputToken.symbol} ≈{' '}
+                                                    {(inputAmount / parseFloat(toUiAmount(selectedRoute.outAmount, outputToken.decimals))).toFixed(outputToken.decimals)}
+                                                    {' '}
+                                                    {inputToken.symbol}
+                                                </>
+                                            )}
+                                        </span>
+                                        {fromAmount && (
+                                            <InfoIcon content={txInfoContent()} placement="bottom">
+                                                <InfoCircleOutlined style={{ lineHeight: 0 }} />
+                                            </InfoIcon>
+                                        )}
+                                        {/* Refresh routes */}
+                                        <span className="icon-button-container">
+                                            {refreshingRoutes || isBusy ? (
+                                                <span className="icon-container"><SyncOutlined spin /></span>
+                                            ) : (
+                                                <Tooltip placement="bottom" title="Refresh routes">
+                                                    <Button
+                                                        type="default"
+                                                        shape="circle"
+                                                        size="small"
+                                                        icon={<ReloadOutlined />}
+                                                        onClick={() => {
+                                                            setRefreshingRoutes(true);
+                                                            refreshRoutes();
+                                                        }}
+                                                    />
+                                                </Tooltip>
+                                            )}
+                                        </span>
+                                    </>
+                                ) : (<span>&nbsp;</span>)
+                            }
+                        </div>
+                        <div className="right">
+                            <SwapSettings
+                                currentValue={slippage}
+                                onValueSelected={onSlippageChanged}
+                            />
+                        </div>
+                    </span>
+                </div>
+
+                {fromMint && (
+                    <JupiterExchangeOutput
+                        fromToken={inputToken || undefined}
+                        toToken={outputToken || undefined}
+                        toTokenBalance={getDisplayOutputTokenBalance()}
+                        toTokenAmount={getDisplayOutputTokenAmount()}
+                        mintList={mintList}
+                        onBalanceClick={() => refreshUserBalances()}
+                        onSelectToken={() => {
+                            setSubjectTokenSelection("destination");
+                            props.inModal ? showDrawer() : showTokenSelector();
+                        }}
+                        className="mb-2"
+                        disabled={!jupiterReady}
+                        routes={routes}
+                        onSelectedRoute={(route: any) => {
+                            consoleOut('onSelectedRoute:', route, 'blue');
+                            setSelectedRoute(route);
+                        }}
+                        isBusy={isBusy || refreshingRoutes || !jupiterReady}
+                        showAllRoutes={showFullRoutesList}
+                        onToggleShowFullRouteList={onShowLpListToggled}
+                    />
+
+                )}
+
+                {/* Action button */}
+                <Button
+                    className={`main-cta ${isBusy ? 'inactive' : ''}`}
+                    block
+                    type="primary"
+                    shape="round"
+                    size="large"
+                    onClick={onStartSwapTx}
+                    disabled={
+                        !isExchangeValid() ||
+                        !isProd() ||
+                        refreshingRoutes
+                    }>
+                    {isBusy && (
+                        <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                    )}
+                    {isBusy
+                        ? 'Swapping'
+                        : transactionStartButtonLabel
+                    }
+                </Button>
+
+                {/* Warning */}
+                {!isProd() && (
+                    <div className="mt-3">
+                        <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
+                            <span role="img" aria-label="exclamation-circle" className="anticon anticon-exclamation-circle ant-alert-icon">
+                                <WarningFilled />
+                            </span>
+                            <div className="ant-alert-content">
+                                <div className="ant-alert-message">
+                                    {t('swap.exchange-warning')}&nbsp;
+                                    <a className="primary-link" href={`${appConfig.getConfig('production').appUrl}/exchange`} target="_blank" rel="noopener noreferrer">MAINNET</a>
+                                    <span className="ml-1">(<a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer"
+                                        href="https://docs.meanfi.com/tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet">Why?</a>)</span>
+                                </div>
+                                <div className="ant-alert-description"></div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+            </div>
+            {props.inModal && (
+                <Drawer
+                    title={t('token-selector.modal-title')}
+                    placement="bottom"
+                    closable={true}
+                    onClose={onCloseTokenSelector}
+                    open={isTokenSelectorVisible}
+                    getContainer={false}
+                    style={{ position: 'absolute' }}>
+                    {renderTokenSelectorInner}
+                </Drawer>
+            )}
+
+            {/* Token selection modal */}
+            {!props.inModal && isTokenSelectorModalVisible && (
+                <Modal
+                    className="mean-modal unpadded-content"
+                    open={isTokenSelectorModalVisible}
+                    title={
+                        <div className="modal-title">{t('token-selector.modal-title')}</div>
+                    }
+                    onCancel={onCloseTokenSelector}
+                    width={420}
+                    footer={null}>
+                    {renderTokenSelectorInner}
+                </Modal>
+            )}
+        </>
+    );
 };

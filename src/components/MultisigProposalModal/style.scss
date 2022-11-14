@@ -1,4 +1,4 @@
-@mixin select-app($filter, $opacity, $color) {
+@mixin select-app ($filter, $opacity, $color) {
   filter: $filter;
   opacity: $opacity;
   color: $color;
@@ -40,7 +40,7 @@
 
 .step-one-select-app {
   margin: 3em 0 0 0 !important;
-  display: flex;
+  display: flex ;
   justify-content: center;
   .select-app {
     flex: 1 !important;
@@ -62,7 +62,7 @@
         // color: inherit !important;
       }
       &:hover {
-        @include select-app(grayscale(0%), 1, var(--color-white) !important);
+        @include select-app (grayscale(0%), 1, var(--color-white) !important);
       }
     }
   }
@@ -119,14 +119,10 @@
 }
 
 .no-selected-app {
-  @include select-app(
-    grayscale(100%),
-    0.75,
-    var(--color-secondary-alpha-50) !important
-  );
+  @include select-app (grayscale(100%), 0.75, var(--color-secondary-alpha-50) !important);
 }
 .selected-app {
-  @include select-app(grayscale(0%), 1, var(--color-white) !important);
+  @include select-app (grayscale(0%), 1, var(--color-white) !important);
 }
 .paste-input {
   height: 200px !important;

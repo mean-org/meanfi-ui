@@ -15,49 +15,49 @@ export const TreasuryOpenModal = (props: {
 
   const isAddressOwnAccount = useCallback((): boolean => {
     return treasuryId && publicKey && treasuryId === publicKey.toBase58()
-      ? true
-      : false;
-  }, [publicKey, treasuryId]);
+           ? true : false;
+  }, [
+    publicKey,
+    treasuryId
+  ]);
 
   const triggerWindowResize = () => {
     window.dispatchEvent(new Event('resize'));
-  };
+  }
 
   const onAcceptTreasuryId = () => {
     props.handleOk(treasuryId);
     setTimeout(() => {
       setTreasuryId('');
     }, 50);
-  };
+  }
 
   const onTreasuryIdChange = (e: any) => {
     const inputValue = e.target.value as string;
     const trimmedValue = inputValue.trim();
     setTreasuryId(trimmedValue);
-  };
+  }
 
   const onTreasuryIdFocusInOut = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
-  };
+  }
 
   // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
-      const ellipsisElements = document.querySelectorAll(
-        '.overflow-ellipsis-middle',
-      );
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
       if (isValidAddress(treasuryId)) {
         for (const element of ellipsisElements) {
           const e = element as HTMLElement;
-          if (e.offsetWidth < e.scrollWidth) {
+          if (e.offsetWidth < e.scrollWidth){
             const text = e.textContent;
             e.dataset.tail = text?.slice(text.length - NUM_CHARS);
           }
         }
-      } else {
+        } else {
         if (ellipsisElements && ellipsisElements.length > 0) {
           const e = ellipsisElements[0] as HTMLElement;
           e.dataset.tail = '';
@@ -68,7 +68,7 @@ export const TreasuryOpenModal = (props: {
     window.addEventListener('resize', resizeListener);
     return () => {
       window.removeEventListener('resize', resizeListener);
-    };
+    }
   }, [treasuryId]);
 
   const getMainCtaLabel = () => {
@@ -79,31 +79,24 @@ export const TreasuryOpenModal = (props: {
     } else {
       return t('treasuries.open-treasury.main-cta');
     }
-  };
+  }
 
   return (
     <Modal
       className="mean-modal"
-      title={
-        <div className="modal-title">
-          {t('treasuries.open-treasury.modal-title')}
-        </div>
-      }
+      title={<div className="modal-title">{t('treasuries.open-treasury.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={onAcceptTreasuryId}
       onCancel={props.handleClose}
-      width={480}
-    >
-      <div className="form-label">
-        {t('treasuries.open-treasury.treasuryid-input-label')}
-      </div>
+      width={480}>
+
+      <div className="form-label">{t('treasuries.open-treasury.treasuryid-input-label')}</div>
       <div className="well">
         <div className="flex-fixed-right">
           <div className="left position-relative">
             <span className="recipient-field-wrapper">
-              <input
-                id="payment-recipient-field"
+              <input id="payment-recipient-field"
                 className="general-text-input"
                 autoComplete="on"
                 autoCorrect="off"
@@ -111,36 +104,32 @@ export const TreasuryOpenModal = (props: {
                 onFocus={onTreasuryIdFocusInOut}
                 onChange={onTreasuryIdChange}
                 onBlur={onTreasuryIdFocusInOut}
-                placeholder={t(
-                  'treasuries.open-treasury.treasuryid-placeholder',
-                )}
+                placeholder={t('treasuries.open-treasury.treasuryid-placeholder')}
                 required={true}
                 spellCheck="false"
-                value={treasuryId}
-              />
-              <span
-                id="payment-recipient-static-field"
-                className={`${
-                  treasuryId ? 'overflow-ellipsis-middle' : 'placeholder-text'
-                }`}
-              >
-                {treasuryId ||
-                  t('treasuries.open-treasury.treasuryid-placeholder')}
+                value={treasuryId}/>
+              <span id="payment-recipient-static-field"
+                    className={`${treasuryId ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                {treasuryId || t('treasuries.open-treasury.treasuryid-placeholder')}
               </span>
             </span>
           </div>
           <div className="right">&nbsp;</div>
         </div>
-        {treasuryId && !isValidAddress(treasuryId) && (
-          <span className="form-field-error">
-            {t('transactions.validation.address-validation')}
-          </span>
-        )}
-        {isAddressOwnAccount() && (
-          <span className="form-field-error">
-            {t('transactions.validation.cannot-use-own-account-as-treasury')}
-          </span>
-        )}
+        {
+          treasuryId && !isValidAddress(treasuryId) && (
+            <span className="form-field-error">
+              {t('transactions.validation.address-validation')}
+            </span>
+          )
+        }
+        {
+          isAddressOwnAccount() && (
+            <span className="form-field-error">
+              {t('transactions.validation.cannot-use-own-account-as-treasury')}
+            </span>
+          )
+        }
       </div>
 
       <Button
@@ -149,11 +138,8 @@ export const TreasuryOpenModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={
-          !treasuryId || !isValidAddress(treasuryId) || isAddressOwnAccount()
-        }
-        onClick={onAcceptTreasuryId}
-      >
+        disabled={!treasuryId || !isValidAddress(treasuryId) || isAddressOwnAccount()}
+        onClick={onAcceptTreasuryId}>
         {getMainCtaLabel()}
       </Button>
     </Modal>

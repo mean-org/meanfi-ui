@@ -1,4 +1,5 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey } from "@solana/web3.js";
+
 
 export type ProgramAccounts = {
   pubkey: PublicKey;
