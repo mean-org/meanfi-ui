@@ -44,7 +44,6 @@ export const AppLayout = React.memo((props: any) => {
   const {
     theme,
     tpsAvg,
-    previousRoute,
     selectedAccount,
     lastUsedAccount,
     isSelectingAccount,
@@ -55,7 +54,6 @@ export const AppLayout = React.memo((props: any) => {
     refreshTokenBalance,
     setSelectedAccount,
     setDiagnosisInfo,
-    setPreviousRoute,
     setSelectedAsset,
     setStreamList,
     setTpsAvg,
@@ -388,13 +386,6 @@ export const AppLayout = React.memo((props: any) => {
       }
     };
   }, [location.pathname]);
-
-  // Clear accounts state when leaving
-  useEffect(() => {
-    if (location.pathname !== previousRoute) {
-      setPreviousRoute(location.pathname);
-    }
-  }, [location.pathname, previousRoute, setPreviousRoute]);
 
   // Update diagnosis info
   useEffect(() => {
