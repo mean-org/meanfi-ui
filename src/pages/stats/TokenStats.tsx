@@ -1,21 +1,21 @@
-import { useContext, useState } from "react";
+import { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
-import "./style.scss";
-import { data } from "./data";
+import './style.scss';
+import { data } from './data';
 import { consoleOut, copyText } from '../../middleware/ui';
 import { PriceGraph } from './PriceGraph';
 import CardStats from './components/CardStats';
-import { formatThousands, openLinkInNewTab } from "../../middleware/utils";
-import { MEAN_TOKEN } from "../../constants/tokens";
-import { AppStateContext } from "../../contexts/appstate";
-import { openNotification } from "../../components/Notifications";
-import { InfoIcon } from "../../components/InfoIcon";
-import { MEANFI_DOCS_URL } from "constants/common";
+import { formatThousands, openLinkInNewTab } from '../../middleware/utils';
+import { MEAN_TOKEN } from '../../constants/tokens';
+import { AppStateContext } from '../../contexts/appstate';
+import { openNotification } from '../../components/Notifications';
+import { InfoIcon } from '../../components/InfoIcon';
+import { MEANFI_DOCS_URL } from 'constants/common';
 
-export const TokenStats = ({meanStats, smeanSupply, totalVolume24h}: any) => {
+export const TokenStats = ({ meanStats, smeanSupply, totalVolume24h }: any) => {
   return (
     <>
       <FirstCardsLayout />
@@ -39,29 +39,47 @@ export const FirstCardsLayout = () => {
   const summaries = [
     {
       label: t('stats.summary.token-name'),
-      value: `${MEAN_TOKEN.name} (${MEAN_TOKEN.symbol})`
+      value: `${MEAN_TOKEN.name} (${MEAN_TOKEN.symbol})`,
     },
     {
       label: t('stats.summary.token-address'),
       value: MEAN_TOKEN.address,
-      tooltip: "stats.summary.token-address-copy"
+      tooltip: 'stats.summary.token-address-copy',
     },
     {
       label: t('stats.summary.token-decimals'),
-      value: MEAN_TOKEN.decimals
+      value: MEAN_TOKEN.decimals,
     },
     {
       label: t('stats.summary.token-audits'),
-      value: <span>
-        <a href={`${MEANFI_DOCS_URL}mean/products/safety-and-security#audits`}
-            target="_blank" title="CetriK" rel="noreferrer" className="audit-links">
-          <img src="https://www.certik.com/certik-logotype-h-w.svg" alt="CetriK" />
-        </a>
-        <a href={`${MEANFI_DOCS_URL}mean/products/safety-and-security#audits`}
-            target="_blank" title="Sec3" rel="noreferrer" className="audit-links">          
-          <img src="https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg" alt="Sec3" />
-        </a>
+      value: (
+        <span>
+          <a
+            href={`${MEANFI_DOCS_URL}mean/products/safety-and-security#audits`}
+            target="_blank"
+            title="CetriK"
+            rel="noreferrer"
+            className="audit-links"
+          >
+            <img
+              src="https://www.certik.com/certik-logotype-h-w.svg"
+              alt="CetriK"
+            />
+          </a>
+          <a
+            href={`${MEANFI_DOCS_URL}mean/products/safety-and-security#audits`}
+            target="_blank"
+            title="Sec3"
+            rel="noreferrer"
+            className="audit-links"
+          >
+            <img
+              src="https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg"
+              alt="Sec3"
+            />
+          </a>
         </span>
+      ),
     },
   ];
 
@@ -72,20 +90,19 @@ export const FirstCardsLayout = () => {
     if (event.currentTarget.name && copyText(event.currentTarget.name)) {
       openNotification({
         description: t('notifications.account-address-copied-message'),
-        type: "info"
+        type: 'info',
       });
     }
   };
 
   const renderHeadSummary = (
     <div className="ant-card-head-title">
-      <span>{t("stats.summary.summary-title")}</span>
-        <Link to={"/exchange"}>
-          <button
-            className="stats-buy-btn">
-            <span>{t('stats.buy-btn')}</span>
-          </button>
-        </Link>
+      <span>{t('stats.summary.summary-title')}</span>
+      <Link to={'/exchange'}>
+        <button className="stats-buy-btn">
+          <span>{t('stats.buy-btn')}</span>
+        </button>
+      </Link>
     </div>
   );
 
@@ -114,18 +131,18 @@ export const FirstCardsLayout = () => {
         </div>
       ))}
     </>
-  )
+  );
 
   const onCoingeckoMarketPrices = (priceData: any) => {
     if (priceData) {
       consoleOut('priceData:', priceData, 'blue');
       setMeanPrice(parseFloat(priceData));
     }
-  }
+  };
 
   const renderHeadPrice = (
     <div className="ant-card-head-title">
-      <span>{t("stats.price.price-title")}</span>
+      <span>{t('stats.price.price-title')}</span>
       {meanPrice ? (
         <span>$ {formatThousands(meanPrice, 8)}</span>
       ) : (
@@ -135,18 +152,20 @@ export const FirstCardsLayout = () => {
   );
 
   const renderBodyPrice = (
-    <PriceGraph onPriceData={(priceData: any) => onCoingeckoMarketPrices(priceData)} />
+    <PriceGraph
+      onPriceData={(priceData: any) => onCoingeckoMarketPrices(priceData)}
+    />
   );
 
   const cards = [
     {
       header: renderHeadSummary,
-      body: renderBodySummary
+      body: renderBodySummary,
     },
     {
       header: renderHeadPrice,
-      body: renderBodyPrice
-    }
+      body: renderBodyPrice,
+    },
   ];
 
   return (
@@ -154,9 +173,9 @@ export const FirstCardsLayout = () => {
       {cards.map((card, index) => (
         <CardStats
           key={index}
-          xs={24} 
-          sm={24} 
-          md={12} 
+          xs={24}
+          sm={24}
+          md={12}
           lg={12}
           header={card.header}
           body={card.body}
@@ -164,56 +183,56 @@ export const FirstCardsLayout = () => {
         />
       ))}
     </Row>
-  )
-}
+  );
+};
 
 /*********************** SECOND TYPE OF CARDS *************************/
-export const SecondCardsLayout = ({ 
+export const SecondCardsLayout = ({
   meanStats,
   sMeanTotalSupply,
-  totalVolume24h
+  totalVolume24h,
 }: any) => {
   const { t } = useTranslation('common');
   const cards = [
     {
       label: 'stats.market.market-cap-title',
       value: `$ ${formatThousands(meanStats.marketCapFD)}`,
-      description: "stats.market.token-fully_dilluted_market_cap"
+      description: 'stats.market.token-fully_dilluted_market_cap',
     },
     {
       label: 'stats.market.holders-title',
       value: formatThousands(meanStats.holders),
-      description: "stats.market.token-holders"
+      description: 'stats.market.token-holders',
     },
     {
       label: 'stats.market.volume-title',
       value: `$ ${formatThousands(totalVolume24h)}`,
-      description: "stats.market.token-total-volume"
+      description: 'stats.market.token-total-volume',
     },
     {
       label: 'stats.market.total-supply-title',
       value: formatThousands(meanStats.totalSupply),
-      description: "stats.market.token-total-supply"
+      description: 'stats.market.token-total-supply',
     },
     {
       label: 'stats.market.circulating-supply-title',
       value: formatThousands(meanStats.circulatingSupply),
-      description: "stats.market.token-circulating-suppply"
+      description: 'stats.market.token-circulating-suppply',
     },
     {
       label: 'stats.market.total-money-streams-title',
       value: formatThousands(meanStats.tvl.totalStreams),
-      description: "stats.market.token-total-money-streams"
+      description: 'stats.market.token-total-money-streams',
     },
     {
       label: 'stats.market.total-value-locked-title',
       value: `$ ${formatThousands(meanStats.tvl.total)}`,
-      description: "stats.market.token-total-value-locked"
+      description: 'stats.market.token-total-value-locked',
     },
     {
       label: 'staking.panel-right.stats.total-mean-rewards',
       value: `${formatThousands(sMeanTotalSupply)}`,
-      description: "stats.market.token-smean-supply"
+      description: 'stats.market.token-smean-supply',
     },
   ];
 
@@ -224,9 +243,14 @@ export const SecondCardsLayout = ({
           <Card className="ant-card card info-cards">
             <div className="card-body">
               <div className="card-content justify-content-start">
-                <span className="fg-secondary-50 align-middle">{t(card.label)}</span>
+                <span className="fg-secondary-50 align-middle">
+                  {t(card.label)}
+                </span>
                 <span className="fg-secondary-50 font-size-70 align-middle">
-                  <InfoIcon content={<span>{t(card.description)}</span>} placement="top">
+                  <InfoIcon
+                    content={<span>{t(card.description)}</span>}
+                    placement="top"
+                  >
                     <InfoCircleOutlined />
                   </InfoIcon>
                 </span>
@@ -237,8 +261,8 @@ export const SecondCardsLayout = ({
         </Col>
       ))}
     </Row>
-  )
-}
+  );
+};
 
 /*********************** THIRD TYPE OF CARDS *************************/
 export const ThirdCardsLayout = () => {
@@ -251,22 +275,30 @@ export const ThirdCardsLayout = () => {
           <Col xs={12} sm={8} md={6} lg={4} key={index}>
             <Card className="ant-card card slide-card">
               <div className="ant-card-body card-body slide-content">
-                  <div className="slide-content_avatar">
-                    <div className="avatar-coin">
-                      <div className="avatar-coin__content row">
-                        <img src={pair.img1} alt={`${pair.base}/${pair.target}`} />
-                      </div>
-                    </div>
-                    <div className="avatar-coin">
-                      <div className="avatar-coin__content row">
-                        <img src={pair.img2} alt={`${pair.base}/${pair.target}`} />
-                      </div>
+                <div className="slide-content_avatar">
+                  <div className="avatar-coin">
+                    <div className="avatar-coin__content row">
+                      <img
+                        src={pair.img1}
+                        alt={`${pair.base}/${pair.target}`}
+                      />
                     </div>
                   </div>
-                  <div className="slide-content_info">
-                    <span className="info-pair">{pair.base}/{pair.target}</span>
-                    <span className="info-name mb-2">{pair.name}</span>
-                    {/* <div className="info-liquidity mb-3">
+                  <div className="avatar-coin">
+                    <div className="avatar-coin__content row">
+                      <img
+                        src={pair.img2}
+                        alt={`${pair.base}/${pair.target}`}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="slide-content_info">
+                  <span className="info-pair">
+                    {pair.base}/{pair.target}
+                  </span>
+                  <span className="info-name mb-2">{pair.name}</span>
+                  {/* <div className="info-liquidity mb-3">
                       <span>{t('stats.pairs.total-liquidity')}:</span>
                       <span>${formatThousands(pair.total_liquidity)}</span>
                   </div> */}
@@ -276,8 +308,11 @@ export const ThirdCardsLayout = () => {
                     type="default"
                     shape="round"
                     size="small"
-                    onClick={() => openLinkInNewTab(pair.buy)}>
-                    {pair.type === "DEX" ? t('stats.total-liquidity-btn'): t('stats.buy-btn')}
+                    onClick={() => openLinkInNewTab(pair.buy)}
+                  >
+                    {pair.type === 'DEX'
+                      ? t('stats.total-liquidity-btn')
+                      : t('stats.buy-btn')}
                   </Button>
                 </div>
               </div>
@@ -286,5 +321,5 @@ export const ThirdCardsLayout = () => {
         ))}
       </div>
     </Row>
-  )
-}
+  );
+};

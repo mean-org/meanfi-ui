@@ -1,43 +1,65 @@
-import { InfoCircleOutlined, WarningFilled } from "@ant-design/icons";
-import { calculateActionFees as calculateDdcaActionFees, DDCA_ACTIONS, TransactionFees as DdcaTxFees } from '@mean-dao/ddca';
+import { InfoCircleOutlined, WarningFilled } from '@ant-design/icons';
 import {
-  ACCOUNT_LAYOUT, Client, ExchangeInfo, FeesInfo, getClients, HlaInfo, LPClient, NATIVE_SOL_MINT, ORCA,
-  RAYDIUM, SERUM,
-  TokenInfo, TOKENS, USDC_MINT,
+  calculateActionFees as calculateDdcaActionFees,
+  DDCA_ACTIONS,
+  TransactionFees as DdcaTxFees,
+} from '@mean-dao/ddca';
+import {
+  ACCOUNT_LAYOUT,
+  Client,
+  ExchangeInfo,
+  FeesInfo,
+  getClients,
+  HlaInfo,
+  LPClient,
+  NATIVE_SOL_MINT,
+  ORCA,
+  RAYDIUM,
+  SERUM,
+  TokenInfo,
+  TOKENS,
+  USDC_MINT,
   USDT_MINT,
-  WRAPPED_SOL_MINT
-} from "@mean-dao/hybrid-liquidity-ag";
-import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
-import { SABER } from "@mean-dao/hybrid-liquidity-ag/lib/types";
-import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+  WRAPPED_SOL_MINT,
+} from '@mean-dao/hybrid-liquidity-ag';
+import { SerumClient } from '@mean-dao/hybrid-liquidity-ag/lib/serum/types';
+import { SABER } from '@mean-dao/hybrid-liquidity-ag/lib/types';
+import {
+  MSP_ACTIONS,
+  TransactionFees,
+} from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { Button, Col, Modal, Row, Spin } from "antd";
-import { DdcaFrequencySelectorModal } from "components/DdcaFrequencySelectorModal";
-import { DdcaSetupModal } from "components/DdcaSetupModal";
-import { ExchangeInput } from "components/ExchangeInput";
-import { ExchangeOutput } from "components/ExchangeOutput";
-import { Identicon } from "components/Identicon";
-import { InfoIcon } from "components/InfoIcon";
-import { SwapSettings } from "components/SwapSettings";
-import { TextInput } from "components/TextInput";
-import { DEFAULT_SLIPPAGE_PERCENT } from "constants/common";
-import { MEAN_TOKEN_LIST } from "constants/tokens";
-import { useAccountsContext } from "contexts/accounts";
-import { AppStateContext } from "contexts/appstate";
-import { useWallet } from "contexts/wallet";
-import { environment } from "environments/environment";
-import useLocalStorage from "hooks/useLocalStorage";
-import { IconCaretDown, IconSwapFlip } from "Icons";
-import { appConfig } from "index";
-import { consoleOut, getTxPercentFeeAmount, toUsCurrency } from "middleware/ui";
-import { formatThousands, getAmountFromLamports, isValidNumber } from "middleware/utils";
-import { DcaInterval } from "models/ddca-models";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import "./style.scss";
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Button, Col, Modal, Row, Spin } from 'antd';
+import { DdcaFrequencySelectorModal } from 'components/DdcaFrequencySelectorModal';
+import { DdcaSetupModal } from 'components/DdcaSetupModal';
+import { ExchangeInput } from 'components/ExchangeInput';
+import { ExchangeOutput } from 'components/ExchangeOutput';
+import { Identicon } from 'components/Identicon';
+import { InfoIcon } from 'components/InfoIcon';
+import { SwapSettings } from 'components/SwapSettings';
+import { TextInput } from 'components/TextInput';
+import { DEFAULT_SLIPPAGE_PERCENT } from 'constants/common';
+import { MEAN_TOKEN_LIST } from 'constants/tokens';
+import { useAccountsContext } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
+import { environment } from 'environments/environment';
+import useLocalStorage from 'hooks/useLocalStorage';
+import { IconCaretDown, IconSwapFlip } from 'Icons';
+import { appConfig } from 'index';
+import { consoleOut, getTxPercentFeeAmount, toUsCurrency } from 'middleware/ui';
+import {
+  formatThousands,
+  getAmountFromLamports,
+  isValidNumber,
+} from 'middleware/utils';
+import { DcaInterval } from 'models/ddca-models';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import './style.scss';
 
 let inputDebounceTimeout: any;
 
@@ -49,7 +71,7 @@ export const RecurringExchange = (props: {
   endpoint: string;
 }) => {
   const navigate = useNavigate();
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
   const { publicKey, connected } = useWallet();
   const { refreshAccount } = useAccountsContext();
   const {
@@ -61,22 +83,33 @@ export const RecurringExchange = (props: {
     setDdcaOption,
     refreshPrices,
   } = useContext(AppStateContext);
-  
+
   const connection = useMemo(() => props.connection, [props.connection]);
   const [refreshing, setRefreshing] = useState(false);
   const [paramsProcessed, setParamsProcessed] = useState(false);
   // Get them from the localStorage and set defaults if they are not already stored
-  const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
+  const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage(
+    'lastSwapFromMint',
+    USDC_MINT.toBase58(),
+  );
   // Continue normal flow
-  const [fromAmount, setFromAmount] = useState("");
-  const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE_PERCENT);
-  const [tokenFilter, setTokenFilter] = useState("");
-  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
-  const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
+  const [fromAmount, setFromAmount] = useState('');
+  const [slippage, setSlippage] = useLocalStorage(
+    'slippage',
+    DEFAULT_SLIPPAGE_PERCENT,
+  );
+  const [tokenFilter, setTokenFilter] = useState('');
+  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] =
+    useState(false);
+  const [subjectTokenSelection, setSubjectTokenSelection] = useState('source');
   // FEES
   const [txFees, setTxFees] = useState<TransactionFees>();
   const [ddcaTxFees, setdDcaTxFees] = useState<DdcaTxFees>({
-    flatFee: 0, maxBlockchainFee: 0, maxFeePerSwap: 0, percentFee: 0, totalScheduledSwapsFees: 0
+    flatFee: 0,
+    maxBlockchainFee: 0,
+    maxFeePerSwap: 0,
+    percentFee: 0,
+    totalScheduledSwapsFees: 0,
   });
   // AGGREGATOR
   const [fromMint, setFromMint] = useState<string | undefined>();
@@ -88,21 +121,24 @@ export const RecurringExchange = (props: {
   const [userBalances, setUserBalances] = useState<any>();
   const [mintList, setMintList] = useState<any>({});
   const [showFromMintList, setShowFromMintList] = useState<any>({});
-  const [showToMintList, setShowToMintList] = useState<any>({});  
+  const [showToMintList, setShowToMintList] = useState<any>({});
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<any>();
   const [exchangeInfo, setExchangeInfo] = useState<ExchangeInfo>();
   const [refreshTime, setRefreshTime] = useState(0);
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
-  const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
+  const [transactionStartButtonLabel, setTransactionStartButtonLabel] =
+    useState('');
   const [renderCount, setRenderCount] = useState(0);
   const [showLpList] = useState(false);
   const [hlaInfo, setHlaInfo] = useState<HlaInfo>();
-  const [defaultDdcaOption] = useState("Repeat weekly");
+  const [defaultDdcaOption] = useState('Repeat weekly');
 
   // Set fromMint & toMint from query string if params are provided
   useEffect(() => {
-    if (paramsProcessed) { return; }
+    if (paramsProcessed) {
+      return;
+    }
 
     setParamsProcessed(true);
 
@@ -114,112 +150,104 @@ export const RecurringExchange = (props: {
         setToMint(props.queryToMint);
       }
     } else if (!props.queryFromMint && !props.queryToMint) {
-      const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
+      const from = MEAN_TOKEN_LIST.filter(
+        t => t.chainId === 101 && t.symbol === 'USDC',
+      );
       if (from && from.length) {
         setFromMint(from[0].address);
       }
-      const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
+      const to = MEAN_TOKEN_LIST.filter(
+        t => t.chainId === 101 && t.symbol === 'MEAN',
+      );
       if (to && to.length) {
         setToMint(to[0].address);
       }
     }
-  },[
-    paramsProcessed,
-    props.queryToMint,
-    props.queryFromMint
-  ]);
+  }, [paramsProcessed, props.queryToMint, props.queryFromMint]);
 
   // DDCA Option selector modal
-  const [isDdcaOptionSelectorModalVisible, setDdcaOptionSelectorModalVisibility] = useState(false);
-  const showDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(true), []);
-  const onCloseDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(false), []);
+  const [
+    isDdcaOptionSelectorModalVisible,
+    setDdcaOptionSelectorModalVisibility,
+  ] = useState(false);
+  const showDdcaOptionSelector = useCallback(
+    () => setDdcaOptionSelectorModalVisibility(true),
+    [],
+  );
+  const onCloseDdcaOptionSelector = useCallback(
+    () => setDdcaOptionSelectorModalVisibility(false),
+    [],
+  );
 
   // DDCA Setup modal
-  const [isDdcaSetupModalVisible, setDdcaSetupModalVisibility] = useState(false);
+  const [isDdcaSetupModalVisible, setDdcaSetupModalVisibility] =
+    useState(false);
 
   const showDdcaSetup = useCallback(() => {
-
-    if (!selectedClient || !exchangeInfo) { return; }
+    if (!selectedClient || !exchangeInfo) {
+      return;
+    }
 
     const hlaInfo: HlaInfo = {
-      exchangeRate: exchangeInfo.outPrice as number || 0,
+      exchangeRate: (exchangeInfo.outPrice as number) || 0,
       protocolFees: exchangeInfo.protocolFees || 0,
       aggregatorPercentFees: 0.05,
-      remainingAccounts: selectedClient.accounts
+      remainingAccounts: selectedClient.accounts,
     };
 
     setHlaInfo(hlaInfo);
     setDdcaSetupModalVisibility(true);
-    
-  }, [
-    selectedClient, 
-    exchangeInfo
-  ]);
+  }, [selectedClient, exchangeInfo]);
 
   const onFinishedDdca = useCallback(() => {
-    setFromAmount("");
+    setFromAmount('');
     setFromSwapAmount(0);
     setDdcaSetupModalVisibility(false);
     navigate('/exchange-dcas');
   }, [navigate]);
 
-  const onDdcaSetupModalClosed = useCallback((shouldReload = false) => {
-    setDdcaSetupModalVisibility(false);
-    if (shouldReload) {
-      props.onRefreshRequested();
-    }
-  }, [props]);
+  const onDdcaSetupModalClosed = useCallback(
+    (shouldReload = false) => {
+      setDdcaSetupModalVisibility(false);
+      if (shouldReload) {
+        props.onRefreshRequested();
+      }
+    },
+    [props],
+  );
 
   const isWrap = useCallback(() => {
-
-    return (
-      fromMint !== undefined &&
+    return fromMint !== undefined &&
       toMint !== undefined &&
-      fromMint === NATIVE_SOL_MINT.toBase58() && 
+      fromMint === NATIVE_SOL_MINT.toBase58() &&
       toMint === WRAPPED_SOL_MINT.toBase58()
-
-    ) ? true : false;
-
-  },[
-    fromMint, 
-    toMint
-  ]);
+      ? true
+      : false;
+  }, [fromMint, toMint]);
 
   const isUnwrap = useCallback(() => {
-
-    return (
-      fromMint !== undefined &&
+    return fromMint !== undefined &&
       toMint !== undefined &&
-      fromMint === WRAPPED_SOL_MINT.toBase58() && 
+      fromMint === WRAPPED_SOL_MINT.toBase58() &&
       toMint === NATIVE_SOL_MINT.toBase58()
+      ? true
+      : false;
+  }, [fromMint, toMint]);
 
-    ) ? true : false;
+  const isStableSwap = (from: string | undefined, to: string | undefined) => {
+    if (!from || !to) {
+      return false;
+    }
 
-  },[
-    fromMint, 
-    toMint
-  ]);
-
-  const isStableSwap = (
-    from: string | undefined,
-    to: string | undefined
-
-  ) => {
-
-    if (!from || !to) { return false; }
-
-    const usdStables = [
-      USDC_MINT.toBase58(), 
-      USDT_MINT.toBase58()
-    ];
+    const usdStables = [USDC_MINT.toBase58(), USDT_MINT.toBase58()];
 
     if (usdStables.includes(from) && usdStables.includes(to)) {
       return true;
     }
 
     const solStables = [
-      NATIVE_SOL_MINT.toBase58(), 
-      WRAPPED_SOL_MINT.toBase58()
+      NATIVE_SOL_MINT.toBase58(),
+      WRAPPED_SOL_MINT.toBase58(),
     ];
 
     if (solStables.includes(from) && solStables.includes(to)) {
@@ -231,7 +259,6 @@ export const RecurringExchange = (props: {
 
   // Calculates the max allowed amount to swap
   const getMaxAllowedSwapAmount = useCallback(() => {
-
     if (!fromMint || !toMint || !fromBalance || !userBalances || !feesInfo) {
       return 0;
     }
@@ -246,26 +273,14 @@ export const RecurringExchange = (props: {
     }
 
     return maxAmount;
-    
-  }, [
-    feesInfo, 
-    fromBalance, 
-    fromMint, 
-    toMint, 
-    userBalances
-  ]);
+  }, [feesInfo, fromBalance, fromMint, toMint, userBalances]);
 
   const updateRenderCount = useCallback(() => {
-
     setRenderCount(renderCount + 1);
-
-  },[
-    renderCount
-  ]);
+  }, [renderCount]);
 
   // Automatically updates if the balance is valid
   const isValidBalance = useCallback(() => {
-
     if (!connection || !connected || !fromMint || !feesInfo || !userBalances) {
       return false;
     }
@@ -276,37 +291,22 @@ export const RecurringExchange = (props: {
     if (isWrap() || fromMint !== NATIVE_SOL_MINT.toBase58()) {
       valid = balance >= feesInfo.network;
     } else {
-      valid = balance >= (feesInfo.total + feesInfo.network);
+      valid = balance >= feesInfo.total + feesInfo.network;
     }
 
     return valid;
-
-  }, [
-    connected, 
-    connection, 
-    feesInfo, 
-    fromMint, 
-    isWrap, 
-    userBalances
-  ]);
+  }, [connected, connection, feesInfo, fromMint, isWrap, userBalances]);
 
   // Automatically updates if the swap amount is valid
   const isSwapAmountValid = useCallback(() => {
-
     if (!connection || !connected) {
       return false;
     }
 
     const maxFromAmount = getMaxAllowedSwapAmount();
-    
-    return fromSwapAmount > 0 && fromSwapAmount <= maxFromAmount;
 
-  }, [
-    connected, 
-    connection, 
-    fromSwapAmount, 
-    getMaxAllowedSwapAmount
-  ]);
+    return fromSwapAmount > 0 && fromSwapAmount <= maxFromAmount;
+  }, [connected, connection, fromSwapAmount, getMaxAllowedSwapAmount]);
 
   // Refresh native account upon entering view
   useEffect(() => {
@@ -320,84 +320,67 @@ export const RecurringExchange = (props: {
 
   // Set the default DDCA option
   useEffect(() => {
-
     if (!ddcaOption || ddcaOption.name !== defaultDdcaOption) {
       return;
     }
 
     const timeout = setTimeout(() => {
-
       setDdcaOption(ddcaOption.name);
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  },[
-    ddcaOption,
-    defaultDdcaOption,
-    setDdcaOption
-  ]);
+    };
+  }, [ddcaOption, defaultDdcaOption, setDdcaOption]);
 
   // Automatically updates the user account
   useEffect(() => {
-
     if (!connection) {
       return;
     }
 
-    if (!connected || !publicKey) { return; }
-    
-    const timeout = setTimeout(() => {
+    if (!connected || !publicKey) {
+      return;
+    }
 
+    const timeout = setTimeout(() => {
       const error = (_error: any) => {
         console.error(_error);
-        throw(_error);
+        throw _error;
       };
       const success = (info: any) => {
         console.info('user', info);
         setUserAccount(info);
       };
 
-      connection.getAccountInfo(publicKey)
+      connection
+        .getAccountInfo(publicKey)
         .then((accInfo: any) => success(accInfo))
         .catch(_error => error(_error));
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  },[
-    connected, 
-    connection, 
-    publicKey,
-    renderCount
-  ]);
+    };
+  }, [connected, connection, publicKey, renderCount]);
 
   // Get Tx fees
   useEffect(() => {
-
     if (!connection) {
       return;
     }
 
     const timeout = setTimeout(() => {
+      const action =
+        isWrap() || isUnwrap() ? MSP_ACTIONS.wrap : MSP_ACTIONS.swap;
 
-      const action = isWrap() || isUnwrap()
-        ? MSP_ACTIONS.wrap 
-        : MSP_ACTIONS.swap;
-      
       const success = (fees: TransactionFees) => {
         setTxFees(fees);
       };
 
       const error = (_error: any) => {
         console.error(_error);
-        throw(_error);
+        throw _error;
       };
 
       calculateActionFees(connection, action)
@@ -407,17 +390,11 @@ export const RecurringExchange = (props: {
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  }, [
-    connection, 
-    isWrap, 
-    isUnwrap
-  ]);
+    };
+  }, [connection, isWrap, isUnwrap]);
 
   // Get DDCA Tx fees
   useEffect(() => {
-
     if (!connection) {
       return;
     }
@@ -430,26 +407,23 @@ export const RecurringExchange = (props: {
         })
         .catch((_error: any) => {
           console.error(_error);
-          throw(_error);
+          throw _error;
         });
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  }, [
-    connection
-  ]);
+    };
+  }, [connection]);
 
   // Token map for quick lookup.
   useEffect(() => {
-
-    if (!TOKENS) { return; }
+    if (!TOKENS) {
+      return;
+    }
 
     const timeout = setTimeout(() => {
-
-      const list: any = { };
+      const list: any = {};
 
       //TODO: Remove token filtering when HLA program implementation covers all tokens
       for (const info of TOKENS) {
@@ -462,55 +436,44 @@ export const RecurringExchange = (props: {
       setMintList(list);
       setShowFromMintList(list);
       setShowToMintList(list);
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
+    };
   }, []);
 
   // Updates the amounts when is wrap or unwrap
-  useEffect(() => { 
-
-    if ((!isWrap() && !isUnwrap()) || !txFees) { return; }
+  useEffect(() => {
+    if ((!isWrap() && !isUnwrap()) || !txFees) {
+      return;
+    }
 
     const timeout = setTimeout(() => {
-
       const exchange = {
         amountIn: fromSwapAmount,
         amountOut: fromSwapAmount,
         minAmountOut: fromSwapAmount,
         outPrice: 1,
-        priceImpact: 0.00,
+        priceImpact: 0.0,
         networkFees: txFees.blockchainFee,
-        protocolFees: 0
-
+        protocolFees: 0,
       } as ExchangeInfo;
 
       consoleOut('exchange', exchange);
 
       setExchangeInfo(exchange);
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  }, [
-    isUnwrap, 
-    isWrap, 
-    fromSwapAmount, 
-    txFees
-  ]);
+    };
+  }, [isUnwrap, isWrap, fromSwapAmount, txFees]);
 
   // Automatically reset and refresh the counter to update exchange info
   useEffect(() => {
-
     if (!connection || !fromMint || !toMint || !refreshTime) {
-      return; 
+      return;
     }
 
     const timeout = setTimeout(() => {
@@ -519,24 +482,25 @@ export const RecurringExchange = (props: {
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  },[
-    connection, 
-    fromMint, 
-    refreshTime, 
-    toMint
-  ]);
+    };
+  }, [connection, fromMint, refreshTime, toMint]);
 
   // Automatically updates the exchange info
   useEffect(() => {
-
-    if (!connection || !fromMint || !toMint || !txFees || !selectedClient || !selectedClient.exchange || isWrap() || isUnwrap()) { 
-      return; 
+    if (
+      !connection ||
+      !fromMint ||
+      !toMint ||
+      !txFees ||
+      !selectedClient ||
+      !selectedClient.exchange ||
+      isWrap() ||
+      isUnwrap()
+    ) {
+      return;
     }
-    
-    const timeout = setTimeout(() => {
 
+    const timeout = setTimeout(() => {
       const aggregatorFees = getTxPercentFeeAmount(txFees, fromSwapAmount);
       let amount = fromSwapAmount - aggregatorFees;
 
@@ -545,8 +509,8 @@ export const RecurringExchange = (props: {
       }
 
       const price = selectedClient.exchange.outPrice || 0;
-      const outAmount = (price * amount);
-      const minOutAmount = outAmount * (100 - slippage) / 100;
+      const outAmount = price * amount;
+      const minOutAmount = (outAmount * (100 - slippage)) / 100;
 
       setExchangeInfo({
         fromAmm: selectedClient.exchange.fromAmm,
@@ -556,33 +520,29 @@ export const RecurringExchange = (props: {
         outPrice: price,
         priceImpact: selectedClient.exchange.priceImpact,
         networkFees: selectedClient.exchange.networkFees,
-        protocolFees: selectedClient.exchange.protocolFees
-
+        protocolFees: selectedClient.exchange.protocolFees,
       } as ExchangeInfo);
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
+    };
   }, [
-    connection, 
+    connection,
     fromMint,
     fromBalance,
-    fromSwapAmount, 
-    isUnwrap, 
-    isWrap, 
-    slippage, 
+    fromSwapAmount,
+    isUnwrap,
+    isWrap,
+    slippage,
     toMint,
     mintList,
     txFees,
-    selectedClient
+    selectedClient,
   ]);
 
   // Automatically updates the fees info
   useEffect(() => {
-
     if (!connection) {
       return;
     }
@@ -592,116 +552,117 @@ export const RecurringExchange = (props: {
     }
 
     const timeout = setTimeout(() => {
-
       const aggregatorFees = getTxPercentFeeAmount(txFees, fromSwapAmount);
       const fees = {
         aggregator: aggregatorFees,
         protocol: exchangeInfo.protocolFees,
         network: exchangeInfo.networkFees,
-        total: isWrap() || isUnwrap() ? 0: aggregatorFees + exchangeInfo.protocolFees
-
+        total:
+          isWrap() || isUnwrap()
+            ? 0
+            : aggregatorFees + exchangeInfo.protocolFees,
       } as FeesInfo;
 
       setFeesInfo(fees);
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  },[
-    connection, 
-    exchangeInfo, 
-    fromSwapAmount, 
-    fromMint, 
-    isUnwrap, 
-    isWrap, 
-    toMint, 
-    txFees
+    };
+  }, [
+    connection,
+    exchangeInfo,
+    fromSwapAmount,
+    fromMint,
+    isUnwrap,
+    isWrap,
+    toMint,
+    txFees,
   ]);
-  
+
   // Updates clients
   useEffect(() => {
-
     let timeout: any;
 
-    if (!connection || !fromMint || !toMint || isWrap() || isUnwrap() || refreshTime) {
-      timeout = setTimeout(() => setRefreshing(false)); 
+    if (
+      !connection ||
+      !fromMint ||
+      !toMint ||
+      isWrap() ||
+      isUnwrap() ||
+      refreshTime
+    ) {
+      timeout = setTimeout(() => setRefreshing(false));
     } else {
-
       timeout = setTimeout(() => {
-
         const error = (_error: any) => {
           console.error(_error);
           setSelectedClient(undefined);
           setExchangeInfo(undefined);
-          setRefreshing(false); 
+          setRefreshing(false);
         };
-  
+
         const success = (clients: Client[] | null) => {
-  
           if (!clients || clients.length === 0) {
-            error(new Error("Client not found"));
+            error(new Error('Client not found'));
             setSelectedClient(undefined);
             setExchangeInfo(undefined);
             return;
           }
-  
+
           //TODO: Remove clients filtering when HLA program implementation covers every client
-          clients = clients.filter(c => c.protocol.equals(ORCA) || c.protocol.equals(RAYDIUM) || c.protocol.equals(SABER));
+          clients = clients.filter(
+            c =>
+              c.protocol.equals(ORCA) ||
+              c.protocol.equals(RAYDIUM) ||
+              c.protocol.equals(SABER),
+          );
           setClients(clients);
           consoleOut('clients', clients, 'blue');
           const client = clients[0].protocol.equals(SERUM)
-            ? clients[0] as SerumClient 
-            : clients[0] as LPClient;
-  
+            ? (clients[0] as SerumClient)
+            : (clients[0] as LPClient);
+
           setSelectedClient(client);
           setRefreshing(false);
           setRefreshTime(30);
         };
-  
-        getClients(
-          connection, 
-          fromMint, 
-          toMint
-        )
-        .then((clients: Client[] | null) => success(clients))
-        .catch((_error: any) => error(_error));
-  
+
+        getClients(connection, fromMint, toMint)
+          .then((clients: Client[] | null) => success(clients))
+          .catch((_error: any) => error(_error));
       });
     }
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  },[
-    connection, 
-    fromMint, 
-    isUnwrap, 
-    isWrap, 
+    };
+  }, [
+    connection,
+    fromMint,
+    isUnwrap,
+    isWrap,
     toMint,
     refreshTime,
-    fromSwapAmount
+    fromSwapAmount,
   ]);
 
   // Automatically update all tokens balance
   useEffect(() => {
-
     if (!connection) {
       return;
     }
-    
+
     if (!connected || !publicKey || !mintList) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      
       const balancesMap: any = {};
 
-      balancesMap[NATIVE_SOL_MINT.toBase58()] = userAccount ? (userAccount.lamports / LAMPORTS_PER_SOL) : 0;
+      balancesMap[NATIVE_SOL_MINT.toBase58()] = userAccount
+        ? userAccount.lamports / LAMPORTS_PER_SOL
+        : 0;
 
       const tokens = Object.values(mintList)
         .filter((t: any) => t.symbol !== 'SOL')
@@ -720,89 +681,72 @@ export const RecurringExchange = (props: {
           const address = decoded.mint.toBase58();
 
           if (mintList[address]) {
-            balancesMap[address] = decoded.amount.toNumber() / (10 ** mintList[address].decimals);
+            balancesMap[address] =
+              decoded.amount.toNumber() / 10 ** mintList[address].decimals;
           } else {
             balancesMap[address] = 0;
           }
         }
-        
+
         setUserBalances(balancesMap);
       };
 
-      const promise = connection.getTokenAccountsByOwner(
-        publicKey, { programId: TOKEN_PROGRAM_ID }
-      );
-        
+      const promise = connection.getTokenAccountsByOwner(publicKey, {
+        programId: TOKEN_PROGRAM_ID,
+      });
+
       promise
         .then((response: any) => success(response))
         .catch((_error: any) => error(_error, tokens));
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  }, [
-    connected, 
-    connection, 
-    mintList, 
-    publicKey, 
-    userAccount
-  ]);
+    };
+  }, [connected, connection, mintList, publicKey, userAccount]);
 
   // Automatically update from token balance once
   useEffect(() => {
-
     if (!connection) {
       return;
     }
-    
+
     if (!connected || !fromMint || !userBalances) {
       setFromBalance('0');
       return;
     }
 
     const timeout = setTimeout(() => {
-
       let balance = 0;
 
       if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-        balance = !userAccount ? 0 : getAmountFromLamports(userAccount.lamports);
+        balance = !userAccount
+          ? 0
+          : getAmountFromLamports(userAccount.lamports);
       } else {
         balance = userBalances[fromMint] ? userBalances[fromMint] : 0;
       }
 
       setFromBalance(balance.toString());
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  }, [
-    connected, 
-    connection, 
-    fromMint, 
-    userAccount, 
-    userBalances
-  ]);
+    };
+  }, [connected, connection, fromMint, userAccount, userBalances]);
 
   // Automatically update to token balance once
   useEffect(() => {
-
     if (!connection) {
       return;
     }
-    
+
     if (!connected || !userAccount || !userBalances || !toMint) {
       setToBalance('0');
       return;
     }
 
     const timeout = setTimeout(() => {
-
       let balance = 0;
 
       if (toMint === NATIVE_SOL_MINT.toBase58()) {
@@ -812,24 +756,15 @@ export const RecurringExchange = (props: {
       }
 
       setToBalance(balance.toString());
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  }, [
-    connected, 
-    connection, 
-    toMint, 
-    userAccount, 
-    userBalances
-  ]);
+    };
+  }, [connected, connection, toMint, userAccount, userBalances]);
 
   // Hook on the wallet connect/disconnect
   useEffect(() => {
-
     if (previousWalletConnectState === connected) {
       return;
     }
@@ -850,83 +785,77 @@ export const RecurringExchange = (props: {
       }
     });
 
-    return () => { 
+    return () => {
       clearTimeout(timeout);
     };
-
   }, [
-    connected, 
+    connected,
     fromMint,
     toMint,
-    lastSwapFromMint, 
-    previousWalletConnectState, 
-    setLastSwapFromMint, 
-    setPreviousWalletConnectState
+    lastSwapFromMint,
+    previousWalletConnectState,
+    setLastSwapFromMint,
+    setPreviousWalletConnectState,
   ]);
 
-  // Updates the allowed to mints to select 
+  // Updates the allowed to mints to select
   useEffect(() => {
-
-    if (!fromMint || !mintList) { return; }
+    if (!fromMint || !mintList) {
+      return;
+    }
 
     const timeout = setTimeout(() => {
       setShowToMintList(mintList);
     });
 
-    return () => { 
+    return () => {
       clearTimeout(timeout);
-    }
+    };
+  }, [fromMint, toMint, mintList]);
 
-  },[
-    fromMint,
-    toMint,
-    mintList
-  ]);
-
-  // Updates the allowed from mints to select 
+  // Updates the allowed from mints to select
   useEffect(() => {
-
-    if (!toMint || !mintList) { return; }
+    if (!toMint || !mintList) {
+      return;
+    }
 
     const timeout = setTimeout(() => {
       setShowFromMintList(mintList);
     });
 
-    return () => { 
+    return () => {
       clearTimeout(timeout);
-    }
-
-  },[
-    fromMint,
-    toMint,
-    mintList
-  ]);
+    };
+  }, [fromMint, toMint, mintList]);
 
   // Updates the label of the Swap button
   useEffect(() => {
-
     if (!connection) {
       return;
     }
 
     const timeout = setTimeout(() => {
-
       let label: string;
 
       if (!connected) {
         label = t('transactions.validation.not-connected');
       } else if (!fromMint || !toMint) {
         label = t('transactions.validation.invalid-exchange');
-      } else if ((!selectedClient || !exchangeInfo || !feesInfo) && !isWrap() && !isUnwrap()) {
+      } else if (
+        (!selectedClient || !exchangeInfo || !feesInfo) &&
+        !isWrap() &&
+        !isUnwrap()
+      ) {
         label = t('transactions.validation.exchange-unavailable');
-      } else if(!isValidBalance()) {
-
+      } else if (!isValidBalance()) {
         let needed = 0;
 
         if (isWrap()) {
           needed = feesInfo?.network || 0;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-          needed = fromSwapAmount + (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
+          needed =
+            fromSwapAmount +
+            (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
         } else {
           needed = feesInfo?.network || 0;
         }
@@ -937,29 +866,38 @@ export const RecurringExchange = (props: {
           needed = parseFloat(needed.toFixed(9));
         }
 
-        label = t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(needed, 4) });
-
+        label = t('transactions.validation.insufficient-balance-needed', {
+          balance: formatThousands(needed, 4),
+        });
       } else if (fromSwapAmount === 0) {
         label = t('transactions.validation.no-amount');
       } else if (!isSwapAmountValid()) {
-
         let needed = 0;
         const fromSymbol = mintList[fromMint].symbol;
-        const isFromSerum = selectedClient && selectedClient.protocol.equals(SERUM);
+        const isFromSerum =
+          selectedClient && selectedClient.protocol.equals(SERUM);
         const exchange = !exchangeInfo ? selectedClient.exchange : exchangeInfo;
 
         if (isFromSerum) {
-          const from = fromMint === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : fromMint;
+          const from =
+            fromMint === NATIVE_SOL_MINT.toBase58()
+              ? WRAPPED_SOL_MINT.toBase58()
+              : fromMint;
           if (selectedClient.market.baseMintAddress.toBase58() === from) {
-            needed = selectedClient.market.minOrderSize + (feesInfo?.protocol || 0);
+            needed =
+              selectedClient.market.minOrderSize + (feesInfo?.protocol || 0);
           } else {
-            needed = selectedClient.market.minOrderSize / (exchange.outPrice || 1) + (feesInfo?.protocol || 0);
+            needed =
+              selectedClient.market.minOrderSize / (exchange.outPrice || 1) +
+              (feesInfo?.protocol || 0);
           }
         } else {
           if (isWrap()) {
             needed = fromSwapAmount + (feesInfo?.network || 0);
           } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-            needed = fromSwapAmount + (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
+            needed =
+              fromSwapAmount +
+              (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
           } else {
             needed = fromSwapAmount + (feesInfo?.total || 0);
           }
@@ -974,144 +912,121 @@ export const RecurringExchange = (props: {
         if (needed === 0) {
           label = t('transactions.validation.amount-low');
         } else if (!isFromSerum) {
-          label = t('transactions.validation.insufficient-amount-needed', { 
-            amount: needed.toString(), 
-            symbol: fromSymbol 
+          label = t('transactions.validation.insufficient-amount-needed', {
+            amount: needed.toString(),
+            symbol: fromSymbol,
           });
         } else {
           const balance = parseFloat(fromBalance);
-          if (fromSwapAmount > (balance - (feesInfo?.network || 0))) {
-            label = t('transactions.validation.insufficient-amount-needed', { 
-              amount: fromSwapAmount.toString(), 
-              symbol: fromSymbol 
+          if (fromSwapAmount > balance - (feesInfo?.network || 0)) {
+            label = t('transactions.validation.insufficient-amount-needed', {
+              amount: fromSwapAmount.toString(),
+              symbol: fromSymbol,
             });
           } else {
-            label = t('transactions.validation.minimum-swap-amount', { 
+            label = t('transactions.validation.minimum-swap-amount', {
               mintAmount: needed.toString(),
-              fromMint: fromSymbol
+              fromMint: fromSymbol,
             });
           }
         }
-
-      } else {    
+      } else {
         label = t('transactions.validation.valid-ddca-review');
       }
 
       setTransactionStartButtonLabel(label);
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
+    };
   }, [
-    t, 
+    t,
     exchangeInfo,
     selectedClient,
     fromBalance,
-    ddcaOption?.dcaInterval, 
-    connected, 
-    connection, 
-    feesInfo, 
-    fromSwapAmount, 
-    fromMint, 
-    isUnwrap, 
-    isWrap, 
-    getMaxAllowedSwapAmount, 
-    mintList, 
-    toMint, 
-    isValidBalance, 
-    isSwapAmountValid
+    ddcaOption?.dcaInterval,
+    connected,
+    connection,
+    feesInfo,
+    fromSwapAmount,
+    fromMint,
+    isUnwrap,
+    isWrap,
+    getMaxAllowedSwapAmount,
+    mintList,
+    toMint,
+    isValidBalance,
+    isSwapAmountValid,
   ]);
 
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback(() => {
-
     if (!connection) {
       return;
     }
 
-    if (!mintList) { return; }
+    if (!mintList) {
+      return;
+    }
 
     const timeout = setTimeout(() => {
-
       const filter = (t: any) => {
         return (
           t.symbol.toLowerCase().includes(tokenFilter.toLowerCase()) ||
           t.name.toLowerCase().includes(tokenFilter.toLowerCase()) ||
           t.address.toLowerCase().includes(tokenFilter.toLowerCase())
         );
-      };      
-      
-      if (subjectTokenSelection === 'source') {
+      };
 
-        const showFromList = !tokenFilter 
+      if (subjectTokenSelection === 'source') {
+        const showFromList = !tokenFilter
           ? mintList
-          : Object.values(mintList)
-            .filter((t: any) => filter(t));
+          : Object.values(mintList).filter((t: any) => filter(t));
 
         setShowFromMintList(showFromList);
+      }
 
-      } 
-      
       if (subjectTokenSelection === 'destination') {
-
-        const showToList = !tokenFilter 
-          ? mintList 
-          : Object.values(mintList)
-            .filter((t: any) => filter(t));
+        const showToList = !tokenFilter
+          ? mintList
+          : Object.values(mintList).filter((t: any) => filter(t));
 
         setShowToMintList(showToList);
       }
-
     });
 
-    return () => { 
+    return () => {
       clearTimeout(timeout);
-    }
-    
-  }, [
-    connection,
-    tokenFilter, 
-    subjectTokenSelection, 
-    mintList
-  ]);
+    };
+  }, [connection, tokenFilter, subjectTokenSelection, mintList]);
 
   // Token selection modal
   const showTokenSelector = useCallback(() => {
-
-    const timeout =setTimeout(() => {
-
+    const timeout = setTimeout(() => {
       setTokenSelectorModalVisibility(true);
-      const input = document.getElementById("token-search-input");
+      const input = document.getElementById('token-search-input');
 
       if (input) {
         input.focus();
       }
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
+    };
   }, []);
 
   // Token selection modal close
   const onCloseTokenSelector = useCallback(() => {
-    
     const timeout = setTimeout(() => {
-
       setTokenSelectorModalVisibility(false);
       setTokenFilter('');
-
     });
 
     return () => {
       clearTimeout(timeout);
-    }
-
+    };
   }, []);
 
   const debounceInputOnChange = (value: string) => {
@@ -1120,56 +1035,58 @@ export const RecurringExchange = (props: {
       consoleOut('input ====>', value, 'orange');
       setFromSwapAmount(parseFloat(value));
     }, 500);
-  }
+  };
 
   // Event handling
-  const handleSwapFromAmountChange = useCallback((e: any) => {
+  const handleSwapFromAmountChange = useCallback(
+    (e: any) => {
+      let newValue = e.target.value;
 
-    let newValue = e.target.value;
-
-    const decimals = fromMint && mintList ? (mintList[fromMint] as TokenInfo).decimals : 0;
-    const splitted = newValue.toString().split('.');
-    const left = splitted[0];
-    if (left.length > 1) {
-      const number = splitted[0] - 0;
-      splitted[0] = `${number}`;
-      newValue = splitted.join('.');
-    } else if (decimals && splitted[1]) {
-      if (splitted[1].length > decimals) {
-        splitted[1] = splitted[1].slice(0, -1);
+      const decimals =
+        fromMint && mintList ? (mintList[fromMint] as TokenInfo).decimals : 0;
+      const splitted = newValue.toString().split('.');
+      const left = splitted[0];
+      if (left.length > 1) {
+        const number = splitted[0] - 0;
+        splitted[0] = `${number}`;
         newValue = splitted.join('.');
+      } else if (decimals && splitted[1]) {
+        if (splitted[1].length > decimals) {
+          splitted[1] = splitted[1].slice(0, -1);
+          newValue = splitted.join('.');
+        }
       }
-    }
 
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setFromAmount('');
-      setFromSwapAmount(0);
-    } else if (newValue === '.') {
-      setFromAmount('.');
-      setFromSwapAmount(0);
-    } else if (isValidNumber(newValue)) {
-      setFromAmount(newValue);
-      debounceInputOnChange(newValue);
-    }
+      if (newValue === null || newValue === undefined || newValue === '') {
+        setFromAmount('');
+        setFromSwapAmount(0);
+      } else if (newValue === '.') {
+        setFromAmount('.');
+        setFromSwapAmount(0);
+      } else if (isValidNumber(newValue)) {
+        setFromAmount(newValue);
+        debounceInputOnChange(newValue);
+      }
+    },
+    [fromMint, mintList],
+  );
 
-  },[fromMint, mintList]);
+  const onTokenSearchInputChange = useCallback(
+    (e: any) => {
+      const input = e.target;
 
-  const onTokenSearchInputChange = useCallback((e: any) => {
+      if (!input) {
+        return;
+      }
 
-    const input = e.target;
-
-    if (!input) { return; }
-
-    const newValue = input.value;
-    setTokenFilter(newValue.trim());
-    updateTokenListByFilter();
-    
-  },[
-    updateTokenListByFilter
-  ]);
+      const newValue = input.value;
+      setTokenFilter(newValue.trim());
+      updateTokenListByFilter();
+    },
+    [updateTokenListByFilter],
+  );
 
   const flipMintsCallback = useCallback(() => {
-    
     const timeout = setTimeout(() => {
       const oldFrom = fromMint;
       const oldTo = toMint;
@@ -1185,35 +1102,33 @@ export const RecurringExchange = (props: {
 
     return () => {
       clearTimeout(timeout);
-    }
-
-  }, [
-    fromBalance, 
-    fromMint, 
-    toBalance, 
-    toMint
-  ]);
+    };
+  }, [fromBalance, fromMint, toBalance, toMint]);
 
   const onAfterTransactionModalClosed = useCallback(() => {
-
-    setFromAmount("");
+    setFromAmount('');
     setFromSwapAmount(0);
     updateRenderCount();
-    
-  }, [
-    updateRenderCount
-  ]);
+  }, [updateRenderCount]);
 
-  const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
-    return (
-      source &&
+  const areSameTokens = (
+    source: TokenInfo,
+    destination: TokenInfo,
+  ): boolean => {
+    return source &&
       destination &&
       source.name === destination.name &&
       source.address === destination.address
-    ) ? true : false;
-  }
+      ? true
+      : false;
+  };
 
-  const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
+  const infoRow = (
+    caption: string,
+    value: string,
+    separator = '≈',
+    route = false,
+  ) => {
     return (
       <Row>
         <Col span={11} className="text-right">
@@ -1233,52 +1148,60 @@ export const RecurringExchange = (props: {
   const txInfoContent = () => {
     return fromMint && toMint && exchangeInfo ? (
       <>
-      {
-        !refreshing && fromAmount && feesInfo &&
-        infoRow(
-          t('transactions.transaction-info.network-transaction-fee'),
-          `${parseFloat(feesInfo.network.toFixed(mintList[fromMint].decimals))} SOL`
-        )
-      }
-      {
-        !refreshing && fromAmount && feesInfo && !isWrap() && !isUnwrap() &&
-        infoRow(
-          t('transactions.transaction-info.protocol-transaction-fee', { protocol: exchangeInfo.fromAmm }),
-          `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
-        )
-      }
-      {
-        !refreshing && fromAmount && slippage > 0 &&
-        infoRow(
-          t('transactions.transaction-info.slippage'),
-          `${slippage.toFixed(2)}%`
-        )
-      }
-      {
-        !refreshing && fromAmount &&
-        infoRow(
-          t('transactions.transaction-info.recipient-receives'),                
-          `${exchangeInfo.minAmountOut?.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
-        )
-      }
-      {
-        !refreshing && fromAmount &&
-        infoRow(
-          t('transactions.transaction-info.price-impact'),                
-          `${parseFloat((exchangeInfo.priceImpact || 0).toFixed(2))}%`
-        )
-      }
-      {
-        !refreshing && fromAmount && exchangeInfo.fromAmm &&
-        infoRow(
-          t('transactions.transaction-info.exchange-on'),
-          `${exchangeInfo.fromAmm}`,
-          ':'
-        )
-      }
+        {!refreshing &&
+          fromAmount &&
+          feesInfo &&
+          infoRow(
+            t('transactions.transaction-info.network-transaction-fee'),
+            `${parseFloat(
+              feesInfo.network.toFixed(mintList[fromMint].decimals),
+            )} SOL`,
+          )}
+        {!refreshing &&
+          fromAmount &&
+          feesInfo &&
+          !isWrap() &&
+          !isUnwrap() &&
+          infoRow(
+            t('transactions.transaction-info.protocol-transaction-fee', {
+              protocol: exchangeInfo.fromAmm,
+            }),
+            `${parseFloat(
+              feesInfo.protocol.toFixed(mintList[fromMint].decimals),
+            )} ${mintList[fromMint].symbol}`,
+          )}
+        {!refreshing &&
+          fromAmount &&
+          slippage > 0 &&
+          infoRow(
+            t('transactions.transaction-info.slippage'),
+            `${slippage.toFixed(2)}%`,
+          )}
+        {!refreshing &&
+          fromAmount &&
+          infoRow(
+            t('transactions.transaction-info.recipient-receives'),
+            `${exchangeInfo.minAmountOut?.toFixed(mintList[toMint].decimals)} ${
+              mintList[toMint].symbol
+            }`,
+          )}
+        {!refreshing &&
+          fromAmount &&
+          infoRow(
+            t('transactions.transaction-info.price-impact'),
+            `${parseFloat((exchangeInfo.priceImpact || 0).toFixed(2))}%`,
+          )}
+        {!refreshing &&
+          fromAmount &&
+          exchangeInfo.fromAmm &&
+          infoRow(
+            t('transactions.transaction-info.exchange-on'),
+            `${exchangeInfo.fromAmm}`,
+            ':',
+          )}
       </>
     ) : null;
-  }
+  };
 
   const onSlippageChanged = (value: any) => {
     setSlippage(value);
@@ -1289,10 +1212,11 @@ export const RecurringExchange = (props: {
       return 'selected';
     }
     const destinationToken = toMint ? showFromMintList[toMint] : undefined;
-    return areSameTokens(item, destinationToken) || isStableSwap(item.address, toMint)
+    return areSameTokens(item, destinationToken) ||
+      isStableSwap(item.address, toMint)
       ? 'disabled'
       : 'simplelink';
-  }
+  };
 
   const renderSourceTokenList = (
     <>
@@ -1313,7 +1237,8 @@ export const RecurringExchange = (props: {
             <div
               key={index + 100}
               onClick={onClick}
-              className={`token-item ${getSourceTokenListItemClass(token)}`}>
+              className={`token-item ${getSourceTokenListItemClass(token)}`}
+            >
               <div className="token-icon">
                 {token.logoURI ? (
                   <img
@@ -1325,7 +1250,7 @@ export const RecurringExchange = (props: {
                 ) : (
                   <Identicon
                     address={token.address}
-                    style={{ width: "24", display: "inline-flex" }}
+                    style={{ width: '24', display: 'inline-flex' }}
                   />
                 )}
               </div>
@@ -1333,17 +1258,19 @@ export const RecurringExchange = (props: {
                 <div className="token-symbol">{token.symbol}</div>
                 <div className="token-name m-0">{token.name}</div>
               </div>
-              {
-                connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
+              {connected &&
+                userBalances &&
+                mintList[token.address] &&
+                userBalances[token.address] > 0 && (
                   <div className="token-balance">
-                  {
-                    !userBalances[token.address] || userBalances[token.address] === 0
-                      ? '' 
-                      : userBalances[token.address].toFixed(mintList[token.address].decimals)
-                  }
+                    {!userBalances[token.address] ||
+                    userBalances[token.address] === 0
+                      ? ''
+                      : userBalances[token.address].toFixed(
+                          mintList[token.address].decimals,
+                        )}
                   </div>
-                )
-              }
+                )}
             </div>
           );
         })
@@ -1358,10 +1285,11 @@ export const RecurringExchange = (props: {
       return 'selected';
     }
     const destinationToken = fromMint ? showToMintList[fromMint] : undefined;
-    return areSameTokens(item, destinationToken) || isStableSwap(fromMint, item.address)
+    return areSameTokens(item, destinationToken) ||
+      isStableSwap(fromMint, item.address)
       ? 'disabled'
       : 'simplelink';
-  }
+  };
 
   const renderDestinationTokenList = (
     <>
@@ -1382,7 +1310,9 @@ export const RecurringExchange = (props: {
             <div
               key={index + 100}
               onClick={onClick}
-              className={`token-item ${getDestinationTokenListItemClass(token)}`}
+              className={`token-item ${getDestinationTokenListItemClass(
+                token,
+              )}`}
             >
               <div className="token-icon">
                 {token.logoURI ? (
@@ -1395,7 +1325,7 @@ export const RecurringExchange = (props: {
                 ) : (
                   <Identicon
                     address={token.address}
-                    style={{ width: "24", display: "inline-flex" }}
+                    style={{ width: '24', display: 'inline-flex' }}
                   />
                 )}
               </div>
@@ -1403,17 +1333,19 @@ export const RecurringExchange = (props: {
                 <div className="token-symbol">{token.symbol}</div>
                 <div className="token-name m-0">{token.name}</div>
               </div>
-              {
-                connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
+              {connected &&
+                userBalances &&
+                mintList[token.address] &&
+                userBalances[token.address] > 0 && (
                   <div className="token-balance">
-                  {
-                    !userBalances[token.address] || userBalances[token.address] === 0
-                      ? '' 
-                      : userBalances[token.address].toFixed(mintList[token.address].decimals)
-                  }
+                    {!userBalances[token.address] ||
+                    userBalances[token.address] === 0
+                      ? ''
+                      : userBalances[token.address].toFixed(
+                          mintList[token.address].decimals,
+                        )}
                   </div>
-                )
-              }
+                )}
             </div>
           );
         })
@@ -1426,20 +1358,23 @@ export const RecurringExchange = (props: {
   const getOutputAmountPrice = () => {
     if (toMint && mintList[toMint]) {
       if (exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut) {
-        const price = getTokenPriceByAddress(mintList[toMint].address) || getTokenPriceBySymbol(mintList[toMint].symbol);
-        const outAmount = parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals));
+        const price =
+          getTokenPriceByAddress(mintList[toMint].address) ||
+          getTokenPriceBySymbol(mintList[toMint].symbol);
+        const outAmount = parseFloat(
+          exchangeInfo.amountOut.toFixed(mintList[toMint].decimals),
+        );
         return toUsCurrency(outAmount * price);
       }
       return '$0.00';
     }
     return '';
-  }
+  };
 
   return (
     <>
       <Spin spinning={refreshing}>
         <div className="swap-wrapper">
-
           {/* DDCA Option selector */}
           <div className="ddca-option-select-row">
             <span className="label">{t('swap.frequency-label')}</span>
@@ -1448,8 +1383,11 @@ export const RecurringExchange = (props: {
                 type="default"
                 size="middle"
                 className="dropdown-like-button"
-                onClick={showDdcaOptionSelector}>
-                <span className="mr-2">{t(`ddca-selector.${ddcaOption.translationId}.name`)}</span>
+                onClick={showDdcaOptionSelector}
+              >
+                <span className="mr-2">
+                  {t(`ddca-selector.${ddcaOption.translationId}.name`)}
+                </span>
                 <IconCaretDown className="mean-svg-icons" />
               </Button>
             )}
@@ -1459,25 +1397,34 @@ export const RecurringExchange = (props: {
           <ExchangeInput
             token={fromMint && mintList[fromMint]}
             tokenBalance={
-              (fromMint && fromBalance && mintList[fromMint] && parseFloat(fromBalance) > 0
+              fromMint &&
+              fromBalance &&
+              mintList[fromMint] &&
+              parseFloat(fromBalance) > 0
                 ? parseFloat(fromBalance).toFixed(mintList[fromMint].decimals)
-                : '')
+                : ''
             }
             tokenAmount={fromAmount}
             onInputChange={handleSwapFromAmountChange}
-            onMaxAmount={
-              () => {
-                const maxFromAmount = getMaxAllowedSwapAmount();
-                console.log('maxFromAmount', maxFromAmount);
-                if (fromMint && toMint && mintList[fromMint] && maxFromAmount && maxFromAmount > 0) {
-                  setFromSwapAmount(maxFromAmount);
-                  const formattedAmount = maxFromAmount.toFixed(mintList[fromMint].decimals);                
-                  setFromAmount(formattedAmount);
-                }
+            onMaxAmount={() => {
+              const maxFromAmount = getMaxAllowedSwapAmount();
+              console.log('maxFromAmount', maxFromAmount);
+              if (
+                fromMint &&
+                toMint &&
+                mintList[fromMint] &&
+                maxFromAmount &&
+                maxFromAmount > 0
+              ) {
+                setFromSwapAmount(maxFromAmount);
+                const formattedAmount = maxFromAmount.toFixed(
+                  mintList[fromMint].decimals,
+                );
+                setFromAmount(formattedAmount);
               }
-            }
+            }}
             onSelectToken={() => {
-              setSubjectTokenSelection("source");
+              setSubjectTokenSelection('source');
               showTokenSelector();
             }}
             onPriceClick={() => refreshPrices()}
@@ -1493,7 +1440,8 @@ export const RecurringExchange = (props: {
             <span className="settings-wrapper pr-3">
               <SwapSettings
                 currentValue={slippage}
-                onValueSelected={onSlippageChanged}/>
+                onValueSelected={onSlippageChanged}
+              />
             </span>
           </div>
 
@@ -1504,17 +1452,21 @@ export const RecurringExchange = (props: {
               fromTokenAmount={fromAmount}
               toToken={toMint && mintList[toMint]}
               toTokenBalance={
-                (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
+                toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
                   ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
-                  : '')
+                  : ''
               }
               toTokenAmount={
-                (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
+                toMint &&
+                mintList[toMint] &&
+                exchangeInfo &&
+                exchangeInfo.amountIn &&
+                exchangeInfo.amountOut
                   ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
-                  : '')
+                  : ''
               }
               onSelectToken={() => {
-                setSubjectTokenSelection("destination");
+                setSubjectTokenSelection('destination');
                 showTokenSelector();
               }}
               inputLabel={getOutputAmountPrice()}
@@ -1534,30 +1486,33 @@ export const RecurringExchange = (props: {
             </div>
             {/* Info */}
             <div className="right info-line">
-              {
-                fromMint && toMint && exchangeInfo && exchangeInfo.outPrice ? (
-                  <>
+              {fromMint && toMint && exchangeInfo && exchangeInfo.outPrice ? (
+                <>
                   {!refreshing && (
                     <>
                       <div className="left">
-                        {
-                          (`1 ${mintList[fromMint].symbol} ≈ ${parseFloat(exchangeInfo.outPrice.toFixed(mintList[toMint].decimals))} ${mintList[toMint].symbol}`)
-                        }
+                        {`1 ${mintList[fromMint].symbol} ≈ ${parseFloat(
+                          exchangeInfo.outPrice.toFixed(
+                            mintList[toMint].decimals,
+                          ),
+                        )} ${mintList[toMint].symbol}`}
                       </div>
                       <div className="right pl-1">
-                        {
-                          fromAmount ? (
-                            <InfoIcon content={txInfoContent()} placement="leftBottom">
-                              <InfoCircleOutlined />
-                            </InfoIcon>
-                          ) : null
-                        }
+                        {fromAmount ? (
+                          <InfoIcon
+                            content={txInfoContent()}
+                            placement="leftBottom"
+                          >
+                            <InfoCircleOutlined />
+                          </InfoIcon>
+                        ) : null}
                       </div>
                     </>
                   )}
-                  </>
-                ) : (<span>-</span>)
-              }
+                </>
+              ) : (
+                <span>-</span>
+              )}
             </div>
           </div>
 
@@ -1574,24 +1529,53 @@ export const RecurringExchange = (props: {
               !isSwapAmountValid() ||
               !exchangeInfo ||
               !exchangeInfo?.amountOut ||
-              (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange)
-            }>
+              (environment !== 'production' &&
+                ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange)
+            }
+          >
             {transactionStartButtonLabel}
           </Button>
 
           {/* Warning */}
           {environment !== 'production' && (
             <div className="mt-3">
-              <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
-                <span role="img" aria-label="exclamation-circle" className="anticon anticon-exclamation-circle ant-alert-icon">
+              <div
+                data-show="true"
+                className="ant-alert ant-alert-warning"
+                role="alert"
+              >
+                <span
+                  role="img"
+                  aria-label="exclamation-circle"
+                  className="anticon anticon-exclamation-circle ant-alert-icon"
+                >
                   <WarningFilled />
                 </span>
                 <div className="ant-alert-content">
                   <div className="ant-alert-message">
                     {t('swap.exchange-warning')}&nbsp;
-                    <a className="primary-link" href={`${appConfig.getConfig('production').appUrl}/exchange`} target="_blank" rel="noopener noreferrer">MAINNET</a>
-                    <span className="ml-1">(<a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer"
-                        href="https://docs.meanfi.com/tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet">Why?</a>)</span>
+                    <a
+                      className="primary-link"
+                      href={`${
+                        appConfig.getConfig('production').appUrl
+                      }/exchange`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      MAINNET
+                    </a>
+                    <span className="ml-1">
+                      (
+                      <a
+                        className="simplelink underline-on-hover"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href="https://docs.meanfi.com/tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet"
+                      >
+                        Why?
+                      </a>
+                      )
+                    </span>
                   </div>
                   <div className="ant-alert-description"></div>
                 </div>
@@ -1604,20 +1588,24 @@ export const RecurringExchange = (props: {
             className="mean-modal unpadded-content"
             open={isTokenSelectorModalVisible}
             title={
-              <div className="modal-title">{t('token-selector.modal-title')}</div>
+              <div className="modal-title">
+                {t('token-selector.modal-title')}
+              </div>
             }
             onCancel={onCloseTokenSelector}
             width={450}
-            footer={null}>
+            footer={null}
+          >
             <div className="token-selector-wrapper">
               <div className="token-search-wrapper">
                 <TextInput
                   value={tokenFilter}
                   placeholder={t('token-selector.search-input-placeholder')}
-                  onInputChange={onTokenSearchInputChange} />
+                  onInputChange={onTokenSearchInputChange}
+                />
               </div>
               <div className="token-list vertical-scroll">
-                {subjectTokenSelection === "source"
+                {subjectTokenSelection === 'source'
                   ? renderSourceTokenList
                   : renderDestinationTokenList}
               </div>
@@ -1641,7 +1629,11 @@ export const RecurringExchange = (props: {
               handleOk={onFinishedDdca}
               onAfterClose={onAfterTransactionModalClosed}
               fromToken={fromMint && mintList[fromMint]}
-              fromTokenBalance={fromMint && fromBalance && mintList[fromMint] ? parseFloat(fromBalance) : 0}
+              fromTokenBalance={
+                fromMint && fromBalance && mintList[fromMint]
+                  ? parseFloat(fromBalance)
+                  : 0
+              }
               fromTokenAmount={parseFloat(fromAmount) || 0}
               toToken={toMint && mintList[toMint]}
               userBalance={userBalances[NATIVE_SOL_MINT.toBase58()]}

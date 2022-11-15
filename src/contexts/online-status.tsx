@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext } from 'react';
 
-const PING_RESOURCE = "/ping.txt";
+const PING_RESOURCE = '/ping.txt';
 const TIMEOUT_TIME_MS = 3000;
 const onlinePollingInterval = 30000;
 
 const timeout = (time: number, promise: Promise<any>) => {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     setTimeout(() => {
-      reject(new Error("Request timed out."));
+      reject(new Error('Request timed out.'));
     }, time);
     promise.then(resolve, reject);
   });
@@ -24,9 +24,9 @@ const checkOnlineStatus = async () => {
     await timeout(
       TIMEOUT_TIME_MS,
       fetch(PING_RESOURCE, {
-        method: "GET",
-        signal
-      })
+        method: 'GET',
+        signal,
+      }),
     );
     return true;
   } catch (error) {
@@ -50,7 +50,8 @@ const defaultValues: OnlineStatusConfig = {
   responseTime: 0,
 };
 
-const OnlineStatusContext = React.createContext<OnlineStatusConfig>(defaultValues);
+const OnlineStatusContext =
+  React.createContext<OnlineStatusConfig>(defaultValues);
 
 export const OnlineStatusProvider: React.FC = ({ children }) => {
   const [onlineStatus, setOnlineStatus] = useState<boolean>(true);
@@ -66,7 +67,7 @@ export const OnlineStatusProvider: React.FC = ({ children }) => {
   };
 
   useEffect(() => {
-    window.addEventListener("offline", () => {
+    window.addEventListener('offline', () => {
       setOnlineStatus(false);
     });
 
@@ -81,7 +82,7 @@ export const OnlineStatusProvider: React.FC = ({ children }) => {
     }, onlinePollingInterval);
 
     return () => {
-      window.removeEventListener("offline", () => {
+      window.removeEventListener('offline', () => {
         setOnlineStatus(false);
       });
 
@@ -93,8 +94,9 @@ export const OnlineStatusProvider: React.FC = ({ children }) => {
     <OnlineStatusContext.Provider
       value={{
         isOnline: onlineStatus,
-        responseTime
-      }}>
+        responseTime,
+      }}
+    >
       {children}
     </OnlineStatusContext.Provider>
   );

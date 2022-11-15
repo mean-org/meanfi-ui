@@ -1,13 +1,11 @@
 import React from 'react';
-import { useWallet } from "../../contexts/wallet";
-import { AccountDetails } from "../AccountDetails";
-import { ConnectButton } from "../ConnectButton";
+import { useWallet } from '../../contexts/wallet';
+import { AccountDetails } from '../AccountDetails';
+import { ConnectButton } from '../ConnectButton';
 import { AppContextMenu } from '../AppContextMenu';
 import { NotificationBell } from '../NotificationBell';
 
-export const FooterBar = (props: {
-  onOpenDrawer?: any;
-}) => {
+export const FooterBar = (props: { onOpenDrawer?: any }) => {
   const { connected } = useWallet();
 
   return (

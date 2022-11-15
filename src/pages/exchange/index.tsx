@@ -1,6 +1,12 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { PreFooter } from "../../components/PreFooter";
+import { PreFooter } from '../../components/PreFooter';
 import { consoleOut, isProd } from '../../middleware/ui';
 import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
@@ -10,37 +16,45 @@ import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
 import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
-import { JupiterExchange, RecurringExchange, } from '../../views';
+import { JupiterExchange, RecurringExchange } from '../../views';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { MEAN_TOKEN_LIST } from '../../constants/tokens';
 
-type SwapOption = "one-time" | "recurring";
+type SwapOption = 'one-time' | 'recurring';
 
 export const SwapView = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
   const { publicKey, wallet } = useWallet();
   const {
     splTokenList,
     recurringBuys,
     setRecurringBuys,
-    getTokenByMintAddress
+    getTokenByMintAddress,
   } = useContext(AppStateContext);
   const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
-  const [currentTab, setCurrentTab] = useState<SwapOption>("one-time");
+  const [currentTab, setCurrentTab] = useState<SwapOption>('one-time');
 
   // Connection management
-  const [cachedRpcJson] = useLocalStorageState("cachedRpc");
+  const [cachedRpcJson] = useLocalStorageState('cachedRpc');
   const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
-  const cachedRpc = (cachedRpcJson as RpcConfig);
-  const endpoint = mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider;
+  const cachedRpc = cachedRpcJson as RpcConfig;
+  const endpoint = mainnetRpc
+    ? mainnetRpc.httpProvider
+    : cachedRpc.httpProvider;
 
-  const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
-    [cachedRpc.httpProvider, mainnetRpc]);
+  const connection = useMemo(
+    () =>
+      new Connection(
+        mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider,
+        'confirmed',
+      ),
+    [cachedRpc.httpProvider, mainnetRpc],
+  );
 
   /////////////////
   //  CALLBACKS  //
@@ -55,13 +69,19 @@ export const SwapView = () => {
     if (!loadingRecurringBuys) {
       setLoadingRecurringBuys(true);
 
-      const ddcaClient = new DdcaClient(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, wallet, { commitment: connection.commitment });
+      const ddcaClient = new DdcaClient(
+        mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider,
+        wallet,
+        { commitment: connection.commitment },
+      );
 
-      ddcaClient.listDdcas()
+      ddcaClient
+        .listDdcas()
         .then(ddcas => {
           consoleOut('ddcas:', ddcas, 'blue');
           setRecurringBuys(ddcas);
-        }).catch(err => {
+        })
+        .catch(err => {
           console.error(err);
         });
     }
@@ -73,7 +93,7 @@ export const SwapView = () => {
     cachedRpc.httpProvider,
     connection.commitment,
     setLoadingRecurringBuys,
-    setRecurringBuys
+    setRecurringBuys,
   ]);
 
   ///////////////
@@ -93,11 +113,8 @@ export const SwapView = () => {
         setMainnetRpc(null);
       }
     })();
-    return () => { }
-  }, [
-    cachedRpc,
-    navigate,
-  ]);
+    return () => {};
+  }, [cachedRpc, navigate]);
 
   // Load recurring buys once
   useEffect(() => {
@@ -106,10 +123,7 @@ export const SwapView = () => {
     }
 
     return () => {};
-  }, [
-    loadingRecurringBuys,
-    reloadRecurringBuys
-  ]);
+  }, [loadingRecurringBuys, reloadRecurringBuys]);
 
   // Parse query params
   useEffect(() => {
@@ -125,7 +139,9 @@ export const SwapView = () => {
           : getTokenBySymbol(symbol, splTokenList)
         : undefined;
     } else {
-        from = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'USDC');
+      from = MEAN_TOKEN_LIST.find(
+        t => t.chainId === 101 && t.symbol === 'USDC',
+      );
     }
 
     if (from) {
@@ -157,7 +173,7 @@ export const SwapView = () => {
 
   const onTabChange = (option: SwapOption) => {
     setCurrentTab(option);
-  }
+  };
 
   /////////////////
   //  Rendering  //
@@ -172,41 +188,45 @@ export const SwapView = () => {
               <IconExchange className="mean-svg-icons" />
               <div>{t('swap.screen-title')}</div>
             </div>
-            <div className="subtitle">
-              {t('swap.screen-subtitle')}
-            </div>
+            <div className="subtitle">{t('swap.screen-subtitle')}</div>
           </div>
           <div className="place-transaction-box mb-3">
             <div className="button-tabset-container">
-              <div className={`tab-button ${currentTab === "one-time" ? 'active' : ''}`} onClick={() => onTabChange("one-time")}>
+              <div
+                className={`tab-button ${
+                  currentTab === 'one-time' ? 'active' : ''
+                }`}
+                onClick={() => onTabChange('one-time')}
+              >
                 {t('swap.tabset.one-time')}
               </div>
-              <div className={`tab-button ${currentTab === "recurring" ? 'active' : ''}`} onClick={() => onTabChange("recurring")}>
+              <div
+                className={`tab-button ${
+                  currentTab === 'recurring' ? 'active' : ''
+                }`}
+                onClick={() => onTabChange('recurring')}
+              >
                 {t('swap.tabset.recurring')}
               </div>
             </div>
             {/* One time exchange */}
-            {
-              currentTab === "one-time" && (
-                <JupiterExchange
-                  connection={connection}
-                  queryFromMint={queryFromMint}
-                  queryToMint={queryToMint}
-                />
-              )
-            }
+            {currentTab === 'one-time' && (
+              <JupiterExchange
+                connection={connection}
+                queryFromMint={queryFromMint}
+                queryToMint={queryToMint}
+              />
+            )}
             {/* Repeating exchange */}
-            {
-              currentTab === "recurring" && (
-                <RecurringExchange
-                  connection={connection}
-                  endpoint={endpoint}
-                  queryFromMint={queryFromMint}
-                  queryToMint={queryToMint}
-                  onRefreshRequested={() => setLoadingRecurringBuys(false)}
-                />
-              )
-            }
+            {currentTab === 'recurring' && (
+              <RecurringExchange
+                connection={connection}
+                endpoint={endpoint}
+                queryFromMint={queryFromMint}
+                queryToMint={queryToMint}
+                onRefreshRequested={() => setLoadingRecurringBuys(false)}
+              />
+            )}
           </div>
           {publicKey && recurringBuys && recurringBuys.length > 0 && isProd() && (
             <div className="text-center mb-3">
@@ -220,4 +240,4 @@ export const SwapView = () => {
       <PreFooter />
     </>
   );
-}
+};

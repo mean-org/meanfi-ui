@@ -1,4 +1,3 @@
-
 export interface AccountDetails {
   dateTime: string;
   clientInfo: string;

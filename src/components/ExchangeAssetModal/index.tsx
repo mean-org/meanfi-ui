@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal } from "antd";
+import { Modal } from 'antd';
 import { JupiterExchange } from '../../views';
 import { getTokenBySymbol, useLocalStorageState } from '../../middleware/utils';
 import { getLiveRpc, RpcConfig } from '../../services/connections-hq';
@@ -17,9 +17,9 @@ export const ExchangeAssetModal = (props: {
   const navigate = useNavigate();
 
   // Connection management
-  const [cachedRpcJson] = useLocalStorageState("cachedRpc");
+  const [cachedRpcJson] = useLocalStorageState('cachedRpc');
   const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
-  const cachedRpc = (cachedRpcJson as RpcConfig);
+  const cachedRpc = cachedRpcJson as RpcConfig;
   const [fromMint, setFromMint] = useState<string | null>(null);
 
   // Get RPC endpoint
@@ -35,14 +35,17 @@ export const ExchangeAssetModal = (props: {
         setMainnetRpc(null);
       }
     })();
-    return () => { }
-  }, [
-    cachedRpc,
-    navigate,
-  ]);
+    return () => {};
+  }, [cachedRpc, navigate]);
 
-  const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
-    [cachedRpc.httpProvider, mainnetRpc]);
+  const connection = useMemo(
+    () =>
+      new Connection(
+        mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider,
+        'confirmed',
+      ),
+    [cachedRpc.httpProvider, mainnetRpc],
+  );
 
   useEffect(() => {
     if (connection && tokenSymbol && isVisible) {
@@ -67,16 +70,17 @@ export const ExchangeAssetModal = (props: {
       open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
-      width={480}>
-        {fromMint && (
-          <JupiterExchange
-            connection={connection}
-            queryFromMint={fromMint}
-            queryToMint={null}
-            inModal={true}
-            swapExecuted={handleClose}
-          />
-        )}
+      width={480}
+    >
+      {fromMint && (
+        <JupiterExchange
+          connection={connection}
+          queryFromMint={fromMint}
+          queryToMint={null}
+          inModal={true}
+          swapExecuted={handleClose}
+        />
+      )}
     </Modal>
   );
 };

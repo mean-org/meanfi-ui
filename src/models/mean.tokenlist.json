@@ -46,10 +46,7 @@
     "name": "Wrapped Ethereum",
     "decimals": 6,
     "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-    "tags": [
-      "wrapped-sollet",
-      "ethereum"
-    ],
+    "tags": ["wrapped-sollet", "ethereum"],
     "extensions": {
       "bridgeContract": "https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a",
       "serumV3Usdc": "4tSvZvnbyzHXLMTiFonMyxZoHmFqau1XArcRCVHLZ5gX",
@@ -64,10 +61,7 @@
     "name": "Wrapped Bitcoin",
     "decimals": 6,
     "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/bitcoin/info/logo.png",
-    "tags": [
-      "wrapped-sollet",
-      "ethereum"
-    ],
+    "tags": ["wrapped-sollet", "ethereum"],
     "extensions": {
       "bridgeContract": "https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a",
       "serumV3Usdc": "A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw",
@@ -82,9 +76,7 @@
     "name": "USD Coin",
     "decimals": 6,
     "logoURI": "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
-    "tags": [
-      "stablecoin"
-    ],
+    "tags": ["stablecoin"],
     "extensions": {
       "website": "https://www.centre.io/",
       "coingeckoId": "usd-coin"
@@ -97,9 +89,7 @@
     "name": "USD Coin",
     "decimals": 6,
     "logoURI": "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
-    "tags": [
-      "stablecoin"
-    ],
+    "tags": ["stablecoin"],
     "extensions": {
       "website": "https://www.centre.io/",
       "coingeckoId": "usd-coin"
@@ -112,9 +102,7 @@
     "name": "USD Coin",
     "decimals": 6,
     "logoURI": "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
-    "tags": [
-      "stablecoin"
-    ],
+    "tags": ["stablecoin"],
     "extensions": {
       "website": "https://www.centre.io/",
       "coingeckoId": "usd-coin"
@@ -127,9 +115,7 @@
     "name": "USDT",
     "decimals": 6,
     "logoURI": "https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg",
-    "tags": [
-      "stablecoin"
-    ],
+    "tags": ["stablecoin"],
     "extensions": {
       "website": "https://tether.to/",
       "coingeckoId": "tether"
@@ -142,9 +128,7 @@
     "name": "USDT",
     "decimals": 6,
     "logoURI": "https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg",
-    "tags": [
-      "stablecoin"
-    ],
+    "tags": ["stablecoin"],
     "extensions": {
       "website": "https://tether.to/",
       "coingeckoId": "tether"

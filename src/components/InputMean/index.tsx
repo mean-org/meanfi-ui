@@ -1,4 +1,4 @@
-import { IconCheckCircle, IconWarningCover } from "../../Icons";
+import { IconCheckCircle, IconWarningCover } from '../../Icons';
 
 export const InputMean = (props: {
   id: string;
@@ -18,21 +18,44 @@ export const InputMean = (props: {
   isTouched?: boolean;
   onBlur?: any;
 }) => {
-  const { id, name, className, autoComplete, autoCorrect, type, maxLength, placeholder, onChange, value, pattern, min, validationIcons, isTouched, isValid, onBlur } = props;
+  const {
+    id,
+    name,
+    className,
+    autoComplete,
+    autoCorrect,
+    type,
+    maxLength,
+    placeholder,
+    onChange,
+    value,
+    pattern,
+    min,
+    validationIcons,
+    isTouched,
+    isValid,
+    onBlur,
+  } = props;
 
   const renderValidity = () => {
     if (isTouched) {
       if (isValid) {
-        return (<IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green"/>);
+        return (
+          <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green" />
+        );
       } else {
-        return (<IconWarningCover className="mean-svg-icons simplelink form-warning-icon fg-warning"/>);
+        return (
+          <IconWarningCover className="mean-svg-icons simplelink form-warning-icon fg-warning" />
+        );
       }
     } else if (isValid) {
-      return (<IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green"/>);
+      return (
+        <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green" />
+      );
     } else {
-      return  null;
+      return null;
     }
-  }
+  };
 
   return (
     <>
@@ -43,9 +66,9 @@ export const InputMean = (props: {
               id={id}
               name={name}
               className="w-100 general-text-input"
-              autoComplete={autoComplete || "off"}
-              autoCorrect={autoCorrect || "off"}
-              type={type || "text"}
+              autoComplete={autoComplete || 'off'}
+              autoCorrect={autoCorrect || 'off'}
+              type={type || 'text'}
               maxLength={maxLength || 32}
               onChange={onChange}
               placeholder={placeholder}
@@ -57,13 +80,11 @@ export const InputMean = (props: {
           </div>
           {validationIcons && (
             <div className="right">
-              <div className="add-on h-100">
-                {renderValidity()}
-              </div>
+              <div className="add-on h-100">{renderValidity()}</div>
             </div>
           )}
         </div>
       </div>
     </>
-  )
-}
+  );
+};

@@ -9,7 +9,17 @@ export const InputTextAreaMean = (props: {
   value?: any;
   onPaste?: any;
 }) => {
-  const { id, className, autoComplete, rows, maxLength, placeholder, onChange, value, onPaste } = props;
+  const {
+    id,
+    className,
+    autoComplete,
+    rows,
+    maxLength,
+    placeholder,
+    onChange,
+    value,
+    onPaste,
+  } = props;
 
   return (
     <>
@@ -17,16 +27,15 @@ export const InputTextAreaMean = (props: {
         <textarea
           id={id}
           className="w-100 general-text-input"
-          autoComplete={autoComplete || "off"}
+          autoComplete={autoComplete || 'off'}
           rows={rows || 5}
           maxLength={maxLength}
           onChange={onChange}
           placeholder={placeholder}
           value={value}
           onPaste={onPaste}
-        >
-        </textarea>
+        ></textarea>
       </div>
     </>
-  )
-}
+  );
+};
