@@ -5,11 +5,9 @@ import {
 import { TransactionFees } from '@mean-dao/msp';
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import {
-  AccountInfo,
   ConfirmOptions,
   Connection,
   LAMPORTS_PER_SOL,
-  ParsedAccountData,
   ParsedTransactionWithMeta,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
@@ -47,16 +45,19 @@ import ReactJson from 'react-json-view';
 import './style.scss';
 
 export const ProgramDetailsView = (props: {
-  isProgramDetails: boolean;
-  onDataToProgramView: any;
+  onDataToProgramView?: any;
   programSelected: any;
   selectedMultisig?: any;
 }) => {
   const { account } = useNativeAccount();
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
-  const { transactionStatus, refreshTokenBalance, setTransactionStatus } =
-    useContext(AppStateContext);
+  const {
+    selectedAccount,
+    transactionStatus,
+    refreshTokenBalance,
+    setTransactionStatus,
+  } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
     startFetchTxSignatureInfo,
@@ -64,7 +65,6 @@ export const ProgramDetailsView = (props: {
   } = useContext(TxConfirmationContext);
 
   const {
-    // isProgramDetails,
     onDataToProgramView,
     programSelected,
     selectedMultisig,
@@ -83,11 +83,6 @@ export const ProgramDetailsView = (props: {
 
   const noIdlInfo =
     'The program IDL is not initialized. To load the IDL info please run `anchor idl init` with the required parameters from your program workspace.';
-
-  const multisigAddressPK = useMemo(
-    () => new PublicKey(appConfig.getConfig().multisigProgramAddress),
-    [],
-  );
 
   // When back button is clicked, goes to Safe Info
   const hideProgramDetailsHandler = () => {
@@ -108,6 +103,11 @@ export const ProgramDetailsView = (props: {
     [connectionConfig.endpoint],
   );
 
+  const multisigProgramAddressPK = useMemo(
+    () => new PublicKey(appConfig.getConfig().multisigProgramAddress),
+    [],
+  );
+
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
       return null;
@@ -116,13 +116,17 @@ export const ProgramDetailsView = (props: {
       connectionConfig.endpoint,
       publicKey,
       'confirmed',
-      multisigAddressPK,
+      multisigProgramAddressPK,
     );
-  }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
+  }, [publicKey, connection, multisigProgramAddressPK, connectionConfig.endpoint]);
 
   const isTxInProgress = useCallback((): boolean => {
     return isBusy || fetchTxInfoStatus === 'fetching' ? true : false;
   }, [isBusy, fetchTxInfoStatus]);
+
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
 
   // Upgrade program modal
   const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] =
@@ -517,7 +521,7 @@ export const ProgramDetailsView = (props: {
 
         const [multisigSigner] = await PublicKey.findProgramAddress(
           [selectedMultisig.id.toBuffer()],
-          multisigAddressPK,
+          multisigProgramAddressPK,
         );
 
         const ixData = Buffer.from([4, 0, 0, 0]);
@@ -773,7 +777,7 @@ export const ProgramDetailsView = (props: {
       nativeBalance,
       multisigClient,
       selectedMultisig,
-      multisigAddressPK,
+      multisigProgramAddressPK,
       transactionCancelled,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
@@ -1090,15 +1094,17 @@ export const ProgramDetailsView = (props: {
   return (
     <>
       <div className="program-details-container">
-        <Row gutter={[8, 8]} className="program-details-resume mb-1 mr-0 ml-0">
-          <div
-            onClick={hideProgramDetailsHandler}
-            className="back-button icon-button-container"
-          >
-            <IconArrowBack className="mean-svg-icons" />
-            <span className="ml-1">Back</span>
-          </div>
-        </Row>
+        {isMultisigContext ? (
+          <Row gutter={[8, 8]} className="program-details-resume mb-1 mr-0 ml-0">
+            <div
+              onClick={hideProgramDetailsHandler}
+              className="back-button icon-button-container"
+            >
+              <IconArrowBack className="mean-svg-icons" />
+              <span className="ml-1">Back</span>
+            </div>
+          </Row>
+        ) : null}
 
         <Row gutter={[8, 8]} className="safe-info-container mr-0 ml-0">
           {infoProgramData.map((info, index) => (

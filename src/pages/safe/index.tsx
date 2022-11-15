@@ -2458,7 +2458,6 @@ const SafeView = (props: {
     } else if (isProgramDetails) {
       return (
         <ProgramDetailsView
-          isProgramDetails={isProgramDetails}
           onDataToProgramView={returnFromProgramDetailsHandler}
           programSelected={programSelected}
           selectedMultisig={selectedMultisig}

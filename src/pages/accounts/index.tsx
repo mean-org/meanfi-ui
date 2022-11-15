@@ -192,6 +192,7 @@ import {
   INITIAL_TREASURIES_SUMMARY,
   UserTreasuriesSummary,
 } from 'models/treasuries';
+import { ProgramDetailsView } from 'pages/safe/components/ProgramDetails';
 import { QRCodeSVG } from 'qrcode.react';
 import React, {
   Suspense,
@@ -4390,6 +4391,10 @@ export const AccountsView = () => {
               upgradeAuthority: authority ? new PublicKey(authority) : null
             }) as ProgramAccounts;
             setSelectedProgram(updatedProgramData);
+
+            // Preset "Other assets" tab. Not sure if it should be here
+            setSelectedAssetsGroup(AssetGroups.OtherAssets);
+
             logIt(updatedProgramData);
           })
           .catch(error => {
@@ -6670,7 +6675,9 @@ export const AccountsView = () => {
                     ) : null}
 
                     {selectedProgram && location.pathname.startsWith('/programs/') ? (
-                      <p>Hey hey hey</p>
+                      <div className="safe-details-component scroll-wrapper vertical-scroll">
+                        <ProgramDetailsView programSelected={selectedProgram} />
+                      </div>
                     ) : null}
 
                     {selectedCategory === 'account-summary' &&
