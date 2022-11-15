@@ -56,7 +56,6 @@ export const VestingContractStreamList = (props: {
     multisigAccounts: MultisigInfo[] | undefined;
     multisigClient: MeanMultisig | null;
     nativeBalance: number;
-    onReloadTokenBalances: any;
     selectedMultisig: MultisigInfo | undefined;
     selectedToken: TokenInfo | undefined;
     streamTemplate: StreamTemplate | undefined;

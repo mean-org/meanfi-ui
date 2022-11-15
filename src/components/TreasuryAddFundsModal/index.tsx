@@ -3,7 +3,7 @@ import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { AllocationType, Stream, Treasury, TreasuryType } from '@mean-dao/msp';
 import { Connection } from '@solana/web3.js';
-import { Button, Modal, Radio, Select, Spin, Tooltip } from 'antd';
+import { Button, Modal, Select, Spin, Tooltip } from 'antd';
 import BN from 'bn.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { Identicon } from 'components/Identicon';
@@ -54,7 +54,6 @@ export const TreasuryAddFundsModal = (props: {
   isBusy: boolean;
   isVisible: boolean;
   nativeBalance: number;
-  onReloadTokenBalances: any;
   selectedMultisig: MultisigInfo | undefined;
   transactionFees: TransactionFees;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
@@ -70,7 +69,6 @@ export const TreasuryAddFundsModal = (props: {
     isBusy,
     isVisible,
     nativeBalance,
-    onReloadTokenBalances,
     selectedMultisig,
     treasuryDetails,
     treasuryList,
@@ -384,6 +382,8 @@ export const TreasuryAddFundsModal = (props: {
       if (isMultisigContext && selectedMultisig && !highLightableStreamId) {
         consoleOut('Getting funds from safe...', '', 'blue');
         setFundFromSafeOption(true);
+      } else {
+        setFundFromSafeOption(false);
       }
     }
   }, [highLightableStreamId, isVisible, isMultisigContext, selectedMultisig, treasuryDetails]);
@@ -519,16 +519,6 @@ export const TreasuryAddFundsModal = (props: {
 
   const onTitleInputValueChange = (e: any) => {
     setProposalTitle(e.target.value);
-  }
-
-  const onFundFromSafeOptionChanged = (e: any) => {
-    const newValue = e.target.value;
-    setFundFromSafeOption(newValue);
-    if (newValue) {
-      onReloadTokenBalances('safe');
-    } else {
-      onReloadTokenBalances('wallet');
-    }
   }
 
   const getTransactionStartButtonLabel = (): string => {
@@ -693,19 +683,6 @@ export const TreasuryAddFundsModal = (props: {
 
             {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
               <>
-                {/* Fund from Wallet/Safe switch */}
-                {isMultisigContext && selectedMultisig && workingTreasuryDetails && !highLightableStreamId && (
-                  <div className="mb-2 flex-fixed-right">
-                    <div className="form-label left m-0">Get funds from:</div>
-                    <div className="right">
-                      <Radio.Group onChange={onFundFromSafeOptionChanged} value={fundFromSafeOption}>
-                        <Radio value={true}>Safe</Radio>
-                        <Radio value={false}>User wallet</Radio>
-                      </Radio.Group>
-                    </div>
-                  </div>
-                )}
-
                 {/* Proposal title */}
                 {isMultisigContext && selectedMultisig && (
                   <div className="mb-3 mt-3">

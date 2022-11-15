@@ -2831,17 +2831,6 @@ export const StreamingAccountView = (props: {
               : ''
           }
           isBusy={isBusy}
-          onReloadTokenBalances={(option: string) => {
-            if (option === "safe") {
-              if (isMultisigContext && selectedMultisig) {
-                refreshUserBalances(selectedMultisig.authority);
-              }
-            } else {
-              if (publicKey) {
-                refreshUserBalances(publicKey);
-              }
-            }
-          }}
         />
       )}
 

@@ -2803,17 +2803,6 @@ export const MoneyStreamsInfoView = (props: {
           treasuryStreams={undefined}
           associatedToken=""
           isBusy={isBusy}
-          onReloadTokenBalances={(option: string) => {
-            if (option === "safe") {
-              if (selectedMultisig) {
-                refreshUserBalances(selectedMultisig.authority);
-              }
-            } else {
-              if (publicKey) {
-                refreshUserBalances(publicKey);
-              }
-            }
-          }}
         />
       )}
 
