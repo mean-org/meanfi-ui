@@ -2862,7 +2862,7 @@ export const AccountsView = () => {
         selectedMultisig.id,
         proposalIx.programId,
         proposalIx.keys,
-        proposalIx.data // Buffer.from(dataBuffer.toString())
+        proposalIx.data
       );
 
       return tx;
@@ -3233,10 +3233,6 @@ export const AccountsView = () => {
           if (asset) {
             selection = getAssetCategory(asset, selectedAccount, accountTokens, accountNfts);
             consoleOut('category from getAssetCategory() ->', selection, 'blue');
-            // if (selection === AssetGroups.Nfts) {
-            //   setAutoOpenDetailsPanel(true);
-            //   setDetailsPanelOpen(true);
-            // }
             setAutoOpenDetailsPanel(true);
             setDetailsPanelOpen(true);
           } else {
@@ -4136,27 +4132,7 @@ export const AccountsView = () => {
     }
   }
 
-  const onGotoAssets = () => {
-    let url = '';
-    if (selectedAsset) {
-      url = getAssetPath(selectedAsset);
-    } else {
-      url += `/assets`;
-    }
-    consoleOut('onGotoAssets ->', url, 'crimson');
-    navigate(url);
-  }
-
   const onChangeAssetsGroup = (group: AssetGroups | undefined) => {
-    // if (group === AssetGroups.Tokens) {
-    //   if (selectedAsset) {
-    //     onGotoAssets();
-    //   } else {
-    //     consoleOut('navigating to:', '/assets', 'crimson');
-    //     navigate('/assets');
-    //   }
-    //   reloadSwitch();
-    // }
     setSelectedAssetsGroup(group);
   }
 
@@ -4644,21 +4620,12 @@ export const AccountsView = () => {
     const onAppClick = (app: KnownAppMetadata) => {
       setSelectedApp(undefined);
       setSelectedAsset(undefined);
+      // The reason for the timeout is to avoid the navigation to happen before the componentUnmount
       setTimeout(() => {
         setAutoOpenDetailsPanel(true);
         setDetailsPanelOpen(true);
         navigate(app.defaultPath);
       }, 50);
-
-      // if (selectedApp?.slug === RegisteredAppPaths.Staking) {
-      //   setTimeout(() => {
-      //     setAutoOpenDetailsPanel(true);
-      //     setDetailsPanelOpen(true);
-      //     navigate(app.defaultPath);
-      //   }, 50);
-      // } else {
-      //   navigate(app.defaultPath);
-      // }
     }
 
     return (
@@ -5111,12 +5078,12 @@ export const AccountsView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span>autoOpenDetailsPanel:</span><span className="mx-1 font-bold">{autoOpenDetailsPanel ? 'true' : 'false'}</span>
           <span>detailsPanelOpen:</span><span className="mx-1 font-bold">{detailsPanelOpen ? 'true' : 'false'}</span>
         </div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button
