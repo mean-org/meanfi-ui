@@ -1,6 +1,11 @@
 name: Release-STAGE
+
 on:
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
 
 env:
   NODE_VERSION: 18
@@ -14,6 +19,7 @@ env:
 
 jobs:
   build:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -52,6 +58,7 @@ jobs:
           retention-days: 7
 
   deploy:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     # When application is successfully tested and build has been generated
     # Then we can start with deployment
