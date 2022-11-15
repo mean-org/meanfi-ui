@@ -46,7 +46,6 @@ export const VestingContractAddFundsModal = (props: {
   isVisible: boolean;
   minRequiredBalance: number;
   nativeBalance: number;
-  onReloadTokenBalances: any;
   selectedMultisig: MultisigInfo | undefined;
   selectedToken: TokenInfo | undefined;
   streamTemplate: StreamTemplate | undefined;
@@ -63,7 +62,6 @@ export const VestingContractAddFundsModal = (props: {
     isVisible,
     minRequiredBalance,
     nativeBalance,
-    onReloadTokenBalances,
     selectedMultisig,
     selectedToken,
     streamTemplate,
@@ -288,6 +286,8 @@ export const VestingContractAddFundsModal = (props: {
       if (isMultisigContext && selectedMultisig && !highLightableStreamId) {
         consoleOut('Getting funds from safe...', '', 'blue');
         setFundFromSafeOption(true);
+      } else {
+        setFundFromSafeOption(false);
       }
     }
   }, [highLightableStreamId, isVisible, isMultisigContext, selectedMultisig]);
@@ -368,16 +368,6 @@ export const VestingContractAddFundsModal = (props: {
 
   const onTitleInputValueChange = (e: any) => {
     setProposalTitle(e.target.value);
-  }
-
-  const onFundFromSafeOptionChanged = (e: any) => {
-    const newValue = e.target.value;
-    setFundFromSafeOption(newValue);
-    if (newValue) {
-      onReloadTokenBalances('safe');
-    } else {
-      onReloadTokenBalances('wallet');
-    }
   }
 
   //////////////////
@@ -498,24 +488,6 @@ export const VestingContractAddFundsModal = (props: {
   ///////////////
   // Rendering //
   ///////////////
-
-  const renderFundFromSwitch = () => {
-    if (isMultisigContext && selectedMultisig && vestingContract && !highLightableStreamId) {
-      return (
-        <div className="mb-2 flex-fixed-right">
-          <div className="form-label left m-0">Get funds from:</div>
-          <div className="right">
-            <Radio.Group onChange={onFundFromSafeOptionChanged} value={fundFromSafeOption}>
-              <Radio value={true}>Safe</Radio>
-              <Radio value={false}>User wallet</Radio>
-            </Radio.Group>
-          </div>
-        </div>
-      );
-    } else {
-      return null;
-    }
-  }
 
   const renderProposalTitle = () => {
     if (isMultisigContext && selectedMultisig) {
@@ -722,9 +694,6 @@ export const VestingContractAddFundsModal = (props: {
 
           {transactionStatus.currentOperation === TransactionStatus.Iddle && (
             <>
-              {/* Fund from Wallet/Safe switch */}
-              {renderFundFromSwitch()}
-      
               {/* Proposal title */}
               {renderProposalTitle()}
 

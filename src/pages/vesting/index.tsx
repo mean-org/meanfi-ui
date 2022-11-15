@@ -3702,14 +3702,6 @@ const VestingView = (props: {
           treasuryStreams={treasuryStreams}
           userBalances={userBalances}
           vestingContract={selectedVestingContract}
-          onReloadTokenBalances={(option: string) => {
-            consoleOut('setting balances source to:', option, 'blue');
-            if (option === "safe" && selectedMultisig) {
-              setBalancesSource(selectedMultisig.authority.toBase58());
-            } else {
-              setBalancesSource('');
-            }
-          }}
         />
       )
     });
@@ -3885,14 +3877,6 @@ const VestingView = (props: {
           userBalances={userBalances}
           vestingContract={selectedVestingContract}
           withdrawTransactionFees={withdrawTransactionFees}
-          onReloadTokenBalances={(option: string) => {
-            consoleOut('setting balances source to:', option, 'blue');
-            if (option === "safe" && selectedMultisig) {
-              setBalancesSource(selectedMultisig.authority.toBase58());
-            } else {
-              setBalancesSource('');
-            }
-          }}
         />
       )}
 
