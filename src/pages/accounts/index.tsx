@@ -83,7 +83,7 @@ import { closeTokenAccount } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from 'middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports, getAmountWithSymbol, getSdkValue, getTxIxResume,
@@ -138,6 +138,7 @@ export const AccountsView = () => {
     splTokenList,
     isWhitelisted,
     selectedAsset,
+    previousRoute,
     loadingStreams,
     selectedAccount,
     lastTxSignature,
@@ -165,6 +166,7 @@ export const AccountsView = () => {
     refreshStreamList,
     setStreamsSummary,
     refreshMultisigs,
+    setPreviousRoute,
     setSelectedToken,
     setSelectedAsset,
     setActiveStream,
@@ -261,16 +263,14 @@ export const AccountsView = () => {
         url = '/my-account';
       }
       consoleOut('No category specified, redirecting to:', url, 'crimson');
-      setAutoOpenDetailsPanel(false);
+      // setAutoOpenDetailsPanel(false);
       setTimeout(() => {
         setIsPageLoaded(true);
       });
       navigate(url, { replace: true });
     } else {
       // If user goes inside any tab of the streaming category, enable autoOpenDetailsPanel
-      if (streamingTab) {
-        setAutoOpenDetailsPanel(true);
-      } else if (location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)) {
+      if (!streamingTab && location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)) {
         const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
         navigate(url);
       }
@@ -3233,10 +3233,12 @@ export const AccountsView = () => {
           if (asset) {
             selection = getAssetCategory(asset, selectedAccount, accountTokens, accountNfts);
             consoleOut('category from getAssetCategory() ->', selection, 'blue');
-            if (selection === AssetGroups.Nfts) {
-              setAutoOpenDetailsPanel(true);
-              setDetailsPanelOpen(true);
-            }
+            // if (selection === AssetGroups.Nfts) {
+            //   setAutoOpenDetailsPanel(true);
+            //   setDetailsPanelOpen(true);
+            // }
+            setAutoOpenDetailsPanel(true);
+            setDetailsPanelOpen(true);
           } else {
             selection = AssetGroups.Tokens;
           }
@@ -4076,43 +4078,62 @@ export const AccountsView = () => {
     refreshTreasuries(false);
   };
 
+  const turnOffRightPanel = () => {
+    setDetailsPanelOpen(false);
+    setAutoOpenDetailsPanel(false);
+  }
+
   const onRefreshStreamsReset = () => {
     refreshStreamList(true);
     refreshTreasuries(false);
   };
 
+  const getReturnPathForStreaming = () => {
+    if (previousRoute) {
+      setPreviousRoute('');
+      return previousRoute;
+    }
+    if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/incoming/${streamingItemId}`) {
+      return `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
+    } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${streamingItemId}`) {
+      setStreamDetail(undefined);
+      return `/${RegisteredAppPaths.PaymentStreaming}/outgoing`;
+    } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingItemId}`) {
+      return `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
+    } else {
+      turnOffRightPanel();
+      return '';
+    }
+  }
+
   const onBackButtonClicked = () => {
     let url = '';
 
-    if (location.pathname.indexOf('/assets') !== -1) {
-      setDetailsPanelOpen(false);
-      setAutoOpenDetailsPanel(false);
+    if (location.pathname === '/my-account') {
+      turnOffRightPanel();
+      return;
+    } else if (location.pathname.indexOf('/assets') !== -1) {
+      turnOffRightPanel();
       consoleOut('calling onBackButtonClicked() on:', '/assets', 'crimson');
       if (selectedAsset) {
         url = getAssetPath(selectedAsset);
       } else {
-        url += `/assets`;
+        url = `/assets`;
       }
     } else if (location.pathname.indexOf('/super-safe') !== -1) {
-      setDetailsPanelOpen(false);
-      setAutoOpenDetailsPanel(false);
+      turnOffRightPanel();
       consoleOut('calling onBackButtonClicked() on:', '/super-safe', 'crimson');
-      url += `/super-safe?v=proposals`;
-    } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/incoming/${streamingItemId}`) {
-      url += `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
-    } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${streamingItemId}`) {
-      url += `/${RegisteredAppPaths.PaymentStreaming}/outgoing`;
-      setStreamDetail(undefined);
-    } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingItemId}`) {
-      url += `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
+      url = `/super-safe?v=proposals`;
+    } else if (location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)) {
+      url = getReturnPathForStreaming();
     } else {
       consoleOut('calling onBackButtonClicked()', '...', 'crimson');
-      setDetailsPanelOpen(false);
-      setAutoOpenDetailsPanel(false);
-      url += `/${RegisteredAppPaths.PaymentStreaming}`;
+      turnOffRightPanel();
     }
 
-    navigate(url);
+    if (url) {
+      navigate(url);
+    }
   }
 
   const onGotoAssets = () => {
@@ -4347,6 +4368,7 @@ export const AccountsView = () => {
       <>
         {
           <div key="streams-category" onClick={() => {
+            setDetailsPanelOpen(true);
             setAutoOpenDetailsPanel(true);
             setSelectedNft(undefined);
             navigateToStreaming();
@@ -4409,6 +4431,7 @@ export const AccountsView = () => {
 
     const onTokenAccountClick = () => {
       consoleOut('clicked on asset:', asset.publicAddress, 'blue');
+      setDetailsPanelOpen(true);
       setAutoOpenDetailsPanel(true);
       navigateToAsset(asset);
       setSelectedNft(undefined);
@@ -4621,13 +4644,21 @@ export const AccountsView = () => {
     const onAppClick = (app: KnownAppMetadata) => {
       setSelectedApp(undefined);
       setSelectedAsset(undefined);
-      if (selectedApp?.slug === RegisteredAppPaths.Staking) {
-        setTimeout(() => {
-          navigate(app.defaultPath);
-        }, 50);
-      } else {
+      setTimeout(() => {
+        setAutoOpenDetailsPanel(true);
+        setDetailsPanelOpen(true);
         navigate(app.defaultPath);
-      }
+      }, 50);
+
+      // if (selectedApp?.slug === RegisteredAppPaths.Staking) {
+      //   setTimeout(() => {
+      //     setAutoOpenDetailsPanel(true);
+      //     setDetailsPanelOpen(true);
+      //     navigate(app.defaultPath);
+      //   }, 50);
+      // } else {
+      //   navigate(app.defaultPath);
+      // }
     }
 
     return (
@@ -5003,6 +5034,7 @@ export const AccountsView = () => {
   }
 
   const goToStreamingAccountStreamDetailsHandler = (stream: any) => {
+    setPreviousRoute(location.pathname);
     const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${stream.id as string}`;
     navigate(url);
   }
@@ -5079,9 +5111,12 @@ export const AccountsView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar"><span>previousRoute:</span><span className="ml-1">{previousRoute}</span></div>
-      )} */}
+      {isLocal() && (
+        <div className="debug-bar">
+          <span>autoOpenDetailsPanel:</span><span className="mx-1 font-bold">{autoOpenDetailsPanel ? 'true' : 'false'}</span>
+          <span>detailsPanelOpen:</span><span className="mx-1 font-bold">{detailsPanelOpen ? 'true' : 'false'}</span>
+        </div>
+      )}
 
       {detailsPanelOpen && (
         <Button
