@@ -383,7 +383,7 @@ export const TreasuryAddFundsModal = (props: {
         consoleOut('Getting funds from safe...', '', 'blue');
         setFundFromSafeOption(true);
       } else {
-        setFundFromSafeOption(true);
+        setFundFromSafeOption(false);
       }
     }
   }, [highLightableStreamId, isVisible, isMultisigContext, selectedMultisig, treasuryDetails]);
