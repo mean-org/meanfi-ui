@@ -1,622 +1,607 @@
-import { Idl } from "@project-serum/anchor";
+import { Idl } from '@project-serum/anchor';
 
 const idl: Idl = {
-  version: "0.11.0",
-  name: "mean_multisig",
+  version: '0.11.0',
+  name: 'mean_multisig',
   instructions: [
     {
-      "name": "createMultisig",
-      "accounts": [
+      name: 'createMultisig',
+      accounts: [
         {
-          "name": "proposer",
-          "isMut": true,
-          "isSigner": true
+          name: 'proposer',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "multisig",
-          "isMut": true,
-          "isSigner": true
+          name: 'multisig',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "multisigOpsAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'multisigOpsAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "owners",
-          "type": {
-            "vec": {
-              "defined": "Owner"
-            }
-          }
+          name: 'owners',
+          type: {
+            vec: {
+              defined: 'Owner',
+            },
+          },
         },
         {
-          "name": "threshold",
-          "type": "u64"
+          name: 'threshold',
+          type: 'u64',
         },
         {
-          "name": "nonce",
-          "type": "u8"
+          name: 'nonce',
+          type: 'u8',
         },
         {
-          "name": "label",
-          "type": "string"
-        }
-      ]
+          name: 'label',
+          type: 'string',
+        },
+      ],
     },
     {
-      "name": "editMultisig",
-      "accounts": [
+      name: 'editMultisig',
+      accounts: [
         {
-          "name": "multisig",
-          "isMut": true,
-          "isSigner": false
+          name: 'multisig',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "multisigSigner",
-          "isMut": false,
-          "isSigner": true
-        }
+          name: 'multisigSigner',
+          isMut: false,
+          isSigner: true,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "owners",
-          "type": {
-            "vec": {
-              "defined": "Owner"
-            }
-          }
+          name: 'owners',
+          type: {
+            vec: {
+              defined: 'Owner',
+            },
+          },
         },
         {
-          "name": "threshold",
-          "type": "u64"
+          name: 'threshold',
+          type: 'u64',
         },
         {
-          "name": "label",
-          "type": "string"
-        }
-      ]
+          name: 'label',
+          type: 'string',
+        },
+      ],
     },
     {
-      "name": "createTransaction",
-      "accounts": [
+      name: 'createTransaction',
+      accounts: [
         {
-          "name": "multisig",
-          "isMut": true,
-          "isSigner": false
+          name: 'multisig',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "transaction",
-          "isMut": true,
-          "isSigner": true
+          name: 'transaction',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "transactionDetail",
-          "isMut": true,
-          "isSigner": false
+          name: 'transactionDetail',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "proposer",
-          "isMut": true,
-          "isSigner": true
+          name: 'proposer',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "multisigOpsAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'multisigOpsAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "pid",
-          "type": "publicKey"
+          name: 'pid',
+          type: 'publicKey',
         },
         {
-          "name": "accs",
-          "type": {
-            "vec": {
-              "defined": "TransactionAccount"
-            }
-          }
+          name: 'accs',
+          type: {
+            vec: {
+              defined: 'TransactionAccount',
+            },
+          },
         },
         {
-          "name": "data",
-          "type": "bytes"
+          name: 'data',
+          type: 'bytes',
         },
         {
-          "name": "operation",
-          "type": "u8"
+          name: 'operation',
+          type: 'u8',
         },
         {
-          "name": "title",
-          "type": "string"
+          name: 'title',
+          type: 'string',
         },
         {
-          "name": "description",
-          "type": "string"
+          name: 'description',
+          type: 'string',
         },
         {
-          "name": "expirationDate",
-          "type": "u64"
+          name: 'expirationDate',
+          type: 'u64',
         },
         {
-          "name": "pdaTimestamp",
-          "type": "u64"
+          name: 'pdaTimestamp',
+          type: 'u64',
         },
         {
-          "name": "pdaBump",
-          "type": "u8"
-        }
-      ]
+          name: 'pdaBump',
+          type: 'u8',
+        },
+      ],
     },
     {
-      "name": "cancelTransaction",
-      "accounts": [
+      name: 'cancelTransaction',
+      accounts: [
         {
-          "name": "multisig",
-          "isMut": true,
-          "isSigner": false
+          name: 'multisig',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "transaction",
-          "isMut": true,
-          "isSigner": false
+          name: 'transaction',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "transactionDetail",
-          "isMut": true,
-          "isSigner": false
+          name: 'transactionDetail',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "proposer",
-          "isMut": true,
-          "isSigner": true
+          name: 'proposer',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "approve",
-      "accounts": [
+      name: 'approve',
+      accounts: [
         {
-          "name": "multisig",
-          "isMut": true,
-          "isSigner": false
+          name: 'multisig',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "transaction",
-          "isMut": true,
-          "isSigner": false
+          name: 'transaction',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "transactionDetail",
-          "isMut": true,
-          "isSigner": false
+          name: 'transactionDetail',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: 'owner',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "executeTransaction",
-      "accounts": [
+      name: 'executeTransaction',
+      accounts: [
         {
-          "name": "multisig",
-          "isMut": true,
-          "isSigner": false
+          name: 'multisig',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "multisigSigner",
-          "isMut": false,
-          "isSigner": false
+          name: 'multisigSigner',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "transaction",
-          "isMut": true,
-          "isSigner": false
+          name: 'transaction',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "transactionDetail",
-          "isMut": true,
-          "isSigner": false
+          name: 'transactionDetail',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "executeTransactionPda",
-      "accounts": [
+      name: 'executeTransactionPda',
+      accounts: [
         {
-          "name": "multisig",
-          "isMut": true,
-          "isSigner": false
+          name: 'multisig',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "multisigSigner",
-          "isMut": false,
-          "isSigner": false
+          name: 'multisigSigner',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "pdaAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'pdaAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "transaction",
-          "isMut": true,
-          "isSigner": false
+          name: 'transaction',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "transactionDetail",
-          "isMut": true,
-          "isSigner": false
+          name: 'transactionDetail',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "pdaTimestamp",
-          "type": "u64"
+          name: 'pdaTimestamp',
+          type: 'u64',
         },
         {
-          "name": "pdaBump",
-          "type": "u8"
-        }
-      ]
-    }
+          name: 'pdaBump',
+          type: 'u8',
+        },
+      ],
+    },
   ],
   accounts: [
     {
-      "name": "Multisig",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'Multisig',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "owners",
-            "type": {
-              "vec": "publicKey"
-            }
+            name: 'owners',
+            type: {
+              vec: 'publicKey',
+            },
           },
           {
-            "name": "threshold",
-            "type": "u64"
+            name: 'threshold',
+            type: 'u64',
           },
           {
-            "name": "nonce",
-            "type": "u8"
+            name: 'nonce',
+            type: 'u8',
           },
           {
-            "name": "ownerSetSeqno",
-            "type": "u32"
+            name: 'ownerSetSeqno',
+            type: 'u32',
           },
           {
-            "name": "label",
-            "type": "string"
+            name: 'label',
+            type: 'string',
           },
           {
-            "name": "createdOn",
-            "type": "u64"
+            name: 'createdOn',
+            type: 'u64',
           },
           {
-            "name": "pendingTxs",
-            "type": "u64"
-          }
-        ]
-      }
+            name: 'pendingTxs',
+            type: 'u64',
+          },
+        ],
+      },
     },
     {
-      "name": "MultisigV2",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'MultisigV2',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "owners",
-            "type": {
-              "array": [
+            name: 'owners',
+            type: {
+              array: [
                 {
-                  "defined": "OwnerData"
+                  defined: 'OwnerData',
                 },
-                10
-              ]
-            }
+                10,
+              ],
+            },
           },
           {
-            "name": "version",
-            "type": "u8"
+            name: 'version',
+            type: 'u8',
           },
           {
-            "name": "nonce",
-            "type": "u8"
+            name: 'nonce',
+            type: 'u8',
           },
           {
-            "name": "label",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
+            name: 'label',
+            type: {
+              array: ['u8', 32],
+            },
           },
           {
-            "name": "ownerSetSeqno",
-            "type": "u32"
+            name: 'ownerSetSeqno',
+            type: 'u32',
           },
           {
-            "name": "threshold",
-            "type": "u64"
+            name: 'threshold',
+            type: 'u64',
           },
           {
-            "name": "pendingTxs",
-            "type": "u64"
+            name: 'pendingTxs',
+            type: 'u64',
           },
           {
-            "name": "createdOn",
-            "type": "u64"
-          }
-        ]
-      }
+            name: 'createdOn',
+            type: 'u64',
+          },
+        ],
+      },
     },
     {
-      "name": "Transaction",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'Transaction',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "multisig",
-            "type": "publicKey"
+            name: 'multisig',
+            type: 'publicKey',
           },
           {
-            "name": "programId",
-            "type": "publicKey"
+            name: 'programId',
+            type: 'publicKey',
           },
           {
-            "name": "accounts",
-            "type": {
-              "vec": {
-                "defined": "TransactionAccount"
-              }
-            }
+            name: 'accounts',
+            type: {
+              vec: {
+                defined: 'TransactionAccount',
+              },
+            },
           },
           {
-            "name": "data",
-            "type": "bytes"
+            name: 'data',
+            type: 'bytes',
           },
           {
-            "name": "signers",
-            "type": {
-              "vec": "bool"
-            }
+            name: 'signers',
+            type: {
+              vec: 'bool',
+            },
           },
           {
-            "name": "ownerSetSeqno",
-            "type": "u32"
+            name: 'ownerSetSeqno',
+            type: 'u32',
           },
           {
-            "name": "createdOn",
-            "type": "u64"
+            name: 'createdOn',
+            type: 'u64',
           },
           {
-            "name": "executedOn",
-            "type": "u64"
+            name: 'executedOn',
+            type: 'u64',
           },
           {
-            "name": "operation",
-            "type": "u8"
+            name: 'operation',
+            type: 'u8',
           },
           {
-            "name": "keypairs",
-            "type": {
-              "vec": {
-                "array": [
-                  "u8",
-                  64
-                ]
-              }
-            }
+            name: 'keypairs',
+            type: {
+              vec: {
+                array: ['u8', 64],
+              },
+            },
           },
           {
-            "name": "proposer",
-            "type": "publicKey"
+            name: 'proposer',
+            type: 'publicKey',
           },
           {
-            "name": "pdaTimestamp",
-            "type": "u64"
+            name: 'pdaTimestamp',
+            type: 'u64',
           },
           {
-            "name": "pdaBump",
-            "type": "u8"
-          }
-        ]
-      }
+            name: 'pdaBump',
+            type: 'u8',
+          },
+        ],
+      },
     },
     {
-      "name": "TransactionDetail",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'TransactionDetail',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "title",
-            "type": {
-              "array": [
-                "u8",
-                64
-              ]
-            }
+            name: 'title',
+            type: {
+              array: ['u8', 64],
+            },
           },
           {
-            "name": "description",
-            "type": {
-              "array": [
-                "u8",
-                512
-              ]
-            }
+            name: 'description',
+            type: {
+              array: ['u8', 512],
+            },
           },
           {
-            "name": "expirationDate",
-            "type": "u64"
-          }
-        ]
-      }
+            name: 'expirationDate',
+            type: 'u64',
+          },
+        ],
+      },
     },
     {
-      "name": "Owner",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'Owner',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "address",
-            "type": "publicKey"
+            name: 'address',
+            type: 'publicKey',
           },
           {
-            "name": "name",
-            "type": "string"
-          }
-        ]
-      }
-    }
+            name: 'name',
+            type: 'string',
+          },
+        ],
+      },
+    },
   ],
   types: [
     {
-      "name": "OwnerData",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'OwnerData',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "address",
-            "type": "publicKey"
+            name: 'address',
+            type: 'publicKey',
           },
           {
-            "name": "name",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          }
-        ]
-      }
+            name: 'name',
+            type: {
+              array: ['u8', 32],
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "TransactionAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'TransactionAccount',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "pubkey",
-            "type": "publicKey"
+            name: 'pubkey',
+            type: 'publicKey',
           },
           {
-            "name": "isSigner",
-            "type": "bool"
+            name: 'isSigner',
+            type: 'bool',
           },
           {
-            "name": "isWritable",
-            "type": "bool"
-          }
-        ]
-      }
+            name: 'isWritable',
+            type: 'bool',
+          },
+        ],
+      },
     },
     {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'ErrorCode',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "InvalidOwner"
+            name: 'InvalidOwner',
           },
           {
-            "name": "InvalidOwnersLen"
+            name: 'InvalidOwnersLen',
           },
           {
-            "name": "NotEnoughSigners"
+            name: 'NotEnoughSigners',
           },
           {
-            "name": "TransactionAlreadySigned"
+            name: 'TransactionAlreadySigned',
           },
           {
-            "name": "Overflow"
+            name: 'Overflow',
           },
           {
-            "name": "UnableToDelete"
+            name: 'UnableToDelete',
           },
           {
-            "name": "AlreadyExecuted"
+            name: 'AlreadyExecuted',
           },
           {
-            "name": "AlreadyExpired"
+            name: 'AlreadyExpired',
           },
           {
-            "name": "InvalidThreshold"
+            name: 'InvalidThreshold',
           },
           {
-            "name": "UniqueOwners"
+            name: 'UniqueOwners',
           },
           {
-            "name": "OwnerNameTooLong"
+            name: 'OwnerNameTooLong',
           },
           {
-            "name": "InvalidMultisigNonce"
+            name: 'InvalidMultisigNonce',
           },
           {
-            "name": "InvalidMultisigVersion"
+            name: 'InvalidMultisigVersion',
           },
           {
-            "name": "InvalidOwnerSetSeqNumber"
+            name: 'InvalidOwnerSetSeqNumber',
           },
           {
-            "name": "InvalidMultisig"
-          }
-        ]
-      }
-    }
-  ]
-}
+            name: 'InvalidMultisig',
+          },
+        ],
+      },
+    },
+  ],
+};
 
 export default idl;

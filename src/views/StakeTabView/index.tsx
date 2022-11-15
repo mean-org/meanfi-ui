@@ -1,23 +1,37 @@
-import { LoadingOutlined } from "@ant-design/icons";
-import { StakeQuote, StakingClient } from "@mean-dao/staking";
-import { Transaction } from "@solana/web3.js";
-import { Button, Col, Row } from "antd";
-import { segmentAnalytics } from "App";
-import { openNotification } from "components/Notifications";
-import { TokenDisplay } from "components/TokenDisplay";
-import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from "constants/common";
-import { useAccountsContext } from "contexts/accounts";
-import { AppStateContext } from "contexts/appstate";
-import { useConnection } from "contexts/connection";
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "contexts/transaction-status";
-import { useWallet } from "contexts/wallet";
-import { customLogger } from "index";
-import { AppUsageEvent, SegmentStakeMeanData } from "middleware/segment-service";
-import { consoleOut, getTransactionStatusForLogs } from "middleware/ui";
-import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "middleware/utils";
-import { EventType, OperationType, TransactionStatus } from "models/enums";
-import { TokenInfo } from "models/SolanaTokenInfo";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { LoadingOutlined } from '@ant-design/icons';
+import { StakeQuote, StakingClient } from '@mean-dao/staking';
+import { Transaction } from '@solana/web3.js';
+import { Button, Col, Row } from 'antd';
+import { segmentAnalytics } from 'App';
+import { openNotification } from 'components/Notifications';
+import { TokenDisplay } from 'components/TokenDisplay';
+import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'constants/common';
+import { useAccountsContext } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnection } from 'contexts/connection';
+import {
+  confirmationEvents,
+  TxConfirmationContext,
+  TxConfirmationInfo,
+} from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { customLogger } from 'index';
+import {
+  AppUsageEvent,
+  SegmentStakeMeanData,
+} from 'middleware/segment-service';
+import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
+import {
+  cutNumber,
+  formatAmount,
+  formatThousands,
+  getAmountWithSymbol,
+  getTxIxResume,
+  isValidNumber,
+} from 'middleware/utils';
+import { EventType, OperationType, TransactionStatus } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
 
@@ -58,21 +72,16 @@ export const StakeTabView = (props: {
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
 
-
   //////////////////////////
   //  CALLBACKS & EVENTS  //
   //////////////////////////
 
   const resetTransactionStatus = useCallback(() => {
-
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
+      currentOperation: TransactionStatus.Iddle,
     });
-
-  }, [
-    setTransactionStatus
-  ]);
+  }, [setTransactionStatus]);
 
   const fetchQuoteFromInput = (value: string) => {
     clearTimeout(inputDebounceTimeout);
@@ -80,10 +89,9 @@ export const StakeTabView = (props: {
       consoleOut('input ====>', value, 'orange');
       setCanFetchStakeQuote(true);
     }, INPUT_DEBOUNCE_TIME);
-  }
+  };
 
   const handleFromCoinAmountChange = (e: any) => {
-
     let newValue = e.target.value;
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
@@ -101,10 +109,10 @@ export const StakeTabView = (props: {
       newValue = splitted.join('.');
     }
 
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setFromCoinAmount("");
+    if (newValue === null || newValue === undefined || newValue === '') {
+      setFromCoinAmount('');
     } else if (newValue === '.') {
-      setFromCoinAmount(".");
+      setFromCoinAmount('.');
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
       setFetchingStakeQuote(true);
@@ -117,22 +125,21 @@ export const StakeTabView = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-        ? `${t("staking.panel-right.tabset.stake.stake-button-busy")} ${selectedToken && selectedToken.symbol}`
-        : !selectedToken || !meanBalance
-          ? t('transactions.validation.no-balance')
-          : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
-            ? t('transactions.validation.no-amount')
-            : parseFloat(fromCoinAmount) > meanBalance
-              ? t('transactions.validation.amount-high')
-              : `${t("staking.panel-right.tabset.stake.stake-button")} ${selectedToken && selectedToken.symbol}`;
-  }, [
-    fromCoinAmount,
-    selectedToken,
-    meanBalance,
-    connected,
-    isBusy,
-    t,
-  ]);
+      ? `${t('staking.panel-right.tabset.stake.stake-button-busy')} ${
+          selectedToken && selectedToken.symbol
+        }`
+      : !selectedToken || !meanBalance
+      ? t('transactions.validation.no-balance')
+      : !fromCoinAmount ||
+        !isValidNumber(fromCoinAmount) ||
+        !parseFloat(fromCoinAmount)
+      ? t('transactions.validation.no-amount')
+      : parseFloat(fromCoinAmount) > meanBalance
+      ? t('transactions.validation.amount-high')
+      : `${t('staking.panel-right.tabset.stake.stake-button')} ${
+          selectedToken && selectedToken.symbol
+        }`;
+  }, [fromCoinAmount, selectedToken, meanBalance, connected, isBusy, t]);
 
   const isStakingFormValid = (): boolean => {
     return connected &&
@@ -143,29 +150,25 @@ export const StakeTabView = (props: {
       parseFloat(fromCoinAmount) <= meanBalance
       ? true
       : false;
-  }
+  };
 
   // Handler paste clipboard data
   const pasteHandler = (e: any) => {
     const getClipBoardData = e.clipboardData.getData('Text');
-    const replaceCommaToDot = getClipBoardData.replace(",", "")
+    const replaceCommaToDot = getClipBoardData.replace(',', '');
     const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
 
     setFromCoinAmount(onlyNumbersAndDot.trim());
     setFetchingStakeQuote(true);
-  }
+  };
 
   const getMaxDecimalsForValue = (value: number) => {
-    return value < 5
-      ? 6
-      : value >= 5 && value < 100
-        ? 4
-        : 2;
-  }
+    return value < 5 ? 6 : value >= 5 && value < 100 ? 4 : 2;
+  };
 
   const onTransactionStart = useCallback(async () => {
     let transaction: Transaction;
-    let signature = "";
+    let signature = '';
     let encodedTx: string;
     const transactionLog: any[] = [];
     resetTransactionStatus();
@@ -178,17 +181,21 @@ export const StakeTabView = (props: {
         });
 
         const uiAmount = parseFloat(fromCoinAmount);
-        consoleOut("uiAmount:", uiAmount, "blue");
+        consoleOut('uiAmount:', uiAmount, 'blue');
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          action: getTransactionStatusForLogs(
+            TransactionStatus.TransactionStart,
+          ),
           inputs: `uiAmount: ${uiAmount}`,
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: "",
+          action: getTransactionStatusForLogs(
+            TransactionStatus.InitTransaction,
+          ),
+          result: '',
         });
 
         const price = getTokenPriceBySymbol(selectedToken.symbol);
@@ -201,54 +208,65 @@ export const StakeTabView = (props: {
           stakedAssetPrice: stakedMeanPrice,
           amount: uiAmount,
           quote: stakeQuote,
-          valueInUsd: price * uiAmount
+          valueInUsd: price * uiAmount,
         };
         consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFormButton, segmentData);
+        segmentAnalytics.recordEvent(
+          AppUsageEvent.StakeMeanFormButton,
+          segmentData,
+        );
 
         return await stakeClient
           .stakeTransaction(
-            uiAmount // uiAmount
+            uiAmount, // uiAmount
           )
-          .then((value) => {
-            consoleOut("stakeTransaction returned transaction:", value);
+          .then(value => {
+            consoleOut('stakeTransaction returned transaction:', value);
             // Stage 1 completed - The transaction is created and returned
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
               currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              action: getTransactionStatusForLogs(
+                TransactionStatus.InitTransactionSuccess,
+              ),
               result: getTxIxResume(value),
             });
             transaction = value;
             return true;
           })
-          .catch((error) => {
-            console.error("stakeTransaction init error:", error);
+          .catch(error => {
+            console.error('stakeTransaction init error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              action: getTransactionStatusForLogs(
+                TransactionStatus.InitTransactionFailure,
+              ),
               result: `${error}`,
             });
-            customLogger.logError("Stake transaction failed", {
+            customLogger.logError('Stake transaction failed', {
               transcript: transactionLog,
             });
-            segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, {
+              transcript: transactionLog,
+            });
             return false;
           });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: "Cannot start transaction! Wallet not found!",
+          result: 'Cannot start transaction! Wallet not found!',
         });
-        customLogger.logError("Stake transaction failed", {
+        customLogger.logError('Stake transaction failed', {
           transcript: transactionLog,
         });
-        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, {
+          transcript: transactionLog,
+        });
         return false;
       }
     };
@@ -263,9 +281,10 @@ export const StakeTabView = (props: {
         transaction.feePayer = wallet.publicKey;
         transaction.recentBlockhash = blockhash;
 
-        return wallet.sendTransaction(transaction, connection, { minContextSlot })
+        return wallet
+          .sendTransaction(transaction, connection, { minContextSlot })
           .then((sig: any) => {
-            consoleOut("sendEncodedTransaction returned a signature:", sig);
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransactionSuccess,
               currentOperation: TransactionStatus.SendTransactionSuccess,
@@ -273,7 +292,7 @@ export const StakeTabView = (props: {
             signature = sig;
             transactionLog.push({
               action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess
+                TransactionStatus.SendTransactionSuccess,
               ),
               result: `signature: ${signature}`,
             });
@@ -287,14 +306,16 @@ export const StakeTabView = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure
+                TransactionStatus.SendTransactionFailure,
               ),
               result: { error, encodedTx },
             });
-            customLogger.logError("Stake transaction failed", {
+            customLogger.logError('Stake transaction failed', {
               transcript: transactionLog,
             });
-            segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, {
+              transcript: transactionLog,
+            });
             return false;
           });
       } else {
@@ -304,12 +325,14 @@ export const StakeTabView = (props: {
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: "Cannot send transaction! Wallet not found!",
+          result: 'Cannot send transaction! Wallet not found!',
         });
-        customLogger.logError("Stake transaction failed", {
+        customLogger.logError('Stake transaction failed', {
           transcript: transactionLog,
         });
-        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, {
+          transcript: transactionLog,
+        });
         return false;
       }
     };
@@ -317,10 +340,10 @@ export const StakeTabView = (props: {
     if (wallet && selectedToken) {
       setIsBusy(true);
       const create = await createTx();
-      consoleOut("created:", create);
+      consoleOut('created:', create);
       if (create) {
         const sent = await sendTx();
-        consoleOut("sent:", sent);
+        consoleOut('sent:', sent);
         if (sent) {
           setTransactionStatus({
             lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -329,26 +352,26 @@ export const StakeTabView = (props: {
           enqueueTransactionConfirmation({
             signature: signature,
             operationType: OperationType.Stake,
-            finality: "confirmed",
-            txInfoFetchStatus: "fetching",
-            loadingTitle: "Confirming transaction",
+            finality: 'confirmed',
+            txInfoFetchStatus: 'fetching',
+            loadingTitle: 'Confirming transaction',
             loadingMessage: `Staking ${formatThousands(
               parseFloat(fromCoinAmount),
-              selectedToken.decimals
+              selectedToken.decimals,
             )} ${selectedToken.symbol}`,
-            completedTitle: "Transaction confirmed",
+            completedTitle: 'Transaction confirmed',
             completedMessage: `Successfully staked ${formatThousands(
               parseFloat(fromCoinAmount),
-              selectedToken.decimals
+              selectedToken.decimals,
             )} ${selectedToken.symbol}`,
           });
           resetTransactionStatus();
-          setFromCoinAmount("");
+          setFromCoinAmount('');
         } else {
           openNotification({
-            title: t("notifications.error-title"),
-            description: t("notifications.error-sending-transaction"),
-            type: "error",
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: 'error',
           });
           setIsBusy(false);
         }
@@ -369,81 +392,99 @@ export const StakeTabView = (props: {
     resetTransactionStatus,
     getTokenPriceBySymbol,
     setTransactionStatus,
-    t
+    t,
   ]);
 
-  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
-    let event: any;
-    if (operation === OperationType.Stake) {
-      event = success ? AppUsageEvent.StakeMeanCompleted : AppUsageEvent.StakeMeanFailed;
-      segmentAnalytics.recordEvent(event, { signature: signature });
-    }
-  }, []);
+  const recordTxConfirmation = useCallback(
+    (signature: string, operation: OperationType, success = true) => {
+      let event: any;
+      if (operation === OperationType.Stake) {
+        event = success
+          ? AppUsageEvent.StakeMeanCompleted
+          : AppUsageEvent.StakeMeanFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+      }
+    },
+    [],
+  );
 
   // Setup event handler for Tx confirmed
-  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
-
-    const path = window.location.pathname;
-    if (!path.startsWith(STAKING_ROUTE_BASE_PATH)) {
-      return;
-    }
-
-    const reloadStakePools = () => {
-      const stakePoolsRefreshCta = document.getElementById("refresh-stake-pool-info-cta");
-      if (stakePoolsRefreshCta) {
-        stakePoolsRefreshCta.click();
-      } else {
-        console.log('element not found:', '#refresh-stake-pool-info-cta', 'red');
+  const onTxConfirmed = useCallback(
+    (item: TxConfirmationInfo) => {
+      const path = window.location.pathname;
+      if (!path.startsWith(STAKING_ROUTE_BASE_PATH)) {
+        return;
       }
-    };
 
-    if (item.operationType === OperationType.Stake) {
-      consoleOut(`onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-      recordTxConfirmation(item.signature, item.operationType, true);
-      setIsBusy(false);
-      onTxFinished();
-      refreshAccount();
-      reloadStakePools();
-    }
+      const reloadStakePools = () => {
+        const stakePoolsRefreshCta = document.getElementById(
+          'refresh-stake-pool-info-cta',
+        );
+        if (stakePoolsRefreshCta) {
+          stakePoolsRefreshCta.click();
+        } else {
+          console.log(
+            'element not found:',
+            '#refresh-stake-pool-info-cta',
+            'red',
+          );
+        }
+      };
 
-  }, [
-    onTxFinished,
-    refreshAccount,
-    recordTxConfirmation
-  ]);
+      if (item.operationType === OperationType.Stake) {
+        consoleOut(
+          `onTxConfirmed event handled for operation ${
+            OperationType[item.operationType]
+          }`,
+          item,
+          'crimson',
+        );
+        recordTxConfirmation(item.signature, item.operationType, true);
+        setIsBusy(false);
+        onTxFinished();
+        refreshAccount();
+        reloadStakePools();
+      }
+    },
+    [onTxFinished, refreshAccount, recordTxConfirmation],
+  );
 
   // Setup event handler for Tx confirmation error
-  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
+  const onTxTimedout = useCallback(
+    (item: TxConfirmationInfo) => {
+      const reloadStakePools = () => {
+        const stakePoolsRefreshCta = document.getElementById(
+          'refresh-stake-pool-info-cta',
+        );
+        if (stakePoolsRefreshCta) {
+          stakePoolsRefreshCta.click();
+        } else {
+          console.log(
+            'element not found:',
+            '#refresh-stake-pool-info-cta',
+            'red',
+          );
+        }
+      };
 
-    const reloadStakePools = () => {
-      const stakePoolsRefreshCta = document.getElementById("refresh-stake-pool-info-cta");
-      if (stakePoolsRefreshCta) {
-        stakePoolsRefreshCta.click();
-      } else {
-        console.log('element not found:', '#refresh-stake-pool-info-cta', 'red');
+      if (item.operationType === OperationType.Stake) {
+        consoleOut('onTxTimedout event executed:', item, 'crimson');
+        recordTxConfirmation(item.signature, item.operationType, false);
+        setIsBusy(false);
+        refreshAccount();
+        openNotification({
+          title: 'Stake MEAN status',
+          description:
+            'The transaction to stake MEAN was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully created.',
+          duration: null,
+          type: 'info',
+          handleClose: () => reloadStakePools(),
+        });
+        onTxFinished();
       }
-    };
-
-    if (item.operationType === OperationType.Stake) {
-      consoleOut("onTxTimedout event executed:", item, 'crimson');
-      recordTxConfirmation(item.signature, item.operationType, false);
-      setIsBusy(false);
-      refreshAccount();
-      openNotification({
-        title: 'Stake MEAN status',
-        description: 'The transaction to stake MEAN was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully created.',
-        duration: null,
-        type: "info",
-        handleClose: () => reloadStakePools()
-      });
-      onTxFinished();
-    }
-  }, [
-    onTxFinished,
-    refreshAccount,
-    recordTxConfirmation
-  ]);
-
+    },
+    [onTxFinished, refreshAccount, recordTxConfirmation],
+  );
 
   /////////////////////
   // Data management //
@@ -451,50 +492,59 @@ export const StakeTabView = (props: {
 
   // Stake quote for 1 MEAN
   useEffect(() => {
-    if (!stakeClient) { return; }
+    if (!stakeClient) {
+      return;
+    }
 
-    stakeClient.getStakeQuote(1).then((value: StakeQuote) => {
-      consoleOut('stakeQuote:', value, 'blue');
-      setStakedMeanPrice(value.sMeanOutUiAmount);
-      consoleOut(`Quote for 1 MEAN:`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
-    }).catch((error: any) => {
-      console.error(error);
-    });
-
-  }, [
-    fromCoinAmount,
-    stakeClient,
-    canFetchStakeQuote,
-  ]);
+    stakeClient
+      .getStakeQuote(1)
+      .then((value: StakeQuote) => {
+        consoleOut('stakeQuote:', value, 'blue');
+        setStakedMeanPrice(value.sMeanOutUiAmount);
+        consoleOut(
+          `Quote for 1 MEAN:`,
+          `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`,
+          'blue',
+        );
+      })
+      .catch((error: any) => {
+        console.error(error);
+      });
+  }, [fromCoinAmount, stakeClient, canFetchStakeQuote]);
 
   // Stake quote for input amount
   useEffect(() => {
-    if (!stakeClient) { return; }
+    if (!stakeClient) {
+      return;
+    }
 
     if (parseFloat(fromCoinAmount) > 0 && canFetchStakeQuote) {
       setFetchingStakeQuote(true);
       setCanFetchStakeQuote(false);
-      stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
-        consoleOut('stakeQuote:', value, 'blue');
-        setStakeQuote(value.sMeanOutUiAmount);
-        consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
-      })
+      stakeClient
+        .getStakeQuote(parseFloat(fromCoinAmount))
+        .then((value: StakeQuote) => {
+          consoleOut('stakeQuote:', value, 'blue');
+          setStakeQuote(value.sMeanOutUiAmount);
+          consoleOut(
+            `Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`,
+            `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`,
+            'blue',
+          );
+        })
         .catch((error: any) => {
           console.error(error);
         })
         .finally(() => setFetchingStakeQuote(false));
     }
-
-  }, [
-    fromCoinAmount,
-    stakeClient,
-    canFetchStakeQuote,
-  ]);
+  }, [fromCoinAmount, stakeClient, canFetchStakeQuote]);
 
   // Unstake quote
   useEffect(() => {
     const getMeanQuote = async (sMEAN: number) => {
-      if (!stakeClient) { return 0; }
+      if (!stakeClient) {
+        return 0;
+      }
 
       try {
         const result = await stakeClient.getUnstakeQuote(sMEAN);
@@ -503,39 +553,45 @@ export const StakeTabView = (props: {
         console.error(error);
         return 0;
       }
-    }
+    };
 
     if (selectedToken) {
       if (smeanBalance > 0) {
-        getMeanQuote(smeanBalance).then((value) => {
-          consoleOut(`Quote for ${formatThousands(smeanBalance, selectedToken?.decimals)} sMEAN`, `${formatThousands(value, selectedToken?.decimals)} MEAN`, 'blue');
+        getMeanQuote(smeanBalance).then(value => {
+          consoleOut(
+            `Quote for ${formatThousands(
+              smeanBalance,
+              selectedToken?.decimals,
+            )} sMEAN`,
+            `${formatThousands(value, selectedToken?.decimals)} MEAN`,
+            'blue',
+          );
           setMeanWorthOfsMean(value);
-        })
+        });
       } else {
         setMeanWorthOfsMean(0);
       }
     }
-  }, [
-    stakeClient,
-    selectedToken,
-    smeanBalance,
-    fromCoinAmount
-  ]);
+  }, [stakeClient, selectedToken, smeanBalance, fromCoinAmount]);
 
   // Setup event listeners
   useEffect(() => {
     if (canSubscribe) {
       setCanSubscribe(false);
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      consoleOut(
+        'Subscribed to event txConfirmed with:',
+        'onTxConfirmed',
+        'blue',
+      );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+      consoleOut(
+        'Subscribed to event txTimedout with:',
+        'onTxTimedout',
+        'blue',
+      );
     }
-  }, [
-    canSubscribe,
-    onTxConfirmed,
-    onTxTimedout
-  ]);
+  }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
   useEffect(() => {
@@ -557,48 +613,65 @@ export const StakeTabView = (props: {
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={12} className="font-size-75 fg-secondary-60 text-right pr-1">{caption}</Col>
-        <Col span={12} className="font-size-75 fg-secondary-60 text-left">{value}</Col>
+        <Col span={12} className="font-size-75 fg-secondary-60 text-right pr-1">
+          {caption}
+        </Col>
+        <Col span={12} className="font-size-75 fg-secondary-60 text-left">
+          {value}
+        </Col>
       </Row>
     );
-  }
+  };
 
   return (
     <>
       <div className="mb-2 px-1">
         <span className="info-label">
-          {
-            smeanBalance
-              ? (
-                <span>You have {cutNumber(smeanBalance, 6)} sMEAN staked{meanWorthOfsMean ? ` which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.` : '.'}</span>
-              )
-              : t("staking.panel-right.tabset.unstake.notification-label-one-error")
-          }
+          {smeanBalance ? (
+            <span>
+              You have {cutNumber(smeanBalance, 6)} sMEAN staked
+              {meanWorthOfsMean
+                ? ` which is currently worth ${cutNumber(
+                    meanWorthOfsMean,
+                    6,
+                  )} MEAN.`
+                : '.'}
+            </span>
+          ) : (
+            t('staking.panel-right.tabset.unstake.notification-label-one-error')
+          )}
         </span>
       </div>
-      <div className="form-label">{t("staking.panel-right.tabset.stake.amount-label")}</div>
+      <div className="form-label">
+        {t('staking.panel-right.tabset.stake.amount-label')}
+      </div>
       <div className={`well mb-1${isBusy ? ' disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
               {selectedToken && (
-                <TokenDisplay onClick={() => { }}
+                <TokenDisplay
+                  onClick={() => {}}
                   mintAddress={selectedToken.address}
                   name={selectedToken.name}
                   className="click-disabled"
                 />
               )}
               {selectedToken && meanBalance ? (
-                <div className="token-max simplelink" onClick={() => {
-                  const newAmount = meanBalance.toFixed(selectedToken?.decimals || 9);
-                  setFromCoinAmount(newAmount);
-                  // Debouncing
-                  fetchQuoteFromInput(newAmount);
-                }}>
+                <div
+                  className="token-max simplelink"
+                  onClick={() => {
+                    const newAmount = meanBalance.toFixed(
+                      selectedToken?.decimals || 9,
+                    );
+                    setFromCoinAmount(newAmount);
+                    // Debouncing
+                    fetchQuoteFromInput(newAmount);
+                  }}
+                >
                   MAX
                 </div>
               ) : null}
-
             </span>
           </div>
           <div className="right">
@@ -623,37 +696,57 @@ export const StakeTabView = (props: {
           <div className="left inner-label">
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span>
-              {`${meanBalance && selectedToken
-                ? getAmountWithSymbol(meanBalance, selectedToken?.address, true)
-                : "0"
-                }`}
+              {`${
+                meanBalance && selectedToken
+                  ? getAmountWithSymbol(
+                      meanBalance,
+                      selectedToken?.address,
+                      true,
+                    )
+                  : '0'
+              }`}
             </span>
           </div>
           <div className="right inner-label">
-            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-              ~${fromCoinAmount && selectedToken
-                ? formatAmount(parseFloat(fromCoinAmount) * getTokenPriceBySymbol(selectedToken.symbol), 2)
-                : "0.00"}
+            <span
+              className={
+                loadingPrices
+                  ? 'click-disabled fg-orange-red pulsate'
+                  : 'simplelink'
+              }
+              onClick={() => refreshPrices()}
+            >
+              ~$
+              {fromCoinAmount && selectedToken
+                ? formatAmount(
+                    parseFloat(fromCoinAmount) *
+                      getTokenPriceBySymbol(selectedToken.symbol),
+                    2,
+                  )
+                : '0.00'}
             </span>
           </div>
         </div>
       </div>
 
       <div className="p-2">
-        {
-          (!fetchingStakeQuote && fromCoinAmount && parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= meanBalance && stakeQuote > 0) &&
+        {!fetchingStakeQuote &&
+          fromCoinAmount &&
+          parseFloat(fromCoinAmount) > 0 &&
+          parseFloat(fromCoinAmount) <= meanBalance &&
+          stakeQuote > 0 &&
           infoRow(
-            `${formatThousands(parseFloat(fromCoinAmount), getMaxDecimalsForValue(parseFloat(fromCoinAmount)))} MEAN ≈`,
-            `${formatThousands(stakeQuote, getMaxDecimalsForValue(stakeQuote))} sMEAN`
-          )
-        }
-        {
-          stakedMeanPrice > 0 &&
-          infoRow(
-            `1 MEAN ≈`,
-            `${cutNumber(stakedMeanPrice, 6)} sMEAN`
-          )
-        }
+            `${formatThousands(
+              parseFloat(fromCoinAmount),
+              getMaxDecimalsForValue(parseFloat(fromCoinAmount)),
+            )} MEAN ≈`,
+            `${formatThousands(
+              stakeQuote,
+              getMaxDecimalsForValue(stakeQuote),
+            )} sMEAN`,
+          )}
+        {stakedMeanPrice > 0 &&
+          infoRow(`1 MEAN ≈`, `${cutNumber(stakedMeanPrice, 6)} sMEAN`)}
       </div>
 
       {/* Action button */}
@@ -664,13 +757,15 @@ export const StakeTabView = (props: {
         shape="round"
         size="large"
         onClick={onTransactionStart}
-        disabled={
-          isBusy ||
-          !isStakingFormValid()
-        }>
-        {isBusy && (<span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>)}
+        disabled={isBusy || !isStakingFormValid()}
+      >
+        {isBusy && (
+          <span className="mr-1">
+            <LoadingOutlined style={{ fontSize: '16px' }} />
+          </span>
+        )}
         {getStakeButtonLabel()}
       </Button>
     </>
-  )
-}
+  );
+};

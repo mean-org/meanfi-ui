@@ -1,6 +1,5 @@
-import { PublicKey } from "@solana/web3.js";
-import { TokenAccountInfo } from "./TokenAccountInfo";
-
+import { PublicKey } from '@solana/web3.js';
+import { TokenAccountInfo } from './TokenAccountInfo';
 
 export class AccountTokenParsedInfo {
   parsedInfo!: TokenAccountInfo;

@@ -1,3 +1,4 @@
-import { CSSProperties } from "react";
+import { CSSProperties } from 'react';
 
-export type CustomCSSProps = CSSProperties & Record<`${string}`, number | string>;
+export type CustomCSSProps = CSSProperties &
+  Record<`${string}`, number | string>;

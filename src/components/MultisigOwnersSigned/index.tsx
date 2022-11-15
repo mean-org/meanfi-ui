@@ -1,16 +1,16 @@
-import { CloseOutlined } from "@ant-design/icons";
-import { MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
-import { Button, Popover } from "antd";
-import { IconDocument } from "Icons";
-import { shortenAddress } from "middleware/utils";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { CloseOutlined } from '@ant-design/icons';
+import { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
+import { Button, Popover } from 'antd';
+import { IconDocument } from 'Icons';
+import { shortenAddress } from 'middleware/utils';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const MultisigOwnersSigned = (props: {
   participants: MultisigParticipant[];
   className?: string;
 }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
   const [popoverVisible, setPopoverVisible] = useState(false);
 
   const handlePopoverVisibleChange = (visibleChange: boolean) => {
@@ -37,9 +37,14 @@ export const MultisigOwnersSigned = (props: {
         <div className="cebra-list">
           {props.participants.map((item, index) => {
             return (
-              <div key={`${index}`} className="cebra-list-item flex-fixed-right align-items-center">
+              <div
+                key={`${index}`}
+                className="cebra-list-item flex-fixed-right align-items-center"
+              >
                 <div className="left">{item.name || `Owner ${index + 1}`}</div>
-                <div className="right text-monospace">{shortenAddress(item.address, 6)}</div>
+                <div className="right text-monospace">
+                  {shortenAddress(item.address, 6)}
+                </div>
               </div>
             );
           })}
@@ -60,7 +65,8 @@ export const MultisigOwnersSigned = (props: {
         content={bodyContent}
         open={popoverVisible}
         onOpenChange={handlePopoverVisibleChange}
-        trigger="click">
+        trigger="click"
+      >
         {props.className ? (
           <span className={`${props.className}`}>
             <IconDocument className="mean-svg-icons simplelink" />

@@ -1,37 +1,74 @@
-import { ArrowDownOutlined, CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
-import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from "@mean-dao/money-streaming/lib/types";
+import {
+  ArrowDownOutlined,
+  CheckOutlined,
+  InfoCircleOutlined,
+  LoadingOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
+import {
+  DEFAULT_EXPIRATION_TIME_SECONDS,
+  MeanMultisig,
+  MultisigInfo,
+} from '@mean-dao/mean-multisig-sdk';
+import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
+import {
+  MSP_ACTIONS,
+  StreamInfo,
+  STREAM_STATE,
+} from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
-  calculateActionFees as calculateActionFeesV2, MSP, MSP_ACTIONS as MSP_ACTIONS_V2, Stream,
-  STREAM_STATUS, TransactionFees
+  calculateActionFees as calculateActionFeesV2,
+  MSP,
+  MSP_ACTIONS as MSP_ACTIONS_V2,
+  Stream,
+  STREAM_STATUS,
+  TransactionFees,
 } from '@mean-dao/msp';
-import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Dropdown, Menu, Modal, Space, Spin } from "antd";
-import { ItemType } from "antd/lib/menu/hooks/useItems";
-import { segmentAnalytics } from "App";
-import BN from "bn.js";
-import { MoneyStreamDetails } from "components/MoneyStreamDetails";
-import { StreamTransferOpenModal } from "components/StreamTransferOpenModal";
-import { StreamWithdrawModal } from "components/StreamWithdrawModal";
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "constants/common";
-import { useNativeAccount } from "contexts/accounts";
-import { AppStateContext } from "contexts/appstate";
-import { getSolanaExplorerClusterParam, useConnectionConfig } from "contexts/connection";
-import { TxConfirmationContext } from "contexts/transaction-status";
-import { useWallet } from "contexts/wallet";
-import { IconEllipsisVertical } from "Icons";
-import { appConfig, customLogger } from "index";
-import { NATIVE_SOL_MINT } from "middleware/ids";
-import { AppUsageEvent, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "middleware/segment-service";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "middleware/ui";
-import { displayAmountWithSymbol, getAmountFromLamports, getAmountWithSymbol, getTokenOrCustomToken, getTxIxResume, shortenAddress } from "middleware/utils";
-import { OperationType, TransactionStatus } from "models/enums";
-import { TokenInfo } from "models/SolanaTokenInfo";
-import { StreamWithdrawData } from "models/streams";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Button, Dropdown, Menu, Modal, Space, Spin } from 'antd';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { segmentAnalytics } from 'App';
+import BN from 'bn.js';
+import { MoneyStreamDetails } from 'components/MoneyStreamDetails';
+import { StreamTransferOpenModal } from 'components/StreamTransferOpenModal';
+import { StreamWithdrawModal } from 'components/StreamWithdrawModal';
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
+import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import {
+  getSolanaExplorerClusterParam,
+  useConnectionConfig,
+} from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { IconEllipsisVertical } from 'Icons';
+import { appConfig, customLogger } from 'index';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
+import {
+  AppUsageEvent,
+  SegmentStreamTransferOwnershipData,
+  SegmentStreamWithdrawData,
+} from 'middleware/segment-service';
+import {
+  consoleOut,
+  getTransactionModalTitle,
+  getTransactionOperationDescription,
+  getTransactionStatusForLogs,
+} from 'middleware/ui';
+import {
+  displayAmountWithSymbol,
+  getAmountFromLamports,
+  getAmountWithSymbol,
+  getTokenOrCustomToken,
+  getTxIxResume,
+  shortenAddress,
+} from 'middleware/utils';
+import { OperationType, TransactionStatus } from 'models/enums';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { StreamWithdrawData } from 'models/streams';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -61,45 +98,52 @@ export const MoneyStreamsIncomingView = (props: {
     refreshTokenBalance,
     setStreamDetail,
   } = useContext(AppStateContext);
-  const {
-    confirmationHistory,
-    enqueueTransactionConfirmation,
-  } = useContext(TxConfirmationContext);
+  const { confirmationHistory, enqueueTransactionConfirmation } = useContext(
+    TxConfirmationContext,
+  );
   const connectionConfig = useConnectionConfig();
   const { endpoint } = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
-  const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
+  const [transactionFees, setTransactionFees] =
+    useState<TransactionFees>(NO_FEES);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [lastStreamTransferAddress, setLastStreamTransferAddress] = useState('');
-  const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
+  const [lastStreamTransferAddress, setLastStreamTransferAddress] =
+    useState('');
+  const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(
+    undefined,
+  );
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
   ////////////
   //  Init  //
   ////////////
 
-  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+  const mspV2AddressPK = useMemo(
+    () => new PublicKey(appConfig.getConfig().streamV2ProgramAddress),
+    [],
+  );
+  const multisigAddressPK = useMemo(
+    () => new PublicKey(appConfig.getConfig().multisigProgramAddress),
+    [],
+  );
 
   // Create and cache the connection
-  const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
-    commitment: "confirmed",
-    disableRetryOnRateLimit: true
-  }), [
-    connectionConfig.endpoint
-  ]);
+  const connection = useMemo(
+    () =>
+      new Connection(connectionConfig.endpoint, {
+        commitment: 'confirmed',
+        disableRetryOnRateLimit: true,
+      }),
+    [connectionConfig.endpoint],
+  );
 
   // Create and cache Money Streaming Program instance
-  const ms = useMemo(() => new MoneyStreaming(
-    endpoint,
-    streamProgramAddress,
-    "confirmed"
-  ), [
-    endpoint,
-    streamProgramAddress
-  ]);
+  const ms = useMemo(
+    () => new MoneyStreaming(endpoint, streamProgramAddress, 'confirmed'),
+    [endpoint, streamProgramAddress],
+  );
 
   // Create and cache Money Streaming Program V2 instance
   const msp = useMemo(() => {
@@ -107,33 +151,24 @@ export const MoneyStreamsIncomingView = (props: {
       return new MSP(
         connectionConfig.endpoint,
         streamV2ProgramAddress,
-        "confirmed"
+        'confirmed',
       );
     }
-  }, [
-    connectionConfig.endpoint,
-    publicKey,
-    streamV2ProgramAddress
-  ]);
+  }, [connectionConfig.endpoint, publicKey, streamV2ProgramAddress]);
 
   // Create and cache Multisig client instance
   const multisigClient = useMemo(() => {
-
-    if (!connection || !publicKey || !endpoint) { return null; }
+    if (!connection || !publicKey || !endpoint) {
+      return null;
+    }
 
     return new MeanMultisig(
       endpoint,
       publicKey,
-      "confirmed",
-      multisigAddressPK
+      'confirmed',
+      multisigAddressPK,
     );
-
-  }, [
-    endpoint,
-    publicKey,
-    connection,
-    multisigAddressPK
-  ]);
+  }, [endpoint, publicKey, connection, multisigAddressPK]);
 
   const isMultisigContext = useMemo(() => {
     return publicKey && selectedAccount.isMultisig ? true : false;
@@ -151,63 +186,86 @@ export const MoneyStreamsIncomingView = (props: {
     return false;
   }, [streamSelected]);
 
-  const isIncomingMultisigStream = useCallback((stream?: any) => {
+  const isIncomingMultisigStream = useCallback(
+    (stream?: any) => {
+      const streamInfo: any = stream ?? streamSelected;
 
-    const streamInfo: any = stream ?? streamSelected;
+      if (
+        !streamInfo ||
+        streamInfo.version < 2 ||
+        !streamInfo.beneficiary ||
+        !publicKey
+      ) {
+        return false;
+      }
 
-    if (!streamInfo || streamInfo.version < 2 || !streamInfo.beneficiary || !publicKey) {
+      const beneficiary = new PublicKey(streamInfo.beneficiary as string);
+
+      if (
+        !beneficiary.equals(publicKey) &&
+        multisigAccounts &&
+        multisigAccounts.findIndex(m => m.authority.equals(beneficiary)) !== -1
+      ) {
+        return true;
+      }
+
       return false;
-    }
-
-    const beneficiary = new PublicKey(streamInfo.beneficiary as string);
-
-    if (!beneficiary.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(beneficiary)) !== -1) {
-      return true;
-    }
-
-    return false;
-  }, [
-    publicKey,
-    streamSelected,
-    multisigAccounts,
-  ]);
+    },
+    [publicKey, streamSelected, multisigAccounts],
+  );
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
+      currentOperation: TransactionStatus.Iddle,
     });
   }, [setTransactionStatus]);
 
-  const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
-    return await calculateActionFees(connection, action);
-  }, [connection]);
+  const getTransactionFees = useCallback(
+    async (action: MSP_ACTIONS): Promise<TransactionFees> => {
+      return await calculateActionFees(connection, action);
+    },
+    [connection],
+  );
 
-  const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
-    return await calculateActionFeesV2(connection, action);
-  }, [connection]);
+  const getTransactionFeesV2 = useCallback(
+    async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
+      return await calculateActionFeesV2(connection, action);
+    },
+    [connection],
+  );
 
   // Transaction execution (Applies to all transactions)
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
   const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
-  }
+    return (
+      transactionStatus.currentOperation ===
+      TransactionStatus.TransactionFinished
+    );
+  };
 
   const isError = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-      transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-      transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-      transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-      transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ||
-      transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled
+    return transactionStatus.currentOperation ===
+      TransactionStatus.TransactionStartFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.InitTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.SignTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.SendTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.ConfirmTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.FeatureTemporarilyDisabled
       ? true
       : false;
-  }
+  };
 
   // Transfer stream modal
-  const [isTransferStreamModalVisible, setIsTransferStreamModalVisibility] = useState(false);
+  const [isTransferStreamModalVisible, setIsTransferStreamModalVisibility] =
+    useState(false);
   const showTransferStreamModal = useCallback(() => {
     resetTransactionStatus();
     setIsTransferStreamModalVisibility(true);
@@ -216,10 +274,22 @@ export const MoneyStreamsIncomingView = (props: {
       consoleOut('transactionFees:', value, 'orange');
     });
   }, [getTransactionFeesV2, resetTransactionStatus]);
-  const closeTransferStreamModal = useCallback(() => setIsTransferStreamModalVisibility(false), []);
-  const [isTransferStreamTransactionModalVisible, setTransferStreamTransactionModalVisibility] = useState(false);
-  const showTransferStreamTransactionModal = useCallback(() => setTransferStreamTransactionModalVisibility(true), []);
-  const hideTransferStreamTransactionModal = useCallback(() => setTransferStreamTransactionModalVisibility(false), []);
+  const closeTransferStreamModal = useCallback(
+    () => setIsTransferStreamModalVisibility(false),
+    [],
+  );
+  const [
+    isTransferStreamTransactionModalVisible,
+    setTransferStreamTransactionModalVisibility,
+  ] = useState(false);
+  const showTransferStreamTransactionModal = useCallback(
+    () => setTransferStreamTransactionModalVisibility(true),
+    [],
+  );
+  const hideTransferStreamTransactionModal = useCallback(
+    () => setTransferStreamTransactionModalVisibility(false),
+    [],
+  );
 
   const onAcceptTransferStream = (dataStream: any) => {
     closeTransferStreamModal();
@@ -242,271 +312,355 @@ export const MoneyStreamsIncomingView = (props: {
       closeTransferStreamModal();
     }
     resetTransactionStatus();
-  }
+  };
 
-  const onExecuteTransferStreamTransaction = useCallback(async (dataStream: any) => {
-    let transaction: Transaction;
-    let signature: any;
-    let encodedTx: string;
-    let multisigAuth = '';
-    const transactionLog: any[] = [];
+  const onExecuteTransferStreamTransaction = useCallback(
+    async (dataStream: any) => {
+      let transaction: Transaction;
+      let signature: any;
+      let encodedTx: string;
+      let multisigAuth = '';
+      const transactionLog: any[] = [];
 
-    resetTransactionStatus();
-    setTransactionCancelled(false);
-    setIsBusy(true);
+      resetTransactionStatus();
+      setTransactionCancelled(false);
+      setIsBusy(true);
 
-    const transferOwnership = async (dataStream: any) => {
-      if (!msp || !publicKey || !streamSelected) { return null; }
+      const transferOwnership = async (dataStream: any) => {
+        if (!msp || !publicKey || !streamSelected) {
+          return null;
+        }
 
-      if (!isMultisigContext) {
-        consoleOut('Creating msp.transferStream() Tx...', '', 'blue');
-        return await msp.transferStream(
-          publicKey,                                       // beneficiary,
-          new PublicKey(dataStream.address),               // newBeneficiary,
-          new PublicKey(streamSelected.id as string),      // stream,
+        if (!isMultisigContext) {
+          consoleOut('Creating msp.transferStream() Tx...', '', 'blue');
+          return await msp.transferStream(
+            publicKey, // beneficiary,
+            new PublicKey(dataStream.address), // newBeneficiary,
+            new PublicKey(streamSelected.id as string), // stream,
+          );
+        }
+
+        if (!streamSelected || !multisigClient || !multisigAccounts) {
+          return null;
+        }
+
+        const stream = streamSelected as Stream;
+        const multisig = multisigAccounts.filter(m =>
+          m.authority.equals(stream.beneficiary),
+        )[0];
+
+        if (!multisig) {
+          return null;
+        }
+
+        multisigAuth = multisig.authority.toBase58();
+
+        const ownershipTransfer = await msp.transferStream(
+          multisig.authority, // beneficiary,
+          new PublicKey(dataStream.address as string), // newBeneficiary,
+          new PublicKey(streamSelected.id as string), // stream,
         );
-      }
 
-      if (!streamSelected || !multisigClient || !multisigAccounts) { return null; }
+        const ixData = Buffer.from(ownershipTransfer.instructions[0].data);
+        const ixAccounts = ownershipTransfer.instructions[0].keys;
+        const expirationTime = parseInt(
+          (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
+        );
 
-      const stream = streamSelected as Stream;
-      const multisig = multisigAccounts.filter(m => m.authority.equals(stream.beneficiary))[0];
+        const tx = await multisigClient.createTransaction(
+          publicKey,
+          dataStream.title === ''
+            ? 'Transfer stream ownership'
+            : dataStream.title,
+          '', // description
+          new Date(expirationTime * 1_000),
+          OperationType.StreamTransferBeneficiary,
+          multisig.id,
+          mspV2AddressPK,
+          ixAccounts,
+          ixData,
+        );
 
-      if (!multisig) { return null; }
-
-      multisigAuth = multisig.authority.toBase58();
-
-      const ownershipTransfer = await msp.transferStream(
-        multisig.authority,                              // beneficiary,
-        new PublicKey(dataStream.address as string),     // newBeneficiary,
-        new PublicKey(streamSelected.id as string),      // stream,
-      );
-
-      const ixData = Buffer.from(ownershipTransfer.instructions[0].data);
-      const ixAccounts = ownershipTransfer.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-
-      const tx = await multisigClient.createTransaction(
-        publicKey,
-        dataStream.title === "" ? "Transfer stream ownership" : dataStream.title,
-        "", // description
-        new Date(expirationTime * 1_000),
-        OperationType.StreamTransferBeneficiary,
-        multisig.id,
-        mspV2AddressPK,
-        ixAccounts,
-        ixData
-      );
-
-      return tx;
-    }
-
-    const createTx = async (): Promise<boolean> => {
-      if (!publicKey || !streamSelected || !msp) {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
-        return false;
-      }
-
-      setTransactionStatus({
-        lastOperation: TransactionStatus.TransactionStart,
-        currentOperation: TransactionStatus.InitTransaction
-      });
-
-      const stream = new PublicKey(streamSelected.id as string);
-      const newBeneficiary = new PublicKey(dataStream.address as string);
-
-      const data = {
-        beneficiary: publicKey.toBase58(),                              // beneficiary
-        newBeneficiary: newBeneficiary.toBase58(),                      // newBeneficiary
-        stream: stream.toBase58()                                       // stream
-      }
-      consoleOut('Transfer stream data:', data);
-
-      // Report event to Segment analytics
-      const segmentData: SegmentStreamTransferOwnershipData = {
-        stream: data.stream,
-        beneficiary: data.beneficiary,
-        newBeneficiary: data.newBeneficiary
+        return tx;
       };
-      consoleOut('segment data:', segmentData, 'brown');
-      segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferOwnershipFormButton, segmentData);
 
-      // Log input data
-      transactionLog.push({
-        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-        inputs: data
-      });
-
-      transactionLog.push({
-        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-        result: ''
-      });
-
-      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-      consoleOut('nativeBalance:', nativeBalance, 'blue');
-      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.TransactionStartFailure
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
-        });
-        customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
-        return false;
-      }
-
-      consoleOut('Starting transferStream using MSP V2...', '', 'blue');
-
-      const result = await transferOwnership(dataStream)
-        .then(value => {
-          if (!value) { return false; }
-          consoleOut('transferStream returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
-          });
+      const createTx = async (): Promise<boolean> => {
+        if (!publicKey || !streamSelected || !msp) {
           transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
+            action: getTransactionStatusForLogs(
+              TransactionStatus.WalletNotFound,
+            ),
+            result: 'Cannot start transaction! Wallet not found!',
           });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('transferStream error:', error);
+          customLogger.logError('Transfer stream transaction failed', {
+            transcript: transactionLog,
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, {
+            transcript: transactionLog,
+          });
+          return false;
+        }
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction,
+        });
+
+        const stream = new PublicKey(streamSelected.id as string);
+        const newBeneficiary = new PublicKey(dataStream.address as string);
+
+        const data = {
+          beneficiary: publicKey.toBase58(), // beneficiary
+          newBeneficiary: newBeneficiary.toBase58(), // newBeneficiary
+          stream: stream.toBase58(), // stream
+        };
+        consoleOut('Transfer stream data:', data);
+
+        // Report event to Segment analytics
+        const segmentData: SegmentStreamTransferOwnershipData = {
+          stream: data.stream,
+          beneficiary: data.beneficiary,
+          newBeneficiary: data.newBeneficiary,
+        };
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(
+          AppUsageEvent.StreamTransferOwnershipFormButton,
+          segmentData,
+        );
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(
+            TransactionStatus.TransactionStart,
+          ),
+          inputs: data,
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(
+            TransactionStatus.InitTransaction,
+          ),
+          result: '',
+        });
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut(
+          'blockchainFee:',
+          transactionFees.blockchainFee + transactionFees.mspFlatFee,
+          'blue',
+        );
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        if (
+          nativeBalance <
+          transactionFees.blockchainFee + transactionFees.mspFlatFee
+        ) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
+            currentOperation: TransactionStatus.TransactionStartFailure,
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
+            action: getTransactionStatusForLogs(
+              TransactionStatus.TransactionStartFailure,
+            ),
+            result: `Not enough balance (${getAmountWithSymbol(
+              nativeBalance,
+              NATIVE_SOL_MINT.toBase58(),
+            )}) to pay for network fees (${getAmountWithSymbol(
+              transactionFees.blockchainFee + transactionFees.mspFlatFee,
+              NATIVE_SOL_MINT.toBase58(),
+            )})`,
           });
-          customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
+          customLogger.logWarning('Transfer stream transaction failed', {
+            transcript: transactionLog,
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, {
+            transcript: transactionLog,
+          });
           return false;
-        });
+        }
 
-      return result;
-    }
+        consoleOut('Starting transferStream using MSP V2...', '', 'blue');
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet.sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
+        const result = await transferOwnership(dataStream)
+          .then(value => {
+            if (!value) {
+              return false;
+            }
+            consoleOut('transferStream returned transaction:', value);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction,
             });
-            signature = sig;
             transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
+              action: getTransactionStatusForLogs(
+                TransactionStatus.InitTransactionSuccess,
+              ),
+              result: getTxIxResume(value),
             });
+            transaction = value;
             return true;
           })
           .catch(error => {
-            console.error(error);
+            console.error('transferStream error:', error);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
+              action: getTransactionStatusForLogs(
+                TransactionStatus.InitTransactionFailure,
+              ),
+              result: `${error}`,
             });
-            customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
-            segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
+            customLogger.logError('Transfer stream transaction failed', {
+              transcript: transactionLog,
+            });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, {
+              transcript: transactionLog,
+            });
             return false;
           });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!'
-        });
-        customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
-        return false;
-      }
-    }
 
-    if (wallet && streamSelected) {
-      showTransferStreamTransactionModal();
-      const created = await createTx();
-      consoleOut('created:', created, 'blue');
-      if (created && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.StreamTransferBeneficiary,
-            finality: "confirmed",
-            txInfoFetchStatus: "fetching",
-            loadingTitle: "Confirming transaction",
-            loadingMessage: `Transfer stream to: ${shortenAddress(dataStream.address, 4)}`,
-            completedTitle: "Transaction confirmed",
-            completedMessage: `Stream transferred to: ${shortenAddress(dataStream.address, 4)}`,
-            extras: {
-              multisigAuthority: multisigAuth
-            }
+        return result;
+      };
+
+      const sendTx = async (): Promise<boolean> => {
+        if (connection && wallet && wallet.publicKey && transaction) {
+          const {
+            context: { slot: minContextSlot },
+            value: { blockhash },
+          } = await connection.getLatestBlockhashAndContext();
+
+          transaction.feePayer = wallet.publicKey;
+          transaction.recentBlockhash = blockhash;
+
+          return wallet
+            .sendTransaction(transaction, connection, { minContextSlot })
+            .then(sig => {
+              consoleOut('sendEncodedTransaction returned a signature:', sig);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SendTransactionSuccess,
+                currentOperation: TransactionStatus.ConfirmTransaction,
+              });
+              signature = sig;
+              transactionLog.push({
+                action: getTransactionStatusForLogs(
+                  TransactionStatus.SendTransactionSuccess,
+                ),
+                result: `signature: ${signature}`,
+              });
+              return true;
+            })
+            .catch(error => {
+              console.error(error);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SendTransaction,
+                currentOperation: TransactionStatus.SendTransactionFailure,
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(
+                  TransactionStatus.SendTransactionFailure,
+                ),
+                result: { error, encodedTx },
+              });
+              customLogger.logError('Transfer stream transaction failed', {
+                transcript: transactionLog,
+              });
+              segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, {
+                transcript: transactionLog,
+              });
+              return false;
+            });
+        } else {
+          console.error('Cannot send transaction! Wallet not found!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransaction,
+            currentOperation: TransactionStatus.WalletNotFound,
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(
+              TransactionStatus.WalletNotFound,
+            ),
+            result: 'Cannot send transaction! Wallet not found!',
+          });
+          customLogger.logError('Transfer stream transaction failed', {
+            transcript: transactionLog,
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, {
+            transcript: transactionLog,
+          });
+          return false;
+        }
+      };
+
+      if (wallet && streamSelected) {
+        showTransferStreamTransactionModal();
+        const created = await createTx();
+        consoleOut('created:', created, 'blue');
+        if (created && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamTransferBeneficiary,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Transfer stream to: ${shortenAddress(
+                dataStream.address,
+                4,
+              )}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Stream transferred to: ${shortenAddress(
+                dataStream.address,
+                4,
+              )}`,
+              extras: {
+                multisigAuthority: multisigAuth,
+              },
+            });
+            setIsBusy(false);
+          } else {
+            setIsBusy(false);
+          }
+        } else {
           setIsBusy(false);
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
-    }
-  }, [
-    msp,
-    wallet,
-    publicKey,
-    connection,
-    nativeBalance,
-    streamSelected,
-    multisigClient,
-    mspV2AddressPK,
-    multisigAccounts,
-    isMultisigContext,
-    transactionCancelled,
-    transactionFees.mspFlatFee,
-    transactionFees.blockchainFee,
-    transactionStatus.currentOperation,
-    showTransferStreamTransactionModal,
-    enqueueTransactionConfirmation,
-    resetTransactionStatus,
-    setTransactionStatus,
-  ]);
+        }
+      }
+    },
+    [
+      msp,
+      wallet,
+      publicKey,
+      connection,
+      nativeBalance,
+      streamSelected,
+      multisigClient,
+      mspV2AddressPK,
+      multisigAccounts,
+      isMultisigContext,
+      transactionCancelled,
+      transactionFees.mspFlatFee,
+      transactionFees.blockchainFee,
+      transactionStatus.currentOperation,
+      showTransferStreamTransactionModal,
+      enqueueTransactionConfirmation,
+      resetTransactionStatus,
+      setTransactionStatus,
+    ],
+  );
 
   // Withdraw funds modal
-  const [lastStreamDetail, setLastStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
-  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<StreamWithdrawData>();
-  const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
+  const [lastStreamDetail, setLastStreamDetail] = useState<
+    Stream | StreamInfo | undefined
+  >(undefined);
+  const [withdrawFundsAmount, setWithdrawFundsAmount] =
+    useState<StreamWithdrawData>();
+  const [isWithdrawModalVisible, setIsWithdrawModalVisibility] =
+    useState(false);
 
   const showWithdrawModal = useCallback(async () => {
     // Record user event in Segment Analytics
@@ -530,7 +684,7 @@ export const MoneyStreamsIncomingView = (props: {
     streamSelected,
     getTransactionFees,
     getTransactionFeesV2,
-    resetTransactionStatus
+    resetTransactionStatus,
   ]);
 
   const closeWithdrawModal = useCallback(() => {
@@ -553,9 +707,11 @@ export const MoneyStreamsIncomingView = (props: {
       hideWithdrawFundsTransactionModal();
     }
     resetTransactionStatus();
-  }
+  };
 
-  const onExecuteWithdrawFundsTransaction = async (withdrawData: StreamWithdrawData) => {
+  const onExecuteWithdrawFundsTransaction = async (
+    withdrawData: StreamWithdrawData,
+  ) => {
     let transaction: Transaction;
     let signature: any;
     let encodedTx: string;
@@ -571,21 +727,26 @@ export const MoneyStreamsIncomingView = (props: {
       if (wallet && streamSelected) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
+          currentOperation: TransactionStatus.InitTransaction,
         });
 
         const stream = new PublicKey(streamSelected.id as string);
 
-        const beneficiary = new PublicKey((streamSelected as StreamInfo).beneficiaryAddress as string);
+        const beneficiary = new PublicKey(
+          (streamSelected as StreamInfo).beneficiaryAddress as string,
+        );
         const amount = parseFloat(withdrawData.amount);
-        const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
+        const price = workingToken
+          ? getTokenPriceByAddress(workingToken.address) ||
+            getTokenPriceBySymbol(workingToken.symbol)
+          : 0;
         const valueInUsd = price * amount;
 
         const data = {
           title: withdrawData.title,
           stream: stream.toBase58(),
           beneficiary: beneficiary.toBase58(),
-          amount: amount
+          amount: amount,
         };
         consoleOut('withdraw params:', data, 'brown');
 
@@ -598,59 +759,86 @@ export const MoneyStreamsIncomingView = (props: {
           feeAmount: withdrawData.fee,
           inputAmount: withdrawData.inputAmount,
           sentAmount: withdrawData.receiveAmount,
-          valueInUsd: parseFloat(valueInUsd.toFixed(2))
+          valueInUsd: parseFloat(valueInUsd.toFixed(2)),
         };
         consoleOut('segment data:', segmentData, 'brown');
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
+        segmentAnalytics.recordEvent(
+          AppUsageEvent.StreamWithdrawalStartFormButton,
+          segmentData,
+        );
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
+          action: getTransactionStatusForLogs(
+            TransactionStatus.TransactionStart,
+          ),
+          inputs: data,
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
+          action: getTransactionStatusForLogs(
+            TransactionStatus.InitTransaction,
+          ),
+          result: '',
         });
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut(
+          'blockchainFee:',
+          transactionFees.blockchainFee + transactionFees.mspFlatFee,
+          'blue',
+        );
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+        if (
+          nativeBalance <
+          transactionFees.blockchainFee + transactionFees.mspFlatFee
+        ) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
+            currentOperation: TransactionStatus.TransactionStartFailure,
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-              }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-              })`
+            action: getTransactionStatusForLogs(
+              TransactionStatus.TransactionStartFailure,
+            ),
+            result: `Not enough balance (${getAmountWithSymbol(
+              nativeBalance,
+              NATIVE_SOL_MINT.toBase58(),
+            )}) to pay for network fees (${getAmountWithSymbol(
+              transactionFees.blockchainFee + transactionFees.mspFlatFee,
+              NATIVE_SOL_MINT.toBase58(),
+            )})`,
           });
-          customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
+          customLogger.logWarning('Withdraw transaction failed', {
+            transcript: transactionLog,
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
+            transcript: transactionLog,
+          });
           return false;
         }
 
         consoleOut('Starting withdraw using MSP V1...', '', 'blue');
         // Create a transaction
-        return await ms.withdraw(
-          // title,
-          beneficiary,
-          stream,
-          amount
-        )
+        return await ms
+          .withdraw(
+            // title,
+            beneficiary,
+            stream,
+            amount,
+          )
           .then(value => {
             consoleOut('withdraw returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction
+              currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-              result: getTxIxResume(value)
+              action: getTransactionStatusForLogs(
+                TransactionStatus.InitTransactionSuccess,
+              ),
+              result: getTxIxResume(value),
             });
             transaction = value;
             return true;
@@ -659,99 +847,127 @@ export const MoneyStreamsIncomingView = (props: {
             console.error('withdraw error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure
+              currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-              result: `${error}`
+              action: getTransactionStatusForLogs(
+                TransactionStatus.InitTransactionFailure,
+              ),
+              result: `${error}`,
             });
-            customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-            segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
+            customLogger.logError('Withdraw transaction failed', {
+              transcript: transactionLog,
+            });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
+              transcript: transactionLog,
+            });
             return false;
           });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
+          result: 'Cannot start transaction! Wallet not found!',
         });
-        customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
+        customLogger.logError('Withdraw transaction failed', {
+          transcript: transactionLog,
+        });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
+          transcript: transactionLog,
+        });
         return false;
       }
-    }
+    };
 
     const withdrawFunds = async (data: any) => {
-
-      if (!msp || !publicKey) { return null; }
+      if (!msp || !publicKey) {
+        return null;
+      }
 
       if (!isIncomingMultisigStream()) {
         return await msp.withdraw(
-          publicKey,                             // payer,
-          new PublicKey(data.stream),            // stream,
-          data.amount,                           // amount
+          publicKey, // payer,
+          new PublicKey(data.stream), // stream,
+          data.amount, // amount
         );
       }
 
-      if (!streamSelected || !multisigClient || !multisigAccounts) { return null; }
+      if (!streamSelected || !multisigClient || !multisigAccounts) {
+        return null;
+      }
 
       const stream = streamSelected as Stream;
-      const multisig = multisigAccounts.filter(m => m.authority.equals(stream.beneficiary))[0];
+      const multisig = multisigAccounts.filter(m =>
+        m.authority.equals(stream.beneficiary),
+      )[0];
 
-      if (!multisig) { return null; }
+      if (!multisig) {
+        return null;
+      }
 
       multisigAuth = multisig.authority.toBase58();
 
       const withdrawFunds = await msp.withdraw(
-        multisig.authority,                          // payer
-        new PublicKey(data.stream),                  // stream,
-        data.amount,                                 // amount
+        multisig.authority, // payer
+        new PublicKey(data.stream), // stream,
+        data.amount, // amount
       );
 
       const ixData = Buffer.from(withdrawFunds.instructions[0].data);
       const ixAccounts = withdrawFunds.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = parseInt(
+        (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
+      );
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        withdrawData.title === "" ? "Withdraw stream funds" : withdrawData.title as string,
-        "", // description
+        withdrawData.title === ''
+          ? 'Withdraw stream funds'
+          : (withdrawData.title as string),
+        '', // description
         new Date(expirationTime * 1_000),
         OperationType.StreamWithdraw,
         multisig.id,
         mspV2AddressPK,
         ixAccounts,
-        ixData
+        ixData,
       );
 
       return tx;
-    }
+    };
 
     const createTxV2 = async (): Promise<boolean> => {
       if (!publicKey || !streamSelected || !msp || !workingToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
+          result: 'Cannot start transaction! Wallet not found!',
         });
-        customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
+        customLogger.logError('Withdraw transaction failed', {
+          transcript: transactionLog,
+        });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
+          transcript: transactionLog,
+        });
         return false;
       }
 
       setTransactionStatus({
         lastOperation: TransactionStatus.TransactionStart,
-        currentOperation: TransactionStatus.InitTransaction
+        currentOperation: TransactionStatus.InitTransaction,
       });
 
       const stream = (streamSelected as Stream).id;
       const beneficiary = (streamSelected as Stream).beneficiary;
       const amount = withdrawData.amount;
-      const price = workingToken ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol) : 0;
+      const price = workingToken
+        ? getTokenPriceByAddress(workingToken.address) ||
+          getTokenPriceBySymbol(workingToken.symbol)
+        : 0;
       const valueInUsd = price * withdrawData.inputAmount;
 
       const data = {
         stream: stream.toBase58(),
         beneficiary: beneficiary.toBase58(),
-        amount: amount
+        amount: amount,
       };
       consoleOut('withdraw params:', data, 'brown');
 
@@ -764,39 +980,59 @@ export const MoneyStreamsIncomingView = (props: {
         feeAmount: withdrawData.fee,
         inputAmount: withdrawData.inputAmount,
         sentAmount: withdrawData.receiveAmount,
-        valueInUsd: parseFloat(valueInUsd.toFixed(2))
+        valueInUsd: parseFloat(valueInUsd.toFixed(2)),
       };
       consoleOut('segment data:', segmentData, 'brown');
-      segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
+      segmentAnalytics.recordEvent(
+        AppUsageEvent.StreamWithdrawalStartFormButton,
+        segmentData,
+      );
 
       // Log input data
       transactionLog.push({
         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-        inputs: data
+        inputs: data,
       });
 
       transactionLog.push({
         action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-        result: ''
+        result: '',
       });
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+      consoleOut(
+        'blockchainFee:',
+        transactionFees.blockchainFee + transactionFees.mspFlatFee,
+        'blue',
+      );
       consoleOut('nativeBalance:', nativeBalance, 'blue');
-      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+      if (
+        nativeBalance <
+        transactionFees.blockchainFee + transactionFees.mspFlatFee
+      ) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.TransactionStartFailure
+          currentOperation: TransactionStatus.TransactionStartFailure,
         });
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
+          action: getTransactionStatusForLogs(
+            TransactionStatus.TransactionStartFailure,
+          ),
+          result: `Not enough balance (${getAmountWithSymbol(
+            nativeBalance,
+            NATIVE_SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(
+            transactionFees.blockchainFee + transactionFees.mspFlatFee,
+            NATIVE_SOL_MINT.toBase58(),
+          )})`,
         });
-        customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
+        customLogger.logWarning('Withdraw transaction failed', {
+          transcript: transactionLog,
+        });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
+          transcript: transactionLog,
+        });
         return false;
       }
 
@@ -804,15 +1040,19 @@ export const MoneyStreamsIncomingView = (props: {
       // Create a transaction
       const result = await withdrawFunds(data)
         .then(value => {
-          if (!value) { return false; }
+          if (!value) {
+            return false;
+          }
           consoleOut('withdraw returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
+            currentOperation: TransactionStatus.SignTransaction,
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
+            action: getTransactionStatusForLogs(
+              TransactionStatus.InitTransactionSuccess,
+            ),
+            result: getTxIxResume(value),
           });
           transaction = value;
           return true;
@@ -821,19 +1061,25 @@ export const MoneyStreamsIncomingView = (props: {
           console.error('withdraw error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
+            currentOperation: TransactionStatus.InitTransactionFailure,
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
+            action: getTransactionStatusForLogs(
+              TransactionStatus.InitTransactionFailure,
+            ),
+            result: `${error}`,
           });
-          customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
+          customLogger.logError('Withdraw transaction failed', {
+            transcript: transactionLog,
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
+            transcript: transactionLog,
+          });
           return false;
         });
 
       return result;
-    }
+    };
 
     const sendTx = async (): Promise<boolean> => {
       if (connection && wallet && wallet.publicKey && transaction) {
@@ -845,17 +1091,20 @@ export const MoneyStreamsIncomingView = (props: {
         transaction.feePayer = wallet.publicKey;
         transaction.recentBlockhash = blockhash;
 
-        return wallet.sendTransaction(transaction, connection, { minContextSlot })
+        return wallet
+          .sendTransaction(transaction, connection, { minContextSlot })
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
+              currentOperation: TransactionStatus.ConfirmTransaction,
             });
             signature = sig;
             transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
+              action: getTransactionStatusForLogs(
+                TransactionStatus.SendTransactionSuccess,
+              ),
+              result: `signature: ${signature}`,
             });
             return true;
           })
@@ -863,31 +1112,41 @@ export const MoneyStreamsIncomingView = (props: {
             console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
+              currentOperation: TransactionStatus.SendTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
+              action: getTransactionStatusForLogs(
+                TransactionStatus.SendTransactionFailure,
+              ),
+              result: { error, encodedTx },
             });
-            customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-            segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
+            customLogger.logError('Withdraw transaction failed', {
+              transcript: transactionLog,
+            });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
+              transcript: transactionLog,
+            });
             return false;
           });
       } else {
         console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
+          currentOperation: TransactionStatus.WalletNotFound,
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!'
+          result: 'Cannot send transaction! Wallet not found!',
         });
-        customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
+        customLogger.logError('Withdraw transaction failed', {
+          transcript: transactionLog,
+        });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
+          transcript: transactionLog,
+        });
         return false;
       }
-    }
+    };
 
     if (wallet && streamSelected && workingToken) {
       const token = withdrawData.token;
@@ -909,7 +1168,7 @@ export const MoneyStreamsIncomingView = (props: {
             token.address,
             token.decimals,
             splTokenList,
-            true
+            true,
           );
           const loadingMessage = multisigAuth
             ? `Create proposal to withdraw ${amountDisplay}`
@@ -920,29 +1179,42 @@ export const MoneyStreamsIncomingView = (props: {
           enqueueTransactionConfirmation({
             signature: signature,
             operationType: OperationType.StreamWithdraw,
-            finality: "finalized",
-            txInfoFetchStatus: "fetching",
-            loadingTitle: "Confirming transaction",
+            finality: 'finalized',
+            txInfoFetchStatus: 'fetching',
+            loadingTitle: 'Confirming transaction',
             loadingMessage: loadingMessage,
-            completedTitle: "Transaction confirmed",
+            completedTitle: 'Transaction confirmed',
             completedMessage: completed,
             extras: {
-              multisigAuthority: multisigAuth
-            }
+              multisigAuthority: multisigAuth,
+            },
           });
 
           setIsWithdrawModalVisibility(false);
           onWithdrawFundsTransactionFinished();
           setIsBusy(false);
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
+        } else {
+          setIsBusy(false);
+        }
+      } else {
+        setIsBusy(false);
+      }
     }
   };
 
   // Withdraw funds Transaction execution modal
-  const [isWithdrawFundsTransactionModalVisible, setWithdrawFundsTransactionModalVisibility] = useState(false);
-  const showWithdrawFundsTransactionModal = useCallback(() => setWithdrawFundsTransactionModalVisibility(true), []);
-  const hideWithdrawFundsTransactionModal = useCallback(() => setWithdrawFundsTransactionModalVisibility(false), []);
+  const [
+    isWithdrawFundsTransactionModalVisible,
+    setWithdrawFundsTransactionModalVisibility,
+  ] = useState(false);
+  const showWithdrawFundsTransactionModal = useCallback(
+    () => setWithdrawFundsTransactionModalVisibility(true),
+    [],
+  );
+  const hideWithdrawFundsTransactionModal = useCallback(
+    () => setWithdrawFundsTransactionModalVisibility(false),
+    [],
+  );
 
   const onWithdrawFundsTransactionFinished = () => {
     resetTransactionStatus();
@@ -952,67 +1224,87 @@ export const MoneyStreamsIncomingView = (props: {
 
   const hideDetailsHandler = () => {
     onSendFromIncomingStreamDetails();
-  }
+  };
 
-  const getStreamStatus = useCallback((item: Stream | StreamInfo): "scheduled" | "stopped" | "stopped-manually" | "running" => {
-    const v1 = item as StreamInfo;
-    const v2 = item as Stream;
-    if (v1.version < 2) {
-      switch (v1.state) {
-        case STREAM_STATE.Schedule:
-          return "scheduled";
-        case STREAM_STATE.Paused:
-          return "stopped";
-        default:
-          return "running";
+  const getStreamStatus = useCallback(
+    (
+      item: Stream | StreamInfo,
+    ): 'scheduled' | 'stopped' | 'stopped-manually' | 'running' => {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return 'scheduled';
+          case STREAM_STATE.Paused:
+            return 'stopped';
+          default:
+            return 'running';
+        }
+      } else {
+        switch (v2.status) {
+          case STREAM_STATUS.Scheduled:
+            return 'scheduled';
+          case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return 'stopped-manually';
+            }
+            return 'stopped';
+          default:
+            return 'running';
+        }
       }
-    } else {
-      switch (v2.status) {
-        case STREAM_STATUS.Scheduled:
-          return "scheduled";
-        case STREAM_STATUS.Paused:
-          if (v2.isManuallyPaused) {
-            return "stopped-manually";
-          }
-          return "stopped";
-        default:
-          return "running";
-      }
-    }
-  }, []);
+    },
+    [],
+  );
 
   // confirmationHistory
-  const hasStreamPendingTx = useCallback((type?: OperationType) => {
-    if (!streamSelected) { return false; }
+  const hasStreamPendingTx = useCallback(
+    (type?: OperationType) => {
+      if (!streamSelected) {
+        return false;
+      }
 
-    if (confirmationHistory && confirmationHistory.length > 0) {
-      if (type !== undefined) {
-        return confirmationHistory.some(h =>
-          h.extras === streamSelected.id &&
-          h.txInfoFetchStatus === "fetching" &&
-          h.operationType === type
+      if (confirmationHistory && confirmationHistory.length > 0) {
+        if (type !== undefined) {
+          return confirmationHistory.some(
+            h =>
+              h.extras === streamSelected.id &&
+              h.txInfoFetchStatus === 'fetching' &&
+              h.operationType === type,
+          );
+        }
+        if (type !== undefined) {
+          return confirmationHistory.some(
+            h =>
+              h.extras === streamSelected.id &&
+              h.txInfoFetchStatus === 'fetching' &&
+              h.operationType === type,
+          );
+        }
+        return confirmationHistory.some(
+          h =>
+            h.extras === streamSelected.id &&
+            h.txInfoFetchStatus === 'fetching',
         );
       }
-      if (type !== undefined) {
-        return confirmationHistory.some(h =>
-          h.extras === streamSelected.id &&
-          h.txInfoFetchStatus === "fetching" &&
-          h.operationType === type
-        );
-      }
-      return confirmationHistory.some(h => h.extras === streamSelected.id && h.txInfoFetchStatus === "fetching");
-    }
 
-    return false;
-  }, [confirmationHistory, streamSelected]);
+      return false;
+    },
+    [confirmationHistory, streamSelected],
+  );
 
   const isScheduledOtp = useCallback((): boolean => {
     if (streamSelected) {
       const isNew = streamSelected.version >= 2 ? true : false;
       if (isNew) {
-        if ((streamSelected.rateAmount as BN).gtn(0)) { return false; }
+        if ((streamSelected.rateAmount as BN).gtn(0)) {
+          return false;
+        }
       } else {
-        if (streamSelected.rateAmount as number > 0) { return false; }
+        if ((streamSelected.rateAmount as number) > 0) {
+          return false;
+        }
       }
       const now = new Date().toUTCString();
       const nowUtc = new Date(now);
@@ -1024,38 +1316,43 @@ export const MoneyStreamsIncomingView = (props: {
     return false;
   }, [streamSelected]);
 
-  const getStreamWithdrawableAmount = useCallback((stream: Stream | StreamInfo) => {
-    const v1 = stream as StreamInfo;
-    const v2 = stream as Stream;
-    const isNew = stream.version >= 2 ? true : false;
-    return isNew ? v2.withdrawableAmount : new BN(v1.escrowVestedAmount);
-  }, []);
+  const getStreamWithdrawableAmount = useCallback(
+    (stream: Stream | StreamInfo) => {
+      const v1 = stream as StreamInfo;
+      const v2 = stream as Stream;
+      const isNew = stream.version >= 2 ? true : false;
+      return isNew ? v2.withdrawableAmount : new BN(v1.escrowVestedAmount);
+    },
+    [],
+  );
 
-  const canWithdraw = useCallback((stream: StreamInfo | Stream | undefined) => {
-    if (!stream) {
-      return false;
-    }
+  const canWithdraw = useCallback(
+    (stream: StreamInfo | Stream | undefined) => {
+      if (!stream) {
+        return false;
+      }
 
-    const v1 = stream as StreamInfo;
-    const v2 = stream as Stream;
+      const v1 = stream as StreamInfo;
+      const v2 = stream as Stream;
 
-    let beneficiary = '';
-    if (v1.version < 2) {
-      beneficiary = v1.beneficiaryAddress
-        ? typeof v1.beneficiaryAddress === "string"
-          ? (v1.beneficiaryAddress as string)
-          : (v1.beneficiaryAddress as PublicKey).toBase58()
-        : '';
-    } else {
-      beneficiary = v2.beneficiary
-        ? typeof v2.beneficiary === "string"
-          ? (v2.beneficiary as string)
-          : (v2.beneficiary as PublicKey).toBase58()
-        : '';
-    }
-    return beneficiary === selectedAccount.address ? true : false
-  }, [selectedAccount.address]);
-
+      let beneficiary = '';
+      if (v1.version < 2) {
+        beneficiary = v1.beneficiaryAddress
+          ? typeof v1.beneficiaryAddress === 'string'
+            ? (v1.beneficiaryAddress as string)
+            : (v1.beneficiaryAddress as PublicKey).toBase58()
+          : '';
+      } else {
+        beneficiary = v2.beneficiary
+          ? typeof v2.beneficiary === 'string'
+            ? (v2.beneficiary as string)
+            : (v2.beneficiary as PublicKey).toBase58()
+          : '';
+      }
+      return beneficiary === selectedAccount.address ? true : false;
+    },
+    [selectedAccount.address],
+  );
 
   /////////////////////
   // Data management //
@@ -1063,7 +1360,9 @@ export const MoneyStreamsIncomingView = (props: {
 
   // Refresh stream data
   useEffect(() => {
-    if (!ms || !msp || !streamSelected) { return; }
+    if (!ms || !msp || !streamSelected) {
+      return;
+    }
 
     const timeout = setTimeout(() => {
       const v1 = streamSelected as StreamInfo;
@@ -1086,13 +1385,9 @@ export const MoneyStreamsIncomingView = (props: {
 
     return () => {
       clearTimeout(timeout);
-    }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    ms,
-    msp,
-    streamSelected,
-  ]);
+  }, [ms, msp, streamSelected]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -1103,44 +1398,55 @@ export const MoneyStreamsIncomingView = (props: {
       // Update previous balance
       setPreviousBalance(account?.lamports);
     }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshTokenBalance
-  ]);
+  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
 
   // Set selected token to the stream associated token as soon as the stream is available or changes
   useEffect(() => {
-    if (!publicKey || !streamSelected) { return; }
+    if (!publicKey || !streamSelected) {
+      return;
+    }
     let associatedToken = '';
 
     if (streamSelected.version < 2) {
-      associatedToken = (streamSelected as StreamInfo).associatedToken as string;
+      associatedToken = (streamSelected as StreamInfo)
+        .associatedToken as string;
     } else {
       associatedToken = (streamSelected as Stream).associatedToken.toBase58();
     }
 
-    if (associatedToken && (!workingToken || workingToken.address !== associatedToken)) {
+    if (
+      associatedToken &&
+      (!workingToken || workingToken.address !== associatedToken)
+    ) {
       getTokenOrCustomToken(
         connection,
         associatedToken,
-        getTokenByMintAddress
-      )
-        .then(token => {
-          consoleOut('getTokenOrCustomToken (MoneyStreamsIncomingView) ->', token, 'blue');
-          setWorkingToken(token);
-        });
+        getTokenByMintAddress,
+      ).then(token => {
+        consoleOut(
+          'getTokenOrCustomToken (MoneyStreamsIncomingView) ->',
+          token,
+          'blue',
+        );
+        setWorkingToken(token);
+      });
     }
-  }, [connection, getTokenByMintAddress, publicKey, streamSelected, workingToken]);
-
+  }, [
+    connection,
+    getTokenByMintAddress,
+    publicKey,
+    streamSelected,
+    workingToken,
+  ]);
 
   ///////////////
   // Rendering //
   ///////////////
 
   const renderFundsToWithdraw = useCallback(() => {
-    if (!streamSelected || !workingToken) { return null; }
+    if (!streamSelected || !workingToken) {
+      return null;
+    }
 
     const v1 = streamSelected as StreamInfo;
     const v2 = streamSelected as Stream;
@@ -1148,39 +1454,43 @@ export const MoneyStreamsIncomingView = (props: {
     return (
       <>
         <span className="info-data large mr-1">
-          {
-            isNewStream()
-              ? displayAmountWithSymbol(
+          {isNewStream()
+            ? displayAmountWithSymbol(
                 v2.withdrawableAmount,
                 workingToken.address,
                 workingToken.decimals,
                 splTokenList,
               )
-              : getAmountWithSymbol(
+            : getAmountWithSymbol(
                 v1.escrowVestedAmount,
                 workingToken.address,
                 false,
                 splTokenList,
                 workingToken.decimals,
-              )
-          }
+              )}
         </span>
         <span className="info-icon">
-          {(streamSelected && getStreamStatus(streamSelected) === "running") ? (
+          {streamSelected && getStreamStatus(streamSelected) === 'running' ? (
             <ArrowDownOutlined className="mean-svg-icons incoming bounce" />
           ) : (
             <ArrowDownOutlined className="mean-svg-icons incoming" />
           )}
         </span>
       </>
-    )
-  }, [getStreamStatus, isNewStream, splTokenList, streamSelected, workingToken])
+    );
+  }, [
+    getStreamStatus,
+    isNewStream,
+    splTokenList,
+    streamSelected,
+    workingToken,
+  ]);
 
   // Info Data
   const infoData = [
     {
-      name: "Funds available to withdraw now",
-      value: streamSelected ? renderFundsToWithdraw() : "--"
+      name: 'Funds available to withdraw now',
+      value: streamSelected ? renderFundsToWithdraw() : '--',
     },
   ];
 
@@ -1192,16 +1502,23 @@ export const MoneyStreamsIncomingView = (props: {
         <div onClick={showTransferStreamModal}>
           <span className="menu-item-text">Transfer ownership</span>
         </div>
-      )
+      ),
     });
     items.push({
       key: '02-explorer-link',
       label: (
-        <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected && streamSelected.id}${getSolanaExplorerClusterParam()}`}
-          target="_blank" rel="noopener noreferrer">
-          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
+        <a
+          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
+            streamSelected && streamSelected.id
+          }${getSolanaExplorerClusterParam()}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span className="menu-item-text">
+            {t('account-area.explorer-link')}
+          </span>
         </a>
-      )
+      ),
     });
 
     return <Menu items={items} />;
@@ -1209,7 +1526,9 @@ export const MoneyStreamsIncomingView = (props: {
 
   // Buttons
   const renderButtons = useCallback(() => {
-    if (!streamSelected) { return null; }
+    if (!streamSelected) {
+      return null;
+    }
 
     return (
       <div className="flex-fixed-right cta-row mb-2 pl-1">
@@ -1226,23 +1545,23 @@ export const MoneyStreamsIncomingView = (props: {
               isBusy ||
               hasStreamPendingTx(OperationType.StreamWithdraw)
             }
-            onClick={showWithdrawModal}>
-            <div className="btn-content">
-              Withdraw funds
-            </div>
+            onClick={showWithdrawModal}
+          >
+            <div className="btn-content">Withdraw funds</div>
           </Button>
         </Space>
         <Dropdown
           overlay={renderDropdownMenu()}
           placement="bottomRight"
-          trigger={["click"]}>
+          trigger={['click']}
+        >
           <span className="ellipsis-icon icon-button-container mr-1">
             <Button
               type="default"
               shape="circle"
               size="middle"
               icon={<IconEllipsisVertical className="mean-svg-icons" />}
-              onClick={(e) => e.preventDefault()}
+              onClick={e => e.preventDefault()}
             />
           </span>
         </Dropdown>
@@ -1302,59 +1621,93 @@ export const MoneyStreamsIncomingView = (props: {
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideWithdrawFundsTransactionModal}
         width={330}
-        footer={null}>
+        footer={null}
+      >
         <div className="transaction-progress">
           {isBusy ? (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {withdrawFundsAmount ? withdrawFundsAmount.inputAmount : 0} {workingToken?.symbol}</h5>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
+              <h4 className="font-bold mb-1">
+                {getTransactionOperationDescription(
+                  transactionStatus.currentOperation,
+                  t,
+                )}
+              </h4>
+              <h5 className="operation">
+                {t('transactions.status.tx-withdraw-operation')}{' '}
+                {withdrawFundsAmount ? withdrawFundsAmount.inputAmount : 0}{' '}
+                {workingToken?.symbol}
+              </h5>
+              {transactionStatus.currentOperation ===
+                TransactionStatus.SignTransaction && (
+                <div className="indication">
+                  {t('transactions.status.instructions')}
+                </div>
               )}
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
+              <h4 className="font-bold mb-1 text-uppercase">
+                {getTransactionOperationDescription(
+                  transactionStatus.currentOperation,
+                  t,
+                )}
+              </h4>
+              <p className="operation">
+                {t('transactions.status.tx-withdraw-operation-success')}
+              </p>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={onWithdrawFundsTransactionFinished}>
+                onClick={onWithdrawFundsTransactionFinished}
+              >
                 {t('general.cta-close')}
               </Button>
             </>
           ) : isError() ? (
             <>
-              {transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled ? (
+              {transactionStatus.currentOperation ===
+              TransactionStatus.FeatureTemporarilyDisabled ? (
                 <>
-                  <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
-                  <h4 className="mb-4">Money Streams are getting a makeover, and we are making them more awesome! Stand by, you'll be able to withdraw shortly.</h4>
+                  <InfoCircleOutlined
+                    style={{ fontSize: 48 }}
+                    className="icon"
+                  />
+                  <h4 className="mb-4">
+                    Money Streams are getting a makeover, and we are making them
+                    more awesome! Stand by, you'll be able to withdraw shortly.
+                  </h4>
                 </>
-              ) : transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+              ) : transactionStatus.currentOperation ===
+                TransactionStatus.TransactionStartFailure ? (
                 <>
                   <WarningOutlined style={{ fontSize: 48 }} className="icon" />
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
                       accountBalance: getAmountWithSymbol(
                         nativeBalance,
-                        NATIVE_SOL_MINT.toBase58()
+                        NATIVE_SOL_MINT.toBase58(),
                       ),
                       feeAmount: getAmountWithSymbol(
-                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                        NATIVE_SOL_MINT.toBase58()
-                      )
-                    })
-                    }
+                        transactionFees.blockchainFee +
+                          transactionFees.mspFlatFee,
+                        NATIVE_SOL_MINT.toBase58(),
+                      ),
+                    })}
                   </h4>
                 </>
               ) : (
                 <>
                   <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+                  <h4 className="font-bold mb-1 text-uppercase">
+                    {getTransactionOperationDescription(
+                      transactionStatus.currentOperation,
+                      t,
+                    )}
+                  </h4>
                 </>
               )}
               <Button
@@ -1362,14 +1715,17 @@ export const MoneyStreamsIncomingView = (props: {
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={hideWithdrawFundsTransactionModal}>
+                onClick={hideWithdrawFundsTransactionModal}
+              >
                 {t('general.cta-close')}
               </Button>
             </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+              <h4 className="font-bold mb-4 text-uppercase">
+                {t('transactions.status.tx-wait')}...
+              </h4>
             </>
           )}
         </div>
@@ -1384,68 +1740,98 @@ export const MoneyStreamsIncomingView = (props: {
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideTransferStreamTransactionModal}
         width={330}
-        footer={null}>
+        footer={null}
+      >
         <div className="transaction-progress">
           {isBusy ? (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <h5 className="operation">{t('transactions.status.tx-transfer-stream', { newAddress: shortenAddress(lastStreamTransferAddress, 8) })}</h5>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
+              <h4 className="font-bold mb-1">
+                {getTransactionOperationDescription(
+                  transactionStatus.currentOperation,
+                  t,
+                )}
+              </h4>
+              <h5 className="operation">
+                {t('transactions.status.tx-transfer-stream', {
+                  newAddress: shortenAddress(lastStreamTransferAddress, 8),
+                })}
+              </h5>
+              {transactionStatus.currentOperation ===
+                TransactionStatus.SignTransaction && (
+                <div className="indication">
+                  {t('transactions.status.instructions')}
+                </div>
               )}
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <p className="operation">{t('transactions.status.tx-transfer-stream-success')}</p>
+              <h4 className="font-bold mb-1 text-uppercase">
+                {getTransactionOperationDescription(
+                  transactionStatus.currentOperation,
+                  t,
+                )}
+              </h4>
+              <p className="operation">
+                {t('transactions.status.tx-transfer-stream-success')}
+              </p>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={onTransferStreamTransactionFinished}>
+                onClick={onTransferStreamTransactionFinished}
+              >
                 {t('general.cta-close')}
               </Button>
             </>
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+              {transactionStatus.currentOperation ===
+              TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(
                       nativeBalance,
-                      NATIVE_SOL_MINT.toBase58()
+                      NATIVE_SOL_MINT.toBase58(),
                     ),
                     feeAmount: getAmountWithSymbol(
-                      transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58()
-                    )
-                  })
-                  }
+                      transactionFees.blockchainFee +
+                        transactionFees.mspFlatFee,
+                      NATIVE_SOL_MINT.toBase58(),
+                    ),
+                  })}
                 </h4>
               ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+                <h4 className="font-bold mb-1 text-uppercase">
+                  {getTransactionOperationDescription(
+                    transactionStatus.currentOperation,
+                    t,
+                  )}
+                </h4>
               )}
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={hideTransferStreamTransactionModal}>
+                onClick={hideTransferStreamTransactionModal}
+              >
                 {t('general.cta-close')}
               </Button>
             </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+              <h4 className="font-bold mb-4 text-uppercase">
+                {t('transactions.status.tx-wait')}...
+              </h4>
             </>
           )}
         </div>
       </Modal>
     </>
-  )
-}
+  );
+};

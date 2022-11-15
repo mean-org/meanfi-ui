@@ -1,18 +1,41 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Button, Checkbox, DatePicker, Dropdown, Menu, Modal, Spin, TimePicker } from "antd";
-import { UserTokenAccount } from "../../../../models/accounts";
+import {
+  Button,
+  Checkbox,
+  DatePicker,
+  Dropdown,
+  Menu,
+  Modal,
+  Spin,
+  TimePicker,
+} from 'antd';
+import { UserTokenAccount } from '../../../../models/accounts';
 import { StreamTemplate, TransactionFees, Treasury } from '@mean-dao/msp';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { addDays, isValidInteger, isValidNumber, makeDecimal, shortenAddress } from '../../../../middleware/utils';
+import {
+  addDays,
+  isValidInteger,
+  isValidNumber,
+  makeDecimal,
+  shortenAddress,
+} from '../../../../middleware/utils';
 import { Identicon } from '../../../../components/Identicon';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
-import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from '../../../../constants';
+import {
+  DATEPICKER_FORMAT,
+  MIN_SOL_BALANCE_REQUIRED,
+} from '../../../../constants';
 import { FormLabelWithIconInfo } from '../../../../components/FormLabelWithIconInfo';
-import { consoleOut, getLockPeriodOptionLabel, getPaymentIntervalFromSeconds, getRateIntervalInSeconds } from '../../../../middleware/ui';
-import { PaymentRateTypeOption } from "../../../../models/PaymentRateTypeOption";
+import {
+  consoleOut,
+  getLockPeriodOptionLabel,
+  getPaymentIntervalFromSeconds,
+  getRateIntervalInSeconds,
+} from '../../../../middleware/ui';
+import { PaymentRateTypeOption } from '../../../../models/PaymentRateTypeOption';
 import { PaymentRateType } from '../../../../models/enums';
 import { IconCaretDown } from '../../../../Icons';
 import moment from 'moment';
@@ -22,7 +45,7 @@ import { VestingContractEditOptions } from '../../../../models/vesting';
 import BN from 'bn.js';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
-const timeFormat="hh:mm A"
+const timeFormat = 'hh:mm A';
 
 export const VestingContractEditModal = (props: {
   accountAddress: string;
@@ -56,17 +79,19 @@ export const VestingContractEditModal = (props: {
   } = props;
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const {
-      transactionStatus,
-  } = useContext(AppStateContext);
+  const { transactionStatus } = useContext(AppStateContext);
   const percentages = [5, 10, 15, 20];
-  const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>("");
+  const [cliffReleasePercentage, setCliffReleasePercentage] =
+    useState<string>('');
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
-  const [contractTime, setContractTime] = useState<string | undefined>(undefined);
+  const [contractTime, setContractTime] = useState<string | undefined>(
+    undefined,
+  );
   const [defaultTime, setDefaultTime] = useState<moment.Moment>();
-  const [paymentStartDate, setPaymentStartDate] = useState<string>("");
-  const [lockPeriodAmount, setLockPeriodAmount] = useState<string>("");
-  const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [paymentStartDate, setPaymentStartDate] = useState<string>('');
+  const [lockPeriodAmount, setLockPeriodAmount] = useState<string>('');
+  const [lockPeriodFrequency, setLockPeriodFrequency] =
+    useState<PaymentRateType>(PaymentRateType.PerMonth);
 
   /////////////////////
   // Data management //
@@ -75,13 +100,18 @@ export const VestingContractEditModal = (props: {
   // Set template data
   useEffect(() => {
     if (isVisible && vestingContract && streamTemplate) {
-      const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
+      const cliffPercent = makeDecimal(
+        new BN(streamTemplate.cliffVestPercent),
+        4,
+      );
       setCliffReleasePercentage(cliffPercent.toString());
       const contractStartDate = new Date(streamTemplate.startUtc);
-      const localUsDate = contractStartDate.toLocaleDateString("en-US");
+      const localUsDate = contractStartDate.toLocaleDateString('en-US');
       setPaymentStartDate(localUsDate);
       setLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
-      const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
+      const periodFrequency = getPaymentIntervalFromSeconds(
+        streamTemplate.rateIntervalInSeconds,
+      );
       setLockPeriodFrequency(periodFrequency);
       const momentTime = moment(contractStartDate);
       setDefaultTime(momentTime);
@@ -100,7 +130,6 @@ export const VestingContractEditModal = (props: {
       : MIN_SOL_BALANCE_REQUIRED;
   }, [getFeeAmount]);
 
-
   ////////////////////////////////////
   // Events, actions and Validation //
   ////////////////////////////////////
@@ -109,8 +138,8 @@ export const VestingContractEditModal = (props: {
   const onAcceptEditChanges = () => {
     const parsedDate = Date.parse(paymentStartDate as string);
     const startUtc = new Date(parsedDate);
-    const shortTime = moment(contractTime, timeFormat).format("HH:mm");
-    const to24hTime = moment(shortTime, "HH:mm");
+    const shortTime = moment(contractTime, timeFormat).format('HH:mm');
+    const to24hTime = moment(shortTime, 'HH:mm');
     startUtc.setHours(to24hTime.hours());
     startUtc.setMinutes(to24hTime.minutes());
     startUtc.setSeconds(to24hTime.seconds());
@@ -121,28 +150,28 @@ export const VestingContractEditModal = (props: {
       durationUnit: getRateIntervalInSeconds(lockPeriodFrequency),
       cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
       startDate: startUtc,
-      multisig: isMultisigContext ? accountAddress : ''
+      multisig: isMultisigContext ? accountAddress : '',
     };
     onTransactionStarted(options);
-  }
+  };
 
   const handleLockPeriodAmountChange = (e: any) => {
-
     const newValue = e.target.value;
 
     if (isValidInteger(newValue)) {
       setLockPeriodAmount(newValue);
     } else {
-      setLockPeriodAmount("");
+      setLockPeriodAmount('');
     }
-
-  }
+  };
 
   const handleLockPeriodOptionChange = (val: PaymentRateType) => {
     setLockPeriodFrequency(val);
-  }
+  };
 
-  const getLockPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
+  const getLockPeriodOptionsFromEnum = (
+    value: any,
+  ): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
     for (const enumMember in value) {
@@ -151,21 +180,20 @@ export const VestingContractEditModal = (props: {
         const item = new PaymentRateTypeOption(
           index,
           mappedValue,
-          getLockPeriodOptionLabel(mappedValue, t)
+          getLockPeriodOptionLabel(mappedValue, t),
         );
         options.push(item);
       }
       index++;
     }
     return options;
-  }
+  };
 
   const handleDateChange = (date: string) => {
     setPaymentStartDate(date);
-  }
+  };
 
   const handleCliffReleaseAmountChange = (e: any) => {
-
     let newValue = e.target.value;
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
@@ -183,10 +211,10 @@ export const VestingContractEditModal = (props: {
       newValue = splitted.join('.');
     }
 
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setCliffReleasePercentage("");
+    if (newValue === null || newValue === undefined || newValue === '') {
+      setCliffReleasePercentage('');
     } else if (newValue === '.') {
-      setCliffReleasePercentage(".");
+      setCliffReleasePercentage('.');
     } else if (isValidNumber(newValue)) {
       setCliffReleasePercentage(newValue);
     }
@@ -195,18 +223,21 @@ export const VestingContractEditModal = (props: {
   const todayAndPriorDatesDisabled = (current: any) => {
     // Can not select neither today nor days before today
     return current && current < moment().add(1, 'days').endOf('day');
-  }
+  };
 
   const onResetDate = () => {
-    const date = addDays(new Date(), 1).toLocaleDateString("en-US");
+    const date = addDays(new Date(), 1).toLocaleDateString('en-US');
     setPaymentStartDate(date);
-  }
+  };
 
   const onChangeValuePercentages = (value: number) => {
     setCliffReleasePercentage(`${value}`);
   };
 
-  const onTimePickerChange = (time: moment.Moment | null, timeString: string) => {
+  const onTimePickerChange = (
+    time: moment.Moment | null,
+    timeString: string,
+  ) => {
     if (time) {
       const shortTime = time.format(timeFormat);
       setContractTime(shortTime);
@@ -216,25 +247,25 @@ export const VestingContractEditModal = (props: {
   const onFeePayedByTreasurerChange = (e: any) => {
     consoleOut('onFeePayedByTreasurerChange:', e.target.checked, 'blue');
     setIsFeePaidByTreasurer(e.target.checked);
-  }
+  };
 
   const getFormButtonLabel = () => {
     return !publicKey
       ? t('transactions.validation.not-connected')
       : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
-        ? t('transactions.validation.amount-sol-low')
-        : !lockPeriodAmount
-          ? 'Set vesting period'
-          : !lockPeriodFrequency
-            ? 'Set vesting period'
-            : t('vesting.create-account.create-cta');
-  }
+      ? t('transactions.validation.amount-sol-low')
+      : !lockPeriodAmount
+      ? 'Set vesting period'
+      : !lockPeriodFrequency
+      ? 'Set vesting period'
+      : t('vesting.create-account.create-cta');
+  };
 
   const isFormValid = (): boolean => {
-    return  publicKey &&
-            lockPeriodAmount &&
-            parseFloat(lockPeriodAmount) > 0 &&
-            lockPeriodFrequency
+    return publicKey &&
+      lockPeriodAmount &&
+      parseFloat(lockPeriodAmount) > 0 &&
+      lockPeriodFrequency
       ? true
       : false;
   };
@@ -244,15 +275,21 @@ export const VestingContractEditModal = (props: {
   ///////////////
 
   const lockPeriodOptionsMenu = () => {
-    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
-      return {
-        key: `option-${index}`,
-        label: (<span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>)
-      };
-    });
+    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map(
+      (item, index) => {
+        return {
+          key: `option-${index}`,
+          label: (
+            <span onClick={() => handleLockPeriodOptionChange(item.value)}>
+              {item.text}
+            </span>
+          ),
+        };
+      },
+    );
 
     return <Menu items={items} />;
-  }
+  };
 
   const renderDatePickerExtraPanel = () => {
     return (
@@ -260,32 +297,35 @@ export const VestingContractEditModal = (props: {
         <span className="mx-1">Reset</span>
       </span>
     );
-  }
+  };
 
   const renderSelectedMultisig = () => {
     return (
       selectedMultisig && (
         <div className={`transaction-list-row w-100 no-pointer`}>
           <div className="icon-cell">
-            <Identicon address={selectedMultisig.id} style={{ width: "30", display: "inline-flex" }} />
+            <Identicon
+              address={selectedMultisig.id}
+              style={{ width: '30', display: 'inline-flex' }}
+            />
           </div>
           <div className="description-cell">
             <div className="title text-truncate">{selectedMultisig.label}</div>
-            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id, 8)}</div>
+            <div className="subtitle text-truncate">
+              {shortenAddress(selectedMultisig.id, 8)}
+            </div>
           </div>
           <div className="rate-cell">
             <div className="rate-amount">
-              {
-                t('multisig.multisig-accounts.pending-transactions', {
-                  txs: selectedMultisig.pendingTxsAmount
-                })
-              }
+              {t('multisig.multisig-accounts.pending-transactions', {
+                txs: selectedMultisig.pendingTxsAmount,
+              })}
             </div>
           </div>
         </div>
       )
-    )
-  }
+    );
+  };
 
   return (
     <Modal
@@ -294,18 +334,15 @@ export const VestingContractEditModal = (props: {
       footer={null}
       open={isVisible}
       onCancel={handleClose}
-      width={480}>
-
+      width={480}
+    >
       <Spin spinning={loadingMultisigAccounts}>
         <div className={`scrollable-content`}>
-
           {/* Multisig in context */}
           {isMultisigContext && selectedMultisig && (
             <>
               <div className="form-label">Multisig account</div>
-              <div className="well">
-                {renderSelectedMultisig()}
-              </div>
+              <div className="well">{renderSelectedMultisig()}</div>
             </>
           )}
 
@@ -323,7 +360,10 @@ export const VestingContractEditModal = (props: {
                       autoCorrect="off"
                       type="text"
                       onChange={handleLockPeriodAmountChange}
-                      placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
+                      placeholder={`Number of ${getLockPeriodOptionLabel(
+                        lockPeriodFrequency,
+                        t,
+                      )}`}
                       spellCheck="false"
                       min={1}
                       value={lockPeriodAmount}
@@ -334,12 +374,12 @@ export const VestingContractEditModal = (props: {
             </div>
             <div className="right">
               <div className="well">
-                <Dropdown
-                  overlay={lockPeriodOptionsMenu()}
-                  trigger={["click"]}>
+                <Dropdown overlay={lockPeriodOptionsMenu()} trigger={['click']}>
                   <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                     <div className="left">
-                      <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)}{" "}</span>
+                      <span>
+                        {getLockPeriodOptionLabel(lockPeriodFrequency, t)}{' '}
+                      </span>
                     </div>
                     <div className="right">
                       <IconCaretDown className="mean-svg-icons" />
@@ -359,7 +399,9 @@ export const VestingContractEditModal = (props: {
             <div className="left">
               <div className="well">
                 <div className="flex-fixed-right">
-                  <div className="left static-data-field">{paymentStartDate}</div>
+                  <div className="left static-data-field">
+                    {paymentStartDate}
+                  </div>
                   <div className="right">
                     <div className="add-on simplelink">
                       <>
@@ -372,11 +414,12 @@ export const VestingContractEditModal = (props: {
                             allowClear={false}
                             disabledDate={todayAndPriorDatesDisabled}
                             placeholder="Pick a date"
-                            onChange={(value: any, date: string) => handleDateChange(date)}
-                            value={moment(
-                              paymentStartDate,
-                              DATEPICKER_FORMAT
-                            ) as any}
+                            onChange={(value: any, date: string) =>
+                              handleDateChange(date)
+                            }
+                            value={
+                              moment(paymentStartDate, DATEPICKER_FORMAT) as any
+                            }
                             format={DATEPICKER_FORMAT}
                             showNow={false}
                             showToday={false}
@@ -399,7 +442,8 @@ export const VestingContractEditModal = (props: {
                   use12Hours
                   format={timeFormat}
                   value={defaultTime}
-                  onChange={onTimePickerChange} />
+                  onChange={onTimePickerChange}
+                />
               </div>
             </div>
           </div>
@@ -413,8 +457,16 @@ export const VestingContractEditModal = (props: {
             <div className="flexible-right mb-1">
               <div className="token-group">
                 {percentages.map((percentage, index) => (
-                  <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                    <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>{percentage}%</div>
+                  <div
+                    key={index}
+                    className="mb-1 d-flex flex-column align-items-center"
+                  >
+                    <div
+                      className="token-max simplelink active"
+                      onClick={() => onChangeValuePercentages(percentage)}
+                    >
+                      {percentage}%
+                    </div>
                   </div>
                 ))}
               </div>
@@ -423,7 +475,8 @@ export const VestingContractEditModal = (props: {
               <div className="left">
                 <span className="add-on simplelink">
                   {selectedToken && (
-                    <TokenDisplay onClick={() => { }}
+                    <TokenDisplay
+                      onClick={() => {}}
                       mintAddress={selectedToken.address}
                       name={selectedToken.name}
                       fullTokenInfo={selectedToken}
@@ -453,7 +506,12 @@ export const VestingContractEditModal = (props: {
 
           {/* Streaming fees will be paid from the vesting contract's funds */}
           <div className="ml-1 mb-3">
-            <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('vesting.create-account.fee-paid-by-treasury')}</Checkbox>
+            <Checkbox
+              checked={isFeePaidByTreasurer}
+              onChange={onFeePayedByTreasurerChange}
+            >
+              {t('vesting.create-account.fee-paid-by-treasury')}
+            </Checkbox>
           </div>
 
           {/* CTA */}
@@ -464,22 +522,22 @@ export const VestingContractEditModal = (props: {
               size="large"
               className="thin-stroke"
               disabled={isBusy || !isFormValid()}
-              onClick={onAcceptEditChanges}>
+              onClick={onAcceptEditChanges}
+            >
               {isBusy && (
-                <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                <span className="mr-1">
+                  <LoadingOutlined style={{ fontSize: '16px' }} />
+                </span>
               )}
               {isBusy
                 ? t('vesting.create-account.create-cta-busy')
                 : isError(transactionStatus.currentOperation)
-                  ? t('general.retry')
-                  : getFormButtonLabel()
-              }
+                ? t('general.retry')
+                : getFormButtonLabel()}
             </Button>
           </div>
-
         </div>
       </Spin>
-
     </Modal>
   );
 };

@@ -1,7 +1,6 @@
-import { UserTokenAccount } from "./UserTokenAccount";
-
+import { UserTokenAccount } from './UserTokenAccount';
 
 export interface TokenSelectorListWithBalances {
-    balancesMap: any;
-    tokenList: UserTokenAccount[];
+  balancesMap: any;
+  tokenList: UserTokenAccount[];
 }

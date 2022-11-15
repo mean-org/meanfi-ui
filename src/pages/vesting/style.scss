@@ -1,198 +1,196 @@
 .vesting {
-
-    @media (max-width: 575.98px) {
-        .meanfi-two-panel-layout {
-            height: 100%;
-            max-height: 100%;
-            margin: 0;
-            .inner-container {
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                padding-bottom: 10px;
-                background: transparent;
-                max-height: calc(100% - 45px);
-            }
-            .meanfi-two-panel-left {
-                padding: 0;
-            }
-        }
-    }
-
-    .vesting-contract-list {
-        .transaction-list-row {
-            border-top: none;
-            border-bottom: none;
-            border-right: none;
-            border-left: 4px solid transparent;
-            margin: 0 6px 0 0;
-            &.selected {
-                border-left-color: var(--color-primary-highlight);
-                background-color: var(--color-secondary-alpha-02);
-            }
-        }
-    }
-
+  @media (max-width: 575.98px) {
     .meanfi-two-panel-layout {
-        .meanfi-two-panel-right {
-            .flexible-column-bottom {
-                display: flex;
-                flex-direction: column;
-                height: 100%;
-                justify-content: flex-start;
-                .top {
-                    flex: 0 0 auto;
-                    .details-panel-meta {
-                        .transaction-list-row {
-                            .icon-cell {
-                                flex: 0 0 44px;
-                                .token-icon {
-                                    width: auto;
-                                    height: auto;
-                                    background-color: transparent;
-                                    > img {
-                                        border-radius: 50%;
-                                    }
-                                }
-                            }
-                            .description-cell {
-                                .subtitle {
-                                    font-size: 13px;
-                                    line-height: 1.3;
-                                    color: var(--color-secondary-alpha-50);
-                                }
-                            }
-                        }
-                        .vested-amount {
-                            line-height: 1.3;
-                            font-size: 0.85rem;
-                            color: var(--color-secondary-alpha-50);
-                            margin-top: 6px;
-                        }
-                        .vesting-progress {
-                            margin-top: -2px;
-                        }
-                    }
-                }
-                .bottom {
-                    flex: auto;
-                    .details-panel-meta {
-                        .progress-status-icon {
-                            color: var(--color-secondary-alpha-50);
-                            > span .anticon {
-                                margin-top: 4px;
-                            }
-                        }
-                    }
-                }
-            }
-            .vesting-contract-streams {
-                .transaction-list-row {
-                    border-radius: unset;
-                    border: none;
-                    height: 50px;
-                    padding: 6px;
-                    &:not(.no-pointer) {
-                        cursor: auto;
-                    }
-                    .description-cell {
-                        .title {
-                            display: inline-block;
-                            font-size: 0.85rem;
-                            line-height: 1;
-                            color: var(--color-secondary-alpha-85);
-                            width: 100%;
-                        }
-                        .subtitle {
-                            font-size: 0.75rem;
-                            line-height: 1.2;
-                        }
-                    }
-                    .rate-cell {
-                        .interval {
-                            margin-top: 2px;
-                        }
-                    }
-                    .actions-cell {
-                        flex: 0 0 24px !important;
-                        padding-left: 4px;
-                    }
-                }
-            }
-        }
+      height: 100%;
+      max-height: 100%;
+      margin: 0;
+      .inner-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding-bottom: 10px;
+        background: transparent;
+        max-height: calc(100% - 45px);
+      }
+      .meanfi-two-panel-left {
+        padding: 0;
+      }
     }
+  }
 
-    .ant-tabs.stretch-content {
+  .vesting-contract-list {
+    .transaction-list-row {
+      border-top: none;
+      border-bottom: none;
+      border-right: none;
+      border-left: 4px solid transparent;
+      margin: 0 6px 0 0;
+      &.selected {
+        border-left-color: var(--color-primary-highlight);
+        background-color: var(--color-secondary-alpha-02);
+      }
+    }
+  }
+
+  .meanfi-two-panel-layout {
+    .meanfi-two-panel-right {
+      .flexible-column-bottom {
+        display: flex;
+        flex-direction: column;
         height: 100%;
-        .ant-tabs-content.ant-tabs-content-top {
-            height: 100%;
-            .ant-tabs-tabpane.ant-tabs-tabpane-active {
-                height: 100%;
-                display: block;
-                @media (min-width: 768px) {
-                    display: table;
+        justify-content: flex-start;
+        .top {
+          flex: 0 0 auto;
+          .details-panel-meta {
+            .transaction-list-row {
+              .icon-cell {
+                flex: 0 0 44px;
+                .token-icon {
+                  width: auto;
+                  height: auto;
+                  background-color: transparent;
+                  > img {
+                    border-radius: 50%;
+                  }
                 }
+              }
+              .description-cell {
+                .subtitle {
+                  font-size: 13px;
+                  line-height: 1.3;
+                  color: var(--color-secondary-alpha-50);
+                }
+              }
             }
+            .vested-amount {
+              line-height: 1.3;
+              font-size: 0.85rem;
+              color: var(--color-secondary-alpha-50);
+              margin-top: 6px;
+            }
+            .vesting-progress {
+              margin-top: -2px;
+            }
+          }
         }
+        .bottom {
+          flex: auto;
+          .details-panel-meta {
+            .progress-status-icon {
+              color: var(--color-secondary-alpha-50);
+              > span .anticon {
+                margin-top: 4px;
+              }
+            }
+          }
+        }
+      }
+      .vesting-contract-streams {
+        .transaction-list-row {
+          border-radius: unset;
+          border: none;
+          height: 50px;
+          padding: 6px;
+          &:not(.no-pointer) {
+            cursor: auto;
+          }
+          .description-cell {
+            .title {
+              display: inline-block;
+              font-size: 0.85rem;
+              line-height: 1;
+              color: var(--color-secondary-alpha-85);
+              width: 100%;
+            }
+            .subtitle {
+              font-size: 0.75rem;
+              line-height: 1.2;
+            }
+          }
+          .rate-cell {
+            .interval {
+              margin-top: 2px;
+            }
+          }
+          .actions-cell {
+            flex: 0 0 24px !important;
+            padding-left: 4px;
+          }
+        }
+      }
     }
+  }
 
-    .tab-inner-content-wrapper {
+  .ant-tabs.stretch-content {
+    height: 100%;
+    .ant-tabs-content.ant-tabs-content-top {
+      height: 100%;
+      .ant-tabs-tabpane.ant-tabs-tabpane-active {
         height: 100%;
-    }
-
-    .elastic-form-container,
-    .ant-modal-content {
-        .cta-container {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            > .ant-btn.ant-btn-primary.ant-btn-round {
-                min-width: 240px;
-            }
-        }
-    }
-
-    .ant-modal-content .cta-container {
-        margin: 2rem 0 0 0;
-    }
-
-    .inner-container {
-
-        .item-block {
-            padding-bottom: 0 !important;
-            position: relative;
-        }
-
-        .bottom-ctas {
-            flex: 0 0 auto;
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            padding-right: 1.8rem;
-            margin: 0 -2.6%;
-            .primary-action {
-                flex: 0 0 60%;
-                width: 60%;
-            }
-
-            .options-dropdown {
-                flex: 0 0 auto;
-                margin-left: 10px;
-            }
-        }
-    }
-
-    .asset-category {
-        height: auto;
-        min-height: 50px;
+        display: block;
         @media (min-width: 768px) {
-            padding-bottom: 0.5rem;
+          display: table;
         }
+      }
+    }
+  }
+
+  .tab-inner-content-wrapper {
+    height: 100%;
+  }
+
+  .elastic-form-container,
+  .ant-modal-content {
+    .cta-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      > .ant-btn.ant-btn-primary.ant-btn-round {
+        min-width: 240px;
+      }
+    }
+  }
+
+  .ant-modal-content .cta-container {
+    margin: 2rem 0 0 0;
+  }
+
+  .inner-container {
+    .item-block {
+      padding-bottom: 0 !important;
+      position: relative;
     }
 
-    /*
+    .bottom-ctas {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      padding-right: 1.8rem;
+      margin: 0 -2.6%;
+      .primary-action {
+        flex: 0 0 60%;
+        width: 60%;
+      }
+
+      .options-dropdown {
+        flex: 0 0 auto;
+        margin-left: 10px;
+      }
+    }
+  }
+
+  .asset-category {
+    height: auto;
+    min-height: 50px;
+    @media (min-width: 768px) {
+      padding-bottom: 0.5rem;
+    }
+  }
+
+  /*
     .transaction-list-row {
         .description-cell {
             flex: auto !important;
@@ -209,27 +207,27 @@
     }
     */
 
-    .vesting-list-progress-bar {
-        &.large,
-        &.ant-progress-default.large {
-            .ant-progress-bg {
-                height: 9px !important;
-            }
-        }
-        &.medium,
-        &.ant-progress-default {
-            .ant-progress-bg {
-                height: 7px !important;
-            }
-        }
-        &.small,
-        &.ant-progress-small {
-            .ant-progress-bg {
-                height: 3px !important;
-            }
-        }
-        .ant-progress-bg {
-            background-color: var(--color-green);
-        }
+  .vesting-list-progress-bar {
+    &.large,
+    &.ant-progress-default.large {
+      .ant-progress-bg {
+        height: 9px !important;
+      }
     }
+    &.medium,
+    &.ant-progress-default {
+      .ant-progress-bg {
+        height: 7px !important;
+      }
+    }
+    &.small,
+    &.ant-progress-small {
+      .ant-progress-bg {
+        height: 3px !important;
+      }
+    }
+    .ant-progress-bg {
+      background-color: var(--color-green);
+    }
+  }
 }

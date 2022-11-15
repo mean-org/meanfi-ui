@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal } from "antd";
+import { Modal } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 export const ModalTemplate = (props: {
@@ -10,14 +10,7 @@ export const ModalTemplate = (props: {
   isVisible: boolean;
   title: string;
 }) => {
-  const {
-    centered,
-    content,
-    handleClose,
-    heading,
-    isVisible,
-    title,
-  } = props;
+  const { centered, content, handleClose, heading, isVisible, title } = props;
 
   return (
     <Modal
@@ -27,18 +20,14 @@ export const ModalTemplate = (props: {
       footer={null}
       open={isVisible}
       onCancel={handleClose}
-      width={360}>
+      width={360}
+    >
       <div className="transaction-progress p-0 shift-up-1">
         <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
 
-        {heading && (
-          <h4 className="mb-0">{heading}:</h4>
-        )}
+        {heading && <h4 className="mb-0">{heading}:</h4>}
 
-        {content && (
-          <div>{content}</div>
-        )}
-
+        {content && <div>{content}</div>}
       </div>
     </Modal>
   );

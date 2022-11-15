@@ -1,12 +1,12 @@
-import React from "react";
-import { useTranslation } from "react-i18next";
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const PageLoadingView = (props: {
   message?: string;
   addWrapper?: boolean;
 }) => {
   const { message, addWrapper } = props;
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
 
   const loader = (
     <>
@@ -14,7 +14,7 @@ export const PageLoadingView = (props: {
         <div className="flex-column flex-center">
           <div className="loader-container">
             <div className="app-loading">
-              <div className="logo" style={{ display: "none" }}>
+              <div className="logo" style={{ display: 'none' }}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="100%"
@@ -59,7 +59,7 @@ export const PageLoadingView = (props: {
               </svg>
             </div>
           </div>
-          <p className="loader-message">{message || t("general.loading")}</p>
+          <p className="loader-message">{message || t('general.loading')}</p>
         </div>
       </div>
     </>

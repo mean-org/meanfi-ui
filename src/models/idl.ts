@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import * as BufferLayout from "buffer-layout";
-import { rustEnum } from "@project-serum/borsh";
+import * as BufferLayout from 'buffer-layout';
+import { rustEnum } from '@project-serum/borsh';
 
 // Simplified since we only use the SetBuffer variant.
 export type IdlInstruction =
@@ -17,11 +17,11 @@ type SetBuffer = {};
 type SetAuthority = {};
 
 const IDL_INSTRUCTION_LAYOUT = rustEnum([
-  BufferLayout.struct([], "create"),
-  BufferLayout.struct([], "createBuffer"),
-  BufferLayout.struct([], "write"),
-  BufferLayout.struct([], "setBuffer"),
-  BufferLayout.struct([], "setAuthority"),
+  BufferLayout.struct([], 'create'),
+  BufferLayout.struct([], 'createBuffer'),
+  BufferLayout.struct([], 'write'),
+  BufferLayout.struct([], 'setBuffer'),
+  BufferLayout.struct([], 'setAuthority'),
 ]);
 
 export function encodeInstruction(i: IdlInstruction): Buffer {
@@ -31,4 +31,4 @@ export function encodeInstruction(i: IdlInstruction): Buffer {
 }
 
 // Reverse for little endian.
-export const IDL_TAG = Buffer.from("0a69e9a778bcf440", "hex").reverse();
+export const IDL_TAG = Buffer.from('0a69e9a778bcf440', 'hex').reverse();

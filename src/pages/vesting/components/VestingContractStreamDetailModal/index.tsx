@@ -1,7 +1,7 @@
 import { MSP, Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { PublicKey } from '@solana/web3.js';
-import { Modal, Switch } from "antd";
+import { Modal, Switch } from 'antd';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { consoleOut } from '../../../../middleware/ui';
@@ -26,61 +26,68 @@ export const VestingContractStreamDetailModal = (props: {
     selectedToken,
   } = props;
 
-  const {
-    isWhitelisted,
-  } = useContext(AppStateContext);
+  const { isWhitelisted } = useContext(AppStateContext);
 
   const [streamDetail, setStreamDetail] = useState<Stream | undefined>();
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(false);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
-  const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(true);
-  const [isToggledShowLastReadData, setIsToggledShowLastReadData] = useState<boolean>(false);
+  const [hasMoreStreamActivity, setHasMoreStreamActivity] =
+    useState<boolean>(true);
+  const [isToggledShowLastReadData, setIsToggledShowLastReadData] =
+    useState<boolean>(false);
 
   const isInboundStream = useCallback((): boolean => {
-    return streamDetail && accountAddress && (streamDetail.beneficiary as PublicKey).toBase58() === accountAddress ? true : false;
+    return streamDetail &&
+      accountAddress &&
+      (streamDetail.beneficiary as PublicKey).toBase58() === accountAddress
+      ? true
+      : false;
   }, [accountAddress, streamDetail]);
 
-  const getStreamActivity = useCallback((streamId: string, clearHistory = false) => {
-    if (!streamId || !msp || loadingStreamActivity) {
-      return;
-    }
+  const getStreamActivity = useCallback(
+    (streamId: string, clearHistory = false) => {
+      if (!streamId || !msp || loadingStreamActivity) {
+        return;
+      }
 
-    consoleOut('Loading stream activity...', '', 'crimson');
+      consoleOut('Loading stream activity...', '', 'crimson');
 
-    setLoadingStreamActivity(true);
-    const streamPublicKey = new PublicKey(streamId);
+      setLoadingStreamActivity(true);
+      const streamPublicKey = new PublicKey(streamId);
 
-    const before = clearHistory
-      ? ''
-      : streamActivity && streamActivity.length > 0
+      const before = clearHistory
+        ? ''
+        : streamActivity && streamActivity.length > 0
         ? streamActivity[streamActivity.length - 1].signature
         : '';
-    consoleOut('before:', before, 'crimson');
-    msp.listStreamActivity(streamPublicKey, before, 5)
-      .then((value: StreamActivity[]) => {
-        consoleOut('activity:', value);
-        const activities = clearHistory
-          ? []
-          : streamActivity && streamActivity.length > 0
+      consoleOut('before:', before, 'crimson');
+      msp
+        .listStreamActivity(streamPublicKey, before, 5)
+        .then((value: StreamActivity[]) => {
+          consoleOut('activity:', value);
+          const activities = clearHistory
+            ? []
+            : streamActivity && streamActivity.length > 0
             ? JSON.parse(JSON.stringify(streamActivity)) // Object.assign({}, streamActivity)
             : [];
 
-        if (value && value.length > 0) {
-          activities.push(...value);
-          setHasMoreStreamActivity(true);
-        } else {
+          if (value && value.length > 0) {
+            activities.push(...value);
+            setHasMoreStreamActivity(true);
+          } else {
+            setHasMoreStreamActivity(false);
+          }
+          setStreamActivity(activities);
+        })
+        .catch(err => {
+          console.error(err);
+          setStreamActivity([]);
           setHasMoreStreamActivity(false);
-        }
-        setStreamActivity(activities);
-      })
-      .catch(err => {
-        console.error(err);
-        setStreamActivity([]);
-        setHasMoreStreamActivity(false);
-      })
-      .finally(() => setLoadingStreamActivity(false));
-
-  }, [loadingStreamActivity, msp, streamActivity]);
+        })
+        .finally(() => setLoadingStreamActivity(false));
+    },
+    [loadingStreamActivity, msp, streamActivity],
+  );
 
   // Get a copy of the stream to work with and reset activity data
   useEffect(() => {
@@ -95,13 +102,16 @@ export const VestingContractStreamDetailModal = (props: {
 
   // Live data calculation - Refresh Stream detail
   useEffect(() => {
-
     if (isToggledShowLastReadData) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      if (msp && streamDetail && streamDetail.status === STREAM_STATUS.Running) {
+      if (
+        msp &&
+        streamDetail &&
+        streamDetail.status === STREAM_STATUS.Running
+      ) {
         msp.refreshStream(streamDetail as Stream).then(detail => {
           setStreamDetail(detail as Stream);
         });
@@ -110,8 +120,7 @@ export const VestingContractStreamDetailModal = (props: {
 
     return () => {
       clearTimeout(timeout);
-    }
-
+    };
   }, [isToggledShowLastReadData, msp, streamDetail]);
 
   const onToggleShowLastReadData = (value: boolean) => {
@@ -119,9 +128,11 @@ export const VestingContractStreamDetailModal = (props: {
   };
 
   const loadMoreActivity = () => {
-    if (!highlightedStream) { return; }
+    if (!highlightedStream) {
+      return;
+    }
     getStreamActivity(highlightedStream.id.toBase58());
-  }
+  };
 
   return (
     <Modal
@@ -130,13 +141,13 @@ export const VestingContractStreamDetailModal = (props: {
       footer={null}
       open={isVisible}
       onCancel={handleClose}
-      width={480}>
-
+      width={480}
+    >
       {isDebugging && isWhitelisted && (
         <div className="flex-fixed-right shift-up-2 mb-3">
           <div className="left">Show last read data</div>
           <div className="right">
-            <Switch 
+            <Switch
               size="small"
               checked={isToggledShowLastReadData}
               onChange={onToggleShowLastReadData}
