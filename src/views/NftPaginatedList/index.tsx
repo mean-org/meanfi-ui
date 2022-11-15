@@ -11,6 +11,7 @@ import { Connection } from '@solana/web3.js';
 import { Spin } from 'antd';
 import { fallbackImgSrc } from 'constants/common';
 import { IconArrowBack, IconArrowForward } from 'Icons';
+import { MeanNft } from 'models/accounts/NftTypes';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const pageSize = 4;
@@ -20,7 +21,7 @@ export const NftPaginatedList = (props: {
   connection: Connection;
   nftList: FindNftsByOwnerOutput;
   onNftItemClick?: any;
-  selectedNft: Nft | Sft | SftWithToken | NftWithToken | undefined;
+  selectedNft: MeanNft | undefined;
 }) => {
   const { presetNftMint, connection, nftList, onNftItemClick, selectedNft } =
     props;
@@ -29,7 +30,7 @@ export const NftPaginatedList = (props: {
   const [shouldPresetItem, setShouldPresetItem] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number | undefined>(undefined);
   const [currentView, setCurrentView] = useState<
-    (Nft | Sft | SftWithToken | NftWithToken)[] | null
+    (MeanNft)[] | null
   >(null);
 
   const mx = useMemo(() => new Metaplex(connection), [connection]);
@@ -124,20 +125,18 @@ export const NftPaginatedList = (props: {
           {currentView && (
             <div className="nft-pagination">
               <span
-                className={`flat-button tiny${
-                  currentPage === 1 ? ' disabled' : ''
-                }`}
+                className={`flat-button tiny${currentPage === 1 ? ' disabled' : ''
+                  }`}
                 onClick={() => changeCurrentPage('prev')}
               >
                 <IconArrowBack className="mean-svg-icons" />
                 <span className="ml-1">Prev Page</span>
               </span>
               <span
-                className={`flat-button tiny${
-                  nftList && nftList.length / pageSize <= (currentPage || 1)
+                className={`flat-button tiny${nftList && nftList.length / pageSize <= (currentPage || 1)
                     ? ' disabled'
                     : ''
-                }`}
+                  }`}
                 onClick={() => changeCurrentPage('next')}
               >
                 <span className="mr-1">Next Page</span>

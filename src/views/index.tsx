@@ -6,6 +6,7 @@ export { MoneyStreamsOutgoingView } from './MoneyStreamsOutgoing';
 export { NftDetails } from './NftDetails';
 export { NftPaginatedList } from './NftPaginatedList';
 export { OneTimePayment } from './OneTimePayment';
+export { OtherAssetsList } from './OtherAssetsList';
 export { PageLoadingView } from './PageLoading';
 export { RecurringExchange } from './RecurringExchange';
 export { RepeatingPayment } from './RepeatingPayment';

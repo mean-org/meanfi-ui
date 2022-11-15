@@ -256,12 +256,12 @@ const SafeView = (props: {
           item.extras &&
           item.extras.multisigAuthority &&
           item.extras.multisigAuthority ===
-            selectedMultisigRef.current?.authority.toBase58()) ||
+          selectedMultisigRef.current?.authority.toBase58()) ||
         (item &&
           item.extras &&
           item.extras.multisigId &&
           item.extras.multisigId ===
-            selectedMultisigRef.current?.authority.toBase58())
+          selectedMultisigRef.current?.authority.toBase58())
       ) {
         return true;
       }
@@ -1387,10 +1387,10 @@ const SafeView = (props: {
                 accountIndex = 5;
               } else if (
                 data.transaction.operation ===
-                  OperationType.TreasuryStreamCreate ||
+                OperationType.TreasuryStreamCreate ||
                 data.transaction.operation === OperationType.StreamCreate ||
                 data.transaction.operation ===
-                  OperationType.StreamCreateWithTemplate
+                OperationType.StreamCreateWithTemplate
               ) {
                 accountIndex = 2;
               } else {
@@ -1420,9 +1420,9 @@ const SafeView = (props: {
               if (
                 data.transaction.operation === OperationType.StreamCreate ||
                 data.transaction.operation ===
-                  OperationType.TreasuryStreamCreate ||
+                OperationType.TreasuryStreamCreate ||
                 data.transaction.operation ===
-                  OperationType.StreamCreateWithTemplate
+                OperationType.StreamCreateWithTemplate
               ) {
                 accountIndex = 2;
               } else if (
@@ -1466,7 +1466,7 @@ const SafeView = (props: {
             } else if (error.toString().indexOf('0x1') !== -1) {
               const accountIndex =
                 data.transaction.operation === OperationType.TransferTokens ||
-                data.transaction.operation === OperationType.Transfer
+                  data.transaction.operation === OperationType.Transfer
                   ? 0
                   : 3;
               consoleOut(
@@ -1578,7 +1578,7 @@ const SafeView = (props: {
           !multisigClient ||
           !selectedMultisig ||
           selectedMultisig.id.toBase58() !==
-            data.transaction.multisig.toBase58() ||
+          data.transaction.multisig.toBase58() ||
           data.transaction.proposer.toBase58() !== publicKey.toBase58() ||
           data.transaction.executedOn
         ) {
@@ -2244,8 +2244,8 @@ const SafeView = (props: {
 
     const isProposalsFork =
       queryParamV === 'proposals' ||
-      queryParamV === 'instruction' ||
-      queryParamV === 'activity'
+        queryParamV === 'instruction' ||
+        queryParamV === 'activity'
         ? true
         : false;
     if (isProposalsFork) {
@@ -2277,8 +2277,8 @@ const SafeView = (props: {
 
     const isProgramsFork =
       queryParamV === 'programs' ||
-      queryParamV === 'transactions' ||
-      queryParamV === 'anchor-idl'
+        queryParamV === 'transactions' ||
+        queryParamV === 'anchor-idl'
         ? true
         : false;
 
@@ -2303,7 +2303,7 @@ const SafeView = (props: {
           {
             pubkey: filteredProgram.pubkey.toBase58(),
             owner: filteredProgram.owner.toBase58(),
-            upgradeAuthority: filteredProgram.upgradeAuthority.toBase58(),
+            upgradeAuthority: filteredProgram.upgradeAuthority ? filteredProgram.upgradeAuthority.toBase58() : null,
             executable: filteredProgram.executable.toBase58(),
             size: formatThousands(filteredProgram.size),
           },
@@ -2510,10 +2510,10 @@ const SafeView = (props: {
                     {!connected
                       ? t('multisig.multisig-accounts.not-connected')
                       : loadingMultisigAccounts
-                      ? t(
+                        ? t(
                           'multisig.multisig-accounts.loading-multisig-accounts',
                         )
-                      : t(
+                        : t(
                           'multisig.multisig-account-detail.no-multisig-loaded',
                         )}
                   </p>

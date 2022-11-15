@@ -43,7 +43,6 @@ import {
   Treasury,
   TreasuryType,
 } from '@mean-dao/msp';
-import { Nft, NftWithToken, Sft, SftWithToken } from '@metaplex-foundation/js';
 import { AnchorProvider, BN, Idl, Program } from '@project-serum/anchor';
 import {
   AccountLayout,
@@ -56,6 +55,7 @@ import {
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
+  MemcmpFilter,
   ParsedTransactionMeta,
   PublicKey,
   Signer,
@@ -142,7 +142,7 @@ import {
   IconVerticalEllipsis,
 } from 'Icons';
 import { appConfig, customLogger } from 'index';
-import { closeTokenAccount } from 'middleware/accounts';
+import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
@@ -150,7 +150,6 @@ import {
   consoleOut,
   copyText,
   getTransactionStatusForLogs,
-  isLocal,
   kFormatter,
   toUsCurrency,
 } from 'middleware/ui';
@@ -172,6 +171,7 @@ import {
   KnownAppMetadata,
   KNOWN_APPS,
   MetaInfoCtaAction,
+  ProgramAccounts,
   RegisteredAppPaths,
   UserTokenAccount,
 } from 'models/accounts';
@@ -213,6 +213,7 @@ import {
   MoneyStreamsOutgoingView,
   NftDetails,
   NftPaginatedList,
+  OtherAssetsList,
   StreamingAccountView,
 } from 'views';
 import getAssetCategory from './getAssetCategory';
@@ -232,12 +233,13 @@ let isWorkflowLocked = false;
 export const AccountsView = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { asset, streamingTab, streamingItemId } = useParams();
+  const { asset, streamingTab, streamingItemId, programId } = useParams();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
   const {
     theme,
+    programs,
     streamList,
     accountNfts,
     tokensLoaded,
@@ -283,10 +285,12 @@ export const AccountsView = () => {
     setStreamDetail,
     setTransactions,
     clearStreams,
+    setPrograms,
   } = useContext(AppStateContext);
-  const { confirmationHistory, enqueueTransactionConfirmation } = useContext(
-    TxConfirmationContext,
-  );
+  const {
+    confirmationHistory,
+    enqueueTransactionConfirmation,
+  } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
@@ -374,6 +378,9 @@ export const AccountsView = () => {
   // Multisig Apps
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
+  const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
+
   // SOL Balance Modal
   const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
   const hideSolBalanceModal = useCallback(
@@ -397,6 +404,12 @@ export const AccountsView = () => {
     }
 
     consoleOut('pathname:', location.pathname, 'crimson');
+    if (location.pathname.startsWith('/programs/')) {
+      setTimeout(() => {
+        setIsPageLoaded(true);
+      });
+      return;
+    }
     // If no category specified (neither assets nor any known App) just assume assets
     const isKnownApp = KNOWN_APPS.some(a =>
       location.pathname.startsWith(`/${a.slug}`),
@@ -413,7 +426,6 @@ export const AccountsView = () => {
         url = '/my-account';
       }
       consoleOut('No category specified, redirecting to:', url, 'crimson');
-      // setAutoOpenDetailsPanel(false);
       setTimeout(() => {
         setIsPageLoaded(true);
       });
@@ -598,6 +610,95 @@ export const AccountsView = () => {
     resetTransactionStatus();
   }, [multisigClient, nativeBalance, resetTransactionStatus]);
 
+  const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
+
+    if (!connection || !selectedAccount.address) {
+      return [];
+    }
+
+    const BPFLoaderUpgradeab1e = new PublicKey(
+      'BPFLoaderUpgradeab1e11111111111111111111111',
+    );
+    const execDataAccountsFilter: MemcmpFilter = {
+      memcmp: { offset: 13, bytes: selectedAccount.address },
+    };
+
+    const execDataAccounts = await connection.getProgramAccounts(
+      BPFLoaderUpgradeab1e,
+      {
+        filters: [execDataAccountsFilter],
+      },
+    );
+
+    if (execDataAccounts.length === 0) {
+      return [];
+    }
+
+    const programs: ProgramAccounts[] = [];
+    const group = (size: number, data: any) => {
+      const result = [];
+      for (let i = 0; i < data.length; i += size) {
+        result.push(data.slice(i, i + size));
+      }
+      return result;
+    };
+
+    const sleep = (ms: number, log = true) => {
+      if (log) {
+        consoleOut('Sleeping for', ms / 1000, 'seconds');
+      }
+      return new Promise(resolve => setTimeout(resolve, ms));
+    };
+
+    const getProgramAccountsPromise = async (execDataAccount: any) => {
+      const execAccountsFilter: MemcmpFilter = {
+        memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() },
+      };
+
+      const execAccounts = await connection.getProgramAccounts(
+        BPFLoaderUpgradeab1e,
+        {
+          dataSlice: { offset: 0, length: 0 },
+          filters: [execAccountsFilter],
+        },
+      );
+
+      if (execAccounts.length === 0) {
+        return;
+      }
+
+      if (execAccounts.length > 1) {
+        throw new Error(
+          `More than one program was found for program data account '${execDataAccount.pubkey.toBase58()}'`,
+        );
+      }
+
+      consoleOut('programAccounts:', execAccounts, 'blue');
+
+      programs.push({
+        pubkey: execAccounts[0].pubkey,
+        owner: execAccounts[0].account.owner,
+        executable: execDataAccount.pubkey,
+        upgradeAuthority: new PublicKey(selectedAccount.address),
+        size: execDataAccount.account.data.byteLength,
+      } as ProgramAccounts);
+    };
+
+    const execDataAccountsGroups = group(8, execDataAccounts);
+
+    for (const groupItem of execDataAccountsGroups) {
+      const promises: Promise<any>[] = [];
+      for (const dataAcc of groupItem) {
+        promises.push(getProgramAccountsPromise(dataAcc));
+      }
+      await Promise.all(promises);
+      sleep(1_000, false);
+    }
+
+    return programs;
+  }, [connection, selectedAccount.address]);
+
+
   // Deposit SPL or SOL modal
   const [isReceiveSplOrSolModalOpen, setIsReceiveSplOrSolModalOpen] =
     useState(false);
@@ -724,9 +825,8 @@ export const AccountsView = () => {
   }, [selectedAsset]);
 
   const goToExchangeWithPresetAsset = useCallback(() => {
-    const queryParams = `${
-      selectedAsset ? '?from=' + selectedAsset.symbol : ''
-    }`;
+    const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''
+      }`;
     setDetailsPanelOpen(false);
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
@@ -1273,8 +1373,7 @@ export const AccountsView = () => {
       }
 
       consoleOut(
-        `onTxConfirmed event handled for operation ${
-          OperationType[item.operationType]
+        `onTxConfirmed event handled for operation ${OperationType[item.operationType]
         }`,
         item,
         'crimson',
@@ -1614,7 +1713,7 @@ export const AccountsView = () => {
           consoleOut(
             'blockchainFee:',
             transactionAssetFees.blockchainFee +
-              transactionAssetFees.mspFlatFee,
+            transactionAssetFees.mspFlatFee,
             'blue',
           );
           consoleOut('nativeBalance:', nativeBalance, 'blue');
@@ -1636,7 +1735,7 @@ export const AccountsView = () => {
                 NATIVE_SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(
                 transactionAssetFees.blockchainFee +
-                  transactionAssetFees.mspFlatFee,
+                transactionAssetFees.mspFlatFee,
                 NATIVE_SOL_MINT.toBase58(),
               )})`,
             });
@@ -2152,9 +2251,8 @@ export const AccountsView = () => {
               completedMessage: `Asset funds (${formatThousands(
                 data.amount,
                 selectedAsset.decimals,
-              )} ${
-                selectedAsset.symbol
-              }) successfully transferred to ${shortenAddress(data.to)}`,
+              )} ${selectedAsset.symbol
+                }) successfully transferred to ${shortenAddress(data.to)}`,
               completedMessageTimeout: isMultisigContext ? 8 : 5,
               extras: {
                 multisigAuthority: selectedMultisig
@@ -2471,11 +2569,10 @@ export const AccountsView = () => {
               loadingTitle: 'Confirming transaction',
               loadingMessage: 'Transferring ownership',
               completedTitle: 'Transaction confirmed',
-              completedMessage: `Asset ${
-                selectedAsset.name
-              } successfully transferred to ${shortenAddress(
-                data.selectedAuthority,
-              )}`,
+              completedMessage: `Asset ${selectedAsset.name
+                } successfully transferred to ${shortenAddress(
+                  data.selectedAuthority,
+                )}`,
               completedMessageTimeout: isMultisigContext ? 8 : 5,
               extras: {
                 multisigAuthority: selectedMultisig
@@ -2907,9 +3004,9 @@ export const AccountsView = () => {
 
                 const isNewTreasury =
                   vA2.version &&
-                  vA2.version >= 2 &&
-                  vB2.version &&
-                  vB2.version >= 2
+                    vA2.version >= 2 &&
+                    vB2.version &&
+                    vB2.version >= 2
                     ? true
                     : false;
 
@@ -3055,7 +3152,7 @@ export const AccountsView = () => {
     for (const stream of updatedStreamsv1) {
       const isIncoming =
         stream.beneficiaryAddress &&
-        stream.beneficiaryAddress === treasurer.toBase58()
+          stream.beneficiaryAddress === treasurer.toBase58()
           ? true
           : false;
 
@@ -3161,7 +3258,7 @@ export const AccountsView = () => {
     for (const stream of updatedStreamsv1) {
       const isIncoming =
         stream.beneficiaryAddress &&
-        stream.beneficiaryAddress === treasurer.toBase58()
+          stream.beneficiaryAddress === treasurer.toBase58()
           ? true
           : false;
 
@@ -3855,8 +3952,7 @@ export const AccountsView = () => {
     if (publicKey) {
       timer = setInterval(() => {
         consoleOut(
-          `Refreshing treasuries past ${
-            ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000
+          `Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000
           }min...`,
         );
         refreshTreasuries(false);
@@ -3925,7 +4021,7 @@ export const AccountsView = () => {
     );
     const isAccountSummary =
       location.pathname.startsWith('/my-account') ||
-      location.pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)
+        location.pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)
         ? true
         : false;
 
@@ -4076,14 +4172,15 @@ export const AccountsView = () => {
       !publicKey ||
       !selectedAsset ||
       !tokensLoaded ||
-      !shouldLoadTransactions
+      !shouldLoadTransactions ||
+      loadingTransactions
     ) {
       return;
     }
 
-    if (!loadingTransactions && selectedAccount.address) {
-      setShouldLoadTransactions(false);
-      setLoadingTransactions(true);
+    if (selectedAccount.address) {
+      setShouldLoadTransactions(() => false);
+      setLoadingTransactions(() => true);
 
       // Get the address to scan and ensure there is one
       const pk = getScanAddress(selectedAsset);
@@ -4136,7 +4233,6 @@ export const AccountsView = () => {
   }, [
     publicKey,
     connection,
-    transactions,
     tokensLoaded,
     selectedAsset?.publicAddress,
     selectedAccount.address,
@@ -4230,6 +4326,82 @@ export const AccountsView = () => {
       setSolanaApps(apps);
     });
   }, [connectionConfig.cluster]);
+
+  // Get Programs owned by the account in context
+  useEffect(() => {
+    if (!connection || !publicKey || !selectedAccount.address) {
+      return;
+    }
+
+    setTimeout(() => {
+      setLoadingPrograms(true);
+    });
+
+    consoleOut('Fetching programs for:', selectedAccount.address, 'blue');
+    setPrograms([]);
+    getProgramsByUpgradeAuthority()
+      .then(progs => {
+        setPrograms(progs);
+        consoleOut('programs:', progs);
+      })
+      .catch(error => console.error(error))
+      .finally(() => setLoadingPrograms(false));
+  }, [
+    publicKey,
+    connection,
+    selectedAccount.address,
+    getProgramsByUpgradeAuthority,
+    setPrograms,
+  ]);
+
+  // Set program specified in the path as programId from the list of programs
+  useEffect(() => {
+
+    if (!connection || !publicKey || isMultisigContext || !location.pathname.startsWith('/programs/')) {
+      return;
+    }
+
+    const logIt = (p: ProgramAccounts) => {
+      consoleOut(
+        'selectedProgram details:',
+        {
+          pubkey: p.pubkey.toBase58(),
+          owner: p.owner.toBase58(),
+          upgradeAuthority: p.upgradeAuthority ? p.upgradeAuthority.toBase58() : '',
+          executable: p.executable.toBase58(),
+          size: formatThousands(p.size),
+        },
+        'orange',
+      );
+    }
+
+    if (programs && programId) {
+      const filteredProgram = programs.find(
+        program => program.pubkey.toBase58() === programId,
+      );
+
+      if (filteredProgram) {
+        const programData = filteredProgram.executable.toBase58() as string;
+        let updatedProgramData: ProgramAccounts | undefined = undefined;
+        resolveParsedAccountInfo(connection, programData)
+          .then(accountInfo => {
+            const authority = accountInfo.data.parsed.info.authority as string | null;
+            updatedProgramData = Object.assign({}, filteredProgram, {
+              upgradeAuthority: authority ? new PublicKey(authority) : null
+            }) as ProgramAccounts;
+            setSelectedProgram(updatedProgramData);
+            logIt(updatedProgramData);
+          })
+          .catch(error => {
+            console.error(error);
+            setSelectedProgram(filteredProgram);
+            logIt(filteredProgram);
+          });
+      } else {
+        setSelectedProgram(undefined);
+      }
+    }
+  }, [connection, isMultisigContext, location.pathname, programId, programs, publicKey]);
 
   // Preset token based on url param asset
   useEffect(() => {
@@ -4327,9 +4499,8 @@ export const AccountsView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
-          MetaInfoCtaAction.Buy
-        }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy
+          }`,
         tooltip: '',
         callBack: showDepositOptionsModal,
       });
@@ -4343,9 +4514,8 @@ export const AccountsView = () => {
       isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
-        MetaInfoCtaAction.Deposit
-      }`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Deposit
+        }`,
       tooltip: '',
       callBack: showReceiveSplOrSolModal,
     });
@@ -4363,9 +4533,8 @@ export const AccountsView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
-          MetaInfoCtaAction.Exchange
-        }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange
+          }`,
         tooltip: '',
         callBack: onExchangeAsset,
       });
@@ -4380,9 +4549,8 @@ export const AccountsView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
-          MetaInfoCtaAction.Invest
-        }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest
+          }`,
         tooltip: '',
         callBack: handleGoToInvestClick,
       });
@@ -4401,9 +4569,8 @@ export const AccountsView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
-          MetaInfoCtaAction.WrapSol
-        }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.WrapSol
+          }`,
         tooltip: '',
         callBack: showWrapSolModal,
       });
@@ -5257,9 +5424,8 @@ export const AccountsView = () => {
               navigateToSafe();
             }
           }}
-          className={`networth-list-item flex-fixed-right ${
-            selectedCategory === 'account-summary' ? 'selected' : ''
-          }`}
+          className={`networth-list-item flex-fixed-right ${selectedCategory === 'account-summary' ? 'selected' : ''
+            }`}
         >
           {renderSelectedAccountSummaryInner()}
         </div>
@@ -5295,12 +5461,11 @@ export const AccountsView = () => {
               setSelectedNft(undefined);
               navigateToStreaming();
             }}
-            className={`transaction-list-row ${
-              selectedCategory === 'apps' &&
+            className={`transaction-list-row ${selectedCategory === 'apps' &&
               selectedApp?.slug === RegisteredAppPaths.PaymentStreaming
-                ? 'selected'
-                : ''
-            }`}
+              ? 'selected'
+              : ''
+              }`}
           >
             <div className="icon-cell">
               {loadingStreams ? (
@@ -5471,9 +5636,8 @@ export const AccountsView = () => {
               {asset.symbol}
               {tokenPrice > 0 ? (
                 <span
-                  className={`badge small ml-1 ${
-                    theme === 'light' ? 'golden fg-dark' : 'darken'
-                  }`}
+                  className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'
+                    }`}
                 >
                   {toUsCurrency(tokenPrice)}
                 </span>
@@ -5490,10 +5654,10 @@ export const AccountsView = () => {
             <div className="interval">
               {(asset.balance || 0) > 0
                 ? formatThousands(
-                    asset.balance || 0,
-                    asset.decimals,
-                    asset.decimals,
-                  )
+                  asset.balance || 0,
+                  asset.decimals,
+                  asset.decimals,
+                )
                 : '0'}
             </div>
           </div>
@@ -5577,9 +5741,8 @@ export const AccountsView = () => {
     return (
       <div
         key="asset-category-token-items"
-        className={`asset-category flex-column${
-          !accountTokens || accountTokens.length === 0 ? ' h-75' : ''
-        }`}
+        className={`asset-category flex-column${!accountTokens || accountTokens.length === 0 ? ' h-75' : ''
+          }`}
       >
         {accountTokens && accountTokens.length > 0 ? (
           <>
@@ -5634,7 +5797,7 @@ export const AccountsView = () => {
       );
     }
 
-    const onNftItemClick = (item: Nft | Sft | SftWithToken | NftWithToken) => {
+    const onNftItemClick = (item: MeanNft) => {
       consoleOut('clicked on NFT item:', item, 'blue');
       setSelectedNft(item);
       setSelectedApp(undefined);
@@ -5651,7 +5814,7 @@ export const AccountsView = () => {
           presetNftMint={selectedNft ? undefined : nftMint}
           connection={connection}
           nftList={accountNfts}
-          onNftItemClick={(nft: Nft | Sft | SftWithToken | NftWithToken) =>
+          onNftItemClick={(nft: MeanNft) =>
             onNftItemClick(nft)
           }
           selectedNft={selectedNft}
@@ -5682,13 +5845,43 @@ export const AccountsView = () => {
   };
 
   const renderOtherAssetsList = () => {
+    if (loadingPrograms) {
+      return (
+        <div
+          key="asset-category-nft-items"
+          className="asset-category flex-column flex-center h-75"
+        >
+          <Spin indicator={antIcon} />
+        </div>
+      );
+    }
+
+    const onProgramSelected = (item: ProgramAccounts) => {
+      setSelectedApp(undefined);
+      setSelectedAsset(undefined);
+      setSelectedCategory('other-assets');
+
+      let url = '';
+      if (isMultisigContext) {
+        url = `/${RegisteredAppPaths.SuperSafe}/programs/${item.pubkey.toBase58()}?v=transactions`;
+      } else {
+        url = `/programs/${item.pubkey.toBase58()}?v=transactions`
+      }
+
+      // Activate panels and navigate
+      setTimeout(() => {
+        setAutoOpenDetailsPanel(true);
+        setDetailsPanelOpen(true);
+        navigate(url);
+      }, 10);
+    };
+
     return (
-      <div
-        key="asset-category-other-items"
-        className="asset-category flex-column"
-      >
-        <span>Nothing here yet</span>
-      </div>
+      <OtherAssetsList
+        onProgramSelected={(item: ProgramAccounts) => onProgramSelected(item)}
+        programs={programs}
+        selectedProgram={selectedProgram}
+      />
     );
   };
 
@@ -5750,12 +5943,11 @@ export const AccountsView = () => {
       <>
         {/* Activity list */}
         <div
-          className={`transaction-list-data-wrapper ${
-            (status === FetchStatus.Fetched && !hasTransactions()) ||
+          className={`transaction-list-data-wrapper ${(status === FetchStatus.Fetched && !hasTransactions()) ||
             status === FetchStatus.FetchFailed
-              ? 'h-100'
-              : 'vertical-scroll'
-          }`}
+            ? 'h-100'
+            : 'vertical-scroll'
+            }`}
         >
           <div className="activity-list h-100">
             {hasTransactions() ? (
@@ -6017,9 +6209,8 @@ export const AccountsView = () => {
                   <AddressDisplay
                     address={selectedAsset.publicAddress as string}
                     iconStyles={{ width: '16', height: '16' }}
-                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-                      selectedAsset.publicAddress
-                    }${getSolanaExplorerClusterParam()}`}
+                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedAsset.publicAddress
+                      }${getSolanaExplorerClusterParam()}`}
                   />
                 </div>
               </Col>
@@ -6109,16 +6300,14 @@ export const AccountsView = () => {
   };
 
   const goToStreamIncomingDetailsHandler = (stream: any) => {
-    const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming/${
-      stream.id as string
-    }`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming/${stream.id as string
+      }`;
     navigate(url);
   };
 
   const goToStreamOutgoingDetailsHandler = (stream: any) => {
-    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${
-      stream.id as string
-    }`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${stream.id as string
+      }`;
     navigate(url);
   };
 
@@ -6126,18 +6315,16 @@ export const AccountsView = () => {
     streamingTreasury: Treasury | TreasuryInfo | undefined,
   ) => {
     if (streamingTreasury) {
-      const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${
-        streamingTreasury.id as string
-      }`;
+      const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingTreasury.id as string
+        }`;
       navigate(url);
     }
   };
 
   const goToStreamingAccountStreamDetailsHandler = (stream: any) => {
     setPreviousRoute(location.pathname);
-    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${
-      stream.id as string
-    }`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${stream.id as string
+      }`;
     navigate(url);
   };
 
@@ -6263,9 +6450,8 @@ export const AccountsView = () => {
           <div className="interaction-area">
             {selectedAccount.address && (
               <div
-                className={`meanfi-two-panel-layout ${
-                  detailsPanelOpen ? 'details-open' : ''
-                }`}
+                className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''
+                  }`}
               >
                 {/* Left / top panel */}
                 <div className="meanfi-two-panel-left">
@@ -6286,9 +6472,8 @@ export const AccountsView = () => {
 
                     {/* Middle area (vertically flexible block of items) */}
                     <div
-                      className={`item-block${
-                        !isXsDevice ? ' vertical-scroll' : ''
-                      }`}
+                      className={`item-block${!isXsDevice ? ' vertical-scroll' : ''
+                        }`}
                     >
                       {/* Pinned Apps or Favorites */}
                       <div
@@ -6398,7 +6583,7 @@ export const AccountsView = () => {
 
                   <div className="inner-container">
                     {selectedApp?.slug ===
-                    RegisteredAppPaths.PaymentStreaming ? (
+                      RegisteredAppPaths.PaymentStreaming ? (
                       <>
                         {/* Refresh cta */}
                         <div className="float-top-right mr-1 mt-1">
@@ -6449,9 +6634,9 @@ export const AccountsView = () => {
                     ) : null}
 
                     {selectedApp?.slug === RegisteredAppPaths.Staking &&
-                    location.pathname.startsWith(
-                      `/${RegisteredAppPaths.Staking}`,
-                    ) ? (
+                      location.pathname.startsWith(
+                        `/${RegisteredAppPaths.Staking}`,
+                      ) ? (
                       <>
                         <Suspense
                           fallback={
@@ -6466,9 +6651,9 @@ export const AccountsView = () => {
                     ) : null}
 
                     {selectedApp?.slug === RegisteredAppPaths.Vesting &&
-                    location.pathname.startsWith(
-                      `/${RegisteredAppPaths.Vesting}`,
-                    ) ? (
+                      location.pathname.startsWith(
+                        `/${RegisteredAppPaths.Vesting}`,
+                      ) ? (
                       <>
                         <Suspense
                           fallback={
@@ -6484,8 +6669,12 @@ export const AccountsView = () => {
                       </>
                     ) : null}
 
+                    {selectedProgram && location.pathname.startsWith('/programs/') ? (
+                      <p>Hey hey hey</p>
+                    ) : null}
+
                     {selectedCategory === 'account-summary' &&
-                    location.pathname === '/my-account' ? (
+                      location.pathname === '/my-account' ? (
                       <>
                         <Suspense
                           fallback={
@@ -6534,15 +6723,14 @@ export const AccountsView = () => {
                               isMultisigContext &&
                               selectedMultisig &&
                               (multisigSolBalance !== undefined &&
-                              multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED ? (
+                                multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED ? (
                                 <Row gutter={[8, 8]}>
                                   <Col
                                     span={24}
-                                    className={`alert-info-message pr-2 ${
-                                      selectedMultisig
-                                        ? 'simplelink'
-                                        : 'disable-pointer'
-                                    }`}
+                                    className={`alert-info-message pr-2 ${selectedMultisig
+                                      ? 'simplelink'
+                                      : 'disable-pointer'
+                                      }`}
                                     onClick={showSolBalanceModal}
                                   >
                                     <Alert
@@ -6554,9 +6742,8 @@ export const AccountsView = () => {
                                 </Row>
                               ) : null)}
                             <div
-                              className={`bottom ${
-                                !hasItemsToRender() ? 'h-100 flex-column' : ''
-                              }`}
+                              className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''
+                                }`}
                             >
                               {/* Activity table heading */}
                               {hasItemsToRender() && (
