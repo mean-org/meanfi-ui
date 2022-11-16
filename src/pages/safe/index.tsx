@@ -63,7 +63,6 @@ import { ProgramDetailsView } from './components/ProgramDetails';
 import { ProposalDetailsView } from './components/ProposalDetails';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
-import './style.scss';
 
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
