@@ -1465,7 +1465,7 @@ export const AccountsView = () => {
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
-          } else {
+          } else if (!item.extras || !item.extras.multisigAuthority) {
             window.location.href = '/';
           }
           break;
@@ -5865,10 +5865,26 @@ export const AccountsView = () => {
     if (loadingPrograms) {
       return (
         <div
-          key="asset-category-nft-items"
+          key="asset-category-other-assets-items"
           className="asset-category flex-column flex-center h-75"
         >
           <Spin indicator={antIcon} />
+        </div>
+      );
+    } else if (!programs || programs.length === 0) {
+      return (
+        <div
+          key="asset-category-other-assets-items"
+          className="asset-category flex-column flex-center h-75"
+        >
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              <span>
+                No programs found
+              </span>
+            }
+          />
         </div>
       );
     }
