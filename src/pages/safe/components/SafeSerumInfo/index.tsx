@@ -4,6 +4,7 @@ import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { Button, Col, Row } from 'antd';
 import { ResumeItem } from 'components/ResumeItem';
 import { IconArrowForward } from 'Icons';
+import { BPF_LOADER_UPGRADEABLE_PID } from 'middleware/ids';
 import { consoleOut } from 'middleware/ui';
 import { ProgramAccounts } from 'models/accounts';
 import { useCallback, useEffect, useState } from 'react';
@@ -98,14 +99,11 @@ export const SafeSerumInfoView = (props: {
       );
 
       // 1. Fetch executable data account having upgradeAuthority as upgrade authority
-      const BPFLoaderUpgradeab1e = new PublicKey(
-        'BPFLoaderUpgradeab1e11111111111111111111111',
-      );
       const executableDataAccountsFilter: MemcmpFilter = {
         memcmp: { offset: 13, bytes: upgradeAuthority.toBase58() },
       };
       const executableDataAccounts = await connection.getProgramAccounts(
-        BPFLoaderUpgradeab1e,
+        BPF_LOADER_UPGRADEABLE_PID,
         {
           encoding: 'base64',
           filters: [executableDataAccountsFilter],
@@ -121,7 +119,7 @@ export const SafeSerumInfoView = (props: {
           memcmp: { offset: 4, bytes: executableData.toBase58() },
         };
         const executableAccounts = await connection.getProgramAccounts(
-          BPFLoaderUpgradeab1e,
+          BPF_LOADER_UPGRADEABLE_PID,
           {
             encoding: 'base64',
             dataSlice: {

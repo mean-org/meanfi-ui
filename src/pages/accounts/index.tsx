@@ -144,7 +144,7 @@ import {
 import { appConfig, customLogger } from 'index';
 import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { BPF_LOADER_UPGRADEABLE_PID, NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import {
   consoleOut,
@@ -617,15 +617,12 @@ export const AccountsView = () => {
       return [];
     }
 
-    const BPFLoaderUpgradeab1e = new PublicKey(
-      'BPFLoaderUpgradeab1e11111111111111111111111',
-    );
     const execDataAccountsFilter: MemcmpFilter = {
       memcmp: { offset: 13, bytes: selectedAccount.address },
     };
 
     const execDataAccounts = await connection.getProgramAccounts(
-      BPFLoaderUpgradeab1e,
+      BPF_LOADER_UPGRADEABLE_PID,
       {
         filters: [execDataAccountsFilter],
       },
@@ -657,7 +654,7 @@ export const AccountsView = () => {
       };
 
       const execAccounts = await connection.getProgramAccounts(
-        BPFLoaderUpgradeab1e,
+        BPF_LOADER_UPGRADEABLE_PID,
         {
           dataSlice: { offset: 0, length: 0 },
           filters: [execAccountsFilter],

@@ -35,7 +35,7 @@ import {
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { appConfig, customLogger } from 'index';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { BPF_LOADER_UPGRADEABLE_PID, NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
 import {
@@ -1993,15 +1993,12 @@ const SafeView = (props: {
       return [];
     }
 
-    const BPFLoaderUpgradeab1e = new PublicKey(
-      'BPFLoaderUpgradeab1e11111111111111111111111',
-    );
     const execDataAccountsFilter: MemcmpFilter = {
       memcmp: { offset: 13, bytes: selectedMultisig.authority.toBase58() },
     };
 
     const execDataAccounts = await connection.getProgramAccounts(
-      BPFLoaderUpgradeab1e,
+      BPF_LOADER_UPGRADEABLE_PID,
       {
         filters: [execDataAccountsFilter],
       },
@@ -2033,7 +2030,7 @@ const SafeView = (props: {
       };
 
       const execAccounts = await connection.getProgramAccounts(
-        BPFLoaderUpgradeab1e,
+        BPF_LOADER_UPGRADEABLE_PID,
         {
           dataSlice: { offset: 0, length: 0 },
           filters: [execAccountsFilter],
