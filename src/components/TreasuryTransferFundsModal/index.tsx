@@ -160,38 +160,38 @@ export const TreasuryTransferFundsModal = (props: {
     return !to
       ? 'Enter an address'
       : to && !isValidAddress(to)
-      ? 'Invalid address'
-      : !tokenAmount || +tokenAmount === 0
-      ? 'Enter amount'
-      : unallocatedBalance && unallocatedBalance.isZero()
-      ? 'No balance'
-      : tokenAmount &&
-        unallocatedBalance &&
-        tokenAmount > (unallocatedBalance || new BN(0))
-      ? 'Amount exceeded'
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : t('treasuries.withdraw-funds.main-cta');
+        ? 'Invalid address'
+        : !tokenAmount || +tokenAmount === 0
+          ? 'Enter amount'
+          : unallocatedBalance && unallocatedBalance.isZero()
+            ? 'No balance'
+            : tokenAmount &&
+              unallocatedBalance &&
+              tokenAmount.gt(unallocatedBalance || new BN(0))
+              ? 'Amount exceeded'
+              : !isVerifiedRecipient
+                ? t('transactions.validation.verified-recipient-unchecked')
+                : t('treasuries.withdraw-funds.main-cta');
   };
 
   const getTransactionStartButtonLabelMultisig = () => {
     return !proposalTitle
       ? 'Add a proposal title'
       : !to
-      ? 'Enter an address'
-      : to && !isValidAddress(to)
-      ? 'Invalid address'
-      : !tokenAmount || +tokenAmount === 0
-      ? 'Enter amount'
-      : unallocatedBalance && unallocatedBalance.isZero()
-      ? 'No balance'
-      : tokenAmount &&
-        unallocatedBalance &&
-        tokenAmount > (unallocatedBalance || new BN(0))
-      ? 'Amount exceeded'
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : 'Sign proposal';
+        ? 'Enter an address'
+        : to && !isValidAddress(to)
+          ? 'Invalid address'
+          : !tokenAmount || +tokenAmount === 0
+            ? 'Enter amount'
+            : unallocatedBalance && unallocatedBalance.isZero()
+              ? 'No balance'
+              : tokenAmount &&
+                unallocatedBalance &&
+                tokenAmount.gt(unallocatedBalance || new BN(0))
+                ? 'Amount exceeded'
+                : !isVerifiedRecipient
+                  ? t('transactions.validation.verified-recipient-unchecked')
+                  : 'Sign proposal';
   };
 
   useEffect(() => {
