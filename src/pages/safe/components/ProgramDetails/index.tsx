@@ -64,8 +64,6 @@ export const ProgramDetailsView = (props: {
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
-    startFetchTxSignatureInfo,
-    clearTxConfirmationContext,
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
 
@@ -133,9 +131,16 @@ export const ProgramDetailsView = (props: {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
 
+  const resetTransactionStatus = useCallback(() => {
+    setIsBusy(false);
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle,
+    });
+  }, [setTransactionStatus]);
+
   // Upgrade program modal
-  const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] =
-    useState(false);
+  const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
   const showUpgradeProgramModal = useCallback(() => {
     setIsUpgradeProgramModalVisible(true);
     const fees = {
@@ -146,30 +151,23 @@ export const ProgramDetailsView = (props: {
     setTransactionFees(fees);
   }, []);
 
-  const resetTransactionStatus = useCallback(() => {
+  const closeUpgradeProgramModal = useCallback(() => {
+    resetTransactionStatus();
+    setIsUpgradeProgramModalVisible(false);
     setIsBusy(false);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
-    });
-  }, [setTransactionStatus]);
+  }, [resetTransactionStatus]);
 
   const onAcceptUpgradeProgram = (params: ProgramUpgradeParams) => {
     consoleOut('params', params, 'blue');
     onExecuteUpgradeProgramsTx(params);
   };
 
-  const onProgramUpgraded = useCallback(() => {
-    setIsUpgradeProgramModalVisible(false);
-  }, []);
-
-  const onExecuteUpgradeProgramsTx = useCallback(async (data: ProgramUpgradeParams) => {
+  const onExecuteUpgradeProgramsTx = useCallback(async (params: ProgramUpgradeParams) => {
     let transaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -281,7 +279,7 @@ export const ProgramDetailsView = (props: {
     };
 
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && data) {
+      if (publicKey && params) {
         consoleOut('Start transaction for create multisig', '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
@@ -292,9 +290,9 @@ export const ProgramDetailsView = (props: {
 
         // Create a transaction
         const payload = {
-          programAddress: data.programAddress,
-          programDataAddress: data.programDataAddress,
-          bufferAddress: data.bufferAddress,
+          programAddress: params.programAddress,
+          programDataAddress: params.programDataAddress,
+          bufferAddress: params.bufferAddress,
         };
 
         consoleOut('data:', payload);
@@ -470,17 +468,30 @@ export const ProgramDetailsView = (props: {
         consoleOut('sent:', sent);
         if (sent && !transactionCancelled) {
           consoleOut('Send Tx to confirmation queue:', signature);
-          startFetchTxSignatureInfo(
-            signature,
-            'confirmed',
-            OperationType.UpgradeProgram,
-          );
-          setIsBusy(false);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionFinished,
+          const multisigAuth = isMultisigContext && selectedMultisig
+            ? selectedMultisig.authority.toBase58()
+            : ''
+          const loadingMessage = multisigAuth
+            ? `Create proposal to upgrade program ${shortenAddress(params.programAddress)}`
+            : `Upgrade program ${shortenAddress(params.programAddress)}`;
+          const completedMessage = multisigAuth
+            ? `Proposal to upgrade program ${shortenAddress(params.programAddress)} has been submitted for approval.`
+            : `Program ${shortenAddress(params.programAddress)} has been upgraded`;
+          enqueueTransactionConfirmation({
+            signature: signature,
+            operationType: OperationType.UpgradeProgram,
+            finality: 'confirmed',
+            txInfoFetchStatus: 'fetching',
+            loadingTitle: 'Confirming transaction',
+            loadingMessage,
+            completedTitle: 'Transaction confirmed',
+            completedMessage,
+            extras: {
+              multisigAuthority: multisigAuth,
+            },
           });
-          onProgramUpgraded();
+
+          closeUpgradeProgramModal();
         } else {
           setIsBusy(false);
         }
@@ -501,11 +512,10 @@ export const ProgramDetailsView = (props: {
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
-      clearTxConfirmationContext,
-      startFetchTxSignatureInfo,
+      enqueueTransactionConfirmation,
+      closeUpgradeProgramModal,
       resetTransactionStatus,
       setTransactionStatus,
-      onProgramUpgraded,
     ],
   );
 
@@ -1313,7 +1323,7 @@ export const ProgramDetailsView = (props: {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           handleOk={(params: ProgramUpgradeParams) => onAcceptUpgradeProgram(params)}
-          handleClose={() => setIsUpgradeProgramModalVisible(false)}
+          handleClose={closeUpgradeProgramModal}
           programId={programSelected?.pubkey.toBase58()}
           isBusy={isBusy}
           programAddress={programSelected.pubkey.toBase58()}

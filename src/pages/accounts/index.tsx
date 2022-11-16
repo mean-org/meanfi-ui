@@ -1455,6 +1455,12 @@ export const AccountsView = () => {
             hardReloadStreams();
           }, 20);
           break;
+        case OperationType.UpgradeProgram:
+          if (item.extras && item.extras.multisigAuthority) {
+            refreshMultisigs();
+            notifyMultisigActionFollowup(item);
+          }
+          break;
         case OperationType.SetMultisigAuthority:
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
