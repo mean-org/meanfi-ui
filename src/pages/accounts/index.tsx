@@ -1459,6 +1459,8 @@ export const AccountsView = () => {
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
+          } else {
+            window.location.href = '/';
           }
           break;
         default:
