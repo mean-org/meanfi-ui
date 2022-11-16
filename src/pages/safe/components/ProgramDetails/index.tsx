@@ -1,6 +1,7 @@
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   MeanMultisig,
+  MultisigInfo,
 } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees } from '@mean-dao/msp';
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -37,6 +38,7 @@ import {
   getAmountFromLamports,
   getAmountWithSymbol,
   getTxIxResume,
+  shortenAddress,
 } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { SetProgramAuthPayload } from 'models/multisig';
@@ -49,7 +51,7 @@ import './style.scss';
 export const ProgramDetailsView = (props: {
   onDataToProgramView?: any;
   programSelected: any;
-  selectedMultisig?: any;
+  selectedMultisig?: MultisigInfo;
 }) => {
   const { account } = useNativeAccount();
   const connectionConfig = useConnectionConfig();
@@ -64,6 +66,7 @@ export const ProgramDetailsView = (props: {
     fetchTxInfoStatus,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
+    enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
 
   const {
@@ -507,8 +510,7 @@ export const ProgramDetailsView = (props: {
   );
 
   // Set program authority modal
-  const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] =
-    useState(false);
+  const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
   const showSetProgramAuthModal = useCallback(() => {
     setIsSetProgramAuthModalVisible(true);
     const fees = {
@@ -518,6 +520,12 @@ export const ProgramDetailsView = (props: {
     };
     setTransactionFees(fees);
   }, []);
+
+  const closeSetProgramAuthModal = useCallback(() => {
+    resetTransactionStatus();
+    setIsSetProgramAuthModalVisible(false);
+    setIsBusy(false);
+  }, [resetTransactionStatus]);
 
   const setInmutableProgram = (programId: string) => {
     const programAddress = new PublicKey(programId);
@@ -548,10 +556,6 @@ export const ProgramDetailsView = (props: {
     onExecuteSetProgramAuthTx(params);
   };
 
-  const onProgramAuthSet = useCallback(() => {
-    setIsSetProgramAuthModalVisible(false);
-  }, []);
-
   const onExecuteSetProgramAuthTx = useCallback(
     async (params: SetProgramAuthPayload) => {
       let transaction: Transaction;
@@ -559,7 +563,6 @@ export const ProgramDetailsView = (props: {
       let encodedTx: string;
       const transactionLog: any[] = [];
 
-      clearTxConfirmationContext();
       resetTransactionStatus();
       setTransactionCancelled(false);
       setIsBusy(true);
@@ -850,17 +853,36 @@ export const ProgramDetailsView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(
-              signature,
-              'confirmed',
-              OperationType.SetMultisigAuthority,
-            );
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished,
+            const multisigAuth = isMultisigContext && selectedMultisig
+              ? selectedMultisig.authority.toBase58()
+              : ''
+            const isAuthChange = params.newAuthAddress ? true : false;
+            const authChangeLoadingMessage = multisigAuth
+              ? `Create proposal to set program authority to ${shortenAddress(params.newAuthAddress)}`
+              : `Set program authority to ${shortenAddress(params.newAuthAddress)}`;
+            const authChangeCompleted = multisigAuth
+              ? `Set program authority proposal has been submitted for approval.`
+              : `Program authority set to ${shortenAddress(params.newAuthAddress)}`;
+            const makeImmutableLoadingMessage = multisigAuth
+              ? `Create proposal to make program ${shortenAddress(params.programAddress)} non-upgradable`
+              : `Make program ${shortenAddress(params.programAddress)} non-upgradable`;
+            const makeImmutableCompleted = multisigAuth
+              ? `Proposal to set program ${shortenAddress(params.programAddress)} as non-upgradable has been submitted for approval.`
+              : `Program ${shortenAddress(params.programAddress)} is now non-upgradable`;
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.SetMultisigAuthority,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: isAuthChange ? authChangeLoadingMessage : makeImmutableLoadingMessage,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: isAuthChange ? authChangeCompleted : makeImmutableCompleted,
+              extras: {
+                multisigAuthority: multisigAuth,
+              },
             });
-            onProgramAuthSet();
+            closeSetProgramAuthModal();
           } else {
             setIsBusy(false);
           }
@@ -882,11 +904,10 @@ export const ProgramDetailsView = (props: {
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
-      clearTxConfirmationContext,
-      startFetchTxSignatureInfo,
+      enqueueTransactionConfirmation,
+      closeSetProgramAuthModal,
       resetTransactionStatus,
       setTransactionStatus,
-      onProgramAuthSet,
     ],
   );
 
@@ -1307,7 +1328,7 @@ export const ProgramDetailsView = (props: {
           handleOk={(params: SetProgramAuthPayload) =>
             onAcceptSetProgramAuth(params)
           }
-          handleClose={() => setIsSetProgramAuthModalVisible(false)}
+          handleClose={closeSetProgramAuthModal}
           programId={programSelected?.pubkey.toBase58()}
           isBusy={isBusy}
         />

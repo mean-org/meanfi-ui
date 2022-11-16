@@ -1455,6 +1455,12 @@ export const AccountsView = () => {
             hardReloadStreams();
           }, 20);
           break;
+        case OperationType.SetMultisigAuthority:
+          if (item.extras && item.extras.multisigAuthority) {
+            refreshMultisigs();
+            notifyMultisigActionFollowup(item);
+          }
+          break;
         default:
           break;
       }
@@ -4024,8 +4030,9 @@ export const AccountsView = () => {
         : false;
 
     // The category is inferred from the route path
-
-    if (isAccountSummary) {
+    if (location.pathname.startsWith('/programs/')) {
+      setSelectedCategory('other-assets');
+    } else if (isAccountSummary) {
       // 1.- If the route starts with my-account or super-safe, set category to "account-summary"
       consoleOut('Setting category:', 'account-summary', 'crimson');
       setSelectedCategory('account-summary');
@@ -5321,7 +5328,7 @@ export const AccountsView = () => {
   };
 
   const canShowAssetDetails = () => {
-    if (selectedCategory === 'account-summary') {
+    if (selectedCategory === 'account-summary' || selectedCategory === 'other-assets') {
       return false;
     }
     const showWhenAssetsSelected =
@@ -6671,9 +6678,15 @@ export const AccountsView = () => {
                       </>
                     ) : null}
 
-                    {selectedProgram && location.pathname.startsWith('/programs/') ? (
+                    {location.pathname.startsWith('/programs/') ? (
                       <div className="safe-details-component scroll-wrapper vertical-scroll">
-                        <ProgramDetailsView programSelected={selectedProgram} />
+                        {selectedProgram ? (
+                          <ProgramDetailsView programSelected={selectedProgram} />
+                        ) : (
+                          <div className="h-100 flex-center">
+                            <Spin spinning={true} />
+                          </div>
+                        )}
                       </div>
                     ) : null}
 
