@@ -172,7 +172,7 @@ export const ProgramDetailsView = (props: {
     setIsBusy(true);
 
     const updateProgramSingleSigner = async (data: ProgramUpgradeParams) => {
-      if (!publicKey || isMultisigContext) {
+      if (!publicKey) {
         return null;
       }
 
@@ -199,11 +199,7 @@ export const ProgramDetailsView = (props: {
         { pubkey: spill, isWritable: true, isSigner: false },
         { pubkey: SYSVAR_RENT_PUBKEY, isWritable: false, isSigner: false },
         { pubkey: SYSVAR_CLOCK_PUBKEY, isWritable: false, isSigner: false },
-        {
-          pubkey: selectedMultisig.authority,
-          isWritable: false,
-          isSigner: false,
-        },
+        { pubkey: publicKey, isWritable: false, isSigner: false },
       ];
 
       const upgradeIxFields: TransactionInstructionCtorFields = {
@@ -568,16 +564,59 @@ export const ProgramDetailsView = (props: {
       setTransactionCancelled(false);
       setIsBusy(true);
 
-      const setProgramAuth = async (data: SetProgramAuthPayload) => {
-        if (!multisigClient || !selectedMultisig || !publicKey) {
+      const setProgramAuthSingleSigner = async (data: SetProgramAuthPayload) => {
+        if (!publicKey) {
           return null;
         }
 
+        const tx = new Transaction();
+
+        const spill = publicKey;
+        const ixData = Buffer.from([4, 0, 0, 0]);
+        const ixAccounts = [
+          {
+            pubkey: new PublicKey(data.programDataAddress),
+            isWritable: true,
+            isSigner: false,
+          },
+          { pubkey: spill, isWritable: false, isSigner: true },
+        ];
+
+        // If it is an authority change, add the account of the new authority
+        // otherwise the program will be inmutable
+        if (data.newAuthAddress) {
+          ixAccounts.push({
+            pubkey: new PublicKey(data.newAuthAddress),
+            isWritable: false,
+            isSigner: false,
+          });
+        }
+
+        const setAuthIxFields: TransactionInstructionCtorFields = {
+          keys: ixAccounts,
+          programId: BPF_LOADER_UPGRADEABLE_PID,
+          data: ixData
+        };
+
+        tx.add(setAuthIxFields);
+        tx.feePayer = publicKey;
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+        tx.lastValidBlockHeight = lastValidBlockHeight;
+
+        return tx;
+      }
+
+      const setProgramAuthMultiSigner = async (data: SetProgramAuthPayload) => {
+        if (!multisigClient || !selectedMultisig || !publicKey) {
+          return null;
+        }
+  
         const [multisigSigner] = await PublicKey.findProgramAddress(
           [selectedMultisig.id.toBuffer()],
           multisigProgramAddressPK,
         );
-
+  
         const ixData = Buffer.from([4, 0, 0, 0]);
         const ixAccounts = [
           {
@@ -587,8 +626,9 @@ export const ProgramDetailsView = (props: {
           },
           { pubkey: multisigSigner, isWritable: false, isSigner: true },
         ];
-
-        // If it is an authority change, add the account of the new authority otherwise the program will be inmutable
+  
+        // If it is an authority change, add the account of the new authority
+        // otherwise the program will be inmutable
         if (data.newAuthAddress) {
           ixAccounts.push({
             pubkey: new PublicKey(data.newAuthAddress),
@@ -596,11 +636,11 @@ export const ProgramDetailsView = (props: {
             isSigner: false,
           });
         }
-
+  
         const expirationTime = parseInt(
           (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
         );
-
+  
         const tx = await multisigClient.createTransaction(
           publicKey,
           'Set Program Authority',
@@ -612,8 +652,16 @@ export const ProgramDetailsView = (props: {
           ixAccounts,
           ixData,
         );
-
+  
         return tx;
+      }
+
+      const setProgramAuth = async (data: SetProgramAuthPayload) => {
+        if (isMultisigContext) {
+          return setProgramAuthMultiSigner(data);
+        } else {
+          return setProgramAuthSingleSigner(data);
+        }
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -828,8 +876,9 @@ export const ProgramDetailsView = (props: {
       nativeBalance,
       multisigClient,
       selectedMultisig,
-      multisigProgramAddressPK,
+      isMultisigContext,
       transactionCancelled,
+      multisigProgramAddressPK,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
