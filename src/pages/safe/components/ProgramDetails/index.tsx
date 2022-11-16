@@ -199,7 +199,7 @@ export const ProgramDetailsView = (props: {
         { pubkey: spill, isWritable: true, isSigner: false },
         { pubkey: SYSVAR_RENT_PUBKEY, isWritable: false, isSigner: false },
         { pubkey: SYSVAR_CLOCK_PUBKEY, isWritable: false, isSigner: false },
-        { pubkey: publicKey, isWritable: false, isSigner: false },
+        { pubkey: publicKey, isWritable: false, isSigner: true },
       ];
 
       const upgradeIxFields: TransactionInstructionCtorFields = {
