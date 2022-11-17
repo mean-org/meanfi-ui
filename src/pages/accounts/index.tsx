@@ -55,7 +55,6 @@ import {
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
-  MemcmpFilter,
   ParsedTransactionMeta,
   PublicKey,
   Signer,
@@ -143,8 +142,9 @@ import {
 } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
+import { getProgramsByUpgradeAuthority } from 'middleware/getProgramsByUpgradeAuthority';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
-import { BPF_LOADER_UPGRADEABLE_PID, NATIVE_SOL_MINT } from 'middleware/ids';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import {
   consoleOut,
@@ -610,92 +610,6 @@ export const AccountsView = () => {
 
     resetTransactionStatus();
   }, [multisigClient, nativeBalance, resetTransactionStatus]);
-
-  const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
-
-    if (!connection || !selectedAccount.address) {
-      return [];
-    }
-
-    const execDataAccountsFilter: MemcmpFilter = {
-      memcmp: { offset: 13, bytes: selectedAccount.address },
-    };
-
-    const execDataAccounts = await connection.getProgramAccounts(
-      BPF_LOADER_UPGRADEABLE_PID,
-      {
-        filters: [execDataAccountsFilter],
-      },
-    );
-
-    if (execDataAccounts.length === 0) {
-      return [];
-    }
-
-    const programs: ProgramAccounts[] = [];
-    const group = (size: number, data: any) => {
-      const result = [];
-      for (let i = 0; i < data.length; i += size) {
-        result.push(data.slice(i, i + size));
-      }
-      return result;
-    };
-
-    const sleep = (ms: number, log = true) => {
-      if (log) {
-        consoleOut('Sleeping for', ms / 1000, 'seconds');
-      }
-      return new Promise(resolve => setTimeout(resolve, ms));
-    };
-
-    const getProgramAccountsPromise = async (execDataAccount: any) => {
-      const execAccountsFilter: MemcmpFilter = {
-        memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() },
-      };
-
-      const execAccounts = await connection.getProgramAccounts(
-        BPF_LOADER_UPGRADEABLE_PID,
-        {
-          dataSlice: { offset: 0, length: 0 },
-          filters: [execAccountsFilter],
-        },
-      );
-
-      if (execAccounts.length === 0) {
-        return;
-      }
-
-      if (execAccounts.length > 1) {
-        throw new Error(
-          `More than one program was found for program data account '${execDataAccount.pubkey.toBase58()}'`,
-        );
-      }
-
-      consoleOut('programAccounts:', execAccounts, 'blue');
-
-      programs.push({
-        pubkey: execAccounts[0].pubkey,
-        owner: execAccounts[0].account.owner,
-        executable: execDataAccount.pubkey,
-        upgradeAuthority: new PublicKey(selectedAccount.address),
-        size: execDataAccount.account.data.byteLength,
-      } as ProgramAccounts);
-    };
-
-    const execDataAccountsGroups = group(8, execDataAccounts);
-
-    for (const groupItem of execDataAccountsGroups) {
-      const promises: Promise<any>[] = [];
-      for (const dataAcc of groupItem) {
-        promises.push(getProgramAccountsPromise(dataAcc));
-      }
-      await Promise.all(promises);
-      sleep(1_000, false);
-    }
-
-    return programs;
-  }, [connection, selectedAccount.address]);
-
 
   // Deposit SPL or SOL modal
   const [isReceiveSplOrSolModalOpen, setIsReceiveSplOrSolModalOpen] =
@@ -4352,7 +4266,10 @@ export const AccountsView = () => {
 
     consoleOut('Fetching programs for:', selectedAccount.address, 'blue');
     setPrograms([]);
-    getProgramsByUpgradeAuthority()
+    getProgramsByUpgradeAuthority(
+      connection,
+      selectedAccount.address
+    )
       .then(progs => {
         setPrograms(progs);
         consoleOut('programs:', progs);
@@ -4363,7 +4280,6 @@ export const AccountsView = () => {
     publicKey,
     connection,
     selectedAccount.address,
-    getProgramsByUpgradeAuthority,
     setPrograms,
   ]);
 
