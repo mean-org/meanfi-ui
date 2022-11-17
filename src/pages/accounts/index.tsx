@@ -5787,7 +5787,7 @@ export const AccountsView = () => {
           <Spin indicator={antIcon} />
         </div>
       );
-    } else if (!programs || programs.length === 0) {
+    } else if (!loadingPrograms && (!programs || programs.length === 0)) {
       return (
         <div
           key="asset-category-other-assets-items"
