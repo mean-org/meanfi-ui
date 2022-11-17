@@ -66,8 +66,6 @@ export const getProgramsByUpgradeAuthority = async (
       );
     }
 
-    consoleOut('programAccounts from middleware:', execAccounts, 'blue');
-
     programs.push({
       pubkey: execAccounts[0].pubkey,
       owner: execAccounts[0].account.owner,

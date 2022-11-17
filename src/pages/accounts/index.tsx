@@ -142,7 +142,6 @@ import {
 } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
-import { getProgramsByUpgradeAuthority } from 'middleware/getProgramsByUpgradeAuthority';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
@@ -220,6 +219,7 @@ import {
 import getAssetCategory from './getAssetCategory';
 import getNftMint from './getNftMint';
 import './style.scss';
+import useAccountPrograms from './useAccountPrograms';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PersonalAccountSummary = React.lazy(
@@ -286,7 +286,6 @@ export const AccountsView = () => {
     setStreamDetail,
     setTransactions,
     clearStreams,
-    setPrograms,
   } = useContext(AppStateContext);
   const {
     confirmationHistory,
@@ -379,7 +378,7 @@ export const AccountsView = () => {
   // Multisig Apps
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
-  const [loadingPrograms, setLoadingPrograms] = useState(false);
+  const { loadingPrograms } = useAccountPrograms();
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
 
   // SOL Balance Modal
@@ -4253,35 +4252,6 @@ export const AccountsView = () => {
       setSolanaApps(apps);
     });
   }, [connectionConfig.cluster]);
-
-  // Get Programs owned by the account in context
-  useEffect(() => {
-    if (!connection || !publicKey || !selectedAccount.address) {
-      return;
-    }
-
-    setTimeout(() => {
-      setLoadingPrograms(true);
-      setPrograms([]);
-    });
-
-    consoleOut('Fetching programs for:', selectedAccount.address, 'blue');
-    getProgramsByUpgradeAuthority(
-      connection,
-      selectedAccount.address
-    )
-      .then(progs => {
-        setPrograms(progs);
-        consoleOut('programs:', progs);
-      })
-      .catch(error => console.error(error))
-      .finally(() => setLoadingPrograms(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    publicKey,
-    connection,
-    selectedAccount.address,
-  ]);
 
   // Set program specified in the path as programId from the list of programs
   useEffect(() => {
