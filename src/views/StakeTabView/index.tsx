@@ -33,7 +33,9 @@ import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import useRealmsDeposit from './useRealmsDeposit';
 import './style.scss';
+import useUnstakeQuote from './useUnstakeQuote';
 
 let inputDebounceTimeout: any;
 
@@ -42,6 +44,7 @@ export const StakeTabView = (props: {
   onTxFinished: any;
   selectedToken: TokenInfo | undefined;
   smeanBalance: number;
+  smeanDecimals: number;
   stakeClient: StakingClient;
 }) => {
   const {
@@ -49,6 +52,7 @@ export const StakeTabView = (props: {
     onTxFinished,
     selectedToken,
     smeanBalance,
+    smeanDecimals,
     stakeClient,
   } = props;
   const {
@@ -69,9 +73,15 @@ export const StakeTabView = (props: {
   const [stakedMeanPrice, setStakedMeanPrice] = useState<number>(0);
   const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(false);
   const [fetchingStakeQuote, setFetchingStakeQuote] = useState(false);
-  const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
-
+  const meanWorthOfsMean = useUnstakeQuote({
+    stakeClient,
+    selectedToken,
+    smeanBalance,
+  });
+  const { depositAmount: realmsDepositAmount } = useRealmsDeposit({
+    decimals: smeanDecimals,
+  });
   //////////////////////////
   //  CALLBACKS & EVENTS  //
   //////////////////////////
@@ -539,41 +549,6 @@ export const StakeTabView = (props: {
     }
   }, [fromCoinAmount, stakeClient, canFetchStakeQuote]);
 
-  // Unstake quote
-  useEffect(() => {
-    const getMeanQuote = async (sMEAN: number) => {
-      if (!stakeClient) {
-        return 0;
-      }
-
-      try {
-        const result = await stakeClient.getUnstakeQuote(sMEAN);
-        return result.meanOutUiAmount;
-      } catch (error) {
-        console.error(error);
-        return 0;
-      }
-    };
-
-    if (selectedToken) {
-      if (smeanBalance > 0) {
-        getMeanQuote(smeanBalance).then(value => {
-          consoleOut(
-            `Quote for ${formatThousands(
-              smeanBalance,
-              selectedToken?.decimals,
-            )} sMEAN`,
-            `${formatThousands(value, selectedToken?.decimals)} MEAN`,
-            'blue',
-          );
-          setMeanWorthOfsMean(value);
-        });
-      } else {
-        setMeanWorthOfsMean(0);
-      }
-    }
-  }, [stakeClient, selectedToken, smeanBalance, fromCoinAmount]);
-
   // Setup event listeners
   useEffect(() => {
     if (canSubscribe) {
@@ -639,6 +614,23 @@ export const StakeTabView = (props: {
             </span>
           ) : (
             t('staking.panel-right.tabset.unstake.notification-label-one-error')
+          )}
+        </span>
+        <span className="info-label d-block">
+          {realmsDepositAmount && (
+            <>
+              At this time, {cutNumber(realmsDepositAmount, 6)} of your sMEAN
+              are committed to{' '}
+              <a
+                href="https://app.realms.today/dao/MEAN"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Realms
+              </a>{' '}
+              for voting purposes. You can find them there and withdraw them at
+              any point.
+            </>
           )}
         </span>
       </div>
@@ -766,6 +758,21 @@ export const StakeTabView = (props: {
         )}
         {getStakeButtonLabel()}
       </Button>
+      <div className="pt-2">
+        <span className="info-label d-block">
+          sMEAN allows for the consistent earning of rewards, while also
+          providing token holders with the ability to engage with governacne
+          proposals, by giving voting rights in said proposals, helping shape
+          the course of the Mean DAO. You can make use of this here:{' '}
+          <a
+            href="https://app.realms.today/dao/MEAN"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            https://app.realms.today/dao/MEAN
+          </a>
+        </span>
+      </div>
     </>
   );
 };

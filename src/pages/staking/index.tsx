@@ -71,6 +71,7 @@ const StakingView = () => {
     undefined,
   );
   const [sMeanBalance, setSmeanBalance] = useState<number>(0);
+  const [sMeanDecimals, setSmeanDecimals] = useState<number>(0);
   const [meanBalance, setMeanBalance] = useState<number>(0);
   const [lastTimestamp, setLastTimestamp] = useState(Date.now());
 
@@ -165,6 +166,7 @@ const StakingView = () => {
     );
     if (result) {
       balance = result.uiAmount || 0;
+      setSmeanDecimals(result.decimals);
     }
     consoleOut('sMEAN balance:', balance, 'blue');
     setSmeanBalance(balance);
@@ -469,6 +471,7 @@ const StakingView = () => {
                     selectedToken={stakingPair?.unstakedToken}
                     meanBalance={meanBalance}
                     smeanBalance={sMeanBalance}
+                    smeanDecimals={sMeanDecimals}
                     onTxFinished={refreshMeanBalance}
                   />
                 )}
