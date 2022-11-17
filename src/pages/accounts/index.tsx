@@ -5734,7 +5734,11 @@ export const AccountsView = () => {
       consoleOut('clicked on NFT item:', item, 'blue');
       setSelectedNft(item);
       setSelectedApp(undefined);
-      navigateToNft(item.address.toBase58());
+      setTimeout(() => {
+        setAutoOpenDetailsPanel(true);
+        setDetailsPanelOpen(true);
+        navigateToNft(item.address.toBase58());
+      }, 50);
     };
 
     const nftMint = asset
