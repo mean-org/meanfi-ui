@@ -604,11 +604,10 @@ export const StakeTabView = (props: {
         <span className="info-label">
           {smeanBalance ? (
             <span>
-              You have {cutNumber(smeanBalance, 6)} sMEAN staked
+              You have {formatThousands(smeanBalance)} sMEAN staked
               {meanWorthOfsMean
-                ? ` which is currently worth ${cutNumber(
+                ? ` which is currently worth ${formatThousands(
                     meanWorthOfsMean,
-                    6,
                   )} MEAN.`
                 : '.'}
             </span>
@@ -619,7 +618,7 @@ export const StakeTabView = (props: {
         <span className="info-label d-block">
           {realmsDepositAmount && (
             <>
-              At this time, {cutNumber(realmsDepositAmount, 6)} of your sMEAN
+              At this time, {formatThousands(realmsDepositAmount)} of your sMEAN
               are committed to{' '}
               <a
                 href="https://app.realms.today/dao/MEAN"
