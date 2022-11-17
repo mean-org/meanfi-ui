@@ -4262,10 +4262,10 @@ export const AccountsView = () => {
 
     setTimeout(() => {
       setLoadingPrograms(true);
+      setPrograms([]);
     });
 
     consoleOut('Fetching programs for:', selectedAccount.address, 'blue');
-    setPrograms([]);
     getProgramsByUpgradeAuthority(
       connection,
       selectedAccount.address
@@ -4276,11 +4276,11 @@ export const AccountsView = () => {
       })
       .catch(error => console.error(error))
       .finally(() => setLoadingPrograms(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     connection,
     selectedAccount.address,
-    setPrograms,
   ]);
 
   // Set program specified in the path as programId from the list of programs
