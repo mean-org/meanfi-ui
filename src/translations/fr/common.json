@@ -225,7 +225,6 @@
   "deposits": {
     "address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des jetons SOL et SPL sur Solana.",
     "back-to-deposit-options": "Retour aux options de dépôt",
-    "ftx-cta-label-enabled": "Dépôt de FTX",
     "heading": "Déposez depuis votre carte, compte bancaire ou depuis une autre Blockchain directement dans votre portefeuille Solana.",
     "modal-title": "Options de dépôt",
     "move-from-ethereum-cta-label": "Déplacer des actifs d'Ethereum",

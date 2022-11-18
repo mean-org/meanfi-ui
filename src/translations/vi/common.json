@@ -225,7 +225,6 @@
   "deposits": {
     "address-share-disclaimer": "Địa chỉ này chỉ có thể dùng để nhận SOL và các mã thông báo SPL trên Solana.",
     "back-to-deposit-options": "Quay lại tuỳ chọn Nạp tiền",
-    "ftx-cta-label-enabled": "Nạp tiền từ FTX",
     "heading": "Nạp tiền từ thẻ, tài khoản ngân hàng, hoặc từ blockchain khác trực tiếp vào ví Solana",
     "modal-title": "Tùy chọn nạp",
     "move-from-ethereum-cta-label": "Di chuyển tài sản từ mạng Ethereum",
