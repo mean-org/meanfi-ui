@@ -1,33 +1,28 @@
-import { PublicKey } from '@solana/web3.js';
-import { useTranslation } from 'react-i18next';
-import { useEffect, useState, useMemo } from 'react';
+import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js';
 import { Col, Row } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import './style.scss';
-import { IconStats } from '../../Icons';
-import { PreFooter } from '../../components/PreFooter';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { PreFooter } from 'components/PreFooter';
 import {
-  getNetworkIdByCluster,
+  MEAN_TOKEN
+} from 'constants/tokens';
+import {
   useConnection,
-  useConnectionConfig,
-} from '../../contexts/connection';
+} from 'contexts/connection';
+import { IconStats } from 'Icons';
+import { appConfig } from 'index';
+import { getCoingeckoMarketChart, getMeanStats } from 'middleware/api';
+import { MeanFiStatsModel } from 'models/meanfi-stats';
+import './style.scss';
 import { TokenStats } from './TokenStats';
-import {
-  MEAN_TOKEN,
-  MEAN_TOKEN_LIST,
-  SMEAN_TOKEN,
-} from '../../constants/tokens';
-import { getCoingeckoMarketChart, getMeanStats } from '../../middleware/api';
-import { MeanFiStatsModel } from '../../models/meanfi-stats';
-import { appConfig } from '../..';
 
 //const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
 
 export const StatsView = () => {
   const { t } = useTranslation('common');
   const connection = useConnection();
-
-  const { cluster } = useConnectionConfig();
   const [totalVolume24h, setTotalVolume24h] = useState<number>(0);
   const [sMeanTotalSupply, setSMeanTotalSupply] = useState<number | null>(0);
   const [meanfiStats, setMeanfiStats] = useState<MeanFiStatsModel | undefined>(
@@ -43,10 +38,44 @@ export const StatsView = () => {
 
   // Data handling / fetching
   useEffect(() => {
+
+    const getHolders = async (mint: string) => {
+      const mainnetConnection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+      const accountInfos = await mainnetConnection.getParsedProgramAccounts(
+        TOKEN_PROGRAM_ID,
+        {
+          filters: [
+            {
+              dataSize: 165,
+            },
+            {
+              memcmp: {
+                offset: 0,
+                bytes: mint,
+              },
+            },
+          ],
+        }
+      );
+      const results = accountInfos.filter((i: any) => i.account.data.parsed.info.tokenAmount.uiAmount > 0);
+      return results.length;
+    }
+
     (async () => {
       const meanStats = await getMeanStats();
+      console.log('getMeanStats() response:', meanStats);
       if (meanStats) {
-        setMeanfiStats(meanStats);
+        if (!meanStats.holders) {
+          setMeanfiStats(meanStats);
+          // After publishing the value like it is, fetch the holders and re-publish the value
+          const holders = await getHolders(MEAN_TOKEN.address);
+          console.log('getHolders() response:', holders);
+          setMeanfiStats(Object.assign({}, meanStats, {
+            holders
+          }));
+        } else {
+          setMeanfiStats(meanStats);
+        }
       }
       //TODO: pull this info
       const [, marketVolumeData] = await getCoingeckoMarketChart(
@@ -61,7 +90,7 @@ export const StatsView = () => {
         );
       }
     })();
-  }, [getMeanStats, getCoingeckoMarketChart]);
+  }, []);
 
   // Get sMEAN token info
   useEffect(() => {
