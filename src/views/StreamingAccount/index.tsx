@@ -4,19 +4,19 @@ import {
   MeanMultisig,
   MultisigInfo,
   MultisigTransactionFees,
-  MULTISIG_ACTIONS,
+  MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk';
 import {
   calculateActionFees,
   Constants,
   MoneyStreaming,
   MSP_ACTIONS,
-  refreshTreasuryBalanceInstruction,
+  refreshTreasuryBalanceInstruction
 } from '@mean-dao/money-streaming';
 import {
   StreamInfo,
   STREAM_STATE,
-  TreasuryInfo,
+  TreasuryInfo
 } from '@mean-dao/money-streaming/lib/types';
 import {
   calculateActionFees as calculateActionFeesV2,
@@ -28,7 +28,7 @@ import {
   Treasury,
   TreasuryType,
   VestingTreasuryActivity,
-  VestingTreasuryActivityAction,
+  VestingTreasuryActivityAction
 } from '@mean-dao/msp';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
@@ -36,7 +36,7 @@ import {
   LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
-  TransactionInstruction,
+  TransactionInstruction
 } from '@solana/web3.js';
 import { Alert, Button, Dropdown, Menu, Row, Space, Spin, Tabs } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -55,13 +55,13 @@ import {
   MSP_FEE_TREASURY,
   NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-  WRAPPED_SOL_MINT_ADDRESS,
+  WRAPPED_SOL_MINT_ADDRESS
 } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { AppStateContext } from 'contexts/appstate';
 import {
   getSolanaExplorerClusterParam,
-  useConnectionConfig,
+  useConnectionConfig
 } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
@@ -70,21 +70,21 @@ import {
   IconArrowBack,
   IconArrowForward,
   IconEllipsisVertical,
-  IconExternalLink,
+  IconExternalLink
 } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import {
   fetchAccountTokens,
-  getTokenAccountBalanceByAddress,
+  getTokenAccountBalanceByAddress
 } from 'middleware/accounts';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
-import { getStreamTitle } from 'middleware/streams';
+import { getStreamStatusResume, getStreamTitle } from 'middleware/streams';
 import {
   consoleOut,
   getIntervalFromSeconds,
   getShortDate,
   getTransactionStatusForLogs,
-  isProd,
+  isProd
 } from 'middleware/ui';
 import {
   displayAmountWithSymbol,
@@ -97,7 +97,7 @@ import {
   makeInteger,
   openLinkInNewTab,
   shortenAddress,
-  toTokenAmountBn,
+  toTokenAmountBn
 } from 'middleware/utils';
 import { TreasuryTopupParams } from 'models/common-types';
 import { OperationType, TransactionStatus } from 'models/enums';
@@ -292,9 +292,9 @@ export const StreamingAccountView = (props: {
         })
         .finally(() => setUserBalances(balancesMap));
 
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [publicKey, connection],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [publicKey, connection]
   );
 
   const getRateAmountBn = useCallback(
@@ -670,7 +670,7 @@ export const StreamingAccountView = (props: {
     [t],
   );
 
-  const getTimeRemaining = useCallback((time: any) => {
+  const getTimeRemaining = useCallback((time: string) => {
     if (time) {
       const countDownDate = new Date(time).getTime();
       const now = new Date().getTime();
@@ -751,39 +751,16 @@ export const StreamingAccountView = (props: {
     }
   }, []);
 
-  const getStreamResume = useCallback(
-    (item: Stream | StreamInfo) => {
-      if (item) {
-        const v1 = item as StreamInfo;
-        const v2 = item as Stream;
-        if (v1.version < 2) {
-          switch (v1.state) {
-            case STREAM_STATE.Schedule:
-              return t('streams.status.scheduled', {
-                date: getShortDate(v1.startUtc as string),
-              });
-            case STREAM_STATE.Paused:
-              return t('streams.status.stopped');
-            default:
-              return t('streams.status.streaming');
-          }
-        } else {
-          switch (v2.status) {
-            case STREAM_STATUS.Scheduled:
-              return `starts on ${getShortDate(v2.startUtc)}`;
-            case STREAM_STATUS.Paused:
-              if (v2.isManuallyPaused) {
-                return `paused on ${getShortDate(v2.startUtc)}`;
-              }
-              return `out of funds on ${getShortDate(v2.startUtc)}`;
-            default:
-              return getTimeRemaining(v2.estimatedDepletionDate);
-          }
-        }
-      }
-    },
-    [getTimeRemaining, t],
-  );
+  const streamStatusSubtitle = (item: Stream | StreamInfo) => {
+    if (!item) {
+      return '';
+    }
+
+    if (item.version >= 2 && (item as Stream).status === STREAM_STATUS.Running) {
+      return getTimeRemaining((item as Stream).estimatedDepletionDate);
+    }
+    return getStreamStatusResume(item, t);
+  }
 
   const getTreasuryUnallocatedBalance = useCallback(
     (tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
@@ -3061,7 +3038,7 @@ export const StreamingAccountView = (props: {
                 ? getStreamTitle(stream, t)
                 : 'Unknown outgoing stream';
               const subtitle = getStreamSubtitle(stream);
-              const resume = getStreamResume(stream);
+              const resume = streamStatusSubtitle(stream);
 
               return (
                 <div

@@ -5,13 +5,13 @@ import {
   MeanMultisig,
   MultisigInfo,
   MultisigTransactionFees,
-  MULTISIG_ACTIONS,
+  MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import {
   StreamInfo,
   STREAM_STATE,
-  TreasuryInfo,
+  TreasuryInfo
 } from '@mean-dao/money-streaming/lib/types';
 import {
   calculateActionFees as calculateActionFeesV2,
@@ -21,13 +21,13 @@ import {
   STREAM_STATUS,
   TransactionFees,
   Treasury,
-  TreasuryType,
+  TreasuryType
 } from '@mean-dao/msp';
 import {
   Connection,
   LAMPORTS_PER_SOL,
   PublicKey,
-  Transaction,
+  Transaction
 } from '@solana/web3.js';
 import { Button, Col, Dropdown, Menu, Row, Space, Spin, Tabs } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -46,7 +46,7 @@ import { TreasuryStreamCreateModal } from 'components/TreasuryStreamCreateModal'
 import {
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-  NO_FEES,
+  NO_FEES
 } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
@@ -60,13 +60,12 @@ import { appConfig, customLogger } from 'index';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
-import { getStreamTitle } from 'middleware/streams';
+import { getStreamStatusResume, getStreamTitle } from 'middleware/streams';
 import {
   consoleOut,
   getIntervalFromSeconds,
-  getShortDate,
   getTransactionStatusForLogs,
-  toUsCurrency,
+  toUsCurrency
 } from 'middleware/ui';
 import {
   cutNumber,
@@ -78,7 +77,7 @@ import {
   getTxIxResume,
   shortenAddress,
   toTokenAmountBn,
-  toUiAmount,
+  toUiAmount
 } from 'middleware/utils';
 import { RegisteredAppPaths } from 'models/accounts/AccountsPageUi';
 import { TreasuryTopupParams } from 'models/common-types';
@@ -88,7 +87,7 @@ import { TokenInfo } from 'models/SolanaTokenInfo';
 import { StreamsSummary } from 'models/streams';
 import {
   TreasuryCreateOptions,
-  UserTreasuriesSummary,
+  UserTreasuriesSummary
 } from 'models/treasuries';
 import { AddFundsParams } from 'models/vesting';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -339,8 +338,8 @@ export const MoneyStreamsInfoView = (props: {
         })
         .finally(() => setUserBalances(balancesMap));
 
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [publicKey, connection],
   );
 
@@ -1914,40 +1913,16 @@ export const MoneyStreamsInfoView = (props: {
     }
   }, []);
 
-  const getStreamResume = useCallback(
-    (item: Stream | StreamInfo) => {
-      if (item) {
-        const v1 = item as StreamInfo;
-        const v2 = item as Stream;
+  const streamStatusSubtitle = (item: Stream | StreamInfo) => {
+    if (!item) {
+      return '';
+    }
 
-        if (v1.version < 2) {
-          switch (v1.state) {
-            case STREAM_STATE.Schedule:
-              return t('streams.status.scheduled', {
-                date: getShortDate(v1.startUtc as string),
-              });
-            case STREAM_STATE.Paused:
-              return t('streams.status.stopped');
-            default:
-              return t('streams.status.streaming');
-          }
-        } else {
-          switch (v2.status) {
-            case STREAM_STATUS.Scheduled:
-              return `starts on ${getShortDate(v2.startUtc)}`;
-            case STREAM_STATUS.Paused:
-              if (v2.isManuallyPaused) {
-                return `paused on ${getShortDate(v2.startUtc)}`;
-              }
-              return `out of funds on ${getShortDate(v2.startUtc)}`;
-            default:
-              return getTimeRemaining(v2.estimatedDepletionDate);
-          }
-        }
-      }
-    },
-    [getTimeRemaining, t],
-  );
+    if (item.version >= 2 && (item as Stream).status === STREAM_STATUS.Running) {
+      return getTimeRemaining((item as Stream).estimatedDepletionDate);
+    }
+    return getStreamStatusResume(item, t);
+  }
 
   const goToIncomingTabHandler = () => {
     const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
@@ -2980,7 +2955,7 @@ export const MoneyStreamsInfoView = (props: {
         : 'Unknown incoming stream';
       const subtitle = getStreamSubtitle(stream) || '0.00';
       const status = getStreamStatus(stream);
-      const resume = getStreamResume(stream);
+      const resume = streamStatusSubtitle(stream);
 
       const withdrawResume = isNew
         ? displayAmountWithSymbol(
@@ -3102,7 +3077,7 @@ export const MoneyStreamsInfoView = (props: {
         : 'Unknown outgoing stream';
       const subtitle = getStreamSubtitle(stream) || '0.00';
       const status = getStreamStatus(stream);
-      const resume = getStreamResume(stream);
+      const resume = streamStatusSubtitle(stream);
 
       return (
         <div
