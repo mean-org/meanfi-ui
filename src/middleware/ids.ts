@@ -15,7 +15,9 @@ export const CLOCK_PROGRAM_ID = new PublicKey(
 export const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
 );
-
+export const BPF_LOADER_UPGRADEABLE_PID = new PublicKey(
+  'BPFLoaderUpgradeab1e11111111111111111111111',
+);
 export const SERUM_PROGRAM_ID_V2 =
   'EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o';
 export const SERUM_PROGRAM_ID_V3 =

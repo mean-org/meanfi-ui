@@ -43,7 +43,6 @@ import {
   Treasury,
   TreasuryType,
 } from '@mean-dao/msp';
-import { Nft, NftWithToken, Sft, SftWithToken } from '@metaplex-foundation/js';
 import { AnchorProvider, BN, Idl, Program } from '@project-serum/anchor';
 import {
   AccountLayout,
@@ -56,7 +55,6 @@ import {
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
-  ParsedTransactionMeta,
   PublicKey,
   Signer,
   SystemProgram,
@@ -98,7 +96,6 @@ import { PreFooter } from 'components/PreFooter';
 import { ReceiveSplOrSolModal } from 'components/ReceiveSplOrSolModal';
 import { SendAssetModal } from 'components/SendAssetModal';
 import { SolBalanceModal } from 'components/SolBalanceModal';
-import { TransactionItemView } from 'components/TransactionItemView';
 import { UnwrapSolModal } from 'components/UnwrapSolModal';
 import { WrapSolModal } from 'components/WrapSolModal';
 import {
@@ -132,25 +129,23 @@ import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
 import {
   IconAdd,
-  IconExternalLink,
   IconEyeOff,
   IconEyeOn,
   IconLightBulb,
   IconLoading,
-  IconNoItems,
   IconSafe,
   IconVerticalEllipsis,
 } from 'Icons';
 import { appConfig, customLogger } from 'index';
-import { closeTokenAccount } from 'middleware/accounts';
+import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
+import { getChange } from 'middleware/transactions';
 import {
   consoleOut,
   copyText,
   getTransactionStatusForLogs,
-  isLocal,
   kFormatter,
   toUsCurrency,
 } from 'middleware/ui';
@@ -160,7 +155,6 @@ import {
   getAmountWithSymbol,
   getSdkValue,
   getTxIxResume,
-  openLinkInNewTab,
   shortenAddress,
   toUiAmount,
 } from 'middleware/utils';
@@ -172,6 +166,7 @@ import {
   KnownAppMetadata,
   KNOWN_APPS,
   MetaInfoCtaAction,
+  ProgramAccounts,
   RegisteredAppPaths,
   UserTokenAccount,
 } from 'models/accounts';
@@ -192,6 +187,7 @@ import {
   INITIAL_TREASURIES_SUMMARY,
   UserTreasuriesSummary,
 } from 'models/treasuries';
+import { ProgramDetailsView } from 'pages/safe/components/ProgramDetails';
 import { QRCodeSVG } from 'qrcode.react';
 import React, {
   Suspense,
@@ -208,16 +204,19 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AppsList,
+  AssetActivity,
   MoneyStreamsIncomingView,
   MoneyStreamsInfoView,
   MoneyStreamsOutgoingView,
   NftDetails,
   NftPaginatedList,
+  OtherAssetsList,
   StreamingAccountView,
 } from 'views';
 import getAssetCategory from './getAssetCategory';
 import getNftMint from './getNftMint';
 import './style.scss';
+import useAccountPrograms from './useAccountPrograms';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PersonalAccountSummary = React.lazy(
@@ -226,18 +225,19 @@ const PersonalAccountSummary = React.lazy(
 const StakingComponent = React.lazy(() => import('../staking/index'));
 const VestingComponent = React.lazy(() => import('../vesting/index'));
 
-const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let isWorkflowLocked = false;
 
 export const AccountsView = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { asset, streamingTab, streamingItemId } = useParams();
+  const { asset, streamingTab, streamingItemId, programId } = useParams();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
   const {
     theme,
+    programs,
     streamList,
     accountNfts,
     tokensLoaded,
@@ -284,9 +284,10 @@ export const AccountsView = () => {
     setTransactions,
     clearStreams,
   } = useContext(AppStateContext);
-  const { confirmationHistory, enqueueTransactionConfirmation } = useContext(
-    TxConfirmationContext,
-  );
+  const {
+    confirmationHistory,
+    enqueueTransactionConfirmation,
+  } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
@@ -374,6 +375,9 @@ export const AccountsView = () => {
   // Multisig Apps
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
+  const { loadingPrograms } = useAccountPrograms();
+  const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
+
   // SOL Balance Modal
   const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
   const hideSolBalanceModal = useCallback(
@@ -397,6 +401,12 @@ export const AccountsView = () => {
     }
 
     consoleOut('pathname:', location.pathname, 'crimson');
+    if (location.pathname.startsWith('/programs/')) {
+      setTimeout(() => {
+        setIsPageLoaded(true);
+      });
+      return;
+    }
     // If no category specified (neither assets nor any known App) just assume assets
     const isKnownApp = KNOWN_APPS.some(a =>
       location.pathname.startsWith(`/${a.slug}`),
@@ -413,7 +423,6 @@ export const AccountsView = () => {
         url = '/my-account';
       }
       consoleOut('No category specified, redirecting to:', url, 'crimson');
-      // setAutoOpenDetailsPanel(false);
       setTimeout(() => {
         setIsPageLoaded(true);
       });
@@ -724,9 +733,8 @@ export const AccountsView = () => {
   }, [selectedAsset]);
 
   const goToExchangeWithPresetAsset = useCallback(() => {
-    const queryParams = `${
-      selectedAsset ? '?from=' + selectedAsset.symbol : ''
-    }`;
+    const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''
+      }`;
     setDetailsPanelOpen(false);
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
@@ -1272,8 +1280,7 @@ export const AccountsView = () => {
       }
 
       consoleOut(
-        `onTxConfirmed event handled for operation ${
-          OperationType[item.operationType]
+        `onTxConfirmed event handled for operation ${OperationType[item.operationType]
         }`,
         item,
         'crimson',
@@ -1357,6 +1364,20 @@ export const AccountsView = () => {
             hardReloadStreams();
           }, 20);
           break;
+        case OperationType.UpgradeProgram:
+          if (item.extras && item.extras.multisigAuthority) {
+            refreshMultisigs();
+            notifyMultisigActionFollowup(item);
+          }
+          break;
+        case OperationType.SetMultisigAuthority:
+          if (item.extras && item.extras.multisigAuthority) {
+            refreshMultisigs();
+            notifyMultisigActionFollowup(item);
+          } else if (!item.extras || !item.extras.multisigAuthority) {
+            window.location.href = '/';
+          }
+          break;
         default:
           break;
       }
@@ -1381,21 +1402,6 @@ export const AccountsView = () => {
       resetTransactionStatus();
     },
     [recordTxConfirmation, resetTransactionStatus],
-  );
-
-  const getChange = useCallback(
-    (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
-      if (meta !== null && accountIndex !== -1) {
-        const prevBalance = meta.preBalances[accountIndex] || 0;
-        const postbalance = meta.postBalances[accountIndex] || 0;
-        const change =
-          getAmountFromLamports(postbalance) -
-          getAmountFromLamports(prevBalance);
-        return change;
-      }
-      return 0;
-    },
-    [],
   );
 
   // Filter only useful Txs for the SOL account and return count
@@ -1428,7 +1434,7 @@ export const AccountsView = () => {
         return 0;
       }
     },
-    [selectedAccount.address, isSelectedAssetNativeAccount, getChange],
+    [selectedAccount.address, isSelectedAssetNativeAccount],
   );
 
   // Lets consider there are items to render if there are transactions for selected asset (NOT SOL)
@@ -1613,7 +1619,7 @@ export const AccountsView = () => {
           consoleOut(
             'blockchainFee:',
             transactionAssetFees.blockchainFee +
-              transactionAssetFees.mspFlatFee,
+            transactionAssetFees.mspFlatFee,
             'blue',
           );
           consoleOut('nativeBalance:', nativeBalance, 'blue');
@@ -1635,7 +1641,7 @@ export const AccountsView = () => {
                 NATIVE_SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(
                 transactionAssetFees.blockchainFee +
-                  transactionAssetFees.mspFlatFee,
+                transactionAssetFees.mspFlatFee,
                 NATIVE_SOL_MINT.toBase58(),
               )})`,
             });
@@ -2151,9 +2157,8 @@ export const AccountsView = () => {
               completedMessage: `Asset funds (${formatThousands(
                 data.amount,
                 selectedAsset.decimals,
-              )} ${
-                selectedAsset.symbol
-              }) successfully transferred to ${shortenAddress(data.to)}`,
+              )} ${selectedAsset.symbol
+                }) successfully transferred to ${shortenAddress(data.to)}`,
               completedMessageTimeout: isMultisigContext ? 8 : 5,
               extras: {
                 multisigAuthority: selectedMultisig
@@ -2470,11 +2475,10 @@ export const AccountsView = () => {
               loadingTitle: 'Confirming transaction',
               loadingMessage: 'Transferring ownership',
               completedTitle: 'Transaction confirmed',
-              completedMessage: `Asset ${
-                selectedAsset.name
-              } successfully transferred to ${shortenAddress(
-                data.selectedAuthority,
-              )}`,
+              completedMessage: `Asset ${selectedAsset.name
+                } successfully transferred to ${shortenAddress(
+                  data.selectedAuthority,
+                )}`,
               completedMessageTimeout: isMultisigContext ? 8 : 5,
               extras: {
                 multisigAuthority: selectedMultisig
@@ -2906,9 +2910,9 @@ export const AccountsView = () => {
 
                 const isNewTreasury =
                   vA2.version &&
-                  vA2.version >= 2 &&
-                  vB2.version &&
-                  vB2.version >= 2
+                    vA2.version >= 2 &&
+                    vB2.version &&
+                    vB2.version >= 2
                     ? true
                     : false;
 
@@ -3054,7 +3058,7 @@ export const AccountsView = () => {
     for (const stream of updatedStreamsv1) {
       const isIncoming =
         stream.beneficiaryAddress &&
-        stream.beneficiaryAddress === treasurer.toBase58()
+          stream.beneficiaryAddress === treasurer.toBase58()
           ? true
           : false;
 
@@ -3160,7 +3164,7 @@ export const AccountsView = () => {
     for (const stream of updatedStreamsv1) {
       const isIncoming =
         stream.beneficiaryAddress &&
-        stream.beneficiaryAddress === treasurer.toBase58()
+          stream.beneficiaryAddress === treasurer.toBase58()
           ? true
           : false;
 
@@ -3854,8 +3858,7 @@ export const AccountsView = () => {
     if (publicKey) {
       timer = setInterval(() => {
         consoleOut(
-          `Refreshing treasuries past ${
-            ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000
+          `Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000
           }min...`,
         );
         refreshTreasuries(false);
@@ -3924,13 +3927,14 @@ export const AccountsView = () => {
     );
     const isAccountSummary =
       location.pathname.startsWith('/my-account') ||
-      location.pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)
+        location.pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)
         ? true
         : false;
 
     // The category is inferred from the route path
-
-    if (isAccountSummary) {
+    if (location.pathname.startsWith('/programs/')) {
+      setSelectedCategory('other-assets');
+    } else if (isAccountSummary) {
       // 1.- If the route starts with my-account or super-safe, set category to "account-summary"
       consoleOut('Setting category:', 'account-summary', 'crimson');
       setSelectedCategory('account-summary');
@@ -4075,14 +4079,15 @@ export const AccountsView = () => {
       !publicKey ||
       !selectedAsset ||
       !tokensLoaded ||
-      !shouldLoadTransactions
+      !shouldLoadTransactions ||
+      loadingTransactions
     ) {
       return;
     }
 
-    if (!loadingTransactions && selectedAccount.address) {
-      setShouldLoadTransactions(false);
-      setLoadingTransactions(true);
+    if (selectedAccount.address) {
+      setShouldLoadTransactions(() => false);
+      setLoadingTransactions(() => true);
 
       // Get the address to scan and ensure there is one
       const pk = getScanAddress(selectedAsset);
@@ -4135,7 +4140,6 @@ export const AccountsView = () => {
   }, [
     publicKey,
     connection,
-    transactions,
     tokensLoaded,
     selectedAsset?.publicAddress,
     selectedAccount.address,
@@ -4229,6 +4233,59 @@ export const AccountsView = () => {
       setSolanaApps(apps);
     });
   }, [connectionConfig.cluster]);
+
+  // Set program specified in the path as programId from the list of programs
+  useEffect(() => {
+
+    if (!connection || !publicKey || isMultisigContext || !location.pathname.startsWith('/programs/')) {
+      return;
+    }
+
+    const logIt = (p: ProgramAccounts) => {
+      consoleOut(
+        'selectedProgram details:',
+        {
+          pubkey: p.pubkey.toBase58(),
+          owner: p.owner.toBase58(),
+          upgradeAuthority: p.upgradeAuthority ? p.upgradeAuthority.toBase58() : '',
+          executable: p.executable.toBase58(),
+          size: formatThousands(p.size),
+        },
+        'orange',
+      );
+    }
+
+    if (programs && programId) {
+      const filteredProgram = programs.find(
+        program => program.pubkey.toBase58() === programId,
+      );
+
+      if (filteredProgram) {
+        const programData = filteredProgram.executable.toBase58() as string;
+        let updatedProgramData: ProgramAccounts | undefined = undefined;
+        resolveParsedAccountInfo(connection, programData)
+          .then(accountInfo => {
+            const authority = accountInfo.data.parsed.info.authority as string | null;
+            updatedProgramData = Object.assign({}, filteredProgram, {
+              upgradeAuthority: authority ? new PublicKey(authority) : null
+            }) as ProgramAccounts;
+            setSelectedProgram(updatedProgramData);
+
+            // Preset "Other assets" tab. Not sure if it should be here
+            setSelectedAssetsGroup(AssetGroups.OtherAssets);
+
+            logIt(updatedProgramData);
+          })
+          .catch(error => {
+            console.error(error);
+            setSelectedProgram(filteredProgram);
+            logIt(filteredProgram);
+          });
+      } else {
+        setSelectedProgram(undefined);
+      }
+    }
+  }, [connection, isMultisigContext, location.pathname, programId, programs, publicKey]);
 
   // Preset token based on url param asset
   useEffect(() => {
@@ -4326,9 +4383,8 @@ export const AccountsView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
-          MetaInfoCtaAction.Buy
-        }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy
+          }`,
         tooltip: '',
         callBack: showDepositOptionsModal,
       });
@@ -4342,9 +4398,8 @@ export const AccountsView = () => {
       isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
-        MetaInfoCtaAction.Deposit
-      }`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Deposit
+        }`,
       tooltip: '',
       callBack: showReceiveSplOrSolModal,
     });
@@ -4362,9 +4417,8 @@ export const AccountsView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
-          MetaInfoCtaAction.Exchange
-        }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange
+          }`,
         tooltip: '',
         callBack: onExchangeAsset,
       });
@@ -4379,9 +4433,8 @@ export const AccountsView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
-          MetaInfoCtaAction.Invest
-        }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest
+          }`,
         tooltip: '',
         callBack: handleGoToInvestClick,
       });
@@ -4400,9 +4453,8 @@ export const AccountsView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
-          MetaInfoCtaAction.WrapSol
-        }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.WrapSol
+          }`,
         tooltip: '',
         callBack: showWrapSolModal,
       });
@@ -5151,7 +5203,7 @@ export const AccountsView = () => {
   };
 
   const canShowAssetDetails = () => {
-    if (selectedCategory === 'account-summary') {
+    if (selectedCategory === 'account-summary' || selectedCategory === 'other-assets') {
       return false;
     }
     const showWhenAssetsSelected =
@@ -5256,9 +5308,8 @@ export const AccountsView = () => {
               navigateToSafe();
             }
           }}
-          className={`networth-list-item flex-fixed-right ${
-            selectedCategory === 'account-summary' ? 'selected' : ''
-          }`}
+          className={`networth-list-item flex-fixed-right ${selectedCategory === 'account-summary' ? 'selected' : ''
+            }`}
         >
           {renderSelectedAccountSummaryInner()}
         </div>
@@ -5294,12 +5345,11 @@ export const AccountsView = () => {
               setSelectedNft(undefined);
               navigateToStreaming();
             }}
-            className={`transaction-list-row ${
-              selectedCategory === 'apps' &&
+            className={`transaction-list-row ${selectedCategory === 'apps' &&
               selectedApp?.slug === RegisteredAppPaths.PaymentStreaming
-                ? 'selected'
-                : ''
-            }`}
+              ? 'selected'
+              : ''
+              }`}
           >
             <div className="icon-cell">
               {loadingStreams ? (
@@ -5470,9 +5520,8 @@ export const AccountsView = () => {
               {asset.symbol}
               {tokenPrice > 0 ? (
                 <span
-                  className={`badge small ml-1 ${
-                    theme === 'light' ? 'golden fg-dark' : 'darken'
-                  }`}
+                  className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'
+                    }`}
                 >
                   {toUsCurrency(tokenPrice)}
                 </span>
@@ -5489,10 +5538,10 @@ export const AccountsView = () => {
             <div className="interval">
               {(asset.balance || 0) > 0
                 ? formatThousands(
-                    asset.balance || 0,
-                    asset.decimals,
-                    asset.decimals,
-                  )
+                  asset.balance || 0,
+                  asset.decimals,
+                  asset.decimals,
+                )
                 : '0'}
             </div>
           </div>
@@ -5516,7 +5565,7 @@ export const AccountsView = () => {
     if (loadingTokenAccounts) {
       return (
         <div className="flex flex-center">
-          <Spin indicator={antIcon} />
+          <Spin indicator={loadIndicator} />
         </div>
       );
     } else if (tokensLoaded) {
@@ -5530,55 +5579,12 @@ export const AccountsView = () => {
     }
   };
 
-  const renderLoadingOrNoNftsMessage = () => {
-    if (loadingTokenAccounts) {
-      return (
-        <div className="flex flex-center">
-          <Spin indicator={antIcon} />
-        </div>
-      );
-    } else if (tokensLoaded) {
-      return (
-        <div className="flex-column flex-center justify-content-center h-100">
-          <IconNoItems
-            className="mean-svg-icons fg-secondary-50"
-            style={{ width: 50, height: 50 }}
-          />
-          <div className="font-size-120 font-bold fg-secondary-75 mt-2 mb-2">
-            No NFTs
-          </div>
-          <div className="font-size-110 fg-secondary-50 mb-3">
-            Get started with your first NFT
-          </div>
-          <div className="text-center">
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              onClick={() => openLinkInNewTab('https://magiceden.io/')}
-            >
-              <span className="mr-1">Browse Magic Eden</span>
-              <IconExternalLink
-                className="mean-svg-icons fg-secondary-70"
-                style={{ width: 22, height: 22 }}
-              />
-            </Button>
-          </div>
-        </div>
-      );
-    } else {
-      return null;
-    }
-  };
-
   const renderAssetsList = () => {
     return (
       <div
         key="asset-category-token-items"
-        className={`asset-category flex-column${
-          !accountTokens || accountTokens.length === 0 ? ' h-75' : ''
-        }`}
+        className={`asset-category flex-column${!accountTokens || accountTokens.length === 0 ? ' h-75' : ''
+          }`}
       >
         {accountTokens && accountTokens.length > 0 ? (
           <>
@@ -5622,18 +5628,8 @@ export const AccountsView = () => {
   };
 
   const renderNftList = () => {
-    if (!accountNfts || accountNfts.length === 0) {
-      return (
-        <div
-          key="asset-category-nft-items"
-          className="asset-category flex-column h-75"
-        >
-          {renderLoadingOrNoNftsMessage()}
-        </div>
-      );
-    }
 
-    const onNftItemClick = (item: Nft | Sft | SftWithToken | NftWithToken) => {
+    const onNftItemClick = (item: MeanNft) => {
       consoleOut('clicked on NFT item:', item, 'blue');
       setSelectedNft(item);
       setSelectedApp(undefined);
@@ -5651,13 +5647,15 @@ export const AccountsView = () => {
     return (
       <>
         <NftPaginatedList
-          presetNftMint={selectedNft ? undefined : nftMint}
           connection={connection}
+          loadingTokenAccounts={loadingTokenAccounts}
           nftList={accountNfts}
-          onNftItemClick={(nft: Nft | Sft | SftWithToken | NftWithToken) =>
+          onNftItemClick={(nft: MeanNft) =>
             onNftItemClick(nft)
           }
+          presetNftMint={selectedNft ? undefined : nftMint}
           selectedNft={selectedNft}
+          tokensLoaded={tokensLoaded}
         />
       </>
     );
@@ -5685,13 +5683,33 @@ export const AccountsView = () => {
   };
 
   const renderOtherAssetsList = () => {
+    const onProgramSelected = (item: ProgramAccounts) => {
+      setSelectedApp(undefined);
+      setSelectedAsset(undefined);
+      setSelectedCategory('other-assets');
+
+      let url = '';
+      if (isMultisigContext) {
+        url = `/${RegisteredAppPaths.SuperSafe}/programs/${item.pubkey.toBase58()}?v=transactions`;
+      } else {
+        url = `/programs/${item.pubkey.toBase58()}?v=transactions`
+      }
+
+      // Activate panels and navigate
+      setTimeout(() => {
+        setAutoOpenDetailsPanel(true);
+        setDetailsPanelOpen(true);
+        navigate(url);
+      }, 10);
+    };
+
     return (
-      <div
-        key="asset-category-other-items"
-        className="asset-category flex-column"
-      >
-        <span>Nothing here yet</span>
-      </div>
+      <OtherAssetsList
+        loadingPrograms={loadingPrograms}
+        onProgramSelected={(item: ProgramAccounts) => onProgramSelected(item)}
+        programs={programs}
+        selectedProgram={selectedProgram}
+      />
     );
   };
 
@@ -5715,147 +5733,19 @@ export const AccountsView = () => {
   };
 
   const renderActivityList = () => {
-    const hasItems = hasItemsToRender();
-
-    if (status === FetchStatus.Fetching && !hasItems) {
-      return (
-        <div className="flex flex-center">
-          <Spin indicator={antIcon} />
-        </div>
-      );
-    }
-
-    const renderMessages = () => {
-      if (status === FetchStatus.Fetched && !hasTransactions()) {
-        return (
-          <div className="h-100 flex-center">
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={<p>{t('assets.no-transactions')}</p>}
-            />
-          </div>
-        );
-      } else if (status === FetchStatus.FetchFailed) {
-        return (
-          <div className="h-100 flex-center">
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={<p>{t('assets.loading-error')}</p>}
-            />
-          </div>
-        );
-      } else {
-        return null;
-      }
-    };
-
     return (
-      <>
-        {/* Activity list */}
-        <div
-          className={`transaction-list-data-wrapper ${
-            (status === FetchStatus.Fetched && !hasTransactions()) ||
-            status === FetchStatus.FetchFailed
-              ? 'h-100'
-              : 'vertical-scroll'
-          }`}
-        >
-          <div className="activity-list h-100">
-            {hasTransactions() ? (
-              <div className="item-list-body compact">
-                {renderTransactions()}
-              </div>
-            ) : (
-              renderMessages()
-            )}
-            {lastTxSignature && (
-              <div className="mt-1 text-center">
-                <span
-                  className={
-                    status === FetchStatus.Fetching
-                      ? 'no-pointer'
-                      : 'secondary-link underline-on-hover'
-                  }
-                  role="link"
-                  onClick={() => startSwitch()}
-                >
-                  {status === FetchStatus.Fetching ? (
-                    <>
-                      <span className="mr-1">
-                        <LoadingOutlined style={{ fontSize: '16px' }} />
-                      </span>
-                      <span className="no-pointer fg-orange-red pulsate-fast">
-                        {t('general.loading')}
-                      </span>
-                    </>
-                  ) : (
-                    t('general.cta-load-more')
-                  )}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </>
+      <AssetActivity
+        accountTokens={accountTokens}
+        hasItems={hasItemsToRender()}
+        isAssetNativeAccount={isSelectedAssetNativeAccount()}
+        lastTxSignature={lastTxSignature}
+        selectedAccountAddress={selectedAccount.address}
+        selectedAsset={selectedAsset}
+        status={status}
+        transactions={transactions}
+        onLoadMore={() => startSwitch()}
+      />
     );
-  };
-
-  const renderTransactions = () => {
-    if (transactions) {
-      if (isSelectedAssetNativeAccount()) {
-        // Render only txs that have SOL changes
-        const filtered = transactions.filter(tx => {
-          const meta =
-            tx.parsedTransaction && tx.parsedTransaction.meta
-              ? tx.parsedTransaction.meta
-              : null;
-          if (!meta || meta.err !== null) {
-            return false;
-          }
-          const accounts = tx.parsedTransaction.transaction.message.accountKeys;
-          const accIdx = accounts.findIndex(
-            acc => acc.pubkey.toBase58() === selectedAccount.address,
-          );
-          if (isSelectedAssetNativeAccount() && accIdx === -1) {
-            return false;
-          }
-          // Get amount change for each tx
-          const change = getChange(accIdx, meta);
-          return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
-        });
-        return filtered?.map((trans: MappedTransaction) => {
-          return (
-            <TransactionItemView
-              key={`${trans.signature}`}
-              transaction={trans}
-              selectedAsset={selectedAsset as UserTokenAccount}
-              accountAddress={selectedAccount.address}
-              tokenAccounts={accountTokens}
-            />
-          );
-        });
-      } else {
-        // Render the transactions collection
-        return transactions.map((trans: MappedTransaction) => {
-          if (
-            trans.parsedTransaction &&
-            trans.parsedTransaction.meta &&
-            trans.parsedTransaction.meta.err === null
-          ) {
-            return (
-              <TransactionItemView
-                key={`${trans.signature}`}
-                transaction={trans}
-                selectedAsset={selectedAsset as UserTokenAccount}
-                accountAddress={selectedAccount.address}
-                tokenAccounts={accountTokens}
-              />
-            );
-          }
-          return null;
-        });
-      }
-    } else return null;
   };
 
   const renderUserAccountAssetMenu = () => {
@@ -6020,9 +5910,8 @@ export const AccountsView = () => {
                   <AddressDisplay
                     address={selectedAsset.publicAddress as string}
                     iconStyles={{ width: '16', height: '16' }}
-                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-                      selectedAsset.publicAddress
-                    }${getSolanaExplorerClusterParam()}`}
+                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedAsset.publicAddress
+                      }${getSolanaExplorerClusterParam()}`}
                   />
                 </div>
               </Col>
@@ -6112,16 +6001,14 @@ export const AccountsView = () => {
   };
 
   const goToStreamIncomingDetailsHandler = (stream: any) => {
-    const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming/${
-      stream.id as string
-    }`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming/${stream.id as string
+      }`;
     navigate(url);
   };
 
   const goToStreamOutgoingDetailsHandler = (stream: any) => {
-    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${
-      stream.id as string
-    }`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${stream.id as string
+      }`;
     navigate(url);
   };
 
@@ -6129,18 +6016,16 @@ export const AccountsView = () => {
     streamingTreasury: Treasury | TreasuryInfo | undefined,
   ) => {
     if (streamingTreasury) {
-      const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${
-        streamingTreasury.id as string
-      }`;
+      const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingTreasury.id as string
+        }`;
       navigate(url);
     }
   };
 
   const goToStreamingAccountStreamDetailsHandler = (stream: any) => {
     setPreviousRoute(location.pathname);
-    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${
-      stream.id as string
-    }`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${stream.id as string
+      }`;
     navigate(url);
   };
 
@@ -6266,9 +6151,8 @@ export const AccountsView = () => {
           <div className="interaction-area">
             {selectedAccount.address && (
               <div
-                className={`meanfi-two-panel-layout ${
-                  detailsPanelOpen ? 'details-open' : ''
-                }`}
+                className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''
+                  }`}
               >
                 {/* Left / top panel */}
                 <div className="meanfi-two-panel-left">
@@ -6289,9 +6173,8 @@ export const AccountsView = () => {
 
                     {/* Middle area (vertically flexible block of items) */}
                     <div
-                      className={`item-block${
-                        !isXsDevice ? ' vertical-scroll' : ''
-                      }`}
+                      className={`item-block${!isXsDevice ? ' vertical-scroll' : ''
+                        }`}
                     >
                       {/* Pinned Apps or Favorites */}
                       <div
@@ -6401,7 +6284,7 @@ export const AccountsView = () => {
 
                   <div className="inner-container">
                     {selectedApp?.slug ===
-                    RegisteredAppPaths.PaymentStreaming ? (
+                      RegisteredAppPaths.PaymentStreaming ? (
                       <>
                         {/* Refresh cta */}
                         <div className="float-top-right mr-1 mt-1">
@@ -6452,9 +6335,9 @@ export const AccountsView = () => {
                     ) : null}
 
                     {selectedApp?.slug === RegisteredAppPaths.Staking &&
-                    location.pathname.startsWith(
-                      `/${RegisteredAppPaths.Staking}`,
-                    ) ? (
+                      location.pathname.startsWith(
+                        `/${RegisteredAppPaths.Staking}`,
+                      ) ? (
                       <>
                         <Suspense
                           fallback={
@@ -6469,9 +6352,9 @@ export const AccountsView = () => {
                     ) : null}
 
                     {selectedApp?.slug === RegisteredAppPaths.Vesting &&
-                    location.pathname.startsWith(
-                      `/${RegisteredAppPaths.Vesting}`,
-                    ) ? (
+                      location.pathname.startsWith(
+                        `/${RegisteredAppPaths.Vesting}`,
+                      ) ? (
                       <>
                         <Suspense
                           fallback={
@@ -6487,8 +6370,20 @@ export const AccountsView = () => {
                       </>
                     ) : null}
 
+                    {location.pathname.startsWith('/programs/') ? (
+                      <div className="safe-details-component scroll-wrapper vertical-scroll">
+                        {selectedProgram ? (
+                          <ProgramDetailsView programSelected={selectedProgram} />
+                        ) : (
+                          <div className="h-100 flex-center">
+                            <Spin spinning={true} />
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+
                     {selectedCategory === 'account-summary' &&
-                    location.pathname === '/my-account' ? (
+                      location.pathname === '/my-account' ? (
                       <>
                         <Suspense
                           fallback={
@@ -6537,15 +6432,14 @@ export const AccountsView = () => {
                               isMultisigContext &&
                               selectedMultisig &&
                               (multisigSolBalance !== undefined &&
-                              multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED ? (
+                                multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED ? (
                                 <Row gutter={[8, 8]}>
                                   <Col
                                     span={24}
-                                    className={`alert-info-message pr-2 ${
-                                      selectedMultisig
-                                        ? 'simplelink'
-                                        : 'disable-pointer'
-                                    }`}
+                                    className={`alert-info-message pr-2 ${selectedMultisig
+                                      ? 'simplelink'
+                                      : 'disable-pointer'
+                                      }`}
                                     onClick={showSolBalanceModal}
                                   >
                                     <Alert
@@ -6557,9 +6451,8 @@ export const AccountsView = () => {
                                 </Row>
                               ) : null)}
                             <div
-                              className={`bottom ${
-                                !hasItemsToRender() ? 'h-100 flex-column' : ''
-                              }`}
+                              className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''
+                                }`}
                             >
                               {/* Activity table heading */}
                               {hasItemsToRender() && (

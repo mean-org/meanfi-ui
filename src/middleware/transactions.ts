@@ -5,9 +5,11 @@ import {
   ConfirmedTransaction,
   TransactionSignature,
   Transaction,
+  ParsedTransactionMeta,
 } from '@solana/web3.js';
 import { TransactionStatus } from '../models/enums';
 import { Confirmations, Timestamp } from '../models/transactions';
+import { getAmountFromLamports } from './utils';
 
 export class TransactionWithSignature {
   constructor(
@@ -143,4 +145,14 @@ export const updateCreateStream2Tx = async (
   const createStreamTxUpdated = Transaction.from(createStreamTxUpdatedBytes);
 
   return createStreamTxUpdated;
+};
+
+export const getChange = (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
+  if (meta !== null && accountIndex !== -1) {
+    const prevBalance = meta.preBalances[accountIndex] || 0;
+    const postbalance = meta.postBalances[accountIndex] || 0;
+    const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
+    return change;
+  }
+  return 0;
 };
