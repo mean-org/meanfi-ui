@@ -1,25 +1,25 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
-import { useTranslation } from 'react-i18next';
 import {
   CheckOutlined,
   InfoCircleOutlined,
-  LoadingOutlined,
+  LoadingOutlined
 } from '@ant-design/icons';
-import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatus } from '../../models/enums';
+import { TransactionFees } from '@mean-dao/money-streaming';
+import { PublicKey } from '@solana/web3.js';
+import { Button, Modal, Spin } from 'antd';
+import { AppStateContext } from 'contexts/appstate';
+import { useConnection } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { BPF_LOADER_UPGRADEABLE_PID, NATIVE_SOL_MINT } from 'middleware/ids';
+import { isError } from 'middleware/transactions';
 import {
   getTransactionOperationDescription,
-  isValidAddress,
-} from '../../middleware/ui';
-import { isError } from '../../middleware/transactions';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { TransactionFees } from '@mean-dao/money-streaming';
-import { getAmountWithSymbol } from '../../middleware/utils';
-import { useConnection } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { PublicKey } from '@solana/web3.js';
+  isValidAddress
+} from 'middleware/ui';
+import { getAmountWithSymbol } from 'middleware/utils';
+import { TransactionStatus } from 'models/enums';
 import { SetProgramAuthPayload } from 'models/multisig';
+import { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -65,9 +65,6 @@ export const MultisigSetProgramAuthModal = (props: {
 
     const timeout = setTimeout(() => {
       const programAddress = new PublicKey(programId);
-      const BPF_LOADER_UPGRADEABLE_PID = new PublicKey(
-        'BPFLoaderUpgradeab1e11111111111111111111111',
-      );
       PublicKey.findProgramAddress(
         [programAddress.toBuffer()],
         BPF_LOADER_UPGRADEABLE_PID,

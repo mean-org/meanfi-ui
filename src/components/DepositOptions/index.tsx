@@ -42,21 +42,6 @@ export const DepositOptions = (props: {
     setIsSharingAddress(false);
   };
 
-  const getFtxPayLink = (): string => {
-    return `https://ftx.us/pay/request?address=${publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false&memo=&allowTip=false`;
-  };
-
-  const handleFtxPayButtonClick = () => {
-    setTimeout(() => {
-      window.open(
-        getFtxPayLink(),
-        'newwindow',
-        'noreferrer,resizable,width=360,height=600',
-      );
-    }, 500);
-    props.handleClose();
-  };
-
   const handleBridgeFromEthereumButtonClick = () => {
     setTimeout(() => {
       window.open(
@@ -196,24 +181,6 @@ export const DepositOptions = (props: {
             <p className="fg-error">{t('deposits.not-connected')}!</p>
           )}
           <Row gutter={[24, 24]}>
-            <Col span={24}>
-              <Button
-                block
-                className="deposit-option"
-                type="ghost"
-                shape="round"
-                size="middle"
-                disabled={!connected}
-                onClick={handleFtxPayButtonClick}
-              >
-                <img
-                  src="/assets/deposit-partners/ftx.ico"
-                  className="deposit-partner-icon"
-                  alt={t('deposits.ftx-cta-label-enabled')}
-                />
-                {t('deposits.ftx-cta-label-enabled')}
-              </Button>
-            </Col>
             <Col span={24}>
               <Button
                 block

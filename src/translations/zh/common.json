@@ -225,7 +225,6 @@
   "deposits": {
     "address-share-disclaimer": "此地址只能用于在Solana上接收SOL和SPL令牌。",
     "back-to-deposit-options": "返回存款选项",
-    "ftx-cta-label-enabled": "从FTX存款",
     "heading": "“从您的卡、银行账户或其他区块链直接存入您的Solana钱包。“",
     "modal-title": "存款选项",
     "move-from-ethereum-cta-label": "从以太坊转移资产",

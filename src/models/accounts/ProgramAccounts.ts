@@ -4,6 +4,6 @@ export type ProgramAccounts = {
   pubkey: PublicKey;
   owner: PublicKey;
   executable: PublicKey;
-  upgradeAuthority: PublicKey;
+  upgradeAuthority: PublicKey | null;
   size: number;
 };

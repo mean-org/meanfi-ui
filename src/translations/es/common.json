@@ -225,7 +225,6 @@
   "deposits": {
     "address-share-disclaimer": "Esta dirección solo se puede usar para recibir tokens SOL y SPL en Solana.",
     "back-to-deposit-options": "Volver a opciones de Depósito",
-    "ftx-cta-label-enabled": "Depósito de FTX",
     "heading": "Deposite desde su Tarjeta, Cuenta Bancaria o desde otra Blockchain directamente en su Monedero Solana.\nSeleccione una de las opciones siguientes",
     "modal-title": "Opciones de Depósito",
     "move-from-ethereum-cta-label": "Mover activos de Ethereum",

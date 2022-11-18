@@ -225,7 +225,6 @@
   "deposits": {
     "address-share-disclaimer": "از این آدرس فقط می توان برای دریافت توکن های SOL و SPL در سولانا استفاده کرد.",
     "back-to-deposit-options": "بازگشت به گزینه های سپرده گزاری",
-    "ftx-cta-label-enabled": "واریز از FTX",
     "heading": "از کارت، حساب بانکی یا از بلاک چین دیگر مستقیماً به کیف پول Solana خود واریز کنید.",
     "modal-title": "گزینه های سپرده",
     "move-from-ethereum-cta-label": "انتقال دارایی ها از اتریوم",

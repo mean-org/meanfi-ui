@@ -111,6 +111,10 @@ export function AppRoutes() {
                           path="/super-safe/programs/:id"
                           element={<AccountsView />}
                         />
+                        <Route
+                          path="/programs/:programId"
+                          element={<AccountsView />}
+                        />
                         <Route path="/staking" element={<AccountsView />} />
                         {/* Apps general route matcher */}
                         <Route path="/:appId" element={<AccountsView />} />
