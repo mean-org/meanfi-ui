@@ -225,7 +225,6 @@
   "deposits": {
     "address-share-disclaimer": "Bu adres yalnızca SOL ve SPL tokenlarını yatırmak için kullanılabilir.",
     "back-to-deposit-options": "Yatırma seçeneklerine geri dön",
-    "ftx-cta-label-enabled": "FTX'den yatır",
     "heading": "",
     "modal-title": "Yatırma Seçenekleri",
     "move-from-ethereum-cta-label": "Ethereum'dan varlık aktarın",
