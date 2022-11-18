@@ -1,59 +1,59 @@
-import { Col, Row, Spin, Tabs } from 'antd';
-import { IconArrowBack, IconExternalLink } from 'Icons';
-import './style.scss';
+import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
+import { MoneyStreaming } from '@mean-dao/money-streaming';
 import {
   StreamActivity,
   StreamInfo,
   STREAM_STATE,
-  TreasuryInfo,
+  TreasuryInfo
 } from '@mean-dao/money-streaming/lib/types';
 import {
   MSP,
   Stream,
   STREAM_STATUS,
   Treasury,
-  TreasuryType,
+  TreasuryType
 } from '@mean-dao/msp';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { PublicKey } from '@solana/web3.js';
+import { Col, Row, Spin, Tabs } from 'antd';
+import BN from 'bn.js';
+import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
+import { Identicon } from 'components/Identicon';
+import { ResumeItem } from 'components/ResumeItem';
+import { RightInfoDetails } from 'components/RightInfoDetails';
 import {
-  displayAmountWithSymbol,
-  getAmountWithSymbol,
-  shortenAddress,
-  toTokenAmountBn,
-} from 'middleware/utils';
+  FALLBACK_COIN_IMAGE,
+  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION
+} from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import {
+  getSolanaExplorerClusterParam,
+  useConnectionConfig
+} from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import useWindowSize from 'hooks/useWindowResize';
+import { IconArrowBack, IconExternalLink } from 'Icons';
+import { getStreamStatusResume, getStreamTitle } from 'middleware/streams';
 import {
   consoleOut,
   getIntervalFromSeconds,
   getReadableDate,
   getShortDate,
-  relativeTimeFromDates,
+  relativeTimeFromDates
 } from 'middleware/ui';
-import { AppStateContext } from 'contexts/appstate';
-import BN from 'bn.js';
-import { useTranslation } from 'react-i18next';
 import {
-  FALLBACK_COIN_IMAGE,
-  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-} from 'constants/common';
+  displayAmountWithSymbol,
+  getAmountWithSymbol,
+  shortenAddress,
+  toTokenAmountBn
+} from 'middleware/utils';
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import { useSearchParams } from 'react-router-dom';
-import { useWallet } from 'contexts/wallet';
-import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import {
-  getSolanaExplorerClusterParam,
-  useConnectionConfig,
-} from 'contexts/connection';
-import Countdown from 'react-countdown';
-import useWindowSize from 'hooks/useWindowResize';
-import { isMobile } from 'react-device-detect';
-import { PublicKey } from '@solana/web3.js';
-import { getStreamTitle } from 'middleware/streams';
-import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { getCategoryLabelByValue } from 'models/vesting';
-import { Identicon } from 'components/Identicon';
-import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
-import { ResumeItem } from 'components/ResumeItem';
-import { RightInfoDetails } from 'components/RightInfoDetails';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import Countdown from 'react-countdown';
+import { isMobile } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
+import './style.scss';
 
 export const MoneyStreamDetails = (props: {
   accountAddress: string;
@@ -299,40 +299,6 @@ export const MoneyStreamDetails = (props: {
               return t('streams.status.status-stopped');
             default:
               return t('streams.status.status-running');
-          }
-        }
-      }
-    },
-    [t],
-  );
-
-  const getStreamResume = useCallback(
-    (item: Stream | StreamInfo) => {
-      if (item) {
-        const v1 = item as StreamInfo;
-        const v2 = item as Stream;
-        if (v1.version < 2) {
-          switch (v1.state) {
-            case STREAM_STATE.Schedule:
-              return t('streams.status.scheduled', {
-                date: getShortDate(v1.startUtc as string),
-              });
-            case STREAM_STATE.Paused:
-              return t('streams.status.stopped');
-            default:
-              return t('streams.status.streaming');
-          }
-        } else {
-          switch (v2.status) {
-            case STREAM_STATUS.Scheduled:
-              return `starts on ${getShortDate(v2.startUtc)}`;
-            case STREAM_STATUS.Paused:
-              if (v2.isManuallyPaused) {
-                return `paused on ${getShortDate(v2.startUtc)}`;
-              }
-              return `out of funds on ${getShortDate(v2.startUtc)}`;
-            default:
-              return `streaming since ${getShortDate(v2.startUtc)}`;
           }
         }
       }
@@ -982,7 +948,7 @@ export const MoneyStreamDetails = (props: {
     ? getStreamTitle(stream, t)
     : `Unknown ${isStreamIncoming ? 'incoming' : 'outgoing'} stream`;
   const subtitle = stream ? getStreamSubtitle(stream) : '--';
-  const resume = stream ? getStreamResume(stream) : '--';
+  const resume = stream ? getStreamStatusResume(stream, t) : '--';
 
   return (
     <>

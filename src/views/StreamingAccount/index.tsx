@@ -4,19 +4,19 @@ import {
   MeanMultisig,
   MultisigInfo,
   MultisigTransactionFees,
-  MULTISIG_ACTIONS,
+  MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk';
 import {
   calculateActionFees,
   Constants,
   MoneyStreaming,
   MSP_ACTIONS,
-  refreshTreasuryBalanceInstruction,
+  refreshTreasuryBalanceInstruction
 } from '@mean-dao/money-streaming';
 import {
   StreamInfo,
   STREAM_STATE,
-  TreasuryInfo,
+  TreasuryInfo
 } from '@mean-dao/money-streaming/lib/types';
 import {
   calculateActionFees as calculateActionFeesV2,
@@ -28,7 +28,7 @@ import {
   Treasury,
   TreasuryType,
   VestingTreasuryActivity,
-  VestingTreasuryActivityAction,
+  VestingTreasuryActivityAction
 } from '@mean-dao/msp';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
@@ -36,7 +36,7 @@ import {
   LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
-  TransactionInstruction,
+  TransactionInstruction
 } from '@solana/web3.js';
 import { Alert, Button, Dropdown, Menu, Row, Space, Spin, Tabs } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -45,6 +45,7 @@ import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { Identicon } from 'components/Identicon';
 import { ResumeItem } from 'components/ResumeItem';
 import { SolBalanceModal } from 'components/SolBalanceModal';
+import { StreamStatusSummary } from 'components/StreamStatusSummary';
 import { TreasuryAddFundsModal } from 'components/TreasuryAddFundsModal';
 import { TreasuryCloseModal } from 'components/TreasuryCloseModal';
 import { TreasuryStreamCreateModal } from 'components/TreasuryStreamCreateModal';
@@ -55,13 +56,13 @@ import {
   MSP_FEE_TREASURY,
   NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-  WRAPPED_SOL_MINT_ADDRESS,
+  WRAPPED_SOL_MINT_ADDRESS
 } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { AppStateContext } from 'contexts/appstate';
 import {
   getSolanaExplorerClusterParam,
-  useConnectionConfig,
+  useConnectionConfig
 } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
@@ -70,12 +71,12 @@ import {
   IconArrowBack,
   IconArrowForward,
   IconEllipsisVertical,
-  IconExternalLink,
+  IconExternalLink
 } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import {
   fetchAccountTokens,
-  getTokenAccountBalanceByAddress,
+  getTokenAccountBalanceByAddress
 } from 'middleware/accounts';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
@@ -84,7 +85,7 @@ import {
   getIntervalFromSeconds,
   getShortDate,
   getTransactionStatusForLogs,
-  isProd,
+  isProd
 } from 'middleware/ui';
 import {
   displayAmountWithSymbol,
@@ -97,7 +98,7 @@ import {
   makeInteger,
   openLinkInNewTab,
   shortenAddress,
-  toTokenAmountBn,
+  toTokenAmountBn
 } from 'middleware/utils';
 import { TreasuryTopupParams } from 'models/common-types';
 import { OperationType, TransactionStatus } from 'models/enums';
@@ -292,9 +293,9 @@ export const StreamingAccountView = (props: {
         })
         .finally(() => setUserBalances(balancesMap));
 
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [publicKey, connection],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [publicKey, connection]
   );
 
   const getRateAmountBn = useCallback(
@@ -668,121 +669,6 @@ export const StreamingAccountView = (props: {
       }
     },
     [t],
-  );
-
-  const getTimeRemaining = useCallback((time: any) => {
-    if (time) {
-      const countDownDate = new Date(time).getTime();
-      const now = new Date().getTime();
-      const timeleft = countDownDate - now;
-
-      const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
-      const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
-      const hours = Math.floor(
-        (timeleft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-      );
-      const days = Math.floor(timeleft / (1000 * 60 * 60 * 24));
-      const weeks = Math.floor(days / 7);
-      const months = Math.floor(days / 30);
-      const years = Math.floor(days / 365);
-
-      if (
-        years === 0 &&
-        months === 0 &&
-        weeks === 0 &&
-        days === 0 &&
-        hours === 0 &&
-        minutes === 0 &&
-        seconds === 0
-      ) {
-        return `out of funds`;
-      } else if (
-        years === 0 &&
-        months === 0 &&
-        weeks === 0 &&
-        days === 0 &&
-        hours === 0 &&
-        minutes === 0 &&
-        seconds <= 60
-      ) {
-        return <span className="fg-warning">less than a minute left</span>;
-      } else if (
-        years === 0 &&
-        months === 0 &&
-        weeks === 0 &&
-        days === 0 &&
-        hours === 0 &&
-        minutes <= 60
-      ) {
-        return (
-          <span className="fg-warning">{`only ${minutes} ${
-            minutes > 1 ? 'minutes' : 'minute'
-          } left`}</span>
-        );
-      } else if (
-        years === 0 &&
-        months === 0 &&
-        weeks === 0 &&
-        days === 0 &&
-        hours <= 24
-      ) {
-        return (
-          <span className="fg-warning">{`only ${hours} ${
-            hours > 1 ? 'hours' : 'hour'
-          } left`}</span>
-        );
-      } else if (
-        years === 0 &&
-        months === 0 &&
-        weeks === 0 &&
-        days > 1 &&
-        days <= 7
-      ) {
-        return `${days} ${days > 1 ? 'days' : 'day'} left`;
-      } else if (years === 0 && months === 0 && days > 7 && days <= 30) {
-        return `${weeks} ${weeks > 1 ? 'weeks' : 'week'} left`;
-      } else if (years === 0 && days > 30 && days <= 365) {
-        return `${months} ${months > 1 ? 'months' : 'month'} left`;
-      } else if (days > 365) {
-        return `${years} ${years > 1 ? 'years' : 'year'} left`;
-      } else {
-        return '';
-      }
-    }
-  }, []);
-
-  const getStreamResume = useCallback(
-    (item: Stream | StreamInfo) => {
-      if (item) {
-        const v1 = item as StreamInfo;
-        const v2 = item as Stream;
-        if (v1.version < 2) {
-          switch (v1.state) {
-            case STREAM_STATE.Schedule:
-              return t('streams.status.scheduled', {
-                date: getShortDate(v1.startUtc as string),
-              });
-            case STREAM_STATE.Paused:
-              return t('streams.status.stopped');
-            default:
-              return t('streams.status.streaming');
-          }
-        } else {
-          switch (v2.status) {
-            case STREAM_STATUS.Scheduled:
-              return `starts on ${getShortDate(v2.startUtc)}`;
-            case STREAM_STATUS.Paused:
-              if (v2.isManuallyPaused) {
-                return `paused on ${getShortDate(v2.startUtc)}`;
-              }
-              return `out of funds on ${getShortDate(v2.startUtc)}`;
-            default:
-              return getTimeRemaining(v2.estimatedDepletionDate);
-          }
-        }
-      }
-    },
-    [getTimeRemaining, t],
   );
 
   const getTreasuryUnallocatedBalance = useCallback(
@@ -3061,7 +2947,6 @@ export const StreamingAccountView = (props: {
                 ? getStreamTitle(stream, t)
                 : 'Unknown outgoing stream';
               const subtitle = getStreamSubtitle(stream);
-              const resume = getStreamResume(stream);
 
               return (
                 <div
@@ -3076,7 +2961,7 @@ export const StreamingAccountView = (props: {
                     img={img}
                     title={title}
                     subtitle={subtitle || '0.00'}
-                    resume={resume}
+                    resume={<StreamStatusSummary stream={stream} />}
                     status={getStreamStatusLabel(stream)}
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}

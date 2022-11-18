@@ -1,5 +1,7 @@
-import { Stream, STREAM_STATUS } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
+import { Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { TFunction } from 'react-i18next';
+import { getShortDate } from './ui';
 import { shortenAddress } from './utils';
 
 interface LooseObject {
@@ -74,6 +76,44 @@ export const getStreamTitle = (
   }
 
   return title;
+};
+
+export const getStreamStatusResume = (
+  item: Stream | StreamInfo,
+  trans: TFunction,
+) => {
+    if (!item) {
+      return '';
+    }
+
+    const v1 = item as StreamInfo;
+    const v2 = item as Stream;
+    if (item.version < 2) {
+      switch (v1.state) {
+        case STREAM_STATE.Schedule:
+          return trans('streams.status.scheduled', {
+            date: getShortDate(v1.startUtc as string),
+          });
+        case STREAM_STATE.Paused:
+          return trans('streams.status.stopped');
+        default:
+          return trans('streams.status.streaming');
+      }
+    } else {
+      switch (v2.status) {
+        case STREAM_STATUS.Scheduled:
+          return `starts on ${getShortDate(v2.startUtc)}`;
+        case STREAM_STATUS.Paused:
+          if (v2.isManuallyPaused) {
+            return '';
+            // return `paused on ${getShortDate(v2.startUtc)}`;
+          }
+          return `out of funds on ${getShortDate(v2.estimatedDepletionDate)}`;
+        default:
+          return `streaming since ${getShortDate(v2.startUtc)}`;
+      }
+    }
+
 };
 
 export const getReadableStream = (item: Stream | StreamInfo) => {
