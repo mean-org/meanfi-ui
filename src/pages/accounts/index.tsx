@@ -998,7 +998,6 @@ export const AccountsView = () => {
   const reloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
     setShouldLoadTokens(true);
-    setDetailsPanelOpen(false);
     setAutoOpenDetailsPanel(true);
     reloadSwitch();
   }, [reloadSwitch, setShouldLoadTokens]);
