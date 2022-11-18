@@ -1,14 +1,20 @@
+import { LoadingOutlined } from "@ant-design/icons";
+import { Empty, Spin } from "antd";
 import { Identicon } from "components/Identicon";
 import { formatThousands, shortenAddress } from "middleware/utils";
 import { ProgramAccounts } from "models/accounts";
 import { useLocation } from "react-router-dom";
 
+const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+
 export const OtherAssetsList = (props: {
+  loadingPrograms: boolean;
   onProgramSelected?: any;
   programs?: ProgramAccounts[];
   selectedProgram: ProgramAccounts | undefined;
 }) => {
   const {
+    loadingPrograms,
     onProgramSelected,
     programs,
     selectedProgram,
@@ -24,6 +30,33 @@ export const OtherAssetsList = (props: {
       return 'selected'
     }
     return '';
+  }
+
+  if (loadingPrograms) {
+    return (
+      <div
+        key="asset-category-other-assets-items"
+        className="asset-category flex-column flex-center h-75"
+      >
+        <Spin indicator={loadIndicator} />
+      </div>
+    );
+  } else if (!loadingPrograms && (!programs || programs.length === 0)) {
+    return (
+      <div
+        key="asset-category-other-assets-items"
+        className="asset-category flex-column flex-center h-75"
+      >
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <span>
+              No programs found
+            </span>
+          }
+        />
+      </div>
+    );
   }
 
   return (

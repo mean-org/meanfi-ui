@@ -55,7 +55,6 @@ import {
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
-  ParsedTransactionMeta,
   PublicKey,
   Signer,
   SystemProgram,
@@ -97,7 +96,6 @@ import { PreFooter } from 'components/PreFooter';
 import { ReceiveSplOrSolModal } from 'components/ReceiveSplOrSolModal';
 import { SendAssetModal } from 'components/SendAssetModal';
 import { SolBalanceModal } from 'components/SolBalanceModal';
-import { TransactionItemView } from 'components/TransactionItemView';
 import { UnwrapSolModal } from 'components/UnwrapSolModal';
 import { WrapSolModal } from 'components/WrapSolModal';
 import {
@@ -131,12 +129,10 @@ import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
 import {
   IconAdd,
-  IconExternalLink,
   IconEyeOff,
   IconEyeOn,
   IconLightBulb,
   IconLoading,
-  IconNoItems,
   IconSafe,
   IconVerticalEllipsis,
 } from 'Icons';
@@ -145,6 +141,7 @@ import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
+import { getChange } from 'middleware/transactions';
 import {
   consoleOut,
   copyText,
@@ -158,7 +155,6 @@ import {
   getAmountWithSymbol,
   getSdkValue,
   getTxIxResume,
-  openLinkInNewTab,
   shortenAddress,
   toUiAmount,
 } from 'middleware/utils';
@@ -208,6 +204,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AppsList,
+  AssetActivity,
   MoneyStreamsIncomingView,
   MoneyStreamsInfoView,
   MoneyStreamsOutgoingView,
@@ -228,7 +225,7 @@ const PersonalAccountSummary = React.lazy(
 const StakingComponent = React.lazy(() => import('../staking/index'));
 const VestingComponent = React.lazy(() => import('../vesting/index'));
 
-const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let isWorkflowLocked = false;
 
 export const AccountsView = () => {
@@ -1408,21 +1405,6 @@ export const AccountsView = () => {
     [recordTxConfirmation, resetTransactionStatus],
   );
 
-  const getChange = useCallback(
-    (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
-      if (meta !== null && accountIndex !== -1) {
-        const prevBalance = meta.preBalances[accountIndex] || 0;
-        const postbalance = meta.postBalances[accountIndex] || 0;
-        const change =
-          getAmountFromLamports(postbalance) -
-          getAmountFromLamports(prevBalance);
-        return change;
-      }
-      return 0;
-    },
-    [],
-  );
-
   // Filter only useful Txs for the SOL account and return count
   const getSolAccountItems = useCallback(
     (txs: MappedTransaction[]): number => {
@@ -1453,7 +1435,7 @@ export const AccountsView = () => {
         return 0;
       }
     },
-    [selectedAccount.address, isSelectedAssetNativeAccount, getChange],
+    [selectedAccount.address, isSelectedAssetNativeAccount],
   );
 
   // Lets consider there are items to render if there are transactions for selected asset (NOT SOL)
@@ -5584,55 +5566,13 @@ export const AccountsView = () => {
     if (loadingTokenAccounts) {
       return (
         <div className="flex flex-center">
-          <Spin indicator={antIcon} />
+          <Spin indicator={loadIndicator} />
         </div>
       );
     } else if (tokensLoaded) {
       return (
         <div className="flex flex-center">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-        </div>
-      );
-    } else {
-      return null;
-    }
-  };
-
-  const renderLoadingOrNoNftsMessage = () => {
-    if (loadingTokenAccounts) {
-      return (
-        <div className="flex flex-center">
-          <Spin indicator={antIcon} />
-        </div>
-      );
-    } else if (tokensLoaded) {
-      return (
-        <div className="flex-column flex-center justify-content-center h-100">
-          <IconNoItems
-            className="mean-svg-icons fg-secondary-50"
-            style={{ width: 50, height: 50 }}
-          />
-          <div className="font-size-120 font-bold fg-secondary-75 mt-2 mb-2">
-            No NFTs
-          </div>
-          <div className="font-size-110 fg-secondary-50 mb-3">
-            Get started with your first NFT
-          </div>
-          <div className="text-center">
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              onClick={() => openLinkInNewTab('https://magiceden.io/')}
-            >
-              <span className="mr-1">Browse Magic Eden</span>
-              <IconExternalLink
-                className="mean-svg-icons fg-secondary-70"
-                style={{ width: 22, height: 22 }}
-              />
-            </Button>
-          </div>
         </div>
       );
     } else {
@@ -5689,16 +5629,6 @@ export const AccountsView = () => {
   };
 
   const renderNftList = () => {
-    if (!accountNfts || accountNfts.length === 0) {
-      return (
-        <div
-          key="asset-category-nft-items"
-          className="asset-category flex-column h-75"
-        >
-          {renderLoadingOrNoNftsMessage()}
-        </div>
-      );
-    }
 
     const onNftItemClick = (item: MeanNft) => {
       consoleOut('clicked on NFT item:', item, 'blue');
@@ -5718,13 +5648,15 @@ export const AccountsView = () => {
     return (
       <>
         <NftPaginatedList
-          presetNftMint={selectedNft ? undefined : nftMint}
           connection={connection}
+          loadingTokenAccounts={loadingTokenAccounts}
           nftList={accountNfts}
           onNftItemClick={(nft: MeanNft) =>
             onNftItemClick(nft)
           }
+          presetNftMint={selectedNft ? undefined : nftMint}
           selectedNft={selectedNft}
+          tokensLoaded={tokensLoaded}
         />
       </>
     );
@@ -5752,33 +5684,6 @@ export const AccountsView = () => {
   };
 
   const renderOtherAssetsList = () => {
-    if (loadingPrograms) {
-      return (
-        <div
-          key="asset-category-other-assets-items"
-          className="asset-category flex-column flex-center h-75"
-        >
-          <Spin indicator={antIcon} />
-        </div>
-      );
-    } else if (!loadingPrograms && (!programs || programs.length === 0)) {
-      return (
-        <div
-          key="asset-category-other-assets-items"
-          className="asset-category flex-column flex-center h-75"
-        >
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <span>
-                No programs found
-              </span>
-            }
-          />
-        </div>
-      );
-    }
-
     const onProgramSelected = (item: ProgramAccounts) => {
       setSelectedApp(undefined);
       setSelectedAsset(undefined);
@@ -5801,6 +5706,7 @@ export const AccountsView = () => {
 
     return (
       <OtherAssetsList
+        loadingPrograms={loadingPrograms}
         onProgramSelected={(item: ProgramAccounts) => onProgramSelected(item)}
         programs={programs}
         selectedProgram={selectedProgram}
@@ -5828,146 +5734,19 @@ export const AccountsView = () => {
   };
 
   const renderActivityList = () => {
-    const hasItems = hasItemsToRender();
-
-    if (status === FetchStatus.Fetching && !hasItems) {
-      return (
-        <div className="flex flex-center">
-          <Spin indicator={antIcon} />
-        </div>
-      );
-    }
-
-    const renderMessages = () => {
-      if (status === FetchStatus.Fetched && !hasTransactions()) {
-        return (
-          <div className="h-100 flex-center">
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={<p>{t('assets.no-transactions')}</p>}
-            />
-          </div>
-        );
-      } else if (status === FetchStatus.FetchFailed) {
-        return (
-          <div className="h-100 flex-center">
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={<p>{t('assets.loading-error')}</p>}
-            />
-          </div>
-        );
-      } else {
-        return null;
-      }
-    };
-
     return (
-      <>
-        {/* Activity list */}
-        <div
-          className={`transaction-list-data-wrapper ${(status === FetchStatus.Fetched && !hasTransactions()) ||
-            status === FetchStatus.FetchFailed
-            ? 'h-100'
-            : 'vertical-scroll'
-            }`}
-        >
-          <div className="activity-list h-100">
-            {hasTransactions() ? (
-              <div className="item-list-body compact">
-                {renderTransactions()}
-              </div>
-            ) : (
-              renderMessages()
-            )}
-            {lastTxSignature && (
-              <div className="mt-1 text-center">
-                <span
-                  className={
-                    status === FetchStatus.Fetching
-                      ? 'no-pointer'
-                      : 'secondary-link underline-on-hover'
-                  }
-                  role="link"
-                  onClick={() => startSwitch()}
-                >
-                  {status === FetchStatus.Fetching ? (
-                    <>
-                      <span className="mr-1">
-                        <LoadingOutlined style={{ fontSize: '16px' }} />
-                      </span>
-                      <span className="no-pointer fg-orange-red pulsate-fast">
-                        {t('general.loading')}
-                      </span>
-                    </>
-                  ) : (
-                    t('general.cta-load-more')
-                  )}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </>
+      <AssetActivity
+        accountTokens={accountTokens}
+        hasItems={hasItemsToRender()}
+        isAssetNativeAccount={isSelectedAssetNativeAccount()}
+        lastTxSignature={lastTxSignature}
+        selectedAccountAddress={selectedAccount.address}
+        selectedAsset={selectedAsset}
+        status={status}
+        transactions={transactions}
+        onLoadMore={() => startSwitch()}
+      />
     );
-  };
-
-  const renderTransactions = () => {
-    if (transactions) {
-      if (isSelectedAssetNativeAccount()) {
-        // Render only txs that have SOL changes
-        const filtered = transactions.filter(tx => {
-          const meta =
-            tx.parsedTransaction && tx.parsedTransaction.meta
-              ? tx.parsedTransaction.meta
-              : null;
-          if (!meta || meta.err !== null) {
-            return false;
-          }
-          const accounts = tx.parsedTransaction.transaction.message.accountKeys;
-          const accIdx = accounts.findIndex(
-            acc => acc.pubkey.toBase58() === selectedAccount.address,
-          );
-          if (isSelectedAssetNativeAccount() && accIdx === -1) {
-            return false;
-          }
-          // Get amount change for each tx
-          const change = getChange(accIdx, meta);
-          return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
-        });
-        return filtered?.map((trans: MappedTransaction) => {
-          return (
-            <TransactionItemView
-              key={`${trans.signature}`}
-              transaction={trans}
-              selectedAsset={selectedAsset as UserTokenAccount}
-              accountAddress={selectedAccount.address}
-              tokenAccounts={accountTokens}
-            />
-          );
-        });
-      } else {
-        // Render the transactions collection
-        return transactions.map((trans: MappedTransaction) => {
-          if (
-            trans.parsedTransaction &&
-            trans.parsedTransaction.meta &&
-            trans.parsedTransaction.meta.err === null
-          ) {
-            return (
-              <TransactionItemView
-                key={`${trans.signature}`}
-                transaction={trans}
-                selectedAsset={selectedAsset as UserTokenAccount}
-                accountAddress={selectedAccount.address}
-                tokenAccounts={accountTokens}
-              />
-            );
-          }
-          return null;
-        });
-      }
-    } else return null;
   };
 
   const renderUserAccountAssetMenu = () => {

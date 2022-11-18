@@ -1,30 +1,37 @@
-import { CheckOutlined } from '@ant-design/icons';
+import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
   FindNftsByOwnerOutput,
   Metaplex,
-  Nft,
-  NftWithToken,
-  Sft,
-  SftWithToken,
 } from '@metaplex-foundation/js';
 import { Connection } from '@solana/web3.js';
-import { Spin } from 'antd';
+import { Button, Spin } from 'antd';
 import { fallbackImgSrc } from 'constants/common';
-import { IconArrowBack, IconArrowForward } from 'Icons';
+import { IconArrowBack, IconArrowForward, IconExternalLink, IconNoItems } from 'Icons';
+import { openLinkInNewTab } from 'middleware/utils';
 import { MeanNft } from 'models/accounts/NftTypes';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const pageSize = 4;
 
 export const NftPaginatedList = (props: {
-  presetNftMint: string | undefined;
   connection: Connection;
-  nftList: FindNftsByOwnerOutput;
+  loadingTokenAccounts: boolean;
+  nftList: FindNftsByOwnerOutput | undefined;
   onNftItemClick?: any;
+  presetNftMint: string | undefined;
   selectedNft: MeanNft | undefined;
+  tokensLoaded: boolean;
 }) => {
-  const { presetNftMint, connection, nftList, onNftItemClick, selectedNft } =
-    props;
+  const {
+    connection,
+    loadingTokenAccounts,
+    nftList,
+    onNftItemClick,
+    presetNftMint,
+    selectedNft,
+    tokensLoaded,
+  } = props;
 
   const [loading, setLoading] = useState(false);
   const [shouldPresetItem, setShouldPresetItem] = useState<boolean>(true);
@@ -37,6 +44,10 @@ export const NftPaginatedList = (props: {
 
   const loadData = useCallback(
     async (startIndex: number, endIndex: number) => {
+      if (!nftList) {
+        return null;
+      }
+
       const nftsToLoad = nftList.filter(
         (_, index) => index >= startIndex && index < endIndex,
       );
@@ -65,7 +76,9 @@ export const NftPaginatedList = (props: {
       console.log('nfts:', nfts);
       if (shouldPresetItem && presetNftMint) {
         setShouldPresetItem(false);
-        const item = nfts.find(i => i.address.toBase58() === presetNftMint);
+        const item = nfts
+          ? nfts.find(i => i.address.toBase58() === presetNftMint)
+          : undefined;
         if (item) {
           onNftItemClick(item);
         }
@@ -81,7 +94,7 @@ export const NftPaginatedList = (props: {
 
   useEffect(() => {
     if (!presetNftMint || !shouldPresetItem) {
-      if (!currentPage && nftList.length > 0) {
+      if (!currentPage && nftList && nftList.length > 0) {
         setCurrentPage(1);
       }
       return;
@@ -89,9 +102,9 @@ export const NftPaginatedList = (props: {
 
     // Find nft given by presetNftMint in nftList
     // Calculate and set page number
-    const itemIndex = nftList.findIndex(
-      (n: any) => n.mintAddress.toBase58() === presetNftMint,
-    );
+    const itemIndex = nftList
+      ? nftList.findIndex((n: any) => n.mintAddress.toBase58() === presetNftMint)
+      : -1;
     if (itemIndex !== -1) {
       const pageNumber = calculatePageNumber(pageSize, itemIndex);
       setCurrentPage(pageNumber);
@@ -114,6 +127,59 @@ export const NftPaginatedList = (props: {
   const imageOnErrorHandler = (
     event: React.SyntheticEvent<HTMLImageElement, Event>,
   ) => (event.currentTarget.src = fallbackImgSrc);
+
+  const renderLoadingOrNoNftsMessage = () => {
+    if (loadingTokenAccounts) {
+      return (
+        <div className="flex flex-center">
+          <Spin indicator={loadIndicator} />
+        </div>
+      );
+    } else if (tokensLoaded) {
+      return (
+        <div className="flex-column flex-center justify-content-center h-100">
+          <IconNoItems
+            className="mean-svg-icons fg-secondary-50"
+            style={{ width: 50, height: 50 }}
+          />
+          <div className="font-size-120 font-bold fg-secondary-75 mt-2 mb-2">
+            No NFTs
+          </div>
+          <div className="font-size-110 fg-secondary-50 mb-3">
+            Get started with your first NFT
+          </div>
+          <div className="text-center">
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={() => openLinkInNewTab('https://magiceden.io/')}
+            >
+              <span className="mr-1">Browse Magic Eden</span>
+              <IconExternalLink
+                className="mean-svg-icons fg-secondary-70"
+                style={{ width: 22, height: 22 }}
+              />
+            </Button>
+          </div>
+        </div>
+      );
+    } else {
+      return null;
+    }
+  };
+
+  if (!nftList || nftList.length === 0) {
+    return (
+      <div
+        key="asset-category-nft-items"
+        className="asset-category flex-column h-75"
+      >
+        {renderLoadingOrNoNftsMessage()}
+      </div>
+    );
+  }
 
   return (
     <>

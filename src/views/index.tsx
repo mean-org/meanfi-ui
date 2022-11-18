@@ -1,4 +1,5 @@
 export { AppsList } from './AppsList';
+export { AssetActivity } from './AssetActivity';
 export { JupiterExchange } from './JupiterExchange';
 export { MoneyStreamsIncomingView } from './MoneyStreamsIncoming';
 export { MoneyStreamsInfoView } from './MoneyStreamsInfo';
