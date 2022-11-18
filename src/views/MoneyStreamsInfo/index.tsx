@@ -40,6 +40,7 @@ import { ResumeItem } from 'components/ResumeItem';
 import { RightInfoDetails } from 'components/RightInfoDetails';
 import { SendAssetModal } from 'components/SendAssetModal';
 import { StreamOpenModal } from 'components/StreamOpenModal';
+import { StreamStatusSummary } from 'components/StreamStatusSummary';
 import { TreasuryAddFundsModal } from 'components/TreasuryAddFundsModal';
 import { TreasuryCreateModal } from 'components/TreasuryCreateModal';
 import { TreasuryStreamCreateModal } from 'components/TreasuryStreamCreateModal';
@@ -60,7 +61,7 @@ import { appConfig, customLogger } from 'index';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
-import { getStreamStatusResume, getStreamTitle } from 'middleware/streams';
+import { getStreamTitle } from 'middleware/streams';
 import {
   consoleOut,
   getIntervalFromSeconds,
@@ -1832,98 +1833,6 @@ export const MoneyStreamsInfoView = (props: {
     [t],
   );
 
-  const getTimeRemaining = useCallback((time: string) => {
-    if (time) {
-      const countDownDate = new Date(time).getTime();
-      const now = new Date().getTime();
-      const timeleft = countDownDate - now;
-
-      const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
-      const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
-      const hours = Math.floor(
-        (timeleft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-      );
-      const days = Math.floor(timeleft / (1000 * 60 * 60 * 24));
-      const weeks = Math.floor(days / 7);
-      const months = Math.floor(days / 30);
-      const years = Math.floor(days / 365);
-
-      if (
-        years === 0 &&
-        months === 0 &&
-        weeks === 0 &&
-        days === 0 &&
-        hours === 0 &&
-        minutes === 0 &&
-        seconds === 0
-      ) {
-        return `out of funds`;
-      } else if (
-        years === 0 &&
-        months === 0 &&
-        weeks === 0 &&
-        days === 0 &&
-        hours === 0 &&
-        minutes === 0 &&
-        seconds <= 60
-      ) {
-        return <span className="fg-warning">less than a minute left</span>;
-      } else if (
-        years === 0 &&
-        months === 0 &&
-        weeks === 0 &&
-        days === 0 &&
-        hours === 0 &&
-        minutes <= 60
-      ) {
-        return (
-          <span className="fg-warning">{`only ${minutes} ${
-            minutes > 1 ? 'minutes' : 'minute'
-          } left`}</span>
-        );
-      } else if (
-        years === 0 &&
-        months === 0 &&
-        weeks === 0 &&
-        days === 0 &&
-        hours <= 24
-      ) {
-        return (
-          <span className="fg-warning">{`only ${hours} ${
-            hours > 1 ? 'hours' : 'hour'
-          } left`}</span>
-        );
-      } else if (
-        years === 0 &&
-        months === 0 &&
-        weeks === 0 &&
-        days > 1 &&
-        days <= 7
-      ) {
-        return `${days} ${days > 1 ? 'days' : 'day'} left`;
-      } else if (years === 0 && months === 0 && days > 7 && days <= 30) {
-        return `${weeks} ${weeks > 1 ? 'weeks' : 'week'} left`;
-      } else if (years === 0 && days > 30 && days <= 365) {
-        return `${months} ${months > 1 ? 'months' : 'month'} left`;
-      } else if (days > 365) {
-        return `${years} ${years > 1 ? 'years' : 'year'} left`;
-      } else {
-        return '';
-      }
-    }
-  }, []);
-
-  const streamStatusSubtitle = (item: Stream | StreamInfo) => {
-    if (!item) {
-      return '';
-    }
-
-    if (item.version >= 2 && (item as Stream).status === STREAM_STATUS.Running) {
-      return getTimeRemaining((item as Stream).estimatedDepletionDate);
-    }
-    return getStreamStatusResume(item, t);
-  }
-
   const goToIncomingTabHandler = () => {
     const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
     navigate(url);
@@ -2955,7 +2864,6 @@ export const MoneyStreamsInfoView = (props: {
         : 'Unknown incoming stream';
       const subtitle = getStreamSubtitle(stream) || '0.00';
       const status = getStreamStatus(stream);
-      const resume = streamStatusSubtitle(stream);
 
       const withdrawResume = isNew
         ? displayAmountWithSymbol(
@@ -2989,7 +2897,7 @@ export const MoneyStreamsInfoView = (props: {
               (isNew && v2.withdrawableAmount.gtn(0)) ||
               (!isNew && v1.escrowVestedAmount > 0)
                 ? `${withdrawResume} available`
-                : resume
+                : <StreamStatusSummary stream={stream} />
             }
             status={status}
             hasRightIcon={true}
@@ -3077,7 +2985,6 @@ export const MoneyStreamsInfoView = (props: {
         : 'Unknown outgoing stream';
       const subtitle = getStreamSubtitle(stream) || '0.00';
       const status = getStreamStatus(stream);
-      const resume = streamStatusSubtitle(stream);
 
       return (
         <div
@@ -3092,7 +2999,7 @@ export const MoneyStreamsInfoView = (props: {
             img={img}
             title={title}
             subtitle={subtitle}
-            resume={resume}
+            resume={<StreamStatusSummary stream={stream} />}
             status={status}
             hasRightIcon={true}
             rightIcon={<IconArrowForward className="mean-svg-icons" />}
