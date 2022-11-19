@@ -5195,7 +5195,7 @@ export const AccountsView = () => {
         value: AssetGroups.Apps,
       },
       {
-        label: `OtherAssets`,
+        label: `Other Assets (${programs ? programs.length : 0})`,
         value: AssetGroups.OtherAssets,
       },
     ];
@@ -5726,7 +5726,7 @@ export const AccountsView = () => {
       case AssetGroups.Apps:
         return <span>Explore supported Apps</span>;
       case AssetGroups.OtherAssets:
-        return <span>Other assets and programs</span>;
+        return <span>Mints, Smart Contracts and other assets</span>;
       default:
         return <span>&nbsp;</span>;
     }

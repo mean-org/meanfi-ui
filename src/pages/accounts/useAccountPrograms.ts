@@ -1,15 +1,25 @@
+import { Connection } from '@solana/web3.js';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
+import { useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { getProgramsByUpgradeAuthority } from 'middleware/getProgramsByUpgradeAuthority';
 import { consoleOut } from 'middleware/ui';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 
 const useAccountPrograms = () => {
-  const connection = useConnection();
+  const { endpoint } = useConnectionConfig();
   const { publicKey } = useWallet();
   const { selectedAccount, setPrograms } = useContext(AppStateContext);
   const [loadingPrograms, setLoadingPrograms] = useState(false);
+
+  const connection = useMemo(
+    () =>
+      new Connection(endpoint, {
+        commitment: 'confirmed',
+        disableRetryOnRateLimit: true,
+      }),
+    [endpoint],
+  );
 
   // Get Programs owned by the account in context
   useEffect(() => {
