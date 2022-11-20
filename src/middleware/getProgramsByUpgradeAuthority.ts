@@ -83,7 +83,7 @@ export const getProgramsByUpgradeAuthority = async (
       promises.push(getProgramAccountsPromise(dataAcc));
     }
     await Promise.all(promises);
-    sleep(1_000, false);
+    sleep(500, true);
   }
 
   return programs;
