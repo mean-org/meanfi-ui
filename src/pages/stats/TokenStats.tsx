@@ -14,6 +14,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { openNotification } from '../../components/Notifications';
 import { InfoIcon } from '../../components/InfoIcon';
 import { MEANFI_DOCS_URL } from 'constants/common';
+import { IconLoading } from 'Icons';
 
 export const TokenStats = ({ meanStats, smeanSupply, totalVolume24h }: any) => {
   return (
@@ -201,7 +202,7 @@ export const SecondCardsLayout = ({
     },
     {
       label: 'stats.market.holders-title',
-      value: formatThousands(meanStats.holders),
+      value: meanStats.holders !== undefined ? formatThousands(meanStats.holders) : <IconLoading className="mean-svg-icons" />,
       description: 'stats.market.token-holders',
     },
     {
