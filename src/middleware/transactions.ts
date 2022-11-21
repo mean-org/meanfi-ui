@@ -1,4 +1,5 @@
 import { base64 } from '@project-serum/anchor/dist/cjs/utils/bytes';
+import { SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import {
   Connection,
   PublicKey,
@@ -7,8 +8,12 @@ import {
   Transaction,
   ParsedTransactionMeta,
 } from '@solana/web3.js';
+import { MeanFiWallet } from 'contexts/wallet';
+import { customLogger } from 'index';
+import { SendTxResult, SignTxResult } from 'models/CreateTxResult';
 import { TransactionStatus } from '../models/enums';
 import { Confirmations, Timestamp } from '../models/transactions';
+import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { getAmountFromLamports } from './utils';
 
 export class TransactionWithSignature {
@@ -155,4 +160,124 @@ export const getChange = (accountIndex: number, meta: ParsedTransactionMeta | nu
     return change;
   }
   return 0;
+};
+
+export const signTx = async (
+  title: string,
+  wallet: MeanFiWallet,
+  publicKey: PublicKey,
+  transaction: Transaction | null,
+): Promise<SignTxResult> => {
+  const txLog: any[] = [];
+
+  if (wallet && publicKey && wallet.signTransaction && transaction) {
+    return (wallet as SignerWalletAdapter)
+    .signTransaction(transaction)
+    .then(async (signed: Transaction) => {
+      consoleOut(
+        'signTransaction returned a signed transaction:',
+        signed,
+      );
+      txLog.push({
+        action: getTransactionStatusForLogs(
+          TransactionStatus.SignTransactionSuccess,
+        ),
+        result: { signer: publicKey.toBase58() },
+      });
+      const encodedTx = signed.serialize().toString('base64');
+      consoleOut('encodedTx:', encodedTx, 'orange');
+      return {
+        encodedTransaction: encodedTx,
+        log: txLog,
+      };
+    })
+    .catch((error: any) => {
+      console.error('Signing transaction failed!');
+      txLog.push({
+        action: getTransactionStatusForLogs(
+          TransactionStatus.SignTransactionFailure,
+        ),
+        result: { signer: `${publicKey.toBase58()}`, error: `${error}` },
+      });
+      customLogger.logError(`${title || 'Sign'} transaction failed`, {
+        transcript: txLog,
+      });
+      return {
+        encodedTransaction: null,
+        log: txLog,
+      };
+      });
+  } else {
+    txLog.push({
+      action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+      result: 'Cannot start transaction or Wallet not found!',
+    });
+    customLogger.logError(`${title || 'Sign'} transaction failed`, {
+      transcript: txLog,
+    });
+    return {
+      encodedTransaction: null,
+      log: txLog,
+    };
+  }
+};
+
+export const sendTx = async (
+  title: string,
+  connection: Connection,
+  wallet: MeanFiWallet,
+  encodedTx: string,
+): Promise<SendTxResult> => {
+  const txLog: any[] = [];
+
+  if (
+    connection &&
+    wallet &&
+    wallet.publicKey &&
+    encodedTx
+  ) {
+    return connection
+      .sendEncodedTransaction(encodedTx)
+      .then(sig => {
+        consoleOut('sendEncodedTransaction returned a signature:', sig);
+        txLog.push({
+          action: getTransactionStatusForLogs(
+            TransactionStatus.SendTransactionSuccess,
+          ),
+          result: `signature: ${sig}`,
+        });
+        return {
+          signature: sig,
+          log: txLog,
+        };
+      })
+      .catch(error => {
+        console.error(error);
+        txLog.push({
+          action: getTransactionStatusForLogs(
+            TransactionStatus.SendTransactionFailure,
+          ),
+          result: { error, encodedTx },
+        });
+        customLogger.logError(`${title || 'Sign'} transaction failed`, {
+          transcript: txLog,
+        });
+        return {
+          signature: null,
+          log: txLog,
+        };
+      });
+  } else {
+    txLog.push({
+      action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+      result: 'Cannot start transaction or Wallet not found!',
+    });
+    customLogger.logError(`${title || 'Sign'} transaction failed`, {
+      transcript: txLog,
+    });
+    return {
+      signature: null,
+      log: txLog,
+    };
+  }
 };

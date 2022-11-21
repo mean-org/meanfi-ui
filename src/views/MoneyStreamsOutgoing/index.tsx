@@ -58,6 +58,7 @@ import {
   SegmentStreamAddFundsData,
   SegmentStreamCloseData,
 } from 'middleware/segment-service';
+import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   getTransactionModalTitle,
@@ -359,8 +360,8 @@ export const MoneyStreamsOutgoingView = (props: {
         })
         .finally(() => setUserBalances(balancesMap));
 
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [publicKey, connection],
   );
 
@@ -2190,11 +2191,11 @@ export const MoneyStreamsOutgoingView = (props: {
   const onExecuteCloseStreamTransaction = async (
     closeTreasuryData: CloseStreamParams,
   ) => {
-    let transaction: Transaction;
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuth = '';
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
@@ -2568,73 +2569,6 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Close stream transaction failed', {
-              transcript: transactionLog,
-            });
-            segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Close stream transaction failed', {
-          transcript: transactionLog,
-        });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
     if (wallet && streamSelected) {
       showCloseStreamTransactionModal();
       let created: boolean;
@@ -2648,39 +2582,57 @@ export const MoneyStreamsOutgoingView = (props: {
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          const loadingMessage = multisigAuth
-            ? `Create proposal to close stream ${streamName}`
-            : `Close stream: ${streamName}`;
-          const completedMessage = multisigAuth
-            ? `Proposal to close stream ${streamName} was submitted for Multisig approval.`
-            : `Successfully closed stream: ${streamName}`;
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.StreamClose,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage,
-            completedTitle: 'Transaction confirmed',
-            completedMessage,
-            extras: {
-              multisigAuthority: multisigAuth,
-            },
-          });
-
+        const sign = await signTx('Close Stream', wallet, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionFinished,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-
-          setCloseStreamTransactionModalVisibility(false);
-          setOngoingOperation(undefined);
-          onCloseStreamTransactionFinished();
+          const sent = await sendTx('Close Stream', connection, wallet, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature && !transactionCancelled) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            const loadingMessage = multisigAuth
+              ? `Create proposal to close stream ${streamName}`
+              : `Close stream: ${streamName}`;
+            const completedMessage = multisigAuth
+              ? `Proposal to close stream ${streamName} was submitted for Multisig approval.`
+              : `Successfully closed stream: ${streamName}`;
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamClose,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage,
+              completedTitle: 'Transaction confirmed',
+              completedMessage,
+              extras: {
+                multisigAuthority: multisigAuth,
+              },
+            });
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished,
+            });
+            setCloseStreamTransactionModalVisibility(false);
+            setOngoingOperation(undefined);
+            onCloseStreamTransactionFinished();
+          } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            setIsBusy(false);
+          }
         } else {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
+          });
           setIsBusy(false);
         }
       } else {

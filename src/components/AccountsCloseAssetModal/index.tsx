@@ -181,9 +181,6 @@ export const AccountsCloseAssetModal = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!',
         });
-        customLogger.logError('Close Account transaction failed', {
-          transcript: txLog,
-        });
         return {
           transaction: null,
           log: txLog,
