@@ -34,6 +34,7 @@ export interface StreamTopupParams {
   treasuryType: StreamTreasuryType | undefined;
   fundFromTreasury: boolean;
   associatedToken: string;
+  proposalTitle: string;
 }
 
 export interface StreamTopupTxCreateParams {
@@ -43,6 +44,7 @@ export interface StreamTopupTxCreateParams {
   stream: string;
   amount: number | string;
   associatedToken: string;
+  proposalTitle: string;
 }
 
 export interface PartnerImage {

@@ -603,10 +603,10 @@ export const MoneyStreamsOutgoingView = (props: {
       const expirationTime = parseInt(
         (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
       );
-
+      const proposalTitle = data.proposalTitle;
       const tx = await multisigClient.createTransaction(
         publicKey,
-        'Add Funds',
+        proposalTitle,
         '', // description
         new Date(expirationTime * 1_000),
         OperationType.StreamAddFunds,
@@ -637,6 +637,7 @@ export const MoneyStreamsOutgoingView = (props: {
         stream: payload.stream.toBase58(),
         amount: payload.amount,
         associatedToken: addFundsData.associatedToken,
+        proposalTitle: addFundsData.proposalTitle,
       };
       return await allocateToStream(data)
         .then(value => {
@@ -3114,6 +3115,7 @@ export const MoneyStreamsOutgoingView = (props: {
           handleOk={onAcceptAddFunds}
           handleClose={closeAddFundsModal}
           selectedToken={workingToken}
+          isMultisigContext={isMultisigTreasury()}
         />
       )}
 

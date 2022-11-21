@@ -31,6 +31,7 @@ import { StreamTopupParams } from '../../models/common-types';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { NATIVE_SOL_MINT } from '../../middleware/ids';
 import { TokenInfo } from 'models/SolanaTokenInfo';
+import { InputMean } from 'components/InputMean';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
@@ -43,6 +44,7 @@ export const StreamAddFundsModal = (props: {
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
   withdrawTransactionFees: TransactionFees;
+  isMultisigContext: boolean;
 }) => {
   const {
     handleClose,
@@ -53,8 +55,8 @@ export const StreamAddFundsModal = (props: {
     userBalances,
     selectedToken,
     streamDetail,
-    transactionFees,
     withdrawTransactionFees,
+    isMultisigContext,
   } = props;
   const {
     splTokenList,
@@ -84,6 +86,7 @@ export const StreamAddFundsModal = (props: {
     useState<any>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
+  const [proposalTitle, setProposalTitle] = useState('');
 
   const getTreasuryType = useCallback(
     (
@@ -351,8 +354,9 @@ export const StreamAddFundsModal = (props: {
 
   const onAcceptTopup = () => {
     const params: StreamTopupParams = {
+      proposalTitle,
       amount: topupAmount,
-      tokenAmount: tokenAmount,
+      tokenAmount,
       treasuryType: streamTreasuryType,
       fundFromTreasury: shouldFundFromTreasury(),
       associatedToken: selectedToken
@@ -405,6 +409,7 @@ export const StreamAddFundsModal = (props: {
     );
     return ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
       (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
+      proposalTitle &&
       tokenAmount &&
       (tokenAmount as BN).gtn(0) &&
       ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
@@ -418,6 +423,9 @@ export const StreamAddFundsModal = (props: {
   };
 
   const getTransactionStartButtonLabel = (): string => {
+    if (!proposalTitle) {
+      return 'Add a proposal title';
+    }
     if (!selectedToken) {
       return t('transactions.validation.no-balance');
     }
@@ -494,6 +502,24 @@ export const StreamAddFundsModal = (props: {
               <h3>{t('streams.add-funds.treasury-money-stream-title')}</h3>
               <p>{t('streams.add-funds.treasury-money-stream-description')}</p>
             </>
+          )}
+          {/* Proposal title */}
+          {isMultisigContext && (
+            <div className="mb-3 mt-3">
+              <div className="form-label text-left">
+                {t('multisig.proposal-modal.title')}
+              </div>
+              <InputMean
+                id="proposal-title-field"
+                name="Title"
+                className={`w-100 general-text-input`}
+                onChange={(e: any) => {
+                  setProposalTitle(e.target.value);
+                }}
+                placeholder="Add a proposal title (required)"
+                value={proposalTitle}
+              />
+            </div>
           )}
           {/* Top up amount */}
           <div className="form-label">
