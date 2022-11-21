@@ -8,15 +8,14 @@ import {
   MultisigParticipant,
   MultisigTransaction,
   MultisigTransactionFees,
-  MULTISIG_ACTIONS,
+  MULTISIG_ACTIONS
 } from '@mean-dao/mean-multisig-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
 import {
   ConfirmOptions,
   Connection,
-  MemcmpFilter,
   PublicKey,
-  Transaction,
+  Transaction
 } from '@solana/web3.js';
 import { Button, Empty, Spin, Tooltip } from 'antd';
 import { segmentAnalytics } from 'App';
@@ -30,21 +29,19 @@ import { useConnectionConfig } from 'contexts/connection';
 import {
   confirmationEvents,
   TxConfirmationContext,
-  TxConfirmationInfo,
+  TxConfirmationInfo
 } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { appConfig, customLogger } from 'index';
-import { BPF_LOADER_UPGRADEABLE_PID, NATIVE_SOL_MINT } from 'middleware/ids';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
 import {
-  formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
-  getTxIxResume,
+  getTxIxResume
 } from 'middleware/utils';
-import { ProgramAccounts } from 'models/accounts';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { MultisigProposalsWithAuthority, ZERO_FEES } from 'models/multisig';
 import SerumIDL from 'models/serum-multisig-idl';
@@ -54,12 +51,11 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState,
+  useState
 } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ProgramDetailsView } from './components/ProgramDetails';
 import { ProposalDetailsView } from './components/ProposalDetails';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
@@ -74,7 +70,6 @@ const SafeView = (props: {
 }) => {
   const { appsProvider, safeBalance, solanaApps, onNewProposalClicked } = props;
   const {
-    programs,
     multisigTxs,
     multisigAccounts,
     selectedAccount,
@@ -86,7 +81,6 @@ const SafeView = (props: {
     setSelectedMultisig,
     refreshMultisigs,
     setMultisigTxs,
-    setPrograms,
   } = useContext(AppStateContext);
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(
     TxConfirmationContext,
@@ -113,11 +107,6 @@ const SafeView = (props: {
   // Tx control
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  // Programs
-  const [programSelected, setProgramSelected] = useState<any>();
-  const [needReloadPrograms, setNeedReloadPrograms] = useState(false);
-  const [loadingPrograms, setLoadingPrograms] = useState(false);
-  const [isProgramDetails, setIsProgramDetails] = useState(false);
   // Other
   const [loadingProposalDetails, setLoadingProposalDetails] = useState(false);
   const [selectedProposal, setSelectedProposal] =
@@ -1985,92 +1974,6 @@ const SafeView = (props: {
     refreshMultisigs().then(() => proposalLoadStatusRegister.clear());
   }, [publicKey, refreshMultisigs]);
 
-  const getProgramsByUpgradeAuthority = useCallback(async (): Promise<
-    ProgramAccounts[]
-  > => {
-    if (!connection || !selectedMultisig || !selectedMultisig.authority) {
-      return [];
-    }
-
-    const execDataAccountsFilter: MemcmpFilter = {
-      memcmp: { offset: 13, bytes: selectedMultisig.authority.toBase58() },
-    };
-
-    const execDataAccounts = await connection.getProgramAccounts(
-      BPF_LOADER_UPGRADEABLE_PID,
-      {
-        filters: [execDataAccountsFilter],
-      },
-    );
-
-    if (execDataAccounts.length === 0) {
-      return [];
-    }
-
-    const programs: ProgramAccounts[] = [];
-    const group = (size: number, data: any) => {
-      const result = [];
-      for (let i = 0; i < data.length; i += size) {
-        result.push(data.slice(i, i + size));
-      }
-      return result;
-    };
-
-    const sleep = (ms: number, log = true) => {
-      if (log) {
-        consoleOut('Sleeping for', ms / 1000, 'seconds');
-      }
-      return new Promise(resolve => setTimeout(resolve, ms));
-    };
-
-    const getProgramAccountsPromise = async (execDataAccount: any) => {
-      const execAccountsFilter: MemcmpFilter = {
-        memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() },
-      };
-
-      const execAccounts = await connection.getProgramAccounts(
-        BPF_LOADER_UPGRADEABLE_PID,
-        {
-          dataSlice: { offset: 0, length: 0 },
-          filters: [execAccountsFilter],
-        },
-      );
-
-      if (execAccounts.length === 0) {
-        return;
-      }
-
-      if (execAccounts.length > 1) {
-        throw new Error(
-          `More than one program was found for program data account '${execDataAccount.pubkey.toBase58()}'`,
-        );
-      }
-
-      consoleOut('programAccounts:', execAccounts, 'blue');
-
-      programs.push({
-        pubkey: execAccounts[0].pubkey,
-        owner: execAccounts[0].account.owner,
-        executable: execDataAccount.pubkey,
-        upgradeAuthority: selectedMultisig.authority,
-        size: execDataAccount.account.data.byteLength,
-      } as ProgramAccounts);
-    };
-
-    const execDataAccountsGroups = group(8, execDataAccounts);
-
-    for (const groupItem of execDataAccountsGroups) {
-      const promises: Promise<any>[] = [];
-      for (const dataAcc of groupItem) {
-        promises.push(getProgramAccountsPromise(dataAcc));
-      }
-      await Promise.all(promises);
-      sleep(1_000, false);
-    }
-
-    return programs;
-  }, [connection, selectedMultisig]);
-
   const getActiveMultisigAuthorityByReference = useCallback(() => {
     if (!selectedMultisigRef || !selectedMultisigRef.current) {
       return '';
@@ -2123,33 +2026,6 @@ const SafeView = (props: {
       setPreviousBalance(account?.lamports);
     }
   }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
-
-  // Get Programs
-  useEffect(() => {
-    if (!connection || !selectedMultisig || !needReloadPrograms) {
-      return;
-    }
-
-    setTimeout(() => {
-      setNeedReloadPrograms(false);
-      setLoadingPrograms(true);
-    });
-
-    setPrograms([]);
-    getProgramsByUpgradeAuthority()
-      .then(progs => {
-        setPrograms(progs);
-        consoleOut('programs:', progs);
-      })
-      .catch(error => console.error(error))
-      .finally(() => setLoadingPrograms(false));
-  }, [
-    connection,
-    needReloadPrograms,
-    selectedMultisig,
-    getProgramsByUpgradeAuthority,
-    setPrograms,
-  ]);
 
   // Get MultisigTxs (proposals)
   useEffect(() => {
@@ -2215,13 +2091,11 @@ const SafeView = (props: {
           ) {
             consoleOut('Multisig is already selected!', 'skipping...', 'blue');
             setNeedRefreshTxs(true);
-            setNeedReloadPrograms(true);
             return;
           }
           consoleOut('Making multisig active:', item, 'blue');
           setSelectedMultisig(item);
           setNeedRefreshTxs(true);
-          setNeedReloadPrograms(true);
         }
       } else {
         setSelectedMultisig(undefined);
@@ -2258,56 +2132,10 @@ const SafeView = (props: {
       if (filteredMultisigTx) {
         setSelectedProposal(filteredMultisigTx);
         setIsProposalDetails(true);
-        setIsProgramDetails(false);
         consoleOut('filteredMultisigTx:', filteredMultisigTx, 'orange');
       }
     }
   }, [id, selectedMultisig, publicKey, queryParamV, multisigTxs]);
-
-  // Process route params and set item (program) specified in the url by id
-  useEffect(() => {
-    if (!publicKey || !selectedMultisig || programs === undefined || !id) {
-      setIsProgramDetails(false);
-      return;
-    }
-
-    const isProgramsFork =
-      queryParamV === 'programs' ||
-        queryParamV === 'transactions' ||
-        queryParamV === 'anchor-idl'
-        ? true
-        : false;
-
-    if (isProgramsFork) {
-      consoleOut('id:', id, 'purple');
-      consoleOut('queryParamV:', queryParamV, 'purple');
-      consoleOut(
-        'selectedMultisig:',
-        selectedMultisig.authority.toBase58(),
-        'purple',
-      );
-      const filteredProgram = programs.filter(
-        program => program.pubkey.toBase58() === id,
-      )[0];
-      if (filteredProgram) {
-        setProgramSelected(filteredProgram);
-        setIsProposalDetails(false);
-        setIsProgramDetails(true);
-        consoleOut('filteredProgram:', filteredProgram, 'orange');
-        consoleOut(
-          'filteredProgram details:',
-          {
-            pubkey: filteredProgram.pubkey.toBase58(),
-            owner: filteredProgram.owner.toBase58(),
-            upgradeAuthority: filteredProgram.upgradeAuthority ? filteredProgram.upgradeAuthority.toBase58() : null,
-            executable: filteredProgram.executable.toBase58(),
-            size: formatThousands(filteredProgram.size),
-          },
-          'orange',
-        );
-      }
-    }
-  }, [id, programs, publicKey, queryParamV, selectedMultisig]);
 
   // Setup event listeners
   useEffect(() => {
@@ -2358,11 +2186,6 @@ const SafeView = (props: {
     setNeedRefreshTxs(true);
   };
 
-  const onRefresMultisigDetailTabs = () => {
-    setNeedRefreshTxs(true);
-    setNeedReloadPrograms(true);
-  };
-
   const goToProposalDetailsHandler = (selectedProposal: any) => {
     const url = `${MULTISIG_ROUTE_BASE_PATH}/proposals/${selectedProposal.id.toBase58()}?v=instruction`;
     navigate(url);
@@ -2380,12 +2203,6 @@ const SafeView = (props: {
     navigate(url);
   };
 
-  const returnFromProgramDetailsHandler = () => {
-    setIsProgramDetails(false);
-    const url = `${MULTISIG_ROUTE_BASE_PATH}?v=programs`;
-    navigate(url);
-  };
-
   ///////////////
   // Rendering //
   ///////////////
@@ -2395,40 +2212,7 @@ const SafeView = (props: {
       return null;
     }
 
-    if (!isProposalDetails && !isProgramDetails) {
-      if (selectedMultisig.version === 0) {
-        return (
-          <SafeSerumInfoView
-            connection={connection}
-            isProgramDetails={isProgramDetails}
-            isProposalDetails={isProposalDetails}
-            multisigClient={multisigSerumClient}
-            onNewProposalClicked={onNewProposalClicked}
-            multisigTxs={[]}
-            onDataToProgramView={goToProgramDetailsHandler}
-            onDataToSafeView={goToProposalDetailsHandler}
-            onEditMultisigClick={onEditMultisigClick}
-            selectedMultisig={selectedMultisig}
-          />
-        );
-      } else {
-        return (
-          <SafeMeanInfo
-            connection={connection}
-            loadingPrograms={loadingPrograms}
-            loadingProposals={loadingProposals}
-            multisigClient={multisigClient}
-            onDataToProgramView={goToProgramDetailsHandler}
-            onDataToSafeView={goToProposalDetailsHandler}
-            onEditMultisigClick={onEditMultisigClick}
-            onNewProposalClicked={onNewProposalClicked}
-            safeBalanceInUsd={safeBalance}
-            selectedMultisig={selectedMultisig}
-            selectedTab={queryParamV}
-          />
-        );
-      }
-    } else if (isProposalDetails) {
+    if (isProposalDetails) {
       return (
         <ProposalDetailsView
           onDataToSafeView={returnFromProposalDetailsHandler}
@@ -2451,16 +2235,37 @@ const SafeView = (props: {
           }
         />
       );
-    } else if (isProgramDetails) {
-      return (
-        <ProgramDetailsView
-          onDataToProgramView={returnFromProgramDetailsHandler}
-          programSelected={programSelected}
-          selectedMultisig={selectedMultisig}
-        />
-      );
     } else {
-      return null;
+      if (selectedMultisig.version === 0) {
+        return (
+          <SafeSerumInfoView
+            connection={connection}
+            isProposalDetails={isProposalDetails}
+            multisigClient={multisigSerumClient}
+            onNewProposalClicked={onNewProposalClicked}
+            multisigTxs={[]}
+            onDataToProgramView={goToProgramDetailsHandler}
+            onDataToSafeView={goToProposalDetailsHandler}
+            onEditMultisigClick={onEditMultisigClick}
+            selectedMultisig={selectedMultisig}
+          />
+        );
+      } else {
+        return (
+          <SafeMeanInfo
+            connection={connection}
+            loadingProposals={loadingProposals}
+            multisigClient={multisigClient}
+            onDataToProgramView={goToProgramDetailsHandler}
+            onDataToSafeView={goToProposalDetailsHandler}
+            onEditMultisigClick={onEditMultisigClick}
+            onNewProposalClicked={onNewProposalClicked}
+            safeBalanceInUsd={safeBalance}
+            selectedMultisig={selectedMultisig}
+            selectedTab={queryParamV}
+          />
+        );
+      }
     }
   };
 

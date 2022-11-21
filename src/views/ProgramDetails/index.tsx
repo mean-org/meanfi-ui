@@ -1,7 +1,6 @@
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   MeanMultisig,
-  MultisigInfo,
 } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees } from '@mean-dao/msp';
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -16,22 +15,24 @@ import {
   Transaction,
   TransactionInstructionCtorFields,
 } from '@solana/web3.js';
-import { Button, Col, Row, Tooltip } from 'antd';
+import { Button, Col, notification, Row, Tooltip } from 'antd';
+import { segmentAnalytics } from 'App';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { MultisigSetProgramAuthModal } from 'components/MultisigSetProgramAuthModal';
 import { MultisigUpgradeProgramModal } from 'components/MultisigUpgradeProgramModal';
+import { openNotification } from 'components/Notifications';
 import { TabsMean } from 'components/TabsMean';
-import { NO_FEES } from 'constants/common';
+import { MULTISIG_ROUTE_BASE_PATH, NO_FEES } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
-import { TxConfirmationContext } from 'contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
-import { IconArrowBack } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { resolveParsedAccountInfo } from 'middleware/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID, NATIVE_SOL_MINT } from 'middleware/ids';
+import { AppUsageEvent } from 'middleware/segment-service';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import {
   formatThousands,
@@ -40,37 +41,39 @@ import {
   getTxIxResume,
   shortenAddress,
 } from 'middleware/utils';
-import { OperationType, TransactionStatus } from 'models/enums';
+import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { SetProgramAuthPayload } from 'models/multisig';
 import { ProgramUpgradeParams } from 'models/programs';
 import moment from 'moment';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import ReactJson from 'react-json-view';
+import { useNavigate } from 'react-router-dom';
 import './style.scss';
 
-export const ProgramDetailsView = (props: {
-  onDataToProgramView?: any;
+let isWorkflowLocked = false;
+
+const ProgramDetailsView = (props: {
   programSelected: any;
-  selectedMultisig?: MultisigInfo;
 }) => {
+  const navigate = useNavigate();
   const { account } = useNativeAccount();
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const {
     selectedAccount,
+    selectedMultisig,
     transactionStatus,
-    refreshTokenBalance,
     setTransactionStatus,
+    refreshTokenBalance,
+    refreshMultisigs,
   } = useContext(AppStateContext);
   const {
-    fetchTxInfoStatus,
+    confirmationHistory,
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
 
   const {
-    onDataToProgramView,
     programSelected,
-    selectedMultisig,
   } = props;
 
   const [transactionFees, setTransactionFees] =
@@ -83,15 +86,11 @@ export const ProgramDetailsView = (props: {
   const [loadingTxs, setLoadingTxs] = useState(true);
   const [programTransactions, setProgramTransactions] = useState<any>();
   const [upgradeAuthority, setUpgradeAuthority] = useState<string | null>(null);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
   const noIdlInfo =
     'The program IDL is not initialized. To load the IDL info please run `anchor idl init` with the required parameters from your program workspace.';
 
-  // When back button is clicked, goes to Safe Info
-  const hideProgramDetailsHandler = () => {
-    // Sends the value to the parent component "SafeView"
-    onDataToProgramView();
-  };
 
   /////////////////
   //  Init code  //
@@ -123,9 +122,25 @@ export const ProgramDetailsView = (props: {
     );
   }, [publicKey, connection, multisigProgramAddressPK, connectionConfig.endpoint]);
 
-  const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === 'fetching' ? true : false;
-  }, [isBusy, fetchTxInfoStatus]);
+  const isTxInProgress = useCallback(
+    (operation?: OperationType) => {
+      if (confirmationHistory && confirmationHistory.length > 0) {
+        if (operation !== undefined) {
+          return confirmationHistory.some(
+            h =>
+              h.operationType === operation &&
+              h.txInfoFetchStatus === 'fetching',
+          );
+        } else {
+          return confirmationHistory.some(
+            h => h.txInfoFetchStatus === 'fetching',
+          );
+        }
+      }
+      return false;
+    },
+    [confirmationHistory],
+  );
 
   const isMultisigContext = useMemo(() => {
     return publicKey && selectedAccount.isMultisig ? true : false;
@@ -138,6 +153,137 @@ export const ProgramDetailsView = (props: {
       currentOperation: TransactionStatus.Iddle,
     });
   }, [setTransactionStatus]);
+
+  const getMultisigList = useCallback(() => {
+    if (!publicKey) {
+      return;
+    }
+
+    refreshMultisigs();
+  }, [publicKey, refreshMultisigs]);
+
+  const recordTxConfirmation = useCallback(
+    (item: TxConfirmationInfo, success = true) => {
+      let event: any = undefined;
+
+      if (item) {
+        switch (item.operationType) {
+          case OperationType.UpgradeProgram:
+            event = success
+              ? AppUsageEvent.UpgradeProgramCompleted
+              : AppUsageEvent.UpgradeProgramFailed;
+            break;
+          case OperationType.SetMultisigAuthority:
+            event = success
+              ? AppUsageEvent.SetMultisigAuthorityCompleted
+              : AppUsageEvent.SetMultisigAuthorityFailed;
+            break;
+          default:
+            break;
+        }
+        if (event) {
+          segmentAnalytics.recordEvent(event, { signature: item.signature });
+        }
+      }
+    },
+    [],
+  );
+
+  const reloadMultisigs = useCallback(() => {
+    const refreshCta = document.getElementById('multisig-refresh-cta');
+    if (refreshCta) {
+      refreshCta.click();
+    }
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+    const turnOffLockWorkflow = () => {
+      isWorkflowLocked = false;
+    };
+
+    const notifyMultisigActionFollowup = (item: TxConfirmationInfo) => {
+      if (!item || !item.extras || !item.extras.multisigAuthority) {
+        turnOffLockWorkflow();
+        return;
+      }
+
+      const myNotifyKey = `notify-${Date.now()}`;
+      openNotification({
+        type: 'info',
+        key: myNotifyKey,
+        title: 'Review proposal',
+        duration: 20,
+        description: (
+          <>
+            <div className="mb-2">
+              The proposal's status can be reviewed in the Safe's proposal list.
+            </div>
+            <Button
+              type="primary"
+              shape="round"
+              size="small"
+              className="extra-small d-flex align-items-center pb-1"
+              onClick={() => {
+                notification.close(myNotifyKey);
+                const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
+                navigate(url);
+              }}
+            >
+              Review proposal
+            </Button>
+          </>
+        ),
+        handleClose: turnOffLockWorkflow,
+      });
+    };
+
+    if (item) {
+      if (isWorkflowLocked) {
+        return;
+      }
+
+      // Lock the workflow
+      if (item.extras && item.extras.multisigAuthority) {
+        isWorkflowLocked = true;
+      }
+
+      consoleOut(`ProgramDetailsView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
+      recordTxConfirmation(item, true);
+      switch (item.operationType) {
+        case OperationType.UpgradeProgram:
+          if (item.extras && item.extras.multisigAuthority) {
+            notifyMultisigActionFollowup(item);
+            reloadMultisigs();
+          }
+          break;
+        case OperationType.SetMultisigAuthority:
+          if (item.extras && item.extras.multisigAuthority) {
+            notifyMultisigActionFollowup(item);
+            reloadMultisigs();
+          } else if (!item.extras || !item.extras.multisigAuthority) {
+            window.location.href = '/';
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  }, [navigate, recordTxConfirmation, reloadMultisigs]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback(
+    (item: TxConfirmationInfo) => {
+      if (item) {
+        consoleOut('onTxTimedout event executed:', item, 'crimson');
+        recordTxConfirmation(item, false);
+        setIsBusy(false);
+      }
+      resetTransactionStatus();
+    },
+    [recordTxConfirmation, resetTransactionStatus],
+  );
+
 
   // Upgrade program modal
   const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
@@ -1196,6 +1342,38 @@ export const ProgramDetailsView = (props: {
     };
   }, [connection, getProgramIDL, programSelected, publicKey]);
 
+  // Setup event listeners
+  useEffect(() => {
+    if (canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut(
+        'Subscribed to event txConfirmed with:',
+        'onTxConfirmed',
+        'blue',
+      );
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut(
+        'Subscribed to event txTimedout with:',
+        'onTxTimedout',
+        'blue',
+      );
+    }
+  }, [canSubscribe, onTxConfirmed, onTxTimedout]);
+
+  // Unsubscribe from events
+  useEffect(() => {
+    // Do unmounting stuff here
+    return () => {
+      confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      setCanSubscribe(true);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const renderIdlTree = () => {
     return !selectedProgramIdl ? (
       <div className={'no-idl-info'}>{noIdlInfo}</div>
@@ -1224,18 +1402,8 @@ export const ProgramDetailsView = (props: {
 
   return (
     <>
+      <span id="multisig-refresh-cta" onClick={() => getMultisigList()}></span>
       <div className="program-details-container">
-        {isMultisigContext ? (
-          <Row gutter={[8, 8]} className="program-details-resume mb-1 mr-0 ml-0">
-            <div
-              onClick={hideProgramDetailsHandler}
-              className="back-button icon-button-container"
-            >
-              <IconArrowBack className="mean-svg-icons" />
-              <span className="ml-1">Back</span>
-            </div>
-          </Row>
-        ) : null}
 
         <Row gutter={[8, 8]} className="safe-info-container mr-0 ml-0">
           {infoProgramData.map((info, index) => (
@@ -1346,3 +1514,5 @@ export const ProgramDetailsView = (props: {
     </>
   );
 };
+
+export default ProgramDetailsView;

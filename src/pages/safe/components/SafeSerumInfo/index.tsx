@@ -12,7 +12,6 @@ import { SafeInfo } from '../SafeInfo';
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;
-  isProgramDetails: boolean;
   isProposalDetails: boolean;
   multisigClient: Program<Idl>;
   multisigTxs: MultisigTransaction[];
@@ -188,7 +187,6 @@ export const SafeSerumInfoView = (props: {
         programs.length > 0 &&
         programs.map((program: any) => {
           const onSelectProgram = () => {
-            // Sends isProgramDetails value to the parent component "SafeView"
             props.onDataToProgramView(program);
           };
 

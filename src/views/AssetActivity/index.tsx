@@ -39,30 +39,6 @@ export const AssetActivity = (props: {
     return transactions && transactions.length > 0 ? true : false;
   }, [transactions]);
 
-  const renderMessages = () => {
-    if (status === FetchStatus.Fetched && !hasTransactions) {
-      return (
-        <div className="h-100 flex-center">
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={<p>{t('assets.no-transactions')}</p>}
-          />
-        </div>
-      );
-    } else if (status === FetchStatus.FetchFailed) {
-      return (
-        <div className="h-100 flex-center">
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={<p>{t('assets.loading-error')}</p>}
-          />
-        </div>
-      );
-    } else {
-      return null;
-    }
-  };
-
   const renderTransactions = () => {
     if (transactions) {
       if (isAssetNativeAccount) {
@@ -121,7 +97,25 @@ export const AssetActivity = (props: {
     } else return null;
   };
 
-  if (status === FetchStatus.Fetching && !hasItems) {
+  if (status === FetchStatus.FetchFailed && !hasItems) {
+    return (
+      <div className="h-100 flex-center">
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={<p>{t('assets.loading-error')}</p>}
+        />
+      </div>
+    );
+  } else if (status === FetchStatus.Fetched && !hasItems) {
+    return (
+      <div className="h-100 flex-center">
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={<p>{t('assets.no-transactions')}</p>}
+        />
+      </div>
+    );
+  } else if (status === FetchStatus.Fetching && !hasItems) {
     return (
       <div className="flex flex-center">
         <Spin indicator={loadIndicator} />
@@ -142,9 +136,7 @@ export const AssetActivity = (props: {
           <div className="item-list-body compact">
             {renderTransactions()}
           </div>
-        ) : (
-          renderMessages()
-        )}
+        ) : null}
         {lastTxSignature && (
           <div className="mt-1 text-center">
             <span
