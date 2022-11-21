@@ -145,6 +145,7 @@ export interface CreateVestingStreamParams {
 }
 
 export interface VestingContractCloseStreamOptions {
+  proposalTitle: string;
   closeTreasuryOption: boolean;
   vestedReturns: number | string;
   unvestedReturns: number | string;
