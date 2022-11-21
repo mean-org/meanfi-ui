@@ -409,7 +409,7 @@ export const StreamAddFundsModal = (props: {
     );
     return ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
       (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
-      proposalTitle &&
+      (proposalTitle || !isMultisigContext) &&
       tokenAmount &&
       (tokenAmount as BN).gtn(0) &&
       ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
@@ -423,7 +423,7 @@ export const StreamAddFundsModal = (props: {
   };
 
   const getTransactionStartButtonLabel = (): string => {
-    if (!proposalTitle) {
+    if (!proposalTitle && isMultisigContext) {
       return 'Add a proposal title';
     }
     if (!selectedToken) {

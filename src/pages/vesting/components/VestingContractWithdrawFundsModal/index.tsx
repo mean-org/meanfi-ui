@@ -185,7 +185,7 @@ export const VestingContractWithdrawFundsModal = (props: {
     const br = getMinBalanceRequired();
     return publicKey &&
       to &&
-      proposalTitle &&
+      (proposalTitle || !isMultisigTreasury) &&
       isValidAddress(to) &&
       selectedToken &&
       isVerifiedRecipient &&
@@ -198,7 +198,7 @@ export const VestingContractWithdrawFundsModal = (props: {
   };
 
   const getButtonLabel = () => {
-    return !proposalTitle
+    return !proposalTitle && isMultisigTreasury
       ? 'Add a proposal title'
       : !to || !isValidAddress(to)
       ? 'Add destination account'
