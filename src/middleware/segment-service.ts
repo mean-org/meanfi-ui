@@ -129,6 +129,10 @@ export enum AppUsageEvent {
   ExecuteProposalFailed = 'Execute Proposal Failed',
   CancelProposalCompleted = 'Cancel Proposal Completed',
   CancelProposalFailed = 'Cancel Proposal Failed',
+  UpgradeProgramCompleted = 'Upgrade Program Completed',
+  UpgradeProgramFailed = 'Upgrade Program Failed',
+  SetMultisigAuthorityCompleted = 'Set Multisig Authority Completed',
+  SetMultisigAuthorityFailed = 'Set Multisig Authority Failed',
   // Streaming Account Actions
   // Create streaming account
   CreateStreamingAccountFormButton = 'Create Streaming Account form button click',

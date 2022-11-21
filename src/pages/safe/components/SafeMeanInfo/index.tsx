@@ -1,8 +1,4 @@
-import {
-  MeanMultisig,
-  MultisigTransaction,
-  MultisigTransactionSummary,
-} from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
@@ -20,9 +16,8 @@ import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { ACCOUNT_LAYOUT } from 'middleware/layouts';
 import { consoleOut } from 'middleware/ui';
 import {
-  formatThousands,
   getAmountFromLamports,
-  shortenAddress,
+  shortenAddress
 } from 'middleware/utils';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +26,6 @@ import { SafeInfo } from '../SafeInfo';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
-  loadingPrograms: boolean;
   loadingProposals: boolean;
   multisigClient: MeanMultisig | undefined;
   onDataToProgramView: any;
@@ -44,10 +38,8 @@ export const SafeMeanInfo = (props: {
 }) => {
   const {
     connection,
-    loadingPrograms,
     loadingProposals,
     multisigClient,
-    onDataToProgramView,
     onDataToSafeView,
     onEditMultisigClick,
     onNewProposalClicked,
@@ -56,7 +48,6 @@ export const SafeMeanInfo = (props: {
     selectedTab,
   } = props;
   const {
-    programs,
     multisigTxs,
     multisigSolBalance,
     setMultisigSolBalance,
@@ -77,17 +68,10 @@ export const SafeMeanInfo = (props: {
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [multisigAddress, setMultisigAddress] = useState('');
-  const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<
-    MultisigTransactionSummary | undefined
-  >(undefined);
-  const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<
-    MultisigTransaction | undefined
-  >();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
   // Tabs
   const [amountOfProposals, setAmountOfProposals] = useState<string>('');
-  const [amountOfPrograms, setAmountOfPrograms] = useState<string>('');
   const multisigAddressPK = useMemo(
     () => new PublicKey(appConfig.getConfig().multisigProgramAddress),
     [],
@@ -170,7 +154,6 @@ export const SafeMeanInfo = (props: {
             result.forEach(item => {
               modifiedResults.push(item);
             });
-            // setAssetsWithoutSol(result);
             setMultisigVaults(modifiedResults);
             consoleOut('Multisig assets', modifiedResults, 'blue');
           })
@@ -192,10 +175,8 @@ export const SafeMeanInfo = (props: {
   // Keep account balance updated
   useEffect(() => {
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
       refreshTokenBalance();
       setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
       setPreviousBalance(account?.lamports);
     }
   }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
@@ -219,8 +200,6 @@ export const SafeMeanInfo = (props: {
     if (multisigAddress && lastSentTxOperationType) {
       if (fetchTxInfoStatus === 'fetched') {
         clearTxConfirmationContext();
-        sethHighlightedMultisigTx(undefined);
-        setMultisigTransactionSummary(undefined);
       } else if (fetchTxInfoStatus === 'error') {
         clearTxConfirmationContext();
         openNotification({
@@ -256,7 +235,6 @@ export const SafeMeanInfo = (props: {
     fetchTxInfoStatus,
     lastSentTxSignature,
     clearTxConfirmationContext,
-    // refreshVaults,
     lastSentTxOperationType,
   ]);
 
@@ -292,14 +270,6 @@ export const SafeMeanInfo = (props: {
   }, [multisigTxs]);
 
   useEffect(() => {
-    if (programs && programs.length > 0) {
-      setAmountOfPrograms(`(${programs.length})`);
-    } else {
-      setAmountOfPrograms('');
-    }
-  }, [programs]);
-
-  useEffect(() => {
     const loading = selectedMultisig ? true : false;
     const timeout = setTimeout(() => {
       setLoadingAssets(loading);
@@ -321,7 +291,6 @@ export const SafeMeanInfo = (props: {
         {multisigTxs && multisigTxs.length > 0 ? (
           multisigTxs.map((proposal, index) => {
             const onSelectProposal = () => {
-              // Sends proposal value to the parent component "SafeView"
               onDataToSafeView(proposal);
             };
             const title = proposal.details.title
@@ -373,51 +342,6 @@ export const SafeMeanInfo = (props: {
     );
   }, [loadingProposals, multisigTxs, onDataToSafeView]);
 
-  const renderListOfPrograms = useCallback(() => {
-    if (loadingPrograms) {
-      return <span className="pl-1">Loading programs ...</span>;
-    }
-
-    return (
-      <>
-        {programs && programs.length > 0 ? (
-          programs.map((program, index) => {
-            const onSelectProgram = () => {
-              // Sends program value to the parent component "SafeView"
-              onDataToProgramView(program);
-            };
-            const programTitle = program.pubkey
-              ? shortenAddress(program.pubkey, 4)
-              : 'Unknown program';
-            const programSubtitle = shortenAddress(program.pubkey, 8);
-            return (
-              <div
-                key={`${index + 1}`}
-                onClick={onSelectProgram}
-                className={`w-100 simplelink hover-list ${
-                  (index + 1) % 2 === 0 ? '' : 'bg-secondary-02'
-                }`}
-              >
-                <ResumeItem
-                  id={program.pubkey.toBase58()}
-                  title={programTitle}
-                  subtitle={programSubtitle}
-                  amount={formatThousands(program.size)}
-                  resume="bytes"
-                  hasRightIcon={true}
-                  rightIcon={<IconArrowForward className="mean-svg-icons" />}
-                  isLink={true}
-                />
-              </div>
-            );
-          })
-        ) : (
-          <span className="pl-1">This multisig has no programs</span>
-        )}
-      </>
-    );
-  }, [loadingPrograms, onDataToProgramView, programs]);
-
   // Tabs
   const proposalsTabContent = useCallback(() => {
     return {
@@ -427,14 +351,6 @@ export const SafeMeanInfo = (props: {
     };
   }, [amountOfProposals, renderListOfProposals]);
 
-  const programsTabContent = useCallback(() => {
-    return {
-      id: 'programs',
-      name: `Programs ${amountOfPrograms}`,
-      render: renderListOfPrograms(),
-    };
-  }, [amountOfPrograms, renderListOfPrograms]);
-
   return (
     <>
       <SafeInfo
@@ -443,7 +359,6 @@ export const SafeMeanInfo = (props: {
         selectedMultisig={selectedMultisig}
         selectedTab={selectedTab}
         totalSafeBalance={safeBalanceInUsd}
-        programsTabContent={programsTabContent()}
         proposalsTabContent={proposalsTabContent()}
       />
     </>

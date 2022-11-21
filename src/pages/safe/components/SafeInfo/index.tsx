@@ -18,7 +18,6 @@ import { useParams, useSearchParams } from 'react-router-dom';
 export const SafeInfo = (props: {
   onEditMultisigClick?: any;
   onNewProposalClicked?: any;
-  programsTabContent?: any;
   proposalsTabContent?: any;
   totalSafeBalance?: number;
   safeNameImg?: string;
@@ -30,7 +29,6 @@ export const SafeInfo = (props: {
   const {
     onEditMultisigClick,
     onNewProposalClicked,
-    programsTabContent,
     proposalsTabContent,
     totalSafeBalance,
     safeNameImg,
@@ -200,19 +198,6 @@ export const SafeInfo = (props: {
         children: 'Loading...',
       });
     }
-    if (programsTabContent) {
-      items.push({
-        key: programsTabContent.id,
-        label: programsTabContent.name,
-        children: programsTabContent.render,
-      });
-    } else {
-      items.push({
-        key: 'programs',
-        label: 'Programs',
-        children: 'Loading...',
-      });
-    }
 
     return (
       <Tabs
@@ -222,7 +207,7 @@ export const SafeInfo = (props: {
         className="neutral"
       />
     );
-  }, [onTabChanged, programsTabContent, proposalsTabContent, selectedTab]);
+  }, [onTabChanged, proposalsTabContent, selectedTab]);
 
   const renderTabset = () => {
     if (tabs && tabs.length > 0) {

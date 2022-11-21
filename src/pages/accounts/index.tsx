@@ -146,6 +146,7 @@ import {
   consoleOut,
   copyText,
   getTransactionStatusForLogs,
+  isLocal,
   kFormatter,
   toUsCurrency,
 } from 'middleware/ui';
@@ -187,7 +188,6 @@ import {
   INITIAL_TREASURIES_SUMMARY,
   UserTreasuriesSummary,
 } from 'models/treasuries';
-import { ProgramDetailsView } from 'pages/safe/components/ProgramDetails';
 import { QRCodeSVG } from 'qrcode.react';
 import React, {
   Suspense,
@@ -219,11 +219,10 @@ import './style.scss';
 import useAccountPrograms from './useAccountPrograms';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
-const PersonalAccountSummary = React.lazy(
-  () => import('../../views/WalletAccountSummary/index'),
-);
 const StakingComponent = React.lazy(() => import('../staking/index'));
 const VestingComponent = React.lazy(() => import('../vesting/index'));
+const ProgramDetailsComponent = React.lazy(() => import('../../views/ProgramDetails/index'));
+const PersonalAccountSummary = React.lazy(() => import('../../views/WalletAccountSummary/index'));
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let isWorkflowLocked = false;
@@ -306,7 +305,6 @@ export const AccountsView = () => {
     useState<AccountsPageCategory>('assets');
   const [selectedApp, setSelectedApp] = useState<KnownAppMetadata>();
   const [isUnwrapping, setIsUnwrapping] = useState(false);
-  const [pathParamAsset, setPathParamAsset] = useState('');
   const [pathParamStreamId, setPathParamStreamId] = useState('');
   const [pathParamTreasuryId, setPathParamTreasuryId] = useState('');
   const [pathParamStreamingTab, setPathParamStreamingTab] = useState('');
@@ -514,7 +512,7 @@ export const AccountsView = () => {
         if (operation !== undefined) {
           return confirmationHistory.some(
             h =>
-              h.operationType === OperationType.ExecuteTransaction &&
+              h.operationType === operation &&
               h.txInfoFetchStatus === 'fetching',
           );
         } else {
@@ -1363,20 +1361,6 @@ export const AccountsView = () => {
           setTimeout(() => {
             hardReloadStreams();
           }, 20);
-          break;
-        case OperationType.UpgradeProgram:
-          if (item.extras && item.extras.multisigAuthority) {
-            refreshMultisigs();
-            notifyMultisigActionFollowup(item);
-          }
-          break;
-        case OperationType.SetMultisigAuthority:
-          if (item.extras && item.extras.multisigAuthority) {
-            refreshMultisigs();
-            notifyMultisigActionFollowup(item);
-          } else if (!item.extras || !item.extras.multisigAuthority) {
-            window.location.href = '/';
-          }
           break;
         default:
           break;
@@ -3885,7 +3869,6 @@ export const AccountsView = () => {
 
     if (asset) {
       consoleOut('Route param asset:', asset, 'crimson');
-      setPathParamAsset(asset);
     }
 
     if (streamingTab) {
@@ -3945,9 +3928,7 @@ export const AccountsView = () => {
       // 2.- If the route starts with assets, set category to "assets"
       consoleOut('Setting category:', 'assets', 'crimson');
       setSelectedCategory('assets');
-      if (!asset) {
-        setPathParamAsset('');
-      } else if (autoOpenDetailsPanel) {
+      if (asset && autoOpenDetailsPanel) {
         setDetailsPanelOpen(true);
       }
     } else if (
@@ -4086,8 +4067,8 @@ export const AccountsView = () => {
     }
 
     if (selectedAccount.address) {
-      setShouldLoadTransactions(() => false);
-      setLoadingTransactions(() => true);
+      setShouldLoadTransactions(false);
+      setLoadingTransactions(true);
 
       // Get the address to scan and ensure there is one
       const pk = getScanAddress(selectedAsset);
@@ -4237,7 +4218,7 @@ export const AccountsView = () => {
   // Set program specified in the path as programId from the list of programs
   useEffect(() => {
 
-    if (!connection || !publicKey || isMultisigContext || !location.pathname.startsWith('/programs/')) {
+    if (!connection || !publicKey) {
       return;
     }
 
@@ -4289,10 +4270,10 @@ export const AccountsView = () => {
 
   // Preset token based on url param asset
   useEffect(() => {
-    if (pathParamAsset && accountTokens && accountTokens.length > 0) {
-      consoleOut('Presetting token based on url...', pathParamAsset, 'crimson');
+    if (asset && accountTokens && accountTokens.length > 0) {
+      consoleOut('Presetting token based on url...', asset, 'crimson');
       const inferredAsset = accountTokens.find(
-        t => t.publicAddress === pathParamAsset,
+        t => t.publicAddress === asset,
       );
       if (inferredAsset) {
         consoleOut('selected:', inferredAsset.symbol, 'crimson');
@@ -4301,7 +4282,7 @@ export const AccountsView = () => {
         selectAsset(accountTokens[0]);
         consoleOut('selected:', accountTokens[0].symbol, 'crimson');
       }
-    } else if (!pathParamAsset && accountTokens && accountTokens.length > 0) {
+    } else if (!asset && accountTokens && accountTokens.length > 0) {
       if (location.pathname.startsWith('/assets')) {
         consoleOut(
           'No token in url, try selecting native account...',
@@ -4323,7 +4304,7 @@ export const AccountsView = () => {
   }, [
     accountTokens,
     location.pathname,
-    pathParamAsset,
+    asset,
     selectedAccount.address,
   ]);
 
@@ -5441,11 +5422,6 @@ export const AccountsView = () => {
         setAutoOpenDetailsPanel(true);
         navigateToAsset(asset);
         setSelectedNft(undefined);
-        if (selectedCategory !== 'assets') {
-          setTimeout(() => {
-            reloadSwitch();
-          }, 100);
-        }
       };
 
       const priceByAddress = getTokenPriceByAddress(asset.address);
@@ -5557,7 +5533,6 @@ export const AccountsView = () => {
       getTokenPriceBySymbol,
       navigateToAsset,
       shouldHideAsset,
-      reloadSwitch,
     ],
   );
 
@@ -5688,14 +5663,8 @@ export const AccountsView = () => {
       setSelectedAsset(undefined);
       setSelectedCategory('other-assets');
 
-      let url = '';
-      if (isMultisigContext) {
-        url = `/${RegisteredAppPaths.SuperSafe}/programs/${item.pubkey.toBase58()}?v=transactions`;
-      } else {
-        url = `/programs/${item.pubkey.toBase58()}?v=transactions`
-      }
-
       // Activate panels and navigate
+      const url = `/programs/${item.pubkey.toBase58()}?v=transactions`
       setTimeout(() => {
         setAutoOpenDetailsPanel(true);
         setDetailsPanelOpen(true);
@@ -6000,15 +5969,15 @@ export const AccountsView = () => {
     );
   };
 
-  const goToStreamIncomingDetailsHandler = (stream: any) => {
-    const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming/${stream.id as string
-      }`;
+  const goToStreamIncomingDetailsHandler = (stream: Stream | StreamInfo) => {
+    const id = stream.version >= 2 ? (stream as Stream).id.toBase58() : (stream as StreamInfo).id as string;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming/${id}`;
     navigate(url);
   };
 
-  const goToStreamOutgoingDetailsHandler = (stream: any) => {
-    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${stream.id as string
-      }`;
+  const goToStreamOutgoingDetailsHandler = (stream: Stream | StreamInfo) => {
+    const id = stream.version >= 2 ? (stream as Stream).id.toBase58() : (stream as StreamInfo).id as string;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${id}`;
     navigate(url);
   };
 
@@ -6022,10 +5991,10 @@ export const AccountsView = () => {
     }
   };
 
-  const goToStreamingAccountStreamDetailsHandler = (stream: any) => {
+  const goToStreamingAccountStreamDetailsHandler = (stream: Stream | StreamInfo) => {
+    const id = stream.version >= 2 ? (stream as Stream).id.toBase58() : (stream as StreamInfo).id as string;
     setPreviousRoute(location.pathname);
-    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${stream.id as string
-      }`;
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${id}`;
     navigate(url);
   };
 
@@ -6108,14 +6077,22 @@ export const AccountsView = () => {
     }
   };
 
+  const renderSpinner = () => {
+    return (
+      <div className="h-100 flex-center">
+        <Spin spinning={true} />
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
-          <span>autoOpenDetailsPanel:</span><span className="mx-1 font-bold">{autoOpenDetailsPanel ? 'true' : 'false'}</span>
-          <span>detailsPanelOpen:</span><span className="mx-1 font-bold">{detailsPanelOpen ? 'true' : 'false'}</span>
+          <span>selectedProgram:</span><span className="mx-1 font-bold">{selectedProgram ? 'true' : 'false'}</span>
+          <span>programAddress:</span><span className="mx-1 font-bold">{programId || '-'}</span>
         </div>
-      )} */}
+      )}
 
       {detailsPanelOpen && (
         <Button
@@ -6318,11 +6295,7 @@ export const AccountsView = () => {
                     {selectedApp?.slug === RegisteredAppPaths.SuperSafe ? (
                       <>
                         <Suspense
-                          fallback={
-                            <div className="h-100 flex-center">
-                              <Spin spinning={true} />
-                            </div>
-                          }
+                          fallback={renderSpinner()}
                         >
                           <SafeDetails
                             appsProvider={appsProvider}
@@ -6340,11 +6313,7 @@ export const AccountsView = () => {
                       ) ? (
                       <>
                         <Suspense
-                          fallback={
-                            <div className="h-100 flex-center">
-                              <Spin spinning={true} />
-                            </div>
-                          }
+                          fallback={renderSpinner()}
                         >
                           <StakingComponent />
                         </Suspense>
@@ -6357,11 +6326,7 @@ export const AccountsView = () => {
                       ) ? (
                       <>
                         <Suspense
-                          fallback={
-                            <div className="h-100 flex-center">
-                              <Spin spinning={true} />
-                            </div>
-                          }
+                          fallback={renderSpinner()}
                         >
                           <VestingComponent
                             appSocialLinks={selectedApp.socials}
@@ -6373,12 +6338,12 @@ export const AccountsView = () => {
                     {location.pathname.startsWith('/programs/') ? (
                       <div className="safe-details-component scroll-wrapper vertical-scroll">
                         {selectedProgram ? (
-                          <ProgramDetailsView programSelected={selectedProgram} />
-                        ) : (
-                          <div className="h-100 flex-center">
-                            <Spin spinning={true} />
-                          </div>
-                        )}
+                          <Suspense
+                            fallback={renderSpinner()}
+                          >
+                            <ProgramDetailsComponent programSelected={selectedProgram} />
+                          </Suspense>
+                        ) : renderSpinner()}
                       </div>
                     ) : null}
 
@@ -6386,11 +6351,7 @@ export const AccountsView = () => {
                       location.pathname === '/my-account' ? (
                       <>
                         <Suspense
-                          fallback={
-                            <div className="h-100 flex-center">
-                              <Spin spinning={true} />
-                            </div>
-                          }
+                          fallback={renderSpinner()}
                         >
                           <PersonalAccountSummary accountBalance={netWorth} />
                         </Suspense>

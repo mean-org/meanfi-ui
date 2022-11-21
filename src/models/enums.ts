@@ -105,18 +105,12 @@ export enum OperationType {
   Wrap = 50,
   Unwrap = 51,
   Swap = 52,
-  CreateAsset = 37,
-  CloseTokenAccount = 38,
+  CreateAsset = 53,
+  CloseTokenAccount = 54,
   // Invest
-  Stake = 53,
-  Unstake = 54,
-  Deposit = 55,
-  // IDO
-  IdoDeposit = 100,
-  IdoWithdraw = 101,
-  IdoClaim = 102,
-  IdoLpClaim = 103,
-  IdoCollectFunds = 104,
+  Stake = 60,
+  Unstake = 61,
+  Deposit = 62,
   // Credix
   CredixDepositFunds = 110,
   CredixWithdrawFunds = 111,
