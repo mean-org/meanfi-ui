@@ -10,8 +10,6 @@ export interface TokenExtensions {
   tgann?: string;
   tggroup?: string;
   discord?: string;
-  serumV3Usdt?: string;
-  serumV3Usdc?: string;
   coingeckoId?: string;
   imageUrl?: string;
   description?: string;

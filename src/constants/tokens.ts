@@ -113,40 +113,6 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
   },
   {
     chainId: 101,
-    address: '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk',
-    symbol: 'ETH',
-    name: 'Wrapped Ethereum (Sollet)',
-    decimals: 6,
-    logoURI:
-      'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
-    tags: ['wrapped-sollet', 'ethereum'],
-    extensions: {
-      bridgeContract:
-        'https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a',
-      serumV3Usdc: '4tSvZvnbyzHXLMTiFonMyxZoHmFqau1XArcRCVHLZ5gX',
-      serumV3Usdt: '7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF',
-      coingeckoId: 'ethereum',
-    },
-  },
-  {
-    chainId: 101,
-    address: '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
-    symbol: 'BTC',
-    name: 'Wrapped Bitcoin (Sollet)',
-    decimals: 6,
-    logoURI:
-      'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/bitcoin/info/logo.png',
-    tags: ['wrapped-sollet', 'ethereum'],
-    extensions: {
-      bridgeContract:
-        'https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a',
-      serumV3Usdc: 'A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw',
-      serumV3Usdt: 'C1EuT9VokAKLiW7i2ASnZUvxDoKuKkCpDDeNxAptuNe4',
-      coingeckoId: 'bitcoin',
-    },
-  },
-  {
-    chainId: 101,
     address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
     symbol: 'USDT',
     name: 'USDT',
@@ -169,8 +135,6 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     tags: [],
     extensions: {
       website: 'https://solana.com/',
-      serumV3Usdc: '9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT',
-      serumV3Usdt: 'HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1',
       coingeckoId: 'solana',
     },
   },
@@ -185,7 +149,6 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     tags: ['solend', 'lending'],
     extensions: {
       coingeckoId: 'solend',
-      serumV3Usdc: 'F9y9NM83kBMzBmMvNT18mkcFuNAPhNRhx7pnz9EDWwfv',
       twitter: 'https://twitter.com/solendprotocol',
       website: 'https://solend.fi',
     },
@@ -281,18 +244,6 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     name: 'Solend USDT',
     decimals: 6,
     logoURI: `${LOGO_BASE_URL}/BTsbZDV7aCMRJ3VNy9ygV4Q2UeEo9GpR8D6VvmMZzNr8/logo.png`,
-    tags: ['solend', 'lending', 'collateral-tokens'],
-    extensions: {
-      website: 'https://solend.fi',
-    },
-  },
-  {
-    chainId: 101,
-    address: '8bDyV3N7ctLKoaSVqUoEwUzw6msS2F65yyNPgAVUisKm',
-    symbol: 'cFTT',
-    name: 'Solend FTT',
-    decimals: 6,
-    logoURI: `${LOGO_BASE_URL}/8bDyV3N7ctLKoaSVqUoEwUzw6msS2F65yyNPgAVUisKm/logo.png`,
     tags: ['solend', 'lending', 'collateral-tokens'],
     extensions: {
       website: 'https://solend.fi',
@@ -511,9 +462,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     decimals: 6,
     logoURI: `${LOGO_BASE_URL}/PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y/PORT.png`,
     tags: [],
-    extensions: {
-      serumV3Usdc: '8x8jf7ikJwgP9UthadtiGFgfFuyyyYPHL3obJAuxFWko',
-    },
+    extensions: {},
   },
   {
     chainId: 101,
@@ -531,9 +480,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     name: 'Marinade staked SOL (mSOL)',
     decimals: 9,
     logoURI: `${LOGO_BASE_URL}/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png`,
-    extensions: {
-      serumV3Usdc: '6oGsL2puUgySccKzn9XA9afqF217LfxP5ocq4B3LWsjy',
-    },
+    extensions: {},
   },
   {
     chainId: 101,
@@ -731,17 +678,6 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     name: 'Saber Protocol Token',
     symbol: 'SBR',
     tags: [],
-  },
-  {
-    address: 'Wbt2CgkkD3eVckD5XxWJmT8pTnFTyWrwvGM7bUMLvsM',
-    chainId: 103,
-    decimals: 6,
-    extensions: {},
-    logoURI:
-      'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/bitcoin/info/logo.png',
-    name: 'Test WBTC',
-    symbol: 'WBTC',
-    tags: ['saber-mkt-btc'],
   },
   {
     chainId: 103,

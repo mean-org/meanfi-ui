@@ -22,10 +22,6 @@ import {
   SlopeWalletName,
   SolflareWalletAdapter,
   SolflareWalletName,
-  SolletExtensionWalletAdapter,
-  SolletExtensionWalletName,
-  SolletWalletAdapter,
-  SolletWalletName,
   SolongWalletAdapter,
   SolongWalletName,
   TrustWalletAdapter,
@@ -67,8 +63,6 @@ export type MeanFiWallet =
   | SlopeWalletAdapter
   | Coin98WalletAdapter
   | SolongWalletAdapter
-  | SolletWalletAdapter
-  | SolletExtensionWalletAdapter
   | MathWalletAdapter
   | TrustWalletAdapter
   | LedgerWalletAdapter
@@ -203,37 +197,6 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideIfUnavailable: true,
   },
   {
-    name: SolletWalletName,
-    url: '',
-    icon: '',
-    adapter: SolletWalletAdapter,
-    adapterParams: {
-      provider: 'https://www.sollet.io',
-      timeout: 10000,
-      network:
-        environment === 'production'
-          ? WalletAdapterNetwork.Mainnet
-          : WalletAdapterNetwork.Devnet,
-    },
-    hideOnDesktop: false,
-    hideOnMobile: false,
-    isWebWallet: true,
-    underDevelopment: false,
-    hideIfUnavailable: false,
-  },
-  {
-    name: SolletExtensionWalletName,
-    url: '',
-    icon: '',
-    adapter: SolletExtensionWalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: isSafari ? true : false,
-    hideOnMobile: true,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: true,
-  },
-  {
     name: TrustWalletName,
     url: '',
     icon: '',
@@ -309,12 +272,6 @@ const getIsProviderInstalled = (provider: any): boolean => {
           (window as any).slopeApp
           ? true
           : false;
-      case SolletWalletName:
-      case SolletExtensionWalletName:
-        return (
-          !!(window as any).sollet &&
-          typeof (window as any).sollet?.postMessage === 'function'
-        );
       case SolongWalletName:
         return !!(window as any).solong;
       case MathWalletName:
@@ -458,8 +415,6 @@ export function WalletProvider({ children = null as any }) {
       new SlopeWalletAdapter(),
       new Coin98WalletAdapter(),
       new SolongWalletAdapter(),
-      new SolletWalletAdapter(),
-      new SolletExtensionWalletAdapter(),
       new TrustWalletAdapter(),
       new MathWalletAdapter(),
       new LedgerWalletAdapter(),

@@ -21,7 +21,7 @@ export const GET_RPC_API_ENDPOINT = '/meanfi-rpcs';
 export const DEFAULT_RPCS: RpcConfig[] = [
   {
     cluster: 'mainnet-beta',
-    httpProvider: 'https://solana-api.projectserum.com', // clusterApiUrl("mainnet-beta"),
+    httpProvider: clusterApiUrl("mainnet-beta"),
     networkId: ChainID.MainnetBeta,
     network: 'Mainnet Beta',
     id: 0,
