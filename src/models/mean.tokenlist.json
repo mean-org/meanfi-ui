@@ -9,8 +9,6 @@
     "tags": [],
     "extensions": {
       "website": "https://solana.com/",
-      "serumV3Usdc": "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT",
-      "serumV3Usdt": "HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1",
       "coingeckoId": "solana"
     }
   },
@@ -37,36 +35,6 @@
     "tags": [],
     "extensions": {
       "coingeckoId": "solana"
-    }
-  },
-  {
-    "chainId": 101,
-    "address": "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk",
-    "symbol": "ETH",
-    "name": "Wrapped Ethereum",
-    "decimals": 6,
-    "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-    "tags": ["wrapped-sollet", "ethereum"],
-    "extensions": {
-      "bridgeContract": "https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a",
-      "serumV3Usdc": "4tSvZvnbyzHXLMTiFonMyxZoHmFqau1XArcRCVHLZ5gX",
-      "serumV3Usdt": "7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF",
-      "coingeckoId": "ethereum"
-    }
-  },
-  {
-    "chainId": 101,
-    "address": "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
-    "symbol": "BTC",
-    "name": "Wrapped Bitcoin",
-    "decimals": 6,
-    "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/bitcoin/info/logo.png",
-    "tags": ["wrapped-sollet", "ethereum"],
-    "extensions": {
-      "bridgeContract": "https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a",
-      "serumV3Usdc": "A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw",
-      "serumV3Usdt": "C1EuT9VokAKLiW7i2ASnZUvxDoKuKkCpDDeNxAptuNe4",
-      "coingeckoId": "bitcoin"
     }
   },
   {
