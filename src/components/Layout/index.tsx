@@ -28,7 +28,7 @@ import { AppUsageEvent } from 'middleware/segment-service';
 import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
 import { isUnauthenticatedRoute } from 'middleware/utils';
 import { AccountDetails } from 'models/accounts';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   browserName,
   deviceType,
@@ -99,10 +99,17 @@ export const AppLayout = React.memo((props: any) => {
   // Callbacks //
   ///////////////
 
+  const connection = useMemo(
+    () =>
+      new Connection(connectionConfig.endpoint, {
+        commitment: 'confirmed',
+        disableRetryOnRateLimit: true,
+      }),
+    [connectionConfig.endpoint],
+  );
+
   // Fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
-    const serumRpc = 'https://solana-api.projectserum.com';
-    const connection = new Connection(serumRpc);
 
     if (!connection) {
       return null;
@@ -132,14 +139,10 @@ export const AppLayout = React.memo((props: any) => {
       const averageTps = Math.round(tpsValues[0]);
       return averageTps;
     } catch (error) {
-      consoleOut(
-        `getRecentPerformanceSamples failed for rpc:`,
-        serumRpc,
-        'darkred',
-      );
+      consoleOut(`getRecentPerformanceSamples`, '', 'darkred');
       return null;
     }
-  }, []);
+  }, [connection]);
 
   const getPlatform = useCallback((): string => {
     if (isDesktop) {
