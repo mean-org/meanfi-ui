@@ -80,6 +80,7 @@ import {
 } from 'middleware/accounts';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
+import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   getIntervalFromSeconds,
@@ -869,11 +870,11 @@ export const StreamingAccountView = (props: {
   };
 
   const onExecuteAddFundsTransaction = async (params: TreasuryTopupParams) => {
-    let transaction: Transaction;
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuth = '';
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
@@ -1256,67 +1257,6 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Treasury Add funds transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Treasury Add funds transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
     if (publicKey && streamingAccountSelected) {
       const token = await getTokenOrCustomToken(
         connection,
@@ -1335,39 +1275,71 @@ export const StreamingAccountView = (props: {
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          const amountDisplay = getAmountWithSymbol(
-            params.amount,
-            params.associatedToken,
-            false,
-            splTokenList,
-            token.decimals,
-          );
-          const loadingMessage = multisigAuth
-            ? `Create proposal to fund streaming account with ${amountDisplay}`
-            : `Fund streaming account with ${amountDisplay}`;
-          const completed = multisigAuth
-            ? `Streaming account funding has been submitted for approval.`
-            : `Streaming account funded with ${amountDisplay}`;
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.TreasuryAddFunds,
-            finality: 'finalized',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: loadingMessage,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: completed,
-            extras: {
-              multisigAuthority: multisigAuth,
-            },
+        const sent = await signAndSendTx('Fund Account',{ 
+          wallet, 
+          publicKey, 
+          transaction, 
+          connection, 
+          afterSign: () => {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
+            });
+          }
+        });
+        
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          onAddFundsTransactionFinished();
-          setIsBusy(false);
+          const sent = await sendTx('Fund Account', connection, wallet, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature && !transactionCancelled) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            const amountDisplay = getAmountWithSymbol(
+              params.amount,
+              params.associatedToken,
+              false,
+              splTokenList,
+              token.decimals,
+            );
+            const loadingMessage = multisigAuth
+              ? `Create proposal to fund streaming account with ${amountDisplay}`
+              : `Fund streaming account with ${amountDisplay}`;
+            const completed = multisigAuth
+              ? `Streaming account funding has been submitted for approval.`
+              : `Streaming account funded with ${amountDisplay}`;
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryAddFunds,
+              finality: 'finalized',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: loadingMessage,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: completed,
+              extras: {
+                multisigAuthority: multisigAuth,
+              },
+            });
+            onAddFundsTransactionFinished();
+            setIsBusy(false);
+          } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            setIsBusy(false);
+          }
         } else {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
+          });
           setIsBusy(false);
         }
       } else {
@@ -1395,10 +1367,10 @@ export const StreamingAccountView = (props: {
   };
 
   const onExecuteTreasuryTransferFundsTx = async (data: any) => {
-    let transaction: Transaction;
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
@@ -1610,103 +1582,61 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Treasury withdraw transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Treasury withdraw transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
     if (wallet && streamingAccountSelected && selectedToken) {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          const isMultisig =
+        const sign = await signTx('Streaming Account Withdraw', wallet, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
+          });
+          const sent = await sendTx('Fund Account', connection, wallet, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature && !transactionCancelled) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            const isMultisig =
             isMultisigTreasury(streamingAccountSelected) && selectedMultisig
               ? selectedMultisig.authority.toBase58()
               : '';
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.TreasuryWithdraw,
-            finality: 'finalized',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: `Withdraw ${formatThousands(
-              parseFloat(data.amount),
-              selectedToken.decimals,
-            )} ${selectedToken.symbol}`,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: `Successfully withdrawn ${formatThousands(
-              parseFloat(data.amount),
-              selectedToken.decimals,
-            )} ${selectedToken.symbol}`,
-            extras: {
-              multisigAuthority: isMultisig,
-            },
-          });
-
-          setIsTransferFundsModalVisible(false);
-          resetTransactionStatus();
-          setIsBusy(false);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryWithdraw,
+              finality: 'finalized',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Withdraw ${formatThousands(
+                parseFloat(data.amount),
+                selectedToken.decimals,
+              )} ${selectedToken.symbol}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Successfully withdrawn ${formatThousands(
+                parseFloat(data.amount),
+                selectedToken.decimals,
+              )} ${selectedToken.symbol}`,
+              extras: {
+                multisigAuthority: isMultisig,
+              },
+            });
+            setIsTransferFundsModalVisible(false);
+            resetTransactionStatus();
+            setIsBusy(false);
+          } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            setIsBusy(false);
+          }
         } else {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
+          });
           setIsBusy(false);
         }
       } else {
@@ -1767,10 +1697,10 @@ export const StreamingAccountView = (props: {
   };
 
   const onExecuteCloseTreasuryTransaction = async (title: string) => {
-    let transaction: Transaction;
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
@@ -2074,70 +2004,8 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Close Treasury transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Close Treasury transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
     if (wallet && streamingAccountSelected) {
       let created: boolean;
-
       let streamingAccountName = '';
       if (
         streamingAccountSelected.version &&
@@ -2153,33 +2021,52 @@ export const StreamingAccountView = (props: {
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          const isMultisig =
-            isMultisigTreasury(streamingAccountSelected) && selectedMultisig
-              ? selectedMultisig.authority.toBase58()
-              : '';
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.TreasuryClose,
-            finality: 'finalized',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: `Close streaming account: ${streamingAccountName}`,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: `Successfully closed streaming account: ${streamingAccountName}`,
-            extras: {
-              multisigAuthority: isMultisig,
-            },
+        const sign = await signTx('Close Account', wallet, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-
-          setIsCloseTreasuryModalVisibility(false);
-          onCloseTreasuryTransactionFinished();
-          resetTransactionStatus();
-          setIsBusy(false);
+          const sent = await sendTx('Close Account', connection, wallet, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature && !transactionCancelled) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            const isMultisig =
+              isMultisigTreasury(streamingAccountSelected) && selectedMultisig
+                ? selectedMultisig.authority.toBase58()
+                : '';
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryClose,
+              finality: 'finalized',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Close streaming account: ${streamingAccountName}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Successfully closed streaming account: ${streamingAccountName}`,
+              extras: {
+                multisigAuthority: isMultisig,
+              },
+            });
+            setIsCloseTreasuryModalVisibility(false);
+            onCloseTreasuryTransactionFinished();
+            resetTransactionStatus();
+            setIsBusy(false);
+          } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            setIsBusy(false);
+          }
         } else {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
+          });
           setIsBusy(false);
         }
       } else {
