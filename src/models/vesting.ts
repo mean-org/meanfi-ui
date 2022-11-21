@@ -110,6 +110,7 @@ export interface VestingContractEditOptions {
 }
 
 export interface VestingContractWithdrawOptions {
+  proposalTitle: string;
   amount: string;
   tokenAmount: BN;
   destinationAccount: string;

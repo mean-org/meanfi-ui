@@ -2780,10 +2780,10 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const expirationTime = parseInt(
         (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
       );
-
+      const proposalTitle = data.proposalTitle;
       const tx = await multisigClient.createTransaction(
         publicKey,
-        'Withdraw Treasury Funds',
+        proposalTitle,
         '', // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryWithdraw,
@@ -2845,6 +2845,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       // Create a transaction
       const payload: TreasuryWithdrawParams = {
+        proposalTitle: params.proposalTitle,
         payer: selectedAccount.address,
         destination: destinationPk.toBase58(),
         treasury: treasuryPk.toBase58(),
