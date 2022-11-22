@@ -47,11 +47,10 @@ import {
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { SetProgramAuthPayload } from 'models/multisig';
 import { ProgramUpgradeParams } from 'models/programs';
-import moment from 'moment';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import ReactJson from 'react-json-view';
 import { useNavigate } from 'react-router-dom';
 import IdlTree from './IdlTree';
+import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutableModal';
 import './style.scss';
 import Transactions from './Transactions';
 
@@ -699,13 +698,24 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     setTransactionFees(fees);
   }, []);
 
+  const [
+    isMultisigMakeProgramImmutableModalVisible,
+    setIsMultisigMakeProgramImmutableModalVisible,
+  ] = useState(false);
+
   const closeSetProgramAuthModal = useCallback(() => {
     resetTransactionStatus();
     setIsSetProgramAuthModalVisible(false);
     setIsBusy(false);
   }, [resetTransactionStatus]);
 
-  const setInmutableProgram = (programId: string) => {
+  const setImmutableProgram = ({
+    proposalTitle,
+    programId,
+  }: {
+    proposalTitle?: string;
+    programId: string;
+  }) => {
     const programAddress = new PublicKey(programId);
     PublicKey.findProgramAddress(
       [programAddress.toBuffer()],
@@ -720,6 +730,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
         };
         setTransactionFees(fees);
         const params: SetProgramAuthPayload = {
+          proposalTitle: proposalTitle || '',
           programAddress: programId,
           programDataAddress: programDataAddress.toBase58(),
           newAuthAddress: '', // Empty to make program non-upgradable (inmutable)
@@ -1450,9 +1461,15 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                   size="small"
                   className="thin-stroke"
                   disabled={isTxInProgress() || !upgradeAuthority}
-                  onClick={() =>
-                    setInmutableProgram(programSelected.pubkey.toBase58())
-                  }
+                  onClick={() => {
+                    if (isMultisigContext) {
+                      setIsMultisigMakeProgramImmutableModalVisible(true);
+                    } else {
+                      setImmutableProgram({
+                        programId: programSelected.pubkey.toBase58(),
+                      });
+                    }
+                  }}
                 >
                   <div className="btn-content">Make immutable</div>
                 </Button>
@@ -1492,6 +1509,20 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           programId={programSelected?.pubkey.toBase58()}
           isBusy={isBusy}
           isMultisigTreasury={isMultisigContext}
+        />
+      )}
+      {isMultisigMakeProgramImmutableModalVisible && (
+        <MultisigMakeProgramImmutableModal
+          handleOk={({ proposalTitle }) => {
+            setIsMultisigMakeProgramImmutableModalVisible(false);
+            setImmutableProgram({
+              proposalTitle,
+              programId: programSelected.pubkey.toBase58(),
+            });
+          }}
+          handleClose={() =>
+            setIsMultisigMakeProgramImmutableModalVisible(false)
+          }
         />
       )}
     </>
