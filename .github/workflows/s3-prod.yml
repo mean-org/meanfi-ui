@@ -11,7 +11,7 @@ env:
   ARTIFACT_NAME: mean-ui-build-production
   DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID_PROD }}
   AWS_S3_SKIP_FOLDERS: 5 # keep only last 5 deploys
-  APPROVAL_ADMINS_PROD: MexicanSparker,supermean-ayaz,eydelrivero,micheltriana
+  APPROVAL_ADMINS_PROD: MexicanSparker,welldan97,eydelrivero,micheltriana
   MINIMUM_APPROVALS: 1
 
 jobs:
