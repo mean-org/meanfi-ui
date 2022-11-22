@@ -269,7 +269,7 @@ export const StreamCloseModal = (props: {
     } else {
       // Validation
       const isValidForm = (): boolean => {
-        return !proposalTitle || !isMultisigTreasury;
+        return !!proposalTitle || !isMultisigTreasury;
       };
 
       const getButtonLabel = () => {
@@ -379,7 +379,7 @@ export const StreamCloseModal = (props: {
               shape="round"
               size="large"
               onClick={onAcceptModal}
-              disabled={isValidForm()}
+              disabled={!isValidForm()}
             >
               {getButtonLabel()}
             </Button>
