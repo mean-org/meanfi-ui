@@ -829,7 +829,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
         const tx = await multisigClient.createTransaction(
           publicKey,
-          'Set Program Authority',
+          data.proposalTitle,
           '', // description
           new Date(expirationTime * 1_000),
           OperationType.SetMultisigAuthority,
@@ -1557,6 +1557,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           handleClose={closeSetProgramAuthModal}
           programId={programSelected?.pubkey.toBase58()}
           isBusy={isBusy}
+          isMultisigTreasury={isMultisigContext}
         />
       )}
     </>

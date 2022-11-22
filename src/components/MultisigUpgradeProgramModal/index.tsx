@@ -6,6 +6,7 @@ import {
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Modal, Spin } from 'antd';
+
 import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
