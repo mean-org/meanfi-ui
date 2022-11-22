@@ -1,4 +1,5 @@
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, LoadingOutlined } from '@ant-design/icons';
+import { initOnRamp } from '@coinbase/cbpay-js';
 import { Button, Col, Modal, Row, Tooltip } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from 'constants/common';
@@ -20,16 +21,27 @@ export const DepositOptions = (props: {
   handleClose: any;
   isVisible: boolean;
 }) => {
+  const {
+    handleClose,
+    isVisible,
+  } = props;
+
   const { t } = useTranslation('common');
   const { publicKey, connected } = useWallet();
+  const [isCoinbasePayReady, setIsCoinbasePayReady] = useState(false);
+  const [isSharingAddress, setIsSharingAddress] = useState(false);
+
+  //#region Init code
 
   // Load the Transak widget script asynchronously
   const { status } = useScript(`https://global.transak.com/sdk/v1.1/widget.js`);
 
-  const [isSharingAddress, setIsSharingAddress] = useState(false);
-
   // Get App config
   const currentConfig = useMemo(() => appConfig.getConfig(), []);
+
+  //#endregion
+
+  //#region Getters, Actions & Event handlers
 
   const enableAddressSharing = () => {
     setIsSharingAddress(true);
@@ -50,7 +62,7 @@ export const DepositOptions = (props: {
         'noreferrer',
       );
     }, 500);
-    props.handleClose();
+    handleClose();
   };
 
   const handleBridgeFromPolygonButtonClick = () => {
@@ -61,9 +73,54 @@ export const DepositOptions = (props: {
         'noreferrer',
       );
     }, 500);
-    props.handleClose();
+    handleClose();
   };
 
+  const handleTransakButtonClick = () => {
+    setTimeout(() => {
+      if (transak) {
+        transak.init();
+        // To get all the events
+        transak.on(transak.ALL_EVENTS, (data: any) => {
+          consoleOut('transak event:', data, 'blue');
+        });
+      }
+    }, 300);
+    handleClose();
+  };
+
+  const handleCoinbaseButtonClick = () => {
+    // Nothing else to do for now
+    handleClose();
+  };
+
+  const onCopyAddress = () => {
+    if (publicKey && copyText(publicKey)) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: 'info',
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: 'error',
+      });
+    }
+  };
+
+  const getCoinbaseButtonLabel = () => {
+    if (!connected) {
+      return t('deposits.coinbase-pay-cta-label');
+    } else if (!isCoinbasePayReady) {
+      return 'Initializing Coinbase Pay';
+    } else {
+      return t('deposits.coinbase-pay-cta-label');
+    }
+  }
+
+  //#endregion
+
+  // Transak initialization
   useEffect(() => {
     if (status === 'ready' && !transak) {
       transak = new TransakSDK.default({
@@ -84,32 +141,47 @@ export const DepositOptions = (props: {
     }
   }, [currentConfig, publicKey, status]);
 
-  const handleTransakButtonClick = () => {
-    setTimeout(() => {
-      if (transak) {
-        transak.init();
-        // To get all the events
-        transak.on(transak.ALL_EVENTS, (data: any) => {
-          consoleOut('transak event:', data, 'blue');
-        });
-      }
-    }, 300);
-    props.handleClose();
-  };
-
-  const onCopyAddress = () => {
-    if (publicKey && copyText(publicKey)) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: 'info',
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: 'error',
-      });
+  // Coinbase Pay initialization
+  useEffect(() => {
+    if (!publicKey || !isVisible) {
+      return;
     }
-  };
+
+    const buttonContainerQuery = '#cbpay-button-container';
+    const el = document.querySelector(buttonContainerQuery);
+    if (isCoinbasePayReady || !el) {
+      return;
+    }
+
+    console.log('Calling initOnRamp...');
+    initOnRamp({
+      appId: currentConfig.coinBaseAppId,
+      target: buttonContainerQuery,
+      widgetParameters: {
+        destinationWallets: [{
+          address: publicKey.toBase58(),
+          blockchains: ['solana'],
+        }],
+      },
+      onSuccess: () => {
+        // handle navigation when user successfully completes the flow
+        console.log(`Processing onSuccess!`);
+      },
+      onExit: () => {
+        // handle navigation from dismiss / exit events due to errors
+        console.log(`Processing onExit!`);
+      },
+      onEvent: (event) => {
+        // event stream
+        console.log(`Processing onEvent ->`, event);
+      },
+      experienceLoggedIn: 'embedded',
+      experienceLoggedOut: 'popup',
+    }, () => {
+      setIsCoinbasePayReady(true);
+      console.log('Coinbase Pay is initialized!');
+    });
+  }, [currentConfig.coinBaseAppId, isCoinbasePayReady, isVisible, publicKey])
 
   // Window resize listener
   useEffect(() => {
@@ -139,6 +211,7 @@ export const DepositOptions = (props: {
     };
   }, []);
 
+
   return (
     <Modal
       className="mean-modal simple-modal multi-step"
@@ -163,9 +236,9 @@ export const DepositOptions = (props: {
         </>
       }
       footer={null}
-      open={props.isVisible}
-      onOk={props.handleClose}
-      onCancel={props.handleClose}
+      open={isVisible}
+      onOk={handleClose}
+      onCancel={handleClose}
       afterClose={closePanels}
       width={450}
     >
@@ -196,9 +269,33 @@ export const DepositOptions = (props: {
               </Button>
             </Col>
             <Col span={24}>
+              <Button
+                block
+                className="deposit-option"
+                type="ghost"
+                shape="round"
+                size="middle"
+                id='cbpay-button-container'
+                disabled={!connected || !isCoinbasePayReady}
+                onClick={handleCoinbaseButtonClick}
+              >
+                <img
+                  src="/assets/deposit-partners/coinbase.svg"
+                  className="deposit-partner-icon"
+                  alt={t('deposits.coinbase-pay-cta-label')}
+                />
+                {getCoinbaseButtonLabel()}
+                {connected && !isCoinbasePayReady ? (
+                  <div className="loading-container">
+                    <LoadingOutlined style={{ fontSize: '24px' }} />
+                  </div>
+                ) : null}
+              </Button>
+            </Col>
+            <Col span={24}>
               <Tooltip
                 placement="bottom"
-                title={t('deposits.renbridge-cta-warning')}
+                title={t('deposits.transak-cta-warning')}
               >
                 <Button
                   block

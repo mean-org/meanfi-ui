@@ -233,9 +233,10 @@
     "move-from-renbridge-cta-label": "비트코인 전송",
     "not-connected": "지갑을 먼저 연결하십시오",
     "operation-cta-label-disabled": "지갑이 연결되지 않았습니다.",
-    "renbridge-cta-warning": "체이스 은행(미국) 신용 카드 및 직불 카드는 암호화폐 구매에 사용할 수 없습니다. 다른 은행은 모두 가능합니다.",
+    "transak-cta-warning": "체이스 은행(미국) 신용 카드 및 직불 카드는 암호화폐 구매에 사용할 수 없습니다. 다른 은행은 모두 가능합니다.",
     "send-from-wallet-cta-label": "지갑/거래소에서 보내기",
-    "transak-cta-label": "직불/신용카드로 구입"
+    "transak-cta-label": "직불/신용카드로 구입",
+    "coinbase-pay-cta-label": "Coinbase에서 구매 또는 전송"
   },
   "error-screens": {
     "network-status": "네트워크 상태 체크",

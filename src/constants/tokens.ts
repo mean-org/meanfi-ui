@@ -42,7 +42,15 @@ export const SOCN_USD = {
     website: 'https://www.orca.so',
   },
 };
-
+export const COINBASE_SUPPORTED_BUY_TOKENS = [
+  'SOL',
+  'USDC',
+  'MEDIA',
+  'GST',
+  'ORCA',
+  'FIDA',
+  'GMT'
+];
 export const PINNED_TOKENS = [
   'USDC',
   'ETH',

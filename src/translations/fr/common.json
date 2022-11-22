@@ -232,9 +232,10 @@
     "move-from-renbridge-cta-label": "Transférez vos Bitcoins",
     "not-connected": "Veuillez d'abord connecter votre portefeuille",
     "operation-cta-label-disabled": "Portefeuille non connecté",
-    "renbridge-cta-warning": "Les cartes de crédit et de débit Chase Bank (US) ne fonctionneront pas pour acheter de la crypto. Toutes les autres banques sont OK !",
+    "transak-cta-warning": "Les cartes de crédit et de débit Chase Bank (US) ne fonctionneront pas pour acheter de la crypto. Toutes les autres banques sont OK !",
     "send-from-wallet-cta-label": "Envoyer depuis Wallet/Exchange",
-    "transak-cta-label": "Acheter avec une carte de débit/crédit"
+    "transak-cta-label": "Acheter avec une carte de débit/crédit",
+    "coinbase-pay-cta-label": "Acheter ou transférer depuis Coinbase"
   },
   "error-screens": {
     "network-status": "Vérifier l'état du réseau",
