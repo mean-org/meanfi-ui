@@ -44,40 +44,20 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
     );
   }, [collectionMintInfo, selectedNft]);
 
-  const isMasterEdition = () => {
-    if (!selectedNft) {
-      return false;
-    }
-    const edition = (selectedNft as Nft).edition;
-    return edition.isOriginal;
-  };
-
-  const getEditionNumber = () => {
-    if (!selectedNft) {
-      return '--';
-    }
-
-    const edition = (selectedNft as Nft).edition;
-    if (!edition.isOriginal) {
-      return edition.number.toNumber();
-    }
-    return '--';
+  const getEditionBody = (nft: MeanNft) => {
+    if (!('edition' in nft)) return 'SFT';
+    if (nft.edition.isOriginal) return 'Master Edition';
+    return `Edition ${nft.edition.number.toNumber()}`;
   };
 
   const getEditionPill = () => {
-    if (isMasterEdition()) {
-      return (
-        <span className="badge medium font-bold text-uppercase fg-white bg-purple">
-          Master Edition
-        </span>
-      );
+    if (!selectedNft) {
+      return null;
     }
-
-    const editionNumber = getEditionNumber();
 
     return (
       <span className="badge medium font-bold text-uppercase fg-white bg-purple">
-        Edition {editionNumber}
+        {getEditionBody(selectedNft)}
       </span>
     );
   };
@@ -362,7 +342,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
                   </div>
 
                   <h3 className="nft-details-heading">Description</h3>
-                  <p>
+                  <p className="mr-2">
                     {selectedNft.json.description ||
                       'No description in metadata'}
                   </p>
