@@ -146,7 +146,6 @@ import {
   consoleOut,
   copyText,
   getTransactionStatusForLogs,
-  isLocal,
   kFormatter,
   toUsCurrency,
 } from 'middleware/ui';
@@ -6087,12 +6086,12 @@ export const AccountsView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span>selectedProgram:</span><span className="mx-1 font-bold">{selectedProgram ? 'true' : 'false'}</span>
           <span>programAddress:</span><span className="mx-1 font-bold">{programId || '-'}</span>
         </div>
-      )}
+      )} */}
 
       {detailsPanelOpen && (
         <Button

@@ -1275,19 +1275,7 @@ export const StreamingAccountView = (props: {
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sent = await signAndSendTx('Fund Account',{ 
-          wallet, 
-          publicKey, 
-          transaction, 
-          connection, 
-          afterSign: () => {
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SignTransactionSuccess,
-            });
-          }
-        });
-        
+        const sign = await signTx('Fund Account', wallet, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
