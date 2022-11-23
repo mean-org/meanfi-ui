@@ -1,3 +1,4 @@
+import { Beneficiary } from '@mean-dao/msp';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 
 export interface StreamsSummary {
@@ -47,7 +48,7 @@ export interface CreateStreamParams {
   payer: string;
   treasurer: string;
   treasury: string;
-  beneficiaries: any;
+  beneficiary: Beneficiary;
   associatedToken: string;
   allocationAssigned: string;
   rateAmount?: string;
