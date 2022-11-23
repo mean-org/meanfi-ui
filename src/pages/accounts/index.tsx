@@ -432,6 +432,16 @@ export const AccountsView = () => {
       ) {
         const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
         navigate(url);
+      } else if (
+        !selectedAccount.isMultisig &&
+        location.pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)
+      ) {
+        openNotification({
+          title: 'Access forbidden',
+          description: `You are trying to access the SuperSafe App from your personal account. To use the SuperSafe feature please connect with a signer account and try again.`,
+          type: 'warning',
+        });
+        navigate('/my-account');
       }
       setTimeout(() => {
         setIsPageLoaded(true);
