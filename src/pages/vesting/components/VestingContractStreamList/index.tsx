@@ -569,7 +569,7 @@ export const VestingContractStreamList = (props: {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        'Close Stream',
+        data.proposalTitle,
         '', // description
         new Date(expirationTime * 1_000),
         OperationType.StreamClose,
@@ -604,6 +604,7 @@ export const VestingContractStreamList = (props: {
         stream: streamPublicKey.toBase58(), // stream
         payer: accountAddress, // initializer
         closeTreasury: closeStreamOptions.closeTreasuryOption, // closeTreasury
+        proposalTitle: closeStreamOptions.proposalTitle,
       };
       consoleOut('data:', data);
       const price = selectedToken
@@ -1187,6 +1188,7 @@ export const VestingContractStreamList = (props: {
           selectedToken={selectedToken}
           streamDetail={highlightedStream}
           transactionFees={transactionFees}
+          isMultisigTreasury={isMultisigTreasury}
         />
       )}
 

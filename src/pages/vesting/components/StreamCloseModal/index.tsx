@@ -9,6 +9,7 @@ import {
 } from '@mean-dao/msp';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Radio, Row } from 'antd';
+import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -31,6 +32,7 @@ export const StreamCloseModal = (props: {
   selectedToken: TokenInfo | undefined;
   streamDetail: Stream | undefined;
   transactionFees: TransactionFees;
+  isMultisigTreasury: boolean;
 }) => {
   const {
     canCloseTreasury,
@@ -43,6 +45,7 @@ export const StreamCloseModal = (props: {
     selectedToken,
     streamDetail,
     transactionFees,
+    isMultisigTreasury,
   } = props;
   const { splTokenList } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -63,6 +66,7 @@ export const StreamCloseModal = (props: {
   const [streamState, setStreamState] = useState<STREAM_STATUS | undefined>(
     undefined,
   );
+  const [proposalTitle, setProposalTitle] = useState('');
 
   const getTreasuryTypeByTreasuryId = useCallback(
     async (treasuryId: string): Promise<StreamTreasuryType | undefined> => {
@@ -206,6 +210,7 @@ export const StreamCloseModal = (props: {
     }
 
     const options: VestingContractCloseStreamOptions = {
+      proposalTitle,
       closeTreasuryOption,
       vestedReturns: getWithdrawableAmount(),
       unvestedReturns: amITreasurer() ? getUnvested() : 0,
@@ -262,6 +267,17 @@ export const StreamCloseModal = (props: {
         </div>
       );
     } else {
+      // Validation
+      const isValidForm = (): boolean => {
+        return !!proposalTitle || !isMultisigTreasury;
+      };
+
+      const getButtonLabel = () => {
+        return !proposalTitle && isMultisigTreasury
+          ? 'Add a proposal title'
+          : t('close-stream.primary-cta');
+      };
+
       return (
         // The normal stuff
         <div className="transaction-progress p-0">
@@ -311,7 +327,24 @@ export const StreamCloseModal = (props: {
               </div>
             </>
           )}
-
+          {/* Proposal title */}
+          {isMultisigTreasury && (
+            <div className="mb-3">
+              <div className="form-label text-left">
+                {t('multisig.proposal-modal.title')}
+              </div>
+              <InputMean
+                id="proposal-title-field"
+                name="Title"
+                className={`w-100 general-text-input`}
+                onChange={(e: any) => {
+                  setProposalTitle(e.target.value);
+                }}
+                placeholder="Add a proposal title (required)"
+                value={proposalTitle}
+              />
+            </div>
+          )}
           {canCloseTreasury && treasuryDetails && !treasuryDetails.autoClose && (
             <div className="mt-3 flex-fixed-right">
               <div className="form-label left m-0 p-0">
@@ -346,8 +379,9 @@ export const StreamCloseModal = (props: {
               shape="round"
               size="large"
               onClick={onAcceptModal}
+              disabled={!isValidForm()}
             >
-              {t('close-stream.primary-cta')}
+              {getButtonLabel()}
             </Button>
           </div>
         </div>
