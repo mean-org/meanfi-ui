@@ -449,10 +449,14 @@
       .nft-attribute-name {
         color: var(--color-secondary-alpha-60);
         margin-bottom: 0.25rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .nft-attribute-value {
         font-weight: 900;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
   }
