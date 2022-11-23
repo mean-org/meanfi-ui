@@ -235,7 +235,8 @@
     "transak-cta-warning": "Chase Bank (ABD) kredi kartları ve banka kartları ile kripto alım işlemi yapılamaz. Diğer tüm bankalar UYGUNDUR!",
     "send-from-wallet-cta-label": "Cüzdandan/Borsadan Gönder",
     "transak-cta-label": "Banka/Kredi kartıyla al",
-    "coinbase-pay-cta-label": "Coinbase'den satın alın veya transfer edin"
+    "coinbase-pay-cta-label": "Coinbase'den satın alın veya transfer edin",
+    "coinbase-cta-warning": "Coinbase Pay'i kullanabilmek için bir Coinbase hesabına ve eklenmiş bir ödeme yöntemine sahip olmanız gerekir!"
   },
   "error-screens": {
     "network-status": "Ağ durumunu kontrol et",

@@ -235,7 +235,8 @@
     "transak-cta-warning": "Las tarjetas de crédito y débito del Chase Bank (US) no funcionan para comprar crypto. ¡Todos los demás bancos están bien!",
     "send-from-wallet-cta-label": "Enviar desde Billetera/Exchange",
     "transak-cta-label": "Compre con tarjeta de débito/crédito",
-    "coinbase-pay-cta-label": "Compre o transfiera desde Coinbase"
+    "coinbase-pay-cta-label": "Compre o transfiera desde Coinbase",
+    "coinbase-cta-warning": "¡Para usar Coinbase Pay, debe tener una cuenta Coinbase y un método de pago agregado!"
   },
   "error-screens": {
     "network-status": "Check network status",

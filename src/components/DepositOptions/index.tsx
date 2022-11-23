@@ -279,42 +279,51 @@ export const DepositOptions = (props: {
                 disabled={!connected || !isCoinbasePayReady}
                 onClick={handleCoinbaseButtonClick}
               >
-                <img
-                  src="/assets/deposit-partners/coinbase.svg"
-                  className="deposit-partner-icon"
-                  alt={t('deposits.coinbase-pay-cta-label')}
-                />
-                {getCoinbaseButtonLabel()}
-                {connected && !isCoinbasePayReady ? (
-                  <div className="loading-container">
-                    <LoadingOutlined style={{ fontSize: '24px' }} />
+                <Tooltip
+                  placement="bottom"
+                  title={t('deposits.coinbase-cta-warning')}
+                >
+                  <div className="flex flex-row justify-content-space-between">
+                    <img
+                      src="/assets/deposit-partners/coinbase.svg"
+                      className="deposit-partner-icon"
+                      alt={t('deposits.coinbase-pay-cta-label')}
+                    />
+                    <span className="option-text">{getCoinbaseButtonLabel()}</span>
+                    <div className="loading-container">
+                      {connected && !isCoinbasePayReady ? (
+                        <LoadingOutlined style={{ fontSize: '24px' }} />
+                      ) : null}
+                    </div>
                   </div>
-                ) : null}
+                </Tooltip>
               </Button>
             </Col>
             <Col span={24}>
-              <Tooltip
-                placement="bottom"
-                title={t('deposits.transak-cta-warning')}
+              <Button
+                block
+                className="deposit-option"
+                type="ghost"
+                shape="round"
+                size="middle"
+                disabled={status !== 'ready'}
+                onClick={handleTransakButtonClick}
               >
-                <Button
-                  block
-                  className="deposit-option"
-                  type="ghost"
-                  shape="round"
-                  size="middle"
-                  disabled={status !== 'ready'}
-                  onClick={handleTransakButtonClick}
+                <Tooltip
+                  placement="bottom"
+                  title={t('deposits.transak-cta-warning')}
                 >
-                  <img
-                    src="/assets/deposit-partners/transak.png"
-                    className="deposit-partner-icon"
-                    alt={t('deposits.transak-cta-label')}
-                  />
-                  {t('deposits.transak-cta-label')}
-                  <IconInfoTriangle className="mean-svg-icons warning" />
-                </Button>
-              </Tooltip>
+                  <div className="flex flex-row justify-content-space-between">
+                    <img
+                      src="/assets/deposit-partners/transak.png"
+                      className="deposit-partner-icon"
+                      alt={t('deposits.transak-cta-label')}
+                    />
+                    <span className="option-text">{t('deposits.transak-cta-label')}</span>
+                    <IconInfoTriangle className="mean-svg-icons warning" />
+                  </div>
+                </Tooltip>
+              </Button>
             </Col>
             <Col span={24}>
               <Button

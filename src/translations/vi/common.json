@@ -235,7 +235,8 @@
     "transak-cta-warning": "Thẻ credit và thẻ debit của ngân hàng Chase (Hoa Kỳ) sẽ không hoạt động để mua tiền điện tử. Tất cả các ngân hàng khác đều OK!",
     "send-from-wallet-cta-label": "Gửi từ Ví/Sàn giao dịch",
     "transak-cta-label": "Mua với thẻ debit/credit",
-    "coinbase-pay-cta-label": "Mua hoặc chuyển từ Coinbase"
+    "coinbase-pay-cta-label": "Mua hoặc chuyển từ Coinbase",
+    "coinbase-cta-warning": "Để sử dụng Coinbase Pay, bạn cần có tài khoản Coinbase và thêm phương thức thanh toán!"
   },
   "error-screens": {
     "network-status": "Kiểm tra trạng thái mạng",

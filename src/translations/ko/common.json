@@ -236,7 +236,8 @@
     "transak-cta-warning": "체이스 은행(미국) 신용 카드 및 직불 카드는 암호화폐 구매에 사용할 수 없습니다. 다른 은행은 모두 가능합니다.",
     "send-from-wallet-cta-label": "지갑/거래소에서 보내기",
     "transak-cta-label": "직불/신용카드로 구입",
-    "coinbase-pay-cta-label": "Coinbase에서 구매 또는 전송"
+    "coinbase-pay-cta-label": "Coinbase에서 구매 또는 전송",
+    "coinbase-cta-warning": "Coinbase Pay를 사용하려면 Coinbase 계정과 지불 방법을 추가해야 합니다!"
   },
   "error-screens": {
     "network-status": "네트워크 상태 체크",
