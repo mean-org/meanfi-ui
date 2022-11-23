@@ -25,6 +25,7 @@ export interface AppConfig {
   realmsGoverningTokenMintPk: string;
   realmsProgramId: string;
   realmId: string;
+  coinBaseAppId: string;
 }
 
 export class AppConfigService {
@@ -61,6 +62,7 @@ export class AppConfigService {
       realmsGoverningTokenMintPk: 'sMEANebFMnd9uTYpyntGzBmTmzEukRFwCjEcnXT2E8z',
       realmsProgramId: 'MGovW65tDhMMcpEmsegpsdgvzb6zUwGsNjhXFxRAnjd',
       realmId: '5o6gEoeJBpuXT1H1ijFTq3KcSGx7ayabdG2hji7cB3FG',
+      coinBaseAppId: '76189359-eb0e-4675-ba33-742c49a6f6c5',
     },
     staging: {
       appUrl: 'https://app-dev.meanfi.com',
@@ -94,6 +96,7 @@ export class AppConfigService {
       realmsGoverningTokenMintPk: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
       realmsProgramId: 'MGovW65tDhMMcpEmsegpsdgvzb6zUwGsNjhXFxRAnjd',
       realmId: 'GkR6JMPU1b2bFj7j9Db8VAmQdisCCqoTQFfzWi2siwcB',
+      coinBaseAppId: '76189359-eb0e-4675-ba33-742c49a6f6c5',
     },
     development: {
       appUrl: 'https://app-dev.meanfi.com',
@@ -127,6 +130,7 @@ export class AppConfigService {
       realmsGoverningTokenMintPk: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
       realmsProgramId: 'MGovW65tDhMMcpEmsegpsdgvzb6zUwGsNjhXFxRAnjd',
       realmId: 'GkR6JMPU1b2bFj7j9Db8VAmQdisCCqoTQFfzWi2siwcB',
+      coinBaseAppId: '76189359-eb0e-4675-ba33-742c49a6f6c5',
     },
     local: {
       appUrl: 'http://localhost:3000',
@@ -160,6 +164,7 @@ export class AppConfigService {
       realmsGoverningTokenMintPk: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
       realmsProgramId: 'MGovW65tDhMMcpEmsegpsdgvzb6zUwGsNjhXFxRAnjd',
       realmId: 'GkR6JMPU1b2bFj7j9Db8VAmQdisCCqoTQFfzWi2siwcB',
+      coinBaseAppId: '76189359-eb0e-4675-ba33-742c49a6f6c5',
     },
     local_validator: {
       appUrl: 'http://localhost:3000',
@@ -192,6 +197,7 @@ export class AppConfigService {
       realmsGoverningTokenMintPk: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
       realmsProgramId: 'MGovW65tDhMMcpEmsegpsdgvzb6zUwGsNjhXFxRAnjd',
       realmId: 'GkR6JMPU1b2bFj7j9Db8VAmQdisCCqoTQFfzWi2siwcB',
+      coinBaseAppId: '76189359-eb0e-4675-ba33-742c49a6f6c5',
     },
   };
 

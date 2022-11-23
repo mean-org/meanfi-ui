@@ -232,9 +232,11 @@
     "move-from-renbridge-cta-label": "转换你的比特币",
     "not-connected": "请先连接你的钱包",
     "operation-cta-label-disabled": "钱包未连接",
-    "renbridge-cta-warning": "大通银行（美国）信用卡和借记卡不能用于购买加密卡。其他银行都可以！",
+    "transak-cta-warning": "大通银行（美国）信用卡和借记卡不能用于购买加密卡。其他银行都可以！",
     "send-from-wallet-cta-label": "从钱包/交易所发送",
-    "transak-cta-label": "使用借记卡/信用卡购买"
+    "transak-cta-label": "使用借记卡/信用卡购买",
+    "coinbase-pay-cta-label": "从 Coinbase 购买或转让",
+    "coinbase-cta-warning": "要使用 Coinbase Pay，您需要有一个 Coinbase 帐户并添加付款方式！"
   },
   "error-screens": {
     "network-status": "检查网络状态",

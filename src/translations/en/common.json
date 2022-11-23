@@ -232,9 +232,11 @@
     "move-from-renbridge-cta-label": "Transfer your Bitcoin",
     "not-connected": "Please connect your wallet first",
     "operation-cta-label-disabled": "Wallet not connected",
-    "renbridge-cta-warning": "Chase Bank (US) credit card and debit cards will not work to buy crypto. All other banks are OK!",
+    "transak-cta-warning": "Chase Bank (US) credit card and debit cards will not work to buy crypto. All other banks are OK!",
     "send-from-wallet-cta-label": "Send from Wallet/Exchange",
-    "transak-cta-label": "Buy with debit/credit card"
+    "transak-cta-label": "Buy with debit/credit card",
+    "coinbase-pay-cta-label": "Buy or transfer from Coinbase",
+    "coinbase-cta-warning": "In order to use Coinbase Pay you need to have a Coinbase account and a payment method added!"
   },
   "error-screens": {
     "network-status": "Check network status",
