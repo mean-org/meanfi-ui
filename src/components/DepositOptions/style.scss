@@ -1,10 +1,90 @@
+.deposit-selector {
+  .deposit-option {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    justify-content: space-between;
+
+    &.ant-btn.ant-btn-round {
+      border-radius: var(--custom-border-radius);
+      border-style: solid;
+      border-width: 2px;
+
+      &.thin-stroke {
+        border-width: 1px;
+      }
+
+      color: var(--text-color);
+      background-color: var(--color-secondary-alpha-02);
+
+      &:not(:disabled) {
+        .deposit-partner-icon {
+          filter: drop-shadow(var(--hard-shadow));
+        }
+      }
+
+      &:disabled {
+        border-color: var(--color-secondary-alpha-20);
+        color: var(--color-secondary-alpha-50);
+        background-color: var(--color-secondary-alpha-05);
+
+        .deposit-partner-icon {
+          filter: grayscale(1);
+          opacity: 0.5;
+        }
+      }
+
+      .deposit-partner-icon {
+        width: 24px;
+        height: 24px;
+        flex: 0 0 24px;
+        margin-right: 12px;
+        color: var(--text-color);
+      }
+
+      >span {
+        flex: 1 1 auto;
+        text-align: left;
+      }
+
+      >.loading-container {
+        width: 24px;
+        height: 24px;
+        flex: 0 0 24px;
+      }
+    }
+    .option-text {
+      flex: 1 1 auto;
+      text-align: left;
+      align-self: center;
+    }
+  }
+
+  .qr-container {
+    padding: 20px;
+    margin-bottom: 1.4rem;
+    display: inline-flex;
+    margin-left: auto;
+    margin-right: auto;
+    width: auto;
+    border-radius: 6px;
+  }
+
+  .ant-row {
+    width: auto !important;
+  }
+}
+
 .options-list,
 .option-detail-panel {
   width: 100%;
 }
+
 .options-list.show {
   padding: 24px;
 }
+
 .options-list.show,
 .option-detail-panel.show {
   height: auto;
@@ -13,6 +93,7 @@
   transition-duration: 0.2s;
   transition-timing-function: ease-in-out;
 }
+
 .options-list.hide,
 .option-detail-panel.hide {
   height: 0;
@@ -22,6 +103,7 @@
   transition-duration: 0.2s;
   transition-timing-function: ease-in-out;
 }
+
 #address-static-field {
   font-size: 0.8rem;
   font-weight: 400;

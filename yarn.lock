@@ -1163,6 +1163,11 @@
     near-api-js "^0.44.2"
     near-seed-phrase "^0.2.0"
 
+"@coinbase/cbpay-js@^1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@coinbase/cbpay-js/-/cbpay-js-1.6.0.tgz#23f4456ba57f3e6ba1583e21376e9a2337fd1aaa"
+  integrity sha512-jt1BUaMLbA2/xfHc2YC/Uq+rYD0LIpU5s70ms8VpxImNGiMLUEgUZnAzjk1aIqWiTpQWRmwqyq+WvKTb0Yv05Q==
+
 "@cspotcode/source-map-support@^0.8.0":
   version "0.8.1"
   resolved "https://registry.yarnpkg.com/@cspotcode/source-map-support/-/source-map-support-0.8.1.tgz#00629c35a688e05a88b1cda684fb9d5e73f000a1"
