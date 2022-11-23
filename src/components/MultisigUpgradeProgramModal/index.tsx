@@ -1,11 +1,13 @@
 import {
   CheckOutlined,
   InfoCircleOutlined,
-  LoadingOutlined
+  LoadingOutlined,
 } from '@ant-design/icons';
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Modal, Spin } from 'antd';
+
+import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -13,7 +15,7 @@ import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import {
   getTransactionOperationDescription,
-  isValidAddress
+  isValidAddress,
 } from 'middleware/ui';
 import { getAmountWithSymbol } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
@@ -23,7 +25,7 @@ import { useTranslation } from 'react-i18next';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const MultisigUpgradeProgramModal = (props: {
+interface Props {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
@@ -32,7 +34,20 @@ export const MultisigUpgradeProgramModal = (props: {
   transactionFees: TransactionFees;
   programId?: string;
   programAddress?: string;
-}) => {
+  isMultisigTreasury: boolean;
+}
+
+export const MultisigUpgradeProgramModal = ({
+  handleClose,
+  handleOk,
+  isVisible,
+  isBusy,
+  nativeBalance,
+  transactionFees,
+  programAddress,
+  isMultisigTreasury,
+  programId: baseProgramId,
+}: Props) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
@@ -42,20 +57,21 @@ export const MultisigUpgradeProgramModal = (props: {
   const [programId, setProgramId] = useState('');
   const [programDataAddress, setProgramDataAddress] = useState('');
   const [bufferAddress, setBufferAddress] = useState('');
+  const [proposalTitle, setProposalTitle] = useState('');
 
   // Get propgram ID from inputs
   useEffect(() => {
-    if (props.isVisible && props.programId) {
-      if (isValidAddress(props.programId)) {
-        setProgramId(props.programId);
+    if (isVisible && baseProgramId) {
+      if (isValidAddress(baseProgramId)) {
+        setProgramId(baseProgramId);
       }
     }
-  }, [props.programId, props.isVisible]);
+  }, [baseProgramId, isVisible]);
 
   // Resolves programDataAddress
   useEffect(() => {
     if (
-      !props.isVisible ||
+      !isVisible ||
       !connection ||
       !publicKey ||
       !programId ||
@@ -81,19 +97,20 @@ export const MultisigUpgradeProgramModal = (props: {
     return () => {
       clearTimeout(timeout);
     };
-  }, [programId, publicKey, connection, props.isVisible]);
+  }, [programId, publicKey, connection, isVisible]);
 
   const onAcceptModal = () => {
     const params: ProgramUpgradeParams = {
+      proposalTitle,
       programAddress: programId,
       programDataAddress: programDataAddress,
       bufferAddress: bufferAddress,
     };
-    props.handleOk(params);
+    handleOk(params);
   };
 
   const onCloseModal = () => {
-    props.handleClose();
+    handleClose();
   };
 
   const onAfterClose = () => {
@@ -109,12 +126,6 @@ export const MultisigUpgradeProgramModal = (props: {
     });
   };
 
-  // const onProgramIdChange = (e: any) => {
-  //   const inputValue = e.target.value as string;
-  //   const trimmedValue = inputValue.trim();
-  //   setProgramId(trimmedValue);
-  // }
-
   const onBufferAccountChange = (e: any) => {
     const inputValue = e.target.value as string;
     const trimmedValue = inputValue.trim();
@@ -123,18 +134,32 @@ export const MultisigUpgradeProgramModal = (props: {
 
   const isValidForm = (): boolean => {
     return programId &&
+      (proposalTitle || !isMultisigTreasury) &&
       bufferAddress &&
       programDataAddress &&
-      // isValidAddress(programId) &&
-      // isValidAddress(programDataAddress) &&
       isValidAddress(bufferAddress)
       ? true
       : false;
   };
 
   const refreshPage = () => {
-    props.handleClose();
+    handleClose();
     window.location.reload();
+  };
+
+  const getButtonLabel = () => {
+    return isBusy
+      ? t('multisig.upgrade-program.main-cta-busy')
+      : !proposalTitle && isMultisigTreasury
+      ? 'Add a proposal title'
+      : !bufferAddress
+      ? 'Add a buffer address'
+      : transactionStatus.currentOperation === TransactionStatus.Iddle
+      ? t('multisig.upgrade-program.main-cta')
+      : transactionStatus.currentOperation ===
+        TransactionStatus.TransactionFinished
+      ? t('general.cta-finish')
+      : t('general.refresh');
   };
 
   return (
@@ -146,25 +171,42 @@ export const MultisigUpgradeProgramModal = (props: {
         </div>
       }
       footer={null}
-      open={props.isVisible}
+      open={isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
       width={
-        props.isBusy ||
-        transactionStatus.currentOperation !== TransactionStatus.Iddle
+        isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle
           ? 380
           : 480
       }
     >
-      <div className={!props.isBusy ? 'panel1 show' : 'panel1 hide'}>
+      <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
+            {/* Proposal title */}
+            {isMultisigTreasury && (
+              <>
+                <div className="form-label text-left">
+                  {t('multisig.proposal-modal.title')}
+                </div>
+                <InputMean
+                  id="proposal-title-field"
+                  name="Title"
+                  className={`w-100 general-text-input`}
+                  onChange={(e: any) => {
+                    setProposalTitle(e.target.value);
+                  }}
+                  placeholder="Add a proposal title (required)"
+                  value={proposalTitle}
+                />
+              </>
+            )}
             {/* Program id */}
             <div className="form-label">
               {t('multisig.upgrade-program.program-address-label')}
             </div>
-            <div className={`well ${props.programId ? 'disabled' : ''}`}>
+            <div className={`well ${baseProgramId ? 'disabled' : ''}`}>
               <input
                 id="token-address-field"
                 className="general-text-input"
@@ -172,7 +214,7 @@ export const MultisigUpgradeProgramModal = (props: {
                 autoCorrect="off"
                 type="text"
                 readOnly
-                value={props.programAddress}
+                value={programAddress}
               />
             </div>
             {/* Buffer address */}
@@ -223,12 +265,12 @@ export const MultisigUpgradeProgramModal = (props: {
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(
-                      props.nativeBalance,
+                      nativeBalance,
                       NATIVE_SOL_MINT.toBase58(),
                     ),
                     feeAmount: getAmountWithSymbol(
-                      props.transactionFees.blockchainFee +
-                        props.transactionFees.mspFlatFee,
+                      transactionFees.blockchainFee +
+                        transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58(),
                     ),
                   })}
@@ -248,13 +290,13 @@ export const MultisigUpgradeProgramModal = (props: {
 
       <div
         className={
-          props.isBusy &&
+          isBusy &&
           transactionStatus.currentOperation !== TransactionStatus.Iddle
             ? 'panel2 show'
             : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
@@ -280,7 +322,7 @@ export const MultisigUpgradeProgramModal = (props: {
             type="text"
             shape="round"
             size="middle"
-            className={props.isBusy ? 'inactive' : ''}
+            className={isBusy ? 'inactive' : ''}
             onClick={() =>
               isError(transactionStatus.currentOperation)
                 ? onAcceptModal()
@@ -294,7 +336,7 @@ export const MultisigUpgradeProgramModal = (props: {
         </div>
         <div className="col-6">
           <Button
-            className={props.isBusy ? 'inactive' : ''}
+            className={isBusy ? 'inactive' : ''}
             block
             type="primary"
             shape="round"
@@ -315,14 +357,7 @@ export const MultisigUpgradeProgramModal = (props: {
               }
             }}
           >
-            {props.isBusy
-              ? t('multisig.upgrade-program.main-cta-busy')
-              : transactionStatus.currentOperation === TransactionStatus.Iddle
-              ? t('multisig.upgrade-program.main-cta')
-              : transactionStatus.currentOperation ===
-                TransactionStatus.TransactionFinished
-              ? t('general.cta-finish')
-              : t('general.refresh')}
+            {getButtonLabel()}
           </Button>
         </div>
       </div>

@@ -8,7 +8,6 @@ import {
   ConfirmOptions,
   Connection,
   LAMPORTS_PER_SOL,
-  ParsedTransactionWithMeta,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -27,7 +26,11 @@ import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import {
+  confirmationEvents,
+  TxConfirmationContext,
+  TxConfirmationInfo,
+} from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { appConfig, customLogger } from 'index';
 import { resolveParsedAccountInfo } from 'middleware/accounts';
@@ -44,17 +47,16 @@ import {
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { SetProgramAuthPayload } from 'models/multisig';
 import { ProgramUpgradeParams } from 'models/programs';
-import moment from 'moment';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import ReactJson from 'react-json-view';
 import { useNavigate } from 'react-router-dom';
+import IdlTree from './IdlTree';
+import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutableModal';
 import './style.scss';
+import Transactions from './Transactions';
 
 let isWorkflowLocked = false;
 
-const ProgramDetailsView = (props: {
-  programSelected: any;
-}) => {
+const ProgramDetailsView = (props: { programSelected: any }) => {
   const navigate = useNavigate();
   const { account } = useNativeAccount();
   const connectionConfig = useConnectionConfig();
@@ -67,14 +69,11 @@ const ProgramDetailsView = (props: {
     refreshTokenBalance,
     refreshMultisigs,
   } = useContext(AppStateContext);
-  const {
-    confirmationHistory,
-    enqueueTransactionConfirmation,
-  } = useContext(TxConfirmationContext);
+  const { confirmationHistory, enqueueTransactionConfirmation } = useContext(
+    TxConfirmationContext,
+  );
 
-  const {
-    programSelected,
-  } = props;
+  const { programSelected } = props;
 
   const [transactionFees, setTransactionFees] =
     useState<TransactionFees>(NO_FEES);
@@ -87,10 +86,6 @@ const ProgramDetailsView = (props: {
   const [programTransactions, setProgramTransactions] = useState<any>();
   const [upgradeAuthority, setUpgradeAuthority] = useState<string | null>(null);
   const [canSubscribe, setCanSubscribe] = useState(true);
-
-  const noIdlInfo =
-    'The program IDL is not initialized. To load the IDL info please run `anchor idl init` with the required parameters from your program workspace.';
-
 
   /////////////////
   //  Init code  //
@@ -120,7 +115,12 @@ const ProgramDetailsView = (props: {
       'confirmed',
       multisigProgramAddressPK,
     );
-  }, [publicKey, connection, multisigProgramAddressPK, connectionConfig.endpoint]);
+  }, [
+    publicKey,
+    connection,
+    multisigProgramAddressPK,
+    connectionConfig.endpoint,
+  ]);
 
   const isTxInProgress = useCallback(
     (operation?: OperationType) => {
@@ -197,79 +197,89 @@ const ProgramDetailsView = (props: {
   }, []);
 
   // Setup event handler for Tx confirmed
-  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
-    const turnOffLockWorkflow = () => {
-      isWorkflowLocked = false;
-    };
+  const onTxConfirmed = useCallback(
+    (item: TxConfirmationInfo) => {
+      const turnOffLockWorkflow = () => {
+        isWorkflowLocked = false;
+      };
 
-    const notifyMultisigActionFollowup = (item: TxConfirmationInfo) => {
-      if (!item || !item.extras || !item.extras.multisigAuthority) {
-        turnOffLockWorkflow();
-        return;
+      const notifyMultisigActionFollowup = (item: TxConfirmationInfo) => {
+        if (!item || !item.extras || !item.extras.multisigAuthority) {
+          turnOffLockWorkflow();
+          return;
+        }
+
+        const myNotifyKey = `notify-${Date.now()}`;
+        openNotification({
+          type: 'info',
+          key: myNotifyKey,
+          title: 'Review proposal',
+          duration: 20,
+          description: (
+            <>
+              <div className="mb-2">
+                The proposal's status can be reviewed in the Safe's proposal
+                list.
+              </div>
+              <Button
+                type="primary"
+                shape="round"
+                size="small"
+                className="extra-small d-flex align-items-center pb-1"
+                onClick={() => {
+                  notification.close(myNotifyKey);
+                  const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
+                  navigate(url);
+                }}
+              >
+                Review proposal
+              </Button>
+            </>
+          ),
+          handleClose: turnOffLockWorkflow,
+        });
+      };
+
+      if (item) {
+        if (isWorkflowLocked) {
+          return;
+        }
+
+        // Lock the workflow
+        if (item.extras && item.extras.multisigAuthority) {
+          isWorkflowLocked = true;
+        }
+
+        consoleOut(
+          `ProgramDetailsView -> onTxConfirmed event handled for operation ${
+            OperationType[item.operationType]
+          }`,
+          item,
+          'crimson',
+        );
+        recordTxConfirmation(item, true);
+        switch (item.operationType) {
+          case OperationType.UpgradeProgram:
+            if (item.extras && item.extras.multisigAuthority) {
+              notifyMultisigActionFollowup(item);
+              reloadMultisigs();
+            }
+            break;
+          case OperationType.SetMultisigAuthority:
+            if (item.extras && item.extras.multisigAuthority) {
+              notifyMultisigActionFollowup(item);
+              reloadMultisigs();
+            } else if (!item.extras || !item.extras.multisigAuthority) {
+              window.location.href = '/';
+            }
+            break;
+          default:
+            break;
+        }
       }
-
-      const myNotifyKey = `notify-${Date.now()}`;
-      openNotification({
-        type: 'info',
-        key: myNotifyKey,
-        title: 'Review proposal',
-        duration: 20,
-        description: (
-          <>
-            <div className="mb-2">
-              The proposal's status can be reviewed in the Safe's proposal list.
-            </div>
-            <Button
-              type="primary"
-              shape="round"
-              size="small"
-              className="extra-small d-flex align-items-center pb-1"
-              onClick={() => {
-                notification.close(myNotifyKey);
-                const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
-                navigate(url);
-              }}
-            >
-              Review proposal
-            </Button>
-          </>
-        ),
-        handleClose: turnOffLockWorkflow,
-      });
-    };
-
-    if (item) {
-      if (isWorkflowLocked) {
-        return;
-      }
-
-      // Lock the workflow
-      if (item.extras && item.extras.multisigAuthority) {
-        isWorkflowLocked = true;
-      }
-
-      consoleOut(`ProgramDetailsView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
-      recordTxConfirmation(item, true);
-      switch (item.operationType) {
-        case OperationType.UpgradeProgram:
-          if (item.extras && item.extras.multisigAuthority) {
-            notifyMultisigActionFollowup(item);
-            reloadMultisigs();
-          }
-          break;
-        case OperationType.SetMultisigAuthority:
-          if (item.extras && item.extras.multisigAuthority) {
-            notifyMultisigActionFollowup(item);
-            reloadMultisigs();
-          } else if (!item.extras || !item.extras.multisigAuthority) {
-            window.location.href = '/';
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  }, [navigate, recordTxConfirmation, reloadMultisigs]);
+    },
+    [navigate, recordTxConfirmation, reloadMultisigs],
+  );
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
@@ -284,9 +294,9 @@ const ProgramDetailsView = (props: {
     [recordTxConfirmation, resetTransactionStatus],
   );
 
-
   // Upgrade program modal
-  const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
+  const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] =
+    useState(false);
   const showUpgradeProgramModal = useCallback(() => {
     setIsUpgradeProgramModalVisible(true);
     const fees = {
@@ -308,344 +318,354 @@ const ProgramDetailsView = (props: {
     onExecuteUpgradeProgramsTx(params);
   };
 
-  const onExecuteUpgradeProgramsTx = useCallback(async (params: ProgramUpgradeParams) => {
-    let transaction: Transaction;
-    let signature: any;
-    let encodedTx: string;
-    const transactionLog: any[] = [];
+  const onExecuteUpgradeProgramsTx = useCallback(
+    async (params: ProgramUpgradeParams) => {
+      let transaction: Transaction;
+      let signature: any;
+      let encodedTx: string;
+      const transactionLog: any[] = [];
 
-    resetTransactionStatus();
-    setTransactionCancelled(false);
-    setIsBusy(true);
+      resetTransactionStatus();
+      setTransactionCancelled(false);
+      setIsBusy(true);
 
-    const updateProgramSingleSigner = async (data: ProgramUpgradeParams) => {
-      if (!publicKey) {
-        return null;
-      }
+      const updateProgramSingleSigner = async (data: ProgramUpgradeParams) => {
+        if (!publicKey) {
+          return null;
+        }
 
-      const tx = new Transaction();
+        const tx = new Transaction();
 
-      const dataBuffer = Buffer.from([3, 0, 0, 0]);
-      const spill = publicKey;
-      const ixAccounts = [
-        {
-          pubkey: new PublicKey(data.programDataAddress),
-          isWritable: true,
-          isSigner: false,
-        },
-        {
-          pubkey: new PublicKey(data.programAddress),
-          isWritable: true,
-          isSigner: false,
-        },
-        {
-          pubkey: new PublicKey(data.bufferAddress),
-          isWritable: true,
-          isSigner: false,
-        },
-        { pubkey: spill, isWritable: true, isSigner: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isWritable: false, isSigner: false },
-        { pubkey: SYSVAR_CLOCK_PUBKEY, isWritable: false, isSigner: false },
-        { pubkey: publicKey, isWritable: false, isSigner: true },
-      ];
+        const dataBuffer = Buffer.from([3, 0, 0, 0]);
+        const spill = publicKey;
+        const ixAccounts = [
+          {
+            pubkey: new PublicKey(data.programDataAddress),
+            isWritable: true,
+            isSigner: false,
+          },
+          {
+            pubkey: new PublicKey(data.programAddress),
+            isWritable: true,
+            isSigner: false,
+          },
+          {
+            pubkey: new PublicKey(data.bufferAddress),
+            isWritable: true,
+            isSigner: false,
+          },
+          { pubkey: spill, isWritable: true, isSigner: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isWritable: false, isSigner: false },
+          { pubkey: SYSVAR_CLOCK_PUBKEY, isWritable: false, isSigner: false },
+          { pubkey: publicKey, isWritable: false, isSigner: true },
+        ];
 
-      const upgradeIxFields: TransactionInstructionCtorFields = {
-        keys: ixAccounts,
-        programId: BPF_LOADER_UPGRADEABLE_PID,
-        data: dataBuffer
-      };
-
-      tx.add(upgradeIxFields);
-      tx.feePayer = publicKey;
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      tx.recentBlockhash = blockhash;
-      tx.lastValidBlockHeight = lastValidBlockHeight;
-
-      return tx;
-    }
-
-    const updateProgramMultiSigner = async (data: ProgramUpgradeParams) => {
-      if (!multisigClient || !selectedMultisig || !publicKey) {
-        return null;
-      }
-
-      const dataBuffer = Buffer.from([3, 0, 0, 0]);
-      const spill = publicKey;
-      const ixAccounts = [
-        {
-          pubkey: new PublicKey(data.programDataAddress),
-          isWritable: true,
-          isSigner: false,
-        },
-        {
-          pubkey: new PublicKey(data.programAddress),
-          isWritable: true,
-          isSigner: false,
-        },
-        {
-          pubkey: new PublicKey(data.bufferAddress),
-          isWritable: true,
-          isSigner: false,
-        },
-        { pubkey: spill, isWritable: true, isSigner: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isWritable: false, isSigner: false },
-        { pubkey: SYSVAR_CLOCK_PUBKEY, isWritable: false, isSigner: false },
-        {
-          pubkey: selectedMultisig.authority,
-          isWritable: false,
-          isSigner: false,
-        },
-      ];
-
-      const expirationTime = parseInt(
-        (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
-      );
-
-      const tx = await multisigClient.createTransaction(
-        publicKey,
-        'Upgrade Program',
-        '', // description
-        new Date(expirationTime * 1_000),
-        OperationType.UpgradeProgram,
-        selectedMultisig.id,
-        BPF_LOADER_UPGRADEABLE_PID,
-        ixAccounts,
-        dataBuffer,
-      );
-
-      return tx;
-    }
-
-    const upgradeProgram = async (data: ProgramUpgradeParams) => {
-      if (isMultisigContext) {
-        return updateProgramMultiSigner(data);
-      } else {
-        return updateProgramSingleSigner(data);
-      }
-    };
-
-    const createTx = async (): Promise<boolean> => {
-      if (publicKey && params) {
-        consoleOut('Start transaction for create multisig', '', 'blue');
-        consoleOut('Wallet address:', publicKey.toBase58());
-
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction,
-        });
-
-        // Create a transaction
-        const payload = {
-          programAddress: params.programAddress,
-          programDataAddress: params.programDataAddress,
-          bufferAddress: params.bufferAddress,
+        const upgradeIxFields: TransactionInstructionCtorFields = {
+          keys: ixAccounts,
+          programId: BPF_LOADER_UPGRADEABLE_PID,
+          data: dataBuffer,
         };
 
-        consoleOut('data:', payload);
+        tx.add(upgradeIxFields);
+        tx.feePayer = publicKey;
+        const { blockhash, lastValidBlockHeight } =
+          await connection.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+        tx.lastValidBlockHeight = lastValidBlockHeight;
 
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
-          inputs: payload,
-        });
+        return tx;
+      };
 
-        transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
-          result: '',
-        });
+      const updateProgramMultiSigner = async (data: ProgramUpgradeParams) => {
+        if (!multisigClient || !selectedMultisig || !publicKey) {
+          return null;
+        }
 
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut(
-          'blockchainFee:',
-          transactionFees.blockchainFee + transactionFees.mspFlatFee,
-          'blue',
+        const dataBuffer = Buffer.from([3, 0, 0, 0]);
+        const spill = publicKey;
+        const ixAccounts = [
+          {
+            pubkey: new PublicKey(data.programDataAddress),
+            isWritable: true,
+            isSigner: false,
+          },
+          {
+            pubkey: new PublicKey(data.programAddress),
+            isWritable: true,
+            isSigner: false,
+          },
+          {
+            pubkey: new PublicKey(data.bufferAddress),
+            isWritable: true,
+            isSigner: false,
+          },
+          { pubkey: spill, isWritable: true, isSigner: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isWritable: false, isSigner: false },
+          { pubkey: SYSVAR_CLOCK_PUBKEY, isWritable: false, isSigner: false },
+          {
+            pubkey: selectedMultisig.authority,
+            isWritable: false,
+            isSigner: false,
+          },
+        ];
+
+        const expirationTime = parseInt(
+          (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
         );
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
 
-        if (
-          nativeBalance <
-          transactionFees.blockchainFee + transactionFees.mspFlatFee
-        ) {
+        const tx = await multisigClient.createTransaction(
+          publicKey,
+          data.proposalTitle,
+          '', // description
+          new Date(expirationTime * 1_000),
+          OperationType.UpgradeProgram,
+          selectedMultisig.id,
+          BPF_LOADER_UPGRADEABLE_PID,
+          ixAccounts,
+          dataBuffer,
+        );
+
+        return tx;
+      };
+
+      const upgradeProgram = async (data: ProgramUpgradeParams) => {
+        if (isMultisigContext) {
+          return updateProgramMultiSigner(data);
+        } else {
+          return updateProgramSingleSigner(data);
+        }
+      };
+
+      const createTx = async (): Promise<boolean> => {
+        if (publicKey && params) {
+          consoleOut('Start transaction for create multisig', '', 'blue');
+          consoleOut('Wallet address:', publicKey.toBase58());
+
           setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure,
+            lastOperation: TransactionStatus.TransactionStart,
+            currentOperation: TransactionStatus.InitTransaction,
           });
+
+          // Create a transaction
+          const payload = {
+            programAddress: params.programAddress,
+            programDataAddress: params.programDataAddress,
+            bufferAddress: params.bufferAddress,
+            proposalTitle: params.proposalTitle,
+          };
+
+          consoleOut('data:', payload);
+
+          // Log input data
           transactionLog.push({
             action: getTransactionStatusForLogs(
-              TransactionStatus.TransactionStartFailure,
+              TransactionStatus.TransactionStart,
             ),
-            result: `Not enough balance (${getAmountWithSymbol(
-              nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
-            )}) to pay for network fees (${getAmountWithSymbol(
-              transactionFees.blockchainFee + transactionFees.mspFlatFee,
-              NATIVE_SOL_MINT.toBase58(),
-            )})`,
+            inputs: payload,
           });
-          customLogger.logWarning('Upgrade Program transaction failed', {
+
+          transactionLog.push({
+            action: getTransactionStatusForLogs(
+              TransactionStatus.InitTransaction,
+            ),
+            result: '',
+          });
+
+          // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+          // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+          consoleOut(
+            'blockchainFee:',
+            transactionFees.blockchainFee + transactionFees.mspFlatFee,
+            'blue',
+          );
+          consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+          if (
+            nativeBalance <
+            transactionFees.blockchainFee + transactionFees.mspFlatFee
+          ) {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionStartFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.TransactionStartFailure,
+              ),
+              result: `Not enough balance (${getAmountWithSymbol(
+                nativeBalance,
+                NATIVE_SOL_MINT.toBase58(),
+              )}) to pay for network fees (${getAmountWithSymbol(
+                transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                NATIVE_SOL_MINT.toBase58(),
+              )})`,
+            });
+            customLogger.logWarning('Upgrade Program transaction failed', {
+              transcript: transactionLog,
+            });
+            return false;
+          }
+
+          return upgradeProgram(payload)
+            .then(value => {
+              if (!value) {
+                return false;
+              }
+              consoleOut('upgradeProgram returned transaction:', value);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.InitTransactionSuccess,
+                currentOperation: TransactionStatus.SignTransaction,
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(
+                  TransactionStatus.InitTransactionSuccess,
+                ),
+                result: getTxIxResume(value),
+              });
+              transaction = value;
+              return true;
+            })
+            .catch(error => {
+              console.error('upgradeProgram error:', error);
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.InitTransactionFailure,
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(
+                  TransactionStatus.InitTransactionFailure,
+                ),
+                result: `${error}`,
+              });
+              customLogger.logError('Upgrade Program transaction failed', {
+                transcript: transactionLog,
+              });
+              return false;
+            });
+        } else {
+          transactionLog.push({
+            action: getTransactionStatusForLogs(
+              TransactionStatus.WalletNotFound,
+            ),
+            result: 'Cannot start transaction! Wallet not found!',
+          });
+          customLogger.logError('Upgrade Program transaction failed', {
             transcript: transactionLog,
           });
           return false;
         }
+      };
 
-        return upgradeProgram(payload)
-          .then(value => {
-            if (!value) {
+      const sendTx = async (): Promise<boolean> => {
+        if (connection && wallet && wallet.publicKey && transaction) {
+          const {
+            context: { slot: minContextSlot },
+            value: { blockhash },
+          } = await connection.getLatestBlockhashAndContext();
+
+          transaction.feePayer = wallet.publicKey;
+          transaction.recentBlockhash = blockhash;
+
+          return wallet
+            .sendTransaction(transaction, connection, { minContextSlot })
+            .then(sig => {
+              consoleOut('sendEncodedTransaction returned a signature:', sig);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SendTransactionSuccess,
+                currentOperation: TransactionStatus.ConfirmTransaction,
+              });
+              signature = sig;
+              transactionLog.push({
+                action: getTransactionStatusForLogs(
+                  TransactionStatus.SendTransactionSuccess,
+                ),
+                result: `signature: ${signature}`,
+              });
+              return true;
+            })
+            .catch(error => {
+              console.error(error);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SendTransaction,
+                currentOperation: TransactionStatus.SendTransactionFailure,
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(
+                  TransactionStatus.SendTransactionFailure,
+                ),
+                result: { error, encodedTx },
+              });
+              customLogger.logError('Upgrade Program transaction failed', {
+                transcript: transactionLog,
+              });
               return false;
-            }
-            consoleOut('upgradeProgram returned transaction:', value);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction,
             });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
-              result: getTxIxResume(value),
-            });
-            transaction = value;
-            return true;
-          })
-          .catch(error => {
-            console.error('upgradeProgram error:', error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
-              result: `${error}`,
-            });
-            customLogger.logError('Upgrade Program transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
+        } else {
+          console.error('Cannot send transaction! Wallet not found!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransaction,
+            currentOperation: TransactionStatus.WalletNotFound,
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.WalletNotFound,
-          ),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Upgrade Program transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Upgrade Program transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(
+              TransactionStatus.WalletNotFound,
+            ),
+            result: 'Cannot send transaction! Wallet not found!',
           });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.WalletNotFound,
-          ),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Upgrade Program transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    if (wallet) {
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          const multisigAuth = isMultisigContext && selectedMultisig
-            ? selectedMultisig.authority.toBase58()
-            : ''
-          const loadingMessage = multisigAuth
-            ? `Create proposal to upgrade program ${shortenAddress(params.programAddress)}`
-            : `Upgrade program ${shortenAddress(params.programAddress)}`;
-          const completedMessage = multisigAuth
-            ? `Proposal to upgrade program ${shortenAddress(params.programAddress)} has been submitted for approval.`
-            : `Program ${shortenAddress(params.programAddress)} has been upgraded`;
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.UpgradeProgram,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage,
-            completedTitle: 'Transaction confirmed',
-            completedMessage,
-            extras: {
-              multisigAuthority: multisigAuth,
-            },
+          customLogger.logError('Upgrade Program transaction failed', {
+            transcript: transactionLog,
           });
+          return false;
+        }
+      };
 
-          closeUpgradeProgramModal();
+      if (wallet) {
+        const create = await createTx();
+        consoleOut('created:', create);
+        if (create && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            const multisigAuth =
+              isMultisigContext && selectedMultisig
+                ? selectedMultisig.authority.toBase58()
+                : '';
+            const loadingMessage = multisigAuth
+              ? `Create proposal to upgrade program ${shortenAddress(
+                  params.programAddress,
+                )}`
+              : `Upgrade program ${shortenAddress(params.programAddress)}`;
+            const completedMessage = multisigAuth
+              ? `Proposal to upgrade program ${shortenAddress(
+                  params.programAddress,
+                )} has been submitted for approval.`
+              : `Program ${shortenAddress(
+                  params.programAddress,
+                )} has been upgraded`;
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.UpgradeProgram,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage,
+              completedTitle: 'Transaction confirmed',
+              completedMessage,
+              extras: {
+                multisigAuthority: multisigAuth,
+              },
+            });
+
+            closeUpgradeProgramModal();
+          } else {
+            setIsBusy(false);
+          }
         } else {
           setIsBusy(false);
         }
-      } else {
-        setIsBusy(false);
       }
-    }
-  },
+    },
     [
       wallet,
       publicKey,
@@ -666,7 +686,8 @@ const ProgramDetailsView = (props: {
   );
 
   // Set program authority modal
-  const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
+  const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] =
+    useState(false);
   const showSetProgramAuthModal = useCallback(() => {
     setIsSetProgramAuthModalVisible(true);
     const fees = {
@@ -677,13 +698,24 @@ const ProgramDetailsView = (props: {
     setTransactionFees(fees);
   }, []);
 
+  const [
+    isMultisigMakeProgramImmutableModalVisible,
+    setIsMultisigMakeProgramImmutableModalVisible,
+  ] = useState(false);
+
   const closeSetProgramAuthModal = useCallback(() => {
     resetTransactionStatus();
     setIsSetProgramAuthModalVisible(false);
     setIsBusy(false);
   }, [resetTransactionStatus]);
 
-  const setInmutableProgram = (programId: string) => {
+  const setImmutableProgram = ({
+    proposalTitle,
+    programId,
+  }: {
+    proposalTitle?: string;
+    programId: string;
+  }) => {
     const programAddress = new PublicKey(programId);
     PublicKey.findProgramAddress(
       [programAddress.toBuffer()],
@@ -698,6 +730,7 @@ const ProgramDetailsView = (props: {
         };
         setTransactionFees(fees);
         const params: SetProgramAuthPayload = {
+          proposalTitle: proposalTitle || '',
           programAddress: programId,
           programDataAddress: programDataAddress.toBase58(),
           newAuthAddress: '', // Empty to make program non-upgradable (inmutable)
@@ -723,7 +756,9 @@ const ProgramDetailsView = (props: {
       setTransactionCancelled(false);
       setIsBusy(true);
 
-      const setProgramAuthSingleSigner = async (data: SetProgramAuthPayload) => {
+      const setProgramAuthSingleSigner = async (
+        data: SetProgramAuthPayload,
+      ) => {
         if (!publicKey) {
           return null;
         }
@@ -754,28 +789,29 @@ const ProgramDetailsView = (props: {
         const setAuthIxFields: TransactionInstructionCtorFields = {
           keys: ixAccounts,
           programId: BPF_LOADER_UPGRADEABLE_PID,
-          data: ixData
+          data: ixData,
         };
 
         tx.add(setAuthIxFields);
         tx.feePayer = publicKey;
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        const { blockhash, lastValidBlockHeight } =
+          await connection.getLatestBlockhash();
         tx.recentBlockhash = blockhash;
         tx.lastValidBlockHeight = lastValidBlockHeight;
 
         return tx;
-      }
+      };
 
       const setProgramAuthMultiSigner = async (data: SetProgramAuthPayload) => {
         if (!multisigClient || !selectedMultisig || !publicKey) {
           return null;
         }
-  
+
         const [multisigSigner] = await PublicKey.findProgramAddress(
           [selectedMultisig.id.toBuffer()],
           multisigProgramAddressPK,
         );
-  
+
         const ixData = Buffer.from([4, 0, 0, 0]);
         const ixAccounts = [
           {
@@ -785,7 +821,7 @@ const ProgramDetailsView = (props: {
           },
           { pubkey: multisigSigner, isWritable: false, isSigner: true },
         ];
-  
+
         // If it is an authority change, add the account of the new authority
         // otherwise the program will be inmutable
         if (data.newAuthAddress) {
@@ -795,14 +831,14 @@ const ProgramDetailsView = (props: {
             isSigner: false,
           });
         }
-  
+
         const expirationTime = parseInt(
           (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
         );
-  
+
         const tx = await multisigClient.createTransaction(
           publicKey,
-          'Set Program Authority',
+          data.proposalTitle,
           '', // description
           new Date(expirationTime * 1_000),
           OperationType.SetMultisigAuthority,
@@ -811,9 +847,9 @@ const ProgramDetailsView = (props: {
           ixAccounts,
           ixData,
         );
-  
+
         return tx;
-      }
+      };
 
       const setProgramAuth = async (data: SetProgramAuthPayload) => {
         if (isMultisigContext) {
@@ -1009,31 +1045,50 @@ const ProgramDetailsView = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            const multisigAuth = isMultisigContext && selectedMultisig
-              ? selectedMultisig.authority.toBase58()
-              : ''
+            const multisigAuth =
+              isMultisigContext && selectedMultisig
+                ? selectedMultisig.authority.toBase58()
+                : '';
             const isAuthChange = params.newAuthAddress ? true : false;
             const authChangeLoadingMessage = multisigAuth
-              ? `Create proposal to set program authority to ${shortenAddress(params.newAuthAddress)}`
-              : `Set program authority to ${shortenAddress(params.newAuthAddress)}`;
+              ? `Create proposal to set program authority to ${shortenAddress(
+                  params.newAuthAddress,
+                )}`
+              : `Set program authority to ${shortenAddress(
+                  params.newAuthAddress,
+                )}`;
             const authChangeCompleted = multisigAuth
               ? `Set program authority proposal has been submitted for approval.`
-              : `Program authority set to ${shortenAddress(params.newAuthAddress)}`;
+              : `Program authority set to ${shortenAddress(
+                  params.newAuthAddress,
+                )}`;
             const makeImmutableLoadingMessage = multisigAuth
-              ? `Create proposal to make program ${shortenAddress(params.programAddress)} non-upgradable`
-              : `Make program ${shortenAddress(params.programAddress)} non-upgradable`;
+              ? `Create proposal to make program ${shortenAddress(
+                  params.programAddress,
+                )} non-upgradable`
+              : `Make program ${shortenAddress(
+                  params.programAddress,
+                )} non-upgradable`;
             const makeImmutableCompleted = multisigAuth
-              ? `Proposal to set program ${shortenAddress(params.programAddress)} as non-upgradable has been submitted for approval.`
-              : `Program ${shortenAddress(params.programAddress)} is now non-upgradable`;
+              ? `Proposal to set program ${shortenAddress(
+                  params.programAddress,
+                )} as non-upgradable has been submitted for approval.`
+              : `Program ${shortenAddress(
+                  params.programAddress,
+                )} is now non-upgradable`;
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.SetMultisigAuthority,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
-              loadingMessage: isAuthChange ? authChangeLoadingMessage : makeImmutableLoadingMessage,
+              loadingMessage: isAuthChange
+                ? authChangeLoadingMessage
+                : makeImmutableLoadingMessage,
               completedTitle: 'Transaction confirmed',
-              completedMessage: isAuthChange ? authChangeCompleted : makeImmutableCompleted,
+              completedMessage: isAuthChange
+                ? authChangeCompleted
+                : makeImmutableCompleted,
               extras: {
                 multisigAuthority: multisigAuth,
               },
@@ -1230,63 +1285,6 @@ const ProgramDetailsView = (props: {
     };
   }, [connection, programSelected, loadingTxs, getProgramTxs]);
 
-  const renderTransactions = (
-    <>
-      <div className="item-list-header compact mt-2 mr-1">
-        <Row gutter={[8, 8]} className="d-flex header-row pb-2">
-          <Col span={14} className="std-table-cell pr-1">
-            Signatures
-          </Col>
-          <Col span={5} className="std-table-cell pl-3 pr-1">
-            Slots
-          </Col>
-          <Col span={5} className="std-table-cell pl-3 pr-1">
-            Time
-          </Col>
-        </Row>
-      </div>
-      {!loadingTxs ? (
-        programTransactions && programTransactions.length > 0 ? (
-          programTransactions.map((tx: ParsedTransactionWithMeta) => (
-            <Row
-              gutter={[8, 8]}
-              className="item-list-body compact hover-list w-100 pt-1"
-              key={tx.blockTime}
-            >
-              <Col
-                span={14}
-                className="std-table-cell pr-1 simplelink signature"
-              >
-                <CopyExtLinkGroup
-                  content={tx.transaction.signatures.slice(0, 1).shift() || ''}
-                  externalLink={true}
-                  className="text-truncate"
-                  message="Signature"
-                  isTx={true}
-                />
-              </Col>
-              <Col span={5} className="std-table-cell pr-1 simplelink">
-                <CopyExtLinkGroup
-                  content={formatThousands(tx.slot)}
-                  externalLink={false}
-                  className="text-truncate"
-                  message="Slot"
-                />
-              </Col>
-              <Col span={5} className="std-table-cell pr-1">
-                {moment.unix(tx.blockTime as number).fromNow()}
-              </Col>
-            </Row>
-          ))
-        ) : (
-          <span>This program has no transactions</span>
-        )
-      ) : (
-        <span>Loading transactions ...</span>
-      )}
-    </>
-  );
-
   const getProgramIDL = useCallback(async () => {
     if (!connection || !publicKey || !programSelected) {
       return null;
@@ -1374,29 +1372,22 @@ const ProgramDetailsView = (props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const renderIdlTree = () => {
-    return !selectedProgramIdl ? (
-      <div className={'no-idl-info'}>{noIdlInfo}</div>
-    ) : (
-      <ReactJson
-        theme={'ocean'}
-        enableClipboard={false}
-        src={selectedProgramIdl}
-      />
-    );
-  };
-
   // Tabs
   const tabs = [
     {
       id: 'transactions',
       name: 'Transactions',
-      render: renderTransactions,
+      render: (
+        <Transactions
+          loadingTxs={loadingTxs}
+          programTransactions={programTransactions}
+        />
+      ),
     },
     {
       id: 'anchor-idl',
       name: 'Anchor IDL',
-      render: renderIdlTree(),
+      render: <IdlTree selectedProgramIdl={selectedProgramIdl} />,
     },
   ];
 
@@ -1404,7 +1395,6 @@ const ProgramDetailsView = (props: {
     <>
       <span id="multisig-refresh-cta" onClick={() => getMultisigList()}></span>
       <div className="program-details-container">
-
         <Row gutter={[8, 8]} className="safe-info-container mr-0 ml-0">
           {infoProgramData.map((info, index) => (
             <Col xs={12} sm={12} md={12} lg={12} key={index}>
@@ -1471,9 +1461,15 @@ const ProgramDetailsView = (props: {
                   size="small"
                   className="thin-stroke"
                   disabled={isTxInProgress() || !upgradeAuthority}
-                  onClick={() =>
-                    setInmutableProgram(programSelected.pubkey.toBase58())
-                  }
+                  onClick={() => {
+                    if (isMultisigContext) {
+                      setIsMultisigMakeProgramImmutableModalVisible(true);
+                    } else {
+                      setImmutableProgram({
+                        programId: programSelected.pubkey.toBase58(),
+                      });
+                    }
+                  }}
                 >
                   <div className="btn-content">Make immutable</div>
                 </Button>
@@ -1490,11 +1486,14 @@ const ProgramDetailsView = (props: {
           isVisible={isUpgradeProgramModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
-          handleOk={(params: ProgramUpgradeParams) => onAcceptUpgradeProgram(params)}
+          handleOk={(params: ProgramUpgradeParams) =>
+            onAcceptUpgradeProgram(params)
+          }
           handleClose={closeUpgradeProgramModal}
           programId={programSelected?.pubkey.toBase58()}
           isBusy={isBusy}
           programAddress={programSelected.pubkey.toBase58()}
+          isMultisigTreasury={isMultisigContext}
         />
       )}
 
@@ -1509,6 +1508,21 @@ const ProgramDetailsView = (props: {
           handleClose={closeSetProgramAuthModal}
           programId={programSelected?.pubkey.toBase58()}
           isBusy={isBusy}
+          isMultisigTreasury={isMultisigContext}
+        />
+      )}
+      {isMultisigMakeProgramImmutableModalVisible && (
+        <MultisigMakeProgramImmutableModal
+          handleOk={({ proposalTitle }) => {
+            setIsMultisigMakeProgramImmutableModalVisible(false);
+            setImmutableProgram({
+              proposalTitle,
+              programId: programSelected.pubkey.toBase58(),
+            });
+          }}
+          handleClose={() =>
+            setIsMultisigMakeProgramImmutableModalVisible(false)
+          }
         />
       )}
     </>

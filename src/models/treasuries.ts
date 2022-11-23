@@ -26,6 +26,7 @@ export interface CloseStreamTransactionParams {
 }
 
 export interface TreasuryWithdrawParams {
+  proposalTitle: string;
   payer: string;
   destination: string;
   treasury: string;

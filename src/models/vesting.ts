@@ -110,6 +110,7 @@ export interface VestingContractEditOptions {
 }
 
 export interface VestingContractWithdrawOptions {
+  proposalTitle: string;
   amount: string;
   tokenAmount: BN;
   destinationAccount: string;
@@ -144,6 +145,7 @@ export interface CreateVestingStreamParams {
 }
 
 export interface VestingContractCloseStreamOptions {
+  proposalTitle: string;
   closeTreasuryOption: boolean;
   vestedReturns: number | string;
   unvestedReturns: number | string;

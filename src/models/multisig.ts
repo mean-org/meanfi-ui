@@ -171,6 +171,7 @@ export type CreateMintPayload = {
 };
 
 export type SetProgramAuthPayload = {
+  proposalTitle: string;
   programAddress: string;
   programDataAddress: string;
   newAuthAddress: string;

@@ -10,6 +10,7 @@ import { Button, Modal, Spin } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { BN } from 'bn.js';
 import { Identicon } from 'components/Identicon';
+import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
   FALLBACK_COIN_IMAGE,
@@ -90,6 +91,7 @@ export const VestingContractWithdrawFundsModal = (props: {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(
     undefined,
   );
+  const [proposalTitle, setProposalTitle] = useState('');
 
   const getTokenPrice = useCallback(
     (inputAmount: string) => {
@@ -111,8 +113,9 @@ export const VestingContractWithdrawFundsModal = (props: {
         ? selectedMultisig.authority.toBase58()
         : '';
     const options: VestingContractWithdrawOptions = {
+      proposalTitle,
       amount: withdrawAmount,
-      tokenAmount: tokenAmount,
+      tokenAmount,
       destinationAccount: to,
       associatedToken: selectedToken,
       multisig,
@@ -182,6 +185,7 @@ export const VestingContractWithdrawFundsModal = (props: {
     const br = getMinBalanceRequired();
     return publicKey &&
       to &&
+      (proposalTitle || !isMultisigTreasury) &&
       isValidAddress(to) &&
       selectedToken &&
       isVerifiedRecipient &&
@@ -194,7 +198,9 @@ export const VestingContractWithdrawFundsModal = (props: {
   };
 
   const getButtonLabel = () => {
-    return !to || !isValidAddress(to)
+    return !proposalTitle && isMultisigTreasury
+      ? 'Add a proposal title'
+      : !to || !isValidAddress(to)
       ? 'Add destination account'
       : !unallocatedBalance || unallocatedBalance.isZero()
       ? 'No balance'
@@ -368,6 +374,24 @@ export const VestingContractWithdrawFundsModal = (props: {
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
+            {/* Proposal title */}
+            {isMultisigTreasury && (
+              <div className="mb-3 mt-3">
+                <div className="form-label text-left">
+                  {t('multisig.proposal-modal.title')}
+                </div>
+                <InputMean
+                  id="proposal-title-field"
+                  name="Title"
+                  className={`w-100 general-text-input`}
+                  onChange={(e: any) => {
+                    setProposalTitle(e.target.value);
+                  }}
+                  placeholder="Add a proposal title (required)"
+                  value={proposalTitle}
+                />
+              </div>
+            )}
             {/* Transfer from */}
             {vestingContract && (
               <div className="mb-3">
