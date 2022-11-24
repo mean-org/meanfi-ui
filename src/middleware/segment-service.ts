@@ -292,6 +292,16 @@ export interface SegmentVestingContractCreateData {
   feePayedByTreasurer: boolean;
 }
 
+export interface SegmentVestingContractEditData {
+  contractName: string;
+  cliffVestPercent: number;
+  duration: number;
+  durationUnit: string;
+  feePayedByTreasurer: boolean;
+  multisig: string;
+  startUtc: string;
+}
+
 export interface SegmentVestingContractWithdrawData {
   asset: string;
   assetPrice: number;
