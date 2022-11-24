@@ -2516,39 +2516,6 @@ em {
   }
 }
 
-.ant-tabs {
-  color: inherit;
-
-  .ant-tabs-nav {
-    &::before {
-      border: none;
-    }
-  }
-
-  .ant-tabs-nav-list {
-    .ant-tabs-tab {
-      padding: 10px 0;
-      border-bottom: 3px solid transparent;
-
-      &:hover {
-        color: inherit;
-        border-bottom: 3px solid var(--color-secondary-alpha-05);
-      }
-
-      .ant-tabs-tab-btn {
-        color: inherit;
-        text-transform: uppercase;
-      }
-    }
-
-    .ant-tabs-ink-bar {
-      position: absolute;
-      background: var(--color-primary-highlight);
-      pointer-events: none;
-    }
-  }
-}
-
 .ant-tooltip {
   .ant-tooltip-content {
     .ant-tooltip-inner {

@@ -1,5 +1,4 @@
 import { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
-import { consoleOut } from 'middleware/ui';
 import {
   AccountContext,
   AssetGroups,

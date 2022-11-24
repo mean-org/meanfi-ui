@@ -162,6 +162,14 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     refreshMultisigs();
   }, [publicKey, refreshMultisigs]);
 
+  const logEventHandling = useCallback((item: TxConfirmationInfo) => {
+    consoleOut(
+      `ProgramDetailsView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
+      item,
+      'crimson',
+    );
+  }, []);
+
   const recordTxConfirmation = useCallback(
     (item: TxConfirmationInfo, success = true) => {
       let event: any = undefined;
@@ -250,22 +258,17 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           isWorkflowLocked = true;
         }
 
-        consoleOut(
-          `ProgramDetailsView -> onTxConfirmed event handled for operation ${
-            OperationType[item.operationType]
-          }`,
-          item,
-          'crimson',
-        );
         recordTxConfirmation(item, true);
         switch (item.operationType) {
           case OperationType.UpgradeProgram:
+            logEventHandling(item);
             if (item.extras && item.extras.multisigAuthority) {
               notifyMultisigActionFollowup(item);
               reloadMultisigs();
             }
             break;
           case OperationType.SetMultisigAuthority:
+            logEventHandling(item);
             if (item.extras && item.extras.multisigAuthority) {
               notifyMultisigActionFollowup(item);
               reloadMultisigs();
@@ -278,7 +281,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
         }
       }
     },
-    [navigate, recordTxConfirmation, reloadMultisigs],
+    [logEventHandling, navigate, recordTxConfirmation, reloadMultisigs],
   );
 
   // Setup event handler for Tx confirmation error
