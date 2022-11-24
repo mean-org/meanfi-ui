@@ -223,7 +223,7 @@ const PersonalAccountSummary = React.lazy(() => import('../../views/WalletAccoun
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let isWorkflowLocked = false;
 
-export const AccountsView = () => {
+export const HomeView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { asset, streamingTab, streamingItemId, programId } = useParams();
