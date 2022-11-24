@@ -136,13 +136,13 @@ const StakingView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accounts, publicKey, stakingPair]);
 
-  const getUsdAmountForSmeanInput = useCallback((balance: number) => {
+  const getUsdAmountForSmeanAmount = useCallback((amount: number) => {
     if (
-      balance > 0 &&
+      amount > 0 &&
       sMeanToMeanRate &&
       meanPrice
     ) {
-      const usdAmount = balance * sMeanToMeanRate * meanPrice;
+      const usdAmount = amount * sMeanToMeanRate * meanPrice;
       return usdAmount;
     }
     return 0;
@@ -183,7 +183,7 @@ const StakingView = () => {
     }
     consoleOut('sMEAN balance:', balance, 'blue');
     setSmeanBalance(balance);
-    const tvl = getUsdAmountForSmeanInput(balance);
+    const tvl = getUsdAmountForSmeanAmount(balance);
     saveTvl(tvl);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
