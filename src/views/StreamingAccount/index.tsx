@@ -11,7 +11,7 @@ import {
   Constants,
   MoneyStreaming,
   MSP_ACTIONS,
-  refreshTreasuryBalanceInstruction
+  refreshTreasuryBalanceInstruction,
 } from '@mean-dao/money-streaming';
 import {
   StreamInfo,

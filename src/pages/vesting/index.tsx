@@ -6,7 +6,6 @@ import {
   MultisigTransactionFees,
   MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
-import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import {
   calculateActionFees,
   Category,
@@ -19,12 +18,10 @@ import {
   TreasuryType,
   VestingTreasuryActivity,
 } from '@mean-dao/msp';
-import { AccountLayout } from '@solana/spl-token';
 import {
   Connection,
   PublicKey,
   Transaction,
-  TransactionInstruction,
 } from '@solana/web3.js';
 import {
   Alert,
@@ -46,7 +43,6 @@ import { openNotification } from 'components/Notifications';
 import {
   HALF_MINUTE_REFRESH_TIMEOUT,
   MIN_SOL_BALANCE_REQUIRED,
-  MSP_FEE_TREASURY,
   MULTISIG_ROUTE_BASE_PATH,
   NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
@@ -74,7 +70,7 @@ import {
   getTokensWithBalances,
 } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from 'middleware/ids';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
 import {
   AppUsageEvent,
   SegmentRefreshAccountBalanceData,
@@ -3020,48 +3016,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const refreshBalance = async (treasury: PublicKey) => {
-      if (!connection || !connected || !publicKey || !msp) {
-        return false;
-      }
-
-      const ixs: TransactionInstruction[] = [];
-
-      const { value } = await connection.getTokenAccountsByOwner(treasury, {
-        programId: TOKEN_PROGRAM_ID,
-      });
-
-      if (!value || !value.length) {
-        return false;
-      }
-
-      const tokenAddress = value[0].pubkey;
-      const tokenAccount = AccountLayout.decode(value[0].account.data);
-      const associatedTokenMint = new PublicKey(tokenAccount.mint);
-
-      const feeTreasuryAddress: PublicKey = new PublicKey(MSP_FEE_TREASURY);
-
-      ixs.push(
-        await refreshTreasuryBalanceInstruction(
-          mspV2AddressPK,
-          publicKey,
-          associatedTokenMint,
-          treasury,
-          tokenAddress,
-          feeTreasuryAddress,
-        ),
-      );
-
-      const tx = new Transaction().add(...ixs);
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash('recent');
-      tx.recentBlockhash = blockhash;
-
-      return tx;
-    };
-
     const createTx = async (): Promise<boolean> => {
-      if (!publicKey || !selectedVestingContract) {
+      if (!publicKey || !selectedVestingContract || !msp) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!',
@@ -3138,7 +3094,10 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       }
 
       // Create a transaction
-      const result = await refreshBalance(new PublicKey(data.treasury))
+      const result = await msp.refreshTreasuryData(
+        publicKey,
+        new PublicKey(data.treasury)
+      )
         .then(value => {
           if (!value) {
             return false;
@@ -3238,11 +3197,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   }, [
     msp,
     wallet,
-    connected,
     publicKey,
     connection,
     nativeBalance,
-    mspV2AddressPK,
     isMultisigContext,
     transactionCancelled,
     selectedVestingContract,
