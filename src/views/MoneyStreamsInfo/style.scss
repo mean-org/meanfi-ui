@@ -96,17 +96,16 @@
   bottom: 0 !important;
   left: 0;
   width: 100%;
-}
-
-#wave {
-  top: 0px;
-  left: 0px;
-  width: 100%;
-  position: absolute;
-  background: transparent;
-  margin: 0px;
-  animation-iteration-count: 2s;
-  animation-delay: 0s;
+  .wave {
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    position: absolute;
+    background: transparent;
+    margin: 0px;
+    animation-iteration-count: 2s;
+    animation-delay: 0s;
+  }
 }
 
 .btn-min-width {

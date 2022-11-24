@@ -10,15 +10,15 @@ import TxConfirmationProvider from './contexts/transaction-status';
 import { WalletProvider } from './contexts/wallet';
 import { isLocal, isProd } from './middleware/ui';
 import {
-  AccountsView,
   CustodyView,
   ExchangeDcasView,
   FaucetView,
+  HomeView,
   NotFoundView,
   PlaygroundView,
   StakingRewardsView,
   StatsView,
-  SwapView,
+  SwapView
 } from './pages';
 import { ServiceUnavailableView } from './pages/service-unavailable';
 
@@ -36,7 +36,7 @@ export function AppRoutes() {
                   <AppStateProvider>
                     <AppLayout>
                       <Routes>
-                        <Route index path="/" element={<AccountsView />} />
+                        <Route index path="/" element={<HomeView />} />
                         <Route
                           path="/create-safe"
                           element={
@@ -47,7 +47,7 @@ export function AppRoutes() {
                             </React.Suspense>
                           }
                         />
-                        <Route path="/my-account" element={<AccountsView />} />
+                        <Route path="/my-account" element={<HomeView />} />
                         <Route path="/exchange" element={<SwapView />} />
                         {(isProd() || isLocal()) && (
                           <Route
@@ -67,10 +67,10 @@ export function AppRoutes() {
                           element={<StakingRewardsView />}
                         />
                         {/* Assets and NFTs */}
-                        <Route path="/assets" element={<AccountsView />} />
+                        <Route path="/assets" element={<HomeView />} />
                         <Route
                           path="/assets/:asset"
-                          element={<AccountsView />}
+                          element={<HomeView />}
                         />
                         {/* Well known App routes */}
                         <Route
@@ -79,45 +79,45 @@ export function AppRoutes() {
                         />
                         <Route
                           path="/vesting/summary"
-                          element={<AccountsView />}
+                          element={<HomeView />}
                         />
                         <Route
                           path="/vesting/contracts"
-                          element={<AccountsView />}
+                          element={<HomeView />}
                         />
                         <Route
                           path="/vesting/:vestingContract"
-                          element={<AccountsView />}
+                          element={<HomeView />}
                         />
                         <Route
                           path="/vesting/:vestingContract/:activeTab"
-                          element={<AccountsView />}
+                          element={<HomeView />}
                         />
-                        <Route path="/streaming" element={<AccountsView />} />
+                        <Route path="/streaming" element={<HomeView />} />
                         <Route
                           path="/streaming/:streamingTab"
-                          element={<AccountsView />}
+                          element={<HomeView />}
                         />
                         <Route
                           path="/streaming/:streamingTab/:streamingItemId"
-                          element={<AccountsView />}
+                          element={<HomeView />}
                         />
-                        <Route path="/super-safe" element={<AccountsView />} />
+                        <Route path="/super-safe" element={<HomeView />} />
                         <Route
                           path="/super-safe/proposals/:id"
-                          element={<AccountsView />}
+                          element={<HomeView />}
                         />
                         <Route
                           path="/super-safe/programs/:id"
-                          element={<AccountsView />}
+                          element={<HomeView />}
                         />
                         <Route
                           path="/programs/:programId"
-                          element={<AccountsView />}
+                          element={<HomeView />}
                         />
-                        <Route path="/staking" element={<AccountsView />} />
+                        <Route path="/staking" element={<HomeView />} />
                         {/* Apps general route matcher */}
-                        <Route path="/:appId" element={<AccountsView />} />
+                        <Route path="/:appId" element={<HomeView />} />
                         {/* Not found and service unavailable */}
                         <Route
                           path="/service-unavailable"

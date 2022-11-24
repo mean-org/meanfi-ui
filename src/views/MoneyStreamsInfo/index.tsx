@@ -2644,7 +2644,7 @@ export const MoneyStreamsInfoView = (props: {
             </div>
           </div>
           {!loadingTreasuries && !loadingStreams && (
-            <div className="wave-container wave-green" id="wave">
+            <div className="wave-container wave wave-green">
               <Wave
                 fill="url(#gradient1)"
                 paused={isPaused}
@@ -2757,7 +2757,7 @@ export const MoneyStreamsInfoView = (props: {
             </div>
           </div>
           {!loadingTreasuries && !loadingStreams && (
-            <div className="wave-container wave-red" id="wave">
+            <div className="wave-container wave wave-red">
               <Wave
                 fill="url(#gradient2)"
                 paused={isPaused}

@@ -365,6 +365,14 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     [connection],
   );
 
+  const logEventHandling = useCallback((item: TxConfirmationInfo) => {
+    consoleOut(
+      `VestingView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
+      item,
+      'crimson',
+    );
+  }, []);
+
   const recordTxConfirmation = useCallback(
     (signature: string, operation: OperationType, success = true) => {
       let event: any;
@@ -537,13 +545,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       switch (item.operationType) {
         case OperationType.TreasuryAddFunds:
-          consoleOut(
-            `onTxConfirmed event handled for operation ${
-              OperationType[item.operationType]
-            }`,
-            item,
-            'crimson',
-          );
+          logEventHandling(item);
           recordTxConfirmation(item.signature, item.operationType, true);
           if (!isWorkflowLocked) {
             isWorkflowLocked = true;
@@ -561,24 +563,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         case OperationType.StreamAddFunds:
         case OperationType.StreamPause:
         case OperationType.StreamResume:
-          consoleOut(
-            `onTxConfirmed event handled for operation ${
-              OperationType[item.operationType]
-            }`,
-            item,
-            'crimson',
-          );
+          logEventHandling(item);
           recordTxConfirmation(item.signature, item.operationType, true);
           softReloadContracts();
           break;
         case OperationType.TreasuryClose:
-          consoleOut(
-            `onTxConfirmed event handled for operation ${
-              OperationType[item.operationType]
-            }`,
-            item,
-            'crimson',
-          );
+          logEventHandling(item);
           recordTxConfirmation(item.signature, item.operationType, true);
           if (!isWorkflowLocked) {
             isWorkflowLocked = true;
@@ -593,13 +583,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           }, 20);
           break;
         case OperationType.TreasuryCreate:
-          consoleOut(
-            `onTxConfirmed event handled for operation ${
-              OperationType[item.operationType]
-            }`,
-            item,
-            'crimson',
-          );
+          logEventHandling(item);
           recordTxConfirmation(item.signature, item.operationType, true);
           if (!isWorkflowLocked) {
             isWorkflowLocked = true;
@@ -614,13 +598,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           }, 20);
           break;
         case OperationType.StreamClose:
-          consoleOut(
-            `onTxConfirmed event handled for operation ${
-              OperationType[item.operationType]
-            }`,
-            item,
-            'crimson',
-          );
+          logEventHandling(item);
           recordTxConfirmation(item.signature, item.operationType, true);
           if (!isWorkflowLocked) {
             isWorkflowLocked = true;
@@ -635,13 +613,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           }, 20);
           break;
         case OperationType.TreasuryStreamCreate:
-          consoleOut(
-            `onTxConfirmed event handled for operation ${
-              OperationType[item.operationType]
-            }`,
-            item,
-            'crimson',
-          );
+          logEventHandling(item);
           recordTxConfirmation(item.signature, item.operationType, true);
           if (!isWorkflowLocked) {
             isWorkflowLocked = true;
@@ -656,13 +628,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           }, 20);
           break;
         case OperationType.TreasuryWithdraw:
-          consoleOut(
-            `onTxConfirmed event handled for operation ${
-              OperationType[item.operationType]
-            }`,
-            item,
-            'crimson',
-          );
+          logEventHandling(item);
           recordTxConfirmation(item.signature, item.operationType, true);
           if (!isWorkflowLocked) {
             isWorkflowLocked = true;
@@ -680,7 +646,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           break;
       }
     },
-    [notifyMultisigVestingContractActionFollowup, recordTxConfirmation],
+    [logEventHandling, notifyMultisigVestingContractActionFollowup, recordTxConfirmation],
   );
 
   // Setup event handler for Tx confirmation error
