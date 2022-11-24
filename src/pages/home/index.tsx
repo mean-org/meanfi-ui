@@ -5405,6 +5405,11 @@ export const HomeView = () => {
 
   const renderAppsList = () => {
     const onAppClick = (app: KnownAppMetadata) => {
+
+      // Don't do anything if the current path starts with the selected App slug
+      const isTargetAppAlreadyOpen = location.pathname.startsWith(`/${app.slug}`);
+      if (isTargetAppAlreadyOpen) { return; }
+
       setSelectedApp(undefined);
       setSelectedAsset(undefined);
       // The reason for the timeout is to avoid the navigation to happen before the componentUnmount
@@ -5748,8 +5753,11 @@ export const HomeView = () => {
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span>selectedProgram:</span><span className="mx-1 font-bold">{selectedProgram ? 'true' : 'false'}</span>
-          <span>programAddress:</span><span className="mx-1 font-bold">{programId || '-'}</span>
+          <span>selectedAsset:</span><span className="ml-1 mr-2 font-bold">{selectedAsset ? 'true' : 'false'}</span>
+          <span>selectedApp:</span><span className="ml-1 mr-2 font-bold">{selectedApp ? 'true' : 'false'}</span>
+          <span>selectedNft:</span><span className="ml-1 mr-2 font-bold">{selectedNft ? 'true' : 'false'}</span>
+          <span>selectedCategory:</span><span className="ml-1 mr-2 font-bold">{selectedCategory || '--'}</span>
+          <span>selectedAssetsGroup:</span><span className="ml-1 mr-2 font-bold">{selectedAssetsGroup || '--'}</span>
         </div>
       )} */}
 
