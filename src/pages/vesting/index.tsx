@@ -6,7 +6,6 @@ import {
   MultisigTransactionFees,
   MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
-import { refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import {
   calculateActionFees,
   Category,
@@ -19,12 +18,10 @@ import {
   TreasuryType,
   VestingTreasuryActivity,
 } from '@mean-dao/msp';
-import { AccountLayout } from '@solana/spl-token';
 import {
   Connection,
   PublicKey,
   Transaction,
-  TransactionInstruction,
 } from '@solana/web3.js';
 import {
   Alert,
@@ -46,7 +43,6 @@ import { openNotification } from 'components/Notifications';
 import {
   HALF_MINUTE_REFRESH_TIMEOUT,
   MIN_SOL_BALANCE_REQUIRED,
-  MSP_FEE_TREASURY,
   MULTISIG_ROUTE_BASE_PATH,
   NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
@@ -74,7 +70,7 @@ import {
   getTokensWithBalances,
 } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from 'middleware/ids';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
 import {
   AppUsageEvent,
   SegmentRefreshAccountBalanceData,
@@ -3011,57 +3007,17 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   }, [refreshTokenBalance, resetTransactionStatus]);
 
   const onExecuteRefreshVestingContractBalance = useCallback(async () => {
-    let transaction: Transaction;
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const refreshBalance = async (treasury: PublicKey) => {
-      if (!connection || !connected || !publicKey || !msp) {
-        return false;
-      }
-
-      const ixs: TransactionInstruction[] = [];
-
-      const { value } = await connection.getTokenAccountsByOwner(treasury, {
-        programId: TOKEN_PROGRAM_ID,
-      });
-
-      if (!value || !value.length) {
-        return false;
-      }
-
-      const tokenAddress = value[0].pubkey;
-      const tokenAccount = AccountLayout.decode(value[0].account.data);
-      const associatedTokenMint = new PublicKey(tokenAccount.mint);
-
-      const feeTreasuryAddress: PublicKey = new PublicKey(MSP_FEE_TREASURY);
-
-      ixs.push(
-        await refreshTreasuryBalanceInstruction(
-          mspV2AddressPK,
-          publicKey,
-          associatedTokenMint,
-          treasury,
-          tokenAddress,
-          feeTreasuryAddress,
-        ),
-      );
-
-      const tx = new Transaction().add(...ixs);
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash('recent');
-      tx.recentBlockhash = blockhash;
-
-      return tx;
-    };
-
     const createTx = async (): Promise<boolean> => {
-      if (!publicKey || !selectedVestingContract) {
+      if (!publicKey || !selectedVestingContract || !msp) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!',
@@ -3138,7 +3094,10 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       }
 
       // Create a transaction
-      const result = await refreshBalance(new PublicKey(data.treasury))
+      const result = await msp.refreshTreasuryData(
+        publicKey,
+        new PublicKey(data.treasury)
+      )
         .then(value => {
           if (!value) {
             return false;
@@ -3178,97 +3137,56 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       return result;
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Refresh Treasury data transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Refresh Treasury data transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
     if (wallet && selectedVestingContract) {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.TreasuryRefreshBalance,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: `Refresh balance for vesting contract ${selectedVestingContract.name}`,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: `Refresh balance successful for vesting contract ${selectedVestingContract.name}`,
-            completedMessageTimeout: isMultisigContext ? 8 : 5,
-            extras: {
-              vestingContractId: selectedVestingContract.id as string,
-              multisigId: '',
-            },
+        const sign = await signTx('Refresh Account Balance', wallet, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          setIsBusy(false);
-          onRefreshTreasuryBalanceTransactionFinished();
+          const sent = await sendTx('Refresh Account Balance', connection, wallet, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature && !transactionCancelled) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryRefreshBalance,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Refresh balance for vesting contract ${selectedVestingContract.name}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Refresh balance successful for vesting contract ${selectedVestingContract.name}`,
+              completedMessageTimeout: isMultisigContext ? 8 : 5,
+              extras: {
+                vestingContractId: selectedVestingContract.id as string,
+                multisigId: '',
+              },
+            });
+            setIsBusy(false);
+            onRefreshTreasuryBalanceTransactionFinished();
+          } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: 'error',
+            });
+            setIsBusy(false);
+          }
         } else {
-          openNotification({
-            title: t('notifications.error-title'),
-            description: t('notifications.error-sending-transaction'),
-            type: 'error',
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
           });
           setIsBusy(false);
         }
@@ -3279,11 +3197,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   }, [
     msp,
     wallet,
-    connected,
     publicKey,
     connection,
     nativeBalance,
-    mspV2AddressPK,
     isMultisigContext,
     transactionCancelled,
     selectedVestingContract,
