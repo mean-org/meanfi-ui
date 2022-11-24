@@ -2005,6 +2005,14 @@ const SafeView = (props: {
     [connection, multisigClient, publicKey],
   );
 
+  const goToListOfProposals = useCallback(() => {
+    setIsProposalDetails(false);
+    setNeedRefreshTxs(true);
+    const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
+    navigate(url);
+  }, [navigate]);
+
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -2133,9 +2141,16 @@ const SafeView = (props: {
         setSelectedProposal(filteredMultisigTx);
         setIsProposalDetails(true);
         consoleOut('filteredMultisigTx:', filteredMultisigTx, 'orange');
+      } else {
+        openNotification({
+          title: 'Access forbidden',
+          description: `You are trying to access a proposal on a SuperSafe you don't have permission to see. Please connect with a signer account and try again.`,
+          type: 'warning',
+        });
+        goToListOfProposals();
       }
     }
-  }, [id, selectedMultisig, publicKey, queryParamV, multisigTxs]);
+  }, [id, selectedMultisig, publicKey, queryParamV, multisigTxs, goToListOfProposals]);
 
   // Setup event listeners
   useEffect(() => {
@@ -2196,13 +2211,6 @@ const SafeView = (props: {
     navigate(url);
   };
 
-  const returnFromProposalDetailsHandler = () => {
-    setIsProposalDetails(false);
-    setNeedRefreshTxs(true);
-    const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
-    navigate(url);
-  };
-
   ///////////////
   // Rendering //
   ///////////////
@@ -2215,7 +2223,7 @@ const SafeView = (props: {
     if (isProposalDetails) {
       return (
         <ProposalDetailsView
-          onDataToSafeView={returnFromProposalDetailsHandler}
+          onDataToSafeView={goToListOfProposals}
           proposalSelected={selectedProposal}
           selectedMultisig={selectedMultisig}
           onProposalApprove={onExecuteApproveTx}

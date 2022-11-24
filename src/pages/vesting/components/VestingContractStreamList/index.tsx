@@ -40,7 +40,7 @@ import {
   AppUsageEvent,
   SegmentStreamCloseData,
 } from 'middleware/segment-service';
-import { isError, isSuccess } from 'middleware/transactions';
+import { isError, isSuccess, sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   copyText,
@@ -507,11 +507,11 @@ export const VestingContractStreamList = (props: {
   const onExecuteCloseStreamTransaction = async (
     closeStreamOptions: VestingContractCloseStreamOptions,
   ) => {
-    let transaction: Transaction;
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigId = '';
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamClose);
@@ -667,7 +667,7 @@ export const VestingContractStreamList = (props: {
             NATIVE_SOL_MINT.toBase58(),
           )})`,
         });
-        customLogger.logWarning('Close stream transaction failed', {
+        customLogger.logError('Close stream transaction failed', {
           transcript: transactionLog,
         });
         return false;
@@ -715,118 +715,77 @@ export const VestingContractStreamList = (props: {
       return result;
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Close stream transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Close stream transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
     if (wallet && highlightedStream && vestingContract && selectedToken) {
       showTransactionExecutionModal();
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          const vestedReturns = getAmountWithSymbol(
-            closeStreamOptions.vestedReturns,
-            selectedToken.address,
-            false,
-            splTokenList,
-            selectedToken.decimals,
-          );
-          const unvestedReturns = getAmountWithSymbol(
-            closeStreamOptions.unvestedReturns,
-            selectedToken.address,
-            false,
-            splTokenList,
-            selectedToken.decimals,
-          );
-          const beneficiary = shortenAddress(highlightedStream.beneficiary);
-          const loadingMessage = multisigId
-            ? 'The Multisig proposal to close the vesting stream Dinero para mi sobrina is being confirmed.'
-            : `Vesting stream ${highlightedStream.name} closure is pending confirmation`;
-          const confirmedMultisigMessage = isDateInTheFuture(paymentStartDate)
-            ? `The proposal to close the vesting stream has been confirmed. Once approved, the unvested amount of ${unvestedReturns} will be returned to the vesting contract.`
-            : `The proposal to close the vesting stream has been confirmed. Once approved, the vested amount of ${vestedReturns} will be sent to ${beneficiary} and the stream will be closed.`;
-          const confirmedMessage = multisigId
-            ? confirmedMultisigMessage
-            : `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of ${vestedReturns} has been sent to ${beneficiary}. Unvested amount of ${unvestedReturns} was returned to the vesting contract.`;
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.StreamClose,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: loadingMessage,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: confirmedMessage,
-            completedMessageTimeout: multisigId ? 8 : 5,
-            extras: {
-              vestingContractId: vestingContract.id as string,
-              multisigId: multisigId,
-            },
+        const sign = await signTx('Close Vesting Stream', wallet, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          setIsBusy(false);
-          onCloseStreamTransactionFinished();
+          const sent = await sendTx('Close Vesting Stream', connection, wallet, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature && !transactionCancelled) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            const vestedReturns = getAmountWithSymbol(
+              closeStreamOptions.vestedReturns,
+              selectedToken.address,
+              false,
+              splTokenList,
+              selectedToken.decimals,
+            );
+            const unvestedReturns = getAmountWithSymbol(
+              closeStreamOptions.unvestedReturns,
+              selectedToken.address,
+              false,
+              splTokenList,
+              selectedToken.decimals,
+            );
+            const beneficiary = shortenAddress(highlightedStream.beneficiary);
+            const loadingMessage = multisigId
+              ? 'The Multisig proposal to close the vesting stream Dinero para mi sobrina is being confirmed.'
+              : `Vesting stream ${highlightedStream.name} closure is pending confirmation`;
+            const confirmedMultisigMessage = isDateInTheFuture(paymentStartDate)
+              ? `The proposal to close the vesting stream has been confirmed. Once approved, the unvested amount of ${unvestedReturns} will be returned to the vesting contract.`
+              : `The proposal to close the vesting stream has been confirmed. Once approved, the vested amount of ${vestedReturns} will be sent to ${beneficiary} and the stream will be closed.`;
+            const confirmedMessage = multisigId
+              ? confirmedMultisigMessage
+              : `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of ${vestedReturns} has been sent to ${beneficiary}. Unvested amount of ${unvestedReturns} was returned to the vesting contract.`;
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamClose,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: loadingMessage,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: confirmedMessage,
+              completedMessageTimeout: multisigId ? 8 : 5,
+              extras: {
+                vestingContractId: vestingContract.id as string,
+                multisigId: multisigId,
+              },
+            });
+            setIsBusy(false);
+            onCloseStreamTransactionFinished();
+          } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            setIsBusy(false);
+          }
         } else {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
+          });
           setIsBusy(false);
         }
       } else {

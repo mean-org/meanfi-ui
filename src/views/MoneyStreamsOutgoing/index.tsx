@@ -2286,7 +2286,7 @@ export const MoneyStreamsOutgoingView = (props: {
               NATIVE_SOL_MINT.toBase58(),
             )})`,
           });
-          customLogger.logWarning('Close stream transaction failed', {
+          customLogger.logError('Close stream transaction failed', {
             transcript: transactionLog,
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, {
@@ -2506,7 +2506,7 @@ export const MoneyStreamsOutgoingView = (props: {
               NATIVE_SOL_MINT.toBase58(),
             )})`,
           });
-          customLogger.logWarning('Close stream transaction failed', {
+          customLogger.logError('Close stream transaction failed', {
             transcript: transactionLog,
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, {
