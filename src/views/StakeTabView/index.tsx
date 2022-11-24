@@ -443,7 +443,7 @@ export const StakeTabView = (props: {
 
       if (item.operationType === OperationType.Stake) {
         consoleOut(
-          `onTxConfirmed event handled for operation ${
+          `StakeTabView -> onTxConfirmed event handled for operation ${
             OperationType[item.operationType]
           }`,
           item,

@@ -156,7 +156,7 @@ const CreateSafeView = () => {
     (item: TxConfirmationInfo) => {
       if (item.operationType === OperationType.CreateMultisig) {
         consoleOut(
-          `onTxConfirmed event handled for operation ${
+          `CreateSafeView -> onTxConfirmed event handled for operation ${
             OperationType[item.operationType]
           }`,
           item,

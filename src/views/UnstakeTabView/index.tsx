@@ -422,7 +422,7 @@ export const UnstakeTabView = (props: {
 
       if (item.operationType === OperationType.Unstake) {
         consoleOut(
-          `onTxConfirmed event handled for operation ${
+          `UnstakeTabView -> onTxConfirmed event handled for operation ${
             OperationType[item.operationType]
           }`,
           item,
