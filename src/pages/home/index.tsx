@@ -1071,6 +1071,14 @@ export const HomeView = () => {
     ],
   );
 
+  const logEventHandling = useCallback((item: TxConfirmationInfo) => {
+    consoleOut(
+      `HomeView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
+      item,
+      'crimson',
+    );
+  }, []);
+
   const recordTxConfirmation = useCallback(
     (item: TxConfirmationInfo, success = true) => {
       let event: any = undefined;
@@ -1192,33 +1200,32 @@ export const HomeView = () => {
         isWorkflowLocked = true;
       }
 
-      consoleOut(
-        `onTxConfirmed event handled for operation ${OperationType[item.operationType]
-        }`,
-        item,
-        'crimson',
-      );
       recordTxConfirmation(item, true);
       switch (item.operationType) {
         case OperationType.CreateMultisig:
+          logEventHandling(item);
           refreshMultisigs();
           break;
         case OperationType.CreateTransaction:
+          logEventHandling(item);
           refreshMultisigs();
           break;
         case OperationType.Wrap:
         case OperationType.Unwrap:
         case OperationType.Transfer:
+          logEventHandling(item);
           setIsUnwrapping(false);
           accountRefresh();
           break;
         case OperationType.CreateAsset:
         case OperationType.CloseTokenAccount:
+          logEventHandling(item);
           accountRefresh();
           break;
         case OperationType.DeleteAsset:
         case OperationType.SetAssetAuthority:
         case OperationType.TransferTokens:
+          logEventHandling(item);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
@@ -1228,8 +1235,7 @@ export const HomeView = () => {
           break;
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [logEventHandling, navigate, recordTxConfirmation, refreshMultisigs]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(

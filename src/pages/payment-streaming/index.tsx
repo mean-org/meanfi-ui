@@ -146,6 +146,14 @@ const PaymentStreamingView = (props: {
     [],
   );
 
+  const logEventHandling = useCallback((item: TxConfirmationInfo) => {
+    consoleOut(
+      `PaymentStreamingView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
+      item,
+      'crimson',
+    );
+  }, []);
+
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
     const turnOffLockWorkflow = () => {
       isWorkflowLocked = false;
@@ -197,14 +205,10 @@ const PaymentStreamingView = (props: {
         isWorkflowLocked = true;
       }
 
-      consoleOut(
-        `onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
-        item,
-        'crimson',
-      );
       recordTxConfirmation(item, true);
       switch (item.operationType) {
         case OperationType.StreamCreate:
+          logEventHandling(item);
           setTimeout(() => {
             accountRefresh();
             hardReloadStreams();
@@ -217,6 +221,7 @@ const PaymentStreamingView = (props: {
         case OperationType.TreasuryRefreshBalance:
         case OperationType.TreasuryAddFunds:
         case OperationType.TreasuryWithdraw:
+          logEventHandling(item);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
@@ -225,6 +230,7 @@ const PaymentStreamingView = (props: {
           break;
         case OperationType.TreasuryCreate:
         case OperationType.StreamWithdraw:
+          logEventHandling(item);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
@@ -234,6 +240,7 @@ const PaymentStreamingView = (props: {
           break;
         case OperationType.StreamClose:
         case OperationType.TreasuryClose:
+          logEventHandling(item);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
@@ -246,6 +253,7 @@ const PaymentStreamingView = (props: {
           }, 20);
           break;
         case OperationType.StreamTransferBeneficiary:
+          logEventHandling(item);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
@@ -261,8 +269,7 @@ const PaymentStreamingView = (props: {
           break;
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [logEventHandling, navigate, recordTxConfirmation, refreshMultisigs]);
 
 
   /////////////////////
