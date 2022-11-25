@@ -99,6 +99,7 @@ export interface VestingContractCreateOptions {
 }
 
 export interface VestingContractEditParams {
+  proposalTitle: string;
   multisig: string;
   treasurer: PublicKey;
   duration: number;

@@ -3253,7 +3253,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const onExecuteEditContractSettingsTx = async (
     editOptions: VestingContractEditOptions,
   ) => {
-    let transaction: Transaction;
+    let transaction: Transaction | undefined = undefined;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -3311,11 +3311,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
       );
 
-      const titleProposal = editOptions.vestingContractTitle;
-
       const tx = await multisigClient.createTransaction(
         publicKey,
-        titleProposal ? 'Edit Vesting Contract' : titleProposal,
+        data.proposalTitle,
         '', // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryEdit,
@@ -3332,8 +3330,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       return editTreasuryTx;
     };
-
-    ////////////////////////////////////////////
 
     const createTx = async () => {
       if (!connection || !wallet || !publicKey || !msp) {
@@ -3368,6 +3364,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         cliffVestPercent: editOptions.cliffVestPercent, // cliffVestPercent
         feePayedByTreasurer: editOptions.feePayedByTreasurer, // feePayedByTreasurer
         vestingTreasury: new PublicKey(vestingContract.id),
+        proposalTitle: 'TODO',
       };
       consoleOut('payload:', payload);
 
@@ -3480,105 +3477,61 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       return result;
     };
 
-    /////////////////////////////////////////////////////
-
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Edit Treasury transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Edit vesting account transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    ////////////////////////////////////////////////////////
-
     if (wallet) {
       const vestingContractName = vestingContract.name;
 
       const create = await createTx();
       consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          const loadingMessage = isMultisigContext
-            ? `Send proposal to edit the vesting contract ${vestingContractName}`
-            : `Edit vesting contract ${vestingContractName}`;
-          const completedMessage = isMultisigContext
-            ? `Proposal to create the vesting contract ${vestingContractName} was submitted for Multisig approval.`
-            : `Vesting contract ${vestingContractName} created successfully`;
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.TreasuryEdit,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage,
-            completedTitle: 'Transaction confirmed',
-            completedMessage,
-            completedMessageTimeout: isMultisigContext ? 8 : 5,
-            extras: {
-              vestingContractId: vestingContract.id,
-              multisigId: editOptions.multisig,
-            },
-          });
-          setIsBusy(false);
-          resetTransactionStatus();
-          onVestingContractCreated();
+      if (create && !transactionCancelled && transaction) {
+        const sign = await signTx(
+          'Edit Stream',
+          wallet,
+          publicKey,
+          transaction,
+        );
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          const sent = await sendTx(
+            'Edit Stream',
+            connection,
+            wallet,
+            encodedTx,
+          );
+          consoleOut('sent:', sent);
+          if (sent.signature && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            const loadingMessage = isMultisigContext
+              ? `Send proposal to edit the vesting contract ${vestingContractName}`
+              : `Edit vesting contract ${vestingContractName}`;
+            const completedMessage = isMultisigContext
+              ? `Proposal to create the vesting contract ${vestingContractName} was submitted for Multisig approval.`
+              : `Vesting contract ${vestingContractName} created successfully`;
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.TreasuryEdit,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage,
+              completedTitle: 'Transaction confirmed',
+              completedMessage,
+              completedMessageTimeout: isMultisigContext ? 8 : 5,
+              extras: {
+                vestingContractId: vestingContract.id,
+                multisigId: editOptions.multisig,
+              },
+            });
+            setIsBusy(false);
+            resetTransactionStatus();
+            onVestingContractCreated();
+          } else {
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: 'error',
+            });
+            setIsBusy(false);
+          }
         } else {
           openNotification({
             title: t('notifications.error-title'),
