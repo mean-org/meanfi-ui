@@ -3878,7 +3878,6 @@ export const HomeView = () => {
       !connection ||
       !publicKey ||
       !selectedAsset ||
-      !tokensLoaded ||
       !shouldLoadTransactions ||
       loadingTransactions
     ) {
@@ -3886,8 +3885,8 @@ export const HomeView = () => {
     }
 
     if (selectedAccount.address) {
-      setShouldLoadTransactions(false);
-      setLoadingTransactions(true);
+      setShouldLoadTransactions(value => !value);
+      setLoadingTransactions(value => !value);
 
       // Get the address to scan and ensure there is one
       const pk = getScanAddress(selectedAsset);
@@ -3915,10 +3914,8 @@ export const HomeView = () => {
 
       fetchAccountHistory(connection, pk, options, true)
         .then(history => {
-          consoleOut('history:', history, 'blue');
           setTransactions(history.transactionMap, true);
           setStatus(FetchStatus.Fetched);
-
           if (
             history.transactionMap &&
             history.transactionMap.length > 0 &&
@@ -3940,7 +3937,6 @@ export const HomeView = () => {
   }, [
     publicKey,
     connection,
-    tokensLoaded,
     selectedAsset?.publicAddress,
     selectedAccount.address,
     lastTxSignature,

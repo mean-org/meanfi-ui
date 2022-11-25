@@ -1576,18 +1576,20 @@ const AppStateProvider: React.FC = ({ children }) => {
       updateTransactions(Array.from(filtered));
     } else {
       if (map && map.length) {
-        const lastSignature = map[map.length - 1].signature;
-        const currentArray = transactions?.slice() || [];
-        const jointArray = currentArray.concat(map);
-        if (map.length === TRANSACTIONS_PER_PAGE) {
+        const history = transactions?.slice() || [];
+        for (const tx of map) {
+          if (history.every(item => item.signature !== tx.signature)) {
+            history.push(tx);
+          }
+        }
+        consoleOut('history:', history, 'blue');
+        const lastSignature = history[history.length - 1].signature;
+        if (history.length === TRANSACTIONS_PER_PAGE) {
           setLastTxSignature(lastSignature);
         } else {
           setLastTxSignature('');
         }
-        // Get a unique set of items
-        const filtered = new Set(jointArray);
-        // Convert iterable to array
-        updateTransactions(Array.from(filtered));
+        updateTransactions(history);
       }
     }
   };
