@@ -21,7 +21,7 @@ import { MultisigSetProgramAuthModal } from 'components/MultisigSetProgramAuthMo
 import { MultisigUpgradeProgramModal } from 'components/MultisigUpgradeProgramModal';
 import { openNotification } from 'components/Notifications';
 import { TabsMean } from 'components/TabsMean';
-import { MULTISIG_ROUTE_BASE_PATH, NO_FEES } from 'constants/common';
+import { MAX_SUPPORTED_TRANSACTION_VERSION, MULTISIG_ROUTE_BASE_PATH, NO_FEES } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
@@ -1262,7 +1262,12 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     }
 
     const signatures = signaturesInfo.map(data => data.signature);
-    const txs = await connection.getParsedTransactions(signatures);
+    const txs = await connection.getParsedTransactions(
+      signatures,
+      {
+        maxSupportedTransactionVersion: MAX_SUPPORTED_TRANSACTION_VERSION
+      }
+    );
 
     if (txs.length === 0) {
       return null;

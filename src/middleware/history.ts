@@ -5,6 +5,7 @@ import {
   Connection,
   ParsedTransactionWithMeta,
 } from '@solana/web3.js';
+import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'constants/common';
 
 const MAX_TRANSACTION_BATCH_SIZE = 4;
 
@@ -80,7 +81,12 @@ export const fetchParsedTransactionsAsync = async (
     while (signatures.length > 0) {
       const txSignatures = signatures.splice(0, MAX_TRANSACTION_BATCH_SIZE);
 
-      const fetched = await connection.getParsedTransactions(txSignatures);
+      const fetched = await connection.getParsedTransactions(
+        txSignatures,
+        {
+          maxSupportedTransactionVersion: MAX_SUPPORTED_TRANSACTION_VERSION
+        }
+      );
       const result = (
         fetched.map(tx => {
           return {
