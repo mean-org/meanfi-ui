@@ -3364,7 +3364,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         cliffVestPercent: editOptions.cliffVestPercent, // cliffVestPercent
         feePayedByTreasurer: editOptions.feePayedByTreasurer, // feePayedByTreasurer
         vestingTreasury: new PublicKey(vestingContract.id),
-        proposalTitle: 'TODO',
+        proposalTitle: editOptions.proposalTitle,
       };
       consoleOut('payload:', payload);
 

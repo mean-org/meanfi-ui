@@ -111,8 +111,7 @@ export interface VestingContractEditParams {
 }
 
 export interface VestingContractEditOptions {
-  // vestingContractName: string;
-  // vestingCategory: SubCategory;
+  proposalTitle: string;
   feePayedByTreasurer: boolean;
   duration: number;
   durationUnit: TimeUnit;
