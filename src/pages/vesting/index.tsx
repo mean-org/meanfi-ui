@@ -5,6 +5,7 @@ import {
   MeanMultisig,
   MultisigTransactionFees,
   MULTISIG_ACTIONS,
+  MultisigInfo,
 } from '@mean-dao/mean-multisig-sdk';
 import {
   calculateActionFees,
@@ -58,6 +59,7 @@ import {
   TxConfirmationInfo,
 } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useTransaction from 'hooks/useTransaction';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconArrowBack, IconLoading, IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
@@ -3287,109 +3289,38 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     onExecuteEditContractSettingsTx(params);
   };
 
+  const { onExecute } = useTransaction();
+
   const onExecuteEditContractSettingsTx = async (
     editOptions: VestingContractEditOptions,
   ) => {
-    let transaction: Transaction | undefined = undefined;
-    let encodedTx: string;
-    const transactionLog: any[] = [];
     const vestingContract = selectedVestingContract;
-    resetTransactionStatus();
-    setTransactionCancelled(false);
-    setIsBusy(true);
     if (!vestingContract) return;
+    resetTransactionStatus();
+    setIsBusy(true);
+    try {
+      const vestingContractName = vestingContract.name;
 
-    const editTreasury = async (data: VestingContractEditParams) => {
-      if (!connection || !msp || !publicKey) {
-        return null;
-      }
+      const name = 'Edit Vesting Contract';
+      const loadingMessage = () =>
+        isMultisigContext
+          ? `Send proposal to edit the vesting contract ${vestingContractName}`
+          : `Edit vesting contract ${vestingContractName}`;
+      const completedMessage = () =>
+        isMultisigContext
+          ? `Proposal to update the vesting contract ${vestingContractName} was submitted for Multisig approval.`
+          : `Vesting contract ${vestingContractName} updated successfully`;
 
-      if (!data.multisig) {
-        consoleOut('received data:', data, 'blue');
-        return msp.modifyVestingTreasuryTemplate(
-          new PublicKey(data.treasurer), // payer
-          new PublicKey(data.treasurer), // treasurer
-          data.vestingTreasury,
-          data.duration, // duration
-          data.durationUnit, // durationUnit
-          data.startUtc, // startUtc
-          data.cliffVestPercent, // cliffVestPercent
-          data.feePayedByTreasurer, // feePayedByTreasurer
-        );
-      }
-
-      if (!multisigClient || !multisigAccounts) {
-        return null;
-      }
-
-      const multisig = multisigAccounts.filter(
-        m => m.authority.toBase58() === data.multisig,
-      )[0];
-
-      if (!multisig) {
-        return null;
-      }
-
-      const editTreasuryTx = await msp.modifyVestingTreasuryTemplate(
-        multisig.authority, // payer
-        multisig.authority, // treasurer
-        data.vestingTreasury,
-        data.duration, // duration
-        data.durationUnit, // durationUnit
-        data.startUtc, // startUtc
-        data.cliffVestPercent, // cliffVestPercent
-        data.feePayedByTreasurer, // feePayedByTreasurer
-      );
-
-      const ixData = Buffer.from(editTreasuryTx.instructions[0].data);
-      const ixAccounts = editTreasuryTx.instructions[0].keys;
-      const expirationTime = parseInt(
-        (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
-      );
-
-      const tx = await multisigClient.createTransaction(
-        publicKey,
-        data.proposalTitle,
-        '', // description
-        new Date(expirationTime * 1_000),
-        OperationType.TreasuryEdit,
-        multisig.id,
-        mspV2AddressPK, // program
-        ixAccounts, // keys o accounts of the Ix
-        ixData, // data of the Ix
-        // preInstructions
-      );
-
-      if (!tx) {
-        return null;
-      }
-
-      return editTreasuryTx;
-    };
-
-    const createTx = async () => {
-      if (!connection || !wallet || !publicKey || !msp) {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Edit vesting account transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-
-      consoleOut('Start transaction for Edit vesting account', '', 'blue');
-      consoleOut('Wallet address:', publicKey.toBase58());
-
-      setTransactionStatus({
-        lastOperation: TransactionStatus.TransactionStart,
-        currentOperation: TransactionStatus.InitTransaction,
+      const operationType = OperationType.TreasuryEdit;
+      const extras = () => ({
+        vestingContractId: vestingContract.id,
+        multisigId: editOptions.multisig,
       });
 
-      const multisigAuthority = getMultisigIdFromContext();
+      const proposalTitle = editOptions.proposalTitle;
+      const multisig = editOptions.multisig;
 
-      consoleOut('workingToken:', workingToken, 'blue');
+      const multisigAuthority = getMultisigIdFromContext();
 
       const payload: VestingContractEditParams = {
         multisig: multisigAuthority, // multisig
@@ -3402,185 +3333,66 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         vestingTreasury: new PublicKey(vestingContract.id),
         proposalTitle: editOptions.proposalTitle,
       };
-      consoleOut('payload:', payload);
 
-      // Report event to Segment analytics
-      const segmentData: SegmentVestingContractEditData = {
-        contractName: vestingContract.name,
-        cliffVestPercent: editOptions.cliffVestPercent,
-        duration: editOptions.duration,
-        durationUnit: getDurationUnitFromSeconds(editOptions.durationUnit, t),
-        feePayedByTreasurer: editOptions.feePayedByTreasurer,
-        multisig: multisigAuthority,
-        startUtc: getReadableDate(editOptions.startDate.toUTCString()),
-      };
-      consoleOut('segment data:', segmentData, 'brown');
-      segmentAnalytics.recordEvent(
-        AppUsageEvent.StreamCreateFormButton,
-        segmentData,
-      );
-
-      // Log input data
-      transactionLog.push({
-        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-        inputs: payload,
-      });
-
-      transactionLog.push({
-        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-        result: '',
-      });
-
-      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-
-      const bf = transactionFees.blockchainFee; // Blockchain fee
-      const ff = transactionFees.mspFlatFee; // Flat fee (protocol)
-      const mp =
-        multisigTxFees.networkFee +
-        multisigTxFees.multisigFee +
-        multisigTxFees.rentExempt; // Multisig proposal
-      const minRequired = multisigAuthority ? mp : bf + ff;
-
-      setMinRequiredBalance(minRequired);
-
-      consoleOut('Min balance required:', minRequired, 'blue');
-      consoleOut('nativeBalance:', nativeBalance, 'blue');
-
-      if (nativeBalance < minRequired) {
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.TransactionStartFailure,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStartFailure,
-          ),
-          result: `Not enough balance (${getAmountWithSymbol(
-            nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(
-            minRequired,
-            NATIVE_SOL_MINT.toBase58(),
-          )})`,
-        });
-        customLogger.logWarning('Create vesting account transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-
-      consoleOut('Starting Edit vesting account using MSP V2...', '', 'blue');
-
-      const result = await editTreasury(payload)
-        .then(value => {
-          // TODO: Log the error
-          if (!value) {
-            return false;
-          }
-          consoleOut('Edit vesting account returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction,
-          });
-          transaction = value;
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.InitTransactionSuccess,
-            ),
-            result: getTxIxResume(transaction),
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error('Edit vesting account error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.InitTransactionFailure,
-            ),
-            result: `${error}`,
-          });
-          customLogger.logError('Edit vesting account transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        });
-
-      return result;
-    };
-
-    if (wallet) {
-      const vestingContractName = vestingContract.name;
-
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled && transaction) {
-        const sign = await signTx(
-          'Edit Stream',
-          wallet,
-          publicKey,
-          transaction,
-        );
-        if (sign.encodedTransaction) {
-          encodedTx = sign.encodedTransaction;
-          const sent = await sendTx(
-            'Edit Stream',
-            connection,
-            wallet,
-            encodedTx,
+      const generateTransaction = async ({
+        multisig,
+        msp,
+      }: {
+        multisig?: MultisigInfo;
+        msp: MSP;
+      }) => {
+        const data = payload;
+        if (!multisig) {
+          return msp.modifyVestingTreasuryTemplate(
+            new PublicKey(data.treasurer), // payer
+            new PublicKey(data.treasurer), // treasurer
+            data.vestingTreasury,
+            data.duration, // duration
+            data.durationUnit, // durationUnit
+            data.startUtc, // startUtc
+            data.cliffVestPercent, // cliffVestPercent
+            data.feePayedByTreasurer, // feePayedByTreasurer
           );
-          consoleOut('sent:', sent);
-          if (sent.signature && !transactionCancelled) {
-            const signature = sent.signature;
-            consoleOut('Send Tx to confirmation queue:', signature);
-            const loadingMessage = isMultisigContext
-              ? `Send proposal to edit the vesting contract ${vestingContractName}`
-              : `Edit vesting contract ${vestingContractName}`;
-            const completedMessage = isMultisigContext
-              ? `Proposal to update the vesting contract ${vestingContractName} was submitted for Multisig approval.`
-              : `Vesting contract ${vestingContractName} updated successfully`;
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.TreasuryEdit,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage,
-              completedTitle: 'Transaction confirmed',
-              completedMessage,
-              completedMessageTimeout: isMultisigContext ? 8 : 5,
-              extras: {
-                vestingContractId: vestingContract.id,
-                multisigId: editOptions.multisig,
-              },
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
-            onVestingContractCreatedOrUpdated();
-          } else {
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-sending-transaction'),
-              type: 'error',
-            });
-            setIsBusy(false);
-          }
-        } else {
-          openNotification({
-            title: t('notifications.error-title'),
-            description: t('notifications.error-sending-transaction'),
-            type: 'error',
-          });
-          setIsBusy(false);
         }
-      } else {
-        setIsBusy(false);
-      }
+
+        return msp.modifyVestingTreasuryTemplate(
+          multisig.authority, // payer
+          multisig.authority, // treasurer
+          data.vestingTreasury,
+          data.duration, // duration
+          data.durationUnit, // durationUnit
+          data.startUtc, // startUtc
+          data.cliffVestPercent, // cliffVestPercent
+          data.feePayedByTreasurer, // feePayedByTreasurer
+        );
+      };
+      await onExecute(payload, {
+        name,
+        transactionCancelled,
+        setTransactionCancelled,
+        loadingMessage,
+        completedMessage,
+        operationType,
+        extras,
+        msp,
+        transactionFees,
+        multisigTxFees,
+        setMinRequiredBalance,
+        nativeBalance,
+        proposalTitle,
+        multisig,
+        generateTransaction,
+      });
+      resetTransactionStatus();
+      onVestingContractCreatedOrUpdated();
+    } catch (e) {
+      openNotification({
+        title: t('notifications.error-title'),
+        description: t('notifications.error-sending-transaction'),
+        type: 'error',
+      });
     }
+    setIsBusy(false);
   };
 
   /////////////////////
