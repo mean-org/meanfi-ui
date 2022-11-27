@@ -101,12 +101,6 @@ export const VestingContractEditModal = (props: {
 
   // Set template data
   useEffect(() => {
-    console.log('!!!', {
-      isVisible,
-      vestingContract,
-      streamTemplate,
-      defaultTime,
-    });
     if (isVisible && vestingContract && streamTemplate) {
       const cliffPercent = makeDecimal(
         new BN(streamTemplate.cliffVestPercent),

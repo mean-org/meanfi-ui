@@ -169,6 +169,8 @@ export enum AppUsageEvent {
   VestingContractCreateSigned = 'Create Vesting contract Signed',
   VestingContractCreateCompleted = 'Create Vesting contract Completed',
   VestingContractCreateFailed = 'Create Vesting contract Failed',
+  VestingContractEditCompleted = 'Update Vesting contract Completed',
+  VestingContractEditFailed = 'Update Vesting contract Failed',
   VestingContractTopupFormButton = 'Topup Vesting contract form button click',
   VestingContractTopupSigned = 'Topup Vesting contract Signed',
   VestingContractTopupCompleted = 'Topup Vesting contract Completed',
