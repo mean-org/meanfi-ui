@@ -141,7 +141,7 @@ const useTransaction = () => {
       }
 
       const editTreasuryTx = await generateTransaction({ multisig, msp });
-
+      if (!editTreasuryTx) return null;
       const ixData = Buffer.from(editTreasuryTx.instructions[0].data);
       const ixAccounts = editTreasuryTx.instructions[0].keys;
       const expirationTime = parseInt(
@@ -165,7 +165,7 @@ const useTransaction = () => {
         return null;
       }
 
-      return editTreasuryTx;
+      return tx;
     };
 
     const createTx = async () => {
