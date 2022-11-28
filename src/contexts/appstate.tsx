@@ -258,7 +258,7 @@ interface AppStateConfig {
   setDiagnosisInfo: (info: AccountDetails | undefined) => void;
   // Accounts page
   setShouldLoadTokens: (state: boolean) => void;
-  setTransactions: (
+  appendHistoryItems: (
     map: MappedTransaction[] | undefined,
     addItems?: boolean,
   ) => void;
@@ -440,7 +440,7 @@ const contextDefaultValues: AppStateConfig = {
   setDiagnosisInfo: () => {},
   // Accounts page
   setShouldLoadTokens: () => {},
-  setTransactions: () => {},
+  appendHistoryItems: () => {},
   setSelectedAsset: () => {},
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
@@ -632,7 +632,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(
     contextDefaultValues.splTokenList,
   );
-  const [transactions, updateTransactions] = useState<
+  const [transactions, updateTheTransactions] = useState<
     MappedTransaction[] | undefined
   >(contextDefaultValues.transactions);
   const [selectedAsset, updateSelectedAsset] = useState<
@@ -1559,7 +1559,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => {};
   }, [accounts, publicKey, shouldUpdateToken, refreshTokenBalance]);
 
-  const setTransactions = (
+  const appendHistoryItems = (
     map: MappedTransaction[] | undefined,
     addItems?: boolean,
   ) => {
@@ -1573,7 +1573,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       // Get a unique set of items
       const filtered = new Set(map);
       // Convert iterable to array
-      updateTransactions(Array.from(filtered));
+      updateTheTransactions(Array.from(filtered));
     } else {
       if (map && map.length) {
         const history = transactions?.slice() || [];
@@ -1589,7 +1589,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         } else {
           setLastTxSignature('');
         }
-        updateTransactions(history);
+        updateTheTransactions(history);
       }
     }
   };
@@ -1599,7 +1599,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   };
 
   const setSelectedAccount = (account: AccountContext, override = false) => {
-    updateTransactions([]);
+    updateTheTransactions([]);
     updateSelectedAccount(account);
     if (override) {
       consoleOut('Overriding lastUsedAccount with:', account, 'crimson');
@@ -2155,7 +2155,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         getStreamActivity,
         setCustomStreamDocked,
         setDiagnosisInfo,
-        setTransactions,
+        appendHistoryItems,
         setSelectedAsset,
         setStreamsSummary,
         setLastStreamsSummary,
