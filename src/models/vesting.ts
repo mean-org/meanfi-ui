@@ -98,9 +98,20 @@ export interface VestingContractCreateOptions {
   fundingAmount: string | number;
 }
 
+export interface VestingContractEditParams {
+  proposalTitle: string;
+  multisig: string;
+  treasurer: PublicKey;
+  duration: number;
+  durationUnit: TimeUnit;
+  startUtc: Date;
+  cliffVestPercent: number;
+  feePayedByTreasurer?: boolean | undefined;
+  vestingTreasury: PublicKey;
+}
+
 export interface VestingContractEditOptions {
-  // vestingContractName: string;
-  // vestingCategory: SubCategory;
+  proposalTitle: string;
   feePayedByTreasurer: boolean;
   duration: number;
   durationUnit: TimeUnit;

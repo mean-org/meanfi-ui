@@ -44,6 +44,7 @@ import { isError } from '../../../../middleware/transactions';
 import { VestingContractEditOptions } from '../../../../models/vesting';
 import BN from 'bn.js';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { InputMean } from 'components/InputMean';
 
 const timeFormat = 'hh:mm A';
 
@@ -92,6 +93,7 @@ export const VestingContractEditModal = (props: {
   const [lockPeriodAmount, setLockPeriodAmount] = useState<string>('');
   const [lockPeriodFrequency, setLockPeriodFrequency] =
     useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [proposalTitle, setProposalTitle] = useState('');
 
   /////////////////////
   // Data management //
@@ -145,6 +147,7 @@ export const VestingContractEditModal = (props: {
     startUtc.setSeconds(to24hTime.seconds());
     consoleOut('start date in UTC:', startUtc, 'darkorange');
     const options: VestingContractEditOptions = {
+      proposalTitle,
       feePayedByTreasurer: isFeePaidByTreasurer,
       duration: parseFloat(lockPeriodAmount),
       durationUnit: getRateIntervalInSeconds(lockPeriodFrequency),
@@ -252,17 +255,20 @@ export const VestingContractEditModal = (props: {
   const getFormButtonLabel = () => {
     return !publicKey
       ? t('transactions.validation.not-connected')
+      : !proposalTitle && isMultisigContext
+      ? 'Add a proposal title'
       : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
       ? t('transactions.validation.amount-sol-low')
       : !lockPeriodAmount
       ? 'Set vesting period'
       : !lockPeriodFrequency
       ? 'Set vesting period'
-      : t('vesting.create-account.create-cta');
+      : 'Update vesting contract';
   };
 
   const isFormValid = (): boolean => {
     return publicKey &&
+      (proposalTitle || !isMultisigContext) &&
       lockPeriodAmount &&
       parseFloat(lockPeriodAmount) > 0 &&
       lockPeriodFrequency
@@ -327,10 +333,31 @@ export const VestingContractEditModal = (props: {
     );
   };
 
+  const renderProposalTitleField = () => {
+    if (isMultisigContext && selectedMultisig) {
+      return (
+        <div className="mb-3 mt-3">
+          <div className="form-label text-left">
+            {t('multisig.proposal-modal.title')}
+          </div>
+          <InputMean
+            id="proposal-title-field"
+            name="Title"
+            className="w-100 general-text-input"
+            onChange={(e: any) => setProposalTitle(e.target.value)}
+            placeholder="Title for the multisig proposal"
+            value={proposalTitle}
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">Create Vesting Contract</div>}
+      title={<div className="modal-title">Edit Vesting Contract</div>}
       footer={null}
       open={isVisible}
       onCancel={handleClose}
@@ -338,6 +365,9 @@ export const VestingContractEditModal = (props: {
     >
       <Spin spinning={loadingMultisigAccounts}>
         <div className={`scrollable-content`}>
+          {/* Proposal title */}
+          {renderProposalTitleField()}
+
           {/* Multisig in context */}
           {isMultisigContext && selectedMultisig && (
             <>
@@ -434,16 +464,17 @@ export const VestingContractEditModal = (props: {
             </div>
             <div className="right">
               <div className="well time-picker">
-                <TimePicker
-                  defaultValue={moment()}
-                  bordered={false}
-                  allowClear={false}
-                  size="middle"
-                  use12Hours
-                  format={timeFormat}
-                  value={defaultTime}
-                  onChange={onTimePickerChange}
-                />
+                {defaultTime && (
+                  <TimePicker
+                    defaultValue={defaultTime}
+                    bordered={false}
+                    allowClear={false}
+                    size="middle"
+                    use12Hours
+                    format={timeFormat}
+                    onChange={onTimePickerChange}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -530,7 +561,7 @@ export const VestingContractEditModal = (props: {
                 </span>
               )}
               {isBusy
-                ? t('vesting.create-account.create-cta-busy')
+                ? 'Updating vesting contract'
                 : isError(transactionStatus.currentOperation)
                 ? t('general.retry')
                 : getFormButtonLabel()}
