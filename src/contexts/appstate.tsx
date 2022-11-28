@@ -259,7 +259,7 @@ interface AppStateConfig {
   // Accounts page
   setShouldLoadTokens: (state: boolean) => void;
   appendHistoryItems: (
-    map: MappedTransaction[] | undefined,
+    transactionsChunk: MappedTransaction[] | undefined,
     addItems?: boolean,
   ) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
@@ -632,7 +632,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(
     contextDefaultValues.splTokenList,
   );
-  const [transactions, updateTheTransactions] = useState<
+  const [transactions, setTransactions] = useState<
     MappedTransaction[] | undefined
   >(contextDefaultValues.transactions);
   const [selectedAsset, updateSelectedAsset] = useState<
@@ -1560,24 +1560,24 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [accounts, publicKey, shouldUpdateToken, refreshTokenBalance]);
 
   const appendHistoryItems = (
-    map: MappedTransaction[] | undefined,
+    transactionsChunk: MappedTransaction[] | undefined,
     addItems?: boolean,
   ) => {
     if (!addItems) {
-      if (map && map.length === TRANSACTIONS_PER_PAGE) {
-        const lastSignature = map[map.length - 1].signature;
+      if (transactionsChunk && transactionsChunk.length === TRANSACTIONS_PER_PAGE) {
+        const lastSignature = transactionsChunk[transactionsChunk.length - 1].signature;
         setLastTxSignature(lastSignature);
       } else {
         setLastTxSignature('');
       }
       // Get a unique set of items
-      const filtered = new Set(map);
+      const filtered = new Set(transactionsChunk);
       // Convert iterable to array
-      updateTheTransactions(Array.from(filtered));
+      setTransactions(Array.from(filtered));
     } else {
-      if (map && map.length) {
+      if (transactionsChunk && transactionsChunk.length) {
         const history = transactions?.slice() || [];
-        for (const tx of map) {
+        for (const tx of transactionsChunk) {
           if (history.every(item => item.signature !== tx.signature)) {
             history.push(tx);
           }
@@ -1589,7 +1589,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         } else {
           setLastTxSignature('');
         }
-        updateTheTransactions(history);
+        setTransactions(history);
       }
     }
   };
@@ -1599,7 +1599,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   };
 
   const setSelectedAccount = (account: AccountContext, override = false) => {
-    updateTheTransactions([]);
+    setTransactions([]);
     updateSelectedAccount(account);
     if (override) {
       consoleOut('Overriding lastUsedAccount with:', account, 'crimson');
