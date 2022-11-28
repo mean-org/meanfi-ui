@@ -188,16 +188,6 @@ export const OneTimePayment = (props: {
     getTokenPriceBySymbol,
   ]);
 
-  const recordTxConfirmation = useCallback(
-    (signature: string, success = true) => {
-      const event = success
-        ? AppUsageEvent.TransferOTPCompleted
-        : AppUsageEvent.TransferOTPFailed;
-      segmentAnalytics.recordEvent(event, { signature: signature });
-    },
-    [],
-  );
-
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
     (item: TxConfirmationInfo) => {
@@ -207,18 +197,10 @@ export const OneTimePayment = (props: {
       resetContractValues();
       setIsVerifiedRecipient(false);
       setSelectedStream(undefined);
-      if (
-        item &&
-        item.operationType === OperationType.Transfer &&
-        item.extras === 'scheduled'
-      ) {
-        recordTxConfirmation(item.signature, true);
-      }
     },
     [
       setIsVerifiedRecipient,
       resetTransactionStatus,
-      recordTxConfirmation,
       resetContractValues,
       setSelectedStream,
     ],
@@ -227,14 +209,10 @@ export const OneTimePayment = (props: {
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
     (item: TxConfirmationInfo) => {
-      consoleOut('onTxTimedout event executed:', item, 'crimson');
-      if (item && item.operationType === OperationType.Transfer) {
-        recordTxConfirmation(item.signature, false);
-      }
       setIsBusy(false);
       resetTransactionStatus();
     },
-    [recordTxConfirmation, resetTransactionStatus],
+    [resetTransactionStatus],
   );
 
   const getInputAmountBn = useCallback(() => {
