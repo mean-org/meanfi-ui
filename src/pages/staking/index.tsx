@@ -1,4 +1,4 @@
-import { Env, StakePoolInfo, StakingClient } from '@mean-dao/staking';
+import { Env, StakePoolInfo, StakingClient, UnstakeQuote } from '@mean-dao/staking';
 import { ConfirmOptions, PublicKey } from '@solana/web3.js';
 import { Col, Row } from 'antd';
 import { InfoIcon } from 'components/InfoIcon';
@@ -73,6 +73,7 @@ const StakingView = () => {
   const [sMeanBalance, setSmeanBalance] = useState<number>(0);
   const [sMeanDecimals, setSmeanDecimals] = useState<number>(0);
   const [meanBalance, setMeanBalance] = useState<number>(0);
+  const [sMeanToMeanRate, setSMeanToMeanRate] = useState(0);
   const [lastTimestamp, setLastTimestamp] = useState(Date.now());
 
   //////////////////
@@ -135,6 +136,18 @@ const StakingView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accounts, publicKey, stakingPair]);
 
+  const getUsdAmountForSmeanAmount = useCallback((amount: number) => {
+    if (
+      amount > 0 &&
+      sMeanToMeanRate &&
+      meanPrice
+    ) {
+      const usdAmount = amount * sMeanToMeanRate * meanPrice;
+      return usdAmount;
+    }
+    return 0;
+  }, [meanPrice, sMeanToMeanRate]);
+
   const refreshStakedMeanBalance = useCallback(async () => {
     if (
       !publicKey ||
@@ -170,7 +183,8 @@ const StakingView = () => {
     }
     consoleOut('sMEAN balance:', balance, 'blue');
     setSmeanBalance(balance);
-    saveTvl(balance);
+    const tvl = getUsdAmountForSmeanAmount(balance);
+    saveTvl(tvl);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accounts, publicKey, stakingPair, selectedAccount.address]);
@@ -205,6 +219,7 @@ const StakingView = () => {
     },
     [setFromCoinAmount, setIsVerifiedRecipient, setSearchParams],
   );
+
 
   /////////////////////
   // Data management //
@@ -322,6 +337,36 @@ const StakingView = () => {
       refreshStakedMeanBalance();
     }
   }, [accounts, publicKey, stakingPair, refreshStakedMeanBalance]);
+
+  // Stake quote - For input amount
+  useEffect(() => {
+    if (!stakeClient) {
+      return;
+    }
+
+    if (sMeanBalance > 0) {
+      stakeClient
+        .getUnstakeQuote(sMeanBalance)
+        .then((value: UnstakeQuote) => {
+          consoleOut('unStakeQuote:', value, 'yellow');
+          consoleOut(
+            `Quote for ${formatThousands(
+              sMeanBalance,
+              sMeanDecimals,
+            )} sMEAN`,
+            `${formatThousands(
+              value.meanOutUiAmount,
+              sMeanDecimals,
+            )} MEAN`,
+            'yellow',
+          );
+          setSMeanToMeanRate(value.sMeanToMeanRateUiAmount);
+        })
+        .catch((error: any) => {
+          console.error(error);
+        });
+    }
+  }, [sMeanBalance, sMeanDecimals, stakeClient]);
 
   // Get staking pool info from staking client
   useEffect(() => {

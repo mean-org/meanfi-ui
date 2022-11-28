@@ -258,8 +258,8 @@ interface AppStateConfig {
   setDiagnosisInfo: (info: AccountDetails | undefined) => void;
   // Accounts page
   setShouldLoadTokens: (state: boolean) => void;
-  setTransactions: (
-    map: MappedTransaction[] | undefined,
+  appendHistoryItems: (
+    transactionsChunk: MappedTransaction[] | undefined,
     addItems?: boolean,
   ) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
@@ -440,7 +440,7 @@ const contextDefaultValues: AppStateConfig = {
   setDiagnosisInfo: () => {},
   // Accounts page
   setShouldLoadTokens: () => {},
-  setTransactions: () => {},
+  appendHistoryItems: () => {},
   setSelectedAsset: () => {},
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
@@ -632,7 +632,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(
     contextDefaultValues.splTokenList,
   );
-  const [transactions, updateTransactions] = useState<
+  const [transactions, setTransactions] = useState<
     MappedTransaction[] | undefined
   >(contextDefaultValues.transactions);
   const [selectedAsset, updateSelectedAsset] = useState<
@@ -1559,35 +1559,37 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => {};
   }, [accounts, publicKey, shouldUpdateToken, refreshTokenBalance]);
 
-  const setTransactions = (
-    map: MappedTransaction[] | undefined,
+  const appendHistoryItems = (
+    transactionsChunk: MappedTransaction[] | undefined,
     addItems?: boolean,
   ) => {
     if (!addItems) {
-      if (map && map.length === TRANSACTIONS_PER_PAGE) {
-        const lastSignature = map[map.length - 1].signature;
+      if (transactionsChunk && transactionsChunk.length === TRANSACTIONS_PER_PAGE) {
+        const lastSignature = transactionsChunk[transactionsChunk.length - 1].signature;
         setLastTxSignature(lastSignature);
       } else {
         setLastTxSignature('');
       }
       // Get a unique set of items
-      const filtered = new Set(map);
+      const filtered = new Set(transactionsChunk);
       // Convert iterable to array
-      updateTransactions(Array.from(filtered));
+      setTransactions(Array.from(filtered));
     } else {
-      if (map && map.length) {
-        const lastSignature = map[map.length - 1].signature;
-        const currentArray = transactions?.slice() || [];
-        const jointArray = currentArray.concat(map);
-        if (map.length === TRANSACTIONS_PER_PAGE) {
+      if (transactionsChunk && transactionsChunk.length) {
+        const modifiedHistory = transactions?.slice() || [];
+        for (const tx of transactionsChunk) {
+          if (modifiedHistory.every(item => item.signature !== tx.signature)) {
+            modifiedHistory.push(tx);
+          }
+        }
+        consoleOut('history:', modifiedHistory, 'blue');
+        const lastSignature = modifiedHistory[modifiedHistory.length - 1].signature;
+        if (modifiedHistory.length === TRANSACTIONS_PER_PAGE) {
           setLastTxSignature(lastSignature);
         } else {
           setLastTxSignature('');
         }
-        // Get a unique set of items
-        const filtered = new Set(jointArray);
-        // Convert iterable to array
-        updateTransactions(Array.from(filtered));
+        setTransactions(modifiedHistory);
       }
     }
   };
@@ -1597,7 +1599,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   };
 
   const setSelectedAccount = (account: AccountContext, override = false) => {
-    updateTransactions([]);
+    setTransactions([]);
     updateSelectedAccount(account);
     if (override) {
       consoleOut('Overriding lastUsedAccount with:', account, 'crimson');
@@ -2153,7 +2155,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         getStreamActivity,
         setCustomStreamDocked,
         setDiagnosisInfo,
-        setTransactions,
+        appendHistoryItems,
         setSelectedAsset,
         setStreamsSummary,
         setLastStreamsSummary,
