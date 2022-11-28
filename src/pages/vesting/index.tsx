@@ -5,6 +5,7 @@ import {
   MeanMultisig,
   MultisigTransactionFees,
   MULTISIG_ACTIONS,
+  MultisigInfo,
 } from '@mean-dao/mean-multisig-sdk';
 import {
   calculateActionFees,
@@ -18,11 +19,7 @@ import {
   TreasuryType,
   VestingTreasuryActivity,
 } from '@mean-dao/msp';
-import {
-  Connection,
-  PublicKey,
-  Transaction,
-} from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import {
   Alert,
   Button,
@@ -62,6 +59,7 @@ import {
   TxConfirmationInfo,
 } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useTransaction from 'hooks/useTransaction';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconArrowBack, IconLoading, IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
@@ -78,6 +76,7 @@ import {
   SegmentStreamCreateData,
   SegmentVestingContractCloseData,
   SegmentVestingContractCreateData,
+  SegmentVestingContractEditData,
   SegmentVestingContractWithdrawData,
 } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
@@ -126,6 +125,7 @@ import {
   getCategoryLabelByValue,
   VestingContractCreateOptions,
   VestingContractEditOptions,
+  VestingContractEditParams,
   VestingContractStreamCreateOptions,
   VestingContractTopupParams,
   VestingContractWithdrawOptions,
@@ -363,7 +363,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const logEventHandling = useCallback((item: TxConfirmationInfo) => {
     consoleOut(
-      `VestingView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
+      `VestingView -> onTxConfirmed event handled for operation ${
+        OperationType[item.operationType]
+      }`,
       item,
       'crimson',
     );
@@ -389,6 +391,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           event = success
             ? AppUsageEvent.VestingContractCreateCompleted
             : AppUsageEvent.VestingContractCreateFailed;
+          segmentAnalytics.recordEvent(event, { signature: signature });
+          break;
+        case OperationType.TreasuryEdit:
+          event = success
+            ? AppUsageEvent.VestingContractEditCompleted
+            : AppUsageEvent.VestingContractEditFailed;
           segmentAnalytics.recordEvent(event, { signature: signature });
           break;
         case OperationType.TreasuryStreamCreate:
@@ -593,6 +601,21 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             hardReloadContracts();
           }, 20);
           break;
+        case OperationType.TreasuryEdit:
+          logEventHandling(item);
+          recordTxConfirmation(item.signature, item.operationType, true);
+          if (!isWorkflowLocked) {
+            isWorkflowLocked = true;
+            notifyMultisigVestingContractActionFollowup(
+              'To complete the vesting contract update, the other Multisig owners need to approve the proposal.',
+              'After the proposal has been approved and executed, the vesting contract will be updated.',
+              item,
+            );
+          }
+          setTimeout(() => {
+            hardReloadContracts();
+          }, 20);
+          break;
         case OperationType.StreamClose:
           logEventHandling(item);
           recordTxConfirmation(item.signature, item.operationType, true);
@@ -642,7 +665,11 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           break;
       }
     },
-    [logEventHandling, notifyMultisigVestingContractActionFollowup, recordTxConfirmation],
+    [
+      logEventHandling,
+      notifyMultisigVestingContractActionFollowup,
+      recordTxConfirmation,
+    ],
   );
 
   // Setup event handler for Tx confirmation error
@@ -665,6 +692,16 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             title: 'Create vesting contract status',
             description:
               'The transaction to create the vesting contract was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully created.',
+            duration: null,
+            type: 'info',
+            handleClose: () => hardReloadContracts(),
+          });
+        }
+        if (item.operationType === OperationType.TreasuryEdit) {
+          openNotification({
+            title: 'Update vesting contract status',
+            description:
+              'The transaction to update the vesting contract was not confirmed within 40 seconds. Solana may be congested right now. This page needs to be reloaded to verify the contract was successfully updated.',
             duration: null,
             type: 'info',
             handleClose: () => hardReloadContracts(),
@@ -1042,11 +1079,29 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     [],
   );
 
-  const onVestingContractCreated = useCallback(() => {
+  // Edit vesting contract settings
+  const [isEditContractSettingsModalOpen, setIsEditContractSettingsModalOpen] =
+    useState(false);
+  const hideEditContractSettingsModal = useCallback(
+    () => setIsEditContractSettingsModalOpen(false),
+    [],
+  );
+  const showEditContractSettingsModal = useCallback(
+    () => setIsEditContractSettingsModalOpen(true),
+    [],
+  );
+
+  const onVestingContractCreatedOrUpdated = useCallback(() => {
     closeVestingContractCreateModal();
+    hideEditContractSettingsModal();
     refreshTokenBalance();
     clearFormValues();
-  }, [clearFormValues, closeVestingContractCreateModal, refreshTokenBalance]);
+  }, [
+    clearFormValues,
+    hideEditContractSettingsModal,
+    closeVestingContractCreateModal,
+    refreshTokenBalance,
+  ]);
 
   const onExecuteCreateVestingContractTransaction = useCallback(
     async (createOptions: VestingContractCreateOptions) => {
@@ -1433,7 +1488,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             });
             setIsBusy(false);
             resetTransactionStatus();
-            onVestingContractCreated();
+            onVestingContractCreatedOrUpdated();
           } else {
             openNotification({
               title: t('notifications.error-title'),
@@ -1464,7 +1519,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
-      onVestingContractCreated,
+      onVestingContractCreatedOrUpdated,
       getMultisigIdFromContext,
       getTokenPriceByAddress,
       resetTransactionStatus,
@@ -2554,7 +2609,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sign = await signTx('Create Stream', wallet, publicKey, transaction);
+        const sign = await signTx(
+          'Create Stream',
+          wallet,
+          publicKey,
+          transaction,
+        );
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -2562,7 +2622,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Create Stream', connection, wallet, encodedTx);
+          const sent = await sendTx(
+            'Create Stream',
+            connection,
+            wallet,
+            encodedTx,
+          );
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
@@ -3094,10 +3159,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       }
 
       // Create a transaction
-      const result = await msp.refreshTreasuryData(
-        publicKey,
-        new PublicKey(data.treasury)
-      )
+      const result = await msp
+        .refreshTreasuryData(publicKey, new PublicKey(data.treasury))
         .then(value => {
           if (!value) {
             return false;
@@ -3141,7 +3204,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sign = await signTx('Refresh Account Balance', wallet, publicKey, transaction);
+        const sign = await signTx(
+          'Refresh Account Balance',
+          wallet,
+          publicKey,
+          transaction,
+        );
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -3149,7 +3217,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Refresh Account Balance', connection, wallet, encodedTx);
+          const sent = await sendTx(
+            'Refresh Account Balance',
+            connection,
+            wallet,
+            encodedTx,
+          );
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
@@ -3211,35 +3284,121 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     t,
   ]);
 
-  // Edit vesting contract settings
-  const [isEditContractSettingsModalOpen, setIsEditContractSettingsModalOpen] =
-    useState(false);
-  const hideEditContractSettingsModal = useCallback(
-    () => setIsEditContractSettingsModalOpen(false),
-    [],
-  );
-  const showEditContractSettingsModal = useCallback(
-    () => setIsEditContractSettingsModalOpen(true),
-    [],
-  );
-
   const onAcceptEditContractSettings = (params: VestingContractEditOptions) => {
     consoleOut('params', params, 'blue');
     onExecuteEditContractSettingsTx(params);
   };
 
-  const onExecuteEditContractSettingsTx = (
-    params: VestingContractEditOptions,
+  const { onExecute } = useTransaction();
+
+  const onExecuteEditContractSettingsTx = async (
+    editOptions: VestingContractEditOptions,
   ) => {
-    // TODO: close a Tx here and adapt as needed
-    consoleOut('only missing the Tx...', '', 'blue');
+    const vestingContract = selectedVestingContract;
+    if (!vestingContract) return;
+    resetTransactionStatus();
+    setIsBusy(true);
+    try {
+      const vestingContractName = vestingContract.name;
+
+      const name = 'Edit Vesting Contract';
+      const loadingMessage = () =>
+        isMultisigContext
+          ? `Send proposal to edit the vesting contract ${vestingContractName}`
+          : `Edit vesting contract ${vestingContractName}`;
+      const completedMessage = () =>
+        isMultisigContext
+          ? `Proposal to update the vesting contract ${vestingContractName} was submitted for Multisig approval.`
+          : `Vesting contract ${vestingContractName} updated successfully`;
+
+      const operationType = OperationType.TreasuryEdit;
+      const extras = () => ({
+        vestingContractId: vestingContract.id,
+        multisigId: editOptions.multisig,
+      });
+
+      const proposalTitle = editOptions.proposalTitle;
+      const multisig = editOptions.multisig;
+
+      const multisigAuthority = getMultisigIdFromContext();
+
+      const payload: VestingContractEditParams = {
+        multisig: multisigAuthority, // multisig
+        treasurer: publicKey, // treasurer
+        duration: editOptions.duration, // duration
+        durationUnit: editOptions.durationUnit, // durationUnit
+        startUtc: editOptions.startDate, // startUtc
+        cliffVestPercent: editOptions.cliffVestPercent, // cliffVestPercent
+        feePayedByTreasurer: editOptions.feePayedByTreasurer, // feePayedByTreasurer
+        vestingTreasury: new PublicKey(vestingContract.id),
+        proposalTitle: editOptions.proposalTitle,
+      };
+
+      const generateTransaction = async ({
+        multisig,
+        msp,
+      }: {
+        multisig?: MultisigInfo;
+        msp: MSP;
+      }) => {
+        const data = payload;
+        if (!multisig) {
+          return msp.modifyVestingTreasuryTemplate(
+            new PublicKey(data.treasurer), // payer
+            new PublicKey(data.treasurer), // treasurer
+            data.vestingTreasury,
+            data.duration, // duration
+            data.durationUnit, // durationUnit
+            data.startUtc, // startUtc
+            data.cliffVestPercent, // cliffVestPercent
+            data.feePayedByTreasurer, // feePayedByTreasurer
+          );
+        }
+
+        return msp.modifyVestingTreasuryTemplate(
+          multisig.authority, // payer
+          multisig.authority, // treasurer
+          data.vestingTreasury,
+          data.duration, // duration
+          data.durationUnit, // durationUnit
+          data.startUtc, // startUtc
+          data.cliffVestPercent, // cliffVestPercent
+          data.feePayedByTreasurer, // feePayedByTreasurer
+        );
+      };
+      await onExecute(payload, {
+        name,
+        transactionCancelled,
+        setTransactionCancelled,
+        loadingMessage,
+        completedMessage,
+        operationType,
+        extras,
+        msp,
+        transactionFees,
+        multisigTxFees,
+        setMinRequiredBalance,
+        nativeBalance,
+        proposalTitle,
+        multisig,
+        generateTransaction,
+      });
+      resetTransactionStatus();
+      onVestingContractCreatedOrUpdated();
+    } catch (e) {
+      openNotification({
+        title: t('notifications.error-title'),
+        description: t('notifications.error-sending-transaction'),
+        type: 'error',
+      });
+    }
+    setIsBusy(false);
   };
 
   /////////////////////
   // Data management //
   /////////////////////
 
-  // sdsdsd
   useEffect(() => {
     // setMainFeatureTab
     if (location.pathname === `${VESTING_ROUTE_BASE_PATH}/summary`) {
@@ -3438,25 +3597,21 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       ctaItems++;
     }
 
-    // TODO: remove isUnderDevelopment() when releasing
-    if (
-      isUnderDevelopment() &&
-      canPerformAnyAction() &&
-      selectedVestingContract &&
-      selectedVestingContract.totalStreams === 0 &&
-      !isContractLocked()
-    ) {
+    if (canPerformAnyAction() && !isContractLocked()) {
+      const disabled = !(
+        selectedVestingContract && selectedVestingContract.totalStreams === 0
+      );
       actions.push({
         action: MetaInfoCtaAction.VestingContractEditSettings,
         caption: 'Edit contract settings',
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
+        disabled,
         uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
           MetaInfoCtaAction.VestingContractEditSettings
         }`,
         tooltip: '',
-        callBack: showEditContractSettingsModal,
+        callBack: disabled ? () => {} : showEditContractSettingsModal,
       });
       ctaItems++;
     }
@@ -3797,7 +3952,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         setStreamTemplate(value);
       });
     }
-  }, [msp, publicKey, vestingContract]);
+  }, [msp, publicKey, vestingContract, selectedVestingContract]);
 
   // Set a multisig based on address in context
   useEffect(() => {

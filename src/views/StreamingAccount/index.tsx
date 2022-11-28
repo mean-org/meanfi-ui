@@ -2591,6 +2591,9 @@ export const StreamingAccountView = (props: {
       case VestingTreasuryActivityAction.TreasuryCreate:
         message += 'Streaming account created';
         break;
+      case VestingTreasuryActivityAction.TreasuryModify:
+        message += `Vesting contract modified`;
+        break;
       case VestingTreasuryActivityAction.TreasuryAddFunds:
         message += 'Deposit funds in the streaming account';
         break;

@@ -169,6 +169,8 @@ export enum AppUsageEvent {
   VestingContractCreateSigned = 'Create Vesting contract Signed',
   VestingContractCreateCompleted = 'Create Vesting contract Completed',
   VestingContractCreateFailed = 'Create Vesting contract Failed',
+  VestingContractEditCompleted = 'Update Vesting contract Completed',
+  VestingContractEditFailed = 'Update Vesting contract Failed',
   VestingContractTopupFormButton = 'Topup Vesting contract form button click',
   VestingContractTopupSigned = 'Topup Vesting contract Signed',
   VestingContractTopupCompleted = 'Topup Vesting contract Completed',
@@ -290,6 +292,16 @@ export interface SegmentVestingContractCreateData {
   startUtc: string;
   multisig: string;
   feePayedByTreasurer: boolean;
+}
+
+export interface SegmentVestingContractEditData {
+  contractName: string;
+  cliffVestPercent: number;
+  duration: number;
+  durationUnit: string;
+  feePayedByTreasurer: boolean;
+  multisig: string;
+  startUtc: string;
 }
 
 export interface SegmentVestingContractWithdrawData {
