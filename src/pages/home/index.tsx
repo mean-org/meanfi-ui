@@ -268,6 +268,7 @@ export const HomeView = () => {
     setShouldLoadTokens,
     setSelectedMultisig,
     resetContractValues,
+    appendHistoryItems,
     refreshStreamList,
     setStreamsSummary,
     refreshMultisigs,
@@ -275,7 +276,6 @@ export const HomeView = () => {
     setSelectedToken,
     setSelectedAsset,
     setStreamDetail,
-    setTransactions,
     clearStreams,
   } = useContext(AppStateContext);
   const {
@@ -972,9 +972,9 @@ export const HomeView = () => {
   const reloadSwitch = useCallback(() => {
     refreshAssetBalance();
     setSolAccountItems(0);
-    setTransactions(undefined);
+    appendHistoryItems(undefined);
     startSwitch();
-  }, [startSwitch, setTransactions, refreshAssetBalance]);
+  }, [startSwitch, appendHistoryItems, refreshAssetBalance]);
 
   const getAssetPath = useCallback(
     (asset: UserTokenAccount) => {
@@ -1031,14 +1031,14 @@ export const HomeView = () => {
       setStatus(FetchStatus.Fetching);
       if (clearTxList) {
         setSolAccountItems(0);
-        setTransactions(undefined);
+        appendHistoryItems(undefined);
       }
       setSelectedAsset(asset);
       setTimeout(() => {
         startSwitch();
       }, 10);
     },
-    [startSwitch, setTransactions, setSelectedAsset],
+    [startSwitch, appendHistoryItems, setSelectedAsset],
   );
 
   const shouldHideAsset = useCallback(
@@ -3878,7 +3878,6 @@ export const HomeView = () => {
       !connection ||
       !publicKey ||
       !selectedAsset ||
-      !tokensLoaded ||
       !shouldLoadTransactions ||
       loadingTransactions
     ) {
@@ -3886,8 +3885,8 @@ export const HomeView = () => {
     }
 
     if (selectedAccount.address) {
-      setShouldLoadTransactions(false);
-      setLoadingTransactions(true);
+      setShouldLoadTransactions(value => !value);
+      setLoadingTransactions(value => !value);
 
       // Get the address to scan and ensure there is one
       const pk = getScanAddress(selectedAsset);
@@ -3898,7 +3897,7 @@ export const HomeView = () => {
       );
       if (!pk) {
         consoleOut('Asset has no public address, aborting...', '', 'goldenrod');
-        setTransactions(undefined);
+        appendHistoryItems(undefined);
         setStatus(FetchStatus.Fetched);
         return;
       }
@@ -3915,10 +3914,8 @@ export const HomeView = () => {
 
       fetchAccountHistory(connection, pk, options, true)
         .then(history => {
-          consoleOut('history:', history, 'blue');
-          setTransactions(history.transactionMap, true);
+          appendHistoryItems(history.transactionMap, true);
           setStatus(FetchStatus.Fetched);
-
           if (
             history.transactionMap &&
             history.transactionMap.length > 0 &&
@@ -3940,7 +3937,6 @@ export const HomeView = () => {
   }, [
     publicKey,
     connection,
-    tokensLoaded,
     selectedAsset?.publicAddress,
     selectedAccount.address,
     lastTxSignature,
@@ -4507,13 +4503,13 @@ export const HomeView = () => {
     }
 
     setIsPageLoaded(false);
-    setTransactions([]);
+    appendHistoryItems([]);
   }, [
     publicKey,
     isPageLoaded,
     selectedAccount.address,
     shouldLoadTokens,
-    setTransactions,
+    appendHistoryItems,
   ]);
 
   // Unsubscribe from events
