@@ -208,7 +208,7 @@ export const AccountsCloseAssetModal = (props: {
         return false;
       }
       transactionLog = transactionLog.concat(createdTx.log);
-      transaction = createdTx.transaction;
+      transaction = createdTx.transaction as Transaction;
       return true;
     };
 

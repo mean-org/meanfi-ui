@@ -7,6 +7,7 @@ import {
   TransactionSignature,
   Transaction,
   ParsedTransactionMeta,
+  VersionedTransaction,
 } from '@solana/web3.js';
 import { MeanFiWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
@@ -166,14 +167,14 @@ export const signTx = async (
   title: string,
   wallet: MeanFiWallet,
   publicKey: PublicKey,
-  transaction: Transaction | null,
+  transaction: Transaction | VersionedTransaction | null,
 ): Promise<SignTxResult> => {
   const txLog: any[] = [];
 
   if (wallet && publicKey && wallet.signTransaction && transaction) {
     return (wallet as SignerWalletAdapter)
     .signTransaction(transaction)
-    .then(async (signed: Transaction) => {
+    .then(async signed => {
       consoleOut(
         'signTransaction returned a signed transaction:',
         signed,

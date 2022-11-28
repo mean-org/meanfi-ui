@@ -5,6 +5,7 @@ import {
   LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
+  VersionedTransaction,
 } from '@solana/web3.js';
 import {
   BIGNUMBER_FORMAT,
@@ -470,6 +471,17 @@ export function getTxIxResume(tx: Transaction) {
   return { numIxs: tx.instructions.length, programIds: programIds };
 }
 
+export function getVersionedTxIxResume(tx: VersionedTransaction) {
+  const programIds: string[] = [];
+  tx.message.compiledInstructions.forEach(t => {
+    const programId = tx.message.staticAccountKeys[t.programIdIndex].toBase58();
+    if (!programIds.includes(programId)) {
+      programIds.push(programId);
+    }
+  });
+  return { numIxs: tx.message.compiledInstructions.length, programIds: programIds };
+}
+
 export async function findATokenAddress(
   walletAddress: PublicKey,
   tokenMintAddress: PublicKey,
@@ -602,9 +614,8 @@ export function slugify(text: string): string {
   return (
     text
       .toLowerCase()
-      // eslint-disable-next-line no-useless-escape
       .replace(
-        /[\~\!\@\#\$\%\^\&\*\(\)\-\_\=\+\]\[\}\{\'\"\;\\\:\?\/\>\<\.\,]+/g,
+        /[~!@#$%^&*()\-_=+\][}{'";\\:?/><.,]+/g,
         '-',
       )
       .replace(/ +/g, '-')

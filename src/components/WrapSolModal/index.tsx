@@ -5,7 +5,6 @@ import {
 } from '@mean-dao/money-streaming/lib/types';
 import {
   calculateActionFees,
-  wrapSol,
 } from '@mean-dao/money-streaming/lib/utils';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
@@ -33,6 +32,7 @@ import {
   getTxIxResume,
   isValidNumber,
 } from 'middleware/utils';
+import { wrapSol } from 'middleware/wrapSol';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -163,11 +163,7 @@ export const WrapSolModal = (props: {
           result: '',
         });
 
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-
-        // const myFees = getTxFeeAmount(wrapFees, amount);
-        // if (nativeBalance < wrapFees.blockchainFee + myFees) {
+        // Abort transaction if not enough balance to pay for gas fees
         if (nativeBalance < MIN_SOL_BALANCE_REQUIRED) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
