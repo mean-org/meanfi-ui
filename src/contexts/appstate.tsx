@@ -1576,20 +1576,20 @@ const AppStateProvider: React.FC = ({ children }) => {
       setTransactions(Array.from(filtered));
     } else {
       if (transactionsChunk && transactionsChunk.length) {
-        const history = transactions?.slice() || [];
+        const modifiedHistory = transactions?.slice() || [];
         for (const tx of transactionsChunk) {
-          if (history.every(item => item.signature !== tx.signature)) {
-            history.push(tx);
+          if (modifiedHistory.every(item => item.signature !== tx.signature)) {
+            modifiedHistory.push(tx);
           }
         }
-        consoleOut('history:', history, 'blue');
-        const lastSignature = history[history.length - 1].signature;
-        if (history.length === TRANSACTIONS_PER_PAGE) {
+        consoleOut('history:', modifiedHistory, 'blue');
+        const lastSignature = modifiedHistory[modifiedHistory.length - 1].signature;
+        if (modifiedHistory.length === TRANSACTIONS_PER_PAGE) {
           setLastTxSignature(lastSignature);
         } else {
           setLastTxSignature('');
         }
-        setTransactions(history);
+        setTransactions(modifiedHistory);
       }
     }
   };
