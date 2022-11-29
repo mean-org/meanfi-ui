@@ -8,7 +8,6 @@ import {
   Transaction,
   ParsedTransactionMeta,
 } from '@solana/web3.js';
-import { MeanFiWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
 import { SendTxResult, SignTxResult } from 'models/CreateTxResult';
 import { TransactionStatus } from '../models/enums';

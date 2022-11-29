@@ -1,7 +1,7 @@
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { SentreWalletAdapter, SentreWalletName } from '@sentre/connector';
-import { Adapter, WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { WalletProvider, useWallet as useBaseWallet } from '@solana/wallet-adapter-react';
+import { Adapter, MessageSignerWalletAdapterProps, SignerWalletAdapterProps, WalletAdapterProps } from '@solana/wallet-adapter-base';
+import { useWallet as useBaseWallet } from '@solana/wallet-adapter-react';
 import {
   BitKeepWalletAdapter,
   BitKeepWalletName,
@@ -31,7 +31,6 @@ import {
 import { Button, Modal } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { sentreAppId } from 'constants/common';
-import { environment } from 'environments/environment';
 import React, {
   useCallback,
   useContext,
@@ -55,24 +54,6 @@ import {
   XnftWalletName,
   isInXnftWallet,
 } from '../integrations/xnft/xnft-wallet-adapter';
-import { Transaction, VersionedTransaction } from '@solana/web3.js';
-
-export type MeanFiWallet =
-  | PhantomWalletAdapter
-  | ExodusWalletAdapter
-  | SolflareWalletAdapter
-  | SlopeWalletAdapter
-  | Coin98WalletAdapter
-  | SolongWalletAdapter
-  | MathWalletAdapter
-  | TrustWalletAdapter
-  | LedgerWalletAdapter
-  | BitKeepWalletAdapter
-  | CoinbaseWalletAdapter
-  | SentreWalletAdapter
-  | BraveWalletAdapter
-  | XnftWalletAdapter
-  | undefined;
 
 export interface WalletProviderEntry {
   name: string;
@@ -323,7 +304,10 @@ interface MeanFiWalletContextState {
   provider: typeof WALLET_PROVIDERS[number] | undefined;
   resetWalletProvider: () => void;
   selectWalletProvider: () => void;
-  signTransaction: (<T extends Transaction | VersionedTransaction>(transaction: T) => Promise<T>) | undefined;
+  sendTransaction: WalletAdapterProps['sendTransaction'];
+  signTransaction: SignerWalletAdapterProps['signTransaction'] | undefined;
+  signAllTransactions: SignerWalletAdapterProps['signAllTransactions'] | undefined;
+  signMessage: MessageSignerWalletAdapterProps['signMessage'] | undefined;
 }
 
 const defaultCtxValues: MeanFiWalletContextState = {
@@ -332,9 +316,12 @@ const defaultCtxValues: MeanFiWalletContextState = {
   connecting: true,
   provider: undefined,
   isSelectingWallet: false,
-  resetWalletProvider: () => {},
+  resetWalletProvider: () => { },
   selectWalletProvider: () => { },
+  sendTransaction: async () => '',
   signTransaction: undefined,
+  signAllTransactions: undefined,
+  signMessage: undefined,
 };
 
 const MeanFiWalletContext = React.createContext<MeanFiWalletContextState>(defaultCtxValues);
@@ -345,15 +332,20 @@ export function MeanFiWalletProvider({ children = null as any }) {
   const navigate = useNavigate();
   const [walletName, setWalletName] = useLocalStorageState('walletName');
   const [lastUsedAccount, setLastUsedAccount] = useLocalStorageState('lastUsedAccount');
-
-  const { wallet, select, connect, disconnect, signTransaction } = useBaseWallet();
-  // const [localWallet, setLocalWallet] = useState<MeanFiWallet | undefined>(undefined);
-
+  const {
+    wallet,
+    wallets,
+    select,
+    connect,
+    disconnect,
+    signMessage,
+    sendTransaction,
+    signTransaction,
+    signAllTransactions,
+  } = useBaseWallet();
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
-
   const [isSelectingWallet, setIsModalVisible] = useState(false);
-
   const selectWalletProvider = useCallback(() => {
     setIsModalVisible(true);
   }, []);
@@ -367,7 +359,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
   const forgetWallet = useCallback(() => {
     setConnected(false);
     setWalletName(null);
-    // setLocalWallet(undefined);
   }, [setWalletName]);
 
   const connectOnDemand = useCallback(() => {
@@ -398,64 +389,41 @@ export function MeanFiWalletProvider({ children = null as any }) {
     return item;
   }, [walletName]);
 
-  const network = environment === 'production'
-    ? WalletAdapterNetwork.Mainnet
-    : WalletAdapterNetwork.Devnet;
-
-  const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new BraveWalletAdapter(),
-      new ExodusWalletAdapter(),
-      new SolflareWalletAdapter({ network }),
-      new BitKeepWalletAdapter(),
-      new CoinbaseWalletAdapter(),
-      new SlopeWalletAdapter(),
-      new Coin98WalletAdapter(),
-      new SolongWalletAdapter(),
-      new TrustWalletAdapter(),
-      new MathWalletAdapter(),
-      new LedgerWalletAdapter(),
-      new SentreWalletAdapter({ appId: sentreAppId }),
-      new XnftWalletAdapter(),
-    ],
-    [network],
-  );
-
-  // TODO: Fix this
-  // useEffect(() => {
-  //   if (isInXnftWallet()) {
-  //     document.body.classList.add('in-xnft-wallet');
-  //     setWalletName(XnftWalletName);
-  //     setLocalWallet(wallets.find(w => w.name === XnftWalletName));
-  //   }
-  // }, [setWalletName, wallets]);
+  /*
+  useEffect(() => {
+    if (isInXnftWallet()) {
+      document.body.classList.add('in-xnft-wallet');
+      setWalletName(XnftWalletName);
+      setLocalWallet(wallets.find(w => w.name === XnftWalletName));
+    }
+  }, [setWalletName, wallets]);
+  */
 
   useEffect(() => {
     if (wallets) {
       for (const item of wallets) {
-        const itemIndex = WALLET_PROVIDERS.findIndex(p => p.name === item.name);
+        const itemIndex = WALLET_PROVIDERS.findIndex(p => p.name === item.adapter.name);
         if (itemIndex !== -1) {
-          WALLET_PROVIDERS[itemIndex].url = item.url;
-          WALLET_PROVIDERS[itemIndex].icon = item.icon;
+          WALLET_PROVIDERS[itemIndex].url = item.adapter.url;
+          WALLET_PROVIDERS[itemIndex].icon = item.adapter.icon;
         }
       }
       if (walletName) {
         consoleOut('walletName:', walletName, 'blue');
-        const wa = wallets.find(w => w.name === walletName);
+        const wa = wallets.find(w => w.adapter.name === walletName);
         const walletEntry = WALLET_PROVIDERS.filter(
           w => !isProviderHidden(w, { isDesktop }),
         ).find(w => w.name === walletName);
         consoleOut('provider:', wa, 'blue');
         if (wa && walletEntry) {
-          // setLocalWallet(wa);
+          if (walletEntry.name === XnftWalletName && isInXnftWallet()) {
+            document.body.classList.add('in-xnft-wallet');
+          }
         } else {
           setWalletName(null);
-          // setLocalWallet(undefined);
         }
       } else {
         setWalletName(null);
-        // setLocalWallet(undefined);
       }
     }
   }, [walletName, setWalletName, wallets]);
@@ -528,119 +496,120 @@ export function MeanFiWalletProvider({ children = null as any }) {
   return (
     <MeanFiWalletContext.Provider
       value={{
+        provider,
         wallet: wallet?.adapter,
         connected,
         connecting,
-        signTransaction,
-        selectWalletProvider,
-        provider,
-        resetWalletProvider,
         isSelectingWallet,
+        selectWalletProvider,
+        signAllTransactions,
+        resetWalletProvider,
+        sendTransaction,
+        signTransaction,
+        signMessage,
       }}
     >
-      <WalletProvider wallets={wallets} autoConnect>
-        {children}
-        <Modal
-          centered
-          className="mean-modal simple-modal"
-          title={
-            <div className="modal-title">
-              {t(`wallet-selector.primary-action`)}
-            </div>
-          }
-          open={!isInXnftWallet() && isSelectingWallet}
-          footer={null}
-          maskClosable={connected}
-          closable={connected}
-          onCancel={close}
-          width={450}
-        >
-          <div className="connect-wallet-modal vertical-scroll">
-            <div className="mb-3 text-center">
-              <h2>{t('wallet-selector.connect-to-begin')}</h2>
-            </div>
-            <div
-              className={`wallet-providers ${
-                walletListExpanded ? 'expanded' : ''
-              }`}
-            >
-              {WALLET_PROVIDERS.map((item, index) => {
-                const isInstalled = getIsProviderInstalled(item);
-                // Skip items that won't show up
-                if (isProviderHidden(item, { isDesktop })) {
-                  return null;
+      {children}
+      <Modal
+        centered
+        className="mean-modal simple-modal"
+        title={
+          <div className="modal-title">
+            {t(`wallet-selector.primary-action`)}
+          </div>
+        }
+        open={!isInXnftWallet() && isSelectingWallet}
+        footer={null}
+        maskClosable={connected}
+        closable={connected}
+        onCancel={close}
+        width={450}
+      >
+        <div className="connect-wallet-modal vertical-scroll">
+          <div className="mb-3 text-center">
+            <h2>{t('wallet-selector.connect-to-begin')}</h2>
+          </div>
+          <div
+            className={`wallet-providers ${
+              walletListExpanded ? 'expanded' : ''
+            }`}
+          >
+            {WALLET_PROVIDERS.map((item, index) => {
+              const isInstalled = getIsProviderInstalled(item);
+              // Skip items that won't show up
+              if (isProviderHidden(item, { isDesktop })) {
+                return null;
+              }
+
+              const onClick = function () {
+                if (wallet) {
+                  disconnect();
                 }
 
-                const onClick = function () {
-                  if (wallet) {
-                    disconnect();
+                // Record user event in Segment Analytics
+                segmentAnalytics.recordEvent(AppUsageEvent.WalletSelected, {
+                  walletProvider: item.name,
+                  isWebWallet: item.isWebWallet,
+                });
+
+                // If not installed take the user to its extension url
+                if (!isInstalled) {
+                  window.open(item.url, '_blank');
+                }
+
+                consoleOut('Selected wallet:', item.name, 'blue');
+                setWalletName(item.name);
+                const selected = wallets.find(w => w.adapter.name === item.name);
+                if (selected) {
+                  // setLocalWallet(selected);
+                  select(selected.adapter.name);
+                }
+              };
+
+              return (
+                <Button
+                  block
+                  size="large"
+                  className="wallet-provider thin-stroke"
+                  shape="round"
+                  type="ghost"
+                  onClick={onClick}
+                  key={index}
+                  icon={
+                    <img
+                      alt={`${item.name}`}
+                      width={20}
+                      height={20}
+                      src={item.icon}
+                      style={{ marginRight: 8 }}
+                    />
                   }
-
-                  // Record user event in Segment Analytics
-                  segmentAnalytics.recordEvent(AppUsageEvent.WalletSelected, {
-                    walletProvider: item.name,
-                    isWebWallet: item.isWebWallet,
-                  });
-
-                  // If not installed take the user to its extension url
-                  if (!isInstalled) {
-                    window.open(item.url, '_blank');
-                  }
-
-                  consoleOut('Selected wallet:', item.name, 'blue');
-                  setWalletName(item.name);
-                  const selected = wallets.find(w => w.name === item.name);
-                  if (selected) {
-                    // setLocalWallet(selected);
-                    select(selected.name);
-                  }
-                };
-
-                return (
-                  <Button
-                    block
-                    size="large"
-                    className="wallet-provider thin-stroke"
-                    shape="round"
-                    type="ghost"
-                    onClick={onClick}
-                    key={index}
-                    icon={
-                      <img
-                        alt={`${item.name}`}
-                        width={20}
-                        height={20}
-                        src={item.icon}
-                        style={{ marginRight: 8 }}
-                      />
-                    }
-                  >
-                    <span className="align-middle">{item.name}</span>
-                  </Button>
-                );
-              })}
-            </div>
-            {isDesktop && (
-              <Button
-                block
-                size="large"
-                className="wallet-providers-more-options thin-stroke"
-                shape="round"
-                type="ghost"
-                onClick={() => setWalletListExpanded(state => !state)}
-                icon={walletListExpanded ? <UpOutlined /> : <DownOutlined />}
-                key="more-options"
-              >
-                <span className="align-middle">
-                  {walletListExpanded
-                    ? t('wallet-selector.more-options-expanded')
-                    : t('wallet-selector.more-options-collapsed')}
-                </span>
-              </Button>
-            )}
+                >
+                  <span className="align-middle">{item.name}</span>
+                </Button>
+              );
+            })}
           </div>
-        </Modal>
-      </WalletProvider>
+          {isDesktop && (
+            <Button
+              block
+              size="large"
+              className="wallet-providers-more-options thin-stroke"
+              shape="round"
+              type="ghost"
+              onClick={() => setWalletListExpanded(state => !state)}
+              icon={walletListExpanded ? <UpOutlined /> : <DownOutlined />}
+              key="more-options"
+            >
+              <span className="align-middle">
+                {walletListExpanded
+                  ? t('wallet-selector.more-options-expanded')
+                  : t('wallet-selector.more-options-collapsed')}
+              </span>
+            </Button>
+          )}
+        </div>
+      </Modal>
     </MeanFiWalletContext.Provider>
   );
 }
