@@ -30,7 +30,7 @@ import {
   WRAPPED_SOL_MINT_ADDRESS,
 } from 'constants/common';
 import { MEAN_TOKEN_LIST, NATIVE_SOL, PINNED_TOKENS } from 'constants/tokens';
-import { useNativeAccount, useUserAccounts } from 'contexts/accounts';
+import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
@@ -71,7 +71,6 @@ export const JupiterExchange = (props: {
   const { t } = useTranslation('common');
   const { publicKey, wallet, connected } = useWallet();
   const { account } = useNativeAccount();
-  const { tokenAccounts } = useUserAccounts();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [wSolBalance, setWsolBalance] = useState(0);
@@ -80,10 +79,10 @@ export const JupiterExchange = (props: {
   );
   const [userBalances, setUserBalances] = useState<any>();
   const {
+    tokenAccounts,
     transactionStatus,
     previousWalletConnectState,
     setTransactionStatus,
-    refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isBusy, setIsBusy] = useState(false);
@@ -196,25 +195,23 @@ export const JupiterExchange = (props: {
 
     let balance = 0;
 
-    if (tokenAccounts && tokenAccounts.length > 0 && tokenList) {
+    if (tokenAccounts && tokenAccounts.length > 0) {
       const wSol = tokenAccounts.findIndex(t => {
-        const mint = t.info.mint.toBase58();
+        const mint = t.parsedInfo.mint;
         return !t.pubkey.equals(publicKey) && mint === WRAPPED_SOL_MINT_ADDRESS
           ? true
           : false;
       });
       if (wSol !== -1) {
-        const wSolInfo = tokenAccounts[wSol].info;
-        const mint = wSolInfo.mint.toBase58();
-        const amount = wSolInfo.amount.toNumber();
-        const token = tokenList.find(t => t.address === mint);
-        balance = token ? parseFloat(toUiAmount(amount, token.decimals)) : 0;
+        const wSolInfo = tokenAccounts[wSol].parsedInfo;
+        const amount = wSolInfo.tokenAmount.uiAmount;
+        balance = amount || 0;
         setWsolPubKey(tokenAccounts[wSol].pubkey);
       }
     }
 
     setWsolBalance(balance);
-  }, [publicKey, tokenList, tokenAccounts]);
+  }, [publicKey, tokenAccounts]);
 
   // Set fromMint & toMint from query string if params are provided
   useEffect(() => {

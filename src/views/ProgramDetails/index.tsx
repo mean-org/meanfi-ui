@@ -1262,7 +1262,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     }
 
     const signatures = signaturesInfo.map(data => data.signature);
-    const txs = await connection.getParsedTransactions(signatures);
+    const txs = await connection.getParsedTransactions(signatures, { maxSupportedTransactionVersion: 0 });
 
     if (txs.length === 0) {
       return null;

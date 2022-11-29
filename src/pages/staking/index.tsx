@@ -4,7 +4,7 @@ import { Col, Row } from 'antd';
 import { InfoIcon } from 'components/InfoIcon';
 import { ONE_MINUTE_REFRESH_TIMEOUT } from 'constants/common';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
-import { useAccountsContext, useNativeAccount } from 'contexts/accounts';
+import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import {
   getNetworkIdByCluster,
@@ -42,6 +42,7 @@ type StakingPair = {
 const StakingView = () => {
   const {
     coinPrices,
+    tokenAccounts,
     selectedAccount,
     setIsVerifiedRecipient,
     getTokenPriceBySymbol,
@@ -53,7 +54,6 @@ const StakingView = () => {
   const { publicKey } = useWallet();
   const [searchParams, setSearchParams] = useSearchParams();
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
@@ -103,9 +103,8 @@ const StakingView = () => {
   const refreshMeanBalance = useCallback(async () => {
     if (
       !publicKey ||
-      !accounts ||
-      !accounts.tokenAccounts ||
-      !accounts.tokenAccounts.length
+      !tokenAccounts ||
+      !tokenAccounts.length
     ) {
       return;
     }
@@ -134,7 +133,7 @@ const StakingView = () => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accounts, publicKey, stakingPair]);
+  }, [tokenAccounts, publicKey, stakingPair]);
 
   const getUsdAmountForSmeanAmount = useCallback((amount: number) => {
     if (
@@ -151,9 +150,8 @@ const StakingView = () => {
   const refreshStakedMeanBalance = useCallback(async () => {
     if (
       !publicKey ||
-      !accounts ||
-      !accounts.tokenAccounts ||
-      !accounts.tokenAccounts.length
+      !tokenAccounts ||
+      !tokenAccounts.length
     ) {
       return;
     }
@@ -187,7 +185,7 @@ const StakingView = () => {
     saveTvl(tvl);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accounts, publicKey, stakingPair, selectedAccount.address]);
+  }, [tokenAccounts, publicKey, stakingPair, selectedAccount.address]);
 
   const refreshStakePoolInfo = useCallback(
     (price: number) => {
@@ -309,9 +307,8 @@ const StakingView = () => {
   useEffect(() => {
     if (
       !publicKey ||
-      !accounts ||
-      !accounts.tokenAccounts ||
-      !accounts.tokenAccounts.length
+      !tokenAccounts ||
+      !tokenAccounts.length
     ) {
       setMeanBalance(0);
       return;
@@ -320,15 +317,14 @@ const StakingView = () => {
     if (stakingPair && stakingPair.unstakedToken) {
       refreshMeanBalance();
     }
-  }, [accounts, publicKey, stakingPair, refreshMeanBalance]);
+  }, [tokenAccounts, publicKey, stakingPair, refreshMeanBalance]);
 
   // Keep sMEAN balance updated
   useEffect(() => {
     if (
       !publicKey ||
-      !accounts ||
-      !accounts.tokenAccounts ||
-      !accounts.tokenAccounts.length
+      !tokenAccounts ||
+      !tokenAccounts.length
     ) {
       return;
     }
@@ -336,7 +332,7 @@ const StakingView = () => {
     if (stakingPair && stakingPair.stakedToken) {
       refreshStakedMeanBalance();
     }
-  }, [accounts, publicKey, stakingPair, refreshStakedMeanBalance]);
+  }, [tokenAccounts, publicKey, stakingPair, refreshStakedMeanBalance]);
 
   // Stake quote - For input amount
   useEffect(() => {
