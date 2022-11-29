@@ -1,7 +1,6 @@
 import { Metaplex } from '@metaplex-foundation/js';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  AuthorityType,
   Token,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
@@ -9,15 +8,11 @@ import {
   AccountInfo,
   Commitment,
   Connection,
-  Keypair,
   ParsedAccountData,
   PublicKey,
-  sendAndConfirmTransaction,
   TokenAmount,
   Transaction,
   TransactionInstruction,
-  TransactionMessage,
-  VersionedTransaction,
 } from '@solana/web3.js';
 import {
   AccountsDictionary,
@@ -92,68 +87,6 @@ export async function getMultipleAccounts(
       account,
     };
   });
-}
-
-export async function createTokenMergeTx(
-  connection: Connection,
-  mint: PublicKey,
-  owner: PublicKey,
-  mergeGroup: AccountTokenParsedInfo[],
-) {
-  const ixs: TransactionInstruction[] = [];
-
-  const associatedAddress = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    mint,
-    owner,
-    true,
-  );
-
-  const ataInfo = await connection.getAccountInfo(associatedAddress);
-
-  if (ataInfo === null) {
-    ixs.push(
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mint,
-        associatedAddress,
-        owner,
-        owner,
-      ),
-    );
-  }
-
-  for (const token of mergeGroup.filter(
-    a => !a.pubkey.equals(associatedAddress),
-  )) {
-    ixs.push(
-      Token.createTransferInstruction(
-        TOKEN_PROGRAM_ID,
-        token.pubkey,
-        associatedAddress,
-        owner,
-        [],
-        (token.parsedInfo.tokenAmount.uiAmount || 0) *
-          10 ** token.parsedInfo.tokenAmount.decimals,
-      ),
-      Token.createCloseAccountInstruction(
-        TOKEN_PROGRAM_ID,
-        token.pubkey,
-        owner,
-        owner,
-        [],
-      ),
-    );
-  }
-
-  const tx = new Transaction().add(...ixs);
-  tx.feePayer = owner;
-  const hash = await connection.getLatestBlockhash('recent');
-  tx.recentBlockhash = hash.blockhash;
-
-  return tx;
 }
 
 export async function createAtaAccount(
@@ -256,113 +189,6 @@ export async function closeTokenAccount(
   tx.recentBlockhash = hash.blockhash;
 
   return tx;
-}
-
-export async function closeTokenAccountV0(
-  connection: Connection,
-  tokenPubkey: PublicKey,
-  owner: PublicKey,
-) {
-  const ixs: TransactionInstruction[] = [];
-  let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
-
-  try {
-    accountInfo = (await connection.getParsedAccountInfo(tokenPubkey)).value;
-  } catch (error) {
-    console.error(error);
-  }
-
-  if (!accountInfo) {
-    return null;
-  }
-
-  const info = (accountInfo as any).data['parsed']['info'] as TokenAccountInfo;
-
-  // If the account has balance, burn the tokens
-  if (
-    info.mint !== NATIVE_SOL.address &&
-    info.mint !== WRAPPED_SOL_MINT_ADDRESS &&
-    (info.tokenAmount.uiAmount || 0) > 0
-  ) {
-    ixs.push(
-      Token.createBurnInstruction(
-        TOKEN_PROGRAM_ID,
-        new PublicKey(info.mint),
-        tokenPubkey,
-        owner,
-        [],
-        (info.tokenAmount.uiAmount || 0) * 10 ** info.tokenAmount.decimals,
-      ),
-    );
-  }
-
-  // Close the account
-  ixs.push(
-    Token.createCloseAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      tokenPubkey,
-      owner,
-      owner,
-      [],
-    ),
-  );
-
-  // Get the latest blockhash
-  const blockhash = await connection
-    .getLatestBlockhash()
-    .then((res) => res.blockhash);
-
-  // create v0 compatible message
-  const messageV0 = new TransactionMessage({
-    payerKey: owner,
-    recentBlockhash: blockhash,
-    instructions: ixs,
-  }).compileToV0Message();
-
-  // Create a VersionedTransaction passing the v0 compatible message
-  const transaction = new VersionedTransaction(messageV0);
-
-  console.log('transaction:', transaction);
-
-  return transaction;
-}
-
-/**
- * Assign a new owner to the account
- *
- * @param owner Owner of the token account
- * @param account Public key of the mint/token account
- * @param newOwner New owner of the mint/token account
- * @param programId Token program ID
- * @param authType Authority type
- */
-export async function setAccountOwner(
-  connection: Connection,
-  owner: Keypair,
-  account: PublicKey,
-  newOwner: PublicKey,
-  programId: PublicKey,
-  authType: AuthorityType,
-): Promise<boolean> {
-  return sendAndConfirmTransaction(
-    connection,
-    new Transaction().add(
-      Token.createSetAuthorityInstruction(
-        programId, // always TOKEN_PROGRAM_ID
-        account, // mint account || token account
-        newOwner, // new auth (you can pass `null` to close it)
-        authType, // authority type, there are 4 types => 'MintTokens' | 'FreezeAccount' | 'AccountOwner' | 'CloseAccount'
-        owner.publicKey, // original auth
-        [], // for multisig
-      ),
-    ),
-    [owner],
-  )
-    .then(() => true)
-    .catch(error => {
-      console.error(error);
-      return false;
-    });
 }
 
 export async function readAccountInfo(

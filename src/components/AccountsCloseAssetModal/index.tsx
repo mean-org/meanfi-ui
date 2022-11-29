@@ -99,7 +99,7 @@ export const AccountsCloseAssetModal = (props: {
 
         const data = {
           tokenPubkey: asset.publicAddress,
-          owred: publicKey.toBase58(),
+          owner: publicKey.toBase58(),
         };
 
         consoleOut('closeTokenAccount data:', data, 'blue');

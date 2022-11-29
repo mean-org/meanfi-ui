@@ -6,7 +6,7 @@ import {
   LAMPORTS_PER_SOL,
   ParsedAccountData,
   PublicKey,
-  Transaction,
+  VersionedTransaction
 } from '@solana/web3.js';
 import { Button, Drawer, Modal } from 'antd';
 import { openNotification } from 'components/Notifications';
@@ -22,17 +22,18 @@ import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
 import { customLogger } from 'index';
-import { createAtaAccount } from 'middleware/accounts';
+import { createV0InitAtaAccountTx } from 'middleware/createV0InitAtaAccountTx';
+import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   getTransactionStatusForLogs,
   isProd,
-  isValidAddress,
+  isValidAddress
 } from 'middleware/ui';
 import {
   getAmountFromLamports,
-  getTxIxResume,
-  shortenAddress,
+  getVersionedTxIxResume,
+  shortenAddress
 } from 'middleware/utils';
 import { AccountTokenParsedInfo } from 'models/accounts';
 import { OperationType, TransactionStatus } from 'models/enums';
@@ -242,10 +243,10 @@ export const AccountsInitAtaModal = (props: {
   }, [handleOk, resetTransactionStatus]);
 
   const onStartTransaction = async () => {
-    let transaction: Transaction;
+    let transaction: VersionedTransaction | null = null;
     let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     const createTx = async (): Promise<boolean> => {
       if (publicKey && selectedToken) {
@@ -255,7 +256,7 @@ export const AccountsInitAtaModal = (props: {
         });
 
         const data = {
-          owred: publicKey.toBase58(),
+          owner: publicKey.toBase58(),
           mint: selectedToken.address,
         };
 
@@ -276,7 +277,7 @@ export const AccountsInitAtaModal = (props: {
           result: '',
         });
 
-        return await createAtaAccount(
+        return await createV0InitAtaAccountTx(
           connection, // connection
           new PublicKey(selectedToken.address), // mint
           publicKey, // owner
@@ -292,7 +293,7 @@ export const AccountsInitAtaModal = (props: {
               action: getTransactionStatusForLogs(
                 TransactionStatus.InitTransactionSuccess,
               ),
-              result: getTxIxResume(value),
+              result: getVersionedTxIxResume(value),
             });
             transaction = value;
             return true;
@@ -326,90 +327,61 @@ export const AccountsInitAtaModal = (props: {
       }
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Create Asset transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Create Asset transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
     if (publicKey && selectedToken) {
       setIsBusy(true);
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent) {
-          enqueueTransactionConfirmation({
-            signature: signature,
-            operationType: OperationType.CreateAsset,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: `Create Associated Token Account for ${selectedToken.symbol}`,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: `Successfully created ATA account for ${selectedToken.symbol}`,
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created && transaction) {
+        const sign = await signTx(
+          'Create Asset',
+          wallet,
+          publicKey,
+          transaction as VersionedTransaction,
+        );
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          onTransactionFinished();
+          const sent = await sendTx(
+            'Create Asset',
+            connection,
+            wallet,
+            encodedTx,
+          );
+          consoleOut('sent:', sent);
+          if (sent.signature) {
+            signature = sent.signature;
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.CreateAsset,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Create Associated Token Account for ${selectedToken.symbol}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Successfully created ATA account for ${selectedToken.symbol}`,
+            });
+            onTransactionFinished();
+            setIsBusy(false);
+          } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: 'error',
+            });
+            setIsBusy(false);
+          }
         } else {
-          openNotification({
-            title: t('notifications.error-title'),
-            description: t('notifications.error-sending-transaction'),
-            type: 'error',
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
           });
           setIsBusy(false);
         }

@@ -4,13 +4,16 @@ import {
   LoadingOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import { Button, Modal, Spin } from 'antd';
+import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { AppStateContext } from 'contexts/appstate';
+import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
-import { createTokenMergeTx } from 'middleware/accounts';
+import { createV0TokenMergeTx } from 'middleware/createV0TokenMergeTx';
+import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   friendlyDisplayDecimalPlaces,
@@ -19,11 +22,11 @@ import {
 } from 'middleware/ui';
 import {
   formatThousands,
-  getTxIxResume,
+  getVersionedTxIxResume,
   shortenAddress,
 } from 'middleware/utils';
 import { AccountTokenParsedInfo, UserTokenAccount } from 'models/accounts';
-import { TransactionStatus } from 'models/enums';
+import { OperationType, TransactionStatus } from 'models/enums';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -51,6 +54,7 @@ export const AccountsMergeModal = (props: {
   const { publicKey, wallet } = useWallet();
   const { transactionStatus, setTransactionStatus } =
     useContext(AppStateContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
@@ -60,10 +64,10 @@ export const AccountsMergeModal = (props: {
   };
 
   const onExecuteMergeAccountsTx = async () => {
-    let transaction: Transaction;
+    let transaction: VersionedTransaction | null = null;
     let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -103,7 +107,7 @@ export const AccountsMergeModal = (props: {
           result: '',
         });
 
-        return createTokenMergeTx(connection, mintPubkey, publicKey, tokenGroup)
+        return createV0TokenMergeTx(connection, mintPubkey, publicKey, tokenGroup)
           .then(value => {
             consoleOut('createTokenMergeTx returned transaction:', value);
             setTransactionStatus({
@@ -114,7 +118,7 @@ export const AccountsMergeModal = (props: {
               action: getTransactionStatusForLogs(
                 TransactionStatus.InitTransactionSuccess,
               ),
-              result: getTxIxResume(value),
+              result: getVersionedTxIxResume(value),
             });
             transaction = value;
             return true;
@@ -148,138 +152,70 @@ export const AccountsMergeModal = (props: {
       }
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Token accounts merge transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
+    if (wallet && publicKey) {
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created && !transactionCancelled && transaction) {
+        const sign = await signTx(
+          'Merge Token Accounts',
+          wallet,
+          publicKey,
+          transaction,
+        );
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Token accounts merge transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    const confirmTx = async (): Promise<boolean> => {
-      return connection
-        .confirmTransaction(signature, 'confirmed')
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished,
+          const sent = await sendTx(
+            'Merge Token Accounts',
+            connection,
+            wallet,
+            encodedTx,
+          );
+          consoleOut('sent:', sent);
+          if (sent.signature && !transactionCancelled) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            const loadingMessage = `Merge ${tokenGroup ? tokenGroup.length : ''} token accounts`;
+            const completedMessage = `Successfully merged ${tokenGroup ? tokenGroup.length : ''} token accounts`;
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.MergeTokenAccounts,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage,
+              completedTitle: 'Transaction confirmed',
+              completedMessage,
             });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.TransactionFinished,
-              ),
-              result: '',
-            });
-            return true;
+            setIsBusy(false);
           } else {
             setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure,
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionFailure,
             });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.ConfirmTransactionFailure,
-              ),
-              result: signature,
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: 'error',
             });
-            customLogger.logError('Token accounts merge transaction failed', {
-              transcript: transactionLog,
-            });
-            throw (
-              result?.value?.err || new Error('Could not confirm transaction')
-            );
+            setIsBusy(false);
           }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.ConfirmTransactionFailure,
-            ),
-            result: signature,
-          });
-          customLogger.logError('Token accounts merge transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        });
-    };
-
-    if (wallet) {
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          const confirmed = await confirmTx();
-          consoleOut('confirmed:', confirmed);
-          setIsBusy(false);
         } else {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
+          });
           setIsBusy(false);
         }
       } else {
         setIsBusy(false);
       }
     }
+
   };
 
   const getMainCtaLabel = () => {
