@@ -533,7 +533,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
             {t(`wallet-selector.primary-action`)}
           </div>
         }
-        open={/*!isInXnftWallet() &&*/ isSelectingWallet}
+        open={isSelectingWallet}
         footer={null}
         maskClosable={connected}
         closable={connected}
