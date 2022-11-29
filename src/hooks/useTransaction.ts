@@ -281,14 +281,14 @@ const useTransaction = () => {
       return result;
     };
 
-    if (wallet) {
+    if (wallet && publicKey) {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled && transaction) {
         const sign = await signTx(name, wallet, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
-          const sent = await sendTx(name, connection, wallet, encodedTx);
+          const sent = await sendTx(name, connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             const signature = sent.signature;

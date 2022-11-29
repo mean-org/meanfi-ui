@@ -7,7 +7,7 @@ import AppStateProvider from './contexts/appstate';
 import { ConnectionProvider } from './contexts/connection';
 import { OnlineStatusProvider } from './contexts/online-status';
 import TxConfirmationProvider from './contexts/transaction-status';
-import { WalletProvider } from './contexts/wallet';
+import { MeanFiWalletProvider } from './contexts/wallet';
 import { isLocal, isProd } from './middleware/ui';
 import {
   CustodyView,
@@ -30,7 +30,7 @@ export function AppRoutes() {
       <OnlineStatusProvider>
         <BrowserRouter basename={'/'}>
           <ConnectionProvider>
-            <WalletProvider>
+            <MeanFiWalletProvider>
               <AccountsProvider>
                 <TxConfirmationProvider>
                   <AppStateProvider>
@@ -129,7 +129,7 @@ export function AppRoutes() {
                   </AppStateProvider>
                 </TxConfirmationProvider>
               </AccountsProvider>
-            </WalletProvider>
+            </MeanFiWalletProvider>
           </ConnectionProvider>
         </BrowserRouter>
       </OnlineStatusProvider>

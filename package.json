@@ -76,6 +76,7 @@
     "@solana/spl-token": "^0.1.8",
     "@solana/spl-token-swap": "^0.1.0",
     "@solana/wallet-adapter-base": "^0.9",
+    "@solana/wallet-adapter-react": "^0.15",
     "@solana/wallet-adapter-wallets": "^0.19",
     "@solana/web3.js": "1.61.0",
     "@solflare-wallet/sdk": "^1.1",

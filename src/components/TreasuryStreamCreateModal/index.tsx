@@ -1411,7 +1411,7 @@ export const TreasuryStreamCreateModal = (props: {
       return result;
     };
 
-    if (wallet && selectedToken) {
+    if (wallet && selectedToken && publicKey) {
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
@@ -1423,7 +1423,7 @@ export const TreasuryStreamCreateModal = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Create Stream', connection, wallet, encodedTx);
+          const sent = await sendTx('Create Stream', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;

@@ -715,7 +715,7 @@ export const VestingContractStreamList = (props: {
       return result;
     };
 
-    if (wallet && highlightedStream && vestingContract && selectedToken) {
+    if (wallet && publicKey && highlightedStream && vestingContract && selectedToken) {
       showTransactionExecutionModal();
       const created = await createTx();
       consoleOut('created:', created, 'blue');
@@ -728,7 +728,7 @@ export const VestingContractStreamList = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Close Vesting Stream', connection, wallet, encodedTx);
+          const sent = await sendTx('Close Vesting Stream', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;

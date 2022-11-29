@@ -29,7 +29,6 @@ import {
   Treasury,
   TreasuryType,
 } from '@mean-dao/msp';
-import { SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Dropdown, Menu, Modal, Space, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -123,7 +122,7 @@ export const MoneyStreamsOutgoingView = (props: {
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(
     TxConfirmationContext,
   );
-  const { wallet, publicKey } = useWallet();
+  const { wallet, publicKey, signTransaction } = useWallet();
   const connection = useConnection();
   const { t } = useTranslation('common');
   const { endpoint } = useConnectionConfig();
@@ -990,10 +989,9 @@ export const MoneyStreamsOutgoingView = (props: {
     };
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey && wallet.signTransaction && transaction) {
+      if (wallet && publicKey && signTransaction && transaction) {
         consoleOut('Signing transaction...');
-        return (wallet as SignerWalletAdapter)
-          .signTransaction(transaction)
+        return signTransaction(transaction)
           .then(async (signed: Transaction) => {
             consoleOut(
               'signTransaction returned a signed transaction:',
@@ -2570,7 +2568,7 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     };
 
-    if (wallet && streamSelected) {
+    if (wallet && publicKey && streamSelected) {
       showCloseStreamTransactionModal();
       let created: boolean;
       let streamName = '';
@@ -2591,7 +2589,7 @@ export const MoneyStreamsOutgoingView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Close Stream', connection, wallet, encodedTx);
+          const sent = await sendTx('Close Stream', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;

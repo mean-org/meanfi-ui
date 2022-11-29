@@ -41,6 +41,11 @@ const useRealmsDeposit = ({ decimals }: Args) => {
   );
 
   useEffect(() => {
+    if (!publicKey) {
+      setDepositAmount(0);
+      return;
+    }
+
     (async () => {
       if (!decimals) return;
       const records = await getTokenOwnerRecordsForRealmMintMapByOwner(

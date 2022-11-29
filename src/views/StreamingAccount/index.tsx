@@ -1258,7 +1258,7 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    if (publicKey && streamingAccountSelected) {
+    if (wallet && publicKey && streamingAccountSelected) {
       const token = await getTokenOrCustomToken(
         connection,
         params.associatedToken,
@@ -1284,7 +1284,7 @@ export const StreamingAccountView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Fund Account', connection, wallet, encodedTx);
+          const sent = await sendTx('Fund Account', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
@@ -1571,7 +1571,7 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    if (wallet && streamingAccountSelected && selectedToken) {
+    if (wallet && publicKey && streamingAccountSelected && selectedToken) {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -1583,7 +1583,7 @@ export const StreamingAccountView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Fund Account', connection, wallet, encodedTx);
+          const sent = await sendTx('Fund Account', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
@@ -1993,7 +1993,7 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    if (wallet && streamingAccountSelected) {
+    if (wallet && publicKey && streamingAccountSelected) {
       let created: boolean;
       let streamingAccountName = '';
       if (
@@ -2018,7 +2018,7 @@ export const StreamingAccountView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Close Account', connection, wallet, encodedTx);
+          const sent = await sendTx('Close Account', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
@@ -2265,7 +2265,7 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    if (wallet && streamingAccountSelected) {
+    if (wallet && publicKey && streamingAccountSelected) {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -2277,7 +2277,7 @@ export const StreamingAccountView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Refresh Account Balance', connection, wallet, encodedTx);
+          const sent = await sendTx('Refresh Account Balance', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;

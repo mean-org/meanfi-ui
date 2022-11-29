@@ -80,7 +80,7 @@ export const AppLayout = React.memo((props: any) => {
     connected,
     publicKey,
     connecting,
-    select,
+    selectWalletProvider,
     disconnect,
     isSelectingWallet,
   } = useWallet();
@@ -518,7 +518,7 @@ export const AppLayout = React.memo((props: any) => {
               setShouldSelectAccount(false);
               disconnect();
               navigate('/');
-              select();
+              selectWalletProvider();
             }}
           />
         </>
@@ -614,7 +614,7 @@ export const AppLayout = React.memo((props: any) => {
     // Launch wallet selector modal
     if (!wallet && !connected && !connecting) {
       setIsSelectingAccount(true);
-      select();
+      selectWalletProvider();
     }
 
     // Render dark MEAN background

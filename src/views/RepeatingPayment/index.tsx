@@ -5,7 +5,6 @@ import {
   MSP_ACTIONS,
   TransactionFees,
 } from '@mean-dao/msp';
-import { SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, DatePicker, Dropdown, Menu } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -91,7 +90,7 @@ export const RepeatingPayment = (props: {
   } = props;
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
-  const { connected, publicKey, wallet } = useWallet();
+  const { connected, publicKey, wallet, signTransaction } = useWallet();
   const {
     splTokenList,
     loadingPrices,
@@ -912,10 +911,9 @@ export const RepeatingPayment = (props: {
     };
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey && wallet.signTransaction && transaction) {
+      if (wallet && publicKey && signTransaction && transaction) {
         consoleOut('Signing transaction...');
-        return (wallet as SignerWalletAdapter)
-          .signTransaction(transaction)
+        return signTransaction(transaction)
           .then(async (signed: Transaction) => {
             consoleOut(
               'signTransaction returned a signed transaction:',
@@ -1099,6 +1097,7 @@ export const RepeatingPayment = (props: {
     getPaymentRateAmount,
     setTransactionStatus,
     resetContractValues,
+    signTransaction,
     getTokenPrice,
     getFeeAmount,
   ]);
