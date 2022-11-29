@@ -1,19 +1,14 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { setProgramIds } from '../middleware/ids';
-import { cache, getMultipleAccounts, MintParser } from './accounts';
-import { MEAN_TOKEN_LIST } from '../constants/tokens';
+import React, { useContext, useMemo } from 'react';
 import { environment } from '../environments/environment';
 import {
   Cluster,
   Connection,
   ConnectionConfig,
-  PublicKey,
 } from '@solana/web3.js';
 import { DEFAULT_RPCS, RpcConfig } from '../services/connections-hq';
 import { useLocalStorageState } from '../middleware/utils';
 import { TRANSACTION_STATUS_RETRY_TIMEOUT } from '../constants';
 import { ChainID } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 
 const DEFAULT = DEFAULT_RPCS[0].httpProvider;
 const DEFAULT_SLIPPAGE = 0.25;
@@ -65,8 +60,6 @@ interface ConnectionProviderConfig {
   slippage: number;
   setSlippage: (val: number) => void;
   cluster: Cluster | 'local-validator';
-  tokens: TokenInfo[];
-  tokenMap: Map<string, TokenInfo>;
 }
 
 const ConnectionContext = React.createContext<ConnectionProviderConfig>({
@@ -75,8 +68,6 @@ const ConnectionContext = React.createContext<ConnectionProviderConfig>({
   setSlippage: (val: number) => {},
   connection: new Connection(DEFAULT, 'recent'),
   cluster: DEFAULT_RPCS[0].cluster,
-  tokens: [],
-  tokenMap: new Map<string, TokenInfo>(),
 });
 
 export function ConnectionProvider({ children = undefined as any }) {
@@ -93,50 +84,6 @@ export function ConnectionProvider({ children = undefined as any }) {
     [cachedRpc],
   );
 
-  const [tokens, setTokens] = useState<TokenInfo[]>([]);
-  const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
-
-  useEffect(() => {
-    // fetch token files
-    (async () => {
-      const list = MEAN_TOKEN_LIST.filter(
-        t => t.chainId === cachedRpc.networkId,
-      );
-      const knownMints = list.reduce((map, item) => {
-        map.set(item.address, item);
-        return map;
-      }, new Map<string, TokenInfo>());
-
-      try {
-        const accounts = await getMultipleAccounts(
-          connection,
-          [...knownMints.keys()],
-          'recent',
-        );
-        if (accounts) {
-          cache.clear();
-          accounts.keys.forEach((key, index) => {
-            const account = accounts.array[index];
-            if (!account) {
-              return;
-            }
-            cache.add(new PublicKey(key), account, MintParser);
-          });
-        }
-      } catch (error) {
-        console.error('Cache update failed.', error);
-        throw error;
-      }
-
-      setTokenMap(knownMints);
-      setTokens(list);
-    })();
-
-    return () => {};
-  }, [cachedRpc.networkId, connection]);
-
-  setProgramIds(cachedRpc.cluster);
-
   return (
     <ConnectionContext.Provider
       value={{
@@ -144,8 +91,6 @@ export function ConnectionProvider({ children = undefined as any }) {
         slippage: parseFloat(slippage),
         setSlippage: val => setSlippage(val.toString()),
         connection,
-        tokens,
-        tokenMap,
         cluster: cachedRpc.cluster,
       }}
     >
@@ -163,8 +108,6 @@ export function useConnectionConfig() {
   return {
     endpoint: context.endpoint,
     cluster: context.cluster,
-    tokens: context.tokens,
-    tokenMap: context.tokenMap,
   };
 }
 

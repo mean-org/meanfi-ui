@@ -1,9 +1,16 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { Layout } from 'antd';
+import { WalletProvider } from 'contexts/wallet';
 import { useEffect, useState } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { PageLoadingView } from 'views';
 import { appConfig } from '.';
 import './App.scss';
+import { AccountsProvider } from './contexts/accounts';
+import AppStateProvider from './contexts/appstate';
+import { ConnectionProvider } from './contexts/connection';
+import { OnlineStatusProvider } from './contexts/online-status';
+import TxConfirmationProvider from './contexts/transaction-status';
 import { SegmentAnalyticsService } from './middleware/segment-service';
 import { isLocal } from './middleware/ui';
 import { useLocalStorageState } from './middleware/utils';
@@ -65,7 +72,24 @@ function App() {
   if (loadingStatus === 'loading') {
     return loader;
   } else {
-    return <AppRoutes />;
+    return (
+      <OnlineStatusProvider>
+        <BrowserRouter basename={'/'}>
+          <ConnectionProvider>
+            {/* Here is where we replace out context provider by this one <WalletProvider wallets={wallets} autoConnect> */}
+            <WalletProvider>
+              <AccountsProvider>
+                <TxConfirmationProvider>
+                  <AppStateProvider>
+                    <AppRoutes />
+                  </AppStateProvider>
+                </TxConfirmationProvider>
+              </AccountsProvider>
+            </WalletProvider>
+          </ConnectionProvider>
+        </BrowserRouter>
+      </OnlineStatusProvider>
+    );
   }
 }
 

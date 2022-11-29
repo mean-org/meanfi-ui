@@ -1,33 +1,33 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { environment } from '../../environments/environment';
-import { Button, Drawer, Modal } from 'antd';
-import { useTranslation } from 'react-i18next';
-import {
-  getNetworkIdByEnvironment,
-  useConnection,
-} from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { AppStateContext } from '../../contexts/appstate';
-import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from '../../constants';
+import { LoadingOutlined } from '@ant-design/icons';
+import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { TransactionFees } from '@mean-dao/msp';
 import {
   AccountInfo,
   Connection,
   LAMPORTS_PER_SOL,
   ParsedAccountData,
-  PublicKey,
+  PublicKey
 } from '@solana/web3.js';
-import { consoleOut, isProd, isValidAddress } from '../../middleware/ui';
-import { LoadingOutlined } from '@ant-design/icons';
-import { AccountTokenParsedInfo } from '../../models/accounts';
+import { Button, Drawer, Modal } from 'antd';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
+import { NATIVE_SOL } from 'constants/tokens';
+import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import {
+  getNetworkIdByEnvironment,
+  useConnection
+} from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { environment } from 'environments/environment';
+import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
+import { getAmountFromLamports, shortenAddress } from 'middleware/utils';
+import { AccountTokenParsedInfo } from 'models/accounts';
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import { NATIVE_SOL } from '../../constants/tokens';
-import { TokenListItem } from '../TokenListItem';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
-import { TransactionFees } from '@mean-dao/msp';
-import { getAmountFromLamports, shortenAddress } from '../../middleware/utils';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { TokenListItem } from '../TokenListItem';
 
 export const MultisigAddAssetModal = (props: {
   connection: Connection;
@@ -50,9 +50,7 @@ export const MultisigAddAssetModal = (props: {
   const connection = useConnection();
   const { publicKey } = useWallet();
   const { tokenList, splTokenList } = useContext(AppStateContext);
-
   const { account } = useNativeAccount();
-  const { tokenAccounts } = useUserAccounts();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [tokenFilter, setTokenFilter] = useState('');
@@ -134,7 +132,7 @@ export const MultisigAddAssetModal = (props: {
       setSelectedList(finalList);
       consoleOut('token list:', finalList, 'blue');
     }
-  }, [isVisible, ownedTokenAccounts, splTokenList, tokenList, tokenAccounts]);
+  }, [isVisible, ownedTokenAccounts, splTokenList, tokenList]);
 
   // Keep account balance updated
   useEffect(() => {

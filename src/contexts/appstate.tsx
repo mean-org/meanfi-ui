@@ -39,6 +39,7 @@ import {
 import {
   AccountContext,
   AccountDetails,
+  AccountTokenParsedInfo,
   ProgramAccounts,
   UserTokenAccount,
   UserTokensResponse,
@@ -75,7 +76,6 @@ import {
   TRANSACTIONS_PER_PAGE,
   WRAPPED_SOL_MINT_ADDRESS,
 } from '../constants';
-import { useAccountsContext } from './accounts';
 import {
   getNetworkIdByCluster,
   useConnection,
@@ -163,6 +163,7 @@ interface AppStateConfig {
   // Accounts page
   shouldLoadTokens: boolean;
   loadingTokenAccounts: boolean;
+  tokenAccounts: AccountTokenParsedInfo[] | undefined;
   userTokensResponse: UserTokensResponse | null;
   tokensLoaded: boolean;
   splTokenList: UserTokenAccount[];
@@ -351,6 +352,7 @@ const contextDefaultValues: AppStateConfig = {
   // Accounts page
   shouldLoadTokens: true,
   loadingTokenAccounts: true,
+  tokenAccounts: undefined,
   userTokensResponse: null,
   tokensLoaded: false,
   splTokenList: [],
@@ -476,7 +478,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
   const connectionConfig = useConnectionConfig();
-  const accounts = useAccountsContext();
   // Account selection
   const [isSelectingAccount, updateIsSelectingAccount] = useState<boolean>(
     contextDefaultValues.isSelectingAccount,
@@ -672,6 +673,10 @@ const AppStateProvider: React.FC = ({ children }) => {
       contextDefaultValues.userTokensResponse,
     );
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
+
+  const [tokenAccounts, updateTokenAccounts] = useState<AccountTokenParsedInfo[] | undefined>(
+    contextDefaultValues.tokenAccounts
+  );
 
   const isDowngradedPerformance = useMemo(() => {
     return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
@@ -1496,9 +1501,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       !connection ||
       !publicKey ||
       !tokenList ||
-      !accounts ||
-      !accounts.tokenAccounts ||
-      !accounts.tokenAccounts.length
+      !tokenAccounts ||
+      !tokenAccounts.length
     ) {
       return;
     }
@@ -1538,15 +1542,14 @@ const AppStateProvider: React.FC = ({ children }) => {
       selectedTokenAddress.toBase58(),
     );
     updateTokenBalance(balance);
-  }, [accounts, connection, publicKey, selectedToken, tokenList]);
+  }, [tokenAccounts, connection, publicKey, selectedToken, tokenList]);
 
   // Effect to refresh token balance if needed
   useEffect(() => {
     if (
       !publicKey ||
-      !accounts ||
-      !accounts.tokenAccounts ||
-      !accounts.tokenAccounts.length
+      !tokenAccounts ||
+      !tokenAccounts.length
     ) {
       return;
     }
@@ -1557,7 +1560,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     return () => {};
-  }, [accounts, publicKey, shouldUpdateToken, refreshTokenBalance]);
+  }, [tokenAccounts, publicKey, shouldUpdateToken, refreshTokenBalance]);
 
   const appendHistoryItems = (
     transactionsChunk: MappedTransaction[] | undefined,
@@ -1772,9 +1775,11 @@ const AppStateProvider: React.FC = ({ children }) => {
         if (response) {
           setUserTokensResponse(response);
           setAccountTokens(response.accountTokens);
+          updateTokenAccounts(response.userTokenAccouns);
         } else {
           setUserTokensResponse(null);
           setAccountTokens([]);
+          updateTokenAccounts(undefined);
         }
       })
       .finally(() => {
@@ -2076,6 +2081,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         diagnosisInfo,
         splTokenList,
         selectedAsset,
+        tokenAccounts,
         userTokensResponse,
         transactions,
         lastTxSignature,
