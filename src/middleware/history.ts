@@ -80,7 +80,7 @@ export const fetchParsedTransactionsAsync = async (
     while (signatures.length > 0) {
       const txSignatures = signatures.splice(0, MAX_TRANSACTION_BATCH_SIZE);
 
-      const fetched = await connection.getParsedTransactions(txSignatures);
+      const fetched = await connection.getParsedTransactions(txSignatures, { maxSupportedTransactionVersion: 0 });
       const result = (
         fetched.map(tx => {
           return {

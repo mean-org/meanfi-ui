@@ -43,7 +43,6 @@ import { UserTokenAccount } from '../../models/accounts';
 import { InputMean } from '../InputMean';
 import { TokenDisplay } from '../TokenDisplay';
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import { useAccountsContext } from '../../contexts/accounts';
 import { NATIVE_SOL } from '../../constants/tokens';
 import { TextInput } from '../TextInput';
 import { TokenListItem } from '../TokenListItem';
@@ -80,12 +79,12 @@ export const MultisigTransferTokensModal = (props: {
     transactionFees,
   } = props;
   const { t } = useTranslation('common');
-  const accounts = useAccountsContext();
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
   const {
     tokenList,
     splTokenList,
+    tokenAccounts,
     loadingPrices,
     transactionStatus,
     getTokenPriceByAddress,
@@ -215,7 +214,7 @@ export const MultisigTransferTokensModal = (props: {
       return;
     }
 
-    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+    if (!publicKey || !tokenList || !tokenAccounts) {
       return;
     }
 
@@ -285,13 +284,13 @@ export const MultisigTransferTokensModal = (props: {
       clearTimeout(timeout);
     };
   }, [
-    accounts,
-    connection,
-    nativeBalance,
     publicKey,
-    selectedMultisig,
-    splTokenList,
     tokenList,
+    connection,
+    splTokenList,
+    tokenAccounts,
+    nativeBalance,
+    selectedMultisig,
   ]);
 
   // Reset results when the filter is cleared

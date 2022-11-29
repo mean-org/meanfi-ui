@@ -110,28 +110,6 @@ export const MEAN_MULTISIG = new PublicKey(
   'FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j',
 );
 
-export const PROGRAM_IDS = [
-  {
-    name: 'mainnet-beta',
-  },
-  {
-    name: 'testnet',
-  },
-  {
-    name: 'devnet',
-  },
-  {
-    name: 'localnet',
-  },
-];
-
-export const setProgramIds = (envName: string) => {
-  const instance = PROGRAM_IDS.find(env => env.name === envName);
-  if (!instance) {
-    return;
-  }
-};
-
 export const programIds = () => {
   return {
     token: TOKEN_PROGRAM_ID,

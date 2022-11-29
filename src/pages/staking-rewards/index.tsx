@@ -5,7 +5,7 @@ import { Button, Spin } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { PreFooter } from 'components/PreFooter';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
-import { useAccountsContext, useNativeAccount } from 'contexts/accounts';
+import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import {
   getNetworkIdByCluster,
@@ -42,14 +42,17 @@ import './style.scss';
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
 export const StakingRewardsView = () => {
-  const { isWhitelisted, transactionStatus, setTransactionStatus } =
-    useContext(AppStateContext);
+  const {
+    tokenAccounts,
+    isWhitelisted,
+    transactionStatus,
+    setTransactionStatus,
+  } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { cluster, endpoint } = useConnectionConfig();
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const { t } = useTranslation('common');
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -128,9 +131,8 @@ export const StakingRewardsView = () => {
     if (
       !connection ||
       !publicKey ||
-      !accounts ||
-      !accounts.tokenAccounts ||
-      !accounts.tokenAccounts.length
+      !tokenAccounts ||
+      !tokenAccounts.length
     ) {
       return;
     }
@@ -152,7 +154,7 @@ export const StakingRewardsView = () => {
       balance = result.uiAmount || 0;
     }
     setMeanBalance(balance);
-  }, [accounts, meanToken, publicKey, connection]);
+  }, [tokenAccounts, meanToken, publicKey, connection]);
 
   const refreshMeanStakingVaultBalance = useCallback(async () => {
     if (!connection || !meanStakingVault) return 0;
@@ -233,9 +235,8 @@ export const StakingRewardsView = () => {
   useEffect(() => {
     if (
       !publicKey ||
-      !accounts ||
-      !accounts.tokenAccounts ||
-      !accounts.tokenAccounts.length
+      !tokenAccounts ||
+      !tokenAccounts.length
     ) {
       return;
     }
@@ -243,7 +244,7 @@ export const StakingRewardsView = () => {
     if (meanToken) {
       refreshMeanBalance();
     }
-  }, [accounts, publicKey, meanToken, refreshMeanBalance]);
+  }, [tokenAccounts, publicKey, meanToken, refreshMeanBalance]);
 
   // Refresh deposits info
   useEffect(() => {

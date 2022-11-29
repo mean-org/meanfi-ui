@@ -13,7 +13,7 @@ import {
   NO_FEES,
   WRAPPED_SOL_MINT_ADDRESS,
 } from 'constants/common';
-import { useNativeAccount, useUserAccounts } from 'contexts/accounts';
+import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import {
@@ -35,7 +35,6 @@ import {
   getAmountFromLamports,
   getTxIxResume,
   isValidNumber,
-  toUiAmount,
 } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -52,6 +51,7 @@ export const UnwrapSolModal = (props: {
   const { publicKey, wallet } = useWallet();
   const {
     tokenList,
+    tokenAccounts,
     transactionStatus,
     setTransactionStatus,
     refreshTokenBalance,
@@ -60,7 +60,6 @@ export const UnwrapSolModal = (props: {
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [unwrapAmount, setUnwrapAmount] = useState<string>('');
   const { account } = useNativeAccount();
-  const { tokenAccounts } = useUserAccounts();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [wSolBalance, setWsolBalance] = useState(0);
@@ -172,25 +171,23 @@ export const UnwrapSolModal = (props: {
 
     let balance = 0;
 
-    if (tokenAccounts && tokenAccounts.length > 0 && tokenList) {
+    if (tokenAccounts && tokenAccounts.length > 0) {
       const wSol = tokenAccounts.findIndex(t => {
-        const mint = t.info.mint.toBase58();
+        const mint = t.parsedInfo.mint;
         return !t.pubkey.equals(publicKey) && mint === WRAPPED_SOL_MINT_ADDRESS
           ? true
           : false;
       });
       if (wSol !== -1) {
-        const wSolInfo = tokenAccounts[wSol].info;
-        const mint = wSolInfo.mint.toBase58();
-        const amount = wSolInfo.amount.toNumber();
-        const token = tokenList.find(t => t.address === mint);
-        balance = token ? parseFloat(toUiAmount(amount, token.decimals)) : 0;
+        const wSolInfo = tokenAccounts[wSol].parsedInfo;
+        const amount = wSolInfo.tokenAmount.uiAmount;
+        balance = amount || 0;
         setWsolPubKey(tokenAccounts[wSol].pubkey);
       }
     }
 
     setWsolBalance(balance);
-  }, [publicKey, tokenList, tokenAccounts]);
+  }, [publicKey, tokenAccounts]);
 
   // Set fee amount once
   useEffect(() => {
