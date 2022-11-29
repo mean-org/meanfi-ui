@@ -1,6 +1,11 @@
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { SentreWalletAdapter, SentreWalletName } from '@sentre/connector';
-import { Adapter, MessageSignerWalletAdapterProps, SignerWalletAdapterProps, WalletAdapterProps } from '@solana/wallet-adapter-base';
+import {
+  Adapter,
+  MessageSignerWalletAdapterProps,
+  SignerWalletAdapterProps,
+  WalletAdapterProps,
+} from '@solana/wallet-adapter-base';
 import { useWallet as useBaseWallet } from '@solana/wallet-adapter-react';
 import {
   BitKeepWalletAdapter,
@@ -306,7 +311,9 @@ interface MeanFiWalletContextState {
   selectWalletProvider: () => void;
   sendTransaction: WalletAdapterProps['sendTransaction'];
   signTransaction: SignerWalletAdapterProps['signTransaction'] | undefined;
-  signAllTransactions: SignerWalletAdapterProps['signAllTransactions'] | undefined;
+  signAllTransactions:
+    | SignerWalletAdapterProps['signAllTransactions']
+    | undefined;
   signMessage: MessageSignerWalletAdapterProps['signMessage'] | undefined;
 }
 
@@ -316,22 +323,24 @@ const defaultCtxValues: MeanFiWalletContextState = {
   connecting: true,
   provider: undefined,
   isSelectingWallet: false,
-  resetWalletProvider: () => { },
-  selectWalletProvider: () => { },
+  resetWalletProvider: () => {},
+  selectWalletProvider: () => {},
   sendTransaction: async () => '',
   signTransaction: undefined,
   signAllTransactions: undefined,
   signMessage: undefined,
 };
 
-const MeanFiWalletContext = React.createContext<MeanFiWalletContextState>(defaultCtxValues);
+const MeanFiWalletContext =
+  React.createContext<MeanFiWalletContextState>(defaultCtxValues);
 
 export function MeanFiWalletProvider({ children = null as any }) {
   const { t } = useTranslation('common');
   const location = useLocation();
   const navigate = useNavigate();
   const [walletName, setWalletName] = useLocalStorageState('walletName');
-  const [lastUsedAccount, setLastUsedAccount] = useLocalStorageState('lastUsedAccount');
+  const [lastUsedAccount, setLastUsedAccount] =
+    useLocalStorageState('lastUsedAccount');
   const {
     wallet,
     wallets,
@@ -388,38 +397,44 @@ export function MeanFiWalletProvider({ children = null as any }) {
     const item = WALLET_PROVIDERS.find(({ name }) => name === walletName);
     return item;
   }, [walletName]);
-
   /*
   useEffect(() => {
-    if (isInXnftWallet()) {
+    if (
+      isInXnftWallet() &&
+      (!wallet || wallet.adapter.name !== XnftWalletName)
+    ) {
       document.body.classList.add('in-xnft-wallet');
       setWalletName(XnftWalletName);
-      setLocalWallet(wallets.find(w => w.name === XnftWalletName));
+      select(XnftWalletName);
     }
-  }, [setWalletName, wallets]);
-  */
-
+  }, [setWalletName, wallets, select, wallet]);
+*/
   useEffect(() => {
     if (wallets) {
       for (const item of wallets) {
-        const itemIndex = WALLET_PROVIDERS.findIndex(p => p.name === item.adapter.name);
+        const itemIndex = WALLET_PROVIDERS.findIndex(
+          p => p.name === item.adapter.name,
+        );
         if (itemIndex !== -1) {
           WALLET_PROVIDERS[itemIndex].url = item.adapter.url;
           WALLET_PROVIDERS[itemIndex].icon = item.adapter.icon;
         }
       }
-      if (walletName) {
+      if (
+        isInXnftWallet() &&
+        (!wallet || wallet.adapter.name !== XnftWalletName)
+      ) {
+        document.body.classList.add('in-xnft-wallet');
+        setWalletName(XnftWalletName);
+        select(XnftWalletName);
+      } else if (walletName) {
         consoleOut('walletName:', walletName, 'blue');
         const wa = wallets.find(w => w.adapter.name === walletName);
         const walletEntry = WALLET_PROVIDERS.filter(
           w => !isProviderHidden(w, { isDesktop }),
         ).find(w => w.name === walletName);
         consoleOut('provider:', wa, 'blue');
-        if (wa && walletEntry) {
-          if (walletEntry.name === XnftWalletName && isInXnftWallet()) {
-            document.body.classList.add('in-xnft-wallet');
-          }
-        } else {
+        if (!(wa && walletEntry)) {
           setWalletName(null);
         }
       } else {
@@ -518,7 +533,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
             {t(`wallet-selector.primary-action`)}
           </div>
         }
-        open={!isInXnftWallet() && isSelectingWallet}
+        open={/*!isInXnftWallet() &&*/ isSelectingWallet}
         footer={null}
         maskClosable={connected}
         closable={connected}
@@ -559,7 +574,9 @@ export function MeanFiWalletProvider({ children = null as any }) {
 
                 consoleOut('Selected wallet:', item.name, 'blue');
                 setWalletName(item.name);
-                const selected = wallets.find(w => w.adapter.name === item.name);
+                const selected = wallets.find(
+                  w => w.adapter.name === item.name,
+                );
                 if (selected) {
                   // setLocalWallet(selected);
                   select(selected.adapter.name);

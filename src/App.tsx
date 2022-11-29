@@ -35,9 +35,7 @@ import {
   TrustWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { SentreWalletAdapter } from '@sentre/connector';
-import {
-  XnftWalletAdapter,
-} from 'integrations/xnft/xnft-wallet-adapter';
+import { XnftWalletAdapter } from 'integrations/xnft/xnft-wallet-adapter';
 
 const { Content } = Layout;
 export const segmentAnalytics = new SegmentAnalyticsService();
@@ -81,9 +79,10 @@ function App() {
     return () => {};
   }, []);
 
-  const network = environment === 'production'
-    ? WalletAdapterNetwork.Mainnet
-    : WalletAdapterNetwork.Devnet;
+  const network =
+    environment === 'production'
+      ? WalletAdapterNetwork.Mainnet
+      : WalletAdapterNetwork.Devnet;
 
   const wallets = useMemo(
     () => [
@@ -104,7 +103,6 @@ function App() {
     ],
     [network],
   );
-
   const loader = (
     <>
       <Layout>
