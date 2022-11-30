@@ -144,7 +144,7 @@ import {
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { getChange } from 'middleware/transactions';
+import { getChange, sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   copyText,
@@ -1083,8 +1083,8 @@ export const HomeView = () => {
             break;
           case OperationType.TransferTokens:
             event = success
-              ? AppUsageEvent.StreamTransferCompleted
-              : AppUsageEvent.StreamTransferFailed;
+              ? AppUsageEvent.TransferTokensCompleted
+              : AppUsageEvent.TransferTokensFailed;
             break;
           case OperationType.CreateTransaction:
             event = success
@@ -1667,11 +1667,11 @@ export const HomeView = () => {
 
   const onExecuteTransferTokensTx = useCallback(
     async (data: any) => {
-      let transaction: Transaction;
+      let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
-      const transactionLog: any[] = [];
-
+      let transactionLog: any[] = [];
+  
       resetTransactionStatus();
       setTransactionCancelled(false);
       setIsBusy(true);
@@ -1889,109 +1889,70 @@ export const HomeView = () => {
         }
       };
 
-      const sendTx = async (): Promise<boolean> => {
-        if (connection && wallet && wallet.publicKey && transaction) {
-          const {
-            context: { slot: minContextSlot },
-            value: { blockhash },
-          } = await connection.getLatestBlockhashAndContext();
-
-          transaction.feePayer = wallet.publicKey;
-          transaction.recentBlockhash = blockhash;
-
-          return wallet
-            .sendTransaction(transaction, connection, { minContextSlot })
-            .then(sig => {
-              consoleOut('sendEncodedTransaction returned a signature:', sig);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransactionSuccess,
-                currentOperation: TransactionStatus.ConfirmTransaction,
-              });
-              signature = sig;
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionSuccess,
-                ),
-                result: `signature: ${signature}`,
-              });
-              return true;
-            })
-            .catch(error => {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransaction,
-                currentOperation: TransactionStatus.SendTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionFailure,
-                ),
-                result: { error, encodedTx },
-              });
-              customLogger.logError('Transfer tokens transaction failed', {
-                transcript: transactionLog,
-              });
-              return false;
-            });
-        } else {
-          console.error('Cannot send transaction! Wallet not found!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransaction,
-            currentOperation: TransactionStatus.WalletNotFound,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.WalletNotFound,
-            ),
-            result: 'Cannot send transaction! Wallet not found!',
-          });
-          customLogger.logError('Transfer tokens transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        }
-      };
-
-      if (wallet && selectedAsset) {
-        const create = await createTx();
-        consoleOut('created:', create);
-        if (create && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.TransferTokens,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Transferring ${formatThousands(
-                data.amount,
-                selectedAsset.decimals,
-              )} ${selectedAsset.symbol} to ${shortenAddress(data.to)}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Asset funds (${formatThousands(
-                data.amount,
-                selectedAsset.decimals,
-              )} ${
-                selectedAsset.symbol
-              }) successfully transferred to ${shortenAddress(data.to)}`,
-              completedMessageTimeout: isMultisigContext ? 8 : 5,
-              extras: {
-                multisigAuthority: selectedMultisig
-                  ? selectedMultisig.authority.toBase58()
-                  : '',
-              },
-            });
+      if (wallet && publicKey && selectedAsset) {
+        const created = await createTx();
+        consoleOut('created:', created);
+        if (created && !transactionCancelled) {
+          const sign = await signTx('Transfer Tokens', wallet, publicKey, transaction);
+          if (sign.encodedTransaction) {
+            encodedTx = sign.encodedTransaction;
+            transactionLog = transactionLog.concat(sign.log);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
-            setIsTransferTokenModalVisible(false);
-            resetTransactionStatus();
-            setIsBusy(false);
+            const sent = await sendTx('Transfer Tokens', connection, encodedTx);
+            consoleOut('sent:', sent);
+            if (sent.signature && !transactionCancelled) {
+              signature = sent.signature;
+              consoleOut('Send Tx to confirmation queue:', signature);
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.TransferTokens,
+                finality: 'confirmed',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Transferring ${formatThousands(
+                  data.amount,
+                  selectedAsset.decimals,
+                )} ${selectedAsset.symbol} to ${shortenAddress(data.to)}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Asset funds (${formatThousands(
+                  data.amount,
+                  selectedAsset.decimals,
+                )} ${selectedAsset.symbol
+                  }) successfully transferred to ${shortenAddress(data.to)}`,
+                completedMessageTimeout: isMultisigContext ? 8 : 5,
+                extras: {
+                  multisigAuthority: selectedMultisig
+                    ? selectedMultisig.authority.toBase58()
+                    : '',
+                },
+              });
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished,
+              });
+              setIsTransferTokenModalVisible(false);
+              resetTransactionStatus();
+              setIsBusy(false);
+            } else {
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.SignTransactionFailure,
+              });
+              openNotification({
+                title: t('notifications.error-title'),
+                description: t('notifications.error-sending-transaction'),
+                type: 'error',
+              });
+              setIsBusy(false);
+            }
           } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionFailure,
+            });
             openNotification({
               title: t('notifications.error-title'),
               description: t('notifications.error-sending-transaction'),

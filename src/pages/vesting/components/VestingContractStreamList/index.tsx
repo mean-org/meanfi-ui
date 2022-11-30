@@ -715,7 +715,7 @@ export const VestingContractStreamList = (props: {
       return result;
     };
 
-    if (wallet && highlightedStream && vestingContract && selectedToken) {
+    if (wallet && publicKey && highlightedStream && vestingContract && selectedToken) {
       showTransactionExecutionModal();
       const created = await createTx();
       consoleOut('created:', created, 'blue');
@@ -728,7 +728,7 @@ export const VestingContractStreamList = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Close Vesting Stream', connection, wallet, encodedTx);
+          const sent = await sendTx('Close Vesting Stream', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
@@ -758,7 +758,7 @@ export const VestingContractStreamList = (props: {
               ? confirmedMultisigMessage
               : `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of ${vestedReturns} has been sent to ${beneficiary}. Unvested amount of ${unvestedReturns} was returned to the vesting contract.`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.StreamClose,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',

@@ -1,7 +1,9 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { Layout } from 'antd';
-import { WalletProvider } from 'contexts/wallet';
-import { useEffect, useState } from 'react';
+import { MeanFiWalletProvider } from 'contexts/wallet';
+import { environment } from 'environments/environment';
+import { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { PageLoadingView } from 'views';
 import { appConfig } from '.';
@@ -16,6 +18,24 @@ import { isLocal } from './middleware/ui';
 import { useLocalStorageState } from './middleware/utils';
 import { AppRoutes } from './routes';
 import { refreshCachedRpc } from './services/connections-hq';
+import { sentreAppId } from 'constants/common';
+import { WalletProvider } from '@solana/wallet-adapter-react';
+import {
+  BitKeepWalletAdapter,
+  BraveWalletAdapter,
+  Coin98WalletAdapter,
+  CoinbaseWalletAdapter,
+  ExodusWalletAdapter,
+  LedgerWalletAdapter,
+  MathWalletAdapter,
+  PhantomWalletAdapter,
+  SlopeWalletAdapter,
+  SolflareWalletAdapter,
+  SolongWalletAdapter,
+  TrustWalletAdapter,
+} from '@solana/wallet-adapter-wallets';
+import { SentreWalletAdapter } from '@sentre/connector';
+import { XnftWalletAdapter } from 'integrations/xnft/xnft-wallet-adapter';
 
 const { Content } = Layout;
 export const segmentAnalytics = new SegmentAnalyticsService();
@@ -59,6 +79,30 @@ function App() {
     return () => {};
   }, []);
 
+  const network =
+    environment === 'production'
+      ? WalletAdapterNetwork.Mainnet
+      : WalletAdapterNetwork.Devnet;
+
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter(),
+      new BraveWalletAdapter(),
+      new ExodusWalletAdapter(),
+      new SolflareWalletAdapter({ network }),
+      new BitKeepWalletAdapter(),
+      new CoinbaseWalletAdapter(),
+      new SlopeWalletAdapter(),
+      new Coin98WalletAdapter(),
+      new SolongWalletAdapter(),
+      new TrustWalletAdapter(),
+      new MathWalletAdapter(),
+      new LedgerWalletAdapter(),
+      new SentreWalletAdapter({ appId: sentreAppId }),
+      new XnftWalletAdapter(),
+    ],
+    [network],
+  );
   const loader = (
     <>
       <Layout>
@@ -76,15 +120,16 @@ function App() {
       <OnlineStatusProvider>
         <BrowserRouter basename={'/'}>
           <ConnectionProvider>
-            {/* Here is where we replace out context provider by this one <WalletProvider wallets={wallets} autoConnect> */}
-            <WalletProvider>
-              <AccountsProvider>
-                <TxConfirmationProvider>
-                  <AppStateProvider>
-                    <AppRoutes />
-                  </AppStateProvider>
-                </TxConfirmationProvider>
-              </AccountsProvider>
+            <WalletProvider wallets={wallets} autoConnect>
+              <MeanFiWalletProvider>
+                <AccountsProvider>
+                  <TxConfirmationProvider>
+                    <AppStateProvider>
+                      <AppRoutes />
+                    </AppStateProvider>
+                  </TxConfirmationProvider>
+                </AccountsProvider>
+              </MeanFiWalletProvider>
             </WalletProvider>
           </ConnectionProvider>
         </BrowserRouter>

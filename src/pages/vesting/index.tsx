@@ -76,7 +76,6 @@ import {
   SegmentStreamCreateData,
   SegmentVestingContractCloseData,
   SegmentVestingContractCreateData,
-  SegmentVestingContractEditData,
   SegmentVestingContractWithdrawData,
 } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
@@ -86,8 +85,6 @@ import {
   getDurationUnitFromSeconds,
   getReadableDate,
   getTransactionStatusForLogs,
-  isDev,
-  isLocal,
   isValidAddress,
   toTimestamp,
   toUsCurrency,
@@ -170,7 +167,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const {
     priceList,
     splTokenList,
-    isWhitelisted,
     loadingStreams,
     selectedAccount,
     selectedMultisig,
@@ -341,10 +337,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     return associatedTokenBalance.eq(new BN(selectedVestingContract.balance))
       ? false
       : true;
-  };
-
-  const isUnderDevelopment = () => {
-    return isLocal() || (isDev() && isWhitelisted) ? true : false;
   };
 
   const resetTransactionStatus = useCallback(() => {
@@ -2604,7 +2596,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       return result;
     };
 
-    if (wallet && workingToken && selectedVestingContract) {
+    if (wallet && publicKey && workingToken && selectedVestingContract) {
       generatedStremId = '';
       const created = await createTx();
       consoleOut('created:', created, 'blue');
@@ -2625,7 +2617,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           const sent = await sendTx(
             'Create Stream',
             connection,
-            wallet,
             encodedTx,
           );
           consoleOut('sent:', sent);
@@ -3200,7 +3191,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       return result;
     };
 
-    if (wallet && selectedVestingContract) {
+    if (wallet && publicKey && selectedVestingContract) {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -3220,7 +3211,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           const sent = await sendTx(
             'Refresh Account Balance',
             connection,
-            wallet,
             encodedTx,
           );
           consoleOut('sent:', sent);
@@ -3295,7 +3285,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     editOptions: VestingContractEditOptions,
   ) => {
     const vestingContract = selectedVestingContract;
-    if (!vestingContract) return;
+    if (!vestingContract || !publicKey) return;
     resetTransactionStatus();
     setIsBusy(true);
     try {
