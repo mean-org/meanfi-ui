@@ -1,5 +1,5 @@
 import { base64 } from '@project-serum/anchor/dist/cjs/utils/bytes';
-import { SignerWalletAdapter } from '@solana/wallet-adapter-base';
+import { Adapter, SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import {
   Connection,
   PublicKey,
@@ -9,7 +9,6 @@ import {
   ParsedTransactionMeta,
   VersionedTransaction,
 } from '@solana/web3.js';
-import { MeanFiWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
 import { SendTxResult, SignTxResult } from 'models/CreateTxResult';
 import { TransactionStatus } from '../models/enums';
@@ -165,13 +164,13 @@ export const getChange = (accountIndex: number, meta: ParsedTransactionMeta | nu
 
 export const signTx = async (
   title: string,
-  wallet: MeanFiWallet,
+  wallet: Adapter,
   publicKey: PublicKey,
   transaction: Transaction | VersionedTransaction | null,
 ): Promise<SignTxResult> => {
   const txLog: any[] = [];
 
-  if (wallet && publicKey && wallet.signTransaction && transaction) {
+  if (wallet && publicKey && transaction) {
     return (wallet as SignerWalletAdapter)
     .signTransaction(transaction)
     .then(async signed => {
@@ -226,15 +225,12 @@ export const signTx = async (
 export const sendTx = async (
   title: string,
   connection: Connection,
-  wallet: MeanFiWallet,
   encodedTx: string,
 ): Promise<SendTxResult> => {
   const txLog: any[] = [];
 
   if (
     connection &&
-    wallet &&
-    wallet.publicKey &&
     encodedTx
   ) {
     return connection

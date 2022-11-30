@@ -108,7 +108,7 @@ export const ExchangeDcasView = () => {
   } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
   const { t } = useTranslation('common');
-  const { publicKey, wallet, connected } = useWallet();
+  const { publicKey, wallet, connected, signTransaction } = useWallet();
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -397,11 +397,10 @@ export const ExchangeDcasView = () => {
         publicKey &&
         ddcaDetails &&
         ddcaClient &&
-        wallet.signTransaction
+        signTransaction
       ) {
         consoleOut('Signing transaction...');
-        return (wallet as SignerWalletAdapter)
-          .signTransaction(transaction)
+        return signTransaction(transaction)
           .then(async (signed: Transaction) => {
             consoleOut(
               'signTransaction returned a signed transaction:',

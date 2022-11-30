@@ -15,7 +15,7 @@ import { TokenDisplay } from 'components/TokenDisplay';
 import { TokenListItem } from 'components/TokenListItem';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
-import { useNativeAccount, useUserAccounts } from 'contexts/accounts';
+import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
@@ -57,7 +57,6 @@ export const AccountsInitAtaModal = (props: {
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isBusy, setIsBusy] = useState(false);
   const { account } = useNativeAccount();
-  const { tokenAccounts } = useUserAccounts();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [tokenFilter, setTokenFilter] = useState('');
@@ -139,7 +138,7 @@ export const AccountsInitAtaModal = (props: {
       setSelectedList(finalList);
       consoleOut('token list:', finalList, 'blue');
     }
-  }, [isVisible, ownedTokenAccounts, splTokenList, tokenList, tokenAccounts]);
+  }, [isVisible, ownedTokenAccounts, splTokenList, tokenList]);
 
   // Keep account balance updated
   useEffect(() => {
