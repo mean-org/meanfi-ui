@@ -1303,7 +1303,7 @@ export const StreamingAccountView = (props: {
               ? `Streaming account funding has been submitted for approval.`
               : `Streaming account funded with ${amountDisplay}`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryAddFunds,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',
@@ -1593,7 +1593,7 @@ export const StreamingAccountView = (props: {
               ? selectedMultisig.authority.toBase58()
               : '';
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryWithdraw,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',
@@ -2028,7 +2028,7 @@ export const StreamingAccountView = (props: {
                 ? selectedMultisig.authority.toBase58()
                 : '';
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryClose,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',
@@ -2283,7 +2283,7 @@ export const StreamingAccountView = (props: {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryRefreshBalance,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',

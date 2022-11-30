@@ -1180,7 +1180,7 @@ export const MoneyStreamsInfoView = (props: {
               ? `Streaming account funding has been submitted for approval.`
               : `Streaming account funded with ${amountDisplay}`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryAddFunds,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',

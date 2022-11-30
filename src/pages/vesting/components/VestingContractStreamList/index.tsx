@@ -758,7 +758,7 @@ export const VestingContractStreamList = (props: {
               ? confirmedMultisigMessage
               : `Vesting stream ${highlightedStream.name} was closed successfully. Vested amount of ${vestedReturns} has been sent to ${beneficiary}. Unvested amount of ${unvestedReturns} was returned to the vesting contract.`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.StreamClose,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',

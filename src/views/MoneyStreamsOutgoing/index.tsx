@@ -2601,7 +2601,7 @@ export const MoneyStreamsOutgoingView = (props: {
               ? `Proposal to close stream ${streamName} was submitted for Multisig approval.`
               : `Successfully closed stream: ${streamName}`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.StreamClose,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
