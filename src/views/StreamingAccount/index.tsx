@@ -1258,7 +1258,7 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    if (publicKey && streamingAccountSelected) {
+    if (wallet && publicKey && streamingAccountSelected) {
       const token = await getTokenOrCustomToken(
         connection,
         params.associatedToken,
@@ -1284,7 +1284,7 @@ export const StreamingAccountView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Fund Account', connection, wallet, encodedTx);
+          const sent = await sendTx('Fund Account', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
@@ -1303,7 +1303,7 @@ export const StreamingAccountView = (props: {
               ? `Streaming account funding has been submitted for approval.`
               : `Streaming account funded with ${amountDisplay}`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryAddFunds,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',
@@ -1571,7 +1571,7 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    if (wallet && streamingAccountSelected && selectedToken) {
+    if (wallet && publicKey && streamingAccountSelected && selectedToken) {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -1583,7 +1583,7 @@ export const StreamingAccountView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Fund Account', connection, wallet, encodedTx);
+          const sent = await sendTx('Fund Account', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
@@ -1593,7 +1593,7 @@ export const StreamingAccountView = (props: {
               ? selectedMultisig.authority.toBase58()
               : '';
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryWithdraw,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',
@@ -1993,7 +1993,7 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    if (wallet && streamingAccountSelected) {
+    if (wallet && publicKey && streamingAccountSelected) {
       let created: boolean;
       let streamingAccountName = '';
       if (
@@ -2018,7 +2018,7 @@ export const StreamingAccountView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Close Account', connection, wallet, encodedTx);
+          const sent = await sendTx('Close Account', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
@@ -2028,7 +2028,7 @@ export const StreamingAccountView = (props: {
                 ? selectedMultisig.authority.toBase58()
                 : '';
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryClose,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',
@@ -2265,7 +2265,7 @@ export const StreamingAccountView = (props: {
       return result;
     };
 
-    if (wallet && streamingAccountSelected) {
+    if (wallet && publicKey && streamingAccountSelected) {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -2277,13 +2277,13 @@ export const StreamingAccountView = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Refresh Account Balance', connection, wallet, encodedTx);
+          const sent = await sendTx('Refresh Account Balance', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryRefreshBalance,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',

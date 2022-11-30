@@ -1,6 +1,12 @@
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { SentreWalletAdapter, SentreWalletName } from '@sentre/connector';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import {
+  Adapter,
+  MessageSignerWalletAdapterProps,
+  SignerWalletAdapterProps,
+  WalletAdapterProps,
+} from '@solana/wallet-adapter-base';
+import { useWallet as useBaseWallet } from '@solana/wallet-adapter-react';
 import {
   BitKeepWalletAdapter,
   BitKeepWalletName,
@@ -30,13 +36,11 @@ import {
 import { Button, Modal } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { sentreAppId } from 'constants/common';
-import { environment } from 'environments/environment';
 import React, {
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { isDesktop, isSafari } from 'react-device-detect';
@@ -55,23 +59,6 @@ import {
   XnftWalletName,
   isInXnftWallet,
 } from '../integrations/xnft/xnft-wallet-adapter';
-
-export type MeanFiWallet =
-  | PhantomWalletAdapter
-  | ExodusWalletAdapter
-  | SolflareWalletAdapter
-  | SlopeWalletAdapter
-  | Coin98WalletAdapter
-  | SolongWalletAdapter
-  | MathWalletAdapter
-  | TrustWalletAdapter
-  | LedgerWalletAdapter
-  | BitKeepWalletAdapter
-  | CoinbaseWalletAdapter
-  | SentreWalletAdapter
-  | BraveWalletAdapter
-  | XnftWalletAdapter
-  | undefined;
 
 export interface WalletProviderEntry {
   name: string;
@@ -314,43 +301,61 @@ const isProviderHidden = (
   (item.underDevelopment && isProd()) ||
   (item.hideIfUnavailable && !getIsProviderInstalled(item));
 
-interface WalletContextState {
-  wallet: MeanFiWallet;
+interface MeanFiWalletContextState {
+  wallet: Adapter | undefined;
   connected: boolean;
   connecting: boolean;
-  autoConnect: boolean;
   isSelectingWallet: boolean;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
   resetWalletProvider: () => void;
-  select: () => void;
+  selectWalletProvider: () => void;
+  sendTransaction: WalletAdapterProps['sendTransaction'];
+  signTransaction: SignerWalletAdapterProps['signTransaction'] | undefined;
+  signAllTransactions:
+    | SignerWalletAdapterProps['signAllTransactions']
+    | undefined;
+  signMessage: MessageSignerWalletAdapterProps['signMessage'] | undefined;
 }
 
-const defaultCtxValues: WalletContextState = {
+const defaultCtxValues: MeanFiWalletContextState = {
   wallet: undefined,
   connected: false,
   connecting: true,
-  autoConnect: true,
   provider: undefined,
   isSelectingWallet: false,
   resetWalletProvider: () => {},
-  select: () => {},
+  selectWalletProvider: () => {},
+  sendTransaction: async () => '',
+  signTransaction: undefined,
+  signAllTransactions: undefined,
+  signMessage: undefined,
 };
 
-const WalletContext = React.createContext<WalletContextState>(defaultCtxValues);
+const MeanFiWalletContext =
+  React.createContext<MeanFiWalletContextState>(defaultCtxValues);
 
-export function WalletProvider({ children = null as any }) {
+export function MeanFiWalletProvider({ children = null as any }) {
   const { t } = useTranslation('common');
   const location = useLocation();
   const navigate = useNavigate();
-  const [autoConnect] = useState(true);
   const [walletName, setWalletName] = useLocalStorageState('walletName');
   const [lastUsedAccount, setLastUsedAccount] =
     useLocalStorageState('lastUsedAccount');
-  const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
+  const {
+    wallet,
+    wallets,
+    select,
+    connect,
+    disconnect,
+    signMessage,
+    sendTransaction,
+    signTransaction,
+    signAllTransactions,
+  } = useBaseWallet();
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
   const [isSelectingWallet, setIsModalVisible] = useState(false);
-  const select = useCallback(() => {
+  const selectWalletProvider = useCallback(() => {
     setIsModalVisible(true);
   }, []);
   const close = useCallback(() => {
@@ -360,16 +365,9 @@ export function WalletProvider({ children = null as any }) {
     isDesktop ? false : true,
   );
 
-  // Live reference to the wallet adapter
-  const walletRef = useRef(wallet);
-  useEffect(() => {
-    walletRef.current = wallet;
-  }, [wallet]);
-
   const forgetWallet = useCallback(() => {
     setConnected(false);
     setWalletName(null);
-    setWallet(undefined);
   }, [setWalletName]);
 
   const connectOnDemand = useCallback(() => {
@@ -377,19 +375,19 @@ export function WalletProvider({ children = null as any }) {
       return;
     }
 
-    wallet.connect().catch(error => {
+    connect().catch(error => {
       console.error('wallet.connect() error', error);
       if (error.toString().indexOf('WalletNotReadyError') !== -1) {
         console.warn('Enforcing wallet selection...');
         openNotification({
           type: 'info',
           title: 'Wallet adapter not configured',
-          description: `Cannot connect to ${wallet.name}. Wallet is not configured or enabled in your browser.`,
+          description: `Cannot connect to ${walletName}. Wallet is not configured or enabled in your browser.`,
         });
         forgetWallet();
       }
     });
-  }, [wallet, forgetWallet]);
+  }, [connect, wallet, walletName, forgetWallet]);
 
   const resetWalletProvider = () => {
     setWalletName(null);
@@ -399,64 +397,48 @@ export function WalletProvider({ children = null as any }) {
     const item = WALLET_PROVIDERS.find(({ name }) => name === walletName);
     return item;
   }, [walletName]);
-
-  const network =
-    environment === 'production'
-      ? WalletAdapterNetwork.Mainnet
-      : WalletAdapterNetwork.Devnet;
-  const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new BraveWalletAdapter(),
-      new ExodusWalletAdapter(),
-      new SolflareWalletAdapter({ network }),
-      new BitKeepWalletAdapter(),
-      new CoinbaseWalletAdapter(),
-      new SlopeWalletAdapter(),
-      new Coin98WalletAdapter(),
-      new SolongWalletAdapter(),
-      new TrustWalletAdapter(),
-      new MathWalletAdapter(),
-      new LedgerWalletAdapter(),
-      new SentreWalletAdapter({ appId: sentreAppId }),
-      new XnftWalletAdapter(),
-    ],
-    [network],
-  );
-
+  /*
   useEffect(() => {
-    if (isInXnftWallet()) {
+    if (
+      isInXnftWallet() &&
+      (!wallet || wallet.adapter.name !== XnftWalletName)
+    ) {
       document.body.classList.add('in-xnft-wallet');
       setWalletName(XnftWalletName);
-      setWallet(wallets.find(w => w.name === XnftWalletName));
+      select(XnftWalletName);
     }
-  }, [setWalletName, wallets]);
-
+  }, [setWalletName, wallets, select, wallet]);
+*/
   useEffect(() => {
     if (wallets) {
       for (const item of wallets) {
-        const itemIndex = WALLET_PROVIDERS.findIndex(p => p.name === item.name);
+        const itemIndex = WALLET_PROVIDERS.findIndex(
+          p => p.name === item.adapter.name,
+        );
         if (itemIndex !== -1) {
-          WALLET_PROVIDERS[itemIndex].url = item.url;
-          WALLET_PROVIDERS[itemIndex].icon = item.icon;
+          WALLET_PROVIDERS[itemIndex].url = item.adapter.url;
+          WALLET_PROVIDERS[itemIndex].icon = item.adapter.icon;
         }
       }
-      if (walletName) {
+      if (
+        isInXnftWallet() &&
+        (!wallet || wallet.adapter.name !== XnftWalletName)
+      ) {
+        document.body.classList.add('in-xnft-wallet');
+        setWalletName(XnftWalletName);
+        select(XnftWalletName);
+      } else if (walletName) {
         consoleOut('walletName:', walletName, 'blue');
-        const wa = wallets.find(w => w.name === walletName);
+        const wa = wallets.find(w => w.adapter.name === walletName);
         const walletEntry = WALLET_PROVIDERS.filter(
           w => !isProviderHidden(w, { isDesktop }),
         ).find(w => w.name === walletName);
         consoleOut('provider:', wa, 'blue');
-        if (wa && walletEntry) {
-          setWallet(wa);
-        } else {
+        if (!(wa && walletEntry)) {
           setWalletName(null);
-          setWallet(undefined);
         }
       } else {
         setWalletName(null);
-        setWallet(undefined);
       }
     }
   }, [walletName, setWalletName, wallets]);
@@ -464,7 +446,7 @@ export function WalletProvider({ children = null as any }) {
   // Keep up with connecting flag
   useEffect(() => {
     if (wallet) {
-      setConnecting(wallet.connecting);
+      setConnecting(wallet.adapter.connecting);
     } else {
       setConnecting(false);
     }
@@ -472,36 +454,36 @@ export function WalletProvider({ children = null as any }) {
 
   // Setup listeners
   useEffect(() => {
-    if (wallet) {
-      wallet.on('connect', pk => {
+    if (wallet?.adapter) {
+      wallet.adapter.on('connect', pk => {
         consoleOut('Wallet connect event fired:', pk.toBase58(), 'blue');
         if (
-          wallet.connected &&
-          !wallet.connecting &&
+          wallet.adapter.connected &&
+          !wallet.adapter.connecting &&
           pk.toBase58() !== lastUsedAccount
         ) {
           resetWalletProvider();
           setLastUsedAccount(null);
           window.location.href = '/';
-        } else if (wallet.publicKey) {
+        } else if (wallet.adapter.publicKey) {
           setConnected(true);
           close();
         }
       });
 
-      wallet.on('disconnect', () => {
+      wallet.adapter.on('disconnect', () => {
         setConnected(false);
         if (!isUnauthenticatedRoute(location.pathname)) {
           navigate('/');
         }
       });
 
-      wallet.on('error', errorEvent => {
-        if (wallet.connecting) {
+      wallet.adapter.on('error', errorEvent => {
+        if (wallet.adapter.connecting) {
           setConnected(false);
-          wallet.removeAllListeners();
+          wallet.adapter.removeAllListeners();
           resetWalletProvider();
-          select();
+          selectWalletProvider();
         }
       });
     }
@@ -509,7 +491,7 @@ export function WalletProvider({ children = null as any }) {
     return () => {
       setConnected(false);
       if (wallet) {
-        wallet.disconnect();
+        disconnect();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -518,26 +500,28 @@ export function WalletProvider({ children = null as any }) {
   // Handle connect
   useEffect(() => {
     // When a wallet is created, selected and the autoConnect is ON, lets connect
-    if (wallet && autoConnect) {
+    if (wallet) {
       consoleOut('Auto-connecting...', '', 'blue');
       connectOnDemand();
     }
 
     return () => {};
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wallet, autoConnect]);
+  }, [connectOnDemand, wallet]);
 
   return (
-    <WalletContext.Provider
+    <MeanFiWalletContext.Provider
       value={{
-        wallet,
+        provider,
+        wallet: wallet?.adapter,
         connected,
         connecting,
-        select,
-        provider,
-        autoConnect,
-        resetWalletProvider,
         isSelectingWallet,
+        selectWalletProvider,
+        signAllTransactions,
+        resetWalletProvider,
+        sendTransaction,
+        signTransaction,
+        signMessage,
       }}
     >
       {children}
@@ -549,7 +533,7 @@ export function WalletProvider({ children = null as any }) {
             {t(`wallet-selector.primary-action`)}
           </div>
         }
-        open={!isInXnftWallet() && isSelectingWallet}
+        open={isSelectingWallet}
         footer={null}
         maskClosable={connected}
         closable={connected}
@@ -574,7 +558,7 @@ export function WalletProvider({ children = null as any }) {
 
               const onClick = function () {
                 if (wallet) {
-                  wallet.disconnect();
+                  disconnect();
                 }
 
                 // Record user event in Segment Analytics
@@ -590,7 +574,13 @@ export function WalletProvider({ children = null as any }) {
 
                 consoleOut('Selected wallet:', item.name, 'blue');
                 setWalletName(item.name);
-                setWallet(wallets.find(w => w.name === item.name));
+                const selected = wallets.find(
+                  w => w.adapter.name === item.name,
+                );
+                if (selected) {
+                  // setLocalWallet(selected);
+                  select(selected.adapter.name);
+                }
               };
 
               return (
@@ -637,7 +627,7 @@ export function WalletProvider({ children = null as any }) {
           )}
         </div>
       </Modal>
-    </WalletContext.Provider>
+    </MeanFiWalletContext.Provider>
   );
 }
 
@@ -647,26 +637,26 @@ export function useWallet() {
     connected,
     connecting,
     provider,
-    autoConnect,
+    signTransaction,
     resetWalletProvider,
-    select,
+    selectWalletProvider,
     isSelectingWallet,
-  } = useContext(WalletContext);
+  } = useContext(MeanFiWalletContext);
 
   return {
     wallet,
     provider,
     connected,
     connecting,
-    select,
-    autoConnect,
+    signTransaction,
     resetWalletProvider,
+    selectWalletProvider,
     publicKey: wallet?.publicKey,
     connect() {
       if (wallet) {
         wallet.connect();
       } else {
-        select();
+        selectWalletProvider();
       }
     },
     disconnect() {

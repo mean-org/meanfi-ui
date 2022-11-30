@@ -6,13 +6,13 @@ import { segmentAnalytics } from '../../App';
 import { AppUsageEvent } from '../../middleware/segment-service';
 
 export const ConnectButton = () => {
-  const { connected, select } = useWallet();
+  const { connected, selectWalletProvider } = useWallet();
   const { t } = useTranslation('common');
 
   const onConnectButtonClick = () => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletConnect);
-    select();
+    selectWalletProvider();
   };
 
   if (!connected) {

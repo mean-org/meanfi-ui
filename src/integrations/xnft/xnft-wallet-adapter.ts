@@ -58,6 +58,7 @@ export class XnftWalletAdapter extends BaseMessageSignerWalletAdapter {
     if (this._readyState === WalletReadyState.Unsupported) return;
 
     scopePollingDetectionStrategy(() => {
+      this._readyState = WalletReadyState.Installed;
       this.emit('readyStateChange', WalletReadyState.Installed);
       return true;
     });
@@ -84,6 +85,9 @@ export class XnftWalletAdapter extends BaseMessageSignerWalletAdapter {
 
     this._status = 'connecting';
     if (connected) {
+      await new Promise(resolve => {
+        setTimeout(resolve, 100);
+      });
       this._onConnected();
       return undefined;
     }
