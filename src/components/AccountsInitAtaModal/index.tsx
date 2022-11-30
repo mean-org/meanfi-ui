@@ -326,7 +326,7 @@ export const AccountsInitAtaModal = (props: {
       }
     };
 
-    if (publicKey && selectedToken) {
+    if (wallet && publicKey && selectedToken) {
       setIsBusy(true);
       const created = await createTx();
       consoleOut('created:', created);
@@ -347,14 +347,13 @@ export const AccountsInitAtaModal = (props: {
           const sent = await sendTx(
             'Create Asset',
             connection,
-            wallet,
             encodedTx,
           );
           consoleOut('sent:', sent);
           if (sent.signature) {
             signature = sent.signature;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.CreateAsset,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',

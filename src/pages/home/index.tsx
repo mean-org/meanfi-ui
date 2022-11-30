@@ -1628,7 +1628,7 @@ export const HomeView = () => {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.CreateAsset,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -2282,7 +2282,7 @@ export const HomeView = () => {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.SetAssetAuthority,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -2602,7 +2602,7 @@ export const HomeView = () => {
               currentOperation: TransactionStatus.TransactionFinished,
             });
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.DeleteAsset,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -3590,7 +3590,7 @@ export const HomeView = () => {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.CreateTransaction,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -4620,7 +4620,7 @@ export const HomeView = () => {
       }
     };
 
-    if (wallet) {
+    if (wallet && publicKey) {
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
@@ -4632,13 +4632,13 @@ export const HomeView = () => {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx('Unwrap SOL', connection, wallet, encodedTx);
+          const sent = await sendTx('Unwrap SOL', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.Unwrap,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',

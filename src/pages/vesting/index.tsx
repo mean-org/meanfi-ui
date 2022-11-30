@@ -1464,7 +1464,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
               ? `Proposal to create the vesting contract ${createOptions.vestingContractName} was submitted for Multisig approval.`
               : `Vesting contract ${createOptions.vestingContractName} created successfully`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryCreate,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -1849,7 +1849,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             ? `Proposal to close the vesting contract ${selectedVestingContract.name} was submitted for Multisig approval.`
             : `Vesting contract ${selectedVestingContract.name} successfully closed`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.TreasuryClose,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -2273,7 +2273,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
                 params.associatedToken?.decimals,
               )} ${params.associatedToken?.symbol}`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.TreasuryAddFunds,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -3020,7 +3020,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
                 selectedVestingContract.name
               }`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.TreasuryWithdraw,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -3218,7 +3218,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryRefreshBalance,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',

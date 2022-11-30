@@ -130,7 +130,7 @@ export const WrapSolModal = (props: {
     handleOk();
   }, [handleOk, isBusy, isSuccess, resetTransactionStatus]);
 
-  const onTransactionStart = async () => {
+  const onStartTransaction = async () => {
     let transaction: Transaction;
     let signature = '';
     let encodedTx: string;
@@ -300,7 +300,7 @@ export const WrapSolModal = (props: {
         setWrapAmount('');
         if (sent && !transactionCancelled) {
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.Wrap,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -526,7 +526,7 @@ export const WrapSolModal = (props: {
           shape="round"
           size="large"
           disabled={!isWrapValid()}
-          onClick={onTransactionStart}
+          onClick={onStartTransaction}
         >
           {isBusy && (
             <span className="mr-1">

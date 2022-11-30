@@ -176,7 +176,7 @@ export const StakeTabView = (props: {
     return value < 5 ? 6 : value >= 5 && value < 100 ? 4 : 2;
   };
 
-  const onTransactionStart = useCallback(async () => {
+  const onStartTransaction = useCallback(async () => {
     let transaction: Transaction;
     let signature = '';
     let encodedTx: string;
@@ -360,7 +360,7 @@ export const StakeTabView = (props: {
             currentOperation: TransactionStatus.TransactionFinished,
           });
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.Stake,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -747,7 +747,7 @@ export const StakeTabView = (props: {
         type="primary"
         shape="round"
         size="large"
-        onClick={onTransactionStart}
+        onClick={onStartTransaction}
         disabled={isBusy || !isStakingFormValid()}
       >
         {isBusy && (

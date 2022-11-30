@@ -1130,7 +1130,7 @@ export const TreasuryStreamCreateModal = (props: {
   // Transaction start  //
   ////////////////////////
 
-  const onTransactionStart = async () => {
+  const onStartTransaction = async () => {
     let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
@@ -2910,7 +2910,7 @@ export const TreasuryStreamCreateModal = (props: {
               onClick={
                 workingTreasuryType === TreasuryType.Lock
                   ? onContinueStepTwoButtonClick
-                  : onTransactionStart
+                  : onStartTransaction
               }
               disabled={
                 workingTreasuryType === TreasuryType.Lock
@@ -2972,7 +2972,7 @@ export const TreasuryStreamCreateModal = (props: {
               type="primary"
               shape="round"
               size="large"
-              onClick={onTransactionStart}
+              onClick={onStartTransaction}
               disabled={
                 !publicKey ||
                 (isMultisigContext && !proposalTitle) ||

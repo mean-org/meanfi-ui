@@ -647,7 +647,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                   params.programAddress,
                 )} has been upgraded`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.UpgradeProgram,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -1080,7 +1080,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                   params.programAddress,
                 )} is now non-upgradable`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.SetMultisigAuthority,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',

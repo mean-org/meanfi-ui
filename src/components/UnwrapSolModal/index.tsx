@@ -470,7 +470,7 @@ export const UnwrapSolModal = (props: {
         consoleOut('sent:', sent);
         if (sent) {
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.Unwrap,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',

@@ -1161,7 +1161,7 @@ export const MoneyStreamsOutgoingView = (props: {
                   token.decimals,
                 )} ${token.symbol}`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.StreamAddFunds,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',
@@ -1614,7 +1614,7 @@ export const MoneyStreamsOutgoingView = (props: {
             ? `Proposal to pause stream ${streamName} was submitted for Multisig approval.`
             : `Successfully paused stream: ${streamName}`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.StreamPause,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -2083,7 +2083,7 @@ export const MoneyStreamsOutgoingView = (props: {
             ? `Proposal to resume stream ${streamName} was submitted for Multisig approval.`
             : `Successfully resumed stream: ${streamName}`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.StreamResume,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',

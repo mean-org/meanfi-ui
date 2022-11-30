@@ -172,7 +172,6 @@ export const AccountsMergeModal = (props: {
           const sent = await sendTx(
             'Merge Token Accounts',
             connection,
-            wallet,
             encodedTx,
           );
           consoleOut('sent:', sent);
@@ -182,7 +181,7 @@ export const AccountsMergeModal = (props: {
             const loadingMessage = `Merge ${tokenGroup ? tokenGroup.length : ''} token accounts`;
             const completedMessage = `Successfully merged ${tokenGroup ? tokenGroup.length : ''} token accounts`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.MergeTokenAccounts,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',

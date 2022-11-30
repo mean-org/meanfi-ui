@@ -463,7 +463,7 @@ export const StakingRewardsView = () => {
             meanToken.decimals,
           )} ${meanToken.symbol} into the staking vault`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.Deposit,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',

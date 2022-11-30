@@ -575,7 +575,7 @@ const SafeView = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.EditMultisig,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -836,7 +836,7 @@ const SafeView = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.ApproveTransaction,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',
@@ -1089,7 +1089,7 @@ const SafeView = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.RejectTransaction,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',
@@ -1505,7 +1505,7 @@ const SafeView = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature, 'blue');
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.ExecuteTransaction,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',
@@ -1789,7 +1789,7 @@ const SafeView = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.CancelTransaction,
               finality: 'finalized',
               txInfoFetchStatus: 'fetching',

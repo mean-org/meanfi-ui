@@ -604,7 +604,7 @@ export const MoneyStreamsIncomingView = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.StreamTransferBeneficiary,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -1177,7 +1177,7 @@ export const MoneyStreamsIncomingView = (props: {
             ? `Proposal to withdraw ${amountDisplay} has been submitted for approval.`
             : `Successfully withdrawn ${amountDisplay}`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.StreamWithdraw,
             finality: 'finalized',
             txInfoFetchStatus: 'fetching',

@@ -1598,7 +1598,7 @@ export const MoneyStreamsInfoView = (props: {
               ? selectedMultisig.authority.toBase58()
               : '';
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.TreasuryCreate,
             finality: 'finalized',
             txInfoFetchStatus: 'fetching',

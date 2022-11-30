@@ -157,7 +157,7 @@ export const UnstakeTabView = (props: {
     setCanFetchUnstakeQuote(true);
   }, []);
 
-  const onTransactionStart = useCallback(async () => {
+  const onStartTransaction = useCallback(async () => {
     let transaction: Transaction;
     let signature = '';
     let encodedTx: string;
@@ -339,7 +339,7 @@ export const UnstakeTabView = (props: {
             currentOperation: TransactionStatus.TransactionFinished,
           });
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.Unstake,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -742,7 +742,7 @@ export const UnstakeTabView = (props: {
         type="primary"
         shape="round"
         size="large"
-        onClick={onTransactionStart}
+        onClick={onStartTransaction}
         disabled={isBusy || !isUnstakingFormValid()}
       >
         {isBusy && (

@@ -9,6 +9,7 @@ import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, DatePicker, Select } from 'antd';
 import { segmentAnalytics } from 'App';
 import BN from 'bn.js';
+import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
   CUSTOM_TOKEN_NAME,
@@ -34,6 +35,7 @@ import {
   AppUsageEvent,
   SegmentStreamOTPTransferData,
 } from 'middleware/segment-service';
+import { sendTx, signTx } from 'middleware/transactions';
 import {
   addMinutes,
   consoleOut,
@@ -584,11 +586,11 @@ export const OneTimePayment = (props: {
 
   // Main action
 
-  const onTransactionStart = useCallback(async () => {
-    let transaction: Transaction;
+  const onStartTransaction = useCallback(async () => {
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -782,124 +784,97 @@ export const OneTimePayment = (props: {
       return result;
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('One-Time Payment transaction failed', {
-              transcript: transactionLog,
-            });
-            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('One-Time Payment transaction failed', {
-          transcript: transactionLog,
-        });
-        segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    if (wallet && selectedToken) {
+    if (wallet && publicKey && selectedToken) {
       const created = await createTx();
       consoleOut('created:', created);
-      if (created && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          if (isScheduledPayment()) {
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.Transfer,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Schedule transfer for ${formatThousands(
-                parseFloat(fromCoinAmount),
-                selectedToken.decimals,
-              )} ${selectedToken.symbol}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Transfer successfully Scheduled!`,
-              extras: 'scheduled',
-            });
-          } else {
-            enqueueTransactionConfirmation({
-              signature: signature,
-              operationType: OperationType.Transfer,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Sending ${formatThousands(
-                parseFloat(fromCoinAmount),
-                selectedToken.decimals,
-              )} ${selectedToken.symbol}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Successfully sent ${formatThousands(
-                parseFloat(fromCoinAmount),
-                selectedToken.decimals,
-              )} ${selectedToken.symbol}`,
-            });
-          }
+      if (created && !transactionCancelled && transaction) {
+        const txTitle = isScheduledPayment() ? 'Scheduled Transfer' : 'One Time Transfer';
+        const sign = await signTx(
+          txTitle,
+          wallet,
+          publicKey,
+          transaction as Transaction,
+        );
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
           setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished,
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          setIsBusy(false);
-          resetTransactionStatus();
-          resetContractValues();
-          setIsVerifiedRecipient(false);
-          transferCompleted();
+          const sent = await sendTx(
+            txTitle,
+            connection,
+            encodedTx,
+          );
+          consoleOut('sent:', sent);
+          if (sent.signature) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            if (isScheduledPayment()) {
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.Transfer,
+                finality: 'confirmed',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Scheduled transfer for ${formatThousands(
+                  parseFloat(fromCoinAmount),
+                  selectedToken.decimals,
+                )} ${selectedToken.symbol}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Transfer successfully Scheduled!`,
+                extras: 'scheduled',
+              });
+            } else {
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.Transfer,
+                finality: 'confirmed',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Sending ${formatThousands(
+                  parseFloat(fromCoinAmount),
+                  selectedToken.decimals,
+                )} ${selectedToken.symbol}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Successfully sent ${formatThousands(
+                  parseFloat(fromCoinAmount),
+                  selectedToken.decimals,
+                )} ${selectedToken.symbol}`,
+              });
+            }
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished,
+            });
+            setIsBusy(false);
+            resetTransactionStatus();
+            resetContractValues();
+            setIsVerifiedRecipient(false);
+            transferCompleted();
+          } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: 'error',
+            });
+            setIsBusy(false);
+          }
         } else {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
+          });
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: 'error',
+          });
           setIsBusy(false);
         }
       } else {
@@ -932,6 +907,7 @@ export const OneTimePayment = (props: {
     isScheduledPayment,
     transferCompleted,
     getFeeAmount,
+    t
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {
@@ -1183,7 +1159,7 @@ export const OneTimePayment = (props: {
           type="primary"
           shape="round"
           size="large"
-          onClick={onTransactionStart}
+          onClick={onStartTransaction}
           disabled={
             !connected ||
             !isMemoValid() ||
