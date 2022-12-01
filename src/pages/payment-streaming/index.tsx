@@ -502,7 +502,7 @@ const PaymentStreamingView = (props: {
   ///////////////
 
   const renderPaymentStreamsContent = () => {
-    if (!pathParamStreamId && !pathParamTreasuryId) {
+    if (!streamingItemId) {
       return (
         <MoneyStreamsInfoView
           loadingStreams={loadingStreams}
