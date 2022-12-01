@@ -3,7 +3,7 @@ import {
   LoadingOutlined,
   ReloadOutlined,
   SyncOutlined,
-  WarningFilled
+  WarningFilled,
 } from '@ant-design/icons';
 import {
   App,
@@ -12,27 +12,27 @@ import {
   Arg,
   NETWORK,
   UiElement,
-  UiInstruction
+  UiInstruction,
 } from '@mean-dao/mean-multisig-apps';
 import {
   createProgram,
   getDepositIx,
   getTrancheDepositIx,
   getTrancheWithdrawIx,
-  getWithdrawIx
+  getWithdrawIx,
 } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   getFees,
   MeanMultisig,
   MultisigTransactionFees,
-  MULTISIG_ACTIONS
+  MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
 import {
   MoneyStreaming,
   StreamInfo,
   STREAM_STATE,
-  TreasuryInfo
+  TreasuryInfo,
 } from '@mean-dao/money-streaming';
 import {
   Category,
@@ -41,7 +41,7 @@ import {
   STREAM_STATUS,
   TransactionFees,
   Treasury,
-  TreasuryType
+  TreasuryType,
 } from '@mean-dao/msp';
 import { AnchorProvider, BN, Idl, Program } from '@project-serum/anchor';
 import {
@@ -49,7 +49,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   MintLayout,
   Token,
-  TOKEN_PROGRAM_ID
+  TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import {
   Connection,
@@ -59,7 +59,7 @@ import {
   Signer,
   SystemProgram,
   Transaction,
-  TransactionInstruction
+  TransactionInstruction,
 } from '@solana/web3.js';
 import {
   Alert,
@@ -73,7 +73,7 @@ import {
   Segmented,
   Space,
   Spin,
-  Tooltip
+  Tooltip,
 } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import notification from 'antd/lib/notification';
@@ -109,7 +109,7 @@ import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   STAKING_ROUTE_BASE_PATH,
   TRANSACTIONS_PER_PAGE,
-  WRAPPED_SOL_MINT_ADDRESS
+  WRAPPED_SOL_MINT_ADDRESS,
 } from 'constants/common';
 import { EMOJIS } from 'constants/emojis';
 import { NATIVE_SOL } from 'constants/tokens';
@@ -117,12 +117,12 @@ import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
 import {
   getSolanaExplorerClusterParam,
-  useConnectionConfig
+  useConnectionConfig,
 } from 'contexts/connection';
 import {
   confirmationEvents,
   TxConfirmationContext,
-  TxConfirmationInfo
+  TxConfirmationInfo,
 } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
@@ -134,10 +134,13 @@ import {
   IconLightBulb,
   IconLoading,
   IconSafe,
-  IconVerticalEllipsis
+  IconVerticalEllipsis,
 } from 'Icons';
 import { appConfig, customLogger } from 'index';
-import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
+import {
+  closeTokenAccount,
+  resolveParsedAccountInfo,
+} from 'middleware/accounts';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
@@ -147,7 +150,7 @@ import {
   copyText,
   getTransactionStatusForLogs,
   kFormatter,
-  toUsCurrency
+  toUsCurrency,
 } from 'middleware/ui';
 import {
   formatThousands,
@@ -156,7 +159,7 @@ import {
   getSdkValue,
   getTxIxResume,
   shortenAddress,
-  toUiAmount
+  toUiAmount,
 } from 'middleware/utils';
 import {
   AccountsPageCategory,
@@ -168,7 +171,7 @@ import {
   MetaInfoCtaAction,
   ProgramAccounts,
   RegisteredAppPaths,
-  UserTokenAccount
+  UserTokenAccount,
 } from 'models/accounts';
 import { MeanNft } from 'models/accounts/NftTypes';
 import { MetaInfoCta } from 'models/common-types';
@@ -178,14 +181,14 @@ import {
   CREDIX_PROGRAM,
   NATIVE_LOADER,
   parseSerializedTx,
-  ZERO_FEES
+  ZERO_FEES,
 } from 'models/multisig';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { initialSummary, StreamsSummary } from 'models/streams';
 import { FetchStatus } from 'models/transactions';
 import {
   INITIAL_TREASURIES_SUMMARY,
-  UserTreasuriesSummary
+  UserTreasuriesSummary,
 } from 'models/treasuries';
 import { QRCodeSVG } from 'qrcode.react';
 import React, {
@@ -195,7 +198,7 @@ import React, {
   useEffect,
   useMemo,
   useRef,
-  useState
+  useState,
 } from 'react';
 import { isMobile } from 'react-device-detect';
 import { Helmet } from 'react-helmet';
@@ -206,19 +209,25 @@ import {
   AssetActivity,
   NftDetails,
   NftPaginatedList,
-  OtherAssetsList
+  OtherAssetsList,
 } from 'views';
-import getAssetCategory from './getAssetCategory';
 import getNftMint from './getNftMint';
 import './style.scss';
 import useAccountPrograms from './useAccountPrograms';
+import useAppNavigation from './useAppNavigation';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
-const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));
+const PaymentStreamingComponent = React.lazy(
+  () => import('../payment-streaming/index'),
+);
 const StakingComponent = React.lazy(() => import('../staking/index'));
 const VestingComponent = React.lazy(() => import('../vesting/index'));
-const ProgramDetailsComponent = React.lazy(() => import('../../views/ProgramDetails/index'));
-const PersonalAccountSummary = React.lazy(() => import('../../views/WalletAccountSummary/index'));
+const ProgramDetailsComponent = React.lazy(
+  () => import('../../views/ProgramDetails/index'),
+);
+const PersonalAccountSummary = React.lazy(
+  () => import('../../views/WalletAccountSummary/index'),
+);
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let isWorkflowLocked = false;
@@ -226,7 +235,7 @@ let isWorkflowLocked = false;
 export const HomeView = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { asset, streamingTab, streamingItemId, programId } = useParams();
+  const { asset, streamingItemId, programId } = useParams();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
@@ -278,10 +287,9 @@ export const HomeView = () => {
     setStreamDetail,
     clearStreams,
   } = useContext(AppStateContext);
-  const {
-    confirmationHistory,
-    enqueueTransactionConfirmation,
-  } = useContext(TxConfirmationContext);
+  const { confirmationHistory, enqueueTransactionConfirmation } = useContext(
+    TxConfirmationContext,
+  );
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
@@ -296,8 +304,7 @@ export const HomeView = () => {
     useState<AccountTokenParsedInfo[]>();
   const [wSolBalance, setWsolBalance] = useState(0);
   const [refreshingBalance, setRefreshingBalance] = useState(false);
-  const [selectedCategory, setSelectedCategory] =
-    useState<AccountsPageCategory>('assets');
+
   const [selectedApp, setSelectedApp] = useState<KnownAppMetadata>();
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
@@ -323,8 +330,19 @@ export const HomeView = () => {
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>(
     [],
   );
-  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
-  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(false);
+
+  const {
+    selectedCategory,
+    selectedAssetsGroup,
+    setSelectedAssetsGroup,
+    detailsPanelOpen,
+    turnOffRightPanel,
+    turnOnRightPanel,
+  } = useAppNavigation({
+    asset,
+    selectedAccount,
+  });
+
   const [incomingStreamList, setIncomingStreamList] = useState<
     Array<Stream | StreamInfo> | undefined
   >();
@@ -354,7 +372,6 @@ export const HomeView = () => {
   const [multisigTransactionFees, setMultisigTransactionFees] =
     useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
-  const [selectedAssetsGroup, setSelectedAssetsGroup] = useState<AssetGroups>();
   const [selectedNft, setSelectedNft] = useState<MeanNft | undefined>(
     undefined,
   );
@@ -362,7 +379,9 @@ export const HomeView = () => {
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
   const { loadingPrograms } = useAccountPrograms();
-  const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
+  const [selectedProgram, setSelectedProgram] = useState<
+    ProgramAccounts | undefined
+  >(undefined);
 
   // SOL Balance Modal
   const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
@@ -380,70 +399,13 @@ export const HomeView = () => {
     [],
   );
 
-  // Perform premature redirect here if no category is specified in path
   useEffect(() => {
-    if (!publicKey || !selectedAccount.address) {
-      return;
-    }
+    if (!publicKey || !selectedAccount.address) return;
 
-    consoleOut('pathname:', location.pathname, 'crimson');
-    if (location.pathname.startsWith('/programs/')) {
-      setTimeout(() => {
-        setIsPageLoaded(true);
-      });
-      return;
-    }
-    // If no category specified (neither assets nor any known App) just assume assets
-    const isKnownApp = KNOWN_APPS.some(a =>
-      location.pathname.startsWith(`/${a.slug}`),
-    );
-    if (
-      location.pathname.indexOf('/assets') === -1 &&
-      location.pathname.indexOf('/my-account') === -1 &&
-      !isKnownApp
-    ) {
-      let url = '';
-      if (selectedAccount.isMultisig) {
-        url = `/${RegisteredAppPaths.SuperSafe}?v=proposals`;
-      } else {
-        url = '/my-account';
-      }
-      consoleOut('No category specified, redirecting to:', url, 'crimson');
-      setTimeout(() => {
-        setIsPageLoaded(true);
-      });
-      navigate(url, { replace: true });
-    } else {
-      // If user goes inside any tab of the streaming category, enable autoOpenDetailsPanel
-      if (
-        !streamingTab &&
-        location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)
-      ) {
-        const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
-        navigate(url);
-      } else if (
-        !selectedAccount.isMultisig &&
-        location.pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)
-      ) {
-        openNotification({
-          title: 'Access forbidden',
-          description: `You are trying to access the SuperSafe App from your personal account. To use the SuperSafe feature please connect with a signer account and try again.`,
-          type: 'warning',
-        });
-        navigate('/my-account');
-      }
-      setTimeout(() => {
-        setIsPageLoaded(true);
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    publicKey,
-    streamingTab,
-    location.pathname,
-    selectedAccount.address,
-    selectedAccount.isMultisig,
-  ]);
+    setTimeout(() => {
+      setIsPageLoaded(true);
+    });
+  }, [publicKey, selectedAccount.address]);
 
   const connection = useMemo(
     () =>
@@ -729,25 +691,24 @@ export const HomeView = () => {
   }, [selectedAsset]);
 
   const goToExchangeWithPresetAsset = useCallback(() => {
-    const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''
-      }`;
-    setDetailsPanelOpen(false);
+    const queryParams = `${
+      selectedAsset ? '?from=' + selectedAsset.symbol : ''
+    }`;
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
     } else {
       navigate('/exchange');
     }
-  }, [navigate, selectedAsset, setDetailsPanelOpen]);
+  }, [navigate, selectedAsset]);
 
   const handleGoToExchangeClick = useCallback(() => {
     const queryParams = `${selectedAsset ? '?to=' + selectedAsset.symbol : ''}`;
-    setDetailsPanelOpen(false);
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
     } else {
       navigate('/exchange');
     }
-  }, [navigate, selectedAsset, setDetailsPanelOpen]);
+  }, [navigate, selectedAsset]);
 
   const investButtonEnabled = useCallback(() => {
     if (!selectedAsset || !isInspectedAccountTheConnectedWallet()) {
@@ -759,7 +720,6 @@ export const HomeView = () => {
   }, [isInspectedAccountTheConnectedWallet, selectedAsset]);
 
   const handleGoToInvestClick = useCallback(() => {
-    setDetailsPanelOpen(false);
     let url = STAKING_ROUTE_BASE_PATH;
 
     if (selectedAsset) {
@@ -776,7 +736,7 @@ export const HomeView = () => {
     }
 
     navigate(url);
-  }, [navigate, selectedAsset, setDetailsPanelOpen]);
+  }, [navigate, selectedAsset]);
 
   const onExchangeAsset = useCallback(() => {
     if (!selectedAsset) {
@@ -1002,7 +962,6 @@ export const HomeView = () => {
   const reloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
     setShouldLoadTokens(true);
-    setAutoOpenDetailsPanel(true);
     reloadSwitch();
   }, [reloadSwitch, setShouldLoadTokens]);
 
@@ -1015,7 +974,7 @@ export const HomeView = () => {
   const navigateToNft = useCallback(
     (address: string) => {
       consoleOut('calling navigateToNft()', '...', 'crimson');
-      const url = `/assets/${address}`;
+      const url = `/nfts/${address}`;
       navigate(url);
     },
     [navigate],
@@ -1073,7 +1032,9 @@ export const HomeView = () => {
 
   const logEventHandling = useCallback((item: TxConfirmationInfo) => {
     consoleOut(
-      `HomeView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
+      `HomeView -> onTxConfirmed event handled for operation ${
+        OperationType[item.operationType]
+      }`,
       item,
       'crimson',
     );
@@ -1149,93 +1110,97 @@ export const HomeView = () => {
   };
 
   // Setup event handler for Tx confirmed
-  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
-    const turnOffLockWorkflow = () => {
-      isWorkflowLocked = false;
-    };
+  const onTxConfirmed = useCallback(
+    (item: TxConfirmationInfo) => {
+      const turnOffLockWorkflow = () => {
+        isWorkflowLocked = false;
+      };
 
-    const notifyMultisigActionFollowup = (item: TxConfirmationInfo) => {
-      if (!item || !item.extras || !item.extras.multisigAuthority) {
-        turnOffLockWorkflow();
-        return;
-      }
+      const notifyMultisigActionFollowup = (item: TxConfirmationInfo) => {
+        if (!item || !item.extras || !item.extras.multisigAuthority) {
+          turnOffLockWorkflow();
+          return;
+        }
 
-      const myNotifyKey = `notify-${Date.now()}`;
-      openNotification({
-        type: 'info',
-        key: myNotifyKey,
-        title: 'Review proposal',
-        duration: 20,
-        description: (
-          <>
-            <div className="mb-2">
-              The proposal's status can be reviewed in the Safe's proposal list.
-            </div>
-            <Button
-              type="primary"
-              shape="round"
-              size="small"
-              className="extra-small d-flex align-items-center pb-1"
-              onClick={() => {
-                const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
-                navigate(url);
-                notification.close(myNotifyKey);
-              }}
-            >
-              Review proposal
-            </Button>
-          </>
-        ),
-        handleClose: turnOffLockWorkflow,
-      });
-    };
+        const myNotifyKey = `notify-${Date.now()}`;
+        openNotification({
+          type: 'info',
+          key: myNotifyKey,
+          title: 'Review proposal',
+          duration: 20,
+          description: (
+            <>
+              <div className="mb-2">
+                The proposal's status can be reviewed in the Safe's proposal
+                list.
+              </div>
+              <Button
+                type="primary"
+                shape="round"
+                size="small"
+                className="extra-small d-flex align-items-center pb-1"
+                onClick={() => {
+                  const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
+                  navigate(url);
+                  notification.close(myNotifyKey);
+                }}
+              >
+                Review proposal
+              </Button>
+            </>
+          ),
+          handleClose: turnOffLockWorkflow,
+        });
+      };
 
-    if (item) {
-      if (isWorkflowLocked) {
-        return;
-      }
+      if (item) {
+        if (isWorkflowLocked) {
+          return;
+        }
 
-      // Lock the workflow
-      if (item.extras && item.extras.multisigAuthority) {
-        isWorkflowLocked = true;
-      }
+        // Lock the workflow
+        if (item.extras && item.extras.multisigAuthority) {
+          isWorkflowLocked = true;
+        }
 
-      recordTxConfirmation(item, true);
-      switch (item.operationType) {
-        case OperationType.CreateMultisig:
-          logEventHandling(item);
-          refreshMultisigs();
-          break;
-        case OperationType.CreateTransaction:
-          logEventHandling(item);
-          refreshMultisigs();
-          break;
-        case OperationType.Wrap:
-        case OperationType.Unwrap:
-        case OperationType.Transfer:
-          logEventHandling(item);
-          setIsUnwrapping(false);
-          accountRefresh();
-          break;
-        case OperationType.CreateAsset:
-        case OperationType.CloseTokenAccount:
-          logEventHandling(item);
-          accountRefresh();
-          break;
-        case OperationType.DeleteAsset:
-        case OperationType.SetAssetAuthority:
-        case OperationType.TransferTokens:
-          logEventHandling(item);
-          if (item.extras && item.extras.multisigAuthority) {
+        recordTxConfirmation(item, true);
+        switch (item.operationType) {
+          case OperationType.CreateMultisig:
+            logEventHandling(item);
             refreshMultisigs();
-            notifyMultisigActionFollowup(item);
-          }
-          break;
-        default:
-          break;
+            break;
+          case OperationType.CreateTransaction:
+            logEventHandling(item);
+            refreshMultisigs();
+            break;
+          case OperationType.Wrap:
+          case OperationType.Unwrap:
+          case OperationType.Transfer:
+            logEventHandling(item);
+            setIsUnwrapping(false);
+            accountRefresh();
+            break;
+          case OperationType.CreateAsset:
+          case OperationType.CloseTokenAccount:
+            logEventHandling(item);
+            accountRefresh();
+            break;
+          case OperationType.DeleteAsset:
+          case OperationType.SetAssetAuthority:
+          case OperationType.TransferTokens:
+            logEventHandling(item);
+            if (item.extras && item.extras.multisigAuthority) {
+              refreshMultisigs();
+              notifyMultisigActionFollowup(item);
+            }
+            break;
+          default:
+            break;
+        }
       }
-    }
-  }, [logEventHandling, navigate, recordTxConfirmation, refreshMultisigs]);
+    },
+    [logEventHandling, navigate, recordTxConfirmation, refreshMultisigs],
+  );
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
@@ -1471,7 +1436,7 @@ export const HomeView = () => {
           consoleOut(
             'blockchainFee:',
             transactionAssetFees.blockchainFee +
-            transactionAssetFees.mspFlatFee,
+              transactionAssetFees.mspFlatFee,
             'blue',
           );
           consoleOut('nativeBalance:', nativeBalance, 'blue');
@@ -1493,7 +1458,7 @@ export const HomeView = () => {
                 NATIVE_SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(
                 transactionAssetFees.blockchainFee +
-                transactionAssetFees.mspFlatFee,
+                  transactionAssetFees.mspFlatFee,
                 NATIVE_SOL_MINT.toBase58(),
               )})`,
             });
@@ -2289,10 +2254,11 @@ export const HomeView = () => {
               loadingTitle: 'Confirming transaction',
               loadingMessage: 'Transferring ownership',
               completedTitle: 'Transaction confirmed',
-              completedMessage: `Asset ${selectedAsset.name
-                } successfully transferred to ${shortenAddress(
-                  data.selectedAuthority,
-                )}`,
+              completedMessage: `Asset ${
+                selectedAsset.name
+              } successfully transferred to ${shortenAddress(
+                data.selectedAuthority,
+              )}`,
               completedMessageTimeout: isMultisigContext ? 8 : 5,
               extras: {
                 multisigAuthority: selectedMultisig
@@ -2724,9 +2690,9 @@ export const HomeView = () => {
 
                 const isNewTreasury =
                   vA2.version &&
-                    vA2.version >= 2 &&
-                    vB2.version &&
-                    vB2.version >= 2
+                  vA2.version >= 2 &&
+                  vB2.version &&
+                  vB2.version >= 2
                     ? true
                     : false;
 
@@ -2872,7 +2838,7 @@ export const HomeView = () => {
     for (const stream of updatedStreamsv1) {
       const isIncoming =
         stream.beneficiaryAddress &&
-          stream.beneficiaryAddress === treasurer.toBase58()
+        stream.beneficiaryAddress === treasurer.toBase58()
           ? true
           : false;
 
@@ -2978,7 +2944,7 @@ export const HomeView = () => {
     for (const stream of updatedStreamsv1) {
       const isIncoming =
         stream.beneficiaryAddress &&
-          stream.beneficiaryAddress === treasurer.toBase58()
+        stream.beneficiaryAddress === treasurer.toBase58()
           ? true
           : false;
 
@@ -3669,7 +3635,8 @@ export const HomeView = () => {
     if (publicKey) {
       timer = setInterval(() => {
         consoleOut(
-          `Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000
+          `Refreshing treasuries past ${
+            ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000
           }min...`,
         );
         refreshTreasuries(false);
@@ -3688,114 +3655,12 @@ export const HomeView = () => {
     }
   }, [width]);
 
-  // Enable deep-linking when isPageLoaded - Parse and save query params as needed
-  useEffect(() => {
-    if (!isPageLoaded || !publicKey) {
-      return;
-    }
-
-    if (asset) {
-      consoleOut('Route param asset:', asset, 'crimson');
-    }
-
-    const isKnownApp = KNOWN_APPS.some(a =>
-      location.pathname.startsWith(`/${a.slug}`),
-    );
-    const isAccountSummary =
-      location.pathname.startsWith('/my-account') ||
-        location.pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)
-        ? true
-        : false;
-
-    // The category is inferred from the route path
-    if (location.pathname.startsWith('/programs/')) {
-      setSelectedCategory('other-assets');
-    } else if (isAccountSummary) {
-      // 1.- If the route starts with my-account or super-safe, set category to "account-summary"
-      consoleOut('Setting category:', 'account-summary', 'crimson');
-      setSelectedCategory('account-summary');
-      if (autoOpenDetailsPanel && isKnownApp) {
-        setDetailsPanelOpen(true);
-      }
-    } else if (location.pathname.startsWith('/assets')) {
-      // 2.- If the route starts with assets, set category to "assets"
-      consoleOut('Setting category:', 'assets', 'crimson');
-      setSelectedCategory('assets');
-      if (asset && autoOpenDetailsPanel) {
-        setDetailsPanelOpen(true);
-      }
-    } else if (isKnownApp && !isAccountSummary) {
-      consoleOut('Setting category:', 'apps', 'crimson');
-      setSelectedCategory('apps');
-      if (autoOpenDetailsPanel) {
-        setDetailsPanelOpen(true);
-      }
-    }
-  }, [
-    asset,
-    publicKey,
-    isPageLoaded,
-    streamingTab,
-    streamingItemId,
-    detailsPanelOpen,
-    location.pathname,
-    autoOpenDetailsPanel,
-    setDetailsPanelOpen,
-  ]);
-
-  /**
-   * Set tabset option based on the deducted category
-   */
-  useEffect(() => {
-    if (!selectedAccount.address) {
-      return;
-    }
-    let selection: AssetGroups | undefined = undefined;
-
-    if (accountNfts && accountTokens) {
-      switch (selectedCategory) {
-        case 'assets':
-          if (asset) {
-            selection = getAssetCategory(
-              asset,
-              selectedAccount,
-              accountTokens,
-              accountNfts,
-            );
-            consoleOut(
-              'category from getAssetCategory() ->',
-              selection,
-              'blue',
-            );
-            setAutoOpenDetailsPanel(true);
-            setDetailsPanelOpen(true);
-          } else {
-            selection = AssetGroups.Tokens;
-          }
-          break;
-        case 'apps':
-          selection = AssetGroups.Apps;
-          break;
-        default:
-          selection = AssetGroups.Tokens;
-          break;
-      }
-
-      setSelectedAssetsGroup(selection);
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAccount.address, accountNfts]);
-
   // Set an App based of current category and asset group
   useEffect(() => {
     if (selectedCategory === 'apps' || selectedCategory === 'account-summary') {
       const app = KNOWN_APPS.find(a =>
         location.pathname.startsWith(`/${a.slug}`),
       );
-      if (app) {
-        setSelectedAssetsGroup(AssetGroups.Apps);
-      }
       setSelectedApp(app);
       setSelectedNft(undefined);
       setSelectedAsset(undefined);
@@ -3994,7 +3859,6 @@ export const HomeView = () => {
 
   // Set program specified in the path as programId from the list of programs
   useEffect(() => {
-
     if (!connection || !publicKey) {
       return;
     }
@@ -4005,13 +3869,15 @@ export const HomeView = () => {
         {
           pubkey: p.pubkey.toBase58(),
           owner: p.owner.toBase58(),
-          upgradeAuthority: p.upgradeAuthority ? p.upgradeAuthority.toBase58() : '',
+          upgradeAuthority: p.upgradeAuthority
+            ? p.upgradeAuthority.toBase58()
+            : '',
           executable: p.executable.toBase58(),
           size: formatThousands(p.size),
         },
         'orange',
       );
-    }
+    };
 
     if (programs && programId) {
       const filteredProgram = programs.find(
@@ -4023,14 +3889,13 @@ export const HomeView = () => {
         let updatedProgramData: ProgramAccounts | undefined = undefined;
         resolveParsedAccountInfo(connection, programData)
           .then(accountInfo => {
-            const authority = accountInfo.data.parsed.info.authority as string | null;
+            const authority = accountInfo.data.parsed.info.authority as
+              | string
+              | null;
             updatedProgramData = Object.assign({}, filteredProgram, {
-              upgradeAuthority: authority ? new PublicKey(authority) : null
+              upgradeAuthority: authority ? new PublicKey(authority) : null,
             }) as ProgramAccounts;
             setSelectedProgram(updatedProgramData);
-
-            // Preset "Other assets" tab. Not sure if it should be here
-            setSelectedAssetsGroup(AssetGroups.OtherAssets);
 
             logIt(updatedProgramData);
           })
@@ -4043,15 +3908,20 @@ export const HomeView = () => {
         setSelectedProgram(undefined);
       }
     }
-  }, [connection, isMultisigContext, location.pathname, programId, programs, publicKey]);
+  }, [
+    connection,
+    isMultisigContext,
+    location.pathname,
+    programId,
+    programs,
+    publicKey,
+  ]);
 
   // Preset token based on url param asset
   useEffect(() => {
     if (asset && accountTokens && accountTokens.length > 0) {
       consoleOut('Presetting token based on url...', asset, 'crimson');
-      const inferredAsset = accountTokens.find(
-        t => t.publicAddress === asset,
-      );
+      const inferredAsset = accountTokens.find(t => t.publicAddress === asset);
       if (inferredAsset) {
         consoleOut('selected:', inferredAsset.symbol, 'crimson');
         selectAsset(inferredAsset);
@@ -4078,12 +3948,7 @@ export const HomeView = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    accountTokens,
-    location.pathname,
-    asset,
-    selectedAccount.address,
-  ]);
+  }, [accountTokens, location.pathname, asset, selectedAccount.address]);
 
   // Build CTAs
   useEffect(() => {
@@ -4141,8 +4006,9 @@ export const HomeView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy
-          }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
+          MetaInfoCtaAction.Buy
+        }`,
         tooltip: '',
         callBack: showDepositOptionsModal,
       });
@@ -4156,8 +4022,9 @@ export const HomeView = () => {
       isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Deposit
-        }`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
+        MetaInfoCtaAction.Deposit
+      }`,
       tooltip: '',
       callBack: showReceiveSplOrSolModal,
     });
@@ -4175,8 +4042,9 @@ export const HomeView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange
-          }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
+          MetaInfoCtaAction.Exchange
+        }`,
         tooltip: '',
         callBack: onExchangeAsset,
       });
@@ -4191,8 +4059,9 @@ export const HomeView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest
-          }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
+          MetaInfoCtaAction.Invest
+        }`,
         tooltip: '',
         callBack: handleGoToInvestClick,
       });
@@ -4211,8 +4080,9 @@ export const HomeView = () => {
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.WrapSol
-          }`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${
+          MetaInfoCtaAction.WrapSol
+        }`,
         tooltip: '',
         callBack: showWrapSolModal,
       });
@@ -4299,7 +4169,6 @@ export const HomeView = () => {
     isSelectedAssetWsol,
     investButtonEnabled,
   ]);
-
 
   // Set the list of incoming and outgoing streams
   useEffect(() => {
@@ -4723,11 +4592,6 @@ export const HomeView = () => {
     refreshTreasuries(false);
   };
 
-  const turnOffRightPanel = () => {
-    setDetailsPanelOpen(false);
-    setAutoOpenDetailsPanel(false);
-  };
-
   const onRefreshStreamsReset = () => {
     refreshStreamList(true);
     refreshTreasuries(false);
@@ -4790,10 +4654,6 @@ export const HomeView = () => {
     if (url) {
       navigate(url);
     }
-  };
-
-  const onChangeAssetsGroup = (group: AssetGroups | undefined) => {
-    setSelectedAssetsGroup(group);
   };
 
   ////////////////
@@ -4908,57 +4768,6 @@ export const HomeView = () => {
     return options;
   };
 
-  const canShowAssetDetails = () => {
-    if (selectedCategory === 'account-summary' || selectedCategory === 'other-assets') {
-      return false;
-    }
-    const showWhenAssetsSelected =
-      selectedAssetsGroup === AssetGroups.Tokens ? true : false;
-    const showWhenOtherAssetsSelected =
-      selectedAssetsGroup === AssetGroups.OtherAssets ? true : false;
-    const showWhenNoNftSelected =
-      selectedAssetsGroup === AssetGroups.Nfts && !selectedNft ? true : false;
-    const showWhenAppsSelectedAndNoAppActiveButAssetIsSelected =
-      selectedAssetsGroup === AssetGroups.Apps && selectedAsset ? true : false;
-    if (
-      selectedAsset &&
-      !selectedApp &&
-      (showWhenAssetsSelected ||
-        showWhenNoNftSelected ||
-        showWhenAppsSelectedAndNoAppActiveButAssetIsSelected ||
-        showWhenOtherAssetsSelected)
-    ) {
-      return true;
-    }
-    return false;
-  };
-
-  const canShowNftDetails = () => {
-    if (selectedCategory === 'account-summary') {
-      return false;
-    }
-    const showIfTokensSelectedButNoAssetIsPreset =
-      selectedAssetsGroup === AssetGroups.Tokens && !selectedAsset
-        ? true
-        : false;
-    const showWhenNftsSelected =
-      selectedAssetsGroup === AssetGroups.Nfts ? true : false;
-    const showWhenNoAppSelected =
-      selectedAssetsGroup === AssetGroups.Apps && !selectedApp ? true : false;
-    const showWhenOtherAssetsSelected =
-      selectedAssetsGroup === AssetGroups.OtherAssets ? true : false;
-    if (
-      selectedNft &&
-      (showWhenNftsSelected ||
-        showWhenNoAppSelected ||
-        showWhenOtherAssetsSelected ||
-        showIfTokensSelectedButNoAssetIsPreset)
-    ) {
-      return true;
-    }
-    return false;
-  };
-
   ///////////////
   // Rendering //
   ///////////////
@@ -5004,8 +4813,7 @@ export const HomeView = () => {
       >
         <div
           onClick={() => {
-            setDetailsPanelOpen(true);
-            setAutoOpenDetailsPanel(true);
+            turnOnRightPanel();
             setSelectedNft(undefined);
             setSelectedAsset(undefined);
             if (type === 'my-account') {
@@ -5014,8 +4822,9 @@ export const HomeView = () => {
               navigateToSafe();
             }
           }}
-          className={`networth-list-item flex-fixed-right ${selectedCategory === 'account-summary' ? 'selected' : ''
-            }`}
+          className={`networth-list-item flex-fixed-right ${
+            selectedCategory === 'account-summary' ? 'selected' : ''
+          }`}
         >
           {renderSelectedAccountSummaryInner()}
         </div>
@@ -5046,16 +4855,15 @@ export const HomeView = () => {
           <div
             key="streams-category"
             onClick={() => {
-              setDetailsPanelOpen(true);
-              setAutoOpenDetailsPanel(true);
               setSelectedNft(undefined);
               navigateToStreaming();
             }}
-            className={`transaction-list-row ${selectedCategory === 'apps' &&
+            className={`transaction-list-row ${
+              selectedCategory === 'apps' &&
               selectedApp?.slug === RegisteredAppPaths.PaymentStreaming
-              ? 'selected'
-              : ''
-              }`}
+                ? 'selected'
+                : ''
+            }`}
           >
             <div className="icon-cell">
               {loadingStreams ? (
@@ -5143,8 +4951,6 @@ export const HomeView = () => {
     (asset: UserTokenAccount) => {
       const onTokenAccountClick = () => {
         consoleOut('clicked on asset:', asset.publicAddress, 'blue');
-        setDetailsPanelOpen(true);
-        setAutoOpenDetailsPanel(true);
         navigateToAsset(asset);
         setSelectedNft(undefined);
       };
@@ -5221,8 +5027,9 @@ export const HomeView = () => {
               {asset.symbol}
               {tokenPrice > 0 ? (
                 <span
-                  className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'
-                    }`}
+                  className={`badge small ml-1 ${
+                    theme === 'light' ? 'golden fg-dark' : 'darken'
+                  }`}
                 >
                   {toUsCurrency(tokenPrice)}
                 </span>
@@ -5239,10 +5046,10 @@ export const HomeView = () => {
             <div className="interval">
               {(asset.balance || 0) > 0
                 ? formatThousands(
-                  asset.balance || 0,
-                  asset.decimals,
-                  asset.decimals,
-                )
+                    asset.balance || 0,
+                    asset.decimals,
+                    asset.decimals,
+                  )
                 : '0'}
             </div>
           </div>
@@ -5283,8 +5090,9 @@ export const HomeView = () => {
     return (
       <div
         key="asset-category-token-items"
-        className={`asset-category flex-column${!accountTokens || accountTokens.length === 0 ? ' h-75' : ''
-          }`}
+        className={`asset-category flex-column${
+          !accountTokens || accountTokens.length === 0 ? ' h-75' : ''
+        }`}
       >
         {accountTokens && accountTokens.length > 0 ? (
           <>
@@ -5328,14 +5136,11 @@ export const HomeView = () => {
   };
 
   const renderNftList = () => {
-
     const onNftItemClick = (item: MeanNft) => {
       consoleOut('clicked on NFT item:', item, 'blue');
       setSelectedNft(item);
       setSelectedApp(undefined);
       setTimeout(() => {
-        setAutoOpenDetailsPanel(true);
-        setDetailsPanelOpen(true);
         navigateToNft(item.address.toBase58());
       }, 50);
     };
@@ -5350,9 +5155,7 @@ export const HomeView = () => {
           connection={connection}
           loadingTokenAccounts={loadingTokenAccounts}
           nftList={accountNfts}
-          onNftItemClick={(nft: MeanNft) =>
-            onNftItemClick(nft)
-          }
+          onNftItemClick={(nft: MeanNft) => onNftItemClick(nft)}
           presetNftMint={selectedNft ? undefined : nftMint}
           selectedNft={selectedNft}
           tokensLoaded={tokensLoaded}
@@ -5363,17 +5166,18 @@ export const HomeView = () => {
 
   const renderAppsList = () => {
     const onAppClick = (app: KnownAppMetadata) => {
-
       // Don't do anything if the current path starts with the selected App slug
-      const isTargetAppAlreadyOpen = location.pathname.startsWith(`/${app.slug}`);
-      if (isTargetAppAlreadyOpen) { return; }
+      const isTargetAppAlreadyOpen = location.pathname.startsWith(
+        `/${app.slug}`,
+      );
+      if (isTargetAppAlreadyOpen) {
+        return;
+      }
 
       setSelectedApp(undefined);
       setSelectedAsset(undefined);
       // The reason for the timeout is to avoid the navigation to happen before the componentUnmount
       setTimeout(() => {
-        setAutoOpenDetailsPanel(true);
-        setDetailsPanelOpen(true);
         navigate(app.defaultPath);
       }, 50);
     };
@@ -5391,13 +5195,10 @@ export const HomeView = () => {
     const onProgramSelected = (item: ProgramAccounts) => {
       setSelectedApp(undefined);
       setSelectedAsset(undefined);
-      setSelectedCategory('other-assets');
 
       // Activate panels and navigate
-      const url = `/programs/${item.pubkey.toBase58()}?v=transactions`
+      const url = `/programs/${item.pubkey.toBase58()}?v=transactions`;
       setTimeout(() => {
-        setAutoOpenDetailsPanel(true);
-        setDetailsPanelOpen(true);
         navigate(url);
       }, 10);
     };
@@ -5609,8 +5410,9 @@ export const HomeView = () => {
                   <AddressDisplay
                     address={selectedAsset.publicAddress as string}
                     iconStyles={{ width: '16', height: '16' }}
-                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedAsset.publicAddress
-                      }${getSolanaExplorerClusterParam()}`}
+                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
+                      selectedAsset.publicAddress
+                    }${getSolanaExplorerClusterParam()}`}
                   />
                 </div>
               </Col>
@@ -5705,7 +5507,7 @@ export const HomeView = () => {
         <Spin spinning={true} />
       </div>
     );
-  }
+  };
 
   return (
     <>
@@ -5753,8 +5555,9 @@ export const HomeView = () => {
           <div className="interaction-area">
             {selectedAccount.address && (
               <div
-                className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''
-                  }`}
+                className={`meanfi-two-panel-layout ${
+                  detailsPanelOpen ? 'details-open' : ''
+                }`}
               >
                 {/* Left / top panel */}
                 <div className="meanfi-two-panel-left">
@@ -5775,8 +5578,11 @@ export const HomeView = () => {
 
                     {/* Middle area (vertically flexible block of items) */}
                     <div
-                      className={`item-block${!isXsDevice ? ' vertical-scroll' : ''
-                        }`}
+                      className={`item-block${
+                        !isXsDevice
+                          ? ' vertical-scroll vertical-scroll-always'
+                          : ''
+                      }`}
                     >
                       {/* Pinned Apps or Favorites */}
                       <div
@@ -5796,7 +5602,9 @@ export const HomeView = () => {
                           defaultValue={AssetGroups.Tokens}
                           value={selectedAssetsGroup}
                           options={getAssetsGroupOptions()}
-                          onChange={(value: any) => onChangeAssetsGroup(value)}
+                          onChange={value =>
+                            setSelectedAssetsGroup(value as AssetGroups)
+                          }
                         />
                         <div className="asset-category-estimated">
                           {renderEstimatedValueByCategory()}
@@ -5886,43 +5694,44 @@ export const HomeView = () => {
 
                   <div className="inner-container">
                     {selectedApp?.slug ===
-                      RegisteredAppPaths.PaymentStreaming ? (
-                        <>
-                          {/* Refresh cta */}
-                          <div className="float-top-right mr-1 mt-1">
-                            <span className="icon-button-container secondary-button">
-                              <Tooltip placement="bottom" title="Refresh payment streams">
-                                <Button
-                                  id="account-refresh-cta"
-                                  type="default"
-                                  shape="circle"
-                                  size="middle"
-                                  icon={
-                                    <ReloadOutlined className="mean-svg-icons" />
-                                  }
-                                  onClick={() => {
-                                    reloadTokensAndActivity();
-                                    onRefreshStreamsNoReset();
-                                  }}
-                                />
-                              </Tooltip>
-                            </span>
-                          </div>
-                          <Suspense fallback={renderSpinner()}>
-                            <PaymentStreamingComponent
-                              loadingTreasuries={loadingTreasuries}
-                              treasuryList={treasuryList}
-                              onBackButtonClicked={onBackButtonClicked}
-                            />
-                          </Suspense>
-                        </>
+                    RegisteredAppPaths.PaymentStreaming ? (
+                      <>
+                        {/* Refresh cta */}
+                        <div className="float-top-right mr-1 mt-1">
+                          <span className="icon-button-container secondary-button">
+                            <Tooltip
+                              placement="bottom"
+                              title="Refresh payment streams"
+                            >
+                              <Button
+                                id="account-refresh-cta"
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={
+                                  <ReloadOutlined className="mean-svg-icons" />
+                                }
+                                onClick={() => {
+                                  reloadTokensAndActivity();
+                                  onRefreshStreamsNoReset();
+                                }}
+                              />
+                            </Tooltip>
+                          </span>
+                        </div>
+                        <Suspense fallback={renderSpinner()}>
+                          <PaymentStreamingComponent
+                            loadingTreasuries={loadingTreasuries}
+                            treasuryList={treasuryList}
+                            onBackButtonClicked={onBackButtonClicked}
+                          />
+                        </Suspense>
+                      </>
                     ) : null}
 
                     {selectedApp?.slug === RegisteredAppPaths.SuperSafe ? (
                       <>
-                        <Suspense
-                          fallback={renderSpinner()}
-                        >
+                        <Suspense fallback={renderSpinner()}>
                           <SafeDetails
                             appsProvider={appsProvider}
                             safeBalance={netWorth}
@@ -5934,26 +5743,22 @@ export const HomeView = () => {
                     ) : null}
 
                     {selectedApp?.slug === RegisteredAppPaths.Staking &&
-                      location.pathname.startsWith(
-                        `/${RegisteredAppPaths.Staking}`,
-                      ) ? (
+                    location.pathname.startsWith(
+                      `/${RegisteredAppPaths.Staking}`,
+                    ) ? (
                       <>
-                        <Suspense
-                          fallback={renderSpinner()}
-                        >
+                        <Suspense fallback={renderSpinner()}>
                           <StakingComponent />
                         </Suspense>
                       </>
                     ) : null}
 
                     {selectedApp?.slug === RegisteredAppPaths.Vesting &&
-                      location.pathname.startsWith(
-                        `/${RegisteredAppPaths.Vesting}`,
-                      ) ? (
+                    location.pathname.startsWith(
+                      `/${RegisteredAppPaths.Vesting}`,
+                    ) ? (
                       <>
-                        <Suspense
-                          fallback={renderSpinner()}
-                        >
+                        <Suspense fallback={renderSpinner()}>
                           <VestingComponent
                             appSocialLinks={selectedApp.socials}
                           />
@@ -5964,27 +5769,27 @@ export const HomeView = () => {
                     {location.pathname.startsWith('/programs/') ? (
                       <div className="safe-details-component scroll-wrapper vertical-scroll">
                         {selectedProgram ? (
-                          <Suspense
-                            fallback={renderSpinner()}
-                          >
-                            <ProgramDetailsComponent programSelected={selectedProgram} />
+                          <Suspense fallback={renderSpinner()}>
+                            <ProgramDetailsComponent
+                              programSelected={selectedProgram}
+                            />
                           </Suspense>
-                        ) : renderSpinner()}
+                        ) : (
+                          renderSpinner()
+                        )}
                       </div>
                     ) : null}
 
                     {selectedCategory === 'account-summary' &&
-                      location.pathname === '/my-account' ? (
+                    location.pathname === '/my-account' ? (
                       <>
-                        <Suspense
-                          fallback={renderSpinner()}
-                        >
+                        <Suspense fallback={renderSpinner()}>
                           <PersonalAccountSummary accountBalance={netWorth} />
                         </Suspense>
                       </>
                     ) : null}
 
-                    {canShowAssetDetails() ? (
+                    {location.pathname.startsWith('/assets') ? (
                       <>
                         {/* Refresh cta */}
                         <div className="float-top-right mr-1 mt-1">
@@ -6019,14 +5824,15 @@ export const HomeView = () => {
                               isMultisigContext &&
                               selectedMultisig &&
                               (multisigSolBalance !== undefined &&
-                                multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED ? (
+                              multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED ? (
                                 <Row gutter={[8, 8]}>
                                   <Col
                                     span={24}
-                                    className={`alert-info-message pr-2 ${selectedMultisig
-                                      ? 'simplelink'
-                                      : 'disable-pointer'
-                                      }`}
+                                    className={`alert-info-message pr-2 ${
+                                      selectedMultisig
+                                        ? 'simplelink'
+                                        : 'disable-pointer'
+                                    }`}
                                     onClick={showSolBalanceModal}
                                   >
                                     <Alert
@@ -6038,8 +5844,9 @@ export const HomeView = () => {
                                 </Row>
                               ) : null)}
                             <div
-                              className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''
-                                }`}
+                              className={`bottom ${
+                                !hasItemsToRender() ? 'h-100 flex-column' : ''
+                              }`}
                             >
                               {/* Activity table heading */}
                               {hasItemsToRender() && (
@@ -6071,7 +5878,7 @@ export const HomeView = () => {
                           </div>
                         )}
                       </>
-                    ) : canShowNftDetails() && selectedNft ? (
+                    ) : location.pathname.startsWith('/nfts') && selectedNft ? (
                       <NftDetails selectedNft={selectedNft} />
                     ) : null}
                   </div>
