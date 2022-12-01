@@ -3,6 +3,7 @@ import { SocialNetwork } from 'models/enums';
 export type AccountsPageCategory =
   | 'account-summary'
   | 'assets'
+  | 'nfts'
   | 'apps'
   | 'other-assets'
   | undefined;
