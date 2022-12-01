@@ -239,13 +239,24 @@ const PaymentStreamingView = (props: {
           softReloadStreams();
           break;
         case OperationType.StreamClose:
+          logEventHandling(item);
+          if (item.extras && item.extras.multisigAuthority) {
+            refreshMultisigs();
+            notifyMultisigActionFollowup(item);
+          } else {
+            onBackButtonClicked();
+          }
+          setTimeout(() => {
+            hardReloadStreams();
+          }, 20);
+          break;
         case OperationType.TreasuryClose:
           logEventHandling(item);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing`;
+            const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
             navigate(url);
           }
           setTimeout(() => {
@@ -269,7 +280,7 @@ const PaymentStreamingView = (props: {
           break;
       }
     }
-  }, [logEventHandling, navigate, recordTxConfirmation, refreshMultisigs]);
+  }, [logEventHandling, navigate, onBackButtonClicked, recordTxConfirmation, refreshMultisigs]);
 
 
   /////////////////////
@@ -537,7 +548,7 @@ const PaymentStreamingView = (props: {
         />
       );
     } else if (
-      pathParamTreasuryId &&
+      streamingItemId &&
       pathParamStreamingTab === 'streaming-accounts' &&
       treasuryDetail &&
       treasuryDetail.id === pathParamTreasuryId
