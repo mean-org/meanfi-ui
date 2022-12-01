@@ -2318,11 +2318,11 @@ export const HomeView = () => {
 
   const onExecuteCloseAssetTx = useCallback(
     async (data: any) => {
-      let transaction: Transaction;
+      let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
       let multisigAuth = '';
-      const transactionLog: any[] = [];
+      let transactionLog: any[] = [];
 
       resetTransactionStatus();
       setTransactionCancelled(false);
@@ -2384,7 +2384,7 @@ export const HomeView = () => {
             ),
             result: 'Cannot start transaction! Wallet not found!',
           });
-          customLogger.logError('Delete Vault transaction failed', {
+          customLogger.logError('Close Token Account transaction failed', {
             transcript: transactionLog,
           });
           return false;
@@ -2483,7 +2483,7 @@ export const HomeView = () => {
               ),
               result: `${error}`,
             });
-            customLogger.logError('Delete Vault transaction failed', {
+            customLogger.logError('Close Token Account transaction failed', {
               transcript: transactionLog,
             });
             return false;
@@ -2492,105 +2492,66 @@ export const HomeView = () => {
         return result;
       };
 
-      const sendTx = async (): Promise<boolean> => {
-        if (connection && wallet && wallet.publicKey && transaction) {
-          const {
-            context: { slot: minContextSlot },
-            value: { blockhash },
-          } = await connection.getLatestBlockhashAndContext();
-
-          transaction.feePayer = wallet.publicKey;
-          transaction.recentBlockhash = blockhash;
-
-          return wallet
-            .sendTransaction(transaction, connection, { minContextSlot })
-            .then(sig => {
-              consoleOut('sendEncodedTransaction returned a signature:', sig);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransactionSuccess,
-                currentOperation: TransactionStatus.ConfirmTransaction,
-              });
-              signature = sig;
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionSuccess,
-                ),
-                result: `signature: ${signature}`,
-              });
-              return true;
-            })
-            .catch(error => {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransaction,
-                currentOperation: TransactionStatus.SendTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionFailure,
-                ),
-                result: { error, encodedTx },
-              });
-              customLogger.logError('Delete Vault transaction failed', {
-                transcript: transactionLog,
-              });
-              return false;
-            });
-        } else {
-          console.error('Cannot send transaction! Wallet not found!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransaction,
-            currentOperation: TransactionStatus.WalletNotFound,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.WalletNotFound,
-            ),
-            result: 'Cannot send transaction! Wallet not found!',
-          });
-          customLogger.logError('Delete Vault transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        }
-      };
-
-      if (wallet && data) {
+      if (wallet && publicKey && data) {
         const created = await createTx();
         consoleOut('created:', created);
         if (created && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
+          const sign = await signTx('Close Token Account', wallet, publicKey, transaction);
+          if (sign.encodedTransaction) {
+            encodedTx = sign.encodedTransaction;
+            transactionLog = transactionLog.concat(sign.log);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
-            enqueueTransactionConfirmation({
-              signature,
-              operationType: OperationType.DeleteAsset,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: 'Deleting asset',
-              completedTitle: 'Transaction confirmed',
-              completedMessage: 'Asset successfully deleted',
-              completedMessageTimeout: isMultisigContext ? 8 : 5,
-              extras: {
-                multisigAuthority: multisigAuth,
-              },
-            });
-            setIsDeleteVaultModalVisible(false);
+            const sent = await sendTx('Close Token Account', connection, encodedTx);
+            consoleOut('sent:', sent);
+            if (sent.signature && !transactionCancelled) {
+              signature = sent.signature;
+              consoleOut('Send Tx to confirmation queue:', signature);
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.DeleteAsset,
+                finality: 'confirmed',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: 'Closing Token Account',
+                completedTitle: 'Transaction confirmed',
+                completedMessage: 'Token Account successfully closed',
+                completedMessageTimeout: isMultisigContext ? 8 : 5,
+                extras: {
+                  multisigAuthority: multisigAuth,
+                },
+              });
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished,
+              });
+              setIsDeleteVaultModalVisible(false);
+            } else {
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.SendTransactionFailure,
+              });
+              openNotification({
+                title: t('notifications.error-title'),
+                description: t('notifications.error-sending-transaction'),
+                type: 'error',
+              });
+            }
+            setIsBusy(false);
           } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionFailure,
+            });
             openNotification({
               title: t('notifications.error-title'),
               description: t('notifications.error-sending-transaction'),
               type: 'error',
             });
+            setIsBusy(false);
           }
-          resetTransactionStatus();
-          setIsBusy(false);
         } else {
           setIsBusy(false);
         }
@@ -3808,12 +3769,6 @@ export const HomeView = () => {
           'green',
         );
       } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'blue');
-        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
-        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
-        setCanSubscribe(true);
         if (streamDetail) {
           setStreamDetail(undefined);
         }
@@ -3824,10 +3779,7 @@ export const HomeView = () => {
     connected,
     streamDetail,
     previousWalletConnectState,
-    setStreamsSummary,
     setStreamDetail,
-    onTxConfirmed,
-    onTxTimedout,
   ]);
 
   // Get Multisig Apps
