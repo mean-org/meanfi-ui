@@ -1311,10 +1311,10 @@ export const MoneyStreamsInfoView = (props: {
   const onExecuteCreateTreasuryTx = async (
     createOptions: TreasuryCreateOptions,
   ) => {
-    let transaction: Transaction;
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
@@ -1369,14 +1369,6 @@ export const MoneyStreamsInfoView = (props: {
         (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
       );
 
-      // Add a pre-instruction to create the treasurer ATA if it doesn't exist
-      // const createTreasurerAtaIx = await getCreateAtaInstructionIfNotExists(
-      //   connection,
-      //   multisig.authority,
-      //   treasuryAssociatedTokenMint,
-      //   publicKey);
-      // const preInstructions = createTreasurerAtaIx ? [createTreasurerAtaIx] : undefined;
-
       const tx = await multisigClient.createTransaction(
         publicKey,
         data.title === '' ? 'Create streaming account' : data.title,
@@ -1387,7 +1379,6 @@ export const MoneyStreamsInfoView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        // preInstructions
       );
 
       return tx;
@@ -1399,7 +1390,7 @@ export const MoneyStreamsInfoView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!',
         });
-        customLogger.logError('Create streaming account transaction failed', {
+        customLogger.logError('Create Streaming Account transaction failed', {
           transcript: transactionLog,
         });
         return false;
@@ -1472,14 +1463,14 @@ export const MoneyStreamsInfoView = (props: {
             NATIVE_SOL_MINT.toBase58(),
           )})`,
         });
-        customLogger.logWarning('Create streaming account transaction failed', {
+        customLogger.logWarning('Create Streaming Account transaction failed', {
           transcript: transactionLog,
         });
         return false;
       }
 
       consoleOut(
-        'Starting Create streaming account using MSP V2...',
+        'Starting Create Streaming Account using MSP V2...',
         '',
         'blue',
       );
@@ -1515,7 +1506,7 @@ export const MoneyStreamsInfoView = (props: {
             ),
             result: `${error}`,
           });
-          customLogger.logError('Create streaming account transaction failed', {
+          customLogger.logError('Create Streaming Account transaction failed', {
             transcript: transactionLog,
           });
           return false;
@@ -1524,104 +1515,67 @@ export const MoneyStreamsInfoView = (props: {
       return result;
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
+    if (wallet && publicKey) {
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created && !transactionCancelled) {
+        const sign = await signTx('Create Streaming Account', wallet, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
+          });
+          const sent = await sendTx('Create Streaming Account', connection, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature && !transactionCancelled) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            const multisig =
+              createOptions.multisigId && selectedMultisig
+                ? selectedMultisig.authority.toBase58()
+                : '';
+            enqueueTransactionConfirmation({
+              signature,
+              operationType: OperationType.TreasuryCreate,
+              finality: 'finalized',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Create Streaming Account: ${createOptions.treasuryName}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Successfully streaming account creation: ${createOptions.treasuryName}`,
+              extras: {
+                multisigAuthority: multisig,
+              },
             });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
+            setIsCreateTreasuryModalVisibility(false);
+            !multisig && onTreasuryCreated(createOptions);
+            resetTransactionStatus();
+          } else {
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
+              lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.SendTransactionFailure,
             });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: 'error',
             });
-            customLogger.logError('Create Treasury transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Create streaming account transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    if (wallet) {
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          const multisig =
-            createOptions.multisigId && selectedMultisig
-              ? selectedMultisig.authority.toBase58()
-              : '';
-          enqueueTransactionConfirmation({
-            signature,
-            operationType: OperationType.TreasuryCreate,
-            finality: 'finalized',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: `Create streaming account: ${createOptions.treasuryName}`,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: `Successfully streaming account creation: ${createOptions.treasuryName}`,
-            extras: {
-              multisigAuthority: multisig,
-            },
-          });
-
-          setIsCreateTreasuryModalVisibility(false);
-          !multisig && onTreasuryCreated(createOptions);
+          }
+          setIsBusy(false);
         } else {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
+          });
           openNotification({
             title: t('notifications.error-title'),
             description: t('notifications.error-sending-transaction'),
             type: 'error',
           });
+          setIsBusy(false);
         }
-        resetTransactionStatus();
-        setIsBusy(false);
       } else {
         setIsBusy(false);
       }
