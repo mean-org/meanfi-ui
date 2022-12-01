@@ -50,6 +50,7 @@ import {
   MintLayout,
   Token,
   TOKEN_PROGRAM_ID,
+  u64
 } from '@solana/spl-token';
 import {
   Connection,
@@ -159,6 +160,8 @@ import {
   getSdkValue,
   getTxIxResume,
   shortenAddress,
+  toTokenAmount,
+  toTokenAmountBn,
   toUiAmount,
 } from 'middleware/utils';
 import {
@@ -1750,13 +1753,15 @@ export const HomeView = () => {
             toAddress = toAccountATA;
           }
 
+          const tokenAmount = toTokenAmount(data.amount, mint.decimals, true) as string;
+
           transferIx = Token.createTransferInstruction(
             TOKEN_PROGRAM_ID,
             fromAddress,
             toAddress,
             selectedMultisig.authority,
             [],
-            new BN(data.amount * 10 ** mint.decimals).toNumber(),
+            new u64(tokenAmount),
           );
         }
 
