@@ -105,7 +105,6 @@ export const RepeatingPayment = (props: {
     isVerifiedRecipient,
     paymentRateFrequency,
     streamV2ProgramAddress,
-    previousWalletConnectState,
     setPaymentRateFrequency,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
@@ -455,32 +454,6 @@ export const RepeatingPayment = (props: {
     }
   }, [connection, recipientAddress]);
 
-  // Hook on wallet connect/disconnect
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        setSelectedTokenBalance(0);
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'green');
-        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
-        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
-        setCanSubscribe(true);
-      }
-    } else if (!connected) {
-      setSelectedTokenBalance(0);
-    }
-  }, [
-    connected,
-    publicKey,
-    previousWalletConnectState,
-    setSelectedTokenBalance,
-    onTxConfirmed,
-    onTxTimedout,
-  ]);
-
   // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
@@ -539,12 +512,12 @@ export const RepeatingPayment = (props: {
 
   // Unsubscribe from events
   useEffect(() => {
-    // Do unmounting stuff here
     return () => {
+      consoleOut('Stop event subscriptions -> RepeatingPayment', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

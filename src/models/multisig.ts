@@ -170,18 +170,19 @@ export type CreateMintPayload = {
   decimals: number;
 };
 
-export type SetProgramAuthPayload = {
+export interface BaseProposal {
   proposalTitle: string;
+}
+
+export interface SetProgramAuthPayload extends BaseProposal {
   programAddress: string;
   programDataAddress: string;
   newAuthAddress: string;
-};
+}
 
-export type SetMintAuthPayload = {
-  multisig: string;
-  mint: string;
-  newAuthority: number;
-};
+export interface SetAssetAuthPayload extends BaseProposal {
+  selectedAuthority: string;
+}
 
 export enum MULTISIG_ACTIONS {
   createMultisig = 1,

@@ -231,10 +231,10 @@ export const UnwrapSolModal = (props: {
 
   // Unsubscribe from events
   useEffect(() => {
-    // Do unmounting stuff here
     return () => {
+      consoleOut('Stop event subscriptions -> UnwrapSolModal', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmSuccess, onUnwrapConfirmed);
-      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       setPageInitialized(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

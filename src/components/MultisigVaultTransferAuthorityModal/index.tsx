@@ -22,6 +22,7 @@ import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { UserTokenAccount } from '../../models/accounts';
 import { InputMean } from '../InputMean';
+import { SetAssetAuthPayload } from 'models/multisig';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -50,10 +51,11 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   ] = useState(false);
 
   const onAcceptModal = () => {
-    props.handleOk({
-      title: proposalTitle,
+    const params: SetAssetAuthPayload = {
+      proposalTitle,
       selectedAuthority: selectedAuthority,
-    });
+    };
+    props.handleOk(params);
   };
 
   const onCloseModal = () => {
@@ -190,12 +192,12 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             <div className="title text-truncate">{item.label}</div>
           ) : (
             <div className="title text-truncate">
-              {shortenAddress(item.id.toBase58(), 8)}
+              {shortenAddress(item.authority.toBase58(), 8)}
             </div>
           )}
           {
             <div className="subtitle text-truncate">
-              {shortenAddress(item.id.toBase58(), 8)}
+              {shortenAddress(item.authority.toBase58(), 8)}
             </div>
           }
         </div>

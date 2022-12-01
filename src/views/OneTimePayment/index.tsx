@@ -92,7 +92,6 @@ export const OneTimePayment = (props: {
     transactionStatus,
     isVerifiedRecipient,
     streamV2ProgramAddress,
-    previousWalletConnectState,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
@@ -325,32 +324,6 @@ export const OneTimePayment = (props: {
     }
   }, [connection, recipientAddress]);
 
-  // Hook on wallet connect/disconnect
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'green');
-        setSelectedTokenBalance(0);
-        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
-        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
-        setCanSubscribe(true);
-      }
-    } else if (!connected) {
-      setSelectedTokenBalance(0);
-    }
-  }, [
-    connected,
-    publicKey,
-    previousWalletConnectState,
-    setSelectedTokenBalance,
-    onTxConfirmed,
-    onTxTimedout,
-  ]);
-
   // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
@@ -400,12 +373,12 @@ export const OneTimePayment = (props: {
 
   // Unsubscribe from events
   useEffect(() => {
-    // Do unmounting stuff here
     return () => {
+      consoleOut('Stop event subscriptions -> OneTimePayment', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -291,10 +291,10 @@ export const StakingRewardsView = () => {
 
   // Unsubscribe from events
   useEffect(() => {
-    // Do unmounting stuff here
     return () => {
+      consoleOut('Stop event subscriptions -> StakingRewardsView', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmSuccess, onDepositTxConfirmed);
-      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       setCanSubscribe(true);
       setPageInitialized(false);
     };
