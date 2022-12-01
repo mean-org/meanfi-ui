@@ -161,11 +161,9 @@ import {
   getTxIxResume,
   shortenAddress,
   toTokenAmount,
-  toTokenAmountBn,
   toUiAmount,
 } from 'middleware/utils';
 import {
-  AccountsPageCategory,
   AccountTokenParsedInfo,
   AssetCta,
   AssetGroups,
@@ -4224,17 +4222,18 @@ export const HomeView = () => {
   useEffect(() => {
     if (canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> HomeView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);

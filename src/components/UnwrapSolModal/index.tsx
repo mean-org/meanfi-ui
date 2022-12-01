@@ -213,11 +213,12 @@ export const UnwrapSolModal = (props: {
   // Setup event listeners
   useEffect(() => {
     if (connection && publicKey && !pageInitialized) {
+      consoleOut('Setup event subscriptions -> UnwrapSolModal', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onUnwrapConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onUnwrapConfirmed',
-        'blue',
+        'brown',
       );
     }
   }, [publicKey, connection, pageInitialized, onUnwrapConfirmed]);

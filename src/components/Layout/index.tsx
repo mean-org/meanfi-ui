@@ -258,7 +258,7 @@ export const AppLayout = React.memo((props: any) => {
   useEffect(() => {
     if (previousChain !== connectionConfig.cluster) {
       setChain(connectionConfig.cluster);
-      consoleOut('Cluster:', connectionConfig.cluster, 'brown');
+      consoleOut('Cluster:', connectionConfig.cluster, 'blue');
       setNeedRefresh(true);
     }
   }, [previousChain, connectionConfig]);

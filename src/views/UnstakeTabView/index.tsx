@@ -199,7 +199,7 @@ export const UnstakeTabView = (props: {
           quote: parseFloat(unstakeMeanValue || '0'),
           valueInUsd: sMeanToMeanRate * parseFloat(unstakeMeanValue || '0'),
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.UnstakeMeanFormButton,
           segmentData,
@@ -592,17 +592,18 @@ export const UnstakeTabView = (props: {
   useEffect(() => {
     if (canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> UnstakeTabView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);

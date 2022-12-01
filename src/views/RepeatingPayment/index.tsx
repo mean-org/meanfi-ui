@@ -495,17 +495,18 @@ export const RepeatingPayment = (props: {
   useEffect(() => {
     if (publicKey && canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> RepeatingPayment', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     }
   }, [publicKey, canSubscribe, onTxConfirmed, onTxTimedout]);
@@ -792,7 +793,7 @@ export const RepeatingPayment = (props: {
           feePayedByTreasurer: data.feePayedByTreasurer,
           valueInUsd: price * parseFloat(fromCoinAmount),
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.TransferRecurringFormButton,
           segmentData,

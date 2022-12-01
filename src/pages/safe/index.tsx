@@ -1828,23 +1828,23 @@ const SafeView = (props: {
   );
 
   const refreshSelectedProposal = useCallback(() => {
-    consoleOut('running refreshSelectedProposal...', '', 'brown');
+    consoleOut('running refreshSelectedProposal...', '', 'blue');
     if (
       publicKey &&
       multisigClient &&
       selectedMultisigRef.current &&
       selectedProposalRef.current
     ) {
-      consoleOut('fetching proposal details...', '', 'brown');
+      consoleOut('fetching proposal details...', '', 'blue');
       consoleOut(
         'selectedMultisigRef:',
         selectedMultisigRef.current.id.toBase58(),
-        'brown',
+        'blue',
       );
       consoleOut(
         'selectedProposalRef:',
         selectedProposalRef.current.id.toBase58(),
-        'brown',
+        'blue',
       );
       setLoadingProposalDetails(true);
       multisigClient
@@ -1854,7 +1854,7 @@ const SafeView = (props: {
           publicKey,
         )
         .then((tx: any) => {
-          consoleOut('proposal refreshed!', tx, 'brown');
+          consoleOut('proposal refreshed!', tx, 'blue');
           setSelectedProposal(tx);
         })
         .catch((err: any) => console.error(err))
@@ -2160,17 +2160,18 @@ const SafeView = (props: {
 
     const timeout = setTimeout(() => {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> SafeView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     });
 

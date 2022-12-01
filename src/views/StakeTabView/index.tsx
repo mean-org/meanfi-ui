@@ -220,7 +220,7 @@ export const StakeTabView = (props: {
           quote: stakeQuote,
           valueInUsd: price * uiAmount,
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.StakeMeanFormButton,
           segmentData,
@@ -553,17 +553,18 @@ export const StakeTabView = (props: {
   useEffect(() => {
     if (canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> StakeTabView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);

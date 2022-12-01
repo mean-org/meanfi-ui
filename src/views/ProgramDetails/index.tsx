@@ -1352,17 +1352,18 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   useEffect(() => {
     if (canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> ProgramDetailsView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
@@ -1370,7 +1371,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   // Unsubscribe from events
   useEffect(() => {
     return () => {
-      consoleOut('Stop event subscriptions -> ProgramDetails', '', 'brown');
+      consoleOut('Stop event subscriptions -> ProgramDetailsView', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);

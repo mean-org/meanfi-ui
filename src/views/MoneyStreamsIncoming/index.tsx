@@ -422,7 +422,7 @@ export const MoneyStreamsIncomingView = (props: {
           beneficiary: data.beneficiary,
           newBeneficiary: data.newBeneficiary,
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.StreamTransferOwnershipFormButton,
           segmentData,
@@ -748,7 +748,7 @@ export const MoneyStreamsIncomingView = (props: {
           beneficiary: beneficiary.toBase58(),
           amount: amount,
         };
-        consoleOut('withdraw params:', data, 'brown');
+        consoleOut('withdraw params:', data, 'blue');
 
         // Report event to Segment analytics
         const segmentData: SegmentStreamWithdrawData = {
@@ -761,7 +761,7 @@ export const MoneyStreamsIncomingView = (props: {
           sentAmount: withdrawData.receiveAmount,
           valueInUsd: parseFloat(valueInUsd.toFixed(2)),
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.StreamWithdrawalStartFormButton,
           segmentData,
@@ -969,7 +969,7 @@ export const MoneyStreamsIncomingView = (props: {
         beneficiary: beneficiary.toBase58(),
         amount: amount,
       };
-      consoleOut('withdraw params:', data, 'brown');
+      consoleOut('withdraw params:', data, 'blue');
 
       // Report event to Segment analytics
       const segmentData: SegmentStreamWithdrawData = {
@@ -982,7 +982,7 @@ export const MoneyStreamsIncomingView = (props: {
         sentAmount: withdrawData.receiveAmount,
         valueInUsd: parseFloat(valueInUsd.toFixed(2)),
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.StreamWithdrawalStartFormButton,
         segmentData,

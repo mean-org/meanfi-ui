@@ -739,7 +739,7 @@ export const MoneyStreamsOutgoingView = (props: {
           amount,
           valueInUsd: price * amount,
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.StreamTopupApproveFormButton,
           segmentData,
@@ -908,7 +908,7 @@ export const MoneyStreamsOutgoingView = (props: {
         amount: addFundsData.amount,
         valueInUsd: price * parseFloat(addFundsData.amount as string),
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.StreamTopupApproveFormButton,
         segmentData,
@@ -2173,7 +2173,7 @@ export const MoneyStreamsOutgoingView = (props: {
             (closeTreasuryData.vestedReturns +
               closeTreasuryData.unvestedReturns),
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.StreamCloseFormButton,
           segmentData,
@@ -2393,7 +2393,7 @@ export const MoneyStreamsOutgoingView = (props: {
             (closeTreasuryData.vestedReturns +
               closeTreasuryData.unvestedReturns),
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.StreamCloseFormButton,
           segmentData,

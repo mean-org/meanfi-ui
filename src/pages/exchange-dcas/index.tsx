@@ -1017,7 +1017,7 @@ export const ExchangeDcasView = () => {
       if (!loadingRecurringBuys && ddcaClient) {
         setLoadingRecurringBuys(true);
 
-        consoleOut('Calling ddcaClient.ListDdcas...', '', 'brown');
+        consoleOut('Calling ddcaClient.ListDdcas...', '', 'blue');
         consoleOut('ddcaClient:', ddcaClient.toString(), 'green');
 
         ddcaClient
@@ -1053,7 +1053,7 @@ export const ExchangeDcasView = () => {
               if (item) {
                 setSelectedDdca(item);
                 setRecentlyCreatedVault('');
-                consoleOut('Calling ddcaClient.getDdca...', '', 'brown');
+                consoleOut('Calling ddcaClient.getDdca...', '', 'blue');
                 reloadDdcaDetail(item.ddcaAccountAddress);
               }
             } else {

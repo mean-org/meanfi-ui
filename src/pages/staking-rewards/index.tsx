@@ -273,11 +273,12 @@ export const StakingRewardsView = () => {
   useEffect(() => {
     if (pageInitialized && canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> StakingRewardsView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onDepositTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onDepositTxConfirmed',
-        'blue',
+        'brown',
       );
     }
   }, [canSubscribe, pageInitialized, onDepositTxConfirmed]);

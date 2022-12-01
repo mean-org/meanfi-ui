@@ -1268,7 +1268,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           startUtc: getReadableDate(createOptions.startDate.toUTCString()),
           type: TreasuryType[createOptions.vestingContractType],
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.StreamCreateFormButton,
           segmentData,
@@ -1675,7 +1675,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         ),
         type: TreasuryType[selectedVestingContract.treasuryType],
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.VestingContractCloseFormButton,
         segmentData,
@@ -2076,7 +2076,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         amount: parseFloat(params.amount),
         valueInUsd: price * parseFloat(params.amount),
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.StreamTopupApproveFormButton,
         segmentData,
@@ -2509,7 +2509,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         feePayedByTreasurer: params.feePayedByTreasurer,
         valueInUsd: params.tokenAmount.muln(price).toString(),
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.StreamCreateFormButton,
         segmentData,
@@ -2836,7 +2836,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         amount: parseFloat(params.amount),
         valueInUsd: parseFloat(params.amount) * price,
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.VestingContractWithdrawFundsFormButton,
         segmentData,
@@ -3101,7 +3101,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         treasurer: data.treasurer,
         treasury: data.treasury,
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.RefreshAccountBalanceFormButton,
         segmentData,
@@ -4124,17 +4124,18 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   useEffect(() => {
     if (canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> VestingView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);

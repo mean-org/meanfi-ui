@@ -407,7 +407,7 @@ const PaymentStreamingView = (props: {
   useEffect(() => {
     if (canSubscribe) {
       setCanSubscribe(false);
-      consoleOut('Subscribe to events -> PaymentStreamingView', '', 'brown');
+      consoleOut('Setup event subscriptions -> PaymentStreamingView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',

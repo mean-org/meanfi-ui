@@ -628,7 +628,7 @@ export const VestingContractStreamList = (props: {
         feeAmount: closeStreamOptions.feeAmount,
         valueInUsd: usdValue,
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.StreamCloseFormButton,
         segmentData,
