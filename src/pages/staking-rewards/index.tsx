@@ -273,11 +273,12 @@ export const StakingRewardsView = () => {
   useEffect(() => {
     if (pageInitialized && canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> StakingRewardsView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onDepositTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onDepositTxConfirmed',
-        'blue',
+        'brown',
       );
     }
   }, [canSubscribe, pageInitialized, onDepositTxConfirmed]);
@@ -291,10 +292,10 @@ export const StakingRewardsView = () => {
 
   // Unsubscribe from events
   useEffect(() => {
-    // Do unmounting stuff here
     return () => {
+      consoleOut('Stop event subscriptions -> StakingRewardsView', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmSuccess, onDepositTxConfirmed);
-      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       setCanSubscribe(true);
       setPageInitialized(false);
     };
@@ -463,7 +464,7 @@ export const StakingRewardsView = () => {
             meanToken.decimals,
           )} ${meanToken.symbol} into the staking vault`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.Deposit,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',

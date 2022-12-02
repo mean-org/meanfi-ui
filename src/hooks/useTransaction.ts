@@ -294,7 +294,7 @@ const useTransaction = () => {
             const signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',

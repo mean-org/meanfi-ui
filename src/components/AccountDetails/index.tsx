@@ -32,8 +32,8 @@ export const AccountDetails = () => {
   const onDisconnectWallet = useCallback(() => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
-    disconnect();
     resetWalletProvider();
+    disconnect();
     setSelectedAccount(emptyAccount);
   }, [disconnect, resetWalletProvider, setSelectedAccount]);
 

@@ -12,6 +12,7 @@ import { segmentAnalytics } from 'App';
 import BN from 'bn.js';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
+import { openNotification } from 'components/Notifications';
 import { StepSelector } from 'components/StepSelector';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
@@ -38,6 +39,7 @@ import {
   AppUsageEvent,
   SegmentStreamRPTransferData,
 } from 'middleware/segment-service';
+import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   disabledDate,
@@ -90,7 +92,7 @@ export const RepeatingPayment = (props: {
   } = props;
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
-  const { connected, publicKey, wallet, signTransaction } = useWallet();
+  const { connected, publicKey, wallet } = useWallet();
   const {
     splTokenList,
     loadingPrices,
@@ -103,7 +105,6 @@ export const RepeatingPayment = (props: {
     isVerifiedRecipient,
     paymentRateFrequency,
     streamV2ProgramAddress,
-    previousWalletConnectState,
     setPaymentRateFrequency,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
@@ -453,32 +454,6 @@ export const RepeatingPayment = (props: {
     }
   }, [connection, recipientAddress]);
 
-  // Hook on wallet connect/disconnect
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        setSelectedTokenBalance(0);
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'green');
-        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
-        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
-        setCanSubscribe(true);
-      }
-    } else if (!connected) {
-      setSelectedTokenBalance(0);
-    }
-  }, [
-    connected,
-    publicKey,
-    previousWalletConnectState,
-    setSelectedTokenBalance,
-    onTxConfirmed,
-    onTxTimedout,
-  ]);
-
   // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
@@ -520,29 +495,30 @@ export const RepeatingPayment = (props: {
   useEffect(() => {
     if (publicKey && canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> RepeatingPayment', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     }
   }, [publicKey, canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
   useEffect(() => {
-    // Do unmounting stuff here
     return () => {
+      consoleOut('Stop event subscriptions -> RepeatingPayment', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -734,12 +710,11 @@ export const RepeatingPayment = (props: {
 
   // Main action
 
-  const onTransactionStart = useCallback(async () => {
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
+  const onStartTransaction = useCallback(async () => {
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -818,7 +793,7 @@ export const RepeatingPayment = (props: {
           feePayedByTreasurer: data.feePayedByTreasurer,
           valueInUsd: price * parseFloat(fromCoinAmount),
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.TransferRecurringFormButton,
           segmentData,
@@ -910,143 +885,34 @@ export const RepeatingPayment = (props: {
       }
     };
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet && publicKey && signTransaction && transaction) {
-        consoleOut('Signing transaction...');
-        return signTransaction(transaction)
-          .then(async (signed: Transaction) => {
-            consoleOut(
-              'signTransaction returned a signed transaction:',
-              signed,
-            );
-            signedTransaction = signed;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SignTransactionSuccess,
-              ),
-              result: { signer: publicKey.toBase58() },
-            });
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction,
-            });
-            return true;
-          })
-          .catch((error: any) => {
-            console.error('Signing transaction failed!');
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SignTransactionFailure,
-              ),
-              result: { signer: `${publicKey.toBase58()}`, error: `${error}` },
-            });
-            customLogger.logWarning('Repeating Payment transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!',
-        });
-        customLogger.logError('Repeating Payment transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    const sendTx = async (): Promise<boolean> => {
-      if (
-        connection &&
-        wallet &&
-        wallet.publicKey &&
-        transaction &&
-        encodedTx
-      ) {
-        return connection
-          .sendEncodedTransaction(encodedTx)
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SendTransactionSuccess,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Repeating Payment transaction failed', {
-              transcript: transactionLog,
-            });
-            segmentAnalytics.recordEvent(
-              AppUsageEvent.TransferRecurringFailed,
-              { transcript: transactionLog },
-            );
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Repeating Payment transaction failed', {
-          transcript: transactionLog,
-        });
-        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    if (wallet) {
+    if (wallet && publicKey) {
       const created = await createTx();
       consoleOut('created:', created);
-      if (created && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('sign:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
+      if (created && !transactionCancelled && transaction) {
+        const sign = await signTx(
+          'Recurring Payment',
+          wallet,
+          publicKey,
+          transaction as Transaction,
+        );
+        if (sign.encodedTransaction && !transactionCancelled) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
+          });
+          const sent = await sendTx(
+            'Recurring Payment',
+            connection,
+            encodedTx,
+          );
           consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
+          if (sent.signature && !transactionCancelled) {
+            signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.StreamCreate,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -1065,6 +931,24 @@ export const RepeatingPayment = (props: {
             setIsVerifiedRecipient(false);
             transferCompleted();
           } else {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: 'error',
+            });
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionFailure,
+            });
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: 'error',
+            });
             setIsBusy(false);
           }
         } else {
@@ -1097,9 +981,9 @@ export const RepeatingPayment = (props: {
     getPaymentRateAmount,
     setTransactionStatus,
     resetContractValues,
-    signTransaction,
     getTokenPrice,
     getFeeAmount,
+    t
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {
@@ -1527,7 +1411,7 @@ export const RepeatingPayment = (props: {
           type="primary"
           shape="round"
           size="large"
-          onClick={onTransactionStart}
+          onClick={onStartTransaction}
           disabled={
             !connected ||
             !isMemoValid() ||

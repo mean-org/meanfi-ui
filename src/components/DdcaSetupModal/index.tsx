@@ -377,7 +377,7 @@ export const DdcaSetupModal = (props: {
           totalSwaps: recurrencePeriod + 1,
         };
 
-        consoleOut('ddca params:', payload, 'brown');
+        consoleOut('ddca params:', payload, 'blue');
 
         // Log input data
         transactionLog.push({
@@ -615,7 +615,7 @@ export const DdcaSetupModal = (props: {
           hlaInfo: hlaInfo,
         };
 
-        consoleOut('ddca swap params:', swapPayload, 'brown');
+        consoleOut('ddca swap params:', swapPayload, 'blue');
 
         // Log input data
         transactionLog.push({

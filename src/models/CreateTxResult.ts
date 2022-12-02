@@ -1,7 +1,7 @@
-import { Transaction } from '@solana/web3.js';
+import { Transaction, VersionedTransaction } from '@solana/web3.js';
 
 export interface CreateTxResult {
-  transaction: Transaction | null;
+  transaction: Transaction | VersionedTransaction | null;
   log: any[];
 }
 

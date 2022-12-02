@@ -1,13 +1,10 @@
 import { base64 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { Adapter, SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import {
-  Connection,
-  PublicKey,
-  ConfirmedTransaction,
-  TransactionSignature,
-  Transaction,
-  ParsedTransactionMeta,
+  Connection, ParsedTransactionMeta, PublicKey, Transaction, TransactionSignature, VersionedTransaction,
+  VersionedTransactionResponse
 } from '@solana/web3.js';
+import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'constants/common';
 import { customLogger } from 'index';
 import { SendTxResult, SignTxResult } from 'models/CreateTxResult';
 import { TransactionStatus } from '../models/enums';
@@ -18,7 +15,7 @@ import { getAmountFromLamports } from './utils';
 export class TransactionWithSignature {
   constructor(
     public signature: string,
-    public confirmedTransaction: ConfirmedTransaction,
+    public confirmedTransaction: VersionedTransactionResponse,
   ) {}
 }
 
@@ -33,8 +30,11 @@ export async function getTransactions(
   const transactions = new Array<TransactionWithSignature>();
   for (let i = 0; i < transSignatures.length; i++) {
     const signature = transSignatures[i].signature;
-    const confirmedTransaction = await connection.getConfirmedTransaction(
+    const confirmedTransaction = await connection.getTransaction(
       signature,
+      {
+        maxSupportedTransactionVersion: MAX_SUPPORTED_TRANSACTION_VERSION
+      }
     );
     if (confirmedTransaction) {
       const transWithSignature = new TransactionWithSignature(
@@ -165,14 +165,14 @@ export const signTx = async (
   title: string,
   wallet: Adapter,
   publicKey: PublicKey,
-  transaction: Transaction | null,
+  transaction: Transaction | VersionedTransaction | null,
 ): Promise<SignTxResult> => {
   const txLog: any[] = [];
 
   if (wallet && publicKey && transaction) {
     return (wallet as SignerWalletAdapter)
     .signTransaction(transaction)
-    .then(async (signed: Transaction) => {
+    .then(async signed => {
       consoleOut(
         'signTransaction returned a signed transaction:',
         signed,
@@ -183,10 +183,19 @@ export const signTx = async (
         ),
         result: { signer: publicKey.toBase58() },
       });
-      const encodedTx = signed.serialize().toString('base64');
-      consoleOut('encodedTx:', encodedTx, 'orange');
+
+      let base64Tx = '';
+      const isVersioned = 'version' in signed ? true : false;
+      if (isVersioned) {
+        const encodedTx = signed.serialize();
+        base64Tx = Uint8ToBase64(encodedTx);
+      } else {
+        base64Tx = signed.serialize().toString('base64');
+      }
+
+      consoleOut('encodedTx:', base64Tx, 'orange');
       return {
-        encodedTransaction: encodedTx,
+        encodedTransaction: base64Tx,
         log: txLog,
       };
     })
@@ -277,3 +286,17 @@ export const sendTx = async (
     };
   }
 };
+
+function Uint8ToBase64(u8Arr: any) {
+  const CHUNK_SIZE = 0x8000; //arbitrary number
+  let index = 0;
+  const length = u8Arr.length;
+  let result = '';
+  let slice;
+  while (index < length) {
+      slice = u8Arr.subarray(index, Math.min(index + CHUNK_SIZE, length));
+      result += String.fromCharCode.apply(null, slice);
+      index += CHUNK_SIZE;
+  }
+  return btoa(result);
+}

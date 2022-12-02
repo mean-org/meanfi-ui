@@ -360,7 +360,7 @@ export const DdcaAddFundsModal = (props: {
           swapsCount: lockedSliderValue,
         };
 
-        consoleOut('createAddFundsTx params:', payload, 'brown');
+        consoleOut('createAddFundsTx params:', payload, 'blue');
 
         // Log input data
         transactionLog.push({

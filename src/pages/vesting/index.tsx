@@ -1268,7 +1268,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           startUtc: getReadableDate(createOptions.startDate.toUTCString()),
           type: TreasuryType[createOptions.vestingContractType],
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.StreamCreateFormButton,
           segmentData,
@@ -1464,7 +1464,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
               ? `Proposal to create the vesting contract ${createOptions.vestingContractName} was submitted for Multisig approval.`
               : `Vesting contract ${createOptions.vestingContractName} created successfully`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryCreate,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -1675,7 +1675,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         ),
         type: TreasuryType[selectedVestingContract.treasuryType],
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.VestingContractCloseFormButton,
         segmentData,
@@ -1849,7 +1849,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             ? `Proposal to close the vesting contract ${selectedVestingContract.name} was submitted for Multisig approval.`
             : `Vesting contract ${selectedVestingContract.name} successfully closed`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.TreasuryClose,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -2076,7 +2076,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         amount: parseFloat(params.amount),
         valueInUsd: price * parseFloat(params.amount),
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.StreamTopupApproveFormButton,
         segmentData,
@@ -2273,7 +2273,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
                 params.associatedToken?.decimals,
               )} ${params.associatedToken?.symbol}`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.TreasuryAddFunds,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -2509,7 +2509,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         feePayedByTreasurer: params.feePayedByTreasurer,
         valueInUsd: params.tokenAmount.muln(price).toString(),
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.StreamCreateFormButton,
         segmentData,
@@ -2836,7 +2836,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         amount: parseFloat(params.amount),
         valueInUsd: parseFloat(params.amount) * price,
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.VestingContractWithdrawFundsFormButton,
         segmentData,
@@ -3020,7 +3020,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
                 selectedVestingContract.name
               }`;
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.TreasuryWithdraw,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -3101,7 +3101,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         treasurer: data.treasurer,
         treasury: data.treasury,
       };
-      consoleOut('segment data:', segmentData, 'brown');
+      consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(
         AppUsageEvent.RefreshAccountBalanceFormButton,
         segmentData,
@@ -3218,7 +3218,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.TreasuryRefreshBalance,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -4066,11 +4066,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         consoleOut('User is connecting...', '', 'green');
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
-        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
-        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
-        setCanSubscribe(true);
         // Cleanup state
         clearFormValues();
         setSelectedVestingContract(undefined);
@@ -4129,29 +4124,30 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   useEffect(() => {
     if (canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> VestingView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
   useEffect(() => {
-    // Do unmounting stuff here
     return () => {
+      consoleOut('Stop event subscriptions -> VestingView', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
       setWorkingToken(undefined);
       setSelectedToken(undefined);

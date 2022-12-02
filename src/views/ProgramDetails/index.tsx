@@ -21,7 +21,7 @@ import { MultisigSetProgramAuthModal } from 'components/MultisigSetProgramAuthMo
 import { MultisigUpgradeProgramModal } from 'components/MultisigUpgradeProgramModal';
 import { openNotification } from 'components/Notifications';
 import { TabsMean } from 'components/TabsMean';
-import { MULTISIG_ROUTE_BASE_PATH, NO_FEES } from 'constants/common';
+import { MAX_SUPPORTED_TRANSACTION_VERSION, MULTISIG_ROUTE_BASE_PATH, NO_FEES } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
@@ -647,7 +647,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                   params.programAddress,
                 )} has been upgraded`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.UpgradeProgram,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -1080,7 +1080,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                   params.programAddress,
                 )} is now non-upgradable`;
             enqueueTransactionConfirmation({
-              signature: signature,
+              signature,
               operationType: OperationType.SetMultisigAuthority,
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
@@ -1262,7 +1262,12 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     }
 
     const signatures = signaturesInfo.map(data => data.signature);
-    const txs = await connection.getParsedTransactions(signatures, { maxSupportedTransactionVersion: 0 });
+    const txs = await connection.getParsedTransactions(
+      signatures,
+      {
+        maxSupportedTransactionVersion: MAX_SUPPORTED_TRANSACTION_VERSION
+      }
+    );
 
     if (txs.length === 0) {
       return null;
@@ -1347,29 +1352,30 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   useEffect(() => {
     if (canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> ProgramDetailsView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
   useEffect(() => {
-    // Do unmounting stuff here
     return () => {
+      consoleOut('Stop event subscriptions -> ProgramDetailsView', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

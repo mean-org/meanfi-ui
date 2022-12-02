@@ -157,7 +157,7 @@ export const UnstakeTabView = (props: {
     setCanFetchUnstakeQuote(true);
   }, []);
 
-  const onTransactionStart = useCallback(async () => {
+  const onStartTransaction = useCallback(async () => {
     let transaction: Transaction;
     let signature = '';
     let encodedTx: string;
@@ -199,7 +199,7 @@ export const UnstakeTabView = (props: {
           quote: parseFloat(unstakeMeanValue || '0'),
           valueInUsd: sMeanToMeanRate * parseFloat(unstakeMeanValue || '0'),
         };
-        consoleOut('segment data:', segmentData, 'brown');
+        consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(
           AppUsageEvent.UnstakeMeanFormButton,
           segmentData,
@@ -339,7 +339,7 @@ export const UnstakeTabView = (props: {
             currentOperation: TransactionStatus.TransactionFinished,
           });
           enqueueTransactionConfirmation({
-            signature: signature,
+            signature,
             operationType: OperationType.Unstake,
             finality: 'confirmed',
             txInfoFetchStatus: 'fetching',
@@ -592,29 +592,30 @@ export const UnstakeTabView = (props: {
   useEffect(() => {
     if (canSubscribe) {
       setCanSubscribe(false);
+      consoleOut('Setup event subscriptions -> UnstakeTabView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut(
         'Subscribed to event txConfirmed with:',
         'onTxConfirmed',
-        'blue',
+        'brown',
       );
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut(
         'Subscribed to event txTimedout with:',
         'onTxTimedout',
-        'blue',
+        'brown',
       );
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
   useEffect(() => {
-    // Do unmounting stuff here
     return () => {
+      consoleOut('Stop event subscriptions -> UnstakeTabView', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+      consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+      consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -742,7 +743,7 @@ export const UnstakeTabView = (props: {
         type="primary"
         shape="round"
         size="large"
-        onClick={onTransactionStart}
+        onClick={onStartTransaction}
         disabled={isBusy || !isUnstakingFormValid()}
       >
         {isBusy && (

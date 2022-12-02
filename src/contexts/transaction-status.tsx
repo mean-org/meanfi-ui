@@ -322,7 +322,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
           const latestBlockHash = await connection.getLatestBlockhash();
           const result = await connection.confirmTransaction(
             {
-              signature: signature,
+              signature,
               blockhash: latestBlockHash.blockhash,
               lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
             },
