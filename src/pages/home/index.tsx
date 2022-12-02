@@ -398,16 +398,6 @@ export const HomeView = () => {
     [],
   );
 
-  /*
-  useEffect(() => {
-    if (!publicKey || !selectedAccount.address) return;
-
-    setTimeout(() => {
-      setIsPageLoaded(true);
-    });
-  }, [publicKey, selectedAccount.address]);
-  */
-
   const connection = useMemo(
     () =>
       new Connection(endpoint, {
