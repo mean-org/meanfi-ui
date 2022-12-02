@@ -193,6 +193,7 @@ export const signTx = async (
         base64Tx = signed.serialize().toString('base64');
       }
 
+      consoleOut('encodedTx:', base64Tx, 'orange');
       return {
         encodedTransaction: base64Tx,
         log: txLog,

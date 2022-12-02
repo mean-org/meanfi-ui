@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { TransactionFees } from '@mean-dao/msp';
-import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import { Button, Checkbox, Modal } from 'antd';
 import { InputMean } from 'components/InputMean';
 import { openNotification } from 'components/Notifications';
@@ -15,7 +15,7 @@ import { customLogger } from 'index';
 import { closeTokenAccountV0 } from 'middleware/createV0CloseTokenAccountTx';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
-import { getAmountFromLamports, getTxIxResume, getVersionedTxIxResume } from 'middleware/utils';
+import { getAmountFromLamports, getVersionedTxIxResume } from 'middleware/utils';
 import { UserTokenAccount } from 'models/accounts';
 import { CreateTxResult } from 'models/CreateTxResult';
 import { OperationType, TransactionStatus } from 'models/enums';

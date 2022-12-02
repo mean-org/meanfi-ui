@@ -8,6 +8,7 @@ import {
 } from '@mean-dao/money-streaming/lib/utils';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
+import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
   MIN_SOL_BALANCE_REQUIRED,
@@ -19,6 +20,7 @@ import { useConnection } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
+import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   delay,
@@ -131,10 +133,10 @@ export const WrapSolModal = (props: {
   }, [handleOk, isBusy, isSuccess, resetTransactionStatus]);
 
   const onStartTransaction = async () => {
-    let transaction: Transaction;
+    let transaction: Transaction | null = null;
     let signature = '';
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -231,98 +233,72 @@ export const WrapSolModal = (props: {
       }
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
+    if (wallet && publicKey && wSol) {
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created && !transactionCancelled) {
+        const sign = await signTx(
+          'Wrap SOL',
+          wallet,
+          publicKey,
+          transaction,
+        );
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
+          });
+          const sent = await sendTx(
+            'Wrap SOL',
+            connection,
+            encodedTx,
+          );
+          consoleOut('sent:', sent);
+          if (sent.signature) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature,
+              operationType: OperationType.Wrap,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Wrap ${formatThousands(
+                parseFloat(wrapAmount as string),
+                wSol.decimals,
+              )} ${wSol.symbol}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Wrapped ${formatThousands(
+                parseFloat(wrapAmount as string),
+                wSol.decimals,
+              )} ${wSol.symbol}`,
+            });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
+              currentOperation: TransactionStatus.TransactionFinished,
             });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
+            setIsBusy(false);
+            await delay(1500);
+            onTransactionFinished();
+          } else {
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
+              lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.SendTransactionFailure,
             });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: 'error',
             });
-            customLogger.logError('Wrap transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Wrap transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    if (wallet && wSol) {
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        setWrapAmount('');
-        if (sent && !transactionCancelled) {
-          enqueueTransactionConfirmation({
-            signature,
-            operationType: OperationType.Wrap,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: `Wrap ${formatThousands(
-              parseFloat(wrapAmount as string),
-              wSol.decimals,
-            )} ${wSol.symbol}`,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: `Wrapped ${formatThousands(
-              parseFloat(wrapAmount as string),
-              wSol.decimals,
-            )} ${wSol.symbol}`,
-          });
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished,
-          });
-          setIsBusy(false);
-          await delay(1500);
-          onTransactionFinished();
+            setIsBusy(false);
+          }
         } else {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
+          });
           setIsBusy(false);
         }
       } else {

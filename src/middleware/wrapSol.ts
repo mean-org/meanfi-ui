@@ -85,7 +85,7 @@ export const wrapSolV0 = async (
   connection: Connection,
   from: PublicKey,
   amount: number
-): Promise<Transaction | VersionedTransaction> => {
+): Promise<VersionedTransaction> => {
 
   const ixs: TransactionInstruction[] = [];
   const newAccount = Keypair.generate();
@@ -163,10 +163,7 @@ export const wrapSolV0 = async (
   // Create a VersionedTransaction passing the v0 compatible message
   const transaction = new VersionedTransaction(messageV0);
 
-  // TODO: How to add signer newAccount ?????
-  // VersionedTransaction doesn't have the .partialSign() method
-
-  console.log('transaction:', transaction);
+  transaction.addSignature(newAccount.publicKey, newAccount.secretKey);
 
   return transaction;
 }

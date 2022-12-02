@@ -97,7 +97,6 @@ import { PreFooter } from 'components/PreFooter';
 import { ReceiveSplOrSolModal } from 'components/ReceiveSplOrSolModal';
 import { SendAssetModal } from 'components/SendAssetModal';
 import { SolBalanceModal } from 'components/SolBalanceModal';
-import { UnwrapSolModal } from 'components/UnwrapSolModal';
 import { WrapSolModal } from 'components/WrapSolModal';
 import {
   ACCOUNTS_LOW_BALANCE_LIMIT,
@@ -260,7 +259,6 @@ export const HomeView = () => {
     lastTxSignature,
     selectedMultisig,
     multisigAccounts,
-    shouldLoadTokens,
     transactionStatus,
     userTokensResponse,
     loadingTokenAccounts,
@@ -597,17 +595,6 @@ export const HomeView = () => {
   const hideWrapSolModal = useCallback(() => setIsWrapSolModalOpen(false), []);
   const showWrapSolModal = useCallback(() => setIsWrapSolModalOpen(true), []);
 
-  // Unwrap SOL token modal
-  const [isUnwrapSolModalOpen, setIsUnwrapSolModalOpen] = useState(false);
-  const hideUnwrapSolModal = useCallback(
-    () => setIsUnwrapSolModalOpen(false),
-    [],
-  );
-  const showUnwrapSolModal = useCallback(
-    () => setIsUnwrapSolModalOpen(true),
-    [],
-  );
-
   // Suggest an Asset modal
   const [isSuggestAssetModalOpen, setIsSuggestAssetModalOpen] = useState(false);
   const hideSuggestAssetModal = useCallback(
@@ -662,10 +649,6 @@ export const HomeView = () => {
 
   const onAfterWrap = () => {
     hideWrapSolModal();
-  };
-
-  const onAfterUnwrap = () => {
-    hideUnwrapSolModal();
   };
 
   const isInspectedAccountTheConnectedWallet = useCallback(() => {
@@ -3899,7 +3882,7 @@ export const HomeView = () => {
         disabled: false,
         uiComponentId: `button-${MetaInfoCtaAction.UnwrapSol}`,
         tooltip: '',
-        callBack: showUnwrapSolModal,
+        callBack: onStartUnwrapTx,
       });
       ctaItems++;
     }
@@ -5797,14 +5780,6 @@ export const HomeView = () => {
           isVisible={isWrapSolModalOpen}
           handleOk={onAfterWrap}
           handleClose={hideWrapSolModal}
-        />
-      )}
-
-      {isUnwrapSolModalOpen && (
-        <UnwrapSolModal
-          isVisible={isUnwrapSolModalOpen}
-          handleOk={onAfterUnwrap}
-          handleClose={hideUnwrapSolModal}
         />
       )}
 
