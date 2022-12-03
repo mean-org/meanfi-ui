@@ -1,12 +1,6 @@
 import { useCallback, useState } from 'react';
 import { ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-  VersionedTransaction,
-} from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import {
   BIGNUMBER_FORMAT,
   CUSTOM_TOKEN_NAME,
@@ -79,12 +73,8 @@ export function shortenAddress(address: string | PublicKey, chars = 4): string {
   return `${output.slice(0, numChars)}...${output.slice(-numChars)}`;
 }
 
-export function getTokenIcon(
-  map: KnownTokenMap,
-  mintAddress?: string | PublicKey,
-): string | undefined {
-  const address =
-    typeof mintAddress === 'string' ? mintAddress : mintAddress?.toBase58();
+export function getTokenIcon(map: KnownTokenMap, mintAddress?: string | PublicKey): string | undefined {
+  const address = typeof mintAddress === 'string' ? mintAddress : mintAddress?.toBase58();
   if (!address) {
     return;
   }
@@ -99,24 +89,12 @@ export const isUnauthenticatedRoute = (route: string) => {
   return UNAUTHENTICATED_ROUTES.some(r => r.startsWith(route));
 };
 
-export const STABLE_COINS = new Set([
-  'USDT',
-  'USDC',
-  'UST',
-  'TUSD',
-  'BUSD',
-  'DAI',
-  'USDP',
-  'USDN',
-  'JST',
-  'FEI',
-]);
+export const STABLE_COINS = new Set(['USDT', 'USDC', 'UST', 'TUSD', 'BUSD', 'DAI', 'USDP', 'USDN', 'JST', 'FEI']);
 
 export function chunks<T>(array: T[], size: number): T[][] {
-  return Array.apply<number, T[], T[][]>(
-    0,
-    new Array(Math.ceil(array.length / size)),
-  ).map((_, index) => array.slice(index * size, (index + 1) * size));
+  return Array.apply<number, T[], T[][]>(0, new Array(Math.ceil(array.length / size))).map((_, index) =>
+    array.slice(index * size, (index + 1) * size),
+  );
 }
 
 export const getAmountFromLamports = (amount = 0): number => {
@@ -169,11 +147,7 @@ export const isSmallNumber = (val: number) => {
   return val < 0.001 && val > 0;
 };
 
-export const formatThousands = (
-  val: number,
-  maxDecimals?: number,
-  minDecimals = 0,
-) => {
+export const formatThousands = (val: number, maxDecimals?: number, minDecimals = 0) => {
   let convertedVlue: Intl.NumberFormat;
 
   if (maxDecimals) {
@@ -213,18 +187,11 @@ export function isValidInteger(str: string): boolean {
   return INTEGER_INPUT_AMOUNT_PATTERN.test(str);
 }
 
-export const getTokenBySymbol = (
-  symbol: string,
-  tokenList?: TokenInfo[],
-): TokenInfo | undefined => {
+export const getTokenBySymbol = (symbol: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
   const tokenFromTokenList =
     tokenList && isProd()
       ? tokenList.find(t => t.symbol === symbol)
-      : MEAN_TOKEN_LIST.find(
-          t =>
-            t.symbol === symbol &&
-            t.chainId === getNetworkIdByEnvironment(environment),
-        );
+      : MEAN_TOKEN_LIST.find(t => t.symbol === symbol && t.chainId === getNetworkIdByEnvironment(environment));
   if (tokenFromTokenList) {
     return tokenFromTokenList;
   }
@@ -270,10 +237,7 @@ export const getAmountWithSymbol = (
     if (address === NATIVE_SOL.address) {
       token = NATIVE_SOL;
     } else {
-      token =
-        tokenList && isProd()
-          ? tokenList.find(t => t.address === address)
-          : undefined;
+      token = tokenList && isProd() ? tokenList.find(t => t.address === address) : undefined;
       if (!token) {
         token = MEAN_TOKEN_LIST.find(t => t.address === address);
       }
@@ -300,24 +264,16 @@ export const getAmountWithSymbol = (
     const inputAmount = amount || 0;
     if (token) {
       const decimals = token.decimals;
-      const formatted = new BigNumber(
-        formatAmount(inputAmount, token.decimals),
-      );
+      const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
-      const toLocale = formatThousands(
-        parseFloat(formatted2),
-        decimals,
-        decimals,
-      );
+      const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
       if (onlyValue) {
         return toLocale;
       }
       return `${toLocale} ${token.symbol}`;
     } else if (address && !token) {
       const formatted = formatThousands(inputAmount, 5, 5);
-      return onlyValue
-        ? formatted
-        : `${formatted} [${shortenAddress(address, 4)}]`;
+      return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
     }
     return `${formatThousands(inputAmount, 5, 5)}`;
   } else {
@@ -329,12 +285,9 @@ export const getAmountWithSymbol = (
       DECIMAL_PLACES: 20,
     });
     const bigNumberAmount =
-      typeof amount === 'string'
-        ? new BigNumber(amount)
-        : new BigNumber((amount as BN).toString());
+      typeof amount === 'string' ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
     const decimalPlaces = friendlyDecimals
-      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) ||
-        decimals
+      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
       : decimals;
     if (friendlyDecimals) {
       BigNumber.set({
@@ -346,9 +299,7 @@ export const getAmountWithSymbol = (
     if (token) {
       return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
     } else {
-      return onlyValue
-        ? inputAmount
-        : `${inputAmount} [${shortenAddress(address, 4)}]`;
+      return onlyValue ? inputAmount : `${inputAmount} [${shortenAddress(address, 4)}]`;
     }
   }
 };
@@ -376,10 +327,7 @@ export const displayAmountWithSymbol = (
     if (address === NATIVE_SOL.address) {
       token = NATIVE_SOL;
     } else {
-      token =
-        tokenList && isProd()
-          ? tokenList.find(t => t.address === address)
-          : undefined;
+      token = tokenList && isProd() ? tokenList.find(t => t.address === address) : undefined;
       if (!token) {
         token = MEAN_TOKEN_LIST.find(t => t.address === address);
       }
@@ -406,19 +354,12 @@ export const displayAmountWithSymbol = (
     const inputAmount = amount || 0;
     if (token) {
       const decimals = token.decimals;
-      const formatted = new BigNumber(
-        formatAmount(inputAmount, token.decimals),
-      );
+      const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
       const decimalPlaces = friendlyDecimals
-        ? friendlyDisplayDecimalPlaces(parseFloat(formatted2), decimals) ||
-          decimals
+        ? friendlyDisplayDecimalPlaces(parseFloat(formatted2), decimals) || decimals
         : decimals;
-      const toLocale = formatThousands(
-        parseFloat(formatted2),
-        decimalPlaces,
-        decimalPlaces,
-      );
+      const toLocale = formatThousands(parseFloat(formatted2), decimalPlaces, decimalPlaces);
       return `${toLocale} ${token.symbol}`;
     } else if (address && !token) {
       const formatted = formatThousands(inputAmount, 5, 5);
@@ -434,14 +375,10 @@ export const displayAmountWithSymbol = (
       DECIMAL_PLACES: 20,
     });
     const baseConvert = new BigNumber(10 ** decimals);
-    const bigNumberAmount =
-      typeof amount === 'string'
-        ? new BigNumber(amount)
-        : new BigNumber(amount.toString());
+    const bigNumberAmount = typeof amount === 'string' ? new BigNumber(amount) : new BigNumber(amount.toString());
     const value = bigNumberAmount.div(baseConvert);
     const decimalPlaces = friendlyDecimals
-      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) ||
-        decimals
+      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
       : decimals;
     if (friendlyDecimals) {
       BigNumber.set({
@@ -453,12 +390,16 @@ export const displayAmountWithSymbol = (
     if (token) {
       return showSymbol ? `${inputAmount} ${token.symbol}` : inputAmount;
     } else {
-      return showSymbol
-        ? `${inputAmount} [${shortenAddress(address, 4)}]`
-        : inputAmount;
+      return showSymbol ? `${inputAmount} [${shortenAddress(address, 4)}]` : inputAmount;
     }
   }
 };
+
+export function isVersionedTransaction(
+  transaction: Transaction | VersionedTransaction,
+): transaction is VersionedTransaction {
+  return 'version' in transaction;
+}
 
 export function getTxIxResume(tx: Transaction) {
   const programIds: string[] = [];
@@ -482,17 +423,17 @@ export function getVersionedTxIxResume(tx: VersionedTransaction) {
   return { numIxs: tx.message.compiledInstructions.length, programIds: programIds };
 }
 
-export async function findATokenAddress(
-  walletAddress: PublicKey,
-  tokenMintAddress: PublicKey,
-): Promise<PublicKey> {
+export function getUniversalTxIxResume(tx: VersionedTransaction | Transaction) {
+  if (isVersionedTransaction(tx)) {
+    return getVersionedTxIxResume(tx);
+  }
+  return getTxIxResume(tx);
+}
+
+export async function findATokenAddress(walletAddress: PublicKey, tokenMintAddress: PublicKey): Promise<PublicKey> {
   return (
     await PublicKey.findProgramAddress(
-      [
-        walletAddress.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        tokenMintAddress.toBuffer(),
-      ],
+      [walletAddress.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), tokenMintAddress.toBuffer()],
       ASSOCIATED_TOKEN_PROGRAM_ID,
     )
   )[0];
@@ -528,11 +469,7 @@ export const toUiAmount = (amount: number | string | BN, decimals: number) => {
   return result.toFixed(decimals);
 };
 
-export const toUiAmountBn = (
-  amount: number | BN,
-  decimals: number,
-  asBn = false,
-) => {
+export const toUiAmountBn = (amount: number | BN, decimals: number, asBn = false) => {
   if (!amount || !decimals) {
     return '0';
   }
@@ -547,11 +484,7 @@ export const toUiAmountBn = (
   }
 };
 
-export const toTokenAmount = (
-  amount: number | string,
-  decimals: number,
-  asString = false,
-) => {
+export const toTokenAmount = (amount: number | string, decimals: number, asString = false) => {
   if (!amount || !decimals) {
     return asString ? '0' : new BigNumber(0);
   }
@@ -611,15 +544,10 @@ export const tabNameFormat = (str: string) => {
 };
 
 export function slugify(text: string): string {
-  return (
-    text
-      .toLowerCase()
-      .replace(
-        /[~!@#$%^&*()\-_=+\][}{'";\\:?/><.,]+/g,
-        '-',
-      )
-      .replace(/ +/g, '-')
-  );
+  return text
+    .toLowerCase()
+    .replace(/[~!@#$%^&*()\-_=+\][}{'";\\:?/><.,]+/g, '-')
+    .replace(/ +/g, '-');
 }
 
 /**
@@ -646,11 +574,7 @@ export const flattenObject = (obj: any) => {
   return flattened;
 };
 
-export const getTokenOrCustomToken = async (
-  connection: Connection,
-  address: string,
-  tokenFilterCallback: any,
-) => {
+export const getTokenOrCustomToken = async (connection: Connection, address: string, tokenFilterCallback: any) => {
   const token = tokenFilterCallback(address) as TokenInfo | undefined;
 
   const unkToken = {
