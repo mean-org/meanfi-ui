@@ -21,7 +21,7 @@ interface Args<T extends LooseObject | undefined> {
   name: string;
   // type of operation, i.e OperationType.TreasuryEdit
   operationType: OperationType;
-  // payload object, if not provided - fails the transaction gracefully
+  // function which returns payload object, if it returns undefined - fails the transaction gracefully
   payload: () => T;
 
   // function used for transaction generation, accepts multisig info
