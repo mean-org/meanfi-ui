@@ -5,7 +5,6 @@ import {
   MeanMultisig,
   MultisigTransactionFees,
   MULTISIG_ACTIONS,
-  MultisigInfo,
 } from '@mean-dao/mean-multisig-sdk';
 import {
   calculateActionFees,
