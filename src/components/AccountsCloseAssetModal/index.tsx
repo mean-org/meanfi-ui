@@ -83,6 +83,7 @@ export const AccountsCloseAssetModal = (props: {
       operationType: OperationType.CloseTokenAccount,
       payload,
       setIsBusy,
+      nativeBalance,
       generateTransaction: async ({ data }) => {
         return closeTokenAccountV0(
           connection, // connection
