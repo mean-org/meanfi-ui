@@ -1,26 +1,19 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { TransactionFees } from '@mean-dao/msp';
-import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { Button, Checkbox, Modal } from 'antd';
 import { InputMean } from 'components/InputMean';
-import { openNotification } from 'components/Notifications';
 import { TokenListItem } from 'components/TokenListItem';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
-import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useTransaction from 'hooks/useTransaction';
-import { customLogger } from 'index';
 import { closeTokenAccountV0 } from 'middleware/createV0CloseTokenAccountTx';
-import { sendTx, signTx } from 'middleware/transactions';
-import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
-import { getAmountFromLamports, getVersionedTxIxResume } from 'middleware/utils';
+import { getAmountFromLamports } from 'middleware/utils';
 import { UserTokenAccount } from 'models/accounts';
-import { CreateTxResult } from 'models/CreateTxResult';
-import { OperationType, TransactionStatus } from 'models/enums';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { OperationType } from 'models/enums';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const AccountsCloseAssetModal = (props: {
@@ -33,11 +26,8 @@ export const AccountsCloseAssetModal = (props: {
   const { isVisible, handleClose, handleOk, asset } = props;
   const { t } = useTranslation('common');
   const connection = useConnection();
-  const { publicKey, wallet } = useWallet();
-  const { transactionStatus, setTransactionStatus } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
+  const { publicKey } = useWallet();
   const [isBusy, setIsBusy] = useState(false);
-
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);

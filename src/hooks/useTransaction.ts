@@ -15,6 +15,7 @@ import { LooseObject } from 'types/LooseObject';
 
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { useTranslation } from 'react-i18next';
+import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 
 interface Args<T extends LooseObject | undefined> {
   // name of the transaction, i.e. 'Edit Vesting Contract',
@@ -48,10 +49,6 @@ interface Args<T extends LooseObject | undefined> {
 
   // set busy when transaction starts, unset when it ends
   setIsBusy: (isBusy: boolean) => void;
-
-  // This is not really used yet, TODO or remove
-  transactionCancelled?: boolean; // Do we need it?
-  setTransactionCancelled?: (transactionCancelled: boolean) => void; // Do we need it?
 }
 
 const useTransaction = () => {
@@ -103,8 +100,6 @@ const useTransaction = () => {
   const onExecute = async <T extends LooseObject | undefined>({
     name,
     payload: basePayload,
-    transactionCancelled = false,
-    setTransactionCancelled = () => {},
     loadingMessage,
     completedMessage,
     operationType,
@@ -122,7 +117,6 @@ const useTransaction = () => {
     let transaction: Transaction | VersionedTransaction | undefined = undefined;
     let encodedTx: string;
     let transactionLog: any[] = [];
-    setTransactionCancelled(false);
     setIsBusy(true);
 
     const wrappedGenerateTransaction = async ({ data }: { data: NonNullable<T> }) => {
@@ -216,10 +210,16 @@ const useTransaction = () => {
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
 
-      consoleOut('Min balance required:', minRequired, 'blue');
+      const minBalanceRequired = minRequired || MIN_SOL_BALANCE_REQUIRED;
+      consoleOut('Min balance required:', minBalanceRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
-      if (nativeBalance && minRequired && nativeBalance < minRequired) {
+      if (nativeBalance === undefined) {
+        consoleOut('Payer native balance unknown', '', 'blue');
+        return false;
+      }
+
+      if (nativeBalance < minBalanceRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure,
@@ -229,7 +229,7 @@ const useTransaction = () => {
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
             NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+          )}) to pay for network fees (${getAmountWithSymbol(minBalanceRequired, NATIVE_SOL_MINT.toBase58())})`,
         });
         customLogger.logWarning(`${name} transaction failed`, {
           transcript: transactionLog,
@@ -242,14 +242,15 @@ const useTransaction = () => {
       const result = await wrappedGenerateTransaction({ data: payload })
         .then(value => {
           if (!value) {
-            console.error(`could not initialize ${name} Tx`);
+            const error = `could not initialize ${name} Tx`;
+            console.error(error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-              result: 'could not initialize closeTokenAccountV0 Tx',
+              result: error,
             });
 
             return false;
@@ -294,7 +295,7 @@ const useTransaction = () => {
     if (wallet && publicKey) {
       const create = await createTx();
       consoleOut('created:', create);
-      if (create && !transactionCancelled && transaction) {
+      if (create && transaction) {
         const sign = await signTx(name, wallet, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
@@ -305,7 +306,7 @@ const useTransaction = () => {
           });
           const sent = await sendTx(name, connection, encodedTx);
           consoleOut('sent:', sent);
-          if (sent.signature && !transactionCancelled) {
+          if (sent.signature) {
             const signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
