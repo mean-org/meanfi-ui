@@ -305,7 +305,6 @@ export const HomeView = () => {
   const [refreshingBalance, setRefreshingBalance] = useState(false);
 
   const [selectedApp, setSelectedApp] = useState<KnownAppMetadata>();
-  const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -322,7 +321,6 @@ export const HomeView = () => {
     useState<TransactionFees>(NO_FEES);
   const [transactionAssetFees, setTransactionAssetFees] =
     useState<TransactionFees>(NO_FEES);
-  const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
@@ -477,6 +475,11 @@ export const HomeView = () => {
     [confirmationHistory],
   );
 
+  const isUnwrapping = useMemo(() => {
+    if (!isBusy) { return false; }
+    return isAnyTxPendingConfirmation(OperationType.Unwrap);
+  }, [isAnyTxPendingConfirmation, isBusy]);
+
   const isInboundStream = useCallback(
     (item: Stream | StreamInfo): boolean => {
       if (item && publicKey && selectedAccount.address) {
@@ -507,6 +510,22 @@ export const HomeView = () => {
       currentOperation: TransactionStatus.Iddle,
     });
   }, [setTransactionStatus]);
+
+  const setFailureStatusAndNotify = useCallback((txStep: 'sign' | 'send') => {
+    const operation = txStep === 'sign'
+      ? TransactionStatus.SignTransactionFailure
+      : TransactionStatus.SendTransactionFailure;
+    setTransactionStatus({
+      lastOperation: transactionStatus.currentOperation,
+      currentOperation: operation,
+    });
+    openNotification({
+      title: t('notifications.error-title'),
+      description: t('notifications.error-sending-transaction'),
+      type: 'error',
+    });
+    setIsBusy(false);
+  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
 
   // Token Merger Modal
   const hideTokenMergerModal = useCallback(
@@ -1153,7 +1172,7 @@ export const HomeView = () => {
           case OperationType.Unwrap:
           case OperationType.Transfer:
             logEventHandling(item);
-            setIsUnwrapping(false);
+            setIsBusy(false);
             accountRefresh();
             break;
           case OperationType.CreateAsset:
@@ -1185,7 +1204,7 @@ export const HomeView = () => {
         consoleOut('onTxTimedout event executed:', item, 'crimson');
         recordTxConfirmation(item, false);
         if (item.operationType === OperationType.Unwrap) {
-          setIsUnwrapping(false);
+          setIsBusy(false);
         } else if (item.operationType === OperationType.TransferTokens) {
           setIsBusy(false);
         }
@@ -1252,6 +1271,11 @@ export const HomeView = () => {
   //    Executions    //
   //////////////////////
 
+  const setSuccessStatus = useCallback(() => {
+    setIsBusy(false);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
+
   const onAfterEveryModalClose = useCallback(() => {
     consoleOut('onAfterEveryModalClose called!', '', 'crimson');
     resetTransactionStatus();
@@ -1282,22 +1306,14 @@ export const HomeView = () => {
     [resetTransactionStatus, setShouldLoadTokens],
   );
 
-  const onAssetCreated = useCallback(() => {
-    openNotification({
-      description: t('multisig.create-asset.success-message'),
-      type: 'success',
-    });
-  }, [t]);
-
   const onExecuteCreateAssetTx = useCallback(
     async (data: any) => {
-      let transaction: Transaction;
+      let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
-      const transactionLog: any[] = [];
+      let transactionLog: any[] = [];
 
       resetTransactionStatus();
-      setTransactionCancelled(false);
       setIsBusy(true);
 
       const createAsset = async (data: any) => {
@@ -1496,98 +1512,40 @@ export const HomeView = () => {
         }
       };
 
-      const sendTx = async (): Promise<boolean> => {
-        if (connection && wallet && wallet.publicKey && transaction) {
-          const {
-            context: { slot: minContextSlot },
-            value: { blockhash },
-          } = await connection.getLatestBlockhashAndContext();
-
-          transaction.feePayer = wallet.publicKey;
-          transaction.recentBlockhash = blockhash;
-
-          return wallet
-            .sendTransaction(transaction, connection, { minContextSlot })
-            .then(sig => {
-              consoleOut('sendEncodedTransaction returned a signature:', sig);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransactionSuccess,
-                currentOperation: TransactionStatus.ConfirmTransaction,
-              });
-              signature = sig;
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionSuccess,
-                ),
-                result: `signature: ${signature}`,
-              });
-              return true;
-            })
-            .catch(error => {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransaction,
-                currentOperation: TransactionStatus.SendTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionFailure,
-                ),
-                result: { error, encodedTx },
-              });
-              customLogger.logError(
-                'Multisig Create Vault transaction failed',
-                { transcript: transactionLog },
-              );
-              return false;
+      if (wallet && publicKey) {
+        const created = await createTx();
+        consoleOut('created:', created);
+        if (created) {
+          const sign = await signTx('Create Safe Asset', wallet, publicKey, transaction);
+          if (sign.encodedTransaction) {
+            encodedTx = sign.encodedTransaction;
+            transactionLog = transactionLog.concat(sign.log);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
-        } else {
-          console.error('Cannot send transaction! Wallet not found!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransaction,
-            currentOperation: TransactionStatus.WalletNotFound,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.WalletNotFound,
-            ),
-            result: 'Cannot send transaction! Wallet not found!',
-          });
-          customLogger.logError('Multisig Create Vault transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        }
-      };
-
-      if (wallet) {
-        const create = await createTx();
-        consoleOut('created:', create);
-        if (create && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature,
-              operationType: OperationType.CreateAsset,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Create asset ${data.token.symbol}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Asset ${data.token.symbol} successfully created`,
-            });
-            setIsBusy(false);
-            onAssetCreated();
-            closeCreateAssetModal(true);
+            const sent = await sendTx('Create Safe Asset', connection, encodedTx);
+            consoleOut('sent:', sent);
+            if (sent.signature) {
+              signature = sent.signature;
+              consoleOut('Send Tx to confirmation queue:', signature);
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.CreateAsset,
+                finality: 'confirmed',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Create asset ${data.token.symbol}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Asset ${data.token.symbol} successfully created`,
+              });
+              setSuccessStatus();
+              closeCreateAssetModal(true);
+            } else {
+              setFailureStatusAndNotify('send');
+            }
           } else {
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-sending-transaction'),
-              type: 'error',
-            });
-            setIsBusy(false);
+            setFailureStatusAndNotify('sign');
           }
         } else {
           setIsBusy(false);
@@ -1601,15 +1559,14 @@ export const HomeView = () => {
       nativeBalance,
       selectedMultisig,
       multisigAddressPK,
-      transactionCancelled,
       transactionAssetFees,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
+      setFailureStatusAndNotify,
       resetTransactionStatus,
       closeCreateAssetModal,
       setTransactionStatus,
-      onAssetCreated,
-      t,
+      setSuccessStatus,
     ],
   );
 
@@ -1649,7 +1606,6 @@ export const HomeView = () => {
       let transactionLog: any[] = [];
   
       resetTransactionStatus();
-      setTransactionCancelled(false);
       setIsBusy(true);
 
       const transferTokens = async (data: any) => {
@@ -1870,7 +1826,7 @@ export const HomeView = () => {
       if (wallet && publicKey && selectedAsset) {
         const created = await createTx();
         consoleOut('created:', created);
-        if (created && !transactionCancelled) {
+        if (created) {
           const sign = await signTx('Transfer Tokens', wallet, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
@@ -1881,7 +1837,7 @@ export const HomeView = () => {
             });
             const sent = await sendTx('Transfer Tokens', connection, encodedTx);
             consoleOut('sent:', sent);
-            if (sent.signature && !transactionCancelled) {
+            if (sent.signature) {
               signature = sent.signature;
               consoleOut('Send Tx to confirmation queue:', signature);
               enqueueTransactionConfirmation({
@@ -1912,31 +1868,12 @@ export const HomeView = () => {
                 currentOperation: TransactionStatus.TransactionFinished,
               });
               setIsTransferTokenModalVisible(false);
-              resetTransactionStatus();
-              setIsBusy(false);
+              setSuccessStatus();
             } else {
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.SendTransactionFailure,
-              });
-              openNotification({
-                title: t('notifications.error-title'),
-                description: t('notifications.error-sending-transaction'),
-                type: 'error',
-              });
-              setIsBusy(false);
+              setFailureStatusAndNotify('send');
             }
           } else {
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SignTransactionFailure,
-            });
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-sending-transaction'),
-              type: 'error',
-            });
-            setIsBusy(false);
+            setFailureStatusAndNotify('sign');
           }
         } else {
           setIsBusy(false);
@@ -1953,12 +1890,12 @@ export const HomeView = () => {
       selectedMultisig,
       isMultisigContext,
       minRequiredBalance,
-      transactionCancelled,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
+      setFailureStatusAndNotify,
       resetTransactionStatus,
       setTransactionStatus,
-      t,
+      setSuccessStatus,
     ],
   );
 
@@ -1990,7 +1927,6 @@ export const HomeView = () => {
       let transactionLog: any[] = [];
 
       resetTransactionStatus();
-      setTransactionCancelled(false);
       setIsBusy(true);
 
       const createTransferOwnershipTx = async (data: SetAssetAuthPayload) => {
@@ -2147,7 +2083,7 @@ export const HomeView = () => {
       if (wallet && publicKey && selectedAsset) {
         const created = await createTx();
         consoleOut('created:', created);
-        if (created && !transactionCancelled) {
+        if (created) {
           const sign = await signTx('Transfer Token Ownership', wallet, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
@@ -2158,7 +2094,7 @@ export const HomeView = () => {
             });
             const sent = await sendTx('Transfer Token Ownership', connection, encodedTx);
             consoleOut('sent:', sent);
-            if (sent.signature && !transactionCancelled) {
+            if (sent.signature) {
               signature = sent.signature;
               consoleOut('Send Tx to confirmation queue:', signature);
               enqueueTransactionConfirmation({
@@ -2181,35 +2117,13 @@ export const HomeView = () => {
                     : '',
                 },
               });
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.TransactionFinished,
-              });
+              setSuccessStatus();
               setIsTransferVaultAuthorityModalVisible(false);
             } else {
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.SendTransactionFailure,
-              });
-              openNotification({
-                title: t('notifications.error-title'),
-                description: t('notifications.error-sending-transaction'),
-                type: 'error',
-              });
+              setFailureStatusAndNotify('send');
             }
-            resetTransactionStatus();
-            setIsBusy(false);
           } else {
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SignTransactionFailure,
-            });
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-sending-transaction'),
-              type: 'error',
-            });
-            setIsBusy(false);
+            setFailureStatusAndNotify('sign');
           }
         } else {
           setIsBusy(false);
@@ -2225,14 +2139,14 @@ export const HomeView = () => {
       multisigClient,
       selectedMultisig,
       isMultisigContext,
-      transactionCancelled,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
+      setFailureStatusAndNotify,
       resetTransactionStatus,
       setTransactionStatus,
-      t,
+      setSuccessStatus,
     ],
   );
 
@@ -2256,7 +2170,6 @@ export const HomeView = () => {
       let transactionLog: any[] = [];
 
       resetTransactionStatus();
-      setTransactionCancelled(false);
       setIsBusy(true);
 
       const closeAssetTx = async (inputAsset: UserTokenAccount, data: any) => {
@@ -2426,7 +2339,7 @@ export const HomeView = () => {
       if (wallet && publicKey && data) {
         const created = await createTx();
         consoleOut('created:', created);
-        if (created && !transactionCancelled) {
+        if (created) {
           const sign = await signTx('Close Token Account', wallet, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
@@ -2437,7 +2350,7 @@ export const HomeView = () => {
             });
             const sent = await sendTx('Close Token Account', connection, encodedTx);
             consoleOut('sent:', sent);
-            if (sent.signature && !transactionCancelled) {
+            if (sent.signature) {
               signature = sent.signature;
               consoleOut('Send Tx to confirmation queue:', signature);
               enqueueTransactionConfirmation({
@@ -2454,34 +2367,13 @@ export const HomeView = () => {
                   multisigAuthority: multisigAuth,
                 },
               });
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.TransactionFinished,
-              });
+              setSuccessStatus();
               setIsDeleteVaultModalVisible(false);
             } else {
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.SendTransactionFailure,
-              });
-              openNotification({
-                title: t('notifications.error-title'),
-                description: t('notifications.error-sending-transaction'),
-                type: 'error',
-              });
+              setFailureStatusAndNotify('send');
             }
-            setIsBusy(false);
           } else {
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SignTransactionFailure,
-            });
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-sending-transaction'),
-              type: 'error',
-            });
-            setIsBusy(false);
+            setFailureStatusAndNotify('sign');
           }
         } else {
           setIsBusy(false);
@@ -2497,14 +2389,14 @@ export const HomeView = () => {
       multisigClient,
       selectedMultisig,
       isMultisigContext,
-      transactionCancelled,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
+      setFailureStatusAndNotify,
       resetTransactionStatus,
       setTransactionStatus,
-      t,
+      setSuccessStatus,
     ],
   );
 
@@ -3081,13 +2973,12 @@ export const HomeView = () => {
 
   const onExecuteCreateTransactionProposal = useCallback(
     async (data: CreateNewProposalParams) => {
-      let transaction: Transaction;
+      let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
-      const transactionLog: any[] = [];
+      let transactionLog: any[] = [];
 
       resetTransactionStatus();
-      setTransactionCancelled(false);
       setIsBusy(true);
 
       const createTransactionProposal = async (data: any) => {
@@ -3262,7 +3153,7 @@ export const HomeView = () => {
             ),
             result: 'Cannot start transaction! Wallet not found!',
           });
-          customLogger.logError('createTransactionProposal failed', {
+          customLogger.logError('Create Multisig Proposal transaction failed', {
             transcript: transactionLog,
           });
           return false;
@@ -3363,7 +3254,7 @@ export const HomeView = () => {
               ),
               result: `${error}`,
             });
-            customLogger.logError('createTransactionProposal failed', {
+            customLogger.logError('Create Multisig Proposal transaction failed', {
               transcript: transactionLog,
             });
             return false;
@@ -3372,100 +3263,44 @@ export const HomeView = () => {
         return result;
       };
 
-      const sendTx = async (): Promise<boolean> => {
-        if (!connection || !wallet || !wallet.publicKey || !transaction) {
-          console.error(
-            'Cannot send transaction! Wallet not found or no connection!',
-          );
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransaction,
-            currentOperation: TransactionStatus.WalletNotFound,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.WalletNotFound,
-            ),
-            result: 'Cannot send transaction! Wallet not found!',
-          });
-          customLogger.logError('Edit multisig transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        }
-
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        const result = wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
+      if (wallet && publicKey) {
+        const created = await createTx();
+        consoleOut('created:', created);
+        if (created) {
+          const sign = await signTx('Create Multisig Proposal', wallet, publicKey, transaction);
+          if (sign.encodedTransaction) {
+            encodedTx = sign.encodedTransaction;
+            transactionLog = transactionLog.concat(sign.log);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Edit multisig transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-
-        return result;
-      };
-
-      if (wallet) {
-        const create = await createTx();
-        consoleOut('created:', create);
-        if (create && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature,
-              operationType: OperationType.CreateTransaction,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Create proposal: ${data.title}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Successfully created proposal: ${data.title}`,
-              completedMessageTimeout: isMultisigContext ? 8 : 5,
-              extras: {
-                multisigAuthority: data.multisigId,
-              },
-            });
-            setIsBusy(false);
-            setMultisigProposalModalVisible(false);
-            resetTransactionStatus();
+            const sent = await sendTx('Create Multisig Proposal', connection, encodedTx);
+            consoleOut('sent:', sent);
+            if (sent.signature) {
+              signature = sent.signature;
+              consoleOut('Send Tx to confirmation queue:', signature);
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.CreateTransaction,
+                finality: 'confirmed',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Create proposal: ${data.title}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Successfully created proposal: ${data.title}`,
+                completedMessageTimeout: isMultisigContext ? 8 : 5,
+                extras: {
+                  multisigAuthority: data.multisigId,
+                },
+              });
+              setSuccessStatus();
+              setMultisigProposalModalVisible(false);
+            } else {
+              setFailureStatusAndNotify('send');
+            }
           } else {
-            setIsBusy(false);
+            setFailureStatusAndNotify('sign');
           }
         } else {
           setIsBusy(false);
@@ -3480,7 +3315,6 @@ export const HomeView = () => {
       multisigClient,
       selectedMultisig,
       isMultisigContext,
-      transactionCancelled,
       multisigTransactionFees.multisigFee,
       multisigTransactionFees.networkFee,
       multisigTransactionFees.rentExempt,
@@ -3488,11 +3322,13 @@ export const HomeView = () => {
       enqueueTransactionConfirmation,
       createCredixWithdrawTrancheIx,
       createCredixDepositTrancheIx,
+      setFailureStatusAndNotify,
       resetTransactionStatus,
       createCredixWithdrawIx,
       createCredixDepositIx,
       setTransactionStatus,
       createProposalIx,
+      setSuccessStatus,
     ],
   );
 
@@ -4238,8 +4074,7 @@ export const HomeView = () => {
     let transactionLog: any[] = [];
 
     resetTransactionStatus();
-    setTransactionCancelled(false);
-    setIsUnwrapping(true);
+    setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
@@ -4360,7 +4195,7 @@ export const HomeView = () => {
     if (wallet && publicKey) {
       const created = await createTx();
       consoleOut('created:', created, 'blue');
-      if (created && !transactionCancelled) {
+      if (created) {
         const sign = await signTx('Unwrap SOL', wallet, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
@@ -4371,7 +4206,7 @@ export const HomeView = () => {
           });
           const sent = await sendTx('Unwrap SOL', connection, encodedTx);
           consoleOut('sent:', sent);
-          if (sent.signature && !transactionCancelled) {
+          if (sent.signature) {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             enqueueTransactionConfirmation({
@@ -4390,28 +4225,15 @@ export const HomeView = () => {
                 NATIVE_SOL.decimals,
               )} SOL`,
             });
+            setSuccessStatus();
           } else {
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-sending-transaction'),
-              type: 'error',
-            });
-            setIsUnwrapping(false);
+            setFailureStatusAndNotify('send');
           }
         } else {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.SignTransactionFailure,
-          });
-          setIsUnwrapping(false);
+          setFailureStatusAndNotify('sign');
         }
-
       } else {
-        setIsUnwrapping(false);
+        setIsBusy(false);
       }
     }
   };
