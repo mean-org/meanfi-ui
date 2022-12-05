@@ -10,6 +10,7 @@ import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from 'middleware/ids';
+import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   getTransactionStatusForLogs,
@@ -53,8 +54,7 @@ export const DdcaAddFundsModal = (props: {
     useContext(AppStateContext);
   const {
     lastSentTxSignature,
-    clearTxConfirmationContext,
-    startFetchTxSignatureInfo,
+    enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
 
   const [rangeMin, setRangeMin] = useState(0);
@@ -332,12 +332,11 @@ export const DdcaAddFundsModal = (props: {
 
   // Execute Add funds transaction
   const onExecuteAddFundsTx = async () => {
-    let transaction: Transaction;
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
 
-    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -422,83 +421,49 @@ export const DdcaAddFundsModal = (props: {
       }
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendSignedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError(
-              'Add funds to DDCA vault transaction failed',
-              { transcript: transactionLog },
-            );
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Add funds to DDCA vault transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
     if (wallet && publicKey) {
-      const create = await createTx();
-      consoleOut('create:', create);
-      if (create && !transactionCancelled) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent && !transactionCancelled) {
-          consoleOut('Send Tx to confirmation queue:', signature);
-          startFetchTxSignatureInfo(
-            signature,
-            'confirmed',
-            OperationType.DdcaAddFunds,
-          );
-          onFinishedAddFundsTx();
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created && !transactionCancelled) {
+        const sign = await signTx('Add funds to DDCA vault', wallet, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
+          });
+          const sent = await sendTx('Add funds to DDCA vault', connection, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature && !transactionCancelled) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature,
+              operationType: OperationType.DdcaAddFunds,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: 'Add funds to DDCA vault',
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `DDCA vault funded successfully`,
+              completedMessageTimeout: 6,
+            });
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished,
+            });
+            onFinishedAddFundsTx();
+          } else {
+            if (sent.error) {
+              consoleOut('Add funds to DDCA vault transaction send error:', sent.error, 'red');
+            }
+            onFinishedAddFundsTx();
+          }
         } else {
+          if (sign.error) {
+            consoleOut('Add funds to DDCA vault transaction sign error:', sign.error, 'red');
+          }
           onFinishedAddFundsTx();
         }
       } else {
