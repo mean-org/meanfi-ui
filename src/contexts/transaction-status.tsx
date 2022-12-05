@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { TransactionConfirmationStatus } from '@solana/web3.js';
 import { getSolanaExplorerClusterParam, useConnection } from './connection';
-import { fetchTransactionStatus } from '../middleware/transactions';
+import { fetchTransactionStatus, fetchTxStatus } from '../middleware/transactions';
 import { consoleOut, delay } from '../middleware/ui';
 import { EventType, OperationType } from '../models/enums';
 import {
@@ -308,42 +308,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     getTxStatus,
   ]);
 
-  const fetchTxStatus = useCallback(
-    async (
-      signature: string,
-      targetFinality: TransactionConfirmationStatus,
-    ) => {
-      if (!connection) {
-        return;
-      }
-
-      const fetchStatus = async () => {
-        try {
-          const latestBlockHash = await connection.getLatestBlockhash();
-          const result = await connection.confirmTransaction(
-            {
-              signature,
-              blockhash: latestBlockHash.blockhash,
-              lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-            },
-            targetFinality,
-          );
-          if (result && result.value && !result.value.err) {
-            setLastSentTxStatus(targetFinality);
-            return targetFinality;
-          }
-          return undefined;
-        } catch (error) {
-          console.error(error);
-          return undefined;
-        }
-      };
-
-      return fetchStatus();
-    },
-    [connection],
-  );
-
   const enqueueTransactionConfirmation = useCallback(
     async (data: TxConfirmationInfo) => {
       const rebuildHistoryFromCache = () => {
@@ -386,7 +350,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
         ),
       });
       rebuildHistoryFromCache();
-      const result = await fetchTxStatus(data.signature, data.finality);
+      const result = await fetchTxStatus(connection, data.signature, data.finality, setLastSentTxStatus);
       if (result === data.finality) {
         txConfirmationCache.update(
           data.signature,
@@ -468,9 +432,9 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
         rebuildHistoryFromCache();
         refreshAccount();
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [t],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [connection, t],
   );
 
   return (
