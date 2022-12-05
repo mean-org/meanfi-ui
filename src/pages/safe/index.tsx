@@ -1342,8 +1342,7 @@ const SafeView = (props: {
               });
               setSuccessStatus();
             } else {
-              // TODO: Unlock next line to decode the error and record it to be displayed later
-              // parseErrorFromExecuteProposal(sent.error, data.transaction);
+              parseErrorFromExecuteProposal(sent.error, data.transaction);
               setTimeout(() => {
                 onExecuteFinishTxCancelled();
               }, 30);
@@ -1366,6 +1365,7 @@ const SafeView = (props: {
       transactionCancelled,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
+      parseErrorFromExecuteProposal,
       onExecuteFinishTxCancelled,
       resetTransactionStatus,
       setTransactionStatus,
