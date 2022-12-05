@@ -9,7 +9,7 @@ import { useNativeAccount } from 'contexts/accounts';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import useTransaction from 'hooks/useTransaction';
-import { closeTokenAccountV0 } from 'middleware/createV0CloseTokenAccountTx';
+import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
 import { getAmountFromLamports } from 'middleware/utils';
 import { UserTokenAccount } from 'models/accounts';
 import { OperationType } from 'models/enums';
@@ -85,7 +85,7 @@ export const AccountsCloseAssetModal = (props: {
       setIsBusy,
       nativeBalance,
       generateTransaction: async ({ data }) => {
-        return closeTokenAccountV0(
+        return createCloseTokenAccountTx(
           connection, // connection
           new PublicKey(data.tokenPubkey), // tokenPubkey
           publicKey, // owner
