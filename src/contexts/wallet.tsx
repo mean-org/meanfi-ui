@@ -409,7 +409,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
           consoleOut('Wallet disconnect event fired:', '', 'blue');
           setConnected(false);
           if (wallet.readyState !== WalletReadyState.Installed) return;
-          navigate('/');
+          window.location.reload();
         }
       });
 
