@@ -19,6 +19,7 @@ import {
 import { useWallet } from 'contexts/wallet';
 import { IconStats } from 'Icons';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
+import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   getTransactionStatusForLogs,
@@ -57,7 +58,7 @@ export const StakingRewardsView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
-  const [isDepositing, setIsDepositing] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const [aprPercentGoal, setAprPercentGoal] = useState(
     DEFAULT_APR_PERCENT_GOAL,
   );
@@ -188,7 +189,7 @@ export const StakingRewardsView = () => {
   const onDepositTxConfirmed = useCallback(
     (value: any) => {
       consoleOut('onDepositTxConfirmed event executed:', value, 'crimson');
-      setIsDepositing(false);
+      setIsBusy(false);
       resetTransactionStatus();
       setTimeout(() => {
         refreshMeanStakingVaultBalance();
@@ -198,6 +199,28 @@ export const StakingRewardsView = () => {
     },
     [refreshMeanStakingVaultBalance, resetTransactionStatus],
   );
+
+  const setFailureStatusAndNotify = useCallback((txStep: 'sign' | 'send') => {
+    const operation = txStep === 'sign'
+      ? TransactionStatus.SignTransactionFailure
+      : TransactionStatus.SendTransactionFailure;
+    setTransactionStatus({
+      lastOperation: transactionStatus.currentOperation,
+      currentOperation: operation,
+    });
+    openNotification({
+      title: t('notifications.error-title'),
+      description: t('notifications.error-sending-transaction'),
+      type: 'error',
+    });
+    setIsBusy(false);
+  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
+
+  const setSuccessStatus = useCallback(() => {
+    setIsBusy(false);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
+
 
   /////////////////
   //   Effects   //
@@ -307,10 +330,13 @@ export const StakingRewardsView = () => {
   ///////////////////
 
   const onStartDepositTx = async () => {
-    let transaction: Transaction;
+    let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
+
+    resetTransactionStatus();
+    setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && stakeClient && meanToken) {
@@ -386,104 +412,53 @@ export const StakingRewardsView = () => {
       }
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Deposit transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
+    if (wallet && publicKey && meanToken) {
+      setIsBusy(true);
+      const created = await createTx();
+      consoleOut('created:', created, 'blue');
+      if (created) {
+        const sign = await signTx('Deposit Staking Rewards', wallet, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-      } else {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Deposit transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    if (wallet && meanToken) {
-      setIsDepositing(true);
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent) {
-          setLastDepositSignature(signature);
-          const depositionMessage = `Depositing ${formatThousands(
-            getTotalMeanAdded(),
-            meanToken.decimals,
-          )} ${meanToken.symbol} into the staking vault`;
-          const depositSuccessMessage = `Successfully deposited ${formatThousands(
-            getTotalMeanAdded(),
-            meanToken.decimals,
-          )} ${meanToken.symbol} into the staking vault`;
-          enqueueTransactionConfirmation({
-            signature,
-            operationType: OperationType.Deposit,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: depositionMessage,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: depositSuccessMessage,
-          });
-          setAprPercentGoal(DEFAULT_APR_PERCENT_GOAL);
+          const sent = await sendTx('Deposit Staking Rewards', connection, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature) {
+            signature = sent.signature;
+            setLastDepositSignature(signature);
+            consoleOut('Send Tx to confirmation queue:', signature);
+            const depositionMessage = `Depositing ${formatThousands(
+              getTotalMeanAdded(),
+              meanToken.decimals,
+            )} ${meanToken.symbol} into the staking vault`;
+            const depositSuccessMessage = `Successfully deposited ${formatThousands(
+              getTotalMeanAdded(),
+              meanToken.decimals,
+            )} ${meanToken.symbol} into the staking vault`;
+            enqueueTransactionConfirmation({
+              signature,
+              operationType: OperationType.Deposit,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: depositionMessage,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: depositSuccessMessage,
+            });
+            setAprPercentGoal(DEFAULT_APR_PERCENT_GOAL);
+            setSuccessStatus();
+          } else {
+            setFailureStatusAndNotify('send');
+          }
         } else {
-          openNotification({
-            title: t('notifications.error-title'),
-            description: t('notifications.error-sending-transaction'),
-            type: 'error',
-          });
-          setIsDepositing(false);
+          setFailureStatusAndNotify('sign');
         }
       } else {
-        setIsDepositing(false);
+        setIsBusy(false);
       }
     }
   };
@@ -645,7 +620,7 @@ export const StakingRewardsView = () => {
 
   const renderAddFundsToStakingRewardsVault = (
     <>
-      <div className={`well ${isDepositing ? 'disabled' : ''}`}>
+      <div className={`well ${isBusy ? 'disabled' : ''}`}>
         <div className="flex-fixed-right">
           <div className="left inner-label">Enter APR Percent Goal</div>
           <div className="right">&nbsp;</div>
@@ -759,10 +734,10 @@ export const StakingRewardsView = () => {
               type="primary"
               shape="round"
               size="large"
-              disabled={!isValidInput() || isDepositing || !canDepositRewards}
+              disabled={!isValidInput() || isBusy || !canDepositRewards}
               onClick={onStartDepositTx}
             >
-              {isDepositing ? 'Funding Vault' : 'Fund Vault'}
+              {isBusy ? 'Funding Vault' : 'Fund Vault'}
             </Button>
           </div>
           <div className="title-and-subtitle">
