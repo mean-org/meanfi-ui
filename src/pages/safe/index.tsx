@@ -36,6 +36,7 @@ import useWindowSize from 'hooks/useWindowResize';
 import { appConfig, customLogger } from 'index';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
+import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
 import {
   getAmountFromLamports,
@@ -203,6 +204,27 @@ const SafeView = (props: {
     });
   }, [setTransactionStatus]);
 
+  const setFailureStatusAndNotify = useCallback((txStep: 'sign' | 'send') => {
+    const operation = txStep === 'sign'
+      ? TransactionStatus.SignTransactionFailure
+      : TransactionStatus.SendTransactionFailure;
+    setTransactionStatus({
+      lastOperation: transactionStatus.currentOperation,
+      currentOperation: operation,
+    });
+    openNotification({
+      title: t('notifications.error-title'),
+      description: t('notifications.error-sending-transaction'),
+      type: 'error',
+    });
+    setIsBusy(false);
+  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
+
+  const setSuccessStatus = useCallback(() => {
+    setIsBusy(false);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
+
   const setProposalsLoading = useCallback(
     (loading: boolean) => {
       if (!selectedMultisig) {
@@ -232,6 +254,129 @@ const SafeView = (props: {
     },
     [selectedMultisig],
   );
+
+  const parseErrorFromExecuteProposal = useCallback((error: any, transaction: MultisigTransaction) => {
+    const txStatus = {
+      customError: undefined,
+      lastOperation: TransactionStatus.SendTransaction,
+      currentOperation: TransactionStatus.SendTransactionFailure,
+    } as TransactionStatusInfo;
+
+    if (error.toString().indexOf('0x1794') !== -1) {
+      let accountIndex = 0;
+      if (transaction.operation === OperationType.StreamClose) {
+        accountIndex = 5;
+      } else if (
+        transaction.operation ===
+        OperationType.TreasuryStreamCreate ||
+        transaction.operation === OperationType.StreamCreate ||
+        transaction.operation ===
+        OperationType.StreamCreateWithTemplate
+      ) {
+        accountIndex = 2;
+      } else {
+        accountIndex = 3;
+      }
+      consoleOut(
+        'accounts:',
+        transaction.accounts.map((a: any) => a.pubkey.toBase58()),
+        'orange',
+      );
+      const treasury = transaction.accounts[accountIndex]
+        ? transaction.accounts[accountIndex].pubkey.toBase58()
+        : '-';
+      consoleOut(
+        `Selected account for index [${accountIndex}]`,
+        treasury,
+        'orange',
+      );
+      txStatus.customError = {
+        title: 'Insufficient balance',
+        message:
+          'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
+        data: treasury,
+      };
+    } else if (error.toString().indexOf('0x1797') !== -1) {
+      let accountIndex = 0;
+      if (
+        transaction.operation === OperationType.StreamCreate ||
+        transaction.operation ===
+        OperationType.TreasuryStreamCreate ||
+        transaction.operation ===
+        OperationType.StreamCreateWithTemplate
+      ) {
+        accountIndex = 2;
+      } else if (
+        transaction.operation === OperationType.TreasuryWithdraw
+      ) {
+        accountIndex = 5;
+      } else {
+        accountIndex = 3;
+      }
+      consoleOut(
+        'accounts:',
+        transaction.accounts.map((a: any) => a.pubkey.toBase58()),
+        'orange',
+      );
+      const treasury = transaction.accounts[accountIndex]
+        ? transaction.accounts[accountIndex].pubkey.toBase58()
+        : '-';
+      consoleOut(
+        `Selected account for index [${accountIndex}]`,
+        treasury,
+        'orange',
+      );
+      txStatus.customError = {
+        title: 'Insufficient balance',
+        message:
+          'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
+        data: treasury,
+      };
+    } else if (error.toString().indexOf('0x1786') !== -1) {
+      txStatus.customError = {
+        message:
+          'Your transaction failed to submit due to Invalid Gateway Token. Please activate the Gateway Token and retry this operation.',
+        data: undefined,
+      };
+    } else if (error.toString().indexOf('0xbc4') !== -1) {
+      txStatus.customError = {
+        message:
+          'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token and LP Token Accounts of the Investor.\n',
+        data: selectedMultisig?.authority.toBase58(),
+      };
+    } else if (error.toString().indexOf('0x1') !== -1) {
+      const accountIndex =
+        transaction.operation === OperationType.TransferTokens ||
+          transaction.operation === OperationType.Transfer
+          ? 0
+          : 3;
+      consoleOut(
+        'accounts:',
+        transaction.accounts.map((a: any) => a.pubkey.toBase58()),
+        'orange',
+      );
+      const asset = transaction.accounts[accountIndex]
+        ? transaction.accounts[accountIndex].pubkey.toBase58()
+        : '-';
+      consoleOut(
+        `Selected account for index [${accountIndex}]`,
+        asset,
+        'orange',
+      );
+      txStatus.customError = {
+        title: 'Insufficient balance',
+        // message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
+        message:
+          'Your transaction failed to submit due to insufficient balance. Please add SOL to the safe and then retry this operation.\n\nSafe: ',
+        data: selectedMultisig?.authority.toBase58(),
+      };
+    }
+
+    consoleOut('setLastError ->', txStatus, 'blue');
+    lastErrorRef.current = txStatus;
+    setLastError(txStatus);
+    return txStatus;
+  }, [selectedMultisig?.authority]);
 
   // Search for pending proposal in confirmation history
   const hasMultisigPendingProposal = useCallback(() => {
@@ -270,17 +415,14 @@ const SafeView = (props: {
   }, [confirmationHistory]);
 
   const onMultisigModified = useCallback(() => {
-    setIsBusy(false);
     setIsEditMultisigModalVisible(false);
-    resetTransactionStatus();
-
     openNotification({
       description:
         "The proposal can be reviewed in the Multisig's proposal list for other owners to approve.",
       duration: 10,
       type: 'success',
     });
-  }, [resetTransactionStatus]);
+  }, []);
 
   // Modal visibility flags
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] =
@@ -315,10 +457,10 @@ const SafeView = (props: {
 
   const onExecuteEditMultisigTx = useCallback(
     async (data: any) => {
-      let transaction: Transaction;
+      let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
-      const transactionLog: any[] = [];
+      let transactionLog: any[] = [];
 
       resetTransactionStatus();
       setTransactionCancelled(false);
@@ -503,96 +645,46 @@ const SafeView = (props: {
         }
       };
 
-      const sendTx = async (): Promise<boolean> => {
-        if (connection && wallet && wallet.publicKey && transaction) {
-          const {
-            context: { slot: minContextSlot },
-            value: { blockhash },
-          } = await connection.getLatestBlockhashAndContext();
-
-          transaction.feePayer = wallet.publicKey;
-          transaction.recentBlockhash = blockhash;
-
-          return wallet
-            .sendTransaction(transaction, connection, { minContextSlot })
-            .then(sig => {
-              consoleOut('sendEncodedTransaction returned a signature:', sig);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransactionSuccess,
-                currentOperation: TransactionStatus.ConfirmTransaction,
-              });
-              signature = sig;
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionSuccess,
-                ),
-                result: `signature: ${signature}`,
-              });
-              return true;
-            })
-            .catch((error: any) => {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransaction,
-                currentOperation: TransactionStatus.SendTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionFailure,
-                ),
-                result: { error, encodedTx },
-              });
-              customLogger.logError('Edit multisig transaction failed', {
-                transcript: transactionLog,
-              });
-              return false;
+      if (wallet && publicKey && selectedMultisig) {
+        const created = await createTx();
+        consoleOut('created:', created);
+        if (created && !transactionCancelled) {
+          const sign = await signTx('Edit Multisig', wallet, publicKey, transaction);
+          if (sign.encodedTransaction) {
+            encodedTx = sign.encodedTransaction;
+            transactionLog = transactionLog.concat(sign.log);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
-        } else {
-          console.error('Cannot send transaction! Wallet not found!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransaction,
-            currentOperation: TransactionStatus.WalletNotFound,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.WalletNotFound,
-            ),
-            result: 'Cannot send transaction! Wallet not found!',
-          });
-          customLogger.logError('Edit multisig transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        }
-      };
-
-      if (wallet && selectedMultisig) {
-        const create = await createTx();
-        consoleOut('created:', create);
-        if (create && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature,
-              operationType: OperationType.EditMultisig,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Editing the safe ${selectedMultisig.label}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `The changes to the ${selectedMultisig.label} Multisig Safe have been submitted for approval.`,
-              extras: {
-                multisigAuthority: selectedMultisig
-                  ? selectedMultisig.authority.toBase58()
-                  : '',
-              },
-            });
-            await delay(500);
-            onMultisigModified();
+            const sent = await sendTx('Edit Multisig', connection, encodedTx);
+            consoleOut('sent:', sent);
+            if (sent.signature) {
+              signature = sent.signature;
+              consoleOut('Send Tx to confirmation queue:', signature);
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.EditMultisig,
+                finality: 'confirmed',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Editing the safe ${selectedMultisig.label}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `The changes to the ${selectedMultisig.label} Multisig Safe have been submitted for approval.`,
+                extras: {
+                  multisigAuthority: selectedMultisig
+                    ? selectedMultisig.authority.toBase58()
+                    : '',
+                },
+              });
+              setSuccessStatus();
+              await delay(200);
+              onMultisigModified();
+            } else {
+              setFailureStatusAndNotify('send');
+            }
           } else {
-            setIsBusy(false);
+            setFailureStatusAndNotify('sign');
           }
         } else {
           setIsBusy(false);
@@ -611,9 +703,11 @@ const SafeView = (props: {
       transactionCancelled,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
+      setFailureStatusAndNotify,
       resetTransactionStatus,
       setTransactionStatus,
       onMultisigModified,
+      setSuccessStatus,
     ],
   );
 
@@ -624,10 +718,10 @@ const SafeView = (props: {
 
   const onExecuteApproveTx = useCallback(
     async (data: any) => {
-      let transaction: Transaction;
+      let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
-      const transactionLog: any[] = [];
+      let transactionLog: any[] = [];
 
       resetTransactionStatus();
       setTransactionCancelled(false);
@@ -695,7 +789,7 @@ const SafeView = (props: {
                 NATIVE_SOL_MINT.toBase58(),
               )})`,
             });
-            customLogger.logWarning('Multisig Approve transaction failed', {
+            customLogger.logWarning('Approve Multisig Proposal transaction failed', {
               transcript: transactionLog,
             });
             openNotification({
@@ -745,7 +839,7 @@ const SafeView = (props: {
                 ),
                 result: `${error}`,
               });
-              customLogger.logError('Multisig Approve transaction failed', {
+              customLogger.logError('Approve Multisig Proposal transaction failed', {
                 transcript: transactionLog,
               });
               return false;
@@ -757,102 +851,50 @@ const SafeView = (props: {
             ),
             result: 'Cannot start transaction! Wallet not found!',
           });
-          customLogger.logError('Multisig Approve transaction failed', {
+          customLogger.logError('Approve Multisig Proposal transaction failed', {
             transcript: transactionLog,
           });
           return false;
         }
       };
 
-      const sendTx = async (): Promise<boolean> => {
-        if (connection && wallet && wallet.publicKey && transaction) {
-          const {
-            context: { slot: minContextSlot },
-            value: { blockhash },
-          } = await connection.getLatestBlockhashAndContext();
-
-          transaction.feePayer = wallet.publicKey;
-          transaction.recentBlockhash = blockhash;
-
-          return wallet
-            .sendTransaction(transaction, connection, { minContextSlot })
-            .then(sig => {
-              consoleOut('sendEncodedTransaction returned a signature:', sig);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransactionSuccess,
-                currentOperation: TransactionStatus.ConfirmTransaction,
-              });
-              signature = sig;
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionSuccess,
-                ),
-                result: `signature: ${signature}`,
-              });
-              return true;
-            })
-            .catch(error => {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransaction,
-                currentOperation: TransactionStatus.SendTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionFailure,
-                ),
-                result: { error, encodedTx },
-              });
-              customLogger.logError('Multisig Approve transaction failed', {
-                transcript: transactionLog,
-              });
-              return false;
+      if (wallet && publicKey) {
+        const created = await createTx();
+        consoleOut('created:', created);
+        if (created && !transactionCancelled) {
+          const sign = await signTx('Approve Multisig Proposal', wallet, publicKey, transaction);
+          if (sign.encodedTransaction) {
+            encodedTx = sign.encodedTransaction;
+            transactionLog = transactionLog.concat(sign.log);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
-        } else {
-          console.error('Cannot send transaction! Wallet not found!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransaction,
-            currentOperation: TransactionStatus.WalletNotFound,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.WalletNotFound,
-            ),
-            result: 'Cannot send transaction! Wallet not found!',
-          });
-          customLogger.logError('Multisig Approve transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        }
-      };
-
-      if (wallet) {
-        const create = await createTx();
-        consoleOut('created:', create);
-        if (create && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature,
-              operationType: OperationType.ApproveTransaction,
-              finality: 'finalized',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Approve proposal: ${data.transaction.details.title}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Successfully approved proposal: ${data.transaction.details.title}`,
-              extras: {
-                multisigAuthority: data.transaction.multisig.toBase58(),
-                transactionId: data.transaction.id,
-              },
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
+            const sent = await sendTx('Approve Multisig Proposal', connection, encodedTx);
+            consoleOut('sent:', sent);
+            if (sent.signature) {
+              signature = sent.signature;
+              consoleOut('Send Tx to confirmation queue:', signature);
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.ApproveTransaction,
+                finality: 'finalized',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Approve proposal: ${data.transaction.details.title}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Successfully approved proposal: ${data.transaction.details.title}`,
+                extras: {
+                  multisigAuthority: data.transaction.multisig.toBase58(),
+                  transactionId: data.transaction.id,
+                },
+              });
+              setSuccessStatus();
+            } else {
+              setFailureStatusAndNotify('send');
+            }
           } else {
-            setIsBusy(false);
+            setFailureStatusAndNotify('sign');
           }
         } else {
           setIsBusy(false);
@@ -860,27 +902,29 @@ const SafeView = (props: {
       }
     },
     [
-      resetTransactionStatus,
       wallet,
-      selectedMultisig,
-      multisigClient,
       publicKey,
-      setTransactionStatus,
-      nativeBalance,
-      transactionStatus.currentOperation,
-      t,
       connection,
+      nativeBalance,
+      multisigClient,
+      selectedMultisig,
       transactionCancelled,
+      transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
+      setFailureStatusAndNotify,
+      resetTransactionStatus,
+      setTransactionStatus,
+      setSuccessStatus,
+      t,
     ],
   );
 
   const onExecuteRejectTx = useCallback(
     async (data: any) => {
-      let transaction: Transaction;
+      let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
-      const transactionLog: any[] = [];
+      let transactionLog: any[] = [];
 
       resetTransactionStatus();
       setTransactionCancelled(false);
@@ -1017,95 +1061,43 @@ const SafeView = (props: {
         }
       };
 
-      const sendTx = async (): Promise<boolean> => {
-        if (connection && wallet && wallet.publicKey && transaction) {
-          const {
-            context: { slot: minContextSlot },
-            value: { blockhash },
-          } = await connection.getLatestBlockhashAndContext();
-
-          transaction.feePayer = wallet.publicKey;
-          transaction.recentBlockhash = blockhash;
-
-          return wallet
-            .sendTransaction(transaction, connection, { minContextSlot })
-            .then(sig => {
-              consoleOut('sendEncodedTransaction returned a signature:', sig);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransactionSuccess,
-                currentOperation: TransactionStatus.ConfirmTransaction,
-              });
-              signature = sig;
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionSuccess,
-                ),
-                result: `signature: ${signature}`,
-              });
-              return true;
-            })
-            .catch(error => {
-              console.error(error);
-              setTransactionStatus({
-                lastOperation: TransactionStatus.SendTransaction,
-                currentOperation: TransactionStatus.SendTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.SendTransactionFailure,
-                ),
-                result: { error, encodedTx },
-              });
-              customLogger.logError('Multisig Reject transaction failed', {
-                transcript: transactionLog,
-              });
-              return false;
+      if (wallet && publicKey) {
+        const created = await createTx();
+        consoleOut('created:', created);
+        if (created && !transactionCancelled) {
+          const sign = await signTx('Reject Multisig Proposal', wallet, publicKey, transaction);
+          if (sign.encodedTransaction) {
+            encodedTx = sign.encodedTransaction;
+            transactionLog = transactionLog.concat(sign.log);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
-        } else {
-          console.error('Cannot send transaction! Wallet not found!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransaction,
-            currentOperation: TransactionStatus.WalletNotFound,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.WalletNotFound,
-            ),
-            result: 'Cannot send transaction! Wallet not found!',
-          });
-          customLogger.logError('Multisig Reject transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        }
-      };
-
-      if (wallet) {
-        const create = await createTx();
-        consoleOut('created:', create);
-        if (create && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature,
-              operationType: OperationType.RejectTransaction,
-              finality: 'finalized',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Reject proposal: ${data.transaction.details.title}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Successfully rejected proposal: ${data.transaction.details.title}`,
-              extras: {
-                multisigAuthority: data.transaction.multisig.toBase58(),
-                transactionId: data.transaction.id,
-              },
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
+            const sent = await sendTx('Reject Multisig Proposal', connection, encodedTx);
+            consoleOut('sent:', sent);
+            if (sent.signature) {
+              signature = sent.signature;
+              consoleOut('Send Tx to confirmation queue:', signature);
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.RejectTransaction,
+                finality: 'finalized',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Reject proposal: ${data.transaction.details.title}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Successfully rejected proposal: ${data.transaction.details.title}`,
+                extras: {
+                  multisigAuthority: data.transaction.multisig.toBase58(),
+                  transactionId: data.transaction.id,
+                },
+              });
+              setSuccessStatus();
+            } else {
+              setFailureStatusAndNotify('send');
+            }
           } else {
-            setIsBusy(false);
+            setFailureStatusAndNotify('sign');
           }
         } else {
           setIsBusy(false);
@@ -1122,8 +1114,10 @@ const SafeView = (props: {
       transactionCancelled,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
+      setFailureStatusAndNotify,
       resetTransactionStatus,
       setTransactionStatus,
+      setSuccessStatus,
       t,
     ],
   );
@@ -1142,6 +1136,7 @@ const SafeView = (props: {
     } else {
       resetTransactionStatus();
     }
+    setIsBusy(false);
   }, [
     showErrorReportingModal,
     resetTransactionStatus,
@@ -1151,10 +1146,10 @@ const SafeView = (props: {
 
   const onExecuteFinishTx = useCallback(
     async (data: any) => {
-      let transaction: Transaction;
+      let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
-      const transactionLog: any[] = [];
+      let transactionLog: any[] = [];
 
       resetTransactionStatus();
       setTransactionCancelled(false);
@@ -1312,223 +1307,51 @@ const SafeView = (props: {
         }
       };
 
-      const sendTx = async (): Promise<boolean> => {
-        if (!connection || !wallet || !wallet.publicKey || !transaction) {
-          console.error(
-            'Cannot send transaction! Wallet not found or no connection!',
-          );
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransaction,
-            currentOperation: TransactionStatus.WalletNotFound,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.WalletNotFound,
-            ),
-            result: 'Cannot send transaction! Wallet not found!',
-          });
-          customLogger.logError('Finish Approoved transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        }
-
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        const result = wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
+      if (wallet && publicKey) {
+        // Clear any last error recorded
+        lastErrorRef.current = undefined;
+        setLastError(undefined);
+        // Create Tx
+        const created = await createTx();
+        consoleOut('created:', created);
+        if (created && !transactionCancelled) {
+          const sign = await signTx('Execute Multisig Proposal', wallet, publicKey, transaction);
+          if (sign.encodedTransaction) {
+            encodedTx = sign.encodedTransaction;
+            transactionLog = transactionLog.concat(sign.log);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch((error: any) => {
-            consoleOut(
-              'operation:',
-              OperationType[data.transaction.operation],
-              'orange',
-            );
-            const txStatus = {
-              customError: undefined,
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            } as TransactionStatusInfo;
-            if (error.toString().indexOf('0x1794') !== -1) {
-              let accountIndex = 0;
-              if (data.transaction.operation === OperationType.StreamClose) {
-                accountIndex = 5;
-              } else if (
-                data.transaction.operation ===
-                OperationType.TreasuryStreamCreate ||
-                data.transaction.operation === OperationType.StreamCreate ||
-                data.transaction.operation ===
-                OperationType.StreamCreateWithTemplate
-              ) {
-                accountIndex = 2;
-              } else {
-                accountIndex = 3;
-              }
-              consoleOut(
-                'accounts:',
-                data.transaction.accounts.map((a: any) => a.pubkey.toBase58()),
-                'orange',
-              );
-              const treasury = data.transaction.accounts[accountIndex]
-                ? data.transaction.accounts[accountIndex].pubkey.toBase58()
-                : '-';
-              consoleOut(
-                `Selected account for index [${accountIndex}]`,
-                treasury,
-                'orange',
-              );
-              txStatus.customError = {
-                title: 'Insufficient balance',
-                message:
-                  'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
-                data: treasury,
-              };
-            } else if (error.toString().indexOf('0x1797') !== -1) {
-              let accountIndex = 0;
-              if (
-                data.transaction.operation === OperationType.StreamCreate ||
-                data.transaction.operation ===
-                OperationType.TreasuryStreamCreate ||
-                data.transaction.operation ===
-                OperationType.StreamCreateWithTemplate
-              ) {
-                accountIndex = 2;
-              } else if (
-                data.transaction.operation === OperationType.TreasuryWithdraw
-              ) {
-                accountIndex = 5;
-              } else {
-                accountIndex = 3;
-              }
-              consoleOut(
-                'accounts:',
-                data.transaction.accounts.map((a: any) => a.pubkey.toBase58()),
-                'orange',
-              );
-              const treasury = data.transaction.accounts[accountIndex]
-                ? data.transaction.accounts[accountIndex].pubkey.toBase58()
-                : '-';
-              consoleOut(
-                `Selected account for index [${accountIndex}]`,
-                treasury,
-                'orange',
-              );
-              txStatus.customError = {
-                title: 'Insufficient balance',
-                message:
-                  'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
-                data: treasury,
-              };
-            } else if (error.toString().indexOf('0x1786') !== -1) {
-              txStatus.customError = {
-                message:
-                  'Your transaction failed to submit due to Invalid Gateway Token. Please activate the Gateway Token and retry this operation.',
-                data: undefined,
-              };
-            } else if (error.toString().indexOf('0xbc4') !== -1) {
-              txStatus.customError = {
-                message:
-                  'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token and LP Token Accounts of the Investor.\n',
-                data: selectedMultisig?.authority.toBase58(),
-              };
-            } else if (error.toString().indexOf('0x1') !== -1) {
-              const accountIndex =
-                data.transaction.operation === OperationType.TransferTokens ||
-                  data.transaction.operation === OperationType.Transfer
-                  ? 0
-                  : 3;
-              consoleOut(
-                'accounts:',
-                data.transaction.accounts.map((a: any) => a.pubkey.toBase58()),
-                'orange',
-              );
-              const asset = data.transaction.accounts[accountIndex]
-                ? data.transaction.accounts[accountIndex].pubkey.toBase58()
-                : '-';
-              consoleOut(
-                `Selected account for index [${accountIndex}]`,
-                asset,
-                'orange',
-              );
-              txStatus.customError = {
-                title: 'Insufficient balance',
-                // message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
-                message:
-                  'Your transaction failed to submit due to insufficient balance. Please add SOL to the safe and then retry this operation.\n\nSafe: ',
-                data: selectedMultisig?.authority.toBase58(),
-              };
+            const sent = await sendTx('Execute Multisig Proposal', connection, encodedTx);
+            consoleOut('sent:', sent);
+            if (sent.signature) {
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.ExecuteTransaction,
+                finality: 'finalized',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Execute proposal: ${data.transaction.details.title}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Successfully executed proposal: ${data.transaction.details.title}`,
+                extras: {
+                  multisigAuthority: data.transaction.multisig.toBase58(),
+                  transactionId: data.transaction.id,
+                },
+              });
+              setSuccessStatus();
+            } else {
+              parseErrorFromExecuteProposal(sent.error, data.transaction);
+              setTimeout(() => {
+                onExecuteFinishTxCancelled();
+              }, 30);
             }
-            consoleOut('setLastError ->', txStatus, 'blue');
-            lastErrorRef.current = txStatus;
-            setLastError(txStatus);
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Finish Approoved transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-
-        return result;
-      };
-
-      if (wallet) {
-        const create = await createTx();
-        consoleOut('created:', create);
-        if (create && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature, 'blue');
-            enqueueTransactionConfirmation({
-              signature,
-              operationType: OperationType.ExecuteTransaction,
-              finality: 'finalized',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Execute proposal: ${data.transaction.details.title}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Successfully executed proposal: ${data.transaction.details.title}`,
-              extras: {
-                multisigAuthority: data.transaction.multisig.toBase58(),
-                transactionId: data.transaction.id,
-              },
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
           } else {
-            setTimeout(() => {
-              onExecuteFinishTxCancelled();
-            }, 30);
-            setIsBusy(false);
+            onExecuteFinishTxCancelled();
           }
         } else {
           onExecuteFinishTxCancelled();
-          setIsBusy(false);
         }
       }
     },
@@ -1539,22 +1362,23 @@ const SafeView = (props: {
       nativeBalance,
       connection,
       multisigClient,
-      selectedMultisig,
       transactionCancelled,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
+      parseErrorFromExecuteProposal,
       onExecuteFinishTxCancelled,
       resetTransactionStatus,
       setTransactionStatus,
+      setSuccessStatus,
     ],
   );
 
   const onExecuteCancelTx = useCallback(
     async (data: any) => {
-      let transaction: Transaction;
+      let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
-      const transactionLog: any[] = [];
+      let transactionLog: any[] = [];
 
       setTransactionCancelled(false);
       setIsBusy(true);
@@ -1633,7 +1457,7 @@ const SafeView = (props: {
                 NATIVE_SOL_MINT.toBase58(),
               )})`,
             });
-            customLogger.logWarning('Finish Cancel transaction failed', {
+            customLogger.logWarning('Cancel Multisig Proposal transaction failed', {
               transcript: transactionLog,
             });
             return false;
@@ -1670,7 +1494,7 @@ const SafeView = (props: {
                 ),
                 result: `${error}`,
               });
-              customLogger.logError('Finish Cancel transaction failed', {
+              customLogger.logError('Cancel Multisig Proposal transaction failed', {
                 transcript: transactionLog,
               });
               return false;
@@ -1682,130 +1506,50 @@ const SafeView = (props: {
             ),
             result: 'Cannot start transaction! Wallet not found!',
           });
-          customLogger.logError('Finish Cancel transaction failed', {
+          customLogger.logError('Cancel Multisig Proposal transaction failed', {
             transcript: transactionLog,
           });
           return false;
         }
       };
 
-      const sendTx = async (): Promise<boolean> => {
-        if (!connection || !wallet || !wallet.publicKey || !transaction) {
-          console.error('Cannot send transaction! Wallet not found!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransaction,
-            currentOperation: TransactionStatus.WalletNotFound,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.WalletNotFound,
-            ),
-            result: 'Cannot send transaction! Wallet not found!',
-          });
-          customLogger.logError('Finish Cancel transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        }
-
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        const result = wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
+      if (wallet && publicKey) {
+        const created = await createTx();
+        consoleOut('created:', created);
+        if (created && !transactionCancelled) {
+          const sign = await signTx('Cancel Multisig Proposal', wallet, publicKey, transaction);
+          if (sign.encodedTransaction) {
+            encodedTx = sign.encodedTransaction;
+            transactionLog = transactionLog.concat(sign.log);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch((error: any) => {
-            console.error(error);
-            const txStatus = {
-              customError: undefined,
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            } as TransactionStatusInfo;
-            if (error.toString().indexOf('0x1794') !== -1) {
-              const accountIndex =
-                data.transaction.operation === OperationType.StreamClose
-                  ? 5
-                  : 3;
-              consoleOut(
-                'accounts:',
-                data.transaction.accounts.map((a: any) => a.pubkey.toBase58()),
-                'orange',
-              );
-              const treasury = data.transaction.accounts[accountIndex]
-                ? data.transaction.accounts[accountIndex].pubkey.toBase58()
-                : '-';
-              consoleOut(
-                `Selected account for index [${accountIndex}]`,
-                treasury,
-                'orange',
-              );
-              txStatus.customError = {
-                message:
-                  'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
-                data: treasury,
-              };
+            const sent = await sendTx('Cancel Multisig Proposal', connection, encodedTx);
+            consoleOut('sent:', sent);
+            if (sent.signature) {
+              signature = sent.signature;
+              consoleOut('Send Tx to confirmation queue:', signature);
+              enqueueTransactionConfirmation({
+                signature,
+                operationType: OperationType.CancelTransaction,
+                finality: 'finalized',
+                txInfoFetchStatus: 'fetching',
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Cancel proposal: ${data.transaction.details.title}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Successfully cancelled proposal: ${data.transaction.details.title}`,
+                extras: {
+                  multisigAuthority: data.transaction.multisig.toBase58(),
+                  transactionId: data.transaction.id,
+                },
+              });
+              setSuccessStatus();
+            } else {
+              setFailureStatusAndNotify('send');
             }
-            setTransactionStatus(txStatus);
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Finish Cancel transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-
-        return result;
-      };
-
-      if (wallet) {
-        const create = await createTx();
-        consoleOut('created:', create);
-        if (create && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature,
-              operationType: OperationType.CancelTransaction,
-              finality: 'finalized',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Cancel proposal: ${data.transaction.details.title}`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Successfully cancelled proposal: ${data.transaction.details.title}`,
-              extras: {
-                multisigAuthority: data.transaction.multisig.toBase58(),
-                transactionId: data.transaction.id,
-              },
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
           } else {
-            setIsBusy(false);
+            setFailureStatusAndNotify('sign');
           }
         } else {
           setIsBusy(false);
@@ -1822,8 +1566,10 @@ const SafeView = (props: {
       transactionCancelled,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
+      setFailureStatusAndNotify,
       resetTransactionStatus,
       setTransactionStatus,
+      setSuccessStatus,
     ],
   );
 
