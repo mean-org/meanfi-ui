@@ -281,6 +281,7 @@ interface MeanFiWalletContextState {
   wallet: Adapter | undefined;
   connected: boolean;
   connecting: boolean;
+  disconnecting: boolean;
   isSelectingWallet: boolean;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
   resetWalletProvider: () => void;
@@ -295,6 +296,7 @@ const defaultCtxValues: MeanFiWalletContextState = {
   wallet: undefined,
   connected: false,
   connecting: true,
+  disconnecting: false,
   provider: undefined,
   isSelectingWallet: false,
   resetWalletProvider: () => {},
@@ -317,6 +319,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
     select,
     connect,
     disconnect,
+    disconnecting,
     signMessage,
     sendTransaction,
     signTransaction,
@@ -386,6 +389,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
       wallet.adapter.on('connect', pk => {
         consoleOut('Wallet connect event fired:', pk.toBase58(), 'blue');
         if (wallet.adapter.connected && !wallet.adapter.connecting) {
+          setConnected(false);
           resetWalletProvider();
           window.location.reload();
         } else if (wallet.adapter.publicKey) {
@@ -397,6 +401,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
       wallet.adapter.on('disconnect', () => {
         consoleOut('Wallet disconnect event fired:', '', 'blue');
         setConnected(false);
+        if (wallet.readyState !== WalletReadyState.Installed) return;
         window.location.reload();
       });
 
@@ -454,6 +459,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
         wallet: wallet?.adapter,
         connected,
         connecting,
+        disconnecting,
         isSelectingWallet,
         selectWalletProvider,
         signAllTransactions,
@@ -558,6 +564,7 @@ export function useWallet() {
     wallet,
     connected,
     connecting,
+    disconnecting,
     provider,
     signTransaction,
     resetWalletProvider,
@@ -565,6 +572,7 @@ export function useWallet() {
     isSelectingWallet,
   } = useContext(MeanFiWalletContext);
 
+  const publicKey = connected && !disconnecting && !connecting ? wallet?.publicKey : null;
   return {
     wallet,
     provider,
@@ -573,7 +581,7 @@ export function useWallet() {
     signTransaction,
     resetWalletProvider,
     selectWalletProvider,
-    publicKey: wallet?.publicKey,
+    publicKey,
     connect() {
       if (wallet) {
         wallet.connect();

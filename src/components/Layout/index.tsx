@@ -415,10 +415,10 @@ export const AppLayout = React.memo((props: any) => {
   // Rendering //
   ///////////////
 
-  if ((wallet && connected) || isUnauthenticatedRoute(location.pathname)) {
-    // Launch the Account selector modal
-    if (!selectedAccount.address && publicKey) {
-      return (
+  const renderAccountSelector = () => {
+    return (
+      !selectedAccount.address &&
+      publicKey && (
         <AccountSelectorModal
           isVisible={true}
           isFullWorkflowEnabled={true}
@@ -429,12 +429,16 @@ export const AppLayout = React.memo((props: any) => {
             //selectWalletProvider();
           }}
         />
-      );
-    }
+      )
+    );
+  };
+  if (isUnauthenticatedRoute(location.pathname) || selectedAccount.address) {
+    // Launch the Account selector modal
 
     // Render layout
     return (
       <>
+        {renderAccountSelector()}
         <div className="App">
           <Layout>
             {isProd() && tpsAvg !== undefined && tpsAvg !== null && tpsAvg < PERFORMANCE_THRESHOLD && (
@@ -500,6 +504,7 @@ export const AppLayout = React.memo((props: any) => {
     // Render dark MEAN background
     return (
       <>
+        {renderAccountSelector()}
         <div className="background-logo-container">
           <img className="meanfi-bg-logo" src="/assets/mean-square.svg" alt="" />
         </div>
