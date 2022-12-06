@@ -1866,7 +1866,6 @@ const SafeView = (props: {
             selectedMultisigRef.current.authority.equals(item.authority)
           ) {
             consoleOut('Multisig is already selected!', 'skipping...', 'blue');
-            setNeedRefreshTxs(true);
             return;
           }
           consoleOut('Making multisig active:', item, 'blue');
