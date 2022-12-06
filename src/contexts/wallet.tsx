@@ -350,11 +350,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
   }, [walletName]);
 
   useEffect(() => {
-    // Avoid working when nothing to do on multi-triggering of this effect
-    if (walletName && wallet && wallet.adapter.name === walletName) {
-      return;
-    }
-
     if (wallets) {
       for (const item of wallets) {
         const itemIndex = WALLET_PROVIDERS.findIndex(p => p.name === item.adapter.name);
