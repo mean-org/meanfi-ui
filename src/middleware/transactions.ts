@@ -1,16 +1,16 @@
 import { base64 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { Adapter, SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import {
-  Connection, ParsedTransactionMeta, PublicKey, Transaction, TransactionSignature, VersionedTransaction,
+  Connection, ParsedTransactionMeta, PublicKey, Transaction, TransactionConfirmationStatus, TransactionSignature, VersionedTransaction,
   VersionedTransactionResponse
 } from '@solana/web3.js';
 import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'constants/common';
 import { customLogger } from 'index';
-import { SendTxResult, SignTxResult } from 'models/CreateTxResult';
+import { ConfirmTxResult, SendTxResult, SignTxResult } from 'models/CreateTxResult';
 import { TransactionStatus } from '../models/enums';
 import { Confirmations, Timestamp } from '../models/transactions';
 import { consoleOut, getTransactionStatusForLogs } from './ui';
-import { getAmountFromLamports } from './utils';
+import { getAmountFromLamports, toBuffer } from './utils';
 
 export class TransactionWithSignature {
   constructor(
@@ -45,6 +45,43 @@ export async function getTransactions(
     }
   }
   return transactions;
+}
+
+export async function fetchTxStatus(
+  connection: Connection,
+  signature: string,
+  targetFinality: TransactionConfirmationStatus,
+  callBack?: any,
+) {
+    if (!connection) {
+      return;
+    }
+
+    const fetchStatus = async () => {
+      try {
+        const latestBlockHash = await connection.getLatestBlockhash();
+        const result = await connection.confirmTransaction(
+          {
+            signature,
+            blockhash: latestBlockHash.blockhash,
+            lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+          },
+          targetFinality,
+        );
+        if (result && result.value && !result.value.err) {
+          if (callBack) {
+            callBack(targetFinality);
+          }
+          return targetFinality;
+        }
+        return undefined;
+      } catch (error) {
+        console.error(error);
+        return undefined;
+      }
+    };
+
+    return fetchStatus();
 }
 
 export async function fetchTransactionStatus(
@@ -183,19 +220,9 @@ export const signTx = async (
         ),
         result: { signer: publicKey.toBase58() },
       });
-
-      let base64Tx = '';
-      const isVersioned = 'version' in signed ? true : false;
-      if (isVersioned) {
-        const encodedTx = signed.serialize();
-        base64Tx = Uint8ToBase64(encodedTx);
-      } else {
-        base64Tx = signed.serialize().toString('base64');
-      }
-
-      consoleOut('encodedTx:', base64Tx, 'orange');
       return {
-        encodedTransaction: base64Tx,
+        encodedTransaction: serializeTx(signed),
+        signedTransaction: signed,
         log: txLog,
       };
     })
@@ -212,9 +239,11 @@ export const signTx = async (
       });
       return {
         encodedTransaction: null,
+        signedTransaction: null,
         log: txLog,
+        error
       };
-      });
+    });
   } else {
     txLog.push({
       action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -225,6 +254,7 @@ export const signTx = async (
     });
     return {
       encodedTransaction: null,
+      signedTransaction: null,
       log: txLog,
     };
   }
@@ -270,6 +300,7 @@ export const sendTx = async (
         return {
           signature: null,
           log: txLog,
+          error
         };
       });
   } else {
@@ -287,16 +318,53 @@ export const sendTx = async (
   }
 };
 
-function Uint8ToBase64(u8Arr: any) {
-  const CHUNK_SIZE = 0x8000; //arbitrary number
-  let index = 0;
-  const length = u8Arr.length;
-  let result = '';
-  let slice;
-  while (index < length) {
-      slice = u8Arr.subarray(index, Math.min(index + CHUNK_SIZE, length));
-      result += String.fromCharCode.apply(null, slice);
-      index += CHUNK_SIZE;
+export const confirmTx = async (
+  title: string,
+  connection: Connection,
+  signature: string,
+): Promise<ConfirmTxResult> => {
+  const txLog: any[] = [];
+
+  try {
+    const confirmation = await fetchTxStatus(connection, signature, 'confirmed');
+    if (confirmation) {
+      return {
+        confirmed: true,
+        log: txLog
+      };
+    }
+  } catch (error) {
+    console.error(error);
   }
-  return btoa(result);
+
+  txLog.push({
+    action: getTransactionStatusForLogs(
+      TransactionStatus.ConfirmTransactionFailure,
+    ),
+    result: signature,
+  });
+  customLogger.logError(`${title || 'Confirm'} transaction failed`, {
+    transcript: txLog,
+  });
+  return {
+    confirmed: false,
+    log: txLog
+  };
+}
+
+export const serializeTx = (signed: Transaction | VersionedTransaction) => {
+
+  let base64Tx = '';
+  const isVersioned = 'version' in signed ? true : false;
+
+  if (isVersioned) {
+    const encodedTx = signed.serialize();
+    const asBuffer = toBuffer(encodedTx);
+    base64Tx = asBuffer.toString('base64');
+  } else {
+    base64Tx = signed.serialize().toString('base64');
+  }
+
+  consoleOut('encodedTx:', base64Tx, 'orange');
+  return base64Tx;
 }
