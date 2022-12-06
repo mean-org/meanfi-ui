@@ -65,11 +65,18 @@ const proposalLoadStatusRegister = new Map<string, boolean>();
 
 const SafeView = (props: {
   appsProvider: AppsProvider | undefined;
+  onNewProposalClicked?: any;
+  onProposalExecuted?: any;
   safeBalance?: number;
   solanaApps: App[];
-  onNewProposalClicked?: any;
 }) => {
-  const { appsProvider, safeBalance, solanaApps, onNewProposalClicked } = props;
+  const {
+    appsProvider,
+    onNewProposalClicked,
+    onProposalExecuted,
+    safeBalance,
+    solanaApps,
+  } = props;
   const {
     multisigTxs,
     multisigAccounts,
@@ -1326,6 +1333,7 @@ const SafeView = (props: {
             const sent = await sendTx('Execute Multisig Proposal', connection, encodedTx);
             consoleOut('sent:', sent);
             if (sent.signature) {
+              signature = sent.signature;
               enqueueTransactionConfirmation({
                 signature,
                 operationType: OperationType.ExecuteTransaction,
@@ -1643,30 +1651,42 @@ const SafeView = (props: {
     [],
   );
 
-  // Setup event handler for Tx confirmed
-  const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
-      console.log('onTxConfirmed event handled:', item);
-      recordTxConfirmation(item.signature, item.operationType, true);
+  const logEventHandling = useCallback((item: TxConfirmationInfo) => {
+    consoleOut(
+      `SafeView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
+      item,
+      'crimson',
+    );
+  }, []);
 
-      switch (item.operationType) {
-        case OperationType.ApproveTransaction:
-        case OperationType.RejectTransaction:
-        case OperationType.ExecuteTransaction:
-          reloadMultisigs();
-          reloadSelectedProposal();
-          break;
-        case OperationType.CancelTransaction:
-          goToProposals();
-          break;
-        case OperationType.EditMultisig:
-          reloadMultisigs();
-          break;
-        default:
-          break;
-      }
-    },
-    [recordTxConfirmation],
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+
+    switch (item.operationType) {
+      case OperationType.ApproveTransaction:
+      case OperationType.RejectTransaction:
+      case OperationType.ExecuteTransaction:
+        logEventHandling(item);
+        recordTxConfirmation(item.signature, item.operationType, true);
+        reloadMultisigs();
+        reloadSelectedProposal();
+        onProposalExecuted();
+        break;
+      case OperationType.CancelTransaction:
+        logEventHandling(item);
+        recordTxConfirmation(item.signature, item.operationType, true);
+        goToProposals();
+        break;
+      case OperationType.EditMultisig:
+        logEventHandling(item);
+        recordTxConfirmation(item.signature, item.operationType, true);
+        reloadMultisigs();
+        break;
+      default:
+        break;
+    }
+  },
+    [logEventHandling, onProposalExecuted, recordTxConfirmation],
   );
 
   // Setup event handler for Tx confirmation error
@@ -1845,6 +1865,7 @@ const SafeView = (props: {
             selectedMultisigRef.current.authority.equals(item.authority)
           ) {
             consoleOut('Multisig is already selected!', 'skipping...', 'blue');
+            setNeedRefreshTxs(true);
             return;
           }
           consoleOut('Making multisig active:', item, 'blue');
