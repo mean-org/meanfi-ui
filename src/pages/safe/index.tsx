@@ -109,7 +109,7 @@ const SafeView = (props: {
   const [transactionFees, setTransactionFees] =
     useState<MultisigTransactionFees>(ZERO_FEES);
   // Active Txs
-  const [needRefreshTxs, setNeedRefreshTxs] = useState(false);
+  const [needRefreshTxs, setNeedRefreshTxs] = useState(true);
   const [loadingProposals, setLoadingProposals] = useState(false);
   const [isProposalDetails, setIsProposalDetails] = useState(false);
   // Tx control
@@ -1727,6 +1727,7 @@ const SafeView = (props: {
 
   const refreshSafeDetails = useCallback(() => {
     reloadMultisigs();
+    onRefreshProposals();
     if (isProposalDetails) {
       reloadSelectedProposal();
     }
@@ -1966,7 +1967,7 @@ const SafeView = (props: {
   //  Events  //
   //////////////
 
-  const onRefresProposals = () => {
+  const onRefreshProposals = () => {
     setNeedRefreshTxs(true);
   };
 
@@ -2052,7 +2053,7 @@ const SafeView = (props: {
       <span
         id="refresh-selected-proposal-cta"
         onClick={() => {
-          onRefresProposals();
+          onRefreshProposals();
           refreshSelectedProposal();
         }}
       ></span>
