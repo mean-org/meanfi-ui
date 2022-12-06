@@ -2,21 +2,21 @@ import { Popover } from 'antd';
 import { segmentAnalytics } from 'App';
 import { AccountSelector } from 'components/AccountSelector';
 import { CREATE_SAFE_ROUTE_PATH } from 'constants/common';
-import { AppStateContext, emptyAccount } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
+import { useWalletAccount } from 'contexts/walletAccount';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconSafe } from 'Icons';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { shortenAddress } from 'middleware/utils';
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './style.scss';
 
 export const AccountDetails = () => {
-  const { selectedAccount, setSelectedAccount } = useContext(AppStateContext);
+  const { selectedAccount } = useWalletAccount();
   const navigate = useNavigate();
   const { width } = useWindowSize();
-  const { publicKey, provider, disconnect, resetWalletProvider } = useWallet();
+  const { publicKey, provider, disconnect } = useWallet();
   const [popoverVisible, setPopoverVisible] = useState(false);
 
   const onCompleteAccountSelection = useCallback(() => {
@@ -32,27 +32,16 @@ export const AccountDetails = () => {
   const onDisconnectWallet = useCallback(() => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
-    resetWalletProvider();
     disconnect();
-    setSelectedAccount(emptyAccount);
-  }, [disconnect, resetWalletProvider, setSelectedAccount]);
+  }, [disconnect]);
 
   const renderPersonalAccount = () => {
     return (
       <>
-        {provider && (
-          <img
-            src={provider.icon}
-            alt={provider.name}
-            width="24"
-            className="wallet-provider-icon"
-          />
-        )}
+        {provider && <img src={provider.icon} alt={provider.name} width="24" className="wallet-provider-icon" />}
         <div className="account-descriptor">
           <div className="account-name">Personal Account</div>
-          <div className="account-id">
-            {shortenAddress(selectedAccount.address, 8)}
-          </div>
+          <div className="account-id">{shortenAddress(selectedAccount.address, 8)}</div>
         </div>
       </>
     );
@@ -61,15 +50,10 @@ export const AccountDetails = () => {
   const renderSupersafeAccount = () => {
     return (
       <>
-        <IconSafe
-          className="mean-svg-icons wallet-provider-icon"
-          style={{ width: 24, height: 24 }}
-        />
+        <IconSafe className="mean-svg-icons wallet-provider-icon" style={{ width: 24, height: 24 }} />
         <div className="account-descriptor">
           <div className="account-name">{selectedAccount.name}</div>
-          <div className="account-id">
-            {shortenAddress(selectedAccount.address, 8)}
-          </div>
+          <div className="account-id">{shortenAddress(selectedAccount.address, 8)}</div>
         </div>
       </>
     );
@@ -111,9 +95,7 @@ export const AccountDetails = () => {
       >
         <div className="wallet-wrapper">
           <span className="wallet-key">
-            {selectedAccount.isMultisig
-              ? renderSupersafeAccount()
-              : renderPersonalAccount()}
+            {selectedAccount.isMultisig ? renderSupersafeAccount() : renderPersonalAccount()}
           </span>
         </div>
       </Popover>

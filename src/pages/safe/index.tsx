@@ -1815,7 +1815,6 @@ const SafeView = (props: {
       })
       .finally(() => setProposalsLoading(false));
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     multisigClient,
@@ -1823,6 +1822,8 @@ const SafeView = (props: {
     selectedMultisig,
     getActiveMultisigAuthorityByReference,
     getMultisigProposals,
+    setProposalsLoading,
+    setMultisigTxs,
   ]);
 
   // Actually selects a multisig base on currently selected account
@@ -1844,7 +1845,6 @@ const SafeView = (props: {
             selectedMultisigRef.current.authority.equals(item.authority)
           ) {
             consoleOut('Multisig is already selected!', 'skipping...', 'blue');
-            setNeedRefreshTxs(true);
             return;
           }
           consoleOut('Making multisig active:', item, 'blue');
@@ -1857,7 +1857,8 @@ const SafeView = (props: {
     } else {
       setSelectedMultisig(undefined);
     }
-  }, [multisigAccounts, selectedAccount, setSelectedMultisig]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [multisigAccounts, selectedAccount]);
 
   // Process route params and set item (proposal) specified in the url by id
   useEffect(() => {

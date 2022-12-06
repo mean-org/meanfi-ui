@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button, Modal, Tooltip } from 'antd';
 import { AccountSelector } from '../AccountSelector';
 import { ArrowLeftOutlined } from '@ant-design/icons';
@@ -12,14 +11,8 @@ export const AccountSelectorModal = (props: {
   onGotoSelectWallet?: any;
   onHandleClose?: any;
 }) => {
-  const {
-    isFullWorkflowEnabled,
-    isVisible,
-    onAccountSelected,
-    onCreateSafe,
-    onGotoSelectWallet,
-    onHandleClose,
-  } = props;
+  const { isFullWorkflowEnabled, isVisible, onAccountSelected, onCreateSafe, onGotoSelectWallet, onHandleClose } =
+    props;
 
   return (
     <Modal
@@ -30,12 +23,7 @@ export const AccountSelectorModal = (props: {
           {!isInXnftWallet() && isFullWorkflowEnabled && (
             <div className="back-button ant-modal-close">
               <Tooltip placement="bottom" title="Back to wallet selection">
-                <Button
-                  type="default"
-                  shape="circle"
-                  icon={<ArrowLeftOutlined />}
-                  onClick={onGotoSelectWallet}
-                />
+                <Button type="default" shape="circle" icon={<ArrowLeftOutlined />} onClick={onGotoSelectWallet} />
               </Tooltip>
             </div>
           )}
