@@ -2,6 +2,7 @@ import { AnalyticsBrowser } from '@segment/analytics-next';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { Layout } from 'antd';
 import { MeanFiWalletProvider } from 'contexts/wallet';
+import { WalletAccountProvider } from 'contexts/walletAccount';
 import { environment } from 'environments/environment';
 import { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
@@ -79,10 +80,7 @@ function App() {
     return () => {};
   }, []);
 
-  const network =
-    environment === 'production'
-      ? WalletAdapterNetwork.Mainnet
-      : WalletAdapterNetwork.Devnet;
+  const network = environment === 'production' ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet;
 
   const wallets = useMemo(
     () => [
@@ -122,13 +120,15 @@ function App() {
           <ConnectionProvider>
             <WalletProvider wallets={wallets} autoConnect>
               <MeanFiWalletProvider>
-                <AccountsProvider>
-                  <TxConfirmationProvider>
-                    <AppStateProvider>
-                      <AppRoutes />
-                    </AppStateProvider>
-                  </TxConfirmationProvider>
-                </AccountsProvider>
+                <WalletAccountProvider>
+                  <AccountsProvider>
+                    <TxConfirmationProvider>
+                      <AppStateProvider>
+                        <AppRoutes />
+                      </AppStateProvider>
+                    </TxConfirmationProvider>
+                  </AccountsProvider>
+                </WalletAccountProvider>
               </MeanFiWalletProvider>
             </WalletProvider>
           </ConnectionProvider>

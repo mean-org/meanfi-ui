@@ -6,10 +6,7 @@ import {
   MultisigTransactionStatus,
 } from '@mean-dao/mean-multisig-sdk';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import {
-  StreamActivity,
-  StreamInfo,
-} from '@mean-dao/money-streaming/lib/types';
+import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream } from '@mean-dao/msp';
 import { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
 import { PublicKey } from '@solana/web3.js';
@@ -20,22 +17,11 @@ import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
 import { TREASURY_TYPE_OPTIONS } from 'constants/treasury-type-options';
 import { appConfig, customLogger } from 'index';
 import { getAccountNFTs, getUserAccountTokens } from 'middleware/accounts';
-import {
-  getPrices,
-  getSolanaTokenListKeyNameByCluster,
-  getSolFlareTokenList,
-  getSplTokens,
-} from 'middleware/api';
+import { getPrices, getSolanaTokenListKeyNameByCluster, getSolFlareTokenList, getSplTokens } from 'middleware/api';
 import { MappedTransaction } from 'middleware/history';
-import { SYSTEM_PROGRAM_ID } from 'middleware/ids';
 import { PerformanceCounter } from 'middleware/perf-counter';
 import { consoleOut, isProd, msToTime } from 'middleware/ui';
-import {
-  findATokenAddress,
-  getAmountFromLamports,
-  shortenAddress,
-  useLocalStorageState,
-} from 'middleware/utils';
+import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from 'middleware/utils';
 import {
   AccountContext,
   AccountDetails,
@@ -45,19 +31,10 @@ import {
   UserTokensResponse,
 } from 'models/accounts';
 import { DdcaFrequencyOption } from 'models/ddca-models';
-import {
-  PaymentRateType,
-  TimesheetRequirementOption,
-  TransactionStatus,
-} from 'models/enums';
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from 'models/enums';
 import { MultisigVault } from 'models/multisig';
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import {
-  initialStats,
-  initialSummary,
-  PaymentStreamingStats,
-  StreamsSummary,
-} from 'models/streams';
+import { initialStats, initialSummary, PaymentStreamingStats, StreamsSummary } from 'models/streams';
 import { TokenPrice } from 'models/TokenPrice';
 import { TreasuryTypeOption } from 'models/treasuries';
 import moment from 'moment';
@@ -76,12 +53,9 @@ import {
   TRANSACTIONS_PER_PAGE,
   WRAPPED_SOL_MINT_ADDRESS,
 } from '../constants';
-import {
-  getNetworkIdByCluster,
-  useConnection,
-  useConnectionConfig,
-} from './connection';
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from './connection';
 import { useWallet } from './wallet';
+import { emptyAccount, useWalletAccount } from './walletAccount';
 
 const pricesPerformanceCounter = new PerformanceCounter();
 const tokenListPerformanceCounter = new PerformanceCounter();
@@ -90,12 +64,6 @@ const listStreamsV2PerformanceCounter = new PerformanceCounter();
 
 export type TpsAverageValues = number | null | undefined;
 export type StreamValues = Stream | StreamInfo | undefined;
-export const emptyAccount: AccountContext = {
-  address: '',
-  name: '',
-  isMultisig: false,
-  owner: '',
-};
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -105,10 +73,7 @@ export interface TransactionStatusInfo {
 
 interface AppStateConfig {
   // Account selection
-  isSelectingAccount: boolean;
   selectedAccount: AccountContext;
-  lastUsedAccount: AccountContext | null;
-  rememberAccount: boolean;
   // General
   theme: string | undefined;
   tpsAvg: TpsAverageValues;
@@ -196,12 +161,7 @@ interface AppStateConfig {
   // Routes
   previousRoute: string;
   // Account selection
-  setIsSelectingAccount: (state: boolean) => void;
-  setSelectedAccount: (account: AccountContext, override?: boolean) => void;
-  setRememberAccount: (state: boolean) => void;
-  getAssetsByAccount: (
-    address: string,
-  ) => Promise<UserTokensResponse | null> | null;
+  getAssetsByAccount: (address: string) => Promise<UserTokensResponse | null> | null;
   // General
   setTheme: (name: string) => void;
   setTpsAvg: (value: TpsAverageValues) => void;
@@ -250,19 +210,12 @@ interface AppStateConfig {
   setDeletedStream: (id: string) => void;
   setHighLightableStreamId: (id: string | undefined) => void;
   openStreamById: (streamId: string, dock: boolean) => void;
-  getStreamActivity: (
-    streamId: string,
-    version: number,
-    clearHistory?: boolean,
-  ) => void;
+  getStreamActivity: (streamId: string, version: number, clearHistory?: boolean) => void;
   setCustomStreamDocked: (state: boolean) => void;
   setDiagnosisInfo: (info: AccountDetails | undefined) => void;
   // Accounts page
   setShouldLoadTokens: (state: boolean) => void;
-  appendHistoryItems: (
-    transactionsChunk: MappedTransaction[] | undefined,
-    addItems?: boolean,
-  ) => void;
+  appendHistoryItems: (transactionsChunk: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
@@ -291,10 +244,7 @@ interface AppStateConfig {
 
 const contextDefaultValues: AppStateConfig = {
   // Account selection
-  isSelectingAccount: true,
   selectedAccount: emptyAccount,
-  lastUsedAccount: null,
-  rememberAccount: true,
   // General
   theme: undefined,
   tpsAvg: undefined, // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
@@ -385,9 +335,6 @@ const contextDefaultValues: AppStateConfig = {
   // Routes
   previousRoute: '',
   // Account selection
-  setIsSelectingAccount: () => {},
-  setSelectedAccount: () => {},
-  setRememberAccount: () => {},
   getAssetsByAccount: () => null,
   // General
   setTheme: () => {},
@@ -469,251 +416,138 @@ const contextDefaultValues: AppStateConfig = {
   setPreviousRoute: () => {},
 };
 
-export const AppStateContext =
-  React.createContext<AppStateConfig>(contextDefaultValues);
+export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
 
 const AppStateProvider: React.FC = ({ children }) => {
   const { t } = useTranslation('common');
   // Parent contexts
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
+  const { selectedAccount } = useWalletAccount();
   const connectionConfig = useConnectionConfig();
   // Account selection
-  const [isSelectingAccount, updateIsSelectingAccount] = useState<boolean>(
-    contextDefaultValues.isSelectingAccount,
-  );
-  const [rememberAccount, updateRememberAccount] = useLocalStorageState(
-    'rememberAccount',
-    `${contextDefaultValues.rememberAccount}`,
-  );
-  const [isWhitelisted, setIsWhitelisted] = useState(
-    contextDefaultValues.isWhitelisted,
-  );
+  const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const today = new Date().toLocaleDateString('en-US');
   const tomorrow = moment().add(1, 'days').format('L');
   const timeDate = moment().format('hh:mm A');
   const [theme, updateTheme] = useLocalStorageState('theme');
-  const [tpsAvg, setTpsAvg] = useState<TpsAverageValues>(
-    contextDefaultValues.tpsAvg,
+  const [tpsAvg, setTpsAvg] = useState<TpsAverageValues>(contextDefaultValues.tpsAvg);
+  const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
+  const [treasuryOption, updateTreasuryOption] = useState<TreasuryTypeOption | undefined>(
+    contextDefaultValues.treasuryOption,
   );
-  const [ddcaOption, updateDdcaOption] = useState<
-    DdcaFrequencyOption | undefined
-  >();
-  const [treasuryOption, updateTreasuryOption] = useState<
-    TreasuryTypeOption | undefined
-  >(contextDefaultValues.treasuryOption);
   const [ddcaOptionName, setDdcaOptionName] = useState<string>('');
-  const [recipientAddress, updateRecipientAddress] = useState<string>(
-    contextDefaultValues.recipientAddress,
+  const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);
+  const [recipientNote, updateRecipientNote] = useState<string>(contextDefaultValues.recipientNote);
+  const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
+  const [proposalEndDate, updateProposalEndDate] = useState<string | undefined>(tomorrow);
+  const [proposalEndTime, updateProposalEndTime] = useState<string | undefined>(timeDate);
+  const [fromCoinAmount, updateFromCoinAmount] = useState<string>(contextDefaultValues.fromCoinAmount);
+  const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
+  const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>(contextDefaultValues.lockPeriodAmount);
+  const [activeTab, updateActiveTab] = useState<string>(contextDefaultValues.activeTab);
+  const [selectedTab, updateSelectedTab] = useState<string>(contextDefaultValues.selectedTab);
+  const [coolOffPeriodFrequency, updateCoolOffPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerDay);
+  const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [lockPeriodFrequency, updateLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(
+    TimesheetRequirementOption.NotRequired,
   );
-  const [recipientNote, updateRecipientNote] = useState<string>(
-    contextDefaultValues.recipientNote,
+  const [isVerifiedRecipient, setIsVerifiedRecipient] = useState<boolean>(contextDefaultValues.isVerifiedRecipient);
+  const [isAllocationReserved, setIsAllocationReserved] = useState<boolean>(contextDefaultValues.isAllocationReserved);
+  const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(
+    contextDefaultValues.transactionStatus,
   );
-  const [paymentStartDate, updatePaymentStartDate] = useState<
-    string | undefined
-  >(today);
-  const [proposalEndDate, updateProposalEndDate] = useState<string | undefined>(
-    tomorrow,
-  );
-  const [proposalEndTime, updateProposalEndTime] = useState<string | undefined>(
-    timeDate,
-  );
-  const [fromCoinAmount, updateFromCoinAmount] = useState<string>(
-    contextDefaultValues.fromCoinAmount,
-  );
-  const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(
-    contextDefaultValues.paymentRateAmount,
-  );
-  const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>(
-    contextDefaultValues.lockPeriodAmount,
-  );
-  const [activeTab, updateActiveTab] = useState<string>(
-    contextDefaultValues.activeTab,
-  );
-  const [selectedTab, updateSelectedTab] = useState<string>(
-    contextDefaultValues.selectedTab,
-  );
-  const [coolOffPeriodFrequency, updateCoolOffPeriodFrequency] =
-    useState<PaymentRateType>(PaymentRateType.PerDay);
-  const [paymentRateFrequency, updatePaymentRateFrequency] =
-    useState<PaymentRateType>(PaymentRateType.PerMonth);
-  const [lockPeriodFrequency, updateLockPeriodFrequency] =
-    useState<PaymentRateType>(PaymentRateType.PerMonth);
-  const [timeSheetRequirement, updateTimeSheetRequirement] =
-    useState<TimesheetRequirementOption>(
-      TimesheetRequirementOption.NotRequired,
-    );
-  const [isVerifiedRecipient, setIsVerifiedRecipient] = useState<boolean>(
-    contextDefaultValues.isVerifiedRecipient,
-  );
-  const [isAllocationReserved, setIsAllocationReserved] = useState<boolean>(
-    contextDefaultValues.isAllocationReserved,
-  );
-  const [transactionStatus, updateTransactionStatus] =
-    useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
-  const [previousWalletConnectState, updatePreviousWalletConnectState] =
-    useState<boolean>(connected);
+  const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(connected);
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
   const [loadingStreams, updateLoadingStreams] = useState(false);
-  const [loadingStreamActivity, setLoadingStreamActivity] = useState(
-    contextDefaultValues.loadingStreamActivity,
-  );
-  const [streamActivity, setStreamActivity] = useState<
-    StreamActivity[] | undefined
-  >(undefined);
+  const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
+  const [streamActivity, setStreamActivity] = useState<StreamActivity[] | undefined>(undefined);
   const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(
     contextDefaultValues.hasMoreStreamActivity,
   );
-  const [customStreamDocked, setCustomStreamDocked] = useState(
-    contextDefaultValues.customStreamDocked,
-  );
-  const [diagnosisInfo, setDiagnosisInfo] = useState<
-    AccountDetails | undefined
-  >(contextDefaultValues.diagnosisInfo);
+  const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
+  const [diagnosisInfo, setDiagnosisInfo] = useState<AccountDetails | undefined>(contextDefaultValues.diagnosisInfo);
   const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
   const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
-  const [streamList, setStreamList] = useState<
-    Array<StreamInfo | Stream> | undefined
-  >();
+  const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
   const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>();
-  const [multisigTxs, setMultisigTxs] = useState<
-    MultisigTransaction[] | undefined
-  >();
+  const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[] | undefined>();
   const [selectedStream, updateSelectedStream] = useState<StreamValues>();
   const [streamDetail, updateStreamDetail] = useState<StreamValues>();
   const [activeStream, setActiveStream] = useState<StreamValues>();
   const [deletedStreams, setDeletedStreams] = useState<string[]>([]);
-  const [highLightableStreamId, setHighLightableStreamId] = useState<
-    string | undefined
-  >(contextDefaultValues.highLightableStreamId);
+  const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(
+    contextDefaultValues.highLightableStreamId,
+  );
   const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
-  const [highLightableMultisigId, setHighLightableMultisigId] = useState<
-    string | undefined
-  >(contextDefaultValues.highLightableMultisigId);
-  const [multisigSolBalance, updateMultisigSolBalance] = useState<
-    number | undefined
-  >(contextDefaultValues.multisigSolBalance);
-  const [pendingMultisigTxCount, setPendingMultisigTxCount] = useState<
-    number | undefined
-  >(contextDefaultValues.pendingMultisigTxCount);
+  const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(
+    contextDefaultValues.highLightableMultisigId,
+  );
+  const [multisigSolBalance, updateMultisigSolBalance] = useState<number | undefined>(
+    contextDefaultValues.multisigSolBalance,
+  );
+  const [pendingMultisigTxCount, setPendingMultisigTxCount] = useState<number | undefined>(
+    contextDefaultValues.pendingMultisigTxCount,
+  );
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
-  const [tokenBalance, updateTokenBalance] = useState<number>(
-    contextDefaultValues.tokenBalance,
+  const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
+  const [totalSafeBalance, updateTotalSafeBalance] = useState<number | undefined>(
+    contextDefaultValues.totalSafeBalance,
   );
-  const [totalSafeBalance, updateTotalSafeBalance] = useState<
-    number | undefined
-  >(contextDefaultValues.totalSafeBalance);
-  const [stakingMultiplier, updateStakingMultiplier] = useState<number>(
-    contextDefaultValues.stakingMultiplier,
-  );
+  const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
   const [priceList, setPriceList] = useState<TokenPrice[] | null>(null);
   const [coinPrices, setCoinPrices] = useState<any>(null);
-  const [loadingPrices, setLoadingPrices] = useState<boolean>(
-    contextDefaultValues.loadingPrices,
-  );
-  const [effectiveRate, updateEffectiveRate] = useState<number>(
-    contextDefaultValues.effectiveRate,
-  );
+  const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
+  const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
-  const [stakedAmount, updateStakedAmount] = useState<string>(
-    contextDefaultValues.stakedAmount,
+  const [stakedAmount, updateStakedAmount] = useState<string>(contextDefaultValues.stakedAmount);
+  const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
+  const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
+  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
+
+  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
+  const [transactions, setTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
+  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(
+    contextDefaultValues.selectedAsset,
   );
-  const [unstakedAmount, updatedUnstakeAmount] = useState<string>(
-    contextDefaultValues.unstakedAmount,
+  const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
+  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
+  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
+  const [paymentStreamingStats, setPaymentStreamingStats] = useState<PaymentStreamingStats>(
+    contextDefaultValues.paymentStreamingStats,
   );
-  const [unstakeStartDate, updateUnstakeStartDate] = useState<
-    string | undefined
-  >(today);
-  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] =
-    useState(false);
-  const [selectedAccount, updateSelectedAccount] =
-    useState<AccountContext>(emptyAccount);
-  const [lastUsedAccount, updateLastUsedAccount] =
-    useLocalStorageState('lastUsedAccount');
-  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(
-    contextDefaultValues.splTokenList,
+  const [accountNfts, setAccountNfts] = useState<FindNftsByOwnerOutput | undefined>(contextDefaultValues.accountNfts);
+  const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
+  const [meanTokenList, setMeanTokenlist] = useState<UserTokenAccount[] | undefined>(undefined);
+  const [tokensLoaded, setTokensLoaded] = useState(contextDefaultValues.tokensLoaded);
+  const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
+  const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(contextDefaultValues.loadingTokenAccounts);
+  const [userTokensResponse, setUserTokensResponse] = useState<UserTokensResponse | null>(
+    contextDefaultValues.userTokensResponse,
   );
-  const [transactions, setTransactions] = useState<
-    MappedTransaction[] | undefined
-  >(contextDefaultValues.transactions);
-  const [selectedAsset, updateSelectedAsset] = useState<
-    UserTokenAccount | undefined
-  >(contextDefaultValues.selectedAsset);
-  const [lastTxSignature, setLastTxSignature] = useState<string>(
-    contextDefaultValues.lastTxSignature,
-  );
-  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(
-    contextDefaultValues.streamsSummary,
-  );
-  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(
-    contextDefaultValues.lastStreamsSummary,
-  );
-  const [paymentStreamingStats, setPaymentStreamingStats] =
-    useState<PaymentStreamingStats>(contextDefaultValues.paymentStreamingStats);
-  const [accountNfts, setAccountNfts] = useState<
-    FindNftsByOwnerOutput | undefined
-  >(contextDefaultValues.accountNfts);
-  const [previousRoute, setPreviousRoute] = useState<string>(
-    contextDefaultValues.previousRoute,
-  );
-  const [meanTokenList, setMeanTokenlist] = useState<
-    UserTokenAccount[] | undefined
-  >(undefined);
-  const [tokensLoaded, setTokensLoaded] = useState(
-    contextDefaultValues.tokensLoaded,
-  );
-  const [shouldLoadTokens, updateShouldLoadTokens] = useState(
-    contextDefaultValues.shouldLoadTokens,
-  );
-  const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(
-    contextDefaultValues.loadingTokenAccounts,
-  );
-  const [userTokensResponse, setUserTokensResponse] =
-    useState<UserTokensResponse | null>(
-      contextDefaultValues.userTokensResponse,
-    );
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
 
   const [tokenAccounts, updateTokenAccounts] = useState<AccountTokenParsedInfo[] | undefined>(
-    contextDefaultValues.tokenAccounts
+    contextDefaultValues.tokenAccounts,
   );
 
   const isDowngradedPerformance = useMemo(() => {
-    return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
-      ? true
-      : false;
+    return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD) ? true : false;
   }, [tpsAvg]);
 
-  const multisigAddressPK = useMemo(
-    () => new PublicKey(appConfig.getConfig().multisigProgramAddress),
-    [],
-  );
-  const streamProgramAddress = useMemo(
-    () => appConfig.getConfig().streamProgramAddress,
-    [],
-  );
-  const streamV2ProgramAddress = useMemo(
-    () => appConfig.getConfig().streamV2ProgramAddress,
-    [],
-  );
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+  const streamProgramAddress = useMemo(() => appConfig.getConfig().streamProgramAddress, []);
+  const streamV2ProgramAddress = useMemo(() => appConfig.getConfig().streamV2ProgramAddress, []);
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(
-    () =>
-      new MoneyStreaming(
-        connectionConfig.endpoint,
-        streamProgramAddress,
-        'confirmed',
-      ),
+    () => new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress, 'confirmed'),
     [connectionConfig.endpoint, streamProgramAddress],
   );
 
   const msp = useMemo(() => {
-    return new MSP(
-      connectionConfig.endpoint,
-      streamV2ProgramAddress,
-      'confirmed',
-    );
+    return new MSP(connectionConfig.endpoint, streamV2ProgramAddress, 'confirmed');
   }, [connectionConfig.endpoint, streamV2ProgramAddress]);
 
   const multisigClient = useMemo(() => {
@@ -721,24 +555,11 @@ const AppStateProvider: React.FC = ({ children }) => {
       return null;
     }
 
-    return new MeanMultisig(
-      connectionConfig.endpoint,
-      publicKey,
-      'confirmed',
-      multisigAddressPK,
-    );
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
   }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
 
   const setTheme = (name: string) => {
     updateTheme(name);
-  };
-
-  const setIsSelectingAccount = (state: boolean) => {
-    updateIsSelectingAccount(state);
-  };
-
-  const setRememberAccount = (state: boolean) => {
-    updateRememberAccount(state);
   };
 
   /**
@@ -781,33 +602,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [theme, updateTheme]);
 
   useEffect(() => {
-    // lastUsedAccount
-    if (publicKey && selectedAccount && lastUsedAccount) {
-      const selectedAddress = selectedAccount.address;
-      const lastAddress = (lastUsedAccount as AccountContext).address;
-      if (
-        selectedAddress &&
-        !selectedAccount.isMultisig &&
-        lastAddress &&
-        lastAddress !== selectedAddress &&
-        lastAddress !== publicKey.toBase58()
-      ) {
-        const account: AccountContext = {
-          name: 'Personal account',
-          address: publicKey.toBase58(),
-          isMultisig: false,
-          owner: SYSTEM_PROGRAM_ID.toBase58(),
-        };
-        consoleOut(
-          'Stored account different than current wallet!',
-          '',
-          'crimson',
-        );
-        consoleOut('Setting account to connected wallet!', '', 'crimson');
-        updateLastUsedAccount(account);
-      }
-    }
-  }, [lastUsedAccount, publicKey, selectedAccount, updateLastUsedAccount]);
+    setTransactions([]);
+    setShouldLoadTokens(true);
+  }, [selectedAccount]);
 
   // Update isWhitelisted
   useEffect(() => {
@@ -816,9 +613,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setIsWhitelisted(false);
         customLogger.canLogToConsole = false;
       } else {
-        const isWl = DAO_CORE_TEAM_WHITELIST.some(
-          a => a === publicKey.toBase58(),
-        );
+        const isWl = DAO_CORE_TEAM_WHITELIST.some(a => a === publicKey.toBase58());
         customLogger.canLogToConsole = isWl;
         setIsWhitelisted(isWl);
       }
@@ -963,10 +758,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const getTokenByMintAddress = useCallback(
     (address: string): TokenInfo | undefined => {
-      let token =
-        splTokenList && isProd()
-          ? tokenList.find(t => t.address === address)
-          : undefined;
+      let token = splTokenList && isProd() ? tokenList.find(t => t.address === address) : undefined;
       if (!token) {
         token = MEAN_TOKEN_LIST.find(t => t.address === address);
       }
@@ -1070,9 +862,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             });
         } else {
           const signature =
-            streamActivity && streamActivity.length > 0
-              ? streamActivity[streamActivity.length - 1].signature
-              : '';
+            streamActivity && streamActivity.length > 0 ? streamActivity[streamActivity.length - 1].signature : '';
           const before = clearHistory ? '' : signature;
           consoleOut('before:', before, 'crimson');
           msp
@@ -1080,9 +870,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             .then((value: StreamActivity[]) => {
               consoleOut('activity:', value);
               const currentActivity =
-                streamActivity && streamActivity.length > 0
-                  ? JSON.parse(JSON.stringify(streamActivity))
-                  : [];
+                streamActivity && streamActivity.length > 0 ? JSON.parse(JSON.stringify(streamActivity)) : [];
               const activities = clearHistory ? [] : currentActivity;
               if (value && value.length > 0) {
                 activities.push(...value);
@@ -1203,9 +991,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         return 0;
       }
 
-      return coinPrices && coinPrices[symbol]
-        ? (coinPrices[symbol] as number)
-        : 0;
+      return coinPrices && coinPrices[symbol] ? (coinPrices[symbol] as number) : 0;
     },
     [coinPrices],
   );
@@ -1254,18 +1040,11 @@ const AppStateProvider: React.FC = ({ children }) => {
       try {
         setLoadingPrices(true);
         pricesPerformanceCounter.start();
-        const isExpired = isCacheItemExpired(
-          'coin-prices',
-          THIRTY_MINUTES_REFRESH_TIMEOUT,
-        );
+        const isExpired = isCacheItemExpired('coin-prices', THIRTY_MINUTES_REFRESH_TIMEOUT);
         const honorCache = fromCache && !isExpired ? true : false;
         const newPrices = await getPrices(honorCache);
         pricesPerformanceCounter.stop();
-        consoleOut(
-          `Fetched price list in ${pricesPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-          '',
-          'crimson',
-        );
+        consoleOut(`Fetched price list in ${pricesPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
         mapPrices(newPrices);
       } catch (error) {
         setCoinPrices({ 'NO-TOKEN-VALUE': 1 });
@@ -1281,11 +1060,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Effect to load coin prices
   useEffect(() => {
     const coinTimer = window.setInterval(() => {
-      consoleOut(
-        `Refreshing prices past ${
-          THIRTY_MINUTES_REFRESH_TIMEOUT / 60 / 1000
-        }min...`,
-      );
+      consoleOut(`Refreshing prices past ${THIRTY_MINUTES_REFRESH_TIMEOUT / 60 / 1000}min...`);
       getCoinPrices();
     }, THIRTY_MINUTES_REFRESH_TIMEOUT);
 
@@ -1300,9 +1075,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Update token price while list of prices change
   useEffect(() => {
     if (coinPrices && selectedToken) {
-      const price = coinPrices[selectedToken.address]
-        ? coinPrices[selectedToken.address]
-        : 0;
+      const price = coinPrices[selectedToken.address] ? coinPrices[selectedToken.address] : 0;
       updateEffectiveRate(price);
     }
   }, [coinPrices, selectedToken]);
@@ -1345,9 +1118,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         return;
       }
 
-      const fallback = selectedAccount.address
-        ? new PublicKey(selectedAccount.address)
-        : (publicKey as PublicKey);
+      const fallback = selectedAccount.address ? new PublicKey(selectedAccount.address) : (publicKey as PublicKey);
       const userPk = userAddress || fallback;
       consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
 
@@ -1370,11 +1141,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             listStreamsV2PerformanceCounter.stop();
             streamAccumulator.push(...streamsv2);
             rawStreamsv2 = streamsv2;
-            rawStreamsv2.sort((a, b) =>
-              new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))
-                ? 1
-                : -1,
-            );
+            rawStreamsv2.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime)) ? 1 : -1));
             listStreamsV1PerformanceCounter.start();
             ms.listStreams({ treasurer: userPk, beneficiary: userPk })
               .then(async streamsv1 => {
@@ -1386,24 +1153,15 @@ const AppStateProvider: React.FC = ({ children }) => {
                 );
                 streamAccumulator.push(...streamsv1);
                 rawStreamsv1 = streamsv1;
-                rawStreamsv1.sort((a, b) =>
-                  new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))
-                    ? 1
-                    : -1,
-                );
-                streamAccumulator.sort((a, b) =>
-                  new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime))
-                    ? 1
-                    : -1,
-                );
+                rawStreamsv1.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime)) ? 1 : -1));
+                streamAccumulator.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime)) ? 1 : -1));
                 // Start debugging block
                 if (!isProd()) {
                   const debugTable: any[] = [];
                   streamAccumulator.forEach(item =>
                     debugTable.push({
                       version: item.version,
-                      name:
-                        item.version < 2 ? item.streamName : item.name.trim(),
+                      name: item.version < 2 ? item.streamName : item.name.trim(),
                       streamId: shortenAddress(item.id, 8),
                     }),
                   );
@@ -1420,10 +1178,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                       ? ((streamDetail as StreamInfo).id as string)
                       : (streamDetail as Stream).id.toBase58();
                   const item = streamAccumulator.find(s => {
-                    const id =
-                      s.version < 2
-                        ? ((s as StreamInfo).id as string)
-                        : (s as Stream).id.toBase58();
+                    const id = s.version < 2 ? ((s as StreamInfo).id as string) : (s as Stream).id.toBase58();
                     return id === streamId;
                   });
                   if (item) {
@@ -1444,15 +1199,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           });
       }
     },
-    [
-      ms,
-      msp,
-      publicKey,
-      streamDetail,
-      selectedAccount.address,
-      loadingStreams,
-      customStreamDocked,
-    ],
+    [ms, msp, publicKey, streamDetail, selectedAccount.address, loadingStreams, customStreamDocked],
   );
 
   /**
@@ -1468,17 +1215,9 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     let timer: any;
 
-    if (
-      selectedAccount.address &&
-      !customStreamDocked &&
-      !isDowngradedPerformance
-    ) {
+    if (selectedAccount.address && !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
-        consoleOut(
-          `Refreshing streams past ${msToTime(
-            FIVE_MINUTES_REFRESH_TIMEOUT,
-          )}...`,
-        );
+        consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
         refreshStreamList();
       }, FIVE_MINUTES_REFRESH_TIMEOUT);
     }
@@ -1488,22 +1227,10 @@ const AppStateProvider: React.FC = ({ children }) => {
         clearInterval(timer);
       }
     };
-  }, [
-    publicKey,
-    customStreamDocked,
-    selectedAccount.address,
-    isDowngradedPerformance,
-    refreshStreamList,
-  ]);
+  }, [publicKey, customStreamDocked, selectedAccount.address, isDowngradedPerformance, refreshStreamList]);
 
   const refreshTokenBalance = useCallback(async () => {
-    if (
-      !connection ||
-      !publicKey ||
-      !tokenList ||
-      !tokenAccounts ||
-      !tokenAccounts.length
-    ) {
+    if (!connection || !publicKey || !tokenList || !tokenAccounts || !tokenAccounts.length) {
       return;
     }
 
@@ -1511,21 +1238,15 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    const getTokenAccountBalanceByAddress = async (
-      address: string,
-    ): Promise<number> => {
+    const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
       if (!address) return 0;
       try {
-        const accountInfo = await connection.getAccountInfo(
-          address.toPublicKey(),
-        );
+        const accountInfo = await connection.getAccountInfo(address.toPublicKey());
         if (!accountInfo) return 0;
         if (address === publicKey?.toBase58()) {
           return getAmountFromLamports(accountInfo.lamports);
         }
-        const tokenAmount = (
-          await connection.getTokenAccountBalance(address.toPublicKey())
-        ).value;
+        const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
         return tokenAmount.uiAmount || 0;
       } catch (error) {
         console.error(error);
@@ -1534,23 +1255,14 @@ const AppStateProvider: React.FC = ({ children }) => {
     };
 
     let balance = 0;
-    const selectedTokenAddress = await findATokenAddress(
-      publicKey,
-      new PublicKey(selectedToken.address),
-    );
-    balance = await getTokenAccountBalanceByAddress(
-      selectedTokenAddress.toBase58(),
-    );
+    const selectedTokenAddress = await findATokenAddress(publicKey, new PublicKey(selectedToken.address));
+    balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
     updateTokenBalance(balance);
   }, [tokenAccounts, connection, publicKey, selectedToken, tokenList]);
 
   // Effect to refresh token balance if needed
   useEffect(() => {
-    if (
-      !publicKey ||
-      !tokenAccounts ||
-      !tokenAccounts.length
-    ) {
+    if (!publicKey || !tokenAccounts || !tokenAccounts.length) {
       return;
     }
 
@@ -1562,10 +1274,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => {};
   }, [tokenAccounts, publicKey, shouldUpdateToken, refreshTokenBalance]);
 
-  const appendHistoryItems = (
-    transactionsChunk: MappedTransaction[] | undefined,
-    addItems?: boolean,
-  ) => {
+  const appendHistoryItems = (transactionsChunk: MappedTransaction[] | undefined, addItems?: boolean) => {
     if (!addItems) {
       if (transactionsChunk && transactionsChunk.length === TRANSACTIONS_PER_PAGE) {
         const lastSignature = transactionsChunk[transactionsChunk.length - 1].signature;
@@ -1601,16 +1310,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateSelectedAsset(asset);
   };
 
-  const setSelectedAccount = (account: AccountContext, override = false) => {
-    setTransactions([]);
-    updateSelectedAccount(account);
-    if (override) {
-      consoleOut('Overriding lastUsedAccount with:', account, 'crimson');
-      updateLastUsedAccount(account);
-      setShouldLoadTokens(true);
-    }
-  };
-
   // Fetch token list
   const getTokenList = useCallback(async () => {
     try {
@@ -1620,11 +1319,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       const honorCache = isCacheItemExpired(cacheEntryKey) ? false : true;
       const tokenList = await getSplTokens(targetChain, honorCache);
       tokenListPerformanceCounter.stop();
-      consoleOut(
-        `Fetched token list in ${tokenListPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-        '',
-        'crimson',
-      );
+      consoleOut(`Fetched token list in ${tokenListPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
       if (tokenList && tokenList.length > 0) {
         const newTokenList: TokenInfo[] = [];
         const newPriceList: TokenPrice[] = [];
@@ -1635,10 +1330,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             chainId: targetChain,
             decimals: token.decimals,
             symbol: token.symbol,
-            logoURI:
-              token.mint === NATIVE_SOL.address
-                ? NATIVE_SOL.logoURI
-                : token.image,
+            logoURI: token.mint === NATIVE_SOL.address ? NATIVE_SOL.logoURI : token.image,
             extensions: undefined,
             tags: [],
           };
@@ -1664,9 +1356,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         consoleOut('Trying Solflare Unified Token List...', '', 'blue');
         const response = await getSolFlareTokenList();
         if (response && response.tokens && response.tokens.length > 0) {
-          const withDecimals = response.tokens.filter(
-            (t: any) => t.decimals && t.decimals > 0,
-          );
+          const withDecimals = response.tokens.filter((t: any) => t.decimals && t.decimals > 0);
           consoleOut('Solflare utl:', withDecimals.length, 'blue');
           setMeanTokenlist(withDecimals);
           getCoinPrices();
@@ -1705,17 +1395,13 @@ const AppStateProvider: React.FC = ({ children }) => {
       // First add Native SOL as a token
       list.push(sol);
       // Add items from the MeanFi list
-      MEAN_TOKEN_LIST.filter(
-        t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster),
-      ).forEach(item => list.push(item));
-      // Save the MeanFi list
-      updateTokenlist(
-        list.filter(t => t.address !== NATIVE_SOL.address) as TokenInfo[],
+      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster)).forEach(item =>
+        list.push(item),
       );
+      // Save the MeanFi list
+      updateTokenlist(list.filter(t => t.address !== NATIVE_SOL.address) as TokenInfo[]);
       // Update the list
-      const userTokenList = JSON.parse(
-        JSON.stringify(list),
-      ) as UserTokenAccount[];
+      const userTokenList = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
       // Add the items from the API
       if (meanTokenList && meanTokenList.length > 0) {
         meanTokenList.forEach(item => {
@@ -1725,9 +1411,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         });
       }
       // Filter out the banned tokens
-      const filteredTokens = userTokenList.filter(
-        t => !BANNED_TOKENS.some(bt => bt === t.symbol),
-      );
+      const filteredTokens = userTokenList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
       // Sort the big list
       const sortedMainnetList = [...filteredTokens].sort((a, b) => {
         const nameA = a.symbol.toUpperCase();
@@ -1754,7 +1438,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       !publicKey ||
       !selectedAccount.address ||
       !shouldLoadTokens ||
-      isSelectingAccount ||
+      //  isSelectingAccount ||
       !splTokenList
     ) {
       return;
@@ -1765,12 +1449,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     setTokensLoaded(false);
     consoleOut('calling getUserAccountTokens from:', 'AppState', 'darkgreen');
 
-    getUserAccountTokens(
-      connection,
-      selectedAccount.address,
-      priceList,
-      splTokenList,
-    )
+    getUserAccountTokens(connection, selectedAccount.address, priceList, splTokenList)
       .then(response => {
         if (response) {
           setUserTokensResponse(response);
@@ -1790,24 +1469,11 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => {};
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    selectedAccount.address,
-    connection,
-    priceList,
-    publicKey,
-    shouldLoadTokens,
-    splTokenList,
-  ]);
+  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
 
   // Get and populate the list of NFTs that the user holds
   useEffect(() => {
-    if (
-      !connection ||
-      !publicKey ||
-      !selectedAccount.address ||
-      !shouldLoadTokens ||
-      isSelectingAccount
-    ) {
+    if (!connection || !publicKey || !selectedAccount.address || !shouldLoadTokens /*|| isSelectingAccount*/) {
       return;
     }
 
@@ -1817,13 +1483,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    selectedAccount.address,
-    connection,
-    priceList,
-    publicKey,
-    shouldLoadTokens,
-  ]);
+  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens]);
 
   // Same as above but on demand
   const getAssetsByAccount = useCallback(
@@ -1834,11 +1494,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
       setLoadingTokenAccounts(true);
       setTokensLoaded(false);
-      consoleOut(
-        'calling getUserAccountTokens from:',
-        'getAssetsByAccount',
-        'darkgreen',
-      );
+      consoleOut('calling getUserAccountTokens from:', 'getAssetsByAccount', 'darkgreen');
 
       return getUserAccountTokens(connection, account, priceList, splTokenList)
         .then(response => {
@@ -1864,20 +1520,15 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [needReloadMultisigAccounts, setNeedReloadMultisigAccounts] = useState(
     contextDefaultValues.needReloadMultisigAccounts,
   );
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(
-    contextDefaultValues.loadingMultisigAccounts,
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(contextDefaultValues.loadingMultisigAccounts);
+  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>(contextDefaultValues.multisigAccounts);
+  const [patchedMultisigAccounts, setPatchedMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(
+    contextDefaultValues.selectedMultisig,
   );
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>(
-    contextDefaultValues.multisigAccounts,
+  const [loadingMultisigTxPendingCount, setLoadingMultisigTxPendingCount] = useState(
+    contextDefaultValues.loadingMultisigTxPendingCount,
   );
-  const [patchedMultisigAccounts, setPatchedMultisigAccounts] = useState<
-    MultisigInfo[] | undefined
-  >(undefined);
-  const [selectedMultisig, setSelectedMultisig] = useState<
-    MultisigInfo | undefined
-  >(contextDefaultValues.selectedMultisig);
-  const [loadingMultisigTxPendingCount, setLoadingMultisigTxPendingCount] =
-    useState(contextDefaultValues.loadingMultisigTxPendingCount);
 
   // Refresh the list of multisigs and return a selection
   const refreshMultisigs = useCallback(async () => {
@@ -1889,11 +1540,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     try {
       const allInfo = await multisigClient.getMultisigs(publicKey);
-      allInfo.sort(
-        (a: any, b: any) =>
-          new Date(b.createdOnUtc).getTime() -
-          new Date(a.createdOnUtc).getTime(),
-      );
+      allInfo.sort((a: any, b: any) => new Date(b.createdOnUtc).getTime() - new Date(a.createdOnUtc).getTime());
       setMultisigAccounts(allInfo);
       consoleOut('multisigAccounts:', allInfo, 'darkorange');
       return true;
@@ -1929,24 +1576,14 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    const multisigWithPendingTxs = multisigAccounts.filter(
-      x => x.pendingTxsAmount > 0,
-    );
+    const multisigWithPendingTxs = multisigAccounts.filter(x => x.pendingTxsAmount > 0);
     if (!multisigWithPendingTxs || multisigWithPendingTxs.length === 0) {
-      consoleOut(
-        'No safes found with pending Txs to work on!',
-        'moving on...',
-        'crimson',
-      );
+      consoleOut('No safes found with pending Txs to work on!', 'moving on...', 'crimson');
       return;
     }
 
     (async () => {
-      consoleOut(
-        'Searching for pending Txs across multisigs...',
-        '',
-        'crimson',
-      );
+      consoleOut('Searching for pending Txs across multisigs...', '', 'crimson');
       setLoadingMultisigTxPendingCount(true);
 
       const multisigAccountsCopy = [...multisigAccounts];
@@ -1958,28 +1595,17 @@ const AppStateProvider: React.FC = ({ children }) => {
       let anythingChanged = false;
       for await (const multisig of multisigWithPendingTxs) {
         try {
-          const multisigTransactions =
-            await multisigClient.getMultisigTransactions(
-              multisig.id,
-              publicKey,
-            );
+          const multisigTransactions = await multisigClient.getMultisigTransactions(multisig.id, publicKey);
           const realPendingTxsAmount = multisigTransactions.filter(tx =>
             multisigPendingStatus.includes(tx.status),
           ).length;
-          const itemIndex = multisigAccountsCopy.findIndex(x =>
-            x.id.equals(multisig.id),
-          );
+          const itemIndex = multisigAccountsCopy.findIndex(x => x.id.equals(multisig.id));
           if (itemIndex > -1) {
-            multisigAccountsCopy[itemIndex].pendingTxsAmount =
-              realPendingTxsAmount;
+            multisigAccountsCopy[itemIndex].pendingTxsAmount = realPendingTxsAmount;
             anythingChanged = true;
           }
         } catch (error) {
-          consoleOut(
-            `Failed pulling tx for multisig ${multisig.id.toBase58()}`,
-            error,
-            'red',
-          );
+          consoleOut(`Failed pulling tx for multisig ${multisig.id.toBase58()}`, error, 'red');
         }
       }
       if (anythingChanged) {
@@ -1988,13 +1614,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       }
       setLoadingMultisigTxPendingCount(false);
     })();
-  }, [
-    loadingMultisigTxPendingCount,
-    multisigAccounts,
-    multisigClient,
-    patchedMultisigAccounts,
-    publicKey,
-  ]);
+  }, [loadingMultisigTxPendingCount, multisigAccounts, multisigClient, patchedMultisigAccounts, publicKey]);
 
   useEffect(() => {
     if (patchedMultisigAccounts !== undefined) {
@@ -2021,10 +1641,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   return (
     <AppStateContext.Provider
       value={{
-        isSelectingAccount,
-        rememberAccount,
         selectedAccount,
-        lastUsedAccount,
         theme,
         tpsAvg,
         refreshInterval,
@@ -2105,9 +1722,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         unstakeStartDate,
         stakingMultiplier,
         previousRoute,
-        setIsSelectingAccount,
-        setSelectedAccount,
-        setRememberAccount,
         getAssetsByAccount,
         setTheme,
         setTpsAvg,

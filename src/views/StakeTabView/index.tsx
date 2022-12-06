@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 import useRealmsDeposit from './useRealmsDeposit';
 import './style.scss';
 import useUnstakeQuote from './useUnstakeQuote';
+import { sendTx, signTx } from 'middleware/transactions';
 
 let inputDebounceTimeout: any;
 
@@ -66,7 +67,7 @@ export const StakeTabView = (props: {
   const { refreshAccount } = useAccountsContext();
   const connection = useConnection();
   const [isBusy, setIsBusy] = useState(false);
-  const { connected, wallet } = useWallet();
+  const { connected, wallet, publicKey } = useWallet();
   const { t } = useTranslation('common');
   const [fromCoinAmount, setFromCoinAmount] = useState<string>('');
   const [stakeQuote, setStakeQuote] = useState<number>(0);
@@ -82,6 +83,7 @@ export const StakeTabView = (props: {
   const { depositAmount: realmsDepositAmount } = useRealmsDeposit({
     decimals: smeanDecimals,
   });
+
   //////////////////////////
   //  CALLBACKS & EVENTS  //
   //////////////////////////
@@ -92,6 +94,27 @@ export const StakeTabView = (props: {
       currentOperation: TransactionStatus.Iddle,
     });
   }, [setTransactionStatus]);
+
+  const setFailureStatusAndNotify = useCallback((txStep: 'sign' | 'send') => {
+    const operation = txStep === 'sign'
+      ? TransactionStatus.SignTransactionFailure
+      : TransactionStatus.SendTransactionFailure;
+    setTransactionStatus({
+      lastOperation: transactionStatus.currentOperation,
+      currentOperation: operation,
+    });
+    openNotification({
+      title: t('notifications.error-title'),
+      description: t('notifications.error-sending-transaction'),
+      type: 'error',
+    });
+    setIsBusy(false);
+  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
+
+  const setSuccessStatus = useCallback(() => {
+    setIsBusy(false);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
 
   const fetchQuoteFromInput = (value: string) => {
     clearTimeout(inputDebounceTimeout);
@@ -177,10 +200,11 @@ export const StakeTabView = (props: {
   };
 
   const onStartTransaction = useCallback(async () => {
-    let transaction: Transaction;
-    let signature = '';
+    let transaction: Transaction | null = null;
+    let signature: any;
     let encodedTx: string;
-    const transactionLog: any[] = [];
+    let transactionLog: any[] = [];
+
     resetTransactionStatus();
 
     const createTx = async (): Promise<boolean> => {
@@ -281,109 +305,47 @@ export const StakeTabView = (props: {
       }
     };
 
-    const sendTx = async (): Promise<boolean> => {
-      if (connection && wallet && wallet.publicKey && transaction) {
-        const {
-          context: { slot: minContextSlot },
-          value: { blockhash },
-        } = await connection.getLatestBlockhashAndContext();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = blockhash;
-
-        return wallet
-          .sendTransaction(transaction, connection, { minContextSlot })
-          .then((sig: any) => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransactionSuccess,
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionSuccess,
-              ),
-              result: `signature: ${signature}`,
-            });
-            return true;
-          })
-          .catch((error: any) => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.SendTransactionFailure,
-              ),
-              result: { error, encodedTx },
-            });
-            customLogger.logError('Stake transaction failed', {
-              transcript: transactionLog,
-            });
-            segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!',
-        });
-        customLogger.logError('Stake transaction failed', {
-          transcript: transactionLog,
-        });
-        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-    };
-
-    if (wallet && selectedToken) {
+    if (wallet && publicKey && selectedToken) {
       setIsBusy(true);
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create) {
-        const sent = await sendTx();
-        consoleOut('sent:', sent);
-        if (sent) {
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created) {
+        const sign = await signTx('Stake MEAN', wallet, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
           setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished,
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          enqueueTransactionConfirmation({
-            signature,
-            operationType: OperationType.Stake,
-            finality: 'confirmed',
-            txInfoFetchStatus: 'fetching',
-            loadingTitle: 'Confirming transaction',
-            loadingMessage: `Staking ${formatThousands(
-              parseFloat(fromCoinAmount),
-              selectedToken.decimals,
-            )} ${selectedToken.symbol}`,
-            completedTitle: 'Transaction confirmed',
-            completedMessage: `Successfully staked ${formatThousands(
-              parseFloat(fromCoinAmount),
-              selectedToken.decimals,
-            )} ${selectedToken.symbol}`,
-          });
-          resetTransactionStatus();
-          setFromCoinAmount('');
+          const sent = await sendTx('Stake MEAN', connection, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature,
+              operationType: OperationType.Stake,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Staking ${formatThousands(
+                parseFloat(fromCoinAmount),
+                selectedToken.decimals,
+              )} ${selectedToken.symbol}`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Successfully staked ${formatThousands(
+                parseFloat(fromCoinAmount),
+                selectedToken.decimals,
+              )} ${selectedToken.symbol}`,
+            });
+            setFromCoinAmount('');
+            setSuccessStatus();
+          } else {
+            setFailureStatusAndNotify('send');
+          }
         } else {
-          openNotification({
-            title: t('notifications.error-title'),
-            description: t('notifications.error-sending-transaction'),
-            type: 'error',
-          });
-          setIsBusy(false);
+          setFailureStatusAndNotify('sign');
         }
       } else {
         setIsBusy(false);
@@ -391,18 +353,20 @@ export const StakeTabView = (props: {
     }
   }, [
     wallet,
+    publicKey,
     connection,
     stakeQuote,
-    fromCoinAmount,
-    stakedMeanPrice,
     stakeClient,
     selectedToken,
+    fromCoinAmount,
+    stakedMeanPrice,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
+    setFailureStatusAndNotify,
     resetTransactionStatus,
     getTokenPriceBySymbol,
     setTransactionStatus,
-    t,
+    setSuccessStatus,
   ]);
 
   const recordTxConfirmation = useCallback(
