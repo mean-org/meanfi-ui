@@ -68,7 +68,7 @@ export const AppLayout = React.memo((props: any) => {
   const { refreshAccount } = useAccountsContext();
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { wallet, provider, connected, publicKey, disconnect } = useWallet();
+  const { provider, connected, publicKey, disconnect } = useWallet();
   const [previousChain, setChain] = useState('');
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
@@ -425,8 +425,6 @@ export const AppLayout = React.memo((props: any) => {
           onCreateSafe={onCreateSafe}
           onGotoSelectWallet={() => {
             disconnect();
-            //navigate('/');
-            //selectWalletProvider();
           }}
         />
       )

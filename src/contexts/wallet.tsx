@@ -48,6 +48,9 @@ import { consoleOut, isProd } from '../middleware/ui';
 import { isUnauthenticatedRoute, useLocalStorageState } from '../middleware/utils';
 import { XnftWalletAdapter, XnftWalletName, isInXnftWallet } from '../integrations/xnft/xnft-wallet-adapter';
 
+// Flag to block processing of events when triggered multiple times
+let isDisconnecting = false;
+
 export interface WalletProviderEntry {
   name: string;
   url: string;
@@ -312,6 +315,7 @@ const MeanFiWalletContext = React.createContext<MeanFiWalletContextState>(defaul
 export function MeanFiWalletProvider({ children = null as any }) {
   const { t } = useTranslation('common');
   const location = useLocation();
+  const navigate = useNavigate();
   const [walletName, setWalletName] = useLocalStorageState('walletName');
   const {
     wallet,
@@ -346,6 +350,11 @@ export function MeanFiWalletProvider({ children = null as any }) {
   }, [walletName]);
 
   useEffect(() => {
+    // Avoid working when nothing to do on multi-triggering of this effect
+    if (walletName && wallet && wallet.adapter.name === walletName) {
+      return;
+    }
+
     if (wallets) {
       for (const item of wallets) {
         const itemIndex = WALLET_PROVIDERS.findIndex(p => p.name === item.adapter.name);
@@ -372,7 +381,8 @@ export function MeanFiWalletProvider({ children = null as any }) {
         setWalletName(null);
       }
     }
-  }, [walletName, setWalletName, wallets, select, wallet]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletName, wallets, wallet]);
 
   // Keep up with connecting flag
   useEffect(() => {
@@ -399,10 +409,13 @@ export function MeanFiWalletProvider({ children = null as any }) {
       });
 
       wallet.adapter.on('disconnect', () => {
-        consoleOut('Wallet disconnect event fired:', '', 'blue');
-        setConnected(false);
-        if (wallet.readyState !== WalletReadyState.Installed) return;
-        window.location.reload();
+        if (isDisconnecting) {
+          isDisconnecting = false;
+          consoleOut('Wallet disconnect event fired:', '', 'blue');
+          setConnected(false);
+          if (wallet.readyState !== WalletReadyState.Installed) return;
+          navigate('/');
+        }
       });
 
       wallet.adapter.on('error', errorEvent => {
@@ -591,8 +604,9 @@ export function useWallet() {
     },
     disconnect() {
       consoleOut(`Disconnecting provider...`, '', 'blue');
-      wallet?.disconnect();
       resetWalletProvider();
+      isDisconnecting = true;
+      wallet?.disconnect();
     },
     isSelectingWallet,
   };
