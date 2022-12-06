@@ -1647,7 +1647,7 @@ export const HomeView = () => {
       let signature: any;
       let encodedTx: string;
       let transactionLog: any[] = [];
-  
+
       resetTransactionStatus();
       setTransactionCancelled(false);
       setIsBusy(true);
@@ -1871,7 +1871,12 @@ export const HomeView = () => {
         const created = await createTx();
         consoleOut('created:', created);
         if (created && !transactionCancelled) {
-          const sign = await signTx('Transfer Tokens', wallet, publicKey, transaction);
+          const sign = await signTx(
+            'Transfer Tokens',
+            wallet,
+            publicKey,
+            transaction,
+          );
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -1898,8 +1903,9 @@ export const HomeView = () => {
                 completedMessage: `Asset funds (${formatThousands(
                   data.amount,
                   selectedAsset.decimals,
-                )} ${selectedAsset.symbol
-                  }) successfully transferred to ${shortenAddress(data.to)}`,
+                )} ${
+                  selectedAsset.symbol
+                }) successfully transferred to ${shortenAddress(data.to)}`,
                 completedMessageTimeout: isMultisigContext ? 8 : 5,
                 extras: {
                   multisigAuthority: selectedMultisig
@@ -5384,7 +5390,7 @@ export const HomeView = () => {
           Keep track of your assets and transactions
         </h1>
 
-        {publicKey ? (
+        {publicKey && (
           <div className="interaction-area">
             {selectedAccount.address && (
               <div
@@ -5718,18 +5724,6 @@ export const HomeView = () => {
                 </div>
               </div>
             )}
-          </div>
-        ) : (
-          <div className="interaction-area">
-            <div className="w-75 h-100 p-5 text-center flex-column flex-center">
-              <div className="text-center mb-2">
-                <WarningFilled
-                  style={{ fontSize: 48 }}
-                  className="icon fg-warning"
-                />
-              </div>
-              <h3>{t('wallet-selector.connect-to-begin')}</h3>
-            </div>
           </div>
         )}
       </div>
