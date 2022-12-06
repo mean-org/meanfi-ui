@@ -5,6 +5,7 @@ import {
   MessageSignerWalletAdapterProps,
   SignerWalletAdapterProps,
   WalletAdapterProps,
+  WalletReadyState,
 } from '@solana/wallet-adapter-base';
 import { useWallet as useBaseWallet } from '@solana/wallet-adapter-react';
 import {
@@ -36,13 +37,7 @@ import {
 import { Button, Modal } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { sentreAppId } from 'constants/common';
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isDesktop, isSafari } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -50,15 +45,11 @@ import { getDefaultRpc } from 'services/connections-hq';
 import { segmentAnalytics } from '../App';
 import { AppUsageEvent } from '../middleware/segment-service';
 import { consoleOut, isProd } from '../middleware/ui';
-import {
-  isUnauthenticatedRoute,
-  useLocalStorageState,
-} from '../middleware/utils';
-import {
-  XnftWalletAdapter,
-  XnftWalletName,
-  isInXnftWallet,
-} from '../integrations/xnft/xnft-wallet-adapter';
+import { isUnauthenticatedRoute, useLocalStorageState } from '../middleware/utils';
+import { XnftWalletAdapter, XnftWalletName, isInXnftWallet } from '../integrations/xnft/xnft-wallet-adapter';
+
+// Flag to block processing of events when triggered multiple times
+let isDisconnecting = false;
 
 export interface WalletProviderEntry {
   name: string;
@@ -255,10 +246,7 @@ const getIsProviderInstalled = (provider: any): boolean => {
       case ExodusWalletName:
         return !!(window as any).exodus?.solana;
       case SlopeWalletName:
-        return typeof (window as any).Slope === 'function' ||
-          (window as any).slopeApp
-          ? true
-          : false;
+        return typeof (window as any).Slope === 'function' || (window as any).slopeApp ? true : false;
       case SolongWalletName:
         return !!(window as any).solong;
       case MathWalletName:
@@ -266,19 +254,13 @@ const getIsProviderInstalled = (provider: any): boolean => {
       case Coin98WalletName:
         return !!(window as any).coin98?.sol;
       case SolflareWalletName:
-        return (
-          !!(window as any).solflare?.isSolflare ||
-          !!(window as any).SolflareApp
-        );
+        return !!(window as any).solflare?.isSolflare || !!(window as any).SolflareApp;
       case BitKeepWalletName:
         return !!(window as any).bitkeep?.solana;
       case CoinbaseWalletName:
         return !!(window as any).coinbaseSolana;
       case TrustWalletName:
-        return (
-          !!(window as any).trustwallet?.isTrustWallet ||
-          !!(window as any).trustwallet?.solana?.isTrust
-        );
+        return !!(window as any).trustwallet?.isTrustWallet || !!(window as any).trustwallet?.solana?.isTrust;
       case LedgerWalletName:
         return true;
       case BraveWalletName:
@@ -292,10 +274,7 @@ const getIsProviderInstalled = (provider: any): boolean => {
   return true;
 };
 
-const isProviderHidden = (
-  item: WalletProviderEntry,
-  { isDesktop }: { isDesktop: boolean },
-) =>
+const isProviderHidden = (item: WalletProviderEntry, { isDesktop }: { isDesktop: boolean }) =>
   (item.hideOnDesktop && isDesktop) ||
   (item.hideOnMobile && !isDesktop) ||
   (item.underDevelopment && isProd()) ||
@@ -305,15 +284,14 @@ interface MeanFiWalletContextState {
   wallet: Adapter | undefined;
   connected: boolean;
   connecting: boolean;
+  disconnecting: boolean;
   isSelectingWallet: boolean;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
   resetWalletProvider: () => void;
   selectWalletProvider: () => void;
   sendTransaction: WalletAdapterProps['sendTransaction'];
   signTransaction: SignerWalletAdapterProps['signTransaction'] | undefined;
-  signAllTransactions:
-    | SignerWalletAdapterProps['signAllTransactions']
-    | undefined;
+  signAllTransactions: SignerWalletAdapterProps['signAllTransactions'] | undefined;
   signMessage: MessageSignerWalletAdapterProps['signMessage'] | undefined;
 }
 
@@ -321,6 +299,7 @@ const defaultCtxValues: MeanFiWalletContextState = {
   wallet: undefined,
   connected: false,
   connecting: true,
+  disconnecting: false,
   provider: undefined,
   isSelectingWallet: false,
   resetWalletProvider: () => {},
@@ -331,22 +310,20 @@ const defaultCtxValues: MeanFiWalletContextState = {
   signMessage: undefined,
 };
 
-const MeanFiWalletContext =
-  React.createContext<MeanFiWalletContextState>(defaultCtxValues);
+const MeanFiWalletContext = React.createContext<MeanFiWalletContextState>(defaultCtxValues);
 
 export function MeanFiWalletProvider({ children = null as any }) {
   const { t } = useTranslation('common');
   const location = useLocation();
   const navigate = useNavigate();
   const [walletName, setWalletName] = useLocalStorageState('walletName');
-  const [lastUsedAccount, setLastUsedAccount] =
-    useLocalStorageState('lastUsedAccount');
   const {
     wallet,
     wallets,
     select,
     connect,
     disconnect,
+    disconnecting,
     signMessage,
     sendTransaction,
     signTransaction,
@@ -361,33 +338,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
   const close = useCallback(() => {
     setIsModalVisible(false);
   }, []);
-  const [walletListExpanded, setWalletListExpanded] = useState(
-    isDesktop ? false : true,
-  );
-
-  const forgetWallet = useCallback(() => {
-    setConnected(false);
-    setWalletName(null);
-  }, [setWalletName]);
-
-  const connectOnDemand = useCallback(() => {
-    if (!wallet) {
-      return;
-    }
-
-    connect().catch(error => {
-      console.error('wallet.connect() error', error);
-      if (error.toString().indexOf('WalletNotReadyError') !== -1) {
-        console.warn('Enforcing wallet selection...');
-        openNotification({
-          type: 'info',
-          title: 'Wallet adapter not configured',
-          description: `Cannot connect to ${walletName}. Wallet is not configured or enabled in your browser.`,
-        });
-        forgetWallet();
-      }
-    });
-  }, [connect, wallet, walletName, forgetWallet]);
+  const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
 
   const resetWalletProvider = () => {
     setWalletName(null);
@@ -397,42 +348,31 @@ export function MeanFiWalletProvider({ children = null as any }) {
     const item = WALLET_PROVIDERS.find(({ name }) => name === walletName);
     return item;
   }, [walletName]);
-  /*
+
   useEffect(() => {
-    if (
-      isInXnftWallet() &&
-      (!wallet || wallet.adapter.name !== XnftWalletName)
-    ) {
-      document.body.classList.add('in-xnft-wallet');
-      setWalletName(XnftWalletName);
-      select(XnftWalletName);
+    // Avoid working when nothing to do on multi-triggering of this effect
+    if (walletName && wallet && wallet.adapter.name === walletName) {
+      return;
     }
-  }, [setWalletName, wallets, select, wallet]);
-*/
-  useEffect(() => {
+
     if (wallets) {
       for (const item of wallets) {
-        const itemIndex = WALLET_PROVIDERS.findIndex(
-          p => p.name === item.adapter.name,
-        );
+        const itemIndex = WALLET_PROVIDERS.findIndex(p => p.name === item.adapter.name);
         if (itemIndex !== -1) {
           WALLET_PROVIDERS[itemIndex].url = item.adapter.url;
           WALLET_PROVIDERS[itemIndex].icon = item.adapter.icon;
         }
       }
-      if (
-        isInXnftWallet() &&
-        (!wallet || wallet.adapter.name !== XnftWalletName)
-      ) {
+      if (isInXnftWallet() && (!wallet || wallet.adapter.name !== XnftWalletName)) {
         document.body.classList.add('in-xnft-wallet');
         setWalletName(XnftWalletName);
         select(XnftWalletName);
       } else if (walletName) {
         consoleOut('walletName:', walletName, 'blue');
         const wa = wallets.find(w => w.adapter.name === walletName);
-        const walletEntry = WALLET_PROVIDERS.filter(
-          w => !isProviderHidden(w, { isDesktop }),
-        ).find(w => w.name === walletName);
+        const walletEntry = WALLET_PROVIDERS.filter(w => !isProviderHidden(w, { isDesktop })).find(
+          w => w.name === walletName,
+        );
         consoleOut('provider:', wa, 'blue');
         if (!(wa && walletEntry)) {
           setWalletName(null);
@@ -441,7 +381,8 @@ export function MeanFiWalletProvider({ children = null as any }) {
         setWalletName(null);
       }
     }
-  }, [walletName, setWalletName, wallets]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletName, wallets, wallet]);
 
   // Keep up with connecting flag
   useEffect(() => {
@@ -457,14 +398,10 @@ export function MeanFiWalletProvider({ children = null as any }) {
     if (wallet?.adapter) {
       wallet.adapter.on('connect', pk => {
         consoleOut('Wallet connect event fired:', pk.toBase58(), 'blue');
-        if (
-          wallet.adapter.connected &&
-          !wallet.adapter.connecting &&
-          pk.toBase58() !== lastUsedAccount
-        ) {
+        if (wallet.adapter.connected && !wallet.adapter.connecting) {
+          setConnected(false);
           resetWalletProvider();
-          setLastUsedAccount(null);
-          window.location.href = '/';
+          window.location.reload();
         } else if (wallet.adapter.publicKey) {
           setConnected(true);
           close();
@@ -472,13 +409,18 @@ export function MeanFiWalletProvider({ children = null as any }) {
       });
 
       wallet.adapter.on('disconnect', () => {
-        setConnected(false);
-        if (!isUnauthenticatedRoute(location.pathname)) {
+        if (isDisconnecting) {
+          isDisconnecting = false;
+          consoleOut('Wallet disconnect event fired:', '', 'blue');
+          setConnected(false);
+          if (wallet.readyState !== WalletReadyState.Installed) return;
           navigate('/');
         }
       });
 
       wallet.adapter.on('error', errorEvent => {
+        consoleOut('Wallet error event fired:', '', 'blue');
+
         if (wallet.adapter.connecting) {
           setConnected(false);
           wallet.adapter.removeAllListeners();
@@ -495,18 +437,33 @@ export function MeanFiWalletProvider({ children = null as any }) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wallet, lastUsedAccount]);
+  }, [wallet]);
 
   // Handle connect
   useEffect(() => {
-    // When a wallet is created, selected and the autoConnect is ON, lets connect
-    if (wallet) {
-      consoleOut('Auto-connecting...', '', 'blue');
-      connectOnDemand();
-    }
+    // When a wallet is selected but not installed
+    if (!walletName || !wallet || wallet.readyState === WalletReadyState.Installed) return;
+    consoleOut('Wallet not installed', '', 'red');
 
-    return () => {};
-  }, [connectOnDemand, wallet]);
+    openNotification({
+      type: 'info',
+      title: 'Wallet adapter not configured',
+      description: `Cannot connect to ${walletName}. Wallet is not configured or enabled in your browser.`,
+    });
+
+    setConnected(false);
+    setWalletName(null);
+    disconnect();
+    selectWalletProvider();
+  }, [wallet, connect, walletName, setWalletName, disconnect, selectWalletProvider]);
+
+  useEffect(() => {
+    if (isUnauthenticatedRoute(location.pathname)) return;
+    if (wallet || connected || connecting) return;
+
+    //setIsSelectingAccount(true);
+    selectWalletProvider();
+  }, [wallet, connected, connecting, selectWalletProvider, location.pathname]);
 
   return (
     <MeanFiWalletContext.Provider
@@ -515,6 +472,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
         wallet: wallet?.adapter,
         connected,
         connecting,
+        disconnecting,
         isSelectingWallet,
         selectWalletProvider,
         signAllTransactions,
@@ -528,11 +486,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
       <Modal
         centered
         className="mean-modal simple-modal"
-        title={
-          <div className="modal-title">
-            {t(`wallet-selector.primary-action`)}
-          </div>
-        }
+        title={<div className="modal-title">{t(`wallet-selector.primary-action`)}</div>}
         open={isSelectingWallet}
         footer={null}
         maskClosable={connected}
@@ -544,11 +498,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
           <div className="mb-3 text-center">
             <h2>{t('wallet-selector.connect-to-begin')}</h2>
           </div>
-          <div
-            className={`wallet-providers ${
-              walletListExpanded ? 'expanded' : ''
-            }`}
-          >
+          <div className={`wallet-providers ${walletListExpanded ? 'expanded' : ''}`}>
             {WALLET_PROVIDERS.map((item, index) => {
               const isInstalled = getIsProviderInstalled(item);
               // Skip items that won't show up
@@ -570,13 +520,12 @@ export function MeanFiWalletProvider({ children = null as any }) {
                 // If not installed take the user to its extension url
                 if (!isInstalled) {
                   window.open(item.url, '_blank');
+                  return;
                 }
 
                 consoleOut('Selected wallet:', item.name, 'blue');
                 setWalletName(item.name);
-                const selected = wallets.find(
-                  w => w.adapter.name === item.name,
-                );
+                const selected = wallets.find(w => w.adapter.name === item.name);
                 if (selected) {
                   // setLocalWallet(selected);
                   select(selected.adapter.name);
@@ -592,15 +541,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
                   type="ghost"
                   onClick={onClick}
                   key={index}
-                  icon={
-                    <img
-                      alt={`${item.name}`}
-                      width={20}
-                      height={20}
-                      src={item.icon}
-                      style={{ marginRight: 8 }}
-                    />
-                  }
+                  icon={<img alt={`${item.name}`} width={20} height={20} src={item.icon} style={{ marginRight: 8 }} />}
                 >
                   <span className="align-middle">{item.name}</span>
                 </Button>
@@ -636,6 +577,7 @@ export function useWallet() {
     wallet,
     connected,
     connecting,
+    disconnecting,
     provider,
     signTransaction,
     resetWalletProvider,
@@ -643,6 +585,7 @@ export function useWallet() {
     isSelectingWallet,
   } = useContext(MeanFiWalletContext);
 
+  const publicKey = connected && !disconnecting && !connecting ? wallet?.publicKey : null;
   return {
     wallet,
     provider,
@@ -651,7 +594,7 @@ export function useWallet() {
     signTransaction,
     resetWalletProvider,
     selectWalletProvider,
-    publicKey: wallet?.publicKey,
+    publicKey,
     connect() {
       if (wallet) {
         wallet.connect();
@@ -661,8 +604,9 @@ export function useWallet() {
     },
     disconnect() {
       consoleOut(`Disconnecting provider...`, '', 'blue');
-      wallet?.disconnect();
       resetWalletProvider();
+      isDisconnecting = true;
+      wallet?.disconnect();
     },
     isSelectingWallet,
   };
