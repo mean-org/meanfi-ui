@@ -392,14 +392,14 @@ export const StakeTabView = (props: {
 
       const reloadStakePools = () => {
         const stakePoolsRefreshCta = document.getElementById(
-          'refresh-stake-pool-info-cta',
+          'refresh-stake-pool-info',
         );
         if (stakePoolsRefreshCta) {
           stakePoolsRefreshCta.click();
         } else {
           console.log(
             'element not found:',
-            '#refresh-stake-pool-info-cta',
+            '#refresh-stake-pool-info',
             'red',
           );
         }
@@ -428,14 +428,14 @@ export const StakeTabView = (props: {
     (item: TxConfirmationInfo) => {
       const reloadStakePools = () => {
         const stakePoolsRefreshCta = document.getElementById(
-          'refresh-stake-pool-info-cta',
+          'refresh-stake-pool-info',
         );
         if (stakePoolsRefreshCta) {
           stakePoolsRefreshCta.click();
         } else {
           console.log(
             'element not found:',
-            '#refresh-stake-pool-info-cta',
+            '#refresh-stake-pool-info',
             'red',
           );
         }

@@ -43,12 +43,18 @@ export const UnstakeTabView = (props: {
   selectedToken: TokenInfo | undefined;
   unstakedToken: TokenInfo | undefined;
 }) => {
-  const { stakeClient, tokenBalance, selectedToken, unstakedToken } = props;
+  const {
+    stakeClient,
+    tokenBalance,
+    selectedToken,
+    unstakedToken,
+  } = props;
 
   const {
-    coinPrices,
+    priceList,
     loadingPrices,
     transactionStatus,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
     setTransactionStatus,
     refreshPrices,
@@ -164,7 +170,7 @@ export const UnstakeTabView = (props: {
   const isUnstakingFormValid = (): boolean => {
     return fromCoinAmount &&
       parseFloat(fromCoinAmount) > 0 &&
-      parseFloat(fromCoinAmount) <= props.tokenBalance
+      parseFloat(fromCoinAmount) <= tokenBalance
       ? true
       : false;
   };
@@ -370,14 +376,14 @@ export const UnstakeTabView = (props: {
 
       const reloadStakePools = () => {
         const stakePoolsRefreshCta = document.getElementById(
-          'refresh-stake-pool-info-cta',
+          'refresh-stake-pool-info',
         );
         if (stakePoolsRefreshCta) {
           stakePoolsRefreshCta.click();
         } else {
           console.log(
             'element not found:',
-            '#refresh-stake-pool-info-cta',
+            '#refresh-stake-pool-info',
             'red',
           );
         }
@@ -405,14 +411,14 @@ export const UnstakeTabView = (props: {
     (item: TxConfirmationInfo) => {
       const reloadStakePools = () => {
         const stakePoolsRefreshCta = document.getElementById(
-          'refresh-stake-pool-info-cta',
+          'refresh-stake-pool-info',
         );
         if (stakePoolsRefreshCta) {
           stakePoolsRefreshCta.click();
         } else {
           console.log(
             'element not found:',
-            '#refresh-stake-pool-info-cta',
+            '#refresh-stake-pool-info',
             'red',
           );
         }
@@ -442,12 +448,12 @@ export const UnstakeTabView = (props: {
 
   // Keep MEAN price updated
   useEffect(() => {
-    if (coinPrices && unstakedToken) {
-      const price = getTokenPriceBySymbol(unstakedToken.symbol);
+    if (priceList && unstakedToken) {
+      const price = getTokenPriceByAddress(unstakedToken.address) || getTokenPriceBySymbol(unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
       setMeanPrice(price);
     }
-  }, [coinPrices, getTokenPriceBySymbol, unstakedToken]);
+  }, [getTokenPriceByAddress, getTokenPriceBySymbol, priceList, unstakedToken]);
 
   // Unstake quote - For full unstaked balance
   useEffect(() => {
@@ -519,9 +525,9 @@ export const UnstakeTabView = (props: {
 
   useEffect(() => {
     const percentageFromCoinAmount =
-      props.tokenBalance > 0
-        ? `${((props.tokenBalance * parseFloat(percentageValue)) / 100).toFixed(
-            props.selectedToken?.decimals || 9,
+      tokenBalance > 0
+        ? `${((tokenBalance * parseFloat(percentageValue)) / 100).toFixed(
+            selectedToken?.decimals || 9,
           )}`
         : '';
 
@@ -633,11 +639,11 @@ export const UnstakeTabView = (props: {
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
-              {props.selectedToken && (
+              {selectedToken && (
                 <TokenDisplay
                   onClick={() => {}}
-                  mintAddress={props.selectedToken.address}
-                  name={props.selectedToken.name}
+                  mintAddress={selectedToken.address}
+                  name={selectedToken.name}
                   className="click-disabled"
                 />
               )}
@@ -668,10 +674,10 @@ export const UnstakeTabView = (props: {
             </span>
             <span>
               {`${
-                props.tokenBalance && props.selectedToken
+                tokenBalance && selectedToken
                   ? getAmountWithSymbol(
-                      props.tokenBalance,
-                      props.selectedToken?.address,
+                      tokenBalance,
+                      selectedToken?.address,
                       true,
                     )
                   : '0'

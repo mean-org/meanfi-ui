@@ -114,7 +114,6 @@ export const PlaygroundView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     priceList,
-    coinPrices,
     splTokenList,
     isWhitelisted,
     getTokenPriceByAddress,
@@ -593,17 +592,15 @@ export const PlaygroundView = () => {
     });
   };
 
-  const getPricePerToken = useCallback(
-    (token: TokenInfo): number => {
-      if (!token || !coinPrices) {
-        return 0;
-      }
+  const getPricePerToken = useCallback((token: TokenInfo): number => {
+    if (!token || !priceList) {
+      return 0;
+    }
+    const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
 
-      return coinPrices && coinPrices[token.symbol]
-        ? coinPrices[token.symbol]
-        : 0;
-    },
-    [coinPrices],
+    return price || 0;
+  },
+    [getTokenPriceByAddress, getTokenPriceBySymbol, priceList],
   );
 
   const getMultisigAssets = useCallback(
