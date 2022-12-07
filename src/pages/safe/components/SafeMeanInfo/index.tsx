@@ -2,26 +2,17 @@ import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { openNotification } from 'components/Notifications';
 import { ResumeItem } from 'components/ResumeItem';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
 import { IconArrowForward } from 'Icons';
 import { appConfig } from 'index';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { ACCOUNT_LAYOUT } from 'middleware/layouts';
 import { consoleOut } from 'middleware/ui';
-import {
-  getAmountFromLamports,
-  shortenAddress
-} from 'middleware/utils';
+import { getAmountFromLamports } from 'middleware/utils';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { SafeInfo } from '../SafeInfo';
 
 export const SafeMeanInfo = (props: {
@@ -54,20 +45,10 @@ export const SafeMeanInfo = (props: {
     refreshTokenBalance,
     setMultisigVaults,
   } = useContext(AppStateContext);
-  const {
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
-    clearTxConfirmationContext,
-  } = useContext(TxConfirmationContext);
-  const location = useLocation();
   const { address } = useParams();
-  const { t } = useTranslation('common');
   const { account } = useNativeAccount();
-  const { publicKey } = useWallet();
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [multisigAddress, setMultisigAddress] = useState('');
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
   // Tabs
@@ -180,63 +161,6 @@ export const SafeMeanInfo = (props: {
       setPreviousBalance(account?.lamports);
     }
   }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
-
-  // Parse query params
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.has('multisig')) {
-      const msAddress = params.get('multisig');
-      setMultisigAddress(msAddress || '');
-      consoleOut('multisigAddress:', msAddress, 'blue');
-    }
-  }, [location]);
-
-  // Handle what to do when pending Tx confirmation reaches finality or on error
-  useEffect(() => {
-    if (!publicKey || fetchTxInfoStatus === 'fetching') {
-      return;
-    }
-
-    if (multisigAddress && lastSentTxOperationType) {
-      if (fetchTxInfoStatus === 'fetched') {
-        clearTxConfirmationContext();
-      } else if (fetchTxInfoStatus === 'error') {
-        clearTxConfirmationContext();
-        openNotification({
-          type: 'info',
-          duration: 5,
-          description: (
-            <>
-              <span className="mr-1">
-                {t('notifications.tx-not-confirmed')}
-              </span>
-              <div>
-                <span className="mr-1">
-                  {t('notifications.check-transaction-in-explorer')}
-                </span>
-                <a
-                  className="secondary-link"
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}${getSolanaExplorerClusterParam()}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {shortenAddress(lastSentTxSignature, 8)}
-                </a>
-              </div>
-            </>
-          ),
-        });
-      }
-    }
-  }, [
-    t,
-    publicKey,
-    multisigAddress,
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    clearTxConfirmationContext,
-    lastSentTxOperationType,
-  ]);
 
   // Get multisig SOL balance
   useEffect(() => {
