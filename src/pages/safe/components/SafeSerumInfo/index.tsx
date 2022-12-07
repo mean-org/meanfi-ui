@@ -41,7 +41,6 @@ export const SafeSerumInfoView = (props: {
       {multisigTxs.length > 0 &&
         multisigTxs.map((tx, index) => {
           const onSelectProposal = () => {
-            // Sends isProposalDetails value to the parent component "SafeView"
             props.onDataToSafeView(tx);
           };
 

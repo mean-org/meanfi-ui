@@ -4498,6 +4498,10 @@ export const HomeView = () => {
                             safeBalance={netWorth}
                             solanaApps={solanaApps}
                             onNewProposalClicked={onNewProposalClicked}
+                            onProposalExecuted={() => {
+                              consoleOut('Triggering onRefreshStreamsReset...');
+                              onRefreshStreamsReset();
+                            }}
                           />
                         </Suspense>
                       </>
