@@ -332,7 +332,6 @@ export const ProposalDetailsView = (props: {
 
   // When back button is clicked, goes to Safe Info
   const hideProposalDetailsHandler = () => {
-    // Sends the value to the parent component "SafeView"
     onDataToSafeView();
   };
 

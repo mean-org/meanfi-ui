@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from '@ant-design/icons';
+import { ArrowLeftOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 import { App, AppConfig, AppsProvider, Arg, NETWORK, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import {
   createProgram,
@@ -4498,6 +4498,10 @@ export const HomeView = () => {
                             safeBalance={netWorth}
                             solanaApps={solanaApps}
                             onNewProposalClicked={onNewProposalClicked}
+                            onProposalExecuted={() => {
+                              consoleOut('Triggering onRefreshStreamsReset...');
+                              onRefreshStreamsReset();
+                            }}
                           />
                         </Suspense>
                       </>
