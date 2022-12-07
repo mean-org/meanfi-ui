@@ -17,7 +17,7 @@ import { IconLoading } from 'Icons';
 import { IconHelpCircle } from 'Icons/IconHelpCircle';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
-import { consoleOut, isProd } from 'middleware/ui';
+import { consoleOut, isLocal, isProd } from 'middleware/ui';
 import {
   findATokenAddress,
   formatThousands,
@@ -41,10 +41,11 @@ type StakingPair = {
 
 const StakingView = () => {
   const {
-    coinPrices,
+    priceList,
     tokenAccounts,
     selectedAccount,
     setIsVerifiedRecipient,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
     setFromCoinAmount,
   } = useContext(AppStateContext);
@@ -187,8 +188,7 @@ const StakingView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tokenAccounts, publicKey, stakingPair, selectedAccount.address]);
 
-  const refreshStakePoolInfo = useCallback(
-    (price: number) => {
+  const refreshStakePoolInfo = useCallback((price: number) => {
       if (stakeClient && price) {
         setTimeout(() => {
           setRefreshingStakePoolInfo(true);
@@ -204,6 +204,8 @@ const StakingView = () => {
             console.error('getStakePoolInfo error:', error);
           })
           .finally(() => setRefreshingStakePoolInfo(false));
+      } else {
+        consoleOut('stakeClient or price not provided!', '', 'red');
       }
     },
     [stakeClient],
@@ -296,12 +298,13 @@ const StakingView = () => {
 
   // Keep MEAN price updated
   useEffect(() => {
-    if (coinPrices && stakingPair && stakingPair.unstakedToken) {
-      const price = getTokenPriceBySymbol(stakingPair.unstakedToken.symbol);
+    if (priceList && stakingPair && stakingPair.unstakedToken) {
+      consoleOut('unstakedToken:', stakingPair.unstakedToken, 'blue');
+      const price = getTokenPriceByAddress(stakingPair.unstakedToken.address) || getTokenPriceBySymbol(stakingPair.unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
       setMeanPrice(price);
     }
-  }, [coinPrices, getTokenPriceBySymbol, stakingPair]);
+  }, [getTokenPriceByAddress, getTokenPriceBySymbol, priceList, stakingPair, account?.lamports]);
 
   // Keep MEAN balance updated
   useEffect(() => {
@@ -317,7 +320,7 @@ const StakingView = () => {
     if (stakingPair && stakingPair.unstakedToken) {
       refreshMeanBalance();
     }
-  }, [tokenAccounts, publicKey, stakingPair, refreshMeanBalance]);
+  }, [tokenAccounts, publicKey, stakingPair, refreshMeanBalance, account?.lamports]);
 
   // Keep sMEAN balance updated
   useEffect(() => {
@@ -332,7 +335,7 @@ const StakingView = () => {
     if (stakingPair && stakingPair.stakedToken) {
       refreshStakedMeanBalance();
     }
-  }, [tokenAccounts, publicKey, stakingPair, refreshStakedMeanBalance]);
+  }, [tokenAccounts, publicKey, stakingPair, refreshStakedMeanBalance, account?.lamports]);
 
   // Stake quote - For input amount
   useEffect(() => {
@@ -375,6 +378,8 @@ const StakingView = () => {
         setShouldRefreshStakePoolInfo(false);
       });
       refreshStakePoolInfo(meanPrice);
+    } else {
+      consoleOut('meanPrice not available!', '', 'red');
     }
   }, [
     stakeClient,
@@ -409,10 +414,7 @@ const StakingView = () => {
 
   return (
     <>
-      <div
-        id="refresh-stake-pool-info"
-        onClick={() => refreshStakePoolInfo(meanPrice)}
-      ></div>
+      <div id="refresh-stake-pool-info" onClick={() => refreshStakePoolInfo(meanPrice)}></div>
       {meanAddresses && (
         <div className="scroll-wrapper vertical-scroll">
           {/* Staking paragraphs */}
