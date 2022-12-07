@@ -4,9 +4,7 @@ import { getSolanaExplorerClusterParam, useConnection } from './connection';
 import { fetchTxStatus } from '../middleware/transactions';
 import { consoleOut } from '../middleware/ui';
 import { EventType, OperationType } from '../models/enums';
-import {
-  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-} from '../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../constants';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../components/Notifications';
 import { useAccountsContext } from './accounts';
@@ -102,7 +100,6 @@ export const txConfirmationCache = {
 };
 
 interface TxConfirmationState {
-  fetchTxInfoStatus: TxStatus | undefined;
   lastVaultCreated: string;
   confirmationHistory: TxConfirmationInfo[];
   enqueueTransactionConfirmation: (data: TxConfirmationInfo) => void;
@@ -111,7 +108,6 @@ interface TxConfirmationState {
 }
 
 const defaultCtxValues: TxConfirmationState = {
-  fetchTxInfoStatus: undefined,
   lastVaultCreated: '',
   confirmationHistory: [],
   enqueueTransactionConfirmation: () => {},
@@ -127,7 +123,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
   const { t } = useTranslation('common');
 
   // Variables
-  const [fetchTxInfoStatus, setFetchingTxStatus] = useState<TxStatus | undefined>(defaultCtxValues.fetchTxInfoStatus);
   const [lastVaultCreated, updatelastVaultCreated] = useState(defaultCtxValues.lastVaultCreated);
   const [confirmationHistory, setConfirmationHistory] = useState<TxConfirmationInfo[]>(
     defaultCtxValues.confirmationHistory,
@@ -141,7 +136,8 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     updatelastVaultCreated(ddcaAccountPda);
   };
 
-  const enqueueTransactionConfirmation = useCallback( async (data: TxConfirmationInfo) => {
+  const enqueueTransactionConfirmation = useCallback(
+    async (data: TxConfirmationInfo) => {
       const rebuildHistoryFromCache = () => {
         const history = Array.from(txStatusCache.values());
         setConfirmationHistory([...history].reverse());
@@ -258,7 +254,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
   return (
     <TxConfirmationContext.Provider
       value={{
-        fetchTxInfoStatus,
         confirmationHistory,
         lastVaultCreated,
         enqueueTransactionConfirmation,
