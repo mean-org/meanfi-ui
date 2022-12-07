@@ -1,6 +1,6 @@
 import { TokenPrice } from 'models/TokenPrice';
 import { appConfig } from '..';
-import { readFromCache, writeToCache } from '../cache/persistentCache';
+import { readFromCache, removeFromCache, writeToCache } from '../cache/persistentCache';
 import { meanFiHeaders } from '../constants';
 import { SimpleTokenInfo } from '../models/accounts';
 import { Allocation } from '../models/common-types';
@@ -64,8 +64,11 @@ export const getPrices = async (honorCache = true): Promise<TokenPrice[]> => {
     method: 'GET',
     headers: meanFiHeaders,
   };
-  const url = appConfig.getConfig().apiUrl + '/coin-prices';
-  const cacheEntryKey = 'coin-prices';
+  const url = appConfig.getConfig().apiUrl + '/token-prices';
+  const cacheEntryKey = 'token-prices';
+
+  // First clear cache of old entry
+  removeFromCache('coin-prices');
 
   if (honorCache) {
     const cachedPrices = readFromCache(cacheEntryKey);

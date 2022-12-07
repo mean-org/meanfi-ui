@@ -1040,7 +1040,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       try {
         setLoadingPrices(true);
         pricesPerformanceCounter.start();
-        const isExpired = isCacheItemExpired('coin-prices', THIRTY_MINUTES_REFRESH_TIMEOUT);
+        const isExpired = isCacheItemExpired('token-prices', THIRTY_MINUTES_REFRESH_TIMEOUT);
         const honorCache = fromCache && !isExpired ? true : false;
         const newPrices = await getPrices(honorCache);
         pricesPerformanceCounter.stop();
