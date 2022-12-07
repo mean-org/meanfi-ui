@@ -225,8 +225,9 @@ const PaymentStreamingView = (props: {
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
+          } else {
+            softReloadStreams();
           }
-          softReloadStreams();
           break;
         case OperationType.TreasuryCreate:
         case OperationType.StreamWithdraw:
@@ -234,9 +235,10 @@ const PaymentStreamingView = (props: {
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
+          } else {
+            accountRefresh();
+            softReloadStreams();
           }
-          accountRefresh();
-          softReloadStreams();
           break;
         case OperationType.StreamClose:
           logEventHandling(item);
@@ -245,10 +247,8 @@ const PaymentStreamingView = (props: {
             notifyMultisigActionFollowup(item);
           } else {
             onBackButtonClicked();
-          }
-          setTimeout(() => {
             hardReloadStreams();
-          }, 20);
+          }
           break;
         case OperationType.TreasuryClose:
           logEventHandling(item);
@@ -258,10 +258,8 @@ const PaymentStreamingView = (props: {
           } else {
             const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
             navigate(url);
-          }
-          setTimeout(() => {
             hardReloadStreams();
-          }, 20);
+          }
           break;
         case OperationType.StreamTransferBeneficiary:
           logEventHandling(item);
@@ -271,10 +269,8 @@ const PaymentStreamingView = (props: {
           } else {
             const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
             navigate(url);
-          }
-          setTimeout(() => {
             hardReloadStreams();
-          }, 20);
+          }
           break;
         default:
           break;

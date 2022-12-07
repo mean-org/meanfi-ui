@@ -42,6 +42,22 @@ export const writeToCache = (key: string, value: any) => {
   }
 };
 
+export const removeFromCache = (key: string) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (!key) {
+    console.warn('Cannot remove item from localStorage. Provided key is empty!');
+  }
+
+  try {
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    console.warn(`Error removing localStorage key “${key}”:`, error);
+  }
+};
+
 /**
  * Determines if a cache item, if found, is aged/old and needs to be refreshed
  * @param {string} key The key/name of the item in the local storage
