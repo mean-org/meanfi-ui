@@ -86,7 +86,6 @@ interface AppStateConfig {
   totalSafeBalance: number | undefined;
   fromCoinAmount: string;
   effectiveRate: number;
-  coinPrices: any | null;
   priceList: TokenPrice[] | null;
   loadingPrices: boolean;
   treasuryOption: TreasuryTypeOption | undefined;
@@ -173,7 +172,6 @@ interface AppStateConfig {
   setFromCoinAmount: (data: string) => void;
   refreshPrices: () => void;
   setEffectiveRate: (rate: number) => void;
-  setCoinPrices: (prices: any) => void;
   getTokenPriceByAddress: (address: string) => number;
   getTokenPriceBySymbol: (symbol: string) => number;
   getTokenByMintAddress: (address: string) => TokenInfo | undefined;
@@ -257,7 +255,6 @@ const contextDefaultValues: AppStateConfig = {
   totalSafeBalance: undefined,
   fromCoinAmount: '',
   effectiveRate: 0,
-  coinPrices: null,
   priceList: null,
   loadingPrices: false,
   treasuryOption: TREASURY_TYPE_OPTIONS[0],
@@ -348,7 +345,6 @@ const contextDefaultValues: AppStateConfig = {
   setFromCoinAmount: () => {},
   refreshPrices: () => {},
   setEffectiveRate: () => {},
-  setCoinPrices: () => {},
   getTokenPriceByAddress: () => 0,
   getTokenPriceBySymbol: () => 0,
   getTokenByMintAddress: () => undefined,
@@ -497,7 +493,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   );
   const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
   const [priceList, setPriceList] = useState<TokenPrice[] | null>(null);
-  const [coinPrices, setCoinPrices] = useState<any>(null);
   const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
@@ -972,40 +967,32 @@ const AppStateProvider: React.FC = ({ children }) => {
     getCoinPrices(false);
   };
 
-  const getTokenPriceByAddress = useCallback(
-    (address: string): number => {
-      if (!address || !priceList || priceList.length === 0) {
-        return 0;
-      }
+  const getTokenPriceByAddress = useCallback((address: string): number => {
+    if (!address || !priceList || priceList.length === 0) {
+      return 0;
+    }
 
-      const item = priceList.find(i => i.address === address);
+    const item = priceList.find(i => i.address === address);
 
-      return item ? item.price || 0 : 0;
-    },
+    return item ? item.price || 0 : 0;
+  },
     [priceList],
   );
 
-  const getTokenPriceBySymbol = useCallback(
-    (symbol: string): number => {
-      if (!symbol || !coinPrices) {
-        return 0;
-      }
+  const getTokenPriceBySymbol = useCallback((symbol: string): number => {
+    if (!symbol || !priceList || priceList.length === 0) {
+      return 0;
+    }
 
-      return coinPrices && coinPrices[symbol] ? (coinPrices[symbol] as number) : 0;
-    },
-    [coinPrices],
+    const item = priceList.find(i => i.symbol === symbol);
+
+    return item ? item.price || 0 : 0;
+  },
+    [priceList],
   );
 
   const mapPrices = useCallback((prices: TokenPrice[]) => {
     if (prices && prices.length > 0) {
-      const pricesMap: any = {};
-      prices.forEach(tp => (pricesMap[tp.symbol] = tp.price));
-      const solPrice = pricesMap['SOL'];
-      // Lets add wSOL to the list using SOL price
-      if (solPrice) {
-        pricesMap['WSOL'] = solPrice;
-        pricesMap['wSOL'] = solPrice;
-      }
       const solIndex = prices.findIndex(p => p.symbol === 'SOL');
       const listCopy = JSON.parse(JSON.stringify(prices)) as TokenPrice[];
       if (solIndex !== -1) {
@@ -1026,17 +1013,13 @@ const AppStateProvider: React.FC = ({ children }) => {
       }
       setPriceList(listCopy);
       consoleOut('Price items:', prices.length, 'blue');
-      consoleOut('Mapped prices:', pricesMap, 'blue');
-      setCoinPrices(pricesMap);
     } else {
       consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');
-      setCoinPrices({ 'NO-TOKEN-VALUE': 1 });
     }
   }, []);
 
   // Fetch coin prices
-  const getCoinPrices = useCallback(
-    async (fromCache = true) => {
+  const getCoinPrices = useCallback(async (fromCache = true) => {
       try {
         setLoadingPrices(true);
         pricesPerformanceCounter.start();
@@ -1047,7 +1030,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         consoleOut(`Fetched price list in ${pricesPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
         mapPrices(newPrices);
       } catch (error) {
-        setCoinPrices({ 'NO-TOKEN-VALUE': 1 });
         updateEffectiveRate(0);
         consoleOut('New prices API error:', error, 'red');
       } finally {
@@ -1074,11 +1056,11 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   // Update token price while list of prices change
   useEffect(() => {
-    if (coinPrices && selectedToken) {
-      const price = coinPrices[selectedToken.address] ? coinPrices[selectedToken.address] : 0;
+    if (priceList && selectedToken) {
+      const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
       updateEffectiveRate(price);
     }
-  }, [coinPrices, selectedToken]);
+  }, [getTokenPriceByAddress, getTokenPriceBySymbol, priceList, selectedToken]);
 
   // Cache selected DDCA frequency option
   const ddcaOptFromCache = useMemo(
@@ -1656,7 +1638,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         totalSafeBalance,
         fromCoinAmount,
         effectiveRate,
-        coinPrices,
         priceList,
         loadingPrices,
         ddcaOption,
@@ -1734,7 +1715,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setFromCoinAmount,
         refreshPrices,
         setEffectiveRate,
-        setCoinPrices,
         getTokenPriceByAddress,
         getTokenPriceBySymbol,
         getTokenByMintAddress,
