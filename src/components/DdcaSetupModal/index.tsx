@@ -62,7 +62,7 @@ export const DdcaSetupModal = (props: {
   const { publicKey, wallet } = useWallet();
   // Transaction control
   const { ddcaOption, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
-  const { setRecentlyCreatedVault, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
+  const { setLastVaultCreated, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isBusy, setIsBusy] = useState(false);
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(0);
@@ -322,7 +322,7 @@ export const DdcaSetupModal = (props: {
   };
 
   const onTxErrorCreatingVaultWithNotify = () => {
-    setRecentlyCreatedVault('');
+    setLastVaultCreated('');
     openNotification({
       title: t('notifications.error-title'),
       description: t('notifications.error-creating-vault-message'),
@@ -361,7 +361,7 @@ export const DdcaSetupModal = (props: {
     let transactionLog: any[] = [];
 
     setLockedSliderValue(recurrencePeriod);
-    setRecentlyCreatedVault('');
+    setLastVaultCreated('');
     setDdcaAccountPda(undefined);
     setVaultCreated(false);
     setSwapExecuted(false);
@@ -425,7 +425,7 @@ export const DdcaSetupModal = (props: {
               ),
               result: getTxIxResume(value[1]),
             });
-            setRecentlyCreatedVault(value[0].toBase58());
+            setLastVaultCreated(value[0].toBase58());
             setDdcaAccountPda(value[0]);
             transaction = value[1];
             return true;
