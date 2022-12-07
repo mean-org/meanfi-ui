@@ -1,6 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
-import { Modal } from 'antd';
 import { ModalTemplate } from 'components/ModalTemplate';
 import { TextInput } from 'components/TextInput';
 import { isValidAddress, scrollToBottom } from 'middleware/ui';
@@ -22,7 +21,6 @@ export const MultisigParticipants = (props: {
     multisigAddresses,
   } = props;
   const { t } = useTranslation('common');
-  const [accumulator, setAccumulator] = useState(1);
   // Max signers info modal
   const [isMaxSignersInfoModalVisible, setIsMaxSignersInfoModalVisibility] =
     useState(false);
@@ -73,13 +71,9 @@ export const MultisigParticipants = (props: {
       showMaxSignersInfoModal();
       return;
     }
-    const items = JSON.parse(
-      JSON.stringify(participants),
-    ) as MultisigParticipant[];
-    const newAccumulator = accumulator + 1;
-    setAccumulator(newAccumulator);
+    const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
     items.push({
-      name: `Signer ${newAccumulator}`,
+      name: `Signer ${participants.length + 1}`,
       address: '',
     });
     if (!checkIfDuplicateExists(items)) {
@@ -88,12 +82,7 @@ export const MultisigParticipants = (props: {
         scrollToBottom('multisig-participants-max-height');
       }, 100);
     }
-  }, [
-    accumulator,
-    onParticipantsChanged,
-    participants,
-    showMaxSignersInfoModal,
-  ]);
+  }, [onParticipantsChanged, participants, showMaxSignersInfoModal]);
 
   const checkIfDuplicateExists = (arr: MultisigParticipant[]): boolean => {
     const items = arr.map(i => i.address);
