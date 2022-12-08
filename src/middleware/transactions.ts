@@ -51,7 +51,6 @@ export async function fetchTxStatus(
   connection: Connection,
   signature: string,
   targetFinality: TransactionConfirmationStatus,
-  callBack?: any,
 ) {
     if (!connection) {
       return;
@@ -69,9 +68,6 @@ export async function fetchTxStatus(
           targetFinality,
         );
         if (result && result.value && !result.value.err) {
-          if (callBack) {
-            callBack(targetFinality);
-          }
           return targetFinality;
         }
         return undefined;
