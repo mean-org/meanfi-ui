@@ -44,6 +44,7 @@ import { PreFooter } from 'components/PreFooter';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+  TRITON_ONE_DEBUG_RPC,
   VERBOSE_DATE_FORMAT,
   VERBOSE_DATE_TIME_FORMAT,
 } from 'constants/common';
@@ -54,6 +55,7 @@ import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
+import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconClock, IconExchange, IconExternalLink } from 'Icons';
 import { customLogger } from 'index';
@@ -114,9 +116,6 @@ export const ExchangeDcasView = () => {
   const [cachedRpcJson] = useLocalStorageState('cachedRpc');
   const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
   const cachedRpc = cachedRpcJson as RpcConfig;
-  const endpoint = mainnetRpc
-    ? mainnetRpc.httpProvider
-    : cachedRpc.httpProvider;
 
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
@@ -133,11 +132,17 @@ export const ExchangeDcasView = () => {
   useEffect(() => {
     (async () => {
       if (cachedRpc.networkId !== 101) {
+        let debugRpc: RpcConfig | null = null;
         const mainnetRpc = await getLiveRpc(101);
         if (!mainnetRpc) {
           navigate('/service-unavailable');
         }
-        setMainnetRpc(mainnetRpc);
+        if (environment === 'production' && isLocal()) {
+          debugRpc = Object.assign({}, mainnetRpc, {
+            httpProvider: TRITON_ONE_DEBUG_RPC,
+          }) as RpcConfig;
+        }
+        setMainnetRpc(debugRpc || mainnetRpc);
       } else {
         setMainnetRpc(null);
       }
@@ -145,11 +150,14 @@ export const ExchangeDcasView = () => {
     return () => {};
   }, [cachedRpc.networkId, navigate]);
 
-  // Set and cache connection
-  const connection = useMemo(
-    () => new Connection(endpoint, 'confirmed'),
-    [endpoint],
+  const endpoint = useMemo(() => mainnetRpc
+    ? mainnetRpc.httpProvider
+    : cachedRpc.httpProvider,
+    [cachedRpc.httpProvider, mainnetRpc]
   );
+
+  // Set and cache connection
+  const connection = useMemo(() => new Connection(endpoint, 'confirmed'), [endpoint]);
 
   // Set and cache the DDCA client
   const ddcaClient = useMemo(() => {
