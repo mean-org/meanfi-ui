@@ -59,6 +59,7 @@ export const PriceGraph = (props: { onPriceData: any }) => {
         props.onPriceData(lastItem.priceData);
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeBtn, priceList]);
 
   /*********************** CUSTOM TOOLTIP *************************/

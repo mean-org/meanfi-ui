@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
 import { TokenStats } from './TokenStats';
+import { consoleOut } from 'middleware/ui';
 
 //const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
 
@@ -30,6 +31,20 @@ export const StatsView = () => {
   }, []);
 
   // Data handling / fetching
+
+  useEffect(() => {
+    consoleOut('Calling getCoingeckoMarketChart from StatsView...', '', 'blue');
+    getCoingeckoMarketChart(MEAN_TOKEN.extensions.coingeckoId, MEAN_TOKEN.decimals, 1, 'daily')
+      .then(dataset => {
+        if (dataset[1] && dataset[1].length > 0) {
+          const dataPoint = dataset[1][dataset[1].length - 1];
+          console.log('volume:', +dataPoint.priceData);
+          setTotalVolume24h(Number(dataPoint.priceData));
+        }
+      })
+      .catch(error => console.error(error));
+  }, []);
+
   useEffect(() => {
     const getHolders = async (mint: string) => {
       const accountInfos = await connection.getParsedProgramAccounts(TOKEN_PROGRAM_ID, {
@@ -66,16 +81,6 @@ export const StatsView = () => {
         } else {
           setMeanfiStats(meanStats);
         }
-      }
-      //TODO: pull this info
-      const [, marketVolumeData] = await getCoingeckoMarketChart(
-        MEAN_TOKEN.extensions.coingeckoId,
-        MEAN_TOKEN.decimals,
-        1,
-        'daily',
-      );
-      if (marketVolumeData && marketVolumeData.length > 0) {
-        setTotalVolume24h(Number(marketVolumeData[marketVolumeData.length - 1].priceData));
       }
     })();
   }, [connection]);
