@@ -62,6 +62,8 @@ export const ProposalDetailsView = (props: {
   proposalSelected?: any;
   selectedMultisig?: any;
   solanaApps?: any;
+  isCancelRejectModalVisible: boolean;
+  setIsCancelRejectModalVisible: (value: boolean) => void;
 }) => {
   const { transactionStatus, setTransactionStatus } =
     useContext(AppStateContext);
@@ -82,6 +84,8 @@ export const ProposalDetailsView = (props: {
     proposalSelected,
     selectedMultisig,
     solanaApps,
+    isCancelRejectModalVisible,
+    setIsCancelRejectModalVisible,
   } = props;
   const { confirmationHistory } = useContext(TxConfirmationContext);
 
@@ -94,8 +98,6 @@ export const ProposalDetailsView = (props: {
   >([]);
   const [needReloadActivity, setNeedReloadActivity] = useState<boolean>(false);
   const [loadingActivity, setLoadingActivity] = useState<boolean>(false);
-  const [isCancelRejectModalVisible, setIsCancelRejectModalVisible] =
-    useState(false);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -213,15 +215,6 @@ export const ProposalDetailsView = (props: {
     },
     [confirmationHistory],
   );
-
-  useEffect(() => {
-    if (
-      transactionStatus.currentOperation ===
-      TransactionStatus.ConfirmTransaction
-    ) {
-      setIsCancelRejectModalVisible(false);
-    }
-  }, [transactionStatus.currentOperation]);
 
   useEffect(() => {
     if (!selectedMultisig || !proposalSelected) {
@@ -620,6 +613,7 @@ export const ProposalDetailsView = (props: {
                       isApproveTxPendingConfirmation(selectedProposal.id) ||
                       isRejectTxPendingConfirmation(selectedProposal.id) ||
                       isExecuteTxPendingConfirmation(selectedProposal.id) ||
+                      isCancelTxPendingConfirmation(selectedProposal.id) ||
                       loadingData
                     }
                     onClick={() => {
@@ -650,6 +644,7 @@ export const ProposalDetailsView = (props: {
                       isBusy ||
                       isApproveTxPendingConfirmation(selectedProposal.id) ||
                       isRejectTxPendingConfirmation(selectedProposal.id) ||
+                      isExecuteTxPendingConfirmation(selectedProposal.id) ||
                       isCancelTxPendingConfirmation(selectedProposal.id) ||
                       loadingData
                     }
@@ -680,6 +675,7 @@ export const ProposalDetailsView = (props: {
                         hasMultisigPendingProposal ||
                         isBusy ||
                         isExecuteTxPendingConfirmation(selectedProposal.id) ||
+                        isCancelTxPendingConfirmation(selectedProposal.id) ||
                         loadingData
                       }
                       onClick={() => setIsCancelRejectModalVisible(true)}
@@ -700,6 +696,9 @@ export const ProposalDetailsView = (props: {
                       hasMultisigPendingProposal ||
                       isBusy ||
                       isExecuteTxPendingConfirmation(selectedProposal.id) ||
+                      isApproveTxPendingConfirmation(selectedProposal.id) ||
+                      isRejectTxPendingConfirmation(selectedProposal.id) ||
+                      isCancelTxPendingConfirmation(selectedProposal.id) ||
                       loadingData
                     }
                     onClick={() => {
@@ -719,8 +718,6 @@ export const ProposalDetailsView = (props: {
                         hasMultisigPendingProposal ||
                         isBusy ||
                         isExecuteTxPendingConfirmation(selectedProposal.id) ||
-                        isApproveTxPendingConfirmation(selectedProposal.id) ||
-                        isRejectTxPendingConfirmation(selectedProposal.id) ||
                         isCancelTxPendingConfirmation(selectedProposal.id) ||
                         loadingData
                       }

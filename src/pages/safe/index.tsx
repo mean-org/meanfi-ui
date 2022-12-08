@@ -125,6 +125,8 @@ const SafeView = (props: {
   const [lastError, setLastError] = useState<TransactionStatusInfo | undefined>(
     undefined,
   );
+  const [isCancelRejectModalVisible, setIsCancelRejectModalVisible] =
+    useState(false);
 
   /////////////////
   //  Init code  //
@@ -1553,6 +1555,7 @@ const SafeView = (props: {
                 },
               });
               setSuccessStatus();
+              setIsCancelRejectModalVisible(false);
             } else {
               setFailureStatusAndNotify('send');
             }
@@ -1680,6 +1683,7 @@ const SafeView = (props: {
       case OperationType.EditMultisig:
         logEventHandling(item);
         recordTxConfirmation(item.signature, item.operationType, true);
+          onRefreshProposals();
         reloadMultisigs();
         break;
       default:
@@ -2010,6 +2014,8 @@ const SafeView = (props: {
             loadingProposals ||
             loadingProposalDetails
           }
+          isCancelRejectModalVisible={isCancelRejectModalVisible}
+          setIsCancelRejectModalVisible={setIsCancelRejectModalVisible}
         />
       );
     } else {
