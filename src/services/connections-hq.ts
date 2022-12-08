@@ -1,6 +1,7 @@
 import { Cluster, clusterApiUrl, Connection } from '@solana/web3.js';
+import { isLocal } from 'middleware/ui';
 import { appConfig } from '..';
-import { requestOptions } from '../constants';
+import { requestOptions, TRITON_ONE_DEBUG_RPC } from '../constants';
 import { environment } from '../environments/environment';
 import { getRpcApiEndpoint } from '../middleware/api';
 import { ChainID } from '../models/enums';
@@ -111,6 +112,16 @@ export const getLiveRpc = async (
 };
 
 export const refreshCachedRpc = async () => {
+
+  // Process special case when debugging in mainnet from localhost
+  if (environment === 'production' && isLocal()) {
+    const debugRpc = Object.assign({}, getDefaultRpc(), {
+      httpProvider: TRITON_ONE_DEBUG_RPC,
+    }) as RpcConfig;
+    window.localStorage.setItem('cachedRpc', JSON.stringify(debugRpc));
+    return;
+  }
+
   const cachedRpcJson = window.localStorage.getItem('cachedRpc');
   if (!cachedRpcJson) {
     const newRpc = (await getLiveRpc()) ?? getDefaultRpc();
