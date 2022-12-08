@@ -52,7 +52,7 @@ import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo, TxStatus } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
 import { environment } from 'environments/environment';
@@ -99,10 +99,9 @@ export const ExchangeDcasView = () => {
     setLoadingRecurringBuys,
   } = useContext(AppStateContext);
   const {
-    fetchTxInfoStatus,
-    lastSentTxOperationType,
-    recentlyCreatedVault,
-    setRecentlyCreatedVault,
+    confirmationHistory,
+    lastVaultCreated,
+    setLastVaultCreated,
     enqueueTransactionConfirmation,
   } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
@@ -752,9 +751,9 @@ export const ExchangeDcasView = () => {
     [],
   );
 
-  //////////////////////
-  //   Data Related   //
-  //////////////////////
+  ///////////////
+  // Callbacks //
+  ///////////////
 
   // Load DDCA activity by ddcaAddress
   const reloadDdcaItemActivity = useCallback(
@@ -839,21 +838,21 @@ export const ExchangeDcasView = () => {
         ddcaClient
           .listDdcas()
           .then(dcas => {
-            consoleOut('recentlyCreatedVault:', recentlyCreatedVault, 'blue');
+            consoleOut('lastVaultCreated:', lastVaultCreated, 'blue');
             consoleOut('Recurring buys:', dcas, 'blue');
             let item: DdcaAccount | undefined;
             if (dcas.length) {
               if (reset) {
-                if (recentlyCreatedVault) {
+                if (lastVaultCreated) {
                   item = dcas.find(
-                    d => d.ddcaAccountAddress === recentlyCreatedVault,
+                    d => d.ddcaAccountAddress === lastVaultCreated,
                   );
                 }
               } else {
                 // Try to get current item by its ddcaAccountAddress
-                if (recentlyCreatedVault) {
+                if (lastVaultCreated) {
                   item = dcas.find(
-                    i => i.ddcaAccountAddress === recentlyCreatedVault,
+                    i => i.ddcaAccountAddress === lastVaultCreated,
                   );
                 } else if (selectedDdca) {
                   const itemFromServer = dcas.find(
@@ -868,7 +867,7 @@ export const ExchangeDcasView = () => {
               }
               if (item) {
                 setSelectedDdca(item);
-                setRecentlyCreatedVault('');
+                setLastVaultCreated('');
                 consoleOut('Calling ddcaClient.getDdca...', '', 'blue');
                 reloadDdcaDetail(item.ddcaAccountAddress);
               }
@@ -889,8 +888,8 @@ export const ExchangeDcasView = () => {
       ddcaClient,
       selectedDdca,
       loadingRecurringBuys,
-      recentlyCreatedVault,
-      setRecentlyCreatedVault,
+      lastVaultCreated,
+      setLastVaultCreated,
       setLoadingRecurringBuys,
       reloadDdcaDetail,
       setRecurringBuys,
@@ -929,6 +928,25 @@ export const ExchangeDcasView = () => {
     [reloadRecurringBuys],
   );
 
+  const isTxStatus = useCallback((operation: OperationType, status?: TxStatus) => {
+      if (confirmationHistory && confirmationHistory.length > 0) {
+        return confirmationHistory.some(
+          h =>
+            h.operationType === operation &&
+            ((status && h.txInfoFetchStatus === status) ||
+             (!status && h.txInfoFetchStatus !== undefined)),
+        );
+      }
+      return false;
+    },
+    [confirmationHistory],
+  );
+
+
+  /////////////////////
+  // Data management //
+  /////////////////////
+
   // Load recurring buys once on enter or reload if the wallet is connected
   // It means that it will be triggered if going from disconnected to connected
   useEffect(() => {
@@ -965,10 +983,6 @@ export const ExchangeDcasView = () => {
     reloadRecurringBuys,
     setRecurringBuys,
   ]);
-
-  ////////////////////
-  //   UI Related   //
-  ////////////////////
 
   // Window resize listeners
   useEffect(() => {
@@ -1300,31 +1314,19 @@ export const ExchangeDcasView = () => {
   };
 
   const isCreating = (): boolean => {
-    return fetchTxInfoStatus === 'fetching' &&
-      lastSentTxOperationType === OperationType.DdcaCreate
-      ? true
-      : false;
+    return isTxStatus(OperationType.DdcaCreate, 'fetching');
   };
 
   const isClosing = (): boolean => {
-    return fetchTxInfoStatus === 'fetching' &&
-      lastSentTxOperationType === OperationType.DdcaClose
-      ? true
-      : false;
+    return isTxStatus(OperationType.DdcaClose, 'fetching');
   };
 
   const isWithdrawing = (): boolean => {
-    return fetchTxInfoStatus === 'fetching' &&
-      lastSentTxOperationType === OperationType.DdcaWithdraw
-      ? true
-      : false;
+    return isTxStatus(OperationType.DdcaWithdraw, 'fetching');
   };
 
   const isAddingFunds = (): boolean => {
-    return fetchTxInfoStatus === 'fetching' &&
-      lastSentTxOperationType === OperationType.DdcaAddFunds
-      ? true
-      : false;
+    return isTxStatus(OperationType.DdcaAddFunds, 'fetching');
   };
 
   const isNextRoundScheduled = (item: DdcaDetails): boolean => {
@@ -1497,15 +1499,15 @@ export const ExchangeDcasView = () => {
                 type="text"
                 shape="round"
                 size="small"
-                disabled={fetchTxInfoStatus === 'fetching'}
+                disabled={isAddingFunds()}
                 onClick={showAddFundsModal}
               >
-                {fetchTxInfoStatus === 'fetching' && <LoadingOutlined />}
+                {isAddingFunds() && <LoadingOutlined />}
                 {getAddFundsCtaLabel()}
               </Button>
               {ddcaDetails &&
                 (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) &&
-                fetchTxInfoStatus !== 'fetching' && (
+                !isAddingFunds() ? (
                   <Dropdown overlay={getMenuOptions()} trigger={['click']}>
                     <Button
                       shape="round"
@@ -1516,7 +1518,7 @@ export const ExchangeDcasView = () => {
                       icon={<EllipsisOutlined />}
                     ></Button>
                   </Dropdown>
-                )}
+                ) : null}
             </div>
           </div>
         </Spin>

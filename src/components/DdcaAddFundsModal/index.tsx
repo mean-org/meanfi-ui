@@ -5,25 +5,14 @@ import { Button, Col, Modal, Progress, Row } from 'antd';
 import Slider, { SliderMarks } from 'antd/lib/slider';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { AppStateContext } from 'contexts/appstate';
-import { TxConfirmationContext } from 'contexts/transaction-status';
+import { TxConfirmationContext, TxStatus } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from 'middleware/ids';
 import { sendTx, signTx } from 'middleware/transactions';
-import {
-  consoleOut,
-  getTransactionStatusForLogs,
-  isLocal,
-  percentage,
-  percentual,
-} from 'middleware/ui';
-import {
-  findATokenAddress,
-  getAmountWithSymbol,
-  getTxIxResume,
-  shortenAddress,
-} from 'middleware/utils';
+import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from 'middleware/ui';
+import { findATokenAddress, getAmountWithSymbol, getTxIxResume, shortenAddress } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,25 +27,12 @@ export const DdcaAddFundsModal = (props: {
   isVisible: boolean;
   userBalance: number;
 }) => {
-  const {
-    connection,
-    ddcaDetails,
-    ddcaTxFees,
-    endpoint,
-    handleClose,
-    handleOk,
-    isVisible,
-    userBalance,
-  } = props;
+  const { connection, ddcaDetails, ddcaTxFees, endpoint, handleClose, handleOk, isVisible, userBalance } = props;
   const { t } = useTranslation('common');
   const { publicKey, wallet } = useWallet();
-  const { transactionStatus, setTransactionStatus } =
-    useContext(AppStateContext);
-  const {
-    lastSentTxSignature,
-    enqueueTransactionConfirmation,
-  } = useContext(TxConfirmationContext);
-
+  const { transactionStatus, setTransactionStatus } = useContext(AppStateContext);
+  const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
+  const [initTimestamp, setInitTimestamp] = useState(0);
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(0);
   const [marks, setMarks] = useState<SliderMarks>();
@@ -69,27 +45,19 @@ export const DdcaAddFundsModal = (props: {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
-  const fromToken = useMemo(
-    () => MEAN_TOKEN_LIST.find(t => t.address === ddcaDetails?.fromMint),
-    [ddcaDetails],
-  );
+  const fromToken = useMemo(() => MEAN_TOKEN_LIST.find(t => t.address === ddcaDetails?.fromMint), [ddcaDetails]);
 
   const getModalHeadline = useCallback(() => {
     if (!ddcaDetails) {
       return '';
     }
     return `<span>${t('ddcas.add-funds.headline', {
-      fromTokenAmount: getAmountWithSymbol(
-        ddcaDetails.amountPerSwap * lockedSliderValue,
-        ddcaDetails.fromMint,
-      ),
+      fromTokenAmount: getAmountWithSymbol(ddcaDetails.amountPerSwap * lockedSliderValue, ddcaDetails.fromMint),
     })}</span>`;
   }, [lockedSliderValue, ddcaDetails, t]);
 
   const getGasFeeAmount = (): number => {
-    return (
-      ddcaTxFees.maxBlockchainFee + ddcaTxFees.maxFeePerSwap * lockedSliderValue
-    );
+    return ddcaTxFees.maxBlockchainFee + ddcaTxFees.maxFeePerSwap * lockedSliderValue;
   };
 
   const hasEnoughNativeBalanceForFees = (): boolean => {
@@ -197,9 +165,7 @@ export const DdcaAddFundsModal = (props: {
             fill="currentColor"
           />
         </svg>
-        <span className="fg-primary-highlight font-bold">
-          {getTotalPeriod(value || 0)}
-        </span>
+        <span className="fg-primary-highlight font-bold">{getTotalPeriod(value || 0)}</span>
       </>
     );
   }
@@ -208,9 +174,33 @@ export const DdcaAddFundsModal = (props: {
     return ddcaDetails?.fromMint === WRAPPED_SOL_MINT.toBase58() ? true : false;
   }, [ddcaDetails]);
 
+  // Returns true if any operation type is found with a given status
+  // If no status is given it will return true on first match
+  const isTxStatus = useCallback(
+    (operation: OperationType, status?: TxStatus) => {
+      if (confirmationHistory && confirmationHistory.length > 0) {
+        return confirmationHistory.some(
+          h =>
+            h.operationType === operation &&
+            ((status && h.txInfoFetchStatus === status) || (!status && h.txInfoFetchStatus !== undefined)) &&
+            (h.timestamp || Date.now()) > initTimestamp,
+        );
+      }
+      return false;
+    },
+    [confirmationHistory, initTimestamp],
+  );
+
   //////////////////////////
   //   Data Preparation   //
   //////////////////////////
+
+  // When modal goes visible, set a modal init timestamp
+  useEffect(() => {
+    if (isVisible) {
+      setInitTimestamp(Date.now());
+    }
+  }, [isVisible]);
 
   useEffect(() => {
     (async () => {
@@ -220,10 +210,7 @@ export const DdcaAddFundsModal = (props: {
           publicKey as PublicKey,
           new PublicKey(ddcaDetails.fromMint),
         );
-        const result = await getTokenAccountBalanceByAddress(
-          connection,
-          selectedTokenAddress,
-        );
+        const result = await getTokenAccountBalanceByAddress(connection, selectedTokenAddress);
         if (result) {
           balance = result.uiAmount || 0;
         }
@@ -236,9 +223,7 @@ export const DdcaAddFundsModal = (props: {
 
   useEffect(() => {
     if (ddcaDetails) {
-      const maxRangeFromSelection = getMaxRangeFromInterval(
-        ddcaDetails.intervalInSeconds,
-      );
+      const maxRangeFromSelection = getMaxRangeFromInterval(ddcaDetails.intervalInSeconds);
       const maxRangeFromBalance = Math.floor(
         isWrappedSol()
           ? (fromTokenBalance + userBalance) / ddcaDetails.amountPerSwap
@@ -260,8 +245,7 @@ export const DdcaAddFundsModal = (props: {
       setMarks(marks);
 
       // Set minimum required and valid flag
-      const minimumRequired =
-        ddcaDetails.amountPerSwap * (minRangeSelectable + 1);
+      const minimumRequired = ddcaDetails.amountPerSwap * (minRangeSelectable + 1);
       const isOpValid = minimumRequired < fromTokenBalance ? true : false;
       let period = 0;
       // Set the slider position
@@ -272,25 +256,15 @@ export const DdcaAddFundsModal = (props: {
       }
       setRecurrencePeriod(period);
     }
-  }, [
-    ddcaDetails,
-    fromTokenBalance,
-    userBalance,
-    isWrappedSol,
-    getTotalPeriod,
-  ]);
+  }, [ddcaDetails, fromTokenBalance, userBalance, isWrappedSol, getTotalPeriod]);
 
   // Calculate token amount progress bar percentual value
   useEffect(() => {
     if (lockedSliderValue && ddcaDetails) {
-      const effectiveTokenAmount =
-        ddcaDetails.amountPerSwap * lockedSliderValue;
+      const effectiveTokenAmount = ddcaDetails.amountPerSwap * lockedSliderValue;
       if (effectiveTokenAmount <= fromTokenBalance) {
         setUsableTokenAmount(effectiveTokenAmount);
-        const percentualValue = percentual(
-          effectiveTokenAmount,
-          fromTokenBalance,
-        );
+        const percentualValue = percentual(effectiveTokenAmount, fromTokenBalance);
         setFromTokenPercentualAmount(percentualValue);
       } else {
         setFromTokenPercentualAmount(100);
@@ -301,14 +275,10 @@ export const DdcaAddFundsModal = (props: {
   // Calculate native amount progress bar percentual value
   useEffect(() => {
     if (lockedSliderValue && ddcaDetails && userBalance) {
-      const effectiveTokenAmount =
-        ddcaDetails.amountPerSwap * lockedSliderValue;
+      const effectiveTokenAmount = ddcaDetails.amountPerSwap * lockedSliderValue;
       if (effectiveTokenAmount > fromTokenBalance) {
         const additionalNativeBalance = effectiveTokenAmount - fromTokenBalance;
-        const percentualValue = percentual(
-          additionalNativeBalance,
-          userBalance,
-        );
+        const percentualValue = percentual(additionalNativeBalance, userBalance);
         setSolPercentualAmount(percentualValue);
       } else {
         setSolPercentualAmount(0);
@@ -351,9 +321,7 @@ export const DdcaAddFundsModal = (props: {
           currentOperation: TransactionStatus.InitTransaction,
         });
 
-        const ddcaAccountAddress = new PublicKey(
-          ddcaDetails.ddcaAccountAddress,
-        );
+        const ddcaAccountAddress = new PublicKey(ddcaDetails.ddcaAccountAddress);
         const payload = {
           ddcaAccountAddress: ddcaDetails.ddcaAccountAddress,
           swapsCount: lockedSliderValue,
@@ -363,19 +331,13 @@ export const DdcaAddFundsModal = (props: {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
           inputs: payload,
         });
 
         // Create a transaction
         return ddcaClient
-          .createAddFundsTx(
-            ddcaAccountAddress,
-            payload.swapsCount,
-            isWrappedSol(),
-          )
+          .createAddFundsTx(ddcaAccountAddress, payload.swapsCount, isWrappedSol())
           .then(value => {
             consoleOut('createAddFundsTx returned transaction:', value);
             setTransactionStatus({
@@ -383,9 +345,7 @@ export const DdcaAddFundsModal = (props: {
               currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
               result: getTxIxResume(value),
             });
             transaction = value;
@@ -398,15 +358,10 @@ export const DdcaAddFundsModal = (props: {
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
-            customLogger.logError(
-              'Add funds to DDCA vault transaction failed',
-              { transcript: transactionLog },
-            );
+            customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -494,24 +449,14 @@ export const DdcaAddFundsModal = (props: {
     const gasFeeAmount = getGasFeeAmount();
 
     if (isWrappedSol()) {
-      return getTotalCombinedSolanaAmount() <= userBalance + fromTokenBalance
-        ? true
-        : false;
+      return getTotalCombinedSolanaAmount() <= userBalance + fromTokenBalance ? true : false;
     }
 
-    const hasEnoughFromTokenBalance =
-      settingAmount < fromTokenBalance ? true : false;
-    return hasEnoughFromTokenBalance && userBalance > gasFeeAmount
-      ? true
-      : false;
+    const hasEnoughFromTokenBalance = settingAmount < fromTokenBalance ? true : false;
+    return hasEnoughFromTokenBalance && userBalance > gasFeeAmount ? true : false;
   };
 
-  const infoRow = (
-    caption: string,
-    value: string,
-    separator = '≈',
-    route = false,
-  ) => {
+  const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
     return (
       <Row>
         <Col span={11} className="text-right">
@@ -529,7 +474,7 @@ export const DdcaAddFundsModal = (props: {
 
   const getDepositCtaLabel = () => {
     let message = '';
-    if (lastSentTxSignature) {
+    if (isTxStatus(OperationType.DdcaAddFunds, 'fetched')) {
       message = t('general.finished');
     } else if (isWrappedSol()) {
       if (getTotalCombinedSolanaAmount() > userBalance + fromTokenBalance) {
@@ -545,10 +490,7 @@ export const DdcaAddFundsModal = (props: {
         message = t('transactions.validation.amount-low');
       } else {
         message = !hasEnoughNativeBalanceForFees()
-          ? `Need at least ${getAmountWithSymbol(
-              getGasFeeAmount(),
-              NATIVE_SOL_MINT.toBase58(),
-            )}`
+          ? `Need at least ${getAmountWithSymbol(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
           : t('ddca-setup-modal.cta-label-deposit');
       }
     }
@@ -558,9 +500,7 @@ export const DdcaAddFundsModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">{t('ddcas.add-funds.modal-title')}</div>
-      }
+      title={<div className="modal-title">{t('ddcas.add-funds.modal-title')}</div>}
       footer={null}
       maskClosable={false}
       open={isVisible}
@@ -568,10 +508,7 @@ export const DdcaAddFundsModal = (props: {
       width={480}
     >
       <div className="mb-3">
-        <div
-          className="ddca-setup-heading"
-          dangerouslySetInnerHTML={{ __html: getModalHeadline() }}
-        ></div>
+        <div className="ddca-setup-heading" dangerouslySetInnerHTML={{ __html: getModalHeadline() }}></div>
       </div>
       <div className="slider-container">
         <Slider
@@ -590,8 +527,7 @@ export const DdcaAddFundsModal = (props: {
         <span className="left from-token-balance">
           Token balance
           <br />
-          {ddcaDetails &&
-            getAmountWithSymbol(fromTokenBalance, ddcaDetails.fromMint)}
+          {ddcaDetails && getAmountWithSymbol(fromTokenBalance, ddcaDetails.fromMint)}
         </span>
         <span className="right pl-3 position-relative">
           <Progress
@@ -599,10 +535,7 @@ export const DdcaAddFundsModal = (props: {
             status={fromTokenPercentualAmount < 100 ? 'success' : 'exception'}
             showInfo={true}
           />
-          <span className="amount">
-            {ddcaDetails &&
-              getAmountWithSymbol(usableTokenAmount, ddcaDetails.fromMint)}
-          </span>
+          <span className="amount">{ddcaDetails && getAmountWithSymbol(usableTokenAmount, ddcaDetails.fromMint)}</span>
         </span>
       </div>
       {isWrappedSol() && (
@@ -610,8 +543,7 @@ export const DdcaAddFundsModal = (props: {
           <span className="left from-token-balance">
             SOL balance
             <br />
-            {userBalance > 0 &&
-              getAmountWithSymbol(userBalance, NATIVE_SOL_MINT.toBase58())}
+            {userBalance > 0 && getAmountWithSymbol(userBalance, NATIVE_SOL_MINT.toBase58())}
           </span>
           <span className="right pl-3 position-relative">
             <Progress
@@ -622,8 +554,7 @@ export const DdcaAddFundsModal = (props: {
             <span className="amount">
               {ddcaDetails &&
                 getAmountWithSymbol(
-                  ddcaDetails.amountPerSwap * lockedSliderValue -
-                    usableTokenAmount,
+                  ddcaDetails.amountPerSwap * lockedSliderValue - usableTokenAmount,
                   ddcaDetails.fromMint,
                 )}
             </span>
@@ -631,9 +562,7 @@ export const DdcaAddFundsModal = (props: {
         </div>
       )}
       <div className="mb-3">
-        <div className="font-bold">
-          {t('ddca-setup-modal.help.how-does-it-work')}
-        </div>
+        <div className="font-bold">{t('ddca-setup-modal.help.how-does-it-work')}</div>
         <ol className="greek">
           <li>
             {ddcaDetails &&
@@ -652,9 +581,7 @@ export const DdcaAddFundsModal = (props: {
           <li>
             {ddcaDetails &&
               t('ddca-setup-modal.help.help-item-03', {
-                toTokenSymbol: fromToken
-                  ? fromToken.symbol
-                  : shortenAddress(ddcaDetails.toMint),
+                toTokenSymbol: fromToken ? fromToken.symbol : shortenAddress(ddcaDetails.toMint),
               })}
           </li>
         </ol>
@@ -663,26 +590,11 @@ export const DdcaAddFundsModal = (props: {
         <div className="mb-3">
           {infoRow(
             'Slider setting',
-            getAmountWithSymbol(
-              ddcaDetails.amountPerSwap * lockedSliderValue,
-              ddcaDetails.fromMint,
-            ),
+            getAmountWithSymbol(ddcaDetails.amountPerSwap * lockedSliderValue, ddcaDetails.fromMint),
           )}
-          {infoRow(
-            'Gas Fees',
-            getAmountWithSymbol(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58()),
-          )}
-          {infoRow(
-            'Combined amount',
-            getAmountWithSymbol(
-              getTotalCombinedSolanaAmount(),
-              NATIVE_SOL_MINT.toBase58(),
-            ),
-          )}
-          {infoRow(
-            'Usable token amount',
-            getAmountWithSymbol(usableTokenAmount, NATIVE_SOL_MINT.toBase58()),
-          )}
+          {infoRow('Gas Fees', getAmountWithSymbol(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58()))}
+          {infoRow('Combined amount', getAmountWithSymbol(getTotalCombinedSolanaAmount(), NATIVE_SOL_MINT.toBase58()))}
+          {infoRow('Usable token amount', getAmountWithSymbol(usableTokenAmount, NATIVE_SOL_MINT.toBase58()))}
         </div>
       )}
       <div className="mt-3">
@@ -696,9 +608,7 @@ export const DdcaAddFundsModal = (props: {
           onClick={onExecuteAddFundsTx}
         >
           {isBusy && <LoadingOutlined className="mr-1" />}
-          {isBusy
-            ? t('ddca-setup-modal.cta-label-depositing')
-            : getDepositCtaLabel()}
+          {isBusy ? t('ddca-setup-modal.cta-label-depositing') : getDepositCtaLabel()}
         </Button>
       </div>
     </Modal>
