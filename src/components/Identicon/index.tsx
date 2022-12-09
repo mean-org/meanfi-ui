@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import Jazzicon from 'jazzicon';
+import Jazzicon from '@metamask/jazzicon';
 import bs58 from 'bs58';
 import './style.scss';
 import { PublicKey } from '@solana/web3.js';
