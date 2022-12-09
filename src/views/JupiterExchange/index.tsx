@@ -30,7 +30,7 @@ import {
   WRAPPED_SOL_MINT_ADDRESS,
 } from 'constants/common';
 import { MEAN_TOKEN_LIST, NATIVE_SOL, PINNED_TOKENS } from 'constants/tokens';
-import { useNativeAccount } from 'contexts/accounts';
+import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
@@ -71,8 +71,8 @@ export const JupiterExchange = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { publicKey, wallet, connected } = useWallet();
-  const { account } = useNativeAccount();
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const { nativeAccount, refreshAccount } = useAccountsContext();
+  const [previousBalance, setPreviousBalance] = useState(nativeAccount?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [wSolBalance, setWsolBalance] = useState(0);
   const [wSolPubKey, setWsolPubKey] = useState<PublicKey | undefined>(
@@ -197,12 +197,12 @@ export const JupiterExchange = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAmountFromLamports(account?.lamports));
+    if (nativeAccount?.lamports !== previousBalance || !nativeBalance) {
+      setNativeBalance(getAmountFromLamports(nativeAccount?.lamports));
       // Update previous balance
-      setPreviousBalance(account?.lamports);
+      setPreviousBalance(nativeAccount?.lamports);
     }
-  }, [account, nativeBalance, previousBalance]);
+  }, [nativeAccount, nativeBalance, previousBalance]);
 
   // Keep wSOL balance updated
   useEffect(() => {
@@ -351,10 +351,10 @@ export const JupiterExchange = (props: {
 
   // Automatically update all token balances
   useEffect(() => {
-    if (fromMint && publicKey && account && tokenList) {
+    if (fromMint && publicKey && nativeAccount && tokenList) {
       refreshUserBalances();
     }
-  }, [fromMint, tokenList, account, publicKey, refreshUserBalances]);
+  }, [fromMint, tokenList, nativeAccount, publicKey, refreshUserBalances]);
 
   /**
    *  Token map for quick lookup.
@@ -1217,11 +1217,12 @@ export const JupiterExchange = (props: {
     } else {
       setInputAmount(0);
       setFromAmount('');
+      refreshAccount();
       refreshUserBalances();
     }
 
     setIsBusy(false);
-  }, [wallet, jupiter, publicKey, selectedRoute, refreshUserBalances]);
+  }, [wallet, jupiter, publicKey, selectedRoute, refreshAccount, refreshUserBalances]);
 
   // Validation
 

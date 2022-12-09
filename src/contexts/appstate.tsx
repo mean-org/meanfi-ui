@@ -53,6 +53,7 @@ import {
   TRANSACTIONS_PER_PAGE,
   WRAPPED_SOL_MINT_ADDRESS,
 } from '../constants';
+import { useNativeAccount } from './accounts';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from './connection';
 import { useWallet } from './wallet';
 import { emptyAccount, useWalletAccount } from './walletAccount';
@@ -297,7 +298,7 @@ const contextDefaultValues: AppStateConfig = {
   customStreamDocked: false,
   diagnosisInfo: undefined,
   // Accounts page
-  shouldLoadTokens: true,
+  shouldLoadTokens: false,
   loadingTokenAccounts: true,
   tokenAccounts: undefined,
   userTokensResponse: null,
@@ -421,6 +422,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const { publicKey, connected } = useWallet();
   const { selectedAccount } = useWalletAccount();
   const connectionConfig = useConnectionConfig();
+  const { account } = useNativeAccount();
   // Account selection
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const today = new Date().toLocaleDateString('en-US');
@@ -1412,6 +1414,16 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => {};
   }, [connectionConfig.cluster, meanTokenList]);
 
+  // Keep track of current balance
+  useEffect(() => {
+    if (publicKey && account?.lamports) {
+      consoleOut('--------------------------------', '', 'darkorange');
+      consoleOut('Native account lamports changed.', 'Reloading tokens...', 'darkorange');
+      consoleOut('--------------------------------', '', 'darkorange');
+      updateShouldLoadTokens(true);
+    }
+  }, [account?.lamports, publicKey]);
+
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   // Also, do this after any Tx is completed in places where token balances were indeed changed)
   useEffect(() => {
@@ -1420,7 +1432,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       !publicKey ||
       !selectedAccount.address ||
       !shouldLoadTokens ||
-      //  isSelectingAccount ||
       !splTokenList
     ) {
       return;
@@ -1455,7 +1466,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   // Get and populate the list of NFTs that the user holds
   useEffect(() => {
-    if (!connection || !publicKey || !selectedAccount.address || !shouldLoadTokens /*|| isSelectingAccount*/) {
+    if (!connection || !publicKey || !selectedAccount.address || !shouldLoadTokens) {
       return;
     }
 
