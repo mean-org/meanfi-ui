@@ -6,6 +6,28 @@ import {
   UserTokenAccount,
 } from 'models/accounts';
 
+const isAssetNativeAccount = (assetId: string, selectedAccount: AccountContext) => {
+  return assetId === selectedAccount.address ? true : false;
+}
+
+const isAssetTokenAccount = (assetId: string, selectedAccount: AccountContext, accountTokens: UserTokenAccount[]) => {
+  return accountTokens.some(
+    t =>
+      t.publicAddress !== selectedAccount.address &&
+      t.publicAddress === assetId,
+  );
+}
+
+const getIsNftTokenAccount = (token: UserTokenAccount | undefined, accountNfts: FindNftsByOwnerOutput | undefined) => {
+  if (token && token.address) {
+    const tAddr = token.address;
+    return accountNfts
+      ? accountNfts.some((n: any) => n.mintAddress.toBase58() === tAddr)
+      : false;
+  }
+  return false;
+}
+
 /**
  * Given the assetId passed in the url, gets the most appropriate category where it belongs
  * @param {string} assetId The public address of an asset or NFT or a well known program ID
@@ -20,40 +42,20 @@ function getAssetCategory(
   accountTokens: UserTokenAccount[],
   accountNfts: FindNftsByOwnerOutput | undefined,
 ): AssetGroups {
-  const isNative = assetId === selectedAccount.address ? true : false;
-  const isTokenAccount = accountTokens.some(
-    t =>
-      t.publicAddress !== selectedAccount.address &&
-      t.publicAddress === assetId,
-  );
+  const isNative = isAssetNativeAccount(assetId, selectedAccount);
+  const isTokenAccount = isAssetTokenAccount(assetId, selectedAccount, accountTokens);
   let isNftMint = false;
   let isNftTokenAccount = false;
   let token: UserTokenAccount | undefined = undefined;
 
   if (isTokenAccount) {
     token = accountTokens.find(t => t.publicAddress === assetId);
-    if (token && token.address) {
-      const tAddr = token.address;
-      isNftTokenAccount = accountNfts
-        ? accountNfts.some((n: any) => n.mintAddress.toBase58() === tAddr)
-        : false;
-    }
+    isNftTokenAccount = getIsNftTokenAccount(token, accountNfts);
   } else {
     isNftMint = accountNfts
       ? accountNfts.some((n: any) => n.mintAddress.toBase58() === assetId)
       : false;
   }
-
-  /*
-    consoleOut('assetId:', assetId, 'blue');
-    consoleOut('selectedAccount:', selectedAccount.address, 'blue');
-    consoleOut('isNative:', isNative, 'blue');
-    consoleOut('isTokenAccount:', isTokenAccount, 'blue');
-    consoleOut('isNftTokenAccount:', isNftTokenAccount, 'blue');
-    consoleOut('isNftMint:', isNftMint, 'blue');
-    consoleOut('tokenAccount mints:', accountTokens.map(a => a.address), 'blue');
-    consoleOut('accountNfts mints:', accountNfts?.map((n: any) => n.mintAddress.toBase58()), 'blue');
-    */
 
   if (isNative || isTokenAccount || isNftTokenAccount || isNftMint) {
     if (isNftTokenAccount || isNftMint) {
