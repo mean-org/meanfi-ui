@@ -569,12 +569,8 @@ export const StakeTabView = (props: {
         <span className="info-label">
           {smeanBalance ? (
             <span>
-              You have {formatThousands(smeanBalance)} sMEAN staked
-              {meanWorthOfsMean
-                ? ` which is currently worth ${formatThousands(
-                    meanWorthOfsMean,
-                  )} MEAN.`
-                : '.'}
+              You have {formatThousands(smeanBalance, 6)} sMEAN staked
+              {meanWorthOfsMean ? ` which is currently worth ${formatThousands(meanWorthOfsMean, 6)} MEAN.` : '.'}
             </span>
           ) : (
             t('staking.panel-right.tabset.unstake.notification-label-one-error')
