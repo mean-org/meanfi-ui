@@ -1,8 +1,13 @@
-import { base64 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { Adapter, SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import {
-  Connection, ParsedTransactionMeta, PublicKey, Transaction, TransactionConfirmationStatus, TransactionSignature, VersionedTransaction,
-  VersionedTransactionResponse
+  Connection,
+  ParsedTransactionMeta,
+  PublicKey,
+  Transaction,
+  TransactionConfirmationStatus,
+  TransactionSignature,
+  VersionedTransaction,
+  VersionedTransactionResponse,
 } from '@solana/web3.js';
 import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'constants/common';
 import { customLogger } from 'index';
@@ -13,34 +18,23 @@ import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { getAmountFromLamports, toBuffer } from './utils';
 
 export class TransactionWithSignature {
-  constructor(
-    public signature: string,
-    public confirmedTransaction: VersionedTransactionResponse,
-  ) {}
+  constructor(public signature: string, public confirmedTransaction: VersionedTransactionResponse) {}
 }
 
 export async function getTransactions(
   connection: Connection,
   address: PublicKey,
 ): Promise<Array<TransactionWithSignature>> {
-  const transSignatures = await connection.getConfirmedSignaturesForAddress2(
-    address,
-  );
+  const transSignatures = await connection.getConfirmedSignaturesForAddress2(address);
 
   const transactions = new Array<TransactionWithSignature>();
-  for (let i = 0; i < transSignatures.length; i++) {
-    const signature = transSignatures[i].signature;
-    const confirmedTransaction = await connection.getTransaction(
-      signature,
-      {
-        maxSupportedTransactionVersion: MAX_SUPPORTED_TRANSACTION_VERSION
-      }
-    );
+  for (const element of transSignatures) {
+    const signature = element.signature;
+    const confirmedTransaction = await connection.getTransaction(signature, {
+      maxSupportedTransactionVersion: MAX_SUPPORTED_TRANSACTION_VERSION,
+    });
     if (confirmedTransaction) {
-      const transWithSignature = new TransactionWithSignature(
-        signature,
-        confirmedTransaction,
-      );
+      const transWithSignature = new TransactionWithSignature(signature, confirmedTransaction);
       transactions.push(transWithSignature);
     }
   }
@@ -52,38 +46,35 @@ export async function fetchTxStatus(
   signature: string,
   targetFinality: TransactionConfirmationStatus,
 ) {
-    if (!connection) {
-      return;
-    }
+  if (!connection) {
+    return;
+  }
 
-    const fetchStatus = async () => {
-      try {
-        const latestBlockHash = await connection.getLatestBlockhash();
-        const result = await connection.confirmTransaction(
-          {
-            signature,
-            blockhash: latestBlockHash.blockhash,
-            lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-          },
-          targetFinality,
-        );
-        if (result && result.value && !result.value.err) {
-          return targetFinality;
-        }
-        return undefined;
-      } catch (error) {
-        console.error(error);
-        return undefined;
+  const fetchStatus = async () => {
+    try {
+      const latestBlockHash = await connection.getLatestBlockhash();
+      const result = await connection.confirmTransaction(
+        {
+          signature,
+          blockhash: latestBlockHash.blockhash,
+          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+        },
+        targetFinality,
+      );
+      if (result && result.value && !result.value.err) {
+        return targetFinality;
       }
-    };
+      return undefined;
+    } catch (error) {
+      console.error(error);
+      return undefined;
+    }
+  };
 
-    return fetchStatus();
+  return fetchStatus();
 }
 
-export async function fetchTransactionStatus(
-  connection: Connection,
-  signature: TransactionSignature,
-) {
+export async function fetchTransactionStatus(connection: Connection, signature: TransactionSignature) {
   let data;
 
   return connection
@@ -104,8 +95,7 @@ export async function fetchTransactionStatus(
         } catch (error) {
           throw new Error(`${error}`);
         }
-        const timestamp: Timestamp =
-          blockTime !== null ? blockTime : 'unavailable';
+        const timestamp: Timestamp = blockTime !== null ? blockTime : 'unavailable';
 
         info = {
           slot: value.slot,
@@ -123,9 +113,7 @@ export async function fetchTransactionStatus(
     });
 }
 
-export const isSuccess = (
-  operation: TransactionStatus | undefined,
-): boolean => {
+export const isSuccess = (operation: TransactionStatus | undefined): boolean => {
   return operation === TransactionStatus.TransactionFinished;
 };
 
@@ -137,51 +125,6 @@ export const isError = (operation: TransactionStatus | undefined): boolean => {
     operation === TransactionStatus.ConfirmTransactionFailure
     ? true
     : false;
-};
-
-export const updateCreateStream2Tx = async (
-  beneficiary: PublicKey,
-  createStream2Tx: Transaction,
-  claimType: number,
-  apiBaseUrl: string,
-) => {
-  const url = `${apiBaseUrl}/${beneficiary}`;
-  const tempoHeaders = new Headers();
-  tempoHeaders.append('content-type', 'application/json;charset=UTF-8');
-  tempoHeaders.append('X-Api-Version', '1.0');
-  const encodedTx = createStream2Tx.serialize({
-    requireAllSignatures: false,
-    verifySignatures: false,
-  });
-
-  const sendCreateStream2UpdateReq = async (): Promise<string> => {
-    const options: RequestInit = {
-      method: 'POST',
-      headers: tempoHeaders,
-      body: JSON.stringify({
-        base64ClaimTransaction: encodedTx.toString('base64'),
-        claimType: claimType,
-      }),
-    };
-
-    return fetch(url, options)
-      .then(async response => {
-        if (response.status !== 200) {
-          throw new Error('Unable to update create stream tx');
-        }
-        const updateCreateStream2TxResponse = (await response.json()) as any;
-        return updateCreateStream2TxResponse.base64ClaimTransaction;
-      })
-      .catch(error => {
-        throw error;
-      });
-  };
-
-  const createStream2TxSignedResp = await sendCreateStream2UpdateReq();
-  const createStreamTxUpdatedBytes = base64.decode(createStream2TxSignedResp);
-  const createStreamTxUpdated = Transaction.from(createStreamTxUpdatedBytes);
-
-  return createStreamTxUpdated;
 };
 
 export const getChange = (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
@@ -204,42 +147,35 @@ export const signTx = async (
 
   if (wallet && publicKey && transaction) {
     return (wallet as SignerWalletAdapter)
-    .signTransaction(transaction)
-    .then(async signed => {
-      consoleOut(
-        'signTransaction returned a signed transaction:',
-        signed,
-      );
-      txLog.push({
-        action: getTransactionStatusForLogs(
-          TransactionStatus.SignTransactionSuccess,
-        ),
-        result: { signer: publicKey.toBase58() },
+      .signTransaction(transaction)
+      .then(async signed => {
+        consoleOut('signTransaction returned a signed transaction:', signed);
+        txLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+          result: { signer: publicKey.toBase58() },
+        });
+        return {
+          encodedTransaction: serializeTx(signed),
+          signedTransaction: signed,
+          log: txLog,
+        };
+      })
+      .catch((error: any) => {
+        console.error('Signing transaction failed!');
+        txLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+          result: { signer: `${publicKey.toBase58()}`, error: `${error}` },
+        });
+        customLogger.logError(`${title || 'Sign'} transaction failed`, {
+          transcript: txLog,
+        });
+        return {
+          encodedTransaction: null,
+          signedTransaction: null,
+          log: txLog,
+          error,
+        };
       });
-      return {
-        encodedTransaction: serializeTx(signed),
-        signedTransaction: signed,
-        log: txLog,
-      };
-    })
-    .catch((error: any) => {
-      console.error('Signing transaction failed!');
-      txLog.push({
-        action: getTransactionStatusForLogs(
-          TransactionStatus.SignTransactionFailure,
-        ),
-        result: { signer: `${publicKey.toBase58()}`, error: `${error}` },
-      });
-      customLogger.logError(`${title || 'Sign'} transaction failed`, {
-        transcript: txLog,
-      });
-      return {
-        encodedTransaction: null,
-        signedTransaction: null,
-        log: txLog,
-        error
-      };
-    });
   } else {
     txLog.push({
       action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -256,25 +192,16 @@ export const signTx = async (
   }
 };
 
-export const sendTx = async (
-  title: string,
-  connection: Connection,
-  encodedTx: string,
-): Promise<SendTxResult> => {
+export const sendTx = async (title: string, connection: Connection, encodedTx: string): Promise<SendTxResult> => {
   const txLog: any[] = [];
 
-  if (
-    connection &&
-    encodedTx
-  ) {
+  if (connection && encodedTx) {
     return connection
       .sendEncodedTransaction(encodedTx)
       .then(sig => {
         consoleOut('sendEncodedTransaction returned a signature:', sig);
         txLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.SendTransactionSuccess,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
           result: `signature: ${sig}`,
         });
         return {
@@ -285,9 +212,7 @@ export const sendTx = async (
       .catch(error => {
         console.error(error);
         txLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.SendTransactionFailure,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
           result: { error, encodedTx },
         });
         customLogger.logError(`${title || 'Sign'} transaction failed`, {
@@ -296,7 +221,7 @@ export const sendTx = async (
         return {
           signature: null,
           log: txLog,
-          error
+          error,
         };
       });
   } else {
@@ -314,11 +239,7 @@ export const sendTx = async (
   }
 };
 
-export const confirmTx = async (
-  title: string,
-  connection: Connection,
-  signature: string,
-): Promise<ConfirmTxResult> => {
+export const confirmTx = async (title: string, connection: Connection, signature: string): Promise<ConfirmTxResult> => {
   const txLog: any[] = [];
 
   try {
@@ -326,7 +247,7 @@ export const confirmTx = async (
     if (confirmation) {
       return {
         confirmed: true,
-        log: txLog
+        log: txLog,
       };
     }
   } catch (error) {
@@ -334,9 +255,7 @@ export const confirmTx = async (
   }
 
   txLog.push({
-    action: getTransactionStatusForLogs(
-      TransactionStatus.ConfirmTransactionFailure,
-    ),
+    action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
     result: signature,
   });
   customLogger.logError(`${title || 'Confirm'} transaction failed`, {
@@ -344,12 +263,11 @@ export const confirmTx = async (
   });
   return {
     confirmed: false,
-    log: txLog
+    log: txLog,
   };
-}
+};
 
 export const serializeTx = (signed: Transaction | VersionedTransaction) => {
-
   let base64Tx = '';
   const isVersioned = 'version' in signed ? true : false;
 
@@ -363,4 +281,4 @@ export const serializeTx = (signed: Transaction | VersionedTransaction) => {
 
   consoleOut('encodedTx:', base64Tx, 'orange');
   return base64Tx;
-}
+};

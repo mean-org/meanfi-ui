@@ -19,6 +19,7 @@ import {
 } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
+import { CreateSafeAssetTxParams } from 'middleware/createAddSafeAssetTx';
 import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
 import { getAmountFromLamports, shortenAddress } from 'middleware/utils';
 import { AccountTokenParsedInfo } from 'models/accounts';
@@ -214,7 +215,8 @@ export const MultisigAddAssetModal = (props: {
   );
 
   const onAcceptModal = () => {
-    handleOk({ token: selectedToken });
+    const params: CreateSafeAssetTxParams = { token: selectedToken };
+    handleOk(params);
   };
 
   const isTokenAlreadyOwned = useCallback(() => {
