@@ -22,13 +22,7 @@ import {
 } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
-import {
-  cutNumber,
-  formatThousands,
-  getAmountWithSymbol,
-  getTxIxResume,
-  isValidNumber,
-} from 'middleware/utils';
+import { formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
@@ -600,13 +594,8 @@ export const UnstakeTabView = (props: {
         <span className="info-label">
           {tokenBalance ? (
             <span>
-              You have {cutNumber(tokenBalance, 6)} sMEAN staked
-              {meanWorthOfsMean
-                ? ` which is currently worth ${cutNumber(
-                    meanWorthOfsMean,
-                    6,
-                  )} MEAN.`
-                : '.'}
+              You have {formatThousands(tokenBalance, 6)} sMEAN staked
+              {meanWorthOfsMean ? ` which is currently worth ${formatThousands(meanWorthOfsMean, 6)} MEAN.` : '.'}
             </span>
           ) : (
             t('staking.panel-right.tabset.unstake.notification-label-one-error')
