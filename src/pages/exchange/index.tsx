@@ -11,7 +11,6 @@ import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from 'Icons';
 import { JupiterExchange, RecurringExchange } from 'views';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { TRITON_ONE_DEBUG_RPC, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { environment } from 'environments/environment';
@@ -131,33 +130,39 @@ export const SwapView = () => {
     return () => {};
   }, [loadingRecurringBuys, reloadRecurringBuys]);
 
+  // Get FROM address from symbol passed via query string param
+  const getSourceFromParams = useCallback((params: URLSearchParams) => {
+    if (params.has('from')) {
+      const symbol = params.get('from');
+      if (!symbol) return undefined;
+      if (symbol === 'SOL') {
+        return getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
+      }
+      return getTokenBySymbol(symbol, splTokenList);
+    } else {
+      return MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'USDC');
+    }
+  }, [getTokenByMintAddress, splTokenList]);
+
+  // Get TO address from symbol passed via query string param
+  const getDestinationFromParams = useCallback((params: URLSearchParams) => {
+    if (params.has('to')) {
+      const symbol = params.get('to');
+      if (!symbol) return undefined;
+      return getTokenBySymbol(symbol);
+    } else {
+      return MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'MEAN');
+    }
+  }, []);
+
   // Parse query params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    let from: TokenInfo | undefined = undefined;
-    let to: TokenInfo | undefined = undefined;
-    // Get from address from symbol passed via query string param
-    if (params.has('from')) {
-      const symbol = params.get('from');
-      from = symbol
-        ? symbol === 'SOL'
-          ? getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS)
-          : getTokenBySymbol(symbol, splTokenList)
-        : undefined;
-    } else {
-      from = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'USDC');
-    }
+    const from = getSourceFromParams(params);
+    const to = getDestinationFromParams(params);
 
     if (from) {
       setQueryFromMint(from.address);
-    }
-
-    // Get to as well
-    if (params.has('to')) {
-      const symbol = params.get('to');
-      to = symbol ? getTokenBySymbol(symbol) : undefined;
-    } else {
-      to = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'MEAN');
     }
 
     if (to) {
@@ -169,7 +174,7 @@ export const SwapView = () => {
       consoleOut('queryFromMint:', from ? from.address : '-', 'blue');
       consoleOut('queryToMint:', to ? to.address : '-', 'blue');
     }
-  }, [getTokenByMintAddress, location, splTokenList]);
+  }, [getDestinationFromParams, getSourceFromParams, location.search]);
 
   //////////////////////
   //  Event handling  //
