@@ -1690,7 +1690,8 @@ const SafeView = (props: {
         break;
     }
   },
-    [logEventHandling, onProposalExecuted, recordTxConfirmation],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   // Setup event handler for Tx confirmation error

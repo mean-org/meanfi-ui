@@ -89,10 +89,11 @@ export async function getMultipleAccounts(
   });
 }
 
-export async function createAtaAccount(
+export async function createAtaAccountIx(
   connection: Connection,
   mint: PublicKey,
   owner: PublicKey,
+  payer: PublicKey,
 ) {
   const ixs: TransactionInstruction[] = [];
 
@@ -101,7 +102,6 @@ export async function createAtaAccount(
     TOKEN_PROGRAM_ID,
     mint,
     owner,
-    true,
   );
 
   const ataInfo = await connection.getAccountInfo(associatedAddress);
@@ -114,12 +114,23 @@ export async function createAtaAccount(
         mint,
         associatedAddress,
         owner,
-        owner,
+        payer,
       ),
     );
   }
 
-  const tx = new Transaction().add(...ixs);
+  return {ixs, associatedAddress};
+}
+
+export async function createAtaAccount(
+  connection: Connection,
+  mint: PublicKey,
+  owner: PublicKey,
+  payer: PublicKey,
+) {
+  const result = await createAtaAccountIx(connection, mint, owner, payer);
+
+  const tx = new Transaction().add(...result.ixs);
   tx.feePayer = owner;
   const hash = await connection.getLatestBlockhash('recent');
   tx.recentBlockhash = hash.blockhash;
