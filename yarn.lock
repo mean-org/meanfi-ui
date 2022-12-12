@@ -2361,6 +2361,17 @@
     bignumber.js "^9.1.0"
     bn.js "^5.2.0"
 
+"@mean-dao/payment-streaming@3.1.2-beta.0":
+  version "3.1.2-beta.0"
+  resolved "https://registry.yarnpkg.com/@mean-dao/payment-streaming/-/payment-streaming-3.1.2-beta.0.tgz#ae41563d221c729124ef7bbd6618df6db0293c85"
+  integrity sha512-65M/DTirMJ9/10fOH2ysQYEsH2mg50A6rVpr2JEwFjEtyn2bPGmOXuuGDs12Z4cSEZmFDK9b895g3ZekMpLdKg==
+  dependencies:
+    "@project-serum/anchor" "^0.24.2"
+    "@solana/spl-token" "^0.1.8"
+    "@solana/web3.js" "1.56.0"
+    bignumber.js "^9.1.0"
+    bn.js "^5.2.0"
+
 "@mean-dao/staking@1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@mean-dao/staking/-/staking-1.1.0.tgz#99b5b657d72d6bf01b0b0a9496ff980579eada8d"

@@ -62,6 +62,7 @@
     "@mean-dao/mean-multisig-sdk": "1.17.0",
     "@mean-dao/money-streaming": "1.7.15",
     "@mean-dao/msp": "3.1.1",
+    "@mean-dao/payment-streaming": "3.1.2-beta.0",
     "@mean-dao/staking": "1.1.0",
     "@metaplex-foundation/js": "^0.17.2",
     "@project-serum/anchor": "^0.24.2",
