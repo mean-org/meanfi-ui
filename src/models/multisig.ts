@@ -1,4 +1,5 @@
 import {
+  AccountMeta,
   Commitment,
   Connection,
   Keypair,
@@ -169,6 +170,13 @@ export type MultisigParticipant = {
 export type CreateMintPayload = {
   decimals: number;
 };
+
+export type MultisigTxParams = {
+  programId: PublicKey;           // Ix program id
+  ixAccounts: AccountMeta[];      // keys o accounts of the Ix
+  ixData: Buffer | undefined;     // data of the Ix
+  ixs?: TransactionInstruction[]; // pre instructions
+}
 
 export interface BaseProposal {
   proposalTitle: string;

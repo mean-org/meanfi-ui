@@ -8,31 +8,22 @@ import { appConfig, customLogger } from 'index';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
-import { getAmountWithSymbol, getUniversalTxIxResume, isVersionedTransaction } from 'middleware/utils';
+import { getAmountWithSymbol, getUniversalTxIxResume } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { LooseObject } from 'types/LooseObject';
-
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { useTranslation } from 'react-i18next';
 import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
+import { MultisigTxParams } from 'models/multisig';
 
-interface Args<T extends LooseObject | undefined> {
+type BaseArgs<T extends LooseObject | undefined> = {
   // name of the transaction, i.e. 'Edit Vesting Contract',
   name: string;
   // type of operation, i.e OperationType.TreasuryEdit
   operationType: OperationType;
   // function which returns payload object, if it returns undefined - fails the transaction gracefully
   payload: () => T;
-
-  // function used for transaction generation, accepts multisig info
-  generateTransaction: ({
-    multisig,
-    data,
-  }: {
-    multisig?: MultisigInfo;
-    data: NonNullable<T>;
-  }) => Promise<Transaction | VersionedTransaction | undefined | null>;
 
   // enqueueTransactionConfirmation data:
   loadingMessage: () => string;
@@ -43,13 +34,48 @@ interface Args<T extends LooseObject | undefined> {
   minRequired?: number;
   nativeBalance?: number;
 
-  // proposalTitle & multisig - both are needed to create a multisig proposal
-  proposalTitle?: string;
-  multisig?: string;
+  // function used for singlesig transaction generation, accepts multisig info
+  generateTransaction?: never;
+  // proposalTitle, multisig & generateMultisigArgs are needed to create a multisig proposal
+  proposalTitle?: never;
+  multisig?: never;
+  generateMultisigArgs?: never;
 
   // set busy when transaction starts, unset when it ends
   setIsBusy: (isBusy: boolean) => void;
-}
+};
+
+type SinglesigArgs<T extends LooseObject | undefined> = Omit<BaseArgs<T>, 'generateTransaction'> & {
+  generateTransaction: ({
+    multisig,
+    data,
+  }: {
+    multisig?: MultisigInfo;
+    data: NonNullable<T>;
+  }) => Promise<Transaction | VersionedTransaction | undefined | null>;
+};
+
+type MultisigArgs<T extends LooseObject | undefined> = Omit<
+  BaseArgs<T>,
+  'proposalTitle' | 'multisig' | 'generateMultisigArgs'
+> & {
+  // proposalTitle & multisig - both are needed to create a multisig proposal
+  proposalTitle: string;
+  multisig: string;
+  // function used for multisig transaction generation, accepts multisig info
+  generateMultisigArgs: ({
+    multisig,
+    data,
+  }: {
+    multisig?: MultisigInfo;
+    data: NonNullable<T>;
+  }) => Promise<MultisigTxParams | null>;
+};
+
+type BothsigArgs<T extends LooseObject | undefined> = Omit<MultisigArgs<T>, 'generateTransaction'> &
+  Omit<SinglesigArgs<T>, 'proposalTitle' | 'multisig' | 'generateMultisigArgs'>;
+
+type Args<T extends LooseObject | undefined> = MultisigArgs<T> | SinglesigArgs<T> | BothsigArgs<T>;
 
 const useTransaction = () => {
   const { publicKey, wallet } = useWallet();
@@ -71,7 +97,6 @@ const useTransaction = () => {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
 
-  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   const multisigClient = useMemo(() => {
@@ -109,6 +134,7 @@ const useTransaction = () => {
     proposalTitle,
     multisig: baseMultisig,
     generateTransaction,
+    generateMultisigArgs,
     setIsBusy,
   }: Args<T>) => {
     const payload = basePayload();
@@ -120,19 +146,19 @@ const useTransaction = () => {
     setIsBusy(true);
 
     const wrappedGenerateTransaction = async ({ data }: { data: NonNullable<T> }) => {
-      if (!connection || !publicKey) {
+      if (!publicKey) {
         consoleOut('not connected', '', 'blue');
         return null;
       }
 
       if (!baseMultisig) {
         consoleOut('received data:', data, 'blue');
+        if (!generateTransaction) throw new Error('pass generateTransaction for singlesig context');
         return generateTransaction({ multisig: undefined, data });
       }
 
-      if (!multisigClient || !multisigAccounts) {
-        consoleOut('no multisigClient or multisigAccounts', '', 'blue');
-
+      if (!multisigClient) {
+        consoleOut('no multisigClient', '', 'blue');
         return null;
       }
 
@@ -145,15 +171,13 @@ const useTransaction = () => {
       }
 
       consoleOut('generating transaction', '', 'blue');
-      const generatedTransaction = await generateTransaction({ multisig, data });
-      if (!generatedTransaction) {
+      if (!generateMultisigArgs) throw new Error('pass generateMultisigArgs for multisig context');
+      const generatedArgs = await generateMultisigArgs({ multisig, data });
+      if (!generatedArgs) {
         consoleOut('no transaction generated', '', 'blue');
         return null;
       }
-      if (isVersionedTransaction(generatedTransaction))
-        throw new Error('TODO: Multisig Versioned transactions are not supported yet');
-      const ixData = Buffer.from(generatedTransaction.instructions[0].data);
-      const ixAccounts = generatedTransaction.instructions[0].keys;
+
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await multisigClient.createTransaction(
@@ -163,17 +187,13 @@ const useTransaction = () => {
         new Date(expirationTime * 1_000),
         operationType,
         multisig.id,
-        mspV2AddressPK, // program
-        ixAccounts, // keys o accounts of the Ix
-        ixData, // data of the Ix
-        // preInstructions
+        generatedArgs.programId,
+        generatedArgs.ixAccounts,
+        generatedArgs.ixData,
+        generatedArgs.ixs,
       );
 
-      if (!tx) {
-        return null;
-      }
-
-      return tx;
+      return tx || null;
     };
 
     const createTx = async () => {
