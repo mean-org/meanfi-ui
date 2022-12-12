@@ -2722,7 +2722,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           programId, // program
           ixAccounts, // keys o accounts of the Ix
           ixData, // data of the Ix
-          ixs: [],
         };
       },
     });

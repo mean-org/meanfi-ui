@@ -175,7 +175,7 @@ export type MultisigTxParams = {
   programId: PublicKey;           // Ix program id
   ixAccounts: AccountMeta[];      // keys o accounts of the Ix
   ixData: Buffer | undefined;     // data of the Ix
-  ixs: TransactionInstruction[];  // pre instructions
+  ixs?: TransactionInstruction[]; // pre instructions
 }
 
 export interface BaseProposal {

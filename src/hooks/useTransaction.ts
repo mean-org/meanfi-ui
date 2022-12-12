@@ -17,31 +17,13 @@ import { useTranslation } from 'react-i18next';
 import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { MultisigTxParams } from 'models/multisig';
 
-interface Args<T extends LooseObject | undefined> {
+type BaseArgs<T extends LooseObject | undefined> = {
   // name of the transaction, i.e. 'Edit Vesting Contract',
   name: string;
   // type of operation, i.e OperationType.TreasuryEdit
   operationType: OperationType;
   // function which returns payload object, if it returns undefined - fails the transaction gracefully
   payload: () => T;
-
-  // function used for transaction generation, accepts multisig info
-  generateTransaction: ({
-    multisig,
-    data,
-  }: {
-    multisig?: MultisigInfo;
-    data: NonNullable<T>;
-  }) => Promise<Transaction | VersionedTransaction | undefined | null>;
-
-  // function used for transaction generation, accepts multisig info
-  generateMultisigArgs: ({
-    multisig,
-    data,
-  }: {
-    multisig?: MultisigInfo;
-    data: NonNullable<T>;
-  }) => Promise<MultisigTxParams | null>;
 
   // enqueueTransactionConfirmation data:
   loadingMessage: () => string;
@@ -52,13 +34,48 @@ interface Args<T extends LooseObject | undefined> {
   minRequired?: number;
   nativeBalance?: number;
 
-  // proposalTitle & multisig - both are needed to create a multisig proposal
-  proposalTitle?: string;
-  multisig?: string;
+  // function used for singlesig transaction generation, accepts multisig info
+  generateTransaction?: never;
+  // proposalTitle, multisig & generateMultisigArgs are needed to create a multisig proposal
+  proposalTitle?: never;
+  multisig?: never;
+  generateMultisigArgs?: never;
 
   // set busy when transaction starts, unset when it ends
   setIsBusy: (isBusy: boolean) => void;
-}
+};
+
+type SinglesigArgs<T extends LooseObject | undefined> = Omit<BaseArgs<T>, 'generateTransaction'> & {
+  generateTransaction: ({
+    multisig,
+    data,
+  }: {
+    multisig?: MultisigInfo;
+    data: NonNullable<T>;
+  }) => Promise<Transaction | VersionedTransaction | undefined | null>;
+};
+
+type MultisigArgs<T extends LooseObject | undefined> = Omit<
+  BaseArgs<T>,
+  'proposalTitle' | 'multisig' | 'generateMultisigArgs'
+> & {
+  // proposalTitle & multisig - both are needed to create a multisig proposal
+  proposalTitle: string;
+  multisig: string;
+  // function used for multisig transaction generation, accepts multisig info
+  generateMultisigArgs: ({
+    multisig,
+    data,
+  }: {
+    multisig?: MultisigInfo;
+    data: NonNullable<T>;
+  }) => Promise<MultisigTxParams | null>;
+};
+
+type BothsigArgs<T extends LooseObject | undefined> = Omit<MultisigArgs<T>, 'generateTransaction'> &
+  Omit<SinglesigArgs<T>, 'proposalTitle' | 'multisig' | 'generateMultisigArgs'>;
+
+type Args<T extends LooseObject | undefined> = MultisigArgs<T> | SinglesigArgs<T> | BothsigArgs<T>;
 
 const useTransaction = () => {
   const { publicKey, wallet } = useWallet();
@@ -136,6 +153,7 @@ const useTransaction = () => {
 
       if (!baseMultisig) {
         consoleOut('received data:', data, 'blue');
+        if (!generateTransaction) throw new Error('pass generateTransaction for singlesig context');
         return generateTransaction({ multisig: undefined, data });
       }
 
@@ -153,6 +171,7 @@ const useTransaction = () => {
       }
 
       consoleOut('generating transaction', '', 'blue');
+      if (!generateMultisigArgs) throw new Error('pass generateMultisigArgs for multisig context');
       const generatedArgs = await generateMultisigArgs({ multisig, data });
       if (!generatedArgs) {
         consoleOut('no transaction generated', '', 'blue');
