@@ -8,14 +8,14 @@ import { appConfig, customLogger } from 'index';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
-import { getAmountWithSymbol, getUniversalTxIxResume, isVersionedTransaction } from 'middleware/utils';
+import { getAmountWithSymbol, getUniversalTxIxResume } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { LooseObject } from 'types/LooseObject';
-
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { useTranslation } from 'react-i18next';
 import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
+import { MultisigTxParams } from 'models/multisig';
 
 interface Args<T extends LooseObject | undefined> {
   // name of the transaction, i.e. 'Edit Vesting Contract',
@@ -33,6 +33,15 @@ interface Args<T extends LooseObject | undefined> {
     multisig?: MultisigInfo;
     data: NonNullable<T>;
   }) => Promise<Transaction | VersionedTransaction | undefined | null>;
+
+  // function used for transaction generation, accepts multisig info
+  generateMultisigArgs: ({
+    multisig,
+    data,
+  }: {
+    multisig?: MultisigInfo;
+    data: NonNullable<T>;
+  }) => Promise<MultisigTxParams | null>;
 
   // enqueueTransactionConfirmation data:
   loadingMessage: () => string;
@@ -71,7 +80,6 @@ const useTransaction = () => {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
 
-  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   const multisigClient = useMemo(() => {
@@ -109,6 +117,7 @@ const useTransaction = () => {
     proposalTitle,
     multisig: baseMultisig,
     generateTransaction,
+    generateMultisigArgs,
     setIsBusy,
   }: Args<T>) => {
     const payload = basePayload();
@@ -120,7 +129,7 @@ const useTransaction = () => {
     setIsBusy(true);
 
     const wrappedGenerateTransaction = async ({ data }: { data: NonNullable<T> }) => {
-      if (!connection || !publicKey) {
+      if (!publicKey) {
         consoleOut('not connected', '', 'blue');
         return null;
       }
@@ -130,9 +139,8 @@ const useTransaction = () => {
         return generateTransaction({ multisig: undefined, data });
       }
 
-      if (!multisigClient || !multisigAccounts) {
-        consoleOut('no multisigClient or multisigAccounts', '', 'blue');
-
+      if (!multisigClient) {
+        consoleOut('no multisigClient', '', 'blue');
         return null;
       }
 
@@ -150,10 +158,7 @@ const useTransaction = () => {
         consoleOut('no transaction generated', '', 'blue');
         return null;
       }
-      /*
-      if (isVersionedTransaction(generatedArgs))
-        throw new Error('TODO: Multisig Versioned transactions are not supported yet');
-        */
+
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await multisigClient.createTransaction(
@@ -169,11 +174,7 @@ const useTransaction = () => {
         generatedArgs.ixs,
       );
 
-      if (!tx) {
-        return null;
-      }
-
-      return tx;
+      return tx || null;
     };
 
     const createTx = async () => {

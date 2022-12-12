@@ -91,6 +91,9 @@ export const AccountsCloseAssetModal = (props: {
           publicKey, // owner
         );
       },
+      generateMultisigArgs: async () => {
+        return null;
+      },
     });
     handleOk();
   };

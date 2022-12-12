@@ -2688,7 +2688,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       generateTransaction: async ({ multisig, data }) => {
         if (!msp) return;
-        return msp.modifyVestingTreasuryTemplate(
+        return await msp.modifyVestingTreasuryTemplate(
           new PublicKey(data.treasurer), // payer
           new PublicKey(data.treasurer), // treasurer
           data.vestingTreasury,
@@ -2699,11 +2699,11 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           data.feePayedByTreasurer, // feePayedByTreasurer
         );
       },
-      // @ts-ignore
-      generateMultisigArgs: async ({ multisig, data }) => {
-        if (!msp) return;
 
-        const tx = msp.modifyVestingTreasuryTemplate(
+      generateMultisigArgs: async ({ multisig, data }) => {
+        if (!msp || !multisig) return null;
+
+        const tx = await msp.modifyVestingTreasuryTemplate(
           multisig.authority, // payer
           multisig.authority, // treasurer
           data.vestingTreasury,
@@ -2722,6 +2722,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           programId, // program
           ixAccounts, // keys o accounts of the Ix
           ixData, // data of the Ix
+          ixs: [],
         };
       },
     });
