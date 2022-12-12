@@ -1,4 +1,4 @@
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -13,10 +13,10 @@ import {
   LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
+  Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import BN from 'bn.js';
-import { OperationType } from 'models/enums';
 import { BaseProposal } from 'models/multisig';
 import { NATIVE_SOL_MINT } from './ids';
 import { consoleOut } from './ui';
@@ -115,20 +115,13 @@ export const createTransferTokensTx = async (
     );
   }
 
-  const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+  const tx = new Transaction().add(transferIx);
+  tx.feePayer = publicKey;
+  const { blockhash } = await connection.getLatestBlockhash('confirmed');
+  tx.recentBlockhash = blockhash;
 
-  const tx = await multisigClient.createTransaction(
-    publicKey,
-    data.proposalTitle === '' ? 'Propose funds transfer' : data.proposalTitle,
-    '', // description
-    new Date(expirationTime * 1_000),
-    fromMintAddress.equals(NATIVE_SOL_MINT) ? OperationType.Transfer : OperationType.TransferTokens,
-    selectedMultisig.id,
-    transferIx.programId,
-    transferIx.keys,
-    transferIx.data,
-    ixs,
-  );
-
-  return tx;
+  return {
+    tx,
+    preInstructions: ixs,
+  };
 };
