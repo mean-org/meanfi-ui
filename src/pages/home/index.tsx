@@ -256,7 +256,7 @@ export const HomeView = () => {
   const [netWorth, setNetWorth] = useState(0);
   const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
   const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
-  const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+  const [, setMinRequiredBalance] = useState(0);
   const [selectedNft, setSelectedNft] = useState<MeanNft | undefined>(undefined);
   // Multisig Apps
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
@@ -1128,176 +1128,6 @@ export const HomeView = () => {
   };
 
   const onExecuteTransferTokensTx = useCallback(async (params: TransferTokensTxParams) => {
-    let transaction: Transaction | null = null;
-    let signature: any;
-    let encodedTx: string;
-    let transactionLog: any[] = [];
-
-    resetTransactionStatus();
-    setIsBusy(true);
-
-    const createTx = async (): Promise<boolean> => {
-      if (!publicKey || !selectedAsset || !multisigClient || !params) {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Transfer tokens transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-
-      setTransactionStatus({
-        lastOperation: TransactionStatus.TransactionStart,
-        currentOperation: TransactionStatus.InitTransaction,
-      });
-
-      consoleOut('token:', selectedAsset, 'blue');
-      consoleOut('data:', params);
-
-      // Log input data
-      transactionLog.push({
-        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-        inputs: params,
-      });
-
-      transactionLog.push({
-        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-        result: '',
-      });
-
-      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-
-      if (nativeBalance < minRequiredBalance) {
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.TransactionStartFailure,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${getAmountWithSymbol(
-            nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequiredBalance, NATIVE_SOL_MINT.toBase58())})`,
-        });
-        customLogger.logWarning('Create multisig transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
-
-      return createTransferTokensTx(
-        connection,
-        publicKey,
-        selectedMultisig,
-        multisigClient,
-        params,
-      )
-        .then(value => {
-          if (!value) {
-            return false;
-          }
-          consoleOut('transferTokens returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value),
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('transferTokens error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`,
-          });
-          customLogger.logError('Transfer tokens transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
-        });
-    };
-
-    if (wallet && publicKey && selectedAsset) {
-      const created = await createTx();
-      consoleOut('created:', created);
-      if (!created) {
-        setIsBusy(false);
-        return;
-      }
-      const sign = await signTx('Transfer Tokens', wallet, publicKey, transaction);
-      if (!sign.encodedTransaction) {
-        setFailureStatusAndNotify('sign');
-        return;
-      }
-      encodedTx = sign.encodedTransaction;
-      transactionLog = transactionLog.concat(sign.log);
-      setTransactionStatus({
-        lastOperation: transactionStatus.currentOperation,
-        currentOperation: TransactionStatus.SignTransactionSuccess,
-      });
-      const sent = await sendTx('Transfer Tokens', connection, encodedTx);
-      consoleOut('sent:', sent);
-      if (sent.signature) {
-        signature = sent.signature;
-        consoleOut('Send Tx to confirmation queue:', signature);
-        enqueueTransactionConfirmation({
-          signature,
-          operationType: OperationType.TransferTokens,
-          finality: 'confirmed',
-          txInfoFetchStatus: 'fetching',
-          loadingTitle: 'Confirming transaction',
-          loadingMessage: `Create proposal to transfer ${formatThousands(params.amount, selectedAsset?.decimals)} ${selectedAsset?.symbol
-          } to ${shortenAddress(params.to)}`,
-          completedTitle: 'Transaction confirmed',
-          completedMessage: `Proposal to transfer ${formatThousands(params.amount, selectedAsset?.decimals)} ${selectedAsset?.symbol
-          } to ${shortenAddress(params.to)} was submitted for Multisig approval.`,
-          completedMessageTimeout: isMultisigContext ? 8 : 5,
-          extras: {
-            multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : '',
-          },
-        });
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.TransactionFinished,
-        });
-        setIsTransferTokenModalVisible(false);
-        setSuccessStatus();
-      } else {
-        setFailureStatusAndNotify('send');
-      }
-    }
-  },
-    [
-      wallet,
-      publicKey,
-      connection,
-      selectedAsset,
-      nativeBalance,
-      multisigClient,
-      selectedMultisig,
-      isMultisigContext,
-      minRequiredBalance,
-      transactionStatus.currentOperation,
-      enqueueTransactionConfirmation,
-      setFailureStatusAndNotify,
-      resetTransactionStatus,
-      setTransactionStatus,
-      setSuccessStatus,
-    ],
-  );
-
-  const onExecuteTransferTokens2Tx = useCallback(async (params: TransferTokensTxParams) => {
 
     const multisigAuthority = selectedMultisig ? selectedMultisig.authority.toBase58() : '';
     const payload = () => {
@@ -1309,6 +1139,8 @@ export const HomeView = () => {
     const completedMessage = () => `Proposal to transfer ${formatThousands(params.amount, selectedAsset?.decimals)} ${selectedAsset?.symbol
     } to ${shortenAddress(params.to)} was submitted for Multisig approval.`;
 
+    const isNative = params.from === NATIVE_SOL.address ? true : false;
+
     const bf = transactionAssetFees.blockchainFee; // Blockchain fee
     const ff = transactionAssetFees.mspFlatFee; // Flat fee (protocol)
     const minRequired = bf + ff;
@@ -1316,7 +1148,7 @@ export const HomeView = () => {
 
     await onExecute({
       name: 'Transfer Tokens',
-      operationType: OperationType.TransferTokens,
+      operationType: isNative ? OperationType.Transfer : OperationType.TransferTokens,
       payload,
       loadingMessage,
       completedMessage,
@@ -1328,17 +1160,27 @@ export const HomeView = () => {
       multisig: multisigAuthority,
       nativeBalance,
       minRequired,
-      generateTransaction: async ({ multisig, data }) => {
+      generateMultisigArgs: async ({ multisig, data }) => {
         consoleOut('multisig:', multisig, 'purple');
         consoleOut('data:', data, 'purple');
-        if (!publicKey || !multisigClient || !multisig) return;
-        return createTransferTokensTx(
+        if (!publicKey || !multisigClient || !multisig || !data) return null;
+        const txResult = await createTransferTokensTx(
           connection,
           publicKey,
           multisig,
           multisigClient,
           data,
         );
+
+        const programId = txResult.tx.instructions[0].programId;
+        const ixData = Buffer.from(txResult.tx.instructions[0].data);
+        const ixAccounts = txResult.tx.instructions[0].keys;
+
+        return {
+          programId, // program
+          ixAccounts, // keys o accounts of the Ix
+          ixData, // data of the Ix
+        };
       },
     });
     setSuccessStatus();
