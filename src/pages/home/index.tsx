@@ -62,7 +62,6 @@ import {
   TRANSACTIONS_PER_PAGE,
   WRAPPED_SOL_MINT_ADDRESS,
 } from 'constants/common';
-import { EMOJIS } from 'constants/emojis';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
@@ -117,7 +116,6 @@ import { TokenInfo } from 'models/SolanaTokenInfo';
 import { initialSummary, StreamsSummary } from 'models/streams';
 import { FetchStatus } from 'models/transactions';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from 'models/treasuries';
-import { QRCodeSVG } from 'qrcode.react';
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { Helmet } from 'react-helmet';
@@ -508,15 +506,6 @@ export const HomeView = () => {
 
   const goToExchangeWithPresetAsset = useCallback(() => {
     const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
-    if (queryParams) {
-      navigate(`/exchange${queryParams}`);
-    } else {
-      navigate('/exchange');
-    }
-  }, [navigate, selectedAsset]);
-
-  const handleGoToExchangeClick = useCallback(() => {
-    const queryParams = `${selectedAsset ? '?to=' + selectedAsset.symbol : ''}`;
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
     } else {
@@ -1032,13 +1021,6 @@ export const HomeView = () => {
       ? true
       : false;
   }, [hasTransactions, isSelectedAssetNativeAccount, solAccountItems]);
-
-  const canShowBuyOptions = useCallback(() => {
-    if (!selectedAsset) {
-      return false;
-    }
-    return !selectedAsset.publicAddress ? true : false;
-  }, [selectedAsset]);
 
   //////////////////////
   //    Executions    //
@@ -3868,65 +3850,6 @@ export const HomeView = () => {
     );
   };
 
-  const getRandomEmoji = useCallback(() => {
-    const totalEmojis = EMOJIS.length;
-    if (totalEmojis) {
-      const randomIndex = Math.floor(Math.random() * totalEmojis);
-      return (
-        <span className="emoji" aria-label={EMOJIS[randomIndex]} role="img">
-          {EMOJIS[randomIndex]}
-        </span>
-      );
-    }
-    return null;
-  }, []);
-
-  const renderQrCodeAndAddress = (
-    <div className="text-center mt-3">
-      <h3 className="mb-3">{t('assets.no-balance.line3')}</h3>
-      <div className="qr-container bg-white">
-        <QRCodeSVG value={selectedAccount.address} size={200} />
-      </div>
-      <div className="flex-center font-size-70 mb-2">
-        <AddressDisplay
-          address={selectedAccount.address}
-          showFullAddress={true}
-          iconStyles={{ width: '15', height: '15' }}
-          newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
-        />
-      </div>
-      <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
-      <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div>
-    </div>
-  );
-
-  const renderTokenBuyOptions = () => {
-    return (
-      <div className="buy-token-options">
-        <h3 className="text-center mb-3">
-          {t('assets.no-balance.line1', { tokenSymbol: selectedAsset?.symbol })} {getRandomEmoji()}
-        </h3>
-        <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
-        <Space size={[16, 16]} wrap>
-          {isSelectedAssetNativeAccount() && (
-            <Button shape="round" type="ghost" onClick={showDepositOptionsModal}>
-              {t('assets.no-balance.cta1', {
-                tokenSymbol: selectedAsset?.symbol,
-              })}
-            </Button>
-          )}
-          {/* For SOL the first option is ok, any other token, we can use the exchange */}
-          {selectedAsset?.publicAddress !== selectedAccount.address && (
-            <Button shape="round" type="ghost" onClick={handleGoToExchangeClick}>
-              {t('assets.no-balance.cta2')}
-            </Button>
-          )}
-        </Space>
-        {renderQrCodeAndAddress}
-      </div>
-    );
-  };
-
   const renderSpinner = () => {
     return (
       <div className="h-100 flex-center">
@@ -4162,62 +4085,57 @@ export const HomeView = () => {
                             </Tooltip>
                           </span>
                         </div>
-
-                        {canShowBuyOptions() ? (
-                          renderTokenBuyOptions()
-                        ) : (
-                          <div className="flexible-column-bottom">
-                            <div className="top">
-                              {renderUserAccountAssetMeta()}
-                              {renderUserAccountAssetCtaRow()}
-                            </div>
-                            {!isInspectedAccountTheConnectedWallet() &&
-                              isMultisigContext &&
-                              selectedMultisig &&
-                              (multisigSolBalance !== undefined && multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED ? (
-                                <Row gutter={[8, 8]}>
-                                  <Col
-                                    span={24}
-                                    className={`alert-info-message pr-2 ${selectedMultisig ? 'simplelink' : 'disable-pointer'
-                                      }`}
-                                    onClick={showSolBalanceModal}
-                                  >
-                                    <Alert
-                                      message="SOL account balance is very low in the safe. Click here to add more SOL."
-                                      type="info"
-                                      showIcon
-                                    />
-                                  </Col>
-                                </Row>
-                              ) : null)}
-                            <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
-                              {/* Activity table heading */}
-                              {hasItemsToRender() && (
-                                <div className="stats-row">
-                                  <div className="item-list-header compact">
-                                    <div className="header-row">
-                                      <div className="std-table-cell first-cell">&nbsp;</div>
-                                      <div className="std-table-cell responsive-cell">
-                                        {t('assets.history-table-activity')}
-                                      </div>
-                                      <div className="std-table-cell responsive-cell pr-2 text-right">
-                                        {t('assets.history-table-amount')}
-                                      </div>
-                                      <div className="std-table-cell responsive-cell pr-2 text-right">
-                                        {t('assets.history-table-postbalance')}
-                                      </div>
-                                      <div className="std-table-cell responsive-cell pl-2">
-                                        {t('assets.history-table-date')}
-                                      </div>
+                        <div className="flexible-column-bottom">
+                          <div className="top">
+                            {renderUserAccountAssetMeta()}
+                            {renderUserAccountAssetCtaRow()}
+                          </div>
+                          {!isInspectedAccountTheConnectedWallet() &&
+                            isMultisigContext &&
+                            selectedMultisig &&
+                            (multisigSolBalance !== undefined && multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED ? (
+                              <Row gutter={[8, 8]}>
+                                <Col
+                                  span={24}
+                                  className={`alert-info-message pr-2 ${selectedMultisig ? 'simplelink' : 'disable-pointer'
+                                    }`}
+                                  onClick={showSolBalanceModal}
+                                >
+                                  <Alert
+                                    message="SOL account balance is very low in the safe. Click here to add more SOL."
+                                    type="info"
+                                    showIcon
+                                  />
+                                </Col>
+                              </Row>
+                            ) : null)}
+                          <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
+                            {/* Activity table heading */}
+                            {hasItemsToRender() && (
+                              <div className="stats-row">
+                                <div className="item-list-header compact">
+                                  <div className="header-row">
+                                    <div className="std-table-cell first-cell">&nbsp;</div>
+                                    <div className="std-table-cell responsive-cell">
+                                      {t('assets.history-table-activity')}
+                                    </div>
+                                    <div className="std-table-cell responsive-cell pr-2 text-right">
+                                      {t('assets.history-table-amount')}
+                                    </div>
+                                    <div className="std-table-cell responsive-cell pr-2 text-right">
+                                      {t('assets.history-table-postbalance')}
+                                    </div>
+                                    <div className="std-table-cell responsive-cell pl-2">
+                                      {t('assets.history-table-date')}
                                     </div>
                                   </div>
                                 </div>
-                              )}
-                              {/* Activity table content */}
-                              {renderActivityList()}
-                            </div>
+                              </div>
+                            )}
+                            {/* Activity table content */}
+                            {renderActivityList()}
                           </div>
-                        )}
+                        </div>
                       </>
                     ) : null}
                     {location.pathname.startsWith('/nfts') && selectedNft ? (
