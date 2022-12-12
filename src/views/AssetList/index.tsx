@@ -64,7 +64,7 @@ export const AssetList = (props: {
     return (
       <div
         key={`${asset.publicAddress}`}
-        onClick={onTokenAccountClick}
+        onClick={() => onTokenAccountClick(asset)}
         id={asset.publicAddress}
         className={`transaction-list-row ${getRowSelectionClass(asset)}`}
       >
