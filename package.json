@@ -69,7 +69,6 @@
     "@project-serum/borsh": "^0.2.3",
     "@project-serum/serum": "^0.13.60",
     "@project-serum/sol-wallet-adapter": "^0.2.6",
-    "@project-serum/swap": "0.1.0-alpha.32",
     "@project-serum/tokens": "^0.0.7",
     "@segment/analytics-next": "^1.43",
     "@sentre/connector": "^0.1.2",
