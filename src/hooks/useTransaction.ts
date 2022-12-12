@@ -145,15 +145,15 @@ const useTransaction = () => {
       }
 
       consoleOut('generating transaction', '', 'blue');
-      const generatedTransaction = await generateTransaction({ multisig, data });
-      if (!generatedTransaction) {
+      const generatedArgs = await generateMultisigArgs({ multisig, data });
+      if (!generatedArgs) {
         consoleOut('no transaction generated', '', 'blue');
         return null;
       }
-      if (isVersionedTransaction(generatedTransaction))
+      /*
+      if (isVersionedTransaction(generatedArgs))
         throw new Error('TODO: Multisig Versioned transactions are not supported yet');
-      const ixData = Buffer.from(generatedTransaction.instructions[0].data);
-      const ixAccounts = generatedTransaction.instructions[0].keys;
+        */
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await multisigClient.createTransaction(
@@ -163,10 +163,10 @@ const useTransaction = () => {
         new Date(expirationTime * 1_000),
         operationType,
         multisig.id,
-        mspV2AddressPK, // program
-        ixAccounts, // keys o accounts of the Ix
-        ixData, // data of the Ix
-        // preInstructions
+        generatedArgs.programId,
+        generatedArgs.ixAccounts,
+        generatedArgs.ixData,
+        generatedArgs.ixs,
       );
 
       if (!tx) {

@@ -265,21 +265,23 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     });
   }, [setTransactionStatus]);
 
-  const setFailureStatusAndNotify = useCallback((txStep: 'sign' | 'send') => {
-    const operation = txStep === 'sign'
-      ? TransactionStatus.SignTransactionFailure
-      : TransactionStatus.SendTransactionFailure;
-    setTransactionStatus({
-      lastOperation: transactionStatus.currentOperation,
-      currentOperation: operation,
-    });
-    openNotification({
-      title: t('notifications.error-title'),
-      description: t('notifications.error-sending-transaction'),
-      type: 'error',
-    });
-    setIsBusy(false);
-  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
+  const setFailureStatusAndNotify = useCallback(
+    (txStep: 'sign' | 'send') => {
+      const operation =
+        txStep === 'sign' ? TransactionStatus.SignTransactionFailure : TransactionStatus.SendTransactionFailure;
+      setTransactionStatus({
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: operation,
+      });
+      openNotification({
+        title: t('notifications.error-title'),
+        description: t('notifications.error-sending-transaction'),
+        type: 'error',
+      });
+      setIsBusy(false);
+    },
+    [setTransactionStatus, t, transactionStatus.currentOperation],
+  );
 
   const setSuccessStatus = useCallback(() => {
     setIsBusy(false);
@@ -1259,7 +1261,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       getTokenPriceBySymbol,
       setTransactionStatus,
       setSuccessStatus,
-      t
+      t,
     ],
   );
 
@@ -2640,7 +2642,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     const payload = () => {
       if (!vestingContract || !publicKey) return;
 
-
       return {
         multisig: multisigAuthority, // multisig
         treasurer: publicKey, // treasurer
@@ -2687,20 +2688,22 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       generateTransaction: async ({ multisig, data }) => {
         if (!msp) return;
-        if (!multisig) {
-          return msp.modifyVestingTreasuryTemplate(
-            new PublicKey(data.treasurer), // payer
-            new PublicKey(data.treasurer), // treasurer
-            data.vestingTreasury,
-            data.duration, // duration
-            data.durationUnit, // durationUnit
-            data.startUtc, // startUtc
-            data.cliffVestPercent, // cliffVestPercent
-            data.feePayedByTreasurer, // feePayedByTreasurer
-          );
-        }
-
         return msp.modifyVestingTreasuryTemplate(
+          new PublicKey(data.treasurer), // payer
+          new PublicKey(data.treasurer), // treasurer
+          data.vestingTreasury,
+          data.duration, // duration
+          data.durationUnit, // durationUnit
+          data.startUtc, // startUtc
+          data.cliffVestPercent, // cliffVestPercent
+          data.feePayedByTreasurer, // feePayedByTreasurer
+        );
+      },
+      // @ts-ignore
+      generateMultisigArgs: async ({ multisig, data }) => {
+        if (!msp) return;
+
+        const tx = msp.modifyVestingTreasuryTemplate(
           multisig.authority, // payer
           multisig.authority, // treasurer
           data.vestingTreasury,
@@ -2710,6 +2713,16 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           data.cliffVestPercent, // cliffVestPercent
           data.feePayedByTreasurer, // feePayedByTreasurer
         );
+
+        const programId = mspV2AddressPK;
+        const ixData = Buffer.from(tx.instructions[0].data);
+        const ixAccounts = tx.instructions[0].keys;
+
+        return {
+          programId, // program
+          ixAccounts, // keys o accounts of the Ix
+          ixData, // data of the Ix
+        };
       },
     });
     onVestingContractCreatedOrUpdated();
