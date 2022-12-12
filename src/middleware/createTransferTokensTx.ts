@@ -19,6 +19,7 @@ import BN from 'bn.js';
 import { OperationType } from 'models/enums';
 import { BaseProposal } from 'models/multisig';
 import { NATIVE_SOL_MINT } from './ids';
+import { consoleOut } from './ui';
 import { toTokenAmount } from './utils';
 
 export interface TransferTokensTxParams extends BaseProposal {
@@ -57,17 +58,17 @@ export const createTransferTokensTx = async (
   }
 
   const fromMintAddress = getFromMint(fromAccountInfo);
-
   let toAddress = new PublicKey(data.to);
-  let transferIx = SystemProgram.transfer({
-    fromPubkey: fromAddress,
-    toPubkey: toAddress,
-    lamports: new BN(data.amount * LAMPORTS_PER_SOL).toNumber(),
-  });
-
+  let transferIx: TransactionInstruction;
   const ixs: TransactionInstruction[] = [];
 
-  if (!fromMintAddress.equals(NATIVE_SOL_MINT)) {
+  if (fromMintAddress.equals(NATIVE_SOL_MINT)) {
+    transferIx = SystemProgram.transfer({
+      fromPubkey: fromAddress,
+      toPubkey: toAddress,
+      lamports: new BN(data.amount * LAMPORTS_PER_SOL).toNumber(),
+    });
+  } else {
     const mintInfo = await connection.getAccountInfo(fromMintAddress);
 
     if (!mintInfo) {
@@ -75,34 +76,32 @@ export const createTransferTokensTx = async (
     }
 
     const mint = MintLayout.decode(Buffer.from(mintInfo.data));
-    const toAccountInfo = await connection.getAccountInfo(toAddress);
 
-    if (!toAccountInfo || !toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
-      const toAccountATA = await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        fromMintAddress,
-        toAddress,
-        true,
+    const toAccountATA = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      fromMintAddress,
+      toAddress,
+      true,
+    );
+    consoleOut('toAccountATA:', toAccountATA.toBase58(), 'blue');
+
+    const toAccountATAInfo = await connection.getAccountInfo(toAccountATA);
+
+    if (!toAccountATAInfo) {
+      ixs.push(
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          fromMintAddress,
+          toAccountATA,
+          toAddress,
+          publicKey,
+        ),
       );
-
-      const toAccountATAInfo = await connection.getAccountInfo(toAccountATA);
-
-      if (!toAccountATAInfo) {
-        ixs.push(
-          Token.createAssociatedTokenAccountInstruction(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            fromMintAddress,
-            toAccountATA,
-            toAddress,
-            publicKey,
-          ),
-        );
-      }
-
-      toAddress = toAccountATA;
     }
+
+    toAddress = toAccountATA;
 
     const tokenAmount = toTokenAmount(data.amount, mint.decimals, true) as string;
 

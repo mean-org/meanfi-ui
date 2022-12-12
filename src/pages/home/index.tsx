@@ -39,7 +39,6 @@ import { AccountsInitAtaModal } from 'components/AccountsInitAtaModal';
 import { AccountsMergeModal } from 'components/AccountsMergeModal';
 import { AccountsSuggestAssetModal } from 'components/AccountsSuggestAssetModal';
 import { AddressDisplay } from 'components/AddressDisplay';
-import { Identicon } from 'components/Identicon';
 import { MultisigAddAssetModal } from 'components/MultisigAddAssetModal';
 import { MultisigProposalModal } from 'components/MultisigProposalModal';
 import { MultisigTransferTokensModal } from 'components/MultisigTransferTokensModal';
@@ -53,7 +52,6 @@ import { SolBalanceModal } from 'components/SolBalanceModal';
 import { WrapSolModal } from 'components/WrapSolModal';
 import {
   ACCOUNTS_LOW_BALANCE_LIMIT,
-  FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   MIN_SOL_BALANCE_REQUIRED,
   MULTISIG_ROUTE_BASE_PATH,
@@ -126,6 +124,15 @@ import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AppsList, AssetActivity, NftDetails, NftPaginatedList, OtherAssetsList } from 'views';
+import AssetList from 'views/AssetList';
+import { getBuyOptionsCta } from './asset-ctas/buyOptionsCta';
+import { getCloseAccountCta } from './asset-ctas/closeAccountCta';
+import { getDepositOptionsCta } from './asset-ctas/depositOptionsCta';
+import { getExchangeAssetCta } from './asset-ctas/exchangeAssetCta';
+import { getInvestAssetCta } from './asset-ctas/investAssetCta';
+import { getMergeAccountsCta } from './asset-ctas/mergeAccountsCta';
+import { getUnwrapSolCta } from './asset-ctas/unwrapSolCta';
+import { getWrapSolCta } from './asset-ctas/wrapSolCta';
 import getNftMint from './getNftMint';
 import './style.scss';
 import useAccountPrograms from './useAccountPrograms';
@@ -149,7 +156,6 @@ export const HomeView = () => {
   const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
   const {
-    theme,
     programs,
     streamList,
     accountNfts,
@@ -1139,7 +1145,7 @@ export const HomeView = () => {
     onExecuteTransferTokensTx(params);
   };
 
-  const onExecuteTransferTokensTx = useCallback(async (data: TransferTokensTxParams) => {
+  const onExecuteTransferTokensTx = useCallback(async (params: TransferTokensTxParams) => {
     let transaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
@@ -1149,7 +1155,7 @@ export const HomeView = () => {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (!publicKey || !selectedAsset || !multisigClient || !data) {
+      if (!publicKey || !selectedAsset || !multisigClient || !params) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!',
@@ -1165,21 +1171,13 @@ export const HomeView = () => {
         currentOperation: TransactionStatus.InitTransaction,
       });
 
-      // Create a transaction
-      const payload = {
-        title: data.proposalTitle,
-        from: data.from,
-        to: data.to,
-        amount: data.amount,
-      };
-
       consoleOut('token:', selectedAsset, 'blue');
-      consoleOut('data:', payload);
+      consoleOut('data:', params);
 
       // Log input data
       transactionLog.push({
         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-        inputs: payload,
+        inputs: params,
       });
 
       transactionLog.push({
@@ -1213,7 +1211,7 @@ export const HomeView = () => {
         publicKey,
         selectedMultisig,
         multisigClient,
-        data,
+        params,
       )
         .then(value => {
           if (!value) {
@@ -1277,11 +1275,11 @@ export const HomeView = () => {
           finality: 'confirmed',
           txInfoFetchStatus: 'fetching',
           loadingTitle: 'Confirming transaction',
-          loadingMessage: `Transferring ${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol
-            } to ${shortenAddress(data.to)}`,
+          loadingMessage: `Create proposal to transfer ${formatThousands(params.amount, selectedAsset?.decimals)} ${selectedAsset?.symbol
+          } to ${shortenAddress(params.to)}`,
           completedTitle: 'Transaction confirmed',
-          completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol
-            }) successfully transferred to ${shortenAddress(data.to)}`,
+          completedMessage: `Proposal to transfer ${formatThousands(params.amount, selectedAsset?.decimals)} ${selectedAsset?.symbol
+          } to ${shortenAddress(params.to)} was submitted for Multisig approval.`,
           completedMessageTimeout: isMultisigContext ? 8 : 5,
           extras: {
             multisigAuthority: selectedMultisig ? selectedMultisig.authority.toBase58() : '',
@@ -1317,18 +1315,12 @@ export const HomeView = () => {
     ],
   );
 
-
   const onExecuteTransferTokens2Tx = useCallback(async (params: TransferTokensTxParams) => {
 
     const multisigAuthority = selectedMultisig ? selectedMultisig.authority.toBase58() : '';
     const payload = () => {
-      if (!publicKey) return;
-      return {
-        proposalTitle: params.proposalTitle,
-        amount: params.amount,
-        from: params.from,
-        to: params.to,
-      } as TransferTokensTxParams;
+      if (!publicKey || !params || !multisigAuthority) return;
+      return params;
     };
     const loadingMessage = () => `Create proposal to transfer ${formatThousands(params.amount, selectedAsset?.decimals)} ${selectedAsset?.symbol
     } to ${shortenAddress(params.to)}`;
@@ -1355,7 +1347,9 @@ export const HomeView = () => {
       nativeBalance,
       minRequired,
       generateTransaction: async ({ multisig, data }) => {
-        if (!publicKey || !multisigClient) return;
+        consoleOut('multisig:', multisig, 'purple');
+        consoleOut('data:', data, 'purple');
+        if (!publicKey || !multisigClient || !multisig) return;
         return createTransferTokensTx(
           connection,
           publicKey,
@@ -1835,61 +1829,57 @@ export const HomeView = () => {
     [msp, selectedAccount.address],
   );
 
-  const refreshTreasuries = useCallback(
-    (reset = false) => {
-      if (!publicKey || !selectedAccount.address) {
+  const refreshTreasuries = useCallback((reset = false) => {
+      if (!publicKey || !selectedAccount.address || !ms || !msp) {
         return;
       }
 
       const pk = new PublicKey(selectedAccount.address);
 
-      if (msp && ms) {
-        setTimeout(() => {
-          setLoadingTreasuries(true);
-        });
+      setTimeout(() => {
+        setLoadingTreasuries(true);
+      });
 
-        const treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
-        let treasuriesv1: TreasuryInfo[] = [];
-        getAllUserV2Treasuries()
-          .then(async treasuriesv2 => {
-            treasuryAccumulator.push(...treasuriesv2);
-            if (!isMultisigContext) {
-              try {
-                treasuriesv1 = await ms.listTreasuries(pk);
-              } catch (error) {
-                console.error(error);
-              }
-              treasuryAccumulator.push(...treasuriesv1);
+      const treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
+      let treasuriesv1: TreasuryInfo[] = [];
+      getAllUserV2Treasuries()
+        .then(async treasuriesv2 => {
+          treasuryAccumulator.push(...treasuriesv2);
+          if (!isMultisigContext) {
+            try {
+              treasuriesv1 = await ms.listTreasuries(pk);
+            } catch (error) {
+              console.error(error);
             }
+            treasuryAccumulator.push(...treasuriesv1);
+          }
 
-            const streamingAccounts = treasuryAccumulator.filter(t => !t.autoClose);
+          const streamingAccounts = treasuryAccumulator.filter(t => !t.autoClose);
 
-            const sortedStreamingAccountList = streamingAccounts
-              .map(streaming => streaming)
-              .sort((a, b) => {
-                const vA1 = a as TreasuryInfo;
-                const vA2 = a as Treasury;
-                const vB1 = b as TreasuryInfo;
-                const vB2 = b as Treasury;
+          const sortedStreamingAccountList = streamingAccounts
+            .map(streaming => streaming)
+            .sort((a, b) => {
+              const vA1 = a as TreasuryInfo;
+              const vA2 = a as Treasury;
+              const vB1 = b as TreasuryInfo;
+              const vB2 = b as Treasury;
 
-                const isNewTreasury = vA2.version && vA2.version >= 2 && vB2.version && vB2.version >= 2 ? true : false;
+              const isNewTreasury = vA2.version && vA2.version >= 2 && vB2.version && vB2.version >= 2 ? true : false;
 
-                if (isNewTreasury) {
-                  return +getSdkValue(vB2.totalStreams) - +getSdkValue(vA2.totalStreams);
-                } else {
-                  return vB1.streamsAmount - vA1.streamsAmount;
-                }
-              });
+              if (isNewTreasury) {
+                return +getSdkValue(vB2.totalStreams) - +getSdkValue(vA2.totalStreams);
+              }
+              return vB1.streamsAmount - vA1.streamsAmount;
+            });
 
-            setTreasuryList(sortedStreamingAccountList);
+          setTreasuryList(sortedStreamingAccountList);
 
-            consoleOut('treasuryList:', sortedStreamingAccountList, 'blue');
-          })
-          .catch(error => {
-            console.error(error);
-          })
-          .finally(() => setLoadingTreasuries(false));
-      }
+          consoleOut('treasuryList:', sortedStreamingAccountList, 'blue');
+        })
+        .catch(error => {
+          console.error(error);
+        })
+        .finally(() => setLoadingTreasuries(false));
     },
     [ms, msp, publicKey, selectedAccount.address, isMultisigContext, getAllUserV2Treasuries],
   );
@@ -1970,24 +1960,11 @@ export const HomeView = () => {
     getTokenByMintAddress,
   ]);
 
-  const refreshIncomingStreamSummary = useCallback(async () => {
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) {
-      return;
-    }
+  const getV1VestedValue = useCallback(async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
+    if (!ms) return 0;
 
-    const resume: StreamsSummary = {
-      totalNet: 0,
-      incomingAmount: 0,
-      outgoingAmount: 0,
-      totalAmount: 0,
-    };
-
-    const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
-
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-
-    for (const stream of updatedStreamsv1) {
+    let vestedValue = 0;
+    for await (const stream of updatedStreamsv1) {
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
 
       // Get refreshed data
@@ -2002,14 +1979,73 @@ export const HomeView = () => {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
 
         if (isIncoming) {
-          resume['totalNet'] = resume['totalNet'] + (freshStream.escrowVestedAmount || 0) * tokenPrice;
+          vestedValue = vestedValue + (freshStream.escrowVestedAmount || 0) * tokenPrice;
         }
       }
     }
+    return vestedValue;
+  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, ms]);
 
-    resume['totalAmount'] = updatedStreamsv1.length;
+  const getV1UnvestedValue = useCallback(async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
+    if (!ms) return 0;
 
-    for (const stream of updatedStreamsv2) {
+    let unvestedValue = 0;
+    for await (const stream of updatedStreamsv1) {
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
+
+      // Get refreshed data
+      const freshStream = await ms.refreshStream(stream, undefined, false);
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
+        continue;
+      }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+
+        if (!isIncoming) {
+          unvestedValue = unvestedValue + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
+        }
+      }
+    }
+    return unvestedValue;
+  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, ms]);
+
+  const getV2FundsLeftValue = useCallback(async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
+    if (!msp) return 0;
+
+    let fundsLeftValue = 0;
+    for await (const stream of updatedStreamsv2) {
+      const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
+
+      // Get refreshed data
+      const freshStream = (await msp.refreshStream(stream)) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) {
+        continue;
+      }
+
+      const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
+
+      if (token) {
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const decimals = token.decimals || 9;
+        const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
+        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+
+        if (!isIncoming) {
+          fundsLeftValue += amountChange;
+        }
+      }
+    }
+    return fundsLeftValue;
+  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, msp]);
+
+  const getV2WithdrawableValue = useCallback(async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
+    if (!msp) return 0;
+
+    let withdrawableValue = 0;
+    for await (const stream of updatedStreamsv2) {
       const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
 
       // Get refreshed data
@@ -2027,11 +2063,36 @@ export const HomeView = () => {
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (isIncoming) {
-          resume['totalNet'] += amountChange;
+          withdrawableValue += amountChange;
         }
       }
     }
+    return withdrawableValue;
+  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, msp]);
 
+  const refreshIncomingStreamSummary = useCallback(async () => {
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) {
+      return;
+    }
+
+    const resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0,
+    };
+
+    const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+
+    const vested = await getV1VestedValue(updatedStreamsv1, treasurer);
+    resume['totalNet'] = vested;
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    const withdrawableValue = await getV2WithdrawableValue(updatedStreamsv2, treasurer);
+    resume['totalNet'] += withdrawableValue;
     resume['totalAmount'] += updatedStreamsv2.length;
 
     // Update state
@@ -2043,9 +2104,8 @@ export const HomeView = () => {
     streamListv1,
     streamListv2,
     selectedAccount.address,
-    getTokenPriceByAddress,
-    getTokenByMintAddress,
-    getTokenPriceBySymbol,
+    getV2WithdrawableValue,
+    getV1VestedValue,
   ]);
 
   const refreshOutgoingStreamSummary = useCallback(async () => {
@@ -2065,51 +2125,12 @@ export const HomeView = () => {
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
-    for (const stream of updatedStreamsv1) {
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
-
-      // Get refreshed data
-      const freshStream = await ms.refreshStream(stream, undefined, false);
-      if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
-        continue;
-      }
-
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
-
-      if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-
-        if (!isIncoming) {
-          resume['totalNet'] = resume['totalNet'] + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
-        }
-      }
-    }
-
+    const unvested = await getV1UnvestedValue(updatedStreamsv1, treasurer);
+    resume['totalNet'] = unvested;
     resume['totalAmount'] = updatedStreamsv1.length;
 
-    for (const stream of updatedStreamsv2) {
-      const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
-
-      // Get refreshed data
-      const freshStream = (await msp.refreshStream(stream)) as Stream;
-      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) {
-        continue;
-      }
-
-      const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
-
-      if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 9;
-        const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
-        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
-
-        if (!isIncoming) {
-          resume['totalNet'] += amountChange;
-        }
-      }
-    }
-
+    const fundsLeft = await getV2FundsLeftValue(updatedStreamsv2, treasurer);
+    resume['totalNet'] += fundsLeft;
     resume['totalAmount'] += updatedStreamsv2.length;
 
     // Update state
@@ -2121,9 +2142,8 @@ export const HomeView = () => {
     streamListv1,
     streamListv2,
     selectedAccount.address,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    getTokenByMintAddress,
+    getV2FundsLeftValue,
+    getV1UnvestedValue,
   ]);
 
   const clearStateData = useCallback(() => {
@@ -2261,8 +2281,7 @@ export const HomeView = () => {
     [connection, connectionConfig, getCredixProgram],
   );
 
-  const onExecuteCreateTransactionProposal = useCallback(
-    async (data: CreateNewProposalParams) => {
+  const onExecuteCreateTransactionProposal = useCallback(async (params: CreateNewProposalParams) => {
       let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
@@ -2380,7 +2399,7 @@ export const HomeView = () => {
       };
 
       const createTx = async (): Promise<boolean> => {
-        if (!publicKey || !data || !multisigClient) {
+        if (!publicKey || !params || !multisigClient) {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
             result: 'Cannot start transaction! Wallet not found!',
@@ -2400,12 +2419,12 @@ export const HomeView = () => {
         });
 
         // Data
-        consoleOut('data:', data);
+        consoleOut('data:', params);
 
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data,
+          inputs: params,
         });
 
         transactionLog.push({
@@ -2444,7 +2463,7 @@ export const HomeView = () => {
           return false;
         }
 
-        const result = await createTransactionProposal(data)
+        const result = await createTransactionProposal(params)
           .then((value: any) => {
             consoleOut('createTransactionProposal returned transaction:', value);
             setTransactionStatus({
@@ -2500,12 +2519,12 @@ export const HomeView = () => {
                 finality: 'confirmed',
                 txInfoFetchStatus: 'fetching',
                 loadingTitle: 'Confirming transaction',
-                loadingMessage: `Create proposal: ${data.title}`,
+                loadingMessage: `Create proposal: ${params.title}`,
                 completedTitle: 'Transaction confirmed',
-                completedMessage: `Successfully created proposal: ${data.title}`,
+                completedMessage: `Successfully created proposal: ${params.title}`,
                 completedMessageTimeout: isMultisigContext ? 8 : 5,
                 extras: {
-                  multisigAuthority: data.multisigId,
+                  multisigAuthority: params.multisigId,
                 },
               });
               setSuccessStatus();
@@ -2854,98 +2873,82 @@ export const HomeView = () => {
     ctaItems++;
 
     // UnwrapSol
-    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && wSolBalance > 0) {
-      actions.push({
-        action: MetaInfoCtaAction.UnwrapSol,
-        caption: 'Unwrap',
-        isVisible: true,
-        uiComponentType: 'button',
-        disabled: false,
-        uiComponentId: `button-${MetaInfoCtaAction.UnwrapSol}`,
-        tooltip: '',
-        callBack: onStartUnwrapTx,
-      });
-      ctaItems++;
-    }
+    const unwrapSolCta = getUnwrapSolCta(
+      'Unwrap',
+      isInspectedAccountTheConnectedWallet(),
+      isSelectedAssetWsol(),
+      wSolBalance,
+      onStartUnwrapTx
+    );
+    if (unwrapSolCta.length > 0) ctaItems++;
+    actions.push(...unwrapSolCta);
 
     // Buy
-    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
-      actions.push({
-        action: MetaInfoCtaAction.Buy,
-        caption: 'Buy',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy}`,
-        tooltip: '',
-        callBack: showDepositOptionsModal,
-      });
-      ctaItems++;
-    }
+    const buyOptionsCta = getBuyOptionsCta(
+      'Buy',
+      ctaItems,
+      numMaxCtas,
+      isInspectedAccountTheConnectedWallet(),
+      isSelectedAssetWsol(),
+      isCustomAsset,
+      showDepositOptionsModal
+    );
+    if (buyOptionsCta.length > 0) ctaItems++;
+    actions.push(...buyOptionsCta);
 
     // Deposit
-    actions.push({
-      action: MetaInfoCtaAction.Deposit,
-      caption: 'Deposit',
-      isVisible: true,
-      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Deposit}`,
-      tooltip: '',
-      callBack: showReceiveSplOrSolModal,
-    });
+    actions.push(
+      getDepositOptionsCta(
+        'Deposit',
+        ctaItems,
+        numMaxCtas,
+        showReceiveSplOrSolModal
+      )
+    );
     ctaItems++;
 
     // Exchange
-    if (isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol() && !isCustomAsset) {
-      actions.push({
-        action: MetaInfoCtaAction.Exchange,
-        caption: 'Exchange',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange}`,
-        tooltip: '',
-        callBack: onExchangeAsset,
-      });
-      ctaItems++;
-    }
+    const exchangeAssetCta = getExchangeAssetCta(
+      'Exchange',
+      ctaItems,
+      numMaxCtas,
+      isInspectedAccountTheConnectedWallet(),
+      isSelectedAssetWsol(),
+      isCustomAsset,
+      onExchangeAsset
+    );
+    if (exchangeAssetCta.length > 0) ctaItems++;
+    actions.push(...exchangeAssetCta);
 
     // Invest
-    if (investButtonEnabled()) {
-      actions.push({
-        action: MetaInfoCtaAction.Invest,
-        caption: selectedAsset.symbol === 'sMEAN' ? 'Unstake' : 'Stake',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest}`,
-        tooltip: '',
-        callBack: handleGoToInvestClick,
-      });
-      ctaItems++;
-    }
+    const investAssetCta = getInvestAssetCta(
+      ctaItems,
+      numMaxCtas,
+      investButtonEnabled(),
+      selectedAsset,
+      handleGoToInvestClick
+    );
+    if (investAssetCta.length > 0) ctaItems++;
+    actions.push(...investAssetCta);
 
     // Wrap
-    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() && isWhitelisted) {
-      actions.push({
-        action: MetaInfoCtaAction.WrapSol,
-        caption: 'Wrap',
-        isVisible: true,
-        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-        disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.WrapSol}`,
-        tooltip: '',
-        callBack: showWrapSolModal,
-      });
-      ctaItems++;
-    }
+    const wrapSolCta = getWrapSolCta(
+      'Wrap',
+      ctaItems,
+      numMaxCtas,
+      isInspectedAccountTheConnectedWallet(),
+      isSelectedAssetNativeAccount(),
+      isWhitelisted,
+      showWrapSolModal
+    );
+    if (wrapSolCta.length > 0) ctaItems++;
+    actions.push(...wrapSolCta);
 
     // Copy asset mint address
     if (selectedAsset.address !== NATIVE_SOL.address) {
       actions.push({
-        action: MetaInfoCtaAction.CopyAssetMintAddress,
         caption: 'Copy mint address',
+        action: MetaInfoCtaAction.CopyAssetMintAddress,
         isVisible: true,
         uiComponentType: 'menuitem',
         disabled: false,
@@ -2957,8 +2960,8 @@ export const HomeView = () => {
 
     // Refresh asset
     actions.push({
-      action: MetaInfoCtaAction.Refresh,
       caption: 'Refresh asset',
+      action: MetaInfoCtaAction.Refresh,
       isVisible: true,
       uiComponentType: 'menuitem',
       disabled: false,
@@ -2968,43 +2971,23 @@ export const HomeView = () => {
     });
 
     // Merge token accounts
-    if (isInspectedAccountTheConnectedWallet() && canActivateMergeTokenAccounts()) {
-      actions.push({
-        action: MetaInfoCtaAction.MergeAccounts,
-        caption: t('assets.merge-accounts-cta'),
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: false,
-        uiComponentId: `menuitem-${MetaInfoCtaAction.MergeAccounts}`,
-        tooltip: '',
-        callBack: activateTokenMerge,
-      });
-    }
+    const mergeAccountsCta = getMergeAccountsCta(
+      t('assets.merge-accounts-cta'),
+      isInspectedAccountTheConnectedWallet(),
+      canActivateMergeTokenAccounts(),
+      activateTokenMerge
+    );
+    actions.push(...mergeAccountsCta);
 
     // Close asset
-    if (isMultisigContext) {
-      actions.push({
-        action: MetaInfoCtaAction.Close,
-        caption: 'Close account',
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: isAnyTxPendingConfirmation() || !isDeleteAssetValid(),
-        uiComponentId: `menuitem-${MetaInfoCtaAction.Close}`,
-        tooltip: '',
-        callBack: showDeleteVaultModal,
-      });
-    } else if (isInspectedAccountTheConnectedWallet()) {
-      actions.push({
-        action: MetaInfoCtaAction.CloseAccount,
-        caption: 'Close account',
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: isAnyTxPendingConfirmation(),
-        uiComponentId: `menuitem-${MetaInfoCtaAction.CloseAccount}`,
-        tooltip: '',
-        callBack: showCloseAssetModal,
-      });
-    }
+    const closeAccountCta = getCloseAccountCta(
+      isMultisigContext,
+      isInspectedAccountTheConnectedWallet(),
+      isAnyTxPendingConfirmation(),
+      isDeleteAssetValid(),
+      isMultisigContext ? showDeleteVaultModal : showCloseAssetModal
+    );
+    actions.push(...closeAccountCta);
 
     setAssetCtas(actions);
 
@@ -3175,156 +3158,58 @@ export const HomeView = () => {
   // Transactions //
   //////////////////
 
-  const onStartUnwrapTx = async () => {
-    let transaction: Transaction | null = null;
-    let signature: any;
-    let encodedTx: string;
-    let transactionLog: any[] = [];
+  const onStartUnwrapTx = useCallback(async () => {
 
-    resetTransactionStatus();
-    setIsBusy(true);
-
-    const createTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction,
-        });
-
-        const wSol = accountTokens.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
-        consoleOut('unwrapAmount:', wSolBalance, 'blue');
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: `unwrapAmount: ${wSolBalance}`,
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: '',
-        });
-
-        if (!wSol || !wSol.publicAddress) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Wrapped SOL token account not found for the currently connected wallet account`,
-          });
-          customLogger.logWarning('Unwrap transaction failed', {
-            transcript: transactionLog,
-          });
-          openNotification({
-            title: 'Cannot unwrap SOL',
-            description: `Wrapped SOL token account not found for the currently connected wallet account`,
-            type: 'info',
-          });
-          return false;
-        }
-
-        const wSolPubKey = new PublicKey(wSol.publicAddress);
-
-        return closeTokenAccount(
-          connection, // connection
-          wSolPubKey, // tokenPubkey
-          publicKey, // owner
-        )
-          .then((value: Transaction | null) => {
-            if (value !== null) {
-              consoleOut('closeTokenAccount returned transaction:', value);
-              // Stage 1 completed - The transaction is created and returned
-              setTransactionStatus({
-                lastOperation: TransactionStatus.InitTransactionSuccess,
-                currentOperation: TransactionStatus.SignTransaction,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-                result: getTxIxResume(value),
-              });
-              transaction = value;
-              return true;
-            } else {
-              // Stage 1 failed - The transaction was not created
-              setTransactionStatus({
-                lastOperation: transactionStatus.currentOperation,
-                currentOperation: TransactionStatus.InitTransactionFailure,
-              });
-              transactionLog.push({
-                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-                result: 'No transaction created',
-              });
-              return false;
-            }
-          })
-          .catch(error => {
-            console.error('closeTokenAccount transaction init error:', error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-              result: `${error}`,
-            });
-            customLogger.logError('Unwrap transaction failed', {
-              transcript: transactionLog,
-            });
-            return false;
-          });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Unwrap transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
-      }
+    const payload = () => {
+      return {wSolBalance};
     };
+    const loadingMessage = () => `Unwrap ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`;
+    const completedMessage = () => `Successfully unwrapped ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`;
+    const bf = transactionAssetFees.blockchainFee; // Blockchain fee
+    const ff = transactionAssetFees.mspFlatFee; // Flat fee (protocol)
+    const minRequired = bf + ff;
+    setMinRequiredBalance(minRequired);
 
-    if (wallet && publicKey) {
-      const created = await createTx();
-      consoleOut('created:', created, 'blue');
-      if (created) {
-        const sign = await signTx('Unwrap SOL', wallet, publicKey, transaction);
-        if (sign.encodedTransaction) {
-          encodedTx = sign.encodedTransaction;
-          transactionLog = transactionLog.concat(sign.log);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.SignTransactionSuccess,
-          });
-          const sent = await sendTx('Unwrap SOL', connection, encodedTx);
-          consoleOut('sent:', sent);
-          if (sent.signature) {
-            signature = sent.signature;
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature,
-              operationType: OperationType.Unwrap,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: `Unwrap ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: `Successfully unwrapped ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`,
-            });
-            setSuccessStatus();
-          } else {
-            setFailureStatusAndNotify('send');
-          }
-        } else {
-          setFailureStatusAndNotify('sign');
-        }
-      } else {
-        setIsBusy(false);
-      }
+    const wSol = accountTokens.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
+    consoleOut('unwrapAmount:', wSolBalance, 'blue');
+
+    if (!wSol || !wSol.publicAddress) {
+      openNotification({
+        title: 'Cannot unwrap SOL',
+        description: `Wrapped SOL token account not found for the currently connected wallet account`,
+        type: 'info',
+      });
+      return;
     }
-  };
+
+    const wSolPubKey = new PublicKey(wSol.publicAddress);
+
+    await onExecute({
+      name: 'Unwrap SOL',
+      operationType: OperationType.Unwrap,
+      payload,
+      loadingMessage,
+      completedMessage,
+      setIsBusy,
+      nativeBalance,
+      minRequired,
+      generateTransaction: async ({ multisig, data }) => {
+        if (!publicKey) return;
+        return closeTokenAccount(connection, wSolPubKey, publicKey);
+      },
+    });
+    closeCreateAssetModal(true);
+  }, [
+    publicKey,
+    connection,
+    wSolBalance,
+    accountTokens,
+    nativeBalance,
+    transactionAssetFees.mspFlatFee,
+    transactionAssetFees.blockchainFee,
+    closeCreateAssetModal,
+    onExecute,
+  ]);
 
   //////////////
   //  Events  //
@@ -3645,99 +3530,6 @@ export const HomeView = () => {
     );
   };
 
-  const renderAsset = useCallback(
-    (asset: UserTokenAccount) => {
-      const onTokenAccountClick = () => {
-        consoleOut('clicked on asset:', asset.publicAddress, 'blue');
-        navigateToAsset(asset);
-        setSelectedNft(undefined);
-      };
-
-      const priceByAddress = getTokenPriceByAddress(asset.address);
-      const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
-
-      const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-        event.currentTarget.src = FALLBACK_COIN_IMAGE;
-        event.currentTarget.className = 'error';
-      };
-
-      const isSelectedToken = (): boolean => {
-        return selectedAsset && asset && selectedAsset.displayIndex === asset.displayIndex ? true : false;
-      };
-
-      const getRowSelectionClass = (): string => {
-        if (isSelectedToken() && selectedCategory === 'assets') {
-          return 'selected';
-        } else {
-          if (hideLowBalances && (shouldHideAsset(asset) || !asset.balance)) {
-            return 'hidden';
-          }
-        }
-        return '';
-      };
-
-      const getRateAmountDisplay = (): string => {
-        if (tokenPrice > 0) {
-          if (!asset.valueInUsd) {
-            return '$0.00';
-          }
-          return asset.valueInUsd > 0 && asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
-            ? '< $0.01'
-            : toUsCurrency(asset.valueInUsd || 0);
-        }
-        return '—';
-      };
-
-      return (
-        <div
-          key={`${asset.publicAddress}`}
-          onClick={onTokenAccountClick}
-          id={asset.publicAddress}
-          className={`transaction-list-row ${getRowSelectionClass()}`}
-        >
-          <div className="icon-cell">
-            <div className="token-icon">
-              {asset.logoURI ? (
-                <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
-              ) : (
-                <Identicon address={asset.address} style={{ width: '30', display: 'inline-flex' }} />
-              )}
-            </div>
-          </div>
-          <div className="description-cell">
-            <div className="title">
-              {asset.symbol}
-              {tokenPrice > 0 ? (
-                <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                  {toUsCurrency(tokenPrice)}
-                </span>
-              ) : null}
-            </div>
-            <div className="subtitle text-truncate">
-              {asset.address === WRAPPED_SOL_MINT_ADDRESS ? 'Wrapped SOL' : asset.name}
-            </div>
-          </div>
-          <div className="rate-cell">
-            <div className="rate-amount">{getRateAmountDisplay()}</div>
-            <div className="interval">
-              {(asset.balance || 0) > 0 ? formatThousands(asset.balance || 0, asset.decimals, asset.decimals) : '0'}
-            </div>
-          </div>
-        </div>
-      );
-    },
-    [
-      theme,
-      selectedAsset,
-      hideLowBalances,
-      selectedCategory,
-      getTokenPriceByAddress,
-      getTokenPriceBySymbol,
-      navigateToAsset,
-      shouldHideAsset,
-    ],
-  );
-
   const renderLoadingOrNoTokensMessage = () => {
     if (loadingTokenAccounts) {
       return (
@@ -3788,7 +3580,17 @@ export const HomeView = () => {
               </div>
             )}
             {/* Render user token accounts */}
-            {accountTokens.map(asset => renderAsset(asset))}
+            <AssetList
+              accountTokens={accountTokens}
+              hideLowBalances={hideLowBalances}
+              onTokenAccountClick={(asset: UserTokenAccount) => {
+                consoleOut('clicked on asset:', asset.publicAddress, 'blue');
+                navigateToAsset(asset);
+                setSelectedNft(undefined);
+              }}
+              selectedAsset={selectedAsset}
+              selectedCategory={selectedCategory}
+            />
           </>
         ) : (
           renderLoadingOrNoTokensMessage()
@@ -4135,16 +3937,6 @@ export const HomeView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar">
-          <span>selectedAsset:</span><span className="ml-1 mr-2 font-bold">{selectedAsset ? 'true' : 'false'}</span>
-          <span>selectedApp:</span><span className="ml-1 mr-2 font-bold">{selectedApp ? 'true' : 'false'}</span>
-          <span>selectedNft:</span><span className="ml-1 mr-2 font-bold">{selectedNft ? 'true' : 'false'}</span>
-          <span>selectedCategory:</span><span className="ml-1 mr-2 font-bold">{selectedCategory || '--'}</span>
-          <span>selectedAssetsGroup:</span><span className="ml-1 mr-2 font-bold">{selectedAssetsGroup || '--'}</span>
-        </div>
-      )} */}
-
       {detailsPanelOpen && (
         <Button
           id="back-button"
@@ -4386,9 +4178,8 @@ export const HomeView = () => {
                                 <Row gutter={[8, 8]}>
                                   <Col
                                     span={24}
-                                    className={`alert-info-message pr-2 ${
-                                      selectedMultisig ? 'simplelink' : 'disable-pointer'
-                                    }`}
+                                    className={`alert-info-message pr-2 ${selectedMultisig ? 'simplelink' : 'disable-pointer'
+                                      }`}
                                     onClick={showSolBalanceModal}
                                   >
                                     <Alert
@@ -4428,7 +4219,8 @@ export const HomeView = () => {
                           </div>
                         )}
                       </>
-                    ) : location.pathname.startsWith('/nfts') && selectedNft ? (
+                    ) : null}
+                    {location.pathname.startsWith('/nfts') && selectedNft ? (
                       <NftDetails selectedNft={selectedNft} />
                     ) : null}
                   </div>
