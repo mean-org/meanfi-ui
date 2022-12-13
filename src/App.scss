@@ -2473,6 +2473,18 @@ em {
   }
 }
 
+.exchange.ant-scrolling-effect,
+.exchange-dcas.ant-scrolling-effect {
+  .ant-tooltip.ant-slider-tooltip.ant-tooltip-placement-top .ant-tooltip-content {
+    .ant-tooltip-inner {
+      padding: 6px;
+    }
+    .ant-tooltip-arrow {
+      display: none;
+    }
+  }
+}
+
 .ant-timeline {
   color: inherit;
 
