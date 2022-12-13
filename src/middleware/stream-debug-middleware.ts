@@ -1,9 +1,9 @@
-import { MSP } from '@mean-dao/msp';
+import { PaymentStreaming } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 
 export const getStreamForDebug = async (
   address: PublicKey,
-  msp: MSP,
+  msp: PaymentStreaming,
 ): Promise<any> => {
   try {
     const response = await msp.getStreamRaw(address);

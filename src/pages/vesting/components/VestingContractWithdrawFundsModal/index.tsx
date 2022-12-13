@@ -5,7 +5,7 @@ import {
 } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { Treasury, TreasuryType } from '@mean-dao/msp';
+import { PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { BN } from 'bn.js';
@@ -54,7 +54,7 @@ export const VestingContractWithdrawFundsModal = (props: {
   nativeBalance: number;
   selectedMultisig: MultisigInfo | undefined;
   transactionFees: TransactionFees;
-  vestingContract: Treasury | undefined;
+  vestingContract: PaymentStreamingAccount | undefined;
 }) => {
   const {
     handleClose,
@@ -224,7 +224,7 @@ export const VestingContractWithdrawFundsModal = (props: {
 
   const isNewTreasury = useCallback(() => {
     if (vestingContract) {
-      const v2 = vestingContract as Treasury;
+      const v2 = vestingContract as PaymentStreamingAccount;
       return v2.version >= 2 ? true : false;
     }
 
@@ -247,9 +247,7 @@ export const VestingContractWithdrawFundsModal = (props: {
   // Set a working token based on the Vesting Contract's Associated Token
   useEffect(() => {
     if (vestingContract) {
-      let token = getTokenByMintAddress(
-        vestingContract.associatedToken as string,
-      );
+      let token = getTokenByMintAddress(vestingContract.mint.toBase58());
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
           symbol: 'SOL',
@@ -263,7 +261,7 @@ export const VestingContractWithdrawFundsModal = (props: {
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
-    const getUnallocatedBalance = (details: Treasury) => {
+    const getUnallocatedBalance = (details: PaymentStreamingAccount) => {
       const balance = new BN(details.balance);
       const allocationAssigned = new BN(details.allocationAssigned);
       return balance.sub(allocationAssigned);
@@ -280,9 +278,7 @@ export const VestingContractWithdrawFundsModal = (props: {
     if (!vestingContract) {
       return null;
     }
-    const token = getTokenByMintAddress(
-      vestingContract.associatedToken as string,
-    );
+    const token = getTokenByMintAddress(vestingContract.mint.toBase58());
     const imageOnErrorHandler = (
       event: React.SyntheticEvent<HTMLImageElement, Event>,
     ) => {
@@ -304,7 +300,7 @@ export const VestingContractWithdrawFundsModal = (props: {
               />
             ) : (
               <Identicon
-                address={vestingContract.associatedToken}
+                address={vestingContract.mint.toBase58()}
                 style={{ width: '30', height: '30', display: 'inline-flex' }}
               />
             )}
@@ -319,7 +315,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                   theme === 'light' ? 'golden fg-dark' : 'darken'
                 }`}
               >
-                {vestingContract.treasuryType === TreasuryType.Open
+                {vestingContract.accountType === AccountType.Open
                   ? 'Open'
                   : 'Locked'}
               </span>
@@ -616,7 +612,7 @@ export const VestingContractWithdrawFundsModal = (props: {
             : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
@@ -635,7 +631,7 @@ export const VestingContractWithdrawFundsModal = (props: {
         )}
       </div>
 
-      {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
         <>
           <div className="cta-container">
             <Button

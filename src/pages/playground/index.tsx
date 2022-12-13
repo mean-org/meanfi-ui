@@ -1,6 +1,6 @@
 import { ArrowRightOutlined, WarningFilled } from '@ant-design/icons';
 import { MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { MSP, Stream } from '@mean-dao/msp';
+import { PaymentStreaming, Stream } from '@mean-dao/payment-streaming';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   AccountInfo,
@@ -165,17 +165,17 @@ export const PlaygroundView = () => {
     [],
   );
   const streamV2ProgramAddressFromConfig = useMemo(
-    () => appConfig.getConfig().streamV2ProgramAddress,
+    () => new PublicKey(appConfig.getConfig().streamV2ProgramAddress),
     [],
   );
 
-  const msp = useMemo(() => {
-    return new MSP(
-      connectionConfig.endpoint,
+  const paymentStreaming = useMemo(() => {
+    return new PaymentStreaming(
+      connection,
       streamV2ProgramAddressFromConfig,
       'confirmed',
     );
-  }, [connectionConfig.endpoint, streamV2ProgramAddressFromConfig]);
+  }, [connection, streamV2ProgramAddressFromConfig]);
 
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
@@ -196,18 +196,18 @@ export const PlaygroundView = () => {
 
   const fetchStreamData = useCallback(
     (id: string) => {
-      if (!id || !isValidAddress(id) || !msp) {
+      if (!id || !isValidAddress(id) || !paymentStreaming) {
         return;
       }
 
       const streamPK = new PublicKey(id);
 
-      getStreamForDebug(streamPK, msp).then(value => {
+      getStreamForDebug(streamPK, paymentStreaming).then(value => {
         consoleOut('raw stream data payload:', value, 'blue');
         setStreamRawData(value);
       });
 
-      msp.getStream(streamPK).then(value => {
+      paymentStreaming.getStream(streamPK).then(value => {
         if (value) {
           consoleOut('parsed stream data payload:', value, 'blue');
           setStreamParsedData(value);
@@ -223,7 +223,7 @@ export const PlaygroundView = () => {
 
       setDisplayStreamData(true);
     },
-    [msp],
+    [paymentStreaming],
   );
 
   const navigateToTab = useCallback(
@@ -2308,7 +2308,7 @@ export const PlaygroundView = () => {
           handleClose={closeStreamDetailModal}
           highlightedStream={streamParsedData}
           isVisible={isStreamDetailModalVisible}
-          msp={msp}
+          msp={paymentStreaming}
           selectedToken={selectedToken}
           isDebugging={true}
         />

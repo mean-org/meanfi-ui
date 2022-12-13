@@ -3,7 +3,7 @@ import { Modal } from 'antd';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { UserTokenAccount } from 'models/accounts';
 import { VestingContractCreateForm } from '../VestingContractCreateForm';
-import { TransactionFees } from '@mean-dao/msp';
+import { TransactionFees } from '@mean-dao/payment-streaming';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
 export const VestingContractCreateModal = (props: {

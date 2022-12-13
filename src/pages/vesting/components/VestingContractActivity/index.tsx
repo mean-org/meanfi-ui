@@ -1,8 +1,8 @@
 import {
-  Treasury,
-  VestingTreasuryActivity,
-  VestingTreasuryActivityAction,
-} from '@mean-dao/msp';
+  PaymentStreamingAccount,
+  VestingAccountActivity,
+  ActivityActionCode,
+} from '@mean-dao/payment-streaming';
 import { Spin } from 'antd';
 import { BN } from 'bn.js';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
@@ -20,12 +20,12 @@ import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const VestingContractActivity = (props: {
-  contractActivity: VestingTreasuryActivity[];
+  contractActivity: VestingAccountActivity[];
   hasMoreStreamActivity: boolean;
   loadingStreamActivity: boolean;
   onLoadMoreActivities: any;
   selectedToken: TokenInfo | undefined;
-  vestingContract: Treasury | undefined;
+  vestingContract: PaymentStreamingAccount | undefined;
 }) => {
   const {
     contractActivity,
@@ -38,54 +38,54 @@ export const VestingContractActivity = (props: {
   const { splTokenList } = useContext(AppStateContext);
   const { t } = useTranslation('common');
 
-  const getActivityDescription = (item: VestingTreasuryActivity) => {
+  const getActivityDescription = (item: VestingAccountActivity) => {
     if (!vestingContract) {
       return '--';
     }
 
     let message = '';
-    switch (item.action) {
-      case VestingTreasuryActivityAction.TreasuryCreate:
+    switch (item.actionCode) {
+      case ActivityActionCode.AccountCreated:
         message += `Vesting contract created - ${vestingContract.name}`;
         break;
-      case VestingTreasuryActivityAction.TreasuryModify:
-        message += `Vesting contract modified - ${vestingContract.name}`;
-        break;
-      case VestingTreasuryActivityAction.TreasuryAddFunds:
+      // case ActivityActionCode.TreasuryModify:
+      //   message += `Vesting contract modified - ${vestingContract.name}`;
+      //   break;
+      case ActivityActionCode.FundsAddedToAccount:
         message += `Vesting contract funds added - ${vestingContract.name}`;
         break;
-      case VestingTreasuryActivityAction.TreasuryWithdraw:
+      case ActivityActionCode.FundsWithdrawnFromAccount:
         message += `Vesting contract funds withdrawn - ${vestingContract.name}`;
         break;
-      case VestingTreasuryActivityAction.TreasuryRefresh:
+      case ActivityActionCode.AccountDataRefreshed:
         message += `Vesting contract refresh data - ${vestingContract.name}`;
         break;
-      case VestingTreasuryActivityAction.StreamCreate:
+      case ActivityActionCode.StreamCreated:
         message += `Vesting stream created for ${
           item.beneficiary ? shortenAddress(item.beneficiary) : '--'
         }`;
         break;
-      case VestingTreasuryActivityAction.StreamAllocateFunds:
+      case ActivityActionCode.FundsAllocatedToStream:
         message += `Vesting stream allocate funds for ${
           item.beneficiary ? shortenAddress(item.beneficiary) : '--'
         }`;
         break;
-      case VestingTreasuryActivityAction.StreamWithdraw:
+      case ActivityActionCode.FundsWithdrawnFromStream:
         message += `Vesting stream withdraw by ${
           item.beneficiary ? shortenAddress(item.beneficiary) : '--'
         }`;
         break;
-      case VestingTreasuryActivityAction.StreamClose:
+      case ActivityActionCode.StreamClosed:
         message += `Vesting stream closed for ${
           item.beneficiary ? shortenAddress(item.beneficiary) : '--'
         }`;
         break;
-      case VestingTreasuryActivityAction.StreamPause:
+      case ActivityActionCode.StreamPaused:
         message += `Vesting stream paused for ${
           item.beneficiary ? shortenAddress(item.beneficiary) : '--'
         }`;
         break;
-      case VestingTreasuryActivityAction.StreamResume:
+      case ActivityActionCode.StreamResumed:
         message += `Vesting stream resumed for ${
           item.beneficiary ? shortenAddress(item.beneficiary) : '--'
         }`;
@@ -97,26 +97,26 @@ export const VestingContractActivity = (props: {
     return message;
   };
 
-  const getActivitySubtitle = (item: VestingTreasuryActivity) => {
+  const getActivitySubtitle = (item: VestingAccountActivity) => {
     if (!vestingContract) {
       return '--';
     }
 
     let message = '';
-    switch (item.action) {
-      case VestingTreasuryActivityAction.TreasuryCreate:
-      case VestingTreasuryActivityAction.TreasuryModify:
-      case VestingTreasuryActivityAction.TreasuryAddFunds:
-      case VestingTreasuryActivityAction.TreasuryWithdraw:
-      case VestingTreasuryActivityAction.TreasuryRefresh:
+    switch (item.actionCode) {
+      // case ActivityActionCode.TreasuryModify:
+      case ActivityActionCode.AccountCreated:
+      case ActivityActionCode.FundsAddedToAccount:
+      case ActivityActionCode.FundsWithdrawnFromAccount:
+      case ActivityActionCode.AccountDataRefreshed:
         message += shortenAddress(vestingContract.id);
         break;
-      case VestingTreasuryActivityAction.StreamCreate:
-      case VestingTreasuryActivityAction.StreamAllocateFunds:
-      case VestingTreasuryActivityAction.StreamWithdraw:
-      case VestingTreasuryActivityAction.StreamClose:
-      case VestingTreasuryActivityAction.StreamPause:
-      case VestingTreasuryActivityAction.StreamResume:
+      case ActivityActionCode.StreamCreated:
+      case ActivityActionCode.FundsAllocatedToStream:
+      case ActivityActionCode.FundsWithdrawnFromStream:
+      case ActivityActionCode.StreamClosed:
+      case ActivityActionCode.StreamPaused:
+      case ActivityActionCode.StreamResumed:
         message += item.stream ? shortenAddress(item.stream) : '--';
         break;
       default:
@@ -126,7 +126,7 @@ export const VestingContractActivity = (props: {
     return message;
   };
 
-  const getActivityAssociatedToken = (item: VestingTreasuryActivity) => {
+  const getActivityAssociatedToken = (item: VestingAccountActivity) => {
     if (!vestingContract || !selectedToken) {
       return '--';
     }
@@ -164,14 +164,14 @@ export const VestingContractActivity = (props: {
     }
 
     let message = '';
-    switch (item.action) {
-      case VestingTreasuryActivityAction.TreasuryAddFunds:
-      case VestingTreasuryActivityAction.TreasuryWithdraw:
+    switch (item.actionCode) {
+      case ActivityActionCode.FundsAddedToAccount:
+      case ActivityActionCode.FundsWithdrawnFromAccount:
         message += `${amount} ${selectedToken?.symbol}`;
         break;
-      case VestingTreasuryActivityAction.StreamCreate:
-      case VestingTreasuryActivityAction.StreamAllocateFunds:
-      case VestingTreasuryActivityAction.StreamWithdraw:
+      case ActivityActionCode.StreamCreated:
+      case ActivityActionCode.FundsAllocatedToStream:
+      case ActivityActionCode.FundsWithdrawnFromStream:
         message += `${amount} ${selectedToken?.symbol}`;
         break;
       default:

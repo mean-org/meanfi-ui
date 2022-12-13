@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { Treasury } from '@mean-dao/msp';
+import { PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 import { Button, Modal, Spin } from 'antd';
 import BN from 'bn.js';
 import { InputMean } from 'components/InputMean';
@@ -33,7 +33,7 @@ export const VestingContractCloseModal = (props: {
   selectedMultisig: MultisigInfo | undefined;
   transactionFees: TransactionFees;
   treasuryBalance: number;
-  vestingContract: Treasury | undefined;
+  vestingContract: PaymentStreamingAccount | undefined;
 }) => {
   const {
     handleClose,
@@ -55,8 +55,8 @@ export const VestingContractCloseModal = (props: {
   );
   const [proposalTitle, setProposalTitle] = useState('');
 
-  const getAvailableStreamingBalance = useCallback((item: Treasury) => {
-    const getUnallocatedBalance = (details: Treasury) => {
+  const getAvailableStreamingBalance = useCallback((item: PaymentStreamingAccount) => {
+    const getUnallocatedBalance = (details: PaymentStreamingAccount) => {
       const balance = new BN(details.balance);
       const allocationAssigned = new BN(details.allocationAssigned);
       return balance.sub(allocationAssigned);
@@ -88,7 +88,7 @@ export const VestingContractCloseModal = (props: {
   useEffect(() => {
     if (vestingContract) {
       let token = getTokenByMintAddress(
-        vestingContract.associatedToken as string,
+        vestingContract.mint.toBase58(),
       );
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
@@ -284,7 +284,7 @@ export const VestingContractCloseModal = (props: {
               : 'panel2 hide'
           }
         >
-          {isBusy && transactionStatus !== TransactionStatus.Iddle && (
+          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
             <div className="transaction-progress">
               <Spin indicator={bigLoadingIcon} className="icon mt-0" />
               <h4 className="font-bold mb-1">
