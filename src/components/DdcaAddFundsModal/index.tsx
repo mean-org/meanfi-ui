@@ -516,10 +516,10 @@ export const DdcaAddFundsModal = (props: {
           min={rangeMin}
           max={rangeMax}
           included={false}
-          tipFormatter={sliderTooltipFormatter}
+          className='ddca-setup-tooltip'
+          tooltip={{ formatter: sliderTooltipFormatter, open: true }}
           value={lockedSliderValue}
           onChange={onSliderChange}
-          tooltipVisible
           dots={false}
         />
       </div>
