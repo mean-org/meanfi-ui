@@ -72,7 +72,7 @@ export const JupiterExchangeOutput = (props: {
         getTokenPriceBySymbol(toToken.symbol);
       return amount * price;
     },
-    [toToken],
+    [getTokenPriceByAddress, getTokenPriceBySymbol, toToken],
   );
 
   useEffect(() => {

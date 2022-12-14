@@ -32,7 +32,6 @@ import {
   LoadingOutlined,
 } from '@ant-design/icons';
 import {
-  addDays,
   getAmountWithSymbol,
   shortenAddress,
 } from '../../middleware/utils';
@@ -45,14 +44,9 @@ import {
 import { PaymentRateTypeOption } from '../../models/PaymentRateTypeOption';
 import { isError } from '../../middleware/transactions';
 import { CreateNewSafeParams } from '../../models/multisig';
-import moment from 'moment';
-import { isMobile } from 'react-device-detect';
-import useWindowSize from '../../hooks/useWindowResize';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-
-const timeFormat = 'hh:mm A';
 
 export const MultisigCreateSafeModal = (props: {
   handleClose: any;
@@ -65,16 +59,12 @@ export const MultisigCreateSafeModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const { width } = useWindowSize();
   const {
     transactionStatus,
     coolOffPeriodFrequency,
     setCoolOffPeriodFrequency,
     setTransactionStatus,
   } = useContext(AppStateContext);
-
-  const date = addDays(new Date(), 1).toLocaleDateString('en-US');
-  const time = moment().format(timeFormat);
 
   const {
     handleClose,
@@ -93,27 +83,13 @@ export const MultisigCreateSafeModal = (props: {
     [],
   );
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
-  const [isAllowToRejectProposal, setAllowToRejectProposal] =
-    useState<boolean>(true);
   const [feeAmount] = useState<number>(
     transactionFees.multisigFee + transactionFees.rentExempt,
   );
-  const [coolOffDate, setCoolOffDate] = useState<string | undefined>(date);
-  const [coolOffTime, setCoolOffTime] = useState<string | undefined>(time);
-  const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [isCoolOffPeriodEnable, setIsCoolOffPeriodEnable] =
     useState<boolean>(true);
   const [createdByName, setCreatedByName] = useState<string>('');
   const [coolOfPeriodAmount, setCoolOfPeriodAmount] = useState<number>(1);
-
-  // Detect XS screen
-  useEffect(() => {
-    if (width < 576) {
-      setIsXsDevice(true);
-    } else {
-      setIsXsDevice(false);
-    }
-  }, [width]);
 
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
@@ -121,10 +97,6 @@ export const MultisigCreateSafeModal = (props: {
 
   const onContinueStepOneButtonClick = () => {
     setCurrentStep(1); // Go to step 2
-  };
-
-  const onContinueStepTwoButtonClick = () => {
-    setCurrentStep(2); // Go to step 3
   };
 
   const getStepTwoContinueButtonLabel = (): string => {
@@ -143,43 +115,12 @@ export const MultisigCreateSafeModal = (props: {
     setSafeName(e.target.value);
   };
 
-  const onTimePickerChange = (
-    time: moment.Moment | null,
-    timeString: string,
-  ) => {
-    if (time) {
-      const shortTime = time.format(timeFormat);
-      setCoolOffTime(shortTime);
-    }
-  };
-
-  const handleDateChange = (date: string) => {
-    setCoolOffDate(date);
-  };
-
-  const todayAndPriorDatesDisabled = (current: any) => {
-    // Can not select neither today nor days before today
-    return current && current < moment().add(1, 'day').startOf('day');
-  };
-
-  const onResetDate = () => {
-    setCoolOffDate(date);
-  };
-
-  const renderDatePickerExtraPanel = () => {
-    return (
-      <span className="flat-button tiny stroked primary" onClick={onResetDate}>
-        <span className="mx-1">Reset</span>
-      </span>
-    );
-  };
-
   const onAcceptModal = () => {
     const options: CreateNewSafeParams = {
       label: safeName,
       threshold: multisigThreshold,
       owners: multisigOwners,
-      isAllowToRejectProposal: isAllowToRejectProposal,
+      isAllowToRejectProposal: true,  // isAllowToRejectProposal = true
       isCoolOffPeriodEnable: isCoolOffPeriodEnable,
       coolOfPeriodAmount: coolOfPeriodAmount,
       coolOffPeriodFrequency: coolOffPeriodFrequency,
@@ -229,10 +170,6 @@ export const MultisigCreateSafeModal = (props: {
       noDuplicateExists(multisigOwners)
       ? true
       : false;
-  };
-
-  const onChangeRejectProposalRejectProposalSwitch = (value: boolean) => {
-    setAllowToRejectProposal(value);
   };
 
   const onChangeCoolOffPeriodSwitch = (value: boolean) => {
@@ -931,32 +868,6 @@ export const MultisigCreateSafeModal = (props: {
                   )}
                 </h4>
               )}
-              {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-                <div className="row two-col-ctas mt-3 transaction-progress p-2">
-                  <div className="col-12">
-                    <Button
-                      block
-                      type="text"
-                      shape="round"
-                      size="middle"
-                      className={isBusy ? 'inactive' : ''}
-                      onClick={() =>
-                        isError(transactionStatus.currentOperation) &&
-                        transactionStatus.currentOperation !==
-                          TransactionStatus.TransactionStartFailure
-                          ? onAcceptModal()
-                          : onCloseModal()
-                      }
-                    >
-                      {isError(transactionStatus.currentOperation) &&
-                      transactionStatus.currentOperation !==
-                        TransactionStatus.TransactionStartFailure
-                        ? t('general.retry')
-                        : t('general.cta-close')}
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           </>
         )}
@@ -970,7 +881,7 @@ export const MultisigCreateSafeModal = (props: {
             : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon m-2" />
             <h4 className="font-bold mb-1">
@@ -988,6 +899,34 @@ export const MultisigCreateSafeModal = (props: {
           </div>
         )}
       </div>
+
+      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+        <div className="row two-col-ctas mt-3 transaction-progress p-2">
+          <div className="col-12">
+            <Button
+              block
+              type="text"
+              shape="round"
+              size="middle"
+              className={isBusy ? 'inactive' : ''}
+              onClick={() =>
+                isError(transactionStatus.currentOperation) &&
+                  transactionStatus.currentOperation !==
+                  TransactionStatus.TransactionStartFailure
+                  ? onAcceptModal()
+                  : onCloseModal()
+              }
+            >
+              {isError(transactionStatus.currentOperation) &&
+                transactionStatus.currentOperation !==
+                TransactionStatus.TransactionStartFailure
+                ? t('general.retry')
+                : t('general.cta-close')}
+            </Button>
+          </div>
+        </div>
+      )}
+
     </Modal>
   );
 };

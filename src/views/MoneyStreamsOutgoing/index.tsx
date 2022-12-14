@@ -118,7 +118,6 @@ export const MoneyStreamsOutgoingView = (props: {
     selectedAccount,
     transactionStatus,
     streamProgramAddress,
-    streamV2ProgramAddress,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
@@ -733,9 +732,7 @@ export const MoneyStreamsOutgoingView = (props: {
         const treasury = new PublicKey(
           (streamSelected as StreamInfo).treasuryAddress as string,
         );
-        const contributorMint = new PublicKey(
-          streamSelected.associatedToken as string,
-        );
+        const contributorMint = getStreamAssociatedMint(streamSelected);
         const amount = parseFloat(addFundsData.amount as string);
         const price = workingToken
           ? getTokenPriceByAddress(workingToken.address) ||
@@ -747,7 +744,7 @@ export const MoneyStreamsOutgoingView = (props: {
           contributor: publicKey.toBase58(), // contributor
           treasury: treasury.toBase58(), // treasury
           stream: stream.toBase58(), // stream
-          contributorMint: contributorMint.toBase58(), // contributorMint
+          contributorMint: contributorMint, // contributorMint
           amount, // amount
         };
         consoleOut('add funds data:', data);
@@ -830,7 +827,7 @@ export const MoneyStreamsOutgoingView = (props: {
             publicKey,
             treasury,
             stream,
-            contributorMint,
+            new PublicKey(contributorMint),
             amount,
             1,  // former AllocationType.Specific
           )
@@ -903,7 +900,8 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const stream = (streamSelected as Stream).id;
       const treasury = (streamSelected as Stream).psAccount;
-      const associatedToken = new PublicKey(streamSelected.associatedToken as string);
+      const streamMint = getStreamAssociatedMint(streamSelected);
+      const associatedToken = new PublicKey(streamMint);
       const amount = addFundsData.tokenAmount.toString();
       const price = workingToken
         ? getTokenPriceByAddress(workingToken.address) ||
@@ -2585,16 +2583,6 @@ export const MoneyStreamsOutgoingView = (props: {
     return false;
   }, [streamSelected]);
 
-  const getStreamAssociatedTokenAddress = useCallback(() => {
-    if (streamSelected) {
-      const v1 = streamSelected as StreamInfo;
-      const v2 = streamSelected as Stream;
-      const isNew = isNewStream();
-      return isNew
-        ? v2.associatedToken.toBase58()
-        : (v1.associatedToken as string);
-    }
-  }, [isNewStream, streamSelected]);
 
   /////////////////////
   // Data management //
@@ -3015,7 +3003,7 @@ export const MoneyStreamsOutgoingView = (props: {
                   parseFloat(
                     addFundsPayload ? (addFundsPayload.amount as string) : '0',
                   ),
-                  getStreamAssociatedTokenAddress() || '',
+                  getStreamAssociatedMint(streamSelected),
                   false,
                   splTokenList,
                 )}

@@ -35,6 +35,7 @@ import {
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconArrowBack, IconExternalLink } from 'Icons';
+import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamStatusResume, getStreamTitle } from 'middleware/streams';
 import {
   consoleOut,
@@ -374,43 +375,37 @@ export const MoneyStreamDetails = (props: {
     return actionText;
   };
 
-  const getStreamIcon = useCallback(
-    (item: Stream | StreamInfo) => {
-      const imageOnErrorHandler = (
-        event: React.SyntheticEvent<HTMLImageElement, Event>,
-      ) => {
-        event.currentTarget.src = FALLBACK_COIN_IMAGE;
-        event.currentTarget.className = 'error';
-      };
-      let associatedToken = '';
+  const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
+    const imageOnErrorHandler = (
+      event: React.SyntheticEvent<HTMLImageElement, Event>,
+    ) => {
+      event.currentTarget.src = FALLBACK_COIN_IMAGE;
+      event.currentTarget.className = 'error';
+    };
 
-      if (item.version < 2) {
-        associatedToken = (item as StreamInfo).associatedToken as string;
-      } else {
-        associatedToken = (item as Stream).associatedToken.toBase58();
-      }
+    const associatedToken = getStreamAssociatedMint(item);
 
-      if (selectedToken && selectedToken.logoURI) {
-        return (
-          <img
-            alt={`${selectedToken.name}`}
-            width={30}
-            height={30}
-            src={selectedToken.logoURI}
-            onError={imageOnErrorHandler}
-            className="token-img"
-          />
-        );
-      } else {
-        return (
-          <Identicon
-            address={associatedToken}
-            style={{ width: '30', display: 'inline-flex' }}
-            className="token-img"
-          />
-        );
-      }
-    },
+    if (selectedToken && selectedToken.logoURI) {
+      return (
+        <img
+          alt={`${selectedToken.name}`}
+          width={30}
+          height={30}
+          src={selectedToken.logoURI}
+          onError={imageOnErrorHandler}
+          className="token-img"
+        />
+      );
+    } else {
+      return (
+        <Identicon
+          address={associatedToken}
+          style={{ width: '30', display: 'inline-flex' }}
+          className="token-img"
+        />
+      );
+    }
+  },
     [selectedToken],
   );
 
@@ -421,7 +416,7 @@ export const MoneyStreamDetails = (props: {
 
     const isNew = stream.version >= 2 ? true : false;
     const treasuryId = isNew
-      ? (stream as Stream).treasury.toBase58()
+      ? (stream as Stream).psAccount.toBase58()
       : ((stream as StreamInfo).treasuryAddress as string);
 
     if (treasuryDetails && (treasuryDetails.id as string) === treasuryId) {
@@ -610,7 +605,7 @@ export const MoneyStreamDetails = (props: {
       <CopyExtLinkGroup
         content={
           isNewStream()
-            ? v2.treasurer.toBase58()
+            ? v2.psAccountOwner.toBase58()
             : (v1.treasurerAddress as string)
         }
         number={8}

@@ -730,7 +730,7 @@ export const TreasuryCreateModal = (props: {
               : 'panel2 hide'
           }
         >
-          {isBusy && transactionStatus !== TransactionStatus.Iddle && (
+          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
             <div className="transaction-progress">
               <Spin indicator={bigLoadingIcon} className="icon mt-0" />
               <h4 className="font-bold mb-1">
@@ -749,7 +749,7 @@ export const TreasuryCreateModal = (props: {
           )}
         </div>
 
-        {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+        {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
           <div className="row two-col-ctas mt-3 transaction-progress p-0">
             {isError(transactionStatus.currentOperation) ? (
               <div className="col-12">

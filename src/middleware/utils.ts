@@ -430,13 +430,12 @@ export function getUniversalTxIxResume(tx: VersionedTransaction | Transaction) {
   return getTxIxResume(tx);
 }
 
-export async function findATokenAddress(walletAddress: PublicKey, tokenMintAddress: PublicKey): Promise<PublicKey> {
-  return (
-    await PublicKey.findProgramAddress(
-      [walletAddress.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), tokenMintAddress.toBuffer()],
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-    )
-  )[0];
+export function findATokenAddress(walletAddress: PublicKey, tokenMintAddress: PublicKey): PublicKey {
+  const [pk] = PublicKey.findProgramAddressSync(
+    [walletAddress.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), tokenMintAddress.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  return pk;
 }
 
 export const getSdkValue = (amount: number | string, asString = false) => {

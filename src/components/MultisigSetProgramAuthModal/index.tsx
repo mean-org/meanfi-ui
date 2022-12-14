@@ -78,16 +78,13 @@ export const MultisigSetProgramAuthModal = ({
     }
 
     const timeout = setTimeout(() => {
-      const programAddress = new PublicKey(programId);
-      PublicKey.findProgramAddress(
-        [programAddress.toBuffer()],
-        BPF_LOADER_UPGRADEABLE_PID,
-      )
-        .then((result: any) => {
-          const programDataAddress = result[0];
-          setProgramDataAddress(programDataAddress.toBase58());
-        })
-        .catch(err => console.error(err));
+      try {
+        const programAddress = new PublicKey(programId);
+        const [programDataAddress] = PublicKey.findProgramAddressSync([programAddress.toBuffer()], BPF_LOADER_UPGRADEABLE_PID);
+        setProgramDataAddress(programDataAddress.toBase58());
+      } catch (error) {
+        console.error(error);
+      }
     });
 
     return () => {
@@ -310,7 +307,7 @@ export const MultisigSetProgramAuthModal = ({
             : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">

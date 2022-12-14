@@ -47,6 +47,7 @@ import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { IconEllipsisVertical } from 'Icons';
 import { appConfig, customLogger } from 'index';
+import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import {
   AppUsageEvent,
@@ -611,7 +612,6 @@ export const MoneyStreamsIncomingView = (props: {
       }
     },
     [
-      paymentStreaming,
       wallet,
       publicKey,
       connection,
@@ -619,6 +619,7 @@ export const MoneyStreamsIncomingView = (props: {
       streamSelected,
       multisigClient,
       mspV2AddressPK,
+      paymentStreaming,
       multisigAccounts,
       isMultisigContext,
       transactionCancelled,
@@ -631,6 +632,7 @@ export const MoneyStreamsIncomingView = (props: {
       resetTransactionStatus,
       setTransactionStatus,
       setSuccessStatus,
+      getStreamId,
     ],
   );
 
@@ -1335,14 +1337,8 @@ export const MoneyStreamsIncomingView = (props: {
     if (!publicKey || !streamSelected) {
       return;
     }
-    let associatedToken = '';
 
-    if (streamSelected.version < 2) {
-      associatedToken = (streamSelected as StreamInfo)
-        .associatedToken as string;
-    } else {
-      associatedToken = (streamSelected as Stream).associatedToken.toBase58();
-    }
+    const associatedToken = getStreamAssociatedMint(streamSelected);
 
     if (
       associatedToken &&

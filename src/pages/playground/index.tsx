@@ -49,6 +49,7 @@ import {
 } from 'Icons';
 import { appConfig } from 'index';
 import { getTokensWithBalances } from 'middleware/accounts';
+import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { NATIVE_SOL_MINT, SYSTEM_PROGRAM_ID } from 'middleware/ids';
 import { ACCOUNT_LAYOUT } from 'middleware/layouts';
 import { getStreamForDebug } from 'middleware/stream-debug-middleware';
@@ -605,7 +606,7 @@ export const PlaygroundView = () => {
 
   const getMultisigAssets = useCallback(
     async (connection: Connection, multisig: PublicKey) => {
-      const [multisigSigner] = await PublicKey.findProgramAddress(
+      const [multisigSigner] = PublicKey.findProgramAddressSync(
         [multisig.toBuffer()],
         multisigAddressPK,
       );
@@ -664,7 +665,7 @@ export const PlaygroundView = () => {
     (option: StreamViewerOption) => {
       if (streamParsedData) {
         if (option === 'treasurer') {
-          setStreamViewerAddress(streamParsedData.treasurer.toBase58());
+          setStreamViewerAddress(streamParsedData.psAccountOwner.toBase58());
         } else {
           setStreamViewerAddress(streamParsedData.beneficiary.toBase58());
         }
@@ -883,7 +884,7 @@ export const PlaygroundView = () => {
       return;
     }
 
-    const associatedToken = streamParsedData.associatedToken.toBase58();
+    const associatedToken = getStreamAssociatedMint(streamParsedData);
 
     if (
       associatedToken &&

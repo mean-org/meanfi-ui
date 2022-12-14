@@ -286,7 +286,7 @@ const updateAtaFlag = async (
   token: UserTokenAccount,
   owner: string,
 ): Promise<boolean> => {
-  const ata = await findATokenAddress(
+  const ata = findATokenAddress(
     new PublicKey(owner),
     new PublicKey(token.address),
   );

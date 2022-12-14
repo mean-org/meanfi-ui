@@ -144,7 +144,7 @@ export const StreamCloseModal = (props: {
       getTreasuryTypeByTreasuryId(
         localStreamDetail.version < 2
           ? (v1.treasuryAddress as string)
-          : v2.treasury.toBase58(),
+          : v2.psAccount.toBase58(),
         localStreamDetail.version,
       ).then(value => {
         consoleOut('streamTreasuryType:', value, 'crimson');
@@ -186,7 +186,7 @@ export const StreamCloseModal = (props: {
       if (
         (localStreamDetail.version < 2 &&
           v1.treasurerAddress === publicKey.toBase58()) ||
-        (v2.version >= 2 && v2.treasurer.equals(publicKey))
+        (v2.version >= 2 && v2.psAccountOwner.equals(publicKey))
       ) {
         return true;
       }

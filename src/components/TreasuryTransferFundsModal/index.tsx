@@ -279,7 +279,7 @@ export const TreasuryTransferFundsModal = (props: {
     if (
       localStreamDetail &&
       localStreamDetail.version >= 2 &&
-      (localStreamDetail as Stream).feePayedByTreasurer
+      (localStreamDetail as Stream).tokenFeePayedFromAccount
     ) {
       return true;
     }
@@ -342,7 +342,7 @@ export const TreasuryTransferFundsModal = (props: {
       if (
         ((localStreamDetail &&
           localStreamDetail.version >= 2 &&
-          (localStreamDetail as Stream).feePayedByTreasurer) ||
+          (localStreamDetail as Stream).tokenFeePayedFromAccount) ||
           preSetting) &&
         transactionFees
       ) {

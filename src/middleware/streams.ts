@@ -58,19 +58,19 @@ export const getStreamTitle = (
           trans
             ? trans('streams.stream-list.title-scheduled-from')
             : 'Scheduled stream from'
-        } (${shortenAddress(`${v2.treasurer}`)})`;
+        } (${shortenAddress(`${v2.psAccountOwner}`)})`;
       } else if (v2.statusCode === STREAM_STATUS_CODE.Paused) {
         title = `${
           trans
             ? trans('streams.stream-list.title-paused-from')
             : 'Paused stream from'
-        } (${shortenAddress(`${v2.treasurer}`)})`;
+        } (${shortenAddress(`${v2.psAccountOwner}`)})`;
       } else {
         title = `${
           trans
             ? trans('streams.stream-list.title-receiving-from')
             : 'Receiving from'
-        } (${shortenAddress(`${v2.treasurer}`)})`;
+        } (${shortenAddress(`${v2.psAccountOwner}`)})`;
       }
     }
   }
@@ -126,7 +126,7 @@ export const getReadableStream = (item: Stream | StreamInfo) => {
       ? v2.allocationAssigned.toString()
       : v1.allocationAssigned,
     associatedToken: isNew
-      ? v2.associatedToken.toBase58()
+      ? v2.mint.toBase58()
       : (v1.associatedToken as string),
     beneficiary: isNew
       ? v2.beneficiary.toBase58()
@@ -139,7 +139,7 @@ export const getReadableStream = (item: Stream | StreamInfo) => {
     estimatedDepletionDate: isNew
       ? v2.estimatedDepletionDate
       : (v1.escrowEstimatedDepletionUtc as string),
-    feePayedByTreasurer: isNew ? v2.feePayedByTreasurer : false,
+    feePayedByTreasurer: isNew ? v2.tokenFeePayedFromAccount : false,
     fundsLeftInStream: isNew
       ? v2.fundsLeftInStream.toString()
       : v1.escrowUnvestedAmount,
@@ -167,9 +167,9 @@ export const getReadableStream = (item: Stream | StreamInfo) => {
     subCategory: isNew ? v2.subCategory : '-',
     totalWithdrawalsAmount: isNew ? v2.totalWithdrawalsAmount.toString() : '-',
     treasurer: isNew
-      ? v2.treasurer.toBase58()
+      ? v2.psAccountOwner.toBase58()
       : (v1.treasurerAddress as string),
-    treasury: isNew ? v2.treasury.toBase58() : (v1.treasuryAddress as string),
+    treasury: isNew ? v2.psAccount.toBase58() : (v1.treasuryAddress as string),
     version: item.version,
     withdrawableAmount: isNew
       ? v2.withdrawableAmount.toString()

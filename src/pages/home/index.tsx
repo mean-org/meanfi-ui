@@ -22,7 +22,6 @@ import {
   STREAM_STATUS_CODE,
   TransactionFees,
   PaymentStreamingAccount,
-  AccountType,
 } from '@mean-dao/payment-streaming';
 import { AnchorProvider, BN, Idl, Program } from '@project-serum/anchor';
 import {
@@ -84,6 +83,7 @@ import { appConfig, customLogger } from 'index';
 import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
 import { createAddSafeAssetTx, CreateSafeAssetTxParams } from 'middleware/createAddSafeAssetTx';
 import { createTransferTokensTx, TransferTokensTxParams } from 'middleware/createTransferTokensTx';
+import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
@@ -1860,7 +1860,8 @@ export const HomeView = () => {
         continue;
       }
 
-      const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
+      const associatedToken = getStreamAssociatedMint(freshStream);
+      const token = getTokenByMintAddress(associatedToken);
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
@@ -1889,7 +1890,8 @@ export const HomeView = () => {
         continue;
       }
 
-      const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
+      const associatedToken = getStreamAssociatedMint(freshStream);
+      const token = getTokenByMintAddress(associatedToken);
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);

@@ -64,6 +64,7 @@ import { IconArrowForward, IconEllipsisVertical, IconLoading } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
+import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
 import { sendTx, signTx } from 'middleware/transactions';
@@ -620,9 +621,8 @@ export const MoneyStreamsInfoView = (props: {
         continue;
       }
 
-      const token = getTokenByMintAddress(
-        freshStream.associatedToken.toBase58(),
-      );
+      const streamMint = getStreamAssociatedMint(freshStream);
+      const token = getTokenByMintAddress(streamMint);
 
       if (token) {
         const tokenPrice =
@@ -1628,14 +1628,8 @@ export const MoneyStreamsInfoView = (props: {
 
   const getRateAmountDisplay = useCallback(
     (item: Stream | StreamInfo): string => {
-      let associatedToken = '';
 
-      if (item.version < 2) {
-        associatedToken = (item as StreamInfo).associatedToken as string;
-      } else {
-        associatedToken = (item as Stream).associatedToken.toBase58();
-      }
-
+      const associatedToken = getStreamAssociatedMint(item);
       const token = getTokenByMintAddress(associatedToken);
       const decimals = token?.decimals || 9;
       const rateAmount = getRateAmountBn(item, decimals);
@@ -1657,13 +1651,8 @@ export const MoneyStreamsInfoView = (props: {
   const getDepositAmountDisplay = useCallback(
     (item: Stream | StreamInfo): string => {
       let value = '';
-      let associatedToken = '';
 
-      if (item.version < 2) {
-        associatedToken = (item as StreamInfo).associatedToken as string;
-      } else {
-        associatedToken = (item as Stream).associatedToken.toBase58();
-      }
+      const associatedToken = getStreamAssociatedMint(item);
 
       if (
         item &&
@@ -1838,11 +1827,11 @@ export const MoneyStreamsInfoView = (props: {
           : false;
 
       const associatedTokenA = isNew
-        ? vA2.associatedToken.toBase58()
+        ? vA2.mint.toBase58()
         : (vA1.associatedToken as string);
 
       const associatedTokenB = isNew
-        ? vB2.associatedToken.toBase58()
+        ? vB2.mint.toBase58()
         : (vB1.associatedToken as string);
 
       const tokenA = getTokenByMintAddress(associatedTokenA);
@@ -2128,9 +2117,8 @@ export const MoneyStreamsInfoView = (props: {
         const v2 = stream as Stream;
         const isNew = v2.version && v2.version >= 2 ? true : false;
 
-        const token = getTokenByMintAddress(
-          (stream.associatedToken as PublicKey).toString(),
-        );
+        const associatedToken = getStreamAssociatedMint(stream);
+        const token = getTokenByMintAddress(associatedToken);
 
         if (token) {
           const tokenPrice =
@@ -2179,19 +2167,9 @@ export const MoneyStreamsInfoView = (props: {
       let totalRateAmountValuePerSecond = 0;
 
       for (const stream of runningOutgoingStreams) {
-        const v1 = stream as StreamInfo;
-        const v2 = stream as Stream;
-        const isNew = v2.version && v2.version >= 2 ? true : false;
-
-        let associatedToken = '';
-
-        if (isNew) {
-          associatedToken = v2.associatedToken.toBase58();
-        } else {
-          associatedToken = v1.associatedToken as string;
-        }
+        const associatedToken = getStreamAssociatedMint(stream);
         const token = getTokenByMintAddress(associatedToken);
-
+  
         if (token) {
           const tokenPrice =
             getTokenPriceByAddress(token.address) ||
@@ -2752,13 +2730,8 @@ export const MoneyStreamsInfoView = (props: {
       const v2 = stream as Stream;
       const isNew = stream.version >= 2 ? true : false;
 
-      const associatedToken = isNew
-        ? (stream.associatedToken as PublicKey).toBase58()
-        : (stream.associatedToken as string);
-
-      const token = associatedToken
-        ? getTokenByMintAddress(associatedToken)
-        : undefined;
+      const associatedToken = getStreamAssociatedMint(stream);
+      const token = getTokenByMintAddress(associatedToken);
 
       let img;
 
@@ -2802,13 +2775,13 @@ export const MoneyStreamsInfoView = (props: {
       const withdrawResume = isNew
         ? displayAmountWithSymbol(
             v2.withdrawableAmount,
-            v2.associatedToken.toString(),
+            associatedToken,
             token?.decimals || 9,
             splTokenList,
           )
         : getAmountWithSymbol(
             v1.escrowVestedAmount,
-            v1.associatedToken as string,
+            associatedToken,
             false,
             splTokenList,
             token?.decimals || 9,
@@ -2874,12 +2847,8 @@ export const MoneyStreamsInfoView = (props: {
       const v2 = stream as Stream;
       const isNew = stream.version >= 2 ? true : false;
 
-      const associatedToken = isNew
-        ? (stream.associatedToken as PublicKey).toBase58()
-        : (stream.associatedToken as string);
-      const token = associatedToken
-        ? getTokenByMintAddress(associatedToken)
-        : undefined;
+      const associatedToken = getStreamAssociatedMint(stream);
+      const token = getTokenByMintAddress(associatedToken);
 
       let img;
 

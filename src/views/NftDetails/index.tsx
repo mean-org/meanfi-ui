@@ -1,5 +1,4 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Nft } from '@metaplex-foundation/js';
 import { Image, Space, Tabs, Tooltip } from 'antd';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { InfoIcon } from 'components/InfoIcon';

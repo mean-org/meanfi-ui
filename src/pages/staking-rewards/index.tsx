@@ -146,7 +146,7 @@ export const StakingRewardsView = () => {
     }
 
     const meanTokenPk = new PublicKey(meanToken.address);
-    const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
+    const meanTokenAddress = findATokenAddress(publicKey, meanTokenPk);
     const result = await getTokenAccountBalanceByAddress(
       connection,
       meanTokenAddress,

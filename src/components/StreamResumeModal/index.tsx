@@ -18,6 +18,7 @@ import {
 import { Stream } from '@mean-dao/payment-streaming';
 import { AppStateContext } from 'contexts/appstate';
 import { InputMean } from 'components/InputMean';
+import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 
 export const StreamResumeModal = (props: {
   handleClose: any;
@@ -45,7 +46,7 @@ export const StreamResumeModal = (props: {
       const v2 = props.streamDetail as Stream;
       if (
         (v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) ||
-        (v2.version >= 2 && v2.treasurer.equals(publicKey))
+        (v2.version >= 2 && v2.psAccountOwner.equals(publicKey))
       ) {
         return true;
       }
@@ -66,8 +67,7 @@ export const StreamResumeModal = (props: {
     return false;
   }, [publicKey, props.streamDetail]);
 
-  const getFeeAmount = useCallback(
-    (fees: TransactionFees): number => {
+  const getFeeAmount = useCallback((fees: TransactionFees): number => {
       let fee = 0;
 
       // If the Treasurer is initializing the CloseStream Tx, mspFlatFee must be used
@@ -76,13 +76,12 @@ export const StreamResumeModal = (props: {
       if (fees && props.streamDetail) {
         const v1 = props.streamDetail as StreamInfo;
         const v2 = props.streamDetail as Stream;
-        const token = getTokenByMintAddress(
-          props.streamDetail.associatedToken as string,
-        );
+        const associatedToken = getStreamAssociatedMint(props.streamDetail);
+        const token = getTokenByMintAddress(associatedToken);
         const isTreasurer = amITreasurer();
         const isBeneficiary = amIBeneficiary();
         if (isBeneficiary) {
-          if (v1.version < 2) {
+          if (props.streamDetail.version < 2) {
             fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
           } else {
             const wa = toUiAmount(v2.withdrawableAmount, token?.decimals || 9);
@@ -102,11 +101,10 @@ export const StreamResumeModal = (props: {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
 
-      const token = getTokenByMintAddress(
-        props.streamDetail.associatedToken as string,
-      );
+      const associatedToken = getStreamAssociatedMint(props.streamDetail);
+      const token = getTokenByMintAddress(associatedToken);
 
-      if (v1.version < 2) {
+      if (props.streamDetail.version < 2) {
         return v1.escrowVestedAmount;
       } else {
         return toUiAmount(v2.withdrawableAmount, token?.decimals || 9);
@@ -120,11 +118,10 @@ export const StreamResumeModal = (props: {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
 
-      const token = getTokenByMintAddress(
-        props.streamDetail.associatedToken as string,
-      );
+      const associatedToken = getStreamAssociatedMint(props.streamDetail);
+      const token = getTokenByMintAddress(associatedToken);
 
-      if (v1.version < 2) {
+      if (props.streamDetail.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
         return toUiAmount(v2.fundsLeftInStream, token?.decimals || 9);
@@ -212,13 +209,13 @@ export const StreamResumeModal = (props: {
         {/* <h4>{props.content}</h4> */}
 
         {/* Info */}
-        {props.streamDetail && props.streamDetail.associatedToken && (
+        {props.streamDetail && getStreamAssociatedMint(props.streamDetail) && (
           <div className="p-2 mb-2">
             {infoRow(
               t('close-stream.return-vested-amount') + ':',
               getAmountWithSymbol(
                 getWithdrawableAmount(),
-                props.streamDetail.associatedToken as string,
+                getStreamAssociatedMint(props.streamDetail) as string,
               ),
             )}
             {amITreasurer() &&
@@ -226,7 +223,7 @@ export const StreamResumeModal = (props: {
                 t('close-stream.return-unvested-amount') + ':',
                 getAmountWithSymbol(
                   getUnvested(),
-                  props.streamDetail.associatedToken as string,
+                  getStreamAssociatedMint(props.streamDetail) as string,
                 ),
               )}
           </div>

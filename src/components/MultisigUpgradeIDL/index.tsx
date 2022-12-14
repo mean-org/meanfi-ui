@@ -51,7 +51,7 @@ export const MultisigUpgradeIDLModal = (props: {
   }, [props.programId, props.isVisible]);
 
   const idlAddress = useCallback(async (programId: PublicKey) => {
-    const base = (await PublicKey.findProgramAddress([], programId))[0];
+    const [base] = PublicKey.findProgramAddressSync([], programId);
     return await PublicKey.createWithSeed(base, 'anchor:idl', programId);
   }, []);
 
@@ -253,7 +253,7 @@ export const MultisigUpgradeIDLModal = (props: {
             : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">

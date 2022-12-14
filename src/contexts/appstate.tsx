@@ -1243,7 +1243,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     };
 
     let balance = 0;
-    const selectedTokenAddress = await findATokenAddress(publicKey, new PublicKey(selectedToken.address));
+    const selectedTokenAddress = findATokenAddress(publicKey, new PublicKey(selectedToken.address));
     balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
     updateTokenBalance(balance);
   }, [tokenAccounts, connection, publicKey, selectedToken, tokenList]);

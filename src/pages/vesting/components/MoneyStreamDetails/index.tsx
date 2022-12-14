@@ -13,6 +13,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { IconExternalLink } from 'Icons';
+import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import {
   getIntervalFromSeconds,
   getReadableDate,
@@ -704,6 +705,8 @@ export const MoneyStreamDetails = (props: {
       return null;
     }
 
+    const associatedToken = getStreamAssociatedMint(item);
+
     return (
       <div className="transaction-list-row no-pointer">
         <div className="icon-cell">
@@ -719,7 +722,7 @@ export const MoneyStreamDetails = (props: {
               />
             ) : (
               <Identicon
-                address={item.associatedToken}
+                address={associatedToken}
                 style={{ width: '36', height: '36', display: 'inline-flex' }}
               />
             )}

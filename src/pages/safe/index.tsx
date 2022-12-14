@@ -480,7 +480,7 @@ const SafeView = (props: {
           throw new Error('No selected multisig');
         }
 
-        const [multisigSigner] = await PublicKey.findProgramAddress(
+        const [multisigSigner] = PublicKey.findProgramAddressSync(
           [selectedMultisig.id.toBuffer()],
           multisigAddressPK,
         );

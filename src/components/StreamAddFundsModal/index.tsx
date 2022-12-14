@@ -159,7 +159,7 @@ export const StreamAddFundsModal = (props: {
       if (
         ((localStreamDetail &&
           localStreamDetail.version >= 2 &&
-          (localStreamDetail as Stream).feePayedByTreasurer) ||
+          (localStreamDetail as Stream).tokenFeePayedFromAccount) ||
           preSetting) &&
         withdrawTransactionFees
       ) {
@@ -239,7 +239,7 @@ export const StreamAddFundsModal = (props: {
     if (
       localStreamDetail &&
       localStreamDetail.version >= 2 &&
-      (localStreamDetail as Stream).feePayedByTreasurer
+      (localStreamDetail as Stream).tokenFeePayedFromAccount
     ) {
       return true;
     }
@@ -288,7 +288,7 @@ export const StreamAddFundsModal = (props: {
         getTreasuryTypeByTreasuryId(
           localStreamDetail.version < 2
             ? (v1.treasuryAddress as string)
-            : v2.treasury.toBase58(),
+            : v2.psAccount.toBase58(),
           localStreamDetail.version,
         ).then(value => {
           consoleOut('streamTreasuryType:', value, 'crimson');

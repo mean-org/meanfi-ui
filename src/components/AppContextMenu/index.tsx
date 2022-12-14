@@ -1,4 +1,4 @@
-import { EllipsisOutlined, SettingOutlined } from '@ant-design/icons';
+import { SettingOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Modal } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { LanguageSelector } from 'components/LanguageSelector';

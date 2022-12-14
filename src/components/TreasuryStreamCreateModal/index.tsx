@@ -12,10 +12,11 @@ import {
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import {
   Beneficiary,
-  MSP,
+  PaymentStreaming,
   TransactionFees,
   PaymentStreamingAccount,
   AccountType,
+  CreateStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import {
@@ -40,7 +41,6 @@ import { StepSelector } from 'components/StepSelector';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
@@ -123,7 +123,6 @@ export const TreasuryStreamCreateModal = (props: {
   } = props;
   const { t } = useTranslation('common');
   const { wallet, publicKey } = useWallet();
-  const { endpoint } = useConnectionConfig();
   const {
     theme,
     splTokenList,
@@ -140,7 +139,6 @@ export const TreasuryStreamCreateModal = (props: {
     isVerifiedRecipient,
     lockPeriodFrequency,
     paymentRateFrequency,
-    streamV2ProgramAddress,
     setPaymentRateFrequency,
     setIsVerifiedRecipient,
     setLockPeriodFrequency,
@@ -199,6 +197,13 @@ export const TreasuryStreamCreateModal = (props: {
     () => new PublicKey(appConfig.getConfig().multisigProgramAddress),
     [],
   );
+  const paymentStreaming = useMemo(() => {
+    return new PaymentStreaming(
+      connection,
+      mspV2AddressPK,
+      'confirmed'
+    );
+  }, [connection, mspV2AddressPK]);
 
   const isMultisigContext = useMemo(() => {
     return publicKey && selectedAccount.isMultisig ? true : false;
@@ -1142,68 +1147,65 @@ export const TreasuryStreamCreateModal = (props: {
       );
       consoleOut('Starting create stream using MSP V2...', '', 'blue');
 
-      const msp = new MSP(endpoint, streamV2ProgramAddress, 'confirmed');
       const payer = new PublicKey(data.payer);
       const beneficiary = data.beneficiary.address;
       const streamName = data.beneficiary.streamName;
 
       if (!isSelectedStreamingAccountMultisigTreasury) {
-        const createStreamTx = await msp.createStream(
-          payer, // payer
-          new PublicKey(data.treasurer), // treasurer
-          new PublicKey(data.treasury), // treasury
-          beneficiary, // beneficiary
-          streamName, // streamName
-          data.allocationAssigned, // allocationAssigned
-          data.rateAmount, // rateAmount
-          data.rateIntervalInSeconds, // rateIntervalInSeconds
-          data.startUtc, // startUtc
-          data.cliffVestAmount, // cliffVestAmount
-          data.cliffVestPercent, // cliffVestPercent
-          data.feePayedByTreasurer, // feePayedByTreasurer
+        const accounts: CreateStreamTransactionAccounts = {
+          feePayer: payer,                            // payer
+          beneficiary,                                // beneficiary
+          psAccount: new PublicKey(data.treasury),    // treasury
+          owner: new PublicKey(data.treasurer),       // owner
+        };
+        const { transaction } = await paymentStreaming.buildCreateStreamTransaction(
+          accounts,                         // accounts
+          streamName,                       // streamName
+          data.rateAmount,                  // rateAmount
+          data.rateIntervalInSeconds,       // rateIntervalInSeconds
+          data.allocationAssigned,          // allocationAssigned
+          data.startUtc,                    // startUtc
+          data.cliffVestAmount,             // cliffVestAmount
+          data.cliffVestPercent,            // cliffVestPercent
+          data.tokenFeePayedFromAccount,    // feePayedByTreasurer
         );
-
-        return createStreamTx;
+        return transaction;
       }
 
-      if (
-        !workingTreasuryDetails ||
-        !multisigClient ||
-        !selectedMultisig ||
-        !publicKey
-      ) {
+      if (!workingTreasuryDetails || !multisigClient || !selectedMultisig || !publicKey) {
         return null;
       }
 
       multisigAuth = selectedMultisig.authority.toBase58();
 
-      const [multisigSigner] = await PublicKey.findProgramAddress(
+      const [multisigSigner] = PublicKey.findProgramAddressSync(
         [selectedMultisig.id.toBuffer()],
         multisigAddressPK,
       );
 
-      const createStreamTx = await msp.createStream(
-        payer, // payer
-        multisigSigner, // treasurer
-        new PublicKey(data.treasury), // treasury
-        beneficiary, // beneficiary
-        streamName, // streamName
-        data.allocationAssigned, // allocationAssigned
-        data.rateAmount, // rateAmount
-        data.rateIntervalInSeconds, // rateIntervalInSeconds
-        data.startUtc, // startUtc
-        data.cliffVestAmount, // cliffVestAmount
-        data.cliffVestPercent, // cliffVestPercent
-        data.feePayedByTreasurer, // feePayedByTreasurer
-        true, // usePda
+      const accounts: CreateStreamTransactionAccounts = {
+        feePayer: payer,                            // payer
+        beneficiary,                                // beneficiary
+        psAccount: new PublicKey(data.treasury),    // treasury
+        owner: multisigSigner,                      // owner
+      };
+      const { transaction } = await paymentStreaming.buildCreateStreamTransaction(
+        accounts,                         // accounts
+        streamName,                       // streamName
+        data.rateAmount,                  // rateAmount
+        data.rateIntervalInSeconds,       // rateIntervalInSeconds
+        data.allocationAssigned,          // allocationAssigned
+        data.startUtc,                    // startUtc
+        data.cliffVestAmount,             // cliffVestAmount
+        data.cliffVestPercent,            // cliffVestPercent
+        data.tokenFeePayedFromAccount,    // feePayedByTreasurer
+        true,                             // usePda
       );
 
-      const expirationTime = parseInt(
-        (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
-      );
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const ixData = Buffer.from(createStreamTx.instructions[0].data);
-      const ixAccounts = createStreamTx.instructions[0].keys;
+      const ixData = Buffer.from(transaction.instructions[0].data);
+      const ixAccounts = transaction.instructions[0].keys;
 
       const tx = await multisigClient.createTransaction(
         publicKey,
@@ -1300,7 +1302,7 @@ export const TreasuryStreamCreateModal = (props: {
         startUtc: startUtc, // startUtc
         cliffVestAmount: cliffAmount, // cliffVestAmount
         cliffVestPercent: 0, // cliffVestPercent
-        feePayedByTreasurer: isFeePaidByTreasurer, // feePayedByTreasurer
+        tokenFeePayedFromAccount: isFeePaidByTreasurer, // feePayedByTreasurer
       };
       consoleOut('data:', data);
 

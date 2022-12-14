@@ -9,6 +9,7 @@ import { useAccountsContext } from "contexts/accounts";
 import { AppStateContext } from "contexts/appstate";
 import { confirmationEvents, TxConfirmationInfo } from "contexts/transaction-status";
 import { useWallet } from "contexts/wallet";
+import { getStreamingAccountId } from "middleware/getStreamingAccountId";
 import { AppUsageEvent } from "middleware/segment-service";
 import { consoleOut } from "middleware/ui";
 import { RegisteredAppPaths } from "models/accounts";
@@ -357,9 +358,7 @@ const PaymentStreamingView = (props: {
       streamingItemId &&
       pathParamTreasuryId === streamingItemId
     ) {
-      const item = treasuryList.find(
-        s => (s.id as string) === pathParamTreasuryId,
-      );
+      const item = treasuryList.find(s => getStreamingAccountId(s) === pathParamTreasuryId);
       consoleOut('treasuryDetail:', item, 'darkgreen');
       if (item) {
         setTreasuryDetail(item);
@@ -547,7 +546,7 @@ const PaymentStreamingView = (props: {
       streamingItemId &&
       pathParamStreamingTab === 'streaming-accounts' &&
       treasuryDetail &&
-      treasuryDetail.id === pathParamTreasuryId
+      getStreamingAccountId(treasuryDetail) === pathParamTreasuryId
     ) {
       return (
         <StreamingAccountView

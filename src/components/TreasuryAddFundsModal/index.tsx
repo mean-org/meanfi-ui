@@ -201,7 +201,7 @@ export const TreasuryAddFundsModal = (props: {
       if (
         stream &&
         stream.version >= 2 &&
-        (stream as Stream).feePayedByTreasurer
+        (stream as Stream).tokenFeePayedFromAccount
       ) {
         return true;
       }
@@ -214,7 +214,7 @@ export const TreasuryAddFundsModal = (props: {
     (preSetting = false) => {
       if (withdrawTransactionFees && highLightableStreamId) {
         const stream = getSelectedStream();
-        if (stream && ((stream as any).feePayedByTreasurer || preSetting)) {
+        if (stream && ((stream as Stream).tokenFeePayedFromAccount || preSetting)) {
           const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
           const feeNumerator =
             withdrawTransactionFees.mspPercentFee *

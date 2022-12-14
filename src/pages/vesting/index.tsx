@@ -3139,7 +3139,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         consoleOut('streamingAccountAddress', streamingAccountAddress, 'blue');
         const tokenPk = new PublicKey(address);
         const saPk = new PublicKey(streamingAccountAddress);
-        const saAtaTokenAddress = await findATokenAddress(saPk, tokenPk);
+        const saAtaTokenAddress = findATokenAddress(saPk, tokenPk);
         const ta = await getTokenAccountBalanceByAddress(connection, saAtaTokenAddress);
         consoleOut('getTokenAccountBalanceByAddress ->', ta, 'blue');
         if (ta) {

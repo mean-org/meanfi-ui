@@ -52,7 +52,7 @@ export const JupiterExchangeInput = (props: {
         getTokenPriceBySymbol(token.symbol);
       return amount * price;
     },
-    [token],
+    [getTokenPriceByAddress, getTokenPriceBySymbol, token],
   );
 
   return (
