@@ -14,8 +14,16 @@ import {
   MultisigTransactionFees,
   MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
-import { MoneyStreaming, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming';
-import { Category, MSP, Stream, STREAM_STATUS, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { MoneyStreaming, StreamInfo, STREAM_STATE, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming';
+import {
+  Category,
+  PaymentStreaming,
+  Stream,
+  STREAM_STATUS_CODE,
+  TransactionFees,
+  PaymentStreamingAccount,
+  AccountType,
+} from '@mean-dao/payment-streaming';
 import { AnchorProvider, BN, Idl, Program } from '@project-serum/anchor';
 import {
   Token,
@@ -226,7 +234,7 @@ export const HomeView = () => {
   const [isBusy, setIsBusy] = useState(false);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
-  const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
+  const [treasuryList, setTreasuryList] = useState<(PaymentStreamingAccount | TreasuryInfo)[]>([]);
 
   const {
     selectedCategory,
@@ -297,9 +305,13 @@ export const HomeView = () => {
     [endpoint, streamProgramAddress],
   );
 
-  const msp = useMemo(() => {
-    return new MSP(endpoint, streamV2ProgramAddress, 'confirmed');
-  }, [endpoint, streamV2ProgramAddress]);
+  const paymentStreaming = useMemo(() => {
+    return new PaymentStreaming(
+      connection,
+      new PublicKey(streamV2ProgramAddress),
+      'confirmed'
+    );
+  }, [connection, streamV2ProgramAddress]);
 
   const isCustomAsset = useMemo(
     () => (selectedAsset && selectedAsset.name === 'Custom account' ? true : false),
@@ -1630,9 +1642,8 @@ export const HomeView = () => {
     ],
   );
 
-  const getAllUserV2Treasuries = useCallback(
-    async (addr?: string) => {
-      if (!msp) {
+  const getAllUserV2Treasuries = useCallback(async (addr?: string) => {
+      if (!paymentStreaming) {
         return [];
       }
 
@@ -1640,7 +1651,7 @@ export const HomeView = () => {
         const pk = new PublicKey(addr || selectedAccount.address);
 
         consoleOut('Fetching treasuries for:', addr || selectedAccount.address, 'orange');
-        const allTreasuries = await msp.listTreasuries(pk, true);
+        const allTreasuries = await paymentStreaming.listAccounts(pk, true);
 
         const treasuries = allTreasuries.filter(t => t.category === Category.default);
         consoleOut('getAllUserV2Treasuries -> Category.default:', treasuries, 'orange');
@@ -1650,11 +1661,11 @@ export const HomeView = () => {
 
       return [];
     },
-    [msp, selectedAccount.address],
+    [paymentStreaming, selectedAccount.address],
   );
 
   const refreshTreasuries = useCallback((reset = false) => {
-      if (!publicKey || !selectedAccount.address || !ms || !msp) {
+      if (!publicKey || !selectedAccount.address || !ms || !paymentStreaming) {
         return;
       }
 
@@ -1664,7 +1675,7 @@ export const HomeView = () => {
         setLoadingTreasuries(true);
       });
 
-      const treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
+      const treasuryAccumulator: (PaymentStreamingAccount | TreasuryInfo)[] = [];
       let treasuriesv1: TreasuryInfo[] = [];
       getAllUserV2Treasuries()
         .then(async treasuriesv2 => {
@@ -1684,9 +1695,9 @@ export const HomeView = () => {
             .map(streaming => streaming)
             .sort((a, b) => {
               const vA1 = a as TreasuryInfo;
-              const vA2 = a as Treasury;
+              const vA2 = a as PaymentStreamingAccount;
               const vB1 = b as TreasuryInfo;
-              const vB2 = b as Treasury;
+              const vB2 = b as PaymentStreamingAccount;
 
               const isNewTreasury = vA2.version && vA2.version >= 2 && vB2.version && vB2.version >= 2 ? true : false;
 
@@ -1705,12 +1716,12 @@ export const HomeView = () => {
         })
         .finally(() => setLoadingTreasuries(false));
     },
-    [ms, msp, publicKey, selectedAccount.address, isMultisigContext, getAllUserV2Treasuries],
+    [ms, paymentStreaming, publicKey, selectedAccount.address, isMultisigContext, getAllUserV2Treasuries],
   );
 
   const getTreasuryUnallocatedBalance = useCallback(
-    (tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
-      const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+    (tsry: PaymentStreamingAccount | TreasuryInfo, assToken: TokenInfo | undefined) => {
+      const getUnallocatedBalance = (details: PaymentStreamingAccount | TreasuryInfo) => {
         const balance = new BN(details.balance);
         const allocationAssigned = new BN(details.allocationAssigned);
         return balance.sub(allocationAssigned);
@@ -1719,7 +1730,7 @@ export const HomeView = () => {
       if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
         const unallocated = getUnallocatedBalance(tsry);
-        const isNewTreasury = (tsry as Treasury).version && (tsry as Treasury).version >= 2 ? true : false;
+        const isNewTreasury = (tsry as PaymentStreamingAccount).version && (tsry as PaymentStreamingAccount).version >= 2 ? true : false;
         const ub = isNewTreasury
           ? new BigNumber(toUiAmount(unallocated, decimals)).toNumber()
           : new BigNumber(unallocated.toString()).toNumber();
@@ -1743,17 +1754,17 @@ export const HomeView = () => {
     };
 
     for (const treasury of treasuryList) {
-      const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2 ? true : false;
+      const isNew = (treasury as PaymentStreamingAccount).version && (treasury as PaymentStreamingAccount).version >= 2 ? true : false;
 
       const treasuryType = isNew
-        ? (treasury as Treasury).treasuryType
-        : ((treasury as TreasuryInfo).type as TreasuryType);
+        ? +(treasury as PaymentStreamingAccount).accountType
+        : +((treasury as TreasuryInfo).type as TreasuryType);
 
       const associatedToken = isNew
-        ? ((treasury as Treasury).associatedToken as string)
+        ? ((treasury as PaymentStreamingAccount).mint.toBase58())
         : ((treasury as TreasuryInfo).associatedTokenAddress as string);
 
-      if (treasuryType === TreasuryType.Open) {
+      if (treasuryType === 0) {
         resume['openAmount'] += 1;
       } else {
         resume['lockedAmount'] += 1;
@@ -1837,15 +1848,15 @@ export const HomeView = () => {
   }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, ms]);
 
   const getV2FundsLeftValue = useCallback(async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
-    if (!msp) return 0;
+    if (!paymentStreaming) return 0;
 
     let fundsLeftValue = 0;
     for await (const stream of updatedStreamsv2) {
       const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
 
       // Get refreshed data
-      const freshStream = (await msp.refreshStream(stream)) as Stream;
-      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) {
+      const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
+      if (!freshStream || freshStream.statusCode !== STREAM_STATUS_CODE.Running) {
         continue;
       }
 
@@ -1863,18 +1874,18 @@ export const HomeView = () => {
       }
     }
     return fundsLeftValue;
-  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, msp]);
+  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, paymentStreaming]);
 
   const getV2WithdrawableValue = useCallback(async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
-    if (!msp) return 0;
+    if (!paymentStreaming) return 0;
 
     let withdrawableValue = 0;
     for await (const stream of updatedStreamsv2) {
       const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
 
       // Get refreshed data
-      const freshStream = (await msp.refreshStream(stream)) as Stream;
-      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) {
+      const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
+      if (!freshStream || freshStream.statusCode !== STREAM_STATUS_CODE.Running) {
         continue;
       }
 
@@ -1892,10 +1903,10 @@ export const HomeView = () => {
       }
     }
     return withdrawableValue;
-  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, msp]);
+  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, paymentStreaming]);
 
   const refreshIncomingStreamSummary = useCallback(async () => {
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) {
+    if (!ms || !paymentStreaming || !publicKey || (!streamListv1 && !streamListv2)) {
       return;
     }
 
@@ -1909,7 +1920,7 @@ export const HomeView = () => {
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 || [], treasurer);
 
     const vested = await getV1VestedValue(updatedStreamsv1, treasurer);
     resume['totalNet'] = vested;
@@ -1923,7 +1934,7 @@ export const HomeView = () => {
     setIncomingStreamsSummary(resume);
   }, [
     ms,
-    msp,
+    paymentStreaming,
     publicKey,
     streamListv1,
     streamListv2,
@@ -1933,7 +1944,7 @@ export const HomeView = () => {
   ]);
 
   const refreshOutgoingStreamSummary = useCallback(async () => {
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) {
+    if (!ms || !paymentStreaming || !publicKey || (!streamListv1 && !streamListv2)) {
       return;
     }
 
@@ -1947,7 +1958,7 @@ export const HomeView = () => {
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 || [], treasurer);
 
     const unvested = await getV1UnvestedValue(updatedStreamsv1, treasurer);
     resume['totalNet'] = unvested;
@@ -1961,7 +1972,7 @@ export const HomeView = () => {
     setOutgoingStreamsSummary(resume);
   }, [
     ms,
-    msp,
+    paymentStreaming,
     publicKey,
     streamListv1,
     streamListv2,
@@ -2413,7 +2424,7 @@ export const HomeView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, selectedAccount.address]);
 
-  // Treasury list refresh timeout
+  // PaymentStreamingAccount list refresh timeout
   useEffect(() => {
     let timer: any;
 

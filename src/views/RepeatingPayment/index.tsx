@@ -1,10 +1,11 @@
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
-  calculateActionFees,
-  MSP,
-  MSP_ACTIONS,
+  calculateFeesForAction,
+  PaymentStreaming,
+  ACTION_CODES,
   TransactionFees,
-} from '@mean-dao/msp';
+  StreamPaymentTransactionAccounts,
+} from '@mean-dao/payment-streaming';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, DatePicker, Dropdown, Menu } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -24,7 +25,7 @@ import {
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnection, useConnectionConfig } from 'contexts/connection';
+import { useConnection } from 'contexts/connection';
 import {
   confirmationEvents,
   TxConfirmationContext,
@@ -91,7 +92,6 @@ export const RepeatingPayment = (props: {
     userBalances,
   } = props;
   const connection = useConnection();
-  const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
     splTokenList,
@@ -136,6 +136,15 @@ export const RepeatingPayment = (props: {
   const [repeatingPaymentFees, setRepeatingPaymentFees] =
     useState<TransactionFees>(NO_FEES);
 
+  // Create and cache Payment Streaming instance
+  const paymentStreaming = useMemo(() => {
+    return new PaymentStreaming(
+      connection,
+      new PublicKey(streamV2ProgramAddress),
+      'confirmed'
+    );
+  }, [connection, streamV2ProgramAddress]);
+
   const isNative = useMemo(() => {
     return selectedToken && selectedToken.address === NATIVE_SOL.address
       ? true
@@ -143,10 +152,10 @@ export const RepeatingPayment = (props: {
   }, [selectedToken]);
 
   const getTransactionFees = useCallback(
-    async (action: MSP_ACTIONS): Promise<TransactionFees> => {
-      return calculateActionFees(connection, action);
+    async (action: ACTION_CODES): Promise<TransactionFees> => {
+      return calculateFeesForAction(action);
     },
-    [connection],
+    [],
   );
 
   const getFeeAmount = useCallback(() => {
@@ -366,7 +375,7 @@ export const RepeatingPayment = (props: {
   /////////////////////
 
   useEffect(() => {
-    getTransactionFees(MSP_ACTIONS.createStreamWithFunds).then(value => {
+    getTransactionFees(ACTION_CODES.CreateStreamWithFunds).then(value => {
       setRepeatingPaymentFees(value);
       consoleOut('repeatingPaymentFees:', value, 'orange');
     });
@@ -711,7 +720,7 @@ export const RepeatingPayment = (props: {
   // Main action
 
   const onStartTransaction = useCallback(async () => {
-    let transaction: Transaction | null = null;
+    let createdTransaction: Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let transactionLog: any[] = [];
@@ -817,59 +826,56 @@ export const RepeatingPayment = (props: {
         consoleOut('repeatingPaymentFees:', getFeeAmount(), 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
 
-        // Init a streaming operation
-        const msp = new MSP(endpoint, streamV2ProgramAddress, 'confirmed');
-
-        return msp
-          .streamPayment(
-            publicKey, // treasurer
-            beneficiary, // beneficiary
-            associatedToken, // mint
-            recipientNote, // streamName
-            amount, // allocationAssigned
-            rateAmount, // rateAmount
-            getRateIntervalInSeconds(paymentRateFrequency), // rateIntervalInSeconds
-            startUtc, // startUtc
-            0, // cliffVestAmount
-            0, // cliffVestPercent
-            false, // feePayedByTreasurer
-          )
-          .then(value => {
-            consoleOut('streamPayment returned transaction:', value);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
-              result: getTxIxResume(value),
-            });
-            transaction = value;
-            return true;
-          })
-          .catch(error => {
-            console.error('streamPayment error:', error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
-              result: `${error}`,
-            });
-            customLogger.logError('Repeating Payment transaction failed', {
-              transcript: transactionLog,
-            });
-            segmentAnalytics.recordEvent(
-              AppUsageEvent.TransferRecurringFailed,
-              { transcript: transactionLog },
-            );
-            return false;
+        try {
+          const accounts: StreamPaymentTransactionAccounts = {
+            feePayer: publicKey,        // treasurer
+            owner: publicKey,           // treasurer
+            beneficiary: beneficiary,   // beneficiary
+            mint: associatedToken,      // mint
+          };
+          const { transaction } = await paymentStreaming.buildStreamPaymentTransaction(
+            accounts,                                         // accounts
+            recipientNote,                                    // streamName
+            rateAmount,                                       // rateAmount
+            getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
+            amount,                                           // allocationAssigned
+            startUtc,                                         // startUtc
+            false,                                            // feePayedByTreasurer
+          );
+          consoleOut('streamPayment returned transaction:', transaction);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction,
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(
+              TransactionStatus.InitTransactionSuccess,
+            ),
+            result: getTxIxResume(transaction),
+          });
+          createdTransaction = transaction;
+          return true;
+        } catch (error) {
+          console.error('streamPayment error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure,
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(
+              TransactionStatus.InitTransactionFailure,
+            ),
+            result: `${error}`,
+          });
+          customLogger.logError('Repeating Payment transaction failed', {
+            transcript: transactionLog,
+          });
+          segmentAnalytics.recordEvent(
+            AppUsageEvent.TransferRecurringFailed,
+            { transcript: transactionLog },
+          );
+          return false;
+        }
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -888,12 +894,12 @@ export const RepeatingPayment = (props: {
     if (wallet && publicKey) {
       const created = await createTx();
       consoleOut('created:', created);
-      if (created && !transactionCancelled && transaction) {
+      if (created && !transactionCancelled && createdTransaction) {
         const sign = await signTx(
           'Recurring Payment',
           wallet,
           publicKey,
-          transaction as Transaction,
+          createdTransaction as Transaction,
         );
         if (sign.encodedTransaction && !transactionCancelled) {
           encodedTx = sign.encodedTransaction;
@@ -960,7 +966,6 @@ export const RepeatingPayment = (props: {
     }
   }, [
     wallet,
-    endpoint,
     publicKey,
     connection,
     nativeBalance,
@@ -968,12 +973,12 @@ export const RepeatingPayment = (props: {
     selectedToken,
     fromCoinAmount,
     recipientAddress,
+    paymentStreaming,
     paymentStartDate,
     paymentRateAmount,
     transferCompleted,
     paymentRateFrequency,
     transactionCancelled,
-    streamV2ProgramAddress,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
     resetTransactionStatus,

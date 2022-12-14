@@ -1,5 +1,5 @@
 import { StreamInfo } from '@mean-dao/money-streaming';
-import { Stream } from '@mean-dao/msp';
+import { Stream } from '@mean-dao/payment-streaming';
 import { Button, Modal } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { InputMean } from 'components/InputMean';

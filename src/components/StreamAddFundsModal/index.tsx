@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button } from 'antd';
-import { AppStateContext } from '../../contexts/appstate';
+import { AppStateContext } from 'contexts/appstate';
 import {
   cutNumber,
   displayAmountWithSymbol,
@@ -10,7 +10,7 @@ import {
   toTokenAmount,
   toTokenAmountBn,
   toUiAmount,
-} from '../../middleware/utils';
+} from 'middleware/utils';
 import { useTranslation } from 'react-i18next';
 import {
   StreamInfo,
@@ -19,25 +19,26 @@ import {
 } from '@mean-dao/money-streaming/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
-import { MSP, Stream, Treasury, TreasuryType } from '@mean-dao/msp';
-import { StreamTreasuryType } from '../../models/treasuries';
-import { useWallet } from '../../contexts/wallet';
-import { useConnection } from '../../contexts/connection';
+import { PaymentStreaming, Stream, PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
+import { StreamTreasuryType } from 'models/treasuries';
+import { useWallet } from 'contexts/wallet';
+import { useConnection } from 'contexts/connection';
 import { PublicKey } from '@solana/web3.js';
-import { consoleOut, toUsCurrency } from '../../middleware/ui';
+import { consoleOut, toUsCurrency } from 'middleware/ui';
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import BN from 'bn.js';
-import { StreamTopupParams } from '../../models/common-types';
-import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
+import { StreamTopupParams } from 'models/common-types';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
+import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { InputMean } from 'components/InputMean';
+import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
-  mspClient: MoneyStreaming | MSP | undefined;
+  mspClient: MoneyStreaming | PaymentStreaming | undefined;
   nativeBalance: number;
   userBalances: any;
   selectedToken?: TokenInfo | undefined;
@@ -70,7 +71,7 @@ export const StreamAddFundsModal = (props: {
   const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
 
-  // Treasury related
+  // PaymentStreamingAccount related
   const [streamTreasuryType, setStreamTreasuryType] = useState<
     StreamTreasuryType | undefined
   >(undefined);
@@ -79,7 +80,7 @@ export const StreamAddFundsModal = (props: {
     Stream | StreamInfo | undefined
   >(undefined);
   const [treasuryDetails, setTreasuryDetails] = useState<
-    Treasury | TreasuryInfo | undefined
+    PaymentStreamingAccount | TreasuryInfo | undefined
   >(undefined);
   const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] =
@@ -90,24 +91,18 @@ export const StreamAddFundsModal = (props: {
 
   const getTreasuryType = useCallback(
     (
-      details?: Treasury | TreasuryInfo | undefined,
+      details?: PaymentStreamingAccount | TreasuryInfo | undefined,
     ): StreamTreasuryType | undefined => {
       if (details) {
-        const v1 = details as TreasuryInfo;
-        const v2 = details as Treasury;
-        const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-        const type = isNewTreasury ? v2.treasuryType : v1.type;
-        if (type === TreasuryType.Lock) {
+        const type = getStreamingAccountType(details);
+        if (type === AccountType.Lock) {
           return 'locked';
         } else {
           return 'open';
         }
       } else if (treasuryDetails) {
-        const v1 = treasuryDetails as TreasuryInfo;
-        const v2 = treasuryDetails as Treasury;
-        const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-        const type = isNewTreasury ? v2.treasuryType : v1.type;
-        if (type === TreasuryType.Lock) {
+        const type = getStreamingAccountType(treasuryDetails);
+        if (type === AccountType.Lock) {
           return 'locked';
         } else {
           return 'open';
@@ -119,44 +114,43 @@ export const StreamAddFundsModal = (props: {
     [treasuryDetails],
   );
 
-  const getTreasuryTypeByTreasuryId = useCallback(
-    async (
-      treasuryId: string,
-      streamVersion: number,
-    ): Promise<StreamTreasuryType | undefined> => {
-      if (!connection || !publicKey || !mspClient) {
-        return undefined;
+  const getTreasuryTypeByTreasuryId = useCallback(async (
+    treasuryId: string,
+    streamVersion: number,
+  ): Promise<StreamTreasuryType | undefined> => {
+    if (!connection || !publicKey || !mspClient) {
+      return undefined;
+    }
+
+    const treasuryPk = new PublicKey(treasuryId);
+
+    try {
+      let details: PaymentStreamingAccount | TreasuryInfo | undefined = undefined;
+      if (streamVersion < 2) {
+        details = await (mspClient as MoneyStreaming).getTreasury(treasuryPk);
+      } else {
+        details = await (mspClient as PaymentStreaming).getAccount(treasuryPk);
       }
-
-      const mspInstance =
-        streamVersion < 2 ? (mspClient as MoneyStreaming) : (mspClient as MSP);
-      const treasueyPk = new PublicKey(treasuryId);
-
-      try {
-        const details = await mspInstance.getTreasury(treasueyPk);
-        if (details) {
-          setTreasuryDetails(details);
-          consoleOut('treasuryDetails:', details, 'blue');
-          const v1 = details as TreasuryInfo;
-          const v2 = details as Treasury;
-          const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-          const type = isNewTreasury ? v2.treasuryType : v1.type;
-          if (type === TreasuryType.Lock) {
-            return 'locked';
-          } else {
-            return 'open';
-          }
+      if (details) {
+        setTreasuryDetails(details);
+        consoleOut('treasuryDetails:', details, 'blue');
+        const type = getStreamingAccountType(details);
+        if (type === AccountType.Lock) {
+          return 'locked';
         } else {
-          setTreasuryDetails(undefined);
-          return 'unknown';
+          return 'open';
         }
-      } catch (error) {
-        console.error(error);
+      } else {
+        setTreasuryDetails(undefined);
         return 'unknown';
-      } finally {
-        setLoadingTreasuryDetails(false);
       }
-    },
+    } catch (error) {
+      console.error(error);
+      return 'unknown';
+    } finally {
+      setLoadingTreasuryDetails(false);
+    }
+  },
     [publicKey, connection, mspClient],
   );
 
@@ -317,7 +311,7 @@ export const StreamAddFundsModal = (props: {
       return;
     }
 
-    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+    const getUnallocatedBalance = (details: PaymentStreamingAccount | TreasuryInfo) => {
       const isNew = details && details.version >= 2 ? true : false;
       let result = new BN(0);
       let balance = new BN(0);

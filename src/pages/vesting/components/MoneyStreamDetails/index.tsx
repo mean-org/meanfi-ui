@@ -102,15 +102,15 @@ export const MoneyStreamDetails = (props: {
         if (item.statusCode === STREAM_STATUS_CODE.Scheduled) {
           title = `${t(
             'streams.stream-list.title-scheduled-from',
-          )} (${shortenAddress(item.treasurer)})`;
+          )} (${shortenAddress(item.psAccountOwner)})`;
         } else if (item.statusCode === STREAM_STATUS_CODE.Paused) {
           title = `${t(
             'streams.stream-list.title-paused-from',
-          )} (${shortenAddress(item.treasurer)})`;
+          )} (${shortenAddress(item.psAccountOwner)})`;
         } else {
           title = `${t(
             'streams.stream-list.title-receiving-from',
-          )} (${shortenAddress(item.treasurer)})`;
+          )} (${shortenAddress(item.psAccountOwner)})`;
         }
       } else {
         if (item.statusCode === STREAM_STATUS_CODE.Scheduled) {
@@ -351,7 +351,7 @@ export const MoneyStreamDetails = (props: {
 
     return (
       <AddressDisplay
-        address={stream.treasurer.toBase58()}
+        address={stream.psAccountOwner.toBase58()}
         iconStyles={{ width: '15', height: '15' }}
         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
       />

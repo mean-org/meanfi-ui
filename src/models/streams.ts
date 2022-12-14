@@ -1,4 +1,4 @@
-import { Beneficiary } from '@mean-dao/msp';
+import { Beneficiary } from '@mean-dao/payment-streaming';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 
 export interface StreamsSummary {

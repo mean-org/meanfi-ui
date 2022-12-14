@@ -2268,7 +2268,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       const accounts: WithdrawFromAccountTransactionAccounts = {
         feePayer: new PublicKey(multisig.authority),      // payer
-        // feePayer: new PublicKey(data.payer),              // payer
         destination: new PublicKey(data.destination),     // destination
         psAccount: new PublicKey(data.treasury),          // psAccount
       };

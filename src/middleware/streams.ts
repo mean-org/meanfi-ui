@@ -1,5 +1,5 @@
 import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
-import { Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { Stream, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
 import { TFunction } from 'react-i18next';
 import { getShortDate } from './ui';
 import { shortenAddress } from './utils';
@@ -53,13 +53,13 @@ export const getStreamTitle = (
         return `${v2.name}`;
       }
 
-      if (v2.status === STREAM_STATUS.Scheduled) {
+      if (v2.statusCode === STREAM_STATUS_CODE.Scheduled) {
         title = `${
           trans
             ? trans('streams.stream-list.title-scheduled-from')
             : 'Scheduled stream from'
         } (${shortenAddress(`${v2.treasurer}`)})`;
-      } else if (v2.status === STREAM_STATUS.Paused) {
+      } else if (v2.statusCode === STREAM_STATUS_CODE.Paused) {
         title = `${
           trans
             ? trans('streams.stream-list.title-paused-from')
@@ -100,10 +100,10 @@ export const getStreamStatusResume = (
           return trans('streams.status.streaming');
       }
     } else {
-      switch (v2.status) {
-        case STREAM_STATUS.Scheduled:
+      switch (v2.statusCode) {
+        case STREAM_STATUS_CODE.Scheduled:
           return `starts on ${getShortDate(v2.startUtc)}`;
-        case STREAM_STATUS.Paused:
+        case STREAM_STATUS_CODE.Paused:
           if (v2.isManuallyPaused) {
             return '';
             // return `paused on ${getShortDate(v2.startUtc)}`;
@@ -161,7 +161,7 @@ export const getReadableStream = (item: Stream | StreamInfo) => {
     secondsSinceStart: isNew ? v2.secondsSinceStart : '-',
     startUtc: isNew ? v2.startUtc : (v1.startUtc as string),
     status: isNew
-      ? `${STREAM_STATUS[v2.status as STREAM_STATUS]} = ${v2.status}`
+      ? `${v2.statusCode} = ${v2.statusName}`
       : `${STREAM_STATE[v1.state]} = ${v1.state}`,
     streamUnitsPerSecond: isNew ? v2.streamUnitsPerSecond : '-',
     subCategory: isNew ? v2.subCategory : '-',

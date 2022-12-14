@@ -1,5 +1,5 @@
 import { StreamInfo, TreasuryInfo } from "@mean-dao/money-streaming";
-import { Stream, Treasury } from "@mean-dao/msp";
+import { Stream, PaymentStreamingAccount } from "@mean-dao/payment-streaming";
 import { PublicKey } from "@solana/web3.js";
 import { Button, notification } from "antd";
 import { segmentAnalytics } from "App";
@@ -20,7 +20,7 @@ import { MoneyStreamsIncomingView, MoneyStreamsInfoView, MoneyStreamsOutgoingVie
 let isWorkflowLocked = false;
 
 const PaymentStreamingView = (props: {
-  treasuryList: (Treasury | TreasuryInfo)[];
+  treasuryList: (TreasuryInfo | PaymentStreamingAccount)[];
   loadingTreasuries: boolean;
   onBackButtonClicked?: any;
 }) => {
@@ -50,7 +50,7 @@ const PaymentStreamingView = (props: {
   const [pathParamTreasuryId, setPathParamTreasuryId] = useState('');
   const [pathParamStreamingTab, setPathParamStreamingTab] = useState('');
   // Streaming account
-  const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
+  const [treasuryDetail, setTreasuryDetail] = useState<PaymentStreamingAccount | TreasuryInfo | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
 
 
@@ -470,7 +470,7 @@ const PaymentStreamingView = (props: {
   };
 
   const goToStreamingAccountDetailsHandler = (
-    streamingTreasury: Treasury | TreasuryInfo | undefined,
+    streamingTreasury: PaymentStreamingAccount | TreasuryInfo | undefined,
   ) => {
     if (streamingTreasury) {
       const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingTreasury.id as string

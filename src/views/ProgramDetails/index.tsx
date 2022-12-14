@@ -2,7 +2,7 @@ import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   MeanMultisig,
 } from '@mean-dao/mean-multisig-sdk';
-import { TransactionFees } from '@mean-dao/msp';
+import { TransactionFees } from '@mean-dao/payment-streaming';
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import {
   ConfirmOptions,
@@ -693,29 +693,29 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   }: {
     proposalTitle?: string;
     programId: string;
-  }) => {
-    const programAddress = new PublicKey(programId);
-    PublicKey.findProgramAddress(
-      [programAddress.toBuffer()],
-      BPF_LOADER_UPGRADEABLE_PID,
-    )
-      .then((result: any) => {
-        const programDataAddress = result[0];
-        const fees = {
-          blockchainFee: 0.000005,
-          mspFlatFee: 0.00001,
-          mspPercentFee: 0,
-        };
-        setTransactionFees(fees);
-        const params: SetProgramAuthPayload = {
-          proposalTitle: proposalTitle || '',
-          programAddress: programId,
-          programDataAddress: programDataAddress.toBase58(),
-          newAuthAddress: '', // Empty to make program non-upgradable (inmutable)
-        };
-        onAcceptSetProgramAuth(params);
-      })
-      .catch(err => console.error(err));
+    }) => {
+    try {
+      const programAddress = new PublicKey(programId);
+      const [programDataAddress] = PublicKey.findProgramAddressSync(
+        [programAddress.toBuffer()],
+        BPF_LOADER_UPGRADEABLE_PID
+      );
+      const fees = {
+        blockchainFee: 0.000005,
+        mspFlatFee: 0.00001,
+        mspPercentFee: 0,
+      };
+      setTransactionFees(fees);
+      const params: SetProgramAuthPayload = {
+        proposalTitle: proposalTitle || '',
+        programAddress: programId,
+        programDataAddress: programDataAddress.toBase58(),
+        newAuthAddress: '', // Empty to make program non-upgradable (inmutable)
+      };
+      onAcceptSetProgramAuth(params);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const onAcceptSetProgramAuth = (params: SetProgramAuthPayload) => {
@@ -785,7 +785,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           return null;
         }
 
-        const [multisigSigner] = await PublicKey.findProgramAddress(
+        const [multisigSigner] = PublicKey.findProgramAddressSync(
           [selectedMultisig.id.toBuffer()],
           multisigProgramAddressPK,
         );

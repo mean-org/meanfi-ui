@@ -3,7 +3,7 @@ import {
   StreamInfo,
   TransactionFees,
 } from '@mean-dao/money-streaming/lib/types';
-import { Stream } from '@mean-dao/msp';
+import { Stream } from '@mean-dao/payment-streaming';
 import { Button, Col, Modal, Row } from 'antd';
 import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';

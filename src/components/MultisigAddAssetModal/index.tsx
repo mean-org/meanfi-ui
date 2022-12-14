@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { TransactionFees } from '@mean-dao/msp';
+import { TransactionFees } from '@mean-dao/payment-streaming';
 import {
   AccountInfo,
   Connection,

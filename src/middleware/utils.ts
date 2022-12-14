@@ -498,13 +498,13 @@ export const toTokenAmount = (amount: number | string, decimals: number, asStrin
   return value.multipliedBy(multiplier);
 };
 
-export const toTokenAmountBn = (amount: number | string, decimals: number) => {
+export const toTokenAmountBn = (amount: number | string | BN, decimals: number) => {
   if (!amount || !decimals) {
     return new BN(0);
   }
-
+  const convertedValue = BN.isBN(amount) ? amount.toString() : amount;
   const multiplier = new BigNumber(10 ** decimals);
-  const value = new BigNumber(amount);
+  const value = new BigNumber(convertedValue);
   const result = value.multipliedBy(multiplier).integerValue();
   const toFixed = result.toFixed(0);
   return new BN(toFixed);

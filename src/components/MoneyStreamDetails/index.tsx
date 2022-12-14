@@ -1,18 +1,20 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import {
-  StreamActivity,
+  StreamActivity as StreamActivityV1,
   StreamInfo,
   STREAM_STATE,
-  TreasuryInfo
+  TreasuryInfo,
+  TreasuryType
 } from '@mean-dao/money-streaming/lib/types';
 import {
-  MSP,
+  AccountType,
+  PaymentStreaming,
+  PaymentStreamingAccount,
+  STREAM_STATUS_CODE,
   Stream,
-  STREAM_STATUS,
-  Treasury,
-  TreasuryType
-} from '@mean-dao/msp';
+  StreamActivity,
+} from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Col, Row, Spin, Tabs } from 'antd';
 import BN from 'bn.js';
@@ -27,6 +29,7 @@ import {
 import { AppStateContext } from 'contexts/appstate';
 import {
   getSolanaExplorerClusterParam,
+  useConnection,
   useConnectionConfig
 } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -84,6 +87,7 @@ export const MoneyStreamDetails = (props: {
     streamV2ProgramAddress,
     getStreamActivity,
   } = useContext(AppStateContext);
+  const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
@@ -92,7 +96,7 @@ export const MoneyStreamDetails = (props: {
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [activityLoaded, setActivityLoaded] = useState(false);
   const [treasuryDetails, setTreasuryDetails] = useState<
-    Treasury | TreasuryInfo | undefined
+    PaymentStreamingAccount | TreasuryInfo | undefined
   >(undefined);
 
   // Create and cache Money Streaming Program instance
@@ -101,9 +105,13 @@ export const MoneyStreamDetails = (props: {
     [endpoint, streamProgramAddress],
   );
 
-  const msp = useMemo(() => {
-    return new MSP(endpoint, streamV2ProgramAddress, 'confirmed');
-  }, [endpoint, streamV2ProgramAddress]);
+  const paymentStreaming = useMemo(() => {
+    return new PaymentStreaming(
+      connection,
+      new PublicKey(streamV2ProgramAddress),
+      'confirmed'
+    );
+  }, [connection, streamV2ProgramAddress]);
 
   const tabOption = useMemo(() => {
     let tabOptionInQuery: string | null = null;
@@ -258,10 +266,10 @@ export const MoneyStreamDetails = (props: {
             return 'running';
         }
       } else {
-        switch (v2.status) {
-          case STREAM_STATUS.Scheduled:
+        switch (v2.statusCode) {
+          case STREAM_STATUS_CODE.Scheduled:
             return 'scheduled';
-          case STREAM_STATUS.Paused:
+          case STREAM_STATUS_CODE.Paused:
             if (v2.isManuallyPaused) {
               return 'stopped-manually';
             }
@@ -289,10 +297,10 @@ export const MoneyStreamDetails = (props: {
               return t('streams.status.status-running');
           }
         } else {
-          switch (v2.status) {
-            case STREAM_STATUS.Scheduled:
+          switch (v2.statusCode) {
+            case STREAM_STATUS_CODE.Scheduled:
               return t('streams.status.status-scheduled');
-            case STREAM_STATUS.Paused:
+            case STREAM_STATUS_CODE.Paused:
               if (v2.isManuallyPaused) {
                 return t('streams.status.status-paused');
               }
@@ -342,7 +350,7 @@ export const MoneyStreamDetails = (props: {
     return false;
   }, []);
 
-  const getActivityIcon = (item: StreamActivity) => {
+  const getActivityIcon = (item: StreamActivityV1 | StreamActivity) => {
     if (isInboundStream(stream as StreamInfo)) {
       if (item.action === 'withdrew') {
         return <ArrowUpOutlined className="mean-svg-icons outgoing" />;
@@ -358,7 +366,7 @@ export const MoneyStreamDetails = (props: {
     }
   };
 
-  const getActivityAction = (item: StreamActivity): string => {
+  const getActivityAction = (item: StreamActivityV1 | StreamActivity): string => {
     const actionText =
       item.action === 'deposited'
         ? t('streams.stream-activity.action-deposit')
@@ -407,7 +415,7 @@ export const MoneyStreamDetails = (props: {
   );
 
   useEffect(() => {
-    if (!publicKey || !stream || !ms || !msp) {
+    if (!publicKey || !stream || !ms || !paymentStreaming) {
       return;
     }
 
@@ -420,11 +428,10 @@ export const MoneyStreamDetails = (props: {
       return;
     }
 
-    const mspInstance = isNew ? msp : ms;
     consoleOut('treasuryId:', treasuryId, 'blue');
     const treasueyPk = new PublicKey(treasuryId);
-
-    mspInstance
+    if (isNew) {
+      ms
       .getTreasury(treasueyPk)
       .then(details => {
         if (details) {
@@ -437,7 +444,22 @@ export const MoneyStreamDetails = (props: {
         console.error(error);
         setTreasuryDetails(undefined);
       });
-  }, [ms, msp, publicKey, stream, treasuryDetails]);
+    } else {
+      paymentStreaming
+        .getAccount(treasueyPk)
+        .then(details => {
+          if (details) {
+            setTreasuryDetails(details);
+          } else {
+            setTreasuryDetails(undefined);
+          }
+        })
+        .catch(error => {
+          console.error(error);
+          setTreasuryDetails(undefined);
+        });
+    }
+  }, [ms, paymentStreaming, publicKey, stream, treasuryDetails]);
 
   // Detect XS screen
   useEffect(() => {
@@ -740,7 +762,7 @@ export const MoneyStreamDetails = (props: {
     }
 
     const v1 = treasuryDetails as TreasuryInfo;
-    const v2 = treasuryDetails as Treasury;
+    const v2 = treasuryDetails as PaymentStreamingAccount;
     const isNewTreasury = treasuryDetails.version >= 2 ? true : false;
 
     let type = '';
@@ -749,7 +771,7 @@ export const MoneyStreamDetails = (props: {
       type =
         v2.category === 1
           ? 'Vesting'
-          : v2.treasuryType === TreasuryType.Open
+          : v2.accountType === AccountType.Open
           ? 'Open'
           : 'Locked';
     } else {

@@ -15,7 +15,7 @@ import {
   StreamInfo,
   TransactionFees,
 } from '@mean-dao/money-streaming/lib/types';
-import { Stream } from '@mean-dao/msp';
+import { Stream } from '@mean-dao/payment-streaming';
 import { AppStateContext } from 'contexts/appstate';
 import { InputMean } from 'components/InputMean';
 

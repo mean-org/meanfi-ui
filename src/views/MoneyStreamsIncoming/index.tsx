@@ -18,13 +18,15 @@ import {
 } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
-  calculateActionFees as calculateActionFeesV2,
-  MSP,
-  MSP_ACTIONS as MSP_ACTIONS_V2,
+  calculateFeesForAction,
+  PaymentStreaming,
+  ACTION_CODES,
   Stream,
-  STREAM_STATUS,
+  STREAM_STATUS_CODE,
   TransactionFees,
-} from '@mean-dao/msp';
+  TransferStreamTransactionAccounts,
+  WithdrawFromStreamTransactionAccounts,
+} from '@mean-dao/payment-streaming';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Dropdown, Menu, Modal, Space, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -92,7 +94,6 @@ export const MoneyStreamsIncomingView = (props: {
     selectedAccount,
     transactionStatus,
     streamProgramAddress,
-    streamV2ProgramAddress,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
     getTokenByMintAddress,
@@ -147,16 +148,14 @@ export const MoneyStreamsIncomingView = (props: {
     [endpoint, streamProgramAddress],
   );
 
-  // Create and cache Money Streaming Program V2 instance
-  const msp = useMemo(() => {
-    if (publicKey) {
-      return new MSP(
-        connectionConfig.endpoint,
-        streamV2ProgramAddress,
-        'confirmed',
-      );
-    }
-  }, [connectionConfig.endpoint, publicKey, streamV2ProgramAddress]);
+  // Create and cache Payment Streaming instance
+  const paymentStreaming = useMemo(() => {
+    return new PaymentStreaming(
+      connection,
+      mspV2AddressPK,
+      'confirmed'
+    );
+  }, [connection, mspV2AddressPK]);
 
   // Create and cache Multisig client instance
   const multisigClient = useMemo(() => {
@@ -188,8 +187,15 @@ export const MoneyStreamsIncomingView = (props: {
     return false;
   }, [streamSelected]);
 
-  const isIncomingMultisigStream = useCallback(
-    (stream?: any) => {
+  const getStreamId = useCallback((stream: Stream | StreamInfo) => {
+    if (stream.version >= 2) {
+      return (stream as Stream).id;
+    } else {
+      return new PublicKey((stream as StreamInfo).id as string);
+    }
+  }, []);
+
+  const isIncomingMultisigStream = useCallback((stream?: Stream | StreamInfo) => {
       const streamInfo: any = stream ?? streamSelected;
 
       if (
@@ -201,7 +207,7 @@ export const MoneyStreamsIncomingView = (props: {
         return false;
       }
 
-      const beneficiary = new PublicKey(streamInfo.beneficiary as string);
+      const beneficiary = (streamInfo as Stream).beneficiary;
 
       if (
         !beneficiary.equals(publicKey) &&
@@ -252,10 +258,10 @@ export const MoneyStreamsIncomingView = (props: {
   );
 
   const getTransactionFeesV2 = useCallback(
-    async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
-      return await calculateActionFeesV2(connection, action);
+    async (action: ACTION_CODES): Promise<TransactionFees> => {
+      return await calculateFeesForAction(action);
     },
-    [connection],
+    [],
   );
 
   // Transaction execution (Applies to all transactions)
@@ -292,7 +298,7 @@ export const MoneyStreamsIncomingView = (props: {
   const showTransferStreamModal = useCallback(() => {
     resetTransactionStatus();
     setIsTransferStreamModalVisibility(true);
-    getTransactionFeesV2(MSP_ACTIONS_V2.transferStream).then(value => {
+    getTransactionFeesV2(ACTION_CODES.TransferStream).then(value => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
@@ -350,17 +356,22 @@ export const MoneyStreamsIncomingView = (props: {
       setIsBusy(true);
 
       const transferOwnership = async (dataStream: any) => {
-        if (!msp || !publicKey || !streamSelected) {
+        if (!paymentStreaming || !publicKey || !streamSelected) {
           return null;
         }
 
         if (!isMultisigContext) {
           consoleOut('Creating msp.transferStream() Tx...', '', 'blue');
-          return await msp.transferStream(
-            publicKey, // beneficiary,
-            new PublicKey(dataStream.address), // newBeneficiary,
-            new PublicKey(streamSelected.id as string), // stream,
+          const accounts: TransferStreamTransactionAccounts = {
+            feePayer: publicKey,                                // feePayer
+            beneficiary: publicKey,                             // beneficiary
+            newBeneficiary: new PublicKey(dataStream.address),  // newBeneficiary
+            stream: getStreamId(streamSelected),                // stream
+          };
+          const { transaction } = await paymentStreaming.buildTransferStreamTransaction(
+            accounts
           );
+          return transaction;
         }
 
         if (!streamSelected || !multisigClient || !multisigAccounts) {
@@ -368,9 +379,7 @@ export const MoneyStreamsIncomingView = (props: {
         }
 
         const stream = streamSelected as Stream;
-        const multisig = multisigAccounts.filter(m =>
-          m.authority.equals(stream.beneficiary),
-        )[0];
+        const multisig = multisigAccounts.find(m => m.authority.equals(stream.beneficiary));
 
         if (!multisig) {
           return null;
@@ -378,14 +387,18 @@ export const MoneyStreamsIncomingView = (props: {
 
         multisigAuth = multisig.authority.toBase58();
 
-        const ownershipTransfer = await msp.transferStream(
-          multisig.authority, // beneficiary,
-          new PublicKey(dataStream.address as string), // newBeneficiary,
-          new PublicKey(streamSelected.id as string), // stream,
+        const accounts: TransferStreamTransactionAccounts = {
+          feePayer: publicKey,                                // feePayer
+          beneficiary: multisig.authority,                    // beneficiary
+          newBeneficiary: new PublicKey(dataStream.address),  // newBeneficiary
+          stream: getStreamId(streamSelected),                // stream
+        };
+        const { transaction } = await paymentStreaming.buildTransferStreamTransaction(
+          accounts
         );
 
-        const ixData = Buffer.from(ownershipTransfer.instructions[0].data);
-        const ixAccounts = ownershipTransfer.instructions[0].keys;
+        const ixData = Buffer.from(transaction.instructions[0].data);
+        const ixAccounts = transaction.instructions[0].keys;
         const expirationTime = parseInt(
           (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
         );
@@ -408,7 +421,7 @@ export const MoneyStreamsIncomingView = (props: {
       };
 
       const createTx = async (): Promise<boolean> => {
-        if (!publicKey || !streamSelected || !msp) {
+        if (!publicKey || !streamSelected || !paymentStreaming) {
           transactionLog.push({
             action: getTransactionStatusForLogs(
               TransactionStatus.WalletNotFound,
@@ -503,7 +516,7 @@ export const MoneyStreamsIncomingView = (props: {
           return false;
         }
 
-        consoleOut('Starting transferStream using MSP V2...', '', 'blue');
+        consoleOut('Starting transferStream using PaymentStreaming V2...', '', 'blue');
 
         const result = await transferOwnership(dataStream)
           .then(value => {
@@ -598,7 +611,7 @@ export const MoneyStreamsIncomingView = (props: {
       }
     },
     [
-      msp,
+      paymentStreaming,
       wallet,
       publicKey,
       connection,
@@ -643,7 +656,7 @@ export const MoneyStreamsIncomingView = (props: {
         consoleOut('transactionFees:', value, 'orange');
       });
     } else {
-      getTransactionFeesV2(MSP_ACTIONS_V2.withdraw).then(value => {
+      getTransactionFeesV2(ACTION_CODES.WithdrawFromStream).then(value => {
         setTransactionFees(value);
         consoleOut('transactionFees:', value, 'orange');
       });
@@ -787,7 +800,7 @@ export const MoneyStreamsIncomingView = (props: {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
+        consoleOut('Starting withdraw using PaymentStreaming V1...', '', 'blue');
         // Create a transaction
         return await ms
           .withdraw(
@@ -847,16 +860,20 @@ export const MoneyStreamsIncomingView = (props: {
     };
 
     const withdrawFunds = async (data: any) => {
-      if (!msp || !publicKey) {
+      if (!paymentStreaming || !publicKey) {
         return null;
       }
 
       if (!isIncomingMultisigStream()) {
-        return await msp.withdraw(
-          publicKey, // payer,
-          new PublicKey(data.stream), // stream,
-          data.amount, // amount
+        const accounts: WithdrawFromStreamTransactionAccounts = {
+          feePayer: publicKey,                  // payer
+          stream: new PublicKey(data.stream),   // stream
+        };
+        const { transaction } = await paymentStreaming.buildWithdrawFromStreamTransaction(
+          accounts,       // accounts
+          data.amount,    // amount
         );
+        return transaction;
       }
 
       if (!streamSelected || !multisigClient || !multisigAccounts) {
@@ -864,9 +881,7 @@ export const MoneyStreamsIncomingView = (props: {
       }
 
       const stream = streamSelected as Stream;
-      const multisig = multisigAccounts.filter(m =>
-        m.authority.equals(stream.beneficiary),
-      )[0];
+      const multisig = multisigAccounts.find(m => m.authority.equals(stream.beneficiary));
 
       if (!multisig) {
         return null;
@@ -874,14 +889,18 @@ export const MoneyStreamsIncomingView = (props: {
 
       multisigAuth = multisig.authority.toBase58();
 
-      const withdrawFunds = await msp.withdraw(
-        multisig.authority, // payer
-        new PublicKey(data.stream), // stream,
-        data.amount, // amount
+
+      const accounts: WithdrawFromStreamTransactionAccounts = {
+        feePayer: multisig.authority,         // payer
+        stream: new PublicKey(data.stream),   // stream
+      };
+      const { transaction } = await paymentStreaming.buildWithdrawFromStreamTransaction(
+        accounts,       // accounts
+        data.amount,    // amount
       );
 
-      const ixData = Buffer.from(withdrawFunds.instructions[0].data);
-      const ixAccounts = withdrawFunds.instructions[0].keys;
+      const ixData = Buffer.from(transaction.instructions[0].data);
+      const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt(
         (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
       );
@@ -904,7 +923,7 @@ export const MoneyStreamsIncomingView = (props: {
     };
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (!publicKey || !streamSelected || !msp || !workingToken) {
+      if (!publicKey || !streamSelected || !paymentStreaming || !workingToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!',
@@ -1004,7 +1023,7 @@ export const MoneyStreamsIncomingView = (props: {
         return false;
       }
 
-      consoleOut('Starting withdraw using MSP V2...', '', 'blue');
+      consoleOut('Starting withdraw using PaymentStreaming V2...', '', 'blue');
       // Create a transaction
       const result = await withdrawFunds(data)
         .then(value => {
@@ -1153,10 +1172,10 @@ export const MoneyStreamsIncomingView = (props: {
             return 'running';
         }
       } else {
-        switch (v2.status) {
-          case STREAM_STATUS.Scheduled:
+        switch (v2.statusCode) {
+          case STREAM_STATUS_CODE.Scheduled:
             return 'scheduled';
-          case STREAM_STATUS.Paused:
+          case STREAM_STATUS_CODE.Paused:
             if (v2.isManuallyPaused) {
               return 'stopped-manually';
             }
@@ -1271,7 +1290,7 @@ export const MoneyStreamsIncomingView = (props: {
 
   // Refresh stream data
   useEffect(() => {
-    if (!ms || !msp || !streamSelected) {
+    if (!ms || !paymentStreaming || !streamSelected) {
       return;
     }
 
@@ -1280,8 +1299,8 @@ export const MoneyStreamsIncomingView = (props: {
       const v2 = streamSelected as Stream;
       const isV2 = streamSelected.version >= 2;
       if (isV2) {
-        if (v2.status === STREAM_STATUS.Running) {
-          msp.refreshStream(streamSelected as Stream).then(detail => {
+        if (v2.statusCode === STREAM_STATUS_CODE.Running) {
+          paymentStreaming.refreshStream(streamSelected as Stream).then(detail => {
             setStreamDetail(detail as Stream);
           });
         }
@@ -1298,7 +1317,7 @@ export const MoneyStreamsIncomingView = (props: {
       clearTimeout(timeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ms, msp, streamSelected]);
+  }, [ms, paymentStreaming, streamSelected]);
 
   // Keep account balance updated
   useEffect(() => {

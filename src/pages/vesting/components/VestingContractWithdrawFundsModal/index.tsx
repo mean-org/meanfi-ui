@@ -560,8 +560,7 @@ export const VestingContractWithdrawFundsModal = (props: {
               </Checkbox>
             </div>
           </>
-        ) : transactionStatus.currentOperation ===
-          TransactionStatus.TransactionFinished ? (
+        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
@@ -577,8 +576,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                 style={{ fontSize: 48 }}
                 className="icon mt-0"
               />
-              {transactionStatus.currentOperation ===
-              TransactionStatus.TransactionStartFailure ? (
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(

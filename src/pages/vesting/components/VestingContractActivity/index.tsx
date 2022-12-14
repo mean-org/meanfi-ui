@@ -48,7 +48,8 @@ export const VestingContractActivity = (props: {
       case ActivityActionCode.AccountCreated:
         message += `Vesting contract created - ${vestingContract.name}`;
         break;
-      // case ActivityActionCode.TreasuryModify:
+      // TODO: StreamTemplateUpdate will soon be StreamTemplateUpdated
+      // case ActivityActionCode.StreamTemplateUpdate:
       //   message += `Vesting contract modified - ${vestingContract.name}`;
       //   break;
       case ActivityActionCode.FundsAddedToAccount:
@@ -104,7 +105,8 @@ export const VestingContractActivity = (props: {
 
     let message = '';
     switch (item.actionCode) {
-      // case ActivityActionCode.TreasuryModify:
+      // TODO: StreamTemplateUpdate will soon be StreamTemplateUpdated
+      // case ActivityActionCode.StreamTemplateUpdate:
       case ActivityActionCode.AccountCreated:
       case ActivityActionCode.FundsAddedToAccount:
       case ActivityActionCode.FundsWithdrawnFromAccount:
