@@ -85,6 +85,7 @@ import {
   getTokenAccountBalanceByAddress
 } from 'middleware/accounts';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
+import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
@@ -245,6 +246,16 @@ export const StreamingAccountView = (props: {
   const isMultisigContext = useMemo(() => {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
+
+  const isNewTreasury = useMemo(() => {
+    if (!streamingAccountSelected) {
+      return false;
+    }
+
+    return streamingAccountSelected.version && streamingAccountSelected.version >= 2
+      ? true
+      : false;
+  }, [streamingAccountSelected]);
 
   /////////////////////////
   // Callbacks & Getters //
@@ -453,11 +464,10 @@ export const StreamingAccountView = (props: {
     if (streamingAccountSelected) {
       const v1 = streamingAccountSelected as TreasuryInfo;
       const v2 = streamingAccountSelected as PaymentStreamingAccount;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
       return isNewTreasury ? v2.name.trim() : v1.label.trim();
     }
     return '';
-  }, [streamingAccountSelected]);
+  }, [isNewTreasury, streamingAccountSelected]);
 
   const getAccountOwner = useCallback((account: TreasuryInfo | PaymentStreamingAccount) => {
     const v1 = account as TreasuryInfo;
@@ -674,10 +684,6 @@ export const StreamingAccountView = (props: {
       if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
         const unallocated = getUnallocatedBalance(tsry);
-        const isNewTreasury =
-          (tsry as PaymentStreamingAccount).version && (tsry as PaymentStreamingAccount).version >= 2
-            ? true
-            : false;
         if (isNewTreasury) {
           return unallocated;
         } else {
@@ -690,18 +696,17 @@ export const StreamingAccountView = (props: {
       }
       return new BN(0);
     },
-    [],
+    [isNewTreasury],
   );
 
-  const getStreamingAccountStreams = useCallback(
-    (treasuryPk: PublicKey, isNewTreasury: boolean) => {
+  const getStreamingAccountStreams = useCallback((treasuryPk: PublicKey, isNewAccount: boolean) => {
       if (!publicKey || !ms) {
         return;
       }
 
       consoleOut('Executing getStreamingAccountStreams...', '', 'blue');
 
-      if (isNewTreasury) {
+      if (isNewAccount) {
         if (paymentStreaming) {
           paymentStreaming
             .listStreams({ treasury: treasuryPk })
@@ -2130,9 +2135,6 @@ export const StreamingAccountView = (props: {
         return null;
       }
 
-      const account = streamingAccountSelected;
-      const isNewTreasury = account.version >= 2 ? true : false;
-
       if (!isNewTreasury) {
         return await refreshBalance(new PublicKey(data.treasury));
       }
@@ -2321,12 +2323,13 @@ export const StreamingAccountView = (props: {
     }
 
   }, [
-    paymentStreaming,
     wallet,
     connected,
     publicKey,
     connection,
+    isNewTreasury,
     nativeBalance,
+    paymentStreaming,
     multisigTransactionFees,
     transactionCancelled,
     streamingAccountSelected,
@@ -2462,19 +2465,17 @@ export const StreamingAccountView = (props: {
       return;
     }
 
-    if (streamingAccountSelected.id === streamingItemId) {
+    const accountId = getStreamingAccountId(streamingAccountSelected);
+
+    if (accountId === streamingItemId) {
       consoleOut('calling getTreasuryStreams...', '', 'blue');
-      const treasuryPk = new PublicKey(streamingItemId as string);
-      const isNewTreasury =
-        (streamingAccountSelected as PaymentStreamingAccount).version &&
-        (streamingAccountSelected as PaymentStreamingAccount).version >= 2
-          ? true
-          : false;
+      const treasuryPk = new PublicKey(accountId);
       getStreamingAccountStreams(treasuryPk, isNewTreasury);
     }
   }, [
     ms,
     publicKey,
+    isNewTreasury,
     streamingAccountSelected,
     getStreamingAccountStreams,
     streamingItemId,
@@ -2548,11 +2549,10 @@ export const StreamingAccountView = (props: {
     if (streamingAccountSelected) {
       const v1 = streamingAccountSelected as TreasuryInfo;
       const v2 = streamingAccountSelected as PaymentStreamingAccount;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
       return isNewTreasury ? (v2.id.toBase58()) : (v1.id as string);
     }
     return '';
-  }, [streamingAccountSelected]);
+  }, [isNewTreasury, streamingAccountSelected]);
 
   const getStreamingAccountResume = useCallback(() => {
     if (streamingAccountSelected && selectedToken) {
