@@ -126,10 +126,7 @@ export const StreamCloseModal = (props: {
   }, [treasuryDetails, canCloseTreasury]);
 
   const amITreasurer = useCallback((): boolean => {
-    if (streamDetail && publicKey) {
-      return streamDetail.psAccountOwner.equals(publicKey) ? true : false;
-    }
-    return false;
+    return streamDetail && publicKey ? streamDetail.psAccountOwner.equals(publicKey) : false;
   }, [publicKey, streamDetail]);
 
   const amIBeneficiary = useCallback((): boolean => {
