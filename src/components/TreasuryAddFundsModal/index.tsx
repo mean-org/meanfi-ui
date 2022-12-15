@@ -34,6 +34,7 @@ import { useWallet } from 'contexts/wallet';
 import { IconHelpCircle } from 'Icons';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
+import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import {
   consoleOut,
@@ -346,30 +347,30 @@ export const TreasuryAddFundsModal = (props: {
     if (
       hasNoStreamingAccounts ||
       !workingAssociatedToken ||
-      !workingTreasuryDetails
+      !userBalances
     ) {
       return;
     }
-    const tokenAddress = getStreamingAccountMint(workingTreasuryDetails);
-    getTokenOrCustomToken(connection, tokenAddress, getTokenByMintAddress).then(
+    consoleOut('workingAssociatedToken:', workingAssociatedToken, 'darkorange');
+    getTokenOrCustomToken(connection, workingAssociatedToken, getTokenByMintAddress)
+      .then(
       token => {
         consoleOut('PaymentStreamingAccount workingAssociatedToken:', token, 'blue');
         setSelectedToken(token);
-        setWorkingAssociatedToken(tokenAddress);
-        if (userBalances[tokenAddress]) {
-          setSelectedTokenBalance(userBalances[tokenAddress]);
+        consoleOut(`userBalances:`, userBalances, 'darkorange');
+        if (userBalances && userBalances[workingAssociatedToken]) {
+          setSelectedTokenBalance(userBalances[workingAssociatedToken]);
         } else {
           setSelectedTokenBalance(0);
         }
       },
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     connection,
     userBalances,
-    workingTreasuryDetails,
     workingAssociatedToken,
     hasNoStreamingAccounts,
-    getTokenByMintAddress,
   ]);
 
   // Set available balance in BN either from user's wallet or from treasury if a stream is being funded
@@ -447,26 +448,26 @@ export const TreasuryAddFundsModal = (props: {
   //   Events   //
   ////////////////
 
-  const onStreamingAccountSelected = useCallback((e: any) => {
-      consoleOut('Selected streaming account:', e, 'blue');
-      setSelectedStreamingAccountId(e.id.toString());
-      const item = treasuryList?.find(t => t.id === e);
-      consoleOut('item:', item, 'blue');
-      if (item) {
-        setWorkingTreasuryDetails(item);
-        setSelectedStreamingAccountId(item.id.toString());
-        const tokenAddress = getStreamingAccountMint(item);
-        getTokenOrCustomToken(
-          connection,
-          tokenAddress,
-          getTokenByMintAddress,
-        ).then(token => {
-          consoleOut('PaymentStreamingAccount workingAssociatedToken:', token, 'blue');
-          setSelectedToken(token);
-          setWorkingAssociatedToken(tokenAddress);
-        });
-      }
-    },
+  const onStreamingAccountSelected = useCallback((e: string) => {
+    consoleOut('Selected streaming account:', e, 'blue');
+    setSelectedStreamingAccountId(e);
+    const item = treasuryList?.find(t => getStreamingAccountId(t) === e);
+    consoleOut('item:', item, 'blue');
+    if (item) {
+      setWorkingTreasuryDetails(item);
+      setSelectedStreamingAccountId(item.id.toString());
+      const tokenAddress = getStreamingAccountMint(item);
+      getTokenOrCustomToken(
+        connection,
+        tokenAddress,
+        getTokenByMintAddress,
+      ).then(token => {
+        consoleOut('PaymentStreamingAccount workingAssociatedToken:', token, 'blue');
+        setSelectedToken(token);
+        setWorkingAssociatedToken(tokenAddress);
+      });
+    }
+  },
     [connection, getTokenByMintAddress, treasuryList],
   );
 
@@ -745,8 +746,9 @@ export const TreasuryAddFundsModal = (props: {
   };
 
   const renderStreamingAccountItem = (item: PaymentStreamingAccount | TreasuryInfo) => {
+    const accountId = getStreamingAccountId(item);
     return (
-      <Option key={`${item.id}`} value={item.id.toString()}>
+      <Option key={`${item.id}`} value={accountId}>
         <div className={`transaction-list-row no-pointer`}>
           <div className="icon-cell">{getStreamingAccountIcon(item)}</div>
           <div className="description-cell">
