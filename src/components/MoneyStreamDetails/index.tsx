@@ -36,6 +36,7 @@ import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconArrowBack, IconExternalLink } from 'Icons';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
+import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamStatusResume, getStreamTitle } from 'middleware/streams';
 import {
   consoleOut,
@@ -113,13 +114,22 @@ export const MoneyStreamDetails = (props: {
       'confirmed'
     );
   }, [connection, streamV2ProgramAddress]);
-
+  
   const isV2tream = useMemo(() => {
-    if (stream) {
+    if (stream?.version) {
       return stream.version >= 2;
     }
     return false;
-  }, [stream]);
+  }, [stream?.version]);
+
+  const treasuryId = useMemo(() => {
+    if (stream) {
+      return isV2tream
+        ? (stream as Stream).psAccount.toBase58()
+        : ((stream as StreamInfo).treasuryAddress as string);
+    }
+    return '';
+  }, [isV2tream, stream]);
 
   const tabOption = useMemo(() => {
     let tabOptionInQuery: string | null = null;
@@ -403,15 +413,11 @@ export const MoneyStreamDetails = (props: {
   );
 
   useEffect(() => {
-    if (!publicKey || !stream || !ms || !paymentStreaming) {
+    if (!publicKey || !treasuryId || !ms || !paymentStreaming || !treasuryDetails) {
       return;
     }
 
-    const treasuryId = isV2tream
-      ? (stream as Stream).psAccount.toBase58()
-      : ((stream as StreamInfo).treasuryAddress as string);
-
-    if (treasuryDetails && (treasuryDetails.id as string) === treasuryId) {
+    if (getStreamingAccountId(treasuryDetails) === treasuryId) {
       return;
     }
 
@@ -446,7 +452,7 @@ export const MoneyStreamDetails = (props: {
           setTreasuryDetails(undefined);
         });
     }
-  }, [isV2tream, ms, paymentStreaming, publicKey, stream, treasuryDetails]);
+  }, [isV2tream, ms, paymentStreaming, publicKey, treasuryDetails, treasuryId]);
 
   // Detect XS screen
   useEffect(() => {
