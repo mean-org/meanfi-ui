@@ -153,7 +153,7 @@ export const TreasuryTransferFundsModal = (props: {
   const onAcceptWithdrawTreasuryFunds = () => {
     const params: TreasuryWithdrawParams = {
       proposalTitle,
-      amount: topupAmount,
+      amount: tokenAmount.toString(),
       destination: to,
       payer: selectedAccount.address,
       treasury: treasuryDetails ? treasuryDetails.id.toString() : ''
