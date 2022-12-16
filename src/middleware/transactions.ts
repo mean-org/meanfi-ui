@@ -239,11 +239,11 @@ export const sendTx = async (title: string, connection: Connection, encodedTx: s
   }
 };
 
-export const confirmTx = async (title: string, connection: Connection, signature: string): Promise<ConfirmTxResult> => {
+export const confirmTx = async (title: string, connection: Connection, signature: string, finality: TransactionConfirmationStatus = 'confirmed'): Promise<ConfirmTxResult> => {
   const txLog: any[] = [];
 
   try {
-    const confirmation = await fetchTxStatus(connection, signature, 'confirmed');
+    const confirmation = await fetchTxStatus(connection, signature, finality);
     if (confirmation) {
       return {
         confirmed: true,
