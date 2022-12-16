@@ -1988,6 +1988,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         accounts,                   // accounts
         data.allocationAssigned,    // allocationAssigned
         data.streamName,            // streamName
+        true
       );
 
       const ixData = Buffer.from(transaction.instructions[0].data);
