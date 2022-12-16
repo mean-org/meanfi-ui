@@ -65,6 +65,7 @@ import { appConfig, customLogger } from 'index';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
+import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
 import { sendTx, signTx } from 'middleware/transactions';
@@ -740,6 +741,7 @@ export const MoneyStreamsInfoView = (props: {
   ]);
 
   const closeAddFundsModal = useCallback(() => {
+    setIsBusy(false);
     setIsAddFundsModalVisibility(false);
     resetTransactionStatus();
   }, [resetTransactionStatus]);
@@ -751,7 +753,7 @@ export const MoneyStreamsInfoView = (props: {
   };
 
   const onAcceptAddFunds = (params: TreasuryTopupParams) => {
-    consoleOut('AddFunds params:', params, 'blue');
+    consoleOut('MoneyStreamsInfoView -> AddFunds params:', params, 'blue');
     onExecuteAddFundsTransaction(params);
   };
 
@@ -1153,7 +1155,7 @@ export const MoneyStreamsInfoView = (props: {
         getTokenByMintAddress,
       );
       consoleOut('onExecuteAddFundsTransaction token:', token, 'blue');
-      const treasury = treasuryList.find(t => t.id === params.treasuryId);
+      const treasury = treasuryList.find(t => getStreamingAccountId(t) === params.treasuryId);
       if (!treasury) {
         return null;
       }

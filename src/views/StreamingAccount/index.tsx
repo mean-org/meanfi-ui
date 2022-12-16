@@ -817,6 +817,7 @@ export const StreamingAccountView = (props: {
   ]);
 
   const closeAddFundsModal = useCallback(() => {
+    setIsBusy(false);
     setIsAddFundsModalVisibility(false);
     setHighLightableStreamId(undefined);
     resetTransactionStatus();
@@ -833,7 +834,7 @@ export const StreamingAccountView = (props: {
   };
 
   const onAcceptAddFunds = (params: TreasuryTopupParams) => {
-    consoleOut('AddFunds params:', params, 'blue');
+    consoleOut('StreamingAccountView -> AddFunds params:', params, 'blue');
     onExecuteAddFundsTransaction(params);
   };
 

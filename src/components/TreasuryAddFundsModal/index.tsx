@@ -1046,31 +1046,24 @@ export const TreasuryAddFundsModal = (props: {
             )}
           </div>
 
-          <div
-            className={
-              isBusy &&
-              transactionStatus.currentOperation !== TransactionStatus.Iddle
-                ? 'panel2 show'
-                : 'panel2 hide'
-            }
-          >
-            {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-              <div className="transaction-progress">
-                <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-                <h4 className="font-bold mb-1">
-                  {getTransactionOperationDescription(
-                    transactionStatus.currentOperation,
-                    t,
-                  )}
-                </h4>
-                {transactionStatus.currentOperation ===
-                  TransactionStatus.SignTransaction && (
-                  <div className="indication">
-                    {t('transactions.status.instructions')}
-                  </div>
+          <div className={isBusy ? 'panel2 show' : 'panel2 hide'}>
+
+            <div className="transaction-progress">
+              <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+              <h4 className="font-bold mb-1">
+                {getTransactionOperationDescription(
+                  transactionStatus.currentOperation,
+                  t,
                 )}
-              </div>
-            )}
+              </h4>
+              {transactionStatus.currentOperation ===
+                TransactionStatus.SignTransaction && (
+                <div className="indication">
+                  {t('transactions.status.instructions')}
+                </div>
+              )}
+            </div>
+
           </div>
 
           {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
@@ -1089,9 +1082,7 @@ export const TreasuryAddFundsModal = (props: {
             </div>
           )}
 
-          {!isBusy &&
-            !highLightableStreamId &&
-            workingTreasuryDetails &&
+          {!isBusy && !highLightableStreamId && workingTreasuryDetails &&
             transactionStatus.currentOperation === TransactionStatus.Iddle && (
               <div className={`text-center mt-4 mb-2`}>
                 <p>
