@@ -218,10 +218,6 @@ export interface CreateNewSafeParams {
   label: string;
   threshold: number;
   owners: MultisigParticipant[];
-  isAllowToRejectProposal?: boolean;
-  isCoolOffPeriodEnable?: boolean;
-  coolOfPeriodAmount?: number;
-  coolOffPeriodFrequency?: PaymentRateType;
 }
 
 export const getFees = async (
