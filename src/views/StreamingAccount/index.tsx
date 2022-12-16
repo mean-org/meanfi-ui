@@ -383,34 +383,6 @@ export const StreamingAccountView = (props: {
     [setSearchParams],
   );
 
-  const isMultisigTreasury = useCallback(
-    (treasury?: any) => {
-      const treasuryInfo: any = treasury ?? streamingAccountSelected;
-
-      if (
-        !treasuryInfo ||
-        treasuryInfo.version < 2 ||
-        !treasuryInfo.treasurer ||
-        !publicKey
-      ) {
-        return false;
-      }
-
-      const treasurer = new PublicKey(treasuryInfo.treasurer as string);
-
-      if (
-        !treasurer.equals(publicKey) &&
-        multisigAccounts &&
-        multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1
-      ) {
-        return true;
-      }
-
-      return false;
-    },
-    [publicKey, multisigAccounts, streamingAccountSelected],
-  );
-
   const getStreamingAccountActivity = useCallback((streamingAccountSelectedId: string, clearHistory = false) => {
       if (
         !streamingAccountSelectedId ||
@@ -925,7 +897,7 @@ export const StreamingAccountView = (props: {
           multisigTransactionFees.networkFee +
           multisigTransactionFees.multisigFee +
           multisigTransactionFees.rentExempt; // Multisig proposal
-        const minRequired = isMultisigTreasury() ? mp : bf + ff;
+        const minRequired = isMultisigContext ? mp : bf + ff;
 
         setMinRequiredBalance(minRequired);
 
@@ -1015,7 +987,7 @@ export const StreamingAccountView = (props: {
         return null;
       }
 
-      if (!isMultisigTreasury() || !params.fundFromSafe) {
+      if (!isMultisigContext || !params.fundFromSafe) {
         if (data.stream === '') {
           const accounts: AddFundsToAccountTransactionAccounts = {
             feePayer: new PublicKey(data.payer),                // feePayer
@@ -1169,7 +1141,7 @@ export const StreamingAccountView = (props: {
         multisigTransactionFees.networkFee +
         multisigTransactionFees.multisigFee +
         multisigTransactionFees.rentExempt; // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+      const minRequired = isMultisigContext ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -1372,7 +1344,8 @@ export const StreamingAccountView = (props: {
         return null;
       }
 
-      if (!isMultisigTreasury()) {
+      if (!isMultisigContext) {
+        consoleOut('Create single signer Tx ->', 'buildWithdrawFromAccountTransaction', 'darkgreen');
         const accounts: WithdrawFromAccountTransactionAccounts = {
           feePayer: new PublicKey(data.payer),          // payer
           destination: new PublicKey(data.destination), // destination
@@ -1397,6 +1370,7 @@ export const StreamingAccountView = (props: {
         return null;
       }
 
+      consoleOut('Create multisig Tx ->', 'buildWithdrawFromAccountTransaction', 'darkgreen');
       const accounts: WithdrawFromAccountTransactionAccounts = {
         feePayer: new PublicKey(multisig.authority),      // payer
         destination: new PublicKey(data.destination),     // destination
@@ -1500,7 +1474,7 @@ export const StreamingAccountView = (props: {
         multisigTransactionFees.networkFee +
         multisigTransactionFees.multisigFee +
         multisigTransactionFees.rentExempt; // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+      const minRequired = isMultisigContext ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -1589,8 +1563,7 @@ export const StreamingAccountView = (props: {
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
-            const isMultisig =
-            isMultisigTreasury(streamingAccountSelected) && selectedMultisig
+            const isMultisig = isMultisigContext && selectedMultisig
               ? selectedMultisig.authority.toBase58()
               : '';
             enqueueTransactionConfirmation({
@@ -1735,7 +1708,7 @@ export const StreamingAccountView = (props: {
           multisigTransactionFees.networkFee +
           multisigTransactionFees.multisigFee +
           multisigTransactionFees.rentExempt; // Multisig proposal
-        const minRequired = isMultisigTreasury() ? mp : bf + ff;
+        const minRequired = isMultisigContext ? mp : bf + ff;
 
         setMinRequiredBalance(minRequired);
 
@@ -1821,7 +1794,7 @@ export const StreamingAccountView = (props: {
         return null;
       }
 
-      if (!isMultisigTreasury()) {
+      if (!isMultisigContext) {
         const accounts: CloseAccountTransactionAccounts = {
           feePayer: new PublicKey(data.treasurer),    // feePayer
           destination: new PublicKey(data.treasurer), // destination
@@ -1920,7 +1893,7 @@ export const StreamingAccountView = (props: {
         multisigTransactionFees.networkFee +
         multisigTransactionFees.multisigFee +
         multisigTransactionFees.rentExempt; // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+      const minRequired = isMultisigContext ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -2022,8 +1995,7 @@ export const StreamingAccountView = (props: {
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
-            const isMultisig =
-              isMultisigTreasury(streamingAccountSelected) && selectedMultisig
+            const isMultisig = isMultisigContext && selectedMultisig
                 ? selectedMultisig.authority.toBase58()
                 : '';
             enqueueTransactionConfirmation({
@@ -2194,7 +2166,7 @@ export const StreamingAccountView = (props: {
         multisigTransactionFees.networkFee +
         multisigTransactionFees.multisigFee +
         multisigTransactionFees.rentExempt; // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+      const minRequired = isMultisigContext ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -2330,8 +2302,9 @@ export const StreamingAccountView = (props: {
     isNewTreasury,
     nativeBalance,
     paymentStreaming,
-    multisigTransactionFees,
+    isMultisigContext,
     transactionCancelled,
+    multisigTransactionFees,
     streamingAccountSelected,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
@@ -2340,7 +2313,6 @@ export const StreamingAccountView = (props: {
     enqueueTransactionConfirmation,
     resetTransactionStatus,
     setTransactionStatus,
-    isMultisigTreasury,
     t,
   ]);
 
@@ -2669,7 +2641,7 @@ export const StreamingAccountView = (props: {
         ),
       });
     }
-    if (isMultisigTreasury()) {
+    if (isMultisigContext) {
       items.push({
         key: '03-sol-balance',
         label: (
@@ -2683,18 +2655,18 @@ export const StreamingAccountView = (props: {
 
     return <Menu items={items} />;
   }, [
+    isXsDevice,
+    selectedToken,
+    isMultisigContext,
+    streamingAccountSelected,
+    streamingAccountStreams,
+    onExecuteRefreshTreasuryBalance,
     getTreasuryUnallocatedBalance,
     hasStreamingAccountPendingTx,
-    isMultisigTreasury,
-    isTreasurer,
-    isXsDevice,
-    onExecuteRefreshTreasuryBalance,
-    selectedToken,
     showCloseTreasuryModal,
     showCreateStreamModal,
     showSolBalanceModal,
-    streamingAccountSelected,
-    streamingAccountStreams,
+    isTreasurer,
   ]);
 
   const renderStreamingAccountStreams = () => {
