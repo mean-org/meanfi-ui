@@ -246,21 +246,18 @@ const PaymentStreamingView = (props: {
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
-          } else {
-            onBackButtonClicked();
-            hardReloadStreams();
           }
+          onBackButtonClicked();
+          hardReloadStreams();
           break;
         case OperationType.TreasuryClose:
           logEventHandling(item);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
-          } else {
-            const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
-            navigate(url);
-            hardReloadStreams();
           }
+          navigate(`/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`);
+          hardReloadStreams();
           break;
         case OperationType.StreamTransferBeneficiary:
           logEventHandling(item);
@@ -268,8 +265,7 @@ const PaymentStreamingView = (props: {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
-            navigate(url);
+            navigate(`/${RegisteredAppPaths.PaymentStreaming}/incoming`);
             hardReloadStreams();
           }
           break;
