@@ -475,7 +475,7 @@ export const DdcaSetupModal = (props: {
           consoleOut('sent:', sent);
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
-            const confirmation = await confirmTx('Create DDCA Vault', connection, signature);
+            const confirmation = await confirmTx('Create DDCA Vault', connection, signature, 'finalized');
             if (confirmation.confirmed) {
               onTxSuccessCreatingVault();
             } else {
