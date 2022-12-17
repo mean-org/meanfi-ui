@@ -70,7 +70,7 @@ export async function createCloseTokenAccountTx(connection: Connection, tokenPub
   ixs.push(Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, tokenPubkey, owner, owner, []));
 
   // Get the latest blockhash
-  const blockhash = await connection.getLatestBlockhash().then(res => res.blockhash);
+  const blockhash = await connection.getLatestBlockhash('confirmed').then(res => res.blockhash);
 
   if (hasBalance) {
     const tx = new Transaction().add(...ixs);

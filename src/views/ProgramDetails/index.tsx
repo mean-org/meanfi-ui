@@ -396,7 +396,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
         tx.add(upgradeIxFields);
         tx.feePayer = publicKey;
         const { blockhash, lastValidBlockHeight } =
-          await connection.getLatestBlockhash();
+          await connection.getLatestBlockhash('confirmed');
         tx.recentBlockhash = blockhash;
         tx.lastValidBlockHeight = lastValidBlockHeight;
 
@@ -773,7 +773,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
         tx.add(setAuthIxFields);
         tx.feePayer = publicKey;
         const { blockhash, lastValidBlockHeight } =
-          await connection.getLatestBlockhash();
+          await connection.getLatestBlockhash('confirmed');
         tx.recentBlockhash = blockhash;
         tx.lastValidBlockHeight = lastValidBlockHeight;
 

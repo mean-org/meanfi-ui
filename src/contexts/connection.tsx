@@ -14,7 +14,7 @@ const DEFAULT = DEFAULT_RPCS[0].httpProvider;
 const DEFAULT_SLIPPAGE = 0.25;
 
 export const failsafeConnectionConfig: ConnectionConfig = {
-  commitment: 'recent',
+  commitment: 'confirmed',
   confirmTransactionInitialTimeout: TRANSACTION_STATUS_RETRY_TIMEOUT,
 };
 
@@ -66,7 +66,7 @@ const ConnectionContext = React.createContext<ConnectionProviderConfig>({
   endpoint: DEFAULT,
   slippage: DEFAULT_SLIPPAGE,
   setSlippage: (val: number) => {},
-  connection: new Connection(DEFAULT, 'recent'),
+  connection: new Connection(DEFAULT, 'confirmed'),
   cluster: DEFAULT_RPCS[0].cluster,
 });
 

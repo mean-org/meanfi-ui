@@ -2097,7 +2097,7 @@ export const StreamingAccountView = (props: {
 
       const tx = new Transaction().add(...ixs);
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash('recent');
+      const { blockhash } = await connection.getLatestBlockhash('confirmed');
       tx.recentBlockhash = blockhash;
 
       return tx;

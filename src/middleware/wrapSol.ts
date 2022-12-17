@@ -73,7 +73,7 @@ export const wrapSol = async (
   tx.feePayer = from;
   // Get the latest blockhash
   const blockhash = await connection
-    .getLatestBlockhash()
+    .getLatestBlockhash('confirmed')
     .then((res) => res.blockhash);
   tx.recentBlockhash = blockhash;
   tx.partialSign(newAccount);
@@ -150,7 +150,7 @@ export const wrapSolV0 = async (
 
   // Get the latest blockhash
   const blockhash = await connection
-    .getLatestBlockhash()
+    .getLatestBlockhash('confirmed')
     .then((res) => res.blockhash);
 
   // create v0 compatible message

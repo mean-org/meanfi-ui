@@ -34,7 +34,7 @@ export async function setAccountOwner(
 
   // Get the latest blockhash
   const blockhash = await connection
-    .getLatestBlockhash()
+    .getLatestBlockhash('confirmed')
     .then((res) => res.blockhash);
 
   // create v0 compatible message

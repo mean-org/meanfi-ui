@@ -52,7 +52,7 @@ export async function fetchTxStatus(
 
   const fetchStatus = async () => {
     try {
-      const latestBlockHash = await connection.getLatestBlockhash();
+      const latestBlockHash = await connection.getLatestBlockhash('confirmed');
       const result = await connection.confirmTransaction(
         {
           signature,
