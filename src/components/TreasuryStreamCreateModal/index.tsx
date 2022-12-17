@@ -696,12 +696,12 @@ export const TreasuryStreamCreateModal = (props: {
       return result;
     };
 
-    if (isVisible && treasuryDetails) {
-      const ub = getUnallocatedBalance(treasuryDetails);
+    if (isVisible && workingTreasuryDetails) {
+      const ub = getUnallocatedBalance(workingTreasuryDetails);
       consoleOut('unallocatedBalance:', ub.toString(), 'blue');
       setUnallocatedBalance(new BN(ub));
     }
-  }, [isVisible, treasuryDetails, selectedToken]);
+  }, [isVisible, workingTreasuryDetails, selectedToken]);
 
   // Set max amount allocatable to a stream in BN the first time
   useEffect(() => {
