@@ -191,6 +191,10 @@ export const MoneyStreamsOutgoingView = (props: {
     );
   }, [endpoint, publicKey, connection, multisigAddressPK]);
 
+  const isMultisigContext = useMemo(() => {
+    return publicKey && selectedAccount.isMultisig ? true : false;
+  }, [publicKey, selectedAccount]);
+
   /////////////////
   //  Callbacks  //
   /////////////////
@@ -222,34 +226,6 @@ export const MoneyStreamsOutgoingView = (props: {
     setIsBusy(false);
     resetTransactionStatus();
   }, [resetTransactionStatus]);
-
-  const isMultisigTreasury = useCallback(
-    (treasury?: any) => {
-      const treasuryInfo: any = treasury ?? treasuryDetails;
-
-      if (
-        !treasuryInfo ||
-        treasuryInfo.version < 2 ||
-        !treasuryInfo.treasurer ||
-        !publicKey
-      ) {
-        return false;
-      }
-
-      const treasurer = new PublicKey(treasuryInfo.treasurer);
-
-      if (
-        !treasurer.equals(publicKey) &&
-        multisigAccounts &&
-        multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1
-      ) {
-        return true;
-      }
-
-      return false;
-    },
-    [multisigAccounts, publicKey, treasuryDetails],
-  );
 
   // confirmationHistory
   const hasStreamPendingTx = useCallback(
@@ -585,7 +561,7 @@ export const MoneyStreamsOutgoingView = (props: {
         return transaction;
       }
 
-      if (!isMultisigTreasury()) {
+      if (!isMultisigContext) {
         const accounts: AllocateFundsToStreamTransactionAccounts = {
           feePayer: new PublicKey(data.payer),                // feePayer
           psAccount: new PublicKey(data.treasury),            // treasury
@@ -1251,7 +1227,7 @@ export const MoneyStreamsOutgoingView = (props: {
         return null;
       }
 
-      if (!isMultisigTreasury()) {
+      if (!isMultisigContext) {
         const accounts: PauseResumeStreamTransactionAccounts = {
           feePayer: new PublicKey(data.payer),    // feePayer
           owner: new PublicKey(data.payer),       // owner
@@ -1697,7 +1673,7 @@ export const MoneyStreamsOutgoingView = (props: {
         return null;
       }
 
-      if (!isMultisigTreasury()) {
+      if (!isMultisigContext) {
         const accounts: PauseResumeStreamTransactionAccounts = {
           feePayer: new PublicKey(data.payer),    // feePayer
           owner: new PublicKey(data.payer),       // owner
@@ -2191,7 +2167,7 @@ export const MoneyStreamsOutgoingView = (props: {
         return null;
       }
 
-      if (!isMultisigTreasury()) {
+      if (!isMultisigContext) {
         const accounts: CloseStreamTransactionAccounts = {
           feePayer: new PublicKey(data.payer),    // feePayer
           stream: new PublicKey(data.stream),     // stream
@@ -2933,7 +2909,7 @@ export const MoneyStreamsOutgoingView = (props: {
           handleOk={onAcceptAddFunds}
           handleClose={closeAddFundsModal}
           selectedToken={workingToken}
-          isMultisigContext={isMultisigTreasury()}
+          isMultisigContext={isMultisigContext}
         />
       )}
 

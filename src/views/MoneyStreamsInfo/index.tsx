@@ -66,6 +66,7 @@ import { fetchAccountTokens } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
+import { getStreamingAccountOwner } from 'middleware/getStreamingAccountOwner';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
 import { sendTx, signTx } from 'middleware/transactions';
@@ -665,34 +666,6 @@ export const MoneyStreamsInfoView = (props: {
     [],
   );
 
-  const isMultisigTreasury = useCallback(
-    (treasuryId: string) => {
-      if (!publicKey || !treasuryId || !multisigAccounts || !treasuryList) {
-        return false;
-      }
-
-      const treasury = treasuryList.find(t => t.id === treasuryId);
-      if (treasury) {
-        const isNew = isNewTreasury(treasury);
-        const v1 = treasury as TreasuryInfo;
-        const v2 = treasury as PaymentStreamingAccount;
-        const treasurer = isNew ? v2.owner.toBase58() : v1.treasurerAddress;
-        const treasurerPk = new PublicKey(treasurer);
-        if (
-          !treasurerPk.equals(publicKey) &&
-          multisigAccounts &&
-          multisigAccounts.findIndex(m => m.authority.equals(treasurerPk)) !==
-            -1
-        ) {
-          return true;
-        }
-      }
-
-      return false;
-    },
-    [publicKey, treasuryList, multisigAccounts, isNewTreasury],
-  );
-
   //////////////////////
   // MODALS & ACTIONS //
   //////////////////////
@@ -817,9 +790,7 @@ export const MoneyStreamsInfoView = (props: {
           multisigTransactionFees.networkFee +
           multisigTransactionFees.multisigFee +
           multisigTransactionFees.rentExempt; // Multisig proposal
-        const minRequired = isMultisigTreasury(params.treasuryId)
-          ? mp
-          : bf + ff;
+        const minRequired = isMultisigContext ? mp : bf + ff;
 
         setMinRequiredBalance(minRequired);
 
@@ -909,8 +880,9 @@ export const MoneyStreamsInfoView = (props: {
         return null;
       }
 
-      if (!isMultisigTreasury(data.treasury) || !params.fundFromSafe) {
+      if (!isMultisigContext || !params.fundFromSafe) {
         if (data.stream === '') {
+          consoleOut('Create single signer Tx ->', 'buildAddFundsToAccountTransaction', 'darkgreen');
           const accounts: AddFundsToAccountTransactionAccounts = {
             feePayer: new PublicKey(data.payer),                  // feePayer
             contributor: new PublicKey(data.contributor),         // contributor
@@ -924,6 +896,7 @@ export const MoneyStreamsInfoView = (props: {
           return transaction;
         }
 
+        consoleOut('Create single signer Tx ->', 'buildAllocateFundsToStreamTransaction', 'darkgreen');
         const accounts: AllocateFundsToStreamTransactionAccounts = {
           feePayer: new PublicKey(data.payer),                  // feePayer
           psAccount: new PublicKey(data.treasury),              // psAccount
@@ -940,15 +913,13 @@ export const MoneyStreamsInfoView = (props: {
       if (!treasuryList || !multisigClient || !multisigAccounts || !publicKey) {
         return null;
       }
-
-      const treasury = treasuryList.find(t => t.id === data.treasury) as
-        | PaymentStreamingAccount
-        | undefined;
+      const treasury = treasuryList.find(t => getStreamingAccountId(t) === data.treasury);
       if (!treasury) {
         return null;
       }
 
-      const multisig = multisigAccounts.find(m => m.authority.equals(treasury.owner));
+      const owner = getStreamingAccountOwner(treasury);
+      const multisig = multisigAccounts.find(m => m.authority.toBase58() === owner);
 
       if (!multisig) {
         return null;
@@ -960,6 +931,7 @@ export const MoneyStreamsInfoView = (props: {
       let addFundsTx: Transaction;
 
       if (data.stream) {
+        consoleOut('Create multisig Tx ->', 'buildAllocateFundsToStreamTransaction', 'darkgreen');
         const accounts: AllocateFundsToStreamTransactionAccounts = {
           feePayer: new PublicKey(multisig.authority),          // feePayer
           owner: new PublicKey(multisig.authority),             // owner
@@ -973,6 +945,7 @@ export const MoneyStreamsInfoView = (props: {
         addFundsTx = transaction;
       } else {
         operationType = OperationType.TreasuryAddFunds;
+        consoleOut('Create multisig Tx ->', 'buildAddFundsToAccountTransaction', 'darkgreen');
         const accounts: AddFundsToAccountTransactionAccounts = {
           feePayer: new PublicKey(multisig.authority),          // feePayer
           contributor: new PublicKey(data.contributor),         // contributor
@@ -1025,9 +998,6 @@ export const MoneyStreamsInfoView = (props: {
         return false;
       }
 
-      consoleOut('Start transaction for treasury addFunds', '', 'blue');
-      consoleOut('Wallet address:', publicKey.toBase58());
-
       setTransactionStatus({
         lastOperation: TransactionStatus.TransactionStart,
         currentOperation: TransactionStatus.InitTransaction,
@@ -1071,7 +1041,7 @@ export const MoneyStreamsInfoView = (props: {
         multisigTransactionFees.networkFee +
         multisigTransactionFees.multisigFee +
         multisigTransactionFees.rentExempt; // Multisig proposal
-      const minRequired = isMultisigTreasury(params.treasuryId) ? mp : bf + ff;
+      const minRequired = isMultisigContext ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -1103,7 +1073,7 @@ export const MoneyStreamsInfoView = (props: {
 
       consoleOut(
         'onExecuteAddFundsTransaction ->',
-        '/src/views/MoneyStreamsInfo',
+        'MoneyStreamsInfoView',
         'darkcyan',
       );
       consoleOut('Starting Add Funds using MSP V2...', '', 'blue');

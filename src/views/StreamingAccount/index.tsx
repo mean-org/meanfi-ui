@@ -990,6 +990,7 @@ export const StreamingAccountView = (props: {
 
       if (!isMultisigContext || !params.fundFromSafe) {
         if (data.stream === '') {
+          consoleOut('Create single signer Tx ->', 'buildAddFundsToAccountTransaction', 'darkgreen');
           const accounts: AddFundsToAccountTransactionAccounts = {
             feePayer: new PublicKey(data.payer),                // feePayer
             contributor: new PublicKey(data.contributor),       // contributor
@@ -1003,6 +1004,7 @@ export const StreamingAccountView = (props: {
           return transaction;
         }
 
+        consoleOut('Create single signer Tx ->', 'buildAllocateFundsToStreamTransaction', 'darkgreen');
         const accounts: AllocateFundsToStreamTransactionAccounts = {
           feePayer: new PublicKey(data.payer),                // payer
           psAccount: new PublicKey(data.treasury),            // psAccount
@@ -1031,6 +1033,7 @@ export const StreamingAccountView = (props: {
       let addFundsTx: Transaction;
 
       if (data.stream) {
+        consoleOut('Create multisig Tx ->', 'buildAllocateFundsToStreamTransaction', 'darkgreen');
         const accounts: AllocateFundsToStreamTransactionAccounts = {
           feePayer: new PublicKey(data.payer),                // payer
           psAccount: new PublicKey(data.treasury),            // psAccount
@@ -1044,6 +1047,7 @@ export const StreamingAccountView = (props: {
         addFundsTx = transaction;
       } else {
         operationType = OperationType.TreasuryAddFunds;
+        consoleOut('Create multisig Tx ->', 'buildAddFundsToAccountTransaction', 'darkgreen');
         const accounts: AddFundsToAccountTransactionAccounts = {
           feePayer: new PublicKey(data.payer),                // feePayer
           contributor: new PublicKey(data.contributor),       // contributor
@@ -1095,9 +1099,6 @@ export const StreamingAccountView = (props: {
         });
         return false;
       }
-
-      consoleOut('Start transaction for treasury addFunds', '', 'blue');
-      consoleOut('Wallet address:', publicKey.toBase58());
 
       setTransactionStatus({
         lastOperation: TransactionStatus.TransactionStart,
@@ -1175,7 +1176,7 @@ export const StreamingAccountView = (props: {
       consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
       consoleOut(
         'onExecuteAddFundsTransaction ->',
-        '/src/views/StreamingAccount/index.tsx',
+        'StreamingAccountView',
         'darkcyan',
       );
       // Create a transaction
