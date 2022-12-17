@@ -10,9 +10,8 @@ import { useContext, useEffect, useState } from 'react';
 
 const WalletAccountSummary = (props: {
   accountBalance?: number;
-  onCtaClicked?: any;
 }) => {
-  const { accountBalance, onCtaClicked } = props;
+  const { accountBalance } = props;
 
   const {
     splTokenList,

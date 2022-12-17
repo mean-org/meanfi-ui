@@ -1,4 +1,3 @@
-import { TransactionFees } from '@mean-dao/money-streaming';
 import { Button, Modal } from 'antd';
 
 import { InputMean } from 'components/InputMean';

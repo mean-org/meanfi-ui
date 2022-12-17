@@ -1,4 +1,4 @@
-import { SubCategory } from '@mean-dao/msp';
+import { SubCategory } from '@mean-dao/payment-streaming';
 
 export enum ChainID {
   MainnetBeta = 101,

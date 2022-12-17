@@ -4,7 +4,7 @@ import {
   STREAM_STATE,
   TransactionFees,
 } from '@mean-dao/money-streaming/lib/types';
-import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { PaymentStreaming, Stream, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
 import BigNumber from 'bignumber.js';
@@ -12,8 +12,9 @@ import { BN } from 'bn.js';
 import { InputMean } from 'components/InputMean';
 import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
+import { useConnection, useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
+import { getStreamId } from 'middleware/getStreamId';
 import { consoleOut, percentageBn } from 'middleware/ui';
 import {
   getAmountWithSymbol,
@@ -46,6 +47,7 @@ export const StreamWithdrawModal = (props: {
     transactionFees,
   } = props;
   const { t } = useTranslation('common');
+  const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { wallet, publicKey } = useWallet();
   const {
@@ -66,6 +68,14 @@ export const StreamWithdrawModal = (props: {
   const isMultisigContext = useMemo(() => {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
+
+  const paymentStreaming = useMemo(() => {
+    return new PaymentStreaming(
+      connection,
+      new PublicKey(streamV2ProgramAddress),
+      'confirmed'
+    );
+  }, [connection, streamV2ProgramAddress]);
 
   const getFeeAmount = useCallback(
     (fees: TransactionFees, amount = new BN(0)): number => {
@@ -114,6 +124,13 @@ export const StreamWithdrawModal = (props: {
     [selectedToken],
   );
 
+  const isV2Stream = useCallback((stream: Stream | StreamInfo) => {
+    if (stream) {
+      return stream.version >= 2;
+    }
+    return false;
+  }, []);
+
   const isMaxAmount = useMemo(() => {
     if (!selectedToken || !withdrawAmountInput) {
       return false;
@@ -133,21 +150,26 @@ export const StreamWithdrawModal = (props: {
     }
 
     const getStreamDetails = async (
+      isV2Stream: boolean,
       streamId: string,
-      client: MSP | MoneyStreaming,
+      client: PaymentStreaming | MoneyStreaming,
     ) => {
       const streamPublicKey = new PublicKey(streamId);
       try {
-        const detail = await client.getStream(streamPublicKey);
+        let detail: Stream | StreamInfo | null = null;
+        if (isV2Stream) {
+          detail = await (client as PaymentStreaming).getStream(streamPublicKey);
+        } else {
+          detail = await (client as MoneyStreaming).getStream(streamPublicKey);
+        }
         if (detail) {
           consoleOut('Withdraw stream detail:', detail, 'blue');
-          const isNew = detail.version >= 2 ? true : false;
           const v1 = detail as StreamInfo;
           const v2 = detail as Stream;
           let max = new BN(0);
-          if (isNew) {
+          if (isV2Stream) {
             max = new BN(v2.withdrawableAmount);
-            setFeePayedByTreasurer(v2.feePayedByTreasurer);
+            setFeePayedByTreasurer(v2.tokenFeePayedFromAccount);
           } else {
             max = new BN(v1.escrowVestedAmount);
           }
@@ -176,18 +198,17 @@ export const StreamWithdrawModal = (props: {
       }
     };
 
-    const isNew = startUpData.version >= 2 ? true : false;
     const v1 = startUpData as StreamInfo;
     const v2 = startUpData as Stream;
+    const streamId = getStreamId(startUpData);
     let max = new BN(0);
-    if (isNew) {
+    if (isV2Stream(startUpData)) {
       max = new BN(v2.withdrawableAmount);
-      if (v2.status === STREAM_STATUS.Running) {
+      if (v2.statusCode === STREAM_STATUS_CODE.Running) {
         setMaxAmountBn(max);
         setLoadingData(true);
         try {
-          const msp = new MSP(endpoint, streamV2ProgramAddress, 'confirmed');
-          getStreamDetails(v2.id.toBase58(), msp);
+          getStreamDetails(true, streamId, paymentStreaming);
         } catch (error) {
           openNotification({
             title: t('notifications.error-title'),
@@ -197,7 +218,7 @@ export const StreamWithdrawModal = (props: {
         }
       } else {
         setMaxAmountBn(max);
-        setFeePayedByTreasurer(v2.feePayedByTreasurer);
+        setFeePayedByTreasurer(v2.tokenFeePayedFromAccount);
       }
     } else {
       max = new BN(v1.escrowVestedAmount);
@@ -210,7 +231,7 @@ export const StreamWithdrawModal = (props: {
             streamProgramAddress,
             'confirmed',
           );
-          getStreamDetails(v1.id as string, ms);
+          getStreamDetails(false, streamId, ms);
         } catch (error) {
           openNotification({
             title: t('notifications.error-title'),
@@ -223,14 +244,16 @@ export const StreamWithdrawModal = (props: {
       }
     }
   }, [
-    t,
-    publicKey,
     wallet,
     endpoint,
+    publicKey,
     startUpData,
+    selectedToken,
+    paymentStreaming,
     streamProgramAddress,
     streamV2ProgramAddress,
-    selectedToken,
+    isV2Stream,
+    t,
   ]);
 
   useEffect(() => {

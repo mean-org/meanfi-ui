@@ -1,5 +1,5 @@
 import { StreamInfo, TreasuryInfo } from "@mean-dao/money-streaming";
-import { Stream, Treasury } from "@mean-dao/msp";
+import { Stream, PaymentStreamingAccount } from "@mean-dao/payment-streaming";
 import { PublicKey } from "@solana/web3.js";
 import { Button, notification } from "antd";
 import { segmentAnalytics } from "App";
@@ -9,6 +9,7 @@ import { useAccountsContext } from "contexts/accounts";
 import { AppStateContext } from "contexts/appstate";
 import { confirmationEvents, TxConfirmationInfo } from "contexts/transaction-status";
 import { useWallet } from "contexts/wallet";
+import { getStreamingAccountId } from "middleware/getStreamingAccountId";
 import { AppUsageEvent } from "middleware/segment-service";
 import { consoleOut } from "middleware/ui";
 import { RegisteredAppPaths } from "models/accounts";
@@ -20,7 +21,7 @@ import { MoneyStreamsIncomingView, MoneyStreamsInfoView, MoneyStreamsOutgoingVie
 let isWorkflowLocked = false;
 
 const PaymentStreamingView = (props: {
-  treasuryList: (Treasury | TreasuryInfo)[];
+  treasuryList: (TreasuryInfo | PaymentStreamingAccount)[];
   loadingTreasuries: boolean;
   onBackButtonClicked?: any;
 }) => {
@@ -50,7 +51,7 @@ const PaymentStreamingView = (props: {
   const [pathParamTreasuryId, setPathParamTreasuryId] = useState('');
   const [pathParamStreamingTab, setPathParamStreamingTab] = useState('');
   // Streaming account
-  const [treasuryDetail, setTreasuryDetail] = useState<Treasury | TreasuryInfo | undefined>();
+  const [treasuryDetail, setTreasuryDetail] = useState<PaymentStreamingAccount | TreasuryInfo | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
 
 
@@ -245,21 +246,18 @@ const PaymentStreamingView = (props: {
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
-          } else {
-            onBackButtonClicked();
-            hardReloadStreams();
           }
+          onBackButtonClicked();
+          hardReloadStreams();
           break;
         case OperationType.TreasuryClose:
           logEventHandling(item);
           if (item.extras && item.extras.multisigAuthority) {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
-          } else {
-            const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
-            navigate(url);
-            hardReloadStreams();
           }
+          navigate(`/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`);
+          hardReloadStreams();
           break;
         case OperationType.StreamTransferBeneficiary:
           logEventHandling(item);
@@ -267,8 +265,7 @@ const PaymentStreamingView = (props: {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           } else {
-            const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
-            navigate(url);
+            navigate(`/${RegisteredAppPaths.PaymentStreaming}/incoming`);
             hardReloadStreams();
           }
           break;
@@ -357,9 +354,7 @@ const PaymentStreamingView = (props: {
       streamingItemId &&
       pathParamTreasuryId === streamingItemId
     ) {
-      const item = treasuryList.find(
-        s => (s.id as string) === pathParamTreasuryId,
-      );
+      const item = treasuryList.find(s => getStreamingAccountId(s) === pathParamTreasuryId);
       consoleOut('treasuryDetail:', item, 'darkgreen');
       if (item) {
         setTreasuryDetail(item);
@@ -470,7 +465,7 @@ const PaymentStreamingView = (props: {
   };
 
   const goToStreamingAccountDetailsHandler = (
-    streamingTreasury: Treasury | TreasuryInfo | undefined,
+    streamingTreasury: PaymentStreamingAccount | TreasuryInfo | undefined,
   ) => {
     if (streamingTreasury) {
       const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingTreasury.id as string
@@ -547,7 +542,7 @@ const PaymentStreamingView = (props: {
       streamingItemId &&
       pathParamStreamingTab === 'streaming-accounts' &&
       treasuryDetail &&
-      treasuryDetail.id === pathParamTreasuryId
+      getStreamingAccountId(treasuryDetail) === pathParamTreasuryId
     ) {
       return (
         <StreamingAccountView

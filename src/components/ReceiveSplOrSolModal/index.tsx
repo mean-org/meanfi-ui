@@ -1,12 +1,11 @@
-import React, { useContext, useState } from 'react';
 import { Modal } from 'antd';
-import { useTranslation } from 'react-i18next';
-import { AppStateContext } from '../../contexts/appstate';
-import { useWallet } from '../../contexts/wallet';
-import { AddressDisplay } from '../AddressDisplay';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
-import { getSolanaExplorerClusterParam } from '../../contexts/connection';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
+import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
 import { QRCodeSVG } from 'qrcode.react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { AddressDisplay } from '../AddressDisplay';
 
 export const ReceiveSplOrSolModal = (props: {
   handleClose: any;
@@ -18,10 +17,9 @@ export const ReceiveSplOrSolModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const { theme } = useContext(AppStateContext);
   const { address, accountAddress, tokenSymbol, isVisible, handleClose } =
     props;
-  const [overrideWithWallet, setOverrideWithWallet] = useState(false);
+  const [overrideWithWallet] = useState(false);
 
   const isWalletAddress = () => {
     return publicKey &&

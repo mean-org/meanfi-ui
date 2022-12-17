@@ -3,20 +3,27 @@ import { Modal, Button } from 'antd';
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { TreasuryInfo, StreamInfo } from '@mean-dao/money-streaming/lib/types';
-import { Stream, Treasury, MSP, TreasuryType } from '@mean-dao/msp';
-import { StreamTreasuryType } from '../../models/treasuries';
-import { useConnection } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { consoleOut } from '../../middleware/ui';
+import { Stream, PaymentStreamingAccount, PaymentStreaming, AccountType } from '@mean-dao/payment-streaming';
+import { StreamTreasuryType } from 'models/treasuries';
+import { useConnection } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { consoleOut } from 'middleware/ui';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
+import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 
 export const StreamLockedModal = (props: {
   handleClose: any;
   isVisible: boolean;
   streamDetail: Stream | StreamInfo | undefined;
-  mspClient: MoneyStreaming | MSP | undefined;
+  mspClient: MoneyStreaming | PaymentStreaming | undefined;
 }) => {
+  const {
+    handleClose,
+    isVisible,
+    streamDetail,
+    mspClient,
+  } = props;
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
@@ -25,70 +32,66 @@ export const StreamLockedModal = (props: {
   >(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
 
-  const getTreasuryTypeByTreasuryId = useCallback(
-    async (
-      treasuryId: string,
-      streamVersion: number,
-    ): Promise<StreamTreasuryType | undefined> => {
-      if (!connection || !publicKey || !props.mspClient) {
-        return undefined;
+  const getTreasuryTypeByTreasuryId = useCallback(async (
+    treasuryId: string,
+    streamVersion: number,
+  ): Promise<StreamTreasuryType | undefined> => {
+    if (!connection || !publicKey || !mspClient) {
+      return undefined;
+    }
+
+    const treasuryPk = new PublicKey(treasuryId);
+
+    try {
+      let details: PaymentStreamingAccount | TreasuryInfo | undefined = undefined;
+      if (streamVersion < 2) {
+        details = await (mspClient as MoneyStreaming).getTreasury(treasuryPk);
+      } else {
+        details = await (mspClient as PaymentStreaming).getAccount(treasuryPk);
       }
-
-      const mspInstance =
-        streamVersion < 2
-          ? (props.mspClient as MoneyStreaming)
-          : (props.mspClient as MSP);
-      const treasueyPk = new PublicKey(treasuryId);
-
-      try {
-        const details = await mspInstance.getTreasury(treasueyPk);
-        if (details) {
-          consoleOut('treasuryDetails:', details, 'blue');
-          const v1 = details as TreasuryInfo;
-          const v2 = details as Treasury;
-          const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-          const type = isNewTreasury ? v2.treasuryType : v1.type;
-          if (type === TreasuryType.Lock) {
-            return 'locked';
-          } else {
-            return 'open';
-          }
+      if (details) {
+        const type = getStreamingAccountType(details);
+        if (type === AccountType.Lock) {
+          return 'locked';
         } else {
-          return 'unknown';
+          return 'open';
         }
-      } catch (error) {
-        console.error(error);
+      } else {
         return 'unknown';
-      } finally {
-        setLoadingTreasuryDetails(false);
       }
-    },
-    [publicKey, connection, props.mspClient],
+    } catch (error) {
+      console.error(error);
+      return 'unknown';
+    } finally {
+      setLoadingTreasuryDetails(false);
+    }
+  },
+    [publicKey, connection, mspClient],
   );
 
   // Set treasury type
   useEffect(() => {
-    if (props.isVisible && localStreamDetail) {
+    if (isVisible && localStreamDetail) {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
       consoleOut('fetching treasury details...', '', 'blue');
       getTreasuryTypeByTreasuryId(
         localStreamDetail.version < 2
           ? (v1.treasuryAddress as string)
-          : v2.treasury.toBase58(),
+          : v2.psAccount.toBase58(),
         localStreamDetail.version,
       ).then(value => {
         consoleOut('streamTreasuryType:', value, 'crimson');
       });
     }
-  }, [props.isVisible, localStreamDetail, getTreasuryTypeByTreasuryId]);
+  }, [isVisible, localStreamDetail, getTreasuryTypeByTreasuryId]);
 
   // Read and keep the input copy of the stream
   useEffect(() => {
-    if (props.isVisible && !localStreamDetail && props.streamDetail) {
-      setLocalStreamDetail(props.streamDetail);
+    if (isVisible && !localStreamDetail && streamDetail) {
+      setLocalStreamDetail(streamDetail);
     }
-  }, [props.isVisible, localStreamDetail, props.streamDetail]);
+  }, [isVisible, localStreamDetail, streamDetail]);
 
   return (
     <Modal
@@ -99,8 +102,8 @@ export const StreamLockedModal = (props: {
         </div>
       }
       footer={null}
-      open={props.isVisible}
-      onCancel={props.handleClose}
+      open={isVisible}
+      onCancel={handleClose}
       width={400}
     >
       {loadingTreasuryDetails ? (
@@ -128,7 +131,7 @@ export const StreamLockedModal = (props: {
               type="primary"
               shape="round"
               size="large"
-              onClick={props.handleClose}
+              onClick={handleClose}
             >
               {t('general.cta-close')}
             </Button>

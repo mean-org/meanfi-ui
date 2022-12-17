@@ -1,7 +1,6 @@
 import { NONCE_ACCOUNT_LENGTH } from '@solana/web3.js';
-import { AccountsCoder, Idl } from '@project-serum/anchor';
+import { AccountsCoder } from '@project-serum/anchor';
 import { publicKey, struct, u32, u64 } from '@project-serum/borsh';
-// import { accountSize } from "@mean-dao/ddca/node_modules/@project-serum/anchor/dist/cjs/coder";
 import { IdlAccountDef } from '@project-serum/anchor/dist/cjs/idl';
 
 export class MeanSystemAccountsCoder<A extends string = string>

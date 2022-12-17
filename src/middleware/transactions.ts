@@ -52,7 +52,7 @@ export async function fetchTxStatus(
 
   const fetchStatus = async () => {
     try {
-      const latestBlockHash = await connection.getLatestBlockhash();
+      const latestBlockHash = await connection.getLatestBlockhash('confirmed');
       const result = await connection.confirmTransaction(
         {
           signature,
@@ -197,7 +197,7 @@ export const sendTx = async (title: string, connection: Connection, encodedTx: s
 
   if (connection && encodedTx) {
     return connection
-      .sendEncodedTransaction(encodedTx)
+      .sendEncodedTransaction(encodedTx, { preflightCommitment: 'confirmed' })
       .then(sig => {
         consoleOut('sendEncodedTransaction returned a signature:', sig);
         txLog.push({
@@ -239,11 +239,11 @@ export const sendTx = async (title: string, connection: Connection, encodedTx: s
   }
 };
 
-export const confirmTx = async (title: string, connection: Connection, signature: string): Promise<ConfirmTxResult> => {
+export const confirmTx = async (title: string, connection: Connection, signature: string, finality: TransactionConfirmationStatus = 'confirmed'): Promise<ConfirmTxResult> => {
   const txLog: any[] = [];
 
   try {
-    const confirmation = await fetchTxStatus(connection, signature, 'confirmed');
+    const confirmation = await fetchTxStatus(connection, signature, finality);
     if (confirmation) {
       return {
         confirmed: true,

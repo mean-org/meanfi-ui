@@ -1,12 +1,12 @@
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
-  MSP,
+  PaymentStreaming,
   Stream,
-  STREAM_STATUS,
+  STREAM_STATUS_CODE,
   TransactionFees,
-  Treasury,
-  TreasuryType,
-} from '@mean-dao/msp';
+  AccountType,
+  PaymentStreamingAccount,
+} from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Radio, Row } from 'antd';
 import { InputMean } from 'components/InputMean';
@@ -28,7 +28,7 @@ export const StreamCloseModal = (props: {
   handleOk: any;
   hasContractFinished: boolean;
   isVisible: boolean;
-  mspClient: MSP | undefined;
+  mspClient: PaymentStreaming | undefined;
   selectedToken: TokenInfo | undefined;
   streamDetail: Stream | undefined;
   transactionFees: TransactionFees;
@@ -53,19 +53,11 @@ export const StreamCloseModal = (props: {
   const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [closeTreasuryOption, setCloseTreasuryOption] = useState(false);
-  const [streamTreasuryType, setStreamTreasuryType] = useState<
-    StreamTreasuryType | undefined
-  >(undefined);
+  const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
-  const [treasuryDetails, setTreasuryDetails] = useState<Treasury | undefined>(
-    undefined,
-  );
-  const [localStreamDetail, setLocalStreamDetail] = useState<
-    Stream | undefined
-  >(undefined);
-  const [streamState, setStreamState] = useState<STREAM_STATUS | undefined>(
-    undefined,
-  );
+  const [treasuryDetails, setTreasuryDetails] = useState<PaymentStreamingAccount | undefined>(undefined);
+  const [localStreamDetail, setLocalStreamDetail] = useState<Stream | undefined>(undefined);
+  const [streamState, setStreamState] = useState<STREAM_STATUS_CODE | undefined>(undefined);
   const [proposalTitle, setProposalTitle] = useState('');
 
   const getTreasuryTypeByTreasuryId = useCallback(
@@ -77,12 +69,12 @@ export const StreamCloseModal = (props: {
       const treasueyPk = new PublicKey(treasuryId);
 
       try {
-        const details = await mspClient.getTreasury(treasueyPk);
+        const details = await mspClient.getAccount(treasueyPk);
         if (details) {
           setTreasuryDetails(details);
           consoleOut('treasuryDetails:', details, 'blue');
-          const type = details.treasuryType;
-          if (type === TreasuryType.Lock) {
+          const type = details.accountType;
+          if (type === AccountType.Lock) {
             return 'locked';
           } else {
             return 'open';
@@ -104,21 +96,19 @@ export const StreamCloseModal = (props: {
   // Read and keep the input copy of the stream
   useEffect(() => {
     if (isVisible && !localStreamDetail && streamDetail) {
-      setStreamState(streamDetail.status as STREAM_STATUS);
+      setStreamState(streamDetail.statusCode as STREAM_STATUS_CODE);
       setLocalStreamDetail(streamDetail);
     }
   }, [isVisible, localStreamDetail, streamDetail]);
 
-  // Set treasury type
+  // Set account type
   useEffect(() => {
     if (isVisible && localStreamDetail) {
-      consoleOut('fetching treasury details...', '', 'blue');
-      getTreasuryTypeByTreasuryId(localStreamDetail.treasury.toBase58()).then(
-        value => {
-          consoleOut('streamTreasuryType:', value, 'crimson');
-          setStreamTreasuryType(value);
-        },
-      );
+      consoleOut('fetching account details...', '', 'blue');
+      getTreasuryTypeByTreasuryId(localStreamDetail.psAccount.toBase58()).then(value => {
+        consoleOut('streamTreasuryType:', value, 'crimson');
+        setStreamTreasuryType(value);
+      });
     }
   }, [isVisible, localStreamDetail, getTreasuryTypeByTreasuryId]);
 
@@ -127,10 +117,7 @@ export const StreamCloseModal = (props: {
     if (!canCloseTreasury && treasuryDetails) {
       if (treasuryDetails.totalStreams > 1) {
         setCloseTreasuryOption(false);
-      } else if (
-        treasuryDetails.totalStreams === 1 &&
-        treasuryDetails.autoClose
-      ) {
+      } else if (treasuryDetails.totalStreams === 1 && treasuryDetails.autoClose) {
         setCloseTreasuryOption(true);
       } else {
         setCloseTreasuryOption(false);
@@ -139,10 +126,7 @@ export const StreamCloseModal = (props: {
   }, [treasuryDetails, canCloseTreasury]);
 
   const amITreasurer = useCallback((): boolean => {
-    if (streamDetail && publicKey) {
-      return streamDetail.treasurer.equals(publicKey) ? true : false;
-    }
-    return false;
+    return streamDetail && publicKey ? streamDetail.psAccountOwner.equals(publicKey) : false;
   }, [publicKey, streamDetail]);
 
   const amIBeneficiary = useCallback((): boolean => {
@@ -163,10 +147,7 @@ export const StreamCloseModal = (props: {
         const isTreasurer = amITreasurer();
         const isBeneficiary = amIBeneficiary();
         if (isBeneficiary) {
-          const wa = toUiAmount(
-            streamDetail.withdrawableAmount,
-            selectedToken?.decimals || 9,
-          );
+          const wa = toUiAmount(streamDetail.withdrawableAmount, selectedToken?.decimals || 9);
           fee = (percentageBn(fees.mspPercentFee, wa, true) as number) || 0;
         } else if (isTreasurer) {
           fee = fees.mspFlatFee;
@@ -179,20 +160,14 @@ export const StreamCloseModal = (props: {
 
   const getWithdrawableAmount = useCallback(() => {
     if (streamDetail) {
-      return toUiAmount(
-        streamDetail.withdrawableAmount,
-        selectedToken?.decimals || 9,
-      );
+      return toUiAmount(streamDetail.withdrawableAmount, selectedToken?.decimals || 9);
     }
     return '0';
   }, [streamDetail, selectedToken?.decimals]);
 
   const getUnvested = useCallback(() => {
     if (streamDetail) {
-      return toUiAmount(
-        streamDetail.fundsLeftInStream,
-        selectedToken?.decimals || 9,
-      );
+      return toUiAmount(streamDetail.fundsLeftInStream, selectedToken?.decimals || 9);
     }
     return '0';
   }, [streamDetail, selectedToken?.decimals]);
@@ -214,10 +189,7 @@ export const StreamCloseModal = (props: {
       closeTreasuryOption,
       vestedReturns: getWithdrawableAmount(),
       unvestedReturns: amITreasurer() ? getUnvested() : 0,
-      feeAmount:
-        amIBeneficiary() && streamDetail.withdrawableAmount.gtn(0)
-          ? feeAmount || 0
-          : 0,
+      feeAmount: amIBeneficiary() && streamDetail.withdrawableAmount.gtn(0) ? feeAmount || 0 : 0,
     };
     handleOk(options);
   };
@@ -240,27 +212,14 @@ export const StreamCloseModal = (props: {
   };
 
   const renderModalContent = () => {
-    if (
-      streamTreasuryType === 'locked' &&
-      streamState === STREAM_STATUS.Running
-    ) {
+    if (streamTreasuryType === 'locked' && streamState === STREAM_STATUS_CODE.Running) {
       return (
         // The user can't close the stream
         <div className="transaction-progress p-0">
-          <ExclamationCircleOutlined
-            style={{ fontSize: 48 }}
-            className="icon mt-0"
-          />
-          <h4 className="operation">
-            {t('vesting.close-account.cant-close-stream-message')}
-          </h4>
+          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+          <h4 className="operation">{t('vesting.close-account.cant-close-stream-message')}</h4>
           <div className="mt-3">
-            <Button
-              type="primary"
-              shape="round"
-              size="large"
-              onClick={handleClose}
-            >
+            <Button type="primary" shape="round" size="large" onClick={handleClose}>
               {t('general.cta-close')}
             </Button>
           </div>
@@ -273,18 +232,13 @@ export const StreamCloseModal = (props: {
       };
 
       const getButtonLabel = () => {
-        return !proposalTitle && isMultisigTreasury
-          ? 'Add a proposal title'
-          : t('close-stream.primary-cta');
+        return !proposalTitle && isMultisigTreasury ? 'Add a proposal title' : t('close-stream.primary-cta');
       };
 
       return (
         // The normal stuff
         <div className="transaction-progress p-0">
-          <ExclamationCircleOutlined
-            style={{ fontSize: 48 }}
-            className="icon mt-0"
-          />
+          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
           <h4 className="operation">{content}</h4>
 
           {/* Info */}
@@ -317,12 +271,7 @@ export const StreamCloseModal = (props: {
                   localStreamDetail.withdrawableAmount.gtn(0) &&
                   infoRow(
                     t('transactions.transaction-info.transaction-fee') + ':',
-                    `${
-                      feeAmount
-                        ? '~' +
-                          getAmountWithSymbol(feeAmount, selectedToken.address)
-                        : '0'
-                    }`,
+                    `${feeAmount ? '~' + getAmountWithSymbol(feeAmount, selectedToken.address) : '0'}`,
                   )}
               </div>
             </>
@@ -330,9 +279,7 @@ export const StreamCloseModal = (props: {
           {/* Proposal title */}
           {isMultisigTreasury && (
             <div className="mb-3">
-              <div className="form-label text-left">
-                {t('multisig.proposal-modal.title')}
-              </div>
+              <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
               <InputMean
                 id="proposal-title-field"
                 name="Title"
@@ -348,15 +295,10 @@ export const StreamCloseModal = (props: {
           {canCloseTreasury && treasuryDetails && !treasuryDetails.autoClose && (
             <div className="mt-3 flex-fixed-right">
               <div className="form-label left m-0 p-0">
-                {t(
-                  'vesting.close-account.close-stream-also-closes-account-label',
-                )}
+                {t('vesting.close-account.close-stream-also-closes-account-label')}
               </div>
               <div className="right">
-                <Radio.Group
-                  onChange={onCloseTreasuryOptionChanged}
-                  value={closeTreasuryOption}
-                >
+                <Radio.Group onChange={onCloseTreasuryOptionChanged} value={closeTreasuryOption}>
                   <Radio value={true}>{t('general.yes')}</Radio>
                   <Radio value={false}>{t('general.no')}</Radio>
                 </Radio.Group>
@@ -365,22 +307,10 @@ export const StreamCloseModal = (props: {
           )}
 
           <div className="mt-3">
-            <Button
-              className="mr-3"
-              type="text"
-              shape="round"
-              size="large"
-              onClick={handleClose}
-            >
+            <Button className="mr-3" type="text" shape="round" size="large" onClick={handleClose}>
               {t('close-stream.secondary-cta')}
             </Button>
-            <Button
-              type="primary"
-              shape="round"
-              size="large"
-              onClick={onAcceptModal}
-              disabled={!isValidForm()}
-            >
+            <Button type="primary" shape="round" size="large" onClick={onAcceptModal} disabled={!isValidForm()}>
               {getButtonLabel()}
             </Button>
           </div>
@@ -402,14 +332,8 @@ export const StreamCloseModal = (props: {
       {loadingTreasuryDetails ? (
         // The loading part
         <div className="transaction-progress p-0">
-          <LoadingOutlined
-            style={{ fontSize: 48 }}
-            className="icon mt-0"
-            spin
-          />
-          <h4 className="operation">
-            {t('close-stream.loading-treasury-message')}
-          </h4>
+          <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
+          <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
         </div>
       ) : (
         renderModalContent()

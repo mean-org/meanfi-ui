@@ -65,7 +65,7 @@ export const ProposalDetailsView = (props: {
   isCancelRejectModalVisible: boolean;
   setIsCancelRejectModalVisible: (value: boolean) => void;
 }) => {
-  const { transactionStatus, setTransactionStatus } =
+  const { setTransactionStatus } =
     useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();

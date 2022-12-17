@@ -1,6 +1,6 @@
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { SubCategory, TransactionFees, TreasuryType } from '@mean-dao/msp';
+import { SubCategory, TransactionFees, AccountType } from '@mean-dao/payment-streaming';
 import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import {
   Button,
@@ -417,8 +417,8 @@ export const VestingContractCreateForm = (props: {
         ? vestingCategory.value
         : SubCategory.default,
       vestingContractType: treasuryOption
-        ? treasuryOption.type
-        : TreasuryType.Lock,
+        ? +treasuryOption.type
+        : AccountType.Lock,
       token: selectedToken as TokenInfo,
       amount: vestingLockFundingAmount,
       feePayedByTreasurer: isFeePaidByTreasurer,

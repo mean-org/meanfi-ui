@@ -12,11 +12,12 @@ import {
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import {
   Beneficiary,
-  MSP,
+  PaymentStreaming,
   TransactionFees,
-  Treasury,
-  TreasuryType,
-} from '@mean-dao/msp';
+  PaymentStreamingAccount,
+  AccountType,
+  CreateStreamTransactionAccounts,
+} from '@mean-dao/payment-streaming';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import {
   Button,
@@ -40,11 +41,12 @@ import { StepSelector } from 'components/StepSelector';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
 import { appConfig, customLogger } from 'index';
+import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
+import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { sendTx, signTx } from 'middleware/transactions';
 import {
@@ -86,7 +88,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
-type TreasuryValues = Treasury | TreasuryInfo | undefined;
+type TreasuryValues = PaymentStreamingAccount | TreasuryInfo | undefined;
 
 export const TreasuryStreamCreateModal = (props: {
   associatedToken: string;
@@ -99,7 +101,7 @@ export const TreasuryStreamCreateModal = (props: {
   multisigClient: MeanMultisig;
   nativeBalance: number;
   transactionFees: TransactionFees;
-  treasuryList: (Treasury | TreasuryInfo)[] | undefined;
+  treasuryList: (TreasuryInfo | PaymentStreamingAccount)[] | undefined;
   treasuryDetails: TreasuryValues;
   userBalances: any;
   withdrawTransactionFees: TransactionFees;
@@ -121,7 +123,6 @@ export const TreasuryStreamCreateModal = (props: {
   } = props;
   const { t } = useTranslation('common');
   const { wallet, publicKey } = useWallet();
-  const { endpoint } = useConnectionConfig();
   const {
     theme,
     splTokenList,
@@ -138,7 +139,6 @@ export const TreasuryStreamCreateModal = (props: {
     isVerifiedRecipient,
     lockPeriodFrequency,
     paymentRateFrequency,
-    streamV2ProgramAddress,
     setPaymentRateFrequency,
     setIsVerifiedRecipient,
     setLockPeriodFrequency,
@@ -182,8 +182,8 @@ export const TreasuryStreamCreateModal = (props: {
   );
   const [workingTreasuryDetails, setWorkingTreasuryDetails] =
     useState<TreasuryValues>(undefined);
-  const [workingTreasuryType, setWorkingTreasuryType] = useState<TreasuryType>(
-    TreasuryType.Open,
+  const [workingTreasuryType, setWorkingTreasuryType] = useState<AccountType>(
+    AccountType.Open,
   );
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] =
     useState('');
@@ -197,6 +197,13 @@ export const TreasuryStreamCreateModal = (props: {
     () => new PublicKey(appConfig.getConfig().multisigProgramAddress),
     [],
   );
+  const paymentStreaming = useMemo(() => {
+    return new PaymentStreaming(
+      connection,
+      mspV2AddressPK,
+      'confirmed'
+    );
+  }, [connection, mspV2AddressPK]);
 
   const isMultisigContext = useMemo(() => {
     return publicKey && selectedAccount.isMultisig ? true : false;
@@ -308,8 +315,8 @@ export const TreasuryStreamCreateModal = (props: {
       return false;
     }
 
-    const treasury = workingTreasuryDetails as Treasury;
-    const treasurer = new PublicKey(treasury.treasurer as string);
+    const treasury = workingTreasuryDetails as PaymentStreamingAccount;
+    const treasurer = treasury.owner;
 
     if (treasurer.equals(selectedMultisig.authority)) {
       return true;
@@ -378,7 +385,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
 
-    if (workingTreasuryType === TreasuryType.Lock) {
+    if (workingTreasuryType === AccountType.Lock) {
       return !rateAmount ? 'Add funds to commit' : '';
     } else {
       return !rateAmount ? t('transactions.validation.no-payment-rate') : '';
@@ -401,7 +408,7 @@ export const TreasuryStreamCreateModal = (props: {
     } else if (!selectedToken || unallocatedBalance.isZero()) {
       return `No balance in account ${
         workingTreasuryDetails
-          ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')'
+          ? '(' + shortenAddress(workingTreasuryDetails.id) + ')'
           : ''
       }`;
     } else if (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) {
@@ -431,7 +438,7 @@ export const TreasuryStreamCreateModal = (props: {
     } else if (!selectedToken || unallocatedBalance.isZero()) {
       return `No balance in account ${
         workingTreasuryDetails
-          ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')'
+          ? '(' + shortenAddress(workingTreasuryDetails.id) + ')'
           : ''
       }`;
     } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
@@ -464,7 +471,7 @@ export const TreasuryStreamCreateModal = (props: {
     } else if (!selectedToken || unallocatedBalance.isZero()) {
       return `No balance in account ${
         workingTreasuryDetails
-          ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')'
+          ? '(' + shortenAddress(workingTreasuryDetails.id) + ')'
           : ''
       }`;
     } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
@@ -544,7 +551,7 @@ export const TreasuryStreamCreateModal = (props: {
     } else if (!selectedToken || unallocatedBalance.isZero()) {
       return `No balance in account ${
         workingTreasuryDetails
-          ? '(' + shortenAddress(workingTreasuryDetails.id as string) + ')'
+          ? '(' + shortenAddress(workingTreasuryDetails.id) + ')'
           : ''
       }`;
     } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
@@ -609,15 +616,10 @@ export const TreasuryStreamCreateModal = (props: {
   useEffect(() => {
     if (isVisible) {
       if (treasuryDetails) {
-        const v1 = treasuryDetails as TreasuryInfo;
-        const v2 = treasuryDetails as Treasury;
-        const treasuryType =
-          treasuryDetails.version < 2
-            ? (v1.type as TreasuryType)
-            : v2.treasuryType;
+        const treasuryType = getStreamingAccountType(treasuryDetails);
         consoleOut('treasuryDetails aquired:', treasuryDetails, 'blue');
         setWorkingTreasuryDetails(treasuryDetails);
-        setSelectedStreamingAccountId(treasuryDetails.id as string);
+        setSelectedStreamingAccountId(treasuryDetails.id.toString());
         setWorkingTreasuryType(treasuryType);
       }
     }
@@ -638,13 +640,10 @@ export const TreasuryStreamCreateModal = (props: {
         'blue',
       );
       const selected = treasuryList[0];
-      const v1 = selected as TreasuryInfo;
-      const v2 = selected as Treasury;
-      const treasuryType =
-        selected.version < 2 ? (v1.type as TreasuryType) : v2.treasuryType;
+      const treasuryType = getStreamingAccountType(selected);
       consoleOut('treasuryDetails preset:', selected, 'blue');
       setWorkingTreasuryDetails(selected);
-      setSelectedStreamingAccountId(selected.id as string);
+      setSelectedStreamingAccountId(selected.id.toString());
       setWorkingTreasuryType(treasuryType);
     }
   }, [isVisible, treasuryDetails, treasuryList, workingTreasuryDetails]);
@@ -654,16 +653,10 @@ export const TreasuryStreamCreateModal = (props: {
       return;
     }
 
-    let tokenAddress = '';
-    const v1 = workingTreasuryDetails as TreasuryInfo;
-    const v2 = workingTreasuryDetails as Treasury;
-    tokenAddress =
-      workingTreasuryDetails.version < 2
-        ? (v1.associatedTokenAddress as string)
-        : (v2.associatedToken as string);
+    const tokenAddress = getStreamingAccountMint(workingTreasuryDetails);
     getTokenOrCustomToken(connection, tokenAddress, getTokenByMintAddress).then(
       token => {
-        consoleOut('Treasury associated token:', token, 'blue');
+        consoleOut('PaymentStreamingAccount associated token:', token, 'blue');
         setSelectedToken(token);
       },
     );
@@ -682,7 +675,7 @@ export const TreasuryStreamCreateModal = (props: {
       return;
     }
 
-    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+    const getUnallocatedBalance = (details: PaymentStreamingAccount | TreasuryInfo) => {
       const isNew = details && details.version >= 2 ? true : false;
       let result = new BN(0);
       let balance;
@@ -703,12 +696,12 @@ export const TreasuryStreamCreateModal = (props: {
       return result;
     };
 
-    if (isVisible && treasuryDetails) {
-      const ub = getUnallocatedBalance(treasuryDetails);
+    if (isVisible && workingTreasuryDetails) {
+      const ub = getUnallocatedBalance(workingTreasuryDetails);
       consoleOut('unallocatedBalance:', ub.toString(), 'blue');
       setUnallocatedBalance(new BN(ub));
     }
-  }, [isVisible, treasuryDetails, selectedToken]);
+  }, [isVisible, workingTreasuryDetails, selectedToken]);
 
   // Set max amount allocatable to a stream in BN the first time
   useEffect(() => {
@@ -1089,7 +1082,7 @@ export const TreasuryStreamCreateModal = (props: {
         ra = toStream.divn(lpa);
       }
 
-      if (workingTreasuryType === TreasuryType.Lock) {
+      if (workingTreasuryType === AccountType.Lock) {
         setPaymentRateAmountBn(ra);
         setPaymentRateAmount(ra.toString());
       } else {
@@ -1143,7 +1136,7 @@ export const TreasuryStreamCreateModal = (props: {
 
     const createStream = async (data: CreateStreamParams): Promise<Transaction | null> => {
       consoleOut(
-        'Is Multisig Treasury: ',
+        'Is Multisig PaymentStreamingAccount: ',
         isSelectedStreamingAccountMultisigTreasury,
         'blue',
       );
@@ -1154,68 +1147,65 @@ export const TreasuryStreamCreateModal = (props: {
       );
       consoleOut('Starting create stream using MSP V2...', '', 'blue');
 
-      const msp = new MSP(endpoint, streamV2ProgramAddress, 'confirmed');
       const payer = new PublicKey(data.payer);
       const beneficiary = data.beneficiary.address;
       const streamName = data.beneficiary.streamName;
 
       if (!isSelectedStreamingAccountMultisigTreasury) {
-        const createStreamTx = await msp.createStream(
-          payer, // payer
-          new PublicKey(data.treasurer), // treasurer
-          new PublicKey(data.treasury), // treasury
-          beneficiary, // beneficiary
-          streamName, // streamName
-          data.allocationAssigned, // allocationAssigned
-          data.rateAmount, // rateAmount
-          data.rateIntervalInSeconds, // rateIntervalInSeconds
-          data.startUtc, // startUtc
-          data.cliffVestAmount, // cliffVestAmount
-          data.cliffVestPercent, // cliffVestPercent
-          data.feePayedByTreasurer, // feePayedByTreasurer
+        const accounts: CreateStreamTransactionAccounts = {
+          feePayer: payer,                            // payer
+          beneficiary,                                // beneficiary
+          psAccount: new PublicKey(data.treasury),    // treasury
+          owner: new PublicKey(data.treasurer),       // owner
+        };
+        const { transaction } = await paymentStreaming.buildCreateStreamTransaction(
+          accounts,                         // accounts
+          streamName,                       // streamName
+          data.rateAmount,                  // rateAmount
+          data.rateIntervalInSeconds,       // rateIntervalInSeconds
+          data.allocationAssigned,          // allocationAssigned
+          data.startUtc,                    // startUtc
+          data.cliffVestAmount,             // cliffVestAmount
+          data.cliffVestPercent,            // cliffVestPercent
+          data.tokenFeePayedFromAccount,    // feePayedByTreasurer
         );
-
-        return createStreamTx;
+        return transaction;
       }
 
-      if (
-        !workingTreasuryDetails ||
-        !multisigClient ||
-        !selectedMultisig ||
-        !publicKey
-      ) {
+      if (!workingTreasuryDetails || !multisigClient || !selectedMultisig || !publicKey) {
         return null;
       }
 
       multisigAuth = selectedMultisig.authority.toBase58();
 
-      const [multisigSigner] = await PublicKey.findProgramAddress(
+      const [multisigSigner] = PublicKey.findProgramAddressSync(
         [selectedMultisig.id.toBuffer()],
         multisigAddressPK,
       );
 
-      const createStreamTx = await msp.createStream(
-        payer, // payer
-        multisigSigner, // treasurer
-        new PublicKey(data.treasury), // treasury
-        beneficiary, // beneficiary
-        streamName, // streamName
-        data.allocationAssigned, // allocationAssigned
-        data.rateAmount, // rateAmount
-        data.rateIntervalInSeconds, // rateIntervalInSeconds
-        data.startUtc, // startUtc
-        data.cliffVestAmount, // cliffVestAmount
-        data.cliffVestPercent, // cliffVestPercent
-        data.feePayedByTreasurer, // feePayedByTreasurer
-        true, // usePda
+      const accounts: CreateStreamTransactionAccounts = {
+        feePayer: payer,                            // payer
+        beneficiary,                                // beneficiary
+        psAccount: new PublicKey(data.treasury),    // treasury
+        owner: multisigSigner,                      // owner
+      };
+      const { transaction } = await paymentStreaming.buildCreateStreamTransaction(
+        accounts,                         // accounts
+        streamName,                       // streamName
+        data.rateAmount,                  // rateAmount
+        data.rateIntervalInSeconds,       // rateIntervalInSeconds
+        data.allocationAssigned,          // allocationAssigned
+        data.startUtc,                    // startUtc
+        data.cliffVestAmount,             // cliffVestAmount
+        data.cliffVestPercent,            // cliffVestPercent
+        data.tokenFeePayedFromAccount,    // feePayedByTreasurer
+        true,                             // usePda
       );
 
-      const expirationTime = parseInt(
-        (Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString(),
-      );
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const ixData = Buffer.from(createStreamTx.instructions[0].data);
-      const ixAccounts = createStreamTx.instructions[0].keys;
+      const ixData = Buffer.from(transaction.instructions[0].data);
+      const ixAccounts = transaction.instructions[0].keys;
 
       const tx = await multisigClient.createTransaction(
         publicKey,
@@ -1266,7 +1256,7 @@ export const TreasuryStreamCreateModal = (props: {
       };
 
       const assocToken = new PublicKey(selectedToken.address);
-      const treasury = new PublicKey(workingTreasuryDetails.id as string);
+      const treasury = workingTreasuryDetails.id;
       const treasurer =
         isSelectedStreamingAccountMultisigTreasury && selectedMultisig
           ? selectedMultisig.id
@@ -1283,7 +1273,7 @@ export const TreasuryStreamCreateModal = (props: {
       startUtc.setMilliseconds(now.getMilliseconds());
 
       const isLockedTreasury =
-        workingTreasuryType === TreasuryType.Lock ? true : false;
+        workingTreasuryType === AccountType.Lock ? true : false;
 
       consoleOut(
         'fromParsedDate.toUTCString()',
@@ -1301,7 +1291,7 @@ export const TreasuryStreamCreateModal = (props: {
       const data: CreateStreamParams = {
         payer: selectedAccount.address, // initializer
         treasurer: treasurer.toBase58(), // treasurer
-        treasury: treasury.toBase58(), // treasury
+        treasury: treasury.toString(), // treasury
         beneficiary, // beneficiaries
         associatedToken: assocToken.toBase58(), // associatedToken
         allocationAssigned: amount, // allocationAssigned
@@ -1312,7 +1302,7 @@ export const TreasuryStreamCreateModal = (props: {
         startUtc: startUtc, // startUtc
         cliffVestAmount: cliffAmount, // cliffVestAmount
         cliffVestPercent: 0, // cliffVestPercent
-        feePayedByTreasurer: isFeePaidByTreasurer, // feePayedByTreasurer
+        tokenFeePayedFromAccount: isFeePaidByTreasurer, // feePayedByTreasurer
       };
       consoleOut('data:', data);
 
@@ -1429,7 +1419,7 @@ export const TreasuryStreamCreateModal = (props: {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             const isLockedTreasury =
-              workingTreasuryType === TreasuryType.Lock ? true : false;
+              workingTreasuryType === AccountType.Lock ? true : false;
             const rateDisplay = isLockedTreasury
               ? getReleaseRate()
               : getPaymentRateAmount();
@@ -1532,24 +1522,19 @@ export const TreasuryStreamCreateModal = (props: {
   const onStreamingAccountSelected = useCallback(
     (e: any) => {
       consoleOut('Selected streaming account:', e, 'blue');
-      setSelectedStreamingAccountId(e.id as string);
+      setSelectedStreamingAccountId(e.id.toBase58());
       const item = treasuryList?.find(t => t.id === e);
       consoleOut('item:', item, 'blue');
       if (item) {
         setWorkingTreasuryDetails(item);
-        setSelectedStreamingAccountId(item.id as string);
-        const v1 = item as TreasuryInfo;
-        const v2 = item as Treasury;
-        const tokenAddress =
-          item.version < 2
-            ? (v1.associatedTokenAddress as string)
-            : (v2.associatedToken as string);
+        setSelectedStreamingAccountId(item.id.toString());
+        const tokenAddress = getStreamingAccountMint(item);
         getTokenOrCustomToken(
           connection,
           tokenAddress,
           getTokenByMintAddress,
         ).then(token => {
-          consoleOut('Treasury associated token:', token, 'blue');
+          consoleOut('PaymentStreamingAccount associated token:', token, 'blue');
           setSelectedToken(token);
         });
       }
@@ -1614,12 +1599,7 @@ export const TreasuryStreamCreateModal = (props: {
     if (!item) {
       return null;
     }
-    const isV2Treasury = item && item.version >= 2 ? true : false;
-    const v1 = item as TreasuryInfo;
-    const v2 = item as Treasury;
-    const treasuryAssociatedToken = isV2Treasury
-      ? (v2.associatedToken as string)
-      : (v1.associatedTokenAddress as string);
+    const treasuryAssociatedToken = getStreamingAccountMint(item);
     const token = treasuryAssociatedToken
       ? getTokenByMintAddress(treasuryAssociatedToken)
       : undefined;
@@ -1657,13 +1637,11 @@ export const TreasuryStreamCreateModal = (props: {
     if (!item) {
       return null;
     }
+    const treasuryType = getStreamingAccountType(item);
     const isV2Treasury = item && item.version >= 2 ? true : false;
     const v1 = item as TreasuryInfo;
-    const v2 = item as Treasury;
+    const v2 = item as PaymentStreamingAccount;
     const name = isV2Treasury ? v2.name : v1.label;
-    const treasuryType = isV2Treasury
-      ? v2.treasuryType
-      : (v1.type as TreasuryType);
     return (
       <>
         {name ? (
@@ -1675,16 +1653,16 @@ export const TreasuryStreamCreateModal = (props: {
                   theme === 'light' ? 'golden fg-dark' : 'darken'
                 }`}
               >
-                {treasuryType === TreasuryType.Open ? 'Open' : 'Locked'}
+                {treasuryType === AccountType.Open ? 'Open' : 'Locked'}
               </span>
             </div>
             <div className="subtitle text-truncate">
-              {shortenAddress(item.id as string, 8)}
+              {shortenAddress(item.id, 8)}
             </div>
           </>
         ) : (
           <div className="title text-truncate">
-            {shortenAddress(item.id as string, 8)}
+            {shortenAddress(item.id, 8)}
           </div>
         )}
       </>
@@ -1697,7 +1675,7 @@ export const TreasuryStreamCreateModal = (props: {
     }
     const isV2Treasury = item && item.version >= 2 ? true : false;
     const v1 = item as TreasuryInfo;
-    const v2 = item as Treasury;
+    const v2 = item as PaymentStreamingAccount;
     return (
       <>
         {!isV2Treasury && v1.upgradeRequired ? (
@@ -1718,9 +1696,9 @@ export const TreasuryStreamCreateModal = (props: {
     );
   };
 
-  const renderStreamingAccountItem = (item: Treasury | TreasuryInfo) => {
+  const renderStreamingAccountItem = (item: PaymentStreamingAccount | TreasuryInfo) => {
     return (
-      <Option key={`${item.id}`} value={item.id as string}>
+      <Option key={`${item.id}`} value={item.id.toString()}>
         <div className={`transaction-list-row no-pointer`}>
           <div className="icon-cell">{getStreamingAccountIcon(item)}</div>
           <div className="description-cell">
@@ -1738,7 +1716,7 @@ export const TreasuryStreamCreateModal = (props: {
     <Modal
       className="mean-modal treasury-stream-create-modal"
       title={
-        workingTreasuryType === TreasuryType.Open ? (
+        workingTreasuryType === AccountType.Open ? (
           <div className="modal-title">
             {isMultisigContext
               ? 'Propose outgoing stream'
@@ -1782,7 +1760,7 @@ export const TreasuryStreamCreateModal = (props: {
           <div className="scrollable-content">
             <StepSelector
               step={currentStep}
-              steps={workingTreasuryType === TreasuryType.Lock ? 3 : 2}
+              steps={workingTreasuryType === AccountType.Lock ? 3 : 2}
               onValueSelected={onStepperChange}
             />
 
@@ -1793,7 +1771,7 @@ export const TreasuryStreamCreateModal = (props: {
                   : 'contract-wrapper panel1 hide'
               }
             >
-              {workingTreasuryType === TreasuryType.Lock && (
+              {workingTreasuryType === AccountType.Lock && (
                 <div className="mb-2 text-uppercase">
                   {t(
                     'treasuries.treasury-streams.add-stream-locked.panel1-name',
@@ -1969,7 +1947,7 @@ export const TreasuryStreamCreateModal = (props: {
               )}
 
               {/* Payment rate */}
-              {workingTreasuryType === TreasuryType.Open ? (
+              {workingTreasuryType === AccountType.Open ? (
                 <>
                   <div className="form-label">
                     {t('transactions.rate-and-frequency.amount-label')}
@@ -2133,7 +2111,7 @@ export const TreasuryStreamCreateModal = (props: {
               )}
 
               {/* Send date */}
-              {workingTreasuryType === TreasuryType.Open && (
+              {workingTreasuryType === AccountType.Open && (
                 <>
                   <div className="form-label">
                     {t('transactions.send-date.label')}
@@ -2185,7 +2163,7 @@ export const TreasuryStreamCreateModal = (props: {
                   : 'contract-wrapper panel2 hide'
               }
             >
-              {workingTreasuryType === TreasuryType.Open ? (
+              {workingTreasuryType === AccountType.Open ? (
                 <>
                   {publicKey && (
                     <>
@@ -2713,7 +2691,7 @@ export const TreasuryStreamCreateModal = (props: {
                   : 'contract-wrapper panel3 hide'
               }
             >
-              {workingTreasuryType === TreasuryType.Lock && (
+              {workingTreasuryType === AccountType.Lock && (
                 <>
                   <div className="flex-fixed-right">
                     <div className="left">
@@ -2863,7 +2841,7 @@ export const TreasuryStreamCreateModal = (props: {
               size="large"
               onClick={onContinueStepOneButtonClick}
               disabled={
-                workingTreasuryType === TreasuryType.Lock
+                workingTreasuryType === AccountType.Lock
                   ? !publicKey ||
                     (isMultisigContext && !proposalTitle) ||
                     !isMemoValid() ||
@@ -2886,7 +2864,7 @@ export const TreasuryStreamCreateModal = (props: {
                     !arePaymentSettingsValid()
               }
             >
-              {workingTreasuryType === TreasuryType.Open
+              {workingTreasuryType === AccountType.Open
                 ? getStepOneContinueButtonLabel()
                 : getStepOneContinueButtonLabelInLocked()}
             </Button>
@@ -2908,12 +2886,12 @@ export const TreasuryStreamCreateModal = (props: {
               shape="round"
               size="large"
               onClick={
-                workingTreasuryType === TreasuryType.Lock
+                workingTreasuryType === AccountType.Lock
                   ? onContinueStepTwoButtonClick
                   : onStartTransaction
               }
               disabled={
-                workingTreasuryType === TreasuryType.Lock
+                workingTreasuryType === AccountType.Lock
                   ? !publicKey ||
                     (isMultisigContext && !proposalTitle) ||
                     !isMemoValid() ||
@@ -2944,17 +2922,17 @@ export const TreasuryStreamCreateModal = (props: {
                     nativeBalance < getMinBalanceRequired()
               }
             >
-              {workingTreasuryType === TreasuryType.Open && isBusy && (
+              {workingTreasuryType === AccountType.Open && isBusy && (
                 <span className="mr-1">
                   <LoadingOutlined style={{ fontSize: '16px' }} />
                 </span>
               )}
-              {workingTreasuryType === TreasuryType.Open &&
+              {workingTreasuryType === AccountType.Open &&
                 (isBusy
                   ? t('streams.create-new-stream-cta-busy')
                   : getTransactionStartButtonLabel())}
 
-              {workingTreasuryType === TreasuryType.Lock &&
+              {workingTreasuryType === AccountType.Lock &&
                 getStepTwoContinueButtonLabel()}
             </Button>
           </div>

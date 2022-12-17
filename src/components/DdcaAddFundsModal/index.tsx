@@ -206,7 +206,7 @@ export const DdcaAddFundsModal = (props: {
     (async () => {
       if (ddcaDetails) {
         let balance = 0;
-        const selectedTokenAddress = await findATokenAddress(
+        const selectedTokenAddress = findATokenAddress(
           publicKey as PublicKey,
           new PublicKey(ddcaDetails.fromMint),
         );

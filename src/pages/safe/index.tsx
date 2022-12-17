@@ -480,7 +480,7 @@ const SafeView = (props: {
           throw new Error('No selected multisig');
         }
 
-        const [multisigSigner] = await PublicKey.findProgramAddress(
+        const [multisigSigner] = PublicKey.findProgramAddressSync(
           [selectedMultisig.id.toBuffer()],
           multisigAddressPK,
         );
@@ -887,7 +887,7 @@ const SafeView = (props: {
               enqueueTransactionConfirmation({
                 signature,
                 operationType: OperationType.ApproveTransaction,
-                finality: 'finalized',
+                finality: 'confirmed',
                 txInfoFetchStatus: 'fetching',
                 loadingTitle: 'Confirming transaction',
                 loadingMessage: `Approve proposal: ${data.transaction.details.title}`,
@@ -1090,7 +1090,7 @@ const SafeView = (props: {
               enqueueTransactionConfirmation({
                 signature,
                 operationType: OperationType.RejectTransaction,
-                finality: 'finalized',
+                finality: 'confirmed',
                 txInfoFetchStatus: 'fetching',
                 loadingTitle: 'Confirming transaction',
                 loadingMessage: `Reject proposal: ${data.transaction.details.title}`,
@@ -1339,7 +1339,7 @@ const SafeView = (props: {
               enqueueTransactionConfirmation({
                 signature,
                 operationType: OperationType.ExecuteTransaction,
-                finality: 'finalized',
+                finality: 'confirmed',
                 txInfoFetchStatus: 'fetching',
                 loadingTitle: 'Confirming transaction',
                 loadingMessage: `Execute proposal: ${data.transaction.details.title}`,
@@ -1543,7 +1543,7 @@ const SafeView = (props: {
               enqueueTransactionConfirmation({
                 signature,
                 operationType: OperationType.CancelTransaction,
-                finality: 'finalized',
+                finality: 'confirmed',
                 txInfoFetchStatus: 'fetching',
                 loadingTitle: 'Confirming transaction',
                 loadingMessage: `Cancel proposal: ${data.transaction.details.title}`,

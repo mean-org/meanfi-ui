@@ -6,7 +6,7 @@ import {
   browserName,
   browserVersion,
 } from 'react-device-detect';
-import { isLocal, isProd } from '../middleware/ui';
+import { isLocal } from '../middleware/ui';
 import { appConfig } from '..';
 import { WALLET_PROVIDERS } from '../contexts/wallet';
 

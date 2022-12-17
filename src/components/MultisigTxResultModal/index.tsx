@@ -1,22 +1,21 @@
-import React, { useCallback, useContext, useEffect } from 'react';
-import { Modal, Button, Spin } from 'antd';
-import { useTranslation } from 'react-i18next';
 import {
   CopyOutlined,
   InfoCircleOutlined,
-  LoadingOutlined,
+  LoadingOutlined
 } from '@ant-design/icons';
-import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatus } from '../../models/enums';
+import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import { Button, Modal, Spin } from 'antd';
+import { AppStateContext } from 'contexts/appstate';
 import {
   consoleOut,
   copyText,
-  getTransactionOperationDescription,
-} from '../../middleware/ui';
-import { isError } from '../../middleware/transactions';
-import { shortenAddress } from '../../middleware/utils';
+  getTransactionOperationDescription
+} from 'middleware/ui';
+import { shortenAddress } from 'middleware/utils';
+import { TransactionStatus } from 'models/enums';
+import { useCallback, useContext, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { openNotification } from '../Notifications';
-import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -55,11 +54,6 @@ export const MultisigTxResultModal = (props: {
     },
     [t],
   );
-
-  const refreshPage = () => {
-    handleClose();
-    window.location.reload();
-  };
 
   return (
     <>
@@ -140,36 +134,6 @@ export const MultisigTxResultModal = (props: {
             </div>
           )}
         </div>
-
-        {/* {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-          <div className="row two-col-ctas mt-3 transaction-progress p-0">
-            {isError(transactionStatus.currentOperation) ? (
-              <div className="col-12">
-                <Button
-                  block
-                  type="text"
-                  shape="round"
-                  size="middle"
-                  className={isBusy ? 'inactive' : ''}
-                  onClick={handleOk}>
-                  {t('general.retry')}
-                </Button>
-              </div>
-            ) : (
-              <div className="col-12">
-                <Button
-                  className={isBusy ? 'inactive' : ''}
-                  block
-                  type="primary"
-                  shape="round"
-                  size="middle"
-                  onClick={() => refreshPage()}>
-                  {t('general.refresh')}
-                </Button>
-              </div>
-            )}
-          </div>
-        )} */}
       </Modal>
     </>
   );

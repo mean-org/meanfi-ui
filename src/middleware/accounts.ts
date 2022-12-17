@@ -132,7 +132,7 @@ export async function createAtaAccount(
 
   const tx = new Transaction().add(...result.ixs);
   tx.feePayer = owner;
-  const hash = await connection.getLatestBlockhash('recent');
+  const hash = await connection.getLatestBlockhash('confirmed');
   tx.recentBlockhash = hash.blockhash;
 
   return tx;
@@ -196,7 +196,7 @@ export async function closeTokenAccount(
 
   const tx = new Transaction().add(...ixs);
   tx.feePayer = owner;
-  const hash = await connection.getLatestBlockhash('recent');
+  const hash = await connection.getLatestBlockhash('confirmed');
   tx.recentBlockhash = hash.blockhash;
 
   return tx;
@@ -286,7 +286,7 @@ const updateAtaFlag = async (
   token: UserTokenAccount,
   owner: string,
 ): Promise<boolean> => {
-  const ata = await findATokenAddress(
+  const ata = findATokenAddress(
     new PublicKey(owner),
     new PublicKey(token.address),
   );

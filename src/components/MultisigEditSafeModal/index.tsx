@@ -1,30 +1,28 @@
-import { useCallback, useContext, useEffect } from 'react';
-import { useState } from 'react';
-import { Modal, Button, Spin, Tooltip } from 'antd';
-import { useTranslation } from 'react-i18next';
 import {
   CheckOutlined,
   InfoCircleOutlined,
-  LoadingOutlined,
+  LoadingOutlined
 } from '@ant-design/icons';
+import {
+  MultisigInfo, MultisigParticipant,
+  MultisigTransactionFees
+} from '@mean-dao/mean-multisig-sdk';
+import { Button, Modal, Spin, Tooltip } from 'antd';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatus } from '../../models/enums';
+import { IconInfoCircle, IconKey, IconLock } from '../../Icons';
+import { NATIVE_SOL_MINT } from '../../middleware/ids';
+import { isError } from '../../middleware/transactions';
 import {
   getTransactionOperationDescription,
-  isValidAddress,
+  isValidAddress
 } from '../../middleware/ui';
-import { isError } from '../../middleware/transactions';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
-import { getAmountWithSymbol, isValidNumber } from '../../middleware/utils';
-import {
-  MultisigParticipant,
-  MultisigTransactionFees,
-  MultisigInfo,
-} from '@mean-dao/mean-multisig-sdk';
-import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
+import { getAmountWithSymbol } from '../../middleware/utils';
+import { TransactionStatus } from '../../models/enums';
 import { InputMean } from '../InputMean';
 import { MultisigSafeOwners } from '../MultisigSafeOwners';
-import { IconInfoCircle, IconKey, IconLock } from '../../Icons';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -42,8 +40,10 @@ export const MultisigEditSafeModal = (props: {
   multisigPendingTxsAmount: number;
 }) => {
   const { t } = useTranslation('common');
-  const { selectedToken, transactionStatus, setTransactionStatus } =
-    useContext(AppStateContext);
+  const {
+    transactionStatus,
+    setTransactionStatus,
+  } = useContext(AppStateContext);
 
   const [multisigTitle, setMultisigTitle] = useState('');
   const [multisigLabel, setMultisigLabel] = useState('');
@@ -183,31 +183,6 @@ export const MultisigEditSafeModal = (props: {
     );
   };
 
-  const onThresholdInputValueChange = (e: any) => {
-    let newValue = e.target.value;
-
-    const decimals = selectedToken ? selectedToken.decimals : 0;
-    const splitted = newValue.toString().split('.');
-    const left = splitted[0];
-
-    if (decimals && splitted[1]) {
-      if (splitted[1].length > decimals) {
-        splitted[1] = splitted[1].slice(0, -1);
-        newValue = splitted.join('.');
-      }
-    } else if (left.length > 1) {
-      const number = splitted[0] - 0;
-      splitted[0] = `${number}`;
-      newValue = splitted.join('.');
-    }
-
-    if (newValue === null || newValue === undefined || newValue === '') {
-      setMultisigThreshold(0);
-    } else if (isValidNumber(newValue)) {
-      setMultisigThreshold(+newValue);
-    }
-  };
-
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -340,13 +315,11 @@ export const MultisigEditSafeModal = (props: {
                   disabled={!isFormValid()}
                   onClick={() => {
                     if (
-                      transactionStatus.currentOperation ===
-                      TransactionStatus.Iddle
+                      transactionStatus.currentOperation === TransactionStatus.Iddle
                     ) {
                       onAcceptModal();
                     } else if (
-                      transactionStatus.currentOperation ===
-                      TransactionStatus.TransactionFinished
+                      transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                     ) {
                       onCloseModal();
                     } else {
@@ -367,8 +340,7 @@ export const MultisigEditSafeModal = (props: {
               </div>
             )}
           </>
-        ) : transactionStatus.currentOperation ===
-          TransactionStatus.TransactionFinished ? (
+        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
@@ -384,8 +356,7 @@ export const MultisigEditSafeModal = (props: {
                 style={{ fontSize: 48 }}
                 className="icon mt-0"
               />
-              {transactionStatus.currentOperation ===
-              TransactionStatus.TransactionStartFailure ? (
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(
@@ -408,32 +379,6 @@ export const MultisigEditSafeModal = (props: {
                   )}
                 </h4>
               )}
-              {!(
-                props.isBusy && transactionStatus !== TransactionStatus.Iddle
-              ) && (
-                <div className="row two-col-ctas mt-3 transaction-progress p-2">
-                  <div className="col-12">
-                    <Button
-                      block
-                      type="text"
-                      shape="round"
-                      size="middle"
-                      className={props.isBusy ? 'inactive' : ''}
-                      onClick={() =>
-                        isError(transactionStatus.currentOperation)
-                          ? onAcceptModal()
-                          : onCloseModal()
-                      }
-                    >
-                      {isError(transactionStatus.currentOperation) &&
-                      transactionStatus.currentOperation !==
-                        TransactionStatus.TransactionStartFailure
-                        ? t('general.retry')
-                        : t('general.cta-close')}
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           </>
         )}
@@ -447,7 +392,7 @@ export const MultisigEditSafeModal = (props: {
             : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
@@ -465,6 +410,32 @@ export const MultisigEditSafeModal = (props: {
           </div>
         )}
       </div>
+
+      {!(props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+        <div className="row two-col-ctas mt-3 transaction-progress p-2">
+          <div className="col-12">
+            <Button
+              block
+              type="text"
+              shape="round"
+              size="middle"
+              className={props.isBusy ? 'inactive' : ''}
+              onClick={() =>
+                isError(transactionStatus.currentOperation)
+                  ? onAcceptModal()
+                  : onCloseModal()
+              }
+            >
+              {isError(transactionStatus.currentOperation) &&
+                transactionStatus.currentOperation !==
+                TransactionStatus.TransactionStartFailure
+                ? t('general.retry')
+                : t('general.cta-close')}
+            </Button>
+          </div>
+        </div>
+      )}
+
     </Modal>
   );
 };

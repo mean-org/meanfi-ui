@@ -1,12 +1,7 @@
-import {
-  AllocationType,
-  SubCategory,
-  TimeUnit,
-  TreasuryType,
-} from '@mean-dao/msp';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import { AccountType, SubCategory, TimeUnit } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
 export type VestingFlowRateInfo = {
   amountBn: BN;
@@ -70,14 +65,14 @@ export interface CreateVestingTreasuryParams {
   payer: PublicKey;
   treasurer: PublicKey;
   label: string;
-  type: TreasuryType;
+  type: AccountType;
   associatedTokenAddress: string;
   duration: number;
   durationUnit: TimeUnit;
   startUtc: Date;
   vestingCategory: SubCategory;
   cliffVestPercent: number;
-  feePayedByTreasurer?: boolean | undefined;
+  tokenFeePayedFromAccount?: boolean | undefined;
   multisig: string;
   fundingAmount: string | number;
 }
@@ -85,7 +80,7 @@ export interface CreateVestingTreasuryParams {
 export interface VestingContractCreateOptions {
   vestingContractTitle: string;
   vestingContractName: string;
-  vestingContractType: TreasuryType;
+  vestingContractType: AccountType;
   vestingCategory: SubCategory;
   amount: string;
   token: TokenInfo;
@@ -166,7 +161,6 @@ export interface VestingContractCloseStreamOptions {
 export interface VestingContractTopupParams {
   amount: string;
   tokenAmount: any;
-  allocationType: AllocationType;
   streamId: string;
   associatedToken: TokenInfo | undefined;
   proposalTitle: string;

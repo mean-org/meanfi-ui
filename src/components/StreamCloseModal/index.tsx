@@ -11,18 +11,19 @@ import {
   TreasuryInfo,
 } from '@mean-dao/money-streaming/lib/types';
 import {
-  MSP,
+  PaymentStreaming,
   Stream,
-  STREAM_STATUS,
-  Treasury,
-  TreasuryType,
-} from '@mean-dao/msp';
+  STREAM_STATUS_CODE,
+  PaymentStreamingAccount,
+  AccountType,
+} from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Radio, Row } from 'antd';
 import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
+import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { consoleOut, percentage, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
@@ -38,7 +39,7 @@ export const StreamCloseModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
-  mspClient: MoneyStreaming | MSP | undefined;
+  mspClient: MoneyStreaming | PaymentStreaming | undefined;
   selectedToken: TokenInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
@@ -66,13 +67,13 @@ export const StreamCloseModal = (props: {
   >(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [treasuryDetails, setTreasuryDetails] = useState<
-    Treasury | TreasuryInfo | undefined
+    PaymentStreamingAccount | TreasuryInfo | undefined
   >(undefined);
   const [localStreamDetail, setLocalStreamDetail] = useState<
     Stream | StreamInfo | undefined
   >(undefined);
   const [streamState, setStreamState] = useState<
-    STREAM_STATE | STREAM_STATUS | undefined
+    STREAM_STATE | STREAM_STATUS_CODE | undefined
   >(undefined);
   const [proposalTitle, setProposalTitle] = useState('');
 
@@ -80,44 +81,43 @@ export const StreamCloseModal = (props: {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
 
-  const getTreasuryTypeByTreasuryId = useCallback(
-    async (
-      treasuryId: string,
-      streamVersion: number,
-    ): Promise<StreamTreasuryType | undefined> => {
-      if (!connection || !publicKey || !mspClient) {
-        return undefined;
+  const getTreasuryTypeByTreasuryId = useCallback(async (
+    treasuryId: string,
+    streamVersion: number,
+  ): Promise<StreamTreasuryType | undefined> => {
+    if (!connection || !publicKey || !mspClient) {
+      return undefined;
+    }
+
+    const treasuryPk = new PublicKey(treasuryId);
+
+    try {
+      let details: PaymentStreamingAccount | TreasuryInfo | undefined = undefined;
+      if (streamVersion < 2) {
+        details = await (mspClient as MoneyStreaming).getTreasury(treasuryPk);
+      } else {
+        details = await (mspClient as PaymentStreaming).getAccount(treasuryPk);
       }
-
-      const mspInstance =
-        streamVersion < 2 ? (mspClient as MoneyStreaming) : (mspClient as MSP);
-      const treasuryPk = new PublicKey(treasuryId);
-
-      try {
-        const details = await mspInstance.getTreasury(treasuryPk);
-        if (details) {
-          setTreasuryDetails(details);
-          consoleOut('treasuryDetails:', details, 'blue');
-          const v1 = details as TreasuryInfo;
-          const v2 = details as Treasury;
-          const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-          const type = isNewTreasury ? v2.treasuryType : v1.type;
-          if (type === TreasuryType.Lock) {
-            return 'locked';
-          } else {
-            return 'open';
-          }
+      if (details) {
+        setTreasuryDetails(details);
+        consoleOut('treasuryDetails:', details, 'blue');
+        const type = getStreamingAccountType(details);
+        if (type === AccountType.Lock) {
+          return 'locked';
         } else {
-          setTreasuryDetails(undefined);
-          return 'unknown';
+          return 'open';
         }
-      } catch (error) {
-        console.error(error);
+      } else {
+        setTreasuryDetails(undefined);
         return 'unknown';
-      } finally {
-        setLoadingTreasuryDetails(false);
       }
-    },
+    } catch (error) {
+      console.error(error);
+      return 'unknown';
+    } finally {
+      setLoadingTreasuryDetails(false);
+    }
+  },
     [publicKey, connection, mspClient],
   );
 
@@ -129,7 +129,7 @@ export const StreamCloseModal = (props: {
       if (streamDetail.version < 2) {
         setStreamState(v1.state);
       } else {
-        setStreamState(v2.status as STREAM_STATUS);
+        setStreamState(v2.statusCode as STREAM_STATUS_CODE);
       }
       setLocalStreamDetail(streamDetail);
     }
@@ -144,7 +144,7 @@ export const StreamCloseModal = (props: {
       getTreasuryTypeByTreasuryId(
         localStreamDetail.version < 2
           ? (v1.treasuryAddress as string)
-          : v2.treasury.toBase58(),
+          : v2.psAccount.toBase58(),
         localStreamDetail.version,
       ).then(value => {
         consoleOut('streamTreasuryType:', value, 'crimson');
@@ -157,7 +157,7 @@ export const StreamCloseModal = (props: {
   useEffect(() => {
     if (!canCloseTreasury && treasuryDetails) {
       const v1 = treasuryDetails as TreasuryInfo;
-      const v2 = treasuryDetails as Treasury;
+      const v2 = treasuryDetails as PaymentStreamingAccount;
       const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
       if (isNewTreasury) {
         if (v2.totalStreams > 1) {
@@ -186,7 +186,7 @@ export const StreamCloseModal = (props: {
       if (
         (localStreamDetail.version < 2 &&
           v1.treasurerAddress === publicKey.toBase58()) ||
-        (v2.version >= 2 && v2.treasurer.equals(publicKey))
+        (v2.version >= 2 && v2.psAccountOwner.equals(publicKey))
       ) {
         return true;
       }
@@ -492,7 +492,7 @@ export const StreamCloseModal = (props: {
       return renderLoading();
     } else if (
       streamTreasuryType === 'locked' &&
-      streamState !== STREAM_STATUS.Paused
+      streamState !== STREAM_STATUS_CODE.Paused
     ) {
       return renderCannotCloseStream();
     } else {

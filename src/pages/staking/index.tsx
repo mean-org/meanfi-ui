@@ -17,7 +17,7 @@ import { IconLoading } from 'Icons';
 import { IconHelpCircle } from 'Icons/IconHelpCircle';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
-import { consoleOut, isLocal, isProd } from 'middleware/ui';
+import { consoleOut, isProd } from 'middleware/ui';
 import {
   findATokenAddress,
   formatThousands,
@@ -119,7 +119,7 @@ const StakingView = () => {
 
     try {
       const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
-      const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
+      const meanTokenAddress = findATokenAddress(publicKey, meanTokenPk);
       const result = await getTokenAccountBalanceByAddress(
         connection,
         meanTokenAddress,
@@ -171,7 +171,7 @@ const StakingView = () => {
     }
 
     const sMeanTokenPk = new PublicKey(stakingPair.stakedToken.address);
-    const smeanTokenAddress = await findATokenAddress(publicKey, sMeanTokenPk);
+    const smeanTokenAddress = findATokenAddress(publicKey, sMeanTokenPk);
     const result = await getTokenAccountBalanceByAddress(
       connection,
       smeanTokenAddress,

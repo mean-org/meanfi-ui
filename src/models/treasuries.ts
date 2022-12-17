@@ -27,10 +27,10 @@ export interface CloseStreamTransactionParams {
 
 export interface TreasuryWithdrawParams {
   proposalTitle: string;
-  payer: string;
   destination: string;
+  amount: string;
+  payer: string;
   treasury: string;
-  amount: number | string;
 }
 
 export interface UserTreasuriesSummary {

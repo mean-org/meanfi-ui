@@ -60,7 +60,7 @@ export const SafeMeanInfo = (props: {
 
   const getMultisigVaults = useCallback(
     async (connection: Connection, multisig: PublicKey) => {
-      const [multisigSigner] = await PublicKey.findProgramAddress(
+      const [multisigSigner] = PublicKey.findProgramAddressSync(
         [multisig.toBuffer()],
         multisigAddressPK,
       );

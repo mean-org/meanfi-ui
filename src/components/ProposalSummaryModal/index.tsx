@@ -126,13 +126,6 @@ export const ProposalSummaryModal = (props: {
     return 0;
   }, []);
 
-  const getTxRejectedCount = useCallback((mtx: MultisigTransaction) => {
-    if (mtx && mtx.signers) {
-      return mtx.signers.filter((s: any) => s === false).length;
-    }
-    return 0;
-  }, []);
-
   const isTxVoided = useCallback(() => {
     if (highlightedMultisigTx) {
       if (highlightedMultisigTx.status === MultisigTransactionStatus.Voided) {
@@ -764,7 +757,7 @@ export const ProposalSummaryModal = (props: {
       </div>
 
       {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
-      {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
         <>
           <Divider plain />
           <div className="row two-col-ctas transaction-progress p-0 no-margin-right-left">

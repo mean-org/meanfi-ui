@@ -21,7 +21,7 @@ import bs58 from 'bs58';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { AppConfig, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
-import { OperationType, PaymentRateType } from './enums';
+import { OperationType } from './enums';
 import { MeanSplTokenInstructionCoder } from './spl-token-coder/instruction';
 import { MeanSystemInstructionCoder } from './system-program-coder/instruction';
 import { appConfig } from '..';
@@ -218,10 +218,6 @@ export interface CreateNewSafeParams {
   label: string;
   threshold: number;
   owners: MultisigParticipant[];
-  isAllowToRejectProposal?: boolean;
-  isCoolOffPeriodEnable?: boolean;
-  coolOfPeriodAmount?: number;
-  coolOffPeriodFrequency?: PaymentRateType;
 }
 
 export const getFees = async (

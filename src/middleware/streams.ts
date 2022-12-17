@@ -1,5 +1,5 @@
 import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
-import { Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { Stream, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
 import { TFunction } from 'react-i18next';
 import { getShortDate } from './ui';
 import { shortenAddress } from './utils';
@@ -53,24 +53,24 @@ export const getStreamTitle = (
         return `${v2.name}`;
       }
 
-      if (v2.status === STREAM_STATUS.Scheduled) {
+      if (v2.statusCode === STREAM_STATUS_CODE.Scheduled) {
         title = `${
           trans
             ? trans('streams.stream-list.title-scheduled-from')
             : 'Scheduled stream from'
-        } (${shortenAddress(`${v2.treasurer}`)})`;
-      } else if (v2.status === STREAM_STATUS.Paused) {
+        } (${shortenAddress(`${v2.psAccountOwner}`)})`;
+      } else if (v2.statusCode === STREAM_STATUS_CODE.Paused) {
         title = `${
           trans
             ? trans('streams.stream-list.title-paused-from')
             : 'Paused stream from'
-        } (${shortenAddress(`${v2.treasurer}`)})`;
+        } (${shortenAddress(`${v2.psAccountOwner}`)})`;
       } else {
         title = `${
           trans
             ? trans('streams.stream-list.title-receiving-from')
             : 'Receiving from'
-        } (${shortenAddress(`${v2.treasurer}`)})`;
+        } (${shortenAddress(`${v2.psAccountOwner}`)})`;
       }
     }
   }
@@ -100,10 +100,10 @@ export const getStreamStatusResume = (
           return trans('streams.status.streaming');
       }
     } else {
-      switch (v2.status) {
-        case STREAM_STATUS.Scheduled:
+      switch (v2.statusCode) {
+        case STREAM_STATUS_CODE.Scheduled:
           return `starts on ${getShortDate(v2.startUtc)}`;
-        case STREAM_STATUS.Paused:
+        case STREAM_STATUS_CODE.Paused:
           if (v2.isManuallyPaused) {
             return '';
             // return `paused on ${getShortDate(v2.startUtc)}`;
@@ -126,7 +126,7 @@ export const getReadableStream = (item: Stream | StreamInfo) => {
       ? v2.allocationAssigned.toString()
       : v1.allocationAssigned,
     associatedToken: isNew
-      ? v2.associatedToken.toBase58()
+      ? v2.mint.toBase58()
       : (v1.associatedToken as string),
     beneficiary: isNew
       ? v2.beneficiary.toBase58()
@@ -139,7 +139,7 @@ export const getReadableStream = (item: Stream | StreamInfo) => {
     estimatedDepletionDate: isNew
       ? v2.estimatedDepletionDate
       : (v1.escrowEstimatedDepletionUtc as string),
-    feePayedByTreasurer: isNew ? v2.feePayedByTreasurer : false,
+    feePayedByTreasurer: isNew ? v2.tokenFeePayedFromAccount : false,
     fundsLeftInStream: isNew
       ? v2.fundsLeftInStream.toString()
       : v1.escrowUnvestedAmount,
@@ -161,15 +161,15 @@ export const getReadableStream = (item: Stream | StreamInfo) => {
     secondsSinceStart: isNew ? v2.secondsSinceStart : '-',
     startUtc: isNew ? v2.startUtc : (v1.startUtc as string),
     status: isNew
-      ? `${STREAM_STATUS[v2.status as STREAM_STATUS]} = ${v2.status}`
+      ? `${v2.statusCode} = ${v2.statusName}`
       : `${STREAM_STATE[v1.state]} = ${v1.state}`,
     streamUnitsPerSecond: isNew ? v2.streamUnitsPerSecond : '-',
     subCategory: isNew ? v2.subCategory : '-',
     totalWithdrawalsAmount: isNew ? v2.totalWithdrawalsAmount.toString() : '-',
     treasurer: isNew
-      ? v2.treasurer.toBase58()
+      ? v2.psAccountOwner.toBase58()
       : (v1.treasurerAddress as string),
-    treasury: isNew ? v2.treasury.toBase58() : (v1.treasuryAddress as string),
+    treasury: isNew ? v2.psAccount.toBase58() : (v1.treasuryAddress as string),
     version: item.version,
     withdrawableAmount: isNew
       ? v2.withdrawableAmount.toString()

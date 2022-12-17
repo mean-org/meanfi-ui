@@ -1,10 +1,12 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import {
-  calculateActionFees,
-  MSP,
-  MSP_ACTIONS,
+  calculateFeesForAction,
+  PaymentStreaming,
+  ACTION_CODES,
   TransactionFees,
-} from '@mean-dao/msp';
+  TransferTransactionAccounts,
+  ScheduleTransferTransactionAccounts,
+} from '@mean-dao/payment-streaming';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, DatePicker, Select } from 'antd';
 import { segmentAnalytics } from 'App';
@@ -119,6 +121,15 @@ export const OneTimePayment = (props: {
     useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
   const [otpFees, setOtpFees] = useState<TransactionFees>(NO_FEES);
 
+  // Create and cache Payment Streaming instance
+  const paymentStreaming = useMemo(() => {
+    return new PaymentStreaming(
+      connection,
+      new PublicKey(streamV2ProgramAddress),
+      'confirmed'
+    );
+  }, [connection, streamV2ProgramAddress]);
+
   const isNative = useMemo(() => {
     return selectedToken && selectedToken.address === NATIVE_SOL.address
       ? true
@@ -232,7 +243,7 @@ export const OneTimePayment = (props: {
 
   useEffect(() => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
-      return calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
+      return calculateFeesForAction(ACTION_CODES.CreateStreamWithFunds);
     };
     if (!otpFees.mspFlatFee) {
       getTransactionFees().then(values => {
@@ -240,7 +251,7 @@ export const OneTimePayment = (props: {
         consoleOut('otpFees:', values);
       });
     }
-  }, [connection, otpFees]);
+  }, [otpFees]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -570,31 +581,35 @@ export const OneTimePayment = (props: {
     setIsBusy(true);
 
     const otpTx = async (data: OtpTxParams) => {
-      if (!endpoint || !streamV2ProgramAddress) {
+      if (!endpoint || !streamV2ProgramAddress || !publicKey) {
         return null;
       }
 
-      // Init a streaming operation
-      const msp = new MSP(endpoint, streamV2ProgramAddress, 'confirmed');
-
       if (!isScheduledPayment()) {
-        return msp.transfer(
-          new PublicKey(data.wallet), // sender
-          new PublicKey(data.beneficiary), // beneficiary
-          new PublicKey(data.associatedToken), // beneficiaryMint
-          data.amount, // amount
+        const accounts: TransferTransactionAccounts = {
+          feePayer: publicKey,                            // feePayer
+          sender: new PublicKey(data.wallet),             // sender
+          beneficiary: new PublicKey(data.beneficiary),   // beneficiary
+          mint: new PublicKey(data.associatedToken),      // mint
+        };
+        const { transaction } = await paymentStreaming.buildTransferTransaction(
+          accounts,                 // accounts
+          data.amount,              // amount
         );
+        return transaction;
       }
 
-      return msp.scheduledTransfer(
-        new PublicKey(data.wallet), // treasurer
-        new PublicKey(data.beneficiary), // beneficiary
-        new PublicKey(data.associatedToken), // beneficiaryMint
-        data.amount, // amount
-        data.startUtc, // startUtc
-        data.recipientNote, // streamName
-        false, // feePayedByTreasurer
+      const accounts: ScheduleTransferTransactionAccounts = {
+        feePayer: publicKey,                            // feePayer
+        beneficiary: new PublicKey(data.beneficiary),   // beneficiary
+        owner: new PublicKey(data.wallet),              // owner
+        mint: new PublicKey(data.associatedToken),      // mint
+      };
+      const { transaction } = await paymentStreaming.buildScheduleTransferTransaction(
+        accounts,                 // accounts
+        data.amount,              // amount
       );
+      return transaction;
     };
 
     const createTx = async (): Promise<boolean> => {
@@ -865,6 +880,7 @@ export const OneTimePayment = (props: {
     isWhitelisted,
     nativeBalance,
     fromCoinAmount,
+    paymentStreaming,
     paymentStartDate,
     recipientAddress,
     fixedScheduleValue,

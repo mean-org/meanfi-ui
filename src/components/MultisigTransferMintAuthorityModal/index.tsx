@@ -288,7 +288,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
             : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
@@ -307,7 +307,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
         )}
       </div>
 
-      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+      {!(props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
         <div className="row two-col-ctas mt-3 transaction-progress p-0">
           <div
             className={

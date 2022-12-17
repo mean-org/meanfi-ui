@@ -22,8 +22,7 @@ export const TransactionItemView = (props: {
 }) => {
   const [isOutboundTx, setIsOutboundTx] = useState(false);
   const [isNativeAccountSelected, setIsNativeAccountSelected] = useState(false);
-  // const [isFeeOnlyTx, setIsFeeOnlyTx] = useState(false);
-  const [outDstAccountIndex, setOutDstAccountIndex] = useState(1);
+  const [outDstAccountIndex] = useState(1);
   const [postBalance, setPostBalance] = useState(0);
   const [balanceChange, setBalanceChange] = useState(0);
   const [postTokenBalance, setPostTokenBalance] = useState<TokenBalance | null>(
@@ -124,7 +123,7 @@ export const TransactionItemView = (props: {
     const faucetAddress = '9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g';
     // Sender is always account 0 = Fee payer
     const sender = accounts[0].pubkey.toBase58();
-    // Receiver could be any account TODO: Polish this logic
+    // Receiver could be any account, this logic can be polished
     const receiver = accounts[outDstAccountIndex]
       ? accounts[outDstAccountIndex].pubkey.toBase58()
       : accounts[1].pubkey.toBase58();

@@ -6,13 +6,11 @@ import {
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import {
-  AllocationType,
   Stream,
   StreamTemplate,
-  Treasury,
-  TreasuryType,
-} from '@mean-dao/msp';
-import { Button, Modal, Radio, Spin } from 'antd';
+  PaymentStreamingAccount,
+} from '@mean-dao/payment-streaming';
+import { Button, Modal, Spin } from 'antd';
 import BN from 'bn.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { InputMean } from 'components/InputMean';
@@ -62,7 +60,7 @@ export const VestingContractAddFundsModal = (props: {
   transactionFees: TransactionFees;
   treasuryStreams: Stream[];
   userBalances: any;
-  vestingContract: Treasury | undefined;
+  vestingContract: PaymentStreamingAccount | undefined;
   withdrawTransactionFees: TransactionFees;
 }) => {
   const {
@@ -95,10 +93,6 @@ export const VestingContractAddFundsModal = (props: {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
-  const [allocationOption, setAllocationOption] = useState<AllocationType>(
-    AllocationType.None,
-  );
-  const [, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [availableBalance, setAvailableBalance] = useState(new BN(0));
   const [tokenAmount, setTokenAmount] = useState<any>(0);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
@@ -162,7 +156,6 @@ export const VestingContractAddFundsModal = (props: {
     (preSetting = false) => {
       if (
         withdrawTransactionFees &&
-        allocationOption === AllocationType.Specific &&
         highLightableStreamId
       ) {
         const stream = getSelectedStream();
@@ -191,7 +184,6 @@ export const VestingContractAddFundsModal = (props: {
     [
       selectedToken,
       availableBalance,
-      allocationOption,
       highLightableStreamId,
       withdrawTransactionFees,
       getSelectedStream,
@@ -228,7 +220,7 @@ export const VestingContractAddFundsModal = (props: {
 
   // When modal goes visible, Set available balance in BN either from user's wallet or from treasury if a streams is being funded
   useEffect(() => {
-    const getUnallocatedBalance = (details: Treasury) => {
+    const getUnallocatedBalance = (details: PaymentStreamingAccount) => {
       const balance = new BN(details.balance);
       const allocationAssigned = new BN(details.allocationAssigned);
       return balance.sub(allocationAssigned);
@@ -270,19 +262,6 @@ export const VestingContractAddFundsModal = (props: {
       }
     }
   }, [selectedToken, userBalances]);
-
-  // When modal goes visible, update allocation type option
-  useEffect(() => {
-    if (!vestingContract) {
-      return;
-    }
-    setTreasuryType(vestingContract.treasuryType);
-    if (highLightableStreamId) {
-      setAllocationOption(AllocationType.Specific);
-    } else {
-      setAllocationOption(AllocationType.None);
-    }
-  }, [vestingContract, treasuryStreams, highLightableStreamId]);
 
   // When modal goes visible, set template data
   useEffect(() => {
@@ -341,15 +320,11 @@ export const VestingContractAddFundsModal = (props: {
     const params: VestingContractTopupParams = {
       amount: topupAmount,
       tokenAmount: tokenAmount,
-      allocationType: allocationOption,
       associatedToken:
         selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
           ? NATIVE_SOL
           : selectedToken,
-      streamId:
-        highLightableStreamId && allocationOption === AllocationType.Specific
-          ? highLightableStreamId
-          : '',
+      streamId: highLightableStreamId || '',
       contributor:
         fundFromSafeOption && selectedMultisig
           ? selectedMultisig.authority.toBase58()
@@ -439,9 +414,7 @@ export const VestingContractAddFundsModal = (props: {
 
   const isTopupFormValid = () => {
     return publicKey &&
-      isValidInput() &&
-      (allocationOption !== AllocationType.Specific ||
-        (allocationOption === AllocationType.Specific && highLightableStreamId))
+           isValidInput()
       ? true
       : false;
   };
@@ -476,15 +449,7 @@ export const VestingContractAddFundsModal = (props: {
       return t('transactions.validation.amount-high');
     } else if (nativeBalance <= MIN_SOL_BALANCE_REQUIRED) {
       return t('transactions.validation.amount-sol-low');
-    } else if (
-      allocationOption === AllocationType.Specific &&
-      !highLightableStreamId
-    ) {
-      return t('transactions.validation.select-stream');
-    } else if (
-      allocationOption === AllocationType.Specific &&
-      highLightableStreamId
-    ) {
+    } else if (highLightableStreamId) {
       return t('treasuries.add-funds.main-cta-fund-stream');
     } else {
       return t('treasuries.add-funds.main-cta');
@@ -493,8 +458,7 @@ export const VestingContractAddFundsModal = (props: {
 
   const getMainCtaLabel = () => {
     if (isBusy) {
-      return allocationOption === AllocationType.Specific &&
-        highLightableStreamId
+      return highLightableStreamId
         ? t('treasuries.add-funds.main-cta-fund-stream-busy')
         : t('treasuries.add-funds.main-cta-busy');
     } else {
@@ -533,7 +497,7 @@ export const VestingContractAddFundsModal = (props: {
     } else {
       if (isFeePaidByTreasurer) {
         const maxAmount = getMaxAmount(true);
-        consoleOut('Treasury pays for fees...', '', 'blue');
+        consoleOut('PaymentStreamingAccount pays for fees...', '', 'blue');
         consoleOut('Settings maxAmount to:', maxAmount, 'blue');
         setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
         setTokenAmount(new BN(maxAmount));
@@ -838,13 +802,13 @@ export const VestingContractAddFundsModal = (props: {
 
         {/* Panel2 */}
         <div className={getPanel2Classes()}>
-          {isBusy && transactionStatus !== TransactionStatus.Iddle && (
+          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
             <>{renderPanel2BusyContent()}</>
           )}
         </div>
 
         {/* CTAs */}
-        {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+        {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
           <>{renderCtas()}</>
         )}
 
@@ -862,7 +826,7 @@ export const VestingContractAddFundsModal = (props: {
                 <>
                   <div className="qr-container bg-white">
                     <QRCodeSVG
-                      value={vestingContract.id as string}
+                      value={vestingContract.id.toBase58()}
                       size={200}
                     />
                   </div>
@@ -872,11 +836,11 @@ export const VestingContractAddFundsModal = (props: {
               {vestingContract && (
                 <div className="flex-center mb-2">
                   <AddressDisplay
-                    address={vestingContract.id as string}
+                    address={vestingContract.id.toBase58()}
                     showFullAddress={true}
                     iconStyles={{ width: '15', height: '15' }}
                     newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-                      vestingContract.id as string
+                      vestingContract.id.toBase58()
                     }${getSolanaExplorerClusterParam()}`}
                   />
                 </div>

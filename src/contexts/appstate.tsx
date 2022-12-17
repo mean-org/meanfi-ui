@@ -6,8 +6,8 @@ import {
   MultisigTransactionStatus,
 } from '@mean-dao/mean-multisig-sdk';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
-import { MSP, Stream } from '@mean-dao/msp';
+import { StreamActivity as StreamActivityV1, StreamInfo } from '@mean-dao/money-streaming/lib/types';
+import { PaymentStreaming, Stream, StreamActivity } from '@mean-dao/payment-streaming';
 import { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
 import { PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
@@ -121,7 +121,7 @@ interface AppStateConfig {
   streamProgramAddress: string;
   streamV2ProgramAddress: string;
   loadingStreamActivity: boolean;
-  streamActivity: StreamActivity[] | undefined;
+  streamActivity: StreamActivityV1[] | StreamActivity[] | undefined;
   hasMoreStreamActivity: boolean;
   customStreamDocked: boolean;
   diagnosisInfo: AccountDetails | undefined;
@@ -460,7 +460,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
   const [loadingStreams, updateLoadingStreams] = useState(false);
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
-  const [streamActivity, setStreamActivity] = useState<StreamActivity[] | undefined>(undefined);
+  const [streamActivity, setStreamActivity] = useState<StreamActivityV1[] | StreamActivity[] | undefined>(undefined);
   const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(
     contextDefaultValues.hasMoreStreamActivity,
   );
@@ -543,9 +543,13 @@ const AppStateProvider: React.FC = ({ children }) => {
     [connectionConfig.endpoint, streamProgramAddress],
   );
 
-  const msp = useMemo(() => {
-    return new MSP(connectionConfig.endpoint, streamV2ProgramAddress, 'confirmed');
-  }, [connectionConfig.endpoint, streamV2ProgramAddress]);
+  const paymentStreaming = useMemo(() => {
+    return new PaymentStreaming(
+      connection,
+      new PublicKey(streamV2ProgramAddress),
+      'confirmed'
+    );
+  }, [connection, streamV2ProgramAddress]);
 
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
@@ -771,8 +775,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     try {
       const streamPublicKey = new PublicKey(streamId);
       try {
-        if (msp && publicKey) {
-          const detail = await msp.getStream(streamPublicKey);
+        if (paymentStreaming && publicKey) {
+          const detail = await paymentStreaming.getStream(streamPublicKey);
           consoleOut('customStream', detail);
           if (detail) {
             setStreamDetail(detail);
@@ -828,7 +832,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const getStreamActivity = useCallback(
     (streamId: string, version: number, clearHistory = false) => {
-      if (!connected || !streamId || !ms || !msp) {
+      if (!connected || !streamId || !ms || !paymentStreaming) {
         return [];
       }
 
@@ -862,7 +866,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             streamActivity && streamActivity.length > 0 ? streamActivity[streamActivity.length - 1].signature : '';
           const before = clearHistory ? '' : signature;
           consoleOut('before:', before, 'crimson');
-          msp
+          paymentStreaming
             .listStreamActivity(streamPublicKey, before, 5)
             .then((value: StreamActivity[]) => {
               consoleOut('activity:', value);
@@ -886,13 +890,13 @@ const AppStateProvider: React.FC = ({ children }) => {
         }
       }
     },
-    [ms, msp, connected, streamActivity, loadingStreamActivity],
+    [ms, paymentStreaming, connected, streamActivity, loadingStreamActivity],
   );
 
   const setSelectedStream = (stream: StreamValues) => {
     updateSelectedStream(stream);
     if (stream) {
-      const mspInstance: any = stream.version < 2 ? ms : msp;
+      const mspInstance: any = stream.version < 2 ? ms : paymentStreaming;
       mspInstance
         .getStream(new PublicKey(stream.id as string))
         .then((detail: Stream | StreamInfo) => {
@@ -1094,7 +1098,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const refreshStreamList = useCallback(
     (reset = false, userAddress?: PublicKey) => {
-      if (loadingStreams || customStreamDocked || !ms || !msp) {
+      if (loadingStreams || customStreamDocked || !ms || !paymentStreaming) {
         return;
       }
 
@@ -1106,7 +1110,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       const userPk = userAddress || fallback;
       consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
 
-      if (msp) {
+      if (paymentStreaming) {
         updateLoadingStreams(true);
 
         const streamAccumulator: any[] = [];
@@ -1118,7 +1122,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         listStreamsV2PerformanceCounter.reset();
         listStreamsV2PerformanceCounter.start();
 
-        msp
+        paymentStreaming
           .listStreams({ treasurer: userPk, beneficiary: userPk })
           .then(streamsv2 => {
             consoleOut('streamsv2 from AppSate:', streamsv2, 'blue');
@@ -1183,7 +1187,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           });
       }
     },
-    [ms, msp, publicKey, streamDetail, selectedAccount.address, loadingStreams, customStreamDocked],
+    [ms, paymentStreaming, publicKey, streamDetail, selectedAccount.address, loadingStreams, customStreamDocked],
   );
 
   /**
@@ -1239,7 +1243,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     };
 
     let balance = 0;
-    const selectedTokenAddress = await findATokenAddress(publicKey, new PublicKey(selectedToken.address));
+    const selectedTokenAddress = findATokenAddress(publicKey, new PublicKey(selectedToken.address));
     balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
     updateTokenBalance(balance);
   }, [tokenAccounts, connection, publicKey, selectedToken, tokenList]);

@@ -430,13 +430,12 @@ export function getUniversalTxIxResume(tx: VersionedTransaction | Transaction) {
   return getTxIxResume(tx);
 }
 
-export async function findATokenAddress(walletAddress: PublicKey, tokenMintAddress: PublicKey): Promise<PublicKey> {
-  return (
-    await PublicKey.findProgramAddress(
-      [walletAddress.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), tokenMintAddress.toBuffer()],
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-    )
-  )[0];
+export function findATokenAddress(walletAddress: PublicKey, tokenMintAddress: PublicKey): PublicKey {
+  const [pk] = PublicKey.findProgramAddressSync(
+    [walletAddress.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), tokenMintAddress.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  return pk;
 }
 
 export const getSdkValue = (amount: number | string, asString = false) => {
@@ -498,13 +497,13 @@ export const toTokenAmount = (amount: number | string, decimals: number, asStrin
   return value.multipliedBy(multiplier);
 };
 
-export const toTokenAmountBn = (amount: number | string, decimals: number) => {
+export const toTokenAmountBn = (amount: number | string | BN, decimals: number) => {
   if (!amount || !decimals) {
     return new BN(0);
   }
-
+  const convertedValue = BN.isBN(amount) ? amount.toString() : amount;
   const multiplier = new BigNumber(10 ** decimals);
-  const value = new BigNumber(amount);
+  const value = new BigNumber(convertedValue);
   const result = value.multipliedBy(multiplier).integerValue();
   const toFixed = result.toFixed(0);
   return new BN(toFixed);

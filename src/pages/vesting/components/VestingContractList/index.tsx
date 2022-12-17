@@ -1,35 +1,23 @@
-import { MSP, StreamTemplate, Treasury } from '@mean-dao/msp';
-import { PublicKey } from '@solana/web3.js';
+import { PaymentStreaming, StreamTemplate, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 import { Progress } from 'antd';
 import BN from 'bn.js';
 import { Identicon } from 'components/Identicon';
 import { FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { IconLoading, IconNoItems } from 'Icons';
-import {
-  delay,
-  getReadableDate,
-  getTodayPercentualBetweenTwoDates,
-  isProd,
-} from 'middleware/ui';
+import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd } from 'middleware/ui';
 import { formatThousands, getSdkValue, makeDecimal } from 'middleware/utils';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const VestingContractList = (props: {
   loadingVestingAccounts: boolean;
-  msp: MSP | undefined;
+  msp: PaymentStreaming | undefined;
   onAccountSelected: any;
-  selectedAccount: Treasury | undefined;
-  streamingAccounts: Treasury[] | undefined;
+  selectedAccount: PaymentStreamingAccount | undefined;
+  streamingAccounts: PaymentStreamingAccount[] | undefined;
 }) => {
-  const {
-    loadingVestingAccounts,
-    msp,
-    onAccountSelected,
-    selectedAccount,
-    streamingAccounts,
-  } = props;
+  const { loadingVestingAccounts, msp, onAccountSelected, selectedAccount, streamingAccounts } = props;
   const { t } = useTranslation('common');
   const { theme, getTokenByMintAddress } = useContext(AppStateContext);
   const [today, setToday] = useState(new Date());
@@ -50,28 +38,18 @@ export const VestingContractList = (props: {
     [today],
   );
 
-  const getContractFinishDate = useCallback(
-    (templateValues: StreamTemplate) => {
-      // Total length of vesting period in seconds
-      const lockPeriod =
-        templateValues.rateIntervalInSeconds *
-        templateValues.durationNumberOfUnits;
-      // Final date = Start date + lockPeriod
-      const ts = new Date(templateValues.startUtc).getTime();
-      const finishDate = new Date(lockPeriod * 1000 + ts);
-      return finishDate;
-    },
-    [],
-  );
+  const getContractFinishDate = useCallback((templateValues: StreamTemplate) => {
+    // Total length of vesting period in seconds
+    const lockPeriod = templateValues.rateIntervalInSeconds * templateValues.durationNumberOfUnits;
+    // Final date = Start date + lockPeriod
+    const ts = new Date(templateValues.startUtc).getTime();
+    const finishDate = new Date(lockPeriod * 1000 + ts);
+    return finishDate;
+  }, []);
 
   // Set template data map
   useEffect(() => {
-    if (
-      !msp ||
-      loadingVestingAccounts ||
-      !streamingAccounts ||
-      loadingTemplates
-    ) {
+    if (!msp || loadingVestingAccounts || !streamingAccounts || loadingTemplates) {
       return;
     }
 
@@ -102,9 +80,8 @@ export const VestingContractList = (props: {
             }
           }
           try {
-            const pk = new PublicKey(contract.id as string);
-            const templateData = await msp.getStreamTemplate(pk);
-            compiledTemplates[contract.id as string] = templateData;
+            const templateData = await msp.getStreamTemplate(contract.id);
+            compiledTemplates[contract.id.toBase58()] = templateData;
           } catch (error) {
             console.error('Error fetching template data:', error);
           }
@@ -132,12 +109,7 @@ export const VestingContractList = (props: {
 
   // Set chart completed percentages
   useEffect(() => {
-    if (
-      loadingVestingAccounts ||
-      loadingTemplates ||
-      !streamingAccounts ||
-      !vcTemplates
-    ) {
+    if (loadingVestingAccounts || loadingTemplates || !streamingAccounts || !vcTemplates) {
       return;
     }
 
@@ -147,14 +119,11 @@ export const VestingContractList = (props: {
       let startDate: string | undefined = undefined;
 
       // get the contract template from the map if the item exists
-      if (
-        vcTemplates &&
-        vcTemplates[contract.id as string] &&
-        vcTemplates[contract.id as string].startUtc
-      ) {
-        streamTemplate = vcTemplates[contract.id as string];
+      const id = contract.id.toBase58();
+      if (vcTemplates && vcTemplates[id] && vcTemplates[id].startUtc) {
+        streamTemplate = vcTemplates[id];
         // Set a start date for the contract
-        const localDate = new Date(vcTemplates[contract.id as string].startUtc);
+        const localDate = new Date(vcTemplates[id].startUtc);
         startDate = localDate.toUTCString();
       }
 
@@ -166,21 +135,14 @@ export const VestingContractList = (props: {
           completedVestingPercentage = 0;
         } else {
           let todayPct = 0;
-          const finishDate =
-            getContractFinishDate(streamTemplate).toUTCString();
+          const finishDate = getContractFinishDate(streamTemplate).toUTCString();
           todayPct = getTodayPercentualBetweenTwoDates(startDate, finishDate);
-          const cliffPercent = makeDecimal(
-            new BN(streamTemplate.cliffVestPercent),
-            4,
-          );
+          const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
           if (cliffPercent > 0) {
             // visualCompletionPct = ((100 - cliffPercent) * completionPct) + cliffPercent
-            const completionWithOutCliifReminder =
-              (100 - cliffPercent) * todayPct;
-            const visualCompletionPct =
-              completionWithOutCliifReminder / 100 + cliffPercent;
-            completedVestingPercentage =
-              visualCompletionPct > 100 ? 100 : visualCompletionPct;
+            const completionWithOutCliifReminder = (100 - cliffPercent) * todayPct;
+            const visualCompletionPct = completionWithOutCliifReminder / 100 + cliffPercent;
+            completedVestingPercentage = visualCompletionPct > 100 ? 100 : visualCompletionPct;
           } else {
             completedVestingPercentage = todayPct > 100 ? 100 : todayPct;
           }
@@ -188,7 +150,7 @@ export const VestingContractList = (props: {
       } else {
         completedVestingPercentage = 0;
       }
-      completedPercentages[contract.id as string] = completedVestingPercentage;
+      completedPercentages[id] = completedVestingPercentage;
     }
     setVcCompleteness(completedPercentages);
   }, [
@@ -200,9 +162,7 @@ export const VestingContractList = (props: {
     vcTemplates,
   ]);
 
-  const imageOnErrorHandler = (
-    event: React.SyntheticEvent<HTMLImageElement, Event>,
-  ) => {
+  const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
     event.currentTarget.className = 'error';
   };
@@ -210,18 +170,13 @@ export const VestingContractList = (props: {
   return (
     <div
       className={`vesting-contract-list ${
-        !loadingVestingAccounts &&
-        (!streamingAccounts || streamingAccounts.length === 0)
-          ? 'h-75'
-          : ''
+        !loadingVestingAccounts && (!streamingAccounts || streamingAccounts.length === 0) ? 'h-75' : ''
       }`}
     >
       {streamingAccounts && streamingAccounts.length > 0 ? (
         streamingAccounts.map((item, index) => {
-          const associatedToken = item.associatedToken;
-          const token = associatedToken
-            ? getTokenByMintAddress(associatedToken as string)
-            : undefined;
+          const associatedToken = item.mint.toBase58();
+          const token = associatedToken ? getTokenByMintAddress(associatedToken as string) : undefined;
           const onTreasuryClick = () => {
             onAccountSelected(item);
           };
@@ -229,11 +184,7 @@ export const VestingContractList = (props: {
             <div
               key={`${index + 50}`}
               onClick={onTreasuryClick}
-              className={`transaction-list-row ${
-                selectedAccount && selectedAccount.id === item.id
-                  ? 'selected'
-                  : ''
-              }`}
+              className={`transaction-list-row ${selectedAccount && selectedAccount.id === item.id ? 'selected' : ''}`}
             >
               <div className="icon-cell">
                 <div className="token-icon">
@@ -264,25 +215,20 @@ export const VestingContractList = (props: {
                 <div className="subtitle text-truncate">
                   {item &&
                   vcTemplates &&
-                  vcTemplates[item.id as string] &&
-                  vcTemplates[item.id as string].startUtc &&
+                  vcTemplates[item.id.toBase58()] &&
+                  vcTemplates[item.id.toBase58()].startUtc &&
                   !loadingTemplates ? (
                     <span className="mr-1">
-                      {isStartDateFuture(
-                        vcTemplates[item.id as string].startUtc,
-                      ) ? (
-                        `Contract starts on ${getReadableDate(
-                          vcTemplates[item.id as string].startUtc,
-                          true,
-                        )}`
+                      {isStartDateFuture(vcTemplates[item.id.toBase58()].startUtc) ? (
+                        `Contract starts on ${getReadableDate(vcTemplates[item.id.toBase58()].startUtc, true)}`
                       ) : (
                         <Progress
-                          percent={vcCompleteness[item.id as string] || 0}
+                          percent={vcCompleteness[item.id.toBase58()] || 0}
                           showInfo={false}
                           status={
-                            vcCompleteness[item.id as string] === 0
+                            vcCompleteness[item.id.toBase58()] === 0
                               ? 'normal'
-                              : vcCompleteness[item.id as string] < 100
+                              : vcCompleteness[item.id.toBase58()] < 100
                               ? 'active'
                               : 'success'
                           }
@@ -310,28 +256,17 @@ export const VestingContractList = (props: {
                 </div>
               </div>
               <div className="rate-cell">
-                <div className="rate-amount">
-                  {formatThousands(+getSdkValue(item.totalStreams))}
-                </div>
-                <div className="interval">
-                  {item.totalStreams === 1 ? 'stream' : 'streams'}
-                </div>
+                <div className="rate-amount">{formatThousands(+getSdkValue(item.totalStreams))}</div>
+                <div className="interval">{item.totalStreams === 1 ? 'stream' : 'streams'}</div>
               </div>
             </div>
           );
         })
       ) : (
         <div className="flex-column flex-center justify-content-center h-100">
-          <IconNoItems
-            className="mean-svg-icons fg-secondary-50"
-            style={{ width: 42, height: 42 }}
-          />
-          <div className="font-size-120 font-bold fg-secondary-75 mt-2 mb-2">
-            {t('vesting.no-contracts')}
-          </div>
-          <div className="font-size-110 fg-secondary-50 mb-3">
-            {t('vesting.user-instruction-headline')}
-          </div>
+          <IconNoItems className="mean-svg-icons fg-secondary-50" style={{ width: 42, height: 42 }} />
+          <div className="font-size-120 font-bold fg-secondary-75 mt-2 mb-2">{t('vesting.no-contracts')}</div>
+          <div className="font-size-110 fg-secondary-50 mb-3">{t('vesting.user-instruction-headline')}</div>
         </div>
       )}
     </div>

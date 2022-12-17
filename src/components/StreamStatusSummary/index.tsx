@@ -1,5 +1,5 @@
 import { StreamInfo } from '@mean-dao/money-streaming';
-import { Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { Stream, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
 import { getStreamStatusResume } from 'middleware/streams';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -97,7 +97,7 @@ export const StreamStatusSummary = (props: {
       return null;
     }
 
-    if (item.version >= 2 && (item as Stream).status === STREAM_STATUS.Running) {
+    if (item.version >= 2 && (item as Stream).statusCode === STREAM_STATUS_CODE.Running) {
       return getTimeRemaining((item as Stream).estimatedDepletionDate);
     }
     return <span>{getStreamStatusResume(item, t)}</span>;

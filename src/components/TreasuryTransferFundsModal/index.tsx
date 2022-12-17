@@ -9,7 +9,7 @@ import {
   TransactionFees,
   TreasuryInfo,
 } from '@mean-dao/money-streaming';
-import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
+import { Stream, PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
@@ -20,6 +20,8 @@ import { TokenDisplay } from 'components/TokenDisplay';
 import { FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
+import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
+import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import {
@@ -42,6 +44,7 @@ import {
 } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
+import { TreasuryWithdrawParams } from 'models/treasuries';
 import React, {
   useCallback,
   useContext,
@@ -62,7 +65,7 @@ export const TreasuryTransferFundsModal = (props: {
   nativeBalance: number;
   minRequiredBalance: number;
   transactionFees: TransactionFees;
-  treasuryDetails: Treasury | TreasuryInfo | undefined;
+  treasuryDetails: PaymentStreamingAccount | TreasuryInfo | undefined;
   multisigAccounts: MultisigInfo[] | undefined;
   selectedToken: TokenInfo | undefined;
 }) => {
@@ -148,12 +151,14 @@ export const TreasuryTransferFundsModal = (props: {
   }, [treasuryDetails]);
 
   const onAcceptWithdrawTreasuryFunds = () => {
-    handleOk({
-      title: proposalTitle,
-      amount: topupAmount,
-      tokenAmount: tokenAmount,
-      destinationAccount: to,
-    });
+    const params: TreasuryWithdrawParams = {
+      proposalTitle,
+      amount: tokenAmount.toString(),
+      destination: to,
+      payer: selectedAccount.address,
+      treasury: treasuryDetails ? treasuryDetails.id.toString() : ''
+    };
+    handleOk(params);
   };
 
   const getTransactionStartButtonLabel = () => {
@@ -274,7 +279,7 @@ export const TreasuryTransferFundsModal = (props: {
     if (
       localStreamDetail &&
       localStreamDetail.version >= 2 &&
-      (localStreamDetail as Stream).feePayedByTreasurer
+      (localStreamDetail as Stream).tokenFeePayedFromAccount
     ) {
       return true;
     }
@@ -337,7 +342,7 @@ export const TreasuryTransferFundsModal = (props: {
       if (
         ((localStreamDetail &&
           localStreamDetail.version >= 2 &&
-          (localStreamDetail as Stream).feePayedByTreasurer) ||
+          (localStreamDetail as Stream).tokenFeePayedFromAccount) ||
           preSetting) &&
         transactionFees
       ) {
@@ -407,7 +412,7 @@ export const TreasuryTransferFundsModal = (props: {
       return;
     }
 
-    const getUnallocatedBalance = (details: Treasury | TreasuryInfo) => {
+    const getUnallocatedBalance = (details: PaymentStreamingAccount | TreasuryInfo) => {
       const isNew = details && details.version >= 2 ? true : false;
       let result = new BN(0);
       let balance = new BN(0);
@@ -435,14 +440,14 @@ export const TreasuryTransferFundsModal = (props: {
     }
   }, [isVisible, treasuryDetails, selectedToken]);
 
-  const renderTreasury = (item: Treasury | TreasuryInfo) => {
+  const renderTreasury = (item: PaymentStreamingAccount | TreasuryInfo) => {
     const v1 = item as TreasuryInfo;
-    const v2 = item as Treasury;
+    const v2 = item as PaymentStreamingAccount;
     const isNewTreasury = item.version >= 2 ? true : false;
 
-    const associatedToken = isNewTreasury
-      ? v2.associatedToken
-      : v1.associatedTokenAddress;
+    const treasuryType = getStreamingAccountType(item);
+
+    const associatedToken = getStreamingAccountMint(item);
     const token = associatedToken
       ? getTokenByMintAddress(associatedToken as string)
       : undefined;
@@ -501,13 +506,7 @@ export const TreasuryTransferFundsModal = (props: {
                   theme === 'light' ? 'golden fg-dark' : 'darken'
                 }`}
               >
-                {isNewTreasury
-                  ? v2.treasuryType === TreasuryType.Open
-                    ? 'Open'
-                    : 'Locked'
-                  : v1.type === TreasuryType.Open
-                  ? 'Open'
-                  : 'Locked'}
+                {treasuryType === AccountType.Open ? 'Open' : 'Locked'}
               </span>
             </div>
           ) : (
@@ -856,8 +855,7 @@ export const TreasuryTransferFundsModal = (props: {
               </div>
             )}
           </>
-        ) : transactionStatus.currentOperation ===
-          TransactionStatus.TransactionFinished ? (
+        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
@@ -873,8 +871,7 @@ export const TreasuryTransferFundsModal = (props: {
                 style={{ fontSize: 48 }}
                 className="icon mt-0"
               />
-              {transactionStatus.currentOperation ===
-              TransactionStatus.TransactionStartFailure ? (
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(
@@ -895,30 +892,6 @@ export const TreasuryTransferFundsModal = (props: {
                   )}
                 </h4>
               )}
-              {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-                <div className="row two-col-ctas mt-3 transaction-progress p-2">
-                  <div className="col-12">
-                    <Button
-                      block
-                      type="text"
-                      shape="round"
-                      size="middle"
-                      className={isBusy ? 'inactive' : ''}
-                      onClick={() =>
-                        isError(transactionStatus.currentOperation)
-                          ? onAcceptWithdrawTreasuryFunds()
-                          : onCloseModal()
-                      }
-                    >
-                      {isError(transactionStatus.currentOperation) &&
-                      transactionStatus.currentOperation !==
-                        TransactionStatus.TransactionStartFailure
-                        ? t('general.retry')
-                        : t('general.cta-close')}
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           </>
         )}
@@ -932,7 +905,7 @@ export const TreasuryTransferFundsModal = (props: {
             : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
@@ -950,6 +923,32 @@ export const TreasuryTransferFundsModal = (props: {
           </div>
         )}
       </div>
+
+      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+        <div className="row two-col-ctas mt-3 transaction-progress p-2">
+          <div className="col-12">
+            <Button
+              block
+              type="text"
+              shape="round"
+              size="middle"
+              className={isBusy ? 'inactive' : ''}
+              onClick={() =>
+                isError(transactionStatus.currentOperation)
+                  ? onAcceptWithdrawTreasuryFunds()
+                  : onCloseModal()
+              }
+            >
+              {isError(transactionStatus.currentOperation) &&
+                transactionStatus.currentOperation !==
+                TransactionStatus.TransactionStartFailure
+                ? t('general.retry')
+                : t('general.cta-close')}
+            </Button>
+          </div>
+        </div>
+      )}
+
     </Modal>
   );
 };

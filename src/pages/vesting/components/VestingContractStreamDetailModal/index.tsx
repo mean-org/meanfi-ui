@@ -1,11 +1,11 @@
-import { MSP, Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { PublicKey } from '@solana/web3.js';
 import { Modal, Switch } from 'antd';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { AppStateContext } from '../../../../contexts/appstate';
-import { consoleOut } from '../../../../middleware/ui';
+import { AppStateContext } from 'contexts/appstate';
+import { consoleOut } from 'middleware/ui';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
+import { PaymentStreaming, Stream, StreamActivity, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
 
 export const VestingContractStreamDetailModal = (props: {
   accountAddress: string;
@@ -13,33 +13,21 @@ export const VestingContractStreamDetailModal = (props: {
   highlightedStream: Stream | undefined;
   isDebugging?: boolean;
   isVisible: boolean;
-  msp: MSP | undefined;
+  msp: PaymentStreaming | undefined;
   selectedToken: TokenInfo | undefined;
 }) => {
-  const {
-    accountAddress,
-    handleClose,
-    highlightedStream,
-    isDebugging,
-    isVisible,
-    msp,
-    selectedToken,
-  } = props;
+  const { accountAddress, handleClose, highlightedStream, isDebugging, isVisible, msp, selectedToken } = props;
 
   const { isWhitelisted } = useContext(AppStateContext);
 
   const [streamDetail, setStreamDetail] = useState<Stream | undefined>();
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(false);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
-  const [hasMoreStreamActivity, setHasMoreStreamActivity] =
-    useState<boolean>(true);
-  const [isToggledShowLastReadData, setIsToggledShowLastReadData] =
-    useState<boolean>(false);
+  const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(true);
+  const [isToggledShowLastReadData, setIsToggledShowLastReadData] = useState<boolean>(false);
 
   const isInboundStream = useCallback((): boolean => {
-    return streamDetail &&
-      accountAddress &&
-      (streamDetail.beneficiary as PublicKey).toBase58() === accountAddress
+    return streamDetail && accountAddress && (streamDetail.beneficiary as PublicKey).toBase58() === accountAddress
       ? true
       : false;
   }, [accountAddress, streamDetail]);
@@ -107,11 +95,7 @@ export const VestingContractStreamDetailModal = (props: {
     }
 
     const timeout = setTimeout(() => {
-      if (
-        msp &&
-        streamDetail &&
-        streamDetail.status === STREAM_STATUS.Running
-      ) {
+      if (msp && streamDetail && streamDetail.statusCode === STREAM_STATUS_CODE.Running) {
         msp.refreshStream(streamDetail as Stream).then(detail => {
           setStreamDetail(detail as Stream);
         });
@@ -147,11 +131,7 @@ export const VestingContractStreamDetailModal = (props: {
         <div className="flex-fixed-right shift-up-2 mb-3">
           <div className="left">Show last read data</div>
           <div className="right">
-            <Switch
-              size="small"
-              checked={isToggledShowLastReadData}
-              onChange={onToggleShowLastReadData}
-            />
+            <Switch size="small" checked={isToggledShowLastReadData} onChange={onToggleShowLastReadData} />
           </div>
         </div>
       )}

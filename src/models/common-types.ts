@@ -1,4 +1,3 @@
-import { AllocationType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { MetaInfoCtaAction } from './accounts';
 import { StreamTreasuryType } from './treasuries';
@@ -19,7 +18,6 @@ export interface SelectOption {
 export interface TreasuryTopupParams {
   amount: string;
   tokenAmount: string;
-  allocationType: AllocationType;
   streamId: string;
   associatedToken: string;
   proposalTitle: string;

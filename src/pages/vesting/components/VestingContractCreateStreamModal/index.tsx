@@ -3,9 +3,9 @@ import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import {
   StreamTemplate,
   TransactionFees,
-  Treasury,
-  TreasuryType,
-} from '@mean-dao/msp';
+  PaymentStreamingAccount,
+  AccountType,
+} from '@mean-dao/payment-streaming';
 import { Button, Checkbox, Col, Modal, Row } from 'antd';
 import BN from 'bn.js';
 import { InfoIcon } from 'components/InfoIcon';
@@ -55,7 +55,7 @@ export const VestingContractCreateStreamModal = (props: {
   selectedToken: TokenInfo | undefined;
   streamTemplate: StreamTemplate | undefined;
   transactionFees: TransactionFees;
-  vestingContract: Treasury | undefined;
+  vestingContract: PaymentStreamingAccount | undefined;
   withdrawTransactionFees: TransactionFees;
 }) => {
   const {
@@ -99,7 +99,7 @@ export const VestingContractCreateStreamModal = (props: {
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState(new BN(0));
   // Setting from the vesting contract
   const [treasuryOption, setTreasuryOption] = useState<
-    TreasuryType | undefined
+    AccountType | undefined
   >(undefined);
   const [paymentStartDate, setPaymentStartDate] = useState<string>('');
   const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>('');
@@ -258,7 +258,7 @@ export const VestingContractCreateStreamModal = (props: {
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
-    const getUnallocatedBalance = (details: Treasury) => {
+    const getUnallocatedBalance = (details: PaymentStreamingAccount) => {
       const balance = new BN(details.balance);
       const allocationAssigned = new BN(details.allocationAssigned);
       return balance.sub(allocationAssigned);
@@ -293,7 +293,7 @@ export const VestingContractCreateStreamModal = (props: {
   useEffect(() => {
     if (isVisible && vestingContract && streamTemplate) {
       consoleOut('this one I received:', streamTemplate, 'orange');
-      setTreasuryOption(vestingContract.treasuryType);
+      setTreasuryOption(vestingContract.accountType);
       const cliffPercent = makeDecimal(
         new BN(streamTemplate.cliffVestPercent),
         4,
@@ -657,7 +657,7 @@ export const VestingContractCreateStreamModal = (props: {
               theme === 'light' ? 'golden fg-dark' : 'darken'
             }`}
           >
-            {treasuryOption === TreasuryType.Open ? 'Open' : 'Locked'}
+            {treasuryOption === AccountType.Open ? 'Open' : 'Locked'}
           </span>
         </div>
       </div>
@@ -781,7 +781,7 @@ export const VestingContractCreateStreamModal = (props: {
           </div>
 
           {/* Amount to stream */}
-          {treasuryOption === TreasuryType.Open ? (
+          {treasuryOption === AccountType.Open ? (
             <div className="form-label">
               {t('vesting.create-stream.total-funds-to-stream')}
             </div>
@@ -970,7 +970,7 @@ export const VestingContractCreateStreamModal = (props: {
             </Col>
           </Row>
 
-          {treasuryOption === TreasuryType.Lock && (
+          {treasuryOption === AccountType.Lock && (
             <span className="warning-message icon-label mb-3">
               <IconWarning className="mean-svg-icons" />
               {t(

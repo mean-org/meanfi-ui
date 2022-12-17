@@ -1,5 +1,5 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import { Stream, StreamActivity, STREAM_STATUS } from '@mean-dao/msp';
+import { Stream, StreamActivity, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
 import { Col, Row, Spin, Tabs } from 'antd';
 import BN from 'bn.js';
 import { AddressDisplay } from 'components/AddressDisplay';
@@ -13,6 +13,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { IconExternalLink } from 'Icons';
+import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import {
   getIntervalFromSeconds,
   getReadableDate,
@@ -99,25 +100,25 @@ export const MoneyStreamDetails = (props: {
         return `${item.name}`;
       }
       if (isInboundStream) {
-        if (item.status === STREAM_STATUS.Scheduled) {
+        if (item.statusCode === STREAM_STATUS_CODE.Scheduled) {
           title = `${t(
             'streams.stream-list.title-scheduled-from',
-          )} (${shortenAddress(item.treasurer)})`;
-        } else if (item.status === STREAM_STATUS.Paused) {
+          )} (${shortenAddress(item.psAccountOwner)})`;
+        } else if (item.statusCode === STREAM_STATUS_CODE.Paused) {
           title = `${t(
             'streams.stream-list.title-paused-from',
-          )} (${shortenAddress(item.treasurer)})`;
+          )} (${shortenAddress(item.psAccountOwner)})`;
         } else {
           title = `${t(
             'streams.stream-list.title-receiving-from',
-          )} (${shortenAddress(item.treasurer)})`;
+          )} (${shortenAddress(item.psAccountOwner)})`;
         }
       } else {
-        if (item.status === STREAM_STATUS.Scheduled) {
+        if (item.statusCode === STREAM_STATUS_CODE.Scheduled) {
           title = `${t(
             'streams.stream-list.title-scheduled-to',
           )} (${shortenAddress(item.beneficiary)})`;
-        } else if (item.status === STREAM_STATUS.Paused) {
+        } else if (item.statusCode === STREAM_STATUS_CODE.Paused) {
           title = `${t(
             'streams.stream-list.title-paused-to',
           )} (${shortenAddress(item.beneficiary)})`;
@@ -194,7 +195,7 @@ export const MoneyStreamDetails = (props: {
         }
 
         if (isInboundStream) {
-          if (item.status === STREAM_STATUS.Scheduled) {
+          if (item.statusCode === STREAM_STATUS_CODE.Scheduled) {
             title = t('streams.stream-list.subtitle-scheduled-inbound', {
               rate: rateAmount,
             });
@@ -204,7 +205,7 @@ export const MoneyStreamDetails = (props: {
             });
           }
         } else {
-          if (item.status === STREAM_STATUS.Scheduled) {
+          if (item.statusCode === STREAM_STATUS_CODE.Scheduled) {
             title = t('streams.stream-list.subtitle-scheduled-outbound', {
               rate: rateAmount,
             });
@@ -227,12 +228,12 @@ export const MoneyStreamDetails = (props: {
       let content = '';
 
       if (item) {
-        switch (item.status) {
-          case STREAM_STATUS.Scheduled:
+        switch (item.statusCode) {
+          case STREAM_STATUS_CODE.Scheduled:
             bgClass = 'bg-purple';
             content = t('streams.status.status-scheduled');
             break;
-          case STREAM_STATUS.Paused:
+          case STREAM_STATUS_CODE.Paused:
             if (item.isManuallyPaused) {
               bgClass = 'error';
               content = t('streams.status.status-stopped');
@@ -262,12 +263,12 @@ export const MoneyStreamDetails = (props: {
   const getStreamStatusSubtitle = useCallback(
     (item: Stream) => {
       if (item) {
-        switch (item.status) {
-          case STREAM_STATUS.Scheduled:
+        switch (item.statusCode) {
+          case STREAM_STATUS_CODE.Scheduled:
             return t('streams.status.scheduled', {
               date: getShortDate(item.startUtc, false),
             });
-          case STREAM_STATUS.Paused:
+          case STREAM_STATUS_CODE.Paused:
             if (item.isManuallyPaused) {
               return t('streams.status.stopped-manually');
             }
@@ -351,7 +352,7 @@ export const MoneyStreamDetails = (props: {
 
     return (
       <AddressDisplay
-        address={stream.treasurer.toBase58()}
+        address={stream.psAccountOwner.toBase58()}
         iconStyles={{ width: '15', height: '15' }}
         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
       />
@@ -619,12 +620,12 @@ export const MoneyStreamDetails = (props: {
         label:
           !isInboundStream &&
           stream &&
-          stream.status === STREAM_STATUS.Running &&
+          stream.statusCode === STREAM_STATUS_CODE.Running &&
           'Funds will run out in:',
         value:
           !isInboundStream &&
           stream &&
-          stream.status === STREAM_STATUS.Running &&
+          stream.statusCode === STREAM_STATUS_CODE.Running &&
           `${getReadableDate(stream.estimatedDepletionDate)} (${getTimeToNow(
             stream.estimatedDepletionDate,
           )})`,
@@ -632,11 +633,11 @@ export const MoneyStreamDetails = (props: {
       {
         label:
           stream &&
-          stream.status === STREAM_STATUS.Paused &&
+          stream.statusCode === STREAM_STATUS_CODE.Paused &&
           'Funds ran out on:',
         value:
           stream &&
-          stream.status === STREAM_STATUS.Paused &&
+          stream.statusCode === STREAM_STATUS_CODE.Paused &&
           getRelativeDate(stream.estimatedDepletionDate),
       },
       {
@@ -704,6 +705,8 @@ export const MoneyStreamDetails = (props: {
       return null;
     }
 
+    const associatedToken = getStreamAssociatedMint(item);
+
     return (
       <div className="transaction-list-row no-pointer">
         <div className="icon-cell">
@@ -719,7 +722,7 @@ export const MoneyStreamDetails = (props: {
               />
             ) : (
               <Identicon
-                address={item.associatedToken}
+                address={associatedToken}
                 style={{ width: '36', height: '36', display: 'inline-flex' }}
               />
             )}
