@@ -197,7 +197,7 @@ export const sendTx = async (title: string, connection: Connection, encodedTx: s
 
   if (connection && encodedTx) {
     return connection
-      .sendEncodedTransaction(encodedTx)
+      .sendEncodedTransaction(encodedTx, { preflightCommitment: 'confirmed' })
       .then(sig => {
         consoleOut('sendEncodedTransaction returned a signature:', sig);
         txLog.push({
