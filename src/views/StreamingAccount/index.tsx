@@ -1280,7 +1280,7 @@ export const StreamingAccountView = (props: {
             enqueueTransactionConfirmation({
               signature,
               operationType: OperationType.TreasuryAddFunds,
-              finality: 'finalized',
+              finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
               loadingMessage: loadingMessage,
@@ -1570,7 +1570,7 @@ export const StreamingAccountView = (props: {
             enqueueTransactionConfirmation({
               signature,
               operationType: OperationType.TreasuryWithdraw,
-              finality: 'finalized',
+              finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
               loadingMessage: `Withdraw ${formatThousands(
@@ -2002,7 +2002,7 @@ export const StreamingAccountView = (props: {
             enqueueTransactionConfirmation({
               signature,
               operationType: OperationType.TreasuryClose,
-              finality: 'finalized',
+              finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
               loadingMessage: `Close streaming account: ${streamingAccountName}`,
@@ -2258,7 +2258,7 @@ export const StreamingAccountView = (props: {
             enqueueTransactionConfirmation({
               signature,
               operationType: OperationType.TreasuryRefreshBalance,
-              finality: 'finalized',
+              finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
               loadingMessage: 'Refresh streaming account data',

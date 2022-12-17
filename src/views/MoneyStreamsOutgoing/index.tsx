@@ -1059,7 +1059,7 @@ export const MoneyStreamsOutgoingView = (props: {
             enqueueTransactionConfirmation({
               signature,
               operationType: OperationType.StreamAddFunds,
-              finality: 'finalized',
+              finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
               loadingMessage,

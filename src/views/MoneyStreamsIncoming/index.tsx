@@ -1110,7 +1110,7 @@ export const MoneyStreamsIncomingView = (props: {
             enqueueTransactionConfirmation({
               signature,
               operationType: OperationType.StreamWithdraw,
-              finality: 'finalized',
+              finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
               loadingMessage: loadingMessage,

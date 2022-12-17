@@ -1199,7 +1199,7 @@ export const MoneyStreamsInfoView = (props: {
             enqueueTransactionConfirmation({
               signature,
               operationType: OperationType.TreasuryAddFunds,
-              finality: 'finalized',
+              finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
               loadingMessage: loadingMessage,
@@ -1561,7 +1561,7 @@ export const MoneyStreamsInfoView = (props: {
             enqueueTransactionConfirmation({
               signature,
               operationType: OperationType.TreasuryCreate,
-              finality: 'finalized',
+              finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
               loadingMessage: `Create Streaming Account: ${createOptions.treasuryName}`,
