@@ -823,6 +823,9 @@ export const HomeView = () => {
       case OperationType.Unwrap:
         event = AppUsageEvent.UnwrapSolCompleted;
         break;
+      case OperationType.StreamCreate:
+        event = AppUsageEvent.StreamCreateCompleted;
+        break;
       case OperationType.Transfer:
         event = AppUsageEvent.TransferOTPCompleted;
         break;
@@ -861,6 +864,9 @@ export const HomeView = () => {
         break;
       case OperationType.Unwrap:
         event = AppUsageEvent.UnwrapSolFailed;
+        break;
+      case OperationType.StreamCreate:
+        event = AppUsageEvent.StreamCreateFailed;
         break;
       case OperationType.Transfer:
         event = AppUsageEvent.TransferOTPFailed;
@@ -951,6 +957,10 @@ export const HomeView = () => {
 
         recordTxConfirmationSuccess(item);
         switch (item.operationType) {
+          case OperationType.StreamCreate:
+            logEventHandling(item);
+            accountRefresh();
+            break;
           case OperationType.CreateMultisig:
           case OperationType.CreateTransaction:
             logEventHandling(item);
@@ -3069,8 +3079,7 @@ export const HomeView = () => {
     }
     if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/incoming/${streamingItemId}`) {
       return `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
-    } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${streamingItemId}`) {
-      setStreamDetail(undefined);
+    } else if (location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}/outgoing`)) {
       return `/${RegisteredAppPaths.PaymentStreaming}/outgoing`;
     } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingItemId}`) {
       return `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
@@ -3088,7 +3097,6 @@ export const HomeView = () => {
       return;
     } else if (location.pathname.indexOf('/assets') !== -1) {
       turnOffRightPanel();
-      consoleOut('calling onBackButtonClicked() on:', '/assets', 'crimson');
       if (selectedAsset) {
         url = getAssetPath(selectedAsset);
       } else {
@@ -3096,15 +3104,14 @@ export const HomeView = () => {
       }
     } else if (location.pathname.indexOf('/super-safe') !== -1) {
       turnOffRightPanel();
-      consoleOut('calling onBackButtonClicked() on:', '/super-safe', 'crimson');
       url = `/super-safe?v=proposals`;
     } else if (location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)) {
       url = getReturnPathForStreaming();
     } else {
-      consoleOut('calling onBackButtonClicked()', '...', 'crimson');
       turnOffRightPanel();
     }
 
+    consoleOut('Return path for streaming:', url, 'crimson');
     if (url) {
       navigate(url);
     }

@@ -88,6 +88,7 @@ export const MoneyStreamDetails = (props: {
     loadingStreamActivity,
     streamV2ProgramAddress,
     getStreamActivity,
+    setStreamDetail,
   } = useContext(AppStateContext);
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
@@ -474,6 +475,15 @@ export const MoneyStreamDetails = (props: {
       getActivityList(true);
     }
   }, [activityLoaded, getActivityList, stream, tabOption]);
+
+  // Component unmount
+  useEffect(() => {
+    return () => {
+      consoleOut('clearing selected stream data...', '', 'blue');
+      setStreamDetail(undefined);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getRelativeDate = (utcDate: string) => {
     const reference = new Date(utcDate);
