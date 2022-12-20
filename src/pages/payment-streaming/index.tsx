@@ -86,11 +86,6 @@ const PaymentStreamingView = (props: {
               ? AppUsageEvent.StreamResumeCompleted
               : AppUsageEvent.StreamResumeFailed;
             break;
-          case OperationType.StreamCreate:
-            event = success
-              ? AppUsageEvent.StreamCreateCompleted
-              : AppUsageEvent.StreamCreateFailed;
-            break;
           case OperationType.StreamClose:
             event = success
               ? AppUsageEvent.StreamCloseCompleted
@@ -208,17 +203,9 @@ const PaymentStreamingView = (props: {
 
       recordTxConfirmation(item, true);
       switch (item.operationType) {
-        case OperationType.StreamCreate:
-          logEventHandling(item);
-          setTimeout(() => {
-            accountRefresh();
-            hardReloadStreams();
-          }, 20);
-          break;
         case OperationType.StreamPause:
         case OperationType.StreamResume:
         case OperationType.StreamAddFunds:
-        case OperationType.TreasuryStreamCreate:
         case OperationType.TreasuryRefreshBalance:
         case OperationType.TreasuryAddFunds:
         case OperationType.TreasuryWithdraw:
@@ -247,8 +234,11 @@ const PaymentStreamingView = (props: {
             refreshMultisigs();
             notifyMultisigActionFollowup(item);
           }
-          onBackButtonClicked();
-          hardReloadStreams();
+          setTimeout(() => {
+            console.log('calling onBackButtonClicked()...');
+            onBackButtonClicked();
+            hardReloadStreams();
+          }, 20);
           break;
         case OperationType.TreasuryClose:
           logEventHandling(item);
@@ -405,6 +395,7 @@ const PaymentStreamingView = (props: {
         'onTxConfirmed',
         'brown',
       );
+      hardReloadStreams();
     }
   }, [canSubscribe, onTxConfirmed]);
 
@@ -468,21 +459,14 @@ const PaymentStreamingView = (props: {
     streamingTreasury: PaymentStreamingAccount | TreasuryInfo | undefined,
   ) => {
     if (streamingTreasury) {
-      const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingTreasury.id as string
-        }`;
+      const accountId = getStreamingAccountId(streamingTreasury);
+      const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${accountId}`;
       navigate(url);
     }
   };
 
   const goToListOfIncomingStreams = () => {
     const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
-
-    setTimeout(() => {
-      setStreamDetail(undefined);
-    }, 100);
-    setTimeout(() => {
-      setStreamDetail(undefined);
-    }, 100);
     navigate(url);
   };
 
