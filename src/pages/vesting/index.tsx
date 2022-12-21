@@ -758,31 +758,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     [paymentStreaming, publicKey, loadingTreasuryStreams],
   );
 
-  const isMultisigTreasury = useCallback((treasury?: PaymentStreamingAccount) => {
-      const treasuryInfo = treasury ?? selectedVestingContract;
-
-      if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.owner || !publicKey) {
-        return false;
-      }
-
-      const contextAddress = new PublicKey(selectedAccount.address);
-      const treasurer = treasuryInfo.owner;
-      const isMultisigTreasury = isMultisigContext && treasuryInfo.owner ? true : false;
-
-      if (
-        isMultisigTreasury &&
-        treasurer.equals(contextAddress) &&
-        multisigAccounts &&
-        multisigAccounts.find(m => m.authority.equals(treasurer))
-      ) {
-        return true;
-      }
-
-      return false;
-    },
-    [selectedAccount.address, isMultisigContext, multisigAccounts, publicKey, selectedVestingContract],
-  );
-
   const getMultisigIdFromContext = useCallback(() => {
     if (!multisigAccounts || !selectedMultisig || !selectedAccount.address) {
       return '';
@@ -1331,7 +1306,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         return null;
       }
 
-      if (!isMultisigTreasury()) {
+      if (!isMultisigContext) {
         const accounts: CloseAccountTransactionAccounts = {
           feePayer: new PublicKey(data.treasurer),    // feePayer
           destination: new PublicKey(data.treasurer), // destination
@@ -1437,7 +1412,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const bf = transactionFees.blockchainFee; // Blockchain fee
       const ff = transactionFees.mspFlatFee; // Flat fee (protocol)
       const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt; // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+      const minRequired = isMultisigContext ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -1607,7 +1582,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         return null;
       }
 
-      if (!isMultisigTreasury() || !params.fundFromSafe) {
+      if (!isMultisigContext || !params.fundFromSafe) {
         if (data.stream === '') {
           const accounts: AddFundsToAccountTransactionAccounts = {
             feePayer: new PublicKey(data.payer),                // feePayer
@@ -1764,7 +1739,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const bf = transactionFees.blockchainFee; // Blockchain fee
       const ff = transactionFees.mspFlatFee; // Flat fee (protocol)
       const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt; // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+      const minRequired = isMultisigContext ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -2241,7 +2216,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         return null;
       }
 
-      if (!isMultisigTreasury()) {
+      if (!isMultisigContext) {
         const accounts: WithdrawFromAccountTransactionAccounts = {
           feePayer: new PublicKey(data.payer),          // payer
           destination: new PublicKey(data.destination), // destination
@@ -2370,7 +2345,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const bf = transactionFees.blockchainFee; // Blockchain fee
       const ff = transactionFees.mspFlatFee; // Flat fee (protocol)
       const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt; // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+      const minRequired = isMultisigContext ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -2957,7 +2932,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     ctaItems++;
 
     // View SOL balance
-    if (selectedVestingContract && isMultisigTreasury(selectedVestingContract) && !isContractRunning()) {
+    if (selectedVestingContract && isMultisigContext && !isContractRunning()) {
       actions.push({
         action: MetaInfoCtaAction.VestingContractViewSolBalance,
         caption: 'View SOL balance',
@@ -3007,8 +2982,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
     setAssetCtas(actions);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    isMultisigContext,
     selectedVestingContract,
     availableStreamingBalance,
     onExecuteRefreshVestingContractBalance,
@@ -3018,7 +2993,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     showVestingContractCloseModal,
     showCreateStreamModal,
     canPerformAnyAction,
-    isMultisigTreasury,
     isContractRunning,
     showAddFundsModal,
     isContractLocked,
@@ -3288,7 +3262,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   useEffect(() => {
     if (selectedAccount.address && selectedVestingContract) {
       let minRequired = 0;
-      if (isMultisigContext && isMultisigTreasury(selectedVestingContract) && multisigTxFees) {
+      if (isMultisigContext && isMultisigContext && multisigTxFees) {
         minRequired = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt; // Multisig proposal fees
       } else if (transactionFees) {
         minRequired = transactionFees.blockchainFee + transactionFees.mspFlatFee;
@@ -3303,12 +3277,11 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       }
     }
   }, [
-    selectedAccount.address,
-    isMultisigContext,
-    isMultisigTreasury,
     multisigTxFees,
-    selectedVestingContract,
     transactionFees,
+    isMultisigContext,
+    selectedAccount.address,
+    selectedVestingContract,
   ]);
 
   // Keep the available streaming balance for the current vesting contract updated
@@ -3715,7 +3688,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       children: (
         <VestingContractStreamList
           accountAddress={selectedAccount.address}
-          isMultisigTreasury={isMultisigTreasury()}
+          isMultisigTreasury={isMultisigContext}
           loadingTreasuryStreams={loadingTreasuryStreams}
           minRequiredBalance={minRequiredBalance}
           msp={paymentStreaming}
@@ -3755,29 +3728,29 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       />
     );
   }, [
-    paymentStreaming,
+    activeTab,
     isXsDevice,
     workingToken,
     userBalances,
     nativeBalance,
     streamTemplate,
-    selectedAccount.address,
     multisigClient,
     treasuryStreams,
-    activeTab,
+    paymentStreaming,
     contractActivity,
     selectedMultisig,
     multisigAccounts,
+    isMultisigContext,
     minRequiredBalance,
     loadingTreasuryStreams,
+    selectedAccount.address,
     hasMoreContractActivity,
     loadingContractActivity,
     selectedVestingContract,
     vestingContractFlowRate,
     availableStreamingBalance,
-    isMultisigTreasury,
-    loadMoreActivity,
     onVestingContractDetailTabChange,
+    loadMoreActivity,
   ]);
 
   //#endregion
@@ -3937,7 +3910,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           handleClose={closeCreateStreamModal}
           handleOk={(options: VestingContractStreamCreateOptions) => onAcceptCreateStream(options)}
           isBusy={isBusy}
-          isMultisigTreasury={isMultisigTreasury()}
+          isMultisigTreasury={isMultisigContext}
           isVisible={isCreateStreamModalVisible}
           isXsDevice={isXsDevice}
           minRequiredBalance={minRequiredBalance}
@@ -3970,7 +3943,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           handleClose={closeVestingContractTransferFundsModal}
           handleOk={(options: VestingContractWithdrawOptions) => onAcceptVestingContractTransferFunds(options)}
           isBusy={isBusy}
-          isMultisigTreasury={isMultisigTreasury()}
+          isMultisigTreasury={isMultisigContext}
           isVisible={isVestingContractTransferFundsModalVisible}
           minRequiredBalance={minRequiredBalance}
           nativeBalance={nativeBalance}

@@ -207,15 +207,7 @@ export const StreamWithdrawModal = (props: {
       if (v2.statusCode === STREAM_STATUS_CODE.Running) {
         setMaxAmountBn(max);
         setLoadingData(true);
-        try {
-          getStreamDetails(true, streamId, paymentStreaming);
-        } catch (error) {
-          openNotification({
-            title: t('notifications.error-title'),
-            description: t('notifications.invalid-streamid-message') + '!',
-            type: 'error',
-          });
-        }
+        getStreamDetails(true, streamId, paymentStreaming);
       } else {
         setMaxAmountBn(max);
         setFeePayedByTreasurer(v2.tokenFeePayedFromAccount);
@@ -225,20 +217,12 @@ export const StreamWithdrawModal = (props: {
       if (v1.state === STREAM_STATE.Running) {
         setMaxAmountBn(max);
         setLoadingData(true);
-        try {
-          const ms = new MoneyStreaming(
-            endpoint,
-            streamProgramAddress,
-            'confirmed',
-          );
-          getStreamDetails(false, streamId, ms);
-        } catch (error) {
-          openNotification({
-            title: t('notifications.error-title'),
-            description: t('notifications.invalid-streamid-message') + '!',
-            type: 'error',
-          });
-        }
+        const ms = new MoneyStreaming(
+          endpoint,
+          streamProgramAddress,
+          'confirmed',
+        );
+        getStreamDetails(false, streamId, ms);
       } else {
         setMaxAmountBn(max);
       }
