@@ -5,12 +5,10 @@ import {
 } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import {
-  StreamInfo,
   TransactionFees,
   TreasuryInfo,
 } from '@mean-dao/money-streaming';
-import { Stream, PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
-import { PublicKey } from '@solana/web3.js';
+import { PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { BN } from 'bn.js';
@@ -101,11 +99,6 @@ export const TreasuryTransferFundsModal = (props: {
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
-  const [localStreamDetail, setLocalStreamDetail] = useState<
-    Stream | StreamInfo | undefined
-  >(undefined);
-  const [maxAllocatableAmount, setMaxAllocatableAmount] =
-    useState<any>(undefined);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState(false);
   const [proposalTitle, setProposalTitle] = useState('');
@@ -113,34 +106,6 @@ export const TreasuryTransferFundsModal = (props: {
   const isMultisigContext = useMemo(() => {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
-
-  const isMultisigTreasury = useCallback(
-    (treasury?: any) => {
-      const treasuryInfo: any = treasury ?? treasuryDetails;
-
-      if (
-        !treasuryInfo ||
-        treasuryInfo.version < 2 ||
-        !treasuryInfo.treasurer ||
-        !publicKey
-      ) {
-        return false;
-      }
-
-      const treasurer = new PublicKey(treasuryInfo.treasurer as string);
-
-      if (
-        !treasurer.equals(publicKey) &&
-        multisigAccounts &&
-        multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1
-      ) {
-        return true;
-      }
-
-      return false;
-    },
-    [publicKey, multisigAccounts, treasuryDetails],
-  );
 
   const shouldFundFromTreasury = useCallback(() => {
     if (!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose)) {
@@ -275,18 +240,6 @@ export const TreasuryTransferFundsModal = (props: {
     setIsVerifiedRecipient(e.target.checked);
   };
 
-  const isfeePayedByTreasurerOn = useCallback(() => {
-    if (
-      localStreamDetail &&
-      localStreamDetail.version >= 2 &&
-      (localStreamDetail as Stream).tokenFeePayedFromAccount
-    ) {
-      return true;
-    }
-
-    return false;
-  }, [localStreamDetail]);
-
   // Validation
   const isValidForm = (): boolean => {
     const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 9);
@@ -300,11 +253,7 @@ export const TreasuryTransferFundsModal = (props: {
       tokenAmount &&
       tokenAmount.gtn(0) &&
       ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
-        (shouldFundFromTreasury() &&
-          ((isfeePayedByTreasurerOn() &&
-            tokenAmount.lte(maxAllocatableAmount)) ||
-            (!isfeePayedByTreasurerOn() &&
-              tokenAmount.lte(unallocatedBalance)))))
+        (shouldFundFromTreasury() && tokenAmount.lte(unallocatedBalance)))
       ? true
       : false;
   };
@@ -320,15 +269,11 @@ export const TreasuryTransferFundsModal = (props: {
       selectedToken &&
       isVerifiedRecipient &&
       ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
-        (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
+       (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
       tokenAmount &&
       tokenAmount.gtn(0) &&
       ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
-        (shouldFundFromTreasury() &&
-          ((isfeePayedByTreasurerOn() &&
-            tokenAmount.lte(maxAllocatableAmount)) ||
-            (!isfeePayedByTreasurerOn() &&
-              tokenAmount.lte(unallocatedBalance)))))
+        (shouldFundFromTreasury() && tokenAmount.lte(unallocatedBalance)))
       ? true
       : false;
   };
@@ -337,15 +282,8 @@ export const TreasuryTransferFundsModal = (props: {
     return multisigAddresses.includes(address);
   };
 
-  const getMaxAmount = useCallback(
-    (preSetting = false) => {
-      if (
-        ((localStreamDetail &&
-          localStreamDetail.version >= 2 &&
-          (localStreamDetail as Stream).tokenFeePayedFromAccount) ||
-          preSetting) &&
-        transactionFees
-      ) {
+  const getMaxAmount = useCallback(() => {
+      if (transactionFees) {
         const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
         const feeNumerator =
           transactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
@@ -381,18 +319,11 @@ export const TreasuryTransferFundsModal = (props: {
           });
           consoleOut('debug table', debugTable, 'blue');
         }
-
-        if (!preSetting) {
-          setMaxAllocatableAmount(maxAmount);
-        }
         return maxAmount;
-      }
-      if (!preSetting) {
-        setMaxAllocatableAmount(unallocatedBalance);
       }
       return unallocatedBalance;
     },
-    [isWhitelisted, localStreamDetail, unallocatedBalance, transactionFees],
+    [isWhitelisted, unallocatedBalance, transactionFees],
   );
 
   const getTokenPrice = useCallback(() => {
@@ -514,11 +445,11 @@ export const TreasuryTransferFundsModal = (props: {
               {shortenAddress(item.id as string, 8)}
             </div>
           )}
-          {isMultisigTreasury(item) && (
+          {isMultisigContext ? (
             <div className="subtitle text-truncate">
               {t('treasuries.treasury-list.multisig-treasury-label')}
             </div>
-          )}
+          ): null}
         </div>
         <div className="rate-cell text-center">
           {!isNewTreasury && v1.upgradeRequired ? (
@@ -674,29 +605,9 @@ export const TreasuryTransferFundsModal = (props: {
                               const decimals = selectedToken
                                 ? selectedToken.decimals
                                 : 6;
-                              if (isfeePayedByTreasurerOn()) {
-                                const maxAmount = getMaxAmount(true);
-                                consoleOut(
-                                  'tokenAmount:',
-                                  tokenAmount.toString(),
-                                  'blue',
-                                );
-                                consoleOut(
-                                  'maxAmount:',
-                                  maxAmount.toString(),
-                                  'blue',
-                                );
-                                setTopupAmount(
-                                  toUiAmount(new BN(maxAmount), decimals),
-                                );
-                                setTokenAmount(new BN(maxAmount));
-                              } else {
-                                const maxAmount = getMaxAmount();
-                                setTopupAmount(
-                                  toUiAmount(new BN(maxAmount), decimals),
-                                );
-                                setTokenAmount(new BN(maxAmount));
-                              }
+                              const maxAmount = getMaxAmount();
+                              setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
+                              setTokenAmount(new BN(maxAmount));
                             }}
                           >
                             MAX
@@ -799,9 +710,9 @@ export const TreasuryTransferFundsModal = (props: {
             </div>
 
             {/* explanatory paragraph */}
-            {isMultisigTreasury(treasuryDetails) && (
+            {isMultisigContext ?(
               <p>{t('multisig.multisig-assets.explanatory-paragraph')}</p>
-            )}
+            ) : null}
 
             {/* confirm that the recipient address doesn't belong to an exchange */}
             <div className="mt-2 mb-3 confirm-terms">

@@ -1,25 +1,25 @@
-import bs58 from 'bs58';
-import moment from 'moment';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { TransactionStatusInfo } from '../contexts/appstate';
-import {
-  PaymentRateType,
-  TimesheetRequirementOption,
-  TransactionStatus,
-} from '../models/enums';
-import { environment } from '../environments/environment';
+import BigNumber from 'bignumber.js';
+import BN from 'bn.js';
+import bs58 from 'bs58';
+import dateFormat from 'dateformat';
+import { customLogger } from 'index';
+import moment from 'moment';
 import {
   BIGNUMBER_FORMAT,
   SIMPLE_DATE_FORMAT,
   SIMPLE_DATE_TIME_FORMAT,
   VERBOSE_DATE_FORMAT,
-  VERBOSE_DATE_TIME_FORMAT,
+  VERBOSE_DATE_TIME_FORMAT
 } from '../constants';
-import dateFormat from 'dateformat';
+import { TransactionStatusInfo } from '../contexts/appstate';
+import { environment } from '../environments/environment';
 import { TimeData } from '../models/common-types';
-import BN from 'bn.js';
-import BigNumber from 'bignumber.js';
-import { customLogger } from 'index';
+import {
+  PaymentRateType,
+  TimesheetRequirementOption,
+  TransactionStatus
+} from '../models/enums';
 
 export const isDev = (): boolean => {
   return environment === 'development';
@@ -181,32 +181,38 @@ export const copyText = (val: any): boolean => {
   if (!val) {
     return false;
   }
-  const selBox = document.createElement('textarea');
-  selBox.style.position = 'fixed';
-  selBox.id = 'copyContainerInputElement';
-  selBox.style.left = '0';
-  selBox.style.top = '0';
-  selBox.style.opacity = '0';
-  selBox.value = val.toString();
-  document.body.appendChild(selBox);
-  const element = document.getElementById(
-    'copyContainerInputElement',
-  ) as HTMLInputElement;
-  if (element) {
-    element.focus();
-    element.select();
-    document.execCommand('copy', false);
-    document.body.removeChild(selBox);
-    return true;
-  } else {
-    consoleOut(
-      'copyContainerInputElement could not be ',
-      'created/found',
-      'blue',
-    );
+  return !!copyToClipboard(val)
+    .then((result) => result)
+    .catch(() => false);
+}
+
+export const copyToClipboard = async (val: any) => {
+  if (!val) {
+    return false;
   }
-  return false;
-};
+
+  const copyValue = val.toString() as string;
+  const text = copyValue.trim();
+
+  if (!text) {
+    console.log('Text to copy is empty!');
+    return false;
+  }
+
+  try {
+
+    if (!navigator.clipboard) {
+      throw new Error("Browser don't have support for native clipboard.");
+    }
+
+    await navigator.clipboard.writeText(text);
+    console.log(`${text} copied!!`);
+    return true;
+  } catch (error: any) {
+    console.error(error.toString());
+    return false;
+  }
+}
 
 export function getRemainingDays(targetDate?: string): number {
   const date = new Date();

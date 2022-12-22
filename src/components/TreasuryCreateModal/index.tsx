@@ -80,7 +80,6 @@ export const TreasuryCreateModal = (props: {
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(
     undefined,
   );
-  const [workingTokenBalance, setWorkingTokenBalance] = useState<number>(0);
 
   const isMultisigContext = useMemo(() => {
     return publicKey && selectedAccount.isMultisig ? true : false;
@@ -245,22 +244,6 @@ export const TreasuryCreateModal = (props: {
       clearTimeout(timeout);
     };
   }, [selectedList, workingToken, userBalances]);
-
-  // Keep token balance updated
-  useEffect(() => {
-    if (!connection || !publicKey || !userBalances || !workingToken) {
-      setWorkingTokenBalance(0);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      setWorkingTokenBalance(userBalances[workingToken.address]);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [connection, publicKey, workingToken, userBalances]);
 
   // Reset results when the filter is cleared
   useEffect(() => {
@@ -484,9 +467,6 @@ export const TreasuryCreateModal = (props: {
                   symbol: `[${shortenAddress(address)}]`,
                 };
                 setWorkingToken(unknownToken);
-                if (userBalances && userBalances[address]) {
-                  setWorkingTokenBalance(userBalances[address]);
-                }
                 consoleOut('token selected:', unknownToken, 'blue');
                 // Do not close on errors (-1 or -2)
                 if (decimals >= 0) {
