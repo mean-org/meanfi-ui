@@ -2,17 +2,7 @@ import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { SubCategory, TransactionFees, AccountType } from '@mean-dao/payment-streaming';
 import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import {
-  Button,
-  Checkbox,
-  DatePicker,
-  Drawer,
-  Dropdown,
-  Menu,
-  Modal,
-  Spin,
-  TimePicker,
-} from 'antd';
+import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, Spin, TimePicker } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
 import { BN } from 'bn.js';
@@ -23,12 +13,7 @@ import { TextInput } from 'components/TextInput';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { TokenListItem } from 'components/TokenListItem';
 import { WizardStepSelector } from 'components/WizardStepSelector';
-import {
-  CUSTOM_TOKEN_NAME,
-  DATEPICKER_FORMAT,
-  MAX_TOKEN_LIST_ITEMS,
-  MIN_SOL_BALANCE_REQUIRED,
-} from 'constants/common';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { VESTING_ACCOUNT_TYPE_OPTIONS } from 'constants/treasury-type-options';
 import { AppStateContext } from 'contexts/appstate';
@@ -62,11 +47,7 @@ import { PaymentRateType } from 'models/enums';
 import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { TreasuryTypeOption } from 'models/treasuries';
-import {
-  VestingContractCategory,
-  VestingContractCreateOptions,
-  VESTING_CATEGORIES,
-} from 'models/vesting';
+import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from 'models/vesting';
 import moment from 'moment';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { isMobile } from 'react-device-detect';
@@ -126,31 +107,19 @@ export const VestingContractCreateForm = (props: {
   const [tokenFilter, setTokenFilter] = useState('');
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
-  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(
-    undefined,
-  );
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [tokenBalanceBn, setSelectedTokenBalanceBn] = useState(new BN(0));
   const [vestingLockName, setVestingLockName] = useState<string>('');
-  const [vestingCategory, setVestingCategory] = useState<
-    VestingContractCategory | undefined
-  >(undefined);
-  const [vestingLockFundingAmount, setVestingLockFundingAmount] =
-    useState<string>('');
+  const [vestingCategory, setVestingCategory] = useState<VestingContractCategory | undefined>(undefined);
+  const [vestingLockFundingAmount, setVestingLockFundingAmount] = useState<string>('');
   const [currentStep, setCurrentStep] = useState(0);
   const percentages = [5, 10, 15, 20];
-  const [cliffReleasePercentage, setCliffReleasePercentage] =
-    useState<string>('');
+  const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>('');
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
-  const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption>(
-    VESTING_ACCOUNT_TYPE_OPTIONS[0],
-  );
-  const [contractTime, setContractTime] = useState<string | undefined>(
-    undefined,
-  );
-  const [paymentStartDate, setPaymentStartDate] = useState<string | undefined>(
-    undefined,
-  );
+  const [treasuryOption, setTreasuryOption] = useState<TreasuryTypeOption>(VESTING_ACCOUNT_TYPE_OPTIONS[0]);
+  const [contractTime, setContractTime] = useState<string | undefined>(undefined);
+  const [paymentStartDate, setPaymentStartDate] = useState<string | undefined>(undefined);
   const [proposalTitle, setProposalTitle] = useState('');
 
   const getFeeAmount = useCallback(() => {
@@ -158,9 +127,7 @@ export const VestingContractCreateForm = (props: {
   }, [transactionFees.blockchainFee, transactionFees.mspFlatFee]);
 
   const getMinSolBlanceRequired = useCallback(() => {
-    return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED
-      ? getFeeAmount()
-      : MIN_SOL_BALANCE_REQUIRED;
+    return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED ? getFeeAmount() : MIN_SOL_BALANCE_REQUIRED;
   }, [getFeeAmount]);
 
   const getMaxAmount = useCallback(() => {
@@ -173,10 +140,7 @@ export const VestingContractCreateForm = (props: {
       return 0;
     }
 
-    return (
-      parseFloat(vestingLockFundingAmount) *
-      getTokenPriceBySymbol(selectedToken.symbol)
-    );
+    return parseFloat(vestingLockFundingAmount) * getTokenPriceBySymbol(selectedToken.symbol);
   }, [vestingLockFundingAmount, selectedToken, getTokenPriceBySymbol]);
 
   const autoFocusInput = useCallback(() => {
@@ -189,8 +153,7 @@ export const VestingContractCreateForm = (props: {
   }, []);
 
   // Token selection modal
-  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] =
-    useState(false);
+  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
 
   const showTokenSelector = useCallback(() => {
     setTokenSelectorModalVisibility(true);
@@ -221,9 +184,7 @@ export const VestingContractCreateForm = (props: {
           );
         };
 
-        const showFromList = !searchString
-          ? selectedList
-          : selectedList.filter((t: any) => filter(t));
+        const showFromList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -331,12 +292,7 @@ export const VestingContractCreateForm = (props: {
 
   // Reset results when the filter is cleared
   useEffect(() => {
-    if (
-      selectedList &&
-      selectedList.length &&
-      filteredTokenList.length === 0 &&
-      !tokenFilter
-    ) {
+    if (selectedList && selectedList.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
     }
   }, [selectedList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
@@ -345,9 +301,7 @@ export const VestingContractCreateForm = (props: {
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
-      const ellipsisElements = document.querySelectorAll(
-        '.overflow-ellipsis-middle',
-      );
+      const ellipsisElements = document.querySelectorAll('.overflow-ellipsis-middle');
       for (const element of ellipsisElements) {
         const e = element as HTMLElement;
         if (e.offsetWidth < e.scrollWidth) {
@@ -413,12 +367,8 @@ export const VestingContractCreateForm = (props: {
     const options: VestingContractCreateOptions = {
       vestingContractTitle: proposalTitle,
       vestingContractName: vestingLockName,
-      vestingCategory: vestingCategory
-        ? vestingCategory.value
-        : SubCategory.default,
-      vestingContractType: treasuryOption
-        ? +treasuryOption.type
-        : AccountType.Lock,
+      vestingCategory: vestingCategory ? vestingCategory.value : SubCategory.default,
+      vestingContractType: treasuryOption ? +treasuryOption.type : AccountType.Lock,
       token: selectedToken as TokenInfo,
       amount: vestingLockFundingAmount,
       feePayedByTreasurer: isFeePaidByTreasurer,
@@ -427,11 +377,7 @@ export const VestingContractCreateForm = (props: {
       cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
       startDate: startUtc,
       multisig: isMultisigContext ? accountAddress : '',
-      fundingAmount: toTokenAmount(
-        vestingLockFundingAmount,
-        (selectedToken as TokenInfo).decimals,
-        true,
-      ) as string,
+      fundingAmount: toTokenAmount(vestingLockFundingAmount, (selectedToken as TokenInfo).decimals, true) as string,
     };
     onStartTransaction(options);
   };
@@ -440,19 +386,13 @@ export const VestingContractCreateForm = (props: {
     setVestingLockName(e.target.value);
   };
 
-  const getLockPeriodOptionsFromEnum = (
-    value: any,
-  ): PaymentRateTypeOption[] => {
+  const getLockPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
     for (const enumMember in value) {
       const mappedValue = parseInt(enumMember, 10);
       if (!isNaN(mappedValue)) {
-        const item = new PaymentRateTypeOption(
-          index,
-          mappedValue,
-          getLockPeriodOptionLabel(mappedValue, t),
-        );
+        const item = new PaymentRateTypeOption(index, mappedValue, getLockPeriodOptionLabel(mappedValue, t));
         options.push(item);
       }
       index++;
@@ -563,15 +503,11 @@ export const VestingContractCreateForm = (props: {
       maxAmount = new BigNumber(tokenBalanceBn.toString());
     }
 
-    const fa = toTokenAmountBn(
-      parseFloat(vestingLockFundingAmount),
-      selectedToken.decimals,
-    );
+    const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
     const fundingAmount = new BigNumber(fa.toString());
 
     return publicKey &&
-      ((!proposalTitle && !isMultisigContext) ||
-        (proposalTitle && isMultisigContext)) &&
+      ((!proposalTitle && !isMultisigContext) || (proposalTitle && isMultisigContext)) &&
       vestingLockName &&
       selectedToken &&
       nativeBalance > 0 &&
@@ -582,10 +518,7 @@ export const VestingContractCreateForm = (props: {
   };
 
   const isStepTwoValid = (): boolean => {
-    return isStepOneValid() &&
-      lockPeriodAmount &&
-      parseFloat(lockPeriodAmount) > 0 &&
-      lockPeriodFrequency
+    return isStepOneValid() && lockPeriodAmount && parseFloat(lockPeriodAmount) > 0 && lockPeriodFrequency
       ? true
       : false;
   };
@@ -594,10 +527,7 @@ export const VestingContractCreateForm = (props: {
     setCliffReleasePercentage(`${value}`);
   };
 
-  const onTimePickerChange = (
-    time: moment.Moment | null,
-    timeString: string,
-  ) => {
+  const onTimePickerChange = (time: moment.Moment | null, timeString: string) => {
     if (time) {
       const shortTime = time.format(timeFormat);
       setContractTime(shortTime);
@@ -609,9 +539,7 @@ export const VestingContractCreateForm = (props: {
   };
 
   const isSolLow = () => {
-    return !nativeBalance || nativeBalance < getMinSolBlanceRequired()
-      ? true
-      : false;
+    return !nativeBalance || nativeBalance < getMinSolBlanceRequired() ? true : false;
   };
 
   const isFundingAmountHigh = () => {
@@ -628,14 +556,9 @@ export const VestingContractCreateForm = (props: {
     } else {
       maxAmount = new BigNumber(tokenBalanceBn.toString());
     }
-    const fa = toTokenAmountBn(
-      parseFloat(vestingLockFundingAmount),
-      selectedToken.decimals,
-    );
+    const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
     const fundingAmount = new BigNumber(fa.toString());
-    return vestingLockFundingAmount && fundingAmount.gt(maxAmount)
-      ? true
-      : false;
+    return vestingLockFundingAmount && fundingAmount.gt(maxAmount) ? true : false;
   };
 
   const getStepOneButtonLabel = () => {
@@ -653,10 +576,7 @@ export const VestingContractCreateForm = (props: {
       maxAmount = new BigNumber(tokenBalanceBn.toString());
     }
 
-    const fa = toTokenAmountBn(
-      parseFloat(vestingLockFundingAmount),
-      selectedToken.decimals,
-    );
+    const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
     const fundingAmount = new BigNumber(fa.toString());
 
     if (!publicKey) {
@@ -731,18 +651,12 @@ export const VestingContractCreateForm = (props: {
   ///////////////
 
   const lockPeriodOptionsMenu = () => {
-    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map(
-      (item, index) => {
-        return {
-          key: `option-${index}`,
-          label: (
-            <span onClick={() => handleLockPeriodOptionChange(item.value)}>
-              {item.text}
-            </span>
-          ),
-        };
-      },
-    );
+    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+      return {
+        key: `option-${index}`,
+        label: <span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>,
+      };
+    });
 
     return <Menu items={items} />;
   };
@@ -751,9 +665,7 @@ export const VestingContractCreateForm = (props: {
     const items: ItemType[] = VESTING_CATEGORIES.map((item, index) => {
       return {
         key: `${slugify(item.label)}-${item.value}`,
-        label: (
-          <span onClick={() => setVestingCategory(item)}>{item.label}</span>
-        ),
+        label: <span onClick={() => setVestingCategory(item)}>{item.label}</span>,
       };
     });
 
@@ -767,9 +679,7 @@ export const VestingContractCreateForm = (props: {
   };
 
   const getSingleTokenResultClass = () => {
-    return selectedToken && selectedToken.address === tokenFilter
-      ? 'selected'
-      : 'simplelink';
+    return selectedToken && selectedToken.address === tokenFilter ? 'selected' : 'simplelink';
   };
 
   const renderTokenList = () => {
@@ -784,10 +694,7 @@ export const VestingContractCreateForm = (props: {
       };
 
       if (index < MAX_TOKEN_LIST_ITEMS) {
-        const balance =
-          connected && userBalances && userBalances[t.address] > 0
-            ? userBalances[t.address]
-            : 0;
+        const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
         return (
           <TokenListItem
             key={t.address}
@@ -818,9 +725,7 @@ export const VestingContractCreateForm = (props: {
   };
 
   const getBalanceForTokenFilter = () => {
-    return connected && userBalances && userBalances[tokenFilter] > 0
-      ? userBalances[tokenFilter]
-      : 0;
+    return connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0;
   };
 
   const renderTokenSelectorInner = () => {
@@ -840,66 +745,56 @@ export const VestingContractCreateForm = (props: {
         </div>
         <div className="token-list">
           {renderTokenList()}
-          {tokenFilter &&
-            isValidAddress(tokenFilter) &&
-            filteredTokenList.length === 0 && (
-              <TokenListItem
-                key={tokenFilter}
-                name={CUSTOM_TOKEN_NAME}
-                mintAddress={tokenFilter}
-                className={getSingleTokenResultClass()}
-                onClick={async () => {
-                  const address = tokenFilter;
-                  let decimals = -1;
-                  let accountInfo: AccountInfo<
-                    Buffer | ParsedAccountData
-                  > | null = null;
-                  try {
-                    accountInfo = (
-                      await connection.getParsedAccountInfo(
-                        new PublicKey(address),
-                      )
-                    ).value;
-                    consoleOut('accountInfo:', accountInfo, 'blue');
-                  } catch (error) {
-                    console.error(error);
+          {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
+            <TokenListItem
+              key={tokenFilter}
+              name={CUSTOM_TOKEN_NAME}
+              mintAddress={tokenFilter}
+              className={getSingleTokenResultClass()}
+              onClick={async () => {
+                const address = tokenFilter;
+                let decimals = -1;
+                let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+                try {
+                  accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                  consoleOut('accountInfo:', accountInfo, 'blue');
+                } catch (error) {
+                  console.error(error);
+                }
+                if (accountInfo) {
+                  if (
+                    (accountInfo as any).data['program'] &&
+                    (accountInfo as any).data['program'] === 'spl-token' &&
+                    (accountInfo as any).data['parsed'] &&
+                    (accountInfo as any).data['parsed']['type'] &&
+                    (accountInfo as any).data['parsed']['type'] === 'mint'
+                  ) {
+                    decimals = (accountInfo as any).data['parsed']['info']['decimals'];
+                  } else {
+                    decimals = -2;
                   }
-                  if (accountInfo) {
-                    if (
-                      (accountInfo as any).data['program'] &&
-                      (accountInfo as any).data['program'] === 'spl-token' &&
-                      (accountInfo as any).data['parsed'] &&
-                      (accountInfo as any).data['parsed']['type'] &&
-                      (accountInfo as any).data['parsed']['type'] === 'mint'
-                    ) {
-                      decimals = (accountInfo as any).data['parsed']['info'][
-                        'decimals'
-                      ];
-                    } else {
-                      decimals = -2;
-                    }
-                  }
-                  const unknownToken: TokenInfo = {
-                    address,
-                    name: CUSTOM_TOKEN_NAME,
-                    chainId: getNetworkIdByEnvironment(environment),
-                    decimals,
-                    symbol: `[${shortenAddress(address)}]`,
-                  };
-                  tokenChanged(unknownToken);
-                  setSelectedToken(unknownToken);
-                  if (userBalances && userBalances[address]) {
-                    setSelectedTokenBalance(userBalances[address]);
-                  }
-                  consoleOut('token selected:', unknownToken, 'blue');
-                  // Do not close on errors (-1 or -2)
-                  if (decimals >= 0) {
-                    onCloseTokenSelector();
-                  }
-                }}
-                balance={getBalanceForTokenFilter()}
-              />
-            )}
+                }
+                const unknownToken: TokenInfo = {
+                  address,
+                  name: CUSTOM_TOKEN_NAME,
+                  chainId: getNetworkIdByEnvironment(environment),
+                  decimals,
+                  symbol: `[${shortenAddress(address)}]`,
+                };
+                tokenChanged(unknownToken);
+                setSelectedToken(unknownToken);
+                if (userBalances && userBalances[address]) {
+                  setSelectedTokenBalance(userBalances[address]);
+                }
+                consoleOut('token selected:', unknownToken, 'blue');
+                // Do not close on errors (-1 or -2)
+                if (decimals >= 0) {
+                  onCloseTokenSelector();
+                }
+              }}
+              balance={getBalanceForTokenFilter()}
+            />
+          )}
         </div>
       </div>
     );
@@ -932,16 +827,11 @@ export const VestingContractCreateForm = (props: {
       selectedMultisig && (
         <div className={`transaction-list-row w-100 no-pointer`}>
           <div className="icon-cell">
-            <Identicon
-              address={selectedMultisig.id}
-              style={{ width: '30', display: 'inline-flex' }}
-            />
+            <Identicon address={selectedMultisig.id} style={{ width: '30', display: 'inline-flex' }} />
           </div>
           <div className="description-cell">
             <div className="title text-truncate">{selectedMultisig.label}</div>
-            <div className="subtitle text-truncate">
-              {shortenAddress(selectedMultisig.id, 8)}
-            </div>
+            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id, 8)}</div>
           </div>
           <div className="rate-cell">
             <div className="rate-amount">
@@ -971,14 +861,10 @@ export const VestingContractCreateForm = (props: {
         </div>
         <div className="item-meta">
           <div className="item-name">
-            {t(
-              `vesting.create-account.vesting-account-type-options.${option.translationId}-name`,
-            )}
+            {t(`vesting.create-account.vesting-account-type-options.${option.translationId}-name`)}
           </div>
           <div className="item-description">
-            {t(
-              `vesting.create-account.vesting-account-type-options.${option.translationId}-description`,
-            )}
+            {t(`vesting.create-account.vesting-account-type-options.${option.translationId}-description`)}
           </div>
         </div>
       </div>
@@ -1001,9 +887,7 @@ export const VestingContractCreateForm = (props: {
     if (isMultisigContext && selectedMultisig) {
       return (
         <div className="mb-3 mt-3">
-          <div className="form-label text-left">
-            {t('multisig.proposal-modal.title')}
-          </div>
+          <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
           <InputMean
             id="proposal-title-field"
             name="Title"
@@ -1043,25 +927,16 @@ export const VestingContractCreateForm = (props: {
   };
 
   const renderTokenToVestMaxCta = () => {
-    if (
-      !isMultisigContext &&
-      selectedToken &&
-      tokenBalance &&
-      canShowMaxCta()
-    ) {
+    if (!isMultisigContext && selectedToken && tokenBalance && canShowMaxCta()) {
       return (
         <div
           className="token-max simplelink"
           onClick={() => {
             if (selectedToken.address === NATIVE_SOL.address) {
               const amount = getMaxAmount();
-              setVestingLockFundingAmount(
-                cutNumber(amount > 0 ? amount : 0, selectedToken.decimals),
-              );
+              setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
             } else {
-              setVestingLockFundingAmount(
-                toUiAmount(tokenBalanceBn, selectedToken.decimals),
-              );
+              setVestingLockFundingAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
             }
           }}
         >
@@ -1077,9 +952,7 @@ export const VestingContractCreateForm = (props: {
       <>
         <FormLabelWithIconInfo
           label={getTokenToVestFormFieldTitle()}
-          tooltipText={t(
-            'vesting.create-account.vesting-contract-token-tooltip',
-          )}
+          tooltipText={t('vesting.create-account.vesting-contract-token-tooltip')}
         />
         <div className="well">
           <div className="flex-fixed-left">
@@ -1115,13 +988,7 @@ export const VestingContractCreateForm = (props: {
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>
                 {`${
-                  tokenBalance && selectedToken
-                    ? getAmountWithSymbol(
-                        tokenBalance,
-                        selectedToken.address,
-                        true,
-                      )
-                    : '0'
+                  tokenBalance && selectedToken ? getAmountWithSymbol(tokenBalance, selectedToken.address, true) : '0'
                 }`}
               </span>
             </div>
@@ -1130,17 +997,10 @@ export const VestingContractCreateForm = (props: {
                 {publicKey ? (
                   <>
                     <span
-                      className={
-                        loadingPrices
-                          ? 'click-disabled fg-orange-red pulsate'
-                          : 'simplelink'
-                      }
+                      className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                       onClick={() => refreshPrices()}
                     >
-                      ~
-                      {vestingLockFundingAmount
-                        ? toUsCurrency(getTokenPrice())
-                        : '$0.00'}
+                      ~{vestingLockFundingAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
                     </span>
                   </>
                 ) : (
@@ -1150,9 +1010,7 @@ export const VestingContractCreateForm = (props: {
             )}
           </div>
           {nativeBalance < getMinSolBlanceRequired() && (
-            <div className="form-field-error">
-              {t('transactions.validation.minimum-balance-required')}
-            </div>
+            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
           )}
         </div>
       </>
@@ -1162,9 +1020,7 @@ export const VestingContractCreateForm = (props: {
   const renderContractNameField = () => {
     return (
       <>
-        <div className="form-label">
-          {t('vesting.create-account.vesting-contract-name-label')}
-        </div>
+        <div className="form-label">{t('vesting.create-account.vesting-contract-name-label')}</div>
         <div className="well">
           <div className="flex-fixed-right">
             <div className="left">
@@ -1213,9 +1069,7 @@ export const VestingContractCreateForm = (props: {
                 {vestingCategory ? (
                   <span>{vestingCategory.label}</span>
                 ) : (
-                  <span className="placeholder-text">
-                    Please select a vesting category
-                  </span>
+                  <span className="placeholder-text">Please select a vesting category</span>
                 )}
               </div>
               <div className="right">
@@ -1244,10 +1098,7 @@ export const VestingContractCreateForm = (props: {
                     autoCorrect="off"
                     type="text"
                     onChange={handleLockPeriodAmountChange}
-                    placeholder={`Number of ${getLockPeriodOptionLabel(
-                      lockPeriodFrequency,
-                      t,
-                    )}`}
+                    placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
                     spellCheck="false"
                     min={1}
                     value={lockPeriodAmount}
@@ -1261,9 +1112,7 @@ export const VestingContractCreateForm = (props: {
               <Dropdown overlay={lockPeriodOptionsMenu} trigger={['click']}>
                 <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                   <div className="left">
-                    <span>
-                      {getLockPeriodOptionLabel(lockPeriodFrequency, t)}{' '}
-                    </span>
+                    <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)} </span>
                   </div>
                   <div className="right">
                     <IconCaretDown className="mean-svg-icons" />
@@ -1301,12 +1150,8 @@ export const VestingContractCreateForm = (props: {
                           allowClear={false}
                           disabledDate={todayAndPriorDatesDisabled}
                           placeholder="Pick a date"
-                          onChange={(value: any, date: string) =>
-                            handleDateChange(date)
-                          }
-                          value={
-                            moment(paymentStartDate, DATEPICKER_FORMAT) as any
-                          }
+                          onChange={(value: any, date: string) => handleDateChange(date)}
+                          value={moment(paymentStartDate, DATEPICKER_FORMAT) as any}
                           format={DATEPICKER_FORMAT}
                           showNow={false}
                           showToday={false}
@@ -1348,14 +1193,8 @@ export const VestingContractCreateForm = (props: {
           <div className="flexible-right mb-1">
             <div className="token-group">
               {percentages.map((percentage, index) => (
-                <div
-                  key={index}
-                  className="mb-1 d-flex flex-column align-items-center"
-                >
-                  <div
-                    className="token-max simplelink active"
-                    onClick={() => onChangeValuePercentages(percentage)}
-                  >
+                <div key={index} className="mb-1 d-flex flex-column align-items-center">
+                  <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>
                     {percentage}%
                   </div>
                 </div>
@@ -1404,22 +1243,13 @@ export const VestingContractCreateForm = (props: {
         {isMultisigContext ? renderPendingProposals() : null}
 
         <div className={getFormContainerClasses()}>
-          <WizardStepSelector
-            step={currentStep}
-            steps={2}
-            extraClass="px-1 mb-2"
-            onValueSelected={onStepperChange}
-          />
+          <WizardStepSelector step={currentStep} steps={2} extraClass="px-1 mb-2" onValueSelected={onStepperChange} />
 
           <div className={getPanel1Classes()}>
-            <h2 className="form-group-label">
-              {t('vesting.create-account.step-one-label')}
-            </h2>
+            <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
 
             {/* Treasury type */}
-            <div className="items-card-list click-disabled mt-2 mb-3">
-              {renderTreasuryOption(treasuryOption)}
-            </div>
+            <div className="items-card-list click-disabled mt-2 mb-3">{renderTreasuryOption(treasuryOption)}</div>
 
             {/* Proposal title */}
             {renderProposalTitleField()}
@@ -1449,9 +1279,7 @@ export const VestingContractCreateForm = (props: {
           </div>
 
           <div className={getPanel2Classes()}>
-            <h2 className="form-group-label">
-              {t('vesting.create-account.step-two-label')}
-            </h2>
+            <h2 className="form-group-label">{t('vesting.create-account.step-two-label')}</h2>
 
             {/* Vesting category */}
             {renderVestingCategoryField()}
@@ -1467,37 +1295,19 @@ export const VestingContractCreateForm = (props: {
 
             {/* Streaming fees will be paid from the vesting contract's funds */}
             <div className="ml-1 mb-3">
-              <Checkbox
-                checked={isFeePaidByTreasurer}
-                onChange={onFeePayedByTreasurerChange}
-              >
+              <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>
                 {t('vesting.create-account.fee-paid-by-treasury')}
               </Checkbox>
             </div>
 
             {/* CTAs */}
-            <div
-              className={`two-column-form-layout${
-                inModal || isXsDevice ? ' reverse' : ''
-              }`}
-            >
-              <div
-                className={`left ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}
-              >
-                <Button
-                  block
-                  type="default"
-                  shape="round"
-                  size="large"
-                  className="thin-stroke"
-                  onClick={onBackClick}
-                >
+            <div className={`two-column-form-layout${inModal || isXsDevice ? ' reverse' : ''}`}>
+              <div className={`left ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}>
+                <Button block type="default" shape="round" size="large" className="thin-stroke" onClick={onBackClick}>
                   Back
                 </Button>
               </div>
-              <div
-                className={`right ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}
-              >
+              <div className={`right ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}>
                 <Button
                   block
                   type="primary"
@@ -1539,9 +1349,7 @@ export const VestingContractCreateForm = (props: {
         <Modal
           className="mean-modal unpadded-content"
           open={isTokenSelectorModalVisible}
-          title={
-            <div className="modal-title">{t('token-selector.modal-title')}</div>
-          }
+          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
           onCancel={onCloseTokenSelector}
           width={450}
           footer={null}

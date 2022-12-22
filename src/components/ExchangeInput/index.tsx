@@ -20,8 +20,7 @@ export const ExchangeInput = (props: {
   className?: string;
 }) => {
   const { t } = useTranslation('common');
-  const { loadingPrices, getTokenPriceBySymbol, refreshPrices } =
-    useContext(AppStateContext);
+  const { loadingPrices, getTokenPriceBySymbol, refreshPrices } = useContext(AppStateContext);
   const { publicKey } = useWallet();
 
   return (
@@ -36,29 +35,20 @@ export const ExchangeInput = (props: {
                 <span className="simplelink" onClick={props.onBalanceClick}>
                   {`${
                     props.token && props.tokenBalance
-                      ? getAmountWithSymbol(
-                          parseFloat(props.tokenBalance),
-                          props.token.address,
-                          true,
-                        )
+                      ? getAmountWithSymbol(parseFloat(props.tokenBalance), props.token.address, true)
                       : '0'
                   }`}
                 </span>
                 {props.tokenBalance && (
                   <span
                     className={`balance-amount ${
-                      loadingPrices
-                        ? 'click-disabled fg-orange-red pulsate'
-                        : 'simplelink'
+                      loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'
                     }`}
                     onClick={() => refreshPrices()}
                   >
                     {`(~${
                       props.token && props.tokenBalance
-                        ? toUsCurrency(
-                            parseFloat(props.tokenBalance) *
-                              getTokenPriceBySymbol(props.token.symbol),
-                          )
+                        ? toUsCurrency(parseFloat(props.tokenBalance) * getTokenPriceBySymbol(props.token.symbol))
                         : '$0.00'
                     })`}
                   </span>
@@ -72,19 +62,12 @@ export const ExchangeInput = (props: {
             {publicKey ? (
               <>
                 <span
-                  className={
-                    loadingPrices
-                      ? 'click-disabled fg-orange-red pulsate'
-                      : 'simplelink'
-                  }
+                  className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                   onClick={() => refreshPrices()}
                 >
                   ~
                   {props.token && props.tokenBalance
-                    ? toUsCurrency(
-                        parseFloat(props.tokenBalance) *
-                          getTokenPriceBySymbol(props.token.symbol),
-                      )
+                    ? toUsCurrency(parseFloat(props.tokenBalance) * getTokenPriceBySymbol(props.token.symbol))
                     : '$0.00'}
                 </span>
               </>
@@ -111,14 +94,8 @@ export const ExchangeInput = (props: {
                 showName={false}
                 showCaretDown={!props.readonly}
               />
-              {publicKey &&
-              props.token &&
-              props.tokenBalance &&
-              props.onMaxAmount ? (
-                <div
-                  className="token-max simplelink"
-                  onClick={props.onMaxAmount}
-                >
+              {publicKey && props.token && props.tokenBalance && props.onMaxAmount ? (
+                <div className="token-max simplelink" onClick={props.onMaxAmount}>
                   MAX
                 </div>
               ) : null}

@@ -39,31 +39,16 @@ export const ServiceUnavailableView = () => {
         <div className="flex-column flex-center">
           <img
             className="app-logo"
-            src={
-              theme === 'dark'
-                ? '/assets/mean-logo-color-light.svg'
-                : '/assets/mean-logo-color-dark.svg'
-            }
+            src={theme === 'dark' ? '/assets/mean-logo-color-light.svg' : '/assets/mean-logo-color-dark.svg'}
             alt="Mean Finance"
           />
-          <h3 className="network-down-message">
-            {t('error-screens.service-unavailable-message')}
-          </h3>
+          <h3 className="network-down-message">{t('error-screens.service-unavailable-message')}</h3>
           <div className="text-center">
-            <Button
-              type="primary"
-              size="large"
-              shape="round"
-              disabled={reloadDisabled}
-              onClick={() => reloadApp()}
-            >
+            <Button type="primary" size="large" shape="round" disabled={reloadDisabled} onClick={() => reloadApp()}>
               {reloadDisabled ? (
                 <>
                   {t('general.reload-cta-disabled')}
-                  <CountdownTimer
-                    val={RELOAD_TIMER}
-                    onFinished={enableReload}
-                  />
+                  <CountdownTimer val={RELOAD_TIMER} onFinished={enableReload} />
                 </>
               ) : (
                 t('general.reload-cta')

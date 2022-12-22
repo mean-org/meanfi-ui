@@ -12,11 +12,7 @@ const IdlTree = ({ selectedProgramIdl }: Props) => {
   return !selectedProgramIdl ? (
     <div className={'no-idl-info'}>{noIdlInfo}</div>
   ) : (
-    <ReactJson
-      theme={'ocean'}
-      enableClipboard={false}
-      src={selectedProgramIdl}
-    />
+    <ReactJson theme={'ocean'} enableClipboard={false} src={selectedProgramIdl} />
   );
 };
 

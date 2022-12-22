@@ -55,9 +55,7 @@ export const StreamTransferOpenModal = (props: {
   };
 
   const isAddressOwnAccount = (): boolean => {
-    return address && publicKey && address === publicKey.toBase58()
-      ? true
-      : false;
+    return address && publicKey && address === publicKey.toBase58() ? true : false;
   };
 
   // Validation
@@ -86,9 +84,7 @@ export const StreamTransferOpenModal = (props: {
   const getTransactionStartButtonLabel = () => {
     return !address
       ? t('transfer-stream.streamid-empty')
-      : !isValidAddress(address) ||
-        isAddressOwnAccount() ||
-        isAddressTreasurer(address)
+      : !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address)
       ? 'Invalid address'
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
@@ -100,9 +96,7 @@ export const StreamTransferOpenModal = (props: {
       ? 'Add a proposal title'
       : !address
       ? t('transfer-stream.streamid-empty')
-      : !isValidAddress(address) ||
-        isAddressOwnAccount() ||
-        isAddressTreasurer(address)
+      : !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address)
       ? 'Invalid address'
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
@@ -132,9 +126,7 @@ export const StreamTransferOpenModal = (props: {
       className="mean-modal"
       title={
         <div className="modal-title">
-          {isMultisigContext
-            ? 'Propose transfer stream'
-            : t('transfer-stream.modal-title')}
+          {isMultisigContext ? 'Propose transfer stream' : t('transfer-stream.modal-title')}
         </div>
       }
       footer={null}
@@ -157,9 +149,7 @@ export const StreamTransferOpenModal = (props: {
         </div>
       )}
 
-      <div className="form-label">
-        {t('transfer-stream.label-streamid-input')}
-      </div>
+      <div className="form-label">{t('transfer-stream.label-streamid-input')}</div>
       <div className="well">
         <div className="flex-fixed-right">
           <div className="left position-relative">
@@ -180,25 +170,16 @@ export const StreamTransferOpenModal = (props: {
           </div>
         </div>
         {address && !isValidAddress(address) ? (
-          <span className="form-field-error">
-            {t('transactions.validation.address-validation')}
-          </span>
+          <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
         ) : isAddressOwnAccount() ? (
-          <span className="form-field-error">
-            {t('transfer-stream.destination-is-own-account')}
-          </span>
+          <span className="form-field-error">{t('transfer-stream.destination-is-own-account')}</span>
         ) : isAddressTreasurer(address) ? (
-          <span className="form-field-error">
-            {t('transfer-stream.destination-address-is-sender')}
-          </span>
+          <span className="form-field-error">{t('transfer-stream.destination-address-is-sender')}</span>
         ) : null}
       </div>
 
       <div className="ml-1 mb-3">
-        <Checkbox
-          checked={isVerifiedRecipient}
-          onChange={onIsVerifiedRecipientChange}
-        >
+        <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
           {t('transfer-stream.streamid-checkbox')}
         </Checkbox>
       </div>
@@ -212,9 +193,7 @@ export const StreamTransferOpenModal = (props: {
         disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
         onClick={onAcceptModal}
       >
-        {isMultisigContext
-          ? getTransactionStartButtonLabelMultisig()
-          : getTransactionStartButtonLabel()}
+        {isMultisigContext ? getTransactionStartButtonLabelMultisig() : getTransactionStartButtonLabel()}
       </Button>
     </Modal>
   );

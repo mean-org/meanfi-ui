@@ -3,12 +3,7 @@ import * as BufferLayout from 'buffer-layout';
 import { rustEnum } from '@project-serum/borsh';
 
 // Simplified since we only use the SetBuffer variant.
-export type IdlInstruction =
-  | Create
-  | CreateBuffer
-  | Write
-  | SetBuffer
-  | SetAuthority;
+export type IdlInstruction = Create | CreateBuffer | Write | SetBuffer | SetAuthority;
 
 type Create = {};
 type CreateBuffer = {};

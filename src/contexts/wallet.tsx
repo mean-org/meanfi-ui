@@ -376,7 +376,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
         setWalletName(null);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletName, wallets, wallet]);
 
   // Keep up with connecting flag

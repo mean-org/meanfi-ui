@@ -9,17 +9,7 @@ export const InputTextAreaMean = (props: {
   value?: any;
   onPaste?: any;
 }) => {
-  const {
-    id,
-    className,
-    autoComplete,
-    rows,
-    maxLength,
-    placeholder,
-    onChange,
-    value,
-    onPaste,
-  } = props;
+  const { id, className, autoComplete, rows, maxLength, placeholder, onChange, value, onPaste } = props;
 
   return (
     <>

@@ -48,9 +48,7 @@ export const DdcaCloseModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">{t('ddcas.close-ddca.modal-title')}</div>
-      }
+      title={<div className="modal-title">{t('ddcas.close-ddca.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={props.handleOk}
@@ -63,24 +61,12 @@ export const DdcaCloseModal = (props: {
         {/* Info */}
         {props.ddcaDetails && props.ddcaDetails.fromBalance && (
           <div className="p-2 mb-2">
-            {infoRow(
-              'Amount left:',
-              getAmountWithSymbol(
-                props.ddcaDetails.fromBalance,
-                props.ddcaDetails.fromMint,
-              ),
-            )}
+            {infoRow('Amount left:', getAmountWithSymbol(props.ddcaDetails.fromBalance, props.ddcaDetails.fromMint))}
           </div>
         )}
 
         <div className="mt-3">
-          <Button
-            className="mr-3"
-            type="text"
-            shape="round"
-            size="large"
-            onClick={props.handleClose}
-          >
+          <Button className="mr-3" type="text" shape="round" size="large" onClick={props.handleClose}>
             {t('ddcas.close-ddca.secondary-cta')}
           </Button>
           <Button

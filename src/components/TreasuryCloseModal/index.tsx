@@ -1,15 +1,6 @@
-import {
-  CheckOutlined,
-  InfoCircleOutlined,
-  LoadingOutlined,
-  WarningFilled,
-  WarningOutlined,
-} from '@ant-design/icons';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import {
-  TransactionFees,
-  TreasuryInfo,
-} from '@mean-dao/money-streaming/lib/types';
+import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
 import { Button, Modal, Spin } from 'antd';
 import { Identicon } from 'components/Identicon';
@@ -22,12 +13,7 @@ import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { getTransactionOperationDescription } from 'middleware/ui';
-import {
-  formatThousands,
-  getAmountWithSymbol,
-  getSdkValue,
-  shortenAddress,
-} from 'middleware/utils';
+import { formatThousands, getAmountWithSymbol, getSdkValue, shortenAddress } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,8 +34,7 @@ export const TreasuryCloseModal = (props: {
   selectedMultisig: MultisigInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
-  const { theme, selectedAccount, transactionStatus, getTokenByMintAddress } =
-    useContext(AppStateContext);
+  const { theme, selectedAccount, transactionStatus, getTokenByMintAddress } = useContext(AppStateContext);
   const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [proposalTitle, setProposalTitle] = useState('');
@@ -58,9 +43,7 @@ export const TreasuryCloseModal = (props: {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
 
-  const imageOnErrorHandler = (
-    event: React.SyntheticEvent<HTMLImageElement, Event>,
-  ) => {
+  const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
     event.currentTarget.className = 'error';
   };
@@ -71,42 +54,26 @@ export const TreasuryCloseModal = (props: {
     }
 
     const treasuryAssociatedToken = getStreamingAccountMint(item);
-    const token = treasuryAssociatedToken
-      ? getTokenByMintAddress(treasuryAssociatedToken)
-      : undefined;
+    const token = treasuryAssociatedToken ? getTokenByMintAddress(treasuryAssociatedToken) : undefined;
 
     return (
       <div className="token-icon">
         {treasuryAssociatedToken ? (
           <>
             {token && token.logoURI ? (
-              <img
-                alt={`${token.name}`}
-                width={20}
-                height={20}
-                src={token.logoURI}
-                onError={imageOnErrorHandler}
-              />
+              <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
-              <Identicon
-                address={treasuryAssociatedToken}
-                style={{ width: '20', display: 'inline-flex' }}
-              />
+              <Identicon address={treasuryAssociatedToken} style={{ width: '20', display: 'inline-flex' }} />
             )}
           </>
         ) : (
-          <Identicon
-            address={item.id}
-            style={{ width: '20', display: 'inline-flex' }}
-          />
+          <Identicon address={item.id} style={{ width: '20', display: 'inline-flex' }} />
         )}
       </div>
     );
   };
 
-  const getStreamingAccountDescription = (
-    item: PaymentStreamingAccount | TreasuryInfo | undefined,
-  ) => {
+  const getStreamingAccountDescription = (item: PaymentStreamingAccount | TreasuryInfo | undefined) => {
     if (!item) {
       return null;
     }
@@ -121,30 +88,20 @@ export const TreasuryCloseModal = (props: {
           <>
             <div className="title text-truncate">
               {name}
-              <span
-                className={`badge small ml-1 ${
-                  theme === 'light' ? 'golden fg-dark' : 'darken'
-                }`}
-              >
+              <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                 {treasuryType === AccountType.Open ? 'Open' : 'Locked'}
               </span>
             </div>
-            <div className="subtitle text-truncate">
-              {shortenAddress(item.id as string, 8)}
-            </div>
+            <div className="subtitle text-truncate">{shortenAddress(item.id as string, 8)}</div>
           </>
         ) : (
-          <div className="title text-truncate">
-            {shortenAddress(item.id as string, 8)}
-          </div>
+          <div className="title text-truncate">{shortenAddress(item.id as string, 8)}</div>
         )}
       </>
     );
   };
 
-  const getStreamingAccountStreamCount = (
-    item: PaymentStreamingAccount | TreasuryInfo | undefined,
-  ) => {
+  const getStreamingAccountStreamCount = (item: PaymentStreamingAccount | TreasuryInfo | undefined) => {
     if (!item) {
       return null;
     }
@@ -158,11 +115,7 @@ export const TreasuryCloseModal = (props: {
         ) : (
           <>
             <div className="rate-amount">
-              {formatThousands(
-                isV2Treasury
-                  ? +getSdkValue(v2.totalStreams)
-                  : +getSdkValue(v1.streamsAmount),
-              )}
+              {formatThousands(isV2Treasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
             </div>
             <div className="interval">streams</div>
           </>
@@ -203,17 +156,14 @@ export const TreasuryCloseModal = (props: {
 
   const v1 = props.treasuryDetails as TreasuryInfo;
   const v2 = props.treasuryDetails as PaymentStreamingAccount;
-  const isNewTreasury =
-    props.treasuryDetails && props.treasuryDetails.version >= 2 ? true : false;
+  const isNewTreasury = props.treasuryDetails && props.treasuryDetails.version >= 2 ? true : false;
 
   return (
     <Modal
       className="mean-modal simple-modal"
       title={
         <div className="modal-title">
-          {isMultisigContext
-            ? 'Propose close account'
-            : t('treasuries.close-account.modal-title')}
+          {isMultisigContext ? 'Propose close account' : t('treasuries.close-account.modal-title')}
         </div>
       }
       maskClosable={false}
@@ -228,15 +178,9 @@ export const TreasuryCloseModal = (props: {
             <div className="mb-3 text-center">
               {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3" /> */}
               {theme === 'light' ? (
-                <WarningFilled
-                  style={{ fontSize: 48 }}
-                  className="icon mt-0 mb-3 fg-warning"
-                />
+                <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
               ) : (
-                <WarningOutlined
-                  style={{ fontSize: 48 }}
-                  className="icon mt-0 mb-3 fg-warning"
-                />
+                <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
               )}
               <div className="mb-3 fg-warning operation">
                 <span>{props.content}</span>
@@ -245,17 +189,13 @@ export const TreasuryCloseModal = (props: {
               {props.selectedMultisig && (
                 <div className="operation">{`Closing streaming account ${
                   isNewTreasury ? v2.name : v1.label
-                } will remove it completely from the multisig safe ${
-                  props.selectedMultisig?.label
-                }`}</div>
+                } will remove it completely from the multisig safe ${props.selectedMultisig?.label}`}</div>
               )}
 
               {/* Proposal title */}
               {isMultisigContext && (
                 <div className="mb-3 mt-3">
-                  <div className="form-label text-left">
-                    {t('multisig.proposal-modal.title')}
-                  </div>
+                  <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
                   <InputMean
                     id="proposal-title-field"
                     name="Title"
@@ -269,26 +209,14 @@ export const TreasuryCloseModal = (props: {
 
               {/* Streaming account */}
               <div className="mb-3">
-                <div className="form-label icon-label">
-                  {t('treasuries.add-funds.select-streaming-account-label')}
-                </div>
+                <div className="form-label icon-label">{t('treasuries.add-funds.select-streaming-account-label')}</div>
                 <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                   <div className="text-left">
                     {props.treasuryDetails && (
                       <div className="transaction-list-row no-pointer">
-                        <div className="icon-cell">
-                          {getStreamingAccountIcon(props.treasuryDetails)}
-                        </div>
-                        <div className="description-cell">
-                          {getStreamingAccountDescription(
-                            props.treasuryDetails,
-                          )}
-                        </div>
-                        <div className="rate-cell">
-                          {getStreamingAccountStreamCount(
-                            props.treasuryDetails,
-                          )}
-                        </div>
+                        <div className="icon-cell">{getStreamingAccountIcon(props.treasuryDetails)}</div>
+                        <div className="description-cell">{getStreamingAccountDescription(props.treasuryDetails)}</div>
+                        <div className="rate-cell">{getStreamingAccountStreamCount(props.treasuryDetails)}</div>
                       </div>
                     )}
                   </div>
@@ -298,9 +226,7 @@ export const TreasuryCloseModal = (props: {
               {!isError(transactionStatus.currentOperation) && (
                 <div className="col-12 p-0 mt-3">
                   <Button
-                    className={`center-text-in-btn ${
-                      props.isBusy ? 'inactive' : ''
-                    }`}
+                    className={`center-text-in-btn ${props.isBusy ? 'inactive' : ''}`}
                     block
                     type="primary"
                     shape="round"
@@ -329,38 +255,26 @@ export const TreasuryCloseModal = (props: {
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">
-                {t('treasuries.create-treasury.success-message')}
-              </h4>
+              <h4 className="font-bold">{t('treasuries.create-treasury.success-message')}</h4>
             </div>
           </>
         ) : (
           <>
             <div className="transaction-progress p-0">
-              <InfoCircleOutlined
-                style={{ fontSize: 48 }}
-                className="icon mt-0"
-              />
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(
-                      props.nativeBalance,
-                      NATIVE_SOL_MINT.toBase58(),
-                    ),
+                    accountBalance: getAmountWithSymbol(props.nativeBalance, NATIVE_SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
-                      props.transactionFees.blockchainFee +
-                        props.transactionFees.mspFlatFee,
+                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58(),
                     ),
                   })}
                 </h4>
               ) : (
                 <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(
-                    transactionStatus.currentOperation,
-                    t,
-                  )}
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
             </div>
@@ -370,26 +284,17 @@ export const TreasuryCloseModal = (props: {
 
       <div
         className={
-          props.isBusy &&
-          transactionStatus.currentOperation !== TransactionStatus.Iddle
-            ? 'panel2 show'
-            : 'panel2 hide'
+          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
         }
       >
         {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
-              {getTransactionOperationDescription(
-                transactionStatus.currentOperation,
-                t,
-              )}
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
-            {transactionStatus.currentOperation ===
-              TransactionStatus.SignTransaction && (
-              <div className="indication">
-                {t('transactions.status.instructions')}
-              </div>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}
@@ -403,27 +308,23 @@ export const TreasuryCloseModal = (props: {
               type="text"
               shape="round"
               size="middle"
-              className={`center-text-in-btn thin-stroke ${props.isBusy ? 'inactive' : ''
-                }`}
+              className={`center-text-in-btn thin-stroke ${props.isBusy ? 'inactive' : ''}`}
               onClick={() =>
                 isError(transactionStatus.currentOperation)
-                  ? transactionStatus.currentOperation ===
-                    TransactionStatus.TransactionStartFailure
+                  ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
                     ? onCloseModal()
                     : onAcceptModal()
                   : onCloseModal()
               }
             >
               {isError(transactionStatus.currentOperation) &&
-                transactionStatus.currentOperation !==
-                TransactionStatus.TransactionStartFailure
+              transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure
                 ? t('general.retry')
                 : t('general.cta-close')}
             </Button>
           </div>
         </div>
       )}
-
     </Modal>
   );
 };

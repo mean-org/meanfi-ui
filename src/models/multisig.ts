@@ -27,12 +27,8 @@ import { MeanSystemInstructionCoder } from './system-program-coder/instruction';
 import { appConfig } from '..';
 import { getAmountFromLamports } from '../middleware/utils';
 
-export const CREDIX_PROGRAM = new PublicKey(
-  'CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX',
-);
-export const NATIVE_LOADER = new PublicKey(
-  'NativeLoader1111111111111111111111111111111',
-);
+export const CREDIX_PROGRAM = new PublicKey('CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX');
+export const NATIVE_LOADER = new PublicKey('NativeLoader1111111111111111111111111111111');
 export const LAMPORTS_PER_SIG = 5000;
 export const DEFAULT_EXPIRATION_TIME_SECONDS = 604800;
 export const ZERO_FEES = {
@@ -172,11 +168,11 @@ export type CreateMintPayload = {
 };
 
 export type MultisigTxParams = {
-  programId: PublicKey;           // Ix program id
-  ixAccounts: AccountMeta[];      // keys o accounts of the Ix
-  ixData: Buffer | undefined;     // data of the Ix
+  programId: PublicKey; // Ix program id
+  ixAccounts: AccountMeta[]; // keys o accounts of the Ix
+  ixData: Buffer | undefined; // data of the Ix
   ixs?: TransactionInstruction[]; // pre instructions
-}
+};
 
 export interface BaseProposal {
   proposalTitle: string;
@@ -220,10 +216,7 @@ export interface CreateNewSafeParams {
   owners: MultisigParticipant[];
 }
 
-export const getFees = async (
-  program: Program<Idl>,
-  action: MULTISIG_ACTIONS,
-): Promise<MultisigTransactionFees> => {
+export const getFees = async (program: Program<Idl>, action: MULTISIG_ACTIONS): Promise<MultisigTransactionFees> => {
   const txFees: MultisigTransactionFees = {
     networkFee: 0.0,
     rentExempt: 0.0,
@@ -233,18 +226,14 @@ export const getFees = async (
   switch (action) {
     case MULTISIG_ACTIONS.createMultisig: {
       txFees.networkFee = 0.00001;
-      txFees.rentExempt =
-        await program.provider.connection.getMinimumBalanceForRentExemption(
-          program.account.multisigV2.size,
-        );
+      txFees.rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(
+        program.account.multisigV2.size,
+      );
       break;
     }
     case MULTISIG_ACTIONS.createTransaction: {
       txFees.networkFee = 0.00001;
-      txFees.rentExempt =
-        await program.provider.connection.getMinimumBalanceForRentExemption(
-          1500,
-        );
+      txFees.rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(1500);
       break;
     }
     case MULTISIG_ACTIONS.cancelTransaction: {
@@ -262,10 +251,7 @@ export const getFees = async (
   return txFees;
 };
 
-export const getIxNameFromMultisigTransaction = (
-  transaction: MultisigTransaction,
-  programIdl?: Idl,
-) => {
+export const getIxNameFromMultisigTransaction = (transaction: MultisigTransaction, programIdl?: Idl) => {
   let ix: any;
 
   if (!programIdl) {
@@ -308,9 +294,7 @@ export const getIxNameFromMultisigTransaction = (
       ix = programIdl.instructions.find(ix => ix.name === 'createStream');
       break;
     case OperationType.TreasuryRefreshBalance:
-      ix = programIdl.instructions.find(
-        ix => ix.name === 'refreshTreasuryData',
-      );
+      ix = programIdl.instructions.find(ix => ix.name === 'refreshTreasuryData');
       break;
     case OperationType.TreasuryAddFunds:
       ix = programIdl.instructions.find(ix => ix.name === 'addFunds');
@@ -393,12 +377,7 @@ export const createAnchorProgram = (
       return new SplTokenCoder(programIdl);
     };
 
-    return new Program<SplToken>(
-      programIdl as SplToken,
-      programId,
-      provider,
-      coder(),
-    );
+    return new Program<SplToken>(programIdl as SplToken, programId, provider, coder());
   }
 
   return new Program(programIdl, programId, provider);
@@ -409,9 +388,7 @@ export const parseMultisigProposalIx = (
   program?: Program<any> | undefined,
 ): MultisigTransactionInstructionInfo | null => {
   try {
-    const multisigAddressPK = new PublicKey(
-      appConfig.getConfig().multisigProgramAddress,
-    );
+    const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
     const ix = new TransactionInstruction({
       programId: transaction.programId,
@@ -514,9 +491,7 @@ export const parseMultisigProposalIx = (
     const nameArray = (program?.idl.name as string).split('_');
     const ixInfo = {
       programId: ix.programId.toBase58(),
-      programName: nameArray
-        .map(i => `${i[0].toUpperCase()}${i.substring(1)}`)
-        .join(' '),
+      programName: nameArray.map(i => `${i[0].toUpperCase()}${i.substring(1)}`).join(' '),
       accounts: ixAccInfos,
       data: dataInfos,
     } as MultisigTransactionInstructionInfo;
@@ -616,23 +591,17 @@ export const sentenceCase = (field: string): string => {
   return result.charAt(0).toUpperCase() + result.slice(1);
 };
 
-export const parseSerializedTx = async (
-  connection: Connection,
-  base64Str: string,
-): Promise<Transaction | null> => {
+export const parseSerializedTx = async (connection: Connection, base64Str: string): Promise<Transaction | null> => {
   try {
     if (!connection || !base64Str) {
       throw Error(`Parse Serialized Transaction: Invalid parameters.`);
     }
 
     // const base64Str = uiInstruction.uiElements[0].value;
-    const base64StrRegx =
-      /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+    const base64StrRegx = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
 
     if (!base64StrRegx.test(base64Str)) {
-      throw Error(
-        `Parse Serialized Transaction: The parameter "base64Str" is not a valid base64 string.`,
-      );
+      throw Error(`Parse Serialized Transaction: The parameter "base64Str" is not a valid base64 string.`);
     }
 
     const buffer = Buffer.from(base64Str, 'base64');

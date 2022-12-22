@@ -2,11 +2,7 @@ import React from 'react';
 import { Modal } from 'antd';
 import { IconLightBulb } from '../../Icons';
 
-export const AccountsSuggestAssetModal = (props: {
-  handleOk: any;
-  handleClose: any;
-  isVisible: boolean;
-}) => {
+export const AccountsSuggestAssetModal = (props: { handleOk: any; handleClose: any; isVisible: boolean }) => {
   const { isVisible, handleClose, handleOk } = props;
 
   // Callback methods
@@ -22,10 +18,7 @@ export const AccountsSuggestAssetModal = (props: {
       className="mean-modal simple-modal"
       title={
         <div className="flex-row flex-center">
-          <IconLightBulb
-            className="mean-svg-icons mr-1"
-            style={{ width: '20', height: '20' }}
-          />
+          <IconLightBulb className="mean-svg-icons mr-1" style={{ width: '20', height: '20' }} />
           <div className="modal-title">Suggest an Asset</div>
         </div>
       }
@@ -37,9 +30,8 @@ export const AccountsSuggestAssetModal = (props: {
     >
       <div className="mb-2 shift-up-1 text-center">
         <p>
-          Now you have the opportunity to suggest new Assets to be added to the
-          MeanFi repertoire. As part of your suggestion include a brief
-          description of the Asset, why is it important and the Asset address.
+          Now you have the opportunity to suggest new Assets to be added to the MeanFi repertoire. As part of your
+          suggestion include a brief description of the Asset, why is it important and the Asset address.
         </p>
         <p>
           <a

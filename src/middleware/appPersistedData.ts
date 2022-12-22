@@ -1,11 +1,7 @@
 import { readFromCache, writeToCache } from 'cache/persistentCache';
 import { LooseObject } from 'types/LooseObject';
 
-export const saveAppData = (
-  lsKey: string,
-  data: any,
-  accountAddress: string,
-) => {
+export const saveAppData = (lsKey: string, data: any, accountAddress: string) => {
   const currentValue = readFromCache(lsKey);
   const keyValueData: LooseObject = {};
 

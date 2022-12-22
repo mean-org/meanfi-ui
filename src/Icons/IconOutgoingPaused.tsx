@@ -1,9 +1,6 @@
 import { CSSProperties } from 'react';
 
-export const IconOutgoingPaused = (props: {
-  className: string;
-  style?: CSSProperties;
-}) => {
+export const IconOutgoingPaused = (props: { className: string; style?: CSSProperties }) => {
   return (
     <svg
       className={props.className}
@@ -28,14 +25,7 @@ export const IconOutgoingPaused = (props: {
           fill="currentColor"
         />
       </g>
-      <circle
-        cx="5"
-        cy="5"
-        r="5"
-        fill="none"
-        stroke="#fff"
-        transform="matrix(.9 0 0 .9 14 1)"
-      />
+      <circle cx="5" cy="5" r="5" fill="none" stroke="#fff" transform="matrix(.9 0 0 .9 14 1)" />
       <path
         d="M18.5 1.333c-2.286.001-4.166 1.881-4.167 4.167 0 2.3 1.867 4.167 4.167 4.167S22.667 7.8 22.667 5.5 20.8 1.333 18.5 1.333c-1.533 0-1.533 0 0 0z"
         fillRule="nonzero"

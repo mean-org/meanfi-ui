@@ -131,18 +131,21 @@ export const SwapView = () => {
   }, [loadingRecurringBuys, reloadRecurringBuys]);
 
   // Get FROM address from symbol passed via query string param
-  const getSourceFromParams = useCallback((params: URLSearchParams) => {
-    if (params.has('from')) {
-      const symbol = params.get('from');
-      if (!symbol) return undefined;
-      if (symbol === 'SOL') {
-        return getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
+  const getSourceFromParams = useCallback(
+    (params: URLSearchParams) => {
+      if (params.has('from')) {
+        const symbol = params.get('from');
+        if (!symbol) return undefined;
+        if (symbol === 'SOL') {
+          return getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
+        }
+        return getTokenBySymbol(symbol, splTokenList);
+      } else {
+        return MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'USDC');
       }
-      return getTokenBySymbol(symbol, splTokenList);
-    } else {
-      return MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'USDC');
-    }
-  }, [getTokenByMintAddress, splTokenList]);
+    },
+    [getTokenByMintAddress, splTokenList],
+  );
 
   // Get TO address from symbol passed via query string param
   const getDestinationFromParams = useCallback((params: URLSearchParams) => {

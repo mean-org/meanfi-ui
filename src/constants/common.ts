@@ -44,23 +44,18 @@ export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://solana.fm/tx/';
 export const SOLANA_STATUS_PAGE = 'https://status.solana.com/';
 export const MEAN_FINANCE_WEBSITE_URL = 'https://meanfi.com';
 export const MEAN_FINANCE_APP_ALLBRIDGE_URL = 'https://app.allbridge.io';
-export const MEAN_FINANCE_APP_RENBRIDGE_URL =
-  'https://bridge.renproject.io/mint';
-export const MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL =
-  'https://forms.gle/buhxAR44YFGQxVX57';
+export const MEAN_FINANCE_APP_RENBRIDGE_URL = 'https://bridge.renproject.io/mint';
+export const MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL = 'https://forms.gle/buhxAR44YFGQxVX57';
 export const MEAN_FINANCE_DISCORD_URL = 'https://discord.gg/qBKDgm49js';
 export const MEAN_FINANCE_TWITTER_URL = 'https://twitter.com/meanfinance';
 export const MEAN_DAO_GITHUB_ORG_URL = 'https://github.com/mean-dao';
 export const MEAN_DAO_GITBOOKS_URL = 'https://meandao.gitbook.io/meanfi';
 export const MEAN_DAO_MEDIUM_BLOG_URL = 'https://meandao.medium.com/';
-export const WRAPPED_SOL_MINT_ADDRESS =
-  'So11111111111111111111111111111111111111112';
-export const SOLANA_ACCOUNT_INCINERATOR =
-  '1nc1nerator11111111111111111111111111111111';
+export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
+export const SOLANA_ACCOUNT_INCINERATOR = '1nc1nerator11111111111111111111111111111111';
 export const MEANFI_DOCS_URL = 'https://docs.meandao.org/';
 export const MEANFI_SUPPORT_URL = 'https://help.meanfi.com/';
-export const MEANFI_METRICS_URL =
-  'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
+export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 export const MSP_FEE_TREASURY = '3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw';
 export const FALLBACK_COIN_IMAGE = '/assets/coin-error.svg';
 export const fallbackImgSrc =

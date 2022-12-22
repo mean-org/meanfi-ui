@@ -1,9 +1,6 @@
 import { CSSProperties } from 'react';
 
-export const IconArrowBack = (props: {
-  className: string;
-  style?: CSSProperties;
-}) => {
+export const IconArrowBack = (props: { className: string; style?: CSSProperties }) => {
   return (
     <svg
       className={props.className}
@@ -14,10 +11,7 @@ export const IconArrowBack = (props: {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path
-        d="M15.422 16.594l-1.406 1.406-6-6 6-6 1.406 1.406-4.594 4.594z"
-        fill="currentColor"
-      ></path>
+      <path d="M15.422 16.594l-1.406 1.406-6-6 6-6 1.406 1.406-4.594 4.594z" fill="currentColor"></path>
     </svg>
   );
 };

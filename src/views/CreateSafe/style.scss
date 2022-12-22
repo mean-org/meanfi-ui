@@ -16,11 +16,7 @@
 
   .ant-tooltip-content {
     .ant-tooltip-arrow-content {
-      --antd-arrow-background-color: linear-gradient(
-        to right bottom,
-        rgba(0, 0, 0, 0.75),
-        rgba(0, 0, 0, 0.85)
-      );
+      --antd-arrow-background-color: linear-gradient(to right bottom, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85));
     }
   }
 

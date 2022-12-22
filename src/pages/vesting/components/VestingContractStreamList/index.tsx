@@ -146,12 +146,9 @@ export const VestingContractStreamList = (props: {
     });
   }, [setTransactionStatus]);
 
-  const getTransactionFees = useCallback(
-    async (action: ACTION_CODES): Promise<TransactionFees> => {
-      return calculateFeesForAction(action);
-    },
-    [],
-  );
+  const getTransactionFees = useCallback(async (action: ACTION_CODES): Promise<TransactionFees> => {
+    return calculateFeesForAction(action);
+  }, []);
 
   const isInboundStream = useCallback(
     (item: Stream): boolean => {
@@ -452,9 +449,9 @@ export const VestingContractStreamList = (props: {
           stream: new PublicKey(data.stream), // stream,
         };
         const { transaction } = await msp.buildCloseStreamTransaction(
-          accounts,             // accounts
-          data.closeTreasury,   // closeTreasury
-          true,                 // autoWSol
+          accounts, // accounts
+          data.closeTreasury, // closeTreasury
+          true, // autoWSol
         );
         return transaction;
       }
@@ -478,9 +475,9 @@ export const VestingContractStreamList = (props: {
         stream: new PublicKey(data.stream), // stream,
       };
       const { transaction } = await msp.buildCloseStreamTransaction(
-        accounts,             // accounts
-        data.closeTreasury,   // closeTreasury
-        false,                // autoWSol
+        accounts, // accounts
+        data.closeTreasury, // closeTreasury
+        false, // autoWSol
       );
 
       const ixData = Buffer.from(transaction.instructions[0].data);

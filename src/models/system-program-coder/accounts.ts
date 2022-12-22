@@ -3,9 +3,7 @@ import { AccountsCoder } from '@project-serum/anchor';
 import { publicKey, struct, u32, u64 } from '@project-serum/borsh';
 import { IdlAccountDef } from '@project-serum/anchor/dist/cjs/idl';
 
-export class MeanSystemAccountsCoder<A extends string = string>
-  implements AccountsCoder
-{
+export class MeanSystemAccountsCoder<A extends string = string> implements AccountsCoder {
   public async encode<T = any>(accountName: A, account: T): Promise<Buffer> {
     switch (accountName) {
       case 'nonce': {

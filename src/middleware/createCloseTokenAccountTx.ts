@@ -7,7 +7,7 @@ import {
   Transaction,
   TransactionInstruction,
   TransactionMessage,
-  VersionedTransaction
+  VersionedTransaction,
 } from '@solana/web3.js';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';

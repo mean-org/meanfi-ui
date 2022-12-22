@@ -1383,8 +1383,7 @@ footer.ant-layout-footer {
 
       .ant-drawer-content-wrapper {
         height: 100% !important;
-        transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1),
-          box-shadow 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s cubic-bezier(0.23, 1, 0.32, 1);
       }
 
       .token-selector-wrapper {
@@ -1401,8 +1400,7 @@ footer.ant-layout-footer {
 
     &.ant-drawer-bottom:not(.ant-drawer-open) {
       .ant-drawer-content-wrapper {
-        transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1),
-          box-shadow 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s cubic-bezier(0.23, 1, 0.32, 1);
       }
     }
   }
@@ -2537,9 +2535,7 @@ em {
     }
 
     .ant-tooltip-arrow-content {
-      --antd-arrow-background-color: var(
-        --color-component-background
-      ) !important;
+      --antd-arrow-background-color: var(--color-component-background) !important;
     }
   }
 }
@@ -3188,8 +3184,7 @@ main section {
     &:not(.flat) {
       background: var(--color-panel-background);
       border-radius: var(--custom-border-radius);
-      box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.08),
-        0 3px 7px 0 rgba(0, 0, 0, 0.08), 0 1px 18px 0 rgba(0, 0, 0, 0.08);
+      box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.08), 0 3px 7px 0 rgba(0, 0, 0, 0.08), 0 1px 18px 0 rgba(0, 0, 0, 0.08);
     }
 
     &.flat {
@@ -3344,8 +3339,7 @@ main section {
   background: var(--color-panel-background);
   border-radius: var(--custom-border-radius);
   padding: 1rem;
-  box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.08),
-    0 3px 7px 0 rgba(0, 0, 0, 0.08), 0 1px 18px 0 rgba(0, 0, 0, 0.08);
+  box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.08), 0 3px 7px 0 rgba(0, 0, 0, 0.08), 0 1px 18px 0 rgba(0, 0, 0, 0.08);
 
   &.no-shadow {
     box-shadow: none !important;
@@ -3444,8 +3438,7 @@ main section {
   background: var(--color-panel-background);
   border-radius: var(--custom-border-radius);
   padding: 2rem !important;
-  box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.08),
-    0 3px 7px 0 rgba(0, 0, 0, 0.08), 0 1px 18px 0 rgba(0, 0, 0, 0.08);
+  box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.08), 0 3px 7px 0 rgba(0, 0, 0, 0.08), 0 1px 18px 0 rgba(0, 0, 0, 0.08);
 
   &.align-center {
     margin: 0 auto;
@@ -3746,9 +3739,7 @@ main section {
     background-color: var(--color-secondary-alpha-15);
   }
 
-  .ant-dropdown-menu-item-group
-    .ant-dropdown-menu-item-group-title
-    .menu-item-text {
+  .ant-dropdown-menu-item-group .ant-dropdown-menu-item-group-title .menu-item-text {
     color: var(--color-secondary-alpha-50);
     text-transform: uppercase;
     font-size: 80%;
@@ -3932,8 +3923,7 @@ main section {
     }
   }
 
-  &.ant-select-single:not(.ant-select-customize-input)
-    .ant-select-selector::after {
+  &.ant-select-single:not(.ant-select-customize-input) .ant-select-selector::after {
     line-height: normal;
   }
 
@@ -4410,17 +4400,7 @@ main section {
       left: -1px;
       height: calc(100% + (var(--animated-border-width) / 2));
       width: calc(100% + (var(--animated-border-width) / 2));
-      background: linear-gradient(
-        60deg,
-        #f79533,
-        #f37055,
-        #ef4e7b,
-        #a166ab,
-        #5073b8,
-        #1098ad,
-        #07b39b,
-        #6fba82
-      );
+      background: linear-gradient(60deg, #f79533, #f37055, #ef4e7b, #a166ab, #5073b8, #1098ad, #07b39b, #6fba82);
       border-radius: calc(2 * var(--animated-border-width));
       z-index: 0;
       animation: animatedgradient 3s ease alternate infinite;
@@ -5137,8 +5117,7 @@ main section {
             align-items: center;
             right: unset;
 
-            &.ant-modal-close
-              button.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
+            &.ant-modal-close button.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
               background-color: inherit;
               color: inherit;
 
@@ -6610,8 +6589,7 @@ button.ant-btn-round.ant-btn-icon-only.settings-button {
         // transform: translateX(-1rem) translateY(1rem);
         padding: 1.4rem;
         transform: translateX(-0.5rem) translateY(1rem);
-        box-shadow: 0px 0px 3px 0 rgba(0, 0, 0, 0.05),
-          -1px 0px 2px 0 rgba(0, 0, 0, 0.05);
+        box-shadow: 0px 0px 3px 0 rgba(0, 0, 0, 0.05), -1px 0px 2px 0 rgba(0, 0, 0, 0.05);
       }
     }
   }
@@ -6680,20 +6658,17 @@ button.ant-btn-round.ant-btn-icon-only.settings-button {
 }
 
 .blurry-1x {
-  -webkit-filter: blur(1px) brightness(1) contrast(1) grayscale(0.3)
-    saturate(0.3);
+  -webkit-filter: blur(1px) brightness(1) contrast(1) grayscale(0.3) saturate(0.3);
   filter: blur(1px) brightness(1) contrast(1) grayscale(0.3) saturate(0.3);
 }
 
 .blurry-2x {
-  -webkit-filter: blur(2px) brightness(1) contrast(1) grayscale(0.3)
-    saturate(0.3);
+  -webkit-filter: blur(2px) brightness(1) contrast(1) grayscale(0.3) saturate(0.3);
   filter: blur(2px) brightness(1) contrast(1) grayscale(0.3) saturate(0.3);
 }
 
 .blurry-3x {
-  -webkit-filter: blur(3px) brightness(1) contrast(1) grayscale(0.3)
-    saturate(0.3);
+  -webkit-filter: blur(3px) brightness(1) contrast(1) grayscale(0.3) saturate(0.3);
   filter: blur(3px) brightness(1) contrast(1) grayscale(0.3) saturate(0.3);
 }
 
@@ -7385,8 +7360,7 @@ button.ant-btn-round.ant-btn-icon-only.settings-button {
 }
 
 .text-monospace {
-  font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-    'Courier New', monospace !important;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
 }
 
 // Letter spacing (tracking)
@@ -7881,8 +7855,7 @@ code {
 
 // Shadows
 .box-shadow-6 {
-  box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2),
-    0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
+  box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
 }
 
 // Pills
@@ -9591,9 +9564,8 @@ code {
 
 .emoji {
   font-weight: 400;
-  font-family: apple color emoji, segoe ui emoji, noto color emoji,
-    android emoji, emojisymbols, emojione mozilla, twemoji mozilla,
-    segoe ui symbol, Helvetica, Arial, Verdana, Tahoma, sans-serif;
+  font-family: apple color emoji, segoe ui emoji, noto color emoji, android emoji, emojisymbols, emojione mozilla,
+    twemoji mozilla, segoe ui symbol, Helvetica, Arial, Verdana, Tahoma, sans-serif;
 }
 
 .online-status {

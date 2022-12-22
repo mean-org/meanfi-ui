@@ -43,12 +43,12 @@
         color: var(--text-color);
       }
 
-      >span {
+      > span {
         flex: 1 1 auto;
         text-align: left;
       }
 
-      >.loading-container {
+      > .loading-container {
         width: 24px;
         height: 24px;
         flex: 0 0 24px;

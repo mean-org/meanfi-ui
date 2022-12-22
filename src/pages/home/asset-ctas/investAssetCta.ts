@@ -1,4 +1,4 @@
-import { AssetCta, MetaInfoCtaAction, UserTokenAccount } from "models/accounts";
+import { AssetCta, MetaInfoCtaAction, UserTokenAccount } from 'models/accounts';
 
 export const getInvestAssetCta = (
   ctaItems: number,
@@ -21,4 +21,4 @@ export const getInvestAssetCta = (
     });
   }
   return actions;
-}
+};

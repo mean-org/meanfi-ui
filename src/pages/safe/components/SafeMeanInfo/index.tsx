@@ -38,13 +38,8 @@ export const SafeMeanInfo = (props: {
     selectedMultisig,
     selectedTab,
   } = props;
-  const {
-    multisigTxs,
-    multisigSolBalance,
-    setMultisigSolBalance,
-    refreshTokenBalance,
-    setMultisigVaults,
-  } = useContext(AppStateContext);
+  const { multisigTxs, multisigSolBalance, setMultisigSolBalance, refreshTokenBalance, setMultisigVaults } =
+    useContext(AppStateContext);
   const { address } = useParams();
   const { account } = useNativeAccount();
   const [loadingAssets, setLoadingAssets] = useState(true);
@@ -53,27 +48,15 @@ export const SafeMeanInfo = (props: {
 
   // Tabs
   const [amountOfProposals, setAmountOfProposals] = useState<string>('');
-  const multisigAddressPK = useMemo(
-    () => new PublicKey(appConfig.getConfig().multisigProgramAddress),
-    [],
-  );
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   const getMultisigVaults = useCallback(
     async (connection: Connection, multisig: PublicKey) => {
-      const [multisigSigner] = PublicKey.findProgramAddressSync(
-        [multisig.toBuffer()],
-        multisigAddressPK,
-      );
+      const [multisigSigner] = PublicKey.findProgramAddressSync([multisig.toBuffer()], multisigAddressPK);
 
-      const accountInfos = await connection.getProgramAccounts(
-        TOKEN_PROGRAM_ID,
-        {
-          filters: [
-            { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } },
-            { dataSize: ACCOUNT_LAYOUT.span },
-          ],
-        },
-      );
+      const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+        filters: [{ memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, { dataSize: ACCOUNT_LAYOUT.span }],
+      });
 
       if (!accountInfos || !accountInfos.length) {
         return [];
@@ -114,13 +97,7 @@ export const SafeMeanInfo = (props: {
 
   // Get Multisig Vaults
   useEffect(() => {
-    if (
-      !connection ||
-      !multisigClient ||
-      !address ||
-      !selectedMultisig ||
-      !loadingAssets
-    ) {
+    if (!connection || !multisigClient || !address || !selectedMultisig || !loadingAssets) {
       return;
     }
 
@@ -217,29 +194,17 @@ export const SafeMeanInfo = (props: {
             const onSelectProposal = () => {
               onDataToSafeView(proposal);
             };
-            const title = proposal.details.title
-              ? proposal.details.title
-              : 'Unknown proposal';
+            const title = proposal.details.title ? proposal.details.title : 'Unknown proposal';
             // Number of participants who have already approved the Tx
-            const approvedSigners = proposal.signers.filter(
-              (s: any) => s === true,
-            ).length;
-            const rejectedSigners = proposal.signers.filter(
-              (s: any) => s === false,
-            ).length;
-            const expirationDate = proposal.details.expirationDate
-              ? proposal.details.expirationDate
-              : '';
-            const executedOnDate = proposal.executedOn
-              ? proposal.executedOn.toDateString()
-              : '';
+            const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
+            const rejectedSigners = proposal.signers.filter((s: any) => s === false).length;
+            const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate : '';
+            const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : '';
             return (
               <div
                 key={index}
                 onClick={onSelectProposal}
-                className={`w-100 simplelink hover-list ${
-                  (index + 1) % 2 === 0 ? '' : 'bg-secondary-02'
-                }`}
+                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
               >
                 <ResumeItem
                   id={proposal.id.toBase58()}

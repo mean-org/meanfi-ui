@@ -1,11 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const StepSelector = (props: {
-  steps: number;
-  step: number;
-  onValueSelected: any;
-}) => {
+export const StepSelector = (props: { steps: number; step: number; onValueSelected: any }) => {
   const { t } = useTranslation('common');
 
   const onChangeValue = (value: number) => {
@@ -27,18 +23,8 @@ export const StepSelector = (props: {
           <span className="stepper-handles">
             {[...Array(props.steps)].map((step: any, index: number) => {
               return (
-                <div
-                  key={`${index + 1}`}
-                  className="handle-wrapper"
-                  onClick={() => onChangeValue(index)}
-                >
-                  <span
-                    className={
-                      index === props.step
-                        ? 'step-handle active'
-                        : 'step-handle'
-                    }
-                  ></span>
+                <div key={`${index + 1}`} className="handle-wrapper" onClick={() => onChangeValue(index)}>
+                  <span className={index === props.step ? 'step-handle active' : 'step-handle'}></span>
                 </div>
               );
             })}

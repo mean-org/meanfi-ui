@@ -1,8 +1,4 @@
-import {
-  CheckOutlined,
-  InfoCircleOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Modal, Spin } from 'antd';
@@ -13,10 +9,7 @@ import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
-import {
-  getTransactionOperationDescription,
-  isValidAddress,
-} from 'middleware/ui';
+import { getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
 import { getAmountWithSymbol } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
 import { ProgramUpgradeParams } from 'models/programs';
@@ -51,8 +44,7 @@ export const MultisigUpgradeProgramModal = ({
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const { transactionStatus, setTransactionStatus } =
-    useContext(AppStateContext);
+  const { transactionStatus, setTransactionStatus } = useContext(AppStateContext);
 
   const [programId, setProgramId] = useState('');
   const [programDataAddress, setProgramDataAddress] = useState('');
@@ -70,13 +62,7 @@ export const MultisigUpgradeProgramModal = ({
 
   // Resolves programDataAddress
   useEffect(() => {
-    if (
-      !isVisible ||
-      !connection ||
-      !publicKey ||
-      !programId ||
-      !isValidAddress(programId)
-    ) {
+    if (!isVisible || !connection || !publicKey || !programId || !isValidAddress(programId)) {
       return;
     }
 
@@ -156,8 +142,7 @@ export const MultisigUpgradeProgramModal = ({
       ? 'Add a buffer address'
       : transactionStatus.currentOperation === TransactionStatus.Iddle
       ? t('multisig.upgrade-program.main-cta')
-      : transactionStatus.currentOperation ===
-        TransactionStatus.TransactionFinished
+      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
       ? t('general.cta-finish')
       : t('general.refresh');
   };
@@ -165,21 +150,13 @@ export const MultisigUpgradeProgramModal = ({
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">
-          {t('multisig.upgrade-program.modal-title')}
-        </div>
-      }
+      title={<div className="modal-title">{t('multisig.upgrade-program.modal-title')}</div>}
       footer={null}
       open={isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={
-        isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle
-          ? 380
-          : 480
-      }
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
@@ -187,9 +164,7 @@ export const MultisigUpgradeProgramModal = ({
             {/* Proposal title */}
             {isMultisigTreasury && (
               <>
-                <div className="form-label text-left">
-                  {t('multisig.proposal-modal.title')}
-                </div>
+                <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
                 <InputMean
                   id="proposal-title-field"
                   name="Title"
@@ -203,9 +178,7 @@ export const MultisigUpgradeProgramModal = ({
               </>
             )}
             {/* Program id */}
-            <div className="form-label">
-              {t('multisig.upgrade-program.program-address-label')}
-            </div>
+            <div className="form-label">{t('multisig.upgrade-program.program-address-label')}</div>
             <div className={`well ${baseProgramId ? 'disabled' : ''}`}>
               <input
                 id="token-address-field"
@@ -218,9 +191,7 @@ export const MultisigUpgradeProgramModal = ({
               />
             </div>
             {/* Buffer address */}
-            <div className="form-label">
-              {t('multisig.upgrade-program.buffer-account-label')}
-            </div>
+            <div className="form-label">{t('multisig.upgrade-program.buffer-account-label')}</div>
             <div className="well">
               <input
                 id="mint-to-field"
@@ -229,58 +200,40 @@ export const MultisigUpgradeProgramModal = ({
                 autoCorrect="off"
                 type="text"
                 onChange={onBufferAccountChange}
-                placeholder={t(
-                  'multisig.upgrade-program.buffer-account-placeholder',
-                )}
+                placeholder={t('multisig.upgrade-program.buffer-account-placeholder')}
                 required={true}
                 spellCheck="false"
                 value={bufferAddress}
               />
               {bufferAddress && !isValidAddress(bufferAddress) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
+                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
               )}
             </div>
           </>
-        ) : transactionStatus.currentOperation ===
-          TransactionStatus.TransactionFinished ? (
+        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">
-                {t('multisig.upgrade-program.success-message')}
-              </h4>
+              <h4 className="font-bold">{t('multisig.upgrade-program.success-message')}</h4>
             </div>
           </>
         ) : (
           <>
             <div className="transaction-progress">
-              <InfoCircleOutlined
-                style={{ fontSize: 48 }}
-                className="icon mt-0"
-              />
-              {transactionStatus.currentOperation ===
-              TransactionStatus.TransactionStartFailure ? (
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(
-                      nativeBalance,
-                      NATIVE_SOL_MINT.toBase58(),
-                    ),
+                    accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
-                      transactionFees.blockchainFee +
-                        transactionFees.mspFlatFee,
+                      transactionFees.blockchainFee + transactionFees.mspFlatFee,
                       NATIVE_SOL_MINT.toBase58(),
                     ),
                   })}
                 </h4>
               ) : (
                 <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(
-                    transactionStatus.currentOperation,
-                    t,
-                  )}
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
             </div>
@@ -290,26 +243,17 @@ export const MultisigUpgradeProgramModal = ({
 
       <div
         className={
-          isBusy &&
-          transactionStatus.currentOperation !== TransactionStatus.Iddle
-            ? 'panel2 show'
-            : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
         }
       >
         {isBusy && transactionStatus !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
-              {getTransactionOperationDescription(
-                transactionStatus.currentOperation,
-                t,
-              )}
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
-            {transactionStatus.currentOperation ===
-              TransactionStatus.SignTransaction && (
-              <div className="indication">
-                {t('transactions.status.instructions')}
-              </div>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}
@@ -323,15 +267,9 @@ export const MultisigUpgradeProgramModal = ({
             shape="round"
             size="middle"
             className={isBusy ? 'inactive' : ''}
-            onClick={() =>
-              isError(transactionStatus.currentOperation)
-                ? onAcceptModal()
-                : onCloseModal()
-            }
+            onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
           >
-            {isError(transactionStatus.currentOperation)
-              ? t('general.retry')
-              : t('general.cta-close')}
+            {isError(transactionStatus.currentOperation) ? t('general.retry') : t('general.cta-close')}
           </Button>
         </div>
         <div className="col-6">
@@ -343,14 +281,9 @@ export const MultisigUpgradeProgramModal = ({
             size="middle"
             disabled={!isValidForm()}
             onClick={() => {
-              if (
-                transactionStatus.currentOperation === TransactionStatus.Iddle
-              ) {
+              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                 onAcceptModal();
-              } else if (
-                transactionStatus.currentOperation ===
-                TransactionStatus.TransactionFinished
-              ) {
+              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                 onCloseModal();
               } else {
                 refreshPage();

@@ -1,11 +1,6 @@
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import {
-  StreamTemplate,
-  TransactionFees,
-  PaymentStreamingAccount,
-  AccountType,
-} from '@mean-dao/payment-streaming';
+import { StreamTemplate, TransactionFees, PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
 import { Button, Checkbox, Col, Modal, Row } from 'antd';
 import BN from 'bn.js';
 import { InfoIcon } from 'components/InfoIcon';
@@ -98,15 +93,11 @@ export const VestingContractCreateStreamModal = (props: {
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState(new BN(0));
   // Setting from the vesting contract
-  const [treasuryOption, setTreasuryOption] = useState<
-    AccountType | undefined
-  >(undefined);
+  const [treasuryOption, setTreasuryOption] = useState<AccountType | undefined>(undefined);
   const [paymentStartDate, setPaymentStartDate] = useState<string>('');
   const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>('');
-  const [lockPeriodFrequency, setLockPeriodFrequency] =
-    useState<PaymentRateType>(PaymentRateType.PerMonth);
-  const [cliffReleasePercentage, setCliffReleasePercentage] =
-    useState<string>('');
+  const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>('');
   const [cliffRelease, setCliffRelease] = useState<string>('');
   const [cliffReleaseBn, setCliffReleaseBn] = useState(new BN(0));
   const [paymentRateAmount, setPaymentRateAmount] = useState<string>('');
@@ -126,16 +117,13 @@ export const VestingContractCreateStreamModal = (props: {
     (preSetting = false) => {
       if ((isFeePaidByTreasurer || preSetting) && withdrawTransactionFees) {
         const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
-        const feeNumerator =
-          withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
+        const feeNumerator = withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
         const feeDenaminator = 1000000;
         const badStreamMaxAllocation = unallocatedBalance
           .mul(new BN(feeDenaminator))
           .div(new BN(feeNumerator + feeDenaminator));
 
-        const feeAmount = badStreamMaxAllocation
-          .mul(new BN(feeNumerator))
-          .div(new BN(feeDenaminator));
+        const feeAmount = badStreamMaxAllocation.mul(new BN(feeNumerator)).div(new BN(feeDenaminator));
 
         const badTotal = badStreamMaxAllocation.add(feeAmount);
         const badRemaining = unallocatedBalance.sub(badTotal);
@@ -171,29 +159,17 @@ export const VestingContractCreateStreamModal = (props: {
       }
       return unallocatedBalance;
     },
-    [
-      isWhitelisted,
-      unallocatedBalance,
-      isFeePaidByTreasurer,
-      withdrawTransactionFees,
-    ],
+    [isWhitelisted, unallocatedBalance, isFeePaidByTreasurer, withdrawTransactionFees],
   );
 
   const getTokenPrice = useCallback(() => {
     if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
-    const price =
-      getTokenPriceByAddress(selectedToken.address) ||
-      getTokenPriceBySymbol(selectedToken.symbol);
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
 
     return parseFloat(fromCoinAmount) * price;
-  }, [
-    fromCoinAmount,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    selectedToken,
-  ]);
+  }, [fromCoinAmount, getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken]);
 
   const getMinBalanceRequired = useCallback(() => {
     if (!transactionFees) {
@@ -204,9 +180,7 @@ export const VestingContractCreateStreamModal = (props: {
     const ff = transactionFees.mspFlatFee; // Flat fee (protocol)
     const fee = bf + ff;
     const minRequired = isMultisigTreasury ? minRequiredBalance : fee;
-    return minRequired > MIN_SOL_BALANCE_REQUIRED
-      ? minRequired
-      : MIN_SOL_BALANCE_REQUIRED;
+    return minRequired > MIN_SOL_BALANCE_REQUIRED ? minRequired : MIN_SOL_BALANCE_REQUIRED;
   }, [isMultisigTreasury, minRequiredBalance, transactionFees]);
 
   const getReleaseRate = useCallback(() => {
@@ -221,27 +195,14 @@ export const VestingContractCreateStreamModal = (props: {
       splTokenList,
       false,
     )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
-  }, [
-    lockPeriodAmount,
-    lockPeriodFrequency,
-    paymentRateAmountBn,
-    selectedToken,
-    splTokenList,
-    t,
-  ]);
+  }, [lockPeriodAmount, lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
 
   const getCliffReleaseAmount = useCallback(() => {
     if (!cliffRelease || !selectedToken) {
       return '--';
     }
 
-    return displayAmountWithSymbol(
-      cliffReleaseBn,
-      selectedToken.address,
-      selectedToken.decimals,
-      splTokenList,
-      false,
-    );
+    return displayAmountWithSymbol(cliffReleaseBn, selectedToken.address, selectedToken.decimals, splTokenList, false);
   }, [cliffRelease, cliffReleaseBn, selectedToken, splTokenList]);
 
   /////////////////////
@@ -273,41 +234,23 @@ export const VestingContractCreateStreamModal = (props: {
 
   // Set max amount allocatable to a stream in BN the first time
   useEffect(() => {
-    if (
-      isVisible &&
-      vestingContract &&
-      withdrawTransactionFees &&
-      !isFeePaidByTreasurer
-    ) {
+    if (isVisible && vestingContract && withdrawTransactionFees && !isFeePaidByTreasurer) {
       getMaxAmount();
     }
-  }, [
-    isVisible,
-    vestingContract,
-    isFeePaidByTreasurer,
-    withdrawTransactionFees,
-    getMaxAmount,
-  ]);
+  }, [isVisible, vestingContract, isFeePaidByTreasurer, withdrawTransactionFees, getMaxAmount]);
 
   // When modal goes visible, set template data
   useEffect(() => {
     if (isVisible && vestingContract && streamTemplate) {
       consoleOut('this one I received:', streamTemplate, 'orange');
       setTreasuryOption(vestingContract.accountType);
-      const cliffPercent = makeDecimal(
-        new BN(streamTemplate.cliffVestPercent),
-        4,
-      );
+      const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
       setCliffReleasePercentage(formatPercent(cliffPercent, 4));
       const localDate = new Date(streamTemplate.startUtc);
-      const dateWithoutOffset = new Date(
-        localDate.getTime() - localDate.getTimezoneOffset() * 60000,
-      );
+      const dateWithoutOffset = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
       setPaymentStartDate(dateWithoutOffset.toUTCString());
       updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
-      const periodFrequency = getPaymentIntervalFromSeconds(
-        streamTemplate.rateIntervalInSeconds,
-      );
+      const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
       setLockPeriodFrequency(periodFrequency);
     }
   }, [isVisible, currentStep, streamTemplate, vestingContract]);
@@ -349,13 +292,7 @@ export const VestingContractCreateStreamModal = (props: {
       setPaymentRateAmountBn(ra);
       setPaymentRateAmount(ra.toString());
     }
-  }, [
-    cliffReleasePercentage,
-    fromCoinAmount,
-    lockPeriodAmount,
-    selectedToken,
-    tokenAmount,
-  ]);
+  }, [cliffReleasePercentage, fromCoinAmount, lockPeriodAmount, selectedToken, tokenAmount]);
 
   // Set the amount to be streamed
   useEffect(() => {
@@ -379,9 +316,7 @@ export const VestingContractCreateStreamModal = (props: {
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
-      const ellipsisElements = document.querySelectorAll(
-        '.overflow-ellipsis-middle',
-      );
+      const ellipsisElements = document.querySelectorAll('.overflow-ellipsis-middle');
       for (const element of ellipsisElements) {
         const e = element as HTMLElement;
         if (e.offsetWidth < e.scrollWidth) {
@@ -419,13 +354,7 @@ export const VestingContractCreateStreamModal = (props: {
 
     setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
     setTokenAmount(new BN(maxAmount));
-  }, [
-    getMaxAmount,
-    selectedToken,
-    setFromCoinAmount,
-    isFeePaidByTreasurer,
-    tokenAmount,
-  ]);
+  }, [getMaxAmount, selectedToken, setFromCoinAmount, isFeePaidByTreasurer, tokenAmount]);
 
   const getStreamTxConfirmDescription = (multisig: string) => {
     if (!selectedToken) {
@@ -464,9 +393,7 @@ export const VestingContractCreateStreamModal = (props: {
       message = `Stream to send ${rate} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(
         lockPeriodFrequency,
         t,
-      )} with ${cliff} released on commencement has been ${
-        multisig ? 'proposed' : 'scheduled'
-      }.`;
+      )} with ${cliff} released on commencement has been ${multisig ? 'proposed' : 'scheduled'}.`;
     }
     return message;
   };
@@ -476,10 +403,7 @@ export const VestingContractCreateStreamModal = (props: {
       return;
     }
 
-    const multisig =
-      isMultisigTreasury && selectedMultisig
-        ? selectedMultisig.authority.toBase58()
-        : '';
+    const multisig = isMultisigTreasury && selectedMultisig ? selectedMultisig.authority.toBase58() : '';
     const options: VestingContractStreamCreateOptions = {
       associatedToken: selectedToken,
       beneficiaryAddress: recipientAddress,
@@ -566,8 +490,7 @@ export const VestingContractCreateStreamModal = (props: {
     const mAa = new BN(maxAllocatableAmount || 0);
     const ub = new BN(unallocatedBalance || 0);
     return publicKey &&
-      ((isMultisigTreasury && selectedMultisig && proposalTitle) ||
-        (!isMultisigTreasury && !proposalTitle)) &&
+      ((isMultisigTreasury && selectedMultisig && proposalTitle) || (!isMultisigTreasury && !proposalTitle)) &&
       selectedToken &&
       vestingStreamName &&
       vestingStreamName.length <= 32 &&
@@ -576,8 +499,7 @@ export const VestingContractCreateStreamModal = (props: {
       nativeBalance >= getMinBalanceRequired() &&
       tokenAmount &&
       tokenAmount.gtn(0) &&
-      ((isFeePaidByTreasurer && tokenAmount.lte(mAa)) ||
-        (!isFeePaidByTreasurer && tokenAmount.lte(ub)))
+      ((isFeePaidByTreasurer && tokenAmount.lte(mAa)) || (!isFeePaidByTreasurer && tokenAmount.lte(ub)))
       ? true
       : false;
   };
@@ -602,10 +524,7 @@ export const VestingContractCreateStreamModal = (props: {
       return t('transactions.validation.no-balance');
     } else if (!tokenAmount || tokenAmount.isZero()) {
       return t('transactions.validation.no-amount');
-    } else if (
-      (isFeePaidByTreasurer && tokenAmount.gt(mAa)) ||
-      (!isFeePaidByTreasurer && tokenAmount.gt(ub))
-    ) {
+    } else if ((isFeePaidByTreasurer && tokenAmount.gt(mAa)) || (!isFeePaidByTreasurer && tokenAmount.gt(ub))) {
       return t('transactions.validation.amount-high');
     } else if (nativeBalance < getMinBalanceRequired()) {
       return t('transactions.validation.insufficient-balance-needed', {
@@ -652,11 +571,7 @@ export const VestingContractCreateStreamModal = (props: {
       <div className="flex-fixed-right px-1 mt-2 mb-2 font-size-120">
         <div className="left font-bold">{vestingContract.name}</div>
         <div className="right">
-          <span
-            className={`badge large ml-1 ${
-              theme === 'light' ? 'golden fg-dark' : 'darken'
-            }`}
-          >
+          <span className={`badge large ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
             {treasuryOption === AccountType.Open ? 'Open' : 'Locked'}
           </span>
         </div>
@@ -667,23 +582,14 @@ export const VestingContractCreateStreamModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">
-          {t('vesting.create-stream.modal-title')}
-        </div>
-      }
+      title={<div className="modal-title">{t('vesting.create-stream.modal-title')}</div>}
       footer={null}
       open={isVisible}
       onCancel={handleClose}
       width={480}
     >
       <div className="scrollable-content">
-        <WizardStepSelector
-          step={currentStep}
-          steps={2}
-          extraClass="px-1 mb-2"
-          onValueSelected={onStepperChange}
-        />
+        <WizardStepSelector step={currentStep} steps={2} extraClass="px-1 mb-2" onValueSelected={onStepperChange} />
 
         <div className={`panel1 ${currentStep === 0 ? 'show' : 'hide'}`}>
           {vestingContract && renderVcName()}
@@ -691,9 +597,7 @@ export const VestingContractCreateStreamModal = (props: {
           {/* Proposal title */}
           {isMultisigTreasury && selectedMultisig && (
             <div className="mb-3">
-              <div className="form-label">
-                {t('multisig.proposal-modal.title')}
-              </div>
+              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
               <InputMean
                 id="proposal-title-field"
                 name="Title"
@@ -706,9 +610,7 @@ export const VestingContractCreateStreamModal = (props: {
           )}
 
           {/* Vesting Stream name */}
-          <div className="form-label">
-            {t('vesting.create-stream.vesting-stream-name-label')}
-          </div>
+          <div className="form-label">{t('vesting.create-stream.vesting-stream-name-label')}</div>
           <div className="well">
             <div className="flex-fixed-right">
               <div className="left">
@@ -720,9 +622,7 @@ export const VestingContractCreateStreamModal = (props: {
                   type="text"
                   maxLength={32}
                   onChange={handleVestingStreamNameChange}
-                  placeholder={t(
-                    'vesting.create-stream.vesting-stream-name-placeholder',
-                  )}
+                  placeholder={t('vesting.create-stream.vesting-stream-name-placeholder')}
                   spellCheck="false"
                   value={vestingStreamName}
                 />
@@ -731,9 +631,7 @@ export const VestingContractCreateStreamModal = (props: {
           </div>
 
           {/* Beneficiary address */}
-          <div className="form-label">
-            {t('vesting.create-stream.beneficiary-address-label')}
-          </div>
+          <div className="form-label">{t('vesting.create-stream.beneficiary-address-label')}</div>
           <div className="well">
             <div className="flex-fixed-right">
               <div className="left position-relative">
@@ -747,25 +645,16 @@ export const VestingContractCreateStreamModal = (props: {
                     onFocus={handleRecipientAddressFocusInOut}
                     onChange={handleRecipientAddressChange}
                     onBlur={handleRecipientAddressFocusInOut}
-                    placeholder={t(
-                      'vesting.create-stream.beneficiary-address-placeholder',
-                    )}
+                    placeholder={t('vesting.create-stream.beneficiary-address-placeholder')}
                     required={true}
                     spellCheck="false"
                     value={recipientAddress}
                   />
                   <span
                     id="payment-recipient-static-field"
-                    className={`${
-                      recipientAddress
-                        ? 'overflow-ellipsis-middle'
-                        : 'placeholder-text'
-                    }`}
+                    className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
                   >
-                    {recipientAddress ||
-                      t(
-                        'vesting.create-stream.beneficiary-address-placeholder',
-                      )}
+                    {recipientAddress || t('vesting.create-stream.beneficiary-address-placeholder')}
                   </span>
                 </span>
               </div>
@@ -774,21 +663,15 @@ export const VestingContractCreateStreamModal = (props: {
               </div>
             </div>
             {recipientAddress && !isValidAddress(recipientAddress) && (
-              <span className="form-field-error">
-                {t('transactions.validation.address-validation')}
-              </span>
+              <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
             )}
           </div>
 
           {/* Amount to stream */}
           {treasuryOption === AccountType.Open ? (
-            <div className="form-label">
-              {t('vesting.create-stream.total-funds-to-stream')}
-            </div>
+            <div className="form-label">{t('vesting.create-stream.total-funds-to-stream')}</div>
           ) : (
-            <div className="form-label">
-              {t('vesting.create-stream.total-funds-to-commit')}
-            </div>
+            <div className="form-label">{t('vesting.create-stream.total-funds-to-commit')}</div>
           )}
           <div className="well mb-1">
             <div className="flex-fixed-left">
@@ -832,21 +715,14 @@ export const VestingContractCreateStreamModal = (props: {
                 <span>{t('transactions.send-amount.label-right')}:</span>
                 <span>
                   {unallocatedBalance && selectedToken
-                    ? stringNumberFormat(
-                        toUiAmount(unallocatedBalance, selectedToken.decimals),
-                        4,
-                      )
+                    ? stringNumberFormat(toUiAmount(unallocatedBalance, selectedToken.decimals), 4)
                     : '0'}
                 </span>
               </div>
               <div className="right inner-label">
                 {publicKey ? (
                   <span
-                    className={
-                      loadingPrices
-                        ? 'click-disabled fg-orange-red pulsate'
-                        : 'simplelink'
-                    }
+                    className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                     onClick={() => refreshPrices()}
                   >
                     ~{fromCoinAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
@@ -878,39 +754,24 @@ export const VestingContractCreateStreamModal = (props: {
 
           <div className="flex-fixed-right">
             <div className="left">
-              <h2 className="form-group-label">
-                {t('vesting.create-stream.step-two-label')}
-              </h2>
+              <h2 className="form-group-label">{t('vesting.create-stream.step-two-label')}</h2>
             </div>
             <div className="right">
-              <span
-                className="flat-button change-button"
-                onClick={() => setCurrentStep(0)}
-              >
+              <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
                 <IconEdit className="mean-svg-icons" />
                 <span>{t('general.cta-change')}</span>
               </span>
             </div>
           </div>
 
-          <div className="px-1 font-size-100 font-bold">
-            {vestingStreamName ? vestingStreamName : '--'}
-          </div>
-          <div
-            className={`mb-2 px-1 ${
-              isXsDevice ? 'font-size-80' : 'font-size-90'
-            }`}
-          >
+          <div className="px-1 font-size-100 font-bold">{vestingStreamName ? vestingStreamName : '--'}</div>
+          <div className={`mb-2 px-1 ${isXsDevice ? 'font-size-80' : 'font-size-90'}`}>
             {recipientAddress ? recipientAddress : '--'}
           </div>
 
           <Row className="mb-2 px-1">
             <Col span={24}>
-              <strong>
-                {t(
-                  'treasuries.treasury-streams.add-stream-locked.panel3-sending',
-                )}
-              </strong>
+              <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}</strong>
               <span className="ml-1">
                 {fromCoinAmount && selectedToken
                   ? `${displayAmountWithSymbol(
@@ -924,27 +785,13 @@ export const VestingContractCreateStreamModal = (props: {
               </span>
             </Col>
             <Col span={24}>
-              <strong>
-                {t(
-                  'treasuries.treasury-streams.add-stream-locked.panel3-starting-on',
-                )}
-              </strong>
-              <span className="ml-1">
-                {paymentStartDate
-                  ? getReadableDate(paymentStartDate, true)
-                  : '--'}
-              </span>
+              <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}</strong>
+              <span className="ml-1">{paymentStartDate ? getReadableDate(paymentStartDate, true) : '--'}</span>
             </Col>
             <Col span={24}>
-              <strong>
-                {t(
-                  'treasuries.treasury-streams.add-stream-locked.panel3-cliff-release',
-                )}
-              </strong>
+              <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}</strong>
               <span className="ml-1">
-                {cliffRelease && selectedToken
-                  ? `${getCliffReleaseAmount()} (on commencement)`
-                  : '--'}
+                {cliffRelease && selectedToken ? `${getCliffReleaseAmount()} (on commencement)` : '--'}
               </span>
             </Col>
             <Col span={24}>
@@ -957,10 +804,7 @@ export const VestingContractCreateStreamModal = (props: {
                       selectedToken.decimals,
                       splTokenList,
                       false,
-                    )} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(
-                      lockPeriodFrequency,
-                      t,
-                    )}`
+                    )} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`
                   : '--'}
               </span>
             </Col>
@@ -973,27 +817,16 @@ export const VestingContractCreateStreamModal = (props: {
           {treasuryOption === AccountType.Lock && (
             <span className="warning-message icon-label mb-3">
               <IconWarning className="mean-svg-icons" />
-              {t(
-                'treasuries.treasury-streams.add-stream-locked.panel3-warning-message',
-              )}
+              {t('treasuries.treasury-streams.add-stream-locked.panel3-warning-message')}
             </span>
           )}
 
           <div className="ml-1">
-            <Checkbox
-              checked={isVerifiedRecipient}
-              onChange={onIsVerifiedRecipientChange}
-            >
+            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
               {t('transfers.verified-recipient-disclaimer')}
             </Checkbox>
             <InfoIcon
-              content={
-                <span>
-                  {t(
-                    'vesting.create-stream.verified-recipient-disclaimer-tooltip',
-                  )}
-                </span>
-              }
+              content={<span>{t('vesting.create-stream.verified-recipient-disclaimer-tooltip')}</span>}
               placement="top"
             >
               <InfoCircleOutlined style={{ lineHeight: 0 }} />
@@ -1001,20 +834,9 @@ export const VestingContractCreateStreamModal = (props: {
           </div>
 
           {/* CTAs */}
-          <div
-            className={`two-column-form-layout mt-3${
-              isXsDevice ? ' reverse' : ''
-            }`}
-          >
+          <div className={`two-column-form-layout mt-3${isXsDevice ? ' reverse' : ''}`}>
             <div className={`left ${isXsDevice ? 'mb-3' : 'mb-0'}`}>
-              <Button
-                block
-                type="default"
-                shape="round"
-                size="large"
-                className="thin-stroke"
-                onClick={onBackClick}
-              >
+              <Button block type="default" shape="round" size="large" className="thin-stroke" onClick={onBackClick}>
                 Back
               </Button>
             </div>

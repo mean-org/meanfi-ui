@@ -1,22 +1,22 @@
-import { StreamInfo, TreasuryInfo } from "@mean-dao/money-streaming";
-import { Stream, PaymentStreamingAccount } from "@mean-dao/payment-streaming";
-import { PublicKey } from "@solana/web3.js";
-import { Button, notification } from "antd";
-import { segmentAnalytics } from "App";
-import { openNotification } from "components/Notifications";
-import { MULTISIG_ROUTE_BASE_PATH } from "constants/common";
-import { useAccountsContext } from "contexts/accounts";
-import { AppStateContext } from "contexts/appstate";
-import { confirmationEvents, TxConfirmationInfo } from "contexts/transaction-status";
-import { useWallet } from "contexts/wallet";
-import { getStreamingAccountId } from "middleware/getStreamingAccountId";
-import { AppUsageEvent } from "middleware/segment-service";
-import { consoleOut } from "middleware/ui";
-import { RegisteredAppPaths } from "models/accounts";
-import { EventType, OperationType } from "models/enums";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { MoneyStreamsIncomingView, MoneyStreamsInfoView, MoneyStreamsOutgoingView, StreamingAccountView } from "views";
+import { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
+import { Stream, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import { PublicKey } from '@solana/web3.js';
+import { Button, notification } from 'antd';
+import { segmentAnalytics } from 'App';
+import { openNotification } from 'components/Notifications';
+import { MULTISIG_ROUTE_BASE_PATH } from 'constants/common';
+import { useAccountsContext } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { confirmationEvents, TxConfirmationInfo } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
+import { AppUsageEvent } from 'middleware/segment-service';
+import { consoleOut } from 'middleware/ui';
+import { RegisteredAppPaths } from 'models/accounts';
+import { EventType, OperationType } from 'models/enums';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { MoneyStreamsIncomingView, MoneyStreamsInfoView, MoneyStreamsOutgoingView, StreamingAccountView } from 'views';
 
 let isWorkflowLocked = false;
 
@@ -25,11 +25,7 @@ const PaymentStreamingView = (props: {
   loadingTreasuries: boolean;
   onBackButtonClicked?: any;
 }) => {
-  const {
-    treasuryList,
-    loadingTreasuries,
-    onBackButtonClicked,
-  } = props;
+  const { treasuryList, loadingTreasuries, onBackButtonClicked } = props;
   const location = useLocation();
   const navigate = useNavigate();
   const { streamingTab, streamingItemId } = useParams();
@@ -54,7 +50,6 @@ const PaymentStreamingView = (props: {
   const [treasuryDetail, setTreasuryDetail] = useState<PaymentStreamingAccount | TreasuryInfo | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
 
-
   ///////////////
   // Callbacks //
   ///////////////
@@ -65,82 +60,61 @@ const PaymentStreamingView = (props: {
     setPathParamStreamingTab('');
   }, []);
 
-  const recordTxConfirmation = useCallback(
-    (item: TxConfirmationInfo, success = true) => {
-      let event: any = undefined;
+  const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
+    let event: any = undefined;
 
-      if (item) {
-        switch (item.operationType) {
-          case OperationType.StreamAddFunds:
-            event = success
-              ? AppUsageEvent.StreamTopupCompleted
-              : AppUsageEvent.StreamTopupFailed;
-            break;
-          case OperationType.StreamPause:
-            event = success
-              ? AppUsageEvent.StreamPauseCompleted
-              : AppUsageEvent.StreamPauseFailed;
-            break;
-          case OperationType.StreamResume:
-            event = success
-              ? AppUsageEvent.StreamResumeCompleted
-              : AppUsageEvent.StreamResumeFailed;
-            break;
-          case OperationType.StreamClose:
-            event = success
-              ? AppUsageEvent.StreamCloseCompleted
-              : AppUsageEvent.StreamCloseFailed;
-            break;
-          case OperationType.StreamWithdraw:
-            event = success
-              ? AppUsageEvent.StreamWithdrawalCompleted
-              : AppUsageEvent.StreamWithdrawalFailed;
-            break;
-          case OperationType.StreamTransferBeneficiary:
-            event = success
-              ? AppUsageEvent.StreamTransferCompleted
-              : AppUsageEvent.StreamTransferFailed;
-            break;
-          case OperationType.TreasuryAddFunds:
-            event = success
-              ? AppUsageEvent.AddFundsStreamingAccountCompleted
-              : AppUsageEvent.AddFundsStreamingAccountFailed;
-            break;
-          case OperationType.TreasuryWithdraw:
-            event = success
-              ? AppUsageEvent.WithdrawFundsStreamingAccountCompleted
-              : AppUsageEvent.WithdrawFundsStreamingAccountFailed;
-            break;
-          case OperationType.TreasuryStreamCreate:
-            event = success
-              ? AppUsageEvent.CreateStreamStreamingAccountCompleted
-              : AppUsageEvent.CreateStreamStreamingAccountFailed;
-            break;
-          case OperationType.TreasuryCreate:
-            event = success
-              ? AppUsageEvent.CreateStreamingAccountCompleted
-              : AppUsageEvent.CreateStreamingAccountFailed;
-            break;
-          case OperationType.TreasuryClose:
-            event = success
-              ? AppUsageEvent.CloseStreamingAccountCompleted
-              : AppUsageEvent.CloseStreamingAccountFailed;
-            break;
-          case OperationType.TreasuryRefreshBalance:
-            event = success
-              ? AppUsageEvent.RefreshAccountBalanceCompleted
-              : AppUsageEvent.RefreshAccountBalanceFailed;
-            break;
-          default:
-            break;
-        }
-        if (event) {
-          segmentAnalytics.recordEvent(event, { signature: item.signature });
-        }
+    if (item) {
+      switch (item.operationType) {
+        case OperationType.StreamAddFunds:
+          event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
+          break;
+        case OperationType.StreamPause:
+          event = success ? AppUsageEvent.StreamPauseCompleted : AppUsageEvent.StreamPauseFailed;
+          break;
+        case OperationType.StreamResume:
+          event = success ? AppUsageEvent.StreamResumeCompleted : AppUsageEvent.StreamResumeFailed;
+          break;
+        case OperationType.StreamClose:
+          event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
+          break;
+        case OperationType.StreamWithdraw:
+          event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
+          break;
+        case OperationType.StreamTransferBeneficiary:
+          event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
+          break;
+        case OperationType.TreasuryAddFunds:
+          event = success
+            ? AppUsageEvent.AddFundsStreamingAccountCompleted
+            : AppUsageEvent.AddFundsStreamingAccountFailed;
+          break;
+        case OperationType.TreasuryWithdraw:
+          event = success
+            ? AppUsageEvent.WithdrawFundsStreamingAccountCompleted
+            : AppUsageEvent.WithdrawFundsStreamingAccountFailed;
+          break;
+        case OperationType.TreasuryStreamCreate:
+          event = success
+            ? AppUsageEvent.CreateStreamStreamingAccountCompleted
+            : AppUsageEvent.CreateStreamStreamingAccountFailed;
+          break;
+        case OperationType.TreasuryCreate:
+          event = success ? AppUsageEvent.CreateStreamingAccountCompleted : AppUsageEvent.CreateStreamingAccountFailed;
+          break;
+        case OperationType.TreasuryClose:
+          event = success ? AppUsageEvent.CloseStreamingAccountCompleted : AppUsageEvent.CloseStreamingAccountFailed;
+          break;
+        case OperationType.TreasuryRefreshBalance:
+          event = success ? AppUsageEvent.RefreshAccountBalanceCompleted : AppUsageEvent.RefreshAccountBalanceFailed;
+          break;
+        default:
+          break;
       }
-    },
-    [],
-  );
+      if (event) {
+        segmentAnalytics.recordEvent(event, { signature: item.signature });
+      }
+    }
+  }, []);
 
   const logEventHandling = useCallback((item: TxConfirmationInfo) => {
     consoleOut(
@@ -150,121 +124,121 @@ const PaymentStreamingView = (props: {
     );
   }, []);
 
-  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
-    const turnOffLockWorkflow = () => {
-      isWorkflowLocked = false;
-    };
+  const onTxConfirmed = useCallback(
+    (item: TxConfirmationInfo) => {
+      const turnOffLockWorkflow = () => {
+        isWorkflowLocked = false;
+      };
 
-    const notifyMultisigActionFollowup = (item: TxConfirmationInfo) => {
-      if (!item || !item.extras || !item.extras.multisigAuthority) {
-        turnOffLockWorkflow();
-        return;
-      }
+      const notifyMultisigActionFollowup = (item: TxConfirmationInfo) => {
+        if (!item || !item.extras || !item.extras.multisigAuthority) {
+          turnOffLockWorkflow();
+          return;
+        }
 
-      const myNotifyKey = `notify-${Date.now()}`;
-      openNotification({
-        type: 'info',
-        key: myNotifyKey,
-        title: 'Review proposal',
-        duration: 20,
-        description: (
-          <>
-            <div className="mb-2">
-              The proposal's status can be reviewed in the Safe's proposal list.
-            </div>
-            <Button
-              type="primary"
-              shape="round"
-              size="small"
-              className="extra-small d-flex align-items-center pb-1"
-              onClick={() => {
-                const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
-                navigate(url);
-                notification.close(myNotifyKey);
-              }}
-            >
-              Review proposal
-            </Button>
-          </>
-        ),
-        handleClose: turnOffLockWorkflow,
-      });
-    };
+        const myNotifyKey = `notify-${Date.now()}`;
+        openNotification({
+          type: 'info',
+          key: myNotifyKey,
+          title: 'Review proposal',
+          duration: 20,
+          description: (
+            <>
+              <div className="mb-2">The proposal's status can be reviewed in the Safe's proposal list.</div>
+              <Button
+                type="primary"
+                shape="round"
+                size="small"
+                className="extra-small d-flex align-items-center pb-1"
+                onClick={() => {
+                  const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
+                  navigate(url);
+                  notification.close(myNotifyKey);
+                }}
+              >
+                Review proposal
+              </Button>
+            </>
+          ),
+          handleClose: turnOffLockWorkflow,
+        });
+      };
 
-    if (item) {
-      if (isWorkflowLocked) {
-        return;
-      }
+      if (item) {
+        if (isWorkflowLocked) {
+          return;
+        }
 
-      // Lock the workflow
-      if (item.extras && item.extras.multisigAuthority) {
-        isWorkflowLocked = true;
-      }
+        // Lock the workflow
+        if (item.extras && item.extras.multisigAuthority) {
+          isWorkflowLocked = true;
+        }
 
-      recordTxConfirmation(item, true);
-      switch (item.operationType) {
-        case OperationType.StreamPause:
-        case OperationType.StreamResume:
-        case OperationType.StreamAddFunds:
-        case OperationType.TreasuryRefreshBalance:
-        case OperationType.TreasuryAddFunds:
-        case OperationType.TreasuryWithdraw:
-          logEventHandling(item);
-          if (item.extras && item.extras.multisigAuthority) {
-            refreshMultisigs();
-            notifyMultisigActionFollowup(item);
-          } else {
-            softReloadStreams();
-          }
-          break;
-        case OperationType.TreasuryCreate:
-        case OperationType.StreamWithdraw:
-          logEventHandling(item);
-          if (item.extras && item.extras.multisigAuthority) {
-            refreshMultisigs();
-            notifyMultisigActionFollowup(item);
-          } else {
-            accountRefresh();
-            softReloadStreams();
-          }
-          break;
-        case OperationType.StreamClose:
-          logEventHandling(item);
-          if (item.extras && item.extras.multisigAuthority) {
-            refreshMultisigs();
-            notifyMultisigActionFollowup(item);
-          }
-          setTimeout(() => {
-            console.log('calling onBackButtonClicked()...');
-            onBackButtonClicked();
+        recordTxConfirmation(item, true);
+        switch (item.operationType) {
+          case OperationType.StreamPause:
+          case OperationType.StreamResume:
+          case OperationType.StreamAddFunds:
+          case OperationType.TreasuryRefreshBalance:
+          case OperationType.TreasuryAddFunds:
+          case OperationType.TreasuryWithdraw:
+            logEventHandling(item);
+            if (item.extras && item.extras.multisigAuthority) {
+              refreshMultisigs();
+              notifyMultisigActionFollowup(item);
+            } else {
+              softReloadStreams();
+            }
+            break;
+          case OperationType.TreasuryCreate:
+          case OperationType.StreamWithdraw:
+            logEventHandling(item);
+            if (item.extras && item.extras.multisigAuthority) {
+              refreshMultisigs();
+              notifyMultisigActionFollowup(item);
+            } else {
+              accountRefresh();
+              softReloadStreams();
+            }
+            break;
+          case OperationType.StreamClose:
+            logEventHandling(item);
+            if (item.extras && item.extras.multisigAuthority) {
+              refreshMultisigs();
+              notifyMultisigActionFollowup(item);
+            }
+            setTimeout(() => {
+              console.log('calling onBackButtonClicked()...');
+              onBackButtonClicked();
+              hardReloadStreams();
+            }, 20);
+            break;
+          case OperationType.TreasuryClose:
+            logEventHandling(item);
+            if (item.extras && item.extras.multisigAuthority) {
+              refreshMultisigs();
+              notifyMultisigActionFollowup(item);
+            }
+            navigate(`/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`);
             hardReloadStreams();
-          }, 20);
-          break;
-        case OperationType.TreasuryClose:
-          logEventHandling(item);
-          if (item.extras && item.extras.multisigAuthority) {
-            refreshMultisigs();
-            notifyMultisigActionFollowup(item);
-          }
-          navigate(`/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`);
-          hardReloadStreams();
-          break;
-        case OperationType.StreamTransferBeneficiary:
-          logEventHandling(item);
-          if (item.extras && item.extras.multisigAuthority) {
-            refreshMultisigs();
-            notifyMultisigActionFollowup(item);
-          } else {
-            navigate(`/${RegisteredAppPaths.PaymentStreaming}/incoming`);
-            hardReloadStreams();
-          }
-          break;
-        default:
-          break;
+            break;
+          case OperationType.StreamTransferBeneficiary:
+            logEventHandling(item);
+            if (item.extras && item.extras.multisigAuthority) {
+              refreshMultisigs();
+              notifyMultisigActionFollowup(item);
+            } else {
+              navigate(`/${RegisteredAppPaths.PaymentStreaming}/incoming`);
+              hardReloadStreams();
+            }
+            break;
+          default:
+            break;
+        }
       }
-    }
-  }, [logEventHandling, navigate, onBackButtonClicked, recordTxConfirmation, refreshMultisigs]);
-
+    },
+    [logEventHandling, navigate, onBackButtonClicked, recordTxConfirmation, refreshMultisigs],
+  );
 
   /////////////////////
   // Data management //
@@ -291,11 +265,7 @@ const PaymentStreamingView = (props: {
       switch (streamingTab) {
         case 'streaming-accounts':
           if (streamingItemId) {
-            consoleOut(
-              'Route param streamingItemId:',
-              streamingItemId,
-              'crimson',
-            );
+            consoleOut('Route param streamingItemId:', streamingItemId, 'crimson');
             setPathParamTreasuryId(streamingItemId);
           } else {
             setPathParamTreasuryId('');
@@ -304,11 +274,7 @@ const PaymentStreamingView = (props: {
         case 'incoming':
         case 'outgoing':
           if (streamingItemId) {
-            consoleOut(
-              'Route param streamingItemId:',
-              streamingItemId,
-              'crimson',
-            );
+            consoleOut('Route param streamingItemId:', streamingItemId, 'crimson');
             setPathParamStreamId(streamingItemId);
           } else {
             setPathParamStreamId('');
@@ -326,12 +292,7 @@ const PaymentStreamingView = (props: {
     // if (autoOpenDetailsPanel) {
     //   setDetailsPanelOpen(true);
     // }
-  }, [
-    publicKey,
-    streamingTab,
-    streamingItemId,
-    location.pathname,
-  ]);
+  }, [publicKey, streamingTab, streamingItemId, location.pathname]);
 
   // Preset the selected streaming account from the list if provided in path param (streamingItemId)
   useEffect(() => {
@@ -339,11 +300,7 @@ const PaymentStreamingView = (props: {
       setTreasuryDetail(undefined);
     }
 
-    if (
-      pathParamTreasuryId &&
-      streamingItemId &&
-      pathParamTreasuryId === streamingItemId
-    ) {
+    if (pathParamTreasuryId && streamingItemId && pathParamTreasuryId === streamingItemId) {
       const item = treasuryList.find(s => getStreamingAccountId(s) === pathParamTreasuryId);
       consoleOut('treasuryDetail:', item, 'darkgreen');
       if (item) {
@@ -373,9 +330,7 @@ const PaymentStreamingView = (props: {
       pathParamStreamId &&
       (!streamDetail || !inPath(streamDetail, pathParamStreamId))
     ) {
-      const item = streamList.find(
-        s => s.id && (s.id as PublicKey).toString() === pathParamStreamId,
-      );
+      const item = streamList.find(s => s.id && (s.id as PublicKey).toString() === pathParamStreamId);
       if (item) {
         setStreamDetail(item);
         setActiveStream(item);
@@ -390,11 +345,7 @@ const PaymentStreamingView = (props: {
       setCanSubscribe(false);
       consoleOut('Setup event subscriptions -> PaymentStreamingView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut(
-        'Subscribed to event txConfirmed with:',
-        'onTxConfirmed',
-        'brown',
-      );
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
       hardReloadStreams();
     }
   }, [canSubscribe, onTxConfirmed]);
@@ -413,7 +364,6 @@ const PaymentStreamingView = (props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
   ////////////////////
   // Event handlers //
   ////////////////////
@@ -426,31 +376,27 @@ const PaymentStreamingView = (props: {
   };
 
   const softReloadStreams = () => {
-    const streamsRefreshCta = document.getElementById(
-      'streams-refresh-noreset-cta',
-    );
+    const streamsRefreshCta = document.getElementById('streams-refresh-noreset-cta');
     if (streamsRefreshCta) {
       streamsRefreshCta.click();
     }
   };
 
   const hardReloadStreams = () => {
-    const streamsRefreshCta = document.getElementById(
-      'streams-refresh-reset-cta',
-    );
+    const streamsRefreshCta = document.getElementById('streams-refresh-reset-cta');
     if (streamsRefreshCta) {
       streamsRefreshCta.click();
     }
   };
 
   const goToStreamIncomingDetailsHandler = (stream: Stream | StreamInfo) => {
-    const id = stream.version >= 2 ? (stream as Stream).id.toBase58() : (stream as StreamInfo).id as string;
+    const id = stream.version >= 2 ? (stream as Stream).id.toBase58() : ((stream as StreamInfo).id as string);
     const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming/${id}`;
     navigate(url);
   };
 
   const goToStreamOutgoingDetailsHandler = (stream: Stream | StreamInfo) => {
-    const id = stream.version >= 2 ? (stream as Stream).id.toBase58() : (stream as StreamInfo).id as string;
+    const id = stream.version >= 2 ? (stream as Stream).id.toBase58() : ((stream as StreamInfo).id as string);
     const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${id}`;
     navigate(url);
   };
@@ -476,12 +422,11 @@ const PaymentStreamingView = (props: {
   };
 
   const goToStreamingAccountStreamDetailsHandler = (stream: Stream | StreamInfo) => {
-    const id = stream.version >= 2 ? (stream as Stream).id.toBase58() : (stream as StreamInfo).id as string;
+    const id = stream.version >= 2 ? (stream as Stream).id.toBase58() : ((stream as StreamInfo).id as string);
     setPreviousRoute(location.pathname);
     const url = `/${RegisteredAppPaths.PaymentStreaming}/outgoing/${id}`;
     navigate(url);
   };
-
 
   ///////////////
   // Rendering //
@@ -534,12 +479,8 @@ const PaymentStreamingView = (props: {
           multisigAccounts={multisigAccounts}
           selectedMultisig={selectedMultisig}
           streamingAccountSelected={treasuryDetail}
-          onSendFromStreamingAccountDetails={
-            goToListOfStreamingAccounts
-          }
-          onSendFromStreamingAccountStreamInfo={
-            goToStreamingAccountStreamDetailsHandler
-          }
+          onSendFromStreamingAccountDetails={goToListOfStreamingAccounts}
+          onSendFromStreamingAccountStreamInfo={goToStreamingAccountStreamDetailsHandler}
         />
       );
     } else {
@@ -547,12 +488,9 @@ const PaymentStreamingView = (props: {
     }
   };
 
-
   return (
     <>
-      <div className="scroll-wrapper vertical-scroll">
-        {renderPaymentStreamsContent()}
-      </div>
+      <div className="scroll-wrapper vertical-scroll">{renderPaymentStreamsContent()}</div>
     </>
   );
 };

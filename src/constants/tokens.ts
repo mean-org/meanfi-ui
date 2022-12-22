@@ -2,8 +2,7 @@ import { NATIVE_SOL_MINT } from '../middleware/ids';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { isProd } from '../middleware/ui';
 
-const LOGO_BASE_URL =
-  'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet';
+const LOGO_BASE_URL = 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet';
 
 export const NATIVE_SOL: TokenInfo = {
   chainId: isProd() ? 101 : 103,
@@ -42,34 +41,10 @@ export const SOCN_USD = {
     website: 'https://www.orca.so',
   },
 };
-export const COINBASE_SUPPORTED_BUY_TOKENS = [
-  'SOL',
-  'USDC',
-  'MEDIA',
-  'GST',
-  'ORCA',
-  'FIDA',
-  'GMT'
-];
-export const PINNED_TOKENS = [
-  'USDC',
-  'ETH',
-  'BTC',
-  'USDT',
-  'SOL',
-  'SLND',
-  'MEAN',
-];
+export const COINBASE_SUPPORTED_BUY_TOKENS = ['SOL', 'USDC', 'MEDIA', 'GST', 'ORCA', 'FIDA', 'GMT'];
+export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'SOL', 'SLND', 'MEAN'];
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
-export const BANNED_TOKENS = [
-  'CRT',
-  'FROG',
-  'DGX',
-  'DOGA',
-  'CHIH',
-  'INO',
-  'GSTONKS',
-];
+export const BANNED_TOKENS = ['CRT', 'FROG', 'DGX', 'DOGA', 'CHIH', 'INO', 'GSTONKS'];
 
 export const MEAN_TOKEN = {
   chainId: 101,
@@ -125,8 +100,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'USDT',
     name: 'USDT',
     decimals: 6,
-    logoURI:
-      'https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg',
+    logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg',
     tags: ['stablecoin'],
     extensions: {
       website: 'https://tether.to/',
@@ -574,8 +548,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'USDT',
     name: 'USDT',
     decimals: 6,
-    logoURI:
-      'https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg',
+    logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg',
     tags: ['stablecoin'],
     extensions: {
       website: 'https://tether.to/',

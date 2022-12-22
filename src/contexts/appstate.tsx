@@ -544,11 +544,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   );
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(
-      connection,
-      new PublicKey(streamV2ProgramAddress),
-      'confirmed'
-    );
+    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
   }, [connection, streamV2ProgramAddress]);
 
   const multisigClient = useMemo(() => {
@@ -973,27 +969,29 @@ const AppStateProvider: React.FC = ({ children }) => {
     getCoinPrices(false);
   };
 
-  const getTokenPriceByAddress = useCallback((address: string): number => {
-    if (!address || !priceList || priceList.length === 0) {
-      return 0;
-    }
+  const getTokenPriceByAddress = useCallback(
+    (address: string): number => {
+      if (!address || !priceList || priceList.length === 0) {
+        return 0;
+      }
 
-    const item = priceList.find(i => i.address === address);
+      const item = priceList.find(i => i.address === address);
 
-    return item ? item.price || 0 : 0;
-  },
+      return item ? item.price || 0 : 0;
+    },
     [priceList],
   );
 
-  const getTokenPriceBySymbol = useCallback((symbol: string): number => {
-    if (!symbol || !priceList || priceList.length === 0) {
-      return 0;
-    }
+  const getTokenPriceBySymbol = useCallback(
+    (symbol: string): number => {
+      if (!symbol || !priceList || priceList.length === 0) {
+        return 0;
+      }
 
-    const item = priceList.find(i => i.symbol === symbol);
+      const item = priceList.find(i => i.symbol === symbol);
 
-    return item ? item.price || 0 : 0;
-  },
+      return item ? item.price || 0 : 0;
+    },
     [priceList],
   );
 
@@ -1025,7 +1023,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, []);
 
   // Fetch coin prices
-  const getCoinPrices = useCallback(async (fromCache = true) => {
+  const getCoinPrices = useCallback(
+    async (fromCache = true) => {
       try {
         setLoadingPrices(true);
         pricesPerformanceCounter.start();
@@ -1431,13 +1430,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   // Also, do this after any Tx is completed in places where token balances were indeed changed)
   useEffect(() => {
-    if (
-      !connection ||
-      !publicKey ||
-      !selectedAccount.address ||
-      !shouldLoadTokens ||
-      !splTokenList
-    ) {
+    if (!connection || !publicKey || !selectedAccount.address || !shouldLoadTokens || !splTokenList) {
       return;
     }
 

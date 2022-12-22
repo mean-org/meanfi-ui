@@ -1,9 +1,6 @@
 import { CSSProperties } from 'react';
 
-export const IconSettings = (props: {
-  className: string;
-  style?: CSSProperties;
-}) => {
+export const IconSettings = (props: { className: string; style?: CSSProperties }) => {
   return (
     <svg
       className={props.className}

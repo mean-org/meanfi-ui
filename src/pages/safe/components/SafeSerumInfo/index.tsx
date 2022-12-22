@@ -21,14 +21,8 @@ export const SafeSerumInfoView = (props: {
   onNewProposalClicked?: any;
   selectedMultisig?: any;
 }) => {
-  const {
-    connection,
-    isProposalDetails,
-    multisigTxs,
-    onEditMultisigClick,
-    onNewProposalClicked,
-    selectedMultisig,
-  } = props;
+  const { connection, isProposalDetails, multisigTxs, onEditMultisigClick, onNewProposalClicked, selectedMultisig } =
+    props;
 
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const safeSerumNameImg =
@@ -44,27 +38,17 @@ export const SafeSerumInfoView = (props: {
             props.onDataToSafeView(tx);
           };
 
-          const title = tx.details.title
-            ? tx.details.title
-            : 'Unknown proposal';
+          const title = tx.details.title ? tx.details.title : 'Unknown proposal';
 
-          const approvedSigners = tx.signers.filter(
-            (s: any) => s === true,
-          ).length;
-          const expirationDate = tx.details.expirationDate
-            ? tx.details.expirationDate.toDateString()
-            : '';
-          const executedOnDate = tx.executedOn
-            ? tx.executedOn.toDateString()
-            : '';
+          const approvedSigners = tx.signers.filter((s: any) => s === true).length;
+          const expirationDate = tx.details.expirationDate ? tx.details.expirationDate.toDateString() : '';
+          const executedOnDate = tx.executedOn ? tx.executedOn.toDateString() : '';
 
           return (
             <div
               key={tx.id.toBase58()}
               onClick={onSelectProposal}
-              className={`w-100 simplelink hover-list ${
-                (index + 1) % 2 === 0 ? '' : 'bg-secondary-02'
-              }`}
+              className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
             >
               <ResumeItem
                 id={tx.id.toBase58()}
@@ -85,28 +69,21 @@ export const SafeSerumInfoView = (props: {
 
   // Programs list
   const getProgramsByUpgradeAuthority = useCallback(
-    async (
-      upgradeAuthority: PublicKey,
-    ): Promise<ProgramAccounts[] | undefined> => {
+    async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
       if (!connection || !upgradeAuthority) {
         return undefined;
       }
 
-      consoleOut(
-        `Searching for programs with upgrade authority: ${upgradeAuthority}`,
-      );
+      consoleOut(`Searching for programs with upgrade authority: ${upgradeAuthority}`);
 
       // 1. Fetch executable data account having upgradeAuthority as upgrade authority
       const executableDataAccountsFilter: MemcmpFilter = {
         memcmp: { offset: 13, bytes: upgradeAuthority.toBase58() },
       };
-      const executableDataAccounts = await connection.getProgramAccounts(
-        BPF_LOADER_UPGRADEABLE_PID,
-        {
-          encoding: 'base64',
-          filters: [executableDataAccountsFilter],
-        },
-      );
+      const executableDataAccounts = await connection.getProgramAccounts(BPF_LOADER_UPGRADEABLE_PID, {
+        encoding: 'base64',
+        filters: [executableDataAccountsFilter],
+      });
 
       // 2. For each executable data account found in the previous step, fetch the corresponding program
       const programs: ProgramAccounts[] = [];
@@ -116,25 +93,20 @@ export const SafeSerumInfoView = (props: {
         const executableAccountsFilter: MemcmpFilter = {
           memcmp: { offset: 4, bytes: executableData.toBase58() },
         };
-        const executableAccounts = await connection.getProgramAccounts(
-          BPF_LOADER_UPGRADEABLE_PID,
-          {
-            encoding: 'base64',
-            dataSlice: {
-              offset: 0,
-              length: 0,
-            },
-            filters: [executableAccountsFilter],
+        const executableAccounts = await connection.getProgramAccounts(BPF_LOADER_UPGRADEABLE_PID, {
+          encoding: 'base64',
+          dataSlice: {
+            offset: 0,
+            length: 0,
           },
-        );
+          filters: [executableAccountsFilter],
+        });
         if (executableAccounts.length === 0) {
           continue;
         }
 
         if (executableAccounts.length > 1) {
-          throw new Error(
-            `More than one program was found for program data account '${executableData}'`,
-          );
+          throw new Error(`More than one program was found for program data account '${executableData}'`);
         }
 
         const foundProgram = {
@@ -193,9 +165,7 @@ export const SafeSerumInfoView = (props: {
             <div
               key={program.id}
               onClick={onSelectProgram}
-              className={`d-flex w-100 align-items-center simplelink ${
-                program.id % 2 === 0 ? '' : 'bg-secondary-02'
-              }`}
+              className={`d-flex w-100 align-items-center simplelink ${program.id % 2 === 0 ? '' : 'bg-secondary-02'}`}
             >
               <Row className="list-item hover-list">
                 <Col>{program.name}</Col>

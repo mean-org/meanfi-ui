@@ -1,8 +1,4 @@
-import {
-  CheckOutlined,
-  InfoCircleOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
@@ -12,20 +8,11 @@ import { BN } from 'bn.js';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
-import {
-  FALLBACK_COIN_IMAGE,
-  MIN_SOL_BALANCE_REQUIRED,
-  WRAPPED_SOL_MINT_ADDRESS,
-} from 'constants/common';
+import { FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
-import {
-  consoleOut,
-  getTransactionOperationDescription,
-  isValidAddress,
-  toUsCurrency,
-} from 'middleware/ui';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
   getAmountWithSymbol,
@@ -88,9 +75,7 @@ export const VestingContractWithdrawFundsModal = (props: {
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
-  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(
-    undefined,
-  );
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [proposalTitle, setProposalTitle] = useState('');
 
   const getTokenPrice = useCallback(
@@ -98,9 +83,7 @@ export const VestingContractWithdrawFundsModal = (props: {
       if (!selectedToken) {
         return 0;
       }
-      const price =
-        getTokenPriceByAddress(selectedToken.address) ||
-        getTokenPriceBySymbol(selectedToken.symbol);
+      const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
 
       return parseFloat(inputAmount) * price;
     },
@@ -108,10 +91,7 @@ export const VestingContractWithdrawFundsModal = (props: {
   );
 
   const onAcceptWithdrawTreasuryFunds = () => {
-    const multisig =
-      isMultisigTreasury && selectedMultisig
-        ? selectedMultisig.authority.toBase58()
-        : '';
+    const multisig = isMultisigTreasury && selectedMultisig ? selectedMultisig.authority.toBase58() : '';
     const options: VestingContractWithdrawOptions = {
       proposalTitle,
       amount: withdrawAmount,
@@ -216,8 +196,7 @@ export const VestingContractWithdrawFundsModal = (props: {
         })
       : transactionStatus.currentOperation === TransactionStatus.Iddle
       ? t('treasuries.withdraw-funds.main-cta')
-      : transactionStatus.currentOperation ===
-        TransactionStatus.TransactionFinished
+      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
       ? t('general.cta-finish')
       : t('general.retry');
   };
@@ -239,9 +218,7 @@ export const VestingContractWithdrawFundsModal = (props: {
     const bf = transactionFees.blockchainFee; // Blockchain fee
     const ff = transactionFees.mspFlatFee; // Flat fee (protocol)
     const minRequired = isMultisigTreasury ? minRequiredBalance : bf + ff;
-    return minRequired > MIN_SOL_BALANCE_REQUIRED
-      ? minRequired
-      : MIN_SOL_BALANCE_REQUIRED;
+    return minRequired > MIN_SOL_BALANCE_REQUIRED ? minRequired : MIN_SOL_BALANCE_REQUIRED;
   }, [isMultisigTreasury, minRequiredBalance, transactionFees]);
 
   // Set a working token based on the Vesting Contract's Associated Token
@@ -279,9 +256,7 @@ export const VestingContractWithdrawFundsModal = (props: {
       return null;
     }
     const token = getTokenByMintAddress(vestingContract.mint.toBase58());
-    const imageOnErrorHandler = (
-      event: React.SyntheticEvent<HTMLImageElement, Event>,
-    ) => {
+    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = 'error';
     };
@@ -291,13 +266,7 @@ export const VestingContractWithdrawFundsModal = (props: {
         <div className="icon-cell">
           <div className="token-icon">
             {token && token.logoURI ? (
-              <img
-                alt={`${token.name}`}
-                width={30}
-                height={30}
-                src={token.logoURI}
-                onError={imageOnErrorHandler}
-              />
+              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
               <Identicon
                 address={vestingContract.mint.toBase58()}
@@ -310,34 +279,20 @@ export const VestingContractWithdrawFundsModal = (props: {
           {vestingContract.name ? (
             <div className="title text-truncate">
               {vestingContract.name}
-              <span
-                className={`badge small ml-1 ${
-                  theme === 'light' ? 'golden fg-dark' : 'darken'
-                }`}
-              >
-                {vestingContract.accountType === AccountType.Open
-                  ? 'Open'
-                  : 'Locked'}
+              <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                {vestingContract.accountType === AccountType.Open ? 'Open' : 'Locked'}
               </span>
             </div>
           ) : (
-            <div className="title text-truncate">
-              {shortenAddress(vestingContract.id, 8)}
-            </div>
+            <div className="title text-truncate">{shortenAddress(vestingContract.id, 8)}</div>
           )}
           {isMultisigTreasury && (
-            <div className="subtitle text-truncate">
-              {t('treasuries.treasury-list.multisig-treasury-label')}
-            </div>
+            <div className="subtitle text-truncate">{t('treasuries.treasury-list.multisig-treasury-label')}</div>
           )}
         </div>
         <div className="rate-cell text-center">
-          <div className="rate-amount">
-            {formatThousands(+getSdkValue(vestingContract.totalStreams))}
-          </div>
-          <div className="interval">
-            {vestingContract.totalStreams === 1 ? 'stream' : 'streams'}
-          </div>
+          <div className="rate-amount">{formatThousands(+getSdkValue(vestingContract.totalStreams))}</div>
+          <div className="interval">{vestingContract.totalStreams === 1 ? 'stream' : 'streams'}</div>
         </div>
       </div>
     );
@@ -346,11 +301,7 @@ export const VestingContractWithdrawFundsModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">
-          {t('vesting.withdraw-funds.modal-title')}
-        </div>
-      }
+      title={<div className="modal-title">{t('vesting.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
@@ -361,11 +312,7 @@ export const VestingContractWithdrawFundsModal = (props: {
         setTokenAmount(new BN(0));
         setIsVerifiedRecipient(false);
       }}
-      width={
-        isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle
-          ? 380
-          : 480
-      }
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
@@ -373,9 +320,7 @@ export const VestingContractWithdrawFundsModal = (props: {
             {/* Proposal title */}
             {isMultisigTreasury && (
               <div className="mb-3 mt-3">
-                <div className="form-label text-left">
-                  {t('multisig.proposal-modal.title')}
-                </div>
+                <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
                 <InputMean
                   id="proposal-title-field"
                   name="Title"
@@ -391,17 +336,13 @@ export const VestingContractWithdrawFundsModal = (props: {
             {/* Transfer from */}
             {vestingContract && (
               <div className="mb-3">
-                <div className="form-label">
-                  {t('vesting.withdraw-funds.from-vesting-contract')}
-                </div>
+                <div className="form-label">{t('vesting.withdraw-funds.from-vesting-contract')}</div>
                 <div className="well">{renderTreasury()}</div>
               </div>
             )}
 
             {/* Transfer to */}
-            <div className="form-label">
-              {t('multisig.transfer-tokens.transfer-to-label')}
-            </div>
+            <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
             <div className="well">
               <input
                 id="mint-to-field"
@@ -410,24 +351,18 @@ export const VestingContractWithdrawFundsModal = (props: {
                 autoCorrect="off"
                 type="text"
                 onChange={onMintToAddressChange}
-                placeholder={t(
-                  'multisig.transfer-tokens.transfer-to-placeholder',
-                )}
+                placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
                 required={true}
                 spellCheck="false"
                 value={to}
               />
               {to && !isValidAddress(to) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
+                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
               )}
             </div>
 
             {/* Withdraw amount */}
-            <div className="form-label">
-              {t('streams.add-funds.amount-label')}
-            </div>
+            <div className="form-label">{t('streams.add-funds.amount-label')}</div>
             <div className="well">
               <div className="flex-fixed-left">
                 <div className="left">
@@ -444,12 +379,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                       <div
                         className="token-max simplelink"
                         onClick={() => {
-                          setWithdrawAmount(
-                            toUiAmount(
-                              unallocatedBalance,
-                              selectedToken.decimals,
-                            ),
-                          );
+                          setWithdrawAmount(toUiAmount(unallocatedBalance, selectedToken.decimals));
                           setTokenAmount(unallocatedBalance);
                         }}
                       >
@@ -478,26 +408,16 @@ export const VestingContractWithdrawFundsModal = (props: {
               </div>
               <div className="flex-fixed-right">
                 <div className="left inner-label">
-                  {!vestingContract ||
-                  (vestingContract && vestingContract.autoClose) ? (
+                  {!vestingContract || (vestingContract && vestingContract.autoClose) ? (
                     <span>{t('add-funds.label-right')}:</span>
                   ) : (
-                    <span>
-                      {t(
-                        'treasuries.treasury-streams.available-unallocated-balance-label',
-                      )}
-                      :
-                    </span>
+                    <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                   )}
                   {vestingContract && vestingContract.autoClose ? (
                     <span>
                       {`${
                         tokenBalance && selectedToken
-                          ? getAmountWithSymbol(
-                              tokenBalance,
-                              selectedToken?.address,
-                              true,
-                            )
+                          ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
                           : '0'
                       }`}
                     </span>
@@ -506,22 +426,13 @@ export const VestingContractWithdrawFundsModal = (props: {
                       {selectedToken && unallocatedBalance ? (
                         <span>
                           {getAmountWithSymbol(
-                            toUiAmount(
-                              unallocatedBalance,
-                              selectedToken.decimals,
-                            ),
+                            toUiAmount(unallocatedBalance, selectedToken.decimals),
                             selectedToken.address,
                             true,
                           )}
                         </span>
                       ) : tokenBalance && selectedToken ? (
-                        <span>
-                          {getAmountWithSymbol(
-                            tokenBalance,
-                            selectedToken.address,
-                            true,
-                          )}
-                        </span>
+                        <span>{getAmountWithSymbol(tokenBalance, selectedToken.address, true)}</span>
                       ) : null}
                     </>
                   )}
@@ -529,33 +440,21 @@ export const VestingContractWithdrawFundsModal = (props: {
 
                 <div className="right inner-label">
                   <span
-                    className={
-                      loadingPrices
-                        ? 'click-disabled fg-orange-red pulsate'
-                        : 'simplelink'
-                    }
+                    className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                     onClick={() => refreshPrices()}
                   >
-                    ~
-                    {withdrawAmount
-                      ? toUsCurrency(getTokenPrice(withdrawAmount))
-                      : '$0.00'}
+                    ~{withdrawAmount ? toUsCurrency(getTokenPrice(withdrawAmount)) : '$0.00'}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* explanatory paragraph */}
-            {isMultisigTreasury && (
-              <p>{t('multisig.multisig-assets.explanatory-paragraph')}</p>
-            )}
+            {isMultisigTreasury && <p>{t('multisig.multisig-assets.explanatory-paragraph')}</p>}
 
             {/* confirm that the recipient address doesn't belong to an exchange */}
             <div className="mt-2 mb-3 confirm-terms">
-              <Checkbox
-                checked={isVerifiedRecipient}
-                onChange={onIsVerifiedRecipientChange}
-              >
+              <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
                 {t('treasuries.withdraw-funds.verified-label')}
               </Checkbox>
             </div>
@@ -564,37 +463,23 @@ export const VestingContractWithdrawFundsModal = (props: {
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">
-                {t('multisig.transfer-tokens.success-message')}
-              </h4>
+              <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
             </div>
           </>
         ) : (
           <>
             <div className="transaction-progress p-0">
-              <InfoCircleOutlined
-                style={{ fontSize: 48 }}
-                className="icon mt-0"
-              />
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(
-                      nativeBalance,
-                      NATIVE_SOL_MINT.toBase58(),
-                    ),
-                    feeAmount: getAmountWithSymbol(
-                      minRequiredBalance,
-                      NATIVE_SOL_MINT.toBase58(),
-                    ),
+                    accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                    feeAmount: getAmountWithSymbol(minRequiredBalance, NATIVE_SOL_MINT.toBase58()),
                   })}
                 </h4>
               ) : (
                 <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(
-                    transactionStatus.currentOperation,
-                    t,
-                  )}
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
             </div>
@@ -604,26 +489,17 @@ export const VestingContractWithdrawFundsModal = (props: {
 
       <div
         className={
-          isBusy &&
-          transactionStatus.currentOperation !== TransactionStatus.Iddle
-            ? 'panel2 show'
-            : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
         }
       >
         {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
-              {getTransactionOperationDescription(
-                transactionStatus.currentOperation,
-                t,
-              )}
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
-            {transactionStatus.currentOperation ===
-              TransactionStatus.SignTransaction && (
-              <div className="indication">
-                {t('transactions.status.instructions')}
-              </div>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}
@@ -638,23 +514,16 @@ export const VestingContractWithdrawFundsModal = (props: {
               size="large"
               disabled={isBusy || !isValidForm()}
               onClick={() => {
-                if (
-                  transactionStatus.currentOperation === TransactionStatus.Iddle
-                ) {
+                if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                   onAcceptWithdrawTreasuryFunds();
-                } else if (
-                  transactionStatus.currentOperation ===
-                  TransactionStatus.TransactionFinished
-                ) {
+                } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                   onCloseModal();
                 } else {
                   onAcceptWithdrawTreasuryFunds();
                 }
               }}
             >
-              {isBusy
-                ? t('multisig.transfer-tokens.main-cta-busy')
-                : getButtonLabel()}
+              {isBusy ? t('multisig.transfer-tokens.main-cta-busy') : getButtonLabel()}
             </Button>
           </div>
         </>

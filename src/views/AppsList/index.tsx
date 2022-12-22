@@ -3,11 +3,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { IconMoneyTransfer, IconNoItems, IconSafe, IconStats } from 'Icons';
 import { IconPaymentStreaming } from 'Icons/IconPaymentStreaming';
 import { toUsCurrency } from 'middleware/ui';
-import {
-  KnownAppMetadata,
-  KNOWN_APPS,
-  RegisteredAppPaths,
-} from 'models/accounts';
+import { KnownAppMetadata, KNOWN_APPS, RegisteredAppPaths } from 'models/accounts';
 import { useCallback, useContext } from 'react';
 import './style.scss';
 
@@ -18,8 +14,7 @@ export const AppsList = (props: {
 }) => {
   const { isMultisigContext, onAppClick, selectedApp } = props;
 
-  const { selectedAccount, paymentStreamingStats } =
-    useContext(AppStateContext);
+  const { selectedAccount, paymentStreamingStats } = useContext(AppStateContext);
 
   const getCachedTvlByApp = useCallback(
     (slug: string) => {
@@ -35,9 +30,7 @@ export const AppsList = (props: {
 
   const getAppIcon = (app: KnownAppMetadata) => {
     if (app.logoURI) {
-      return (
-        <img src={app.logoURI} alt={`${app.title}`} width={30} height={30} />
-      );
+      return <img src={app.logoURI} alt={`${app.title}`} width={30} height={30} />;
     }
 
     const classes = 'mean-svg-icons fg-secondary-50';
@@ -112,10 +105,7 @@ export const AppsList = (props: {
 
   return (
     <>
-      <div
-        key="asset-category-apps-items"
-        className="asset-category flex-column apps-list"
-      >
+      <div key="asset-category-apps-items" className="asset-category flex-column apps-list">
         {KNOWN_APPS.map(app => {
           if (!app.visible) {
             return null;
@@ -132,9 +122,7 @@ export const AppsList = (props: {
               </div>
               <div className="description-cell">
                 <div className="title">{app.title}</div>
-                <div className="subtitle text-truncate">
-                  {getAppSubtitle(app)}
-                </div>
+                <div className="subtitle text-truncate">{getAppSubtitle(app)}</div>
               </div>
               <div className="rate-cell">
                 <div className="rate-amount">{getCachedTvlByApp(app.slug)}</div>

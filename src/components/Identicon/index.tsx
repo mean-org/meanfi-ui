@@ -5,16 +5,9 @@ import './style.scss';
 import { PublicKey } from '@solana/web3.js';
 import { isValidAddress } from '../../middleware/ui';
 
-export const Identicon = (props: {
-  address?: string | PublicKey;
-  style?: React.CSSProperties;
-  className?: string;
-}) => {
+export const Identicon = (props: { address?: string | PublicKey; style?: React.CSSProperties; className?: string }) => {
   const { style, className } = props;
-  const address =
-    typeof props.address === 'string'
-      ? props.address
-      : props.address?.toBase58();
+  const address = typeof props.address === 'string' ? props.address : props.address?.toBase58();
   const ref = useRef<HTMLDivElement>();
 
   useEffect(() => {
@@ -22,18 +15,13 @@ export const Identicon = (props: {
       ref.current.innerHTML = '';
       ref.current.className = className || '';
       ref.current.appendChild(
-        Jazzicon(
-          style?.width || 16,
-          parseInt(bs58.decode(address).toString('hex').slice(5, 15), 16),
-        ),
+        Jazzicon(style?.width || 16, parseInt(bs58.decode(address).toString('hex').slice(5, 15), 16)),
       );
     }
   }, [address, style, className]);
 
   if (isValidAddress(address)) {
-    return (
-      <div className="identicon-wrapper" ref={ref as any} style={props.style} />
-    );
+    return <div className="identicon-wrapper" ref={ref as any} style={props.style} />;
   }
   return null;
 };

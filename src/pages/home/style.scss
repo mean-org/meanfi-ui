@@ -243,9 +243,7 @@
   }
 
   .well {
-    .dropdown-trigger.no-decoration
-      .ant-select.auto-height
-      .ant-select-selector {
+    .dropdown-trigger.no-decoration .ant-select.auto-height .ant-select-selector {
       height: 34px;
       margin: 0;
       padding: 0;

@@ -22,7 +22,7 @@ export const GET_RPC_API_ENDPOINT = '/meanfi-rpcs';
 export const DEFAULT_RPCS: RpcConfig[] = [
   {
     cluster: 'mainnet-beta',
-    httpProvider: clusterApiUrl("mainnet-beta"),
+    httpProvider: clusterApiUrl('mainnet-beta'),
     networkId: ChainID.MainnetBeta,
     network: 'Mainnet Beta',
     id: 0,
@@ -73,8 +73,7 @@ export const isRpcLive = async (rpcConfig: RpcConfig): Promise<boolean> => {
     return connection
       .getLatestBlockhashAndContext('confirmed')
       .then((response: any) => {
-        const rpcTestPassed =
-          response && response.value && !response.value.err ? true : false;
+        const rpcTestPassed = response && response.value && !response.value.err ? true : false;
         return rpcTestPassed;
       })
       .catch(error => {
@@ -87,14 +86,9 @@ export const isRpcLive = async (rpcConfig: RpcConfig): Promise<boolean> => {
   }
 };
 
-export const getLiveRpc = async (
-  networkId?: number,
-  previousRpcId?: number,
-): Promise<RpcConfig | null> => {
+export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Promise<RpcConfig | null> => {
   networkId = networkId ?? getDefaultRpc().networkId;
-  const url = `${
-    appConfig.getConfig().apiUrl
-  }${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${
+  const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${
     previousRpcId || 0
   }`;
   const rpcConfig = await getRpcApiEndpoint(url, requestOptions);
@@ -112,7 +106,6 @@ export const getLiveRpc = async (
 };
 
 export const refreshCachedRpc = async () => {
-
   // Process special case when debugging in mainnet from localhost
   if (environment === 'production' && isLocal()) {
     const debugRpc = Object.assign({}, getDefaultRpc(), {

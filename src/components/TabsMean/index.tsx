@@ -13,13 +13,7 @@ export const TabsMean = (props: {
   defaultTab: string;
 }) => {
   const { activeTab, setActiveTab } = useContext(AppStateContext);
-  const {
-    containerClassName,
-    headerClassName,
-    bodyClassName,
-    tabs,
-    defaultTab,
-  } = props;
+  const { containerClassName, headerClassName, bodyClassName, tabs, defaultTab } = props;
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -104,9 +98,7 @@ export const TabsMean = (props: {
               <li
                 key={tab.id}
                 className={`ant-menu-item ${
-                  activeTab === tabNameFormat(tab.id)
-                    ? 'active ant-menu-item-selected'
-                    : ''
+                  activeTab === tabNameFormat(tab.id) ? 'active ant-menu-item-selected' : ''
                 }`}
                 tabIndex={0}
                 onClick={onSelectTab}
@@ -119,9 +111,7 @@ export const TabsMean = (props: {
       </div>
       <div className={bodyClassName}>
         {tabs.map((tab: any) => (
-          <div key={tab.id}>
-            {activeTab === tabNameFormat(tab.id) && tab.render}
-          </div>
+          <div key={tab.id}>{activeTab === tabNameFormat(tab.id) && tab.render}</div>
         ))}
       </div>
     </div>

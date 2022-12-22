@@ -17,8 +17,7 @@ const contextDefaultValues: AccountsContextConfig = {
   refreshAccount: () => {},
 };
 
-const AccountsContext =
-  React.createContext<AccountsContextConfig>(contextDefaultValues);
+const AccountsContext = React.createContext<AccountsContextConfig>(contextDefaultValues);
 const pendingCalls = new Map<string, Promise<ParsedAccountBase>>();
 const genericCache = new Map<string, ParsedAccountBase>();
 
@@ -28,10 +27,7 @@ interface ParsedAccountBase {
   info: any;
 }
 
-type AccountParser = (
-  pubkey: PublicKey,
-  data: AccountInfo<Buffer>,
-) => ParsedAccountBase | undefined;
+type AccountParser = (pubkey: PublicKey, data: AccountInfo<Buffer>) => ParsedAccountBase | undefined;
 
 export const MintParser = (pubKey: PublicKey, info: AccountInfo<Buffer>) => {
   const buffer = Buffer.from(info.data);
@@ -53,11 +49,7 @@ export const keyToAccountParser = new Map<string, AccountParser>();
 
 export const cache = {
   emitter: new EventEmitter(),
-  query: async (
-    connection: Connection,
-    pubKey: string | PublicKey,
-    parser?: AccountParser,
-  ) => {
+  query: async (connection: Connection, pubKey: string | PublicKey, parser?: AccountParser) => {
     let id: PublicKey;
     if (typeof pubKey === 'string') {
       id = new PublicKey(pubKey);
@@ -88,11 +80,7 @@ export const cache = {
 
     return query;
   },
-  add: (
-    id: PublicKey | string,
-    obj: AccountInfo<Buffer>,
-    parser?: AccountParser,
-  ) => {
+  add: (id: PublicKey | string, obj: AccountInfo<Buffer>, parser?: AccountParser) => {
     if (obj.data.length === 0) {
       return;
     }
@@ -100,9 +88,7 @@ export const cache = {
     const address = typeof id === 'string' ? id : id?.toBase58();
     const deserialize = parser ? parser : keyToAccountParser.get(address);
     if (!deserialize) {
-      throw new Error(
-        'Deserializer needs to be registered or passed as a parameter',
-      );
+      throw new Error('Deserializer needs to be registered or passed as a parameter');
     }
 
     cache.registerParser(id, deserialize);
@@ -256,9 +242,7 @@ export function useMint(key?: string | PublicKey) {
     const dispose = cache.emitter.onCache(e => {
       const event = e;
       if (event.id === id) {
-        cache
-          .query(connection, id, MintParser)
-          .then(mint => setMint(mint.info as any));
+        cache.query(connection, id, MintParser).then(mint => setMint(mint.info as any));
       }
     });
     return () => {

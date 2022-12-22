@@ -16,10 +16,7 @@ export const NotificationBell = (props: { onOpenDrawer: any }) => {
     return (
       <div className="connected-network">
         {!isLargeScreen() && (
-          <div
-            className="events-drawer-trigger lower"
-            onClick={props.onOpenDrawer}
-          >
+          <div className="events-drawer-trigger lower" onClick={props.onOpenDrawer}>
             <IconNotification className="mean-svg-icons" />
             {/* <div className="magictime tinRightIn">
               <IconNotification className="mean-svg-icons"/>
@@ -42,10 +39,7 @@ export const NotificationBell = (props: { onOpenDrawer: any }) => {
           </Tooltip>
         </span> */}
         {isLargeScreen() && (
-          <div
-            className="events-drawer-trigger upper"
-            onClick={props.onOpenDrawer}
-          >
+          <div className="events-drawer-trigger upper" onClick={props.onOpenDrawer}>
             {/* {confirmationHistory && confirmationHistory.length > 0} */}
             <IconNotification className="mean-svg-icons" />
             {/* <div className="magictime tinRightIn">

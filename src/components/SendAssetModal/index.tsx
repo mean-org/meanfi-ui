@@ -86,9 +86,7 @@ export const SendAssetModal = (props: {
           );
         };
 
-        const showFromList = !searchString
-          ? selectedList
-          : selectedList.filter((t: any) => filter(t));
+        const showFromList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -152,13 +150,7 @@ export const SendAssetModal = (props: {
     }
 
     const timeout = setTimeout(() => {
-      getTokensWithBalances(
-        connection,
-        publicKey.toBase58(),
-        priceList,
-        splTokenList,
-        true,
-      ).then(response => {
+      getTokensWithBalances(connection, publicKey.toBase58(), priceList, splTokenList, true).then(response => {
         if (response) {
           setSelectedList(response.tokenList);
           setUserBalances(response.balancesMap);
@@ -173,12 +165,7 @@ export const SendAssetModal = (props: {
 
   // Reset results when the filter is cleared
   useEffect(() => {
-    if (
-      splTokenList &&
-      splTokenList.length &&
-      filteredTokenList.length === 0 &&
-      !tokenFilter
-    ) {
+    if (splTokenList && splTokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
     }
   }, [splTokenList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
@@ -205,10 +192,7 @@ export const SendAssetModal = (props: {
       };
 
       if (index < MAX_TOKEN_LIST_ITEMS) {
-        const balance =
-          connected && userBalances && userBalances[t.address] > 0
-            ? userBalances[t.address]
-            : 0;
+        const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
         return (
           <TokenListItem
             key={t.address}
@@ -239,9 +223,7 @@ export const SendAssetModal = (props: {
   };
 
   const getBalanceForTokenFilter = () => {
-    return connected && userBalances && userBalances[tokenFilter] > 0
-      ? userBalances[tokenFilter]
-      : 0;
+    return connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0;
   };
 
   const renderTokenSelectorInner = () => {
@@ -261,66 +243,52 @@ export const SendAssetModal = (props: {
         </div>
         <div className="token-list">
           {filteredTokenList.length > 0 && renderTokenList()}
-          {tokenFilter &&
-            isValidAddress(tokenFilter) &&
-            filteredTokenList.length === 0 && (
-              <TokenListItem
-                key={tokenFilter}
-                name={CUSTOM_TOKEN_NAME}
-                mintAddress={tokenFilter}
-                className={
-                  selectedToken && selectedToken.address === tokenFilter
-                    ? 'selected'
-                    : 'simplelink'
+          {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
+            <TokenListItem
+              key={tokenFilter}
+              name={CUSTOM_TOKEN_NAME}
+              mintAddress={tokenFilter}
+              className={selectedToken && selectedToken.address === tokenFilter ? 'selected' : 'simplelink'}
+              onClick={async () => {
+                const address = tokenFilter;
+                let decimals = -1;
+                let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+                try {
+                  accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                  consoleOut('accountInfo:', accountInfo, 'blue');
+                } catch (error) {
+                  console.error(error);
                 }
-                onClick={async () => {
-                  const address = tokenFilter;
-                  let decimals = -1;
-                  let accountInfo: AccountInfo<
-                    Buffer | ParsedAccountData
-                  > | null = null;
-                  try {
-                    accountInfo = (
-                      await connection.getParsedAccountInfo(
-                        new PublicKey(address),
-                      )
-                    ).value;
-                    consoleOut('accountInfo:', accountInfo, 'blue');
-                  } catch (error) {
-                    console.error(error);
+                if (accountInfo) {
+                  if (
+                    (accountInfo as any).data['program'] &&
+                    (accountInfo as any).data['program'] === 'spl-token' &&
+                    (accountInfo as any).data['parsed'] &&
+                    (accountInfo as any).data['parsed']['type'] &&
+                    (accountInfo as any).data['parsed']['type'] === 'mint'
+                  ) {
+                    decimals = (accountInfo as any).data['parsed']['info']['decimals'];
+                  } else {
+                    decimals = -2;
                   }
-                  if (accountInfo) {
-                    if (
-                      (accountInfo as any).data['program'] &&
-                      (accountInfo as any).data['program'] === 'spl-token' &&
-                      (accountInfo as any).data['parsed'] &&
-                      (accountInfo as any).data['parsed']['type'] &&
-                      (accountInfo as any).data['parsed']['type'] === 'mint'
-                    ) {
-                      decimals = (accountInfo as any).data['parsed']['info'][
-                        'decimals'
-                      ];
-                    } else {
-                      decimals = -2;
-                    }
-                  }
-                  const unknownToken: TokenInfo = {
-                    address,
-                    name: CUSTOM_TOKEN_NAME,
-                    chainId: getNetworkIdByEnvironment(environment),
-                    decimals,
-                    symbol: `[${shortenAddress(address)}]`,
-                  };
-                  setToken(unknownToken);
-                  consoleOut('token selected:', unknownToken, 'blue');
-                  // Do not close on errors (-1 or -2)
-                  if (decimals >= 0) {
-                    onCloseTokenSelector();
-                  }
-                }}
-                balance={getBalanceForTokenFilter()}
-              />
-            )}
+                }
+                const unknownToken: TokenInfo = {
+                  address,
+                  name: CUSTOM_TOKEN_NAME,
+                  chainId: getNetworkIdByEnvironment(environment),
+                  decimals,
+                  symbol: `[${shortenAddress(address)}]`,
+                };
+                setToken(unknownToken);
+                consoleOut('token selected:', unknownToken, 'blue');
+                // Do not close on errors (-1 or -2)
+                if (decimals >= 0) {
+                  onCloseTokenSelector();
+                }
+              }}
+              balance={getBalanceForTokenFilter()}
+            />
+          )}
         </div>
       </div>
     );
@@ -390,14 +358,7 @@ export const SendAssetModal = (props: {
           onOpenTokenSelector={showDrawer}
         />
       )}
-      {!selected && (
-        <Tabs
-          items={tabs}
-          className="shift-up-2"
-          defaultActiveKey={selected}
-          centered
-        />
-      )}
+      {!selected && <Tabs items={tabs} className="shift-up-2" defaultActiveKey={selected} centered />}
       <Drawer
         title={t('token-selector.modal-title')}
         placement="bottom"

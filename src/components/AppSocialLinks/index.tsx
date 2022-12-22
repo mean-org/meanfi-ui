@@ -12,9 +12,7 @@ import {
 import { SocialMediaEntry } from 'models/accounts';
 import { SocialNetwork } from 'models/enums';
 
-export const AppSocialLinks = (props: {
-  appSocialLinks?: SocialMediaEntry[];
-}) => {
+export const AppSocialLinks = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const { appSocialLinks } = props;
 
   const getIconByNetworkId = (social: SocialMediaEntry) => {
@@ -48,12 +46,7 @@ export const AppSocialLinks = (props: {
         ? appSocialLinks.map(social => {
             return (
               <div key={social.network} className="link">
-                <a
-                  className="simplelink"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={social.linkUrl}
-                >
+                <a className="simplelink" target="_blank" rel="noopener noreferrer" href={social.linkUrl}>
                   {getIconByNetworkId(social)}
                 </a>
               </div>

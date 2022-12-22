@@ -1,17 +1,5 @@
-import {
-  InfoCircleOutlined,
-  LoadingOutlined,
-  ReloadOutlined,
-  SyncOutlined,
-  WarningFilled,
-} from '@ant-design/icons';
-import {
-  getPlatformFeeAccounts,
-  Jupiter,
-  RouteInfo,
-  TOKEN_LIST_URL,
-  TransactionFeeInfo,
-} from '@jup-ag/core';
+import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from '@ant-design/icons';
+import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from '@jup-ag/core';
 import { SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Divider, Drawer, Modal, Tooltip } from 'antd';
@@ -75,16 +63,10 @@ export const JupiterExchange = (props: {
   const [previousBalance, setPreviousBalance] = useState(nativeAccount?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [wSolBalance, setWsolBalance] = useState(0);
-  const [wSolPubKey, setWsolPubKey] = useState<PublicKey | undefined>(
-    undefined,
-  );
+  const [wSolPubKey, setWsolPubKey] = useState<PublicKey | undefined>(undefined);
   const [userBalances, setUserBalances] = useState<any>();
-  const {
-    tokenAccounts,
-    transactionStatus,
-    previousWalletConnectState,
-    setTransactionStatus,
-  } = useContext(AppStateContext);
+  const { tokenAccounts, transactionStatus, previousWalletConnectState, setTransactionStatus } =
+    useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isBusy, setIsBusy] = useState(false);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
@@ -93,41 +75,27 @@ export const JupiterExchange = (props: {
   const [refreshingRoutes, setRefreshingRoutes] = useState(false);
   const [jupiter, setJupiter] = useState<Jupiter | undefined>(undefined);
   const [jupiterReady, setJupiterReady] = useState(false);
-  const [slippage, setSlippage] = useLocalStorage(
-    'slippage',
-    DEFAULT_SLIPPAGE_PERCENT,
-  );
+  const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE_PERCENT);
   const [fromAmount, setFromAmount] = useState('');
   const [inputAmount, setInputAmount] = useState(0);
   // The full list, any filtering should be against this one
   const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
   const [mintList, setMintList] = useState<any>({});
-  const [possiblePairsTokenInfo, setPossiblePairsTokenInfo] =
-    useState<any>(undefined);
-  const [inputToken, setInputToken] = useState<TokenInfo | undefined>(
-    undefined,
-  );
-  const [outputToken, setOutputToken] = useState<TokenInfo | undefined>(
-    undefined,
-  );
+  const [possiblePairsTokenInfo, setPossiblePairsTokenInfo] = useState<any>(undefined);
+  const [inputToken, setInputToken] = useState<TokenInfo | undefined>(undefined);
+  const [outputToken, setOutputToken] = useState<TokenInfo | undefined>(undefined);
   const [routes, setRoutes] = useState<RouteInfo[]>([]);
   const [showFullRoutesList, setShowFullRoutesList] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<RouteInfo>();
   const [subjectTokenSelection, setSubjectTokenSelection] = useState('source');
-  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] =
-    useState(false);
+  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [showFromMintList, setShowFromMintList] = useState<any>({});
   const [showToMintList, setShowToMintList] = useState<any>({});
   const [tokenFilter, setTokenFilter] = useState('');
   const [minInAmount, setMinInAmount] = useState<number | undefined>(undefined);
-  const [minOutAmount, setMinOutAmount] = useState<number | undefined>(
-    undefined,
-  );
-  const [transactionStartButtonLabel, setTransactionStartButtonLabel] =
-    useState('');
-  const [feeInfo, setFeeInfo] = useState<TransactionFeeInfo | undefined>(
-    undefined,
-  );
+  const [minOutAmount, setMinOutAmount] = useState<number | undefined>(undefined);
+  const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
+  const [feeInfo, setFeeInfo] = useState<TransactionFeeInfo | undefined>(undefined);
   const [quickTokens, setQuickTokens] = useState<TokenInfo[]>([]);
   const [swapRate, setSwapRate] = useState(false);
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
@@ -143,10 +111,7 @@ export const JupiterExchange = (props: {
     if (connection) {
       return {
         feeBps: platformFeeAmount * 100,
-        feeAccounts: await getPlatformFeeAccounts(
-          connection,
-          new PublicKey(platformFeesOwner),
-        ),
+        feeAccounts: await getPlatformFeeAccounts(connection, new PublicKey(platformFeesOwner)),
       };
     } else {
       return undefined;
@@ -166,34 +131,30 @@ export const JupiterExchange = (props: {
   }, []);
 
   const isFromSol = useCallback(() => {
-    return fromMint !== undefined &&
-      (fromMint === sol.address || fromMint === WRAPPED_SOL_MINT_ADDRESS)
-      ? true
-      : false;
+    return fromMint !== undefined && (fromMint === sol.address || fromMint === WRAPPED_SOL_MINT_ADDRESS) ? true : false;
   }, [sol, fromMint]);
 
   const isToSol = useCallback(() => {
-    return toMint !== undefined &&
-      (toMint === sol.address || toMint === WRAPPED_SOL_MINT_ADDRESS)
-      ? true
-      : false;
+    return toMint !== undefined && (toMint === sol.address || toMint === WRAPPED_SOL_MINT_ADDRESS) ? true : false;
   }, [sol, toMint]);
 
-  const setFailureStatusAndNotify = useCallback((txStep: 'sign' | 'send') => {
-    const operation = txStep === 'sign'
-      ? TransactionStatus.SignTransactionFailure
-      : TransactionStatus.SendTransactionFailure;
-    setTransactionStatus({
-      lastOperation: transactionStatus.currentOperation,
-      currentOperation: operation,
-    });
-    openNotification({
-      title: t('notifications.error-title'),
-      description: t('notifications.error-sending-transaction'),
-      type: 'error',
-    });
-    setIsUnwrapping(false);
-  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
+  const setFailureStatusAndNotify = useCallback(
+    (txStep: 'sign' | 'send') => {
+      const operation =
+        txStep === 'sign' ? TransactionStatus.SignTransactionFailure : TransactionStatus.SendTransactionFailure;
+      setTransactionStatus({
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: operation,
+      });
+      openNotification({
+        title: t('notifications.error-title'),
+        description: t('notifications.error-sending-transaction'),
+        type: 'error',
+      });
+      setIsUnwrapping(false);
+    },
+    [setTransactionStatus, t, transactionStatus.currentOperation],
+  );
 
   // Keep account balance updated
   useEffect(() => {
@@ -215,9 +176,7 @@ export const JupiterExchange = (props: {
     if (tokenAccounts && tokenAccounts.length > 0) {
       const wSol = tokenAccounts.findIndex(t => {
         const mint = t.parsedInfo.mint;
-        return !t.pubkey.equals(publicKey) && mint === WRAPPED_SOL_MINT_ADDRESS
-          ? true
-          : false;
+        return !t.pubkey.equals(publicKey) && mint === WRAPPED_SOL_MINT_ADDRESS ? true : false;
       });
       if (wSol !== -1) {
         const wSolInfo = tokenAccounts[wSol].parsedInfo;
@@ -238,9 +197,7 @@ export const JupiterExchange = (props: {
       if (props.queryFromMint) {
         setFromMint(props.queryFromMint);
       } else {
-        const from = MEAN_TOKEN_LIST.filter(
-          t => t.chainId === 101 && t.symbol === 'USDC',
-        );
+        const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
         if (from && from.length) {
           setToMint(from[0].address);
         }
@@ -248,9 +205,7 @@ export const JupiterExchange = (props: {
       if (props.queryToMint) {
         setToMint(props.queryToMint);
       } else {
-        const to = MEAN_TOKEN_LIST.filter(
-          t => t.chainId === 101 && t.symbol === 'MEAN',
-        );
+        const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
         if (to && to.length) {
           setToMint(to[0].address);
         }
@@ -262,9 +217,7 @@ export const JupiterExchange = (props: {
   useEffect(() => {
     const loadJupiterTokenList = async () => {
       try {
-        const tokens: TokenInfo[] = await getJupiterTokenList(
-          TOKEN_LIST_URL['mainnet-beta'],
-        );
+        const tokens: TokenInfo[] = await getJupiterTokenList(TOKEN_LIST_URL['mainnet-beta']);
         consoleOut('tokenList:', tokens, 'orange');
         setTokenList(tokens);
       } catch (error) {
@@ -304,9 +257,7 @@ export const JupiterExchange = (props: {
     const timeout = setTimeout(() => {
       const balancesMap: any = {};
 
-      const tokenAddressesList = tokenList.map(
-        (t: any) => new PublicKey(t.address),
-      );
+      const tokenAddressesList = tokenList.map((t: any) => new PublicKey(t.address));
 
       const error = (_error: any, tl: PublicKey[]) => {
         console.error(_error);
@@ -325,8 +276,7 @@ export const JupiterExchange = (props: {
             balancesMap[address] = nativeBalance;
           } else {
             if (item) {
-              balancesMap[address] =
-                decoded.amount.toNumber() / 10 ** item.decimals;
+              balancesMap[address] = decoded.amount.toNumber() / 10 ** item.decimals;
             } else {
               balancesMap[address] = 0;
             }
@@ -339,9 +289,7 @@ export const JupiterExchange = (props: {
         programId: TOKEN_PROGRAM_ID,
       });
 
-      promise
-        .then((response: any) => success(response))
-        .catch((_error: any) => error(_error, tokenAddressesList));
+      promise.then((response: any) => success(response)).catch((_error: any) => error(_error, tokenAddressesList));
     });
 
     return () => {
@@ -382,20 +330,14 @@ export const JupiterExchange = (props: {
       if (publicKey && userBalances) {
         for (const token of tokenList) {
           const mint = JSON.parse(JSON.stringify(token));
-          if (
-            mint.logoURI &&
-            token.address !== sol.address &&
-            userBalances[token.address] > 0
-          ) {
+          if (mint.logoURI && token.address !== sol.address && userBalances[token.address] > 0) {
             newList[mint.address] = mint;
           }
         }
       }
 
       // Then add tokens from pinned list not already in the dictionary
-      MEAN_TOKEN_LIST.filter(
-        t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol),
-      ).forEach(item => {
+      MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol)).forEach(item => {
         if (!newList[item.address]) {
           newList[item.address] = item;
         }
@@ -454,9 +396,7 @@ export const JupiterExchange = (props: {
       return {};
     }
 
-    const possiblePairs = inputToken
-      ? routeMap.get(inputToken.address) || []
-      : []; // return an array of token mints that can be swapped with the selected inputToken
+    const possiblePairs = inputToken ? routeMap.get(inputToken.address) || [] : []; // return an array of token mints that can be swapped with the selected inputToken
 
     const possiblePairsTokenInfo: { [key: string]: TokenInfo | undefined } = {};
     possiblePairs.forEach(address => {
@@ -554,9 +494,7 @@ export const JupiterExchange = (props: {
       }
 
       // Then add tokens from pinned list not already in the dictionary
-      MEAN_TOKEN_LIST.filter(
-        t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol),
-      ).forEach(item => {
+      MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol)).forEach(item => {
         if (!toList[item.address] && pairs[item.address]) {
           toList[item.address] = item;
         }
@@ -576,15 +514,7 @@ export const JupiterExchange = (props: {
       setPossiblePairsTokenInfo(undefined);
       setShowToMintList(undefined);
     }
-  }, [
-    toMint,
-    routeMap,
-    publicKey,
-    tokenList,
-    inputToken,
-    userBalances,
-    subjectTokenSelection,
-  ]);
+  }, [toMint, routeMap, publicKey, tokenList, inputToken, userBalances, subjectTokenSelection]);
 
   // Get routes on demmand based on input/output tokens, amount and slippage
   // Routes are sorted based on outputAmount, so ideally the first route is the best.
@@ -606,9 +536,7 @@ export const JupiterExchange = (props: {
         return null;
       }
 
-      const inputAmountLamports = inputToken
-        ? Math.round(inputAmount * 10 ** inputToken.decimals)
-        : 0; // Lamports based on token decimals
+      const inputAmountLamports = inputToken ? Math.round(inputAmount * 10 ** inputToken.decimals) : 0; // Lamports based on token decimals
       const routes =
         inputToken && outputToken
           ? await jupiter.computeRoutes({
@@ -666,11 +594,7 @@ export const JupiterExchange = (props: {
         if (routes.length) {
           filteredRoutes = routes.filter(r => r.outAmount);
           setSelectedRoute(filteredRoutes[0]);
-          consoleOut(
-            `Filtered ${filteredRoutes.length} possible routes:`,
-            filteredRoutes,
-            'blue',
-          );
+          consoleOut(`Filtered ${filteredRoutes.length} possible routes:`, filteredRoutes, 'blue');
           consoleOut('Best route:', filteredRoutes[0], 'blue');
         } else {
           setSelectedRoute(undefined);
@@ -679,15 +603,7 @@ export const JupiterExchange = (props: {
       })
       .catch(error => console.error(error))
       .finally(() => setRefreshingRoutes(false));
-  }, [
-    jupiter,
-    slippage,
-    inputToken,
-    outputToken,
-    inputAmount,
-    isFromSol,
-    isToSol,
-  ]);
+  }, [jupiter, slippage, inputToken, outputToken, inputAmount, isFromSol, isToSol]);
 
   // Automatically get routes
   useEffect(() => {
@@ -794,21 +710,15 @@ export const JupiterExchange = (props: {
         };
 
         if (subjectTokenSelection === 'source') {
-          const showFromList = !searchString
-            ? mintList
-            : Object.values(mintList).filter((t: any) => filter(t));
+          const showFromList = !searchString ? mintList : Object.values(mintList).filter((t: any) => filter(t));
 
           setShowFromMintList(showFromList);
         }
 
         if (subjectTokenSelection === 'destination') {
-          const allPairs = possiblePairsTokenInfo
-            ? Object.values(possiblePairsTokenInfo).filter(t => t)
-            : {};
+          const allPairs = possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter(t => t) : {};
           const matchedPairs = possiblePairsTokenInfo
-            ? Object.values(possiblePairsTokenInfo).filter((t: any) =>
-                filter(t),
-              )
+            ? Object.values(possiblePairsTokenInfo).filter((t: any) => filter(t))
             : {};
           const showToList = !searchString ? allPairs : matchedPairs;
           setShowToMintList(showToList);
@@ -823,9 +733,7 @@ export const JupiterExchange = (props: {
   );
 
   const setModalBodyMinHeight = useCallback((addMinHeight: boolean) => {
-    const modalBody = document.querySelector(
-      '.exchange-modal .ant-modal-content',
-    );
+    const modalBody = document.querySelector('.exchange-modal .ant-modal-content');
     if (modalBody) {
       if (addMinHeight) {
         modalBody.classList.add('drawer-open');
@@ -914,14 +822,8 @@ export const JupiterExchange = (props: {
 
   // Getters
 
-  const areSameTokens = (
-    source: TokenInfo,
-    destination: TokenInfo,
-  ): boolean => {
-    return source &&
-      destination &&
-      source.name === destination.name &&
-      source.address === destination.address
+  const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
+    return source && destination && source.name === destination.name && source.address === destination.address
       ? true
       : false;
   };
@@ -993,11 +895,7 @@ export const JupiterExchange = (props: {
     if (jupiter && inputToken && outputToken && slippage && inputAmount) {
       timer = setInterval(() => {
         if (!isBusy) {
-          consoleOut(
-            `Trigger refresh routes after ${
-              ONE_MINUTE_REFRESH_TIMEOUT / 1000
-            } seconds`,
-          );
+          consoleOut(`Trigger refresh routes after ${ONE_MINUTE_REFRESH_TIMEOUT / 1000} seconds`);
           setRefreshingRoutes(true);
           refreshRoutes();
         }
@@ -1009,15 +907,7 @@ export const JupiterExchange = (props: {
         clearInterval(timer);
       }
     };
-  }, [
-    isBusy,
-    jupiter,
-    slippage,
-    inputToken,
-    outputToken,
-    inputAmount,
-    refreshRoutes,
-  ]);
+  }, [isBusy, jupiter, slippage, inputToken, outputToken, inputAmount, refreshRoutes]);
 
   // Set Jupiter ready
   useEffect(() => {
@@ -1043,16 +933,12 @@ export const JupiterExchange = (props: {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
           inputs: `unwrapAmount: ${wSolBalance}`,
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: '',
         });
 
@@ -1062,9 +948,7 @@ export const JupiterExchange = (props: {
             currentOperation: TransactionStatus.TransactionStartFailure,
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.TransactionStartFailure,
-            ),
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Wrapped SOL token account not found for the currently connected wallet account`,
           });
           customLogger.logWarning('Unwrap transaction failed', {
@@ -1092,9 +976,7 @@ export const JupiterExchange = (props: {
                 currentOperation: TransactionStatus.SignTransaction,
               });
               transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.InitTransactionSuccess,
-                ),
+                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
                 result: getTxIxResume(value),
               });
               transaction = value;
@@ -1106,9 +988,7 @@ export const JupiterExchange = (props: {
                 currentOperation: TransactionStatus.InitTransactionFailure,
               });
               transactionLog.push({
-                action: getTransactionStatusForLogs(
-                  TransactionStatus.InitTransactionFailure,
-                ),
+                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
                 result: 'No transaction created',
               });
               return false;
@@ -1121,9 +1001,7 @@ export const JupiterExchange = (props: {
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
             customLogger.logError('Unwrap transaction failed', {
@@ -1167,15 +1045,9 @@ export const JupiterExchange = (props: {
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Unwrap ${formatThousands(
-                wSolBalance,
-                sol.decimals,
-              )} SOL`,
+              loadingMessage: `Unwrap ${formatThousands(wSolBalance, sol.decimals)} SOL`,
               completedTitle: 'Transaction confirmed',
-              completedMessage: `Successfully unwrapped ${formatThousands(
-                wSolBalance,
-                sol.decimals,
-              )} SOL`,
+              completedMessage: `Successfully unwrapped ${formatThousands(wSolBalance, sol.decimals)} SOL`,
             });
             setIsUnwrapping(false);
             setInputAmount(0);
@@ -1246,24 +1118,10 @@ export const JupiterExchange = (props: {
     }
 
     return result;
-  }, [
-    toMint,
-    fromMint,
-    publicKey,
-    inputToken,
-    inputAmount,
-    selectedRoute,
-    isInAmountTooLow,
-    getMaxAllowedSwapAmount,
-  ]);
+  }, [toMint, fromMint, publicKey, inputToken, inputAmount, selectedRoute, isInAmountTooLow, getMaxAllowedSwapAmount]);
 
   // Rendering
-  const infoRow = (
-    caption: string,
-    value: string,
-    separator = '≈',
-    route = false,
-  ) => {
+  const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
     return (
       <>
         <div className="three-col-info-row">
@@ -1298,18 +1156,13 @@ export const JupiterExchange = (props: {
         {!refreshingRoutes &&
           inputAmount > 0 &&
           slippage > 0 &&
-          infoRow(
-            t('transactions.transaction-info.slippage'),
-            `${slippage.toFixed(2)}%`,
-          )}
+          infoRow(t('transactions.transaction-info.slippage'), `${slippage.toFixed(2)}%`)}
         {!refreshingRoutes &&
           inputAmount > 0 &&
           selectedRoute &&
           infoRow(
             t('transactions.transaction-info.price-impact'),
-            selectedRoute.priceImpactPct * 100 < 0.1
-              ? '0.1%'
-              : `${(selectedRoute.priceImpactPct * 100).toFixed(4)}%`,
+            selectedRoute.priceImpactPct * 100 < 0.1 ? '0.1%' : `${(selectedRoute.priceImpactPct * 100).toFixed(4)}%`,
             selectedRoute.priceImpactPct * 100 < 0.1 ? '<' : '≈',
           )}
         {!refreshingRoutes &&
@@ -1318,8 +1171,7 @@ export const JupiterExchange = (props: {
           infoRow(
             t('transactions.transaction-info.minimum-received'),
             `${formatThousands(
-              selectedRoute?.outAmountWithSlippage /
-                10 ** outputToken.decimals || 1,
+              selectedRoute?.outAmountWithSlippage / 10 ** outputToken.decimals || 1,
               outputToken.decimals,
             )} ${outputToken.symbol}`,
           )}
@@ -1357,27 +1209,11 @@ export const JupiterExchange = (props: {
       };
 
       return (
-        <Button
-          key={`${index}`}
-          type="ghost"
-          shape="round"
-          size="small"
-          onClick={onClick}
-          className="no-stroke"
-        >
+        <Button key={`${index}`} type="ghost" shape="round" size="small" onClick={onClick} className="no-stroke">
           {token.address === WRAPPED_SOL_MINT_ADDRESS ? (
-            <TokenDisplay
-              className="inherit-font"
-              mintAddress={token.address}
-              symbol="SOL"
-              onClick={() => {}}
-            />
+            <TokenDisplay className="inherit-font" mintAddress={token.address} symbol="SOL" onClick={() => {}} />
           ) : (
-            <TokenDisplay
-              className="inherit-font"
-              mintAddress={token.address}
-              onClick={() => {}}
-            />
+            <TokenDisplay className="inherit-font" mintAddress={token.address} onClick={() => {}} />
           )}
         </Button>
       );
@@ -1393,19 +1229,11 @@ export const JupiterExchange = (props: {
   };
 
   const renderTokenBalance = (token: TokenInfo) => {
-    if (
-      publicKey &&
-      userBalances &&
-      mintList[token.address] &&
-      userBalances[token.address]
-    ) {
+    if (publicKey && userBalances && mintList[token.address] && userBalances[token.address]) {
       if (token.address === WRAPPED_SOL_MINT_ADDRESS) {
         return formatThousands(nativeBalance, mintList[token.address].decimals);
       }
-      return formatThousands(
-        userBalances[token.address],
-        mintList[token.address].decimals,
-      );
+      return formatThousands(userBalances[token.address], mintList[token.address].decimals);
     }
     return <span>&nbsp;</span>;
   };
@@ -1430,36 +1258,20 @@ export const JupiterExchange = (props: {
 
           if (index < MAX_TOKEN_LIST_ITEMS) {
             return (
-              <div
-                key={index + 100}
-                onClick={onClick}
-                className={`token-item ${getSourceTokenListItemClass(token)}`}
-              >
+              <div key={index + 100} onClick={onClick} className={`token-item ${getSourceTokenListItemClass(token)}`}>
                 <div className="token-icon">
                   {token.logoURI ? (
-                    <img
-                      alt={`${token.name}`}
-                      width={24}
-                      height={24}
-                      src={token.logoURI}
-                    />
+                    <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
                   ) : (
-                    <Identicon
-                      address={token.address}
-                      style={{ width: '24', display: 'inline-flex' }}
-                    />
+                    <Identicon address={token.address} style={{ width: '24', display: 'inline-flex' }} />
                   )}
                 </div>
                 <div className="token-description">
                   <div className="token-symbol">
-                    {token.address === WRAPPED_SOL_MINT_ADDRESS
-                      ? 'SOL'
-                      : token.symbol}
+                    {token.address === WRAPPED_SOL_MINT_ADDRESS ? 'SOL' : token.symbol}
                   </div>
                   <div className="token-name m-0">
-                    {token.address === WRAPPED_SOL_MINT_ADDRESS
-                      ? 'Solana'
-                      : token.name}
+                    {token.address === WRAPPED_SOL_MINT_ADDRESS ? 'Solana' : token.name}
                   </div>
                 </div>
                 <div className="token-balance">{renderTokenBalance(token)}</div>
@@ -1506,35 +1318,21 @@ export const JupiterExchange = (props: {
               <div
                 key={index + 100}
                 onClick={onClick}
-                className={`token-item ${getDestinationTokenListItemClass(
-                  token,
-                )}`}
+                className={`token-item ${getDestinationTokenListItemClass(token)}`}
               >
                 <div className="token-icon">
                   {token.logoURI ? (
-                    <img
-                      alt={`${token.name}`}
-                      width={24}
-                      height={24}
-                      src={token.logoURI}
-                    />
+                    <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
                   ) : (
-                    <Identicon
-                      address={token.address}
-                      style={{ width: '24', display: 'inline-flex' }}
-                    />
+                    <Identicon address={token.address} style={{ width: '24', display: 'inline-flex' }} />
                   )}
                 </div>
                 <div className="token-description">
                   <div className="token-symbol">
-                    {token.address === WRAPPED_SOL_MINT_ADDRESS
-                      ? 'SOL'
-                      : token.symbol}
+                    {token.address === WRAPPED_SOL_MINT_ADDRESS ? 'SOL' : token.symbol}
                   </div>
                   <div className="token-name m-0">
-                    {token.address === WRAPPED_SOL_MINT_ADDRESS
-                      ? 'Solana'
-                      : token.name}
+                    {token.address === WRAPPED_SOL_MINT_ADDRESS ? 'Solana' : token.name}
                   </div>
                 </div>
                 <div className="token-balance">{renderTokenBalance(token)}</div>
@@ -1565,17 +1363,14 @@ export const JupiterExchange = (props: {
       <div className="common-token-shortcuts">{renderCommonTokens()}</div>
       <Divider />
       <div className="token-list">
-        {subjectTokenSelection === 'source'
-          ? renderSourceTokenList
-          : renderDestinationTokenList}
+        {subjectTokenSelection === 'source' ? renderSourceTokenList : renderDestinationTokenList}
       </div>
     </div>
   );
 
   const getDisplayInputTokenBalance = () => {
     if (fromMint && userBalances && mintList[fromMint]) {
-      return (mintList[fromMint] as TokenInfo).address ===
-        WRAPPED_SOL_MINT_ADDRESS
+      return (mintList[fromMint] as TokenInfo).address === WRAPPED_SOL_MINT_ADDRESS
         ? nativeBalance
         : userBalances[fromMint];
     }
@@ -1585,8 +1380,7 @@ export const JupiterExchange = (props: {
 
   const getDisplayOutputTokenBalance = () => {
     if (toMint && userBalances && mintList[toMint]) {
-      return (mintList[toMint] as TokenInfo).address ===
-        WRAPPED_SOL_MINT_ADDRESS
+      return (mintList[toMint] as TokenInfo).address === WRAPPED_SOL_MINT_ADDRESS
         ? nativeBalance
         : userBalances[toMint];
     }
@@ -1598,9 +1392,7 @@ export const JupiterExchange = (props: {
     if (isFromSol()) {
       return fromAmount;
     }
-    return selectedRoute && outputToken
-      ? toUiAmount(selectedRoute.outAmount, outputToken.decimals)
-      : '';
+    return selectedRoute && outputToken ? toUiAmount(selectedRoute.outAmount, outputToken.decimals) : '';
   };
 
   return (
@@ -1610,18 +1402,11 @@ export const JupiterExchange = (props: {
           <div className="well mb-1">
             <div className="flex-fixed-right align-items-center">
               <div className="left">
-                You have {formatThousands(wSolBalance, sol.decimals)}{' '}
-                <strong>wrapped SOL</strong> in your wallet. Click to unwrap to
-                native SOL.
+                You have {formatThousands(wSolBalance, sol.decimals)} <strong>wrapped SOL</strong> in your wallet. Click
+                to unwrap to native SOL.
               </div>
               <div className="right">
-                <Button
-                  type="primary"
-                  shape="round"
-                  disabled={isUnwrapping}
-                  onClick={onStartUnwrapTx}
-                  size="small"
-                >
+                <Button type="primary" shape="round" disabled={isUnwrapping} onClick={onStartUnwrapTx} size="small">
                   {isUnwrapping ? 'Unwrapping SOL' : 'Unwrap SOL'}
                 </Button>
               </div>
@@ -1641,10 +1426,7 @@ export const JupiterExchange = (props: {
               const maxFromAmount = getMaxAllowedSwapAmount();
               if (toMint && mintList[fromMint] && maxFromAmount > 0) {
                 setInputAmount(maxFromAmount);
-                const formattedAmount = cutNumber(
-                  maxFromAmount,
-                  mintList[fromMint].decimals,
-                );
+                const formattedAmount = cutNumber(maxFromAmount, mintList[fromMint].decimals);
                 setFromAmount(formattedAmount);
               }
             }}
@@ -1663,19 +1445,12 @@ export const JupiterExchange = (props: {
           />
         )}
 
-        {jupiterReady &&
-        inputToken &&
-        outputToken &&
-        inputAmount &&
-        isInAmountTooLow() ? (
+        {jupiterReady && inputToken && outputToken && inputAmount && isInAmountTooLow() ? (
           <div className="input-amount-too-low flex-row flex-center">
             <InfoCircleOutlined className="font-size-75" />
             <span>
-              Minimum swap is at least{' '}
-              {toUiAmount(minInAmount || 0, inputToken.decimals)}{' '}
-              {inputToken.symbol} for{' '}
-              {toUiAmount(minOutAmount || 0, outputToken.decimals)}{' '}
-              {outputToken.symbol}
+              Minimum swap is at least {toUiAmount(minInAmount || 0, inputToken.decimals)} {inputToken.symbol} for{' '}
+              {toUiAmount(minOutAmount || 0, outputToken.decimals)} {outputToken.symbol}
             </span>
           </div>
         ) : null}
@@ -1688,40 +1463,23 @@ export const JupiterExchange = (props: {
           {/* Settings icon */}
           <span className="flex-fixed-right flex align-items-center pl-3 pr-3">
             <div className="left flex-row text-left align-items-center">
-              {inputToken &&
-              outputToken &&
-              selectedRoute &&
-              selectedRoute.outAmount ? (
+              {inputToken && outputToken && selectedRoute && selectedRoute.outAmount ? (
                 <>
-                  <span
-                    className="simplelink underline-on-hover"
-                    onClick={() => setSwapRate(!swapRate)}
-                  >
+                  <span className="simplelink underline-on-hover" onClick={() => setSwapRate(!swapRate)}>
                     {swapRate ? (
                       <>
                         1 {inputToken.symbol} ≈{' '}
-                        {(
-                          parseFloat(
-                            toUiAmount(
-                              selectedRoute.outAmount,
-                              outputToken.decimals,
-                            ),
-                          ) / inputAmount
-                        ).toFixed(outputToken.decimals)}{' '}
+                        {(parseFloat(toUiAmount(selectedRoute.outAmount, outputToken.decimals)) / inputAmount).toFixed(
+                          outputToken.decimals,
+                        )}{' '}
                         {outputToken.symbol}
                       </>
                     ) : (
                       <>
                         1 {outputToken.symbol} ≈{' '}
-                        {(
-                          inputAmount /
-                          parseFloat(
-                            toUiAmount(
-                              selectedRoute.outAmount,
-                              outputToken.decimals,
-                            ),
-                          )
-                        ).toFixed(outputToken.decimals)}{' '}
+                        {(inputAmount / parseFloat(toUiAmount(selectedRoute.outAmount, outputToken.decimals))).toFixed(
+                          outputToken.decimals,
+                        )}{' '}
                         {inputToken.symbol}
                       </>
                     )}
@@ -1758,10 +1516,7 @@ export const JupiterExchange = (props: {
               )}
             </div>
             <div className="right">
-              <SwapSettings
-                currentValue={slippage}
-                onValueSelected={onSlippageChanged}
-              />
+              <SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged} />
             </div>
           </span>
         </div>
@@ -1812,11 +1567,7 @@ export const JupiterExchange = (props: {
         {/* Warning */}
         {!isProd() && (
           <div className="mt-3">
-            <div
-              data-show="true"
-              className="ant-alert ant-alert-warning"
-              role="alert"
-            >
+            <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
               <span
                 role="img"
                 aria-label="exclamation-circle"
@@ -1829,9 +1580,7 @@ export const JupiterExchange = (props: {
                   {t('swap.exchange-warning')}&nbsp;
                   <a
                     className="primary-link"
-                    href={`${
-                      appConfig.getConfig('production').appUrl
-                    }/exchange`}
+                    href={`${appConfig.getConfig('production').appUrl}/exchange`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -1875,9 +1624,7 @@ export const JupiterExchange = (props: {
         <Modal
           className="mean-modal unpadded-content"
           open={isTokenSelectorModalVisible}
-          title={
-            <div className="modal-title">{t('token-selector.modal-title')}</div>
-          }
+          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
           onCancel={onCloseTokenSelector}
           width={420}
           footer={null}

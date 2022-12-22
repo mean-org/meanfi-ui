@@ -34,12 +34,7 @@ export const JupiterExchangeInput = (props: {
     hint,
   } = props;
   const { t } = useTranslation('common');
-  const {
-    loadingPrices,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    refreshPrices,
-  } = useContext(AppStateContext);
+  const { loadingPrices, getTokenPriceByAddress, getTokenPriceBySymbol, refreshPrices } = useContext(AppStateContext);
   const { publicKey } = useWallet();
 
   const getTokenAmountValue = useCallback(
@@ -47,9 +42,7 @@ export const JupiterExchangeInput = (props: {
       if (!token || !amount) {
         return 0;
       }
-      const price =
-        getTokenPriceByAddress(token.address) ||
-        getTokenPriceBySymbol(token.symbol);
+      const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
       return amount * price;
     },
     [getTokenPriceByAddress, getTokenPriceBySymbol, token],
@@ -65,28 +58,16 @@ export const JupiterExchangeInput = (props: {
             {publicKey ? (
               <>
                 <span className="simplelink" onClick={onBalanceClick}>
-                  {token &&
-                    tokenBalance !== undefined &&
-                    formatThousands(
-                      tokenBalance,
-                      token.decimals,
-                      token.decimals,
-                    )}
+                  {token && tokenBalance !== undefined && formatThousands(tokenBalance, token.decimals, token.decimals)}
                 </span>
                 {tokenBalance && (
                   <span
                     className={`balance-amount ${
-                      loadingPrices
-                        ? 'click-disabled fg-orange-red pulsate'
-                        : 'simplelink'
+                      loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'
                     }`}
                     onClick={() => refreshPrices()}
                   >
-                    {`(~${
-                      token && tokenBalance
-                        ? toUsCurrency(getTokenAmountValue(tokenBalance))
-                        : '$0.00'
-                    })`}
+                    {`(~${token && tokenBalance ? toUsCurrency(getTokenAmountValue(tokenBalance)) : '$0.00'})`}
                   </span>
                 )}
               </>
@@ -98,17 +79,10 @@ export const JupiterExchangeInput = (props: {
             {publicKey ? (
               <>
                 <span
-                  className={
-                    loadingPrices
-                      ? 'click-disabled fg-orange-red pulsate'
-                      : 'simplelink'
-                  }
+                  className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                   onClick={() => refreshPrices()}
                 >
-                  ~
-                  {token && tokenAmount
-                    ? toUsCurrency(getTokenAmountValue(parseFloat(tokenAmount)))
-                    : '$0.00'}
+                  ~{token && tokenAmount ? toUsCurrency(getTokenAmountValue(parseFloat(tokenAmount))) : '$0.00'}
                 </span>
               </>
             ) : (

@@ -11,8 +11,7 @@ export const TokenIcon = (props: {
 }) => {
   const { mintAddress, style, size, className } = props;
   const { getTokenByMintAddress } = useContext(AppStateContext);
-  const address =
-    typeof mintAddress === 'string' ? mintAddress : mintAddress?.toBase58();
+  const address = typeof mintAddress === 'string' ? mintAddress : mintAddress?.toBase58();
 
   if (!address) {
     return null;
@@ -55,19 +54,11 @@ export const TokenIcon = (props: {
   );
 };
 
-export const PoolIcon = (props: {
-  mintA: string;
-  mintB: string;
-  style?: React.CSSProperties;
-  className?: string;
-}) => {
+export const PoolIcon = (props: { mintA: string; mintB: string; style?: React.CSSProperties; className?: string }) => {
   const { mintA, mintB, style, className } = props;
   return (
     <div className={className} style={{ display: 'flex' }}>
-      <TokenIcon
-        mintAddress={mintA}
-        style={{ marginRight: '-0.5rem', ...style }}
-      />
+      <TokenIcon mintAddress={mintA} style={{ marginRight: '-0.5rem', ...style }} />
       <TokenIcon mintAddress={mintB} />
     </div>
   );

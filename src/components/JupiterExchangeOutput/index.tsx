@@ -44,16 +44,9 @@ export const JupiterExchangeOutput = (props: {
     toTokenBalance,
   } = props;
   const { t } = useTranslation('common');
-  const {
-    loadingPrices,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    refreshPrices,
-  } = useContext(AppStateContext);
+  const { loadingPrices, getTokenPriceByAddress, getTokenPriceBySymbol, refreshPrices } = useContext(AppStateContext);
   const { publicKey } = useWallet();
-  const [selectedRouteIndex, setSelectedRouteIndex] = useState<
-    number | undefined
-  >(undefined);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | undefined>(undefined);
 
   const toUiAmount = (amount: BN, decimals: number) => {
     if (!amount || !decimals) {
@@ -67,9 +60,7 @@ export const JupiterExchangeOutput = (props: {
       if (!toToken || !amount) {
         return 0;
       }
-      const price =
-        getTokenPriceByAddress(toToken.address) ||
-        getTokenPriceBySymbol(toToken.symbol);
+      const price = getTokenPriceByAddress(toToken.address) || getTokenPriceBySymbol(toToken.symbol);
       return amount * price;
     },
     [getTokenPriceByAddress, getTokenPriceBySymbol, toToken],
@@ -93,9 +84,7 @@ export const JupiterExchangeOutput = (props: {
     if (routes && routes.length > 1) {
       return <span>&nbsp;</span>;
     } else if (toTokenAmount) {
-      return (
-        <div className="static-data-field text-right">{toTokenAmount}</div>
-      );
+      return <div className="static-data-field text-right">{toTokenAmount}</div>;
     } else {
       return <span>&nbsp;</span>;
     }
@@ -113,26 +102,16 @@ export const JupiterExchangeOutput = (props: {
                 <span className="simplelink" onClick={onBalanceClick}>
                   {toToken &&
                     toTokenBalance !== undefined &&
-                    formatThousands(
-                      toTokenBalance,
-                      toToken.decimals,
-                      toToken.decimals,
-                    )}
+                    formatThousands(toTokenBalance, toToken.decimals, toToken.decimals)}
                 </span>
                 {toTokenBalance && (
                   <span
                     className={`balance-amount ${
-                      loadingPrices
-                        ? 'click-disabled fg-orange-red pulsate'
-                        : 'simplelink'
+                      loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'
                     }`}
                     onClick={() => refreshPrices()}
                   >
-                    {`(~${
-                      toToken && toTokenBalance
-                        ? toUsCurrency(getTokenAmountValue(toTokenBalance))
-                        : '$0.00'
-                    })`}
+                    {`(~${toToken && toTokenBalance ? toUsCurrency(getTokenAmountValue(toTokenBalance)) : '$0.00'})`}
                   </span>
                 )}
               </>
@@ -144,19 +123,10 @@ export const JupiterExchangeOutput = (props: {
             {publicKey ? (
               <>
                 <span
-                  className={
-                    loadingPrices
-                      ? 'click-disabled fg-orange-red pulsate'
-                      : 'simplelink'
-                  }
+                  className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                   onClick={() => refreshPrices()}
                 >
-                  ~
-                  {toToken && toTokenAmount
-                    ? toUsCurrency(
-                        getTokenAmountValue(parseFloat(toTokenAmount)),
-                      )
-                    : '$0.00'}
+                  ~{toToken && toTokenAmount ? toUsCurrency(getTokenAmountValue(parseFloat(toTokenAmount))) : '$0.00'}
                 </span>
               </>
             ) : (
@@ -168,9 +138,7 @@ export const JupiterExchangeOutput = (props: {
         {/* Main row */}
         <div className="flex-fixed-left">
           <div className="left">
-            <span
-              className={`add-on ${!readonly || !isBusy ? 'simplelink' : ''}`}
-            >
+            <span className={`add-on ${!readonly || !isBusy ? 'simplelink' : ''}`}>
               <TokenDisplay
                 onClick={() => {
                   if (!readonly || !isBusy) {
@@ -202,20 +170,14 @@ export const JupiterExchangeOutput = (props: {
                 const lastInfo = routes[routes.length - 1];
                 const decimals = toToken ? toToken.decimals : 6;
                 const amountOut = toUiAmount(new BN(c.outAmount), decimals);
-                const showBadge =
-                  routes.length > 1 &&
-                  (firstInfo.outAmount || 0) > (lastInfo.outAmount || 0);
+                const showBadge = routes.length > 1 && (firstInfo.outAmount || 0) > (lastInfo.outAmount || 0);
                 const marketInfo = c.marketInfos;
-                const labels = marketInfo
-                  .map(item => item.amm.label)
-                  .join(' x ');
+                const labels = marketInfo.map(item => item.amm.label).join(' x ');
                 const maxNumItems = showAllRoutes ? 10 : 2;
 
                 const getRouteClass = () => {
                   if (index === selectedRouteIndex) {
-                    return `swap-client-card ${
-                      isBusy ? 'no-pointer' : 'selected'
-                    }`;
+                    return `swap-client-card ${isBusy ? 'no-pointer' : 'selected'}`;
                   } else {
                     return `swap-client-card ${isBusy ? 'no-pointer' : ''}`;
                   }
@@ -235,49 +197,31 @@ export const JupiterExchangeOutput = (props: {
                     >
                       <div className="card-content">
                         {index === 0 && showBadge && (
-                          <span
-                            className={`badge ${
-                              index === selectedRouteIndex
-                                ? 'bg-orange-red'
-                                : 'disabled'
-                            }`}
-                          >
+                          <span className={`badge ${index === selectedRouteIndex ? 'bg-orange-red' : 'disabled'}`}>
                             {t('swap.routes-best-price-label')}
                           </span>
                         )}
                         <div className="highlight flex-column">
-                          <span className="font-size-100 font-bold">
-                            {labels || ''}
-                          </span>
+                          <span className="font-size-100 font-bold">{labels || ''}</span>
                           <div className="font-size-75">
-                            {marketInfo.map(
-                              (value: MarketInfo, idx: number) => {
-                                const tokenIn = fromToken;
-                                const tokenOut = mintList[
-                                  value.outputMint.toBase58()
-                                ] as TokenInfo;
-                                return (
-                                  <span key={`route-${idx}`}>
-                                    {idx === 0 && tokenIn && (
-                                      <span>{tokenIn.symbol}</span>
-                                    )}
-                                    {tokenOut && (
-                                      <>
-                                        <span className="route-separator">
-                                          →
-                                        </span>
-                                        <span>{tokenOut.symbol}</span>
-                                      </>
-                                    )}
-                                  </span>
-                                );
-                              },
-                            )}
+                            {marketInfo.map((value: MarketInfo, idx: number) => {
+                              const tokenIn = fromToken;
+                              const tokenOut = mintList[value.outputMint.toBase58()] as TokenInfo;
+                              return (
+                                <span key={`route-${idx}`}>
+                                  {idx === 0 && tokenIn && <span>{tokenIn.symbol}</span>}
+                                  {tokenOut && (
+                                    <>
+                                      <span className="route-separator">→</span>
+                                      <span>{tokenOut.symbol}</span>
+                                    </>
+                                  )}
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
-                        <div className="amount">
-                          {formatAmount(amountOut, decimals)}
-                        </div>
+                        <div className="amount">{formatAmount(amountOut, decimals)}</div>
                       </div>
                     </div>
                   );
@@ -289,9 +233,7 @@ export const JupiterExchangeOutput = (props: {
             <div className="flex-fixed-left align-items-center pl-1">
               {routes.length > 2 ? (
                 <span
-                  className={`left fg-secondary-60 ${
-                    isBusy ? 'no-pointer' : 'simplelink underline-on-hover'
-                  }`}
+                  className={`left fg-secondary-60 ${isBusy ? 'no-pointer' : 'simplelink underline-on-hover'}`}
                   onClick={() => {
                     if (!isBusy) {
                       onToggleShowFullRouteList();

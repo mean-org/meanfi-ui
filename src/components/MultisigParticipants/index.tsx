@@ -13,31 +13,16 @@ export const MultisigParticipants = (props: {
   disabled?: boolean;
   multisigAddresses: string[];
 }) => {
-  const {
-    participants,
-    onParticipantsChanged,
-    label,
-    disabled,
-    multisigAddresses,
-  } = props;
+  const { participants, onParticipantsChanged, label, disabled, multisigAddresses } = props;
   const { t } = useTranslation('common');
   // Max signers info modal
-  const [isMaxSignersInfoModalVisible, setIsMaxSignersInfoModalVisibility] =
-    useState(false);
-  const showMaxSignersInfoModal = useCallback(
-    () => setIsMaxSignersInfoModalVisibility(true),
-    [],
-  );
-  const closeMaxSignersInfoModal = useCallback(
-    () => setIsMaxSignersInfoModalVisibility(false),
-    [],
-  );
+  const [isMaxSignersInfoModalVisible, setIsMaxSignersInfoModalVisibility] = useState(false);
+  const showMaxSignersInfoModal = useCallback(() => setIsMaxSignersInfoModalVisibility(true), []);
+  const closeMaxSignersInfoModal = useCallback(() => setIsMaxSignersInfoModalVisibility(false), []);
 
   const setSingleItemName = useCallback(
     (name: string, index: number) => {
-      const items = JSON.parse(
-        JSON.stringify(participants),
-      ) as MultisigParticipant[];
+      const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
       items[index].name = name;
       onParticipantsChanged(items);
     },
@@ -46,9 +31,7 @@ export const MultisigParticipants = (props: {
 
   const setSingleItemAddress = useCallback(
     (address: string, index: number) => {
-      const items = JSON.parse(
-        JSON.stringify(participants),
-      ) as MultisigParticipant[];
+      const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
       items[index].address = address;
       onParticipantsChanged(items);
     },
@@ -57,9 +40,7 @@ export const MultisigParticipants = (props: {
 
   const onRemoveSingleItem = useCallback(
     (index: number) => {
-      const items = JSON.parse(
-        JSON.stringify(participants),
-      ) as MultisigParticipant[];
+      const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
       items.splice(index, 1);
       onParticipantsChanged(items);
     },
@@ -95,76 +76,61 @@ export const MultisigParticipants = (props: {
 
   return (
     <>
-      <div
-        className={`flex-fixed-right mb-1${disabled ? ' click-disabled' : ''}`}
-      >
+      <div className={`flex-fixed-right mb-1${disabled ? ' click-disabled' : ''}`}>
         <div className="left">
-          {label ? (
-            <div className="form-label">{label}</div>
-          ) : (
-            <div className="form-label">&nbsp;</div>
-          )}
+          {label ? <div className="form-label">{label}</div> : <div className="form-label">&nbsp;</div>}
         </div>
         <div className="right">
           <span className="flat-button tiny" onClick={() => addParticipant()}>
             <PlusOutlined />
-            <span className="ml-1 text-uppercase">
-              {t('multisig.add-participant-cta')}
-            </span>
+            <span className="ml-1 text-uppercase">{t('multisig.add-participant-cta')}</span>
           </span>
         </div>
       </div>
       {participants && participants.length > 0 && (
         <div id="multisig-participants-max-height">
-          {participants.map(
-            (participant: MultisigParticipant, index: number) => {
-              return (
-                <div
-                  key={`participant-${index}`}
-                  className="two-column-layout address-fixed"
-                >
-                  <div className="left">
-                    <TextInput
-                      placeholder="Enter signer name or description"
-                      extraClass="small"
-                      id={`participant-name-${index + 1}`}
-                      value={participant.name}
-                      allowClear={false}
-                      maxLength={32}
-                      onInputChange={(e: any) => {
-                        const value = e.target.value;
-                        setSingleItemName(value, index);
-                      }}
-                    />
-                  </div>
-                  <div className="right">
-                    <TextInput
-                      placeholder="Type or paste the address of multisig signer"
-                      extraClass="small"
-                      id={`participant-address-${index + 1}`}
-                      value={participant.address}
-                      allowClear={participants.length > 1}
-                      alwaysShowClear={participants.length > 1}
-                      error={
-                        isValidAddress(participant.address)
-                          ? isInputMultisigAddress(participant.address)
-                            ? t(
-                                'multisig.create-multisig.multisig-address-used-as-participant',
-                              )
-                            : ''
-                          : t('transactions.validation.valid-address-required')
-                      }
-                      onInputClear={() => onRemoveSingleItem(index)}
-                      onInputChange={(e: any) => {
-                        const value = e.target.value;
-                        setSingleItemAddress(value, index);
-                      }}
-                    />
-                  </div>
+          {participants.map((participant: MultisigParticipant, index: number) => {
+            return (
+              <div key={`participant-${index}`} className="two-column-layout address-fixed">
+                <div className="left">
+                  <TextInput
+                    placeholder="Enter signer name or description"
+                    extraClass="small"
+                    id={`participant-name-${index + 1}`}
+                    value={participant.name}
+                    allowClear={false}
+                    maxLength={32}
+                    onInputChange={(e: any) => {
+                      const value = e.target.value;
+                      setSingleItemName(value, index);
+                    }}
+                  />
                 </div>
-              );
-            },
-          )}
+                <div className="right">
+                  <TextInput
+                    placeholder="Type or paste the address of multisig signer"
+                    extraClass="small"
+                    id={`participant-address-${index + 1}`}
+                    value={participant.address}
+                    allowClear={participants.length > 1}
+                    alwaysShowClear={participants.length > 1}
+                    error={
+                      isValidAddress(participant.address)
+                        ? isInputMultisigAddress(participant.address)
+                          ? t('multisig.create-multisig.multisig-address-used-as-participant')
+                          : ''
+                        : t('transactions.validation.valid-address-required')
+                    }
+                    onInputClear={() => onRemoveSingleItem(index)}
+                    onInputChange={(e: any) => {
+                      const value = e.target.value;
+                      setSingleItemAddress(value, index);
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

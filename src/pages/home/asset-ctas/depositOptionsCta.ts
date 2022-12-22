@@ -1,11 +1,6 @@
-import { AssetCta, MetaInfoCtaAction } from "models/accounts";
+import { AssetCta, MetaInfoCtaAction } from 'models/accounts';
 
-export const getDepositOptionsCta = (
-  caption: string,
-  ctaItems: number,
-  numMaxCtas: number,
-  callBack: any,
-) => {
+export const getDepositOptionsCta = (caption: string, ctaItems: number, numMaxCtas: number, callBack: any) => {
   return {
     action: MetaInfoCtaAction.Deposit,
     caption,
@@ -16,4 +11,4 @@ export const getDepositOptionsCta = (
     tooltip: '',
     callBack,
   } as AssetCta;
-}
+};

@@ -1,20 +1,11 @@
-import React, {
-  useContext,
-  useCallback,
-  useEffect,
-  useState,
-  useMemo,
-} from 'react';
+import React, { useContext, useCallback, useEffect, useState, useMemo } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { useWallet } from 'contexts/wallet';
 import { percentage, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
 import { useTranslation } from 'react-i18next';
-import {
-  StreamInfo,
-  TransactionFees,
-} from '@mean-dao/money-streaming/lib/types';
+import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/payment-streaming';
 import { AppStateContext } from 'contexts/appstate';
 import { InputMean } from 'components/InputMean';
@@ -29,8 +20,7 @@ export const StreamResumeModal = (props: {
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
 }) => {
-  const { theme, selectedAccount, getTokenByMintAddress } =
-    useContext(AppStateContext);
+  const { theme, selectedAccount, getTokenByMintAddress } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
@@ -67,7 +57,8 @@ export const StreamResumeModal = (props: {
     return false;
   }, [publicKey, props.streamDetail]);
 
-  const getFeeAmount = useCallback((fees: TransactionFees): number => {
+  const getFeeAmount = useCallback(
+    (fees: TransactionFees): number => {
       let fee = 0;
 
       // If the Treasurer is initializing the CloseStream Tx, mspFlatFee must be used
@@ -178,9 +169,7 @@ export const StreamResumeModal = (props: {
       className="mean-modal simple-modal"
       title={
         <div className="modal-title">
-          {isMultisigContext
-            ? 'Propose resume stream'
-            : t('streams.resume-stream-modal-title')}
+          {isMultisigContext ? 'Propose resume stream' : t('streams.resume-stream-modal-title')}
         </div>
       }
       footer={null}
@@ -192,15 +181,9 @@ export const StreamResumeModal = (props: {
         {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" /> */}
         <div className="text-center">
           {theme === 'light' ? (
-            <WarningFilled
-              style={{ fontSize: 48 }}
-              className="icon mt-0 fg-warning"
-            />
+            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
           ) : (
-            <WarningOutlined
-              style={{ fontSize: 48 }}
-              className="icon mt-0 fg-warning"
-            />
+            <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
           )}
         </div>
         <div className="mb-2 fg-warning">
@@ -213,18 +196,12 @@ export const StreamResumeModal = (props: {
           <div className="p-2 mb-2">
             {infoRow(
               t('close-stream.return-vested-amount') + ':',
-              getAmountWithSymbol(
-                getWithdrawableAmount(),
-                getStreamAssociatedMint(props.streamDetail) as string,
-              ),
+              getAmountWithSymbol(getWithdrawableAmount(), getStreamAssociatedMint(props.streamDetail) as string),
             )}
             {amITreasurer() &&
               infoRow(
                 t('close-stream.return-unvested-amount') + ':',
-                getAmountWithSymbol(
-                  getUnvested(),
-                  getStreamAssociatedMint(props.streamDetail) as string,
-                ),
+                getAmountWithSymbol(getUnvested(), getStreamAssociatedMint(props.streamDetail) as string),
               )}
           </div>
         )}
@@ -232,9 +209,7 @@ export const StreamResumeModal = (props: {
         {/* Proposal title */}
         {isMultisigContext && (
           <div className="mb-3">
-            <div className="form-label text-left">
-              {t('multisig.proposal-modal.title')}
-            </div>
+            <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
             <InputMean
               id="proposal-title-field"
               name="Title"
@@ -255,9 +230,7 @@ export const StreamResumeModal = (props: {
             disabled={isMultisigContext && !isValidForm()}
             onClick={() => onAcceptModal()}
           >
-            {isMultisigContext
-              ? getTransactionStartButtonLabel()
-              : t('streams.resume-stream-cta')}
+            {isMultisigContext ? getTransactionStartButtonLabel() : t('streams.resume-stream-cta')}
           </Button>
         </div>
       </div>

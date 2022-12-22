@@ -23,11 +23,7 @@ export const VestingContractSolBalanceModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">
-          {t('vesting.sol-balance.modal-title')}
-        </div>
-      }
+      title={<div className="modal-title">{t('vesting.sol-balance.modal-title')}</div>}
       footer={null}
       open={isVisible}
       onOk={handleClose}
@@ -36,16 +32,12 @@ export const VestingContractSolBalanceModal = (props: {
     >
       <div className="buy-token-options shift-up-1">
         <div className="text-center">
-          <h4 className="mb-0">
-            {t('vesting.sol-balance.contract-balance-label')}:
-          </h4>
+          <h4 className="mb-0">{t('vesting.sol-balance.contract-balance-label')}:</h4>
           <div className="font-size-100 font-extrabold mb-2">
             {getAmountWithSymbol(treasuryBalance, WRAPPED_SOL_MINT_ADDRESS)}
           </div>
           {treasuryBalance < MIN_SOL_BALANCE_REQUIRED && (
-            <p className="fg-warning">
-              {t('vesting.sol-balance.contract-balance-low-warning')}
-            </p>
+            <p className="fg-warning">{t('vesting.sol-balance.contract-balance-low-warning')}</p>
           )}
 
           <h3 className="mb-2">{t('vesting.sol-balance.qrcode-scan-label')}</h3>
@@ -65,9 +57,7 @@ export const VestingContractSolBalanceModal = (props: {
               </div>
             </>
           )}
-          <div className="font-light font-size-75 px-4">
-            {t('vesting.sol-balance.deposit-address-disclaimer')}
-          </div>
+          <div className="font-light font-size-75 px-4">{t('vesting.sol-balance.deposit-address-disclaimer')}</div>
         </div>
       </div>
     </Modal>

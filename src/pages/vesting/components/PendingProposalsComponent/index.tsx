@@ -13,22 +13,13 @@ export const PendingProposalsComponent = (props: {
   const { loadingMultisigTxPendingCount } = useContext(AppStateContext);
   const navigate = useNavigate();
 
-  if (
-    loadingMultisigTxPendingCount ||
-    !pendingMultisigTxCount ||
-    pendingMultisigTxCount === 0
-  ) {
+  if (loadingMultisigTxPendingCount || !pendingMultisigTxCount || pendingMultisigTxCount === 0) {
     return null;
   }
 
   return (
     <>
-      <div
-        key="pending-proposals"
-        className={`transaction-list-row${
-          extraClasses ? ' ' + extraClasses : ''
-        }`}
-      >
+      <div key="pending-proposals" className={`transaction-list-row${extraClasses ? ' ' + extraClasses : ''}`}>
         <div
           className="flex-row align-items-center fg-warning simplelink underline-on-hover"
           onClick={() => {
@@ -36,9 +27,7 @@ export const PendingProposalsComponent = (props: {
             navigate(url);
           }}
         >
-          <div className="font-bold">
-            There are pending proposals on this account
-          </div>
+          <div className="font-bold">There are pending proposals on this account</div>
           <span className="icon-button-container ml-1">
             <Tooltip placement="bottom" title="Go to safe account">
               <Button

@@ -1,18 +1,12 @@
 import React from 'react';
 import { TxConfirmationInfo } from '../../contexts/transaction-status';
-import {
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons';
+import { CheckCircleOutlined, ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { getRelativeDate } from '../../middleware/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 import { shortenAddress } from '../../middleware/utils';
 
-export const TransactionConfirmationHistory = (props: {
-  confirmationHistory: TxConfirmationInfo[];
-}) => {
+export const TransactionConfirmationHistory = (props: { confirmationHistory: TxConfirmationInfo[] }) => {
   const { confirmationHistory } = props;
 
   const getEventIcon = (item: TxConfirmationInfo) => {
@@ -41,9 +35,7 @@ export const TransactionConfirmationHistory = (props: {
                 </div>
                 <div className="right ml-1 flex-column">
                   <div className="event-description">
-                    {item.txInfoFetchStatus === 'fetched'
-                      ? item.completedMessage
-                      : item.loadingMessage}
+                    {item.txInfoFetchStatus === 'fetched' ? item.completedMessage : item.loadingMessage}
                   </div>
                   <div className="flex-fixed-right">
                     <div className="left event-signature">

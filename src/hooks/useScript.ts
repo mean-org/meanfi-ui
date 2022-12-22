@@ -34,10 +34,7 @@ function useScript(src: string, name?: any): ScriptControl {
         // Store status in attribute on script
         // This can be read by other instances of this hook
         const setAttributeFromEvent = (event: Event) => {
-          script?.setAttribute(
-            'data-status',
-            event.type === 'load' ? 'ready' : 'error',
-          );
+          script?.setAttribute('data-status', event.type === 'load' ? 'ready' : 'error');
           // library will contain a reference to the window object name apparently
           // loaded by the script, but the user should know that name.
           if (name && event.type === 'load') {

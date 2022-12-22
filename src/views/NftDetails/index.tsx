@@ -2,22 +2,13 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Image, Space, Tabs, Tooltip } from 'antd';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { InfoIcon } from 'components/InfoIcon';
-import {
-  fallbackImgSrc,
-  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
-} from 'constants/common';
+import { fallbackImgSrc, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { useMint } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import useWindowSize from 'hooks/useWindowResize';
 import { MeanNft } from 'models/accounts/NftTypes';
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { NftCreators } from './NftCreators';
 
 export const NftDetails = (props: { selectedNft?: MeanNft }) => {
@@ -28,19 +19,14 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
   const collectionAddress = selectedNft?.collection?.address;
   const collectionMintInfo = useMint(collectionAddress);
   const { width: browserInnerWidth } = useWindowSize();
-  const [shouldShortedAddresses, setShouldShortedAddresses] =
-    useState<boolean>(false);
+  const [shouldShortedAddresses, setShouldShortedAddresses] = useState<boolean>(false);
 
   const isVerifiedCollection = useMemo(() => {
     if (!selectedNft) {
       return false;
     }
 
-    return (
-      selectedNft.collection != null &&
-      selectedNft.collection.verified &&
-      collectionMintInfo !== undefined
-    );
+    return selectedNft.collection != null && selectedNft.collection.verified && collectionMintInfo !== undefined;
   }, [collectionMintInfo, selectedNft]);
 
   const getEditionBody = (nft: MeanNft) => {
@@ -55,9 +41,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
     }
 
     return (
-      <span className="badge medium font-bold text-uppercase fg-white bg-purple">
-        {getEditionBody(selectedNft)}
-      </span>
+      <span className="badge medium font-bold text-uppercase fg-white bg-purple">{getEditionBody(selectedNft)}</span>
     );
   };
 
@@ -66,9 +50,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
       'This NFT has been verified as a member of an on-chain collection. This tag guarantees authenticity.';
     return (
       <Tooltip title={onchainVerifiedToolTip}>
-        <span className="badge medium font-bold text-uppercase fg-white bg-purple">
-          Verified Collection
-        </span>
+        <span className="badge medium font-bold text-uppercase fg-white bg-purple">Verified Collection</span>
       </Tooltip>
     );
   };
@@ -82,21 +64,14 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
   };
 
   const getSaleTypePill = (hasPrimarySaleHappened: boolean) => {
-    const primaryMarketTooltip =
-      'Creator(s) split 100% of the proceeds when this NFT is sold.';
+    const primaryMarketTooltip = 'Creator(s) split 100% of the proceeds when this NFT is sold.';
 
     const secondaryMarketTooltip =
       'Creator(s) split the Seller Fee when this NFT is sold. The owner receives the remaining proceeds.';
 
     return (
       <>
-        <Tooltip
-          title={
-            hasPrimarySaleHappened
-              ? secondaryMarketTooltip
-              : primaryMarketTooltip
-          }
-        >
+        <Tooltip title={hasPrimarySaleHappened ? secondaryMarketTooltip : primaryMarketTooltip}>
           <span className="badge medium font-bold text-uppercase fg-white bg-purple">
             {hasPrimarySaleHappened ? 'Secondary Market' : 'Primary Market'}
           </span>
@@ -120,8 +95,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
               placement="top"
               content={
                 <span>
-                  Royalties are shared to Creators at this rate if the asset is
-                  sold using Metaplex Auction program.
+                  Royalties are shared to Creators at this rate if the asset is sold using Metaplex Auction program.
                 </span>
               }
             >
@@ -195,10 +169,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
           ? infoRow(
               <>
                 <span className="align-text-bottom">Mint Authority</span>
-                <InfoIcon
-                  placement="top"
-                  content={<span>Account permitted to mint this token.</span>}
-                >
+                <InfoIcon placement="top" content={<span>Account permitted to mint this token.</span>}>
                   <InfoCircleOutlined />
                 </InfoIcon>
               </>,
@@ -217,12 +188,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
                 <span className="align-text-bottom">Update Authority</span>
                 <InfoIcon
                   placement="top"
-                  content={
-                    <span>
-                      Account permitted to issue update requests for this
-                      token's information.
-                    </span>
-                  }
+                  content={<span>Account permitted to issue update requests for this token's information.</span>}
                 >
                   <InfoCircleOutlined />
                 </InfoIcon>
@@ -240,10 +206,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
           ? infoRow(
               <>
                 <span className="align-text-bottom">Current Owner</span>
-                <InfoIcon
-                  placement="top"
-                  content={<span>The owner of this token!</span>}
-                >
+                <InfoIcon placement="top" content={<span>The owner of this token!</span>}>
                   <InfoCircleOutlined />
                 </InfoIcon>
               </>,
@@ -310,11 +273,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
                     alt={selectedNft.json.name}
                   />
                 ) : (
-                  <Image
-                    className="nft-image"
-                    src={fallbackImgSrc}
-                    alt="No image description. Metadata not loaded"
-                  />
+                  <Image className="nft-image" src={fallbackImgSrc} alt="No image description. Metadata not loaded" />
                 )}
               </div>
             </div>
@@ -324,27 +283,20 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
                   <h3 className="nft-details-heading">NFT Overview</h3>
                   <div className="font-size-100 font-bold mb-1">
                     <span>{selectedNft.name || 'No NFT name found'}</span>
-                    {selectedNft.json.symbol ? (
-                      <span className="ml-1">({selectedNft.json.symbol})</span>
-                    ) : null}
+                    {selectedNft.json.symbol ? <span className="ml-1">({selectedNft.json.symbol})</span> : null}
                   </div>
 
                   <div className="font-size-100 mb-2">
                     <Space size="small" align="center" wrap>
                       {getEditionPill()}
-                      {isVerifiedCollection
-                        ? getVerifiedCollectionPill()
-                        : null}
+                      {isVerifiedCollection ? getVerifiedCollectionPill() : null}
                       {getIsMutablePill(selectedNft.isMutable)}
                       {getSaleTypePill(selectedNft.primarySaleHappened)}
                     </Space>
                   </div>
 
                   <h3 className="nft-details-heading">Description</h3>
-                  <p className="mr-2">
-                    {selectedNft.json.description ||
-                      'No description in metadata'}
-                  </p>
+                  <p className="mr-2">{selectedNft.json.description || 'No description in metadata'}</p>
                 </>
               ) : (
                 <span>No metadata found</span>

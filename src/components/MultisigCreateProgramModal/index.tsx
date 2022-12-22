@@ -48,11 +48,7 @@ export const MultisigCreateProgramModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">
-          {t('multisig.multisig-programs.modal-title')}
-        </div>
-      }
+      title={<div className="modal-title">{t('multisig.multisig-programs.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={onAcceptModal}
@@ -63,9 +59,8 @@ export const MultisigCreateProgramModal = (props: {
       <div className="mb-3">
         <h3>Adding a program to your Multisig</h3>
         <p>
-          To use program upgrades for your on-chain program through the MeanFi
-          Multisig you will need to set the upgrade authority of your program to
-          this multisig account:
+          To use program upgrades for your on-chain program through the MeanFi Multisig you will need to set the upgrade
+          authority of your program to this multisig account:
         </p>
         <div className="well small mb-2">
           <div className="flex-fixed-right">
@@ -79,11 +74,7 @@ export const MultisigCreateProgramModal = (props: {
             <div className="right">
               <div
                 className="add-on simplelink"
-                onClick={() =>
-                  copyAddressToClipboard(
-                    props.selectedMultisig.authority.toBase58(),
-                  )
-                }
+                onClick={() => copyAddressToClipboard(props.selectedMultisig.authority.toBase58())}
               >
                 <IconCopy className="mean-svg-icons" />
               </div>
@@ -91,8 +82,7 @@ export const MultisigCreateProgramModal = (props: {
           </div>
         </div>
         <p>
-          You can use the Solana CLI to set a program's upgrade authority, to
-          learn more about this,{' '}
+          You can use the Solana CLI to set a program's upgrade authority, to learn more about this,{' '}
           <a
             className="simplelink underline"
             href="https://docs.solana.com/cli/deploy-a-program#set-a-programs-upgrade-authority"
@@ -104,19 +94,13 @@ export const MultisigCreateProgramModal = (props: {
           </a>
         </p>
         <p>
-          Once you complete this step you can refresh the list of programs and
-          it will appear on the list and you can immediately start upgrading
-          your progam.
+          Once you complete this step you can refresh the list of programs and it will appear on the list and you can
+          immediately start upgrading your progam.
         </p>
       </div>
 
       <div className="transaction-progress">
-        <Button
-          type="primary"
-          shape="round"
-          size="large"
-          onClick={onCloseModal}
-        >
+        <Button type="primary" shape="round" size="large" onClick={onCloseModal}>
           {t('general.cta-close')}
         </Button>
       </div>

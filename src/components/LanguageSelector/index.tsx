@@ -4,11 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { LANGUAGES } from '../../constants';
 import './style.scss';
 
-export const LanguageSelector = (props: {
-  handleClose: any;
-  handleOk: any;
-  isVisible: boolean;
-}) => {
+export const LanguageSelector = (props: { handleClose: any; handleOk: any; isVisible: boolean }) => {
   const { t, i18n } = useTranslation('common');
   const [selectedLanguage] = useState<string>(i18n.language);
   const [language, setLanguage] = useState<string>('');
@@ -42,9 +38,7 @@ export const LanguageSelector = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">{t('language-selector.modal-title')}</div>
-      }
+      title={<div className="modal-title">{t('language-selector.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={props.handleOk}
@@ -58,11 +52,7 @@ export const LanguageSelector = (props: {
               return (
                 <div
                   key={item.code}
-                  className={
-                    item.code === language
-                      ? 'item-list-row selected'
-                      : 'item-list-row simplelink'
-                  }
+                  className={item.code === language ? 'item-list-row selected' : 'item-list-row simplelink'}
                   onClick={() => changeLanguageByCode(item.code)}
                 >
                   <div className="std-table-cell first-cell">
@@ -70,9 +60,7 @@ export const LanguageSelector = (props: {
                       <img src={item.flag} alt={getLanguageCode(item.code)} />
                     </span>
                   </div>
-                  <div className="std-table-cell responsive-cell">
-                    {item.name}
-                  </div>
+                  <div className="std-table-cell responsive-cell">{item.name}</div>
                 </div>
               );
             })}

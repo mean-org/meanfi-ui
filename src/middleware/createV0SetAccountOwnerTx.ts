@@ -1,5 +1,11 @@
-import { AuthorityType, Token } from "@solana/spl-token";
-import { Connection, PublicKey, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { AuthorityType, Token } from '@solana/spl-token';
+import {
+  Connection,
+  PublicKey,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
+} from '@solana/web3.js';
 
 /**
  * Assign a new owner to the account
@@ -18,24 +24,21 @@ export async function setAccountOwner(
   programId: PublicKey,
   authType: AuthorityType,
 ) {
-
   const ixs: TransactionInstruction[] = [];
 
   ixs.push(
     Token.createSetAuthorityInstruction(
-      programId,  // always TOKEN_PROGRAM_ID
-      account,    // mint account || token account
-      newOwner,   // new auth (you can pass `null` to close it)
-      authType,   // authority type, there are 4 types => 'MintTokens' | 'FreezeAccount' | 'AccountOwner' | 'CloseAccount'
-      owner,      // original auth
-      [],         // for multisig
+      programId, // always TOKEN_PROGRAM_ID
+      account, // mint account || token account
+      newOwner, // new auth (you can pass `null` to close it)
+      authType, // authority type, there are 4 types => 'MintTokens' | 'FreezeAccount' | 'AccountOwner' | 'CloseAccount'
+      owner, // original auth
+      [], // for multisig
     ),
   );
 
   // Get the latest blockhash
-  const blockhash = await connection
-    .getLatestBlockhash('confirmed')
-    .then((res) => res.blockhash);
+  const blockhash = await connection.getLatestBlockhash('confirmed').then(res => res.blockhash);
 
   // create v0 compatible message
   const messageV0 = new TransactionMessage({

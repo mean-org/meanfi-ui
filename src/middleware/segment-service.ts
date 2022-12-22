@@ -400,11 +400,7 @@ export class SegmentAnalyticsService {
    * Every time the user navigates to a page
    */
 
-  public recordIdentity(
-    userId: string,
-    userInfo: any,
-    callback?: any | undefined,
-  ): void {
+  public recordIdentity(userId: string, userInfo: any, callback?: any | undefined): void {
     if (this._analytics) {
       this._analytics.identify(userId, userInfo, callback);
     }
@@ -435,11 +431,7 @@ export class SegmentAnalyticsService {
    * Every time the user performs an action that we want to track :D
    */
 
-  public recordEvent(
-    event: AppUsageEvent | StatsTriggertEvent,
-    data?: any,
-    callback?: any | undefined,
-  ): void {
+  public recordEvent(event: AppUsageEvent | StatsTriggertEvent, data?: any, callback?: any | undefined): void {
     if (this._analytics) {
       if (event && !data && !callback) {
         this._analytics.track(event);

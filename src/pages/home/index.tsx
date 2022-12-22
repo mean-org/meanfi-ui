@@ -24,17 +24,8 @@ import {
   PaymentStreamingAccount,
 } from '@mean-dao/payment-streaming';
 import { AnchorProvider, BN, Idl, Program } from '@project-serum/anchor';
-import {
-  Token,
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Alert, Button, Col, Divider, Dropdown, Empty, Menu, Row, Segmented, Space, Spin, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import notification from 'antd/lib/notification';
@@ -306,11 +297,7 @@ export const HomeView = () => {
   );
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(
-      connection,
-      new PublicKey(streamV2ProgramAddress),
-      'confirmed'
-    );
+    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
   }, [connection, streamV2ProgramAddress]);
 
   const isCustomAsset = useMemo(
@@ -1013,25 +1000,26 @@ export const HomeView = () => {
   );
 
   // Filter only useful Txs for the SOL account and return count
-  const getSolAccountItems = useCallback((txs: MappedTransaction[]): number => {
-    // Show only txs that have SOL changes
-    const filtered = txs.filter(tx => {
-      const meta = tx.parsedTransaction && tx.parsedTransaction.meta ? tx.parsedTransaction.meta : null;
-      if (!meta || meta.err !== null) {
-        return false;
-      }
-      const accounts = tx.parsedTransaction.transaction.message.accountKeys;
-      const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === selectedAccount.address);
-      if (isSelectedAssetNativeAccount() && accIdx === -1) {
-        return false;
-      }
-      const change = getChange(accIdx, meta);
-      return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
-    });
+  const getSolAccountItems = useCallback(
+    (txs: MappedTransaction[]): number => {
+      // Show only txs that have SOL changes
+      const filtered = txs.filter(tx => {
+        const meta = tx.parsedTransaction && tx.parsedTransaction.meta ? tx.parsedTransaction.meta : null;
+        if (!meta || meta.err !== null) {
+          return false;
+        }
+        const accounts = tx.parsedTransaction.transaction.message.accountKeys;
+        const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === selectedAccount.address);
+        if (isSelectedAssetNativeAccount() && accIdx === -1) {
+          return false;
+        }
+        const change = getChange(accIdx, meta);
+        return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
+      });
 
-    consoleOut(`${filtered.length} useful Txs`);
-    return filtered.length || 0;
-  },
+      consoleOut(`${filtered.length} useful Txs`);
+      return filtered.length || 0;
+    },
     [selectedAccount.address, isSelectedAssetNativeAccount],
   );
 
@@ -1071,7 +1059,8 @@ export const HomeView = () => {
     setTransactionAssetFees(fees);
   }, [resetTransactionStatus]);
 
-  const closeCreateAssetModal = useCallback((refresh = false) => {
+  const closeCreateAssetModal = useCallback(
+    (refresh = false) => {
       resetTransactionStatus();
       setIsBusy(false);
       setIsCreateAssetModalVisible(false);
@@ -1082,51 +1071,54 @@ export const HomeView = () => {
     [resetTransactionStatus, setShouldLoadTokens],
   );
 
-  const onExecuteCreateAssetTx = useCallback(async (params: CreateSafeAssetTxParams) => {
-
-    const payload = () => {
-      if (!publicKey) return;
-      return {
-        token: params.token,
-      } as CreateSafeAssetTxParams;
-    };
-    const loadingMessage = () => `Create asset ${params.token?.symbol}`;
-    const completedMessage = () => `Asset ${params.token?.symbol} successfully created`;
-    const bf = transactionAssetFees.blockchainFee; // Blockchain fee
-    const ff = transactionAssetFees.mspFlatFee; // Flat fee (protocol)
-    const minRequired = bf + ff;
-    setMinRequiredBalance(minRequired);
-
-    await onExecute({
-      name: 'Create Safe Asset',
-      operationType: OperationType.CreateAsset,
-      payload,
-      loadingMessage,
-      completedMessage,
-      setIsBusy,
-      nativeBalance,
-      minRequired,
-      generateTransaction: async ({ multisig, data }) => {
+  const onExecuteCreateAssetTx = useCallback(
+    async (params: CreateSafeAssetTxParams) => {
+      const payload = () => {
         if (!publicKey) return;
-        return createAddSafeAssetTx(connection, publicKey, selectedMultisig, data);
-      },
-    });
-    closeCreateAssetModal(true);
-  }, [
-    publicKey,
-    connection,
-    nativeBalance,
-    selectedMultisig,
-    transactionAssetFees.mspFlatFee,
-    transactionAssetFees.blockchainFee,
-    closeCreateAssetModal,
-    onExecute,
-  ]);
+        return {
+          token: params.token,
+        } as CreateSafeAssetTxParams;
+      };
+      const loadingMessage = () => `Create asset ${params.token?.symbol}`;
+      const completedMessage = () => `Asset ${params.token?.symbol} successfully created`;
+      const bf = transactionAssetFees.blockchainFee; // Blockchain fee
+      const ff = transactionAssetFees.mspFlatFee; // Flat fee (protocol)
+      const minRequired = bf + ff;
+      setMinRequiredBalance(minRequired);
 
-  const onAcceptCreateVault = useCallback((params: CreateSafeAssetTxParams) => {
-    consoleOut('Create asset payload:', params);
-    onExecuteCreateAssetTx(params);
-  },
+      await onExecute({
+        name: 'Create Safe Asset',
+        operationType: OperationType.CreateAsset,
+        payload,
+        loadingMessage,
+        completedMessage,
+        setIsBusy,
+        nativeBalance,
+        minRequired,
+        generateTransaction: async ({ multisig, data }) => {
+          if (!publicKey) return;
+          return createAddSafeAssetTx(connection, publicKey, selectedMultisig, data);
+        },
+      });
+      closeCreateAssetModal(true);
+    },
+    [
+      publicKey,
+      connection,
+      nativeBalance,
+      selectedMultisig,
+      transactionAssetFees.mspFlatFee,
+      transactionAssetFees.blockchainFee,
+      closeCreateAssetModal,
+      onExecute,
+    ],
+  );
+
+  const onAcceptCreateVault = useCallback(
+    (params: CreateSafeAssetTxParams) => {
+      consoleOut('Create asset payload:', params);
+      onExecuteCreateAssetTx(params);
+    },
     [onExecuteCreateAssetTx],
   );
 
@@ -1149,77 +1141,77 @@ export const HomeView = () => {
     onExecuteTransferTokensTx(params);
   };
 
-  const onExecuteTransferTokensTx = useCallback(async (params: TransferTokensTxParams) => {
+  const onExecuteTransferTokensTx = useCallback(
+    async (params: TransferTokensTxParams) => {
+      const multisigAuthority = selectedMultisig ? selectedMultisig.authority.toBase58() : '';
+      const payload = () => {
+        if (!publicKey || !params || !multisigAuthority) return;
+        return params;
+      };
+      const loadingMessage = () =>
+        `Create proposal to transfer ${formatThousands(params.amount, selectedAsset?.decimals)} ${
+          selectedAsset?.symbol
+        } to ${shortenAddress(params.to)}`;
+      const completedMessage = () =>
+        `Proposal to transfer ${formatThousands(params.amount, selectedAsset?.decimals)} ${
+          selectedAsset?.symbol
+        } to ${shortenAddress(params.to)} was submitted for Multisig approval.`;
 
-    const multisigAuthority = selectedMultisig ? selectedMultisig.authority.toBase58() : '';
-    const payload = () => {
-      if (!publicKey || !params || !multisigAuthority) return;
-      return params;
-    };
-    const loadingMessage = () => `Create proposal to transfer ${formatThousands(params.amount, selectedAsset?.decimals)} ${selectedAsset?.symbol
-    } to ${shortenAddress(params.to)}`;
-    const completedMessage = () => `Proposal to transfer ${formatThousands(params.amount, selectedAsset?.decimals)} ${selectedAsset?.symbol
-    } to ${shortenAddress(params.to)} was submitted for Multisig approval.`;
+      const isNative = params.from === NATIVE_SOL.address ? true : false;
 
-    const isNative = params.from === NATIVE_SOL.address ? true : false;
+      const bf = transactionAssetFees.blockchainFee; // Blockchain fee
+      const ff = transactionAssetFees.mspFlatFee; // Flat fee (protocol)
+      const minRequired = bf + ff;
+      setMinRequiredBalance(minRequired);
 
-    const bf = transactionAssetFees.blockchainFee; // Blockchain fee
-    const ff = transactionAssetFees.mspFlatFee; // Flat fee (protocol)
-    const minRequired = bf + ff;
-    setMinRequiredBalance(minRequired);
+      await onExecute({
+        name: 'Transfer Tokens',
+        operationType: isNative ? OperationType.Transfer : OperationType.TransferTokens,
+        payload,
+        loadingMessage,
+        completedMessage,
+        setIsBusy,
+        extras: () => ({
+          multisigAuthority: multisigAuthority,
+        }),
+        proposalTitle: params.proposalTitle,
+        multisig: multisigAuthority,
+        nativeBalance,
+        minRequired,
+        generateMultisigArgs: async ({ multisig, data }) => {
+          consoleOut('multisig:', multisig, 'purple');
+          consoleOut('data:', data, 'purple');
+          if (!publicKey || !multisigClient || !multisig || !data) return null;
+          const txResult = await createTransferTokensTx(connection, publicKey, multisig, multisigClient, data);
 
-    await onExecute({
-      name: 'Transfer Tokens',
-      operationType: isNative ? OperationType.Transfer : OperationType.TransferTokens,
-      payload,
-      loadingMessage,
-      completedMessage,
-      setIsBusy,
-      extras: () => ({
-        multisigAuthority: multisigAuthority,
-      }),
-      proposalTitle: params.proposalTitle,
-      multisig: multisigAuthority,
+          const programId = txResult.tx.instructions[0].programId;
+          const ixData = Buffer.from(txResult.tx.instructions[0].data);
+          const ixAccounts = txResult.tx.instructions[0].keys;
+
+          return {
+            programId, // program
+            ixAccounts, // keys o accounts of the Ix
+            ixData, // data of the Ix
+          };
+        },
+      });
+      setSuccessStatus();
+      setIsTransferTokenModalVisible(false);
+    },
+    [
+      publicKey,
+      connection,
       nativeBalance,
-      minRequired,
-      generateMultisigArgs: async ({ multisig, data }) => {
-        consoleOut('multisig:', multisig, 'purple');
-        consoleOut('data:', data, 'purple');
-        if (!publicKey || !multisigClient || !multisig || !data) return null;
-        const txResult = await createTransferTokensTx(
-          connection,
-          publicKey,
-          multisig,
-          multisigClient,
-          data,
-        );
-
-        const programId = txResult.tx.instructions[0].programId;
-        const ixData = Buffer.from(txResult.tx.instructions[0].data);
-        const ixAccounts = txResult.tx.instructions[0].keys;
-
-        return {
-          programId, // program
-          ixAccounts, // keys o accounts of the Ix
-          ixData, // data of the Ix
-        };
-      },
-    });
-    setSuccessStatus();
-    setIsTransferTokenModalVisible(false);
-  }, [
-    publicKey,
-    connection,
-    nativeBalance,
-    multisigClient,
-    selectedMultisig,
-    selectedAsset?.symbol,
-    selectedAsset?.decimals,
-    transactionAssetFees.mspFlatFee,
-    transactionAssetFees.blockchainFee,
-    setSuccessStatus,
-    onExecute,
-  ]);
+      multisigClient,
+      selectedMultisig,
+      selectedAsset?.symbol,
+      selectedAsset?.decimals,
+      transactionAssetFees.mspFlatFee,
+      transactionAssetFees.blockchainFee,
+      setSuccessStatus,
+      onExecute,
+    ],
+  );
 
   // Transfer asset authority modal
   const [isTransferVaultAuthorityModalVisible, setIsTransferVaultAuthorityModalVisible] = useState(false);
@@ -1652,7 +1644,8 @@ export const HomeView = () => {
     ],
   );
 
-  const getAllUserV2Treasuries = useCallback(async (addr?: string) => {
+  const getAllUserV2Treasuries = useCallback(
+    async (addr?: string) => {
       if (!paymentStreaming) {
         return [];
       }
@@ -1674,7 +1667,8 @@ export const HomeView = () => {
     [paymentStreaming, selectedAccount.address],
   );
 
-  const refreshTreasuries = useCallback((reset = false) => {
+  const refreshTreasuries = useCallback(
+    (reset = false) => {
       if (!publicKey || !selectedAccount.address || !ms || !paymentStreaming) {
         return;
       }
@@ -1740,7 +1734,8 @@ export const HomeView = () => {
       if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
         const unallocated = getUnallocatedBalance(tsry);
-        const isNewTreasury = (tsry as PaymentStreamingAccount).version && (tsry as PaymentStreamingAccount).version >= 2 ? true : false;
+        const isNewTreasury =
+          (tsry as PaymentStreamingAccount).version && (tsry as PaymentStreamingAccount).version >= 2 ? true : false;
         const ub = isNewTreasury
           ? new BigNumber(toUiAmount(unallocated, decimals)).toNumber()
           : new BigNumber(unallocated.toString()).toNumber();
@@ -1764,14 +1759,17 @@ export const HomeView = () => {
     };
 
     for (const treasury of treasuryList) {
-      const isNew = (treasury as PaymentStreamingAccount).version && (treasury as PaymentStreamingAccount).version >= 2 ? true : false;
+      const isNew =
+        (treasury as PaymentStreamingAccount).version && (treasury as PaymentStreamingAccount).version >= 2
+          ? true
+          : false;
 
       const treasuryType = isNew
         ? +(treasury as PaymentStreamingAccount).accountType
         : +((treasury as TreasuryInfo).type as TreasuryType);
 
       const associatedToken = isNew
-        ? ((treasury as PaymentStreamingAccount).mint.toBase58())
+        ? (treasury as PaymentStreamingAccount).mint.toBase58()
         : ((treasury as TreasuryInfo).associatedTokenAddress as string);
 
       if (treasuryType === 0) {
@@ -1805,117 +1803,131 @@ export const HomeView = () => {
     getTokenByMintAddress,
   ]);
 
-  const getV1VestedValue = useCallback(async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
-    if (!ms) return 0;
+  const getV1VestedValue = useCallback(
+    async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
+      if (!ms) return 0;
 
-    let vestedValue = 0;
-    for await (const stream of updatedStreamsv1) {
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
+      let vestedValue = 0;
+      for await (const stream of updatedStreamsv1) {
+        const isIncoming =
+          stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
 
-      // Get refreshed data
-      const freshStream = await ms.refreshStream(stream);
-      if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
-        continue;
-      }
+        // Get refreshed data
+        const freshStream = await ms.refreshStream(stream);
+        if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
+          continue;
+        }
 
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+        const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
-      if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
 
-        if (isIncoming) {
-          vestedValue = vestedValue + (freshStream.escrowVestedAmount || 0) * tokenPrice;
+          if (isIncoming) {
+            vestedValue = vestedValue + (freshStream.escrowVestedAmount || 0) * tokenPrice;
+          }
         }
       }
-    }
-    return vestedValue;
-  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, ms]);
+      return vestedValue;
+    },
+    [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, ms],
+  );
 
-  const getV1UnvestedValue = useCallback(async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
-    if (!ms) return 0;
+  const getV1UnvestedValue = useCallback(
+    async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
+      if (!ms) return 0;
 
-    let unvestedValue = 0;
-    for await (const stream of updatedStreamsv1) {
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
+      let unvestedValue = 0;
+      for await (const stream of updatedStreamsv1) {
+        const isIncoming =
+          stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
 
-      // Get refreshed data
-      const freshStream = await ms.refreshStream(stream, undefined, false);
-      if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
-        continue;
-      }
+        // Get refreshed data
+        const freshStream = await ms.refreshStream(stream, undefined, false);
+        if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
+          continue;
+        }
 
-      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+        const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
-      if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
 
-        if (!isIncoming) {
-          unvestedValue = unvestedValue + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
+          if (!isIncoming) {
+            unvestedValue = unvestedValue + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
+          }
         }
       }
-    }
-    return unvestedValue;
-  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, ms]);
+      return unvestedValue;
+    },
+    [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, ms],
+  );
 
-  const getV2FundsLeftValue = useCallback(async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
-    if (!paymentStreaming) return 0;
+  const getV2FundsLeftValue = useCallback(
+    async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
+      if (!paymentStreaming) return 0;
 
-    let fundsLeftValue = 0;
-    for await (const stream of updatedStreamsv2) {
-      const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
+      let fundsLeftValue = 0;
+      for await (const stream of updatedStreamsv2) {
+        const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
 
-      // Get refreshed data
-      const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
-      if (!freshStream || freshStream.statusCode !== STREAM_STATUS_CODE.Running) {
-        continue;
-      }
+        // Get refreshed data
+        const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
+        if (!freshStream || freshStream.statusCode !== STREAM_STATUS_CODE.Running) {
+          continue;
+        }
 
-      const associatedToken = getStreamAssociatedMint(freshStream);
-      const token = getTokenByMintAddress(associatedToken);
+        const associatedToken = getStreamAssociatedMint(freshStream);
+        const token = getTokenByMintAddress(associatedToken);
 
-      if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 9;
-        const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
-        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const decimals = token.decimals || 9;
+          const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
+          const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
-        if (!isIncoming) {
-          fundsLeftValue += amountChange;
+          if (!isIncoming) {
+            fundsLeftValue += amountChange;
+          }
         }
       }
-    }
-    return fundsLeftValue;
-  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, paymentStreaming]);
+      return fundsLeftValue;
+    },
+    [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, paymentStreaming],
+  );
 
-  const getV2WithdrawableValue = useCallback(async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
-    if (!paymentStreaming) return 0;
+  const getV2WithdrawableValue = useCallback(
+    async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
+      if (!paymentStreaming) return 0;
 
-    let withdrawableValue = 0;
-    for await (const stream of updatedStreamsv2) {
-      const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
+      let withdrawableValue = 0;
+      for await (const stream of updatedStreamsv2) {
+        const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
 
-      // Get refreshed data
-      const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
-      if (!freshStream || freshStream.statusCode !== STREAM_STATUS_CODE.Running) {
-        continue;
-      }
+        // Get refreshed data
+        const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
+        if (!freshStream || freshStream.statusCode !== STREAM_STATUS_CODE.Running) {
+          continue;
+        }
 
-      const associatedToken = getStreamAssociatedMint(freshStream);
-      const token = getTokenByMintAddress(associatedToken);
+        const associatedToken = getStreamAssociatedMint(freshStream);
+        const token = getTokenByMintAddress(associatedToken);
 
-      if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-        const decimals = token.decimals || 9;
-        const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
-        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+        if (token) {
+          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const decimals = token.decimals || 9;
+          const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
+          const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
-        if (isIncoming) {
-          withdrawableValue += amountChange;
+          if (isIncoming) {
+            withdrawableValue += amountChange;
+          }
         }
       }
-    }
-    return withdrawableValue;
-  }, [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, paymentStreaming]);
+      return withdrawableValue;
+    },
+    [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, paymentStreaming],
+  );
 
   const refreshIncomingStreamSummary = useCallback(async () => {
     if (!ms || !paymentStreaming || !publicKey || (!streamListv1 && !streamListv2)) {
@@ -2128,7 +2140,8 @@ export const HomeView = () => {
     [connection, connectionConfig, getCredixProgram],
   );
 
-  const onExecuteCreateTransactionProposal = useCallback(async (params: CreateNewProposalParams) => {
+  const onExecuteCreateTransactionProposal = useCallback(
+    async (params: CreateNewProposalParams) => {
       let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
@@ -2725,7 +2738,7 @@ export const HomeView = () => {
       isInspectedAccountTheConnectedWallet(),
       isSelectedAssetWsol(),
       wSolBalance,
-      onStartUnwrapTx
+      onStartUnwrapTx,
     );
     if (unwrapSolCta.length > 0) ctaItems++;
     actions.push(...unwrapSolCta);
@@ -2738,20 +2751,13 @@ export const HomeView = () => {
       isInspectedAccountTheConnectedWallet(),
       isSelectedAssetWsol(),
       isCustomAsset,
-      showDepositOptionsModal
+      showDepositOptionsModal,
     );
     if (buyOptionsCta.length > 0) ctaItems++;
     actions.push(...buyOptionsCta);
 
     // Deposit
-    actions.push(
-      getDepositOptionsCta(
-        'Deposit',
-        ctaItems,
-        numMaxCtas,
-        showReceiveSplOrSolModal
-      )
-    );
+    actions.push(getDepositOptionsCta('Deposit', ctaItems, numMaxCtas, showReceiveSplOrSolModal));
     ctaItems++;
 
     // Exchange
@@ -2762,7 +2768,7 @@ export const HomeView = () => {
       isInspectedAccountTheConnectedWallet(),
       isSelectedAssetWsol(),
       isCustomAsset,
-      onExchangeAsset
+      onExchangeAsset,
     );
     if (exchangeAssetCta.length > 0) ctaItems++;
     actions.push(...exchangeAssetCta);
@@ -2773,7 +2779,7 @@ export const HomeView = () => {
       numMaxCtas,
       investButtonEnabled(),
       selectedAsset,
-      handleGoToInvestClick
+      handleGoToInvestClick,
     );
     if (investAssetCta.length > 0) ctaItems++;
     actions.push(...investAssetCta);
@@ -2786,7 +2792,7 @@ export const HomeView = () => {
       isInspectedAccountTheConnectedWallet(),
       isSelectedAssetNativeAccount(),
       isWhitelisted,
-      showWrapSolModal
+      showWrapSolModal,
     );
     if (wrapSolCta.length > 0) ctaItems++;
     actions.push(...wrapSolCta);
@@ -2822,7 +2828,7 @@ export const HomeView = () => {
       t('assets.merge-accounts-cta'),
       isInspectedAccountTheConnectedWallet(),
       canActivateMergeTokenAccounts(),
-      activateTokenMerge
+      activateTokenMerge,
     );
     actions.push(...mergeAccountsCta);
 
@@ -2832,7 +2838,7 @@ export const HomeView = () => {
       isInspectedAccountTheConnectedWallet(),
       isAnyTxPendingConfirmation(),
       isDeleteAssetValid(),
-      isMultisigContext ? showDeleteVaultModal : showCloseAssetModal
+      isMultisigContext ? showDeleteVaultModal : showCloseAssetModal,
     );
     actions.push(...closeAccountCta);
 
@@ -3006,9 +3012,8 @@ export const HomeView = () => {
   //////////////////
 
   const onStartUnwrapTx = useCallback(async () => {
-
     const payload = () => {
-      return {wSolBalance};
+      return { wSolBalance };
     };
     const loadingMessage = () => `Unwrap ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`;
     const completedMessage = () => `Successfully unwrapped ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`;
@@ -3959,8 +3964,9 @@ export const HomeView = () => {
                               <Row gutter={[8, 8]}>
                                 <Col
                                   span={24}
-                                  className={`alert-info-message pr-2 ${selectedMultisig ? 'simplelink' : 'disable-pointer'
-                                    }`}
+                                  className={`alert-info-message pr-2 ${
+                                    selectedMultisig ? 'simplelink' : 'disable-pointer'
+                                  }`}
                                   onClick={showSolBalanceModal}
                                 >
                                   <Alert

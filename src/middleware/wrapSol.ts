@@ -1,13 +1,18 @@
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
-import { WRAPPED_SOL_MINT } from "./ids";
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
+} from '@solana/web3.js';
+import { WRAPPED_SOL_MINT } from './ids';
 
-export const wrapSol = async (
-  connection: Connection,
-  from: PublicKey,
-  amount: number
-): Promise<Transaction> => {
-
+export const wrapSol = async (connection: Connection, from: PublicKey, amount: number): Promise<Transaction> => {
   const ixs: TransactionInstruction[] = [];
   const newAccount = Keypair.generate();
   const minimumWrappedAccountBalance = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
@@ -20,12 +25,7 @@ export const wrapSol = async (
       space: AccountLayout.span,
       programId: TOKEN_PROGRAM_ID,
     }),
-    Token.createInitAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      WRAPPED_SOL_MINT,
-      newAccount.publicKey,
-      from
-    )
+    Token.createInitAccountInstruction(TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT, newAccount.publicKey, from),
   );
 
   const aTokenKey = await Token.getAssociatedTokenAddress(
@@ -33,7 +33,7 @@ export const wrapSol = async (
     TOKEN_PROGRAM_ID,
     WRAPPED_SOL_MINT,
     from,
-    true
+    true,
   );
 
   const accountInfo = await connection.getAccountInfo(aTokenKey);
@@ -46,8 +46,8 @@ export const wrapSol = async (
         WRAPPED_SOL_MINT,
         aTokenKey,
         from,
-        from
-      )
+        from,
+      ),
     );
   }
 
@@ -58,35 +58,26 @@ export const wrapSol = async (
       aTokenKey,
       from,
       [],
-      amount * LAMPORTS_PER_SOL
+      amount * LAMPORTS_PER_SOL,
     ),
-    Token.createCloseAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      newAccount.publicKey,
-      from,
-      from,
-      []
-    )
+    Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, newAccount.publicKey, from, from, []),
   );
 
   const tx = new Transaction().add(...ixs);
   tx.feePayer = from;
   // Get the latest blockhash
-  const blockhash = await connection
-    .getLatestBlockhash('confirmed')
-    .then((res) => res.blockhash);
+  const blockhash = await connection.getLatestBlockhash('confirmed').then(res => res.blockhash);
   tx.recentBlockhash = blockhash;
   tx.partialSign(newAccount);
 
   return tx;
-}
+};
 
 export const wrapSolV0 = async (
   connection: Connection,
   from: PublicKey,
-  amount: number
+  amount: number,
 ): Promise<VersionedTransaction> => {
-
   const ixs: TransactionInstruction[] = [];
   const newAccount = Keypair.generate();
   const minimumWrappedAccountBalance = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
@@ -99,12 +90,7 @@ export const wrapSolV0 = async (
       space: AccountLayout.span,
       programId: TOKEN_PROGRAM_ID,
     }),
-    Token.createInitAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      WRAPPED_SOL_MINT,
-      newAccount.publicKey,
-      from
-    )
+    Token.createInitAccountInstruction(TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT, newAccount.publicKey, from),
   );
 
   const aTokenKey = await Token.getAssociatedTokenAddress(
@@ -112,7 +98,7 @@ export const wrapSolV0 = async (
     TOKEN_PROGRAM_ID,
     WRAPPED_SOL_MINT,
     from,
-    true
+    true,
   );
 
   const accountInfo = await connection.getAccountInfo(aTokenKey);
@@ -125,8 +111,8 @@ export const wrapSolV0 = async (
         WRAPPED_SOL_MINT,
         aTokenKey,
         from,
-        from
-      )
+        from,
+      ),
     );
   }
 
@@ -137,21 +123,13 @@ export const wrapSolV0 = async (
       aTokenKey,
       from,
       [],
-      amount * LAMPORTS_PER_SOL
+      amount * LAMPORTS_PER_SOL,
     ),
-    Token.createCloseAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      newAccount.publicKey,
-      from,
-      from,
-      []
-    )
+    Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, newAccount.publicKey, from, from, []),
   );
 
   // Get the latest blockhash
-  const blockhash = await connection
-    .getLatestBlockhash('confirmed')
-    .then((res) => res.blockhash);
+  const blockhash = await connection.getLatestBlockhash('confirmed').then(res => res.blockhash);
 
   // create v0 compatible message
   const messageV0 = new TransactionMessage({
@@ -166,4 +144,4 @@ export const wrapSolV0 = async (
   transaction.addSignature(newAccount.publicKey, newAccount.secretKey);
 
   return transaction;
-}
+};

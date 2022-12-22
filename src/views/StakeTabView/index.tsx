@@ -9,17 +9,10 @@ import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
-import {
-  confirmationEvents,
-  TxConfirmationContext,
-  TxConfirmationInfo,
-} from 'contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
-import {
-  AppUsageEvent,
-  SegmentStakeMeanData,
-} from 'middleware/segment-service';
+import { AppUsageEvent, SegmentStakeMeanData } from 'middleware/segment-service';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import {
   cutNumber,
@@ -48,21 +41,9 @@ export const StakeTabView = (props: {
   smeanDecimals: number;
   stakeClient: StakingClient;
 }) => {
-  const {
-    meanBalance,
-    onTxFinished,
-    selectedToken,
-    smeanBalance,
-    smeanDecimals,
-    stakeClient,
-  } = props;
-  const {
-    loadingPrices,
-    transactionStatus,
-    getTokenPriceBySymbol,
-    setTransactionStatus,
-    refreshPrices,
-  } = useContext(AppStateContext);
+  const { meanBalance, onTxFinished, selectedToken, smeanBalance, smeanDecimals, stakeClient } = props;
+  const { loadingPrices, transactionStatus, getTokenPriceBySymbol, setTransactionStatus, refreshPrices } =
+    useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { refreshAccount } = useAccountsContext();
   const connection = useConnection();
@@ -95,21 +76,23 @@ export const StakeTabView = (props: {
     });
   }, [setTransactionStatus]);
 
-  const setFailureStatusAndNotify = useCallback((txStep: 'sign' | 'send') => {
-    const operation = txStep === 'sign'
-      ? TransactionStatus.SignTransactionFailure
-      : TransactionStatus.SendTransactionFailure;
-    setTransactionStatus({
-      lastOperation: transactionStatus.currentOperation,
-      currentOperation: operation,
-    });
-    openNotification({
-      title: t('notifications.error-title'),
-      description: t('notifications.error-sending-transaction'),
-      type: 'error',
-    });
-    setIsBusy(false);
-  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
+  const setFailureStatusAndNotify = useCallback(
+    (txStep: 'sign' | 'send') => {
+      const operation =
+        txStep === 'sign' ? TransactionStatus.SignTransactionFailure : TransactionStatus.SendTransactionFailure;
+      setTransactionStatus({
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: operation,
+      });
+      openNotification({
+        title: t('notifications.error-title'),
+        description: t('notifications.error-sending-transaction'),
+        type: 'error',
+      });
+      setIsBusy(false);
+    },
+    [setTransactionStatus, t, transactionStatus.currentOperation],
+  );
 
   const setSuccessStatus = useCallback(() => {
     setIsBusy(false);
@@ -158,20 +141,14 @@ export const StakeTabView = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-      ? `${t('staking.panel-right.tabset.stake.stake-button-busy')} ${
-          selectedToken && selectedToken.symbol
-        }`
+      ? `${t('staking.panel-right.tabset.stake.stake-button-busy')} ${selectedToken && selectedToken.symbol}`
       : !selectedToken || !meanBalance
       ? t('transactions.validation.no-balance')
-      : !fromCoinAmount ||
-        !isValidNumber(fromCoinAmount) ||
-        !parseFloat(fromCoinAmount)
+      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > meanBalance
       ? t('transactions.validation.amount-high')
-      : `${t('staking.panel-right.tabset.stake.stake-button')} ${
-          selectedToken && selectedToken.symbol
-        }`;
+      : `${t('staking.panel-right.tabset.stake.stake-button')} ${selectedToken && selectedToken.symbol}`;
   }, [fromCoinAmount, selectedToken, meanBalance, connected, isBusy, t]);
 
   const isStakingFormValid = (): boolean => {
@@ -219,16 +196,12 @@ export const StakeTabView = (props: {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
           inputs: `uiAmount: ${uiAmount}`,
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: '',
         });
 
@@ -245,10 +218,7 @@ export const StakeTabView = (props: {
           valueInUsd: price * uiAmount,
         };
         consoleOut('segment data:', segmentData, 'blue');
-        segmentAnalytics.recordEvent(
-          AppUsageEvent.StakeMeanFormButton,
-          segmentData,
-        );
+        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFormButton, segmentData);
 
         return await stakeClient
           .stakeTransaction(
@@ -262,9 +232,7 @@ export const StakeTabView = (props: {
               currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
               result: getTxIxResume(value),
             });
             transaction = value;
@@ -277,9 +245,7 @@ export const StakeTabView = (props: {
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
             customLogger.logError('Stake transaction failed', {
@@ -329,10 +295,9 @@ export const StakeTabView = (props: {
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Staking ${formatThousands(
-                parseFloat(fromCoinAmount),
-                selectedToken.decimals,
-              )} ${selectedToken.symbol}`,
+              loadingMessage: `Staking ${formatThousands(parseFloat(fromCoinAmount), selectedToken.decimals)} ${
+                selectedToken.symbol
+              }`,
               completedTitle: 'Transaction confirmed',
               completedMessage: `Successfully staked ${formatThousands(
                 parseFloat(fromCoinAmount),
@@ -369,18 +334,13 @@ export const StakeTabView = (props: {
     setSuccessStatus,
   ]);
 
-  const recordTxConfirmation = useCallback(
-    (signature: string, operation: OperationType, success = true) => {
-      let event: any;
-      if (operation === OperationType.Stake) {
-        event = success
-          ? AppUsageEvent.StakeMeanCompleted
-          : AppUsageEvent.StakeMeanFailed;
-        segmentAnalytics.recordEvent(event, { signature: signature });
-      }
-    },
-    [],
-  );
+  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
+    let event: any;
+    if (operation === OperationType.Stake) {
+      event = success ? AppUsageEvent.StakeMeanCompleted : AppUsageEvent.StakeMeanFailed;
+      segmentAnalytics.recordEvent(event, { signature: signature });
+    }
+  }, []);
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
@@ -391,25 +351,17 @@ export const StakeTabView = (props: {
       }
 
       const reloadStakePools = () => {
-        const stakePoolsRefreshCta = document.getElementById(
-          'refresh-stake-pool-info',
-        );
+        const stakePoolsRefreshCta = document.getElementById('refresh-stake-pool-info');
         if (stakePoolsRefreshCta) {
           stakePoolsRefreshCta.click();
         } else {
-          console.log(
-            'element not found:',
-            '#refresh-stake-pool-info',
-            'red',
-          );
+          console.log('element not found:', '#refresh-stake-pool-info', 'red');
         }
       };
 
       if (item.operationType === OperationType.Stake) {
         consoleOut(
-          `StakeTabView -> onTxConfirmed event handled for operation ${
-            OperationType[item.operationType]
-          }`,
+          `StakeTabView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
           item,
           'crimson',
         );
@@ -427,17 +379,11 @@ export const StakeTabView = (props: {
   const onTxTimedout = useCallback(
     (item: TxConfirmationInfo) => {
       const reloadStakePools = () => {
-        const stakePoolsRefreshCta = document.getElementById(
-          'refresh-stake-pool-info',
-        );
+        const stakePoolsRefreshCta = document.getElementById('refresh-stake-pool-info');
         if (stakePoolsRefreshCta) {
           stakePoolsRefreshCta.click();
         } else {
-          console.log(
-            'element not found:',
-            '#refresh-stake-pool-info',
-            'red',
-          );
+          console.log('element not found:', '#refresh-stake-pool-info', 'red');
         }
       };
 
@@ -475,11 +421,7 @@ export const StakeTabView = (props: {
       .then((value: StakeQuote) => {
         consoleOut('stakeQuote:', value, 'blue');
         setStakedMeanPrice(value.sMeanOutUiAmount);
-        consoleOut(
-          `Quote for 1 MEAN:`,
-          `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`,
-          'blue',
-        );
+        consoleOut(`Quote for 1 MEAN:`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
       })
       .catch((error: any) => {
         console.error(error);
@@ -519,17 +461,9 @@ export const StakeTabView = (props: {
       setCanSubscribe(false);
       consoleOut('Setup event subscriptions -> StakeTabView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut(
-        'Subscribed to event txConfirmed with:',
-        'onTxConfirmed',
-        'brown',
-      );
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut(
-        'Subscribed to event txTimedout with:',
-        'onTxTimedout',
-        'brown',
-      );
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
@@ -579,24 +513,16 @@ export const StakeTabView = (props: {
         <span className="info-label d-block">
           {realmsDepositAmount && (
             <>
-              At this time, {formatThousands(realmsDepositAmount)} of your sMEAN
-              are committed to{' '}
-              <a
-                href="https://app.realms.today/dao/MEAN"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              At this time, {formatThousands(realmsDepositAmount)} of your sMEAN are committed to{' '}
+              <a href="https://app.realms.today/dao/MEAN" target="_blank" rel="noopener noreferrer">
                 Realms
               </a>{' '}
-              for voting purposes. You can find them there and withdraw them at
-              any point.
+              for voting purposes. You can find them there and withdraw them at any point.
             </>
           )}
         </span>
       </div>
-      <div className="form-label">
-        {t('staking.panel-right.tabset.stake.amount-label')}
-      </div>
+      <div className="form-label">{t('staking.panel-right.tabset.stake.amount-label')}</div>
       <div className={`well mb-1${isBusy ? ' disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
@@ -613,9 +539,7 @@ export const StakeTabView = (props: {
                 <div
                   className="token-max simplelink"
                   onClick={() => {
-                    const newAmount = meanBalance.toFixed(
-                      selectedToken?.decimals || 9,
-                    );
+                    const newAmount = meanBalance.toFixed(selectedToken?.decimals || 9);
                     setFromCoinAmount(newAmount);
                     // Debouncing
                     fetchQuoteFromInput(newAmount);
@@ -648,33 +572,17 @@ export const StakeTabView = (props: {
           <div className="left inner-label">
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span>
-              {`${
-                meanBalance && selectedToken
-                  ? getAmountWithSymbol(
-                      meanBalance,
-                      selectedToken?.address,
-                      true,
-                    )
-                  : '0'
-              }`}
+              {`${meanBalance && selectedToken ? getAmountWithSymbol(meanBalance, selectedToken?.address, true) : '0'}`}
             </span>
           </div>
           <div className="right inner-label">
             <span
-              className={
-                loadingPrices
-                  ? 'click-disabled fg-orange-red pulsate'
-                  : 'simplelink'
-              }
+              className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
               onClick={() => refreshPrices()}
             >
               ~$
               {fromCoinAmount && selectedToken
-                ? formatAmount(
-                    parseFloat(fromCoinAmount) *
-                      getTokenPriceBySymbol(selectedToken.symbol),
-                    2,
-                  )
+                ? formatAmount(parseFloat(fromCoinAmount) * getTokenPriceBySymbol(selectedToken.symbol), 2)
                 : '0.00'}
             </span>
           </div>
@@ -688,17 +596,10 @@ export const StakeTabView = (props: {
           parseFloat(fromCoinAmount) <= meanBalance &&
           stakeQuote > 0 &&
           infoRow(
-            `${formatThousands(
-              parseFloat(fromCoinAmount),
-              getMaxDecimalsForValue(parseFloat(fromCoinAmount)),
-            )} MEAN ≈`,
-            `${formatThousands(
-              stakeQuote,
-              getMaxDecimalsForValue(stakeQuote),
-            )} sMEAN`,
+            `${formatThousands(parseFloat(fromCoinAmount), getMaxDecimalsForValue(parseFloat(fromCoinAmount)))} MEAN ≈`,
+            `${formatThousands(stakeQuote, getMaxDecimalsForValue(stakeQuote))} sMEAN`,
           )}
-        {stakedMeanPrice > 0 &&
-          infoRow(`1 MEAN ≈`, `${cutNumber(stakedMeanPrice, 6)} sMEAN`)}
+        {stakedMeanPrice > 0 && infoRow(`1 MEAN ≈`, `${cutNumber(stakedMeanPrice, 6)} sMEAN`)}
       </div>
 
       {/* Action button */}
@@ -720,15 +621,10 @@ export const StakeTabView = (props: {
       </Button>
       <div className="pt-2">
         <span className="info-label d-block">
-          sMEAN allows for the consistent earning of rewards, while also
-          providing token holders with the ability to engage with governacne
-          proposals, by giving voting rights in said proposals, helping shape
-          the course of the Mean DAO. You can make use of this here:{' '}
-          <a
-            href="https://app.realms.today/dao/MEAN"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          sMEAN allows for the consistent earning of rewards, while also providing token holders with the ability to
+          engage with governacne proposals, by giving voting rights in said proposals, helping shape the course of the
+          Mean DAO. You can make use of this here:{' '}
+          <a href="https://app.realms.today/dao/MEAN" target="_blank" rel="noopener noreferrer">
             https://app.realms.today/dao/MEAN
           </a>
         </span>

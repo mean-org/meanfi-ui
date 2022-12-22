@@ -6,11 +6,7 @@ import { ONE_MINUTE_REFRESH_TIMEOUT } from 'constants/common';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import {
-  getNetworkIdByCluster,
-  useConnection,
-  useConnectionConfig,
-} from 'contexts/connection';
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconLoading } from 'Icons';
@@ -18,11 +14,7 @@ import { IconHelpCircle } from 'Icons/IconHelpCircle';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
 import { consoleOut, isProd } from 'middleware/ui';
-import {
-  findATokenAddress,
-  formatThousands,
-  getAmountFromLamports,
-} from 'middleware/utils';
+import { findATokenAddress, formatThousands, getAmountFromLamports } from 'middleware/utils';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
@@ -64,13 +56,10 @@ const StakingView = () => {
   const [currentTab, setCurrentTab] = useState<StakeOption>(undefined);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
-  const [shouldRefreshStakePoolInfo, setShouldRefreshStakePoolInfo] =
-    useState(true);
+  const [shouldRefreshStakePoolInfo, setShouldRefreshStakePoolInfo] = useState(true);
   const [refreshingStakePoolInfo, setRefreshingStakePoolInfo] = useState(false);
   const [meanAddresses, setMeanAddresses] = useState<Env>();
-  const [stakingPair, setStakingPair] = useState<StakingPair | undefined>(
-    undefined,
-  );
+  const [stakingPair, setStakingPair] = useState<StakingPair | undefined>(undefined);
   const [sMeanBalance, setSmeanBalance] = useState<number>(0);
   const [sMeanDecimals, setSmeanDecimals] = useState<number>(0);
   const [meanBalance, setMeanBalance] = useState<number>(0);
@@ -88,13 +77,7 @@ const StakingView = () => {
       commitment: 'confirmed',
     };
 
-    return new StakingClient(
-      cluster,
-      endpoint,
-      publicKey,
-      opts,
-      isProd() ? false : true,
-    );
+    return new StakingClient(cluster, endpoint, publicKey, opts, isProd() ? false : true);
   }, [cluster, endpoint, publicKey]);
 
   /////////////////
@@ -102,11 +85,7 @@ const StakingView = () => {
   /////////////////
 
   const refreshMeanBalance = useCallback(async () => {
-    if (
-      !publicKey ||
-      !tokenAccounts ||
-      !tokenAccounts.length
-    ) {
+    if (!publicKey || !tokenAccounts || !tokenAccounts.length) {
       return;
     }
 
@@ -120,10 +99,7 @@ const StakingView = () => {
     try {
       const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
       const meanTokenAddress = findATokenAddress(publicKey, meanTokenPk);
-      const result = await getTokenAccountBalanceByAddress(
-        connection,
-        meanTokenAddress,
-      );
+      const result = await getTokenAccountBalanceByAddress(connection, meanTokenAddress);
       if (result) {
         balance = result.uiAmount || 0;
       }
@@ -136,24 +112,19 @@ const StakingView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tokenAccounts, publicKey, stakingPair]);
 
-  const getUsdAmountForSmeanAmount = useCallback((amount: number) => {
-    if (
-      amount > 0 &&
-      sMeanToMeanRate &&
-      meanPrice
-    ) {
-      const usdAmount = amount * sMeanToMeanRate * meanPrice;
-      return usdAmount;
-    }
-    return 0;
-  }, [meanPrice, sMeanToMeanRate]);
+  const getUsdAmountForSmeanAmount = useCallback(
+    (amount: number) => {
+      if (amount > 0 && sMeanToMeanRate && meanPrice) {
+        const usdAmount = amount * sMeanToMeanRate * meanPrice;
+        return usdAmount;
+      }
+      return 0;
+    },
+    [meanPrice, sMeanToMeanRate],
+  );
 
   const refreshStakedMeanBalance = useCallback(async () => {
-    if (
-      !publicKey ||
-      !tokenAccounts ||
-      !tokenAccounts.length
-    ) {
+    if (!publicKey || !tokenAccounts || !tokenAccounts.length) {
       return;
     }
 
@@ -172,10 +143,7 @@ const StakingView = () => {
 
     const sMeanTokenPk = new PublicKey(stakingPair.stakedToken.address);
     const smeanTokenAddress = findATokenAddress(publicKey, sMeanTokenPk);
-    const result = await getTokenAccountBalanceByAddress(
-      connection,
-      smeanTokenAddress,
-    );
+    const result = await getTokenAccountBalanceByAddress(connection, smeanTokenAddress);
     if (result) {
       balance = result.uiAmount || 0;
       setSmeanDecimals(result.decimals);
@@ -188,7 +156,8 @@ const StakingView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tokenAccounts, publicKey, stakingPair, selectedAccount.address]);
 
-  const refreshStakePoolInfo = useCallback((price: number) => {
+  const refreshStakePoolInfo = useCallback(
+    (price: number) => {
       if (stakeClient && price) {
         setTimeout(() => {
           setRefreshingStakePoolInfo(true);
@@ -219,7 +188,6 @@ const StakingView = () => {
     },
     [setFromCoinAmount, setIsVerifiedRecipient, setSearchParams],
   );
-
 
   /////////////////////
   // Data management //
@@ -266,15 +234,9 @@ const StakingView = () => {
 
       setMeanAddresses(meanAddress);
 
-      const tokenList = MEAN_TOKEN_LIST.filter(
-        t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster),
-      );
-      const unstakedToken = tokenList.find(
-        t => t.address === meanAddress.mean.toBase58(),
-      );
-      const stakedToken = tokenList.find(
-        t => t.address === meanAddress.sMean.toBase58(),
-      );
+      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster));
+      const unstakedToken = tokenList.find(t => t.address === meanAddress.mean.toBase58());
+      const stakedToken = tokenList.find(t => t.address === meanAddress.sMean.toBase58());
 
       consoleOut('unstakedToken', unstakedToken, 'blue');
       consoleOut('stakedToken', stakedToken, 'blue');
@@ -300,7 +262,9 @@ const StakingView = () => {
   useEffect(() => {
     if (priceList && stakingPair && stakingPair.unstakedToken) {
       consoleOut('unstakedToken:', stakingPair.unstakedToken, 'blue');
-      const price = getTokenPriceByAddress(stakingPair.unstakedToken.address) || getTokenPriceBySymbol(stakingPair.unstakedToken.symbol);
+      const price =
+        getTokenPriceByAddress(stakingPair.unstakedToken.address) ||
+        getTokenPriceBySymbol(stakingPair.unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
       setMeanPrice(price);
     }
@@ -308,11 +272,7 @@ const StakingView = () => {
 
   // Keep MEAN balance updated
   useEffect(() => {
-    if (
-      !publicKey ||
-      !tokenAccounts ||
-      !tokenAccounts.length
-    ) {
+    if (!publicKey || !tokenAccounts || !tokenAccounts.length) {
       setMeanBalance(0);
       return;
     }
@@ -324,11 +284,7 @@ const StakingView = () => {
 
   // Keep sMEAN balance updated
   useEffect(() => {
-    if (
-      !publicKey ||
-      !tokenAccounts ||
-      !tokenAccounts.length
-    ) {
+    if (!publicKey || !tokenAccounts || !tokenAccounts.length) {
       return;
     }
 
@@ -349,14 +305,8 @@ const StakingView = () => {
         .then((value: UnstakeQuote) => {
           consoleOut('unStakeQuote:', value, 'yellow');
           consoleOut(
-            `Quote for ${formatThousands(
-              sMeanBalance,
-              sMeanDecimals,
-            )} sMEAN`,
-            `${formatThousands(
-              value.meanOutUiAmount,
-              sMeanDecimals,
-            )} MEAN`,
+            `Quote for ${formatThousands(sMeanBalance, sMeanDecimals)} sMEAN`,
+            `${formatThousands(value.meanOutUiAmount, sMeanDecimals)} MEAN`,
             'yellow',
           );
           setSMeanToMeanRate(value.sMeanToMeanRateUiAmount);
@@ -381,12 +331,7 @@ const StakingView = () => {
     } else {
       consoleOut('meanPrice not available!', '', 'red');
     }
-  }, [
-    stakeClient,
-    refreshStakePoolInfo,
-    meanPrice,
-    shouldRefreshStakePoolInfo,
-  ]);
+  }, [stakeClient, refreshStakePoolInfo, meanPrice, shouldRefreshStakePoolInfo]);
 
   // Refresh pool info timeout
   useEffect(() => {
@@ -394,10 +339,7 @@ const StakingView = () => {
       const now = Date.now();
       setLastTimestamp(now);
       setShouldRefreshStakePoolInfo(true);
-      consoleOut(
-        'Autorefresh stake pool info after:',
-        `${(now - lastTimestamp) / 1000}s`,
-      );
+      consoleOut('Autorefresh stake pool info after:', `${(now - lastTimestamp) / 1000}s`);
     }, ONE_MINUTE_REFRESH_TIMEOUT);
 
     return () => {
@@ -430,19 +372,12 @@ const StakingView = () => {
                   <Col span={8}>
                     <div className="info-label icon-label justify-content-center align-items-center">
                       <span>{t('staking.panel-right.stats.staking-apy')}</span>
-                      <InfoIcon
-                        content={t(
-                          'staking.panel-right.stats.staking-apy-tooltip',
-                        )}
-                        placement="top"
-                      >
+                      <InfoIcon content={t('staking.panel-right.stats.staking-apy-tooltip')} placement="top">
                         <IconHelpCircle className="mean-svg-icons" />
                       </InfoIcon>
                     </div>
                     <div className="transaction-detail-row">
-                      {refreshingStakePoolInfo ||
-                      !stakePoolInfo ||
-                      stakePoolInfo.apr === 0 ? (
+                      {refreshingStakePoolInfo || !stakePoolInfo || stakePoolInfo.apr === 0 ? (
                         <IconLoading className="mean-svg-icons" />
                       ) : (
                         <span>{(stakePoolInfo.apr * 100).toFixed(2)}%</span>
@@ -454,9 +389,7 @@ const StakingView = () => {
                       {t('staking.panel-right.stats.total-value-locked')}
                     </div>
                     <div className="transaction-detail-row">
-                      {refreshingStakePoolInfo ||
-                      !stakePoolInfo ||
-                      stakePoolInfo.tvl === 0 ? (
+                      {refreshingStakePoolInfo || !stakePoolInfo || stakePoolInfo.tvl === 0 ? (
                         <IconLoading className="mean-svg-icons" />
                       ) : (
                         <span>${formatThousands(stakePoolInfo.tvl, 2)}</span>
@@ -468,17 +401,10 @@ const StakingView = () => {
                       {t('staking.panel-right.stats.total-mean-rewards')}
                     </div>
                     <div className="transaction-detail-row">
-                      {refreshingStakePoolInfo ||
-                      !stakePoolInfo ||
-                      stakePoolInfo.totalMeanAmount.uiAmount === 0 ? (
+                      {refreshingStakePoolInfo || !stakePoolInfo || stakePoolInfo.totalMeanAmount.uiAmount === 0 ? (
                         <IconLoading className="mean-svg-icons" />
                       ) : (
-                        <span>
-                          {formatThousands(
-                            stakePoolInfo.totalMeanAmount.uiAmount || 0,
-                            0,
-                          )}
-                        </span>
+                        <span>{formatThousands(stakePoolInfo.totalMeanAmount.uiAmount || 0, 0)}</span>
                       )}
                     </div>
                   </Col>
@@ -490,17 +416,13 @@ const StakingView = () => {
               <div className="place-transaction-box">
                 <div className="button-tabset-container">
                   <div
-                    className={`tab-button ${
-                      currentTab === 'stake' ? 'active' : ''
-                    }`}
+                    className={`tab-button ${currentTab === 'stake' ? 'active' : ''}`}
                     onClick={() => onTabChange('stake')}
                   >
                     {t('staking.panel-right.tabset.stake.name')}
                   </div>
                   <div
-                    className={`tab-button ${
-                      currentTab === 'unstake' ? 'active' : ''
-                    }`}
+                    className={`tab-button ${currentTab === 'unstake' ? 'active' : ''}`}
                     onClick={() => onTabChange('unstake')}
                   >
                     {t('staking.panel-right.tabset.unstake.name')}

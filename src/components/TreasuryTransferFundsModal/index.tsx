@@ -1,13 +1,6 @@
-import {
-  CheckOutlined,
-  InfoCircleOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import {
-  TransactionFees,
-  TreasuryInfo,
-} from '@mean-dao/money-streaming';
+import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
 import { PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
@@ -22,12 +15,7 @@ import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
-import {
-  consoleOut,
-  getTransactionOperationDescription,
-  isValidAddress,
-  toUsCurrency,
-} from 'middleware/ui';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
 import {
   displayAmountWithSymbol,
   formatThousands,
@@ -43,13 +31,7 @@ import {
 import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { TreasuryWithdrawParams } from 'models/treasuries';
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
 
@@ -121,7 +103,7 @@ export const TreasuryTransferFundsModal = (props: {
       amount: tokenAmount.toString(),
       destination: to,
       payer: selectedAccount.address,
-      treasury: treasuryDetails ? treasuryDetails.id.toString() : ''
+      treasury: treasuryDetails ? treasuryDetails.id.toString() : '',
     };
     handleOk(params);
   };
@@ -130,38 +112,34 @@ export const TreasuryTransferFundsModal = (props: {
     return !to
       ? 'Enter an address'
       : to && !isValidAddress(to)
-        ? 'Invalid address'
-        : !tokenAmount || +tokenAmount === 0
-          ? 'Enter amount'
-          : unallocatedBalance && unallocatedBalance.isZero()
-            ? 'No balance'
-            : tokenAmount &&
-              unallocatedBalance &&
-              tokenAmount.gt(unallocatedBalance || new BN(0))
-              ? 'Amount exceeded'
-              : !isVerifiedRecipient
-                ? t('transactions.validation.verified-recipient-unchecked')
-                : t('treasuries.withdraw-funds.main-cta');
+      ? 'Invalid address'
+      : !tokenAmount || +tokenAmount === 0
+      ? 'Enter amount'
+      : unallocatedBalance && unallocatedBalance.isZero()
+      ? 'No balance'
+      : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance || new BN(0))
+      ? 'Amount exceeded'
+      : !isVerifiedRecipient
+      ? t('transactions.validation.verified-recipient-unchecked')
+      : t('treasuries.withdraw-funds.main-cta');
   };
 
   const getTransactionStartButtonLabelMultisig = () => {
     return !proposalTitle
       ? 'Add a proposal title'
       : !to
-        ? 'Enter an address'
-        : to && !isValidAddress(to)
-          ? 'Invalid address'
-          : !tokenAmount || +tokenAmount === 0
-            ? 'Enter amount'
-            : unallocatedBalance && unallocatedBalance.isZero()
-              ? 'No balance'
-              : tokenAmount &&
-                unallocatedBalance &&
-                tokenAmount.gt(unallocatedBalance || new BN(0))
-                ? 'Amount exceeded'
-                : !isVerifiedRecipient
-                  ? t('transactions.validation.verified-recipient-unchecked')
-                  : 'Sign proposal';
+      ? 'Enter an address'
+      : to && !isValidAddress(to)
+      ? 'Invalid address'
+      : !tokenAmount || +tokenAmount === 0
+      ? 'Enter amount'
+      : unallocatedBalance && unallocatedBalance.isZero()
+      ? 'No balance'
+      : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance || new BN(0))
+      ? 'Amount exceeded'
+      : !isVerifiedRecipient
+      ? t('transactions.validation.verified-recipient-unchecked')
+      : 'Sign proposal';
   };
 
   useEffect(() => {
@@ -248,8 +226,7 @@ export const TreasuryTransferFundsModal = (props: {
       isValidAddress(to) &&
       selectedToken &&
       isVerifiedRecipient &&
-      ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
-        (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
+      ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) || (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
       tokenAmount &&
       tokenAmount.gtn(0) &&
       ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
@@ -268,8 +245,7 @@ export const TreasuryTransferFundsModal = (props: {
       !isInputMultisigAddress(to) &&
       selectedToken &&
       isVerifiedRecipient &&
-      ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
-       (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
+      ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) || (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
       tokenAmount &&
       tokenAmount.gtn(0) &&
       ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
@@ -283,57 +259,50 @@ export const TreasuryTransferFundsModal = (props: {
   };
 
   const getMaxAmount = useCallback(() => {
-      if (transactionFees) {
-        const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
-        const feeNumerator =
-          transactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
-        const feeDenaminator = 1000000;
-        const badStreamMaxAllocation = unallocatedBalance
-          .mul(new BN(feeDenaminator))
-          .div(new BN(feeNumerator + feeDenaminator));
+    if (transactionFees) {
+      const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
+      const feeNumerator = transactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
+      const feeDenaminator = 1000000;
+      const badStreamMaxAllocation = unallocatedBalance
+        .mul(new BN(feeDenaminator))
+        .div(new BN(feeNumerator + feeDenaminator));
 
-        const feeAmount = badStreamMaxAllocation
-          .mul(new BN(feeNumerator))
-          .div(new BN(feeDenaminator));
+      const feeAmount = badStreamMaxAllocation.mul(new BN(feeNumerator)).div(new BN(feeDenaminator));
 
-        const badTotal = badStreamMaxAllocation.add(feeAmount);
-        const badRemaining = unallocatedBalance.sub(badTotal);
-        const goodStreamMaxAllocation = unallocatedBalance.sub(feeAmount);
-        const goodTotal = goodStreamMaxAllocation.add(feeAmount);
-        const goodRemaining = unallocatedBalance.sub(goodTotal);
-        const maxAmount = goodStreamMaxAllocation;
+      const badTotal = badStreamMaxAllocation.add(feeAmount);
+      const badRemaining = unallocatedBalance.sub(badTotal);
+      const goodStreamMaxAllocation = unallocatedBalance.sub(feeAmount);
+      const goodTotal = goodStreamMaxAllocation.add(feeAmount);
+      const goodRemaining = unallocatedBalance.sub(goodTotal);
+      const maxAmount = goodStreamMaxAllocation;
 
-        if (isWhitelisted) {
-          const debugTable: any[] = [];
-          debugTable.push({
-            unallocatedBalance: unallocatedBalance.toString(),
-            feeNumerator: feeNumerator,
-            feePercentage01: feeNumerator / feeDenaminator,
-            badStreamMaxAllocation: badStreamMaxAllocation.toString(),
-            feeAmount: feeAmount.toString(),
-            badTotal: badTotal.toString(),
-            badRemaining: badRemaining.toString(),
-            goodStreamMaxAllocation: goodStreamMaxAllocation.toString(),
-            goodTotal: goodTotal.toString(),
-            goodRemaining: goodRemaining.toString(),
-          });
-          consoleOut('debug table', debugTable, 'blue');
-        }
-        return maxAmount;
+      if (isWhitelisted) {
+        const debugTable: any[] = [];
+        debugTable.push({
+          unallocatedBalance: unallocatedBalance.toString(),
+          feeNumerator: feeNumerator,
+          feePercentage01: feeNumerator / feeDenaminator,
+          badStreamMaxAllocation: badStreamMaxAllocation.toString(),
+          feeAmount: feeAmount.toString(),
+          badTotal: badTotal.toString(),
+          badRemaining: badRemaining.toString(),
+          goodStreamMaxAllocation: goodStreamMaxAllocation.toString(),
+          goodTotal: goodTotal.toString(),
+          goodRemaining: goodRemaining.toString(),
+        });
+        consoleOut('debug table', debugTable, 'blue');
       }
-      return unallocatedBalance;
-    },
-    [isWhitelisted, unallocatedBalance, transactionFees],
-  );
+      return maxAmount;
+    }
+    return unallocatedBalance;
+  }, [isWhitelisted, unallocatedBalance, transactionFees]);
 
   const getTokenPrice = useCallback(() => {
     if (!topupAmount || !selectedToken) {
       return 0;
     }
 
-    return (
-      parseFloat(topupAmount) * getTokenPriceBySymbol(selectedToken.symbol)
-    );
+    return parseFloat(topupAmount) * getTokenPriceBySymbol(selectedToken.symbol);
   }, [topupAmount, selectedToken, getTokenPriceBySymbol]);
 
   // Set treasury unalocated balance in BN
@@ -351,10 +320,7 @@ export const TreasuryTransferFundsModal = (props: {
 
       if (!isNew) {
         balance = toTokenAmountBn(details.balance, selectedToken.decimals);
-        allocationAssigned = toTokenAmountBn(
-          details.allocationAssigned,
-          selectedToken.decimals,
-        );
+        allocationAssigned = toTokenAmountBn(details.allocationAssigned, selectedToken.decimals);
       } else {
         balance = new BN(details.balance);
         allocationAssigned = new BN(details.allocationAssigned);
@@ -379,13 +345,9 @@ export const TreasuryTransferFundsModal = (props: {
     const treasuryType = getStreamingAccountType(item);
 
     const associatedToken = getStreamingAccountMint(item);
-    const token = associatedToken
-      ? getTokenByMintAddress(associatedToken as string)
-      : undefined;
+    const token = associatedToken ? getTokenByMintAddress(associatedToken as string) : undefined;
 
-    const imageOnErrorHandler = (
-      event: React.SyntheticEvent<HTMLImageElement, Event>,
-    ) => {
+    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = 'error';
     };
@@ -406,11 +368,7 @@ export const TreasuryTransferFundsModal = (props: {
         );
       } else {
         img = (
-          <Identicon
-            address={associatedToken}
-            style={{ width: '30', display: 'inline-flex' }}
-            className="token-img"
-          />
+          <Identicon address={associatedToken} style={{ width: '30', display: 'inline-flex' }} className="token-img" />
         );
       }
     } else {
@@ -432,24 +390,16 @@ export const TreasuryTransferFundsModal = (props: {
           {(isNewTreasury ? v2.name : v1.label) ? (
             <div className="title text-truncate">
               {isNewTreasury ? v2.name : v1.label}
-              <span
-                className={`badge small ml-1 ${
-                  theme === 'light' ? 'golden fg-dark' : 'darken'
-                }`}
-              >
+              <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                 {treasuryType === AccountType.Open ? 'Open' : 'Locked'}
               </span>
             </div>
           ) : (
-            <div className="title text-truncate">
-              {shortenAddress(item.id as string, 8)}
-            </div>
+            <div className="title text-truncate">{shortenAddress(item.id as string, 8)}</div>
           )}
           {isMultisigContext ? (
-            <div className="subtitle text-truncate">
-              {t('treasuries.treasury-list.multisig-treasury-label')}
-            </div>
-          ): null}
+            <div className="subtitle text-truncate">{t('treasuries.treasury-list.multisig-treasury-label')}</div>
+          ) : null}
         </div>
         <div className="rate-cell text-center">
           {!isNewTreasury && v1.upgradeRequired ? (
@@ -457,11 +407,7 @@ export const TreasuryTransferFundsModal = (props: {
           ) : (
             <>
               <div className="rate-amount">
-                {formatThousands(
-                  isNewTreasury
-                    ? +getSdkValue(v2.totalStreams)
-                    : +getSdkValue(v1.streamsAmount),
-                )}
+                {formatThousands(isNewTreasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
               </div>
               <div className="interval">streams</div>
             </>
@@ -476,9 +422,7 @@ export const TreasuryTransferFundsModal = (props: {
       className="mean-modal simple-modal"
       title={
         <div className="modal-title">
-          {isMultisigContext
-            ? 'Propose withdrawal'
-            : t('treasuries.withdraw-funds.modal-title')}
+          {isMultisigContext ? 'Propose withdrawal' : t('treasuries.withdraw-funds.modal-title')}
         </div>
       }
       maskClosable={false}
@@ -491,11 +435,7 @@ export const TreasuryTransferFundsModal = (props: {
         setTokenAmount(new BN(0));
         setIsVerifiedRecipient(false);
       }}
-      width={
-        isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle
-          ? 380
-          : 480
-      }
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
@@ -503,9 +443,7 @@ export const TreasuryTransferFundsModal = (props: {
             {/* Proposal title */}
             {isMultisigContext && (
               <div className="mb-3">
-                <div className="form-label">
-                  {t('multisig.proposal-modal.title')}
-                </div>
+                <div className="form-label">{t('multisig.proposal-modal.title')}</div>
                 <InputMean
                   id="proposal-title-field"
                   name="Title"
@@ -520,17 +458,13 @@ export const TreasuryTransferFundsModal = (props: {
             {/* Transfer from */}
             {treasuryDetails && (
               <div className="mb-3">
-                <div className="form-label">
-                  {t('treasuries.withdraw-funds.selected-treasury-label')}
-                </div>
+                <div className="form-label">{t('treasuries.withdraw-funds.selected-treasury-label')}</div>
                 <div className="well">{renderTreasury(treasuryDetails)}</div>
               </div>
             )}
 
             {/* Transfer to */}
-            <div className="form-label">
-              {t('multisig.transfer-tokens.transfer-to-label')}
-            </div>
+            <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
             <div className="well">
               <input
                 id="mint-to-field"
@@ -539,30 +473,22 @@ export const TreasuryTransferFundsModal = (props: {
                 autoCorrect="off"
                 type="text"
                 onChange={onMintToAddressChange}
-                placeholder={t(
-                  'multisig.transfer-tokens.transfer-to-placeholder',
-                )}
+                placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
                 required={true}
                 spellCheck="false"
                 value={to}
               />
               {to && !isValidAddress(to) ? (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
+                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
               ) : (
                 isInputMultisigAddress(to) && (
-                  <span className="form-field-error">
-                    {t('transactions.validation.invalid-account')}
-                  </span>
+                  <span className="form-field-error">{t('transactions.validation.invalid-account')}</span>
                 )
               )}
             </div>
 
             {/* Top up amount */}
-            <div className="form-label">
-              {t('streams.add-funds.amount-label')}
-            </div>
+            <div className="form-label">{t('streams.add-funds.amount-label')}</div>
             <div className="well">
               <div className="flex-fixed-left">
                 <div className="left">
@@ -581,15 +507,8 @@ export const TreasuryTransferFundsModal = (props: {
                           <div
                             className="token-max simplelink"
                             onClick={() => {
-                              setTopupAmount(
-                                tokenBalance.toFixed(selectedToken.decimals),
-                              );
-                              setTokenAmount(
-                                makeInteger(
-                                  tokenBalance,
-                                  selectedToken?.decimals || 9,
-                                ),
-                              );
+                              setTopupAmount(tokenBalance.toFixed(selectedToken.decimals));
+                              setTokenAmount(makeInteger(tokenBalance, selectedToken?.decimals || 9));
                             }}
                           >
                             MAX
@@ -602,9 +521,7 @@ export const TreasuryTransferFundsModal = (props: {
                           <div
                             className="token-max simplelink"
                             onClick={() => {
-                              const decimals = selectedToken
-                                ? selectedToken.decimals
-                                : 6;
+                              const decimals = selectedToken ? selectedToken.decimals : 6;
                               const maxAmount = getMaxAmount();
                               setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
                               setTokenAmount(new BN(maxAmount));
@@ -637,26 +554,16 @@ export const TreasuryTransferFundsModal = (props: {
               </div>
               <div className="flex-fixed-right">
                 <div className="left inner-label">
-                  {!treasuryDetails ||
-                  (treasuryDetails && treasuryDetails.autoClose) ? (
+                  {!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose) ? (
                     <span>{t('add-funds.label-right')}:</span>
                   ) : (
-                    <span>
-                      {t(
-                        'treasuries.treasury-streams.available-unallocated-balance-label',
-                      )}
-                      :
-                    </span>
+                    <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                   )}
                   {treasuryDetails && treasuryDetails.autoClose ? (
                     <span>
                       {`${
                         tokenBalance && selectedToken
-                          ? getAmountWithSymbol(
-                              tokenBalance,
-                              selectedToken?.address,
-                              true,
-                            )
+                          ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
                           : '0'
                       }`}
                     </span>
@@ -672,13 +579,7 @@ export const TreasuryTransferFundsModal = (props: {
                           )}
                         </span>
                       ) : tokenBalance && selectedToken ? (
-                        <span>
-                          {getAmountWithSymbol(
-                            tokenBalance,
-                            selectedToken.address,
-                            true,
-                          )}
-                        </span>
+                        <span>{getAmountWithSymbol(tokenBalance, selectedToken.address, true)}</span>
                       ) : null}
                     </>
                   )}
@@ -687,11 +588,7 @@ export const TreasuryTransferFundsModal = (props: {
                   {publicKey ? (
                     <>
                       <span
-                        className={
-                          loadingPrices
-                            ? 'click-disabled fg-orange-red pulsate'
-                            : 'simplelink'
-                        }
+                        className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                         onClick={() => refreshPrices()}
                       >
                         ~{topupAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
@@ -710,16 +607,11 @@ export const TreasuryTransferFundsModal = (props: {
             </div>
 
             {/* explanatory paragraph */}
-            {isMultisigContext ?(
-              <p>{t('multisig.multisig-assets.explanatory-paragraph')}</p>
-            ) : null}
+            {isMultisigContext ? <p>{t('multisig.multisig-assets.explanatory-paragraph')}</p> : null}
 
             {/* confirm that the recipient address doesn't belong to an exchange */}
             <div className="mt-2 mb-3 confirm-terms">
-              <Checkbox
-                checked={isVerifiedRecipient}
-                onChange={onIsVerifiedRecipientChange}
-              >
+              <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
                 {t('treasuries.withdraw-funds.verified-label')}
               </Checkbox>
             </div>
@@ -732,19 +624,11 @@ export const TreasuryTransferFundsModal = (props: {
                   type="primary"
                   shape="round"
                   size="large"
-                  disabled={
-                    isMultisigContext ? !isValidFormMultisig() : !isValidForm()
-                  }
+                  disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
-                    if (
-                      transactionStatus.currentOperation ===
-                      TransactionStatus.Iddle
-                    ) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                       onAcceptWithdrawTreasuryFunds();
-                    } else if (
-                      transactionStatus.currentOperation ===
-                      TransactionStatus.TransactionFinished
-                    ) {
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
                     } else {
                       refreshPage();
@@ -753,13 +637,11 @@ export const TreasuryTransferFundsModal = (props: {
                 >
                   {isBusy
                     ? 'multisig.transfer-tokens.main-cta-busy'
-                    : transactionStatus.currentOperation ===
-                      TransactionStatus.Iddle
+                    : transactionStatus.currentOperation === TransactionStatus.Iddle
                     ? isMultisigContext
                       ? getTransactionStartButtonLabelMultisig()
                       : getTransactionStartButtonLabel()
-                    : transactionStatus.currentOperation ===
-                      TransactionStatus.TransactionFinished
+                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                     ? t('general.cta-finish')
                     : t('general.refresh')}
                 </Button>
@@ -770,37 +652,23 @@ export const TreasuryTransferFundsModal = (props: {
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">
-                {t('multisig.transfer-tokens.success-message')}
-              </h4>
+              <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
             </div>
           </>
         ) : (
           <>
             <div className="transaction-progress p-0">
-              <InfoCircleOutlined
-                style={{ fontSize: 48 }}
-                className="icon mt-0"
-              />
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(
-                      nativeBalance,
-                      NATIVE_SOL_MINT.toBase58(),
-                    ),
-                    feeAmount: getAmountWithSymbol(
-                      minRequiredBalance,
-                      NATIVE_SOL_MINT.toBase58(),
-                    ),
+                    accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                    feeAmount: getAmountWithSymbol(minRequiredBalance, NATIVE_SOL_MINT.toBase58()),
                   })}
                 </h4>
               ) : (
                 <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(
-                    transactionStatus.currentOperation,
-                    t,
-                  )}
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
             </div>
@@ -810,26 +678,17 @@ export const TreasuryTransferFundsModal = (props: {
 
       <div
         className={
-          isBusy &&
-          transactionStatus.currentOperation !== TransactionStatus.Iddle
-            ? 'panel2 show'
-            : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
         }
       >
         {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
-              {getTransactionOperationDescription(
-                transactionStatus.currentOperation,
-                t,
-              )}
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
-            {transactionStatus.currentOperation ===
-              TransactionStatus.SignTransaction && (
-              <div className="indication">
-                {t('transactions.status.instructions')}
-              </div>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}
@@ -845,21 +704,17 @@ export const TreasuryTransferFundsModal = (props: {
               size="middle"
               className={isBusy ? 'inactive' : ''}
               onClick={() =>
-                isError(transactionStatus.currentOperation)
-                  ? onAcceptWithdrawTreasuryFunds()
-                  : onCloseModal()
+                isError(transactionStatus.currentOperation) ? onAcceptWithdrawTreasuryFunds() : onCloseModal()
               }
             >
               {isError(transactionStatus.currentOperation) &&
-                transactionStatus.currentOperation !==
-                TransactionStatus.TransactionStartFailure
+              transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure
                 ? t('general.retry')
                 : t('general.cta-close')}
             </Button>
           </div>
         </div>
       )}
-
     </Modal>
   );
 };

@@ -10,10 +10,7 @@ interface Props {
   programTransactions: ParsedTransactionWithMeta[];
 }
 
-const ProgaramDetailsTransactions = ({
-  loadingTxs,
-  programTransactions,
-}: Props) => {
+const ProgaramDetailsTransactions = ({ loadingTxs, programTransactions }: Props) => {
   return (
     <>
       <div className="item-list-header compact mt-2 mr-1">
@@ -32,15 +29,8 @@ const ProgaramDetailsTransactions = ({
       {!loadingTxs ? (
         programTransactions && programTransactions.length > 0 ? (
           programTransactions.map(tx => (
-            <Row
-              gutter={[8, 8]}
-              className="item-list-body compact hover-list w-100 pt-1"
-              key={tx.blockTime}
-            >
-              <Col
-                span={14}
-                className="std-table-cell pr-1 simplelink signature"
-              >
+            <Row gutter={[8, 8]} className="item-list-body compact hover-list w-100 pt-1" key={tx.blockTime}>
+              <Col span={14} className="std-table-cell pr-1 simplelink signature">
                 <CopyExtLinkGroup
                   content={tx.transaction.signatures.slice(0, 1).shift() || ''}
                   externalLink={true}

@@ -1,8 +1,4 @@
-import {
-  getGovernanceAccounts,
-  pubkeyFilter,
-  TokenOwnerRecord,
-} from '@solana/spl-governance';
+import { getGovernanceAccounts, pubkeyFilter, TokenOwnerRecord } from '@solana/spl-governance';
 import { Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { useEffect, useState } from 'react';
@@ -11,12 +7,8 @@ import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { appConfig } from 'index';
 
-const getTokenOwnerRecordsForRealmMintMapByOwner = async (
-  connection: Connection,
-) => {
-  const governingTokenMintPk = new PublicKey(
-    appConfig.getConfig().realmsGoverningTokenMintPk,
-  );
+const getTokenOwnerRecordsForRealmMintMapByOwner = async (connection: Connection) => {
+  const governingTokenMintPk = new PublicKey(appConfig.getConfig().realmsGoverningTokenMintPk);
   const programId = new PublicKey(appConfig.getConfig().realmsProgramId);
   const realmId = new PublicKey(appConfig.getConfig().realmId);
 
@@ -24,10 +16,7 @@ const getTokenOwnerRecordsForRealmMintMapByOwner = async (
   const filter2 = pubkeyFilter(1 + 32, governingTokenMintPk);
   if (!filter1 || !filter2) return [];
 
-  return getGovernanceAccounts(connection, programId, TokenOwnerRecord, [
-    filter1,
-    filter2,
-  ]);
+  return getGovernanceAccounts(connection, programId, TokenOwnerRecord, [filter1, filter2]);
 };
 
 type Args = {
@@ -36,9 +25,7 @@ type Args = {
 const useRealmsDeposit = ({ decimals }: Args) => {
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const [depositAmount, setDepositAmount] = useState<number | undefined>(
-    undefined,
-  );
+  const [depositAmount, setDepositAmount] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!publicKey) {
@@ -48,18 +35,12 @@ const useRealmsDeposit = ({ decimals }: Args) => {
 
     (async () => {
       if (!decimals) return;
-      const records = await getTokenOwnerRecordsForRealmMintMapByOwner(
-        connection,
-      );
-      const record = records.find(r =>
-        r.account.governingTokenOwner.equals(publicKey),
-      );
+      const records = await getTokenOwnerRecordsForRealmMintMapByOwner(connection);
+      const record = records.find(r => r.account.governingTokenOwner.equals(publicKey));
       if (!record) return;
 
       setDepositAmount(
-        new BigNumber(record.account.governingTokenDepositAmount.toNumber())
-          .shiftedBy(-decimals)
-          .toNumber(),
+        new BigNumber(record.account.governingTokenDepositAmount.toNumber()).shiftedBy(-decimals).toNumber(),
       );
     })();
   }, [connection, publicKey, decimals]);

@@ -1,13 +1,12 @@
-import { Connection, MemcmpFilter, PublicKey } from "@solana/web3.js";
-import { ProgramAccounts } from "models/accounts";
-import { BPF_LOADER_UPGRADEABLE_PID } from "./ids";
-import { consoleOut } from "./ui";
+import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
+import { ProgramAccounts } from 'models/accounts';
+import { BPF_LOADER_UPGRADEABLE_PID } from './ids';
+import { consoleOut } from './ui';
 
 export const getProgramsByUpgradeAuthority = async (
   connection: Connection,
   selectedAccountAddress: string,
 ): Promise<ProgramAccounts[]> => {
-
   if (!connection || !selectedAccountAddress) {
     return [];
   }
@@ -16,12 +15,9 @@ export const getProgramsByUpgradeAuthority = async (
     memcmp: { offset: 13, bytes: selectedAccountAddress },
   };
 
-  const execDataAccounts = await connection.getProgramAccounts(
-    BPF_LOADER_UPGRADEABLE_PID,
-    {
-      filters: [execDataAccountsFilter],
-    },
-  );
+  const execDataAccounts = await connection.getProgramAccounts(BPF_LOADER_UPGRADEABLE_PID, {
+    filters: [execDataAccountsFilter],
+  });
 
   if (execDataAccounts.length === 0) {
     return [];
@@ -48,13 +44,10 @@ export const getProgramsByUpgradeAuthority = async (
       memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() },
     };
 
-    const execAccounts = await connection.getProgramAccounts(
-      BPF_LOADER_UPGRADEABLE_PID,
-      {
-        dataSlice: { offset: 0, length: 0 },
-        filters: [execAccountsFilter],
-      },
-    );
+    const execAccounts = await connection.getProgramAccounts(BPF_LOADER_UPGRADEABLE_PID, {
+      dataSlice: { offset: 0, length: 0 },
+      filters: [execAccountsFilter],
+    });
 
     if (execAccounts.length === 0) {
       return;
@@ -87,4 +80,4 @@ export const getProgramsByUpgradeAuthority = async (
   }
 
   return programs;
-}
+};

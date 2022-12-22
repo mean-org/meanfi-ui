@@ -8,11 +8,7 @@ import { Connection } from '@solana/web3.js';
 import { consoleOut } from '../../middleware/ui';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 
-export const ExchangeAssetModal = (props: {
-  handleClose: any;
-  isVisible: boolean;
-  tokenSymbol: string;
-}) => {
+export const ExchangeAssetModal = (props: { handleClose: any; isVisible: boolean; tokenSymbol: string }) => {
   const { tokenSymbol, isVisible, handleClose } = props;
   const navigate = useNavigate();
 
@@ -39,11 +35,7 @@ export const ExchangeAssetModal = (props: {
   }, [cachedRpc, navigate]);
 
   const connection = useMemo(
-    () =>
-      new Connection(
-        mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider,
-        'confirmed',
-      ),
+    () => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, 'confirmed'),
     [cachedRpc.httpProvider, mainnetRpc],
   );
 

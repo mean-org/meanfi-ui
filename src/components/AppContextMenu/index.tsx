@@ -32,8 +32,7 @@ import { Link } from 'react-router-dom';
 
 export const AppContextMenu = () => {
   const { connected } = useWallet();
-  const { theme, diagnosisInfo, isWhitelisted, setTheme } =
-    useContext(AppStateContext);
+  const { theme, diagnosisInfo, isWhitelisted, setTheme } = useContext(AppStateContext);
 
   const { t, i18n } = useTranslation('common');
   const [selectedLanguage] = useState<string>(i18n.language);
@@ -58,16 +57,9 @@ export const AppContextMenu = () => {
   };
 
   // Language switcher modal
-  const [isLanguageModalVisible, setIsLanguageModalVisibility] =
-    useState(false);
-  const showLanguageModal = useCallback(
-    () => setIsLanguageModalVisibility(true),
-    [],
-  );
-  const hideLanguageModal = useCallback(
-    () => setIsLanguageModalVisibility(false),
-    [],
-  );
+  const [isLanguageModalVisible, setIsLanguageModalVisibility] = useState(false);
+  const showLanguageModal = useCallback(() => setIsLanguageModalVisibility(true), []);
+  const hideLanguageModal = useCallback(() => setIsLanguageModalVisibility(false), []);
   const onAcceptLanguage = (e: any) => {
     hideLanguageModal();
     i18n.changeLanguage(e);
@@ -75,28 +67,14 @@ export const AppContextMenu = () => {
   };
 
   // Friend Referral modal
-  const [isFriendReferralModalVisible, setIsFriendReferralModalVisibility] =
-    useState(false);
-  const showFriendReferralModal = useCallback(
-    () => setIsFriendReferralModalVisibility(true),
-    [],
-  );
-  const hideFriendReferralModal = useCallback(
-    () => setIsFriendReferralModalVisibility(false),
-    [],
-  );
+  const [isFriendReferralModalVisible, setIsFriendReferralModalVisibility] = useState(false);
+  const showFriendReferralModal = useCallback(() => setIsFriendReferralModalVisibility(true), []);
+  const hideFriendReferralModal = useCallback(() => setIsFriendReferralModalVisibility(false), []);
 
   // Diagnosis info modal
-  const [isDiagnosisInfoModalVisible, setIsDiagnosisInfoModalVisible] =
-    useState(false);
-  const showDiagnosisInfoModal = useCallback(
-    () => setIsDiagnosisInfoModalVisible(true),
-    [],
-  );
-  const closeDiagnosisInfoModal = useCallback(
-    () => setIsDiagnosisInfoModalVisible(false),
-    [],
-  );
+  const [isDiagnosisInfoModalVisible, setIsDiagnosisInfoModalVisible] = useState(false);
+  const showDiagnosisInfoModal = useCallback(() => setIsDiagnosisInfoModalVisible(true), []);
+  const closeDiagnosisInfoModal = useCallback(() => setIsDiagnosisInfoModalVisible(false), []);
 
   const onSwitchTheme = useCallback(() => {
     if (theme === 'light') {
@@ -107,17 +85,9 @@ export const AppContextMenu = () => {
   }, [setTheme, theme]);
 
   const getLanguageFlag = () => {
-    const lang = LANGUAGES.filter(
-      l => l.code === language || l.locale === language,
-    );
+    const lang = LANGUAGES.filter(l => l.code === language || l.locale === language);
     if (lang && lang.length) {
-      return (
-        <img
-          src={lang[0].flag}
-          alt={getLanguageCode(lang[0].code)}
-          className="mean-svg-icons"
-        />
-      );
+      return <img src={lang[0].flag} alt={getLanguageCode(lang[0].code)} className="mean-svg-icons" />;
     } else {
       return <IconSettings className="mean-svg-icons" />;
     }
@@ -141,29 +111,11 @@ export const AppContextMenu = () => {
     <div>
       {diagnosisInfo && (
         <>
-          {diagnosisInfo.dateTime && (
-            <div className="diagnosis-info-item">{diagnosisInfo.dateTime}</div>
-          )}
-          {diagnosisInfo.clientInfo && (
-            <div className="diagnosis-info-item">
-              {diagnosisInfo.clientInfo}
-            </div>
-          )}
-          {diagnosisInfo.networkInfo && (
-            <div className="diagnosis-info-item">
-              {diagnosisInfo.networkInfo}
-            </div>
-          )}
-          {diagnosisInfo.accountInfo && (
-            <div className="diagnosis-info-item">
-              {diagnosisInfo.accountInfo}
-            </div>
-          )}
-          {diagnosisInfo.appBuildInfo && (
-            <div className="diagnosis-info-item">
-              {diagnosisInfo.appBuildInfo}
-            </div>
-          )}
+          {diagnosisInfo.dateTime && <div className="diagnosis-info-item">{diagnosisInfo.dateTime}</div>}
+          {diagnosisInfo.clientInfo && <div className="diagnosis-info-item">{diagnosisInfo.clientInfo}</div>}
+          {diagnosisInfo.networkInfo && <div className="diagnosis-info-item">{diagnosisInfo.networkInfo}</div>}
+          {diagnosisInfo.accountInfo && <div className="diagnosis-info-item">{diagnosisInfo.accountInfo}</div>}
+          {diagnosisInfo.appBuildInfo && <div className="diagnosis-info-item">{diagnosisInfo.appBuildInfo}</div>}
         </>
       )}
     </div>
@@ -200,9 +152,7 @@ export const AppContextMenu = () => {
           <IconMoon className="mean-svg-icons" />
           <span className="menu-item-text">
             {t(`ui-menus.app-context-menu.switch-theme`)}{' '}
-            {theme === 'light'
-              ? t(`ui-menus.app-context-menu.theme-dark`)
-              : t(`ui-menus.app-context-menu.theme-light`)}
+            {theme === 'light' ? t(`ui-menus.app-context-menu.theme-dark`) : t(`ui-menus.app-context-menu.theme-light`)}
           </span>
         </div>
       ),
@@ -213,8 +163,7 @@ export const AppContextMenu = () => {
         <div onClick={showLanguageModal}>
           {getLanguageFlag()}
           <span className="menu-item-text">
-            {t('ui-menus.app-context-menu.switch-language')}:{' '}
-            {t(`ui-language.${getLanguageCode(language)}`)}
+            {t('ui-menus.app-context-menu.switch-language')}: {t(`ui-language.${getLanguageCode(language)}`)}
           </span>
         </div>
       ),
@@ -225,9 +174,7 @@ export const AppContextMenu = () => {
       label: (
         <div onClick={() => openFriendReferralModal()}>
           <IconShareBox className="mean-svg-icons" />
-          <span className="menu-item-text">
-            {t('ui-menus.app-context-menu.refer-a-friend', { referrals: '' })}
-          </span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.refer-a-friend', { referrals: '' })}</span>
         </div>
       ),
     });
@@ -237,9 +184,7 @@ export const AppContextMenu = () => {
       label: (
         <Link to="/stats">
           <IconStats className="mean-svg-icons" />
-          <span className="menu-item-text">
-            {t('ui-menus.main-menu.stats')}
-          </span>
+          <span className="menu-item-text">{t('ui-menus.main-menu.stats')}</span>
         </Link>
       ),
     });
@@ -248,54 +193,34 @@ export const AppContextMenu = () => {
       label: (
         <div onClick={showDiagnosisInfoModal}>
           <IconPulse className="mean-svg-icons" />
-          <span className="menu-item-text">
-            {t('account-area.diagnosis-info')}
-          </span>
+          <span className="menu-item-text">{t('account-area.diagnosis-info')}</span>
         </div>
       ),
     });
     items.push({
       key: '06-docs',
       label: (
-        <a
-          href={MEAN_DAO_GITBOOKS_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={MEAN_DAO_GITBOOKS_URL} target="_blank" rel="noopener noreferrer">
           <IconBookOpen className="mean-svg-icons" />
-          <span className="menu-item-text">
-            {t('ui-menus.app-context-menu.how-to-use')}
-          </span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
         </a>
       ),
     });
     items.push({
       key: '07-code',
       label: (
-        <a
-          href={MEAN_DAO_GITHUB_ORG_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={MEAN_DAO_GITHUB_ORG_URL} target="_blank" rel="noopener noreferrer">
           <IconCodeBlock className="mean-svg-icons" />
-          <span className="menu-item-text">
-            {t('ui-menus.app-context-menu.code')}
-          </span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.code')}</span>
         </a>
       ),
     });
     items.push({
       key: '08-discord',
       label: (
-        <a
-          href={MEAN_FINANCE_DISCORD_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={MEAN_FINANCE_DISCORD_URL} target="_blank" rel="noopener noreferrer">
           <IconChat className="mean-svg-icons" />
-          <span className="menu-item-text">
-            {t('ui-menus.app-context-menu.discord')}
-          </span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.discord')}</span>
         </a>
       ),
     });
@@ -304,9 +229,7 @@ export const AppContextMenu = () => {
       label: (
         <a href={MEANFI_SUPPORT_URL} target="_blank" rel="noopener noreferrer">
           <IconLiveHelp className="mean-svg-icons" />
-          <span className="menu-item-text">
-            {t('ui-menus.app-context-menu.help-support')}
-          </span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.help-support')}</span>
         </a>
       ),
     });
@@ -359,16 +282,11 @@ export const AppContextMenu = () => {
         handleOk={onAcceptLanguage}
         handleClose={hideLanguageModal}
       />
-      <ReferFriendModal
-        isVisible={isFriendReferralModalVisible}
-        handleClose={hideFriendReferralModal}
-      />
+      <ReferFriendModal isVisible={isFriendReferralModalVisible} handleClose={hideFriendReferralModal} />
       <Modal
         className="mean-modal simple-modal"
         open={isDiagnosisInfoModalVisible}
-        title={
-          <div className="modal-title">{t('account-area.diagnosis-info')}</div>
-        }
+        title={<div className="modal-title">{t('account-area.diagnosis-info')}</div>}
         onCancel={closeDiagnosisInfoModal}
         width={450}
         footer={null}
@@ -386,9 +304,7 @@ export const AppContextMenu = () => {
                   onClick={onCopyDiagnosisInfo}
                 >
                   <IconCopy className="mean-svg-icons" />
-                  <span className="icon-button-text">
-                    {t('general.cta-copy')}
-                  </span>
+                  <span className="icon-button-text">{t('general.cta-copy')}</span>
                 </Button>
               </div>
             </>

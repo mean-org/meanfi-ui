@@ -1,8 +1,5 @@
 import { WarningFilled, WarningOutlined } from '@ant-design/icons';
-import {
-  StreamInfo,
-  TransactionFees,
-} from '@mean-dao/money-streaming/lib/types';
+import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/payment-streaming';
 import { Button, Col, Modal, Row } from 'antd';
 import { InputMean } from 'components/InputMean';
@@ -23,8 +20,7 @@ export const StreamPauseModal = (props: {
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
 }) => {
-  const { theme, selectedAccount, getTokenByMintAddress } =
-    useContext(AppStateContext);
+  const { theme, selectedAccount, getTokenByMintAddress } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
@@ -61,7 +57,8 @@ export const StreamPauseModal = (props: {
     return false;
   }, [publicKey, props.streamDetail]);
 
-  const getFeeAmount = useCallback((fees: TransactionFees): number => {
+  const getFeeAmount = useCallback(
+    (fees: TransactionFees): number => {
       let fee = 0;
 
       // If the Treasurer is initializing the CloseStream Tx, mspFlatFee must be used
@@ -168,9 +165,7 @@ export const StreamPauseModal = (props: {
       className="mean-modal simple-modal"
       title={
         <div className="modal-title">
-          {isMultisigContext
-            ? 'Propose pause stream'
-            : t('streams.pause-stream-modal-title')}
+          {isMultisigContext ? 'Propose pause stream' : t('streams.pause-stream-modal-title')}
         </div>
       }
       footer={null}
@@ -181,15 +176,9 @@ export const StreamPauseModal = (props: {
       <div className="transaction-progress p-0">
         <div className="text-center">
           {theme === 'light' ? (
-            <WarningFilled
-              style={{ fontSize: 48 }}
-              className="icon mt-0 fg-warning"
-            />
+            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
           ) : (
-            <WarningOutlined
-              style={{ fontSize: 48 }}
-              className="icon mt-0 fg-warning"
-            />
+            <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
           )}
         </div>
         <div className="mb-2 fg-warning">
@@ -202,18 +191,12 @@ export const StreamPauseModal = (props: {
           <div className="p-2 mb-2">
             {infoRow(
               t('close-stream.return-vested-amount') + ':',
-              getAmountWithSymbol(
-                getWithdrawableAmount(),
-                getStreamAssociatedMint(props.streamDetail),
-              ),
+              getAmountWithSymbol(getWithdrawableAmount(), getStreamAssociatedMint(props.streamDetail)),
             )}
             {amITreasurer() &&
               infoRow(
                 t('close-stream.return-unvested-amount') + ':',
-                getAmountWithSymbol(
-                  getUnvested(),
-                  getStreamAssociatedMint(props.streamDetail),
-                ),
+                getAmountWithSymbol(getUnvested(), getStreamAssociatedMint(props.streamDetail)),
               )}
           </div>
         )}
@@ -221,9 +204,7 @@ export const StreamPauseModal = (props: {
         {/* Proposal title */}
         {isMultisigContext && (
           <div className="mb-3">
-            <div className="form-label text-left">
-              {t('multisig.proposal-modal.title')}
-            </div>
+            <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
             <InputMean
               id="proposal-title-field"
               name="Title"
@@ -244,9 +225,7 @@ export const StreamPauseModal = (props: {
             disabled={isMultisigContext && !isValidForm()}
             onClick={() => onAcceptModal()}
           >
-            {isMultisigContext
-              ? getTransactionStartButtonLabel()
-              : t('streams.pause-stream-cta')}
+            {isMultisigContext ? getTransactionStartButtonLabel() : t('streams.pause-stream-cta')}
           </Button>
         </div>
       </div>

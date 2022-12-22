@@ -21,14 +21,7 @@ export const MultisigSafeOwners = (props: {
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
 
-  const {
-    participants,
-    onParticipantsChanged,
-    label,
-    disabled,
-    multisigAddresses,
-    isOwnersListValid,
-  } = props;
+  const { participants, onParticipantsChanged, label, disabled, multisigAddresses, isOwnersListValid } = props;
 
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
 
@@ -43,9 +36,7 @@ export const MultisigSafeOwners = (props: {
 
   const setSingleItemName = useCallback(
     (name: string, index: number) => {
-      const items = JSON.parse(
-        JSON.stringify(participants),
-      ) as MultisigParticipant[];
+      const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
       items[index].name = name;
       onParticipantsChanged(items);
     },
@@ -54,9 +45,7 @@ export const MultisigSafeOwners = (props: {
 
   const setSingleItemAddress = useCallback(
     (address: string, index: number) => {
-      const items = JSON.parse(
-        JSON.stringify(participants),
-      ) as MultisigParticipant[];
+      const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
       items[index].address = address;
       onParticipantsChanged(items);
     },
@@ -66,9 +55,7 @@ export const MultisigSafeOwners = (props: {
   const onRemoveSingleItem = useCallback(
     (index: number) => {
       if (index > 0) {
-        const items = JSON.parse(
-          JSON.stringify(participants),
-        ) as MultisigParticipant[];
+        const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
         items.splice(index, 1);
         onParticipantsChanged(items);
       }
@@ -77,9 +64,7 @@ export const MultisigSafeOwners = (props: {
   );
 
   const addParticipant = useCallback(() => {
-    const items = JSON.parse(
-      JSON.stringify(participants),
-    ) as MultisigParticipant[];
+    const items = JSON.parse(JSON.stringify(participants)) as MultisigParticipant[];
     items.push({
       name: `Owner ${items.length + 1}`,
       address: '',
@@ -147,16 +132,8 @@ export const MultisigSafeOwners = (props: {
   };
 
   return (
-    <div
-      className={`multisig-safe-owners ${
-        ownersInputsObject.length > 2 ? 'mb-1' : 'mb-3'
-      }`}
-    >
-      <div
-        className={`flex-fixed-right add-owners-row ${
-          disabled ? 'click-disabled' : ''
-        }`}
-      >
+    <div className={`multisig-safe-owners ${ownersInputsObject.length > 2 ? 'mb-1' : 'mb-3'}`}>
+      <div className={`flex-fixed-right add-owners-row ${disabled ? 'click-disabled' : ''}`}>
         <div className="left">
           {label ? (
             <div className="form-label icon-label">
@@ -171,18 +148,10 @@ export const MultisigSafeOwners = (props: {
             <div className="form-label">&nbsp;</div>
           )}
         </div>
-        <div
-          className={`right ${
-            ownersInputsObject.length === 10 || !isOwnersListValid
-              ? 'not-allowed-cursor'
-              : ''
-          }`}
-        >
+        <div className={`right ${ownersInputsObject.length === 10 || !isOwnersListValid ? 'not-allowed-cursor' : ''}`}>
           <span
             className={`flat-button change-button ${
-              ownersInputsObject.length === 10 || !isOwnersListValid
-                ? 'disabled'
-                : ''
+              ownersInputsObject.length === 10 || !isOwnersListValid ? 'disabled' : ''
             }`}
             onClick={() => addParticipant()}
           >
@@ -204,20 +173,14 @@ export const MultisigSafeOwners = (props: {
       )}
       {ownersInputsObject && ownersInputsObject.length > 0 ? (
         <div
-          className={`multisig-participants-max-height ${
-            ownersInputsObject.length > 2 ? 'vertical-scroll pr-2' : ''
-          }`}
+          className={`multisig-participants-max-height ${ownersInputsObject.length > 2 ? 'vertical-scroll pr-2' : ''}`}
         >
           {ownersInputsObject.map((participant, index: number) => {
             const isAddressValid = isValidAddress(participant.address);
 
             return (
               <div className="container-owner-item" key={index}>
-                <div
-                  className={`two-column-layout w-100 mb-0 ${
-                    disabled ? 'disabled' : ''
-                  }`}
-                >
+                <div className={`two-column-layout w-100 mb-0 ${disabled ? 'disabled' : ''}`}>
                   <div className="left">
                     <InputMean
                       id={`participant-name-${index + 1}`}
@@ -250,26 +213,17 @@ export const MultisigSafeOwners = (props: {
                     {isAddressValid ? (
                       isInputMultisigAddress(participant.address) && (
                         <small className="fg-warning form-field-error ml-1">
-                          {t(
-                            'multisig.create-multisig.multisig-address-used-as-participant',
-                          )}
+                          {t('multisig.create-multisig.multisig-address-used-as-participant')}
                         </small>
                       )
                     ) : (
-                      <small className="fg-warning form-field-error ml-1">
-                        Please enter a valid Solana address
-                      </small>
+                      <small className="fg-warning form-field-error ml-1">Please enter a valid Solana address</small>
                     )}
                   </div>
                 </div>
-                <div
-                  className="trash-icon"
-                  onClick={() => onRemoveSingleItem(index)}
-                >
+                <div className="trash-icon" onClick={() => onRemoveSingleItem(index)}>
                   <IconTrash
-                    className={`mean-svg-icons simplelink ${
-                      index === 0 ? 'not-allowed-cursor disabled' : ''
-                    }`}
+                    className={`mean-svg-icons simplelink ${index === 0 ? 'not-allowed-cursor disabled' : ''}`}
                   />
                 </div>
               </div>
@@ -278,9 +232,7 @@ export const MultisigSafeOwners = (props: {
           {renderMultisigThresholdMessage()}
         </div>
       ) : (
-        <div className="inner-label pl-1">
-          {t('multisig.create-multisig.multisig-no-participants')}
-        </div>
+        <div className="inner-label pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>
       )}
     </div>
   );

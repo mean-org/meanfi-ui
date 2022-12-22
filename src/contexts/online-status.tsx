@@ -50,8 +50,7 @@ const defaultValues: OnlineStatusConfig = {
   responseTime: 0,
 };
 
-const OnlineStatusContext =
-  React.createContext<OnlineStatusConfig>(defaultValues);
+const OnlineStatusContext = React.createContext<OnlineStatusConfig>(defaultValues);
 
 export const OnlineStatusProvider: React.FC = ({ children }) => {
   const [onlineStatus, setOnlineStatus] = useState<boolean>(true);

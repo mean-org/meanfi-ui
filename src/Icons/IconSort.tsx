@@ -1,9 +1,6 @@
 import { CSSProperties } from 'react';
 
-export const IconSort = (props: {
-  className: string;
-  style?: CSSProperties;
-}) => {
+export const IconSort = (props: { className: string; style?: CSSProperties }) => {
   return (
     <svg
       className={props.className}

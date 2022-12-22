@@ -67,26 +67,13 @@ export const AddressDisplay = (props: {
         style={style}
       >
         {prefix}
-        {linkText
-          ? linkText
-          : showFullAddress
-          ? address
-          : shortenAddress(address, maxChars || 8)}
+        {linkText ? linkText : showFullAddress ? address : shortenAddress(address, maxChars || 8)}
         {suffix}
       </div>
       {newTabLink && (
         <div className="right" style={{ marginLeft: '4px' }}>
-          <a
-            className="simplelink"
-            target="_blank"
-            rel="noopener noreferrer"
-            href={newTabLink}
-          >
-            {newTabIcon ? (
-              newTabIcon
-            ) : (
-              <IconExternalLink className="mean-svg-icons" style={iconStyles} />
-            )}
+          <a className="simplelink" target="_blank" rel="noopener noreferrer" href={newTabLink}>
+            {newTabIcon ? newTabIcon : <IconExternalLink className="mean-svg-icons" style={iconStyles} />}
           </a>
         </div>
       )}

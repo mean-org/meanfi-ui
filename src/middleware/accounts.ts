@@ -1,9 +1,5 @@
 import { Metaplex } from '@metaplex-foundation/js';
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  Token,
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   AccountInfo,
   Commitment,
@@ -27,11 +23,7 @@ import { TokenPrice } from 'models/TokenPrice';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../constants';
 import { MEAN_TOKEN_LIST, NATIVE_SOL } from '../constants/tokens';
 import { consoleOut } from './ui';
-import {
-  findATokenAddress,
-  getAmountFromLamports,
-  shortenAddress,
-} from './utils';
+import { findATokenAddress, getAmountFromLamports, shortenAddress } from './utils';
 
 export async function getMultipleAccounts(
   connection: Connection,
@@ -89,12 +81,7 @@ export async function getMultipleAccounts(
   });
 }
 
-export async function createAtaAccountIx(
-  connection: Connection,
-  mint: PublicKey,
-  owner: PublicKey,
-  payer: PublicKey,
-) {
+export async function createAtaAccountIx(connection: Connection, mint: PublicKey, owner: PublicKey, payer: PublicKey) {
   const ixs: TransactionInstruction[] = [];
 
   const associatedAddress = await Token.getAssociatedTokenAddress(
@@ -119,15 +106,10 @@ export async function createAtaAccountIx(
     );
   }
 
-  return {ixs, associatedAddress};
+  return { ixs, associatedAddress };
 }
 
-export async function createAtaAccount(
-  connection: Connection,
-  mint: PublicKey,
-  owner: PublicKey,
-  payer: PublicKey,
-) {
+export async function createAtaAccount(connection: Connection, mint: PublicKey, owner: PublicKey, payer: PublicKey) {
   const result = await createAtaAccountIx(connection, mint, owner, payer);
 
   const tx = new Transaction().add(...result.ixs);
@@ -138,11 +120,7 @@ export async function createAtaAccount(
   return tx;
 }
 
-export async function closeTokenAccount(
-  connection: Connection,
-  tokenPubkey: PublicKey,
-  owner: PublicKey,
-) {
+export async function closeTokenAccount(connection: Connection, tokenPubkey: PublicKey, owner: PublicKey) {
   const ixs: TransactionInstruction[] = [];
   let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
 
@@ -184,15 +162,7 @@ export async function closeTokenAccount(
   }
 
   // Close the account
-  ixs.push(
-    Token.createCloseAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      tokenPubkey,
-      owner,
-      owner,
-      [],
-    ),
-  );
+  ixs.push(Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, tokenPubkey, owner, owner, []));
 
   const tx = new Transaction().add(...ixs);
   tx.feePayer = owner;
@@ -202,18 +172,14 @@ export async function closeTokenAccount(
   return tx;
 }
 
-export async function readAccountInfo(
-  connection: Connection,
-  address?: string,
-) {
+export async function readAccountInfo(connection: Connection, address?: string) {
   if (!connection || !address) {
     return null;
   }
 
   let accInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
   try {
-    accInfo = (await connection.getParsedAccountInfo(new PublicKey(address)))
-      .value;
+    accInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
   } catch (error) {
     console.error(error);
     return null;
@@ -229,14 +195,8 @@ export async function readAccountInfo(
   }
 }
 
-export async function resolveParsedAccountInfo(
-  connection: Connection,
-  address?: string,
-) {
-  const accInfo = (await readAccountInfo(
-    connection,
-    address,
-  )) as AccountInfo<ParsedAccountData> | null;
+export async function resolveParsedAccountInfo(connection: Connection, address?: string) {
+  const accInfo = (await readAccountInfo(connection, address)) as AccountInfo<ParsedAccountData> | null;
   if (!accInfo?.data.parsed) {
     throw new Error('Could not get account info');
   }
@@ -249,31 +209,22 @@ export const getTokenAccountBalanceByAddress = async (
 ): Promise<TokenAmount | null> => {
   if (!connection || !tokenAddress) return null;
   try {
-    const tokenAmount = (await connection.getTokenAccountBalance(tokenAddress))
-      .value;
+    const tokenAmount = (await connection.getTokenAccountBalance(tokenAddress)).value;
     return tokenAmount;
   } catch (error) {
-    consoleOut(
-      'getTokenAccountBalance failed for:',
-      tokenAddress.toBase58(),
-      'red',
-    );
+    consoleOut('getTokenAccountBalance failed for:', tokenAddress.toBase58(), 'red');
     return null;
   }
 };
 
-export async function fetchAccountTokens(
-  connection: Connection,
-  pubkey: PublicKey,
-) {
+export async function fetchAccountTokens(connection: Connection, pubkey: PublicKey) {
   let data;
   try {
     const { value } = await connection.getParsedTokenAccountsByOwner(pubkey, {
       programId: TOKEN_PROGRAM_ID,
     });
     data = value.map((accountInfo: any) => {
-      const parsedInfo = accountInfo.account.data.parsed
-        .info as TokenAccountInfo;
+      const parsedInfo = accountInfo.account.data.parsed.info as TokenAccountInfo;
       return { parsedInfo, pubkey: accountInfo.pubkey };
     });
     return data as AccountTokenParsedInfo[];
@@ -282,23 +233,12 @@ export async function fetchAccountTokens(
   }
 }
 
-const updateAtaFlag = async (
-  token: UserTokenAccount,
-  owner: string,
-): Promise<boolean> => {
-  const ata = findATokenAddress(
-    new PublicKey(owner),
-    new PublicKey(token.address),
-  );
-  return ata && token.publicAddress && ata.toBase58() === token.publicAddress
-    ? true
-    : false;
+const updateAtaFlag = async (token: UserTokenAccount, owner: string): Promise<boolean> => {
+  const ata = findATokenAddress(new PublicKey(owner), new PublicKey(token.address));
+  return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
 };
 
-const getTokenByMintAddress = (
-  address: string,
-  list: UserTokenAccount[],
-): TokenInfo | undefined => {
+const getTokenByMintAddress = (address: string, list: UserTokenAccount[]): TokenInfo | undefined => {
   const tokenFromTokenList = list
     ? list.find(t => t.address === address)
     : MEAN_TOKEN_LIST.find(t => t.address === address);
@@ -308,11 +248,7 @@ const getTokenByMintAddress = (
   return undefined;
 };
 
-const getPriceByAddressOrSymbol = (
-  prices: TokenPrice[] | null,
-  address: string,
-  symbol = '',
-): number => {
+const getPriceByAddressOrSymbol = (prices: TokenPrice[] | null, address: string, symbol = ''): number => {
   if (!address || !prices || prices.length === 0) {
     return 0;
   }
@@ -357,10 +293,7 @@ const getWrappedSolBalance = (list: UserTokenAccount[]) => {
   return wSol ? wSol.balance || 0 : 0;
 };
 
-const getGroupedTokenAccounts = (
-  accTks: AccountTokenParsedInfo[],
-  list: UserTokenAccount[],
-) => {
+const getGroupedTokenAccounts = (accTks: AccountTokenParsedInfo[], list: UserTokenAccount[]) => {
   const taGroups = new Map<string, AccountTokenParsedInfo[]>();
   for (const ta of accTks) {
     const key = ta.parsedInfo.mint;
@@ -384,29 +317,18 @@ const getGroupedTokenAccounts = (
   });
 
   if (groupsWithDuplicates.size > 0) {
-    consoleOut(
-      'This account owns duplicated tokens:',
-      groupsWithDuplicates,
-      'blue',
-    );
+    consoleOut('This account owns duplicated tokens:', groupsWithDuplicates, 'blue');
     return groupsWithDuplicates;
   } else {
     return undefined;
   }
 };
 
-const getTokenListForOwnedTokenAccounts = (
-  accTks: AccountTokenParsedInfo[],
-  list: UserTokenAccount[],
-) => {
+const getTokenListForOwnedTokenAccounts = (accTks: AccountTokenParsedInfo[], list: UserTokenAccount[]) => {
   const newTokenAccountList = new Array<UserTokenAccount>();
   accTks.forEach(item => {
-    const tokenFromMeanTokenList = list.find(
-      t => t.address === item.parsedInfo.mint,
-    );
-    const isTokenAccountInNewList = newTokenAccountList.some(
-      t => t.address === item.parsedInfo.mint,
-    );
+    const tokenFromMeanTokenList = list.find(t => t.address === item.parsedInfo.mint);
+    const isTokenAccountInNewList = newTokenAccountList.some(t => t.address === item.parsedInfo.mint);
     if (tokenFromMeanTokenList && !isTokenAccountInNewList) {
       tokenFromMeanTokenList.owner = item.parsedInfo.owner;
       newTokenAccountList.push(tokenFromMeanTokenList);
@@ -423,27 +345,18 @@ const updateTokenAccountBalancesInTokenList = (
   const listCopy = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
   for (const item of accTks) {
     // Locate the token in input list
-    const tokenIndex = listCopy.findIndex(
-      i => i.address === item.parsedInfo.mint,
-    );
+    const tokenIndex = listCopy.findIndex(i => i.address === item.parsedInfo.mint);
     if (tokenIndex !== -1) {
-      const price = getPriceByAddressOrSymbol(
-        prices,
-        listCopy[tokenIndex].address,
-        listCopy[tokenIndex].symbol,
-      );
+      const price = getPriceByAddressOrSymbol(prices, listCopy[tokenIndex].address, listCopy[tokenIndex].symbol);
       const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
       const valueInUSD = balance * price;
       // If we didn't already filled info for this associated token address
       if (!listCopy[tokenIndex].publicAddress) {
         // Add it
         listCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
-        listCopy[tokenIndex].balance =
-          item.parsedInfo.tokenAmount.uiAmount || 0;
+        listCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
         listCopy[tokenIndex].valueInUsd = valueInUSD;
-      } else if (
-        listCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()
-      ) {
+      } else if (listCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
         // If we did and the publicAddress is different/new then duplicate this item with the new info
         const newItem = Object.assign({}, listCopy[tokenIndex]);
         newItem.publicAddress = item.pubkey.toBase58();
@@ -472,9 +385,7 @@ export const getUserAccountTokens = async (
     tokenAccountGroups: undefined,
   };
 
-  const splTokensCopy = JSON.parse(
-    JSON.stringify(splTokenList),
-  ) as UserTokenAccount[];
+  const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
   const pk = new PublicKey(accountAddress);
 
   consoleOut('calling getUserAccountTokens() for:', accountAddress, 'blue');
@@ -492,9 +403,7 @@ export const getUserAccountTokens = async (
     publicAddress: accountAddress,
     tags: NATIVE_SOL.tags,
     logoURI: NATIVE_SOL.logoURI,
-    valueInUsd:
-      getAmountFromLamports(solBalance) *
-      getPriceByAddressOrSymbol(coinPrices, NATIVE_SOL.address, 'SOL'),
+    valueInUsd: getAmountFromLamports(solBalance) * getPriceByAddressOrSymbol(coinPrices, NATIVE_SOL.address, 'SOL'),
   };
 
   try {
@@ -526,18 +435,11 @@ export const getUserAccountTokens = async (
     response.userTokenAccouns = accTks;
     response.tokenAccountGroups = getGroupedTokenAccounts(accTks, splTokenList);
 
-    const intersectedList = getTokenListForOwnedTokenAccounts(
-      accTks,
-      splTokenList,
-    );
+    const intersectedList = getTokenListForOwnedTokenAccounts(accTks, splTokenList);
     intersectedList.push(sol);
 
     // Update balances in the mean token list
-    const balancesUpdated = updateTokenAccountBalancesInTokenList(
-      accTks,
-      intersectedList,
-      coinPrices,
-    );
+    const balancesUpdated = updateTokenAccountBalancesInTokenList(accTks, intersectedList, coinPrices);
 
     // Update displayIndex and isAta flag
     let listIndex = 0;
@@ -554,10 +456,7 @@ export const getUserAccountTokens = async (
     accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
       if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
         const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-        const price = getPriceByAddressOrSymbol(
-          coinPrices,
-          item.parsedInfo.mint,
-        );
+        const price = getPriceByAddressOrSymbol(coinPrices, item.parsedInfo.mint);
         const valueInUsd = balance * price;
         const customToken: UserTokenAccount = {
           address: item.parsedInfo.mint,
@@ -610,9 +509,7 @@ export const getTokensWithBalances = async (
     tokenList: [],
   };
 
-  const splTokensCopy = JSON.parse(
-    JSON.stringify(splTokenList),
-  ) as UserTokenAccount[];
+  const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
   const pk = new PublicKey(accountAddress);
 
   consoleOut('calling getTokensWithBalances() for:', accountAddress, 'blue');
@@ -630,9 +527,7 @@ export const getTokensWithBalances = async (
     publicAddress: accountAddress,
     tags: NATIVE_SOL.tags,
     logoURI: NATIVE_SOL.logoURI,
-    valueInUsd:
-      nativeBalance *
-      getPriceByAddressOrSymbol(coinPrices, NATIVE_SOL.address, 'SOL'),
+    valueInUsd: nativeBalance * getPriceByAddressOrSymbol(coinPrices, NATIVE_SOL.address, 'SOL'),
   };
 
   try {
@@ -649,20 +544,14 @@ export const getTokensWithBalances = async (
       return response;
     }
 
-    const intersectedList = onlyAccountAssets
-      ? getTokenListForOwnedTokenAccounts(accTks, splTokenList)
-      : splTokensCopy;
+    const intersectedList = onlyAccountAssets ? getTokenListForOwnedTokenAccounts(accTks, splTokenList) : splTokensCopy;
 
     if (!intersectedList.some(l => l.address === sol.address)) {
       intersectedList.push(sol);
     }
 
     // Update balances in the mean token list
-    const balancesUpdated = updateTokenAccountBalancesInTokenList(
-      accTks,
-      intersectedList,
-      coinPrices,
-    );
+    const balancesUpdated = updateTokenAccountBalancesInTokenList(accTks, intersectedList, coinPrices);
 
     const sortedList = sortTokenAccountsByUsdValue(balancesUpdated);
 
@@ -671,10 +560,7 @@ export const getTokensWithBalances = async (
     accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
       if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
         const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-        const price = getPriceByAddressOrSymbol(
-          coinPrices,
-          item.parsedInfo.mint,
-        );
+        const price = getPriceByAddressOrSymbol(coinPrices, item.parsedInfo.mint);
         const valueInUsd = balance * price;
         const customToken: UserTokenAccount = {
           address: item.parsedInfo.mint,
@@ -704,8 +590,7 @@ export const getTokensWithBalances = async (
 
     const balancesMap: any = {};
     accTks.forEach(item => {
-      balancesMap[item.parsedInfo.mint] =
-        item.parsedInfo.tokenAmount.uiAmount || 0;
+      balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
     });
     balancesMap[NATIVE_SOL.address] = nativeBalance;
     response.balancesMap = balancesMap;
@@ -723,10 +608,7 @@ export const getTokensWithBalances = async (
   return response;
 };
 
-export const getAccountNFTs = async (
-  connection: Connection,
-  accountAddress: string,
-) => {
+export const getAccountNFTs = async (connection: Connection, accountAddress: string) => {
   const owner = new PublicKey(accountAddress);
   const metaplex = new Metaplex(connection);
 

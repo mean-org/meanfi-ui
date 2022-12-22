@@ -25,11 +25,7 @@ const getMeanQuote = async (stakeClient: StakingClient, sMEAN: number) => {
   }
 };
 
-const useUnstakeQuote = ({
-  stakeClient,
-  selectedToken,
-  smeanBalance,
-}: Args) => {
+const useUnstakeQuote = ({ stakeClient, selectedToken, smeanBalance }: Args) => {
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
 
   useEffect(() => {
@@ -45,10 +41,7 @@ const useUnstakeQuote = ({
       const value = await getMeanQuote(stakeClient, smeanBalance);
 
       consoleOut(
-        `Quote for ${formatThousands(
-          smeanBalance,
-          selectedToken?.decimals,
-        )} sMEAN`,
+        `Quote for ${formatThousands(smeanBalance, selectedToken?.decimals)} sMEAN`,
         `${formatThousands(value, selectedToken?.decimals)} MEAN`,
         'blue',
       );

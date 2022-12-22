@@ -6,7 +6,7 @@ import {
   LAMPORTS_PER_SOL,
   ParsedAccountData,
   PublicKey,
-  VersionedTransaction
+  VersionedTransaction,
 } from '@solana/web3.js';
 import { Button, Drawer, Modal } from 'antd';
 import { openNotification } from 'components/Notifications';
@@ -24,17 +24,8 @@ import { environment } from 'environments/environment';
 import { customLogger } from 'index';
 import { createV0InitAtaAccountTx } from 'middleware/createV0InitAtaAccountTx';
 import { sendTx, signTx } from 'middleware/transactions';
-import {
-  consoleOut,
-  getTransactionStatusForLogs,
-  isProd,
-  isValidAddress
-} from 'middleware/ui';
-import {
-  getAmountFromLamports,
-  getVersionedTxIxResume,
-  shortenAddress
-} from 'middleware/utils';
+import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from 'middleware/ui';
+import { getAmountFromLamports, getVersionedTxIxResume, shortenAddress } from 'middleware/utils';
 import { AccountTokenParsedInfo } from 'models/accounts';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
@@ -52,8 +43,7 @@ export const AccountsInitAtaModal = (props: {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
-  const { tokenList, splTokenList, transactionStatus, setTransactionStatus } =
-    useContext(AppStateContext);
+  const { tokenList, splTokenList, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isBusy, setIsBusy] = useState(false);
   const { account } = useNativeAccount();
@@ -67,12 +57,8 @@ export const AccountsInitAtaModal = (props: {
     mspFlatFee: 0.00001,
     mspPercentFee: 0,
   });
-  const [feeAmount] = useState<number>(
-    transactionFees.blockchainFee + transactionFees.mspFlatFee,
-  );
-  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(
-    undefined,
-  );
+  const [feeAmount] = useState<number>(transactionFees.blockchainFee + transactionFees.mspFlatFee);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
 
   // Callbacks
@@ -93,9 +79,7 @@ export const AccountsInitAtaModal = (props: {
           );
         };
 
-        const showFromList = !searchString
-          ? selectedList
-          : selectedList.filter((t: any) => filter(t));
+        const showFromList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -115,9 +99,7 @@ export const AccountsInitAtaModal = (props: {
       const finalList = new Array<TokenInfo>();
 
       // Make a copy of the MeanFi favorite tokens
-      const meanTokensCopy = JSON.parse(
-        JSON.stringify(tokenList),
-      ) as TokenInfo[];
+      const meanTokensCopy = JSON.parse(JSON.stringify(tokenList)) as TokenInfo[];
 
       // Add all other items but excluding those in meanTokensCopy (only in mainnet)
       if (isProd()) {
@@ -151,27 +133,16 @@ export const AccountsInitAtaModal = (props: {
 
   // First time token list
   useEffect(() => {
-    if (
-      selectedList.length > 0 &&
-      !tokenFilter &&
-      filteredTokenList.length === 0
-    ) {
+    if (selectedList.length > 0 && !tokenFilter && filteredTokenList.length === 0) {
       consoleOut('Initializing filtered list...', '', 'blue');
       updateTokenListByFilter('');
     }
-  }, [
-    filteredTokenList.length,
-    selectedList.length,
-    tokenFilter,
-    updateTokenListByFilter,
-  ]);
+  }, [filteredTokenList.length, selectedList.length, tokenFilter, updateTokenListByFilter]);
 
   // Events and actions
 
   const setModalBodyMinHeight = useCallback((addMinHeight: boolean) => {
-    const modalBody = document.querySelector(
-      '.exchange-modal .ant-modal-content',
-    );
+    const modalBody = document.querySelector('.exchange-modal .ant-modal-content');
     if (modalBody) {
       if (addMinHeight) {
         modalBody.classList.add('drawer-open');
@@ -231,9 +202,7 @@ export const AccountsInitAtaModal = (props: {
       return false;
     }
 
-    return ownedTokenAccounts.some(
-      ta => selectedToken.address === ta.parsedInfo.mint,
-    );
+    return ownedTokenAccounts.some(ta => selectedToken.address === ta.parsedInfo.mint);
   }, [ownedTokenAccounts, selectedToken]);
 
   const onTransactionFinished = useCallback(() => {
@@ -263,16 +232,12 @@ export const AccountsInitAtaModal = (props: {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
           inputs: data,
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: '',
         });
 
@@ -289,9 +254,7 @@ export const AccountsInitAtaModal = (props: {
               currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
               result: getVersionedTxIxResume(value),
             });
             transaction = value;
@@ -304,9 +267,7 @@ export const AccountsInitAtaModal = (props: {
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
             customLogger.logError('Create Asset transaction failed', {
@@ -331,12 +292,7 @@ export const AccountsInitAtaModal = (props: {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && transaction) {
-        const sign = await signTx(
-          'Create Asset',
-          wallet,
-          publicKey,
-          transaction as VersionedTransaction,
-        );
+        const sign = await signTx('Create Asset', wallet, publicKey, transaction as VersionedTransaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -344,11 +300,7 @@ export const AccountsInitAtaModal = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx(
-            'Create Asset',
-            connection,
-            encodedTx,
-          );
+          const sent = await sendTx('Create Asset', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature) {
             signature = sent.signature;
@@ -439,11 +391,7 @@ export const AccountsInitAtaModal = (props: {
                 name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
-                className={
-                  selectedToken && selectedToken.address === t.address
-                    ? 'selected'
-                    : 'simplelink'
-                }
+                className={selectedToken && selectedToken.address === t.address ? 'selected' : 'simplelink'}
                 onClick={onClick}
                 balance={0}
               />
@@ -477,66 +425,52 @@ export const AccountsInitAtaModal = (props: {
       </div>
       <div className="token-list">
         {filteredTokenList.length > 0 && renderTokenList}
-        {tokenFilter &&
-          isValidAddress(tokenFilter) &&
-          filteredTokenList.length === 0 && (
-            <TokenListItem
-              key={tokenFilter}
-              name={CUSTOM_TOKEN_NAME}
-              mintAddress={tokenFilter}
-              className={
-                selectedToken && selectedToken.address === tokenFilter
-                  ? 'selected'
-                  : 'simplelink'
+        {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
+          <TokenListItem
+            key={tokenFilter}
+            name={CUSTOM_TOKEN_NAME}
+            mintAddress={tokenFilter}
+            className={selectedToken && selectedToken.address === tokenFilter ? 'selected' : 'simplelink'}
+            onClick={async () => {
+              const address = tokenFilter;
+              let decimals = -1;
+              let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+              try {
+                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                consoleOut('accountInfo:', accountInfo, 'blue');
+              } catch (error) {
+                console.error(error);
               }
-              onClick={async () => {
-                const address = tokenFilter;
-                let decimals = -1;
-                let accountInfo: AccountInfo<
-                  Buffer | ParsedAccountData
-                > | null = null;
-                try {
-                  accountInfo = (
-                    await connection.getParsedAccountInfo(
-                      new PublicKey(address),
-                    )
-                  ).value;
-                  consoleOut('accountInfo:', accountInfo, 'blue');
-                } catch (error) {
-                  console.error(error);
+              if (accountInfo) {
+                if (
+                  (accountInfo as any).data['program'] &&
+                  (accountInfo as any).data['program'] === 'spl-token' &&
+                  (accountInfo as any).data['parsed'] &&
+                  (accountInfo as any).data['parsed']['type'] &&
+                  (accountInfo as any).data['parsed']['type'] === 'mint'
+                ) {
+                  decimals = (accountInfo as any).data['parsed']['info']['decimals'];
+                } else {
+                  decimals = -2;
                 }
-                if (accountInfo) {
-                  if (
-                    (accountInfo as any).data['program'] &&
-                    (accountInfo as any).data['program'] === 'spl-token' &&
-                    (accountInfo as any).data['parsed'] &&
-                    (accountInfo as any).data['parsed']['type'] &&
-                    (accountInfo as any).data['parsed']['type'] === 'mint'
-                  ) {
-                    decimals = (accountInfo as any).data['parsed']['info'][
-                      'decimals'
-                    ];
-                  } else {
-                    decimals = -2;
-                  }
-                }
-                const uknwnToken: TokenInfo = {
-                  address,
-                  name: CUSTOM_TOKEN_NAME,
-                  chainId: getNetworkIdByEnvironment(environment),
-                  decimals,
-                  symbol: shortenAddress(address),
-                };
-                setSelectedToken(uknwnToken);
-                consoleOut('token selected:', uknwnToken, 'blue');
-                // Do not close on errors (-1 or -2)
-                if (decimals >= 0) {
-                  onCloseTokenSelector();
-                }
-              }}
-              balance={0}
-            />
-          )}
+              }
+              const uknwnToken: TokenInfo = {
+                address,
+                name: CUSTOM_TOKEN_NAME,
+                chainId: getNetworkIdByEnvironment(environment),
+                decimals,
+                symbol: shortenAddress(address),
+              };
+              setSelectedToken(uknwnToken);
+              consoleOut('token selected:', uknwnToken, 'blue');
+              // Do not close on errors (-1 or -2)
+              if (decimals >= 0) {
+                onCloseTokenSelector();
+              }
+            }}
+            balance={0}
+          />
+        )}
       </div>
     </div>
   );
@@ -554,12 +488,10 @@ export const AccountsInitAtaModal = (props: {
       <div className="px-4 pb-3">
         <div className="mb-2 shift-up-1 text-center">
           <p>
-            Adding an asset will initialize the Associated Token Account. You
-            can add a custom asset by entering its mint address.
+            Adding an asset will initialize the Associated Token Account. You can add a custom asset by entering its
+            mint address.
           </p>
-          <p>
-            The asset will be added to your wallet if you don't own it already.
-          </p>
+          <p>The asset will be added to your wallet if you don't own it already.</p>
         </div>
 
         {/* Asset picker */}
@@ -574,9 +506,7 @@ export const AccountsInitAtaModal = (props: {
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showCaretDown={true}
-                    showName={
-                      selectedToken.name === CUSTOM_TOKEN_NAME ? true : false
-                    }
+                    showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
                     fullTokenInfo={selectedToken}
                   />
                 ) : (
@@ -596,9 +526,7 @@ export const AccountsInitAtaModal = (props: {
           ) : selectedToken && selectedToken.decimals === -1 ? (
             <span className="form-field-error">Account not found</span>
           ) : selectedToken && selectedToken.decimals === -2 ? (
-            <span className="form-field-error">
-              Account is not a token mint
-            </span>
+            <span className="form-field-error">Account is not a token mint</span>
           ) : null}
         </div>
 
