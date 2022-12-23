@@ -33,10 +33,7 @@ const useAccountPrograms = () => {
     });
 
     consoleOut('Fetching programs for:', selectedAccount.address, 'blue');
-    getProgramsByUpgradeAuthority(
-      connection,
-      selectedAccount.address
-    )
+    getProgramsByUpgradeAuthority(connection, selectedAccount.address)
       .then(progs => {
         setPrograms(progs);
         consoleOut('programs from middleware:', progs);
@@ -47,11 +44,7 @@ const useAccountPrograms = () => {
       })
       .finally(() => setLoadingPrograms(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    publicKey,
-    connection,
-    selectedAccount.address,
-  ]);
+  }, [publicKey, connection, selectedAccount.address]);
 
   return {
     loadingPrograms,

@@ -1,9 +1,6 @@
 import { CSSProperties } from 'react';
 
-export const IconCustomTx = (props: {
-  className: string;
-  style?: CSSProperties;
-}) => {
+export const IconCustomTx = (props: { className: string; style?: CSSProperties }) => {
   return (
     <svg
       className={props.className}
@@ -20,10 +17,7 @@ export const IconCustomTx = (props: {
         d="M144.395,93.791c-8.823,0-15.981,7.158-15.981,15.985v255.753c0,8.827,7.158,15.985,15.981,15.985
         H328.22c8.827,0,15.981-7.158,15.981-15.985V167.814l-77.047-74.023H144.395z"
       />
-      <path
-        fill="#E1E1E1"
-        d="M344.205,167.814h-61.066c-8.827,0-15.981-7.158-15.981-15.985V93.791L344.205,167.814z"
-      />
+      <path fill="#E1E1E1" d="M344.205,167.814h-61.066c-8.827,0-15.981-7.158-15.981-15.985V93.791L344.205,167.814z" />
       <g>
         <path
           fill="#C9C9C8"

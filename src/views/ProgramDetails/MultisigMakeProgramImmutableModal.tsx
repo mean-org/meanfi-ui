@@ -8,10 +8,7 @@ interface Props {
   handleClose: () => void;
   handleOk: ({ proposalTitle }: { proposalTitle: string }) => void;
 }
-export const MultisigMakeProgramImmutableModal = ({
-  handleClose,
-  handleOk,
-}: Props) => {
+export const MultisigMakeProgramImmutableModal = ({ handleClose, handleOk }: Props) => {
   const { t } = useTranslation('common');
 
   const [proposalTitle, setProposalTitle] = useState('');
@@ -39,9 +36,7 @@ export const MultisigMakeProgramImmutableModal = ({
       width={480}
     >
       <div>
-        <div className="form-label text-left">
-          {t('multisig.proposal-modal.title')}
-        </div>
+        <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
         <InputMean
           id="proposal-title-field"
           name="Title"
@@ -56,13 +51,7 @@ export const MultisigMakeProgramImmutableModal = ({
 
       <div className="row two-col-ctas mt-3 transaction-progress p-0">
         <div className="col-6">
-          <Button
-            block
-            type="text"
-            shape="round"
-            size="middle"
-            onClick={() => handleClose()}
-          >
+          <Button block type="text" shape="round" size="middle" onClick={() => handleClose()}>
             {t('general.cta-close')}
           </Button>
         </div>

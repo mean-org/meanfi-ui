@@ -3,19 +3,11 @@ import { Button, Modal } from 'antd';
 import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
-import {
-  copyText,
-  getTransactionOperationDescription,
-} from '../../middleware/ui';
+import { copyText, getTransactionOperationDescription } from '../../middleware/ui';
 import { shortenAddress } from '../../middleware/utils';
 import { openNotification } from '../Notifications';
 
-export const ErrorReportModal = (props: {
-  handleClose: any;
-  heading?: string;
-  isVisible: boolean;
-  title: string;
-}) => {
+export const ErrorReportModal = (props: { handleClose: any; heading?: string; isVisible: boolean; title: string }) => {
   const { handleClose, heading, isVisible, title } = props;
   const { transactionStatus } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -54,25 +46,18 @@ export const ErrorReportModal = (props: {
 
         <h4 className="mb-0">
           {!transactionStatus.customError ? (
-            getTransactionOperationDescription(
-              transactionStatus.currentOperation,
-              t,
-            )
+            getTransactionOperationDescription(transactionStatus.currentOperation, t)
           ) : (
             <>
               <span>{transactionStatus.customError.message}</span>
-              <span className="ml-1">
-                [{shortenAddress(transactionStatus.customError.data, 8)}]
-              </span>
+              <span className="ml-1">[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
               <div className="icon-button-container">
                 <Button
                   type="default"
                   shape="circle"
                   size="middle"
                   icon={<CopyOutlined />}
-                  onClick={() =>
-                    copyAddressToClipboard(transactionStatus.customError.data)
-                  }
+                  onClick={() => copyAddressToClipboard(transactionStatus.customError.data)}
                 />
               </div>
             </>

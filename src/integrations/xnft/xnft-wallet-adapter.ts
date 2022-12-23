@@ -1,23 +1,13 @@
-import type {
-  SendTransactionOptions,
-  WalletName,
-} from '@solana/wallet-adapter-base';
+import type { SendTransactionOptions, WalletName } from '@solana/wallet-adapter-base';
 import {
   scopePollingDetectionStrategy,
   BaseMessageSignerWalletAdapter,
   WalletReadyState,
 } from '@solana/wallet-adapter-base';
-import {
-  Connection,
-  Transaction,
-  TransactionSignature,
-  VersionedTransaction,
-} from '@solana/web3.js';
+import { Connection, Transaction, TransactionSignature, VersionedTransaction } from '@solana/web3.js';
 
 // Check if wallet runs inside of extension, we pass query param to iframe there
-const isInXnftWalletParam =
-  Object.fromEntries(new URLSearchParams(window.location.search))
-    .isInXnftWallet === 'true';
+const isInXnftWalletParam = Object.fromEntries(new URLSearchParams(window.location.search)).isInXnftWallet === 'true';
 
 declare global {
   interface Window {
@@ -115,15 +105,11 @@ export class XnftWalletAdapter extends BaseMessageSignerWalletAdapter {
     return await xnft.solana.send(transaction, undefined, options);
   }
 
-  async signTransaction<T extends Transaction | VersionedTransaction>(
-    transaction: T,
-  ): Promise<T> {
+  async signTransaction<T extends Transaction | VersionedTransaction>(transaction: T): Promise<T> {
     return await xnft.solana.signTransaction(transaction);
   }
 
-  async signAllTransactions<T extends Transaction | VersionedTransaction>(
-    transactions: T[],
-  ): Promise<T[]> {
+  async signAllTransactions<T extends Transaction | VersionedTransaction>(transactions: T[]): Promise<T[]> {
     return await xnft.solana.signAllTransaction(transactions);
   }
 

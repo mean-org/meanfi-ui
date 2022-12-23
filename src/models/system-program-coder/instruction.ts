@@ -57,10 +57,7 @@ export class MeanSystemInstructionCoder implements InstructionCoder {
     throw new Error('System does not have state');
   }
 
-  public decode(
-    ix: Buffer | string,
-    encoding: 'hex' | 'base58' = 'hex',
-  ): Instruction | null {
+  public decode(ix: Buffer | string, encoding: 'hex' | 'base58' = 'hex'): Instruction | null {
     if (typeof ix === 'string') {
       ix = encoding === 'hex' ? Buffer.from(ix, 'hex') : bs58.decode(ix);
     }
@@ -80,13 +77,8 @@ export class MeanSystemInstructionCoder implements InstructionCoder {
     };
   }
 
-  public format(
-    ix: Instruction,
-    accountMetas: AccountMeta[],
-  ): InstructionDisplay | null {
-    const variant: any = Object.values(LAYOUT.registry).filter(
-      (v: any) => v.property === ix.name,
-    )[0];
+  public format(ix: Instruction, accountMetas: AccountMeta[]): InstructionDisplay | null {
+    const variant: any = Object.values(LAYOUT.registry).filter((v: any) => v.property === ix.name)[0];
     // const idlIx = this.idl.instructions.filter(i => i.name === ix.name)[0];
     // console.log('idlIx', idlIx);
 
@@ -98,9 +90,7 @@ export class MeanSystemInstructionCoder implements InstructionCoder {
 
     for (const arg of Object.keys(ix.data)) {
       // console.log('arg', arg);
-      const field = variant.layout.fields.filter(
-        (f: any) => f.property === arg,
-      )[0] as any;
+      const field = variant.layout.fields.filter((f: any) => f.property === arg)[0] as any;
       // console.log('field', field);
       const value = (ix.data as any)[arg];
       // console.log('value', value);
@@ -192,13 +182,7 @@ function encodeTransfer({ lamports }: any): Buffer {
   });
 }
 
-function encodeCreateAccountWithSeed({
-  base,
-  seed,
-  lamports,
-  space,
-  owner,
-}: any): Buffer {
+function encodeCreateAccountWithSeed({ base, seed, lamports, space, owner }: any): Buffer {
   return encodeData(
     {
       createAccountWithSeed: {
@@ -286,19 +270,11 @@ function encodeTransferWithSeed({ lamports, seed, owner }: any): Buffer {
 const LAYOUT = BufferLayout.union(BufferLayout.u32('instruction'));
 LAYOUT.addVariant(
   0,
-  BufferLayout.struct([
-    BufferLayout.ns64('lamports'),
-    BufferLayout.ns64('space'),
-    publicKey('owner'),
-  ]),
+  BufferLayout.struct([BufferLayout.ns64('lamports'), BufferLayout.ns64('space'), publicKey('owner')]),
   'createAccount',
 );
 LAYOUT.addVariant(1, BufferLayout.struct([publicKey('owner')]), 'assign');
-LAYOUT.addVariant(
-  2,
-  BufferLayout.struct([BufferLayout.ns64('lamports')]),
-  'transfer',
-);
+LAYOUT.addVariant(2, BufferLayout.struct([BufferLayout.ns64('lamports')]), 'transfer');
 LAYOUT.addVariant(
   3,
   BufferLayout.struct([
@@ -310,57 +286,24 @@ LAYOUT.addVariant(
   ]),
   'createAccountWithSeed',
 );
-LAYOUT.addVariant(
-  4,
-  BufferLayout.struct([publicKey('authorized')]),
-  'advanceNonceAccount',
-);
-LAYOUT.addVariant(
-  5,
-  BufferLayout.struct([BufferLayout.ns64('lamports')]),
-  'withdrawNonceAccount',
-);
-LAYOUT.addVariant(
-  6,
-  BufferLayout.struct([publicKey('authorized')]),
-  'initializeNonceAccount',
-);
-LAYOUT.addVariant(
-  7,
-  BufferLayout.struct([publicKey('authorized')]),
-  'authorizeNonceAccount',
-);
-LAYOUT.addVariant(
-  8,
-  BufferLayout.struct([BufferLayout.ns64('space')]),
-  'allocate',
-);
+LAYOUT.addVariant(4, BufferLayout.struct([publicKey('authorized')]), 'advanceNonceAccount');
+LAYOUT.addVariant(5, BufferLayout.struct([BufferLayout.ns64('lamports')]), 'withdrawNonceAccount');
+LAYOUT.addVariant(6, BufferLayout.struct([publicKey('authorized')]), 'initializeNonceAccount');
+LAYOUT.addVariant(7, BufferLayout.struct([publicKey('authorized')]), 'authorizeNonceAccount');
+LAYOUT.addVariant(8, BufferLayout.struct([BufferLayout.ns64('space')]), 'allocate');
 LAYOUT.addVariant(
   9,
-  BufferLayout.struct([
-    publicKey('base'),
-    rustStringLayout('seed'),
-    BufferLayout.ns64('space'),
-    publicKey('owner'),
-  ]),
+  BufferLayout.struct([publicKey('base'), rustStringLayout('seed'), BufferLayout.ns64('space'), publicKey('owner')]),
   'allocateWithSeed',
 );
 LAYOUT.addVariant(
   10,
-  BufferLayout.struct([
-    publicKey('base'),
-    rustStringLayout('seed'),
-    publicKey('owner'),
-  ]),
+  BufferLayout.struct([publicKey('base'), rustStringLayout('seed'), publicKey('owner')]),
   'assignWithSeed',
 );
 LAYOUT.addVariant(
   11,
-  BufferLayout.struct([
-    BufferLayout.ns64('lamports'),
-    rustStringLayout('seed'),
-    publicKey('owner'),
-  ]),
+  BufferLayout.struct([BufferLayout.ns64('lamports'), rustStringLayout('seed'), publicKey('owner')]),
   'transferWithSeed',
 );
 
@@ -375,9 +318,7 @@ function encodeData(instruction: any, maxSpan?: number): Buffer {
   return b;
 }
 
-const instructionMaxSpan = Math.max(
-  ...Object.values(LAYOUT.registry).map((r: any) => r.span),
-);
+const instructionMaxSpan = Math.max(...Object.values(LAYOUT.registry).map((r: any) => r.span));
 
 const getIxAccounts = (name: string, keys: AccountMeta[]): any[] => {
   switch (name) {

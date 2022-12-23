@@ -515,7 +515,7 @@ export const MultisigTransferTokensModal = (props: {
     } else {
       return t('general.refresh');
     }
-  }
+  };
 
   const getAlternateStateModalContent = () => {
     if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
@@ -554,7 +554,7 @@ export const MultisigTransferTokensModal = (props: {
                   onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
                 >
                   {isError(transactionStatus.currentOperation) &&
-                    transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure
+                  transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure
                     ? t('general.retry')
                     : t('general.cta-close')}
                 </Button>
@@ -564,7 +564,7 @@ export const MultisigTransferTokensModal = (props: {
         </div>
       </>
     );
-  }
+  };
 
   return (
     <>
@@ -740,7 +740,9 @@ export const MultisigTransferTokensModal = (props: {
                 </div>
               )}
             </>
-          ) : getAlternateStateModalContent()}
+          ) : (
+            getAlternateStateModalContent()
+          )}
         </div>
 
         <div

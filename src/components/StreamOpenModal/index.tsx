@@ -3,11 +3,7 @@ import { useState } from 'react';
 import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-export const StreamOpenModal = (props: {
-  handleClose: any;
-  handleOk: any;
-  isVisible: boolean;
-}) => {
+export const StreamOpenModal = (props: { handleClose: any; handleOk: any; isVisible: boolean }) => {
   const [streamId, setStreamId] = useState('');
   const { t } = useTranslation('common');
 
@@ -34,9 +30,7 @@ export const StreamOpenModal = (props: {
     >
       <div className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">
-            {t('open-stream.label-streamid-input')}
-          </span>
+          <span className="field-label-left">{t('open-stream.label-streamid-input')}</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
@@ -67,9 +61,7 @@ export const StreamOpenModal = (props: {
         disabled={!streamId}
         onClick={onAcceptStreamId}
       >
-        {!streamId
-          ? t('open-stream.streamid-empty')
-          : t('open-stream.streamid-open-cta')}
+        {!streamId ? t('open-stream.streamid-empty') : t('open-stream.streamid-open-cta')}
       </Button>
     </Modal>
   );

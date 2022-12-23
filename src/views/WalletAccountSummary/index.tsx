@@ -8,22 +8,13 @@ import { getAmountWithSymbol } from 'middleware/utils';
 import { UserTokenAccount } from 'models/accounts';
 import { useContext, useEffect, useState } from 'react';
 
-const WalletAccountSummary = (props: {
-  accountBalance?: number;
-}) => {
+const WalletAccountSummary = (props: { accountBalance?: number }) => {
   const { accountBalance } = props;
 
-  const {
-    splTokenList,
-    selectedAccount,
-    userTokensResponse,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-  } = useContext(AppStateContext);
+  const { splTokenList, selectedAccount, userTokensResponse, getTokenPriceByAddress, getTokenPriceBySymbol } =
+    useContext(AppStateContext);
 
-  const [selectedAsset, setSelectedAsset] = useState<
-    UserTokenAccount | undefined
-  >(undefined);
+  const [selectedAsset, setSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
 
   const renderNetworth = () => {
     if (accountBalance) {
@@ -39,13 +30,10 @@ const WalletAccountSummary = (props: {
     }
 
     const priceByAddress = getTokenPriceByAddress(selectedAsset.address);
-    const tokenPrice =
-      priceByAddress || getTokenPriceBySymbol(selectedAsset.symbol);
+    const tokenPrice = priceByAddress || getTokenPriceBySymbol(selectedAsset.symbol);
 
     if (tokenPrice > 0) {
-      return selectedAsset.balance
-        ? toUsCurrency((selectedAsset.balance || 0) * tokenPrice)
-        : '$0.00';
+      return selectedAsset.balance ? toUsCurrency((selectedAsset.balance || 0) * tokenPrice) : '$0.00';
     } else {
       return '$0.00';
     }
@@ -54,9 +42,7 @@ const WalletAccountSummary = (props: {
   // Process userTokensResponse from AppState to get a renderable list of tokens
   useEffect(() => {
     if (userTokensResponse) {
-      const nativeAsset = userTokensResponse.accountTokens.find(
-        t => t.publicAddress === selectedAccount.address,
-      );
+      const nativeAsset = userTokensResponse.accountTokens.find(t => t.publicAddress === selectedAccount.address);
       consoleOut('WalletAccountSummary nativeAsset:', nativeAsset, 'blue');
       setSelectedAsset(nativeAsset);
     }

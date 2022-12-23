@@ -23,13 +23,7 @@ import {
 } from 'middleware/ui';
 import { displayAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
 
@@ -68,9 +62,7 @@ export const MoneyStreamDetails = (props: {
     const now = new Date().toUTCString();
     const nowUtc = new Date(now);
     const comparedDate = new Date(date);
-    const dateWithoutOffset = new Date(
-      comparedDate.getTime() - comparedDate.getTimezoneOffset() * 60000,
-    );
+    const dateWithoutOffset = new Date(comparedDate.getTime() - comparedDate.getTimezoneOffset() * 60000);
     if (dateWithoutOffset > nowUtc) {
       return true;
     }
@@ -101,31 +93,19 @@ export const MoneyStreamDetails = (props: {
       }
       if (isInboundStream) {
         if (item.statusCode === STREAM_STATUS_CODE.Scheduled) {
-          title = `${t(
-            'streams.stream-list.title-scheduled-from',
-          )} (${shortenAddress(item.psAccountOwner)})`;
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(item.psAccountOwner)})`;
         } else if (item.statusCode === STREAM_STATUS_CODE.Paused) {
-          title = `${t(
-            'streams.stream-list.title-paused-from',
-          )} (${shortenAddress(item.psAccountOwner)})`;
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(item.psAccountOwner)})`;
         } else {
-          title = `${t(
-            'streams.stream-list.title-receiving-from',
-          )} (${shortenAddress(item.psAccountOwner)})`;
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(item.psAccountOwner)})`;
         }
       } else {
         if (item.statusCode === STREAM_STATUS_CODE.Scheduled) {
-          title = `${t(
-            'streams.stream-list.title-scheduled-to',
-          )} (${shortenAddress(item.beneficiary)})`;
+          title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(item.beneficiary)})`;
         } else if (item.statusCode === STREAM_STATUS_CODE.Paused) {
-          title = `${t(
-            'streams.stream-list.title-paused-to',
-          )} (${shortenAddress(item.beneficiary)})`;
+          title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(item.beneficiary)})`;
         } else {
-          title = `${t(
-            'streams.stream-list.title-sending-to',
-          )} (${shortenAddress(item.beneficiary)})`;
+          title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(item.beneficiary)})`;
         }
       }
     }
@@ -181,17 +161,9 @@ export const MoneyStreamDetails = (props: {
       let title = '';
 
       if (item) {
-        let rateAmount = item.rateAmount.gtn(0)
-          ? getRateAmountDisplay(item)
-          : getDepositAmountDisplay(item);
+        let rateAmount = item.rateAmount.gtn(0) ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
         if (item.rateAmount.gtn(0)) {
-          rateAmount +=
-            ' ' +
-            getIntervalFromSeconds(
-              new BN(item.rateIntervalInSeconds).toNumber(),
-              false,
-              t,
-            );
+          rateAmount += ' ' + getIntervalFromSeconds(new BN(item.rateIntervalInSeconds).toNumber(), false, t);
         }
 
         if (isInboundStream) {
@@ -249,13 +221,7 @@ export const MoneyStreamDetails = (props: {
         }
       }
 
-      return (
-        <span
-          className={`badge small font-bold text-uppercase fg-white ${bgClass}`}
-        >
-          {content}
-        </span>
-      );
+      return <span className={`badge small font-bold text-uppercase fg-white ${bgClass}`}>{content}</span>;
     },
     [t],
   );
@@ -274,10 +240,9 @@ export const MoneyStreamDetails = (props: {
             }
             return t('vesting.vesting-account-streams.stream-status-complete');
           default:
-            return t(
-              'vesting.vesting-account-streams.stream-status-streaming',
-              { timeLeft: getTimeToNow(item.estimatedDepletionDate) },
-            );
+            return t('vesting.vesting-account-streams.stream-status-streaming', {
+              timeLeft: getTimeToNow(item.estimatedDepletionDate),
+            });
         }
       }
     },
@@ -289,11 +254,7 @@ export const MoneyStreamDetails = (props: {
   /////////////////////
 
   useEffect(() => {
-    if (
-      highlightedStream &&
-      tabOption === 'activity' &&
-      streamActivity.length < 5
-    ) {
+    if (highlightedStream && tabOption === 'activity' && streamActivity.length < 5) {
       onLoadMoreActivities();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -308,9 +269,7 @@ export const MoneyStreamDetails = (props: {
     return relativeTimeFromDates(reference);
   };
 
-  const imageOnErrorHandler = (
-    event: React.SyntheticEvent<HTMLImageElement, Event>,
-  ) => {
+  const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
     event.currentTarget.className = 'error';
   };
@@ -366,17 +325,9 @@ export const MoneyStreamDetails = (props: {
 
     const rateAmountBN = new BN(stream.rateAmount);
 
-    let rateAmount = rateAmountBN.gtn(0)
-      ? getRateAmountDisplay(stream)
-      : getDepositAmountDisplay(stream);
+    let rateAmount = rateAmountBN.gtn(0) ? getRateAmountDisplay(stream) : getDepositAmountDisplay(stream);
     if (rateAmountBN.gtn(0)) {
-      rateAmount +=
-        ' ' +
-        getIntervalFromSeconds(
-          new BN(stream.rateIntervalInSeconds).toNumber(),
-          false,
-          t,
-        );
+      rateAmount += ' ' + getIntervalFromSeconds(new BN(stream.rateIntervalInSeconds).toNumber(), false, t);
     }
 
     return rateAmount;
@@ -406,12 +357,7 @@ export const MoneyStreamDetails = (props: {
 
     return (
       <>
-        {displayAmountWithSymbol(
-          stream.fundsLeftInStream,
-          selectedToken.address,
-          selectedToken.decimals,
-          splTokenList,
-        )}
+        {displayAmountWithSymbol(stream.fundsLeftInStream, selectedToken.address, selectedToken.decimals, splTokenList)}
       </>
     );
   }, [selectedToken, splTokenList, stream]);
@@ -444,9 +390,7 @@ export const MoneyStreamDetails = (props: {
           address={stream.id.toBase58()}
           maxChars={8}
           iconStyles={{ width: '15', height: '15', verticalAlign: 'text-top' }}
-          newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-            stream.id
-          }${getSolanaExplorerClusterParam()}`}
+          newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.id}${getSolanaExplorerClusterParam()}`}
         />
       </>
     );
@@ -472,12 +416,7 @@ export const MoneyStreamDetails = (props: {
       return null;
     }
 
-    return displayAmountWithSymbol(
-      stream.cliffVestAmount,
-      selectedToken.address,
-      selectedToken.decimals,
-      splTokenList,
-    );
+    return displayAmountWithSymbol(stream.cliffVestAmount, selectedToken.address, selectedToken.decimals, splTokenList);
   }, [selectedToken, splTokenList, stream]);
 
   const renderActivities = useCallback(() => {
@@ -492,18 +431,12 @@ export const MoneyStreamDetails = (props: {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="transaction-list-row stripped-rows"
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${
-                    item.signature
-                  }${getSolanaExplorerClusterParam()}`}
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}
                 >
                   <div className="icon-cell">{getActivityIcon(item)}</div>
                   <div className="description-cell no-padding">
-                    <div className="title text-truncate">
-                      {getActivityAction(item)}
-                    </div>
-                    <div className="subtitle text-truncate">
-                      {shortenAddress(item.initializer)}
-                    </div>
+                    <div className="title text-truncate">{getActivityAction(item)}</div>
+                    <div className="subtitle text-truncate">{shortenAddress(item.initializer)}</div>
                   </div>
                   <div className="rate-cell">
                     <div className="rate-amount">
@@ -518,15 +451,10 @@ export const MoneyStreamDetails = (props: {
                           )
                         : '--'}
                     </div>
-                    <div className="interval">
-                      {getShortDate(item.utcDate, true)}
-                    </div>
+                    <div className="interval">{getShortDate(item.utcDate, true)}</div>
                   </div>
                   <div className="actions-cell">
-                    <IconExternalLink
-                      className="mean-svg-icons"
-                      style={{ width: '15', height: '15' }}
-                    />
+                    <IconExternalLink className="mean-svg-icons" style={{ width: '15', height: '15' }} />
                   </div>
                 </a>
               );
@@ -546,11 +474,7 @@ export const MoneyStreamDetails = (props: {
         {streamActivity.length > 0 && hasMoreStreamActivity && (
           <div className="mt-1 text-center">
             <span
-              className={
-                loadingStreamActivity
-                  ? 'no-pointer'
-                  : 'secondary-link underline-on-hover'
-              }
+              className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
               role="link"
               onClick={onLoadMoreActivities}
             >
@@ -574,9 +498,7 @@ export const MoneyStreamDetails = (props: {
 
   const getStartDateLabel = useCallback(
     (stream: Stream) => {
-      return isStartDateFuture(stream.startUtc)
-        ? 'Starting on:'
-        : 'Started on:';
+      return isStartDateFuture(stream.startUtc) ? 'Starting on:' : 'Started on:';
     },
     [isStartDateFuture],
   );
@@ -618,27 +540,17 @@ export const MoneyStreamDetails = (props: {
       },
       {
         label:
-          !isInboundStream &&
-          stream &&
-          stream.statusCode === STREAM_STATUS_CODE.Running &&
-          'Funds will run out in:',
+          !isInboundStream && stream && stream.statusCode === STREAM_STATUS_CODE.Running && 'Funds will run out in:',
         value:
           !isInboundStream &&
           stream &&
           stream.statusCode === STREAM_STATUS_CODE.Running &&
-          `${getReadableDate(stream.estimatedDepletionDate)} (${getTimeToNow(
-            stream.estimatedDepletionDate,
-          )})`,
+          `${getReadableDate(stream.estimatedDepletionDate)} (${getTimeToNow(stream.estimatedDepletionDate)})`,
       },
       {
-        label:
-          stream &&
-          stream.statusCode === STREAM_STATUS_CODE.Paused &&
-          'Funds ran out on:',
+        label: stream && stream.statusCode === STREAM_STATUS_CODE.Paused && 'Funds ran out on:',
         value:
-          stream &&
-          stream.statusCode === STREAM_STATUS_CODE.Paused &&
-          getRelativeDate(stream.estimatedDepletionDate),
+          stream && stream.statusCode === STREAM_STATUS_CODE.Paused && getRelativeDate(stream.estimatedDepletionDate),
       },
       {
         label: 'Stream id:',
@@ -690,14 +602,7 @@ export const MoneyStreamDetails = (props: {
       children: renderActivities(),
     });
 
-    return (
-      <Tabs
-        items={items}
-        activeKey={tabOption}
-        onChange={onTabChanged}
-        className="neutral"
-      />
-    );
+    return <Tabs items={items} activeKey={tabOption} onChange={onTabChanged} className="neutral" />;
   }, [onTabChanged, renderActivities, renderDetails, tabOption]);
 
   const renderStream = (item: Stream) => {
@@ -721,18 +626,13 @@ export const MoneyStreamDetails = (props: {
                 onError={imageOnErrorHandler}
               />
             ) : (
-              <Identicon
-                address={associatedToken}
-                style={{ width: '36', height: '36', display: 'inline-flex' }}
-              />
+              <Identicon address={associatedToken} style={{ width: '36', height: '36', display: 'inline-flex' }} />
             )}
           </div>
         </div>
         <div className="description-cell">
           <div className="title text-truncate">{getStreamTitle(item)}</div>
-          <div className="subtitle text-truncate">
-            {getStreamSubtitle(item)}
-          </div>
+          <div className="subtitle text-truncate">{getStreamSubtitle(item)}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">{getStreamStatus(item)}</div>

@@ -1,8 +1,4 @@
-import {
-  CheckOutlined,
-  InfoCircleOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
 import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
@@ -21,11 +17,7 @@ import { environment } from 'environments/environment';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
-import {
-  consoleOut,
-  getTransactionOperationDescription,
-  isValidAddress,
-} from 'middleware/ui';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
 import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
@@ -56,30 +48,20 @@ export const TreasuryCreateModal = (props: {
     transactionFees,
   } = props;
   const { t } = useTranslation('common');
-  const {
-    tokenList,
-    splTokenList,
-    selectedAccount,
-    transactionStatus,
-    setTransactionStatus,
-  } = useContext(AppStateContext);
+  const { tokenList, splTokenList, selectedAccount, transactionStatus, setTransactionStatus } =
+    useContext(AppStateContext);
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
   const [proposalTitle, setProposalTitle] = useState('');
   const [treasuryName, setTreasuryName] = useState('');
   const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
-  const [localSelectedMultisig, setLocalSelectedMultisig] = useState<
-    MultisigInfo | undefined
-  >(undefined);
-  const [enableMultisigTreasuryOption, setEnableMultisigTreasuryOption] =
-    useState(true);
+  const [localSelectedMultisig, setLocalSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
+  const [enableMultisigTreasuryOption, setEnableMultisigTreasuryOption] = useState(true);
   const [tokenFilter, setTokenFilter] = useState('');
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [userBalances, setUserBalances] = useState<any>();
-  const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(
-    undefined,
-  );
+  const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
 
   const isMultisigContext = useMemo(() => {
     return publicKey && selectedAccount.isMultisig ? true : false;
@@ -125,9 +107,7 @@ export const TreasuryCreateModal = (props: {
           );
         };
 
-        const showFromList = !searchString
-          ? selectedList
-          : selectedList.filter((t: any) => filter(t));
+        const showFromList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -177,9 +157,7 @@ export const TreasuryCreateModal = (props: {
       return;
     }
 
-    const splTokensCopy = JSON.parse(
-      JSON.stringify(splTokenList),
-    ) as TokenInfo[];
+    const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
     const balancesMap: any = {};
     balancesMap[splTokensCopy[0].address] = nativeBalance;
 
@@ -189,15 +167,12 @@ export const TreasuryCreateModal = (props: {
           // Add owned token accounts to balances map
           // Code to have all tokens sorted by balance
           accTks.forEach(item => {
-            balancesMap[item.parsedInfo.mint] =
-              item.parsedInfo.tokenAmount.uiAmount || 0;
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
           });
           splTokensCopy.sort((a, b) => {
             if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
               return 1;
-            } else if (
-              (balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)
-            ) {
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
               return -1;
             }
             return 0;
@@ -247,12 +222,7 @@ export const TreasuryCreateModal = (props: {
 
   // Reset results when the filter is cleared
   useEffect(() => {
-    if (
-      tokenList &&
-      tokenList.length &&
-      filteredTokenList.length === 0 &&
-      !tokenFilter
-    ) {
+    if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
     }
   }, [tokenList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
@@ -263,10 +233,7 @@ export const TreasuryCreateModal = (props: {
       treasuryName: treasuryName,
       token: workingToken as TokenInfo,
       treasuryType: treasuryOption ? treasuryOption.type : TreasuryType.Open,
-      multisigId:
-        enableMultisigTreasuryOption && localSelectedMultisig
-          ? localSelectedMultisig.id.toBase58()
-          : '',
+      multisigId: enableMultisigTreasuryOption && localSelectedMultisig ? localSelectedMultisig.id.toBase58() : '',
     };
     handleOk(options);
   };
@@ -302,17 +269,11 @@ export const TreasuryCreateModal = (props: {
   };
 
   const getTransactionStartButtonLabel = () => {
-    return !treasuryName
-      ? 'Add an account name'
-      : t('treasuries.create-treasury.main-cta');
+    return !treasuryName ? 'Add an account name' : t('treasuries.create-treasury.main-cta');
   };
 
   const getTransactionStartButtonLabelMultisig = () => {
-    return !proposalTitle
-      ? 'Add a proposal title'
-      : !treasuryName
-      ? 'Add an account name'
-      : 'Sign proposal';
+    return !proposalTitle ? 'Add a proposal title' : !treasuryName ? 'Add an account name' : 'Sign proposal';
   };
 
   const onTitleInputValueChange = (e: any) => {
@@ -332,16 +293,11 @@ export const TreasuryCreateModal = (props: {
       selectedMultisig && (
         <div className={`transaction-list-row w-100 no-pointer`}>
           <div className="icon-cell">
-            <Identicon
-              address={selectedMultisig.id}
-              style={{ width: '30', display: 'inline-flex' }}
-            />
+            <Identicon address={selectedMultisig.id} style={{ width: '30', display: 'inline-flex' }} />
           </div>
           <div className="description-cell">
             <div className="title text-truncate">{selectedMultisig.label}</div>
-            <div className="subtitle text-truncate">
-              {shortenAddress(selectedMultisig.id.toBase58(), 8)}
-            </div>
+            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id.toBase58(), 8)}</div>
           </div>
           <div className="rate-cell">
             <div className="rate-amount">
@@ -367,21 +323,14 @@ export const TreasuryCreateModal = (props: {
           };
 
           if (index < MAX_TOKEN_LIST_ITEMS) {
-            const balance =
-              connected && userBalances && userBalances[t.address] > 0
-                ? userBalances[t.address]
-                : 0;
+            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
             return (
               <TokenListItem
                 key={t.address}
                 name={t.name || CUSTOM_TOKEN_NAME}
                 mintAddress={t.address}
                 token={t}
-                className={
-                  workingToken && workingToken.address === t.address
-                    ? 'selected'
-                    : 'simplelink'
-                }
+                className={workingToken && workingToken.address === t.address ? 'selected' : 'simplelink'}
                 onClick={onClick}
                 balance={balance}
                 showZeroBalances={true}
@@ -416,70 +365,52 @@ export const TreasuryCreateModal = (props: {
       </div>
       <div className="token-list">
         {filteredTokenList.length > 0 && renderTokenList}
-        {tokenFilter &&
-          isValidAddress(tokenFilter) &&
-          filteredTokenList.length === 0 && (
-            <TokenListItem
-              key={tokenFilter}
-              name={CUSTOM_TOKEN_NAME}
-              mintAddress={tokenFilter}
-              className={
-                workingToken && workingToken.address === tokenFilter
-                  ? 'selected'
-                  : 'simplelink'
+        {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
+          <TokenListItem
+            key={tokenFilter}
+            name={CUSTOM_TOKEN_NAME}
+            mintAddress={tokenFilter}
+            className={workingToken && workingToken.address === tokenFilter ? 'selected' : 'simplelink'}
+            onClick={async () => {
+              const address = tokenFilter;
+              let decimals = -1;
+              let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+              try {
+                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                consoleOut('accountInfo:', accountInfo, 'blue');
+              } catch (error) {
+                console.error(error);
               }
-              onClick={async () => {
-                const address = tokenFilter;
-                let decimals = -1;
-                let accountInfo: AccountInfo<
-                  Buffer | ParsedAccountData
-                > | null = null;
-                try {
-                  accountInfo = (
-                    await connection.getParsedAccountInfo(
-                      new PublicKey(address),
-                    )
-                  ).value;
-                  consoleOut('accountInfo:', accountInfo, 'blue');
-                } catch (error) {
-                  console.error(error);
+              if (accountInfo) {
+                if (
+                  (accountInfo as any).data['program'] &&
+                  (accountInfo as any).data['program'] === 'spl-token' &&
+                  (accountInfo as any).data['parsed'] &&
+                  (accountInfo as any).data['parsed']['type'] &&
+                  (accountInfo as any).data['parsed']['type'] === 'mint'
+                ) {
+                  decimals = (accountInfo as any).data['parsed']['info']['decimals'];
+                } else {
+                  decimals = -2;
                 }
-                if (accountInfo) {
-                  if (
-                    (accountInfo as any).data['program'] &&
-                    (accountInfo as any).data['program'] === 'spl-token' &&
-                    (accountInfo as any).data['parsed'] &&
-                    (accountInfo as any).data['parsed']['type'] &&
-                    (accountInfo as any).data['parsed']['type'] === 'mint'
-                  ) {
-                    decimals = (accountInfo as any).data['parsed']['info'][
-                      'decimals'
-                    ];
-                  } else {
-                    decimals = -2;
-                  }
-                }
-                const unknownToken: TokenInfo = {
-                  address,
-                  name: CUSTOM_TOKEN_NAME,
-                  chainId: getNetworkIdByEnvironment(environment),
-                  decimals,
-                  symbol: `[${shortenAddress(address)}]`,
-                };
-                setWorkingToken(unknownToken);
-                consoleOut('token selected:', unknownToken, 'blue');
-                // Do not close on errors (-1 or -2)
-                if (decimals >= 0) {
-                  onCloseTokenSelector();
-                }
-              }}
-              balance={
-                connected && userBalances && userBalances[tokenFilter] > 0
-                  ? userBalances[tokenFilter]
-                  : 0
               }
-            />
-          )}
+              const unknownToken: TokenInfo = {
+                address,
+                name: CUSTOM_TOKEN_NAME,
+                chainId: getNetworkIdByEnvironment(environment),
+                decimals,
+                symbol: `[${shortenAddress(address)}]`,
+              };
+              setWorkingToken(unknownToken);
+              consoleOut('token selected:', unknownToken, 'blue');
+              // Do not close on errors (-1 or -2)
+              if (decimals >= 0) {
+                onCloseTokenSelector();
+              }
+            }}
+            balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+          />
+        )}
       </div>
     </div>
   );
@@ -490,9 +421,7 @@ export const TreasuryCreateModal = (props: {
         className="mean-modal simple-modal"
         title={
           <div className="modal-title">
-            {isMultisigContext
-              ? 'Propose streaming account'
-              : t('treasuries.create-treasury.modal-title')}
+            {isMultisigContext ? 'Propose streaming account' : t('treasuries.create-treasury.modal-title')}
           </div>
         }
         maskClosable={false}
@@ -501,12 +430,7 @@ export const TreasuryCreateModal = (props: {
         onOk={onAcceptModal}
         onCancel={onCloseModal}
         afterClose={onAfterClose}
-        width={
-          isBusy ||
-          transactionStatus.currentOperation !== TransactionStatus.Iddle
-            ? 380
-            : 480
-        }
+        width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
       >
         <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
           {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
@@ -514,9 +438,7 @@ export const TreasuryCreateModal = (props: {
               {/* Proposal title */}
               {isMultisigContext && (
                 <div className="mb-3">
-                  <div className="form-label">
-                    {t('multisig.proposal-modal.title')}
-                  </div>
+                  <div className="form-label">{t('multisig.proposal-modal.title')}</div>
                   <InputMean
                     id="proposal-title-field"
                     name="Title"
@@ -530,9 +452,7 @@ export const TreasuryCreateModal = (props: {
 
               {/* Treasury name */}
               <div className="mb-3">
-                <div className="form-label">
-                  {t('treasuries.create-treasury.treasury-name-input-label')}
-                </div>
+                <div className="form-label">{t('treasuries.create-treasury.treasury-name-input-label')}</div>
                 <div className={`well ${isBusy ? 'disabled' : ''}`}>
                   <div className="flex-fixed-right">
                     <div className="left">
@@ -544,22 +464,16 @@ export const TreasuryCreateModal = (props: {
                         type="text"
                         maxLength={32}
                         onChange={onInputValueChange}
-                        placeholder={t(
-                          'treasuries.create-treasury.treasury-name-placeholder',
-                        )}
+                        placeholder={t('treasuries.create-treasury.treasury-name-placeholder')}
                         value={treasuryName}
                       />
                     </div>
                   </div>
-                  <div className="form-field-hint">
-                    I.e. "My company payroll", "Seed round vesting", etc.
-                  </div>
+                  <div className="form-field-hint">I.e. "My company payroll", "Seed round vesting", etc.</div>
                 </div>
               </div>
 
-              <div className="form-label">
-                {t('treasuries.create-treasury.treasury-token-label')}
-              </div>
+              <div className="form-label">{t('treasuries.create-treasury.treasury-token-label')}</div>
               <div className={`well ${isBusy ? 'disabled' : ''} pt-2 pb-2`}>
                 <div className="flex-fixed-left">
                   <div className="left">
@@ -586,11 +500,7 @@ export const TreasuryCreateModal = (props: {
                     <div
                       key={`${option.translationId}`}
                       className={`item-card ${
-                        option.type === treasuryOption?.type
-                          ? 'selected'
-                          : option.disabled
-                          ? 'disabled'
-                          : ''
+                        option.type === treasuryOption?.type ? 'selected' : option.disabled ? 'disabled' : ''
                       }`}
                       onClick={() => {
                         if (!option.disabled) {
@@ -603,14 +513,10 @@ export const TreasuryCreateModal = (props: {
                       </div>
                       <div className="item-meta">
                         <div className="item-name">
-                          {t(
-                            `treasuries.create-treasury.treasury-type-options.${option.translationId}-name`,
-                          )}
+                          {t(`treasuries.create-treasury.treasury-type-options.${option.translationId}-name`)}
                         </div>
                         <div className="item-description">
-                          {t(
-                            `treasuries.create-treasury.treasury-type-options.${option.translationId}-description`,
-                          )}
+                          {t(`treasuries.create-treasury.treasury-type-options.${option.translationId}-description`)}
                         </div>
                       </div>
                     </div>
@@ -639,62 +545,42 @@ export const TreasuryCreateModal = (props: {
                 // )
               }
 
-              {enableMultisigTreasuryOption &&
-                multisigAccounts &&
-                multisigAccounts.length > 0 && (
-                  <>
-                    <div className="mb-3">
-                      <div className="form-label">
-                        {t(
-                          'treasuries.create-treasury.multisig-selector-label',
-                        )}
-                      </div>
-                      <div className="well">
-                        {/* {renderMultisigSelectItems()} */}
-                        {renderSelectedMultisig()}
-                      </div>
+              {enableMultisigTreasuryOption && multisigAccounts && multisigAccounts.length > 0 && (
+                <>
+                  <div className="mb-3">
+                    <div className="form-label">{t('treasuries.create-treasury.multisig-selector-label')}</div>
+                    <div className="well">
+                      {/* {renderMultisigSelectItems()} */}
+                      {renderSelectedMultisig()}
                     </div>
-                  </>
-                )}
+                  </div>
+                </>
+              )}
             </>
-          ) : transactionStatus.currentOperation ===
-            TransactionStatus.TransactionFinished ? (
+          ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
             <>
               <div className="transaction-progress">
                 <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                <h4 className="font-bold">
-                  {t('treasuries.create-treasury.success-message')}
-                </h4>
+                <h4 className="font-bold">{t('treasuries.create-treasury.success-message')}</h4>
               </div>
             </>
           ) : (
             <>
               <div className="transaction-progress p-0">
-                <InfoCircleOutlined
-                  style={{ fontSize: 48 }}
-                  className="icon mt-0"
-                />
-                {transactionStatus.currentOperation ===
-                TransactionStatus.TransactionStartFailure ? (
+                <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getAmountWithSymbol(
-                        nativeBalance,
-                        NATIVE_SOL_MINT.toBase58(),
-                      ),
+                      accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
                       feeAmount: getAmountWithSymbol(
-                        transactionFees.blockchainFee +
-                          transactionFees.mspFlatFee,
+                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58(),
                       ),
                     })}
                   </h4>
                 ) : (
                   <h4 className="font-bold mb-3">
-                    {getTransactionOperationDescription(
-                      transactionStatus.currentOperation,
-                      t,
-                    )}
+                    {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
                 )}
               </div>
@@ -704,26 +590,17 @@ export const TreasuryCreateModal = (props: {
 
         <div
           className={
-            isBusy &&
-            transactionStatus.currentOperation !== TransactionStatus.Iddle
-              ? 'panel2 show'
-              : 'panel2 hide'
+            isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
           }
         >
           {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
             <div className="transaction-progress">
               <Spin indicator={bigLoadingIcon} className="icon mt-0" />
               <h4 className="font-bold mb-1">
-                {getTransactionOperationDescription(
-                  transactionStatus.currentOperation,
-                  t,
-                )}
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
-              {transactionStatus.currentOperation ===
-                TransactionStatus.SignTransaction && (
-                <div className="indication">
-                  {t('transactions.status.instructions')}
-                </div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
               )}
             </div>
           )}
@@ -752,19 +629,11 @@ export const TreasuryCreateModal = (props: {
                   type="primary"
                   shape="round"
                   size="large"
-                  disabled={
-                    isMultisigContext ? !isValidFormMultisig() : !isValidForm()
-                  }
+                  disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
-                    if (
-                      transactionStatus.currentOperation ===
-                      TransactionStatus.Iddle
-                    ) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                       onAcceptModal();
-                    } else if (
-                      transactionStatus.currentOperation ===
-                      TransactionStatus.TransactionFinished
-                    ) {
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
                     } else {
                       refreshPage();
@@ -773,13 +642,11 @@ export const TreasuryCreateModal = (props: {
                 >
                   {isBusy
                     ? t('treasuries.create-treasury.main-cta-busy')
-                    : transactionStatus.currentOperation ===
-                      TransactionStatus.Iddle
+                    : transactionStatus.currentOperation === TransactionStatus.Iddle
                     ? isMultisigContext
                       ? getTransactionStartButtonLabelMultisig()
                       : getTransactionStartButtonLabel()
-                    : transactionStatus.currentOperation ===
-                      TransactionStatus.TransactionFinished
+                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                     ? t('general.cta-finish')
                     : t('general.refresh')}
                 </Button>

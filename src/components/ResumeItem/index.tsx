@@ -182,13 +182,7 @@ export const ResumeItem = (props: {
 
   const renderExecutedOnDisplay = () => {
     if (status === 0 || status === 1) {
-      return (
-        <Countdown
-          className="align-middle"
-          date={expires.toString()}
-          renderer={renderer}
-        />
-      );
+      return <Countdown className="align-middle" date={expires.toString()} renderer={renderer} />;
     } else if (status === 4) {
       return <span>Voided</span>;
     } else if (status === 5) {
@@ -200,19 +194,9 @@ export const ResumeItem = (props: {
 
   const renderRightIcon = () => {
     return rightIconHasDropdown ? (
-      <Dropdown
-        overlay={dropdownMenu}
-        placement="bottomRight"
-        trigger={['click']}
-      >
+      <Dropdown overlay={dropdownMenu} placement="bottomRight" trigger={['click']}>
         <span className="ellipsis-icon icon-button-container">
-          <Button
-            type="default"
-            shape="circle"
-            size="middle"
-            icon={rightIcon}
-            onClick={e => e.preventDefault()}
-          />
+          <Button type="default" shape="circle" size="middle" icon={rightIcon} onClick={e => e.preventDefault()} />
         </span>
       </Dropdown>
     ) : (
@@ -234,38 +218,25 @@ export const ResumeItem = (props: {
       <div
         key={`resume-item-${counterKey}`}
         onClick={onClick}
-        className={`resume-item-container mr-0 ml-0 ${className} ${
-          isLink ? '' : 'align-items-end'
-        } ${isDetailsPanel ? 'pl-1 pr-2' : ''}`}
+        className={`resume-item-container mr-0 ml-0 ${className} ${isLink ? '' : 'align-items-end'} ${
+          isDetailsPanel ? 'pl-1 pr-2' : ''
+        }`}
       >
         <div className="resume-left-container">
           {(src || img) && (
             <div className="img-container">
               {src && (
-                <img
-                  src={src}
-                  alt={title}
-                  width={35}
-                  height={35}
-                  style={{ borderRadius: '0.25em !important' }}
-                />
+                <img src={src} alt={title} width={35} height={35} style={{ borderRadius: '0.25em !important' }} />
               )}
               {img || null}
             </div>
           )}
           <div className={`resume-left-text ${isDetailsPanel ? 'pb-1' : ''}`}>
-            <div
-              className={`resume-title ${
-                isDetailsPanel ? 'big-title' : ''
-              } ${classNameTitle}`}
-            >
+            <div className={`resume-title ${isDetailsPanel ? 'big-title' : ''} ${classNameTitle}`}>
               {title}
               {extraTitle &&
                 extraTitle.map((badge: any, index: number) => (
-                  <span
-                    key={`badge-${index}`}
-                    className="ml-1 badge darken small text-uppercase"
-                  >
+                  <span key={`badge-${index}`} className="ml-1 badge darken small text-uppercase">
                     {badge}
                   </span>
                 ))}
@@ -283,11 +254,7 @@ export const ResumeItem = (props: {
                 )
               ) : expires ? (
                 <div className="info-label">
-                  {executedOn || status === 2 ? (
-                    <span>Executed on {executedOn}</span>
-                  ) : (
-                    renderExecutedOnDisplay()
-                  )}
+                  {executedOn || status === 2 ? <span>Executed on {executedOn}</span> : renderExecutedOnDisplay()}
                 </div>
               ) : (
                 <div className="info-label">
@@ -296,68 +263,38 @@ export const ResumeItem = (props: {
               ))}
           </div>
         </div>
-        <div
-          className={`resume-right-container ${
-            isDetailsPanel ? 'mr-2' : 'mr-1'
-          } ${classNameRightContent}`}
-        >
+        <div className={`resume-right-container ${isDetailsPanel ? 'mr-2' : 'mr-1'} ${classNameRightContent}`}>
           <div className="resume-right-text">
             <>
               <div className={`resume-right-text-up`}>
                 {approved > 0 && (
-                  <div
-                    className="thumbs-up"
-                    title={
-                      userSigned === true ? 'You approved this proposal' : ''
-                    }
-                  >
+                  <div className="thumbs-up" title={userSigned === true ? 'You approved this proposal' : ''}>
                     <span>{approved}</span>
                     <IconThumbsUp className="mean-svg-icons" />
                   </div>
                 )}
                 {rejected > 0 && version !== 0 && (
-                  <div
-                    className="thumbs-down"
-                    title={
-                      userSigned === false ? 'You rejected this proposal' : ''
-                    }
-                  >
+                  <div className="thumbs-down" title={userSigned === false ? 'You rejected this proposal' : ''}>
                     <IconThumbsDown className="mean-svg-icons" />
                     <span>{rejected}</span>
                   </div>
                 )}
                 {status !== undefined &&
                   (!isStream ? (
-                    <div
-                      className={`badge-container ${getTransactionStatusBackgroundColor(
-                        status as number,
-                      )}`}
-                    >
+                    <div className={`badge-container ${getTransactionStatusBackgroundColor(status as number)}`}>
                       <span className="badge darken small text-uppercase">
                         {getTransactionStatusAction(status as number)}
                       </span>
                     </div>
                   ) : (
-                    <div
-                      className={`badge-container ${getStreamStatusBackgroundColor(
-                        status as string,
-                      )}`}
-                    >
-                      <span className="badge darken small text-uppercase">
-                        {status}
-                      </span>
+                    <div className={`badge-container ${getStreamStatusBackgroundColor(status as string)}`}>
+                      <span className="badge darken small text-uppercase">{status}</span>
                     </div>
                   ))}
                 {amount && <div className="rate-amount">{amount}</div>}
                 {content && <div className="info-label">{content}</div>}
               </div>
-              {resume && (
-                <div
-                  className={`${!isStreamingAccount ? 'info-label' : ''} mb-0`}
-                >
-                  {resume}
-                </div>
-              )}
+              {resume && <div className={`${!isStreamingAccount ? 'info-label' : ''} mb-0`}>{resume}</div>}
             </>
           </div>
           {hasRightIcon && renderRightIcon()}

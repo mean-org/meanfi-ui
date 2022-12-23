@@ -2,13 +2,7 @@ import { ArrowRightOutlined, WarningFilled } from '@ant-design/icons';
 import { MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { PaymentStreaming, Stream } from '@mean-dao/payment-streaming';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import {
-  AccountInfo,
-  Connection,
-  LAMPORTS_PER_SOL,
-  ParsedAccountData,
-  PublicKey,
-} from '@solana/web3.js';
+import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Button, Divider, Modal, Space, Tooltip } from 'antd';
 import notification, { IconType } from 'antd/lib/notification';
 import BigNumber from 'bignumber.js';
@@ -21,19 +15,11 @@ import { PreFooter } from 'components/PreFooter';
 import { TextInput } from 'components/TextInput';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { TokenListItem } from 'components/TokenListItem';
-import {
-  CUSTOM_TOKEN_NAME,
-  MAX_TOKEN_LIST_ITEMS,
-  MULTISIG_ROUTE_BASE_PATH,
-} from 'constants/common';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS, MULTISIG_ROUTE_BASE_PATH } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import {
-  getNetworkIdByEnvironment,
-  useConnection,
-  useConnectionConfig,
-} from 'contexts/connection';
+import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
@@ -76,12 +62,7 @@ import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactJson from 'react-json-view';
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
 import './style.scss';
 
@@ -97,13 +78,10 @@ type StreamViewerOption = 'treasurer' | 'beneficiary';
 const notificationKey = 'updatable';
 
 const CRYPTO_VALUES: number[] = [
-  0.0004, 0.000003, 0.00000012345678, 1200.5, 1500.000009, 100500.000009226,
-  7131060.641513,
+  0.0004, 0.000003, 0.00000012345678, 1200.5, 1500.000009, 100500.000009226, 7131060.641513,
 ];
 
-const NUMBER_OF_ITEMS: number[] = [
-  0, 1, 99, 157, 679, 1000, 1300, 1550, 99600, 154350, 600000, 1200000,
-];
+const NUMBER_OF_ITEMS: number[] = [0, 1, 99, 157, 679, 1000, 1300, 1550, 99600, 154350, 600000, 1200000];
 
 export const PlaygroundView = () => {
   const { t } = useTranslation('common');
@@ -127,55 +105,35 @@ export const PlaygroundView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [currentTab, setCurrentTab] = useState<TabOption>(undefined);
-  const [parsedAccountInfo, setParsedAccountInfo] =
-    useState<AccountInfo<ParsedAccountData> | null>(null);
-  const [accountInfo, setAccountInfo] = useState<AccountInfo<Buffer> | null>(
-    null,
-  );
+  const [parsedAccountInfo, setParsedAccountInfo] = useState<AccountInfo<ParsedAccountData> | null>(null);
+  const [accountInfo, setAccountInfo] = useState<AccountInfo<Buffer> | null>(null);
   const [accountNotFound, setAccountNotFound] = useState<string>('');
   const [tokenFilter, setTokenFilter] = useState('');
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
-  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(
-    undefined,
-  );
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [streamId, setStreamId] = useState<string>('');
   const [streamRawData, setStreamRawData] = useState();
-  const [streamParsedData, setStreamParsedData] = useState<Stream | undefined>(
-    undefined,
-  );
+  const [streamParsedData, setStreamParsedData] = useState<Stream | undefined>(undefined);
   const [displayStreamData, setDisplayStreamData] = useState<boolean>(false);
   const [targetAddress, setTargetAddress] = useState<string>('');
   // Multisig
-  const [selectedMultisig, setSelectedMultisig] = useState<
-    MultisigInfo | undefined
-  >(undefined);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [assetsAmout, setAssetsAmount] = useState<string>();
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [multisigAssets, setMultisigAssets] = useState<MultisigAsset[]>([]);
-  const [multisigSolBalance, setMultisigSolBalance] = useState<
-    number | undefined
-  >(undefined);
-  const [totalSafeBalance, setTotalSafeBalance] = useState<number | undefined>(
-    undefined,
-  );
+  const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
+  const [totalSafeBalance, setTotalSafeBalance] = useState<number | undefined>(undefined);
   const [streamViewerAddress, setStreamViewerAddress] = useState('');
 
-  const multisigAddressPK = useMemo(
-    () => new PublicKey(appConfig.getConfig().multisigProgramAddress),
-    [],
-  );
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
   const streamV2ProgramAddressFromConfig = useMemo(
     () => new PublicKey(appConfig.getConfig().streamV2ProgramAddress),
     [],
   );
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(
-      connection,
-      streamV2ProgramAddressFromConfig,
-      'confirmed',
-    );
+    return new PaymentStreaming(connection, streamV2ProgramAddressFromConfig, 'confirmed');
   }, [connection, streamV2ProgramAddressFromConfig]);
 
   const multisigClient = useMemo(() => {
@@ -183,12 +141,7 @@ export const PlaygroundView = () => {
       return null;
     }
 
-    return new MeanMultisig(
-      connectionConfig.endpoint,
-      publicKey,
-      'confirmed',
-      multisigAddressPK,
-    );
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
   }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
 
   ///////////////
@@ -213,11 +166,7 @@ export const PlaygroundView = () => {
           consoleOut('parsed stream data payload:', value, 'blue');
           setStreamParsedData(value);
           if (value.version >= 2) {
-            consoleOut(
-              'Humanized stream data:',
-              getReadableStream(value),
-              'blue',
-            );
+            consoleOut('Humanized stream data:', getReadableStream(value), 'blue');
           }
         }
       });
@@ -261,9 +210,7 @@ export const PlaygroundView = () => {
 
       let accInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
       try {
-        accInfo = (
-          await connection.getParsedAccountInfo(new PublicKey(scanAddress))
-        ).value;
+        accInfo = (await connection.getParsedAccountInfo(new PublicKey(scanAddress))).value;
       } catch (error) {
         console.error(error);
       }
@@ -304,9 +251,7 @@ export const PlaygroundView = () => {
       try {
         const allInfo = await multisigClient.getMultisigs(publicKey);
         consoleOut('All multisigs:', allInfo, 'green');
-        const selectedMultisig = allInfo.find(
-          m => m.authority.toBase58() === filter,
-        );
+        const selectedMultisig = allInfo.find(m => m.authority.toBase58() === filter);
         consoleOut('selectedMultisig:', selectedMultisig, 'green');
         if (selectedMultisig) {
           setSelectedMultisig(selectedMultisig);
@@ -387,8 +332,7 @@ export const PlaygroundView = () => {
   }, []);
 
   // Token selection modal
-  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] =
-    useState(false);
+  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
 
   const showTokenSelector = useCallback(() => {
     setTokenSelectorModalVisibility(true);
@@ -418,9 +362,7 @@ export const PlaygroundView = () => {
           );
         };
 
-        const showFromList = !searchString
-          ? selectedList
-          : selectedList.filter((t: any) => filter(t));
+        const showFromList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -484,9 +426,7 @@ export const PlaygroundView = () => {
     consoleOut('Notification is closing...');
     openNotification({
       type: 'info',
-      description: t(
-        'treasuries.create-treasury.multisig-treasury-created-instructions',
-      ),
+      description: t('treasuries.create-treasury.multisig-treasury-created-instructions'),
       duration: null,
     });
     navigate('/custody');
@@ -495,9 +435,7 @@ export const PlaygroundView = () => {
   const sequentialMessagesAndNavigate = () => {
     openNotification({
       type: 'info',
-      description: t(
-        'treasuries.create-treasury.multisig-treasury-created-info',
-      ),
+      description: t('treasuries.create-treasury.multisig-treasury-created-info'),
       handleClose: notificationTwo,
     });
   };
@@ -505,17 +443,13 @@ export const PlaygroundView = () => {
   const stackedMessagesAndNavigate = async () => {
     openNotification({
       type: 'info',
-      description: t(
-        'treasuries.create-treasury.multisig-treasury-created-info',
-      ),
+      description: t('treasuries.create-treasury.multisig-treasury-created-info'),
       duration: 10,
     });
     await delay(1500);
     openNotification({
       type: 'info',
-      description: t(
-        'treasuries.create-treasury.multisig-treasury-created-instructions',
-      ),
+      description: t('treasuries.create-treasury.multisig-treasury-created-instructions'),
       duration: null,
     });
     navigate('/custody');
@@ -548,9 +482,8 @@ export const PlaygroundView = () => {
         duration: 0,
         description: (
           <span>
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Natus,
-            ullam perspiciatis accusamus, sunt ipsum asperiores similique
-            cupiditate autem veniam explicabo earum voluptates!
+            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Natus, ullam perspiciatis accusamus, sunt ipsum
+            asperiores similique cupiditate autem veniam explicabo earum voluptates!
           </span>
         ),
       });
@@ -562,10 +495,7 @@ export const PlaygroundView = () => {
       duration: 0,
       description: (
         <>
-          <div className="mb-1">
-            This notification is meant to have an additional CTA to perform
-            another action!
-          </div>
+          <div className="mb-1">This notification is meant to have an additional CTA to perform another action!</div>
           <Button
             type="primary"
             size="small"
@@ -586,40 +516,30 @@ export const PlaygroundView = () => {
   const interestingCase = () => {
     openNotification({
       type: 'info',
-      description: t(
-        'treasuries.create-treasury.multisig-treasury-created-info',
-      ),
+      description: t('treasuries.create-treasury.multisig-treasury-created-info'),
       duration: 0,
     });
   };
 
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !priceList) {
-      return 0;
-    }
-    const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+  const getPricePerToken = useCallback(
+    (token: TokenInfo): number => {
+      if (!token || !priceList) {
+        return 0;
+      }
+      const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
 
-    return price || 0;
-  },
+      return price || 0;
+    },
     [getTokenPriceByAddress, getTokenPriceBySymbol, priceList],
   );
 
   const getMultisigAssets = useCallback(
     async (connection: Connection, multisig: PublicKey) => {
-      const [multisigSigner] = PublicKey.findProgramAddressSync(
-        [multisig.toBuffer()],
-        multisigAddressPK,
-      );
+      const [multisigSigner] = PublicKey.findProgramAddressSync([multisig.toBuffer()], multisigAddressPK);
 
-      const accountInfos = await connection.getProgramAccounts(
-        TOKEN_PROGRAM_ID,
-        {
-          filters: [
-            { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } },
-            { dataSize: ACCOUNT_LAYOUT.span },
-          ],
-        },
-      );
+      const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+        filters: [{ memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, { dataSize: ACCOUNT_LAYOUT.span }],
+      });
 
       if (!accountInfos || !accountInfos.length) {
         return [];
@@ -659,8 +579,7 @@ export const PlaygroundView = () => {
   }, [selectedMultisig, multisigSolBalance]);
 
   // Stream detail modal
-  const [isStreamDetailModalVisible, setIsStreamDetailModalVisibility] =
-    useState(false);
+  const [isStreamDetailModalVisible, setIsStreamDetailModalVisibility] = useState(false);
   const showStreamDetailModal = useCallback(
     (option: StreamViewerOption) => {
       if (streamParsedData) {
@@ -732,13 +651,7 @@ export const PlaygroundView = () => {
     }
 
     const timeout = setTimeout(() => {
-      getTokensWithBalances(
-        connection,
-        publicKey.toBase58(),
-        priceList,
-        splTokenList,
-        false,
-      ).then(response => {
+      getTokensWithBalances(connection, publicKey.toBase58(), priceList, splTokenList, false).then(response => {
         if (response) {
           setSelectedList(response.tokenList);
           setUserBalances(response.balancesMap);
@@ -756,12 +669,7 @@ export const PlaygroundView = () => {
 
   // Reset results when the filter is cleared
   useEffect(() => {
-    if (
-      splTokenList &&
-      splTokenList.length &&
-      filteredTokenList.length === 0 &&
-      !tokenFilter
-    ) {
+    if (splTokenList && splTokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
     }
   }, [splTokenList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
@@ -849,9 +757,7 @@ export const PlaygroundView = () => {
       const token = getTokenByMintAddress(asset.mint.toBase58());
 
       if (token) {
-        const tokenPrice =
-          getTokenPriceByAddress(token.address) ||
-          getTokenPriceBySymbol(token.symbol);
+        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
         if (!tokenPrice) {
           continue;
         }
@@ -886,26 +792,13 @@ export const PlaygroundView = () => {
 
     const associatedToken = getStreamAssociatedMint(streamParsedData);
 
-    if (
-      associatedToken &&
-      (!selectedToken || selectedToken.address !== associatedToken)
-    ) {
-      getTokenOrCustomToken(
-        connection,
-        associatedToken,
-        getTokenByMintAddress,
-      ).then(token => {
+    if (associatedToken && (!selectedToken || selectedToken.address !== associatedToken)) {
+      getTokenOrCustomToken(connection, associatedToken, getTokenByMintAddress).then(token => {
         consoleOut('getTokenOrCustomToken (PlaygroundView) ->', token, 'blue');
         setSelectedToken(token);
       });
     }
-  }, [
-    connection,
-    getTokenByMintAddress,
-    publicKey,
-    selectedToken,
-    streamParsedData,
-  ]);
+  }, [connection, getTokenByMintAddress, publicKey, selectedToken, streamParsedData]);
 
   ////////////////////////
   // Getters and values //
@@ -971,29 +864,18 @@ export const PlaygroundView = () => {
       return (
         <div className="item-list-row" key={index}>
           <div className="std-table-cell responsive-cell text-monospace text-right px-1">
+            {selectedToken ? `${formatThousands(value, selectedToken.decimals)} ${selectedToken.symbol}` : ''}
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
             {selectedToken
-              ? `${formatThousands(value, selectedToken.decimals)} ${
+              ? `${formatThousands(value, friendlyDisplayDecimalPlaces(value, selectedToken.decimals))} ${
                   selectedToken.symbol
                 }`
               : ''}
           </div>
           <div className="std-table-cell responsive-cell text-monospace text-right px-1">
             {selectedToken
-              ? `${formatThousands(
-                  value,
-                  friendlyDisplayDecimalPlaces(value, selectedToken.decimals),
-                )} ${selectedToken.symbol}`
-              : ''}
-          </div>
-          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
-            {selectedToken
-              ? getAmountWithSymbol(
-                  value,
-                  selectedToken.address,
-                  false,
-                  splTokenList,
-                  selectedToken.decimals,
-                )
+              ? getAmountWithSymbol(value, selectedToken.address, false, splTokenList, selectedToken.decimals)
               : ''}
           </div>
         </div>
@@ -1006,18 +888,14 @@ export const PlaygroundView = () => {
       return (
         <div className="item-list-row" key={`${index}`}>
           <div className="std-table-cell responsive-cell text-monospace">
-            <span className="font-size-75 font-bold text-shadow">
-              {formatThousands(value) || 0}
-            </span>
+            <span className="font-size-75 font-bold text-shadow">{formatThousands(value) || 0}</span>
           </div>
           <div className="std-table-cell responsive-cell text-monospace">
             <div className="table-cell-flex-content">
               <div className="icon-cell">
                 <div className="token-icon">
                   <div className="streams-count">
-                    <span className="font-size-75 font-bold text-shadow">
-                      {formatAmount(value, 0, true) || 0}
-                    </span>
+                    <span className="font-size-75 font-bold text-shadow">{formatAmount(value, 0, true) || 0}</span>
                   </div>
                 </div>
               </div>
@@ -1028,9 +906,7 @@ export const PlaygroundView = () => {
               <div className="icon-cell">
                 <div className="token-icon">
                   <div className="streams-count">
-                    <span className="font-size-75 font-bold text-shadow">
-                      {kFormatter(value, 1) || 0}
-                    </span>
+                    <span className="font-size-75 font-bold text-shadow">{kFormatter(value, 1) || 0}</span>
                   </div>
                 </div>
               </div>
@@ -1049,10 +925,7 @@ export const PlaygroundView = () => {
         </div>
         <div className="right">
           <Tooltip title="Pick one of my assets" trigger="hover">
-            <span
-              className="flat-button change-button"
-              onClick={showTokenSelector}
-            >
+            <span className="flat-button change-button" onClick={showTokenSelector}>
               <IconCoin className="mean-svg-icons" />
             </span>
           </Tooltip>
@@ -1060,15 +933,9 @@ export const PlaygroundView = () => {
       </div>
       <div className="item-list-header">
         <div className="header-row">
-          <div className="std-table-cell responsive-cell text-right px-1">
-            Format 1
-          </div>
-          <div className="std-table-cell responsive-cell text-right px-1">
-            Format 2
-          </div>
-          <div className="std-table-cell responsive-cell text-right px-1">
-            Format 3
-          </div>
+          <div className="std-table-cell responsive-cell text-right px-1">Format 1</div>
+          <div className="std-table-cell responsive-cell text-right px-1">Format 2</div>
+          <div className="std-table-cell responsive-cell text-right px-1">Format 3</div>
         </div>
       </div>
       <div className="item-list-body">{renderTable()}</div>
@@ -1105,10 +972,7 @@ export const PlaygroundView = () => {
           {isValidAddress(value) ? (
             <>
               {!isSystemAccount(value) ? (
-                <span
-                  className="flat-button tiny mr-1"
-                  onClick={() => onScanAddress(value)}
-                >
+                <span className="flat-button tiny mr-1" onClick={() => onScanAddress(value)}>
                   <IconEyeOn className="mean-svg-icons m-0" />
                 </span>
               ) : null}
@@ -1133,18 +997,14 @@ export const PlaygroundView = () => {
           </div>
           <div className="right">
             <span
-              className={`simplelink ${
-                streamParsedData ? 'underline-on-hover' : 'disabled'
-              }`}
+              className={`simplelink ${streamParsedData ? 'underline-on-hover' : 'disabled'}`}
               onClick={() => showStreamDetailModal('treasurer')}
             >
               View as treasurer
             </span>
             <span className="mx-2">|</span>
             <span
-              className={`simplelink ${
-                streamParsedData ? 'underline-on-hover' : 'disabled'
-              }`}
+              className={`simplelink ${streamParsedData ? 'underline-on-hover' : 'disabled'}`}
               onClick={() => showStreamDetailModal('beneficiary')}
             >
               View as beneficiary
@@ -1176,13 +1036,9 @@ export const PlaygroundView = () => {
                   <span>&nbsp;</span>
                 </div>
               </div>
-              {streamId && !isValidAddress(streamId) && (
-                <span className="form-field-error">Not a valid stream id</span>
-              )}
+              {streamId && !isValidAddress(streamId) && <span className="form-field-error">Not a valid stream id</span>}
               {streamId && accountNotFound && (
-                <span className="form-field-error">
-                  Account info is not available for this stream id
-                </span>
+                <span className="form-field-error">Account info is not available for this stream id</span>
               )}
             </div>
           </div>
@@ -1201,13 +1057,7 @@ export const PlaygroundView = () => {
                 </Button>
               </div>
               <div className="right">
-                <Button
-                  type="default"
-                  shape="round"
-                  size="large"
-                  disabled={streamId === ''}
-                  onClick={onClearStreamId}
-                >
+                <Button type="default" shape="round" size="large" disabled={streamId === ''} onClick={onClearStreamId}>
                   Clear
                 </Button>
               </div>
@@ -1221,29 +1071,13 @@ export const PlaygroundView = () => {
               <div className="left">
                 <div className="form-label">On-chain stream account data</div>
                 <div className="well mb-1 panel-max-height vertical-scroll">
-                  {streamRawData ? (
-                    <ReactJson
-                      src={streamRawData}
-                      theme={'ocean'}
-                      collapsed={1}
-                    />
-                  ) : (
-                    '--'
-                  )}
+                  {streamRawData ? <ReactJson src={streamRawData} theme={'ocean'} collapsed={1} /> : '--'}
                 </div>
               </div>
               <div className="right">
                 <div className="form-label">MSP SDK parsed stream data</div>
                 <div className="well mb-1 panel-max-height vertical-scroll">
-                  {streamParsedData ? (
-                    <ReactJson
-                      src={streamParsedData}
-                      theme={'ocean'}
-                      collapsed={1}
-                    />
-                  ) : (
-                    '--'
-                  )}
+                  {streamParsedData ? <ReactJson src={streamParsedData} theme={'ocean'} collapsed={1} /> : '--'}
                 </div>
               </div>
             </div>
@@ -1258,10 +1092,7 @@ export const PlaygroundView = () => {
       return infoRow(
         'Current Supply:',
         getAmountWithSymbol(
-          toUiAmount(
-            parsedAccountInfo.data.parsed.info.supply,
-            selectedTokenDecimals,
-          ),
+          toUiAmount(parsedAccountInfo.data.parsed.info.supply, selectedTokenDecimals),
           parsedAccountInfo.data.parsed.info.mint,
           true,
           splTokenList,
@@ -1296,15 +1127,9 @@ export const PlaygroundView = () => {
     return (
       <>
         {infoRow('Entity:', 'Account')}
-        {infoRow(
-          'Balance (SOL):',
-          `◎${formatThousands(accountInfo.lamports / LAMPORTS_PER_SOL, 9, 9)}`,
-        )}
+        {infoRow('Balance (SOL):', `◎${formatThousands(accountInfo.lamports / LAMPORTS_PER_SOL, 9, 9)}`)}
         {infoRow('Executable:', accountInfo.executable ? 'Yes' : 'No')}
-        {infoRow(
-          'Allocated Data Size:',
-          `${accountInfo.data.byteLength} byte(s)`,
-        )}
+        {infoRow('Allocated Data Size:', `${accountInfo.data.byteLength} byte(s)`)}
         {infoRow('Owner:', accountInfo.owner.toBase58())}
       </>
     );
@@ -1319,45 +1144,21 @@ export const PlaygroundView = () => {
       <>
         {infoRow('Entity:', getParsedAccountType(parsedAccountInfo))}
         {isProgram &&
-          infoRow(
-            'Balance (SOL):',
-            `◎${formatThousands(
-              parsedAccountInfo.lamports / LAMPORTS_PER_SOL,
-              9,
-              9,
-            )}`,
-          )}
+          infoRow('Balance (SOL):', `◎${formatThousands(parsedAccountInfo.lamports / LAMPORTS_PER_SOL, 9, 9)}`)}
         {infoRow('Executable:', parsedAccountInfo.executable ? 'Yes' : 'No')}
-        {isProgramData &&
-          infoRow(
-            'Upgradeable:',
-            parsedAccountInfo.data.parsed.info.authority ? 'Yes' : 'No',
-          )}
+        {isProgramData && infoRow('Upgradeable:', parsedAccountInfo.data.parsed.info.authority ? 'Yes' : 'No')}
         {isProgramData && parsedAccountInfo.data.parsed.info.authority
-          ? infoRow(
-              'Upgrade Authority:',
-              parsedAccountInfo.data.parsed.info.authority,
-            )
+          ? infoRow('Upgrade Authority:', parsedAccountInfo.data.parsed.info.authority)
           : null}
         {renderCurrentSupply()}
         {renderCurrentBalance()}
-        {isTokenMint &&
-          infoRow(
-            'Mint Authority:',
-            parsedAccountInfo.data.parsed.info.mintAuthority,
-          )}
-        {isTokenAccount &&
-          infoRow('Mint:', parsedAccountInfo.data.parsed.info.mint)}
-        {(isTokenMint || isTokenAccount) &&
-          infoRow('Decimals:', selectedTokenDecimals)}
-        {infoRow(
-          'Allocated Data Size:',
-          `${parsedAccountInfo.data.space} byte(s)`,
-        )}
+        {isTokenMint && infoRow('Mint Authority:', parsedAccountInfo.data.parsed.info.mintAuthority)}
+        {isTokenAccount && infoRow('Mint:', parsedAccountInfo.data.parsed.info.mint)}
+        {(isTokenMint || isTokenAccount) && infoRow('Decimals:', selectedTokenDecimals)}
+        {infoRow('Allocated Data Size:', `${parsedAccountInfo.data.space} byte(s)`)}
         {isProgram && infoRow('Owner:', parsedAccountInfo.owner.toBase58())}
         {isTokenMint && infoRow('Owner:', parsedAccountInfo.owner.toBase58())}
-        {isTokenAccount &&
-          infoRow('Owner:', parsedAccountInfo.data.parsed.info.owner)}
+        {isTokenAccount && infoRow('Owner:', parsedAccountInfo.data.parsed.info.owner)}
         {targetAddress && (isTokenAccount || isTokenMint) && (
           <>
             <Divider orientation="left" className="mt-1 mb-1">
@@ -1365,21 +1166,13 @@ export const PlaygroundView = () => {
             </Divider>
             <TokenDisplay
               className="px-2 pb-2"
-              mintAddress={
-                isTokenMint
-                  ? targetAddress
-                  : parsedAccountInfo.data.parsed.info.mint
-              }
+              mintAddress={isTokenMint ? targetAddress : parsedAccountInfo.data.parsed.info.mint}
               onClick={undefined}
               showName={true}
             />
           </>
         )}
-        {isProgram &&
-          infoRow(
-            'Program Data:',
-            parsedAccountInfo.data.parsed.info.programData,
-          )}
+        {isProgram && infoRow('Program Data:', parsedAccountInfo.data.parsed.info.programData)}
       </>
     );
   };
@@ -1409,18 +1202,12 @@ export const PlaygroundView = () => {
             {publicKey ? (
               <>
                 <Tooltip title="Inspect my wallet address" trigger="hover">
-                  <span
-                    className="flat-button change-button"
-                    onClick={onScanMyAddress}
-                  >
+                  <span className="flat-button change-button" onClick={onScanMyAddress}>
                     <IconWallet className="mean-svg-icons" />
                   </span>
                 </Tooltip>
                 <Tooltip title="Pick one of my assets" trigger="hover">
-                  <span
-                    className="flat-button change-button"
-                    onClick={showTokenSelector}
-                  >
+                  <span className="flat-button change-button" onClick={showTokenSelector}>
                     <IconCoin className="mean-svg-icons" />
                   </span>
                 </Tooltip>
@@ -1453,11 +1240,7 @@ export const PlaygroundView = () => {
                     />
                     <span
                       id="payment-recipient-static-field"
-                      className={`${
-                        targetAddress
-                          ? 'overflow-ellipsis-middle'
-                          : 'placeholder-text'
-                      }`}
+                      className={`${targetAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
                     >
                       {targetAddress || t('transactions.recipient.placeholder')}
                     </span>
@@ -1468,35 +1251,20 @@ export const PlaygroundView = () => {
                 </div>
               </div>
               {targetAddress && !isValidAddress(targetAddress) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
+                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
               )}
-              {targetAddress && accountNotFound && (
-                <span className="form-field-error">{accountNotFound}</span>
-              )}
+              {targetAddress && accountNotFound && <span className="form-field-error">{accountNotFound}</span>}
             </div>
           </div>
           <div className="right">
             <div className="flex-fixed-right">
               <div className="left">
-                <Button
-                  block
-                  type="primary"
-                  shape="round"
-                  size="large"
-                  onClick={() => getAccountInfoByAddress()}
-                >
+                <Button block type="primary" shape="round" size="large" onClick={() => getAccountInfoByAddress()}>
                   Get info
                 </Button>
               </div>
               <div className="right">
-                <Button
-                  type="default"
-                  shape="round"
-                  size="large"
-                  onClick={onClearResults}
-                >
+                <Button type="default" shape="round" size="large" onClick={onClearResults}>
                   Clear
                 </Button>
               </div>
@@ -1513,8 +1281,7 @@ export const PlaygroundView = () => {
     if (!selectedMultisig) {
       return '--';
     }
-    const selectedLabelName =
-      selectedMultisig.label || shortenAddress(selectedMultisig.id);
+    const selectedLabelName = selectedMultisig.label || shortenAddress(selectedMultisig.id);
     return <div>{selectedLabelName}</div>;
   }, [selectedMultisig]);
 
@@ -1534,10 +1301,7 @@ export const PlaygroundView = () => {
   const renderSafeBalance = useCallback(() => {
     return totalSafeBalance === undefined ? (
       <>
-        <IconLoading
-          className="mean-svg-icons"
-          style={{ height: '15px', lineHeight: '15px' }}
-        />
+        <IconLoading className="mean-svg-icons" style={{ height: '15px', lineHeight: '15px' }} />
       </>
     ) : (
       toUsCurrency(totalSafeBalance)
@@ -1563,9 +1327,7 @@ export const PlaygroundView = () => {
       },
       {
         name: renderSecurity(),
-        value: selectedMultisig
-          ? `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures`
-          : '--',
+        value: selectedMultisig ? `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures` : '--',
       },
       {
         name: `Safe balance ${assetsAmout}`,
@@ -1576,14 +1338,7 @@ export const PlaygroundView = () => {
         value: renderDepositAddress(),
       },
     ],
-    [
-      assetsAmout,
-      renderDepositAddress,
-      renderSafeBalance,
-      renderSafeName,
-      renderSecurity,
-      selectedMultisig,
-    ],
+    [assetsAmout, renderDepositAddress, renderSafeBalance, renderSafeName, renderSecurity, selectedMultisig],
   );
 
   const renderMultisigTab = () => {
@@ -1620,11 +1375,7 @@ export const PlaygroundView = () => {
                     />
                     <span
                       id="payment-recipient-static-field"
-                      className={`${
-                        targetAddress
-                          ? 'overflow-ellipsis-middle'
-                          : 'placeholder-text'
-                      }`}
+                      className={`${targetAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
                     >
                       {targetAddress || t('transactions.recipient.placeholder')}
                     </span>
@@ -1635,9 +1386,7 @@ export const PlaygroundView = () => {
                 </div>
               </div>
               {targetAddress && !isValidAddress(targetAddress) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
+                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
               )}
               {targetAddress && selectedMultisig === undefined && (
                 <span className="form-field-error">{accountNotFound}</span>
@@ -1647,23 +1396,12 @@ export const PlaygroundView = () => {
           <div className="right">
             <div className="flex-fixed-right">
               <div className="left">
-                <Button
-                  block
-                  type="primary"
-                  shape="round"
-                  size="large"
-                  onClick={() => getMultisigInfo(targetAddress)}
-                >
+                <Button block type="primary" shape="round" size="large" onClick={() => getMultisigInfo(targetAddress)}>
                   Get multisig
                 </Button>
               </div>
               <div className="right">
-                <Button
-                  type="default"
-                  shape="round"
-                  size="large"
-                  onClick={onClearResults}
-                >
+                <Button type="default" shape="round" size="large" onClick={onClearResults}>
                   Clear
                 </Button>
               </div>
@@ -1680,9 +1418,7 @@ export const PlaygroundView = () => {
                   return (
                     <div key={`${index}`} className={isEven ? 'left' : 'right'}>
                       <div className="info-label">{info.name}</div>
-                      <div className="info-value mb-2 line-height-100">
-                        {info.value}
-                      </div>
+                      <div className="info-value mb-2 line-height-100">{info.value}</div>
                     </div>
                   );
                 })}
@@ -1701,9 +1437,7 @@ export const PlaygroundView = () => {
           <div className="flex-fixed-right">
             <div className="left position-relative">
               <span className="recipient-field-wrapper">
-                <span className="referral-link font-size-75 text-monospace">
-                  {linkAddress}
-                </span>
+                <span className="referral-link font-size-75 text-monospace">{linkAddress}</span>
               </span>
             </div>
             <div className="right">
@@ -1733,9 +1467,7 @@ export const PlaygroundView = () => {
       } else {
         console.log(
           'could not query:',
-          width < 1200
-            ? 'footer .account-selector-max-width'
-            : 'header .account-selector-max-width',
+          width < 1200 ? 'footer .account-selector-max-width' : 'header .account-selector-max-width',
           'red',
         );
       }
@@ -1759,11 +1491,7 @@ export const PlaygroundView = () => {
       notification.open({
         type: 'success',
         message: 'SuperSafe account created',
-        description: (
-          <div className="mb-1">
-            Your SuperSafe account was successfully created.
-          </div>
-        ),
+        description: <div className="mb-1">Your SuperSafe account was successfully created.</div>,
         btn,
         key: notificationKey,
         duration: null,
@@ -1790,22 +1518,13 @@ export const PlaygroundView = () => {
       <div className="tabset-heading">Notify and navigate</div>
       <div className="text-left mb-3">
         <Space wrap={true}>
-          <span
-            className="flat-button stroked"
-            onClick={() => sequentialMessagesAndNavigate()}
-          >
+          <span className="flat-button stroked" onClick={() => sequentialMessagesAndNavigate()}>
             <span>Sequential messages → Navigate</span>
           </span>
-          <span
-            className="flat-button stroked"
-            onClick={() => stackedMessagesAndNavigate()}
-          >
+          <span className="flat-button stroked" onClick={() => stackedMessagesAndNavigate()}>
             <span>Stacked messages → Navigate</span>
           </span>
-          <span
-            className="flat-button stroked"
-            onClick={() => interestingCase()}
-          >
+          <span className="flat-button stroked" onClick={() => interestingCase()}>
             <span>Without title</span>
           </span>
         </Space>
@@ -1814,10 +1533,7 @@ export const PlaygroundView = () => {
       <div className="tabset-heading">Test Updatable Notifications</div>
       <div className="text-left mb-3">
         <Space>
-          <span
-            className="flat-button stroked"
-            onClick={() => reuseNotification('pepito')}
-          >
+          <span className="flat-button stroked" onClick={() => reuseNotification('pepito')}>
             <span>See mission status</span>
           </span>
         </Space>
@@ -1826,34 +1542,19 @@ export const PlaygroundView = () => {
       <div className="tabset-heading">Test Standalone Notifications</div>
       <div className="text-left mb-3">
         <Space wrap={true}>
-          <span
-            className="flat-button stroked"
-            onClick={() => showNotificationByType('info')}
-          >
+          <span className="flat-button stroked" onClick={() => showNotificationByType('info')}>
             <span>Info</span>
           </span>
-          <span
-            className="flat-button stroked"
-            onClick={() => showNotificationByType('success')}
-          >
+          <span className="flat-button stroked" onClick={() => showNotificationByType('success')}>
             <span>Success</span>
           </span>
-          <span
-            className="flat-button stroked"
-            onClick={() => showNotificationByType('warning')}
-          >
+          <span className="flat-button stroked" onClick={() => showNotificationByType('warning')}>
             <span>Warning</span>
           </span>
-          <span
-            className="flat-button stroked"
-            onClick={() => showNotificationByType('error')}
-          >
+          <span className="flat-button stroked" onClick={() => showNotificationByType('error')}>
             <span>Error</span>
           </span>
-          <span
-            className="flat-button stroked"
-            onClick={() => showNotificationByType('info', true)}
-          >
+          <span className="flat-button stroked" onClick={() => showNotificationByType('info', true)}>
             <span>With CTA</span>
           </span>
         </Space>
@@ -1862,10 +1563,7 @@ export const PlaygroundView = () => {
       <div className="tabset-heading">Notification with UI interaction</div>
       <div className="text-left mb-3">
         <Space>
-          <span
-            className="flat-button stroked"
-            onClick={() => handleNotifWithUiInteraction()}
-          >
+          <span className="flat-button stroked" onClick={() => handleNotifWithUiInteraction()}>
             <span>Show me</span>
           </span>
         </Space>
@@ -1883,56 +1581,26 @@ export const PlaygroundView = () => {
       <div className="mb-2">
         <div className="mb-1">
           <Space wrap={true} size="middle">
-            <Button
-              type="primary"
-              shape="round"
-              size="small"
-              className="extra-small"
-            >
+            <Button type="primary" shape="round" size="small" className="extra-small">
               Primary
             </Button>
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="extra-small"
-            >
+            <Button type="default" shape="round" size="small" className="extra-small">
               Default
             </Button>
-            <Button
-              type="ghost"
-              shape="round"
-              size="small"
-              className="extra-small"
-            >
+            <Button type="ghost" shape="round" size="small" className="extra-small">
               Ghost
             </Button>
           </Space>
         </div>
         <div className="mb-1">
           <Space wrap={true} size="middle">
-            <Button
-              type="primary"
-              shape="round"
-              size="middle"
-              className="thin-stroke"
-            >
+            <Button type="primary" shape="round" size="middle" className="thin-stroke">
               Primary
             </Button>
-            <Button
-              type="default"
-              shape="round"
-              size="middle"
-              className="thin-stroke"
-            >
+            <Button type="default" shape="round" size="middle" className="thin-stroke">
               Default
             </Button>
-            <Button
-              type="ghost"
-              shape="round"
-              size="middle"
-              className="thin-stroke"
-            >
+            <Button type="ghost" shape="round" size="middle" className="thin-stroke">
               Ghost
             </Button>
           </Space>
@@ -1941,31 +1609,13 @@ export const PlaygroundView = () => {
       <h3>Primary, Secondary and Terciary buttons disabled</h3>
       <div className="mb-2">
         <Space wrap={true} size="middle">
-          <Button
-            type="primary"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={true}
-          >
+          <Button type="primary" shape="round" size="small" className="thin-stroke" disabled={true}>
             Primary disabled
           </Button>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={true}
-          >
+          <Button type="default" shape="round" size="small" className="thin-stroke" disabled={true}>
             Default disabled
           </Button>
-          <Button
-            type="ghost"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={true}
-          >
+          <Button type="ghost" shape="round" size="small" className="thin-stroke" disabled={true}>
             Ghost disabled
           </Button>
         </Space>
@@ -2072,33 +1722,25 @@ export const PlaygroundView = () => {
           Demo 1
         </div>
         <div
-          className={`tab-button ${
-            currentTab === 'test-stream' ? 'active' : ''
-          }`}
+          className={`tab-button ${currentTab === 'test-stream' ? 'active' : ''}`}
           onClick={() => navigateToTab('test-stream')}
         >
           Test Stream
         </div>
         <div
-          className={`tab-button ${
-            currentTab === 'multisig-tab' ? 'active' : ''
-          }`}
+          className={`tab-button ${currentTab === 'multisig-tab' ? 'active' : ''}`}
           onClick={() => navigateToTab('multisig-tab')}
         >
           Multisig info
         </div>
         <div
-          className={`tab-button ${
-            currentTab === 'account-info' ? 'active' : ''
-          }`}
+          className={`tab-button ${currentTab === 'account-info' ? 'active' : ''}`}
           onClick={() => navigateToTab('account-info')}
         >
           Account info
         </div>
         <div
-          className={`tab-button ${
-            currentTab === 'demo-notifications' ? 'active' : ''
-          }`}
+          className={`tab-button ${currentTab === 'demo-notifications' ? 'active' : ''}`}
           onClick={() => navigateToTab('demo-notifications')}
         >
           Demo 3
@@ -2134,10 +1776,7 @@ export const PlaygroundView = () => {
       };
 
       if (index < MAX_TOKEN_LIST_ITEMS) {
-        const balance =
-          connected && userBalances && userBalances[t.address] > 0
-            ? userBalances[t.address]
-            : 0;
+        const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
         return (
           <TokenListItem
             key={t.address}
@@ -2168,9 +1807,7 @@ export const PlaygroundView = () => {
   };
 
   const getBalanceForTokenFilter = () => {
-    return connected && userBalances && userBalances[tokenFilter] > 0
-      ? userBalances[tokenFilter]
-      : 0;
+    return connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0;
   };
 
   const renderTokenSelectorInner = () => {
@@ -2190,66 +1827,52 @@ export const PlaygroundView = () => {
         </div>
         <div className="token-list">
           {filteredTokenList.length > 0 && renderTokenList()}
-          {tokenFilter &&
-            isValidAddress(tokenFilter) &&
-            filteredTokenList.length === 0 && (
-              <TokenListItem
-                key={tokenFilter}
-                name={CUSTOM_TOKEN_NAME}
-                mintAddress={tokenFilter}
-                className={
-                  selectedToken && selectedToken.address === tokenFilter
-                    ? 'selected'
-                    : 'simplelink'
+          {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
+            <TokenListItem
+              key={tokenFilter}
+              name={CUSTOM_TOKEN_NAME}
+              mintAddress={tokenFilter}
+              className={selectedToken && selectedToken.address === tokenFilter ? 'selected' : 'simplelink'}
+              onClick={async () => {
+                const address = tokenFilter;
+                let decimals = -1;
+                let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+                try {
+                  accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                  consoleOut('accountInfo:', accountInfo, 'blue');
+                } catch (error) {
+                  console.error(error);
                 }
-                onClick={async () => {
-                  const address = tokenFilter;
-                  let decimals = -1;
-                  let accountInfo: AccountInfo<
-                    Buffer | ParsedAccountData
-                  > | null = null;
-                  try {
-                    accountInfo = (
-                      await connection.getParsedAccountInfo(
-                        new PublicKey(address),
-                      )
-                    ).value;
-                    consoleOut('accountInfo:', accountInfo, 'blue');
-                  } catch (error) {
-                    console.error(error);
+                if (accountInfo) {
+                  if (
+                    (accountInfo as any).data['program'] &&
+                    (accountInfo as any).data['program'] === 'spl-token' &&
+                    (accountInfo as any).data['parsed'] &&
+                    (accountInfo as any).data['parsed']['type'] &&
+                    (accountInfo as any).data['parsed']['type'] === 'mint'
+                  ) {
+                    decimals = (accountInfo as any).data['parsed']['info']['decimals'];
+                  } else {
+                    decimals = -2;
                   }
-                  if (accountInfo) {
-                    if (
-                      (accountInfo as any).data['program'] &&
-                      (accountInfo as any).data['program'] === 'spl-token' &&
-                      (accountInfo as any).data['parsed'] &&
-                      (accountInfo as any).data['parsed']['type'] &&
-                      (accountInfo as any).data['parsed']['type'] === 'mint'
-                    ) {
-                      decimals = (accountInfo as any).data['parsed']['info'][
-                        'decimals'
-                      ];
-                    } else {
-                      decimals = -2;
-                    }
-                  }
-                  const unknownToken: TokenInfo = {
-                    address,
-                    name: CUSTOM_TOKEN_NAME,
-                    chainId: getNetworkIdByEnvironment(environment),
-                    decimals,
-                    symbol: `[${shortenAddress(address)}]`,
-                  };
-                  setSelectedToken(unknownToken);
-                  consoleOut('token selected:', unknownToken, 'blue');
-                  // Do not close on errors (-1 or -2)
-                  if (decimals >= 0) {
-                    onCloseTokenSelector();
-                  }
-                }}
-                balance={getBalanceForTokenFilter()}
-              />
-            )}
+                }
+                const unknownToken: TokenInfo = {
+                  address,
+                  name: CUSTOM_TOKEN_NAME,
+                  chainId: getNetworkIdByEnvironment(environment),
+                  decimals,
+                  symbol: `[${shortenAddress(address)}]`,
+                };
+                setSelectedToken(unknownToken);
+                consoleOut('token selected:', unknownToken, 'blue');
+                // Do not close on errors (-1 or -2)
+                if (decimals >= 0) {
+                  onCloseTokenSelector();
+                }
+              }}
+              balance={getBalanceForTokenFilter()}
+            />
+          )}
         </div>
       </div>
     );
@@ -2268,17 +1891,13 @@ export const PlaygroundView = () => {
               </div>
               <div className="w-50 h-100 p-5 text-center flex-column flex-center">
                 <div className="text-center mb-2">
-                  <WarningFilled
-                    style={{ fontSize: 48 }}
-                    className="icon fg-warning"
-                  />
+                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
                 </div>
                 {!publicKey ? (
                   <h3>Please connect your wallet to access this page</h3>
                 ) : (
                   <h3>
-                    The content you are accessing is not available at this time
-                    or you don't have access permission
+                    The content you are accessing is not available at this time or you don't have access permission
                   </h3>
                 )}
               </div>
@@ -2320,9 +1939,7 @@ export const PlaygroundView = () => {
         <Modal
           className="mean-modal unpadded-content"
           open={isTokenSelectorModalVisible}
-          title={
-            <div className="modal-title">{t('token-selector.modal-title')}</div>
-          }
+          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
           onCancel={onCloseTokenSelector}
           width={450}
           footer={null}

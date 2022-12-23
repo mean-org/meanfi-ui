@@ -119,11 +119,7 @@
 }
 
 .no-selected-app {
-  @include select-app(
-    grayscale(100%),
-    0.75,
-    var(--color-secondary-alpha-50) !important
-  );
+  @include select-app(grayscale(100%), 0.75, var(--color-secondary-alpha-50) !important);
 }
 .selected-app {
   @include select-app(grayscale(0%), 1, var(--color-white) !important);

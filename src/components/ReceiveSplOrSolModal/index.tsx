@@ -17,8 +17,7 @@ export const ReceiveSplOrSolModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const { address, accountAddress, tokenSymbol, isVisible, handleClose } =
-    props;
+  const { address, accountAddress, tokenSymbol, isVisible, handleClose } = props;
   const [overrideWithWallet] = useState(false);
 
   const isWalletAddress = () => {
@@ -34,9 +33,7 @@ export const ReceiveSplOrSolModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">Receive {tokenSymbol || 'Funds'}</div>
-      }
+      title={<div className="modal-title">Receive {tokenSymbol || 'Funds'}</div>}
       footer={null}
       open={isVisible}
       onOk={handleClose}
@@ -51,15 +48,9 @@ export const ReceiveSplOrSolModal = (props: {
             <div className="qr-container bg-white">
               <>
                 {!props.multisigAddress ? (
-                  <QRCodeSVG
-                    value={publicKey?.toBase58() as string}
-                    size={200}
-                  />
+                  <QRCodeSVG value={publicKey?.toBase58() as string} size={200} />
                 ) : (
-                  <QRCodeSVG
-                    value={props.multisigAddress as string}
-                    size={200}
-                  />
+                  <QRCodeSVG value={props.multisigAddress as string} size={200} />
                 )}
               </>
             </div>
@@ -103,12 +94,8 @@ export const ReceiveSplOrSolModal = (props: {
           )}
 
           <>
-            <div className="font-light font-size-75 px-4">
-              {t('assets.no-balance.line4')}
-            </div>
-            <div className="font-light font-size-75 px-4">
-              {t('assets.no-balance.line5')}
-            </div>
+            <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
+            <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div>
           </>
 
           {/* {(isWalletAddress() || overrideWithWallet) ? (

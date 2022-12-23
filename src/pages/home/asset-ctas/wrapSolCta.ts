@@ -1,4 +1,4 @@
-import { AssetCta, MetaInfoCtaAction } from "models/accounts";
+import { AssetCta, MetaInfoCtaAction } from 'models/accounts';
 
 export const getWrapSolCta = (
   caption: string,
@@ -23,4 +23,4 @@ export const getWrapSolCta = (
     });
   }
   return actions;
-}
+};

@@ -13,12 +13,7 @@ import { IconShieldSolid } from 'Icons/IconShieldSolid';
 import { customLogger } from 'index';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { confirmTx, sendTx, signTx } from 'middleware/transactions';
-import {
-  consoleOut,
-  getTransactionStatusForLogs,
-  isProd,
-  percentage,
-} from 'middleware/ui';
+import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from 'middleware/ui';
 import { getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { DcaInterval } from 'models/ddca-models';
 import { OperationType, TransactionStatus } from 'models/enums';
@@ -73,22 +68,13 @@ export const DdcaSetupModal = (props: {
   const [lockedSliderValue, setLockedSliderValue] = useState(0);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [ddcaAccountPda, setDdcaAccountPda] = useState<PublicKey | undefined>();
-  const [lockedFromTokenBalance, setLockedFromTokenBalance] = useState<
-    number | undefined
-  >(undefined);
+  const [lockedFromTokenBalance, setLockedFromTokenBalance] = useState<number | undefined>(undefined);
 
   const ddcaClient = useMemo(() => new DdcaClient(endpoint, wallet, { commitment: 'confirmed' }), [endpoint, wallet]);
 
   const getGasFeeAmount = useCallback((): number => {
-    return (
-      ddcaTxFees.maxBlockchainFee +
-      ddcaTxFees.maxFeePerSwap * (lockedSliderValue + 1)
-    );
-  }, [
-    lockedSliderValue,
-    ddcaTxFees.maxFeePerSwap,
-    ddcaTxFees.maxBlockchainFee,
-  ]);
+    return ddcaTxFees.maxBlockchainFee + ddcaTxFees.maxFeePerSwap * (lockedSliderValue + 1);
+  }, [lockedSliderValue, ddcaTxFees.maxFeePerSwap, ddcaTxFees.maxBlockchainFee]);
 
   const hasEnoughNativeBalanceForFees = (): boolean => {
     return userBalance >= getGasFeeAmount() ? true : false;
@@ -167,29 +153,17 @@ export const DdcaSetupModal = (props: {
     // Buy 100 USDC worth of SOL every week ,for 6 weeks, starting today.
     // Buy {{fromTokenAmount}} worth of {{toTokenSymbol}} {{recurrencePeriod}} for {{totalPeriod}}, starting today.
     return `<span>${t('ddca-setup-modal.headline', {
-      fromTokenAmount: getAmountWithSymbol(
-        fromTokenAmount,
-        fromToken?.address as string,
-      ),
+      fromTokenAmount: getAmountWithSymbol(fromTokenAmount, fromToken?.address as string),
       toTokenSymbol: toToken?.symbol,
       recurrencePeriod: getRecurrencePeriod(),
       totalPeriod: getTotalPeriod(lockedSliderValue),
     })}</span>`;
-  }, [
-    lockedSliderValue,
-    fromTokenAmount,
-    toToken?.symbol,
-    fromToken?.address,
-    getRecurrencePeriod,
-    getTotalPeriod,
-    t,
-  ]);
+  }, [lockedSliderValue, fromTokenAmount, toToken?.symbol, fromToken?.address, getRecurrencePeriod, getTotalPeriod, t]);
 
   const getTxHeadline = useCallback(() => {
-    return `Setup recurring buy for ${getAmountWithSymbol(
-        fromTokenAmount,
-        fromToken?.address as string,
-      )} worth of ${toToken?.symbol} every ${getRecurrencePeriod()}, for ${getTotalPeriod(lockedSliderValue)}, starting today`;
+    return `Setup recurring buy for ${getAmountWithSymbol(fromTokenAmount, fromToken?.address as string)} worth of ${
+      toToken?.symbol
+    } every ${getRecurrencePeriod()}, for ${getTotalPeriod(lockedSliderValue)}, starting today`;
   }, [fromToken?.address, fromTokenAmount, getRecurrencePeriod, getTotalPeriod, lockedSliderValue, toToken?.symbol]);
 
   function sliderTooltipFormatter(value?: number) {
@@ -218,17 +192,13 @@ export const DdcaSetupModal = (props: {
             fill="currentColor"
           />
         </svg>
-        <span className="fg-primary-highlight font-bold">
-          {getTotalPeriod(value || 0)}
-        </span>
+        <span className="fg-primary-highlight font-bold">{getTotalPeriod(value || 0)}</span>
       </>
     );
   }
 
   const hasEnoughFromTokenBalance = (): boolean => {
-    return (
-      (lockedFromTokenBalance || 0) > fromTokenAmount * (lockedSliderValue + 1)
-    );
+    return (lockedFromTokenBalance || 0) > fromTokenAmount * (lockedSliderValue + 1);
   };
 
   //////////////////////////
@@ -264,9 +234,7 @@ export const DdcaSetupModal = (props: {
           : ddcaOption.dcaInterval === DcaInterval.RepeatingTwiceMonth
           ? 26
           : 12;
-      const maxRangeFromBalance = Math.floor(
-        lockedFromTokenBalance / fromTokenAmount,
-      );
+      const maxRangeFromBalance = Math.floor(lockedFromTokenBalance / fromTokenAmount);
       const minRangeSelectable = 3;
       const maxRangeSelectable =
         maxRangeFromBalance <= maxRangeFromSelection
@@ -297,13 +265,7 @@ export const DdcaSetupModal = (props: {
         'blue',
       );
     }
-  }, [
-    ddcaOption,
-    fromTokenAmount,
-    lockedFromTokenBalance,
-    hlaInfo,
-    getTotalPeriod,
-  ]);
+  }, [ddcaOption, fromTokenAmount, lockedFromTokenBalance, hlaInfo, getTotalPeriod]);
 
   // Set lockedSliderValue once when the modal is openes but we have a recurrencePeriod > 0
   useEffect(() => {
@@ -388,16 +350,12 @@ export const DdcaSetupModal = (props: {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
           inputs: payload,
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: '',
         });
 
@@ -411,18 +369,13 @@ export const DdcaSetupModal = (props: {
             payload.intervalinSeconds,
           )
           .then((value: [PublicKey, Transaction]) => {
-            consoleOut(
-              'createDdca returned vault pubKey and transaction:',
-              value,
-            );
+            consoleOut('createDdca returned vault pubKey and transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
               currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
               result: getTxIxResume(value[1]),
             });
             setLastVaultCreated(value[0].toBase58());
@@ -437,9 +390,7 @@ export const DdcaSetupModal = (props: {
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
             customLogger.logError('Create DDCA Vault transaction failed', {
@@ -526,9 +477,7 @@ export const DdcaSetupModal = (props: {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
           inputs: swapPayload,
         });
 
@@ -542,9 +491,7 @@ export const DdcaSetupModal = (props: {
               currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
               result: getTxIxResume(value),
             });
             transaction = value;
@@ -553,19 +500,13 @@ export const DdcaSetupModal = (props: {
           .catch(error => {
             console.error('createWakeAndSwapTx error:', error);
             const parsedError = ddcaClient.tryParseRpcError(error);
-            consoleOut(
-              'tryParseRpcError -> createWakeAndSwapTx',
-              parsedError,
-              'red',
-            );
+            consoleOut('tryParseRpcError -> createWakeAndSwapTx', parsedError, 'red');
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
             customLogger.logError('WakeAndSwap transaction failed', {
@@ -651,8 +592,7 @@ export const DdcaSetupModal = (props: {
 
   const isDdcaValid = () => {
     return isProd() &&
-      ((isNative() && userBalance > getTotalSolAmountNeeded()) ||
-        (!isNative() && hasEnoughFromTokenBalance()))
+      ((isNative() && userBalance > getTotalSolAmountNeeded()) || (!isNative() && hasEnoughFromTokenBalance()))
       ? true
       : false;
   };
@@ -662,18 +602,12 @@ export const DdcaSetupModal = (props: {
       ? t('ddca-setup-modal.cta-label-vault-created')
       : isNative()
       ? getTotalSolAmountNeeded() > userBalance
-        ? `Need at least ${getAmountWithSymbol(
-            getTotalSolAmountNeeded(),
-            NATIVE_SOL_MINT.toBase58(),
-          )}`
+        ? `Need at least ${getAmountWithSymbol(getTotalSolAmountNeeded(), NATIVE_SOL_MINT.toBase58())}`
         : t('ddca-setup-modal.cta-label-deposit')
       : !hasEnoughFromTokenBalance()
       ? t('transactions.validation.amount-low')
       : !hasEnoughNativeBalanceForFees()
-      ? `Need at least ${getAmountWithSymbol(
-          getGasFeeAmount(),
-          NATIVE_SOL_MINT.toBase58(),
-        )}`
+      ? `Need at least ${getAmountWithSymbol(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
       : t('ddca-setup-modal.cta-label-deposit');
   };
 
@@ -685,9 +619,7 @@ export const DdcaSetupModal = (props: {
   const importantNotesPopoverContent = () => {
     return (
       <>
-        <div className="font-bold">
-          {t('ddca-setup-modal.notes.notes-title')}
-        </div>
+        <div className="font-bold">{t('ddca-setup-modal.notes.notes-title')}</div>
         <ol className="greek small">
           <li>{t('ddca-setup-modal.notes.note-item-01')}</li>
           <li>{t('ddca-setup-modal.notes.note-item-02')}</li>
@@ -700,9 +632,7 @@ export const DdcaSetupModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={
-        <div className="modal-title">{t('ddca-setup-modal.modal-title')}</div>
-      }
+      title={<div className="modal-title">{t('ddca-setup-modal.modal-title')}</div>}
       closeIcon={
         <Popconfirm
           placement="bottomRight"
@@ -730,10 +660,7 @@ export const DdcaSetupModal = (props: {
       width={480}
     >
       <div className="mb-3">
-        <div
-          className="ddca-setup-heading"
-          dangerouslySetInnerHTML={{ __html: getModalHeadline() }}
-        ></div>
+        <div className="ddca-setup-heading" dangerouslySetInnerHTML={{ __html: getModalHeadline() }}></div>
       </div>
       <div className="slider-container">
         <Slider
@@ -742,7 +669,7 @@ export const DdcaSetupModal = (props: {
           min={rangeMin}
           max={rangeMax}
           included={false}
-          className='ddca-setup-tooltip'
+          className="ddca-setup-tooltip"
           tooltip={{ formatter: sliderTooltipFormatter, open: true }}
           value={lockedSliderValue}
           onChange={onSliderChange}
@@ -750,9 +677,7 @@ export const DdcaSetupModal = (props: {
         />
       </div>
       <div className="mb-3">
-        <div className="font-bold">
-          {t('ddca-setup-modal.help.how-does-it-work')}
-        </div>
+        <div className="font-bold">{t('ddca-setup-modal.help.how-does-it-work')}</div>
         <ol className="greek">
           <li>
             {t('ddca-setup-modal.help.help-item-01', {
@@ -776,11 +701,7 @@ export const DdcaSetupModal = (props: {
       </div>
       <div className="mb-2 text-center">
         <span className="yellow-pill">
-          <InfoIcon
-            trigger="click"
-            content={importantNotesPopoverContent()}
-            placement="top"
-          >
+          <InfoIcon trigger="click" content={importantNotesPopoverContent()} placement="top">
             <IconShieldSolid className="mean-svg-icons" />
           </InfoIcon>
           <span>{t('ddca-setup-modal.notes.note-item-01')}</span>
@@ -809,13 +730,7 @@ export const DdcaSetupModal = (props: {
            *                   : 'Deposit'
            */}
           <Button
-            className={`main-cta ${
-              !vaultCreated && isBusy
-                ? 'inactive'
-                : vaultCreated
-                ? 'completed'
-                : ''
-            }`}
+            className={`main-cta ${!vaultCreated && isBusy ? 'inactive' : vaultCreated ? 'completed' : ''}`}
             block
             type="primary"
             shape="round"
@@ -823,9 +738,7 @@ export const DdcaSetupModal = (props: {
             disabled={!isDdcaValid()}
             onClick={() => onCreateVaultTxStart()}
           >
-            {!vaultCreated && isBusy
-              ? t('ddca-setup-modal.cta-label-depositing')
-              : getMainCtaLabel()}
+            {!vaultCreated && isBusy ? t('ddca-setup-modal.cta-label-depositing') : getMainCtaLabel()}
           </Button>
         </div>
         <div className="col-6">

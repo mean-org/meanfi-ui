@@ -37,13 +37,8 @@ export const SafeInfo = (props: {
     selectedTab,
     tabs,
   } = props;
-  const {
-    multisigVaults,
-    selectedAccount,
-    multisigSolBalance,
-    refreshTokenBalance,
-    setActiveTab,
-  } = useContext(AppStateContext);
+  const { multisigVaults, selectedAccount, multisigSolBalance, refreshTokenBalance, setActiveTab } =
+    useContext(AppStateContext);
   const { address } = useParams();
   const { account } = useNativeAccount();
   const [, setSearchParams] = useSearchParams();
@@ -57,14 +52,8 @@ export const SafeInfo = (props: {
 
   // SOL Balance Modal
   const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
-  const hideSolBalanceModal = useCallback(
-    () => setIsSolBalanceModalOpen(false),
-    [],
-  );
-  const showSolBalanceModal = useCallback(
-    () => setIsSolBalanceModalOpen(true),
-    [],
-  );
+  const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
+  const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
 
   // Keep account balance updated
   useEffect(() => {
@@ -92,13 +81,7 @@ export const SafeInfo = (props: {
     <Row className="d-flex align-items-center">
       {safeNameImg && safeNameImgAlt && (
         <Tooltip placement="rightTop" title="Serum Multisig">
-          <img
-            src={safeNameImg}
-            alt={safeNameImgAlt}
-            width={16}
-            height={16}
-            className="simplelink mr-1"
-          />
+          <img src={safeNameImg} alt={safeNameImgAlt} width={16} height={16} className="simplelink mr-1" />
         </Tooltip>
       )}
       <div>{selectedLabelName}</div>
@@ -133,10 +116,7 @@ export const SafeInfo = (props: {
   const renderSafeBalance =
     totalSafeBalance === undefined ? (
       <>
-        <IconLoading
-          className="mean-svg-icons"
-          style={{ height: '15px', lineHeight: '15px' }}
-        />
+        <IconLoading className="mean-svg-icons" style={{ height: '15px', lineHeight: '15px' }} />
       </>
     ) : totalSafeBalance === 0 ? (
       <>$0.00</>
@@ -160,9 +140,7 @@ export const SafeInfo = (props: {
     },
     {
       name: renderSecurity,
-      value: selectedMultisig
-        ? `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures`
-        : '--',
+      value: selectedMultisig ? `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures` : '--',
     },
     {
       name: `Safe balance ${assetsAmout}`,
@@ -199,26 +177,12 @@ export const SafeInfo = (props: {
       });
     }
 
-    return (
-      <Tabs
-        items={items}
-        activeKey={selectedTab}
-        onChange={onTabChanged}
-        className="neutral"
-      />
-    );
+    return <Tabs items={items} activeKey={selectedTab} onChange={onTabChanged} className="neutral" />;
   }, [onTabChanged, proposalsTabContent, selectedTab]);
 
   const renderTabset = () => {
     if (tabs && tabs.length > 0) {
-      return (
-        <Tabs
-          items={tabs}
-          activeKey={selectedTab}
-          onChange={onTabChanged}
-          className="neutral"
-        />
-      );
+      return <Tabs items={tabs} activeKey={selectedTab} onChange={onTabChanged} className="neutral" />;
     } else {
       return getSafeTabs();
     }
@@ -230,13 +194,7 @@ export const SafeInfo = (props: {
 
       <div className="flex-fixed-right cta-row mb-2">
         <Space className="left" size="middle" wrap>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={onNewProposalClicked}
-          >
+          <Button type="default" shape="round" size="small" className="thin-stroke" onClick={onNewProposalClicked}>
             New proposal
           </Button>
           <Button
@@ -254,11 +212,7 @@ export const SafeInfo = (props: {
       {multisigSolBalance !== undefined &&
         (multisigSolBalance / LAMPORTS_PER_SOL <= MIN_SOL_BALANCE_REQUIRED ? (
           <Row gutter={[8, 8]} className="mr-0 ml-0">
-            <Col
-              span={24}
-              className="alert-info-message pr-6 simplelink"
-              onClick={showSolBalanceModal}
-            >
+            <Col span={24} className="alert-info-message pr-6 simplelink" onClick={showSolBalanceModal}>
               <Alert
                 message="SOL account balance is very low in the safe. Click here to add more SOL."
                 type="info"

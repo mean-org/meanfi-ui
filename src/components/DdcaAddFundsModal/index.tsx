@@ -206,10 +206,7 @@ export const DdcaAddFundsModal = (props: {
     (async () => {
       if (ddcaDetails) {
         let balance = 0;
-        const selectedTokenAddress = findATokenAddress(
-          publicKey as PublicKey,
-          new PublicKey(ddcaDetails.fromMint),
-        );
+        const selectedTokenAddress = findATokenAddress(publicKey as PublicKey, new PublicKey(ddcaDetails.fromMint));
         const result = await getTokenAccountBalanceByAddress(connection, selectedTokenAddress);
         if (result) {
           balance = result.uiAmount || 0;
@@ -516,7 +513,7 @@ export const DdcaAddFundsModal = (props: {
           min={rangeMin}
           max={rangeMax}
           included={false}
-          className='ddca-setup-tooltip'
+          className="ddca-setup-tooltip"
           tooltip={{ formatter: sliderTooltipFormatter, open: true }}
           value={lockedSliderValue}
           onChange={onSliderChange}

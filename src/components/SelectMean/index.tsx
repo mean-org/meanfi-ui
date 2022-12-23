@@ -9,15 +9,7 @@ export const SelectMean = (props: {
   values?: any;
   labelInValue?: boolean;
 }) => {
-  const {
-    className,
-    placeholder,
-    defaultValue,
-    onChange,
-    value,
-    values,
-    labelInValue,
-  } = props;
+  const { className, placeholder, defaultValue, onChange, value, values, labelInValue } = props;
 
   const { Option } = Select;
 

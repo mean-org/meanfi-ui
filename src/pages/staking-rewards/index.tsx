@@ -7,25 +7,13 @@ import { PreFooter } from 'components/PreFooter';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import {
-  getNetworkIdByCluster,
-  useConnection,
-  useConnectionConfig,
-} from 'contexts/connection';
-import {
-  confirmationEvents,
-  TxConfirmationContext,
-} from 'contexts/transaction-status';
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from 'contexts/connection';
+import { confirmationEvents, TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { IconStats } from 'Icons';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { sendTx, signTx } from 'middleware/transactions';
-import {
-  consoleOut,
-  getTransactionStatusForLogs,
-  isProd,
-  relativeTimeFromDates,
-} from 'middleware/ui';
+import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from 'middleware/ui';
 import {
   findATokenAddress,
   formatThousands,
@@ -43,12 +31,7 @@ import './style.scss';
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
 export const StakingRewardsView = () => {
-  const {
-    tokenAccounts,
-    isWhitelisted,
-    transactionStatus,
-    setTransactionStatus,
-  } = useContext(AppStateContext);
+  const { tokenAccounts, isWhitelisted, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { cluster, endpoint } = useConnectionConfig();
   const connection = useConnection();
@@ -59,22 +42,15 @@ export const StakingRewardsView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [isBusy, setIsBusy] = useState(false);
-  const [aprPercentGoal, setAprPercentGoal] = useState(
-    DEFAULT_APR_PERCENT_GOAL,
-  );
-  const [depositsInfo, setDepositsInfo] = useState<DepositsInfo | undefined>(
-    undefined,
-  );
-  const [refreshingDepositsInfo, setRefreshingDepositsInfo] =
-    useState<boolean>(false);
-  const [shouldRefreshDepositsInfo, setShouldRefreshDepositsInfo] =
-    useState(true);
+  const [aprPercentGoal, setAprPercentGoal] = useState(DEFAULT_APR_PERCENT_GOAL);
+  const [depositsInfo, setDepositsInfo] = useState<DepositsInfo | undefined>(undefined);
+  const [refreshingDepositsInfo, setRefreshingDepositsInfo] = useState<boolean>(false);
+  const [shouldRefreshDepositsInfo, setShouldRefreshDepositsInfo] = useState(true);
   const [, setLastDepositSignature] = useState('');
   // Tokens and balances
   const [meanToken, setMeanToken] = useState<TokenInfo>();
   const [meanBalance, setMeanBalance] = useState<number | undefined>(undefined);
-  const [meanStakingVaultBalance, setMeanStakingVaultBalance] =
-    useState<number>(0);
+  const [meanStakingVaultBalance, setMeanStakingVaultBalance] = useState<number>(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
 
   // MEAN Staking Vault address
@@ -115,13 +91,7 @@ export const StakingRewardsView = () => {
       commitment: 'confirmed',
     };
 
-    return new StakingClient(
-      cluster,
-      endpoint,
-      publicKey,
-      opts,
-      isProd() ? false : true,
-    );
+    return new StakingClient(cluster, endpoint, publicKey, opts, isProd() ? false : true);
   }, [cluster, endpoint, publicKey]);
 
   /////////////////
@@ -129,12 +99,7 @@ export const StakingRewardsView = () => {
   /////////////////
 
   const refreshMeanBalance = useCallback(async () => {
-    if (
-      !connection ||
-      !publicKey ||
-      !tokenAccounts ||
-      !tokenAccounts.length
-    ) {
+    if (!connection || !publicKey || !tokenAccounts || !tokenAccounts.length) {
       return;
     }
 
@@ -147,10 +112,7 @@ export const StakingRewardsView = () => {
 
     const meanTokenPk = new PublicKey(meanToken.address);
     const meanTokenAddress = findATokenAddress(publicKey, meanTokenPk);
-    const result = await getTokenAccountBalanceByAddress(
-      connection,
-      meanTokenAddress,
-    );
+    const result = await getTokenAccountBalanceByAddress(connection, meanTokenAddress);
     if (result) {
       balance = result.uiAmount || 0;
     }
@@ -200,27 +162,28 @@ export const StakingRewardsView = () => {
     [refreshMeanStakingVaultBalance, resetTransactionStatus],
   );
 
-  const setFailureStatusAndNotify = useCallback((txStep: 'sign' | 'send') => {
-    const operation = txStep === 'sign'
-      ? TransactionStatus.SignTransactionFailure
-      : TransactionStatus.SendTransactionFailure;
-    setTransactionStatus({
-      lastOperation: transactionStatus.currentOperation,
-      currentOperation: operation,
-    });
-    openNotification({
-      title: t('notifications.error-title'),
-      description: t('notifications.error-sending-transaction'),
-      type: 'error',
-    });
-    setIsBusy(false);
-  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
+  const setFailureStatusAndNotify = useCallback(
+    (txStep: 'sign' | 'send') => {
+      const operation =
+        txStep === 'sign' ? TransactionStatus.SignTransactionFailure : TransactionStatus.SendTransactionFailure;
+      setTransactionStatus({
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: operation,
+      });
+      openNotification({
+        title: t('notifications.error-title'),
+        description: t('notifications.error-sending-transaction'),
+        type: 'error',
+      });
+      setIsBusy(false);
+    },
+    [setTransactionStatus, t, transactionStatus.currentOperation],
+  );
 
   const setSuccessStatus = useCallback(() => {
     setIsBusy(false);
     resetTransactionStatus();
   }, [resetTransactionStatus]);
-
 
   /////////////////
   //   Effects   //
@@ -233,9 +196,7 @@ export const StakingRewardsView = () => {
     }
 
     if (!pageInitialized) {
-      const tokenList = MEAN_TOKEN_LIST.filter(
-        t => t.chainId === getNetworkIdByCluster(cluster),
-      );
+      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(cluster));
       const token = tokenList.find(t => t.symbol === 'MEAN');
 
       consoleOut('MEAN token', token, 'blue');
@@ -256,11 +217,7 @@ export const StakingRewardsView = () => {
 
   // Keep MEAN balance updated
   useEffect(() => {
-    if (
-      !publicKey ||
-      !tokenAccounts ||
-      !tokenAccounts.length
-    ) {
+    if (!publicKey || !tokenAccounts || !tokenAccounts.length) {
       return;
     }
 
@@ -298,11 +255,7 @@ export const StakingRewardsView = () => {
       setCanSubscribe(false);
       consoleOut('Setup event subscriptions -> StakingRewardsView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onDepositTxConfirmed);
-      consoleOut(
-        'Subscribed to event txConfirmed with:',
-        'onDepositTxConfirmed',
-        'brown',
-      );
+      consoleOut('Subscribed to event txConfirmed with:', 'onDepositTxConfirmed', 'brown');
     }
   }, [canSubscribe, pageInitialized, onDepositTxConfirmed]);
 
@@ -350,16 +303,12 @@ export const StakingRewardsView = () => {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
           inputs: `depositPercentage: ${depositPercentage}%`,
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: '',
         });
 
@@ -375,9 +324,7 @@ export const StakingRewardsView = () => {
               currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
               result: getTxIxResume(value),
             });
             transaction = value;
@@ -390,9 +337,7 @@ export const StakingRewardsView = () => {
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
             customLogger.logError('Deposit transaction failed', {
@@ -431,10 +376,9 @@ export const StakingRewardsView = () => {
             signature = sent.signature;
             setLastDepositSignature(signature);
             consoleOut('Send Tx to confirmation queue:', signature);
-            const depositionMessage = `Depositing ${formatThousands(
-              getTotalMeanAdded(),
-              meanToken.decimals,
-            )} ${meanToken.symbol} into the staking vault`;
+            const depositionMessage = `Depositing ${formatThousands(getTotalMeanAdded(), meanToken.decimals)} ${
+              meanToken.symbol
+            } into the staking vault`;
             const depositSuccessMessage = `Successfully deposited ${formatThousands(
               getTotalMeanAdded(),
               meanToken.decimals,
@@ -515,9 +459,7 @@ export const StakingRewardsView = () => {
       <div className="container-max-width-720 my-3">
         <div className="item-list-header compact dark">
           <div className="header-row">
-            <div className="std-table-cell responsive-cell px-2 text-left">
-              Date
-            </div>
+            <div className="std-table-cell responsive-cell px-2 text-left">Date</div>
             <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">
               <span>
                 Total Staked +<br />
@@ -548,27 +490,22 @@ export const StakingRewardsView = () => {
                 {depositsInfo &&
                   depositsInfo.depositRecords &&
                   depositsInfo.depositRecords.length > 0 &&
-                  depositsInfo.depositRecords.map(
-                    (item: DepositRecord, index: number) => (
-                      <div key={`${index}`} className="item-list-row">
-                        <div className="std-table-cell responsive-cell px-2 text-left">
-                          <span className="capitalize-first-letter">
-                            {getRelativeDate(item.depositedUtc)}
-                          </span>
-                        </div>
-                        <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">
-                          {formatThousands(item.totalStakedPlusRewardsUiAmount)}{' '}
-                          MEAN
-                        </div>
-                        <div className="std-table-cell responsive-cell px-3 text-right border-right">
-                          {item.depositedPercentage * 100}%
-                        </div>
-                        <div className="std-table-cell responsive-cell px-3 text-right">
-                          {formatThousands(item.depositedUiAmount)} MEAN
-                        </div>
+                  depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
+                    <div key={`${index}`} className="item-list-row">
+                      <div className="std-table-cell responsive-cell px-2 text-left">
+                        <span className="capitalize-first-letter">{getRelativeDate(item.depositedUtc)}</span>
                       </div>
-                    ),
-                  )}
+                      <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">
+                        {formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN
+                      </div>
+                      <div className="std-table-cell responsive-cell px-3 text-right border-right">
+                        {item.depositedPercentage * 100}%
+                      </div>
+                      <div className="std-table-cell responsive-cell px-3 text-right">
+                        {formatThousands(item.depositedUiAmount)} MEAN
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           </Spin>
@@ -595,24 +532,10 @@ export const StakingRewardsView = () => {
   );
 
   const renderPercentGoalValidationErrors = () => {
-    if (
-      !aprPercentGoal ||
-      parseFloat(aprPercentGoal) < 0.01 ||
-      parseFloat(aprPercentGoal) > 100
-    ) {
-      return (
-        <span className="form-field-error">Valid values: from 0.01 to 100</span>
-      );
-    } else if (
-      meanStakingVaultBalance &&
-      meanBalance !== undefined &&
-      meanBalance < getTotalMeanAdded()
-    ) {
-      return (
-        <span className="form-field-error">
-          Insufficient balance for APR Percent Goal
-        </span>
-      );
+    if (!aprPercentGoal || parseFloat(aprPercentGoal) < 0.01 || parseFloat(aprPercentGoal) > 100) {
+      return <span className="form-field-error">Valid values: from 0.01 to 100</span>;
+    } else if (meanStakingVaultBalance && meanBalance !== undefined && meanBalance < getTotalMeanAdded()) {
+      return <span className="form-field-error">Insufficient balance for APR Percent Goal</span>;
     } else {
       return null;
     }
@@ -659,16 +582,11 @@ export const StakingRewardsView = () => {
           <div className="right">&nbsp;</div>
         </div>
         <div className="flex-fixed-right">
-          <div className="left static-data-field">
-            {formatThousands(getTotalMeanAdded(), meanToken?.decimals || 9)}
-          </div>
+          <div className="left static-data-field">{formatThousands(getTotalMeanAdded(), meanToken?.decimals || 9)}</div>
           <div className="right">&nbsp;</div>
         </div>
         <span className="form-field-hint">
-          User MEAN balance:{' '}
-          {meanBalance
-            ? formatThousands(meanBalance, meanToken?.decimals || 9)
-            : '0'}
+          User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 9) : '0'}
         </span>
       </div>
     </>
@@ -684,22 +602,16 @@ export const StakingRewardsView = () => {
                 <IconStats className="mean-svg-icons" />
                 <div>{t('staking.title')}</div>
               </div>
-              <div className="subtitle text-center">
-                Staking Rewards &amp; History
-              </div>
+              <div className="subtitle text-center">Staking Rewards &amp; History</div>
               <div className="w-50 h-100 p-5 text-center flex-column flex-center">
                 <div className="text-center mb-2">
-                  <WarningFilled
-                    style={{ fontSize: 48 }}
-                    className="icon fg-warning"
-                  />
+                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
                 </div>
                 {!publicKey ? (
                   <h3>Please connect your wallet to setup rewards</h3>
                 ) : (
                   <h3>
-                    The content you are accessing is not available at this time
-                    or you don't have access permission
+                    The content you are accessing is not available at this time or you don't have access permission
                   </h3>
                 )}
               </div>
@@ -720,9 +632,7 @@ export const StakingRewardsView = () => {
               <IconStats className="mean-svg-icons" />
               <div>{t('staking.title')}</div>
             </div>
-            <div className="subtitle text-center">
-              Staking Rewards &amp; History
-            </div>
+            <div className="subtitle text-center">Staking Rewards &amp; History</div>
           </div>
           <div className="place-transaction-box mb-3">
             {renderStakingRewardsVaultBalance}

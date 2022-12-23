@@ -1,11 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { environment } from '../environments/environment';
-import {
-  osName,
-  isBrowser,
-  browserName,
-  browserVersion,
-} from 'react-device-detect';
+import { osName, isBrowser, browserName, browserVersion } from 'react-device-detect';
 import { isLocal } from '../middleware/ui';
 import { appConfig } from '..';
 import { WALLET_PROVIDERS } from '../contexts/wallet';
@@ -78,11 +73,7 @@ export class CustomLoggerService {
   public async logError(message: string, data?: any) {
     const errorData = this.getLoggerJsonData(message, LogLevel.Error, data);
     if (isLocal()) {
-      this.print(
-        'Loggly logger not available for localhost',
-        'print then',
-        'orange',
-      );
+      this.print('Loggly logger not available for localhost', 'print then', 'orange');
       this.print('loggerJsonData:', errorData, 'blue');
       return;
     }
@@ -116,11 +107,7 @@ export class CustomLoggerService {
     return `${browserName} ${browserVersion}`;
   }
 
-  private getLoggerJsonData(
-    message: string,
-    level: LogLevel,
-    data?: any,
-  ): LoggerJsonData {
+  private getLoggerJsonData(message: string, level: LogLevel, data?: any): LoggerJsonData {
     const logBody: LoggerJsonData = {
       Application: this.applicationName,
       Environment: this.getEnv(),
@@ -148,10 +135,7 @@ export class CustomLoggerService {
         }
       }
     } catch (error) {
-      console.warn(
-        `Error reading localStorage key “${this.walletProviderKey}”:`,
-        error,
-      );
+      console.warn(`Error reading localStorage key “${this.walletProviderKey}”:`, error);
     }
 
     if (data) {

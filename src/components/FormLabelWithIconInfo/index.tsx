@@ -1,11 +1,7 @@
 import { IconHelpCircle } from '../../Icons';
 import { InfoIcon } from '../InfoIcon';
 
-export const FormLabelWithIconInfo = (props: {
-  label: string;
-  tooltipText: any;
-  tooltipPlacement?: any;
-}) => {
+export const FormLabelWithIconInfo = (props: { label: string; tooltipText: any; tooltipPlacement?: any }) => {
   const { label, tooltipText, tooltipPlacement } = props;
 
   return (

@@ -21,11 +21,7 @@ export const TokenStats = ({ meanStats, smeanSupply, totalVolume24h }: any) => {
     <>
       <FirstCardsLayout />
       <Divider />
-      <SecondCardsLayout
-        meanStats={meanStats}
-        sMeanTotalSupply={smeanSupply}
-        totalVolume24h={totalVolume24h}
-      />
+      <SecondCardsLayout meanStats={meanStats} sMeanTotalSupply={smeanSupply} totalVolume24h={totalVolume24h} />
       <Divider />
       <ThirdCardsLayout />
     </>
@@ -62,10 +58,7 @@ export const FirstCardsLayout = () => {
             rel="noreferrer"
             className="audit-links"
           >
-            <img
-              src="https://www.certik.com/certik-logotype-h-w.svg"
-              alt="CetriK"
-            />
+            <img src="https://www.certik.com/certik-logotype-h-w.svg" alt="CetriK" />
           </a>
           <a
             href={`${MEANFI_DOCS_URL}mean/products/safety-and-security#audits`}
@@ -152,11 +145,7 @@ export const FirstCardsLayout = () => {
     </div>
   );
 
-  const renderBodyPrice = (
-    <PriceGraph
-      onPriceData={(priceData: any) => onCoingeckoMarketPrices(priceData)}
-    />
-  );
+  const renderBodyPrice = <PriceGraph onPriceData={(priceData: any) => onCoingeckoMarketPrices(priceData)} />;
 
   const cards = [
     {
@@ -188,11 +177,7 @@ export const FirstCardsLayout = () => {
 };
 
 /*********************** SECOND TYPE OF CARDS *************************/
-export const SecondCardsLayout = ({
-  meanStats,
-  sMeanTotalSupply,
-  totalVolume24h,
-}: any) => {
+export const SecondCardsLayout = ({ meanStats, sMeanTotalSupply, totalVolume24h }: any) => {
   const { t } = useTranslation('common');
   const cards = [
     {
@@ -202,7 +187,12 @@ export const SecondCardsLayout = ({
     },
     {
       label: 'stats.market.holders-title',
-      value: meanStats.holders !== undefined ? formatThousands(meanStats.holders) : <IconLoading className="mean-svg-icons" />,
+      value:
+        meanStats.holders !== undefined ? (
+          formatThousands(meanStats.holders)
+        ) : (
+          <IconLoading className="mean-svg-icons" />
+        ),
       description: 'stats.market.token-holders',
     },
     {
@@ -244,14 +234,9 @@ export const SecondCardsLayout = ({
           <Card className="ant-card card info-cards">
             <div className="card-body">
               <div className="card-content justify-content-start">
-                <span className="fg-secondary-50 align-middle">
-                  {t(card.label)}
-                </span>
+                <span className="fg-secondary-50 align-middle">{t(card.label)}</span>
                 <span className="fg-secondary-50 font-size-70 align-middle">
-                  <InfoIcon
-                    content={<span>{t(card.description)}</span>}
-                    placement="top"
-                  >
+                  <InfoIcon content={<span>{t(card.description)}</span>} placement="top">
                     <InfoCircleOutlined />
                   </InfoIcon>
                 </span>
@@ -279,18 +264,12 @@ export const ThirdCardsLayout = () => {
                 <div className="slide-content_avatar">
                   <div className="avatar-coin">
                     <div className="avatar-coin__content row">
-                      <img
-                        src={pair.img1}
-                        alt={`${pair.base}/${pair.target}`}
-                      />
+                      <img src={pair.img1} alt={`${pair.base}/${pair.target}`} />
                     </div>
                   </div>
                   <div className="avatar-coin">
                     <div className="avatar-coin__content row">
-                      <img
-                        src={pair.img2}
-                        alt={`${pair.base}/${pair.target}`}
-                      />
+                      <img src={pair.img2} alt={`${pair.base}/${pair.target}`} />
                     </div>
                   </div>
                 </div>
@@ -305,15 +284,8 @@ export const ThirdCardsLayout = () => {
                   </div> */}
                 </div>
                 <div className="slide-content_buttons">
-                  <Button
-                    type="default"
-                    shape="round"
-                    size="small"
-                    onClick={() => openLinkInNewTab(pair.buy)}
-                  >
-                    {pair.type === 'DEX'
-                      ? t('stats.total-liquidity-btn')
-                      : t('stats.buy-btn')}
+                  <Button type="default" shape="round" size="small" onClick={() => openLinkInNewTab(pair.buy)}>
+                    {pair.type === 'DEX' ? t('stats.total-liquidity-btn') : t('stats.buy-btn')}
                   </Button>
                 </div>
               </div>

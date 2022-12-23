@@ -1,11 +1,13 @@
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Connection, PublicKey, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  Connection,
+  PublicKey,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
+} from '@solana/web3.js';
 
-export async function createV0InitAtaAccountTx(
-  connection: Connection,
-  mint: PublicKey,
-  owner: PublicKey,
-) {
+export async function createV0InitAtaAccountTx(connection: Connection, mint: PublicKey, owner: PublicKey) {
   const ixs: TransactionInstruction[] = [];
 
   const associatedAddress = await Token.getAssociatedTokenAddress(
@@ -32,9 +34,7 @@ export async function createV0InitAtaAccountTx(
   }
 
   // Get the latest blockhash
-  const blockhash = await connection
-    .getLatestBlockhash('confirmed')
-    .then((res) => res.blockhash);
+  const blockhash = await connection.getLatestBlockhash('confirmed').then(res => res.blockhash);
 
   // create v0 compatible message
   const messageV0 = new TransactionMessage({

@@ -433,7 +433,7 @@ export function getUniversalTxIxResume(tx: VersionedTransaction | Transaction) {
 export function findATokenAddress(walletAddress: PublicKey, tokenMintAddress: PublicKey): PublicKey {
   const [pk] = PublicKey.findProgramAddressSync(
     [walletAddress.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), tokenMintAddress.toBuffer()],
-    ASSOCIATED_TOKEN_PROGRAM_ID
+    ASSOCIATED_TOKEN_PROGRAM_ID,
   );
   return pk;
 }

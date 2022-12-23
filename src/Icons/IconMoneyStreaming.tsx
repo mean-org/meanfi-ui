@@ -1,9 +1,6 @@
 import { CSSProperties } from 'react';
 
-export const IconMoneyStreaming = (props: {
-  className: string;
-  style?: CSSProperties;
-}) => {
+export const IconMoneyStreaming = (props: { className: string; style?: CSSProperties }) => {
   return (
     <svg
       className={props.className}
@@ -29,10 +26,7 @@ export const IconMoneyStreaming = (props: {
         d="M412.6,186.9l-162.2-81.1l-160,81.1c0,2.2,0,15.6,0,17.7l162.2,86.7l160-86.7
         C412.6,202.5,412.6,189.1,412.6,186.9z"
       />
-      <polygon
-        fill="#B7CAC4"
-        points="90.3,203.4 412.3,203.4 393.9,257 253.8,292 201,286.9 "
-      />
+      <polygon fill="#B7CAC4" points="90.3,203.4 412.3,203.4 393.9,257 253.8,292 201,286.9 " />
       <path
         fill="#B9EFBD"
         d="M168.2,88.2c-5.8,0-10.5,4.7-10.5,10.5v210.9c0,5.8,4.7,10.5,10.5,10.5h157.7
@@ -47,10 +41,7 @@ export const IconMoneyStreaming = (props: {
           c11.9,0,18.8-5,18.8-12.6c0-9.2-10.4-11.7-22.6-14.6c-14.7-3.2-34.2-9-34.2-31.2c0-16.1,11.4-27.6,29.5-31v-6.2
           c0-7.7,2.8-11.4,9.6-11.4h1c6.9,0,9.5,3.5,9.5,11.4v5.7C277.2,150.2,287.4,158.6,287.4,167.2z"
         />
-        <path
-          fill="#71AD71"
-          d="M336.5,128.6h-24.3c-9.5,0-17.1-7.7-17.1-17.1l0.2-23.2L336.5,128.6z"
-        />
+        <path fill="#71AD71" d="M336.5,128.6h-24.3c-9.5,0-17.1-7.7-17.1-17.1l0.2-23.2L336.5,128.6z" />
       </g>
       <path
         fill="#EDEDED"
@@ -58,14 +49,8 @@ export const IconMoneyStreaming = (props: {
         L90.4,203.3"
       />
       <g>
-        <path
-          fill="#E5E5E5"
-          d="M252.6,291.3l159.5-87.2l0.3,152.2c0,8-6.5,14.5-14.5,14.5L252.6,291.3z"
-        />
-        <path
-          fill="#E5E5E5"
-          d="M90.3,203.4l163.5,88l-149.1,78.9c-8,0-14.5-6.5-14.5-14.5L90.3,203.4z"
-        />
+        <path fill="#E5E5E5" d="M252.6,291.3l159.5-87.2l0.3,152.2c0,8-6.5,14.5-14.5,14.5L252.6,291.3z" />
+        <path fill="#E5E5E5" d="M90.3,203.4l163.5,88l-149.1,78.9c-8,0-14.5-6.5-14.5-14.5L90.3,203.4z" />
       </g>
       <g></g>
       <g></g>

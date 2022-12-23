@@ -39,11 +39,7 @@ export async function fetchAccountHistory(
   try {
     let transactionMap: MappedTransaction[] = [];
 
-    const fetched = await connection.getConfirmedSignaturesForAddress2(
-      pubkey,
-      options,
-      'confirmed',
-    );
+    const fetched = await connection.getConfirmedSignaturesForAddress2(pubkey, options, 'confirmed');
 
     const history = {
       fetched,
@@ -51,13 +47,8 @@ export async function fetchAccountHistory(
     };
 
     if (fetchTransactions && history && history.fetched) {
-      const signatures = history.fetched
-        .map(signature => signature.signature)
-        .concat(additionalSignatures || []);
-      transactionMap = await fetchParsedTransactionsAsync(
-        connection,
-        signatures,
-      );
+      const signatures = history.fetched.map(signature => signature.signature).concat(additionalSignatures || []);
+      transactionMap = await fetchParsedTransactionsAsync(connection, signatures);
     }
 
     return {
@@ -81,12 +72,9 @@ export const fetchParsedTransactionsAsync = async (
     while (signatures.length > 0) {
       const txSignatures = signatures.splice(0, MAX_TRANSACTION_BATCH_SIZE);
 
-      const fetched = await connection.getParsedTransactions(
-        txSignatures,
-        {
-          maxSupportedTransactionVersion: MAX_SUPPORTED_TRANSACTION_VERSION
-        }
-      );
+      const fetched = await connection.getParsedTransactions(txSignatures, {
+        maxSupportedTransactionVersion: MAX_SUPPORTED_TRANSACTION_VERSION,
+      });
       const result = (
         fetched.map(tx => {
           return {

@@ -5,10 +5,7 @@ import useWindowSize from 'hooks/useWindowResize';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const SwapSettings = (props: {
-  currentValue: number;
-  onValueSelected: any;
-}) => {
+export const SwapSettings = (props: { currentValue: number; onValueSelected: any }) => {
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [popoverVisible, setPopoverVisible] = useState(false);
@@ -54,25 +51,13 @@ export const SwapSettings = (props: {
       <div className="inner-label">{t('swap.slippage-tolerance')}</div>
       <div className="flexible-left">
         <div className="left token-group">
-          <div
-            key="preset-02"
-            className="token-max simplelink"
-            onClick={() => onChangeValue(0.5)}
-          >
+          <div key="preset-02" className="token-max simplelink" onClick={() => onChangeValue(0.5)}>
             0.5%
           </div>
-          <div
-            key="preset-03"
-            className="token-max simplelink"
-            onClick={() => onChangeValue(1)}
-          >
+          <div key="preset-03" className="token-max simplelink" onClick={() => onChangeValue(1)}>
             1%
           </div>
-          <div
-            key="preset-04"
-            className="token-max simplelink"
-            onClick={() => onChangeValue(2)}
-          >
+          <div key="preset-04" className="token-max simplelink" onClick={() => onChangeValue(2)}>
             2%
           </div>
         </div>
@@ -101,13 +86,7 @@ export const SwapSettings = (props: {
         onOpenChange={handlePopoverVisibleChange}
         trigger="click"
       >
-        <Button
-          shape="round"
-          type="text"
-          size="large"
-          className="settings-button"
-          icon={<SettingOutlined />}
-        ></Button>
+        <Button shape="round" type="text" size="large" className="settings-button" icon={<SettingOutlined />}></Button>
       </Popover>
     </>
   );

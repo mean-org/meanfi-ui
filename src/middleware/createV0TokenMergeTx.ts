@@ -1,6 +1,12 @@
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Connection, PublicKey, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
-import { AccountTokenParsedInfo } from "models/accounts";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  Connection,
+  PublicKey,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
+} from '@solana/web3.js';
+import { AccountTokenParsedInfo } from 'models/accounts';
 
 export async function createV0TokenMergeTx(
   connection: Connection,
@@ -33,9 +39,7 @@ export async function createV0TokenMergeTx(
     );
   }
 
-  for (const token of mergeGroup.filter(
-    a => !a.pubkey.equals(associatedAddress),
-  )) {
+  for (const token of mergeGroup.filter(a => !a.pubkey.equals(associatedAddress))) {
     ixs.push(
       Token.createTransferInstruction(
         TOKEN_PROGRAM_ID,
@@ -43,23 +47,14 @@ export async function createV0TokenMergeTx(
         associatedAddress,
         owner,
         [],
-        (token.parsedInfo.tokenAmount.uiAmount || 0) *
-          10 ** token.parsedInfo.tokenAmount.decimals,
+        (token.parsedInfo.tokenAmount.uiAmount || 0) * 10 ** token.parsedInfo.tokenAmount.decimals,
       ),
-      Token.createCloseAccountInstruction(
-        TOKEN_PROGRAM_ID,
-        token.pubkey,
-        owner,
-        owner,
-        [],
-      ),
+      Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, token.pubkey, owner, owner, []),
     );
   }
 
   // Get the latest blockhash
-  const blockhash = await connection
-    .getLatestBlockhash('confirmed')
-    .then((res) => res.blockhash);
+  const blockhash = await connection.getLatestBlockhash('confirmed').then(res => res.blockhash);
 
   // create v0 compatible message
   const messageV0 = new TransactionMessage({

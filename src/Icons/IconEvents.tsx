@@ -1,7 +1,4 @@
-export const IconEvents = (props: {
-  className: string;
-  style?: React.CSSProperties;
-}) => {
+export const IconEvents = (props: { className: string; style?: React.CSSProperties }) => {
   return (
     <svg
       className={props.className}

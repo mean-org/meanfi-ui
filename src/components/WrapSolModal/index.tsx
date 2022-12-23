@@ -1,19 +1,11 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import {
-  MSP_ACTIONS,
-  TransactionFees,
-} from '@mean-dao/money-streaming/lib/types';
-import {
-  calculateActionFees,
-} from '@mean-dao/money-streaming/lib/utils';
+import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
-import {
-  MIN_SOL_BALANCE_REQUIRED,
-  WRAPPED_SOL_MINT_ADDRESS,
-} from 'constants/common';
+import { MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
@@ -21,12 +13,7 @@ import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
 import { sendTx, signTx } from 'middleware/transactions';
-import {
-  consoleOut,
-  delay,
-  getTransactionStatusForLogs,
-  toUsCurrency,
-} from 'middleware/ui';
+import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports,
@@ -39,11 +26,7 @@ import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const WrapSolModal = (props: {
-  handleOk: any;
-  handleClose: any;
-  isVisible: boolean;
-}) => {
+export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible: boolean }) => {
   const { isVisible, handleClose, handleOk } = props;
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -108,10 +91,7 @@ export const WrapSolModal = (props: {
   };
 
   const isSuccess = useCallback(() => {
-    return (
-      transactionStatus.currentOperation ===
-      TransactionStatus.TransactionFinished
-    );
+    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }, [transactionStatus.currentOperation]);
 
   const resetTransactionStatus = useCallback(() => {
@@ -152,16 +132,12 @@ export const WrapSolModal = (props: {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
           inputs: `wrapAmount: ${amount}`,
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: '',
         });
 
@@ -172,9 +148,7 @@ export const WrapSolModal = (props: {
             currentOperation: TransactionStatus.TransactionStartFailure,
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.TransactionStartFailure,
-            ),
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: '',
           });
           customLogger.logWarning('Wrap transaction failed', {
@@ -196,9 +170,7 @@ export const WrapSolModal = (props: {
               currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
               result: getTxIxResume(value),
             });
             transaction = value;
@@ -211,9 +183,7 @@ export const WrapSolModal = (props: {
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
             customLogger.logError('Wrap transaction failed', {
@@ -237,12 +207,7 @@ export const WrapSolModal = (props: {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sign = await signTx(
-          'Wrap SOL',
-          wallet,
-          publicKey,
-          transaction,
-        );
+        const sign = await signTx('Wrap SOL', wallet, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -250,11 +215,7 @@ export const WrapSolModal = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx(
-            'Wrap SOL',
-            connection,
-            encodedTx,
-          );
+          const sent = await sendTx('Wrap SOL', connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature) {
             signature = sent.signature;
@@ -265,15 +226,11 @@ export const WrapSolModal = (props: {
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Wrap ${formatThousands(
-                parseFloat(wrapAmount as string),
-                wSol.decimals,
-              )} ${wSol.symbol}`,
+              loadingMessage: `Wrap ${formatThousands(parseFloat(wrapAmount as string), wSol.decimals)} ${wSol.symbol}`,
               completedTitle: 'Transaction confirmed',
-              completedMessage: `Wrapped ${formatThousands(
-                parseFloat(wrapAmount as string),
-                wSol.decimals,
-              )} ${wSol.symbol}`,
+              completedMessage: `Wrapped ${formatThousands(parseFloat(wrapAmount as string), wSol.decimals)} ${
+                wSol.symbol
+              }`,
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -412,9 +369,7 @@ export const WrapSolModal = (props: {
                   <div
                     className="token-max simplelink"
                     onClick={() => {
-                      setWrapAmount(
-                        getMaxPossibleAmount().toFixed(wSol?.decimals),
-                      );
+                      setWrapAmount(getMaxPossibleAmount().toFixed(wSol?.decimals));
                     }}
                   >
                     MAX
@@ -442,38 +397,20 @@ export const WrapSolModal = (props: {
           <div className="flex-fixed-right">
             <div className="left inner-label">
               <span>{t('transactions.send-amount.label-right')}:</span>
-              <span>
-                {`${
-                  nativeBalance && wSol
-                    ? getAmountWithSymbol(nativeBalance, wSol.address, true)
-                    : '0'
-                }`}
-              </span>
+              <span>{`${nativeBalance && wSol ? getAmountWithSymbol(nativeBalance, wSol.address, true) : '0'}`}</span>
             </div>
             <div className="right inner-label">
               <span
-                className={
-                  loadingPrices
-                    ? 'click-disabled fg-orange-red pulsate'
-                    : 'simplelink'
-                }
+                className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                 onClick={() => refreshPrices()}
               >
-                ~
-                {wSol
-                  ? toUsCurrency(
-                      (parseFloat(wrapAmount) || 0) *
-                        getTokenPriceBySymbol(wSol.symbol),
-                    )
-                  : '$0.00'}
+                ~{wSol ? toUsCurrency((parseFloat(wrapAmount) || 0) * getTokenPriceBySymbol(wSol.symbol)) : '$0.00'}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="form-field-hint mb-2 pl-3">
-          {t('wrap.hint-message')}
-        </div>
+        <div className="form-field-hint mb-2 pl-3">{t('wrap.hint-message')}</div>
 
         <div className="mb-2">
           {isValidInput() &&
@@ -483,10 +420,7 @@ export const WrapSolModal = (props: {
                 wrapAmount
                   ? '~' +
                     getAmountWithSymbol(
-                      parseFloat(wrapAmount) >=
-                        (MIN_SOL_BALANCE_REQUIRED as number)
-                        ? parseFloat(wrapAmount)
-                        : 0,
+                      parseFloat(wrapAmount) >= (MIN_SOL_BALANCE_REQUIRED as number) ? parseFloat(wrapAmount) : 0,
                       WRAPPED_SOL_MINT_ADDRESS,
                       false,
                     )

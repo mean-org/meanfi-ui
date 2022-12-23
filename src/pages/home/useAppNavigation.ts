@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  AccountContext,
-  AccountsPageCategory,
-  AssetGroups,
-  KNOWN_APPS,
-  RegisteredAppPaths,
-} from 'models/accounts';
+import { AccountContext, AccountsPageCategory, AssetGroups, KNOWN_APPS, RegisteredAppPaths } from 'models/accounts';
 import { consoleOut } from 'middleware/ui';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { openNotification } from 'components/Notifications';
@@ -19,16 +13,12 @@ interface CategoryToAssetsGroupArgs {
   pathname: string;
 }
 
-const categoryToAssetsGroup = ({
-  selectedCategory,
-  pathname,
-}: CategoryToAssetsGroupArgs) => {
+const categoryToAssetsGroup = ({ selectedCategory, pathname }: CategoryToAssetsGroupArgs) => {
   switch (selectedCategory) {
     case 'nfts':
       return AssetGroups.Nfts;
     case 'apps': {
-      if (pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`))
-        return AssetGroups.Tokens;
+      if (pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)) return AssetGroups.Tokens;
       return AssetGroups.Apps;
     }
     case 'other-assets':
@@ -53,8 +43,7 @@ const useAppNavigation = ({ asset, selectedAccount }: Args) => {
   // ---------------------------------------------------------------------------
 
   const isAccountSummary =
-    pathname.startsWith('/my-account') ||
-    pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`);
+    pathname.startsWith('/my-account') || pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`);
 
   const isKnownApp = KNOWN_APPS.some(a => pathname.startsWith(`/${a.slug}`));
 
@@ -124,20 +113,14 @@ const useAppNavigation = ({ asset, selectedAccount }: Args) => {
     consoleOut('pathname:', pathname, 'crimson');
 
     // if streaming tab is undefined go to summary
-    if (
-      !streamingTab &&
-      pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)
-    ) {
+    if (!streamingTab && pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)) {
       const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
       navigate(url);
       return;
     }
 
     // if opening safe from personal account go to personal account, show error
-    if (
-      !selectedAccount.isMultisig &&
-      pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)
-    ) {
+    if (!selectedAccount.isMultisig && pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)) {
       openNotification({
         title: 'Access forbidden',
         description: `You are trying to access the SuperSafe App from your personal account. To use the SuperSafe feature please connect with a signer account and try again.`,
@@ -183,14 +166,7 @@ const useAppNavigation = ({ asset, selectedAccount }: Args) => {
     consoleOut(`Error route(${pathname}), redirecting to:`, '/', 'crimson');
 
     navigate('/', { replace: true });
-  }, [
-    streamingTab,
-    pathname,
-    selectedAccount.address,
-    selectedAccount.isMultisig,
-    isKnownApp,
-    navigate,
-  ]);
+  }, [streamingTab, pathname, selectedAccount.address, selectedAccount.isMultisig, isKnownApp, navigate]);
 
   return {
     selectedCategory,

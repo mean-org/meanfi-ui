@@ -6,30 +6,18 @@ import {
   MultisigTransactionFees,
   MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-} from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Row, Slider, Tooltip } from 'antd';
 import { SliderMarks } from 'antd/lib/slider';
 import { segmentAnalytics } from 'App';
 import { MultisigParticipants } from 'components/MultisigParticipants';
 import { openNotification } from 'components/Notifications';
 import { PreFooter } from 'components/PreFooter';
-import {
-  MAX_MULTISIG_PARTICIPANTS,
-  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-} from 'constants/common';
+import { MAX_MULTISIG_PARTICIPANTS, MEAN_MULTISIG_ACCOUNT_LAMPORTS } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
-import {
-  confirmationEvents,
-  TxConfirmationContext,
-  TxConfirmationInfo,
-} from 'contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconHelpCircle, IconSafe } from 'Icons';
@@ -37,17 +25,8 @@ import { appConfig, customLogger } from 'index';
 import { NATIVE_SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
-import {
-  consoleOut,
-  getTransactionStatusForLogs,
-  isValidAddress,
-} from 'middleware/ui';
-import {
-  formatThousands,
-  getAmountFromLamports,
-  getAmountWithSymbol,
-  getTxIxResume,
-} from 'middleware/utils';
+import { consoleOut, getTransactionStatusForLogs, isValidAddress } from 'middleware/ui';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { CreateNewSafeParams, ZERO_FEES } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -61,27 +40,19 @@ const CreateSafeView = () => {
   const connectionConfig = useConnectionConfig();
   const account = useAccountsContext();
   const navigate = useNavigate();
-  const {
-    multisigAccounts,
-    transactionStatus,
-    setTransactionStatus,
-    refreshMultisigs,
-  } = useContext(AppStateContext);
+  const { multisigAccounts, transactionStatus, setTransactionStatus, refreshMultisigs } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { width } = useWindowSize();
   const [isXsDevice, setIsXsDevice] = useState<boolean>(false);
   const [multisigLabel, setMultisigLabel] = useState('');
   const [multisigThreshold, setMultisigThreshold] = useState(0);
-  const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>(
-    [],
-  );
+  const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
-  const [multisigTransactionFees, setMultisigTransactionFees] =
-    useState<MultisigTransactionFees>(ZERO_FEES);
+  const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   // Slider
   const [marks, setMarks] = useState<SliderMarks>();
   const [rangeMin, setRangeMin] = useState(0);
@@ -91,10 +62,7 @@ const CreateSafeView = () => {
   //  Init code  //
   /////////////////
 
-  const multisigAddressPK = useMemo(
-    () => new PublicKey(appConfig.getConfig().multisigProgramAddress),
-    [],
-  );
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   const connection = useMemo(
     () =>
@@ -109,18 +77,11 @@ const CreateSafeView = () => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
       return null;
     }
-    return new MeanMultisig(
-      connectionConfig.endpoint,
-      publicKey,
-      'confirmed',
-      multisigAddressPK,
-    );
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
   }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
 
   const nativeBalance = useMemo(() => {
-    return account && account.nativeAccount
-      ? getAmountFromLamports(account.nativeAccount.lamports)
-      : 0;
+    return account && account.nativeAccount ? getAmountFromLamports(account.nativeAccount.lamports) : 0;
   }, [account]);
 
   ///////////////
@@ -134,18 +95,13 @@ const CreateSafeView = () => {
     });
   }, [setTransactionStatus]);
 
-  const recordTxConfirmation = useCallback(
-    (signature: string, operation: OperationType, success = true) => {
-      let event: any;
-      if (operation === OperationType.CreateMultisig) {
-        event = success
-          ? AppUsageEvent.CreateSuperSafeAccountCompleted
-          : AppUsageEvent.CreateSuperSafeAccountFailed;
-        segmentAnalytics.recordEvent(event, { signature: signature });
-      }
-    },
-    [],
-  );
+  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
+    let event: any;
+    if (operation === OperationType.CreateMultisig) {
+      event = success ? AppUsageEvent.CreateSuperSafeAccountCompleted : AppUsageEvent.CreateSuperSafeAccountFailed;
+      segmentAnalytics.recordEvent(event, { signature: signature });
+    }
+  }, []);
 
   const clearFormValues = useCallback(() => {
     setMultisigLabel('');
@@ -157,9 +113,7 @@ const CreateSafeView = () => {
     (item: TxConfirmationInfo) => {
       if (item.operationType === OperationType.CreateMultisig) {
         consoleOut(
-          `CreateSafeView -> onTxConfirmed event handled for operation ${
-            OperationType[item.operationType]
-          }`,
+          `CreateSafeView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
           item,
           'crimson',
         );
@@ -183,13 +137,7 @@ const CreateSafeView = () => {
   const onTxTimedout = useCallback(
     (item: TxConfirmationInfo) => {
       if (item.operationType === OperationType.CreateMultisig) {
-        consoleOut(
-          `onTxTimedout event handled for operation ${
-            OperationType[item.operationType]
-          }`,
-          item,
-          'crimson',
-        );
+        consoleOut(`onTxTimedout event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, false);
         setIsBusy(false);
         refreshMultisigs();
@@ -237,37 +185,24 @@ const CreateSafeView = () => {
 
   // Get the Create multisig fees
   useEffect(() => {
-    if (
-      !publicKey ||
-      !multisigClient ||
-      multisigTransactionFees.multisigFee > 0
-    ) {
+    if (!publicKey || !multisigClient || multisigTransactionFees.multisigFee > 0) {
       return;
     }
 
-    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createMultisig).then(
-      value => {
-        setMultisigTransactionFees(value);
-        consoleOut('multisigTransactionFees:', value, 'orange');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        consoleOut('networkFee:', value.networkFee, 'blue');
-        consoleOut('rentExempt:', value.rentExempt, 'blue');
-        const totalMultisigFee =
-          value.multisigFee + MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL;
-        consoleOut('multisigFee:', totalMultisigFee, 'blue');
-        const minRequired =
-          totalMultisigFee + value.rentExempt + value.networkFee;
-        consoleOut('Min required balance:', minRequired, 'blue');
-        // const minSolForOperations = minRequired > MIN_SOL_BALANCE_REQUIRED ? minRequired : MIN_SOL_BALANCE_REQUIRED;
-        setMinRequiredBalance(minRequired);
-      },
-    );
-  }, [
-    multisigClient,
-    multisigTransactionFees.multisigFee,
-    nativeBalance,
-    publicKey,
-  ]);
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createMultisig).then(value => {
+      setMultisigTransactionFees(value);
+      consoleOut('multisigTransactionFees:', value, 'orange');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+      consoleOut('networkFee:', value.networkFee, 'blue');
+      consoleOut('rentExempt:', value.rentExempt, 'blue');
+      const totalMultisigFee = value.multisigFee + MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL;
+      consoleOut('multisigFee:', totalMultisigFee, 'blue');
+      const minRequired = totalMultisigFee + value.rentExempt + value.networkFee;
+      consoleOut('Min required balance:', minRequired, 'blue');
+      // const minSolForOperations = minRequired > MIN_SOL_BALANCE_REQUIRED ? minRequired : MIN_SOL_BALANCE_REQUIRED;
+      setMinRequiredBalance(minRequired);
+    });
+  }, [multisigClient, multisigTransactionFees.multisigFee, nativeBalance, publicKey]);
 
   // Set min and max for the slider
   useEffect(() => {
@@ -279,12 +214,8 @@ const CreateSafeView = () => {
     }
 
     const marks: SliderMarks = {
-      [minRangeSelectable]: `${minRangeSelectable} ${
-        minRangeSelectable === 1 ? 'signer' : 'signers'
-      }`,
-      [maxRangeSelectable]: `${maxRangeSelectable} ${
-        maxRangeSelectable === 1 ? 'signer' : 'signers'
-      }`,
+      [minRangeSelectable]: `${minRangeSelectable} ${minRangeSelectable === 1 ? 'signer' : 'signers'}`,
+      [maxRangeSelectable]: `${maxRangeSelectable} ${maxRangeSelectable === 1 ? 'signer' : 'signers'}`,
     };
     setMarks(marks);
     setRangeMin(minRangeSelectable);
@@ -297,17 +228,9 @@ const CreateSafeView = () => {
       setCanSubscribe(false);
       consoleOut('Setup event subscriptions -> CreateSafeView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut(
-        'Subscribed to event txConfirmed with:',
-        'onTxConfirmed',
-        'brown',
-      );
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut(
-        'Subscribed to event txTimedout with:',
-        'onTxTimedout',
-        'brown',
-      );
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
@@ -401,16 +324,12 @@ const CreateSafeView = () => {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
           inputs: payload,
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: '',
         });
 
@@ -420,13 +339,9 @@ const CreateSafeView = () => {
         consoleOut('networkFee:', multisigTransactionFees.networkFee, 'blue');
         consoleOut('rentExempt:', multisigTransactionFees.rentExempt, 'blue');
         const totalMultisigFee =
-          multisigTransactionFees.multisigFee +
-          MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL;
+          multisigTransactionFees.multisigFee + MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL;
         consoleOut('multisigFee:', totalMultisigFee, 'blue');
-        const minRequired =
-          totalMultisigFee +
-          multisigTransactionFees.rentExempt +
-          multisigTransactionFees.networkFee;
+        const minRequired = totalMultisigFee + multisigTransactionFees.rentExempt + multisigTransactionFees.networkFee;
         consoleOut('Min required balance:', minRequired, 'blue');
 
         if (nativeBalance < minRequired) {
@@ -435,16 +350,11 @@ const CreateSafeView = () => {
             currentOperation: TransactionStatus.TransactionStartFailure,
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.TransactionStartFailure,
-            ),
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
               NATIVE_SOL_MINT.toBase58(),
-            )}) to pay for network fees (${getAmountWithSymbol(
-              minRequired,
-              NATIVE_SOL_MINT.toBase58(),
-            )})`,
+            )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
           });
           customLogger.logWarning('Create multisig transaction failed', {
             transcript: transactionLog,
@@ -463,9 +373,7 @@ const CreateSafeView = () => {
               currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
               result: getTxIxResume(value),
             });
             transaction = value;
@@ -478,9 +386,7 @@ const CreateSafeView = () => {
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
             customLogger.logError('Create multisig transaction failed', {
@@ -581,9 +487,7 @@ const CreateSafeView = () => {
   };
 
   const isOwnersListValid = () => {
-    return multisigOwners.every(
-      o => o.address.length > 0 && isValidAddress(o.address),
-    );
+    return multisigOwners.every(o => o.address.length > 0 && isValidAddress(o.address));
   };
 
   const isFormValid = () => {
@@ -604,11 +508,7 @@ const CreateSafeView = () => {
   ///////////////
 
   function sliderTooltipFormatter(value?: number) {
-    return (
-      <span className="font-size-75">{`${value} ${
-        value === 1 ? 'Signer' : 'Signers'
-      }`}</span>
-    );
+    return <span className="font-size-75">{`${value} ${value === 1 ? 'Signer' : 'Signers'}`}</span>;
   }
 
   const getMainCtaLabel = () => {
@@ -625,10 +525,7 @@ const CreateSafeView = () => {
       return t('multisig.create-multisig.main-cta-busy');
     } else if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
       return t('multisig.create-multisig.main-cta');
-    } else if (
-      transactionStatus.currentOperation ===
-      TransactionStatus.TransactionFinished
-    ) {
+    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
       return t('general.cta-finish');
     } else {
       return t('general.retry');
@@ -653,10 +550,7 @@ const CreateSafeView = () => {
       <div className="mb-3">
         <div className="form-label icon-label">
           {t('multisig.create-multisig.multisig-label-input-label')}
-          <Tooltip
-            placement="bottom"
-            title={`I.e. "My company payroll", "Seed round vesting", etc.`}
-          >
+          <Tooltip placement="bottom" title={`I.e. "My company payroll", "Seed round vesting", etc.`}>
             <span>
               <IconHelpCircle className="mean-svg-icons" />
             </span>
@@ -671,9 +565,7 @@ const CreateSafeView = () => {
             type="text"
             maxLength={32}
             onChange={onLabelInputValueChange}
-            placeholder={t(
-              'multisig.create-multisig.multisig-label-placeholder',
-            )}
+            placeholder={t('multisig.create-multisig.multisig-label-placeholder')}
             value={multisigLabel}
           />
         </div>
@@ -691,23 +583,13 @@ const CreateSafeView = () => {
   const renderMultisigThresholdSlider = () => {
     return (
       <>
-        <div
-          className={`two-column-layout address-fixed ${
-            isXsDevice ? 'mt-2' : 'mt-4'
-          }`}
-        >
+        <div className={`two-column-layout address-fixed ${isXsDevice ? 'mt-2' : 'mt-4'}`}>
           <div className={isXsDevice ? 'left' : 'left pt-1'}>
-            <div
-              className={`form-label icon-label ${
-                isXsDevice ? 'mb-3' : 'mt-2'
-              }`}
-            >
+            <div className={`form-label icon-label ${isXsDevice ? 'mb-3' : 'mt-2'}`}>
               {t('multisig.create-multisig.multisig-threshold-input-label')}
               <Tooltip
                 placement="bottom"
-                title={t(
-                  'multisig.create-multisig.multisig-threshold-question-mark-tooltip',
-                )}
+                title={t('multisig.create-multisig.multisig-threshold-question-mark-tooltip')}
               >
                 <span>
                   <IconHelpCircle className="mean-svg-icons" />
@@ -758,9 +640,7 @@ const CreateSafeView = () => {
                   numParticipants: multisigOwners.length,
                 })}
                 multisigAddresses={multisigAddresses}
-                onParticipantsChanged={(e: MultisigParticipant[]) =>
-                  onMultisigOwnersChanged(e)
-                }
+                onParticipantsChanged={(e: MultisigParticipant[]) => onMultisigOwnersChanged(e)}
               />
 
               {/* Multisig threshold */}
@@ -772,8 +652,7 @@ const CreateSafeView = () => {
                   {infoRow(
                     t('multisig.create-multisig.fee-info-label') + ' ≈',
                     `${formatThousands(
-                      multisigTransactionFees.multisigFee +
-                        multisigTransactionFees.rentExempt,
+                      multisigTransactionFees.multisigFee + multisigTransactionFees.rentExempt,
                       9,
                     )} SOL`,
                   )}
@@ -781,20 +660,9 @@ const CreateSafeView = () => {
               )}
 
               {/* CTAs */}
-              <div
-                className={`two-column-form-layout${
-                  isXsDevice ? ' reverse' : ''
-                }`}
-              >
+              <div className={`two-column-form-layout${isXsDevice ? ' reverse' : ''}`}>
                 <div className={`left ${isXsDevice ? 'mb-3' : 'mb-0'}`}>
-                  <Button
-                    block
-                    type="default"
-                    shape="round"
-                    size="large"
-                    className="thin-stroke"
-                    onClick={onBackClick}
-                  >
+                  <Button block type="default" shape="round" size="large" className="thin-stroke" onClick={onBackClick}>
                     Cancel
                   </Button>
                 </div>

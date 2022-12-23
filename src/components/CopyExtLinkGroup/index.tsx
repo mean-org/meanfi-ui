@@ -1,9 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
-  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-} from '../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 import { IconExternalLink } from '../../Icons';
 import { copyText } from '../../middleware/ui';
@@ -19,15 +16,7 @@ export const CopyExtLinkGroup = (props: {
   className?: string;
   isTx?: boolean;
 }) => {
-  const {
-    content,
-    number,
-    externalLink,
-    message,
-    classNameContainer,
-    className,
-    isTx,
-  } = props;
+  const { content, number, externalLink, message, classNameContainer, className, isTx } = props;
 
   const { t } = useTranslation('common');
 
@@ -58,13 +47,8 @@ export const CopyExtLinkGroup = (props: {
 
   return (
     <>
-      <div
-        className={`d-flex align-items-center copy-ext-link-group ${classNameContainer}`}
-      >
-        <div
-          onClick={() => copyAddressToClipboard(content)}
-          className={`simplelink underline-on-hover ${className}`}
-        >
+      <div className={`d-flex align-items-center copy-ext-link-group ${classNameContainer}`}>
+        <div onClick={() => copyAddressToClipboard(content)} className={`simplelink underline-on-hover ${className}`}>
           {!number ? content : shortenAddress(content, number)}
         </div>
         <span className="icon-button-container">
@@ -77,9 +61,7 @@ export const CopyExtLinkGroup = (props: {
                 : `${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${content}${getSolanaExplorerClusterParam()}`
             }`}
           >
-            {externalLink && (
-              <IconExternalLink className="mean-svg-icons external-icon ml-1" />
-            )}
+            {externalLink && <IconExternalLink className="mean-svg-icons external-icon ml-1" />}
           </a>
         </span>
       </div>

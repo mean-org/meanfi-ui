@@ -13,9 +13,7 @@ function getNftMint(
   accountTokens: UserTokenAccount[],
   accountNfts: FindNftsByOwnerOutput | undefined,
 ): string | undefined {
-  const nftMint = accountNfts
-    ? accountNfts.find((n: any) => n.mintAddress.toBase58() === assetId)
-    : undefined;
+  const nftMint = accountNfts ? accountNfts.find((n: any) => n.mintAddress.toBase58() === assetId) : undefined;
 
   if (nftMint) {
     return (nftMint as Metadata).mintAddress.toBase58();

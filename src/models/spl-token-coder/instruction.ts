@@ -14,10 +14,7 @@ export class MeanSplTokenInstructionCoder extends SplTokenInstructionCoder {
     this.idl = idl;
   }
 
-  public decode(
-    ix: Buffer | string,
-    encoding: 'hex' | 'base58' = 'hex',
-  ): Instruction | null {
+  public decode(ix: Buffer | string, encoding: 'hex' | 'base58' = 'hex'): Instruction | null {
     if (typeof ix === 'string') {
       ix = encoding === 'hex' ? Buffer.from(ix, 'hex') : bs58.decode(ix);
     }
@@ -32,15 +29,10 @@ export class MeanSplTokenInstructionCoder extends SplTokenInstructionCoder {
     };
   }
 
-  public format(
-    ix: Instruction,
-    accountMetas: AccountMeta[],
-  ): InstructionDisplay | null {
+  public format(ix: Instruction, accountMetas: AccountMeta[]): InstructionDisplay | null {
     // console.log('LAYOUT.registry', LAYOUT.registry);
 
-    const variant: any = Object.values(LAYOUT.registry).filter(
-      (v: any) => v.property === ix.name,
-    )[0];
+    const variant: any = Object.values(LAYOUT.registry).filter((v: any) => v.property === ix.name)[0];
     const idlIx = this.idl.instructions.filter(i => i.name === ix.name)[0];
     // console.log('idlIx', idlIx);
 
@@ -61,9 +53,7 @@ export class MeanSplTokenInstructionCoder extends SplTokenInstructionCoder {
           type: field.type,
           data:
             field.type === 'publicKey' ||
-            (typeof field.type === 'object' &&
-              field.type.coption &&
-              field.type.coption === 'publicKey')
+            (typeof field.type === 'object' && field.type.coption && field.type.coption === 'publicKey')
               ? new PublicKey(value as PublicKeyInitData).toString()
               : value.toString(),
         });
@@ -97,21 +87,9 @@ LAYOUT.addVariant(
   'initializeMint',
 );
 LAYOUT.addVariant(1, BufferLayout.struct([]), 'initializeAccount');
-LAYOUT.addVariant(
-  2,
-  BufferLayout.struct([BufferLayout.u8('m')]),
-  'initializeMultisig',
-);
-LAYOUT.addVariant(
-  3,
-  BufferLayout.struct([BufferLayout.nu64('amount')]),
-  'transfer',
-);
-LAYOUT.addVariant(
-  4,
-  BufferLayout.struct([BufferLayout.nu64('amount')]),
-  'approve',
-);
+LAYOUT.addVariant(2, BufferLayout.struct([BufferLayout.u8('m')]), 'initializeMultisig');
+LAYOUT.addVariant(3, BufferLayout.struct([BufferLayout.nu64('amount')]), 'transfer');
+LAYOUT.addVariant(4, BufferLayout.struct([BufferLayout.nu64('amount')]), 'approve');
 LAYOUT.addVariant(5, BufferLayout.struct([]), 'revoke');
 LAYOUT.addVariant(
   6,
@@ -122,67 +100,27 @@ LAYOUT.addVariant(
   ]),
   'setAuthority',
 );
-LAYOUT.addVariant(
-  7,
-  BufferLayout.struct([BufferLayout.nu64('amount')]),
-  'mintTo',
-);
-LAYOUT.addVariant(
-  8,
-  BufferLayout.struct([BufferLayout.nu64('amount')]),
-  'burn',
-);
+LAYOUT.addVariant(7, BufferLayout.struct([BufferLayout.nu64('amount')]), 'mintTo');
+LAYOUT.addVariant(8, BufferLayout.struct([BufferLayout.nu64('amount')]), 'burn');
 LAYOUT.addVariant(9, BufferLayout.struct([]), 'closeAccount');
 LAYOUT.addVariant(10, BufferLayout.struct([]), 'freezeAccount');
 LAYOUT.addVariant(11, BufferLayout.struct([]), 'thawAccount');
 LAYOUT.addVariant(
   12,
-  BufferLayout.struct([
-    BufferLayout.nu64('amount'),
-    BufferLayout.u8('decimals'),
-  ]),
+  BufferLayout.struct([BufferLayout.nu64('amount'), BufferLayout.u8('decimals')]),
   'transferChecked',
 );
 LAYOUT.addVariant(
   13,
-  BufferLayout.struct([
-    BufferLayout.nu64('amount'),
-    BufferLayout.u8('decimals'),
-  ]),
+  BufferLayout.struct([BufferLayout.nu64('amount'), BufferLayout.u8('decimals')]),
   'approvedChecked',
 );
-LAYOUT.addVariant(
-  14,
-  BufferLayout.struct([
-    BufferLayout.nu64('amount'),
-    BufferLayout.u8('decimals'),
-  ]),
-  'mintToChecked',
-);
-LAYOUT.addVariant(
-  15,
-  BufferLayout.struct([
-    BufferLayout.nu64('amount'),
-    BufferLayout.u8('decimals'),
-  ]),
-  'burnedChecked',
-);
-LAYOUT.addVariant(
-  16,
-  BufferLayout.struct([publicKey('authority')]),
-  'InitializeAccount2',
-);
+LAYOUT.addVariant(14, BufferLayout.struct([BufferLayout.nu64('amount'), BufferLayout.u8('decimals')]), 'mintToChecked');
+LAYOUT.addVariant(15, BufferLayout.struct([BufferLayout.nu64('amount'), BufferLayout.u8('decimals')]), 'burnedChecked');
+LAYOUT.addVariant(16, BufferLayout.struct([publicKey('authority')]), 'InitializeAccount2');
 LAYOUT.addVariant(17, BufferLayout.struct([]), 'syncNative');
-LAYOUT.addVariant(
-  18,
-  BufferLayout.struct([publicKey('authority')]),
-  'initializeAccount3',
-);
-LAYOUT.addVariant(
-  19,
-  BufferLayout.struct([BufferLayout.u8('m')]),
-  'initializeMultisig2',
-);
+LAYOUT.addVariant(18, BufferLayout.struct([publicKey('authority')]), 'initializeAccount3');
+LAYOUT.addVariant(19, BufferLayout.struct([BufferLayout.u8('m')]), 'initializeMultisig2');
 LAYOUT.addVariant(
   20,
   BufferLayout.struct([

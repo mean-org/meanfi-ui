@@ -26,38 +26,32 @@ const transactions = [
   {
     slot: 115534798,
     token: 'MEAN',
-    signature:
-      '45n19mmfh1kkLfKY68ESM6TWqUV1TGu66HZVdbbTRMXSfoUD2MrLTd7Ka4Vm8KGUjHHNsrRKk3Z2W6Upeb3vuiMD',
+    signature: '45n19mmfh1kkLfKY68ESM6TWqUV1TGu66HZVdbbTRMXSfoUD2MrLTd7Ka4Vm8KGUjHHNsrRKk3Z2W6Upeb3vuiMD',
   },
   {
     slot: 115534529,
     token: 'MEAN',
-    signature:
-      'xSX65F5BAqk4SgYhcFCwwov3vuKi5vtBK3ec6gN6XvGB1Hop8Wvbc579UU8urYi86ikujzvjZMVYVobLKKUuRRo',
+    signature: 'xSX65F5BAqk4SgYhcFCwwov3vuKi5vtBK3ec6gN6XvGB1Hop8Wvbc579UU8urYi86ikujzvjZMVYVobLKKUuRRo',
   },
   {
     slot: 112757513,
     token: 'MEAN',
-    signature:
-      '4X7CwhbegXpH4SEZq1x97NVgzCaEyiQjFNR11nwnKtWCJFccJh5bc68qfFnyrvr9JAD82aW26FVxFvi8hkv9Cd99',
+    signature: '4X7CwhbegXpH4SEZq1x97NVgzCaEyiQjFNR11nwnKtWCJFccJh5bc68qfFnyrvr9JAD82aW26FVxFvi8hkv9Cd99',
   },
   {
     slot: 112757184,
     token: 'MEAN',
-    signature:
-      'okhvHtmaRwYzMpbTCGtsVdKL3DBhFsLEJtH5szJDRWYAcJQqYir9QMAGJz6xKN5mDNYmAitmsbTf9ktNCUGoTKF',
+    signature: 'okhvHtmaRwYzMpbTCGtsVdKL3DBhFsLEJtH5szJDRWYAcJQqYir9QMAGJz6xKN5mDNYmAitmsbTf9ktNCUGoTKF',
   },
   {
     slot: 112707500,
     token: 'MEAN',
-    signature:
-      '4eb6FsYa41uLs76ufT6L99uLDpR3RQrM6nwagPoF3iGbFWrRr2A2NzqmBk1NmMfsEWai7gUP2yxVSKvtHU5nHqWY',
+    signature: '4eb6FsYa41uLs76ufT6L99uLDpR3RQrM6nwagPoF3iGbFWrRr2A2NzqmBk1NmMfsEWai7gUP2yxVSKvtHU5nHqWY',
   },
   {
     slot: 112705254,
     token: 'MEAN',
-    signature:
-      '3Nnoz6HsMtjq5iXnmrGapUsvtK4DTTc9sVPakJiD7yEEGgfiLFXLs6i9nYcCwzVvZewTygq6rSLU6vjNJ5y84EDU',
+    signature: '3Nnoz6HsMtjq5iXnmrGapUsvtK4DTTc9sVPakJiD7yEEGgfiLFXLs6i9nYcCwzVvZewTygq6rSLU6vjNJ5y84EDU',
   },
 ];
 

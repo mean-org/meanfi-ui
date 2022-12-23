@@ -40,18 +40,12 @@ export const InputMean = (props: {
   const renderValidity = () => {
     if (isTouched) {
       if (isValid) {
-        return (
-          <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green" />
-        );
+        return <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green" />;
       } else {
-        return (
-          <IconWarningCover className="mean-svg-icons simplelink form-warning-icon fg-warning" />
-        );
+        return <IconWarningCover className="mean-svg-icons simplelink form-warning-icon fg-warning" />;
       }
     } else if (isValid) {
-      return (
-        <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green" />
-      );
+      return <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green" />;
     } else {
       return null;
     }

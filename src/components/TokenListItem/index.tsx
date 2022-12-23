@@ -16,22 +16,8 @@ export const TokenListItem = (props: {
   showUsdValues?: boolean;
   showZeroBalances?: boolean;
 }) => {
-  const {
-    name,
-    icon,
-    className,
-    mintAddress,
-    balance,
-    token,
-    showUsdValues,
-    showZeroBalances,
-  } = props;
-  const {
-    theme,
-    getTokenByMintAddress,
-    getTokenPriceBySymbol,
-    getTokenPriceByAddress,
-  } = useContext(AppStateContext);
+  const { name, icon, className, mintAddress, balance, token, showUsdValues, showZeroBalances } = props;
+  const { theme, getTokenByMintAddress, getTokenPriceBySymbol, getTokenPriceByAddress } = useContext(AppStateContext);
 
   const displayToken = token || getTokenByMintAddress(mintAddress);
 
@@ -43,21 +29,14 @@ export const TokenListItem = (props: {
     } else {
       return priceByAddress;
     }
-  }, [
-    displayToken,
-    mintAddress,
-    getTokenPriceBySymbol,
-    getTokenPriceByAddress,
-  ]);
+  }, [displayToken, mintAddress, getTokenPriceBySymbol, getTokenPriceByAddress]);
 
   const getDisplayTokenName = () => {
     if (name) {
       return name;
     }
 
-    return displayToken && displayToken.name
-      ? displayToken.name
-      : shortenAddress(mintAddress);
+    return displayToken && displayToken.name ? displayToken.name : shortenAddress(mintAddress);
   };
 
   const getDisplayBalance = () => {
@@ -68,11 +47,7 @@ export const TokenListItem = (props: {
   const getDisplayPrice = () => {
     if (tokenPrice > 0) {
       return (
-        <span
-          className={`badge small ml-1 ${
-            theme === 'light' ? 'golden fg-dark' : 'darken'
-          }`}
-        >
+        <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
           {toUsCurrency(tokenPrice)}
         </span>
       );
@@ -83,11 +58,7 @@ export const TokenListItem = (props: {
   const getDisplayUsdValue = () => {
     if (tokenPrice > 0 && balance > 0) {
       const value = balance * tokenPrice || 0;
-      return (
-        <div className="text-right font-size-90 font-bold fg-secondary-80">
-          {toUsCurrency(value)}
-        </div>
-      );
+      return <div className="text-right font-size-90 font-bold fg-secondary-80">{toUsCurrency(value)}</div>;
     }
     return null;
   };
@@ -105,12 +76,7 @@ export const TokenListItem = (props: {
         ) : (
           <>
             {displayToken && displayToken.logoURI ? (
-              <img
-                alt={`${displayToken.name}`}
-                width={24}
-                height={24}
-                src={displayToken.logoURI}
-              />
+              <img alt={`${displayToken.name}`} width={24} height={24} src={displayToken.logoURI} />
             ) : (
               <Identicon
                 address={displayToken ? displayToken.address : mintAddress}
@@ -123,9 +89,7 @@ export const TokenListItem = (props: {
       <div className="token-description">
         <div className="token-symbol">
           <span className="align-middle">
-            {displayToken && displayToken.symbol
-              ? displayToken.symbol
-              : shortenAddress(mintAddress)}
+            {displayToken && displayToken.symbol ? displayToken.symbol : shortenAddress(mintAddress)}
           </span>
           {showUsdValues && getDisplayPrice()}
         </div>

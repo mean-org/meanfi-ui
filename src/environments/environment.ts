@@ -39,16 +39,14 @@ export class AppConfigService {
       streamV2ProgramAddress: 'MSPCUMbLfy2MeT6geLMMzrUkv1Tx88XRApaVRdyxTuu',
       segmentAnalyticsKey: 'TPMrxxFTOatu7SCEMDBfMTThsPdqp4VU',
       influxDbUrl: 'https://metrics.meanfi.com:8086',
-      influxDbToken:
-        'AcVhBSCQ8XE9nTpR5cf2Gv8aU420BG-eKbxYDX-_PQ_qwyE4YS0oXeZFd8drfMkossPRs-fKqFMf7cbqxXatng==',
+      influxDbToken: 'AcVhBSCQ8XE9nTpR5cf2Gv8aU420BG-eKbxYDX-_PQ_qwyE4YS0oXeZFd8drfMkossPRs-fKqFMf7cbqxXatng==',
       influxDbOrg: 'meanops',
       influxDbBucket: 'meanfi-prod',
       logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
       logglyTag: 'MeanFiWebApp',
       idoAccountAddress: 'E7hiYsz4SRAXjadPYbjML2VDSfY1CwGUYFkHWU9yvk7n',
       idoAirdropTreasuryAddress: 'GFfFaytdGYtiXWfNuJXPusWjS5T792hvr4t6xnAJXEd6',
-      idoAirdropTreasurerAddress:
-        '9KYCrkB4LLC3HxLEPqE2PJpvYoDLszgWPKNVWp74uhC5',
+      idoAirdropTreasurerAddress: '9KYCrkB4LLC3HxLEPqE2PJpvYoDLszgWPKNVWp74uhC5',
       exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
       exchangeFlatFee: 0.25,
       stakingRewardsAcl: [
@@ -73,16 +71,14 @@ export class AppConfigService {
       streamV2ProgramAddress: 'MSPdQo5ZdrPh6rU1LsvUv5nRhAnj1mj6YQEqBUq8YwZ',
       segmentAnalyticsKey: '1VSk356IiaThR9fBBDko2QMJFDas33Yf',
       influxDbUrl: 'https://metrics.meanfi.com:8086',
-      influxDbToken:
-        'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
+      influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
       influxDbOrg: 'meanops',
       influxDbBucket: 'meanfi-dev',
       logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
       logglyTag: 'MeanFiWebApp',
       idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
       idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
-      idoAirdropTreasurerAddress:
-        'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
+      idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
       exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
       exchangeFlatFee: 0.25,
       stakingRewardsAcl: [
@@ -107,16 +103,14 @@ export class AppConfigService {
       streamV2ProgramAddress: 'MSPdQo5ZdrPh6rU1LsvUv5nRhAnj1mj6YQEqBUq8YwZ',
       segmentAnalyticsKey: '1VSk356IiaThR9fBBDko2QMJFDas33Yf',
       influxDbUrl: 'https://metrics.meanfi.com:8086',
-      influxDbToken:
-        'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
+      influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
       influxDbOrg: 'meanops',
       influxDbBucket: 'meanfi-dev',
       logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
       logglyTag: 'MeanFiWebApp',
       idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
       idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
-      idoAirdropTreasurerAddress:
-        'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
+      idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
       exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
       exchangeFlatFee: 0.25,
       stakingRewardsAcl: [
@@ -141,16 +135,14 @@ export class AppConfigService {
       streamV2ProgramAddress: 'MSPdQo5ZdrPh6rU1LsvUv5nRhAnj1mj6YQEqBUq8YwZ',
       segmentAnalyticsKey: '1VSk356IiaThR9fBBDko2QMJFDas33Yf',
       influxDbUrl: 'https://metrics.meanfi.com:8086',
-      influxDbToken:
-        'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
+      influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
       influxDbOrg: 'meanops',
       influxDbBucket: 'meanfi-dev',
       logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
       logglyTag: 'MeanFiWebApp',
       idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
       idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
-      idoAirdropTreasurerAddress:
-        'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
+      idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
       exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
       exchangeFlatFee: 0.25,
       stakingRewardsAcl: [
@@ -182,8 +174,7 @@ export class AppConfigService {
       logglyTag: '',
       idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
       idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
-      idoAirdropTreasurerAddress:
-        'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
+      idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
       exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
       exchangeFlatFee: 0.25,
       stakingRewardsAcl: [

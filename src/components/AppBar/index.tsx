@@ -10,15 +10,10 @@ import { useWallet } from 'contexts/wallet';
 import { isProd } from 'middleware/ui';
 import { useContext } from 'react';
 
-export const AppBar = (props: {
-  menuType: string;
-  topNavVisible: boolean;
-  onOpenDrawer: any;
-}) => {
+export const AppBar = (props: { menuType: string; topNavVisible: boolean; onOpenDrawer: any }) => {
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
-  const { isDepositOptionsModalVisible, hideDepositOptionsModal } =
-    useContext(AppStateContext);
+  const { isDepositOptionsModalVisible, hideDepositOptionsModal } = useContext(AppStateContext);
 
   return (
     <>

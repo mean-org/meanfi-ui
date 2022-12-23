@@ -9,17 +9,10 @@ import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
-import {
-  confirmationEvents,
-  TxConfirmationContext,
-  TxConfirmationInfo,
-} from 'contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
-import {
-  AppUsageEvent,
-  SegmentUnstakeMeanData,
-} from 'middleware/segment-service';
+import { AppUsageEvent, SegmentUnstakeMeanData } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import { formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from 'middleware/utils';
@@ -37,12 +30,7 @@ export const UnstakeTabView = (props: {
   selectedToken: TokenInfo | undefined;
   unstakedToken: TokenInfo | undefined;
 }) => {
-  const {
-    stakeClient,
-    tokenBalance,
-    selectedToken,
-    unstakedToken,
-  } = props;
+  const { stakeClient, tokenBalance, selectedToken, unstakedToken } = props;
 
   const {
     priceList,
@@ -80,21 +68,23 @@ export const UnstakeTabView = (props: {
     });
   }, [setTransactionStatus]);
 
-  const setFailureStatusAndNotify = useCallback((txStep: 'sign' | 'send') => {
-    const operation = txStep === 'sign'
-      ? TransactionStatus.SignTransactionFailure
-      : TransactionStatus.SendTransactionFailure;
-    setTransactionStatus({
-      lastOperation: transactionStatus.currentOperation,
-      currentOperation: operation,
-    });
-    openNotification({
-      title: t('notifications.error-title'),
-      description: t('notifications.error-sending-transaction'),
-      type: 'error',
-    });
-    setIsBusy(false);
-  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
+  const setFailureStatusAndNotify = useCallback(
+    (txStep: 'sign' | 'send') => {
+      const operation =
+        txStep === 'sign' ? TransactionStatus.SignTransactionFailure : TransactionStatus.SendTransactionFailure;
+      setTransactionStatus({
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: operation,
+      });
+      openNotification({
+        title: t('notifications.error-title'),
+        description: t('notifications.error-sending-transaction'),
+        type: 'error',
+      });
+      setIsBusy(false);
+    },
+    [setTransactionStatus, t, transactionStatus.currentOperation],
+  );
 
   const setSuccessStatus = useCallback(() => {
     setIsBusy(false);
@@ -143,28 +133,18 @@ export const UnstakeTabView = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-      ? `${t('staking.panel-right.tabset.unstake.unstake-button-busy')} ${
-          selectedToken && selectedToken.symbol
-        }`
+      ? `${t('staking.panel-right.tabset.unstake.unstake-button-busy')} ${selectedToken && selectedToken.symbol}`
       : !selectedToken || !tokenBalance
-      ? `${t(
-          'staking.panel-right.tabset.unstake.unstake-button-unavailable',
-        )} ${selectedToken && selectedToken.symbol}`
-      : !fromCoinAmount ||
-        !isValidNumber(fromCoinAmount) ||
-        !parseFloat(fromCoinAmount)
+      ? `${t('staking.panel-right.tabset.unstake.unstake-button-unavailable')} ${selectedToken && selectedToken.symbol}`
+      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : `${t('staking.panel-right.tabset.unstake.unstake-button-available')} ${
-          selectedToken && selectedToken.symbol
-        }`;
+      : `${t('staking.panel-right.tabset.unstake.unstake-button-available')} ${selectedToken && selectedToken.symbol}`;
   }, [fromCoinAmount, selectedToken, tokenBalance, connected, isBusy, t]);
 
   const isUnstakingFormValid = (): boolean => {
-    return fromCoinAmount &&
-      parseFloat(fromCoinAmount) > 0 &&
-      parseFloat(fromCoinAmount) <= tokenBalance
+    return fromCoinAmount && parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= tokenBalance
       ? true
       : false;
   };
@@ -199,16 +179,12 @@ export const UnstakeTabView = (props: {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.TransactionStart,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
           inputs: `uiAmount: ${uiAmount}`,
         });
 
         transactionLog.push({
-          action: getTransactionStatusForLogs(
-            TransactionStatus.InitTransaction,
-          ),
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: '',
         });
 
@@ -223,10 +199,7 @@ export const UnstakeTabView = (props: {
           valueInUsd: sMeanToMeanRate * parseFloat(unstakeMeanValue || '0'),
         };
         consoleOut('segment data:', segmentData, 'blue');
-        segmentAnalytics.recordEvent(
-          AppUsageEvent.UnstakeMeanFormButton,
-          segmentData,
-        );
+        segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFormButton, segmentData);
 
         return await stakeClient
           .unstakeTransaction(
@@ -240,9 +213,7 @@ export const UnstakeTabView = (props: {
               currentOperation: TransactionStatus.SignTransaction,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
               result: getTxIxResume(value),
             });
             transaction = value;
@@ -255,9 +226,7 @@ export const UnstakeTabView = (props: {
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
             customLogger.logError('Unstake transaction failed', {
@@ -307,10 +276,9 @@ export const UnstakeTabView = (props: {
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Unstaking ${formatThousands(
-                parseFloat(fromCoinAmount),
-                selectedToken.decimals,
-              )} ${selectedToken.symbol}`,
+              loadingMessage: `Unstaking ${formatThousands(parseFloat(fromCoinAmount), selectedToken.decimals)} ${
+                selectedToken.symbol
+              }`,
               completedTitle: 'Transaction confirmed',
               completedMessage: `Successfully unstaked ${formatThousands(
                 parseFloat(fromCoinAmount),
@@ -347,18 +315,13 @@ export const UnstakeTabView = (props: {
     setSuccessStatus,
   ]);
 
-  const recordTxConfirmation = useCallback(
-    (signature: string, operation: OperationType, success = true) => {
-      let event: any;
-      if (operation === OperationType.Unstake) {
-        event = success
-          ? AppUsageEvent.UnstakeMeanCompleted
-          : AppUsageEvent.UnstakeMeanFailed;
-        segmentAnalytics.recordEvent(event, { signature: signature });
-      }
-    },
-    [],
-  );
+  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
+    let event: any;
+    if (operation === OperationType.Unstake) {
+      event = success ? AppUsageEvent.UnstakeMeanCompleted : AppUsageEvent.UnstakeMeanFailed;
+      segmentAnalytics.recordEvent(event, { signature: signature });
+    }
+  }, []);
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
@@ -369,25 +332,17 @@ export const UnstakeTabView = (props: {
       }
 
       const reloadStakePools = () => {
-        const stakePoolsRefreshCta = document.getElementById(
-          'refresh-stake-pool-info',
-        );
+        const stakePoolsRefreshCta = document.getElementById('refresh-stake-pool-info');
         if (stakePoolsRefreshCta) {
           stakePoolsRefreshCta.click();
         } else {
-          console.log(
-            'element not found:',
-            '#refresh-stake-pool-info',
-            'red',
-          );
+          console.log('element not found:', '#refresh-stake-pool-info', 'red');
         }
       };
 
       if (item.operationType === OperationType.Unstake) {
         consoleOut(
-          `UnstakeTabView -> onTxConfirmed event handled for operation ${
-            OperationType[item.operationType]
-          }`,
+          `UnstakeTabView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
           item,
           'crimson',
         );
@@ -404,17 +359,11 @@ export const UnstakeTabView = (props: {
   const onTxTimedout = useCallback(
     (item: TxConfirmationInfo) => {
       const reloadStakePools = () => {
-        const stakePoolsRefreshCta = document.getElementById(
-          'refresh-stake-pool-info',
-        );
+        const stakePoolsRefreshCta = document.getElementById('refresh-stake-pool-info');
         if (stakePoolsRefreshCta) {
           stakePoolsRefreshCta.click();
         } else {
-          console.log(
-            'element not found:',
-            '#refresh-stake-pool-info',
-            'red',
-          );
+          console.log('element not found:', '#refresh-stake-pool-info', 'red');
         }
       };
 
@@ -469,10 +418,7 @@ export const UnstakeTabView = (props: {
       if (tokenBalance > 0) {
         getMeanQuote(tokenBalance).then(value => {
           consoleOut(
-            `Quote for ${formatThousands(
-              tokenBalance,
-              selectedToken?.decimals,
-            )} sMEAN`,
+            `Quote for ${formatThousands(tokenBalance, selectedToken?.decimals)} sMEAN`,
             `${formatThousands(value, selectedToken?.decimals)} MEAN`,
             'blue',
           );
@@ -499,14 +445,8 @@ export const UnstakeTabView = (props: {
           consoleOut('unStakeQuote:', value, 'blue');
           setUnstakeMeanValue(value.meanOutUiAmount.toString());
           consoleOut(
-            `Quote for ${formatThousands(
-              parseFloat(fromCoinAmount),
-              selectedToken?.decimals,
-            )} sMEAN`,
-            `${formatThousands(
-              value.meanOutUiAmount,
-              selectedToken?.decimals,
-            )} MEAN`,
+            `Quote for ${formatThousands(parseFloat(fromCoinAmount), selectedToken?.decimals)} sMEAN`,
+            `${formatThousands(value.meanOutUiAmount, selectedToken?.decimals)} MEAN`,
             'blue',
           );
           setSMeanToMeanRate(value.sMeanToMeanRateUiAmount);
@@ -520,9 +460,7 @@ export const UnstakeTabView = (props: {
   useEffect(() => {
     const percentageFromCoinAmount =
       tokenBalance > 0
-        ? `${((tokenBalance * parseFloat(percentageValue)) / 100).toFixed(
-            selectedToken?.decimals || 9,
-          )}`
+        ? `${((tokenBalance * parseFloat(percentageValue)) / 100).toFixed(selectedToken?.decimals || 9)}`
         : '';
 
     if (percentageValue) {
@@ -538,14 +476,8 @@ export const UnstakeTabView = (props: {
    * So we calculate the USD Amount relative to the input sMEAN: sMEAN x sMeanToMeanRateUiAmount x MEAN_current_price
    */
   const getUsdAmountForSmeanInput = useCallback(() => {
-    if (
-      fromCoinAmount &&
-      parseFloat(fromCoinAmount) > 0 &&
-      sMeanToMeanRate &&
-      meanPrice
-    ) {
-      const usdAmount =
-        parseFloat(fromCoinAmount) * sMeanToMeanRate * meanPrice;
+    if (fromCoinAmount && parseFloat(fromCoinAmount) > 0 && sMeanToMeanRate && meanPrice) {
+      const usdAmount = parseFloat(fromCoinAmount) * sMeanToMeanRate * meanPrice;
       return usdAmount;
     }
     return 0;
@@ -557,17 +489,9 @@ export const UnstakeTabView = (props: {
       setCanSubscribe(false);
       consoleOut('Setup event subscriptions -> UnstakeTabView', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut(
-        'Subscribed to event txConfirmed with:',
-        'onTxConfirmed',
-        'brown',
-      );
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut(
-        'Subscribed to event txTimedout with:',
-        'onTxTimedout',
-        'brown',
-      );
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
     }
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
@@ -602,21 +526,14 @@ export const UnstakeTabView = (props: {
           )}
         </span>
       </div>
-      <div className="form-label mt-2">
-        {t('staking.panel-right.tabset.unstake.amount-label')}
-      </div>
+      <div className="form-label mt-2">{t('staking.panel-right.tabset.unstake.amount-label')}</div>
       <div className={`well${isBusy ? ' disabled' : ''}`}>
         <div className="flexible-right mb-1">
           <div className="token-group">
             {percentages.map((percentage, index) => (
-              <div
-                key={index}
-                className="mb-1 d-flex flex-column align-items-center"
-              >
+              <div key={index} className="mb-1 d-flex flex-column align-items-center">
                 <div
-                  className={`token-max simplelink ${
-                    tokenBalance !== 0 ? 'active' : 'disabled'
-                  }`}
+                  className={`token-max simplelink ${tokenBalance !== 0 ? 'active' : 'disabled'}`}
                   onClick={() => onChangeValue(percentage)}
                 >
                   {percentage}%
@@ -658,41 +575,25 @@ export const UnstakeTabView = (props: {
         </div>
         <div className="flex-fixed-right">
           <div className="left inner-label">
-            <span>
-              {t('staking.panel-right.tabset.unstake.send-amount.label-right')}:
-            </span>
+            <span>{t('staking.panel-right.tabset.unstake.send-amount.label-right')}:</span>
             <span>
               {`${
-                tokenBalance && selectedToken
-                  ? getAmountWithSymbol(
-                      tokenBalance,
-                      selectedToken?.address,
-                      true,
-                    )
-                  : '0'
+                tokenBalance && selectedToken ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true) : '0'
               }`}
             </span>
           </div>
           <div className="right inner-label">
             <span
-              className={
-                loadingPrices
-                  ? 'click-disabled fg-orange-red pulsate'
-                  : 'simplelink'
-              }
+              className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
               onClick={() => refreshPrices()}
             >
               ~$
-              {fromCoinAmount
-                ? formatThousands(getUsdAmountForSmeanInput(), 2, 2)
-                : '0.00'}
+              {fromCoinAmount ? formatThousands(getUsdAmountForSmeanInput(), 2, 2) : '0.00'}
             </span>
           </div>
         </div>
       </div>
-      <span className="info-label">
-        {t('staking.panel-right.tabset.unstake.notification-label-two')}
-      </span>
+      <span className="info-label">{t('staking.panel-right.tabset.unstake.notification-label-two')}</span>
 
       {/* Action button */}
       <Button

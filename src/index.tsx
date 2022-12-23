@@ -21,22 +21,12 @@ import { CustomLoggerService } from 'services/logger';
 
 export const gitInfo = GitInfo();
 export const appConfig = new AppConfigService(process.env.REACT_APP_ENV);
-const appBuildInfo = `Branch: ${gitInfo.branch || '-'}. Commit: ${
-  gitInfo.commit.shortHash || '-'
-}`;
+const appBuildInfo = `Branch: ${gitInfo.branch || '-'}. Commit: ${gitInfo.commit.shortHash || '-'}`;
 console.log(`%cApp version:`, 'color:brown', process.env.REACT_APP_VERSION);
 console.log(`%cBuild details:`, 'color:brown', appBuildInfo);
-console.log(
-  `%cBuild date:`,
-  'color:brown',
-  new Date(Date.parse(gitInfo.commit.date)).toLocaleString(),
-);
+console.log(`%cBuild date:`, 'color:brown', new Date(Date.parse(gitInfo.commit.date)).toLocaleString());
 console.log(`%cEnvironment:`, 'color:brown', process.env.REACT_APP_ENV);
-console.log(
-  `%cProgramId:`,
-  'color:brown',
-  appConfig.getConfig().streamProgramAddress,
-);
+console.log(`%cProgramId:`, 'color:brown', appConfig.getConfig().streamProgramAddress);
 export const customLogger = new CustomLoggerService();
 
 i18next.use(LanguageDetector).init({

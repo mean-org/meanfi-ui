@@ -2,14 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
-import {
-  IconCopy,
-  IconFacebook,
-  IconLinkedin,
-  IconTelegram,
-  IconTwitter,
-  IconWhatsapp,
-} from '../../Icons';
+import { IconCopy, IconFacebook, IconLinkedin, IconTelegram, IconTwitter, IconWhatsapp } from '../../Icons';
 import { copyText } from '../../middleware/ui';
 import {
   FacebookShareButton,
@@ -22,19 +15,14 @@ import { useWallet } from '../../contexts/wallet';
 import { appConfig } from '../..';
 import { openNotification } from '../Notifications';
 
-export const ReferFriendModal = (props: {
-  handleClose: any;
-  isVisible: boolean;
-}) => {
+export const ReferFriendModal = (props: { handleClose: any; isVisible: boolean }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const [referralLink, setReferralLink] = useState('');
 
   useEffect(() => {
     if (!referralLink && publicKey) {
-      const newLink = `${
-        appConfig.getConfig().appUrl
-      }?ref=${publicKey.toBase58()}`;
+      const newLink = `${appConfig.getConfig().appUrl}?ref=${publicKey.toBase58()}`;
       setReferralLink(newLink);
     }
   }, [publicKey, referralLink]);
@@ -69,16 +57,12 @@ export const ReferFriendModal = (props: {
                   <span className="badge orange-red referrals-badge">{referrals}</span>
                 )} */}
         </div>
-        <h4 className="refer-friend-hint">
-          {t('referrals.refer-friend-hint')}
-        </h4>
+        <h4 className="refer-friend-hint">{t('referrals.refer-friend-hint')}</h4>
         <div className="well small mb-2">
           <div className="flex-fixed-right">
             <div className="left position-relative">
               <span className="recipient-field-wrapper">
-                <span className="referral-link font-size-75 text-monospace">
-                  {referralLink}
-                </span>
+                <span className="referral-link font-size-75 text-monospace">{referralLink}</span>
               </span>
             </div>
             <div className="right">
@@ -90,25 +74,13 @@ export const ReferFriendModal = (props: {
         </div>
         <div className="flex-row align-items-center">
           <span className="ml-2">{t('referrals.share-to')}</span>
-          <FacebookShareButton
-            url={referralLink}
-            quote={t('referrals.modal-title')}
-            className="share-button"
-          >
+          <FacebookShareButton url={referralLink} quote={t('referrals.modal-title')} className="share-button">
             <IconFacebook className="mean-svg-icons" />
           </FacebookShareButton>
-          <TwitterShareButton
-            url={referralLink}
-            title={t('referrals.modal-title')}
-            className="share-button"
-          >
+          <TwitterShareButton url={referralLink} title={t('referrals.modal-title')} className="share-button">
             <IconTwitter className="mean-svg-icons" />
           </TwitterShareButton>
-          <TelegramShareButton
-            url={referralLink}
-            title={t('referrals.modal-title')}
-            className="share-button"
-          >
+          <TelegramShareButton url={referralLink} title={t('referrals.modal-title')} className="share-button">
             <IconTelegram className="mean-svg-icons" />
           </TelegramShareButton>
           <WhatsappShareButton

@@ -1,4 +1,4 @@
-import { AssetCta, MetaInfoCtaAction } from "models/accounts";
+import { AssetCta, MetaInfoCtaAction } from 'models/accounts';
 
 export const getMergeAccountsCta = (
   caption: string,
@@ -20,4 +20,4 @@ export const getMergeAccountsCta = (
     });
   }
   return actions;
-}
+};

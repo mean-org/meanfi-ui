@@ -31,18 +31,10 @@ export const NotFoundView = () => {
             style={{ enableBackground: 'new 0 0 200 82.7' } as CustomCSSProps}
           >
             <g id="Calque_1">
-              <text
-                id="XMLID_3_"
-                transform="matrix(1.2187 0 0 1 13 75.6393)"
-                className="st0 st1"
-              >
+              <text id="XMLID_3_" transform="matrix(1.2187 0 0 1 13 75.6393)" className="st0 st1">
                 4
               </text>
-              <text
-                id="XMLID_4_"
-                transform="matrix(1.2187 0 0 1 133.0003 73.6393)"
-                className="st0 st1"
-              >
+              <text id="XMLID_4_" transform="matrix(1.2187 0 0 1 133.0003 73.6393)" className="st0 st1">
                 4
               </text>
             </g>
@@ -71,13 +63,7 @@ export const NotFoundView = () => {
                 </g>
               </g>
               <defs>
-                <filter
-                  id="blurFilter4"
-                  x="-20"
-                  y="-20"
-                  width="200"
-                  height="200"
-                >
+                <filter id="blurFilter4" x="-20" y="-20" width="200" height="200">
                   <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
                 </filter>
               </defs>

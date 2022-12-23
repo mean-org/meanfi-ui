@@ -10,8 +10,7 @@ export const WizardStepSelector = (props: {
   showLabel?: boolean;
   position?: 'left' | 'right';
 }) => {
-  const { steps, step, extraClass, position, showLabel, onValueSelected } =
-    props;
+  const { steps, step, extraClass, position, showLabel, onValueSelected } = props;
   const { t } = useTranslation('common');
 
   const onChangeValue = useCallback(
@@ -26,14 +25,8 @@ export const WizardStepSelector = (props: {
       <span className="wizard-stepper-handles">
         {[...Array(steps)].map((item: number, index: number) => {
           return (
-            <div
-              key={`${index + 1}`}
-              className="handle-wrapper"
-              onClick={() => onChangeValue(index)}
-            >
-              <span
-                className={index <= step ? 'step-handle active' : 'step-handle'}
-              ></span>
+            <div key={`${index + 1}`} className="handle-wrapper" onClick={() => onChangeValue(index)}>
+              <span className={index <= step ? 'step-handle active' : 'step-handle'}></span>
             </div>
           );
         })}

@@ -1,10 +1,6 @@
 import React, { useContext, useMemo } from 'react';
 import { environment } from '../environments/environment';
-import {
-  Cluster,
-  Connection,
-  ConnectionConfig,
-} from '@solana/web3.js';
+import { Cluster, Connection, ConnectionConfig } from '@solana/web3.js';
 import { DEFAULT_RPCS, RpcConfig } from '../services/connections-hq';
 import { useLocalStorageState } from '../middleware/utils';
 import { TRANSACTION_STATUS_RETRY_TIMEOUT } from '../constants';
@@ -74,15 +70,9 @@ export function ConnectionProvider({ children = undefined as any }) {
   const [cachedRpcJson] = useLocalStorageState('cachedRpc');
   const cachedRpc = cachedRpcJson as RpcConfig;
 
-  const [slippage, setSlippage] = useLocalStorageState(
-    'slippage',
-    DEFAULT_SLIPPAGE.toString(),
-  );
+  const [slippage, setSlippage] = useLocalStorageState('slippage', DEFAULT_SLIPPAGE.toString());
 
-  const connection = useMemo(
-    () => new Connection(cachedRpc.httpProvider, failsafeConnectionConfig),
-    [cachedRpc],
-  );
+  const connection = useMemo(() => new Connection(cachedRpc.httpProvider, failsafeConnectionConfig), [cachedRpc]);
 
   return (
     <ConnectionContext.Provider

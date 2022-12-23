@@ -7,11 +7,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { getDayOfWeek, getOrdinalDay } from '../../middleware/ui';
 import { DdcaFrequencyOption } from '../../models/ddca-models';
 
-export const DdcaFrequencySelectorModal = (props: {
-  handleClose: any;
-  handleOk: any;
-  isVisible: boolean;
-}) => {
+export const DdcaFrequencySelectorModal = (props: { handleClose: any; handleOk: any; isVisible: boolean }) => {
   const today = new Date();
   const { t, i18n } = useTranslation('common');
   const [currentLocale, setCurrentLocale] = useState(i18n.language || 'en-US');
@@ -39,11 +35,7 @@ export const DdcaFrequencySelectorModal = (props: {
             <div
               key={`${option.dcaInterval}`}
               className={`item-card ${
-                option.name === ddcaOption?.name
-                  ? 'selected'
-                  : option.disabled
-                  ? 'disabled'
-                  : ''
+                option.name === ddcaOption?.name ? 'selected' : option.disabled ? 'disabled' : ''
               }`}
               onClick={() => {
                 if (!option.disabled) {
@@ -55,9 +47,7 @@ export const DdcaFrequencySelectorModal = (props: {
                 <CheckOutlined />
               </div>
               <div className="item-meta">
-                <div className="item-name">
-                  {t(`ddca-selector.${option.translationId}.name`)}
-                </div>
+                <div className="item-name">{t(`ddca-selector.${option.translationId}.name`)}</div>
                 <div className="item-description">
                   {t(`ddca-selector.${option.translationId}.description`, {
                     ordinalDay: getOrdinalDay(today),
@@ -75,9 +65,7 @@ export const DdcaFrequencySelectorModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={
-        <div className="modal-title">{t('ddca-selector.modal-title')}</div>
-      }
+      title={<div className="modal-title">{t('ddca-selector.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={props.handleOk}

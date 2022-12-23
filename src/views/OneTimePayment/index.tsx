@@ -25,18 +25,11 @@ import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection, useConnectionConfig } from 'contexts/connection';
-import {
-  confirmationEvents,
-  TxConfirmationContext,
-  TxConfirmationInfo,
-} from 'contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
 import { customLogger } from 'index';
-import {
-  AppUsageEvent,
-  SegmentStreamOTPTransferData,
-} from 'middleware/segment-service';
+import { AppUsageEvent, SegmentStreamOTPTransferData } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import {
   addMinutes,
@@ -74,12 +67,7 @@ export const OneTimePayment = (props: {
   transferCompleted?: any;
   userBalances: any;
 }) => {
-  const {
-    onOpenTokenSelector,
-    selectedToken,
-    transferCompleted,
-    userBalances,
-  } = props;
+  const { onOpenTokenSelector, selectedToken, transferCompleted, userBalances } = props;
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
@@ -117,23 +105,20 @@ export const OneTimePayment = (props: {
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [tokenBalanceBn, setSelectedTokenBalanceBn] = useState(new BN(0));
-  const [recipientAddressInfo, setRecipientAddressInfo] =
-    useState<RecipientAddressInfo>({ type: '', mint: '', owner: '' });
+  const [recipientAddressInfo, setRecipientAddressInfo] = useState<RecipientAddressInfo>({
+    type: '',
+    mint: '',
+    owner: '',
+  });
   const [otpFees, setOtpFees] = useState<TransactionFees>(NO_FEES);
 
   // Create and cache Payment Streaming instance
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(
-      connection,
-      new PublicKey(streamV2ProgramAddress),
-      'confirmed'
-    );
+    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
   }, [connection, streamV2ProgramAddress]);
 
   const isNative = useMemo(() => {
-    return selectedToken && selectedToken.address === NATIVE_SOL.address
-      ? true
-      : false;
+    return selectedToken && selectedToken.address === NATIVE_SOL.address ? true : false;
   }, [selectedToken]);
 
   const isScheduledPayment = useCallback((): boolean => {
@@ -144,16 +129,12 @@ export const OneTimePayment = (props: {
   }, [paymentStartDate]);
 
   const getFeeAmount = useCallback(() => {
-    return isScheduledPayment()
-      ? otpFees.blockchainFee + otpFees.mspFlatFee
-      : otpFees.blockchainFee;
+    return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
   }, [isScheduledPayment, otpFees.blockchainFee, otpFees.mspFlatFee]);
 
   const getMinSolBlanceRequired = useCallback(() => {
     const feeAmount = getFeeAmount();
-    return feeAmount > MIN_SOL_BALANCE_REQUIRED
-      ? feeAmount
-      : MIN_SOL_BALANCE_REQUIRED;
+    return feeAmount > MIN_SOL_BALANCE_REQUIRED ? feeAmount : MIN_SOL_BALANCE_REQUIRED;
   }, [getFeeAmount]);
 
   const getMaxAmount = useCallback(() => {
@@ -188,17 +169,10 @@ export const OneTimePayment = (props: {
     if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
-    const price =
-      getTokenPriceByAddress(selectedToken.address) ||
-      getTokenPriceBySymbol(selectedToken.symbol);
+    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
 
     return parseFloat(fromCoinAmount) * price;
-  }, [
-    fromCoinAmount,
-    selectedToken,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-  ]);
+  }, [fromCoinAmount, selectedToken, getTokenPriceByAddress, getTokenPriceBySymbol]);
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
@@ -210,12 +184,7 @@ export const OneTimePayment = (props: {
       setIsVerifiedRecipient(false);
       setSelectedStream(undefined);
     },
-    [
-      setIsVerifiedRecipient,
-      resetTransactionStatus,
-      resetContractValues,
-      setSelectedStream,
-    ],
+    [setIsVerifiedRecipient, resetTransactionStatus, resetContractValues, setSelectedStream],
   );
 
   // Setup event handler for Tx confirmation error
@@ -232,9 +201,7 @@ export const OneTimePayment = (props: {
       return new BN(0);
     }
 
-    return parseFloat(fromCoinAmount) > 0
-      ? toTokenAmountBn(fromCoinAmount, selectedToken.decimals)
-      : new BN(0);
+    return parseFloat(fromCoinAmount) > 0 ? toTokenAmountBn(fromCoinAmount, selectedToken.decimals) : new BN(0);
   }, [fromCoinAmount, selectedToken]);
 
   /////////////////////
@@ -290,9 +257,7 @@ export const OneTimePayment = (props: {
 
     const getInfo = async (address: string) => {
       try {
-        const accountInfo = (
-          await connection.getParsedAccountInfo(new PublicKey(address))
-        ).value;
+        const accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
         consoleOut('accountInfo:', accountInfo, 'blue');
         return accountInfo;
       } catch (error) {
@@ -339,9 +304,7 @@ export const OneTimePayment = (props: {
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
-      const ellipsisElements = document.querySelectorAll(
-        '.overflow-ellipsis-middle',
-      );
+      const ellipsisElements = document.querySelectorAll('.overflow-ellipsis-middle');
       for (const element of ellipsisElements) {
         const e = element as HTMLElement;
         if (e.offsetWidth < e.scrollWidth) {
@@ -369,17 +332,9 @@ export const OneTimePayment = (props: {
       setCanSubscribe(false);
       consoleOut('Setup event subscriptions -> OneTimePayment', '', 'brown');
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut(
-        'Subscribed to event txConfirmed with:',
-        'onTxConfirmed',
-        'brown',
-      );
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut(
-        'Subscribed to event txTimedout with:',
-        'onTxTimedout',
-        'brown',
-      );
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
     }
   }, [publicKey, canSubscribe, onTxConfirmed, onTxTimedout]);
 
@@ -486,12 +441,7 @@ export const OneTimePayment = (props: {
   };
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress &&
-      wallet &&
-      publicKey &&
-      recipientAddress === publicKey.toBase58()
-      ? true
-      : false;
+    return recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58() ? true : false;
   };
 
   const isSendAmountValid = (): boolean => {
@@ -505,10 +455,8 @@ export const OneTimePayment = (props: {
       inputAmount.gtn(0) &&
       tokenBalanceBn.gtn(0) &&
       nativeBalance >= getMinSolBlanceRequired() &&
-      ((selectedToken.address === NATIVE_SOL.address &&
-        parseFloat(fromCoinAmount) <= getMaxAmount()) ||
-        (selectedToken.address !== NATIVE_SOL.address &&
-          tokenBalanceBn.gte(inputAmount)))
+      ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+        (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
       ? true
       : false;
   };
@@ -524,18 +472,11 @@ export const OneTimePayment = (props: {
       return t('transactions.validation.not-connected');
     } else if (!recipientAddress || isAddressOwnAccount()) {
       return t('transactions.validation.select-recipient');
-    } else if (
-      !isRecipientAddressValid() ||
-      !isValidAddress(recipientAddress)
-    ) {
+    } else if (!isRecipientAddressValid() || !isValidAddress(recipientAddress)) {
       return 'Invalid recipient address';
     } else if (!selectedToken || tokenBalanceBn.isZero()) {
       return t('transactions.validation.no-balance');
-    } else if (
-      !fromCoinAmount ||
-      !isValidNumber(fromCoinAmount) ||
-      inputAmount.isZero()
-    ) {
+    } else if (!fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()) {
       return t('transactions.validation.no-amount');
     } else if (
       (isNative && parseFloat(fromCoinAmount) > getMaxAmount()) ||
@@ -587,27 +528,27 @@ export const OneTimePayment = (props: {
 
       if (!isScheduledPayment()) {
         const accounts: TransferTransactionAccounts = {
-          feePayer: publicKey,                            // feePayer
-          sender: new PublicKey(data.wallet),             // sender
-          beneficiary: new PublicKey(data.beneficiary),   // beneficiary
-          mint: new PublicKey(data.associatedToken),      // mint
+          feePayer: publicKey, // feePayer
+          sender: new PublicKey(data.wallet), // sender
+          beneficiary: new PublicKey(data.beneficiary), // beneficiary
+          mint: new PublicKey(data.associatedToken), // mint
         };
         const { transaction } = await paymentStreaming.buildTransferTransaction(
-          accounts,                 // accounts
-          data.amount,              // amount
+          accounts, // accounts
+          data.amount, // amount
         );
         return transaction;
       }
 
       const accounts: ScheduleTransferTransactionAccounts = {
-        feePayer: publicKey,                            // feePayer
-        beneficiary: new PublicKey(data.beneficiary),   // beneficiary
-        owner: new PublicKey(data.wallet),              // owner
-        mint: new PublicKey(data.associatedToken),      // mint
+        feePayer: publicKey, // feePayer
+        beneficiary: new PublicKey(data.beneficiary), // beneficiary
+        owner: new PublicKey(data.wallet), // owner
+        mint: new PublicKey(data.associatedToken), // mint
       };
       const { transaction } = await paymentStreaming.buildScheduleTransferTransaction(
-        accounts,                 // accounts
-        data.amount,              // amount
+        accounts, // accounts
+        data.amount, // amount
       );
       return transaction;
     };
@@ -635,11 +576,7 @@ export const OneTimePayment = (props: {
       const beneficiary = new PublicKey(recipientAddress);
       consoleOut('associatedToken:', selectedToken.address);
       const associatedToken = new PublicKey(selectedToken.address);
-      const amount = toTokenAmount(
-        fromCoinAmount,
-        selectedToken.decimals,
-        true,
-      );
+      const amount = toTokenAmount(fromCoinAmount, selectedToken.decimals, true);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       let startUtc = new Date(parsedDate);
@@ -655,21 +592,9 @@ export const OneTimePayment = (props: {
       }
 
       consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
-      consoleOut(
-        'fromParsedDate.toLocaleString()',
-        startUtc.toLocaleString(),
-        'crimson',
-      );
-      consoleOut(
-        'fromParsedDate.toISOString()',
-        startUtc.toISOString(),
-        'crimson',
-      );
-      consoleOut(
-        'fromParsedDate.toUTCString()',
-        startUtc.toUTCString(),
-        'crimson',
-      );
+      consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
+      consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
+      consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
 
       // Create a transaction
       const data: OtpTxParams = {
@@ -682,9 +607,7 @@ export const OneTimePayment = (props: {
       };
 
       consoleOut('data:', data, 'blue');
-      const price =
-        getTokenPriceByAddress(selectedToken.address) ||
-        getTokenPriceBySymbol(selectedToken.symbol);
+      const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
 
       // Report event to Segment analytics
       const segmentData: SegmentStreamOTPTransferData = {
@@ -696,10 +619,7 @@ export const OneTimePayment = (props: {
         valueInUsd: price * parseFloat(fromCoinAmount),
       };
       consoleOut('segment data:', segmentData, 'blue');
-      segmentAnalytics.recordEvent(
-        AppUsageEvent.TransferOTPFormButton,
-        segmentData,
-      );
+      segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFormButton, segmentData);
 
       // Log input data
       transactionLog.push({
@@ -723,9 +643,7 @@ export const OneTimePayment = (props: {
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure,
-              ),
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             });
             customLogger.logError('One-Time Payment transaction failed', {
               transcript: transactionLog,
@@ -741,9 +659,7 @@ export const OneTimePayment = (props: {
             currentOperation: TransactionStatus.SignTransaction,
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.InitTransactionSuccess,
-            ),
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
             result: getTxIxResume(value),
           });
           transaction = value;
@@ -756,9 +672,7 @@ export const OneTimePayment = (props: {
             currentOperation: TransactionStatus.InitTransactionFailure,
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(
-              TransactionStatus.InitTransactionFailure,
-            ),
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`,
           });
           customLogger.logError('One-Time Payment transaction failed', {
@@ -778,12 +692,7 @@ export const OneTimePayment = (props: {
       consoleOut('created:', created);
       if (created && !transactionCancelled && transaction) {
         const txTitle = isScheduledPayment() ? 'Scheduled Transfer' : 'One Time Transfer';
-        const sign = await signTx(
-          txTitle,
-          wallet,
-          publicKey,
-          transaction as Transaction,
-        );
+        const sign = await signTx(txTitle, wallet, publicKey, transaction as Transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -791,11 +700,7 @@ export const OneTimePayment = (props: {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.SignTransactionSuccess,
           });
-          const sent = await sendTx(
-            txTitle,
-            connection,
-            encodedTx,
-          );
+          const sent = await sendTx(txTitle, connection, encodedTx);
           consoleOut('sent:', sent);
           if (sent.signature) {
             signature = sent.signature;
@@ -822,10 +727,9 @@ export const OneTimePayment = (props: {
                 finality: 'confirmed',
                 txInfoFetchStatus: 'fetching',
                 loadingTitle: 'Confirming transaction',
-                loadingMessage: `Sending ${formatThousands(
-                  parseFloat(fromCoinAmount),
-                  selectedToken.decimals,
-                )} ${selectedToken.symbol}`,
+                loadingMessage: `Sending ${formatThousands(parseFloat(fromCoinAmount), selectedToken.decimals)} ${
+                  selectedToken.symbol
+                }`,
                 completedTitle: 'Transaction confirmed',
                 completedMessage: `Successfully sent ${formatThousands(
                   parseFloat(fromCoinAmount),
@@ -897,7 +801,7 @@ export const OneTimePayment = (props: {
     isScheduledPayment,
     transferCompleted,
     getFeeAmount,
-    t
+    t,
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {
@@ -933,11 +837,7 @@ export const OneTimePayment = (props: {
                 />
                 <span
                   id="payment-recipient-static-field"
-                  className={`${
-                    recipientAddress
-                      ? 'overflow-ellipsis-middle'
-                      : 'placeholder-text'
-                  }`}
+                  className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
                 >
                   {recipientAddress || t('transactions.recipient.placeholder')}
                 </span>
@@ -948,19 +848,13 @@ export const OneTimePayment = (props: {
             </div>
           </div>
           {recipientAddress && !isValidAddress(recipientAddress) && (
-            <span className="form-field-error">
-              {t('transactions.validation.address-validation')}
-            </span>
+            <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
           )}
           {isAddressOwnAccount() && (
-            <span className="form-field-error">
-              {t('transactions.recipient.recipient-is-own-account')}
-            </span>
+            <span className="form-field-error">{t('transactions.recipient.recipient-is-own-account')}</span>
           )}
           {recipientAddress && !isRecipientAddressValid() && (
-            <span className="form-field-error">
-              {getRecipientAddressValidation()}
-            </span>
+            <span className="form-field-error">{getRecipientAddressValidation()}</span>
           )}
         </div>
 
@@ -977,8 +871,7 @@ export const OneTimePayment = (props: {
                       mintAddress={selectedToken.address}
                       showCaretDown={true}
                       showName={
-                        selectedToken.name === CUSTOM_TOKEN_NAME ||
-                        selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+                        selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
                           ? true
                           : false
                       }
@@ -986,25 +879,16 @@ export const OneTimePayment = (props: {
                     />
                   </>
                 )}
-                {selectedToken &&
-                tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
+                {selectedToken && tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
                   <div
                     className="token-max simplelink"
                     onClick={() => {
                       console.log('decimals:', selectedToken.decimals);
                       if (selectedToken.address === NATIVE_SOL.address) {
-                        const amount =
-                          nativeBalance - getMinSolBlanceRequired();
-                        setFromCoinAmount(
-                          cutNumber(
-                            amount > 0 ? amount : 0,
-                            selectedToken.decimals,
-                          ),
-                        );
+                        const amount = nativeBalance - getMinSolBlanceRequired();
+                        setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
                       } else {
-                        setFromCoinAmount(
-                          toUiAmount(tokenBalanceBn, selectedToken.decimals),
-                        );
+                        setFromCoinAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
                       }
                     }}
                   >
@@ -1037,11 +921,7 @@ export const OneTimePayment = (props: {
             </div>
             <div className="right inner-label">
               <span
-                className={
-                  loadingPrices
-                    ? 'click-disabled fg-orange-red pulsate'
-                    : 'simplelink'
-                }
+                className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                 onClick={() => refreshPrices()}
               >
                 ~${fromCoinAmount ? formatAmount(getTokenPrice(), 2) : '0.00'}
@@ -1051,9 +931,7 @@ export const OneTimePayment = (props: {
           {selectedToken &&
             selectedToken.address === NATIVE_SOL.address &&
             (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
-              <div className="form-field-error">
-                {t('transactions.validation.minimum-balance-required')}
-              </div>
+              <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
             )}
         </div>
 
@@ -1108,9 +986,7 @@ export const OneTimePayment = (props: {
 
         {isWhitelisted && (
           <>
-            <div className="form-label">
-              Schedule transfer for: (For dev team only)
-            </div>
+            <div className="form-label">Schedule transfer for: (For dev team only)</div>
             <div className="well">
               <Select
                 value={fixedScheduleValue}
@@ -1125,19 +1001,14 @@ export const OneTimePayment = (props: {
                 <Option value={20}>20 minutes from now</Option>
                 <Option value={30}>30 minutes from now</Option>
               </Select>
-              <div className="form-field-hint">
-                Selecting a value will override your date selection
-              </div>
+              <div className="form-field-hint">Selecting a value will override your date selection</div>
             </div>
           </>
         )}
 
         {/* Confirm recipient address is correct Checkbox */}
         <div className="mb-2">
-          <Checkbox
-            checked={isVerifiedRecipient}
-            onChange={onIsVerifiedRecipientChange}
-          >
+          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
             {t('transfers.verified-recipient-disclaimer')}
           </Checkbox>
         </div>

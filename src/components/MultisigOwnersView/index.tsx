@@ -19,9 +19,7 @@ export const MultisigOwnersView = (props: {
 
   const titleContent = (
     <div className="flexible-left">
-      <div className="left">
-        {t('multisig.multisig-account-detail.multisig-owners')}
-      </div>
+      <div className="left">{t('multisig.multisig-account-detail.multisig-owners')}</div>
       <div className="right">
         <Button
           type="default"
@@ -39,10 +37,7 @@ export const MultisigOwnersView = (props: {
         <div className="cebra-list">
           {props.participants.map((item, index) => {
             return (
-              <div
-                key={`${index}`}
-                className="cebra-list-item flex-fixed-right align-items-center"
-              >
+              <div key={`${index}`} className="cebra-list-item flex-fixed-right align-items-center">
                 <div className="left">{item.name || `Owner ${index + 1}`}</div>
                 <CopyExtLinkGroup
                   content={item.address}
@@ -55,9 +50,7 @@ export const MultisigOwnersView = (props: {
           })}
         </div>
       ) : (
-        <div className="pl-1">
-          {t('multisig.create-multisig.multisig-no-participants')}
-        </div>
+        <div className="pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>
       )}
     </>
   );
@@ -74,9 +67,7 @@ export const MultisigOwnersView = (props: {
       >
         {props.className ? (
           <span className={`${props.className}`}>
-            (
-            <span className="simplelink underline-on-hover">{props.label}</span>
-            )
+            (<span className="simplelink underline-on-hover">{props.label}</span>)
           </span>
         ) : (
           <span className="simplelink underline-on-hover">{props.label}</span>

@@ -28,10 +28,7 @@ export const NftCreators = (props: { creators: Creator[] }) => {
           <div className="item-list-body compact dark pt-1">
             {creators.map((item, index) => {
               return (
-                <div
-                  key={`${index}-${item.address.toBase58()}`}
-                  className="item-list-row"
-                >
+                <div key={`${index}-${item.address.toBase58()}`} className="item-list-row">
                   <div className="std-table-cell responsive-cell px-2 text-left">
                     <Tooltip title={item.verified ? 'Verified' : 'Unverified'}>
                       {item.verified ? (
@@ -56,9 +53,7 @@ export const NftCreators = (props: { creators: Creator[] }) => {
                       newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.address.toBase58()}${getSolanaExplorerClusterParam()}`}
                     />
                   </div>
-                  <div className="std-table-cell fixed-width-80 px-2 text-right border-left">
-                    {item.share}%
-                  </div>
+                  <div className="std-table-cell fixed-width-80 px-2 text-right border-left">{item.share}%</div>
                 </div>
               );
             })}

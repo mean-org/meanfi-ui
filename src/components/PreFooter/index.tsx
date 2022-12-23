@@ -24,9 +24,7 @@ export const PreFooter = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <span className="menu-item-text">
-                      {t('ui-menus.app-context-menu.discord')}
-                    </span>
+                    <span className="menu-item-text">{t('ui-menus.app-context-menu.discord')}</span>
                   </a>
                 </li>
                 <li>
@@ -36,9 +34,7 @@ export const PreFooter = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <span className="menu-item-text">
-                      {t('ui-menus.app-context-menu.twitter')}
-                    </span>
+                    <span className="menu-item-text">{t('ui-menus.app-context-menu.twitter')}</span>
                   </a>
                 </li>
                 <li>
@@ -48,9 +44,7 @@ export const PreFooter = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <span className="menu-item-text">
-                      {t('ui-menus.app-context-menu.blog')}
-                    </span>
+                    <span className="menu-item-text">{t('ui-menus.app-context-menu.blog')}</span>
                   </a>
                 </li>
                 <li>
@@ -60,9 +54,7 @@ export const PreFooter = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <span className="menu-item-text">
-                      {t('ui-menus.app-context-menu.how-to-use')}
-                    </span>
+                    <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
                   </a>
                 </li>
               </ul>
@@ -74,11 +66,7 @@ export const PreFooter = () => {
                   ❤️
                 </span>{' '}
                 {t('pre-footer.on-solana')}{' '}
-                <img
-                  className="small-solana-icon"
-                  src="/solana-logo.png"
-                  alt="Solana logo"
-                />
+                <img className="small-solana-icon" src="/solana-logo.png" alt="Solana logo" />
               </span>
             </div>
           </div>

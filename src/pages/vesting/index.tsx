@@ -173,7 +173,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
   const [treasuryStreams, setTreasuryStreams] = useState<Stream[]>([]);
   // Selected vesting contract
-  const [selectedVestingContract, setSelectedVestingContract] = useState<PaymentStreamingAccount | undefined>(undefined);
+  const [selectedVestingContract, setSelectedVestingContract] = useState<PaymentStreamingAccount | undefined>(
+    undefined,
+  );
   const [streamTemplate, setStreamTemplate] = useState<StreamTemplate | undefined>(undefined);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [isLgDevice, setIsLgDevice] = useState<boolean>(isMobile);
@@ -240,11 +242,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const paymentStreaming = useMemo(() => {
     if (publicKey) {
       console.log('New MSP from treasuries');
-      return new PaymentStreaming(
-        connection,
-        mspV2AddressPK,
-        'confirmed',
-      );
+      return new PaymentStreaming(connection, mspV2AddressPK, 'confirmed');
     }
     return undefined;
   }, [connection, mspV2AddressPK, publicKey]);
@@ -299,12 +297,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     resetTransactionStatus();
   }, [resetTransactionStatus]);
 
-  const getTransactionFees = useCallback(
-    async (action: ACTION_CODES): Promise<TransactionFees> => {
-      return calculateFeesForAction(action);
-    },
-    [],
-  );
+  const getTransactionFees = useCallback(async (action: ACTION_CODES): Promise<TransactionFees> => {
+    return calculateFeesForAction(action);
+  }, []);
 
   const logEventHandling = useCallback((item: TxConfirmationInfo) => {
     consoleOut(
@@ -947,22 +942,22 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         if (!data.multisig) {
           consoleOut('received data:', data, 'blue');
           const accounts: CreateVestingAccountTransactionAccounts = {
-            feePayer: new PublicKey(data.treasurer),          // payer
-            owner: new PublicKey(data.treasurer),             // treasurer
+            feePayer: new PublicKey(data.treasurer), // payer
+            owner: new PublicKey(data.treasurer), // treasurer
             mint: new PublicKey(data.associatedTokenAddress), // mint
           };
           return await paymentStreaming.buildCreateVestingAccountTransaction(
-            accounts,                       // accounts
-            data.label,                     // label
-            data.type,                      // type
-            solFeePayedByTreasury,          // solFeePayedByTreasury
-            data.duration,                  // numberOfIntervals
-            data.durationUnit,              // intervalUnit
-            data.fundingAmount,             // fundingAmount
-            data.vestingCategory,           // vestingCategory
-            data.startUtc,                  // startUtc
-            data.cliffVestPercent,          // cliffVestPercent
-            data.tokenFeePayedFromAccount,  // tokenFeePayedFromAccount
+            accounts, // accounts
+            data.label, // label
+            data.type, // type
+            solFeePayedByTreasury, // solFeePayedByTreasury
+            data.duration, // numberOfIntervals
+            data.durationUnit, // intervalUnit
+            data.fundingAmount, // fundingAmount
+            data.vestingCategory, // vestingCategory
+            data.startUtc, // startUtc
+            data.cliffVestPercent, // cliffVestPercent
+            data.tokenFeePayedFromAccount, // tokenFeePayedFromAccount
           );
         }
 
@@ -978,22 +973,22 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
         const treasuryAssociatedTokenMint = new PublicKey(data.associatedTokenAddress);
         const accounts: CreateVestingAccountTransactionAccounts = {
-          feePayer: multisig.authority,           // payer
-          owner: multisig.authority,              // treasurer
-          mint: treasuryAssociatedTokenMint,      // mint
+          feePayer: multisig.authority, // payer
+          owner: multisig.authority, // treasurer
+          mint: treasuryAssociatedTokenMint, // mint
         };
         const createVestingContractTx = await paymentStreaming.buildCreateVestingAccountTransaction(
-          accounts,                               // accounts
-          data.label,                             // label
-          data.type,                              // type
-          solFeePayedByTreasury,                  // solFeePayedByTreasury
-          data.duration,                          // numberOfIntervals
-          data.durationUnit,                      // intervalUnit
-          data.fundingAmount,                     // fundingAmount
-          data.vestingCategory,                   // vestingCategory
-          data.startUtc,                          // startUtc
-          data.cliffVestPercent,                  // cliffVestPercent
-          data.tokenFeePayedFromAccount,          // tokenFeePayedFromAccount
+          accounts, // accounts
+          data.label, // label
+          data.type, // type
+          solFeePayedByTreasury, // solFeePayedByTreasury
+          data.duration, // numberOfIntervals
+          data.durationUnit, // intervalUnit
+          data.fundingAmount, // fundingAmount
+          data.vestingCategory, // vestingCategory
+          data.startUtc, // startUtc
+          data.cliffVestPercent, // cliffVestPercent
+          data.tokenFeePayedFromAccount, // tokenFeePayedFromAccount
         );
 
         const ixData = Buffer.from(createVestingContractTx.transaction.instructions[0].data);
@@ -1308,13 +1303,13 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       if (!isMultisigContext) {
         const accounts: CloseAccountTransactionAccounts = {
-          feePayer: new PublicKey(data.treasurer),    // feePayer
+          feePayer: new PublicKey(data.treasurer), // feePayer
           destination: new PublicKey(data.treasurer), // destination
-          psAccount: new PublicKey(data.treasury),    // psAccount
+          psAccount: new PublicKey(data.treasury), // psAccount
         };
         const { transaction } = await paymentStreaming.buildCloseAccountTransaction(
-          accounts,           // accounts
-          true,               // autoWSol
+          accounts, // accounts
+          true, // autoWSol
         );
         return transaction;
       }
@@ -1333,13 +1328,13 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       multisigAuthority = multisig.authority.toBase58();
 
       const accounts: CloseAccountTransactionAccounts = {
-        feePayer: multisig.authority,             // feePayer
-        destination: multisig.authority,          // destination
-        psAccount: new PublicKey(data.treasury),  // psAccount
+        feePayer: multisig.authority, // feePayer
+        destination: multisig.authority, // destination
+        psAccount: new PublicKey(data.treasury), // psAccount
       };
       const { transaction } = await paymentStreaming.buildCloseAccountTransaction(
-        accounts,           // accounts
-        true,               // autoWSol
+        accounts, // accounts
+        true, // autoWSol
       );
 
       const ixData = Buffer.from(transaction.instructions[0].data);
@@ -1585,27 +1580,27 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       if (!isMultisigContext || !params.fundFromSafe) {
         if (data.stream === '') {
           const accounts: AddFundsToAccountTransactionAccounts = {
-            feePayer: new PublicKey(data.payer),                // feePayer
-            contributor: new PublicKey(data.contributor),       // contributor
-            psAccount: new PublicKey(data.treasury),            // psAccount
+            feePayer: new PublicKey(data.payer), // feePayer
+            contributor: new PublicKey(data.contributor), // contributor
+            psAccount: new PublicKey(data.treasury), // psAccount
             psAccountMint: new PublicKey(data.associatedToken), // psAccountMint
           };
           const { transaction } = await paymentStreaming.buildAddFundsToAccountTransaction(
-            accounts,     // accounts
-            data.amount,  // amount
+            accounts, // accounts
+            data.amount, // amount
           );
           return transaction;
         }
 
         const accounts: AllocateFundsToStreamTransactionAccounts = {
-          feePayer: new PublicKey(data.payer),                // payer
-          psAccount: new PublicKey(data.treasury),            // psAccount
-          owner: new PublicKey(data.contributor),             // owner
-          stream: new PublicKey(data.stream),                 // stream
+          feePayer: new PublicKey(data.payer), // payer
+          psAccount: new PublicKey(data.treasury), // psAccount
+          owner: new PublicKey(data.contributor), // owner
+          stream: new PublicKey(data.stream), // stream
         };
         const { transaction } = await paymentStreaming.buildAllocateFundsToStreamTransaction(
-          accounts,     // accounts
-          data.amount,  // amount
+          accounts, // accounts
+          data.amount, // amount
         );
         return transaction;
       }
@@ -1626,27 +1621,27 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       if (data.stream) {
         const accounts: AllocateFundsToStreamTransactionAccounts = {
-          feePayer: new PublicKey(data.payer),                // payer
-          psAccount: new PublicKey(data.treasury),            // psAccount
-          owner: new PublicKey(multisig.authority),           // owner
-          stream: new PublicKey(data.stream),                 // stream
+          feePayer: new PublicKey(data.payer), // payer
+          psAccount: new PublicKey(data.treasury), // psAccount
+          owner: new PublicKey(multisig.authority), // owner
+          stream: new PublicKey(data.stream), // stream
         };
         const { transaction } = await paymentStreaming.buildAllocateFundsToStreamTransaction(
-          accounts,     // accounts
-          data.amount,  // amount
+          accounts, // accounts
+          data.amount, // amount
         );
         addFundsTx = transaction;
       } else {
         operationType = OperationType.TreasuryAddFunds;
         const accounts: AddFundsToAccountTransactionAccounts = {
-          feePayer: new PublicKey(data.payer),                // feePayer
-          contributor: new PublicKey(data.contributor),       // contributor
-          psAccount: new PublicKey(data.treasury),            // psAccount
+          feePayer: new PublicKey(data.payer), // feePayer
+          contributor: new PublicKey(data.contributor), // contributor
+          psAccount: new PublicKey(data.treasury), // psAccount
           psAccountMint: new PublicKey(data.associatedToken), // psAccountMint
         };
         const { transaction } = await paymentStreaming.buildAddFundsToAccountTransaction(
-          accounts,     // accounts
-          data.amount,  // amount
+          accounts, // accounts
+          data.amount, // amount
         );
         addFundsTx = transaction;
       }
@@ -1920,15 +1915,15 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       if (!data.multisig) {
         const accounts: CreateVestingStreamTransactionAccounts = {
-          feePayer: publicKey,        // feePayer
-          beneficiary,                // beneficiary
-          owner: publicKey,           // treasurer
-          vestingAccount: treasury,   // vestingAccount
+          feePayer: publicKey, // feePayer
+          beneficiary, // beneficiary
+          owner: publicKey, // treasurer
+          vestingAccount: treasury, // vestingAccount
         };
         const { transaction, stream } = await paymentStreaming.buildCreateVestingStreamTransaction(
-          accounts,                   // accounts
-          data.allocationAssigned,    // allocationAssigned
-          data.streamName,            // streamName
+          accounts, // accounts
+          data.allocationAssigned, // allocationAssigned
+          data.streamName, // streamName
         );
         return [transaction, stream];
       }
@@ -1954,16 +1949,16 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       );
 
       const accounts: CreateVestingStreamTransactionAccounts = {
-        feePayer: multisig.authority,         // feePayer
-        owner: multisig.authority,            // treasurer
-        vestingAccount: treasury,             // vestingAccount
-        beneficiary,                          // beneficiary
+        feePayer: multisig.authority, // feePayer
+        owner: multisig.authority, // treasurer
+        vestingAccount: treasury, // vestingAccount
+        beneficiary, // beneficiary
       };
       const { transaction, stream } = await paymentStreaming.buildCreateVestingStreamTransaction(
-        accounts,                   // accounts
-        data.allocationAssigned,    // allocationAssigned
-        data.streamName,            // streamName
-        true
+        accounts, // accounts
+        data.allocationAssigned, // allocationAssigned
+        data.streamName, // streamName
+        true,
       );
 
       const ixData = Buffer.from(transaction.instructions[0].data);
@@ -2218,14 +2213,14 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       if (!isMultisigContext) {
         const accounts: WithdrawFromAccountTransactionAccounts = {
-          feePayer: new PublicKey(data.payer),          // payer
+          feePayer: new PublicKey(data.payer), // payer
           destination: new PublicKey(data.destination), // destination
-          psAccount: new PublicKey(data.treasury),      // psAccount
+          psAccount: new PublicKey(data.treasury), // psAccount
         };
         const { transaction } = await paymentStreaming.buildWithdrawFromAccountTransaction(
-          accounts,     // accounts
-          data.amount,  // amount
-          true,         // autoWsol
+          accounts, // accounts
+          data.amount, // amount
+          true, // autoWsol
         );
         return transaction;
       }
@@ -2243,14 +2238,14 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       multisigAuthority = multisig.authority.toBase58();
 
       const accounts: WithdrawFromAccountTransactionAccounts = {
-        feePayer: new PublicKey(multisig.authority),      // payer
-        destination: new PublicKey(data.destination),     // destination
-        psAccount: new PublicKey(data.treasury),          // psAccount
+        feePayer: new PublicKey(multisig.authority), // payer
+        destination: new PublicKey(data.destination), // destination
+        psAccount: new PublicKey(data.treasury), // psAccount
       };
       const { transaction } = await paymentStreaming.buildWithdrawFromAccountTransaction(
-        accounts,     // accounts
-        data.amount,  // amount
-        false,        // autoWsol
+        accounts, // accounts
+        data.amount, // amount
+        false, // autoWsol
       );
 
       const ixData = Buffer.from(transaction.instructions[0].data);
@@ -2546,8 +2541,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       // Create a transaction
       const accounts: RefreshAccountDataTransactionAccounts = {
-        feePayer: publicKey,                      // feePayer
-        psAccount: new PublicKey(data.treasury),  // psAccount
+        feePayer: publicKey, // feePayer
+        psAccount: new PublicKey(data.treasury), // psAccount
       };
       const result = await paymentStreaming
         .buildRefreshAccountDataTransaction(accounts)
@@ -2721,18 +2716,18 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       generateTransaction: async ({ multisig, data }) => {
         if (!paymentStreaming) return;
         const accounts: UpdateVestingTemplateTransactionAccounts = {
-          feePayer: new PublicKey(data.treasurer),                  // feePayer
-          owner: new PublicKey(data.treasurer),                     // owner
-          vestingAccount: new PublicKey(data.vestingTreasury),      // vestingAccount
+          feePayer: new PublicKey(data.treasurer), // feePayer
+          owner: new PublicKey(data.treasurer), // owner
+          vestingAccount: new PublicKey(data.vestingTreasury), // vestingAccount
         };
         const { transaction } = await paymentStreaming.buildUpdateVestingTemplateTransaction(
-          accounts,                     // accounts
-          data.duration,                // numberOfIntervals
-          data.durationUnit,            // intervalUnit
-          data.startUtc,                // startUtc
-          data.cliffVestPercent,        // cliffVestPercent
-          data.feePayedByTreasurer,     // tokenFeePayedFromAccount
-        )
+          accounts, // accounts
+          data.duration, // numberOfIntervals
+          data.durationUnit, // intervalUnit
+          data.startUtc, // startUtc
+          data.cliffVestPercent, // cliffVestPercent
+          data.feePayedByTreasurer, // tokenFeePayedFromAccount
+        );
         return transaction;
       },
 
@@ -2740,18 +2735,18 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         if (!paymentStreaming || !multisig) return null;
 
         const accounts: UpdateVestingTemplateTransactionAccounts = {
-          feePayer: multisig.authority,                             // feePayer
-          owner: multisig.authority,                                // owner
-          vestingAccount: new PublicKey(data.vestingTreasury),      // vestingAccount
+          feePayer: multisig.authority, // feePayer
+          owner: multisig.authority, // owner
+          vestingAccount: new PublicKey(data.vestingTreasury), // vestingAccount
         };
         const { transaction } = await paymentStreaming.buildUpdateVestingTemplateTransaction(
-          accounts,                     // accounts
-          data.duration,                // numberOfIntervals
-          data.durationUnit,            // intervalUnit
-          data.startUtc,                // startUtc
-          data.cliffVestPercent,        // cliffVestPercent
-          data.feePayedByTreasurer,     // tokenFeePayedFromAccount
-        )
+          accounts, // accounts
+          data.duration, // numberOfIntervals
+          data.durationUnit, // intervalUnit
+          data.startUtc, // startUtc
+          data.cliffVestPercent, // cliffVestPercent
+          data.feePayedByTreasurer, // tokenFeePayedFromAccount
+        );
 
         const programId = mspV2AddressPK;
         const ixData = Buffer.from(transaction.instructions[0].data);
@@ -2981,7 +2976,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     ctaItems++;
 
     setAssetCtas(actions);
-
   }, [
     isMultisigContext,
     selectedVestingContract,
@@ -3240,7 +3234,13 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   // Get the Vesting contract activity while in "activity" tab
   useEffect(() => {
-    if (publicKey && paymentStreaming && selectedVestingContract && activeTab === 'activity' && contractActivity.length < 5) {
+    if (
+      publicKey &&
+      paymentStreaming &&
+      selectedVestingContract &&
+      activeTab === 'activity' &&
+      contractActivity.length < 5
+    ) {
       getContractActivity(selectedVestingContract.id.toBase58());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -3276,13 +3276,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         consoleOut('Min balance required:', MIN_SOL_BALANCE_REQUIRED, 'blue');
       }
     }
-  }, [
-    multisigTxFees,
-    transactionFees,
-    isMultisigContext,
-    selectedAccount.address,
-    selectedVestingContract,
-  ]);
+  }, [multisigTxFees, transactionFees, isMultisigContext, selectedAccount.address, selectedVestingContract]);
 
   // Keep the available streaming balance for the current vesting contract updated
   useEffect(() => {

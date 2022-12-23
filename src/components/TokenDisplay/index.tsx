@@ -18,17 +18,8 @@ export const TokenDisplay = (props: {
   onClick: any;
   nameInfoLabel?: boolean;
 }) => {
-  const {
-    name,
-    icon,
-    className,
-    mintAddress,
-    showName,
-    showCaretDown,
-    noTokenLabel,
-    fullTokenInfo,
-    nameInfoLabel,
-  } = props;
+  const { name, icon, className, mintAddress, showName, showCaretDown, noTokenLabel, fullTokenInfo, nameInfoLabel } =
+    props;
   const { getTokenByMintAddress } = useContext(AppStateContext);
 
   const token = getTokenByMintAddress(mintAddress);
@@ -47,17 +38,9 @@ export const TokenDisplay = (props: {
               {fullTokenInfo ? (
                 <>
                   {fullTokenInfo && fullTokenInfo.logoURI ? (
-                    <img
-                      alt={`${fullTokenInfo.name}`}
-                      width={20}
-                      height={20}
-                      src={fullTokenInfo.logoURI}
-                    />
+                    <img alt={`${fullTokenInfo.name}`} width={20} height={20} src={fullTokenInfo.logoURI} />
                   ) : (
-                    <Identicon
-                      address={mintAddress}
-                      style={{ width: '24', display: 'inline-flex' }}
-                    />
+                    <Identicon address={mintAddress} style={{ width: '24', display: 'inline-flex' }} />
                   )}
                 </>
               ) : icon ? (
@@ -65,30 +48,16 @@ export const TokenDisplay = (props: {
               ) : (
                 <>
                   {token && token.logoURI ? (
-                    <img
-                      alt={`${token.name}`}
-                      width={20}
-                      height={20}
-                      src={token.logoURI}
-                    />
+                    <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} />
                   ) : (
-                    <Identicon
-                      address={mintAddress}
-                      style={{ width: '24', display: 'inline-flex' }}
-                    />
+                    <Identicon address={mintAddress} style={{ width: '24', display: 'inline-flex' }} />
                   )}
                 </>
               )}
             </div>
             {showName && (
               <div className="token-name mr-1">
-                {fullTokenInfo
-                  ? fullTokenInfo.name
-                  : name
-                  ? `(${name})`
-                  : token
-                  ? `(${token.name})`
-                  : ''}
+                {fullTokenInfo ? fullTokenInfo.name : name ? `(${name})` : token ? `(${token.name})` : ''}
               </div>
             )}
             {fullTokenInfo ? (
@@ -98,9 +67,7 @@ export const TokenDisplay = (props: {
             ) : token && token.symbol ? (
               <div className="token-symbol mr-1">{token.symbol}</div>
             ) : (
-              <div className="token-symbol mr-1">
-                {shortenAddress(mintAddress)}
-              </div>
+              <div className="token-symbol mr-1">{shortenAddress(mintAddress)}</div>
             )}
             {showCaretDown && (
               <span className="flex-center dropdown-arrow">
@@ -121,13 +88,7 @@ export const TokenDisplay = (props: {
       </div>
       {nameInfoLabel && (
         <span className="info-label ml-3 mb-0 pl-1">
-          {fullTokenInfo
-            ? fullTokenInfo.name
-            : name
-            ? `(${name})`
-            : token
-            ? `(${token.name})`
-            : ''}
+          {fullTokenInfo ? fullTokenInfo.name : name ? `(${name})` : token ? `(${token.name})` : ''}
         </span>
       )}
     </div>

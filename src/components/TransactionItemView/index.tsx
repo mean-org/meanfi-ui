@@ -2,11 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { TokenBalance } from '@solana/web3.js';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import {
-  getAmountFromLamports,
-  getAmountWithSymbol,
-  shortenAddress,
-} from 'middleware/utils';
+import { getAmountFromLamports, getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import { UserTokenAccount } from 'models/accounts';
 import { NATIVE_SOL } from 'constants/tokens';
 import { Tooltip } from 'antd';
@@ -25,16 +21,13 @@ export const TransactionItemView = (props: {
   const [outDstAccountIndex] = useState(1);
   const [postBalance, setPostBalance] = useState(0);
   const [balanceChange, setBalanceChange] = useState(0);
-  const [postTokenBalance, setPostTokenBalance] = useState<TokenBalance | null>(
-    null,
-  );
+  const [postTokenBalance, setPostTokenBalance] = useState<TokenBalance | null>(null);
   const [isTxRenderable, setIsTxRenderable] = useState(true);
 
   useEffect(() => {
     if (props.transaction) {
       const meta =
-        props.transaction.parsedTransaction &&
-        props.transaction.parsedTransaction.meta
+        props.transaction.parsedTransaction && props.transaction.parsedTransaction.meta
           ? props.transaction.parsedTransaction.meta
           : null;
 
@@ -46,20 +39,14 @@ export const TransactionItemView = (props: {
       // Define some local vars
       let postBalance = 0;
       let balanceChange = 0;
-      const accounts =
-        props.transaction.parsedTransaction.transaction.message.accountKeys;
+      const accounts = props.transaction.parsedTransaction.transaction.message.accountKeys;
 
       // Are we scanning a user token account or the user wallet?
-      const isNativeAccountSelected =
-        props.accountAddress === props.selectedAsset?.publicAddress
-          ? true
-          : false;
+      const isNativeAccountSelected = props.accountAddress === props.selectedAsset?.publicAddress ? true : false;
       setIsNativeAccountSelected(isNativeAccountSelected);
 
       if (isNativeAccountSelected) {
-        const myAccounIndex = accounts.findIndex(
-          acc => acc.pubkey.toBase58() === props.accountAddress,
-        );
+        const myAccounIndex = accounts.findIndex(acc => acc.pubkey.toBase58() === props.accountAddress);
         postBalance = meta.postBalances[myAccounIndex];
         balanceChange = postBalance - meta.preBalances[myAccounIndex];
         setPostBalance(postBalance);
@@ -73,19 +60,14 @@ export const TransactionItemView = (props: {
         }
         const preTokenBalanceAmount =
           meta.preTokenBalances && meta.preTokenBalances.length
-            ? meta.preTokenBalances.find(
-                tk => tk.accountIndex === selectedTokenAccountIndex,
-              )?.uiTokenAmount?.uiAmount || 0
+            ? meta.preTokenBalances.find(tk => tk.accountIndex === selectedTokenAccountIndex)?.uiTokenAmount
+                ?.uiAmount || 0
             : 0;
         const postTokenBalance =
           meta.postTokenBalances && meta.postTokenBalances.length
-            ? meta.postTokenBalances.find(
-                tk => tk.accountIndex === selectedTokenAccountIndex,
-              )
+            ? meta.postTokenBalances.find(tk => tk.accountIndex === selectedTokenAccountIndex)
             : null;
-        balanceChange =
-          (postTokenBalance?.uiTokenAmount.uiAmount || 0) -
-          preTokenBalanceAmount;
+        balanceChange = (postTokenBalance?.uiTokenAmount.uiAmount || 0) - preTokenBalanceAmount;
         if (balanceChange === 0) {
           setIsTxRenderable(false);
           return;
@@ -108,9 +90,7 @@ export const TransactionItemView = (props: {
     if (isOutboundTx) {
       return <ArrowUpOutlined className="mean-svg-icons outgoing upright" />;
     } else {
-      return (
-        <ArrowDownOutlined className="mean-svg-icons incoming downright" />
-      );
+      return <ArrowDownOutlined className="mean-svg-icons incoming downright" />;
       //   return (
       //     <IconGasStation className="mean-svg-icons gas-station warning" />
       //   );
@@ -118,8 +98,7 @@ export const TransactionItemView = (props: {
   };
 
   const getTxDescription = (shorten = true): string => {
-    const accounts =
-      props.transaction.parsedTransaction.transaction.message.accountKeys;
+    const accounts = props.transaction.parsedTransaction.transaction.message.accountKeys;
     const faucetAddress = '9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g';
     // Sender is always account 0 = Fee payer
     const sender = accounts[0].pubkey.toBase58();
@@ -145,11 +124,7 @@ export const TransactionItemView = (props: {
 
     const displayAmount = postTokenBalance
       ? isNativeAccountSelected
-        ? getAmountWithSymbol(
-            getAmountFromLamports(balanceChange),
-            NATIVE_SOL.address,
-            true,
-          )
+        ? getAmountWithSymbol(getAmountFromLamports(balanceChange), NATIVE_SOL.address, true)
         : getAmountWithSymbol(
             balanceChange,
             postTokenBalance.mint,
@@ -158,11 +133,7 @@ export const TransactionItemView = (props: {
             postTokenBalance.uiTokenAmount.decimals,
           )
       : isNativeAccountSelected
-      ? getAmountWithSymbol(
-          getAmountFromLamports(balanceChange),
-          NATIVE_SOL.address,
-          true,
-        )
+      ? getAmountWithSymbol(getAmountFromLamports(balanceChange), NATIVE_SOL.address, true)
       : getAmountWithSymbol(
           balanceChange,
           props.selectedAsset.address,
@@ -189,15 +160,11 @@ export const TransactionItemView = (props: {
             NATIVE_SOL.decimals,
           )
         : getAmountWithSymbol(
-            postTokenBalance
-              ? postTokenBalance.uiTokenAmount.uiAmount || postBalance
-              : postBalance,
+            postTokenBalance ? postTokenBalance.uiTokenAmount.uiAmount || postBalance : postBalance,
             postTokenBalance.mint,
             true,
             props.tokenAccounts,
-            postTokenBalance
-              ? postTokenBalance.uiTokenAmount.decimals || NATIVE_SOL.decimals
-              : NATIVE_SOL.decimals,
+            postTokenBalance ? postTokenBalance.uiTokenAmount.decimals || NATIVE_SOL.decimals : NATIVE_SOL.decimals,
           )
       : isNativeAccountSelected
       ? getAmountWithSymbol(
@@ -253,11 +220,7 @@ export const TransactionItemView = (props: {
           )}
         </div>
         <div className="std-table-cell responsive-cell pl-2">
-          {blockTime ? (
-            <>{getRelativeDate(blockTime * 1000)}</>
-          ) : (
-            <span>'unavailable'</span>
-          )}
+          {blockTime ? <>{getRelativeDate(blockTime * 1000)}</> : <span>'unavailable'</span>}
         </div>
       </a>
     );
@@ -265,7 +228,5 @@ export const TransactionItemView = (props: {
 
   // balanceChange
 
-  return (isNativeAccountSelected && isTxRenderable) || !isNativeAccountSelected
-    ? getTransactionItem()
-    : null;
+  return (isNativeAccountSelected && isTxRenderable) || !isNativeAccountSelected ? getTransactionItem() : null;
 };

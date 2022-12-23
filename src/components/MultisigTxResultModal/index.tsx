@@ -1,16 +1,8 @@
-import {
-  CopyOutlined,
-  InfoCircleOutlined,
-  LoadingOutlined
-} from '@ant-design/icons';
+import { CopyOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { Button, Modal, Spin } from 'antd';
 import { AppStateContext } from 'contexts/appstate';
-import {
-  consoleOut,
-  copyText,
-  getTransactionOperationDescription
-} from 'middleware/ui';
+import { consoleOut, copyText, getTransactionOperationDescription } from 'middleware/ui';
 import { shortenAddress } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect } from 'react';
@@ -28,8 +20,7 @@ export const MultisigTxResultModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { transactionStatus } = useContext(AppStateContext);
-  const { isBusy, isVisible, handleClose, handleOk, highlightedMultisigTx } =
-    props;
+  const { isBusy, isVisible, handleClose, handleOk, highlightedMultisigTx } = props;
 
   useEffect(() => {
     if (isVisible) {
@@ -59,11 +50,7 @@ export const MultisigTxResultModal = (props: {
     <>
       <Modal
         className="mean-modal simple-modal"
-        title={
-          <div className="modal-title">
-            {t('multisig.multisig-transactions.modal-title')}
-          </div>
-        }
+        title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
         maskClosable={false}
         open={isVisible}
         closable={true}
@@ -74,36 +61,23 @@ export const MultisigTxResultModal = (props: {
       >
         <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
           <div className="transaction-progress p-0">
-            <InfoCircleOutlined
-              style={{ fontSize: 48 }}
-              className="icon mt-0"
-            />
+            <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
             <h4 className="mb-0">
               {!transactionStatus.customError ? (
-                getTransactionOperationDescription(
-                  transactionStatus.currentOperation,
-                  t,
-                )
+                getTransactionOperationDescription(transactionStatus.currentOperation, t)
               ) : (
                 <>
                   <span>{transactionStatus.customError.message}</span>
                   {transactionStatus.customError.data && (
                     <>
-                      <span className="ml-1">
-                        [{shortenAddress(transactionStatus.customError.data, 8)}
-                        ]
-                      </span>
+                      <span className="ml-1">[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
                       <div className="icon-button-container">
                         <Button
                           type="default"
                           shape="circle"
                           size="middle"
                           icon={<CopyOutlined />}
-                          onClick={() =>
-                            copyAddressToClipboard(
-                              transactionStatus.customError.data,
-                            )
-                          }
+                          onClick={() => copyAddressToClipboard(transactionStatus.customError.data)}
                         />
                       </div>
                     </>
@@ -120,16 +94,10 @@ export const MultisigTxResultModal = (props: {
             <div className="transaction-progress p-1">
               <Spin indicator={bigLoadingIcon} className="icon mt-2 mb-4" />
               <h4 className="font-bold mb-1">
-                {getTransactionOperationDescription(
-                  transactionStatus.currentOperation,
-                  t,
-                )}
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
-              {transactionStatus.currentOperation ===
-                TransactionStatus.SignTransaction && (
-                <div className="indication">
-                  {t('transactions.status.instructions')}
-                </div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
               )}
             </div>
           )}

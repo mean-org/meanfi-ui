@@ -29,9 +29,7 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, SetValue<T>] {
   const setValue: SetValue<T> = value => {
     // Prevent build error "window is undefined" but keeps working
     if (typeof window == 'undefined') {
-      console.warn(
-        `Tried setting localStorage key “${key}” even though environment is not a client`,
-      );
+      console.warn(`Tried setting localStorage key “${key}” even though environment is not a client`);
     }
 
     try {

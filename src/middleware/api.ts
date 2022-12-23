@@ -15,22 +15,16 @@ export const getSolanaTokenListKeyNameByCluster = (chainId: number) => {
   return `solana-tokens-${chainId}`;
 };
 
-export const getSplTokens = async (
-  chainId: number,
-  honorCache = true,
-): Promise<SimpleTokenInfo[]> => {
+export const getSplTokens = async (chainId: number, honorCache = true): Promise<SimpleTokenInfo[]> => {
   const options: RequestInit = {
     method: 'GET',
     headers: meanFiHeaders,
   };
 
-  const url =
-    appConfig.getConfig().apiUrl + `/solana-tokens?networkId=${chainId}`;
+  const url = appConfig.getConfig().apiUrl + `/solana-tokens?networkId=${chainId}`;
 
   if (honorCache) {
-    const cachedTokens = readFromCache(
-      getSolanaTokenListKeyNameByCluster(chainId),
-    );
+    const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
     if (cachedTokens) {
       return Promise.resolve(cachedTokens.data);
     }
@@ -40,17 +34,13 @@ export const getSplTokens = async (
     .then(response => response.json())
     .then(response => {
       // Filter out items with no decimals value
-      const filtered = (response as SimpleTokenInfo[]).filter(
-        t => t.decimals !== null,
-      );
+      const filtered = (response as SimpleTokenInfo[]).filter(t => t.decimals !== null);
       writeToCache(getSolanaTokenListKeyNameByCluster(chainId), filtered);
       return response;
     })
     .catch(err => {
       console.error(err);
-      const cachedTokens = readFromCache(
-        getSolanaTokenListKeyNameByCluster(chainId),
-      );
+      const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
       if (cachedTokens) {
         console.warn('Using cached data...');
         return cachedTokens.data;
@@ -97,8 +87,7 @@ export const getPrices = async (honorCache = true): Promise<TokenPrice[]> => {
 };
 
 export const getSolFlareTokenList = async (): Promise<any> => {
-  const path =
-    'https://cdn.jsdelivr.net/gh/solflare-wallet/token-list/solana-tokenlist.json';
+  const path = 'https://cdn.jsdelivr.net/gh/solflare-wallet/token-list/solana-tokenlist.json';
   return fetch(path, {
     method: 'GET',
   })
@@ -152,10 +141,7 @@ export const getRaydiumLpPairs = async (): Promise<any> => {
     });
 };
 
-export const getRpcApiEndpoint = async (
-  url: string,
-  options?: RequestInit,
-): Promise<any> => {
+export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Promise<any> => {
   try {
     const response = await fetch(url, options);
     if (response && response.status === 200) {
@@ -170,10 +156,7 @@ export const getRpcApiEndpoint = async (
 };
 
 // POST /meanfi-connected-accounts Creates a referral for a new address
-export const reportConnectedAccount = async (
-  address: string,
-  refBy?: string,
-): Promise<boolean> => {
+export const reportConnectedAccount = async (address: string, refBy?: string): Promise<boolean> => {
   const options: RequestInit = {
     method: 'POST',
     headers: meanFiHeaders,
@@ -205,9 +188,7 @@ export const getWhitelistAllocation = async (
     method: 'GET',
     headers: meanFiHeaders,
   };
-  const url = `${
-    appConfig.getConfig().apiUrl
-  }/whitelists/${address}?claimType=${claimType}`;
+  const url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?claimType=${claimType}`;
   try {
     const response = await fetch(url, options);
     if (response && response.status === 200) {
@@ -220,10 +201,7 @@ export const getWhitelistAllocation = async (
   }
 };
 
-export const sendSignClaimTxRequest = async (
-  address: string,
-  base64ClaimTx: string,
-): Promise<any> => {
+export const sendSignClaimTxRequest = async (address: string, base64ClaimTx: string): Promise<any> => {
   const options: RequestInit = {
     method: 'POST',
     headers: meanFiHeaders,
@@ -248,18 +226,13 @@ export const sendSignClaimTxRequest = async (
     });
 };
 
-export const sendRecordClaimTxRequest = async (
-  address: string,
-  claimTxId: string,
-): Promise<any> => {
+export const sendRecordClaimTxRequest = async (address: string, claimTxId: string): Promise<any> => {
   const options: RequestInit = {
     method: 'POST',
     headers: meanFiHeaders,
   };
 
-  const url = `${
-    appConfig.getConfig().apiUrl
-  }/airdrop-claim-tx/${address}?txId=${claimTxId}`;
+  const url = `${appConfig.getConfig().apiUrl}/airdrop-claim-tx/${address}?txId=${claimTxId}`;
 
   fetch(url, options)
     .then(response => {
@@ -299,9 +272,7 @@ export const getCoingeckoMarketChart = async (
     const res = await fetch(path, { method: 'GET' });
     // 400+ status codes are failed
     if (res.status >= 400) {
-      throw new Error(
-        `Error getCoingeckoMarketChart: ${res.status}: ${res.statusText}`,
-      );
+      throw new Error(`Error getCoingeckoMarketChart: ${res.status}: ${res.statusText}`);
     }
     const { prices, total_volumes } = await res.json();
     const formatedPriceData = prices.map((x: number[]) => {

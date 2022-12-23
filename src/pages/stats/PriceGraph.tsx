@@ -2,15 +2,7 @@ import moment from 'moment';
 import { Button } from 'antd';
 import { array, bool, str } from '@project-serum/borsh';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 import './style.scss';
 import { MEAN_TOKEN } from '../../constants/tokens';
@@ -59,7 +51,7 @@ export const PriceGraph = (props: { onPriceData: any }) => {
         props.onPriceData(lastItem.priceData);
       }
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeBtn, priceList]);
 
   /*********************** CUSTOM TOOLTIP *************************/
@@ -158,11 +150,7 @@ export const PriceGraph = (props: { onPriceData: any }) => {
             tickMargin={5}
             tickFormatter={priceData => priceData || 0}
           />
-          <Tooltip
-            content={
-              <CustomToolTip active={bool} payload={array} label={str} />
-            }
-          />
+          <Tooltip content={<CustomToolTip active={bool} payload={array} label={str} />} />
           <CartesianGrid opacity={0.2} vertical={false} />
         </AreaChart>
       </ResponsiveContainer>

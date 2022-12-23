@@ -1,32 +1,21 @@
 import { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
-import {
-  AccountContext,
-  AssetGroups,
-  KNOWN_APPS,
-  UserTokenAccount,
-} from 'models/accounts';
+import { AccountContext, AssetGroups, KNOWN_APPS, UserTokenAccount } from 'models/accounts';
 
 const isAssetNativeAccount = (assetId: string, selectedAccount: AccountContext) => {
   return assetId === selectedAccount.address ? true : false;
-}
+};
 
 const isAssetTokenAccount = (assetId: string, selectedAccount: AccountContext, accountTokens: UserTokenAccount[]) => {
-  return accountTokens.some(
-    t =>
-      t.publicAddress !== selectedAccount.address &&
-      t.publicAddress === assetId,
-  );
-}
+  return accountTokens.some(t => t.publicAddress !== selectedAccount.address && t.publicAddress === assetId);
+};
 
 const getIsNftTokenAccount = (token: UserTokenAccount | undefined, accountNfts: FindNftsByOwnerOutput | undefined) => {
   if (token && token.address) {
     const tAddr = token.address;
-    return accountNfts
-      ? accountNfts.some((n: any) => n.mintAddress.toBase58() === tAddr)
-      : false;
+    return accountNfts ? accountNfts.some((n: any) => n.mintAddress.toBase58() === tAddr) : false;
   }
   return false;
-}
+};
 
 /**
  * Given the assetId passed in the url, gets the most appropriate category where it belongs
@@ -52,9 +41,7 @@ function getAssetCategory(
     token = accountTokens.find(t => t.publicAddress === assetId);
     isNftTokenAccount = getIsNftTokenAccount(token, accountNfts);
   } else {
-    isNftMint = accountNfts
-      ? accountNfts.some((n: any) => n.mintAddress.toBase58() === assetId)
-      : false;
+    isNftMint = accountNfts ? accountNfts.some((n: any) => n.mintAddress.toBase58() === assetId) : false;
   }
 
   if (isNative || isTokenAccount || isNftTokenAccount || isNftMint) {

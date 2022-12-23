@@ -1,10 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const PageLoadingView = (props: {
-  message?: string;
-  addWrapper?: boolean;
-}) => {
+export const PageLoadingView = (props: { message?: string; addWrapper?: boolean }) => {
   const { message, addWrapper } = props;
   const { t } = useTranslation('common');
 
@@ -47,15 +44,7 @@ export const PageLoadingView = (props: {
                 </svg>
               </div>
               <svg className="spinner" viewBox="25 25 50 50">
-                <circle
-                  className="path"
-                  cx="50"
-                  cy="50"
-                  r="20"
-                  fill="none"
-                  strokeWidth="2"
-                  strokeMiterlimit="10"
-                />
+                <circle className="path" cx="50" cy="50" r="20" fill="none" strokeWidth="2" strokeMiterlimit="10" />
               </svg>
             </div>
           </div>
@@ -65,13 +54,5 @@ export const PageLoadingView = (props: {
     </>
   );
 
-  return (
-    <>
-      {addWrapper ? (
-        <div className="container main-container">{loader}</div>
-      ) : (
-        loader
-      )}
-    </>
-  );
+  return <>{addWrapper ? <div className="container main-container">{loader}</div> : loader}</>;
 };

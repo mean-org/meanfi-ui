@@ -12,11 +12,7 @@ import {
   toUiAmount,
 } from 'middleware/utils';
 import { useTranslation } from 'react-i18next';
-import {
-  StreamInfo,
-  TransactionFees,
-  TreasuryInfo,
-} from '@mean-dao/money-streaming/lib/types';
+import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PaymentStreaming, Stream, PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
@@ -59,40 +55,26 @@ export const StreamAddFundsModal = (props: {
     withdrawTransactionFees,
     isMultisigContext,
   } = props;
-  const {
-    splTokenList,
-    loadingPrices,
-    isWhitelisted,
-    getTokenPriceBySymbol,
-    refreshPrices,
-  } = useContext(AppStateContext);
+  const { splTokenList, loadingPrices, isWhitelisted, getTokenPriceBySymbol, refreshPrices } =
+    useContext(AppStateContext);
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
 
   // PaymentStreamingAccount related
-  const [streamTreasuryType, setStreamTreasuryType] = useState<
-    StreamTreasuryType | undefined
-  >(undefined);
+  const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
-  const [localStreamDetail, setLocalStreamDetail] = useState<
-    Stream | StreamInfo | undefined
-  >(undefined);
-  const [treasuryDetails, setTreasuryDetails] = useState<
-    PaymentStreamingAccount | TreasuryInfo | undefined
-  >(undefined);
+  const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
+  const [treasuryDetails, setTreasuryDetails] = useState<PaymentStreamingAccount | TreasuryInfo | undefined>(undefined);
   const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
-  const [maxAllocatableAmount, setMaxAllocatableAmount] =
-    useState<any>(undefined);
+  const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [proposalTitle, setProposalTitle] = useState('');
 
   const getTreasuryType = useCallback(
-    (
-      details?: PaymentStreamingAccount | TreasuryInfo | undefined,
-    ): StreamTreasuryType | undefined => {
+    (details?: PaymentStreamingAccount | TreasuryInfo | undefined): StreamTreasuryType | undefined => {
       if (details) {
         const type = getStreamingAccountType(details);
         if (type === AccountType.Lock) {
@@ -114,43 +96,41 @@ export const StreamAddFundsModal = (props: {
     [treasuryDetails],
   );
 
-  const getTreasuryTypeByTreasuryId = useCallback(async (
-    treasuryId: string,
-    streamVersion: number,
-  ): Promise<StreamTreasuryType | undefined> => {
-    if (!connection || !publicKey || !mspClient) {
-      return undefined;
-    }
-
-    const treasuryPk = new PublicKey(treasuryId);
-
-    try {
-      let details: PaymentStreamingAccount | TreasuryInfo | undefined = undefined;
-      if (streamVersion < 2) {
-        details = await (mspClient as MoneyStreaming).getTreasury(treasuryPk);
-      } else {
-        details = await (mspClient as PaymentStreaming).getAccount(treasuryPk);
+  const getTreasuryTypeByTreasuryId = useCallback(
+    async (treasuryId: string, streamVersion: number): Promise<StreamTreasuryType | undefined> => {
+      if (!connection || !publicKey || !mspClient) {
+        return undefined;
       }
-      if (details) {
-        setTreasuryDetails(details);
-        consoleOut('treasuryDetails:', details, 'blue');
-        const type = getStreamingAccountType(details);
-        if (type === AccountType.Lock) {
-          return 'locked';
+
+      const treasuryPk = new PublicKey(treasuryId);
+
+      try {
+        let details: PaymentStreamingAccount | TreasuryInfo | undefined = undefined;
+        if (streamVersion < 2) {
+          details = await (mspClient as MoneyStreaming).getTreasury(treasuryPk);
         } else {
-          return 'open';
+          details = await (mspClient as PaymentStreaming).getAccount(treasuryPk);
         }
-      } else {
-        setTreasuryDetails(undefined);
+        if (details) {
+          setTreasuryDetails(details);
+          consoleOut('treasuryDetails:', details, 'blue');
+          const type = getStreamingAccountType(details);
+          if (type === AccountType.Lock) {
+            return 'locked';
+          } else {
+            return 'open';
+          }
+        } else {
+          setTreasuryDetails(undefined);
+          return 'unknown';
+        }
+      } catch (error) {
+        console.error(error);
         return 'unknown';
+      } finally {
+        setLoadingTreasuryDetails(false);
       }
-    } catch (error) {
-      console.error(error);
-      return 'unknown';
-    } finally {
-      setLoadingTreasuryDetails(false);
-    }
-  },
+    },
     [publicKey, connection, mspClient],
   );
 
@@ -164,16 +144,13 @@ export const StreamAddFundsModal = (props: {
         withdrawTransactionFees
       ) {
         const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
-        const feeNumerator =
-          withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
+        const feeNumerator = withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
         const feeDenaminator = 1000000;
         const badStreamMaxAllocation = unallocatedBalance
           .mul(new BN(feeDenaminator))
           .div(new BN(feeNumerator + feeDenaminator));
 
-        const feeAmount = badStreamMaxAllocation
-          .mul(new BN(feeNumerator))
-          .div(new BN(feeDenaminator));
+        const feeAmount = badStreamMaxAllocation.mul(new BN(feeNumerator)).div(new BN(feeDenaminator));
 
         const badTotal = badStreamMaxAllocation.add(feeAmount);
         const badRemaining = unallocatedBalance.sub(badTotal);
@@ -209,12 +186,7 @@ export const StreamAddFundsModal = (props: {
       }
       return unallocatedBalance;
     },
-    [
-      isWhitelisted,
-      localStreamDetail,
-      unallocatedBalance,
-      withdrawTransactionFees,
-    ],
+    [isWhitelisted, localStreamDetail, unallocatedBalance, withdrawTransactionFees],
   );
 
   const getTokenPrice = useCallback(() => {
@@ -222,9 +194,7 @@ export const StreamAddFundsModal = (props: {
       return 0;
     }
 
-    return (
-      parseFloat(topupAmount) * getTokenPriceBySymbol(selectedToken.symbol)
-    );
+    return parseFloat(topupAmount) * getTokenPriceBySymbol(selectedToken.symbol);
   }, [topupAmount, selectedToken, getTokenPriceBySymbol]);
 
   const shouldFundFromTreasury = useCallback(() => {
@@ -236,11 +206,7 @@ export const StreamAddFundsModal = (props: {
   }, [treasuryDetails]);
 
   const isfeePayedByTreasurerOn = useCallback(() => {
-    if (
-      localStreamDetail &&
-      localStreamDetail.version >= 2 &&
-      (localStreamDetail as Stream).tokenFeePayedFromAccount
-    ) {
+    if (localStreamDetail && localStreamDetail.version >= 2 && (localStreamDetail as Stream).tokenFeePayedFromAccount) {
       return true;
     }
 
@@ -251,9 +217,7 @@ export const StreamAddFundsModal = (props: {
     if (!selectedToken) {
       return nativeBalance;
     }
-    return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-      ? nativeBalance
-      : tokenBalance;
+    return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? nativeBalance : tokenBalance;
   }, [nativeBalance, selectedToken, tokenBalance]);
 
   // Keep token balance updated
@@ -286,9 +250,7 @@ export const StreamAddFundsModal = (props: {
         const v2 = localStreamDetail as Stream;
         consoleOut('fetching treasury details...', '', 'blue');
         getTreasuryTypeByTreasuryId(
-          localStreamDetail.version < 2
-            ? (v1.treasuryAddress as string)
-            : v2.psAccount.toBase58(),
+          localStreamDetail.version < 2 ? (v1.treasuryAddress as string) : v2.psAccount.toBase58(),
           localStreamDetail.version,
         ).then(value => {
           consoleOut('streamTreasuryType:', value, 'crimson');
@@ -296,13 +258,7 @@ export const StreamAddFundsModal = (props: {
         });
       }
     }
-  }, [
-    isVisible,
-    treasuryDetails,
-    localStreamDetail,
-    getTreasuryTypeByTreasuryId,
-    getTreasuryType,
-  ]);
+  }, [isVisible, treasuryDetails, localStreamDetail, getTreasuryTypeByTreasuryId, getTreasuryType]);
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
@@ -322,10 +278,7 @@ export const StreamAddFundsModal = (props: {
         allocationAssigned = new BN(details.allocationAssigned);
       } else {
         balance = toTokenAmountBn(details.balance, selectedToken.decimals);
-        allocationAssigned = toTokenAmountBn(
-          details.allocationAssigned,
-          selectedToken.decimals,
-        );
+        allocationAssigned = toTokenAmountBn(details.allocationAssigned, selectedToken.decimals);
       }
       result = balance.sub(allocationAssigned);
 
@@ -397,10 +350,7 @@ export const StreamAddFundsModal = (props: {
     if (!selectedToken) {
       return false;
     }
-    const userBalance = toTokenAmountBn(
-      selectFromTokenBalance(),
-      selectedToken.decimals,
-    );
+    const userBalance = toTokenAmountBn(selectFromTokenBalance(), selectedToken.decimals);
     return ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
       (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
       (proposalTitle || !isMultisigContext) &&
@@ -408,10 +358,8 @@ export const StreamAddFundsModal = (props: {
       (tokenAmount as BN).gtn(0) &&
       ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
         (shouldFundFromTreasury() &&
-          ((isfeePayedByTreasurerOn() &&
-            tokenAmount.lte(maxAllocatableAmount)) ||
-            (!isfeePayedByTreasurerOn() &&
-              tokenAmount.lte(unallocatedBalance)))))
+          ((isfeePayedByTreasurerOn() && tokenAmount.lte(maxAllocatableAmount)) ||
+            (!isfeePayedByTreasurerOn() && tokenAmount.lte(unallocatedBalance)))))
       ? true
       : false;
   };
@@ -423,10 +371,7 @@ export const StreamAddFundsModal = (props: {
     if (!selectedToken) {
       return t('transactions.validation.no-balance');
     }
-    const userBalance = toTokenAmountBn(
-      selectFromTokenBalance(),
-      selectedToken.decimals,
-    );
+    const userBalance = toTokenAmountBn(selectFromTokenBalance(), selectedToken.decimals);
     return (shouldFundFromTreasury() && unallocatedBalance.isZero()) ||
       (!shouldFundFromTreasury() && userBalance.isZero())
       ? t('transactions.validation.no-balance')
@@ -434,8 +379,7 @@ export const StreamAddFundsModal = (props: {
       ? t('transactions.validation.no-amount')
       : (!shouldFundFromTreasury() && tokenAmount.gt(userBalance)) ||
         (shouldFundFromTreasury() &&
-          ((isfeePayedByTreasurerOn() &&
-            tokenAmount.gt(maxAllocatableAmount)) ||
+          ((isfeePayedByTreasurerOn() && tokenAmount.gt(maxAllocatableAmount)) ||
             (!isfeePayedByTreasurerOn() && tokenAmount.gt(unallocatedBalance))))
       ? t('transactions.validation.amount-high')
       : t('transactions.validation.valid-approve');
@@ -444,9 +388,7 @@ export const StreamAddFundsModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={
-        <div className="modal-title">{t('streams.add-funds.modal-title')}</div>
-      }
+      title={<div className="modal-title">{t('streams.add-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
@@ -461,30 +403,16 @@ export const StreamAddFundsModal = (props: {
       {loadingTreasuryDetails ? (
         // The loading part
         <div className="transaction-progress">
-          <LoadingOutlined
-            style={{ fontSize: 48 }}
-            className="icon mt-0"
-            spin
-          />
-          <h4 className="operation">
-            {t('close-stream.loading-treasury-message')}
-          </h4>
+          <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
+          <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
         </div>
       ) : streamTreasuryType === 'locked' ? (
         // The user can't top-up the stream
         <div className="transaction-progress">
-          <ExclamationCircleOutlined
-            style={{ fontSize: 48 }}
-            className="icon mt-0"
-          />
+          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
           <h4 className="operation">{t('close-stream.cant-topup-message')}</h4>
           <div className="mt-3">
-            <Button
-              type="primary"
-              shape="round"
-              size="large"
-              onClick={handleClose}
-            >
+            <Button type="primary" shape="round" size="large" onClick={handleClose}>
               {t('general.cta-close')}
             </Button>
           </div>
@@ -500,9 +428,7 @@ export const StreamAddFundsModal = (props: {
           {/* Proposal title */}
           {isMultisigContext && (
             <div className="mb-3 mt-3">
-              <div className="form-label text-left">
-                {t('multisig.proposal-modal.title')}
-              </div>
+              <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
               <InputMean
                 id="proposal-title-field"
                 name="Title"
@@ -516,9 +442,7 @@ export const StreamAddFundsModal = (props: {
             </div>
           )}
           {/* Top up amount */}
-          <div className="form-label">
-            {t('streams.add-funds.amount-label')}
-          </div>
+          <div className="form-label">{t('streams.add-funds.amount-label')}</div>
           <div className="well">
             <div className="flex-fixed-left">
               <div className="left">
@@ -538,18 +462,8 @@ export const StreamAddFundsModal = (props: {
                         <div
                           className="token-max simplelink"
                           onClick={() => {
-                            setTopupAmount(
-                              cutNumber(
-                                selectFromTokenBalance(),
-                                selectedToken.decimals,
-                              ),
-                            );
-                            setTokenAmount(
-                              toTokenAmountBn(
-                                selectFromTokenBalance(),
-                                selectedToken.decimals,
-                              ),
-                            );
+                            setTopupAmount(cutNumber(selectFromTokenBalance(), selectedToken.decimals));
+                            setTokenAmount(toTokenAmountBn(selectFromTokenBalance(), selectedToken.decimals));
                           }}
                         >
                           MAX
@@ -562,30 +476,16 @@ export const StreamAddFundsModal = (props: {
                         <div
                           className="token-max simplelink"
                           onClick={() => {
-                            const decimals = selectedToken
-                              ? selectedToken.decimals
-                              : 6;
+                            const decimals = selectedToken ? selectedToken.decimals : 6;
                             if (isfeePayedByTreasurerOn()) {
                               const maxAmount = getMaxAmount(true);
-                              consoleOut(
-                                'tokenAmount:',
-                                tokenAmount.toString(),
-                                'blue',
-                              );
-                              consoleOut(
-                                'maxAmount:',
-                                maxAmount.toString(),
-                                'blue',
-                              );
-                              setTopupAmount(
-                                toUiAmount(new BN(maxAmount), decimals),
-                              );
+                              consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+                              consoleOut('maxAmount:', maxAmount.toString(), 'blue');
+                              setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
                               setTokenAmount(new BN(maxAmount));
                             } else {
                               const maxAmount = getMaxAmount();
-                              setTopupAmount(
-                                toUiAmount(new BN(maxAmount), decimals),
-                              );
+                              setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
                               setTokenAmount(new BN(maxAmount));
                             }
                           }}
@@ -617,25 +517,16 @@ export const StreamAddFundsModal = (props: {
             </div>
             <div className="flex-fixed-right">
               <div className="left inner-label">
-                {!treasuryDetails ||
-                (treasuryDetails && treasuryDetails.autoClose) ? (
+                {!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose) ? (
                   <span>{t('add-funds.label-right')}:</span>
                 ) : (
-                  <span>
-                    {t(
-                      'treasuries.treasury-streams.available-unallocated-balance-label',
-                    )}
-                    :
-                  </span>
+                  <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                 )}
                 {treasuryDetails && treasuryDetails.autoClose ? (
                   <span>
                     {`${
                       selectedToken && selectFromTokenBalance()
-                        ? getAmountWithSymbol(
-                            selectFromTokenBalance(),
-                            selectedToken?.address,
-                          )
+                        ? getAmountWithSymbol(selectFromTokenBalance(), selectedToken?.address)
                         : '0'
                     }`}
                   </span>
@@ -658,11 +549,7 @@ export const StreamAddFundsModal = (props: {
                 {publicKey ? (
                   <>
                     <span
-                      className={
-                        loadingPrices
-                          ? 'click-disabled fg-orange-red pulsate'
-                          : 'simplelink'
-                      }
+                      className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                       onClick={() => refreshPrices()}
                     >
                       ~{topupAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
