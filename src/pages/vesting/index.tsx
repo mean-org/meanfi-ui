@@ -731,7 +731,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       consoleOut('Executing getTreasuryStreams...', '', 'blue');
 
       paymentStreaming
-        .listStreams({ psAccountOwner: treasuryPk })
+        .listStreams({ psAccount: treasuryPk })
         .then(streams => {
           consoleOut('treasuryStreams:', streams, 'blue');
           setTreasuryStreams(

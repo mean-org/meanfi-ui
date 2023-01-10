@@ -598,7 +598,7 @@ export const StreamingAccountView = (props: {
       if (isNewAccount) {
         if (paymentStreaming) {
           paymentStreaming
-            .listStreams({ psAccountOwner: treasuryPk })
+            .listStreams({ psAccount: treasuryPk })
             .then((streams: any) => {
               consoleOut('treasuryStreams:', streams, 'blue');
               setStreamingAccountStreams(streams);
