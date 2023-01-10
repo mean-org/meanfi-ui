@@ -23,7 +23,7 @@ import {
   TransactionFees,
   PaymentStreamingAccount,
   AccountType,
-  VestingAccountActivity,
+  AccountActivity,
   ActivityActionCode,
   AddFundsToAccountTransactionAccounts,
   AllocateFundsToStreamTransactionAccounts,
@@ -146,7 +146,7 @@ export const StreamingAccountView = (props: {
   const [isBusy, setIsBusy] = useState(false);
   const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
-  const [streamingAccountActivity, setStreamingAccountActivity] = useState<VestingAccountActivity[]>([]);
+  const [streamingAccountActivity, setStreamingAccountActivity] = useState<AccountActivity[]>([]);
   const [loadingStreamingAccountActivity, setLoadingStreamingAccountActivity] = useState(false);
   const [hasMoreStreamingAccountActivity, setHasMoreStreamingAccountActivity] = useState<boolean>(true);
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(new BN(0));
@@ -333,7 +333,7 @@ export const StreamingAccountView = (props: {
         : '';
       consoleOut('before:', before, 'crimson');
       paymentStreaming
-        .listVestingAccountActivity(streamingAccountPublicKey, before, 5)
+        .listAccountActivity(streamingAccountPublicKey, before, 5)
         .then(value => {
           consoleOut('Streaming Account activity:', value);
           const activities = clearHistory
@@ -375,7 +375,7 @@ export const StreamingAccountView = (props: {
     return account.version < 2 ? new PublicKey(v1.treasurerAddress) : v2.owner;
   }, []);
 
-  const getStreamingAccountActivityAssociatedToken = (item: VestingAccountActivity) => {
+  const getStreamingAccountActivityAssociatedToken = (item: AccountActivity) => {
     let message = '';
 
     if (!selectedToken) {
@@ -598,7 +598,7 @@ export const StreamingAccountView = (props: {
       if (isNewAccount) {
         if (paymentStreaming) {
           paymentStreaming
-            .listStreams({ treasury: treasuryPk })
+            .listStreams({ psAccountOwner: treasuryPk })
             .then((streams: any) => {
               consoleOut('treasuryStreams:', streams, 'blue');
               setStreamingAccountStreams(streams);
@@ -2291,7 +2291,7 @@ export const StreamingAccountView = (props: {
     return '--';
   }, [getTreasuryUnallocatedBalance, selectedToken, splTokenList, streamingAccountSelected]);
 
-  const getStreamingAccountActivityAction = (item: VestingAccountActivity): string => {
+  const getStreamingAccountActivityAction = (item: AccountActivity): string => {
     let message = '';
     switch (item.actionCode) {
       case ActivityActionCode.AccountCreated:

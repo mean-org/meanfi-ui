@@ -16,7 +16,7 @@ import {
   TransactionFees,
   PaymentStreamingAccount,
   AccountType,
-  VestingAccountActivity,
+  AccountActivity,
   CreateVestingAccountTransactionAccounts,
   CloseAccountTransactionAccounts,
   AddFundsToAccountTransactionAccounts,
@@ -200,7 +200,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const [vestingContractFlowRate, setVestingContractFlowRate] = useState<VestingFlowRateInfo | undefined>(undefined);
   const [loadingVestingContractFlowRate, setLoadingVestingContractFlowRate] = useState(false);
   const [loadingContractActivity, setLoadingContractActivity] = useState(false);
-  const [contractActivity, setContractActivity] = useState<VestingAccountActivity[]>([]);
+  const [contractActivity, setContractActivity] = useState<AccountActivity[]>([]);
   const [hasMoreContractActivity, setHasMoreContractActivity] = useState<boolean>(true);
   const [availableStreamingBalance, setAvailableStreamingBalance] = useState(new BN(0));
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(new BN(0));
@@ -731,7 +731,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       consoleOut('Executing getTreasuryStreams...', '', 'blue');
 
       paymentStreaming
-        .listStreams({ treasury: treasuryPk })
+        .listStreams({ psAccountOwner: treasuryPk })
         .then(streams => {
           consoleOut('treasuryStreams:', streams, 'blue');
           setTreasuryStreams(
@@ -782,7 +782,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const before = clearHistory ? '' : lastActivity;
       consoleOut('before:', before, 'crimson');
       paymentStreaming
-        .listVestingAccountActivity(streamPublicKey, before, 5, 'confirmed')
+        .listAccountActivity(streamPublicKey, before, 5, 'confirmed')
         .then(value => {
           consoleOut('VC Activity:', value);
           const currentActivity = contractActivity.length > 0 ? JSON.parse(JSON.stringify(contractActivity)) : [];

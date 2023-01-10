@@ -1122,7 +1122,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         listStreamsV2PerformanceCounter.start();
 
         paymentStreaming
-          .listStreams({ treasurer: userPk, beneficiary: userPk })
+          .listStreams({ psAccountOwner: userPk, beneficiary: userPk })
           .then(streamsv2 => {
             consoleOut('streamsv2 from AppSate:', streamsv2, 'blue');
             listStreamsV2PerformanceCounter.stop();
