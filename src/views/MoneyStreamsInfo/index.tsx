@@ -414,11 +414,11 @@ export const MoneyStreamsInfoView = (props: {
 
       // Get refreshed data
       const freshStream = await paymentStreaming.refreshStream(stream);
-      if (!freshStream || freshStream.status !== STREAM_STATUS_CODE.Running) {
+      if (!freshStream || freshStream.statusCode !== STREAM_STATUS_CODE.Running) {
         continue;
       }
 
-      const token = getTokenByMintAddress(freshStream.associatedToken.toBase58());
+      const token = getTokenByMintAddress(freshStream.mint.toBase58());
 
       if (token) {
         const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);

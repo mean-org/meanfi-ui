@@ -1,4 +1,4 @@
-import { PaymentStreamingAccount, VestingAccountActivity, ActivityActionCode } from '@mean-dao/payment-streaming';
+import { PaymentStreamingAccount, ActivityActionCode, AccountActivity } from '@mean-dao/payment-streaming';
 import { Spin } from 'antd';
 import { BN } from 'bn.js';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
@@ -12,7 +12,7 @@ import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const VestingContractActivity = (props: {
-  contractActivity: VestingAccountActivity[];
+  contractActivity: AccountActivity[];
   hasMoreStreamActivity: boolean;
   loadingStreamActivity: boolean;
   onLoadMoreActivities: any;
@@ -30,7 +30,7 @@ export const VestingContractActivity = (props: {
   const { splTokenList } = useContext(AppStateContext);
   const { t } = useTranslation('common');
 
-  const getActivityDescription = (item: VestingAccountActivity) => {
+  const getActivityDescription = (item: AccountActivity) => {
     if (!vestingContract) {
       return '--';
     }
@@ -77,7 +77,7 @@ export const VestingContractActivity = (props: {
     return message;
   };
 
-  const getActivitySubtitle = (item: VestingAccountActivity) => {
+  const getActivitySubtitle = (item: AccountActivity) => {
     if (!vestingContract) {
       return '--';
     }
@@ -106,7 +106,7 @@ export const VestingContractActivity = (props: {
     return message;
   };
 
-  const getActivityAssociatedToken = (item: VestingAccountActivity) => {
+  const getActivityAssociatedToken = (item: AccountActivity) => {
     if (!vestingContract || !selectedToken) {
       return '--';
     }

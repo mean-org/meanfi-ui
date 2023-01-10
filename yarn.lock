@@ -2350,10 +2350,10 @@
     prompt-sync "^4.2.0"
     yaml "^1.10.2"
 
-"@mean-dao/payment-streaming@3.1.2-beta.7":
-  version "3.1.2-beta.7"
-  resolved "https://registry.yarnpkg.com/@mean-dao/payment-streaming/-/payment-streaming-3.1.2-beta.7.tgz#c626e39cd2d464daaa998447a7ffcab738522aca"
-  integrity sha512-ipfq/gk7B5eWwo4P8H/mtuwwD94BpOcuoPkXOZBv29FCWaU94FSMrQT8kcAsKcvvSeLivVWsQE7Q5UnAPW4w3A==
+"@mean-dao/payment-streaming@^4.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@mean-dao/payment-streaming/-/payment-streaming-4.0.0.tgz#d5cfc09dc0f926a441698da782718b2556968310"
+  integrity sha512-1hm72oqPyD5lpHkOs7QRk5ncsgqy6312ZaAXH6iM2PZ6jNTCTrSLwTIfoyJWCdBgXf0Vb2H3ibq/EG9t3rkOzA==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@solana/spl-token" "^0.1.8"
