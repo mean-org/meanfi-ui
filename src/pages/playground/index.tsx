@@ -36,7 +36,7 @@ import {
 import { appConfig } from 'index';
 import { getTokensWithBalances } from 'middleware/accounts';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
-import { NATIVE_SOL_MINT, SYSTEM_PROGRAM_ID } from 'middleware/ids';
+import { SOL_MINT, SYSTEM_PROGRAM_ID } from 'middleware/ids';
 import { ACCOUNT_LAYOUT } from 'middleware/layouts';
 import { getStreamForDebug } from 'middleware/stream-debug-middleware';
 import { getReadableStream } from 'middleware/streams';
@@ -572,7 +572,7 @@ export const PlaygroundView = () => {
       delegatedAmount: 0,
       isNative: true,
       isNativeOption: 0,
-      mint: NATIVE_SOL_MINT,
+      mint: SOL_MINT,
       owner: selectedMultisig.authority,
       state: 1,
     } as MultisigAsset;

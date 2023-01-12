@@ -30,6 +30,7 @@ import {
   WithdrawFromAccountTransactionAccounts,
   CloseAccountTransactionAccounts,
   RefreshAccountDataTransactionAccounts,
+  NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -67,7 +68,7 @@ import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isProd } from 'middleware/ui';
@@ -809,8 +810,8 @@ export const StreamingAccountView = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
-            )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+              SOL_MINT.toBase58(),
+            )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
           });
           customLogger.logWarning('PaymentStreamingAccount Add funds transaction failed', {
             transcript: transactionLog,
@@ -984,7 +985,9 @@ export const StreamingAccountView = (props: {
       });
 
       const treasury = new PublicKey(streamingAccountSelected.id);
-      const associatedToken = new PublicKey(params.associatedToken);
+      const associatedToken = params.associatedToken === SOL_MINT.toBase58()
+        ? NATIVE_SOL_MINT   // imported from SDK
+        : new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toString();
       consoleOut('raw amount:', params.tokenAmount, 'blue');
       consoleOut('amount.toString():', amount, 'blue');
@@ -1035,8 +1038,8 @@ export const StreamingAccountView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logWarning('PaymentStreamingAccount Add funds transaction failed', {
           transcript: transactionLog,
@@ -1343,8 +1346,8 @@ export const StreamingAccountView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logWarning('PaymentStreamingAccount withdraw transaction failed', {
           transcript: transactionLog,
@@ -1558,8 +1561,8 @@ export const StreamingAccountView = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
-            )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+              SOL_MINT.toBase58(),
+            )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
           });
           customLogger.logWarning('Close PaymentStreamingAccount transaction failed', {
             transcript: transactionLog,
@@ -1732,8 +1735,8 @@ export const StreamingAccountView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logWarning('Close PaymentStreamingAccount transaction failed', {
           transcript: transactionLog,
@@ -1978,8 +1981,8 @@ export const StreamingAccountView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logWarning('Refresh PaymentStreamingAccount data transaction failed', {
           transcript: transactionLog,

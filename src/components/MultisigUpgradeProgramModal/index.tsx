@@ -7,7 +7,7 @@ import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
 import { getAmountWithSymbol } from 'middleware/utils';
@@ -224,10 +224,10 @@ export const MultisigUpgradeProgramModal = ({
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                    accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
                       transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58(),
+                      SOL_MINT.toBase58(),
                     ),
                   })}
                 </h4>

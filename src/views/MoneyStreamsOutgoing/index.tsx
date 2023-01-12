@@ -45,7 +45,7 @@ import { appConfig, customLogger } from 'index';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import {
@@ -418,8 +418,9 @@ export const MoneyStreamsOutgoingView = (props: {
           stream: payload.stream, // stream
         };
         const { transaction } = await paymentStreaming.buildFundStreamTransaction(
-          accounts, // accounts
-          payload.amount, // amount
+          accounts,         // accounts
+          payload.amount,   // amount
+          true,             // autoWSol
         );
         consoleOut('fundStream returned transaction:', transaction);
         setTransactionStatus({
@@ -662,10 +663,10 @@ export const MoneyStreamsOutgoingView = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logWarning('Add funds transaction failed', {
@@ -808,10 +809,10 @@ export const MoneyStreamsOutgoingView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
+            SOL_MINT.toBase58(),
           )}) to pay for network fees (${getAmountWithSymbol(
             transactionFees.blockchainFee + transactionFees.mspFlatFee,
-            NATIVE_SOL_MINT.toBase58(),
+            SOL_MINT.toBase58(),
           )})`,
         });
         customLogger.logWarning('Add funds transaction failed', {
@@ -995,10 +996,10 @@ export const MoneyStreamsOutgoingView = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logWarning('Pause stream transaction failed', {
@@ -1159,12 +1160,12 @@ export const MoneyStreamsOutgoingView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
+            SOL_MINT.toBase58(),
             false,
             splTokenList,
           )}) to pay for network fees (${getAmountWithSymbol(
             transactionFees.blockchainFee + transactionFees.mspFlatFee,
-            NATIVE_SOL_MINT.toBase58(),
+            SOL_MINT.toBase58(),
             false,
             splTokenList,
           )})`,
@@ -1398,10 +1399,10 @@ export const MoneyStreamsOutgoingView = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logWarning('Resume stream transaction failed', {
@@ -1561,10 +1562,10 @@ export const MoneyStreamsOutgoingView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
+            SOL_MINT.toBase58(),
           )}) to pay for network fees (${getAmountWithSymbol(
             transactionFees.blockchainFee + transactionFees.mspFlatFee,
-            NATIVE_SOL_MINT.toBase58(),
+            SOL_MINT.toBase58(),
           )})`,
         });
         customLogger.logWarning('Resume stream transaction failed', {
@@ -1819,10 +1820,10 @@ export const MoneyStreamsOutgoingView = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logError('Close stream transaction failed', {
@@ -2015,10 +2016,10 @@ export const MoneyStreamsOutgoingView = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logError('Close stream transaction failed', {
@@ -2634,10 +2635,10 @@ export const MoneyStreamsOutgoingView = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58(), false, splTokenList),
+                    accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58(), false, splTokenList),
                     feeAmount: getAmountWithSymbol(
                       transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58(),
+                      SOL_MINT.toBase58(),
                       false,
                       splTokenList,
                     ),
@@ -2701,10 +2702,10 @@ export const MoneyStreamsOutgoingView = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                    accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
                       transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58(),
+                      SOL_MINT.toBase58(),
                     ),
                   })}
                 </h4>
@@ -2764,10 +2765,10 @@ export const MoneyStreamsOutgoingView = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                    accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
                       transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58(),
+                      SOL_MINT.toBase58(),
                     ),
                   })}
                 </h4>

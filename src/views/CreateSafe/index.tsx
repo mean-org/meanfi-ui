@@ -22,7 +22,7 @@ import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconHelpCircle, IconSafe } from 'Icons';
 import { appConfig, customLogger } from 'index';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isValidAddress } from 'middleware/ui';
@@ -353,8 +353,8 @@ const CreateSafeView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
-            )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+              SOL_MINT.toBase58(),
+            )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
           });
           customLogger.logWarning('Create multisig transaction failed', {
             transcript: transactionLog,

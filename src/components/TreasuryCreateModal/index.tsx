@@ -15,7 +15,7 @@ import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
 import { fetchAccountTokens } from 'middleware/accounts';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { consoleOut, getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
 import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
@@ -571,10 +571,10 @@ export const TreasuryCreateModal = (props: {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                      accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                       feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                        NATIVE_SOL_MINT.toBase58(),
+                        SOL_MINT.toBase58(),
                       ),
                     })}
                   </h4>

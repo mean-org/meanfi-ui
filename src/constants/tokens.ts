@@ -1,4 +1,4 @@
-import { NATIVE_SOL_MINT } from '../middleware/ids';
+import { SOL_MINT } from '../middleware/ids';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { isProd } from '../middleware/ui';
 
@@ -8,7 +8,7 @@ export const NATIVE_SOL: TokenInfo = {
   chainId: isProd() ? 101 : 103,
   symbol: 'SOL',
   name: 'Native SOL',
-  address: NATIVE_SOL_MINT.toString(),
+  address: SOL_MINT.toString(),
   decimals: 9,
   logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
   tags: ['raydium'],

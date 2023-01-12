@@ -7,7 +7,7 @@ import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { IconArrowForward } from 'Icons';
 import { appConfig } from 'index';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { ACCOUNT_LAYOUT } from 'middleware/layouts';
 import { consoleOut } from 'middleware/ui';
 import { getAmountFromLamports } from 'middleware/utils';
@@ -79,7 +79,7 @@ export const SafeMeanInfo = (props: {
     }
 
     return {
-      mint: NATIVE_SOL_MINT,
+      mint: SOL_MINT,
       owner: selectedMultisig.authority,
       amount: multisigSolBalance && new BN(multisigSolBalance),
       delegateOption: 0,

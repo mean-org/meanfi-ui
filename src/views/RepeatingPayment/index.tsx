@@ -5,6 +5,7 @@ import {
   ACTION_CODES,
   TransactionFees,
   StreamPaymentTransactionAccounts,
+  NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, DatePicker, Dropdown, Menu } from 'antd';
@@ -26,7 +27,7 @@ import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconCaretDown, IconEdit } from 'Icons';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamRPTransferData } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import {
@@ -658,7 +659,9 @@ export const RepeatingPayment = (props: {
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress);
         consoleOut('beneficiaryMint:', selectedToken.address);
-        const associatedToken = new PublicKey(selectedToken.address);
+        const associatedToken = selectedToken.address === SOL_MINT.toBase58()
+          ? NATIVE_SOL_MINT   // imported from SDK
+          : new PublicKey(selectedToken.address);
         const amount = toTokenAmount(fromCoinAmount, selectedToken.decimals).toString();
         const rateAmount = toTokenAmount(paymentRateAmount, selectedToken.decimals).toString();
         const now = new Date();
@@ -1085,7 +1088,7 @@ export const RepeatingPayment = (props: {
                 <div className="left flex-row">
                   <div className="flex-center">
                     <Identicon
-                      address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
+                      address={isValidAddress(recipientAddress) ? recipientAddress : SOL_MINT.toBase58()}
                       style={{ width: '30', display: 'inline-flex' }}
                     />
                   </div>

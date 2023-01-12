@@ -18,7 +18,7 @@ import {
 } from '@solana/web3.js';
 import BN from 'bn.js';
 import { BaseProposal } from 'models/multisig';
-import { NATIVE_SOL_MINT } from './ids';
+import { SOL_MINT } from './ids';
 import { consoleOut } from './ui';
 import { toTokenAmount } from './utils';
 
@@ -36,7 +36,7 @@ const getFromAccount = (fromAccountInfo: AccountInfo<Buffer>) => {
 
 const getFromMint = (fromAccountInfo: AccountInfo<Buffer>) => {
   const fromAccount = getFromAccount(fromAccountInfo);
-  return fromAccountInfo.owner.equals(SystemProgram.programId) ? NATIVE_SOL_MINT : new PublicKey(fromAccount.mint);
+  return fromAccountInfo.owner.equals(SystemProgram.programId) ? SOL_MINT : new PublicKey(fromAccount.mint);
 };
 
 export const createTransferTokensTx = async (
@@ -62,7 +62,7 @@ export const createTransferTokensTx = async (
   let transferIx: TransactionInstruction;
   const ixs: TransactionInstruction[] = [];
 
-  if (fromMintAddress.equals(NATIVE_SOL_MINT)) {
+  if (fromMintAddress.equals(SOL_MINT)) {
     transferIx = SystemProgram.transfer({
       fromPubkey: fromAddress,
       toPubkey: toAddress,

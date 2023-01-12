@@ -6,6 +6,7 @@ import {
   TransactionFees,
   TransferTransactionAccounts,
   ScheduleTransferTransactionAccounts,
+  NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, DatePicker, Select } from 'antd';
@@ -29,6 +30,7 @@ import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'c
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
 import { customLogger } from 'index';
+import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamOTPTransferData } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import {
@@ -127,6 +129,10 @@ export const OneTimePayment = (props: {
     const fromParsedDate = new Date(parsedDate);
     return fromParsedDate.getDate() > now.getDate() ? true : false;
   }, [paymentStartDate]);
+
+  const isTestingScheduledOtp = useMemo(() => {
+    return isWhitelisted && fixedScheduleValue > 0;
+  }, [fixedScheduleValue, isWhitelisted]);
 
   const getFeeAmount = useCallback(() => {
     return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
@@ -526,7 +532,7 @@ export const OneTimePayment = (props: {
         return null;
       }
 
-      if (!isScheduledPayment()) {
+      if (!isScheduledPayment() && !isTestingScheduledOtp) {
         const accounts: TransferTransactionAccounts = {
           feePayer: publicKey, // feePayer
           sender: new PublicKey(data.wallet), // sender
@@ -575,7 +581,9 @@ export const OneTimePayment = (props: {
       consoleOut('Beneficiary address:', recipientAddress);
       const beneficiary = new PublicKey(recipientAddress);
       consoleOut('associatedToken:', selectedToken.address);
-      const associatedToken = new PublicKey(selectedToken.address);
+      const associatedToken = selectedToken.address === SOL_MINT.toBase58() // && isScheduledPayment()
+        ? NATIVE_SOL_MINT   // imported from SDK
+        : new PublicKey(selectedToken.address);
       const amount = toTokenAmount(fromCoinAmount, selectedToken.decimals, true);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
@@ -588,6 +596,7 @@ export const OneTimePayment = (props: {
       // If current user is in the whitelist and we have an amount of minutes to add
       // to the current date selection, calculate it!
       if (isWhitelisted && fixedScheduleValue > 0) {
+        consoleOut(`Adding ${fixedScheduleValue} minutes to current time`, '...', 'blue');
         startUtc = addMinutes(startUtc, fixedScheduleValue);
       }
 

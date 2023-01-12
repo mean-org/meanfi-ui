@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 import { AppStateContext } from '../../contexts/appstate';
 import { IconInfoCircle, IconKey, IconLock } from '../../Icons';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
+import { SOL_MINT } from '../../middleware/ids';
 import { isError } from '../../middleware/transactions';
 import { getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
 import { getAmountWithSymbol } from '../../middleware/utils';
@@ -298,12 +298,12 @@ export const MultisigEditSafeModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(props.nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                    accountBalance: getAmountWithSymbol(props.nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
                       props.transactionFees.networkFee +
                         props.transactionFees.multisigFee +
                         props.transactionFees.rentExempt,
-                      NATIVE_SOL_MINT.toBase58(),
+                      SOL_MINT.toBase58(),
                     ),
                   })}
                 </h4>
