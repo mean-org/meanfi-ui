@@ -26,7 +26,7 @@ import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
@@ -1170,8 +1170,8 @@ export const TreasuryStreamCreateModal = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logWarning('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
         return false;
@@ -1863,7 +1863,7 @@ export const TreasuryStreamCreateModal = (props: {
                                 <div className="flex-center">
                                   <Identicon
                                     address={
-                                      isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()
+                                      isValidAddress(recipientAddress) ? recipientAddress : SOL_MINT.toBase58()
                                     }
                                     style={{
                                       width: '30',
@@ -1917,7 +1917,7 @@ export const TreasuryStreamCreateModal = (props: {
                                   <div className="flex-center">
                                     <Identicon
                                       address={
-                                        isValidAddress(csvItem.address) ? csvItem.address : NATIVE_SOL_MINT.toBase58()
+                                        isValidAddress(csvItem.address) ? csvItem.address : SOL_MINT.toBase58()
                                       }
                                       style={{
                                         width: '30',

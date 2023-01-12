@@ -10,7 +10,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { getTransactionOperationDescription } from 'middleware/ui';
 import { formatThousands, getAmountWithSymbol, getSdkValue, shortenAddress } from 'middleware/utils';
@@ -265,10 +265,10 @@ export const TreasuryCloseModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(props.nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                    accountBalance: getAmountWithSymbol(props.nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58(),
+                      SOL_MINT.toBase58(),
                     ),
                   })}
                 </h4>

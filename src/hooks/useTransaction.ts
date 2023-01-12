@@ -5,7 +5,7 @@ import { useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { appConfig, customLogger } from 'index';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import { getAmountWithSymbol, getUniversalTxIxResume } from 'middleware/utils';
@@ -248,8 +248,8 @@ const useTransaction = () => {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minBalanceRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minBalanceRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logWarning(`${name} transaction failed`, {
           transcript: transactionLog,

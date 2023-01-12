@@ -76,7 +76,7 @@ import { createAddSafeAssetTx, CreateSafeAssetTxParams } from 'middleware/create
 import { createTransferTokensTx, TransferTokensTxParams } from 'middleware/createTransferTokensTx';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { getChange, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from 'middleware/ui';
@@ -608,7 +608,7 @@ export const HomeView = () => {
   const getScanAddress = useCallback(
     (asset: UserTokenAccount): PublicKey | null => {
       if (asset && asset.publicAddress) {
-        return asset.publicAddress !== NATIVE_SOL_MINT.toBase58()
+        return asset.publicAddress !== SOL_MINT.toBase58()
           ? new PublicKey(asset.publicAddress)
           : new PublicKey(selectedAccount.address);
       }
@@ -1313,10 +1313,10 @@ export const HomeView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logWarning('Transfer tokens transaction failed', {
@@ -1532,10 +1532,10 @@ export const HomeView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logWarning('Transfer tokens transaction failed', {
@@ -2305,8 +2305,8 @@ export const HomeView = () => {
         if (nativeBalance < minRequired) {
           const txStatusMsg = `Not enough balance ${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )} to pay for network fees ${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())}`;
+            SOL_MINT.toBase58(),
+          )} to pay for network fees ${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())}`;
           const txStatus = {
             customError: txStatusMsg,
             lastOperation: transactionStatus.currentOperation,
@@ -3128,7 +3128,7 @@ export const HomeView = () => {
 
   const isDeleteAssetValid = () => {
     if (selectedAsset) {
-      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+      const isSol = selectedAsset.address === SOL_MINT.toBase58() ? true : false;
 
       if (!isSol && (selectedAsset.balance as number) === 0) {
         return true;
@@ -3149,7 +3149,7 @@ export const HomeView = () => {
 
   const isTransferOwnershipValid = () => {
     if (selectedAsset) {
-      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+      const isSol = selectedAsset.address === SOL_MINT.toBase58() ? true : false;
 
       if (!isSol) {
         return true;

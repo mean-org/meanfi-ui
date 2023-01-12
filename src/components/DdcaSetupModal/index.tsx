@@ -11,7 +11,7 @@ import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { IconShieldSolid } from 'Icons/IconShieldSolid';
 import { customLogger } from 'index';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { confirmTx, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from 'middleware/ui';
 import { getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
@@ -602,12 +602,12 @@ export const DdcaSetupModal = (props: {
       ? t('ddca-setup-modal.cta-label-vault-created')
       : isNative()
       ? getTotalSolAmountNeeded() > userBalance
-        ? `Need at least ${getAmountWithSymbol(getTotalSolAmountNeeded(), NATIVE_SOL_MINT.toBase58())}`
+        ? `Need at least ${getAmountWithSymbol(getTotalSolAmountNeeded(), SOL_MINT.toBase58())}`
         : t('ddca-setup-modal.cta-label-deposit')
       : !hasEnoughFromTokenBalance()
       ? t('transactions.validation.amount-low')
       : !hasEnoughNativeBalanceForFees()
-      ? `Need at least ${getAmountWithSymbol(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
+      ? `Need at least ${getAmountWithSymbol(getGasFeeAmount(), SOL_MINT.toBase58())}`
       : t('ddca-setup-modal.cta-label-deposit');
   };
 

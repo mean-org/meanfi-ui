@@ -25,6 +25,7 @@ import {
   WithdrawFromAccountTransactionAccounts,
   RefreshAccountDataTransactionAccounts,
   UpdateVestingTemplateTransactionAccounts,
+  NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
@@ -56,7 +57,7 @@ import { IconArrowBack, IconLoading, IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { getTokenAccountBalanceByAddress, getTokensWithBalances } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import {
   AppUsageEvent,
   SegmentRefreshAccountBalanceData,
@@ -1113,8 +1114,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
-            )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+              SOL_MINT.toBase58(),
+            )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
           });
           customLogger.logError('Create vesting account transaction failed', {
             transcript: transactionLog,
@@ -1423,8 +1424,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logError('Close Vesting Contract transaction failed', {
           transcript: transactionLog,
@@ -1687,7 +1688,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       });
 
       const treasury = selectedVestingContract.id;
-      const associatedToken = new PublicKey(params.associatedToken.address);
+      const associatedToken = params.associatedToken.address === SOL_MINT.toBase58()
+        ? NATIVE_SOL_MINT   // imported from SDK
+        : new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toString();
       const token = params.associatedToken;
       const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
@@ -1750,8 +1753,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logError('PaymentStreamingAccount Add Funds transaction failed', {
           transcript: transactionLog,
@@ -2071,8 +2074,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logError('Create Vesting Stream transaction failed', {
           transcript: transactionLog,
@@ -2356,8 +2359,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logError('Vesting Contract withdraw transaction failed', { transcript: transactionLog });
         return false;
@@ -2530,8 +2533,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logError('Refresh PaymentStreamingAccount data transaction failed', {
           transcript: transactionLog,

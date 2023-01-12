@@ -27,7 +27,7 @@ import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'c
 import { useWallet } from 'contexts/wallet';
 import { appConfig, customLogger } from 'index';
 import { resolveParsedAccountInfo } from 'middleware/accounts';
-import { BPF_LOADER_UPGRADEABLE_PID, NATIVE_SOL_MINT } from 'middleware/ids';
+import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
@@ -467,10 +467,10 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
               action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
               result: `Not enough balance (${getAmountWithSymbol(
                 nativeBalance,
-                NATIVE_SOL_MINT.toBase58(),
+                SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(
                 transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                NATIVE_SOL_MINT.toBase58(),
+                SOL_MINT.toBase58(),
               )})`,
             });
             customLogger.logWarning('Upgrade Program transaction failed', {
@@ -792,10 +792,10 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
               action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
               result: `Not enough balance (${getAmountWithSymbol(
                 nativeBalance,
-                NATIVE_SOL_MINT.toBase58(),
+                SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(
                 transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                NATIVE_SOL_MINT.toBase58(),
+                SOL_MINT.toBase58(),
               )})`,
             });
             customLogger.logWarning('Set program authority transaction failed', { transcript: transactionLog });

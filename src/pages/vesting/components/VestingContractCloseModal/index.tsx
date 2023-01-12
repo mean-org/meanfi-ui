@@ -7,7 +7,7 @@ import BN from 'bn.js';
 import { InputMean } from 'components/InputMean';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { getTransactionOperationDescription } from 'middleware/ui';
 import { displayAmountWithSymbol, getAmountWithSymbol } from 'middleware/utils';
@@ -205,10 +205,10 @@ export const VestingContractCloseModal = (props: {
                   {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                     <h4 className="mb-4">
                       {t('transactions.status.tx-start-failure', {
-                        accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                        accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                         feeAmount: getAmountWithSymbol(
                           transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                          NATIVE_SOL_MINT.toBase58(),
+                          SOL_MINT.toBase58(),
                         ),
                       })}
                     </h4>

@@ -783,7 +783,8 @@ export const getTimeToNow = (date: string): string => {
 };
 
 export function addMinutes(date: Date, minutes: number) {
-  return new Date(date.getTime() + minutes * 60000);
+  const addedMinutesInTs = minutes * 60000;
+  return new Date(date.getTime() + addedMinutesInTs);
 }
 
 export function addHours(date: Date, hours: number) {

@@ -21,6 +21,7 @@ import {
   AllocateFundsToStreamTransactionAccounts,
   CreateAccountTransactionAccounts,
   AccountType,
+  NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Dropdown, Menu, Row, Space, Spin, Tabs } from 'antd';
@@ -53,7 +54,7 @@ import { saveAppData } from 'middleware/appPersistedData';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamingAccountOwner } from 'middleware/getStreamingAccountOwner';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getIntervalFromSeconds, getTransactionStatusForLogs, toUsCurrency } from 'middleware/ui';
@@ -659,8 +660,8 @@ export const MoneyStreamsInfoView = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
-            )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+              SOL_MINT.toBase58(),
+            )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
           });
           customLogger.logWarning('PaymentStreamingAccount Add funds transaction failed', {
             transcript: transactionLog,
@@ -832,7 +833,9 @@ export const MoneyStreamsInfoView = (props: {
         currentOperation: TransactionStatus.InitTransaction,
       });
 
-      const associatedToken = new PublicKey(params.associatedToken);
+      const associatedToken = params.associatedToken === SOL_MINT.toBase58()
+        ? NATIVE_SOL_MINT   // imported from SDK
+        : new PublicKey(params.associatedToken);
       const amount = params.tokenAmount;
       consoleOut('raw amount:', params.tokenAmount, 'blue');
       consoleOut('amount.toNumber():', amount, 'blue');
@@ -884,8 +887,8 @@ export const MoneyStreamsInfoView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logWarning('PaymentStreamingAccount Add funds transaction failed', {
           transcript: transactionLog,
@@ -1233,8 +1236,8 @@ export const MoneyStreamsInfoView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, NATIVE_SOL_MINT.toBase58())})`,
+            SOL_MINT.toBase58(),
+          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
         customLogger.logWarning('Create Streaming Account transaction failed', {
           transcript: transactionLog,

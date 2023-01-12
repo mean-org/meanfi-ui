@@ -44,7 +44,7 @@ import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconClock, IconExchange, IconExternalLink } from 'Icons';
 import { customLogger } from 'index';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { sendTx, serializeTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
@@ -281,10 +281,10 @@ export const ExchangeDcasView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               ddcaTxFees.maxBlockchainFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logWarning('Close DDCA transaction failed', {
@@ -538,10 +538,10 @@ export const ExchangeDcasView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               balance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               ddcaTxFees.maxBlockchainFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logWarning('DDCA withdraw transaction failed', {
@@ -1472,8 +1472,8 @@ export const ExchangeDcasView = () => {
           {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
             <h4 className="mb-4">
               {t('transactions.status.tx-start-failure', {
-                accountBalance: `${getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58(), true)} SOL`,
-                feeAmount: `${getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58(), true)} SOL`,
+                accountBalance: `${getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58(), true)} SOL`,
+                feeAmount: `${getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, SOL_MINT.toBase58(), true)} SOL`,
               })}
             </h4>
           ) : (
@@ -1533,8 +1533,8 @@ export const ExchangeDcasView = () => {
           {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
             <h4 className="mb-4">
               {t('transactions.status.tx-start-failure', {
-                accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
-                feeAmount: getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58()),
+                accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
+                feeAmount: getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, SOL_MINT.toBase58()),
               })}
             </h4>
           ) : (

@@ -25,7 +25,7 @@ import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import BN from 'bn.js';
 import { StreamTopupParams } from 'models/common-types';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { InputMean } from 'components/InputMean';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
@@ -308,7 +308,7 @@ export const StreamAddFundsModal = (props: {
       fundFromTreasury: shouldFundFromTreasury(),
       associatedToken: selectedToken
         ? selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-          ? NATIVE_SOL_MINT.toBase58()
+          ? SOL_MINT.toBase58()
           : selectedToken.address
         : '',
     };

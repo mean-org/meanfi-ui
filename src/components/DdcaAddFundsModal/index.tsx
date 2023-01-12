@@ -9,7 +9,7 @@ import { TxConfirmationContext, TxStatus } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
-import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT, WRAPPED_SOL_MINT } from 'middleware/ids';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from 'middleware/ui';
 import { findATokenAddress, getAmountWithSymbol, getTxIxResume, shortenAddress } from 'middleware/utils';
@@ -477,7 +477,7 @@ export const DdcaAddFundsModal = (props: {
       if (getTotalCombinedSolanaAmount() > userBalance + fromTokenBalance) {
         message = `Need at least ${getAmountWithSymbol(
           getTotalCombinedSolanaAmount() - usableTokenAmount,
-          NATIVE_SOL_MINT.toBase58(),
+          SOL_MINT.toBase58(),
         )}`;
       } else {
         message = t('ddca-setup-modal.cta-label-deposit');
@@ -487,7 +487,7 @@ export const DdcaAddFundsModal = (props: {
         message = t('transactions.validation.amount-low');
       } else {
         message = !hasEnoughNativeBalanceForFees()
-          ? `Need at least ${getAmountWithSymbol(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
+          ? `Need at least ${getAmountWithSymbol(getGasFeeAmount(), SOL_MINT.toBase58())}`
           : t('ddca-setup-modal.cta-label-deposit');
       }
     }
@@ -540,7 +540,7 @@ export const DdcaAddFundsModal = (props: {
           <span className="left from-token-balance">
             SOL balance
             <br />
-            {userBalance > 0 && getAmountWithSymbol(userBalance, NATIVE_SOL_MINT.toBase58())}
+            {userBalance > 0 && getAmountWithSymbol(userBalance, SOL_MINT.toBase58())}
           </span>
           <span className="right pl-3 position-relative">
             <Progress
@@ -589,9 +589,9 @@ export const DdcaAddFundsModal = (props: {
             'Slider setting',
             getAmountWithSymbol(ddcaDetails.amountPerSwap * lockedSliderValue, ddcaDetails.fromMint),
           )}
-          {infoRow('Gas Fees', getAmountWithSymbol(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58()))}
-          {infoRow('Combined amount', getAmountWithSymbol(getTotalCombinedSolanaAmount(), NATIVE_SOL_MINT.toBase58()))}
-          {infoRow('Usable token amount', getAmountWithSymbol(usableTokenAmount, NATIVE_SOL_MINT.toBase58()))}
+          {infoRow('Gas Fees', getAmountWithSymbol(getGasFeeAmount(), SOL_MINT.toBase58()))}
+          {infoRow('Combined amount', getAmountWithSymbol(getTotalCombinedSolanaAmount(), SOL_MINT.toBase58()))}
+          {infoRow('Usable token amount', getAmountWithSymbol(usableTokenAmount, SOL_MINT.toBase58()))}
         </div>
       )}
       <div className="mt-3">

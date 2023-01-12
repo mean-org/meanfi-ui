@@ -22,7 +22,7 @@ import { IconHelpCircle } from 'Icons';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
 import {
   displayAmountWithSymbol,
@@ -364,7 +364,7 @@ export const TreasuryAddFundsModal = (props: {
       tokenAmount: tokenAmount.toString(),
       associatedToken: selectedToken
         ? selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-          ? NATIVE_SOL_MINT.toBase58()
+          ? SOL_MINT.toBase58()
           : selectedToken.address
         : '',
       streamId: highLightableStreamId || '',

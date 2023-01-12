@@ -37,7 +37,7 @@ import { useWallet } from 'contexts/wallet';
 import { IconEllipsisVertical } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
-import { NATIVE_SOL_MINT } from 'middleware/ids';
+import { SOL_MINT } from 'middleware/ids';
 import {
   AppUsageEvent,
   SegmentStreamTransferOwnershipData,
@@ -412,10 +412,10 @@ export const MoneyStreamsIncomingView = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logWarning('Transfer stream transaction failed', {
@@ -657,10 +657,10 @@ export const MoneyStreamsIncomingView = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(
               transactionFees.blockchainFee + transactionFees.mspFlatFee,
-              NATIVE_SOL_MINT.toBase58(),
+              SOL_MINT.toBase58(),
             )})`,
           });
           customLogger.logWarning('Withdraw transaction failed', {
@@ -858,10 +858,10 @@ export const MoneyStreamsIncomingView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${getAmountWithSymbol(
             nativeBalance,
-            NATIVE_SOL_MINT.toBase58(),
+            SOL_MINT.toBase58(),
           )}) to pay for network fees (${getAmountWithSymbol(
             transactionFees.blockchainFee + transactionFees.mspFlatFee,
-            NATIVE_SOL_MINT.toBase58(),
+            SOL_MINT.toBase58(),
           )})`,
         });
         customLogger.logWarning('Withdraw transaction failed', {
@@ -1376,10 +1376,10 @@ export const MoneyStreamsIncomingView = (props: {
                   <WarningOutlined style={{ fontSize: 48 }} className="icon" />
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                      accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                       feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                        NATIVE_SOL_MINT.toBase58(),
+                        SOL_MINT.toBase58(),
                       ),
                     })}
                   </h4>
@@ -1449,10 +1449,10 @@ export const MoneyStreamsIncomingView = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                    accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
                       transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58(),
+                      SOL_MINT.toBase58(),
                     ),
                   })}
                 </h4>

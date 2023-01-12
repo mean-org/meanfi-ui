@@ -36,7 +36,7 @@ export const SWAP_PROGRAM_ID = new PublicKey('SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6
 
 export const DEX_PROGRAM_ID = new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin');
 
-export const NATIVE_SOL_MINT = new PublicKey('11111111111111111111111111111111');
+export const SOL_MINT = new PublicKey('11111111111111111111111111111111');
 
 export const WRAPPED_SOL_MINT = new PublicKey('So11111111111111111111111111111111111111112');
 
@@ -45,9 +45,6 @@ export const SRM_MINT = new PublicKey('SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKW
 export const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
 
 export const USDT_MINT = new PublicKey('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
-
-// Arbitrary mint to represent SOL (not wrapped SOL).
-export const SOL_MINT = new PublicKey('Ejmc1UB4EsES5oAaRN63SpoxMJidt3ZGBrqrZk49vjTZ');
 
 export const WORM_MARKET_BASE = new PublicKey('6a9wpsZpZGxGhFVSQBpcTNjNjytdbSA1iUw1A5KNDxPw');
 

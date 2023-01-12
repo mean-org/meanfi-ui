@@ -6,7 +6,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
 import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
 import { isError } from '../../middleware/transactions';
-import { NATIVE_SOL_MINT } from '../../middleware/ids';
+import { SOL_MINT } from '../../middleware/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
@@ -310,10 +310,10 @@ export const MultisigVaultTransferAuthorityModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(props.nativeBalance, NATIVE_SOL_MINT.toBase58()),
+                    accountBalance: getAmountWithSymbol(props.nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
                       props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58(),
+                      SOL_MINT.toBase58(),
                     ),
                   })}
                 </h4>
