@@ -798,6 +798,7 @@ export const OneTimePayment = (props: {
     recipientAddress,
     fixedScheduleValue,
     transactionCancelled,
+    isTestingScheduledOtp,
     streamV2ProgramAddress,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
