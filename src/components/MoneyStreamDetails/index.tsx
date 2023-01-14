@@ -148,8 +148,8 @@ export const MoneyStreamDetails = (props: {
     (item: Stream | StreamInfo) => {
       if (item && selectedToken) {
         const rateAmount = isV2tream
-          ? toTokenAmountBn(item.rateAmount as number, selectedToken.decimals)
-          : (item.rateAmount as BN);
+          ? (item.rateAmount as BN)
+          : toTokenAmountBn(item.rateAmount as number, selectedToken.decimals);
         return rateAmount;
       }
       return new BN(0);
