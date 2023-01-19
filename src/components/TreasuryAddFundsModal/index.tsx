@@ -468,7 +468,7 @@ export const TreasuryAddFundsModal = (props: {
     } else if (tokenAmount.gt(getMaxAmount())) {
       return t('transactions.validation.amount-high');
     } else if (nativeBalance <= MIN_SOL_BALANCE_REQUIRED) {
-      return t('transactions.validation.amount-sol-low');
+      return t('transactions.validation.insufficient-balance-needed', { balance: MIN_SOL_BALANCE_REQUIRED });
     } else if (highLightableStreamId) {
       return t('treasuries.add-funds.main-cta-fund-stream');
     } else {

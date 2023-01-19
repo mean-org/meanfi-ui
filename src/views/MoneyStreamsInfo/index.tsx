@@ -42,7 +42,7 @@ import { TreasuryStreamCreateModal } from 'components/TreasuryStreamCreateModal'
 import { FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
+import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
@@ -254,7 +254,7 @@ export const MoneyStreamsInfoView = (props: {
       connection.getBalance(pk).then(solBalance => {
         const uiBalance = getAmountFromLamports(solBalance);
         balancesMap[NATIVE_SOL.address] = uiBalance;
-        setNativeBalance(uiBalance);
+        // setNativeBalance(uiBalance);
       });
 
       fetchAccountTokens(connection, pk)
@@ -533,6 +533,34 @@ export const MoneyStreamsInfoView = (props: {
     return calculateFeesForAction(action);
   }, []);
 
+  const abortOnLowBalance = useCallback((title: string, nativeBalance: number, minRequired: number, transactionLog: any[]) => {
+    const txLog: any[] = transactionLog.slice();
+    const notifContent = t('transactions.status.tx-start-failure', {
+      accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
+      feeAmount: getAmountWithSymbol(minRequired, SOL_MINT.toBase58()),
+    });
+    txLog.push({
+      action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+      result: notifContent,
+    });
+    customLogger.logWarning(title, {
+      transcript: txLog,
+    });
+    openNotification({
+      description: notifContent,
+      type: 'info',
+    });
+    const txStatus = {
+      customError: {
+        message: notifContent,
+        data: undefined,
+      },
+      lastOperation: transactionStatus.currentOperation,
+      currentOperation: TransactionStatus.TransactionStartFailure,
+    } as TransactionStatusInfo;
+    setTransactionStatus(txStatus);
+  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
+
   //////////////////////
   // MODALS & ACTIONS //
   //////////////////////
@@ -652,20 +680,13 @@ export const MoneyStreamsInfoView = (props: {
         consoleOut('nativeBalance:', nativeBalance, 'blue');
 
         if (nativeBalance < minRequired) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${getAmountWithSymbol(
-              nativeBalance,
-              SOL_MINT.toBase58(),
-            )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
-          });
-          customLogger.logWarning('PaymentStreamingAccount Add funds transaction failed', {
-            transcript: transactionLog,
-          });
+          abortOnLowBalance(
+            'PaymentStreamingAccount Add funds transaction failed',
+            nativeBalance,
+            minRequired,
+            transactionLog
+          );
+
           return false;
         }
 
@@ -879,20 +900,13 @@ export const MoneyStreamsInfoView = (props: {
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.TransactionStartFailure,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${getAmountWithSymbol(
-            nativeBalance,
-            SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
-        });
-        customLogger.logWarning('PaymentStreamingAccount Add funds transaction failed', {
-          transcript: transactionLog,
-        });
+        abortOnLowBalance(
+          'PaymentStreamingAccount Add funds transaction failed',
+          nativeBalance,
+          minRequired,
+          transactionLog
+        );
+
         return false;
       }
 
@@ -1220,7 +1234,7 @@ export const MoneyStreamsInfoView = (props: {
       const ff = transactionFees.mspFlatFee; // Flat fee (protocol)
       const mp =
         multisigTransactionFees.networkFee + multisigTransactionFees.multisigFee + multisigTransactionFees.rentExempt; // Multisig proposal
-      const minRequired = createOptions.multisigId ? mp : bf + ff;
+      const minRequired = isMultisigContext ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -1228,20 +1242,13 @@ export const MoneyStreamsInfoView = (props: {
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.TransactionStartFailure,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${getAmountWithSymbol(
-            nativeBalance,
-            SOL_MINT.toBase58(),
-          )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
-        });
-        customLogger.logWarning('Create Streaming Account transaction failed', {
-          transcript: transactionLog,
-        });
+        abortOnLowBalance(
+          'Create Streaming Account transaction failed',
+          nativeBalance,
+          minRequired,
+          transactionLog
+        );
+
         return false;
       }
 
