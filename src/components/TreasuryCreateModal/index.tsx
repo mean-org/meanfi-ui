@@ -1,10 +1,11 @@
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { CheckOutlined, CopyOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
 import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Button, Drawer, Modal, Spin } from 'antd';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
+import { openNotification } from 'components/Notifications';
 import { TextInput } from 'components/TextInput';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { TokenListItem } from 'components/TokenListItem';
@@ -17,7 +18,7 @@ import { environment } from 'environments/environment';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
+import { consoleOut, copyText, getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
 import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
@@ -78,6 +79,24 @@ export const TreasuryCreateModal = (props: {
 
   // Token selection
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
+
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback(
+    (address: any) => {
+      if (copyText(address.toString())) {
+        openNotification({
+          description: t('notifications.account-address-copied-message'),
+          type: 'info',
+        });
+      } else {
+        openNotification({
+          description: t('notifications.account-address-not-copied-message'),
+          type: 'error',
+        });
+      }
+    },
+    [t],
+  );
 
   const showTokenSelector = useCallback(() => {
     setIsTokenSelectorVisible(true);
@@ -570,13 +589,33 @@ export const TreasuryCreateModal = (props: {
                 <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
-                    {t('transactions.status.tx-start-failure', {
-                      accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
-                      feeAmount: getAmountWithSymbol(
-                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                        SOL_MINT.toBase58(),
-                      ),
-                    })}
+                    {!transactionStatus.customError ? (
+                      t('transactions.status.tx-start-failure', {
+                        accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
+                        feeAmount: getAmountWithSymbol(
+                          transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                          SOL_MINT.toBase58(),
+                        ),
+                      })
+                    ) : (
+                      <>
+                        {transactionStatus.customError.message ? <span>{transactionStatus.customError.message}</span> : null}
+                        {transactionStatus.customError.data ? (
+                          <>
+                            <span className="ml-1">[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
+                            <div className="icon-button-container">
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={<CopyOutlined />}
+                                onClick={() => copyAddressToClipboard(transactionStatus.customError.data)}
+                              />
+                            </div>
+                          </>
+                        ) : null}
+                      </>
+                    )}
                   </h4>
                 ) : (
                   <h4 className="font-bold mb-3">
