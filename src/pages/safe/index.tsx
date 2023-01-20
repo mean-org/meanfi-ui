@@ -221,6 +221,16 @@ const SafeView = (props: {
         currentOperation: TransactionStatus.SendTransactionFailure,
       } as TransactionStatusInfo;
 
+      let anchorError = '';
+      const errorString = error.toString() as string;
+      // match returns 3 groups, the whole string at 0, first (.*) group match at 1 and second (.*) groups match at 3
+      // that would be the Error Message part
+      const anchorErrorMatcher = errorString.match(/> Program logged: "AnchorError(.*)Error Message: (.*)"/);
+
+      if (anchorErrorMatcher) {
+        anchorError = anchorErrorMatcher[2];
+      }
+
       if (error.toString().indexOf('0x1794') !== -1) {
         let accountIndex = 0;
         if (transaction.operation === OperationType.StreamClose) {
@@ -289,7 +299,12 @@ const SafeView = (props: {
             'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token and LP Token Accounts of the Investor.\n',
           data: selectedMultisig?.authority.toBase58(),
         };
-      } else if (error.toString().indexOf('0x1') !== -1) {
+      } else if (anchorError) {   // Handle any anchorError not matched above by any "custom program error: 0x1XXX"
+        txStatus.customError = {
+          message: anchorError,
+          data: undefined,
+        };
+      } else if (error.toString().indexOf('0x1') !== -1) {  // Leave classic Insufficient lamports message for last
         const accountIndex =
           transaction.operation === OperationType.TransferTokens || transaction.operation === OperationType.Transfer
             ? 0
