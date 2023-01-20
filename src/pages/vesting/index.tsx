@@ -3265,7 +3265,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   useEffect(() => {
     if (selectedAccount.address && selectedVestingContract) {
       let minRequired = 0;
-      if (isMultisigContext && isMultisigContext && multisigTxFees) {
+      if (isMultisigContext && multisigTxFees) {
         minRequired = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt; // Multisig proposal fees
       } else if (transactionFees) {
         minRequired = transactionFees.blockchainFee + transactionFees.mspFlatFee;
