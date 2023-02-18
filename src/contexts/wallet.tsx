@@ -47,6 +47,7 @@ import { AppUsageEvent } from '../middleware/segment-service';
 import { consoleOut, isProd } from '../middleware/ui';
 import { isUnauthenticatedRoute, useLocalStorageState } from '../middleware/utils';
 import { XnftWalletAdapter, XnftWalletName, isInXnftWallet } from '../integrations/xnft/xnft-wallet-adapter';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 // Flag to block processing of events when triggered multiple times
 let isDisconnecting = false;
@@ -317,6 +318,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [walletName, setWalletName] = useLocalStorageState('walletName');
+  const [dynamicAutoConnect, setDynamicAutoConnect] = useLocalStorage('autoConnect', isDesktop ? 'true' : 'false');
   const {
     wallet,
     wallets,
@@ -340,9 +342,9 @@ export function MeanFiWalletProvider({ children = null as any }) {
   }, []);
   const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
 
-  const resetWalletProvider = () => {
+  const resetWalletProvider = useCallback(() => {
     setWalletName(null);
-  };
+  }, [setWalletName]);
 
   const provider = useMemo(() => {
     const item = WALLET_PROVIDERS.find(({ name }) => name === walletName);
@@ -350,31 +352,29 @@ export function MeanFiWalletProvider({ children = null as any }) {
   }, [walletName]);
 
   useEffect(() => {
-    if (wallets) {
-      for (const item of wallets) {
-        const itemIndex = WALLET_PROVIDERS.findIndex(p => p.name === item.adapter.name);
-        if (itemIndex !== -1) {
-          WALLET_PROVIDERS[itemIndex].url = item.adapter.url;
-          WALLET_PROVIDERS[itemIndex].icon = item.adapter.icon;
-        }
+    for (const item of wallets) {
+      const itemIndex = WALLET_PROVIDERS.findIndex(p => p.name === item.adapter.name);
+      if (itemIndex !== -1) {
+        WALLET_PROVIDERS[itemIndex].url = item.adapter.url;
+        WALLET_PROVIDERS[itemIndex].icon = item.adapter.icon;
       }
-      if (isInXnftWallet() && (!wallet || wallet.adapter.name !== XnftWalletName)) {
-        document.body.classList.add('in-xnft-wallet');
-        setWalletName(XnftWalletName);
-        select(XnftWalletName);
-      } else if (walletName) {
-        consoleOut('walletName:', walletName, 'blue');
-        const wa = wallets.find(w => w.adapter.name === walletName);
-        const walletEntry = WALLET_PROVIDERS.filter(w => !isProviderHidden(w, { isDesktop })).find(
-          w => w.name === walletName,
-        );
-        consoleOut('provider:', wa, 'blue');
-        if (!(wa && walletEntry)) {
-          setWalletName(null);
-        }
-      } else {
+    }
+    if (isInXnftWallet() && (!wallet || wallet.adapter.name !== XnftWalletName)) {
+      document.body.classList.add('in-xnft-wallet');
+      setWalletName(XnftWalletName);
+      select(XnftWalletName);
+    } else if (walletName) {
+      consoleOut('walletName:', walletName, 'blue');
+      const wa = wallets.find(w => w.adapter.name === walletName);
+      const walletEntry = WALLET_PROVIDERS.filter(w => !isProviderHidden(w, { isDesktop })).find(
+        w => w.name === walletName,
+      );
+      consoleOut('provider:', wa, 'blue');
+      if (!(wa && walletEntry)) {
         setWalletName(null);
       }
+    } else {
+      setWalletName(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletName, wallets, wallet]);
@@ -388,41 +388,53 @@ export function MeanFiWalletProvider({ children = null as any }) {
     }
   }, [wallet]);
 
+  function setupOnConnectEvent(adapter: Adapter) {
+    adapter.on('connect', pk => {
+      consoleOut('Wallet connect event fired:', pk.toBase58(), 'blue');
+      if (adapter.connected && !adapter.connecting) {
+        setConnected(false);
+        resetWalletProvider();
+        window.location.reload();
+      } else if (adapter.publicKey) {
+        setConnected(true);
+        close();
+      }
+    });
+  }
+
+  function setupOnDisconnectEvent(adapter: Adapter, readyState: WalletReadyState) {
+    adapter.on('disconnect', () => {
+      if (isDisconnecting) {
+        isDisconnecting = false;
+        consoleOut('Wallet disconnect event fired:', '', 'blue');
+        setConnected(false);
+        if (readyState !== WalletReadyState.Installed) return;
+        navigate('/');
+      }
+    });
+  }
+
+  function setupOnErrorEvent(adapter: Adapter) {
+    adapter.on('error', errorEvent => {
+      consoleOut('Wallet error event fired:', '', 'blue');
+
+      if (adapter.connecting) {
+        setConnected(false);
+        adapter.removeAllListeners();
+        resetWalletProvider();
+        selectWalletProvider();
+      }
+    });
+  }
+
   // Setup listeners
   useEffect(() => {
     if (wallet?.adapter) {
-      wallet.adapter.on('connect', pk => {
-        consoleOut('Wallet connect event fired:', pk.toBase58(), 'blue');
-        if (wallet.adapter.connected && !wallet.adapter.connecting) {
-          setConnected(false);
-          resetWalletProvider();
-          window.location.reload();
-        } else if (wallet.adapter.publicKey) {
-          setConnected(true);
-          close();
-        }
-      });
+      setupOnConnectEvent(wallet.adapter);
 
-      wallet.adapter.on('disconnect', () => {
-        if (isDisconnecting) {
-          isDisconnecting = false;
-          consoleOut('Wallet disconnect event fired:', '', 'blue');
-          setConnected(false);
-          if (wallet.readyState !== WalletReadyState.Installed) return;
-          navigate('/');
-        }
-      });
+      setupOnDisconnectEvent(wallet.adapter, wallet.readyState);
 
-      wallet.adapter.on('error', errorEvent => {
-        consoleOut('Wallet error event fired:', '', 'blue');
-
-        if (wallet.adapter.connecting) {
-          setConnected(false);
-          wallet.adapter.removeAllListeners();
-          resetWalletProvider();
-          selectWalletProvider();
-        }
-      });
+      setupOnErrorEvent(wallet.adapter);
     }
 
     return () => {
@@ -456,27 +468,41 @@ export function MeanFiWalletProvider({ children = null as any }) {
     if (isUnauthenticatedRoute(location.pathname)) return;
     if (wallet || connected || connecting) return;
 
-    //setIsSelectingAccount(true);
     selectWalletProvider();
   }, [wallet, connected, connecting, selectWalletProvider, location.pathname]);
 
+  const providerValues = useMemo(() => {
+    return {
+      provider,
+      wallet: wallet?.adapter,
+      connected,
+      connecting,
+      disconnecting,
+      isSelectingWallet,
+      selectWalletProvider,
+      signAllTransactions,
+      resetWalletProvider,
+      sendTransaction,
+      signTransaction,
+      signMessage,
+    };
+  }, [
+    connected,
+    connecting,
+    disconnecting,
+    isSelectingWallet,
+    provider,
+    resetWalletProvider,
+    selectWalletProvider,
+    sendTransaction,
+    signAllTransactions,
+    signMessage,
+    signTransaction,
+    wallet?.adapter,
+  ]);
+
   return (
-    <MeanFiWalletContext.Provider
-      value={{
-        provider,
-        wallet: wallet?.adapter,
-        connected,
-        connecting,
-        disconnecting,
-        isSelectingWallet,
-        selectWalletProvider,
-        signAllTransactions,
-        resetWalletProvider,
-        sendTransaction,
-        signTransaction,
-        signMessage,
-      }}
-    >
+    <MeanFiWalletContext.Provider value={providerValues}>
       {children}
       <Modal
         centered
@@ -522,7 +548,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
                 setWalletName(item.name);
                 const selected = wallets.find(w => w.adapter.name === item.name);
                 if (selected) {
-                  // setLocalWallet(selected);
                   select(selected.adapter.name);
                 }
               };
@@ -535,7 +560,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
                   shape="round"
                   type="ghost"
                   onClick={onClick}
-                  key={index}
+                  key={item.name}
                   icon={<img alt={`${item.name}`} width={20} height={20} src={item.icon} style={{ marginRight: 8 }} />}
                 >
                   <span className="align-middle">{item.name}</span>

@@ -1,6 +1,6 @@
 import { useLocalStorageState } from 'middleware/utils';
 import { AccountContext } from 'models/accounts';
-import React, { useContext, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import { useWallet } from './wallet';
 
 export const emptyAccount: AccountContext = {
@@ -33,9 +33,12 @@ export function WalletAccountProvider({ children = null }: WalletAccountProvider
     (account: AccountContext | null) => void,
   ];
 
-  const setSelectedAccount = (account?: AccountContext) => {
-    setLastUsedAccount(account ?? null);
-  };
+  const setSelectedAccount = useCallback(
+    (account?: AccountContext) => {
+      setLastUsedAccount(account ?? null);
+    },
+    [setLastUsedAccount],
+  );
 
   const selectedAccount = useMemo(() => {
     if (!publicKey) return emptyAccount;
@@ -46,16 +49,14 @@ export function WalletAccountProvider({ children = null }: WalletAccountProvider
     return lastUsedAccount;
   }, [lastUsedAccount, publicKey]);
 
-  return (
-    <WalletAccountContext.Provider
-      value={{
-        selectedAccount,
-        setSelectedAccount,
-      }}
-    >
-      {children}
-    </WalletAccountContext.Provider>
-  );
+  const providerValues = useMemo(() => {
+    return {
+      selectedAccount,
+      setSelectedAccount,
+    };
+  }, [selectedAccount, setSelectedAccount]);
+
+  return <WalletAccountContext.Provider value={providerValues}>{children}</WalletAccountContext.Provider>;
 }
 
 export function useWalletAccount() {
