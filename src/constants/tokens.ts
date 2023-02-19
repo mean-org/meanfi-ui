@@ -100,7 +100,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'USDT',
     name: 'USDT',
     decimals: 6,
-    logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg',
+    logoURI:
+      'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg',
     tags: ['stablecoin'],
     extensions: {
       website: 'https://tether.to/',
@@ -548,7 +549,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'USDT',
     name: 'USDT',
     decimals: 6,
-    logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg',
+    logoURI:
+      'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg',
     tags: ['stablecoin'],
     extensions: {
       website: 'https://tether.to/',
