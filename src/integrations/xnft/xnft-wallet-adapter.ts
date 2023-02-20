@@ -70,6 +70,10 @@ export class XnftWalletAdapter extends BaseMessageSignerWalletAdapter {
     return this._readyState;
   }
 
+  async autoConnect() {
+    await this.connect();
+  }
+
   async connect(): Promise<void> {
     if (this._status !== 'disconnected') return;
 

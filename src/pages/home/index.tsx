@@ -2833,12 +2833,14 @@ export const HomeView = () => {
     actions.push(...mergeAccountsCta);
 
     // Close asset
+    const closeAccountCtaMultisigCallback =
+      isMultisigContext && isDeleteAssetValid() ? showDeleteVaultModal : undefined;
     const closeAccountCta = getCloseAccountCta(
       isMultisigContext,
       isInspectedAccountTheConnectedWallet(),
       isAnyTxPendingConfirmation(),
       isDeleteAssetValid(),
-      isMultisigContext ? showDeleteVaultModal : showCloseAssetModal,
+      !isMultisigContext ? showCloseAssetModal : closeAccountCtaMultisigCallback,
     );
     actions.push(...closeAccountCta);
 

@@ -47,7 +47,6 @@ import { AppUsageEvent } from '../middleware/segment-service';
 import { consoleOut, isProd } from '../middleware/ui';
 import { isUnauthenticatedRoute, useLocalStorageState } from '../middleware/utils';
 import { XnftWalletAdapter, XnftWalletName, isInXnftWallet } from '../integrations/xnft/xnft-wallet-adapter';
-import useLocalStorage from 'hooks/useLocalStorage';
 
 // Flag to block processing of events when triggered multiple times
 let isDisconnecting = false;
@@ -287,7 +286,7 @@ interface MeanFiWalletContextState {
   connecting: boolean;
   disconnecting: boolean;
   isSelectingWallet: boolean;
-  provider: typeof WALLET_PROVIDERS[number] | undefined;
+  provider: (typeof WALLET_PROVIDERS)[number] | undefined;
   resetWalletProvider: () => void;
   selectWalletProvider: () => void;
   sendTransaction: WalletAdapterProps['sendTransaction'];
@@ -318,7 +317,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [walletName, setWalletName] = useLocalStorageState('walletName');
-  const [dynamicAutoConnect, setDynamicAutoConnect] = useLocalStorage('autoConnect', isDesktop ? 'true' : 'false');
   const {
     wallet,
     wallets,

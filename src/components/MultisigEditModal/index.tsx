@@ -331,7 +331,7 @@ export const MultisigEditModal = (props: {
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
-              {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+              {!props.isBusy && (
                 <div className="row two-col-ctas mt-3 transaction-progress p-2">
                   <div className="col-12">
                     <Button
@@ -360,7 +360,7 @@ export const MultisigEditModal = (props: {
           props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">

@@ -307,7 +307,7 @@ export const MultisigCreateAssetModal = (props: {
           isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
             <h4 className="font-bold mb-1">
@@ -326,7 +326,7 @@ export const MultisigCreateAssetModal = (props: {
        * and auto-close the modal after 1s. If we chose to NOT auto-close the modal
        * Uncommenting the commented lines below will do it!
        */}
-      {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+      {!isBusy && (
         <div className="row two-col-ctas mt-3 transaction-progress p-0">
           <div className={!isError(transactionStatus.currentOperation) ? 'col-6' : 'col-12'}>
             <Button

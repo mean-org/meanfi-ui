@@ -25,7 +25,7 @@ export const getCloseAccountCta = (
       caption: 'Close account',
       isVisible: true,
       uiComponentType: 'menuitem',
-      disabled: isAnyTxPendingConfirmation,
+      disabled: isAnyTxPendingConfirmation || !canDeleteAsset,
       uiComponentId: `menuitem-${MetaInfoCtaAction.CloseAccount}`,
       tooltip: '',
       callBack,
