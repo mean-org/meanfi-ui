@@ -37,6 +37,7 @@ import {
 } from '@solana/wallet-adapter-wallets';
 import { SentreWalletAdapter } from '@sentre/connector';
 import { XnftWalletAdapter } from 'integrations/xnft/xnft-wallet-adapter';
+import { isDesktop } from 'react-device-detect';
 
 const { Content } = Layout;
 export const segmentAnalytics = new SegmentAnalyticsService();
@@ -45,6 +46,14 @@ function App() {
   const [theme, updateTheme] = useLocalStorageState('theme');
   const [loadingStatus, setLoadingStatus] = useState<string>('loading');
   const [writeKey, setWriteKey] = useState('');
+
+  useEffect(() => {
+    if (!isDesktop) {
+      localStorage.removeItem('walletName');
+      localStorage.removeItem('lastUsedAccount');
+      localStorage.removeItem('cachedRpc');
+    }
+  }, []);
 
   useEffect(() => {
     if (!writeKey) {
