@@ -110,6 +110,7 @@ function App() {
     ],
     [network],
   );
+
   const loader = (
     <>
       <Layout>
@@ -120,12 +121,26 @@ function App() {
     </>
   );
 
+  const renderDebugBar = () => {
+    return (
+      <Layout>
+        <Content className="flex-center">
+          <div className="debug-bar">
+            <span className="mr-1 align-middle">AppDebug</span>
+            <span className="ml-1 font-bold fg-dark-active">AAAAAAa</span>
+          </div>
+        </Content>
+      </Layout>
+    );
+  };
+
   if (loadingStatus === 'loading') {
     return loader;
   } else {
     return (
       <OnlineStatusProvider>
         <BrowserRouter basename={'/'}>
+          {renderDebugBar()}
           <ConnectionProvider>
             <WalletProvider wallets={wallets} autoConnect>
               <MeanFiWalletProvider>
