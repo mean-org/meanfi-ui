@@ -104,7 +104,7 @@
     "react-countdown": "2.3.2",
     "react-countdown-circle-timer": "^3.0.9",
     "react-countup": "^6.3.0",
-    "react-device-detect": "2.2.2",
+    "react-device-detect": "2.2.3",
     "react-dom": "17.0.2",
     "react-ga": "^3.3.0",
     "react-helmet": "^6.1",

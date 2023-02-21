@@ -13,7 +13,7 @@ import {
   CloseStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
 import { PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Dropdown, Menu, Modal, Spin } from 'antd';
+import { Button, Dropdown, Modal, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import BN from 'bn.js';
@@ -814,11 +814,9 @@ export const VestingContractStreamList = (props: {
       ),
     });
 
-    const menu = <Menu items={items} />;
-
     return (
       <Dropdown
-        overlay={menu}
+        menu={{ items }}
         trigger={['click']}
         onOpenChange={(visibleChange: any) => {
           if (visibleChange) {

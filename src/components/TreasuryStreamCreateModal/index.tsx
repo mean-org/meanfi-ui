@@ -10,8 +10,7 @@ import {
   CreateStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Checkbox, Col, DatePicker, Divider, Dropdown, Menu, Modal, Row, Select, Tooltip } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { Button, Checkbox, Col, DatePicker, Divider, Dropdown, MenuProps, Modal, Row, Select, Tooltip } from 'antd';
 import { BN } from 'bn.js';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
@@ -1367,25 +1366,24 @@ export const TreasuryStreamCreateModal = (props: {
   };
 
   const paymentRateOptionsMenu = () => {
-    const items: ItemType[] = getOptionsFromEnum(PaymentRateType).map((item, index) => {
+    const items: MenuProps['items'] = getOptionsFromEnum(PaymentRateType).map((item, index) => {
       return {
         key: `option-${index}`,
         label: <span onClick={() => handlePaymentRateOptionChange(item.value)}>{item.text}</span>,
       };
     });
-
-    return <Menu items={items} />;
+    return { items };
   };
 
   const lockPeriodOptionsMenu = () => {
-    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+    const items: MenuProps['items'] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
       return {
         key: `option-${index}`,
         label: <span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>,
       };
     });
 
-    return <Menu items={items} />;
+    return { items };
   };
 
   const getStreamingAccountIcon = (item: TreasuryValues) => {
@@ -1708,7 +1706,7 @@ export const TreasuryStreamCreateModal = (props: {
                       <div className="well mb-0">
                         <div className="flex-fixed-left">
                           <div className="left">
-                            <Dropdown overlay={paymentRateOptionsMenu} trigger={['click']}>
+                            <Dropdown menu={paymentRateOptionsMenu()} trigger={['click']}>
                               <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                                 <div className="left">
                                   <span className="capitalize-first-letter">
@@ -1862,9 +1860,7 @@ export const TreasuryStreamCreateModal = (props: {
                               <div className="left flex-row">
                                 <div className="flex-center">
                                   <Identicon
-                                    address={
-                                      isValidAddress(recipientAddress) ? recipientAddress : SOL_MINT.toBase58()
-                                    }
+                                    address={isValidAddress(recipientAddress) ? recipientAddress : SOL_MINT.toBase58()}
                                     style={{
                                       width: '30',
                                       display: 'inline-flex',
@@ -1916,9 +1912,7 @@ export const TreasuryStreamCreateModal = (props: {
                                 <div className="left flex-row">
                                   <div className="flex-center">
                                     <Identicon
-                                      address={
-                                        isValidAddress(csvItem.address) ? csvItem.address : SOL_MINT.toBase58()
-                                      }
+                                      address={isValidAddress(csvItem.address) ? csvItem.address : SOL_MINT.toBase58()}
                                       style={{
                                         width: '30',
                                         display: 'inline-flex',
@@ -2109,7 +2103,7 @@ export const TreasuryStreamCreateModal = (props: {
                       </div>
                     </div>
                     <div className="well w-75 ml-1">
-                      <Dropdown overlay={lockPeriodOptionsMenu} trigger={['click']}>
+                      <Dropdown menu={lockPeriodOptionsMenu()} trigger={['click']}>
                         <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                           <div className="left">
                             <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)} </span>

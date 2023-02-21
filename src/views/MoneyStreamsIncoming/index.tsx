@@ -20,7 +20,7 @@ import {
   WithdrawFromStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Dropdown, Menu, Modal, Space, Spin } from 'antd';
+import { Button, Dropdown, Modal, Space, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import BN from 'bn.js';
@@ -1237,7 +1237,7 @@ export const MoneyStreamsIncomingView = (props: {
       ),
     });
 
-    return <Menu items={items} />;
+    return { items };
   }, [showTransferStreamModal, streamSelected, t]);
 
   // Buttons
@@ -1266,7 +1266,7 @@ export const MoneyStreamsIncomingView = (props: {
             <div className="btn-content">Withdraw funds</div>
           </Button>
         </Space>
-        <Dropdown overlay={renderDropdownMenu()} placement="bottomRight" trigger={['click']}>
+        <Dropdown menu={renderDropdownMenu()} placement="bottomRight" trigger={['click']}>
           <span className="ellipsis-icon icon-button-container mr-1">
             <Button
               type="default"

@@ -110,6 +110,7 @@ function App() {
     ],
     [network],
   );
+
   const loader = (
     <>
       <Layout>

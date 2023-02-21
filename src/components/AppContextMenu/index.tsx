@@ -1,5 +1,5 @@
 import { SettingOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Modal } from 'antd';
+import { Button, Dropdown, MenuProps, Modal } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { LanguageSelector } from 'components/LanguageSelector';
 import { openNotification } from 'components/Notifications';
@@ -263,11 +263,11 @@ export const AppContextMenu = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme, language, isWhitelisted, t]);
 
-  const menu = <Menu items={menuItems} />;
+  const items: MenuProps['items'] = menuItems || [];
 
   return (
     <>
-      <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
         <Button
           shape="round"
           type="text"

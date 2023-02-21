@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Button, Checkbox, DatePicker, Dropdown, Menu, Modal, Spin, TimePicker } from 'antd';
+import { Button, Checkbox, DatePicker, Dropdown, Modal, Spin, TimePicker } from 'antd';
 import { UserTokenAccount } from 'models/accounts';
 import { StreamTemplate, TransactionFees, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
@@ -109,7 +109,7 @@ export const VestingContractEditModal = (props: {
 
   // TODO: Modify payload as needed
   const onAcceptEditChanges = () => {
-    const parsedDate = Date.parse(paymentStartDate as string);
+    const parsedDate = Date.parse(paymentStartDate);
     const startUtc = new Date(parsedDate);
     const shortTime = moment(contractTime, timeFormat).format('HH:mm');
     const to24hTime = moment(shortTime, 'HH:mm');
@@ -250,7 +250,7 @@ export const VestingContractEditModal = (props: {
       };
     });
 
-    return <Menu items={items} />;
+    return { items };
   };
 
   const renderDatePickerExtraPanel = () => {
@@ -350,7 +350,7 @@ export const VestingContractEditModal = (props: {
             </div>
             <div className="right">
               <div className="well">
-                <Dropdown overlay={lockPeriodOptionsMenu()} trigger={['click']}>
+                <Dropdown menu={lockPeriodOptionsMenu()} trigger={['click']}>
                   <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                     <div className="left">
                       <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)} </span>

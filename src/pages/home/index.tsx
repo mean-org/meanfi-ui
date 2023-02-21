@@ -26,7 +26,7 @@ import {
 import { AnchorProvider, BN, Idl, Program } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { Alert, Button, Col, Divider, Dropdown, Empty, Menu, Row, Segmented, Space, Spin, Tooltip } from 'antd';
+import { Alert, Button, Col, Divider, Dropdown, Empty, Row, Segmented, Space, Spin, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import notification from 'antd/lib/notification';
 import { SegmentedLabeledOption } from 'antd/lib/segmented';
@@ -2833,12 +2833,14 @@ export const HomeView = () => {
     actions.push(...mergeAccountsCta);
 
     // Close asset
+    const closeAccountCtaMultisigCallback =
+      isMultisigContext && isDeleteAssetValid() ? showDeleteVaultModal : undefined;
     const closeAccountCta = getCloseAccountCta(
       isMultisigContext,
       isInspectedAccountTheConnectedWallet(),
       isAnyTxPendingConfirmation(),
       isDeleteAssetValid(),
-      isMultisigContext ? showDeleteVaultModal : showCloseAssetModal,
+      !isMultisigContext ? showCloseAssetModal : closeAccountCtaMultisigCallback,
     );
     actions.push(...closeAccountCta);
 
@@ -3204,7 +3206,7 @@ export const HomeView = () => {
         });
       }
     }
-    return <Menu items={items} />;
+    return { items };
   };
 
   const getAssetsGroupOptions = () => {
@@ -3566,7 +3568,7 @@ export const HomeView = () => {
         disabled: item.disabled,
       };
     });
-    return <Menu items={items} />;
+    return { items };
   };
 
   const renderUserAccountAssetCtaRow = () => {
@@ -3646,7 +3648,7 @@ export const HomeView = () => {
             })
           )}
         </Space>
-        <Dropdown overlay={renderUserAccountAssetMenu()} placement="bottomRight" trigger={['click']}>
+        <Dropdown menu={renderUserAccountAssetMenu()} placement="bottomRight" trigger={['click']}>
           <span className="icon-button-container">
             <Button
               type="default"
@@ -3825,7 +3827,7 @@ export const HomeView = () => {
                       </div>
                       <Dropdown
                         className="options-dropdown"
-                        overlay={getLeftPanelOptions()}
+                        menu={getLeftPanelOptions()}
                         placement="bottomRight"
                         trigger={['click']}
                       >

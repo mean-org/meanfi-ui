@@ -1,3 +1,4 @@
+import { WalletReadyState } from '@solana/wallet-adapter-base';
 import { Connection } from '@solana/web3.js';
 import { Drawer, Empty, Layout } from 'antd';
 import { segmentAnalytics } from 'App';
@@ -68,13 +69,14 @@ export const AppLayout = React.memo((props: any) => {
   const { refreshAccount } = useAccountsContext();
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { provider, connected, publicKey, disconnect } = useWallet();
+  const { provider, connected, publicKey, wallet, isSelectingWallet, disconnect } = useWallet();
   const [previousChain, setChain] = useState('');
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
   const [language, setLanguage] = useState('');
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [needRefresh, setNeedRefresh] = useState(true);
+  const [lastWalletMessage, setLastWalletMessage] = useState('');
 
   ///////////////
   // Callbacks //
@@ -88,6 +90,51 @@ export const AppLayout = React.memo((props: any) => {
       }),
     [connectionConfig.endpoint],
   );
+
+  useEffect(() => {
+    if (isSelectingWallet) {
+      setLastWalletMessage('Selecting wallet...');
+    }
+
+    if (!wallet) {
+      return;
+    }
+
+    wallet.on('error', errorEvent => {
+      setLastWalletMessage(errorEvent.message);
+    });
+
+    wallet.on('connect', pk => {
+      setLastWalletMessage(`Wallet connected: ${pk.toBase58()}`);
+    });
+
+    wallet.on('disconnect', () => {
+      setLastWalletMessage('Wallet disconnected');
+    });
+
+    if (wallet && connected) {
+      setLastWalletMessage(`Wallet connected: ${wallet.publicKey?.toBase58()}`);
+      return;
+    }
+
+    switch (wallet.readyState) {
+      case WalletReadyState.Installed:
+        setLastWalletMessage(`${wallet.name} Wallet Installed`);
+        break;
+      case WalletReadyState.Loadable:
+        setLastWalletMessage(`${wallet.name} Wallet Installed - Loadable`);
+        break;
+      case WalletReadyState.Unsupported:
+        setLastWalletMessage(`${wallet.name} Wallet not supported`);
+        return;
+      case WalletReadyState.NotDetected:
+        setLastWalletMessage(`${wallet.name} Wallet not detected`);
+        return;
+      default:
+        setLastWalletMessage(`${wallet.name} Wallet not installed`);
+        break;
+    }
+  }, [connected, isSelectingWallet, wallet]);
 
   // Fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
@@ -415,6 +462,19 @@ export const AppLayout = React.memo((props: any) => {
   // Rendering //
   ///////////////
 
+  const renderDebugBar = () => {
+    if (isProd()) {
+      return;
+    }
+
+    return (
+      <div className="debug-bar">
+        <span className="mr-1 align-middle">lastWalletMessage</span>
+        <span className="ml-1 font-bold fg-dark-active">{lastWalletMessage || '-'}</span>
+      </div>
+    );
+  };
+
   const renderAccountSelector = () => {
     return (
       !selectedAccount.address &&
@@ -430,12 +490,14 @@ export const AppLayout = React.memo((props: any) => {
       )
     );
   };
+
   if (isUnauthenticatedRoute(location.pathname) || selectedAccount.address) {
     // Launch the Account selector modal
 
     // Render layout
     return (
       <>
+        {renderDebugBar()}
         {renderAccountSelector()}
         <div className="App">
           <Layout>
@@ -502,6 +564,7 @@ export const AppLayout = React.memo((props: any) => {
     // Render dark MEAN background
     return (
       <>
+        {renderDebugBar()}
         {renderAccountSelector()}
         <div className="background-logo-container">
           <img className="meanfi-bg-logo" src="/assets/mean-square.svg" alt="" />

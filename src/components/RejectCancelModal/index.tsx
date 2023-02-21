@@ -81,7 +81,7 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
-              {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+              {!isBusy && (
                 <div className="row two-col-ctas mt-3 transaction-progress p-2">
                   <div className="col-12">
                     <Button
@@ -115,7 +115,7 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
           isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
           <div className="transaction-progress p-4 mb-2">
             <Spin indicator={bigLoadingIcon} className="icon mb-4 mt-1" />
             <h4 className="font-bold">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>

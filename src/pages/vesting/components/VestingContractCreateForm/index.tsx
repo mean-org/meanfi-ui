@@ -2,7 +2,7 @@ import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { SubCategory, TransactionFees, AccountType } from '@mean-dao/payment-streaming';
 import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { Button, Checkbox, DatePicker, Drawer, Dropdown, Menu, Modal, Spin, TimePicker } from 'antd';
+import { Button, Checkbox, DatePicker, Drawer, Dropdown, Modal, Spin, TimePicker } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
 import { BN } from 'bn.js';
@@ -658,7 +658,7 @@ export const VestingContractCreateForm = (props: {
       };
     });
 
-    return <Menu items={items} />;
+    return { items };
   };
 
   const vestingCategoriesMenu = () => {
@@ -669,7 +669,7 @@ export const VestingContractCreateForm = (props: {
       };
     });
 
-    return <Menu items={items} />;
+    return { items };
   };
 
   //#region Token selector - render methods
@@ -1063,7 +1063,7 @@ export const VestingContractCreateForm = (props: {
           tooltipText="This vesting category helps identify the type of streams in this contract. Some examples are seed round, investor, marketing, token lock."
         />
         <div className="well">
-          <Dropdown overlay={vestingCategoriesMenu()} trigger={['click']}>
+          <Dropdown menu={vestingCategoriesMenu()} trigger={['click']}>
             <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
               <div className="left">
                 {vestingCategory ? (
@@ -1109,7 +1109,7 @@ export const VestingContractCreateForm = (props: {
           </div>
           <div className="right">
             <div className="well">
-              <Dropdown overlay={lockPeriodOptionsMenu} trigger={['click']}>
+              <Dropdown menu={lockPeriodOptionsMenu()} trigger={['click']}>
                 <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                   <div className="left">
                     <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)} </span>

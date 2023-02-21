@@ -1,5 +1,5 @@
 import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
-import { Button, Dropdown } from 'antd';
+import { Button, Dropdown, MenuProps } from 'antd';
 import { AppStateContext } from 'contexts/appstate';
 import { IconThumbsDown, IconThumbsUp } from 'Icons';
 import { useCallback, useContext, useState } from 'react';
@@ -193,8 +193,9 @@ export const ResumeItem = (props: {
   };
 
   const renderRightIcon = () => {
+    const items: MenuProps['items'] = dropdownMenu || [];
     return rightIconHasDropdown ? (
-      <Dropdown overlay={dropdownMenu} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
         <span className="ellipsis-icon icon-button-container">
           <Button type="default" shape="circle" size="middle" icon={rightIcon} onClick={e => e.preventDefault()} />
         </span>

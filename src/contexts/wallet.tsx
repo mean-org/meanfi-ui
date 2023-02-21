@@ -47,7 +47,6 @@ import { AppUsageEvent } from '../middleware/segment-service';
 import { consoleOut, isProd } from '../middleware/ui';
 import { isUnauthenticatedRoute, useLocalStorageState } from '../middleware/utils';
 import { XnftWalletAdapter, XnftWalletName, isInXnftWallet } from '../integrations/xnft/xnft-wallet-adapter';
-import useLocalStorage from 'hooks/useLocalStorage';
 
 // Flag to block processing of events when triggered multiple times
 let isDisconnecting = false;
@@ -287,7 +286,7 @@ interface MeanFiWalletContextState {
   connecting: boolean;
   disconnecting: boolean;
   isSelectingWallet: boolean;
-  provider: typeof WALLET_PROVIDERS[number] | undefined;
+  provider: (typeof WALLET_PROVIDERS)[number] | undefined;
   resetWalletProvider: () => void;
   selectWalletProvider: () => void;
   sendTransaction: WalletAdapterProps['sendTransaction'];
@@ -318,12 +317,11 @@ export function MeanFiWalletProvider({ children = null as any }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [walletName, setWalletName] = useLocalStorageState('walletName');
-  const [dynamicAutoConnect, setDynamicAutoConnect] = useLocalStorage('autoConnect', isDesktop ? 'true' : 'false');
   const {
     wallet,
     wallets,
     select,
-    connect,
+    connecting,
     disconnect,
     disconnecting,
     signMessage,
@@ -332,7 +330,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
     signAllTransactions,
   } = useBaseWallet();
   const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(true);
   const [isSelectingWallet, setIsModalVisible] = useState(false);
   const selectWalletProvider = useCallback(() => {
     setIsModalVisible(true);
@@ -379,15 +376,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletName, wallets, wallet]);
 
-  // Keep up with connecting flag
-  useEffect(() => {
-    if (wallet) {
-      setConnecting(wallet.adapter.connecting);
-    } else {
-      setConnecting(false);
-    }
-  }, [wallet]);
-
   function setupOnConnectEvent(adapter: Adapter) {
     adapter.on('connect', pk => {
       consoleOut('Wallet connect event fired:', pk.toBase58(), 'blue');
@@ -427,7 +415,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
     });
   }
 
-  // Setup listeners
+  // // Setup listeners
   useEffect(() => {
     if (wallet?.adapter) {
       setupOnConnectEvent(wallet.adapter);
@@ -462,7 +450,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
     setWalletName(null);
     disconnect();
     selectWalletProvider();
-  }, [wallet, connect, walletName, setWalletName, disconnect, selectWalletProvider]);
+  }, [wallet, walletName, setWalletName, disconnect, selectWalletProvider]);
 
   useEffect(() => {
     if (isUnauthenticatedRoute(location.pathname)) return;
@@ -504,6 +492,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
   return (
     <MeanFiWalletContext.Provider value={providerValues}>
       {children}
+
       <Modal
         centered
         className="mean-modal simple-modal"

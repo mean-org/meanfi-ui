@@ -25,7 +25,7 @@ import {
   CloseStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
 import { PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Dropdown, Menu, Modal, Space, Spin } from 'antd';
+import { Button, Dropdown, Modal, Space, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import { MoneyStreamDetails } from 'components/MoneyStreamDetails';
@@ -418,9 +418,9 @@ export const MoneyStreamsOutgoingView = (props: {
           stream: payload.stream, // stream
         };
         const { transaction } = await paymentStreaming.buildFundStreamTransaction(
-          accounts,         // accounts
-          payload.amount,   // amount
-          true,             // autoWSol
+          accounts, // accounts
+          payload.amount, // amount
+          true, // autoWSol
         );
         consoleOut('fundStream returned transaction:', transaction);
         setTransactionStatus({
@@ -2439,7 +2439,7 @@ export const MoneyStreamsOutgoingView = (props: {
       ),
     });
 
-    return <Menu items={items} />;
+    return { items };
   }, [getStreamStatus, getTreasuryType, hasStreamPendingTx, isBusy, showCloseStreamModal, streamSelected, t]);
 
   // Buttons
@@ -2492,7 +2492,7 @@ export const MoneyStreamsOutgoingView = (props: {
               </Button>
             ) : null)}
         </Space>
-        <Dropdown overlay={renderDropdownMenu()} placement="bottomRight" trigger={['click']}>
+        <Dropdown menu={renderDropdownMenu()} placement="bottomRight" trigger={['click']}>
           <span className="ellipsis-icon icon-button-container mr-1">
             <Button
               type="default"

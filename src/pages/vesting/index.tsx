@@ -28,7 +28,7 @@ import {
   NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { Alert, Button, Dropdown, Menu, notification, Space, Tabs, Tooltip } from 'antd';
+import { Alert, Button, Dropdown, notification, Space, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import BigNumber from 'bignumber.js';
@@ -1688,9 +1688,10 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       });
 
       const treasury = selectedVestingContract.id;
-      const associatedToken = params.associatedToken.address === SOL_MINT.toBase58()
-        ? NATIVE_SOL_MINT   // imported from SDK
-        : new PublicKey(params.associatedToken);
+      const associatedToken =
+        params.associatedToken.address === SOL_MINT.toBase58()
+          ? NATIVE_SOL_MINT // imported from SDK
+          : new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toString();
       const token = params.associatedToken;
       const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
@@ -3600,7 +3601,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         disabled: item.disabled,
       };
     });
-    return <Menu items={items} />;
+    return { items };
   };
 
   const renderVestingContractDetailCtaRow = () => {
@@ -3644,7 +3645,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
               }
             })}
         </Space>
-        <Dropdown overlay={renderVestingContractDetailMenuItems()} placement="bottomRight" trigger={['click']}>
+        <Dropdown menu={renderVestingContractDetailMenuItems()} placement="bottomRight" trigger={['click']}>
           <span className="icon-button-container">
             <Button
               type="default"
