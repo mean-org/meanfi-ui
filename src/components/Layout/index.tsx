@@ -463,6 +463,10 @@ export const AppLayout = React.memo((props: any) => {
   ///////////////
 
   const renderDebugBar = () => {
+    if (isProd()) {
+      return;
+    }
+
     return (
       <div className="debug-bar">
         <span className="mr-1 align-middle">lastWalletMessage</span>
