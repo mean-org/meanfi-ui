@@ -127,7 +127,7 @@ function App() {
         <Content className="flex-center">
           <div className="debug-bar">
             <span className="mr-1 align-middle">AppDebug</span>
-            <span className="ml-1 font-bold fg-dark-active">AAAAAAa</span>
+            <span className="ml-1 font-bold fg-dark-active">Enable ConnectionProvider -&gt; WalletProvider</span>
           </div>
         </Content>
       </Layout>
@@ -140,10 +140,10 @@ function App() {
     return (
       <OnlineStatusProvider>
         <BrowserRouter basename={'/'}>
-          {renderDebugBar()}
           <ConnectionProvider>
-            {/* <WalletProvider wallets={wallets} autoConnect>
-              <MeanFiWalletProvider>
+            <WalletProvider wallets={wallets} autoConnect>
+              {renderDebugBar()}
+              {/* <MeanFiWalletProvider>
                 <WalletAccountProvider>
                   <AccountsProvider>
                     <TxConfirmationProvider>
@@ -153,8 +153,8 @@ function App() {
                     </TxConfirmationProvider>
                   </AccountsProvider>
                 </WalletAccountProvider>
-              </MeanFiWalletProvider>
-            </WalletProvider> */}
+              </MeanFiWalletProvider> */}
+            </WalletProvider>
           </ConnectionProvider>
         </BrowserRouter>
       </OnlineStatusProvider>
