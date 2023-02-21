@@ -321,7 +321,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
     wallet,
     wallets,
     select,
-    connect,
     connecting,
     disconnect,
     disconnecting,
@@ -331,7 +330,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
     signAllTransactions,
   } = useBaseWallet();
   const [connected, setConnected] = useState(false);
-  const [canConnect, setCanConnect] = useState(isDesktop);
   const [isSelectingWallet, setIsModalVisible] = useState(false);
   const selectWalletProvider = useCallback(() => {
     setIsModalVisible(true);
@@ -378,14 +376,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletName, wallets, wallet]);
 
-  useEffect(() => {
-    if (walletName && wallet && wallet.readyState === WalletReadyState.Installed && canConnect) {
-      console.log('trying autoconnect');
-      connect();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canConnect, wallet, walletName]);
-
   function setupOnConnectEvent(adapter: Adapter) {
     adapter.on('connect', pk => {
       consoleOut('Wallet connect event fired:', pk.toBase58(), 'blue');
@@ -406,7 +396,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
         isDisconnecting = false;
         consoleOut('Wallet disconnect event fired:', '', 'blue');
         setConnected(false);
-        setCanConnect(false);
         if (readyState !== WalletReadyState.Installed) return;
         navigate('/');
       }
@@ -549,9 +538,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
                 const selected = wallets.find(w => w.adapter.name === item.name);
                 if (selected) {
                   select(selected.adapter.name);
-                  if (!isDesktop && !canConnect) {
-                    setCanConnect(true);
-                  }
                 }
               };
 

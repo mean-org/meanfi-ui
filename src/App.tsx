@@ -128,7 +128,7 @@ function App() {
       <OnlineStatusProvider>
         <BrowserRouter basename={'/'}>
           <ConnectionProvider>
-            <WalletProvider wallets={wallets} autoConnect={isDesktop}>
+            <WalletProvider wallets={wallets} autoConnect>
               <MeanFiWalletProvider>
                 <WalletAccountProvider>
                   <AccountsProvider>
