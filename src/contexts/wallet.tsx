@@ -322,6 +322,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
     wallets,
     select,
     connect,
+    connecting,
     disconnect,
     disconnecting,
     signMessage,
@@ -330,7 +331,9 @@ export function MeanFiWalletProvider({ children = null as any }) {
     signAllTransactions,
   } = useBaseWallet();
   const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(true);
+
+  const [canConnect, setCanConnect] = useState(isDesktop);
+
   const [isSelectingWallet, setIsModalVisible] = useState(false);
   const selectWalletProvider = useCallback(() => {
     setIsModalVisible(true);
@@ -377,14 +380,12 @@ export function MeanFiWalletProvider({ children = null as any }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletName, wallets, wallet]);
 
-  // Keep up with connecting flag
   useEffect(() => {
-    if (wallet) {
-      setConnecting(wallet.adapter.connecting);
-    } else {
-      setConnecting(false);
+    if (walletName && wallet && wallet.readyState === WalletReadyState.Installed && canConnect) {
+      console.log('trying autoconnect');
+      connect();
     }
-  }, [wallet]);
+  }, [canConnect, connect, wallet, walletName]);
 
   function setupOnConnectEvent(adapter: Adapter) {
     adapter.on('connect', pk => {
@@ -406,6 +407,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
         isDisconnecting = false;
         consoleOut('Wallet disconnect event fired:', '', 'blue');
         setConnected(false);
+        setCanConnect(false);
         if (readyState !== WalletReadyState.Installed) return;
         navigate('/');
       }
@@ -425,7 +427,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
     });
   }
 
-  // Setup listeners
+  // // Setup listeners
   useEffect(() => {
     if (wallet?.adapter) {
       setupOnConnectEvent(wallet.adapter);
@@ -460,7 +462,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
     setWalletName(null);
     disconnect();
     selectWalletProvider();
-  }, [wallet, connect, walletName, setWalletName, disconnect, selectWalletProvider]);
+  }, [wallet, walletName, setWalletName, disconnect, selectWalletProvider]);
 
   useEffect(() => {
     if (isUnauthenticatedRoute(location.pathname)) return;
@@ -502,6 +504,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
   return (
     <MeanFiWalletContext.Provider value={providerValues}>
       {children}
+
       <Modal
         centered
         className="mean-modal simple-modal"
@@ -547,6 +550,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
                 const selected = wallets.find(w => w.adapter.name === item.name);
                 if (selected) {
                   select(selected.adapter.name);
+                  setCanConnect(true);
                 }
               };
 

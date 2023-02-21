@@ -143,7 +143,7 @@ function App() {
       <OnlineStatusProvider>
         <BrowserRouter basename={'/'}>
           <ConnectionProvider>
-            <WalletProvider wallets={wallets} autoConnect>
+            <WalletProvider wallets={wallets} autoConnect={isDesktop}>
               <MeanFiWalletProvider>
                 {renderDebugBar()}
                 {/* <WalletAccountProvider>
