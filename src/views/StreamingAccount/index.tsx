@@ -985,9 +985,10 @@ export const StreamingAccountView = (props: {
       });
 
       const treasury = new PublicKey(streamingAccountSelected.id);
-      const associatedToken = params.associatedToken === SOL_MINT.toBase58()
-        ? NATIVE_SOL_MINT   // imported from SDK
-        : new PublicKey(params.associatedToken);
+      const associatedToken =
+        params.associatedToken === SOL_MINT.toBase58()
+          ? NATIVE_SOL_MINT // imported from SDK
+          : new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toString();
       consoleOut('raw amount:', params.tokenAmount, 'blue');
       consoleOut('amount.toString():', amount, 'blue');
@@ -2387,7 +2388,7 @@ export const StreamingAccountView = (props: {
       });
     }
 
-    return <Menu items={items} />;
+    return { items };
   }, [
     isXsDevice,
     selectedToken,
@@ -2682,7 +2683,7 @@ export const StreamingAccountView = (props: {
               </Button>
             )}
           </Space>
-          <Dropdown overlay={renderDropdownMenu()} placement="bottomRight" trigger={['click']}>
+          <Dropdown menu={renderDropdownMenu()} placement="bottomRight" trigger={['click']}>
             <span className="ellipsis-icon icon-button-container mr-1">
               <Button
                 type="default"

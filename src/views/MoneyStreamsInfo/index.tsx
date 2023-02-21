@@ -24,7 +24,7 @@ import {
   NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Col, Dropdown, Menu, Row, Space, Spin, Tabs } from 'antd';
+import { Button, Col, Dropdown, Row, Space, Spin, Tabs } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
 import BN from 'bn.js';
@@ -533,33 +533,36 @@ export const MoneyStreamsInfoView = (props: {
     return calculateFeesForAction(action);
   }, []);
 
-  const abortOnLowBalance = useCallback((title: string, nativeBalance: number, minRequired: number, transactionLog: any[]) => {
-    const txLog: any[] = transactionLog.slice();
-    const notifContent = t('transactions.status.tx-start-failure', {
-      accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
-      feeAmount: getAmountWithSymbol(minRequired, SOL_MINT.toBase58()),
-    });
-    txLog.push({
-      action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-      result: notifContent,
-    });
-    customLogger.logWarning(title, {
-      transcript: txLog,
-    });
-    openNotification({
-      description: notifContent,
-      type: 'info',
-    });
-    const txStatus = {
-      customError: {
-        message: notifContent,
-        data: undefined,
-      },
-      lastOperation: transactionStatus.currentOperation,
-      currentOperation: TransactionStatus.TransactionStartFailure,
-    } as TransactionStatusInfo;
-    setTransactionStatus(txStatus);
-  }, [setTransactionStatus, t, transactionStatus.currentOperation]);
+  const abortOnLowBalance = useCallback(
+    (title: string, nativeBalance: number, minRequired: number, transactionLog: any[]) => {
+      const txLog: any[] = transactionLog.slice();
+      const notifContent = t('transactions.status.tx-start-failure', {
+        accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
+        feeAmount: getAmountWithSymbol(minRequired, SOL_MINT.toBase58()),
+      });
+      txLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+        result: notifContent,
+      });
+      customLogger.logWarning(title, {
+        transcript: txLog,
+      });
+      openNotification({
+        description: notifContent,
+        type: 'info',
+      });
+      const txStatus = {
+        customError: {
+          message: notifContent,
+          data: undefined,
+        },
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: TransactionStatus.TransactionStartFailure,
+      } as TransactionStatusInfo;
+      setTransactionStatus(txStatus);
+    },
+    [setTransactionStatus, t, transactionStatus.currentOperation],
+  );
 
   //////////////////////
   // MODALS & ACTIONS //
@@ -684,7 +687,7 @@ export const MoneyStreamsInfoView = (props: {
             'PaymentStreamingAccount Add funds transaction failed',
             nativeBalance,
             minRequired,
-            transactionLog
+            transactionLog,
           );
 
           return false;
@@ -854,9 +857,10 @@ export const MoneyStreamsInfoView = (props: {
         currentOperation: TransactionStatus.InitTransaction,
       });
 
-      const associatedToken = params.associatedToken === SOL_MINT.toBase58()
-        ? NATIVE_SOL_MINT   // imported from SDK
-        : new PublicKey(params.associatedToken);
+      const associatedToken =
+        params.associatedToken === SOL_MINT.toBase58()
+          ? NATIVE_SOL_MINT // imported from SDK
+          : new PublicKey(params.associatedToken);
       const amount = params.tokenAmount;
       consoleOut('raw amount:', params.tokenAmount, 'blue');
       consoleOut('amount.toNumber():', amount, 'blue');
@@ -904,7 +908,7 @@ export const MoneyStreamsInfoView = (props: {
           'PaymentStreamingAccount Add funds transaction failed',
           nativeBalance,
           minRequired,
-          transactionLog
+          transactionLog,
         );
 
         return false;
@@ -1242,12 +1246,7 @@ export const MoneyStreamsInfoView = (props: {
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
-        abortOnLowBalance(
-          'Create Streaming Account transaction failed',
-          nativeBalance,
-          minRequired,
-          transactionLog
-        );
+        abortOnLowBalance('Create Streaming Account transaction failed', nativeBalance, minRequired, transactionLog);
 
         return false;
       }
@@ -2585,7 +2584,7 @@ export const MoneyStreamsInfoView = (props: {
       });
     }
 
-    return <Menu items={items} />;
+    return { items };
   }, [isMultisigContext, showCreateStreamModal, showOpenStreamModal]);
 
   return (
@@ -2652,7 +2651,7 @@ export const MoneyStreamsInfoView = (props: {
           {isXsDevice && (
             <Dropdown
               className="options-dropdown"
-              overlay={renderDropdownMenu()}
+              menu={renderDropdownMenu()}
               placement="bottomRight"
               trigger={['click']}
             >

@@ -18,8 +18,7 @@ import {
   TransactionFees,
 } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { Button, Col, Dropdown, Empty, MenuProps, Modal, Row, Spin, Tooltip } from 'antd';
 import { DdcaAddFundsModal } from 'components/DdcaAddFundsModal';
 import { DdcaCloseModal } from 'components/DdcaCloseModal';
 import { DdcaWithdrawModal } from 'components/DdcaWithdrawModal';
@@ -282,10 +281,7 @@ export const ExchangeDcasView = () => {
             result: `Not enough balance (${getAmountWithSymbol(
               nativeBalance,
               SOL_MINT.toBase58(),
-            )}) to pay for network fees (${getAmountWithSymbol(
-              ddcaTxFees.maxBlockchainFee,
-              SOL_MINT.toBase58(),
-            )})`,
+            )}) to pay for network fees (${getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, SOL_MINT.toBase58())})`,
           });
           customLogger.logWarning('Close DDCA transaction failed', {
             transcript: transactionLog,
@@ -539,10 +535,7 @@ export const ExchangeDcasView = () => {
             result: `Not enough balance (${getAmountWithSymbol(
               balance,
               SOL_MINT.toBase58(),
-            )}) to pay for network fees (${getAmountWithSymbol(
-              ddcaTxFees.maxBlockchainFee,
-              SOL_MINT.toBase58(),
-            )})`,
+            )}) to pay for network fees (${getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, SOL_MINT.toBase58())})`,
           });
           customLogger.logWarning('DDCA withdraw transaction failed', {
             transcript: transactionLog,
@@ -1150,7 +1143,7 @@ export const ExchangeDcasView = () => {
 
   // If exchangeFor is > 0 -> Withdraw is visible
   const getMenuOptions = () => {
-    const items: ItemType[] = [];
+    const items: MenuProps['items'] = [];
     if (ddcaDetails && ddcaDetails.toBalance > 0) {
       items.push({
         key: '01-withdraw',
@@ -1170,7 +1163,7 @@ export const ExchangeDcasView = () => {
       ),
     });
 
-    return <Menu items={items} />;
+    return { items };
   };
 
   const getAddFundsCtaLabel = () => {
@@ -1279,7 +1272,7 @@ export const ExchangeDcasView = () => {
                 {getAddFundsCtaLabel()}
               </Button>
               {ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && !isAddingFunds() ? (
-                <Dropdown overlay={getMenuOptions()} trigger={['click']}>
+                <Dropdown menu={getMenuOptions()} trigger={['click']}>
                   <Button
                     shape="round"
                     type="text"

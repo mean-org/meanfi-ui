@@ -121,21 +121,6 @@ function App() {
     </>
   );
 
-  const renderDebugBar = () => {
-    return (
-      <Layout>
-        <Content className="flex-center">
-          <div className="debug-bar">
-            <span className="mr-1 align-middle">AppDebug</span>
-            <span className="ml-1 font-bold fg-dark-active">
-              Enable ConnectionProvider -&gt; WalletProvider -&gt; MeanFiWalletProvider
-            </span>
-          </div>
-        </Content>
-      </Layout>
-    );
-  };
-
   if (loadingStatus === 'loading') {
     return loader;
   } else {
@@ -145,8 +130,7 @@ function App() {
           <ConnectionProvider>
             <WalletProvider wallets={wallets} autoConnect={isDesktop}>
               <MeanFiWalletProvider>
-                {renderDebugBar()}
-                {/* <WalletAccountProvider>
+                <WalletAccountProvider>
                   <AccountsProvider>
                     <TxConfirmationProvider>
                       <AppStateProvider>
@@ -154,7 +138,7 @@ function App() {
                       </AppStateProvider>
                     </TxConfirmationProvider>
                   </AccountsProvider>
-                </WalletAccountProvider> */}
+                </WalletAccountProvider>
               </MeanFiWalletProvider>
             </WalletProvider>
           </ConnectionProvider>

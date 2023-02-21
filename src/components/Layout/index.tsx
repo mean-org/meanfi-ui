@@ -100,6 +100,23 @@ export const AppLayout = React.memo((props: any) => {
       return;
     }
 
+    wallet.on('error', errorEvent => {
+      setLastWalletMessage(errorEvent.message);
+    });
+
+    wallet.on('connect', pk => {
+      setLastWalletMessage(`Wallet connected: ${pk.toBase58()}`);
+    });
+
+    wallet.on('disconnect', () => {
+      setLastWalletMessage('Wallet disconnected');
+    });
+
+    if (wallet && connected) {
+      setLastWalletMessage(`Wallet connected: ${wallet.publicKey?.toBase58()}`);
+      return;
+    }
+
     switch (wallet.readyState) {
       case WalletReadyState.Installed:
         setLastWalletMessage(`${wallet.name} Wallet Installed`);
@@ -117,19 +134,7 @@ export const AppLayout = React.memo((props: any) => {
         setLastWalletMessage(`${wallet.name} Wallet not installed`);
         break;
     }
-
-    wallet.on('error', errorEvent => {
-      setLastWalletMessage(errorEvent.message);
-    });
-
-    wallet.on('connect', pk => {
-      setLastWalletMessage(`Wallet connected: ${pk.toBase58()}`);
-    });
-
-    wallet.on('disconnect', () => {
-      setLastWalletMessage('Wallet disconnected');
-    });
-  }, [isSelectingWallet, wallet]);
+  }, [connected, isSelectingWallet, wallet]);
 
   // Fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
@@ -460,7 +465,7 @@ export const AppLayout = React.memo((props: any) => {
   const renderDebugBar = () => {
     return (
       <div className="debug-bar">
-        <span className="mr-1 align-middle">lastWalletError</span>
+        <span className="mr-1 align-middle">lastWalletMessage</span>
         <span className="ml-1 font-bold fg-dark-active">{lastWalletMessage || '-'}</span>
       </div>
     );

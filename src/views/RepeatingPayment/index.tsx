@@ -659,9 +659,10 @@ export const RepeatingPayment = (props: {
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress);
         consoleOut('beneficiaryMint:', selectedToken.address);
-        const associatedToken = selectedToken.address === SOL_MINT.toBase58()
-          ? NATIVE_SOL_MINT   // imported from SDK
-          : new PublicKey(selectedToken.address);
+        const associatedToken =
+          selectedToken.address === SOL_MINT.toBase58()
+            ? NATIVE_SOL_MINT // imported from SDK
+            : new PublicKey(selectedToken.address);
         const amount = toTokenAmount(fromCoinAmount, selectedToken.decimals).toString();
         const rateAmount = toTokenAmount(paymentRateAmount, selectedToken.decimals).toString();
         const now = new Date();
@@ -887,7 +888,7 @@ export const RepeatingPayment = (props: {
       };
     });
 
-    return <Menu items={items} />;
+    return { items };
   };
 
   return (
@@ -1002,7 +1003,7 @@ export const RepeatingPayment = (props: {
             <div className="well mb-0">
               <div className="flex-fixed-left">
                 <div className="left">
-                  <Dropdown overlay={paymentRateOptionsMenu()} trigger={['click']}>
+                  <Dropdown menu={paymentRateOptionsMenu()} trigger={['click']}>
                     <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
                       <div className="left">
                         <span className="capitalize-first-letter">

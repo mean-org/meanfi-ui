@@ -1,5 +1,5 @@
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { Button, Dropdown, Menu, Spin, Tooltip } from 'antd';
+import { Button, Dropdown, MenuProps, Spin, Tooltip } from 'antd';
 import { Identicon } from 'components/Identicon';
 import { openNotification } from 'components/Notifications';
 import { AppStateContext } from 'contexts/appstate';
@@ -194,28 +194,24 @@ export const AccountSelector = (props: {
   };
 
   const renderNativeAccountOptions = () => {
-    const menu = (
-      <Menu
-        items={[
-          {
-            key: '01-refresh-balance-native',
-            label: (
-              <div
-                onClick={e => {
-                  e.preventDefault();
-                  refreshAssetValues();
-                }}
-              >
-                <span className="menu-item-text">Refresh balances</span>
-              </div>
-            ),
-          },
-        ]}
-      />
-    );
+    const items: MenuProps['items'] = [
+      {
+        key: '01-refresh-balance-native',
+        label: (
+          <div
+            onClick={e => {
+              e.preventDefault();
+              refreshAssetValues();
+            }}
+          >
+            <span className="menu-item-text">Refresh balances</span>
+          </div>
+        ),
+      },
+    ];
 
     return (
-      <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
         <span className="icon-button-container">
           <Button
             type="default"
@@ -230,28 +226,24 @@ export const AccountSelector = (props: {
   };
 
   const renderMultisigAccountOptions = (item: MultisigInfo) => {
-    const menu = (
-      <Menu
-        items={[
-          {
-            key: `01-refresh-balance-${item.createdOnUtc.getTime()}`,
-            label: (
-              <div
-                onClick={e => {
-                  e.preventDefault();
-                  refreshPendingTxs();
-                }}
-              >
-                <span className="menu-item-text">Refresh pending Txs</span>
-              </div>
-            ),
-          },
-        ]}
-      />
-    );
+    const items: MenuProps['items'] = [
+      {
+        key: `01-refresh-balance-${item.createdOnUtc.getTime()}`,
+        label: (
+          <div
+            onClick={e => {
+              e.preventDefault();
+              refreshPendingTxs();
+            }}
+          >
+            <span className="menu-item-text">Refresh pending Txs</span>
+          </div>
+        ),
+      },
+    ];
 
     return (
-      <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
         <span className="icon-button-container">
           <Button
             type="default"
@@ -355,7 +347,7 @@ export const AccountSelector = (props: {
             multisigAccounts.map((item, index) => {
               return (
                 <div
-                  key={`account-${index}`}
+                  key={item.authority.toBase58()}
                   className={`transaction-list-row${
                     selectedAccount.address === item.authority.toBase58() ? ' selected' : ''
                   }`}
