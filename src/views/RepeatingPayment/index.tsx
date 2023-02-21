@@ -8,7 +8,7 @@ import {
   NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
 import { PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Checkbox, DatePicker, Dropdown, Menu } from 'antd';
+import { Button, Checkbox, DatePicker, Dropdown } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import BN from 'bn.js';

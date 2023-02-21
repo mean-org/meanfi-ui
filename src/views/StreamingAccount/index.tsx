@@ -34,7 +34,7 @@ import {
 } from '@mean-dao/payment-streaming';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { Alert, Button, Dropdown, Menu, Row, Space, Spin, Tabs } from 'antd';
+import { Alert, Button, Dropdown, Row, Space, Spin, Tabs } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BN from 'bn.js';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
