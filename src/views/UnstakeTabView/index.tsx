@@ -1,7 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { StakingClient, UnstakeQuote } from '@mean-dao/staking';
+import { StakeQuote, StakingClient, UnstakeQuote } from '@mean-dao/staking';
 import { Transaction } from '@solana/web3.js';
-import { Button } from 'antd';
+import { Button, Col, Row } from 'antd';
 import { segmentAnalytics } from 'App';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -15,7 +15,7 @@ import { customLogger } from 'index';
 import { AppUsageEvent, SegmentUnstakeMeanData } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
-import { formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from 'middleware/utils';
+import { cutNumber, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
@@ -50,7 +50,7 @@ export const UnstakeTabView = (props: {
   const [fromCoinAmount, setFromCoinAmount] = useState<string>('');
   const [percentageValue, setPercentageValue] = useState<string>('');
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
-  const [unstakeMeanValue, setUnstakeMeanValue] = useState<string>();
+  const [unstakeMeanValue, setUnstakeMeanValue] = useState<number>(0);
   const [canFetchUnstakeQuote, setCanFetchUnstakeQuote] = useState(false);
   const [sMeanToMeanRate, setSMeanToMeanRate] = useState(0);
   const [meanPrice, setMeanPrice] = useState<number>(0);
@@ -195,8 +195,8 @@ export const UnstakeTabView = (props: {
           unstakedAsset: 'MEAN',
           unstakedAssetPrice: meanPrice,
           amount: uiAmount,
-          quote: parseFloat(unstakeMeanValue || '0'),
-          valueInUsd: sMeanToMeanRate * parseFloat(unstakeMeanValue || '0'),
+          quote: unstakeMeanValue || 0,
+          valueInUsd: sMeanToMeanRate * (unstakeMeanValue || 0),
         };
         consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFormButton, segmentData);
@@ -385,6 +385,23 @@ export const UnstakeTabView = (props: {
     [refreshAccount, recordTxConfirmation],
   );
 
+  const getMeanQuote = useCallback(
+    async (sMEAN: number) => {
+      if (!stakeClient) {
+        return 0;
+      }
+
+      try {
+        const result = await stakeClient.getUnstakeQuote(sMEAN);
+        return result.meanOutUiAmount;
+      } catch (error) {
+        console.error(error);
+        return 0;
+      }
+    },
+    [stakeClient],
+  );
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -400,20 +417,6 @@ export const UnstakeTabView = (props: {
 
   // Unstake quote - For full unstaked balance
   useEffect(() => {
-    const getMeanQuote = async (sMEAN: number) => {
-      if (!stakeClient) {
-        return 0;
-      }
-
-      try {
-        const result = await stakeClient.getUnstakeQuote(sMEAN);
-        return result.meanOutUiAmount;
-      } catch (error) {
-        console.error(error);
-        return 0;
-      }
-    };
-
     if (selectedToken && selectedToken.symbol === 'sMEAN') {
       if (tokenBalance > 0) {
         getMeanQuote(tokenBalance).then(value => {
@@ -428,7 +431,7 @@ export const UnstakeTabView = (props: {
         setMeanWorthOfsMean(0);
       }
     }
-  }, [stakeClient, selectedToken, tokenBalance, fromCoinAmount]);
+  }, [stakeClient, selectedToken, tokenBalance, fromCoinAmount, getMeanQuote]);
 
   // Stake quote - For input amount
   useEffect(() => {
@@ -443,7 +446,7 @@ export const UnstakeTabView = (props: {
         .getUnstakeQuote(parseFloat(fromCoinAmount))
         .then((value: UnstakeQuote) => {
           consoleOut('unStakeQuote:', value, 'blue');
-          setUnstakeMeanValue(value.meanOutUiAmount.toString());
+          setUnstakeMeanValue(value.meanOutUiAmount);
           consoleOut(
             `Quote for ${formatThousands(parseFloat(fromCoinAmount), selectedToken?.decimals)} sMEAN`,
             `${formatThousands(value.meanOutUiAmount, selectedToken?.decimals)} MEAN`,
@@ -512,6 +515,19 @@ export const UnstakeTabView = (props: {
   // Rendering //
   ///////////////
 
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <Row>
+        <Col span={12} className="font-size-75 fg-secondary-60 text-right pr-1">
+          {caption}
+        </Col>
+        <Col span={12} className="font-size-75 fg-secondary-60 text-left">
+          {value}
+        </Col>
+      </Row>
+    );
+  };
+
   return (
     <>
       <div className="mb-2 px-1">
@@ -519,7 +535,8 @@ export const UnstakeTabView = (props: {
           {tokenBalance ? (
             <span>
               You have {formatThousands(tokenBalance, 6)} sMEAN staked
-              {meanWorthOfsMean ? ` which is currently worth ${formatThousands(meanWorthOfsMean, 6)} MEAN.` : '.'}
+              {meanWorthOfsMean ? ` which is currently worth ${formatThousands(meanWorthOfsMean, 6)} MEAN.` : '.'}&nbsp;
+              {t('staking.panel-right.tabset.unstake.notification-label-two')}
             </span>
           ) : (
             t('staking.panel-right.tabset.unstake.notification-label-one-error')
@@ -593,7 +610,18 @@ export const UnstakeTabView = (props: {
           </div>
         </div>
       </div>
-      <span className="info-label">{t('staking.panel-right.tabset.unstake.notification-label-two')}</span>
+
+      <div className="p-2">
+        {fromCoinAmount &&
+          parseFloat(fromCoinAmount) > 0 &&
+          parseFloat(fromCoinAmount) <= tokenBalance &&
+          unstakeMeanValue > 0 &&
+          infoRow(
+            `${formatThousands(parseFloat(fromCoinAmount), 6)} sMEAN ≈`,
+            `${formatThousands(unstakeMeanValue, 6)} MEAN`,
+          )}
+        {sMeanToMeanRate > 0 && infoRow(`1 sMEAN ≈`, `${cutNumber(sMeanToMeanRate, 6)} MEAN`)}
+      </div>
 
       {/* Action button */}
       <Button

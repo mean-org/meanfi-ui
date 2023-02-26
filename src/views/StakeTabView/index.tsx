@@ -173,7 +173,13 @@ export const StakeTabView = (props: {
   };
 
   const getMaxDecimalsForValue = (value: number) => {
-    return value < 5 ? 6 : value >= 5 && value < 100 ? 4 : 2;
+    if (value < 5) {
+      return 6;
+    } else if (value >= 5 && value < 100) {
+      return 4;
+    } else {
+      return 2;
+    }
   };
 
   const onStartTransaction = useCallback(async () => {
