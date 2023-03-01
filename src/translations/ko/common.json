@@ -1241,7 +1241,6 @@
       "multisig-selector-label": "다중 서명 계정",
       "multisig-treasury-created-info": "To complete the Streaming Account setup, the other Multisig signers need to approve it.",
       "multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
-      "multisig-treasury-switch-label": "다중서명 계정의 트레저리입니까?",
       "success-message": "Your new streaming account was created successfully.",
       "success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
       "treasury-name-input-empty": "Enter Account name",

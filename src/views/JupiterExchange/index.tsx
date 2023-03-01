@@ -14,6 +14,7 @@ import { TokenDisplay } from 'components/TokenDisplay';
 import {
   DEFAULT_SLIPPAGE_PERCENT,
   MAX_TOKEN_LIST_ITEMS,
+  MEANFI_DOCS_URL,
   ONE_MINUTE_REFRESH_TIMEOUT,
   WRAPPED_SOL_MINT_ADDRESS,
 } from 'constants/common';
@@ -1592,7 +1593,7 @@ export const JupiterExchange = (props: {
                       className="simplelink underline-on-hover"
                       target="_blank"
                       rel="noopener noreferrer"
-                      href="https://docs.meanfi.com/tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet"
+                      href={`${MEANFI_DOCS_URL}tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet`}
                     >
                       Why?
                     </a>

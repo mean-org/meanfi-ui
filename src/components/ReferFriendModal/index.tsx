@@ -53,9 +53,6 @@ export const ReferFriendModal = (props: { handleClose: any; isVisible: boolean }
       <div className="transaction-progress refer-friend-wrapper">
         <div className="refer-friend-image">
           <img src="/assets/giftbox.svg" alt="" />
-          {/* {referrals > 0 && (
-                  <span className="badge orange-red referrals-badge">{referrals}</span>
-                )} */}
         </div>
         <h4 className="refer-friend-hint">{t('referrals.refer-friend-hint')}</h4>
         <div className="well small mb-2">
@@ -95,12 +92,6 @@ export const ReferFriendModal = (props: { handleClose: any; isVisible: boolean }
             <IconLinkedin className="mean-svg-icons" />
           </LinkedinShareButton>
         </div>
-        {/* <div className="text-center mt-1">
-              <a className="simplelink underline-on-hover"
-                  target="_blank" rel="noopener noreferrer"
-                  href="https://docs.meanfi.com/governance/mean-token/tge-and-airdrop">{t('referrals.see-rules')}
-              </a>
-            </div> */}
       </div>
     </Modal>
   );

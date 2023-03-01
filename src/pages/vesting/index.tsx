@@ -38,6 +38,7 @@ import { AppSocialLinks } from 'components/AppSocialLinks';
 import { openNotification } from 'components/Notifications';
 import {
   HALF_MINUTE_REFRESH_TIMEOUT,
+  MEANFI_DOCS_URL,
   MIN_SOL_BALANCE_REQUIRED,
   MULTISIG_ROUTE_BASE_PATH,
   NO_FEES,
@@ -3437,7 +3438,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const renderBalanceContracts = (
     <a
-      href="https://docs.meanfi.com/products/developers/smart-contracts"
+      href={`${MEANFI_DOCS_URL}products/developers/smart-contracts`}
       target="_blank"
       rel="noopener noreferrer"
       className="simplelink underline-on-hover"

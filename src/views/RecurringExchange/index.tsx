@@ -37,7 +37,7 @@ import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
 import { SwapSettings } from 'components/SwapSettings';
 import { TextInput } from 'components/TextInput';
-import { DEFAULT_SLIPPAGE_PERCENT } from 'constants/common';
+import { DEFAULT_SLIPPAGE_PERCENT, MEANFI_DOCS_URL } from 'constants/common';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
@@ -1374,7 +1374,7 @@ export const RecurringExchange = (props: {
                         className="simplelink underline-on-hover"
                         target="_blank"
                         rel="noopener noreferrer"
-                        href="https://docs.meanfi.com/tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet"
+                        href={`${MEANFI_DOCS_URL}tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet`}
                       >
                         Why?
                       </a>

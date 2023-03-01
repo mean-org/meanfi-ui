@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from 'antd';
 import { IconLightBulb } from '../../Icons';
+import { HELLO_NEXT_BOARD_URL } from 'constants/common';
 
 export const AccountsSuggestAssetModal = (props: { handleOk: any; handleClose: any; isVisible: boolean }) => {
   const { isVisible, handleClose, handleOk } = props;
@@ -36,7 +37,7 @@ export const AccountsSuggestAssetModal = (props: { handleOk: any; handleClose: a
         <p>
           <a
             className="simplelink underline"
-            href="https://next.meanfi.com/b/meanfi"
+            href={HELLO_NEXT_BOARD_URL}
             title="Suggest an Asset"
             target="_blank"
             rel="noopener noreferrer"

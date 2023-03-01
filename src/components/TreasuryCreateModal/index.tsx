@@ -543,35 +543,11 @@ export const TreasuryCreateModal = (props: {
                 })}
               </div>
 
-              {/* Multisig Treasury checkbox */}
-              {
-                // (!selectedMultisig && multisigAccounts.length > 0) && (
-                //   <div className="mb-2 flex-row align-items-center">
-                //     <span className="form-label w-auto mb-0">{t('treasuries.create-treasury.multisig-treasury-switch-label')}</span>
-                //     {/* <a className="simplelink" href="https://docs.meanfi.com/" target="_blank" rel="noopener noreferrer">
-                //       <Button
-                //         className="info-icon-button"
-                //         type="default"
-                //         shape="circle">
-                //         <InfoCircleOutlined />
-                //       </Button>
-                //     </a> */}
-                //     <Radio.Group className="ml-2" onChange={onCloseTreasuryOptionChanged} value={enableMultisigTreasuryOption}>
-                //       <Radio value={true}>{t('general.yes')}</Radio>
-                //       <Radio value={false}>{t('general.no')}</Radio>
-                //     </Radio.Group>
-                //   </div>
-                // )
-              }
-
               {enableMultisigTreasuryOption && multisigAccounts && multisigAccounts.length > 0 && (
                 <>
                   <div className="mb-3">
                     <div className="form-label">{t('treasuries.create-treasury.multisig-selector-label')}</div>
-                    <div className="well">
-                      {/* {renderMultisigSelectItems()} */}
-                      {renderSelectedMultisig()}
-                    </div>
+                    <div className="well">{renderSelectedMultisig()}</div>
                   </div>
                 </>
               )}
@@ -599,7 +575,9 @@ export const TreasuryCreateModal = (props: {
                       })
                     ) : (
                       <>
-                        {transactionStatus.customError.message ? <span>{transactionStatus.customError.message}</span> : null}
+                        {transactionStatus.customError.message ? (
+                          <span>{transactionStatus.customError.message}</span>
+                        ) : null}
                         {transactionStatus.customError.data ? (
                           <>
                             <span className="ml-1">[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
