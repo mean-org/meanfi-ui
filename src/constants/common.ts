@@ -43,6 +43,7 @@ export const SOLANA_EXPLORER_URI_INSPECT_ADDRESS = 'https://solana.fm/account/';
 export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://solana.fm/tx/';
 export const SOLANA_STATUS_PAGE = 'https://status.solana.com/';
 export const MEAN_FINANCE_WEBSITE_URL = 'https://meanfi.com';
+export const HELLO_NEXT_BOARD_URL = 'https://next.meanfi.com/b/product-feedback';
 export const MEAN_FINANCE_APP_ALLBRIDGE_URL = 'https://app.allbridge.io';
 export const MEAN_FINANCE_APP_RENBRIDGE_URL = 'https://bridge.renproject.io/mint';
 export const MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL = 'https://forms.gle/buhxAR44YFGQxVX57';

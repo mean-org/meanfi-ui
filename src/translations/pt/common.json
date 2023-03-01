@@ -1164,7 +1164,6 @@
       "multisig-selector-label": "Conta multisig",
       "multisig-treasury-created-info": "To complete the Streaming Account setup, the other Multisig signers need to approve it.",
       "multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
-      "multisig-treasury-switch-label": "Essa tesouraria é para uma conta Multisig?",
       "success-message": "Your new streaming account was created successfully.",
       "success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
       "treasury-name-input-empty": "Enter Account name",
