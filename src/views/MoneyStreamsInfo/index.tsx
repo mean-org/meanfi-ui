@@ -39,7 +39,7 @@ import { StreamStatusSummary } from 'components/StreamStatusSummary';
 import { TreasuryAddFundsModal } from 'components/TreasuryAddFundsModal';
 import { TreasuryCreateModal } from 'components/TreasuryCreateModal';
 import { TreasuryStreamCreateModal } from 'components/TreasuryStreamCreateModal';
-import { FALLBACK_COIN_IMAGE, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES } from 'constants/common';
+import { FALLBACK_COIN_IMAGE, MEANFI_DOCS_URL, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
@@ -1935,7 +1935,7 @@ export const MoneyStreamsInfoView = (props: {
 
   const renderBalanceContracts = (
     <a
-      href="https://docs.meanfi.com/products/developers/smart-contracts"
+      href={`${MEANFI_DOCS_URL}products/developers/smart-contracts`}
       target="_blank"
       rel="noopener noreferrer"
       className="simplelink underline-on-hover"
