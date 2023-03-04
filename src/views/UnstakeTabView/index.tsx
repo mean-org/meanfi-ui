@@ -1,5 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { StakeQuote, StakingClient, UnstakeQuote } from '@mean-dao/staking';
+import { StakingClient, UnstakeQuote } from '@mean-dao/staking';
 import { Transaction } from '@solana/web3.js';
 import { Button, Col, Row } from 'antd';
 import { segmentAnalytics } from 'App';
@@ -323,6 +323,15 @@ export const UnstakeTabView = (props: {
     }
   }, []);
 
+  const reloadStakePools = () => {
+    const stakePoolsRefreshCta = document.getElementById('refresh-stake-pool-info');
+    if (stakePoolsRefreshCta) {
+      stakePoolsRefreshCta.click();
+    } else {
+      console.log('element not found:', '#refresh-stake-pool-info', 'red');
+    }
+  };
+
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
     (item: TxConfirmationInfo) => {
@@ -330,15 +339,6 @@ export const UnstakeTabView = (props: {
       if (!path.startsWith(STAKING_ROUTE_BASE_PATH)) {
         return;
       }
-
-      const reloadStakePools = () => {
-        const stakePoolsRefreshCta = document.getElementById('refresh-stake-pool-info');
-        if (stakePoolsRefreshCta) {
-          stakePoolsRefreshCta.click();
-        } else {
-          console.log('element not found:', '#refresh-stake-pool-info', 'red');
-        }
-      };
 
       if (item.operationType === OperationType.Unstake) {
         consoleOut(
@@ -358,15 +358,6 @@ export const UnstakeTabView = (props: {
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
     (item: TxConfirmationInfo) => {
-      const reloadStakePools = () => {
-        const stakePoolsRefreshCta = document.getElementById('refresh-stake-pool-info');
-        if (stakePoolsRefreshCta) {
-          stakePoolsRefreshCta.click();
-        } else {
-          console.log('element not found:', '#refresh-stake-pool-info', 'red');
-        }
-      };
-
       if (item.operationType === OperationType.Unstake) {
         consoleOut('onTxTimedout event executed:', item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, false);
