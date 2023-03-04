@@ -15,7 +15,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
-import { fetchAccountTokens } from 'middleware/accounts';
+import { getTokensWithBalances } from 'middleware/accounts';
 import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { consoleOut, copyText, getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
@@ -33,7 +33,7 @@ export const TreasuryCreateModal = (props: {
   handleOk: any;
   isBusy: boolean;
   isVisible: boolean;
-  multisigAccounts?: MultisigInfo[] | undefined;
+  multisigAccounts?: MultisigInfo[];
   nativeBalance: number;
   selectedMultisig: MultisigInfo | undefined;
   transactionFees: TransactionFees;
@@ -49,7 +49,7 @@ export const TreasuryCreateModal = (props: {
     transactionFees,
   } = props;
   const { t } = useTranslation('common');
-  const { tokenList, splTokenList, selectedAccount, transactionStatus, setTransactionStatus } =
+  const { tokenList, splTokenList, selectedAccount, transactionStatus, setTransactionStatus, priceList } =
     useContext(AppStateContext);
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
@@ -166,6 +166,7 @@ export const TreasuryCreateModal = (props: {
     }
   }, [isVisible, selectedMultisig, multisigAccounts]);
 
+  // Automatically update all token balances and rebuild token list
   useEffect(() => {
     if (!connection) {
       console.error('No connection');
@@ -176,55 +177,19 @@ export const TreasuryCreateModal = (props: {
       return;
     }
 
-    const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
-    const balancesMap: any = {};
-    balancesMap[splTokensCopy[0].address] = nativeBalance;
+    const timeout = setTimeout(() => {
+      getTokensWithBalances(connection, publicKey.toBase58(), priceList, splTokenList, true).then(response => {
+        if (response) {
+          setSelectedList(response.tokenList);
+          setUserBalances(response.balancesMap);
+        }
+      });
+    });
 
-    fetchAccountTokens(connection, publicKey)
-      .then(accTks => {
-        if (accTks) {
-          // Add owned token accounts to balances map
-          // Code to have all tokens sorted by balance
-          accTks.forEach(item => {
-            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
-          });
-          splTokensCopy.sort((a, b) => {
-            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
-              return 1;
-            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
-              return -1;
-            }
-            return 0;
-          });
-          setSelectedList(splTokensCopy);
-          if (!workingToken) {
-            setWorkingToken(splTokensCopy[0]);
-          }
-        } else {
-          for (const t of splTokensCopy) {
-            balancesMap[t.address] = 0;
-          }
-          // set the list to the userTokens list
-          setSelectedList(splTokensCopy);
-          if (!workingToken) {
-            setWorkingToken(splTokensCopy[0]);
-          }
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (const t of splTokensCopy) {
-          balancesMap[t.address] = 0;
-        }
-        setSelectedList(splTokensCopy);
-        if (!workingToken) {
-          setWorkingToken(splTokensCopy[0]);
-        }
-      })
-      .finally(() => setUserBalances(balancesMap));
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey, connection, nativeBalance]);
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [publicKey, connection, priceList, splTokenList]);
 
   // Pick a token if none selected
   useEffect(() => {
@@ -292,7 +257,13 @@ export const TreasuryCreateModal = (props: {
   };
 
   const getTransactionStartButtonLabelMultisig = () => {
-    return !proposalTitle ? 'Add a proposal title' : !treasuryName ? 'Add an account name' : 'Sign proposal';
+    if (!proposalTitle) {
+      return 'Add a proposal title';
+    } else if (!treasuryName) {
+      return 'Add an account name';
+    } else {
+      return 'Sign proposal';
+    }
   };
 
   const onTitleInputValueChange = (e: any) => {
@@ -330,109 +301,124 @@ export const TreasuryCreateModal = (props: {
     );
   };
 
-  const renderTokenList = (
-    <>
-      {filteredTokenList &&
-        filteredTokenList.length > 0 &&
-        filteredTokenList.map((t, index) => {
-          const onClick = function () {
-            setWorkingToken(t);
-            consoleOut('token selected:', t.symbol, 'blue');
-            onCloseTokenSelector();
-          };
+  //#region Token selector - render methods
 
-          if (index < MAX_TOKEN_LIST_ITEMS) {
-            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
-            return (
-              <TokenListItem
-                key={t.address}
-                name={t.name || CUSTOM_TOKEN_NAME}
-                mintAddress={t.address}
-                token={t}
-                className={workingToken && workingToken.address === t.address ? 'selected' : 'simplelink'}
-                onClick={onClick}
-                balance={balance}
-                showZeroBalances={true}
-              />
-            );
-          } else {
-            return null;
-          }
-        })}
-    </>
-  );
+  const getTokenListItemClass = (item: TokenInfo) => {
+    return workingToken?.address === item.address ? 'selected' : 'simplelink';
+  };
 
-  const renderTokenSelectorInner = (
-    <div className="token-selector-wrapper">
-      <div className="token-search-wrapper">
-        <TextInput
-          id="token-search-streaming-account"
-          value={tokenFilter}
-          allowClear={true}
-          extraClass="mb-2"
-          onInputClear={onInputCleared}
-          placeholder={t('token-selector.search-input-placeholder')}
-          error={
-            tokenFilter && workingToken && workingToken.decimals === -1
-              ? 'Account not found'
-              : tokenFilter && workingToken && workingToken.decimals === -2
-              ? 'Account is not a token mint'
-              : ''
-          }
-          onInputChange={onTokenSearchInputChange}
-        />
-      </div>
-      <div className="token-list">
-        {filteredTokenList.length > 0 && renderTokenList}
-        {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
+  const renderTokenList = () => {
+    return filteredTokenList.map((t, index) => {
+      const onClick = function () {
+        setWorkingToken(t);
+
+        consoleOut('token selected:', t, 'blue');
+        onCloseTokenSelector();
+      };
+
+      if (index < MAX_TOKEN_LIST_ITEMS) {
+        const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
+        return (
           <TokenListItem
-            key={tokenFilter}
-            name={CUSTOM_TOKEN_NAME}
-            mintAddress={tokenFilter}
-            className={workingToken && workingToken.address === tokenFilter ? 'selected' : 'simplelink'}
-            onClick={async () => {
-              const address = tokenFilter;
-              let decimals = -1;
-              let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
-              try {
-                accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
-                consoleOut('accountInfo:', accountInfo, 'blue');
-              } catch (error) {
-                console.error(error);
-              }
-              if (accountInfo) {
-                if (
-                  (accountInfo as any).data['program'] &&
-                  (accountInfo as any).data['program'] === 'spl-token' &&
-                  (accountInfo as any).data['parsed'] &&
-                  (accountInfo as any).data['parsed']['type'] &&
-                  (accountInfo as any).data['parsed']['type'] === 'mint'
-                ) {
-                  decimals = (accountInfo as any).data['parsed']['info']['decimals'];
-                } else {
-                  decimals = -2;
-                }
-              }
-              const unknownToken: TokenInfo = {
-                address,
-                name: CUSTOM_TOKEN_NAME,
-                chainId: getNetworkIdByEnvironment(environment),
-                decimals,
-                symbol: `[${shortenAddress(address)}]`,
-              };
-              setWorkingToken(unknownToken);
-              consoleOut('token selected:', unknownToken, 'blue');
-              // Do not close on errors (-1 or -2)
-              if (decimals >= 0) {
-                onCloseTokenSelector();
-              }
-            }}
-            balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+            key={t.address}
+            name={t.name || CUSTOM_TOKEN_NAME}
+            mintAddress={t.address}
+            token={t}
+            className={balance ? getTokenListItemClass(t) : 'hidden'}
+            onClick={onClick}
+            balance={balance}
+            showUsdValues={true}
           />
-        )}
+        );
+      } else {
+        return null;
+      }
+    });
+  };
+
+  const getSelectedTokenError = () => {
+    if (tokenFilter && workingToken) {
+      if (workingToken.decimals === -1) {
+        return 'Account not found';
+      } else if (workingToken.decimals === -2) {
+        return 'Account is not a token mint';
+      }
+    }
+    return undefined;
+  };
+
+  const getBalanceForTokenFilter = () => {
+    return connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0;
+  };
+
+  const renderTokenSelectorInner = () => {
+    return (
+      <div className="token-selector-wrapper">
+        <div className="token-search-wrapper">
+          <TextInput
+            id="token-search-streaming-account"
+            value={tokenFilter}
+            allowClear={true}
+            extraClass="mb-2"
+            onInputClear={onInputCleared}
+            placeholder={t('token-selector.search-input-placeholder')}
+            error={getSelectedTokenError()}
+            onInputChange={onTokenSearchInputChange}
+          />
+        </div>
+        <div className="token-list">
+          {filteredTokenList.length > 0 && renderTokenList()}
+          {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
+            <TokenListItem
+              key={tokenFilter}
+              name={CUSTOM_TOKEN_NAME}
+              mintAddress={tokenFilter}
+              className={workingToken && workingToken.address === tokenFilter ? 'selected' : 'simplelink'}
+              onClick={async () => {
+                const address = tokenFilter;
+                let decimals = -1;
+                let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+                try {
+                  accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+                  consoleOut('accountInfo:', accountInfo, 'blue');
+                } catch (error) {
+                  console.error(error);
+                }
+                if (accountInfo) {
+                  if (
+                    (accountInfo as any).data['program'] &&
+                    (accountInfo as any).data['program'] === 'spl-token' &&
+                    (accountInfo as any).data['parsed'] &&
+                    (accountInfo as any).data['parsed']['type'] &&
+                    (accountInfo as any).data['parsed']['type'] === 'mint'
+                  ) {
+                    decimals = (accountInfo as any).data['parsed']['info']['decimals'];
+                  } else {
+                    decimals = -2;
+                  }
+                }
+                const unknownToken: TokenInfo = {
+                  address,
+                  name: CUSTOM_TOKEN_NAME,
+                  chainId: getNetworkIdByEnvironment(environment),
+                  decimals,
+                  symbol: `[${shortenAddress(address)}]`,
+                };
+                setWorkingToken(unknownToken);
+                consoleOut('token selected:', unknownToken, 'blue');
+                // Do not close on errors (-1 or -2)
+                if (decimals >= 0) {
+                  onCloseTokenSelector();
+                }
+              }}
+              balance={getBalanceForTokenFilter()}
+            />
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+  //#endregion
 
   return (
     <>
@@ -681,7 +667,7 @@ export const TreasuryCreateModal = (props: {
           getContainer={false}
           style={{ position: 'absolute' }}
         >
-          {renderTokenSelectorInner}
+          {renderTokenSelectorInner()}
         </Drawer>
       </Modal>
     </>
