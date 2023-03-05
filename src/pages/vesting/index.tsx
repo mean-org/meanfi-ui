@@ -1692,7 +1692,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const associatedToken =
         params.associatedToken.address === SOL_MINT.toBase58()
           ? NATIVE_SOL_MINT // imported from SDK
-          : new PublicKey(params.associatedToken);
+          : new PublicKey(params.associatedToken.address);
       const amount = params.tokenAmount.toString();
       const token = params.associatedToken;
       const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);

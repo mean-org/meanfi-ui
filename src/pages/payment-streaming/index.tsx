@@ -208,6 +208,8 @@ const PaymentStreamingView = (props: {
               notifyMultisigActionFollowup(item);
             }
             setTimeout(() => {
+              console.log('generating backButtonClick()...');
+              backButtonClick();
               console.log('calling onBackButtonClicked()...');
               onBackButtonClicked();
               hardReloadStreams();
@@ -367,6 +369,13 @@ const PaymentStreamingView = (props: {
   ////////////////////
   // Event handlers //
   ////////////////////
+
+  const backButtonClick = () => {
+    const fullRefreshCta = document.querySelector('.stream-fields-container .back-button') as HTMLElement;
+    if (fullRefreshCta) {
+      fullRefreshCta.click();
+    }
+  };
 
   const accountRefresh = () => {
     const fullRefreshCta = document.getElementById('account-refresh-cta');
