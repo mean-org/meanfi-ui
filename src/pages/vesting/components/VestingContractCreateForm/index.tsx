@@ -634,11 +634,11 @@ export const VestingContractCreateForm = (props: {
 
   const todayAndPriorDatesDisabled = (current: any) => {
     // Can not select neither today nor days before today
-    return current && current < moment().add(1, 'day').startOf('day');
+    return current && current < moment().startOf('day');
   };
 
   const onResetDate = () => {
-    const date = addDays(new Date(), 1).toLocaleDateString('en-US');
+    const date = new Date().toLocaleDateString('en-US');
     setPaymentStartDate(date);
   };
 
@@ -1153,7 +1153,7 @@ export const VestingContractCreateForm = (props: {
                           onChange={(value: any, date: string) => handleDateChange(date)}
                           value={moment(paymentStartDate, DATEPICKER_FORMAT) as any}
                           format={DATEPICKER_FORMAT}
-                          showNow={false}
+                          showNow={true}
                           showToday={false}
                           renderExtraFooter={renderDatePickerExtraPanel}
                         />
@@ -1192,8 +1192,8 @@ export const VestingContractCreateForm = (props: {
         <div className="well">
           <div className="flexible-right mb-1">
             <div className="token-group">
-              {percentages.map((percentage, index) => (
-                <div key={index} className="mb-1 d-flex flex-column align-items-center">
+              {percentages.map(percentage => (
+                <div key={`release-${percentage}`} className="mb-1 d-flex flex-column align-items-center">
                   <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>
                     {percentage}%
                   </div>
