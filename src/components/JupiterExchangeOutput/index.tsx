@@ -1,10 +1,10 @@
 import { MarketInfo, RouteInfo } from '@jup-ag/core';
-import BN from 'bn.js';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
+import JSBI from 'jsbi';
 import { toUsCurrency } from 'middleware/ui';
-import { formatAmount, formatThousands } from 'middleware/utils';
+import { formatAmount, formatThousands, toUiAmount } from 'middleware/utils';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -47,13 +47,6 @@ export const JupiterExchangeOutput = (props: {
   const { loadingPrices, getTokenPriceByAddress, getTokenPriceBySymbol, refreshPrices } = useContext(AppStateContext);
   const { publicKey } = useWallet();
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | undefined>(undefined);
-
-  const toUiAmount = (amount: BN, decimals: number) => {
-    if (!amount || !decimals) {
-      return 0;
-    }
-    return amount.toNumber() / 10 ** decimals;
-  };
 
   const getTokenAmountValue = useCallback(
     (amount?: number) => {
@@ -169,8 +162,10 @@ export const JupiterExchangeOutput = (props: {
                 const firstInfo = routes[0];
                 const lastInfo = routes[routes.length - 1];
                 const decimals = toToken ? toToken.decimals : 6;
-                const amountOut = toUiAmount(new BN(c.outAmount), decimals);
-                const showBadge = routes.length > 1 && (firstInfo.outAmount || 0) > (lastInfo.outAmount || 0);
+                const amountOut = toUiAmount(c.outAmount.toString(), decimals);
+                const showBadge =
+                  routes.length > 1 &&
+                  (JSBI.toNumber(firstInfo.outAmount) || 0) > (JSBI.toNumber(lastInfo.outAmount) || 0);
                 const marketInfo = c.marketInfos;
                 const labels = marketInfo.map(item => item.amm.label).join(' x ');
                 const maxNumItems = showAllRoutes ? 10 : 2;
@@ -221,7 +216,7 @@ export const JupiterExchangeOutput = (props: {
                             })}
                           </div>
                         </div>
-                        <div className="amount">{formatAmount(amountOut, decimals)}</div>
+                        <div className="amount">{formatAmount(parseFloat(amountOut), decimals)}</div>
                       </div>
                     </div>
                   );

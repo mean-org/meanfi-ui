@@ -613,9 +613,11 @@ export function useWallet() {
     },
     disconnect() {
       consoleOut(`Disconnecting provider...`, '', 'blue');
-      resetWalletProvider();
-      isDisconnecting = true;
-      wallet?.disconnect();
+      if (wallet) {
+        wallet.disconnect();
+        isDisconnecting = true;
+        resetWalletProvider();
+      }
     },
     isSelectingWallet,
   };

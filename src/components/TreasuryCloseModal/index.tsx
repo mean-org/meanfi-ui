@@ -13,7 +13,7 @@ import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { getTransactionOperationDescription } from 'middleware/ui';
-import { formatThousands, getAmountWithSymbol, getSdkValue, shortenAddress } from 'middleware/utils';
+import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
