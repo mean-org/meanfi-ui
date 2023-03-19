@@ -1,5 +1,5 @@
 import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from '@ant-design/icons';
-import { getPlatformFeeAccounts, Jupiter, RouteInfo, SwapMode, TOKEN_LIST_URL, TransactionFeeInfo } from '@jup-ag/core';
+import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from '@jup-ag/core';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Divider, Drawer, Modal, Tooltip } from 'antd';
 import { Identicon } from 'components/Identicon';
