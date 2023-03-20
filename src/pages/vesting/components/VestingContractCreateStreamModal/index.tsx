@@ -246,9 +246,7 @@ export const VestingContractCreateStreamModal = (props: {
       setTreasuryOption(vestingContract.accountType);
       const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
       setCliffReleasePercentage(formatPercent(cliffPercent, 4));
-      const localDate = new Date(streamTemplate.startUtc);
-      const dateWithoutOffset = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
-      setPaymentStartDate(dateWithoutOffset.toUTCString());
+      setPaymentStartDate(streamTemplate.startUtc.toString());
       updateLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
       const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
       setLockPeriodFrequency(periodFrequency);
