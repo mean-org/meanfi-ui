@@ -10,10 +10,11 @@ import { getLiveRpc, RpcConfig } from 'services/connections-hq';
 import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from 'Icons';
-import { JupiterExchange, RecurringExchange } from 'views';
+import { RecurringExchange } from 'views';
 import { TRITON_ONE_DEBUG_RPC, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { environment } from 'environments/environment';
+import JupiterExchangeV4 from 'views/JupiterExchangeV4';
 
 type SwapOption = 'one-time' | 'recurring';
 
@@ -24,8 +25,8 @@ export const SwapView = () => {
   const { publicKey, wallet } = useWallet();
   const { splTokenList, recurringBuys, setRecurringBuys, getTokenByMintAddress } = useContext(AppStateContext);
   const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
-  const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
-  const [queryToMint, setQueryToMint] = useState<string | null>(null);
+  const [queryFromMint, setQueryFromMint] = useState<string | undefined>(undefined);
+  const [queryToMint, setQueryToMint] = useState<string | undefined>(undefined);
   const [currentTab, setCurrentTab] = useState<SwapOption>('one-time');
 
   // Connection management
@@ -219,7 +220,7 @@ export const SwapView = () => {
             </div>
             {/* One time exchange */}
             {currentTab === 'one-time' && (
-              <JupiterExchange connection={connection} queryFromMint={queryFromMint} queryToMint={queryToMint} />
+              <JupiterExchangeV4 connection={connection} queryFromMint={queryFromMint} queryToMint={queryToMint} />
             )}
             {/* Repeating exchange */}
             {currentTab === 'recurring' && (

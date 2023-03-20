@@ -57,8 +57,8 @@ import './style.scss';
 let inputDebounceTimeout: any;
 
 export const RecurringExchange = (props: {
-  queryFromMint: string | null;
-  queryToMint: string | null;
+  queryFromMint?: string;
+  queryToMint?: string;
   connection: Connection;
   onRefreshRequested: any;
   endpoint: string;

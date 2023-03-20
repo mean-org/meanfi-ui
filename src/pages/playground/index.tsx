@@ -860,9 +860,9 @@ export const PlaygroundView = () => {
   ///////////////
 
   const renderTable = () => {
-    return CRYPTO_VALUES.map((value: number, index: number) => {
+    return CRYPTO_VALUES.map((value: number) => {
       return (
-        <div className="item-list-row" key={index}>
+        <div className="item-list-row" key={`value-${value}`}>
           <div className="std-table-cell responsive-cell text-monospace text-right px-1">
             {selectedToken ? `${formatThousands(value, selectedToken.decimals)} ${selectedToken.symbol}` : ''}
           </div>
@@ -884,9 +884,9 @@ export const PlaygroundView = () => {
   };
 
   const renderKformatters = () => {
-    return NUMBER_OF_ITEMS.map((value: number, index: number) => {
+    return NUMBER_OF_ITEMS.map((value: number) => {
       return (
-        <div className="item-list-row" key={`${index}`}>
+        <div className="item-list-row" key={`value-${value}`}>
           <div className="std-table-cell responsive-cell text-monospace">
             <span className="font-size-75 font-bold text-shadow">{formatThousands(value) || 0}</span>
           </div>
@@ -1416,7 +1416,7 @@ export const PlaygroundView = () => {
                 {infoSafeData.map((info, index: number) => {
                   const isEven = index % 2 === 0 ? true : false;
                   return (
-                    <div key={`${index}`} className={isEven ? 'left' : 'right'}>
+                    <div key={`${info.name}`} className={isEven ? 'left' : 'right'}>
                       <div className="info-label">{info.name}</div>
                       <div className="info-value mb-2 line-height-100">{info.value}</div>
                     </div>
