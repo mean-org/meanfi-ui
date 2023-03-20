@@ -49,7 +49,7 @@ jobs:
 
         # Build react app
       - name: Generate build for ${{ env.APP_ENV }}
-        run: npm --max-old-space-size=3096 run build:s3
+        run: npm run build:s3
         env:
           REACT_APP_ENV: ${{ env.APP_ENV }}
 
