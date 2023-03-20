@@ -48,7 +48,7 @@
     "build:prod:win": "set \"REACT_APP_ENV=production\" && npm run build",
     "postbuild": "node ci/copy-config.js",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
-    "build:s3": "react-app-rewired build"
+    "build:s3": "NODE_OPTIONS=\"--max_old_space_size=4096\" react-app-rewired build"
   },
   "dependencies": {
     "@ant-design/icons": "5.0.1",
