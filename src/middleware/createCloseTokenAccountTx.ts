@@ -1,4 +1,4 @@
-import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import {
   AccountInfo,
   Connection,
@@ -61,7 +61,7 @@ export async function createCloseTokenAccountTx(connection: Connection, tokenPub
         tokenPubkey,
         owner,
         [],
-        (info.tokenAmount.uiAmount || 0) * 10 ** info.tokenAmount.decimals,
+        new u64(info.tokenAmount.amount),
       ),
     );
   }
