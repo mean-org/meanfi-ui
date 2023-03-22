@@ -397,6 +397,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
         consoleOut('Wallet disconnect event fired:', '', 'blue');
         setConnected(false);
         if (readyState !== WalletReadyState.Installed) return;
+        resetWalletProvider();
         navigate('/');
       }
     });
@@ -616,7 +617,6 @@ export function useWallet() {
       if (wallet) {
         wallet.disconnect();
         isDisconnecting = true;
-        resetWalletProvider();
       }
     },
     isSelectingWallet,

@@ -2430,17 +2430,6 @@
     "@solana/web3.js" "^1.66.2"
     decimal.js "^10.3.1"
 
-"@jup-ag/react-hook@^4.0.0-beta.16":
-  version "4.0.0-beta.16"
-  resolved "https://registry.yarnpkg.com/@jup-ag/react-hook/-/react-hook-4.0.0-beta.16.tgz#698b4f485e9d1c52aa298575470aeb44c8758135"
-  integrity sha512-E4uiZu9fs25X1laBgjwcY0p47GKV/kdw+ZNaHJNtoBmskRDDlT8Op8FtZNqd96WKDEQSniT7na3tEkk4hlWx+w==
-  dependencies:
-    "@jup-ag/api" "4.0.1-alpha.0"
-    "@jup-ag/common" "4.0.0-beta.16"
-    "@mercurial-finance/optimist" "0.2.0"
-    "@solana/spl-token" "0.1.8"
-    cross-fetch "3.1.5"
-
 "@jup-ag/whirlpools-sdk@0.7.2":
   version "0.7.2"
   resolved "https://registry.yarnpkg.com/@jup-ag/whirlpools-sdk/-/whirlpools-sdk-0.7.2.tgz#c4cc2fa601686e5cb5f1020b8c50acf38c9fb529"

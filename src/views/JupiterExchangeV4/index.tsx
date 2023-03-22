@@ -544,8 +544,8 @@ const JupiterExchangeV4 = (props: {
               amount: JSBI.BigInt(inputAmount * 10 ** inputToken.decimals),
               onlyDirectRoutes: isFromSol() || isToSol(),
               slippageBps: slippage,
-              forceFetch: true,
-              filterTopNResult: 5,
+              forceFetch: false,
+              filterTopNResult: 10,
             })
           : null;
 

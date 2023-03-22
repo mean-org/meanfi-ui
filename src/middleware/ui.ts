@@ -683,13 +683,10 @@ export const getReadableDate = (date: string, includeTime = false, isUtc = false
     return '';
   }
 
-  const localDate = new Date(date);
   if (isUtc) {
-    const dateWithoutOffset = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
-    const displayDate = dateWithoutOffset.toUTCString();
-    return dateFormat(displayDate, includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT);
+    return dateFormat(date, includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT, true);
   } else {
-    return dateFormat(localDate, includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT);
+    return dateFormat(new Date(date), includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT);
   }
 };
 

@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.25.0",
+  "version": "1.25.1",
   "private": true,
   "browserslist": {
     "production": [
@@ -55,7 +55,6 @@
     "@coinbase/cbpay-js": "^1.6.0",
     "@coral-xyz/borsh": "^0.26.0",
     "@jup-ag/core": "^4.0.0-beta.16",
-    "@jup-ag/react-hook": "^4.0.0-beta.16",
     "@ledgerhq/hw-transport": "^6.27",
     "@ledgerhq/hw-transport-webhid": "^6.27",
     "@mean-dao/ddca": "1.2.35",
