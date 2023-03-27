@@ -8,30 +8,32 @@ import { formatThousands } from 'middleware/utils';
 import { TokenDisplay } from 'components/TokenDisplay';
 
 export const JupiterExchangeInput = (props: {
-  token: TokenInfo | undefined;
-  tokenBalance?: number;
-  tokenAmount: string;
-  onSelectToken: any;
+  className?: string;
+  disabled?: boolean;
+  hint?: string;
+  loadingTokens?: boolean;
+  onBalanceClick?: any;
   onInputChange?: any;
   onMaxAmount: any | undefined;
-  onBalanceClick?: any;
+  onSelectToken: any;
   readonly?: boolean;
-  disabled?: boolean;
-  className?: string;
-  hint?: string;
+  token: TokenInfo | undefined;
+  tokenAmount: string;
+  tokenBalance?: number;
 }) => {
   const {
-    token,
-    tokenBalance,
-    tokenAmount,
-    onSelectToken,
+    className,
+    disabled,
+    hint,
+    loadingTokens,
+    onBalanceClick,
     onInputChange,
     onMaxAmount,
-    onBalanceClick,
+    onSelectToken,
     readonly,
-    disabled,
-    className,
-    hint,
+    token,
+    tokenAmount,
+    tokenBalance,
   } = props;
   const { t } = useTranslation('common');
   const { loadingPrices, getTokenPriceByAddress, getTokenPriceBySymbol, refreshPrices } = useContext(AppStateContext);
@@ -93,27 +95,37 @@ export const JupiterExchangeInput = (props: {
 
         <div className="flex-fixed-left">
           <div className="left">
-            <span className={`add-on ${!readonly ? 'simplelink' : ''}`}>
-              <TokenDisplay
-                onClick={() => {
-                  if (!readonly) {
-                    onSelectToken();
-                  }
-                }}
-                fullTokenInfo={token}
-                mintAddress={token ? token.address : ''}
-                name={token ? token.name : ''}
-                className={!readonly ? 'simplelink' : ''}
-                noTokenLabel={t('swap.token-select-destination')}
-                showName={false}
-                showCaretDown={!readonly}
-              />
-              {publicKey && token && tokenBalance && onMaxAmount ? (
-                <div className="token-max simplelink" onClick={onMaxAmount}>
-                  MAX
+            {loadingTokens ? (
+              <span className="add-on simplelink">
+                <div className="d-flex flex-column">
+                  <div title="" className="token-selector">
+                    <span className="notoken-label">{t('general.loading')}</span>
+                  </div>
                 </div>
-              ) : null}
-            </span>
+              </span>
+            ) : (
+              <span className={`add-on ${!readonly ? 'simplelink' : ''}`}>
+                <TokenDisplay
+                  onClick={() => {
+                    if (!readonly) {
+                      onSelectToken();
+                    }
+                  }}
+                  fullTokenInfo={token}
+                  mintAddress={token ? token.address : ''}
+                  name={token ? token.name : ''}
+                  className={!readonly ? 'simplelink' : ''}
+                  noTokenLabel={t('swap.token-select-destination')}
+                  showName={false}
+                  showCaretDown={!readonly}
+                />
+                {publicKey && token && tokenBalance && onMaxAmount ? (
+                  <div className="token-max simplelink" onClick={onMaxAmount}>
+                    MAX
+                  </div>
+                ) : null}
+              </span>
+            )}
           </div>
           <div className="right">
             <input

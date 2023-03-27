@@ -14,6 +14,7 @@ export const JupiterExchangeOutput = (props: {
   disabled?: boolean;
   fromToken: TokenInfo | undefined;
   isBusy?: boolean;
+  loadingTokens?: boolean;
   mintList?: any;
   onBalanceClick?: any;
   onSelectToken: any;
@@ -31,6 +32,7 @@ export const JupiterExchangeOutput = (props: {
     disabled,
     fromToken,
     isBusy,
+    loadingTokens,
     mintList,
     onBalanceClick,
     onSelectToken,
@@ -131,22 +133,32 @@ export const JupiterExchangeOutput = (props: {
         {/* Main row */}
         <div className="flex-fixed-left">
           <div className="left">
-            <span className={`add-on ${!readonly || !isBusy ? 'simplelink' : ''}`}>
-              <TokenDisplay
-                onClick={() => {
-                  if (!readonly || !isBusy) {
-                    onSelectToken();
-                  }
-                }}
-                fullTokenInfo={toToken}
-                mintAddress={toToken ? toToken.address : ''}
-                name={toToken ? toToken.name : ''}
-                className={!readonly || !isBusy ? 'simplelink' : ''}
-                noTokenLabel={t('swap.token-select-destination')}
-                showName={false}
-                showCaretDown={!readonly || !isBusy}
-              />
-            </span>
+            {loadingTokens ? (
+              <span className="add-on simplelink">
+                <div className="d-flex flex-column">
+                  <div title="" className="token-selector">
+                    <span className="notoken-label">{t('general.loading')}</span>
+                  </div>
+                </div>
+              </span>
+            ) : (
+              <span className={`add-on ${!readonly || !isBusy ? 'simplelink' : ''}`}>
+                <TokenDisplay
+                  onClick={() => {
+                    if (!readonly || !isBusy) {
+                      onSelectToken();
+                    }
+                  }}
+                  fullTokenInfo={toToken}
+                  mintAddress={toToken ? toToken.address : ''}
+                  name={toToken ? toToken.name : ''}
+                  className={!readonly || !isBusy ? 'simplelink' : ''}
+                  noTokenLabel={t('swap.token-select-destination')}
+                  showName={false}
+                  showCaretDown={!readonly || !isBusy}
+                />
+              </span>
+            )}
           </div>
           <div className="right">{getOutputAmountDisplay()}</div>
         </div>

@@ -17,7 +17,7 @@ import {
   ONE_MINUTE_REFRESH_TIMEOUT,
   WRAPPED_SOL_MINT_ADDRESS,
 } from 'constants/common';
-import { MEAN_TOKEN_LIST, NATIVE_SOL, PINNED_TOKENS } from 'constants/tokens';
+import { MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { TxConfirmationContext } from 'contexts/transaction-status';
@@ -38,6 +38,7 @@ import {
   getAmountFromLamports,
   getTxIxResume,
   isValidNumber,
+  toTokenAmount,
   toUiAmount,
 } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
@@ -80,8 +81,10 @@ const JupiterExchangeV4 = (props: {
   const [inputAmount, setInputAmount] = useState(0);
   // The full list, any filtering should be against this one
   const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
+  const [loadingSourceTokens, setLoadingSourceTokens] = useState(true);
   const [mintList, setMintList] = useState<any>({});
   const [possiblePairsTokenInfo, setPossiblePairsTokenInfo] = useState<any>(undefined);
+  const [loadingDestinationTokens, setLoadingDestinationTokens] = useState(true);
   const [inputToken, setInputToken] = useState<TokenInfo | undefined>(undefined);
   const [outputToken, setOutputToken] = useState<TokenInfo | undefined>(undefined);
   const [routes, setRoutes] = useState<RouteInfo[]>([]);
@@ -223,10 +226,13 @@ const JupiterExchangeV4 = (props: {
       } catch (error) {
         console.error(error);
         setTokenList([]);
+      } finally {
+        setLoadingSourceTokens(false);
       }
     };
 
     if (!tokenList || tokenList.length === 0) {
+      setLoadingSourceTokens(true);
       loadJupiterTokenList();
     }
   }, [tokenList]);
@@ -336,13 +342,6 @@ const JupiterExchangeV4 = (props: {
         }
       }
 
-      // Then add tokens from pinned list not already in the dictionary
-      MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol)).forEach(item => {
-        if (!newList[item.address]) {
-          newList[item.address] = item;
-        }
-      });
-
       // Add all other tokens
       tokenList.forEach(item => {
         if (!newList[item.address]) {
@@ -352,7 +351,8 @@ const JupiterExchangeV4 = (props: {
 
       setMintList(newList);
       setShowFromMintList(newList);
-      setShowToMintList(undefined);
+
+      // setShowToMintList(undefined);
     });
 
     return () => {
@@ -417,8 +417,8 @@ const JupiterExchangeV4 = (props: {
 
     const balance =
       fromMint === WRAPPED_SOL_MINT_ADDRESS
-        ? nativeBalance - MINIMUM_REQUIRED_SOL_BALANCE
-        : userBalances[fromMint] || 0;
+        ? ((nativeBalance - MINIMUM_REQUIRED_SOL_BALANCE) as number)
+        : (userBalances[fromMint] as number) || 0;
 
     return balance <= 0 ? 0 : balance;
   }, [toMint, fromMint, userBalances, nativeBalance]);
@@ -470,6 +470,9 @@ const JupiterExchangeV4 = (props: {
       return;
     }
 
+    setShowToMintList(undefined);
+    setLoadingDestinationTokens(true);
+
     const getPairs = () => {
       return getPossiblePairsTokenInfo({
         tokens: tokenList,
@@ -493,13 +496,6 @@ const JupiterExchangeV4 = (props: {
         }
       }
 
-      // Then add tokens from pinned list not already in the dictionary
-      MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol)).forEach(item => {
-        if (!toList[item.address] && pairs[item.address]) {
-          toList[item.address] = item;
-        }
-      });
-
       // Add all other items
       for (const info of Object.values(pairs)) {
         const mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
@@ -512,8 +508,9 @@ const JupiterExchangeV4 = (props: {
       setPossiblePairsTokenInfo(toList);
     } else {
       setPossiblePairsTokenInfo(undefined);
-      setShowToMintList(undefined);
     }
+
+    setLoadingDestinationTokens(false);
   }, [toMint, routeMap, publicKey, tokenList, inputToken, userBalances, subjectTokenSelection]);
 
   // Get routes on demmand based on input/output tokens, amount and slippage
@@ -541,7 +538,7 @@ const JupiterExchangeV4 = (props: {
           ? await jupiter.computeRoutes({
               inputMint: new PublicKey(inputToken.address),
               outputMint: new PublicKey(outputToken.address),
-              amount: JSBI.BigInt(inputAmount * 10 ** inputToken.decimals),
+              amount: JSBI.BigInt(toTokenAmount(inputAmount, inputToken.decimals, true)),
               onlyDirectRoutes: isFromSol() || isToSol(),
               slippageBps: slippage,
               forceFetch: false,
@@ -549,9 +546,9 @@ const JupiterExchangeV4 = (props: {
             })
           : null;
 
-      if (routes && routes.routesInfos) {
+      if (routes && routes.routesInfos.length) {
         consoleOut('routesInfos:', routes.routesInfos, 'blue');
-        if (inputAmount) {
+        if (inputAmount && routes.routesInfos[0].marketInfos.length) {
           setMinInAmount(routes.routesInfos[0].marketInfos[0].minInAmount);
           setMinOutAmount(routes.routesInfos[0].marketInfos[0].minOutAmount);
           return routes;
@@ -1241,6 +1238,14 @@ const JupiterExchangeV4 = (props: {
     return areSameTokens(item, destinationToken) ? 'disabled' : 'simplelink';
   };
 
+  const getDestinationTokenListItemClass = (item: TokenInfo) => {
+    if (toMint && toMint === item.address) {
+      return 'selected';
+    }
+    const destinationToken = fromMint ? showToMintList[fromMint] : undefined;
+    return areSameTokens(item, destinationToken) ? 'disabled' : 'simplelink';
+  };
+
   const renderTokenBalance = (token: TokenInfo) => {
     if (publicKey && userBalances && mintList[token.address] && userBalances[token.address]) {
       if (token.address === WRAPPED_SOL_MINT_ADDRESS) {
@@ -1299,14 +1304,6 @@ const JupiterExchangeV4 = (props: {
       )}
     </>
   );
-
-  const getDestinationTokenListItemClass = (item: TokenInfo) => {
-    if (toMint && toMint === item.address) {
-      return 'selected';
-    }
-    const destinationToken = fromMint ? showToMintList[fromMint] : undefined;
-    return areSameTokens(item, destinationToken) ? 'disabled' : 'simplelink';
-  };
 
   const renderDestinationTokenList = (
     <>
@@ -1454,6 +1451,7 @@ const JupiterExchangeV4 = (props: {
             }
             className="mb-0"
             disabled={!jupiterReady}
+            loadingTokens={loadingSourceTokens}
             onBalanceClick={() => refreshUserBalances()}
           />
         )}
@@ -1554,6 +1552,7 @@ const JupiterExchangeV4 = (props: {
             }}
             className="mb-2"
             disabled={!jupiterReady}
+            loadingTokens={loadingDestinationTokens}
             routes={routes}
             onSelectedRoute={(route: any) => {
               consoleOut('onSelectedRoute:', route, 'blue');
