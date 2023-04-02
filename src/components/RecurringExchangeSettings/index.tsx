@@ -5,7 +5,7 @@ import useWindowSize from 'hooks/useWindowResize';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const SwapSettings = (props: { currentValue: number; onValueSelected: any }) => {
+export const RecurringExchangeSettings = (props: { currentValue: number; onValueSelected: any }) => {
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [popoverVisible, setPopoverVisible] = useState(false);
