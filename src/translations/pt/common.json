@@ -919,6 +919,8 @@
     "screen-title": "Troca",
     "show-routes": "Mostrar opções de roteamento",
     "slippage-tolerance": "Tolerância de derrapagem",
+    "slippage-tolerance-help": "Os preços comerciais mudam constantemente. A tolerância de derrapagem é projetada para determinar o valor mínimo dos tokens a receber. Se o preço do ativo a receber se desviar acima da porcentagem de tolerância à derrapagem, a transação não será executada. Neste caso, você pode tentar novamente mais tarde ou esperar até que a taxa de câmbio volte ao intervalo de tolerância de derrapagem indicado. Alternativamente, você pode aumentar a tolerância de derrapagem.",
+    "slippage-tolerance-exceeded": "Tolerância de deslizamento excedida. Por favor, tente novamente mais tarde ou aumente a tolerância de derrapagem.",
     "settings-direct-route": "Direct Route Only",
     "settings-direct-route-help": "It ensures only direct routing and also disable split trade trading. It delivers faster performance but price might not be the best.",
     "settings-versioned-tx": "Versioned Transaction",
@@ -1048,7 +1050,6 @@
       "price-impact": "Impacto do preço",
       "protocol-transaction-fee": "{{protocol}} taxa de LP",
       "recipient-receives": "Mínimo recebido",
-      "slippage": "Tolerância de deslizamento",
       "transaction-fee": "Taxa de transação",
       "you-receive": "Tu recebes"
     },

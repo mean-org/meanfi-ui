@@ -1007,6 +1007,8 @@
     "screen-title": "교환",
     "show-routes": "라우팅 옵션 표시",
     "slippage-tolerance": "슬리피지 한도",
+    "slippage-tolerance-help": "거래 가격은 끊임없이 변합니다. 슬리피지 허용 오차는 받을 수 있는 토큰의 최소 금액을 결정하도록 설계되었습니다. 미수금 자산의 가격이 슬리피지 허용 비율을 초과하면 거래가 실행되지 않습니다. 이 경우 나중에 다시 시도하거나 환율이 표시된 슬리피지 허용 범위로 돌아올 때까지 기다릴 수 있습니다. 또는 미끄러짐 허용 오차를 높일 수 있습니다.",
+    "slippage-tolerance-exceeded": "미끄러짐 허용치를 초과했습니다. 나중에 다시 시도하거나 미끄러짐 허용치를 늘리십시오.",
     "settings-direct-route": "Direct Route Only",
     "settings-direct-route-help": "It ensures only direct routing and also disable split trade trading. It delivers faster performance but price might not be the best.",
     "settings-versioned-tx": "Versioned Transaction",
@@ -1136,7 +1138,6 @@
       "price-impact": "프라이스 임팩트",
       "protocol-transaction-fee": "{{protocol}} LP 수수료",
       "recipient-receives": "최소 수령",
-      "slippage": "슬리피지 한도",
       "transaction-fee": "거래 수수료",
       "you-receive": "당신은 받는다"
     },

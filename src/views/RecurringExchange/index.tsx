@@ -1063,10 +1063,7 @@ export const RecurringExchange = (props: {
             }),
             `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`,
           )}
-        {!refreshing &&
-          fromAmount &&
-          slippage > 0 &&
-          infoRow(t('transactions.transaction-info.slippage'), `${slippage.toFixed(2)}%`)}
+        {!refreshing && fromAmount && slippage > 0 && infoRow(t('swap.slippage-tolerance'), `${slippage.toFixed(2)}%`)}
         {!refreshing &&
           fromAmount &&
           infoRow(

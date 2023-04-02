@@ -919,6 +919,8 @@
     "screen-title": "Échanger",
     "show-routes": "Afficher les options de routage",
     "slippage-tolerance": "Tolérance de glissement",
+    "slippage-tolerance-help": "Les prix du commerce changent constamment. La tolérance de glissement est conçue pour déterminer le montant minimum des jetons à recevoir. Si le prix de l'actif à recevoir dépasse le pourcentage de tolérance de glissement, la transaction échouera à s'exécuter. Dans ce cas, vous pouvez réessayer plus tard ou attendre que le taux de change revienne dans la plage de tolérance de glissement indiquée. Alternativement, vous pouvez augmenter la tolérance de glissement.",
+    "slippage-tolerance-exceeded": "Tolérance de glissement dépassée. Veuillez réessayer plus tard ou augmenter la tolérance de glissement.",
     "settings-direct-route": "Direct Route Only",
     "settings-direct-route-help": "It ensures only direct routing and also disable split trade trading. It delivers faster performance but price might not be the best.",
     "settings-versioned-tx": "Versioned Transaction",
@@ -1048,7 +1050,6 @@
       "price-impact": "Incidence sur les prix",
       "protocol-transaction-fee": "{{protocol}} frais de LP",
       "recipient-receives": "Minimum reçu",
-      "slippage": "Tolérance de glissement",
       "transaction-fee": "Frais de transaction",
       "you-receive": "Vous recevez"
     },

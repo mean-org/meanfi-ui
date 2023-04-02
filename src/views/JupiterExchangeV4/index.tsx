@@ -160,6 +160,24 @@ const JupiterExchangeV4 = (props: {
     [setTransactionStatus, t, transactionStatus.currentOperation],
   );
 
+  const notifyOnSwapError = useCallback(
+    (error: any) => {
+      const errorString = `${error}`;
+      let message = '';
+      if (errorString.includes('Slippage tolerance exceeded')) {
+        message = t('swap.slippage-tolerance-exceeded');
+      } else {
+        message = t('notifications.error-sending-transaction');
+      }
+      openNotification({
+        description: message,
+        type: 'error',
+        duration: 8,
+      });
+    },
+    [t],
+  );
+
   // Keep account balance updated
   useEffect(() => {
     if (nativeAccount?.lamports !== previousBalance || !nativeBalance) {
@@ -569,6 +587,8 @@ const JupiterExchangeV4 = (props: {
       return;
     }
 
+    setRefreshingRoutes(true);
+
     const getRoutes = async () => {
       return getJupiterRoutes({
         jupiter,
@@ -585,7 +605,6 @@ const JupiterExchangeV4 = (props: {
       return;
     }
 
-    setRefreshingRoutes(true);
     getRoutes()
       .then(response => {
         const routes = response ? response.routesInfos : [];
@@ -621,7 +640,6 @@ const JupiterExchangeV4 = (props: {
       return;
     }
 
-    setRefreshingRoutes(true);
     refreshRoutes();
   }, [jupiter, swapSettings.slippage, inputToken, outputToken, inputAmount, refreshRoutes]);
 
@@ -907,7 +925,6 @@ const JupiterExchangeV4 = (props: {
       timer = setInterval(() => {
         if (!isBusy) {
           consoleOut(`Trigger refresh routes after ${ONE_MINUTE_REFRESH_TIMEOUT / 1000} seconds`);
-          setRefreshingRoutes(true);
           refreshRoutes();
         }
       }, ONE_MINUTE_REFRESH_TIMEOUT);
@@ -1097,6 +1114,7 @@ const JupiterExchangeV4 = (props: {
 
     if (swapResult.error) {
       console.error(swapResult.error);
+      notifyOnSwapError(swapResult.error);
     } else {
       setInputAmount(0);
       setFromAmount('');
@@ -1105,7 +1123,7 @@ const JupiterExchangeV4 = (props: {
     }
 
     setIsBusy(false);
-  }, [wallet, jupiter, publicKey, selectedRoute, refreshAccount, refreshUserBalances]);
+  }, [jupiter, wallet, selectedRoute, publicKey, notifyOnSwapError, refreshAccount, refreshUserBalances]);
 
   // Validation
 
@@ -1167,7 +1185,7 @@ const JupiterExchangeV4 = (props: {
         {!refreshingRoutes &&
           inputAmount > 0 &&
           swapSettings.slippage > 0 &&
-          infoRow(t('transactions.transaction-info.slippage'), `${swapSettings.slippage.toFixed(2)}%`)}
+          infoRow(t('swap.slippage-tolerance'), `${swapSettings.slippage.toFixed(2)}%`)}
         {!refreshingRoutes &&
           inputAmount > 0 &&
           selectedRoute &&
@@ -1315,6 +1333,8 @@ const JupiterExchangeV4 = (props: {
           const token = t as TokenInfo;
           const onClick = () => {
             if (!toMint || toMint !== token.address) {
+              setFromAmount('');
+              setInputAmount(0);
               setToMint(token.address);
               consoleOut('toMint:', token.address, 'blue');
               const selectedToken = showToMintList[token.address] as TokenInfo;
@@ -1523,7 +1543,6 @@ const JupiterExchangeV4 = (props: {
                           size="small"
                           icon={<ReloadOutlined />}
                           onClick={() => {
-                            setRefreshingRoutes(true);
                             refreshRoutes();
                           }}
                         />

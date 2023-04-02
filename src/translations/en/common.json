@@ -923,6 +923,8 @@
     "screen-title": "Exchange",
     "show-routes": "Show routing options",
     "slippage-tolerance": "Slippage Tolerance",
+    "slippage-tolerance-help": "Trade prices constantly change. Slippage tolerance is designed to determine the minimum amount of the receivable tokens. If the price of the receivable asset deviates above the slippage tolerance percentage, the transaction will fail to execute. In this case you can try again later or wait until the exchange rate gets back to the indicated slippage tolerance range. Alternatively you can increase slippage tolerance.",
+    "slippage-tolerance-exceeded": "Slippage tolerance exceeded. Please try again later or increase slippage tolerance.",
     "settings-direct-route": "Direct Route Only",
     "settings-direct-route-help": "It ensures only direct routing and also disable split trade trading. It delivers faster performance but price might not be the best.",
     "settings-versioned-tx": "Versioned Transaction",
@@ -1052,7 +1054,6 @@
       "price-impact": "Price impact",
       "protocol-transaction-fee": "{{protocol}} LP fee",
       "recipient-receives": "Minimum received",
-      "slippage": "Slippage tolerance",
       "transaction-fee": "Transaction fee",
       "you-receive": "You receive"
     },

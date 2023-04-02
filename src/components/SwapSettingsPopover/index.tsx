@@ -28,8 +28,8 @@ export const SwapSettingsPopover = ({ currentValue, onSettingsChanged }: Props) 
 
       if (!value || value < 0.1) {
         adjustedValue = 0.1;
-      } else if (value > 20) {
-        adjustedValue = 20;
+      } else if (value > 15) {
+        adjustedValue = 15;
       } else {
         adjustedValue = value;
       }
@@ -91,7 +91,12 @@ export const SwapSettingsPopover = ({ currentValue, onSettingsChanged }: Props) 
 
     return (
       <div className="exchange-settings-popover-container">
-        <div className="inner-label">{t('swap.slippage-tolerance')}</div>
+        <div className="left flex-row justify-content-start align-items-center">
+          <div className="inner-label w-auto my-0">{t('swap.slippage-tolerance')}</div>
+          <InfoIcon content={<span>{t('swap.slippage-tolerance-help')}</span>} placement="bottom">
+            <InfoCircleOutlined style={{ lineHeight: 0 }} />
+          </InfoIcon>
+        </div>
         <div className="flexible-left mb-2">
           <div className="left token-group">
             <div key="preset-02" className="token-max simplelink" onClick={() => onSlippageChange(0.5)}>
@@ -143,17 +148,15 @@ export const SwapSettingsPopover = ({ currentValue, onSettingsChanged }: Props) 
   };
 
   return (
-    <>
-      <Popover
-        placement={isSmScreen() ? 'bottomRight' : 'bottom'}
-        title={titleContent}
-        content={bodyContent()}
-        open={popoverVisible}
-        onOpenChange={handlePopoverVisibleChange}
-        trigger="click"
-      >
-        <Button shape="round" type="text" size="large" className="settings-button" icon={<SettingOutlined />}></Button>
-      </Popover>
-    </>
+    <Popover
+      placement={isSmScreen() ? 'bottomRight' : 'bottom'}
+      title={titleContent}
+      content={bodyContent()}
+      open={popoverVisible}
+      onOpenChange={handlePopoverVisibleChange}
+      trigger="click"
+    >
+      <Button shape="round" type="text" size="large" className="swap-settings-button" icon={<SettingOutlined />} />
+    </Popover>
   );
 };

@@ -919,6 +919,8 @@
     "screen-title": "兑换",
     "show-routes": "显示布路径选项",
     "slippage-tolerance": "滑点公差",
+    "slippage-tolerance-help": "贸易价格不断变化。 滑点容忍度旨在确定可接收代币的最小数量。 如果应收资产的价格偏离滑点容忍度百分比以上，交易将无法执行。 在这种情况下，您可以稍后重试或等到汇率回到指定的滑点容忍范围内。 或者，您可以增加滑点容忍度。",
+    "slippage-tolerance-exceeded": "超出滑点容差。 请稍后重试或增加滑点容忍度。",
     "settings-direct-route": "Direct Route Only",
     "settings-direct-route-help": "It ensures only direct routing and also disable split trade trading. It delivers faster performance but price might not be the best.",
     "settings-versioned-tx": "Versioned Transaction",
@@ -1048,7 +1050,6 @@
       "price-impact": "价格影响",
       "protocol-transaction-fee": "{{协议}}LP费用",
       "recipient-receives": "收到的最小值",
-      "slippage": "滑点公差",
       "transaction-fee": "交易费用",
       "you-receive": "您收到"
     },

@@ -141,7 +141,7 @@
   --color-dark-active: #fcfcfc;
   --color-gray-normal: #f8f8f8;
   --color-lightgray: #eeeeee;
-  --color-dimmed: #eceff1;
+  --color-dimmed: #5c5c5c;
   --color-blue-gray: #c9c9c9;
   --color-smoke: #c2c2c2;
   --color-whitesmoke: #2e2f3b;
@@ -1071,6 +1071,13 @@ footer.ant-layout-footer {
 }
 
 // Text button shaded with rounded corners
+.ant-btn-text[disabled],
+.ant-btn-text[disabled]:hover,
+.ant-btn-text[disabled]:focus,
+.ant-btn-text[disabled]:active {
+  color: var(--color-dimmed);
+}
+
 .ant-btn>svg,
 .ant-btn>span {
   display: inline-block;
@@ -5210,6 +5217,19 @@ button.ant-btn-round.ant-btn-icon-only.settings-button {
   }
 }
 
+.swap-settings-button .ant-btn-round.ant-btn-icon-only,
+button.ant-btn-round.ant-btn-icon-only.swap-settings-button {
+  width: auto;
+  height: auto;
+  border: none;
+  padding: 0 !important;
+  color: var(--color-secondary-alpha-70);
+
+  &:hover {
+    color: var(--color-secondary-alpha-85);
+  }
+}
+
 .icon-button-container {
   display: inline-flex;
   justify-content: center;
@@ -5522,7 +5542,7 @@ button.ant-btn-round.ant-btn-icon-only.settings-button {
     }
 
     &:not(:last-of-type) {
-      border-bottom: 1px solid var(--color-dimmed);
+      border-bottom: 1px solid var(--color-secondary-alpha-10);
     }
   }
 }

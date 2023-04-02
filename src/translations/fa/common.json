@@ -912,6 +912,8 @@
     "screen-title": "مبادله",
     "show-routes": "نمایش گزینه های مسیریابی",
     "slippage-tolerance": "حد مجاز افت",
+    "slippage-tolerance-help": "قیمت های تجارت دائما تغییر می کند. تحمل لغزش برای تعیین حداقل مقدار توکن های قابل دریافت طراحی شده است. اگر قیمت دارایی دریافتنی از درصد تحمل لغزش منحرف شود، معامله انجام نخواهد شد. در این صورت می توانید بعداً دوباره امتحان کنید یا صبر کنید تا نرخ ارز به محدوده تحمل لغزش نشان داده شده بازگردد. همچنین می توانید تحمل لغزش را افزایش دهید.",
+    "slippage-tolerance-exceeded": "تحمل لغزش بیش از حد است. لطفاً بعداً دوباره امتحان کنید یا تحمل لغزش را افزایش دهید.",
     "settings-direct-route": "Direct Route Only",
     "settings-direct-route-help": "It ensures only direct routing and also disable split trade trading. It delivers faster performance but price might not be the best.",
     "settings-versioned-tx": "Versioned Transaction",
@@ -1041,7 +1043,6 @@
       "price-impact": "تاثیر قیمت",
       "protocol-transaction-fee": "{{protocol}} هزینه LP",
       "recipient-receives": "حداقل دریافت شده",
-      "slippage": "حد مجاز افت",
       "transaction-fee": "فی تراکنش",
       "you-receive": "شما دریافت می کنید"
     },
