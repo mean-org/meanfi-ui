@@ -46,6 +46,7 @@ import { useTranslation } from 'react-i18next';
 import './style.scss';
 import { SwapSettings, defaultExchangeValues } from 'models/ExchangeSettings';
 import { SwapSettingsPopover } from 'components/SwapSettingsPopover';
+import { LedgerWarning } from './LedgerWarning';
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
@@ -1588,6 +1589,7 @@ const JupiterExchangeV4 = (props: {
         </Button>
 
         {/* Warning */}
+        {swapSettings.versionedTxs ? <LedgerWarning /> : null}
         {!isProd() && (
           <div className="mt-3">
             <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
