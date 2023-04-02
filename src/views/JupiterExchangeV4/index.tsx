@@ -7,11 +7,9 @@ import { InfoIcon } from 'components/InfoIcon';
 import { JupiterExchangeInput } from 'components/JupiterExchangeInput';
 import { JupiterExchangeOutput } from 'components/JupiterExchangeOutput';
 import { openNotification } from 'components/Notifications';
-import { SwapSettings } from 'components/SwapSettings';
 import { TextInput } from 'components/TextInput';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
-  DEFAULT_SLIPPAGE_PERCENT,
   MAX_TOKEN_LIST_ITEMS,
   MEANFI_DOCS_URL,
   ONE_MINUTE_REFRESH_TIMEOUT,
@@ -46,6 +44,8 @@ import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
+import { SwapSettings, defaultExchangeValues } from 'models/ExchangeSettings';
+import { SwapSettingsPopover } from 'components/SwapSettingsPopover';
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
@@ -76,7 +76,7 @@ const JupiterExchangeV4 = (props: {
   const [refreshingRoutes, setRefreshingRoutes] = useState(false);
   const [jupiter, setJupiter] = useState<Jupiter | undefined>(undefined);
   const [jupiterReady, setJupiterReady] = useState(false);
-  const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE_PERCENT);
+  const [swapSettings, setSwapSettings] = useLocalStorage<SwapSettings>('swapSettings', defaultExchangeValues);
   const [fromAmount, setFromAmount] = useState('');
   const [inputAmount, setInputAmount] = useState(0);
   // The full list, any filtering should be against this one
@@ -539,10 +539,11 @@ const JupiterExchangeV4 = (props: {
               inputMint: new PublicKey(inputToken.address),
               outputMint: new PublicKey(outputToken.address),
               amount: JSBI.BigInt(toTokenAmount(inputAmount, inputToken.decimals, true)),
-              onlyDirectRoutes: isFromSol() || isToSol(),
+              onlyDirectRoutes: isFromSol() || isToSol() || swapSettings.onlyDirectRoutes,
               slippageBps: slippage,
-              forceFetch: false,
+              forceFetch: true,
               filterTopNResult: 10,
+              asLegacyTransaction: !swapSettings.versionedTxs,
             })
           : null;
 
@@ -562,7 +563,7 @@ const JupiterExchangeV4 = (props: {
       }
     };
 
-    if (!jupiter || !inputToken || !outputToken || !slippage) {
+    if (!jupiter || !inputToken || !outputToken || !swapSettings.slippage) {
       setRefreshingRoutes(false);
       return;
     }
@@ -573,7 +574,7 @@ const JupiterExchangeV4 = (props: {
         inputToken,
         outputToken,
         inputAmount,
-        slippage,
+        slippage: swapSettings.slippage,
       });
     };
 
@@ -600,18 +601,28 @@ const JupiterExchangeV4 = (props: {
       })
       .catch(error => console.error(error))
       .finally(() => setRefreshingRoutes(false));
-  }, [jupiter, slippage, inputToken, outputToken, inputAmount, isFromSol, isToSol]);
+  }, [
+    jupiter,
+    inputToken,
+    outputToken,
+    swapSettings.slippage,
+    swapSettings.onlyDirectRoutes,
+    swapSettings.versionedTxs,
+    inputAmount,
+    isFromSol,
+    isToSol,
+  ]);
 
   // Automatically get routes
   useEffect(() => {
-    if (!jupiter || !inputToken || !outputToken || !slippage) {
+    if (!jupiter || !inputToken || !outputToken || !swapSettings.slippage) {
       setRefreshingRoutes(false);
       return;
     }
 
     setRefreshingRoutes(true);
     refreshRoutes();
-  }, [jupiter, slippage, inputToken, outputToken, inputAmount, refreshRoutes]);
+  }, [jupiter, swapSettings.slippage, inputToken, outputToken, inputAmount, refreshRoutes]);
 
   // Hook on wallet connect/disconnect
   useEffect(() => {
@@ -832,8 +843,8 @@ const JupiterExchangeV4 = (props: {
     setShowFullRoutesList(value => !value);
   };
 
-  const onSlippageChanged = (value: any) => {
-    setSlippage(value);
+  const handleSwapSettingsChanges = (value: SwapSettings) => {
+    setSwapSettings(value);
   };
 
   const debounceInputOnChange = (value: string) => {
@@ -891,7 +902,7 @@ const JupiterExchangeV4 = (props: {
   useEffect(() => {
     let timer: any;
 
-    if (jupiter && inputToken && outputToken && slippage && inputAmount) {
+    if (jupiter && inputToken && outputToken && swapSettings.slippage && inputAmount) {
       timer = setInterval(() => {
         if (!isBusy) {
           consoleOut(`Trigger refresh routes after ${ONE_MINUTE_REFRESH_TIMEOUT / 1000} seconds`);
@@ -906,7 +917,7 @@ const JupiterExchangeV4 = (props: {
         clearInterval(timer);
       }
     };
-  }, [isBusy, jupiter, slippage, inputToken, outputToken, inputAmount, refreshRoutes]);
+  }, [isBusy, jupiter, swapSettings.slippage, inputToken, outputToken, inputAmount, refreshRoutes]);
 
   // Set Jupiter ready
   useEffect(() => {
@@ -914,17 +925,6 @@ const JupiterExchangeV4 = (props: {
       setJupiterReady(true);
     }
   }, [jupiter, routeMap, showToMintList]);
-
-  // Attach Jupiter hook
-  /**
-  const jupiterClient = useJupiter({
-    amount: JSBI.BigInt(inputAmount * 10 ** 6), // raw input amount of tokens
-    inputMint: inputToken ? new PublicKey(inputToken.address) : undefined,
-    outputMint: outputToken ? new PublicKey(outputToken.address) : undefined,
-    slippageBps: slippage,
-    debounceTime: 350, // debounce ms time before refresh
-  });
-  */
 
   const onStartUnwrapTx = async () => {
     let transaction: Transaction | null = null;
@@ -1165,8 +1165,8 @@ const JupiterExchangeV4 = (props: {
           )}
         {!refreshingRoutes &&
           inputAmount > 0 &&
-          slippage > 0 &&
-          infoRow(t('transactions.transaction-info.slippage'), `${slippage.toFixed(2)}%`)}
+          swapSettings.slippage > 0 &&
+          infoRow(t('transactions.transaction-info.slippage'), `${swapSettings.slippage.toFixed(2)}%`)}
         {!refreshingRoutes &&
           inputAmount > 0 &&
           selectedRoute &&
@@ -1263,6 +1263,8 @@ const JupiterExchangeV4 = (props: {
           const token = t as TokenInfo;
           const onClick = () => {
             if (!fromMint || fromMint !== token.address) {
+              setFromAmount('');
+              setInputAmount(0);
               setFromMint(token.address);
               consoleOut('fromMint:', token.address, 'blue');
               const selectedToken = showFromMintList[token.address];
@@ -1533,7 +1535,10 @@ const JupiterExchangeV4 = (props: {
               )}
             </div>
             <div className="right">
-              <SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged} />
+              <SwapSettingsPopover
+                currentValue={swapSettings}
+                onSettingsChanged={value => handleSwapSettingsChanges(value)}
+              />
             </div>
           </span>
         </div>
