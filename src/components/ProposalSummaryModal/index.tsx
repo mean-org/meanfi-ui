@@ -208,7 +208,7 @@ export const ProposalSummaryModal = (props: {
     };
 
     if (isPendingForExecution()) {
-      if (!isTreasuryOperation() || (isUserTheProposer() && isTreasuryOperation)) {
+      if (!isTreasuryOperation() || (isUserTheProposer() && isTreasuryOperation())) {
         return true;
       } else {
         return false;

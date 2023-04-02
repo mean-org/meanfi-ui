@@ -1005,6 +1005,13 @@
     "screen-title": "Giao dịch",
     "show-routes": "Hiện tùy chọn routing",
     "slippage-tolerance": "Trượt giá cho phép",
+    "slippage-tolerance-help": "Giá thương mại thay đổi liên tục. Dung sai trượt giá được thiết kế để xác định số lượng tối thiểu của các mã thông báo phải thu. Nếu giá của tài sản phải thu chênh lệch trên tỷ lệ phần trăm dung sai trượt giá, giao dịch sẽ không thực hiện được. Trong trường hợp này, bạn có thể thử lại sau hoặc đợi cho đến khi tỷ giá hối đoái quay trở lại phạm vi dung sai trượt giá đã chỉ định. Ngoài ra, bạn có thể tăng khả năng chịu trượt.",
+    "slippage-tolerance-exceeded": "Vượt quá dung sai trượt. Vui lòng thử lại sau hoặc tăng dung sai trượt.",
+    "settings-direct-route": "Direct Route Only",
+    "settings-direct-route-help": "It ensures only direct routing and also disable split trade trading. It delivers faster performance but price might not be the best.",
+    "settings-versioned-tx": "Versioned Transaction",
+    "settings-versioned-tx-help": "Versioned Tx is a significant upgrade that allows for more advanced routings and better prices! Make sure your connected wallet is compatible before toggling this feature. Current compatible wallets: Phantom, Solflare, Glow and Backpack.",
+    "ledger-upgrade-warning": "If you are using Ledger to sign transactions it is recommended to update your ledger firmware to support Versioned Transactions.",
     "tabset": {
       "one-time": "Một lần",
       "recurring": "Định kỳ"
@@ -1129,7 +1136,6 @@
       "price-impact": "Tác động giá",
       "protocol-transaction-fee": "Phí LP trên {{protocol}}",
       "recipient-receives": "Tối thiểu nhận",
-      "slippage": "Trượt giá cho phép",
       "transaction-fee": "Phí giao dịch",
       "you-receive": "Bạn sẽ nhận"
     },

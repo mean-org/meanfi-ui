@@ -35,7 +35,7 @@ import { ExchangeInput } from 'components/ExchangeInput';
 import { ExchangeOutput } from 'components/ExchangeOutput';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
-import { SwapSettings } from 'components/SwapSettings';
+import { RecurringExchangeSettings } from 'components/RecurringExchangeSettings';
 import { TextInput } from 'components/TextInput';
 import { DEFAULT_SLIPPAGE_PERCENT, MEANFI_DOCS_URL } from 'constants/common';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
@@ -1063,10 +1063,7 @@ export const RecurringExchange = (props: {
             }),
             `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`,
           )}
-        {!refreshing &&
-          fromAmount &&
-          slippage > 0 &&
-          infoRow(t('transactions.transaction-info.slippage'), `${slippage.toFixed(2)}%`)}
+        {!refreshing && fromAmount && slippage > 0 && infoRow(t('swap.slippage-tolerance'), `${slippage.toFixed(2)}%`)}
         {!refreshing &&
           fromAmount &&
           infoRow(
@@ -1261,7 +1258,7 @@ export const RecurringExchange = (props: {
             </div>
             {/* Settings icon */}
             <span className="settings-wrapper pr-3">
-              <SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged} />
+              <RecurringExchangeSettings currentValue={slippage} onValueSelected={onSlippageChanged} />
             </span>
           </div>
 

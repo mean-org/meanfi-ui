@@ -913,6 +913,13 @@
     "screen-title": "Exchange",
     "show-routes": "Show routing options",
     "slippage-tolerance": "Slippage Tolerance",
+    "slippage-tolerance-help": "Торговые цены постоянно меняются. Допустимое отклонение от проскальзывания предназначено для определения минимального количества токенов, подлежащих получению. Если цена актива, подлежащего получению, отклоняется выше допустимого процента проскальзывания, транзакция не будет выполнена. В этом случае вы можете повторить попытку позже или подождать, пока обменный курс не вернется в указанный диапазон допуска проскальзывания. В качестве альтернативы вы можете увеличить устойчивость к проскальзыванию.",
+    "slippage-tolerance-exceeded": "Превышен допуск на проскальзывание. Повторите попытку позже или увеличьте допуск на проскальзывание.",
+    "settings-direct-route": "Direct Route Only",
+    "settings-direct-route-help": "It ensures only direct routing and also disable split trade trading. It delivers faster performance but price might not be the best.",
+    "settings-versioned-tx": "Versioned Transaction",
+    "settings-versioned-tx-help": "Versioned Tx is a significant upgrade that allows for more advanced routings and better prices! Make sure your connected wallet is compatible before toggling this feature. Current compatible wallets: Phantom, Solflare, Glow and Backpack.",
+    "ledger-upgrade-warning": "If you are using Ledger to sign transactions it is recommended to update your ledger firmware to support Versioned Transactions.",
     "tabset": {
       "one-time": "One time",
       "recurring": "Recurring"
@@ -1037,7 +1044,6 @@
       "price-impact": "Price impact",
       "protocol-transaction-fee": "{{protocol}} LP fee",
       "recipient-receives": "Minimum received",
-      "slippage": "Slippage tolerance",
       "transaction-fee": "Transaction fee",
       "you-receive": "You receive"
     },
