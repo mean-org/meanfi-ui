@@ -919,6 +919,11 @@
     "screen-title": "Exchange",
     "show-routes": "Show routing options",
     "slippage-tolerance": "Tolerancia al deslizamiento",
+    "settings-direct-route": "Direct Route Only",
+    "settings-direct-route-help": "It ensures only direct routing and also disable split trade trading. It delivers faster performance but price might not be the best.",
+    "settings-versioned-tx": "Versioned Transaction",
+    "settings-versioned-tx-help": "Versioned Tx is a significant upgrade that allows for more advanced routings and better prices! Make sure your connected wallet is compatible before toggling this feature. Current compatible wallets: Phantom, Solflare, Glow and Backpack.",
+    "ledger-upgrade-warning": "If you are using Ledger to sign transactions it is recommended to update your ledger firmware to support Versioned Transactions.",
     "tabset": {
       "one-time": "One time",
       "recurring": "Recurring"
