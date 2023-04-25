@@ -16,7 +16,6 @@ import { OnlineStatusProvider } from './contexts/online-status';
 import TxConfirmationProvider from './contexts/transaction-status';
 import { SegmentAnalyticsService } from './middleware/segment-service';
 import { isLocal } from './middleware/ui';
-import { useLocalStorageState } from './middleware/utils';
 import { AppRoutes } from './routes';
 import { refreshCachedRpc } from './services/connections-hq';
 import { sentreAppId } from 'constants/common';
@@ -38,12 +37,13 @@ import {
 import { SentreWalletAdapter } from '@sentre/connector';
 import { XnftWalletAdapter } from 'integrations/xnft/xnft-wallet-adapter';
 import { isDesktop } from 'react-device-detect';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 const { Content } = Layout;
 export const segmentAnalytics = new SegmentAnalyticsService();
 
 function App() {
-  const [theme, updateTheme] = useLocalStorageState('theme');
+  const [theme, updateTheme] = useLocalStorage('theme', 'dark');
   const [loadingStatus, setLoadingStatus] = useState<string>('loading');
   const [writeKey, setWriteKey] = useState('');
 

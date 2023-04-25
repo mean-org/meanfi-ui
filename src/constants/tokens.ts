@@ -708,7 +708,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'THREE',
     name: 'THREE',
     decimals: 3,
-    logoURI: '',
+    logoURI:
+      'https://dzllr4sbx46qpesme3qwxeeitu3msgahlctbz4yqisexaumtnruq.arweave.net/Hla48kG_PQeSTCbha5CInTbJGAdYphzzEESJcFGTbGk?ext=png',
     tags: [],
   },
   {
@@ -717,7 +718,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'FOUR',
     name: 'FOUR',
     decimals: 4,
-    logoURI: '',
+    logoURI:
+      'https://dzllr4sbx46qpesme3qwxeeitu3msgahlctbz4yqisexaumtnruq.arweave.net/Hla48kG_PQeSTCbha5CInTbJGAdYphzzEESJcFGTbGk?ext=png',
     tags: [],
   },
   {
@@ -726,7 +728,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'FIVE',
     name: 'FIVE',
     decimals: 5,
-    logoURI: '',
+    logoURI:
+      'https://dzllr4sbx46qpesme3qwxeeitu3msgahlctbz4yqisexaumtnruq.arweave.net/Hla48kG_PQeSTCbha5CInTbJGAdYphzzEESJcFGTbGk?ext=png',
     tags: [],
   },
   {
@@ -735,7 +738,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'SIX',
     name: 'Six',
     decimals: 6,
-    logoURI: '',
+    logoURI:
+      'https://dzllr4sbx46qpesme3qwxeeitu3msgahlctbz4yqisexaumtnruq.arweave.net/Hla48kG_PQeSTCbha5CInTbJGAdYphzzEESJcFGTbGk?ext=png',
     tags: [],
   },
   {
@@ -744,7 +748,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'NINE',
     name: 'NINE',
     decimals: 9,
-    logoURI: '',
+    logoURI:
+      'https://dzllr4sbx46qpesme3qwxeeitu3msgahlctbz4yqisexaumtnruq.arweave.net/Hla48kG_PQeSTCbha5CInTbJGAdYphzzEESJcFGTbGk?ext=png',
     tags: [],
   },
   {
@@ -753,7 +758,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'TEN',
     name: 'TEN',
     decimals: 10,
-    logoURI: '',
+    logoURI:
+      'https://dzllr4sbx46qpesme3qwxeeitu3msgahlctbz4yqisexaumtnruq.arweave.net/Hla48kG_PQeSTCbha5CInTbJGAdYphzzEESJcFGTbGk?ext=png',
     tags: [],
   },
   {
@@ -762,7 +768,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'ELEVEN',
     name: 'ELEVEN',
     decimals: 11,
-    logoURI: '',
+    logoURI:
+      'https://dzllr4sbx46qpesme3qwxeeitu3msgahlctbz4yqisexaumtnruq.arweave.net/Hla48kG_PQeSTCbha5CInTbJGAdYphzzEESJcFGTbGk?ext=png',
     tags: [],
   },
   {
@@ -771,7 +778,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     symbol: 'TWELVE',
     name: 'TWELVE',
     decimals: 12,
-    logoURI: '',
+    logoURI:
+      'https://dzllr4sbx46qpesme3qwxeeitu3msgahlctbz4yqisexaumtnruq.arweave.net/Hla48kG_PQeSTCbha5CInTbJGAdYphzzEESJcFGTbGk?ext=png',
     tags: [],
   },
 ];
