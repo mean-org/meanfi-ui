@@ -21,7 +21,7 @@ import { getPrices, getSolanaTokenListKeyNameByCluster, getSolFlareTokenList, ge
 import { MappedTransaction } from 'middleware/history';
 import { PerformanceCounter } from 'middleware/perf-counter';
 import { consoleOut, isProd, msToTime } from 'middleware/ui';
-import { findATokenAddress, getAmountFromLamports, shortenAddress, useLocalStorageState } from 'middleware/utils';
+import { findATokenAddress, getAmountFromLamports, shortenAddress } from 'middleware/utils';
 import {
   AccountContext,
   AccountDetails,
@@ -57,6 +57,7 @@ import { useNativeAccount } from './accounts';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from './connection';
 import { useWallet } from './wallet';
 import { emptyAccount, useWalletAccount } from './walletAccount';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 const pricesPerformanceCounter = new PerformanceCounter();
 const tokenListPerformanceCounter = new PerformanceCounter();
@@ -428,7 +429,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const today = new Date().toLocaleDateString('en-US');
   const tomorrow = moment().add(1, 'days').format('L');
   const timeDate = moment().format('hh:mm A');
-  const [theme, updateTheme] = useLocalStorageState('theme');
+  const [theme, updateTheme] = useLocalStorage('theme', 'dark');
   const [tpsAvg, setTpsAvg] = useState<TpsAverageValues>(contextDefaultValues.tpsAvg);
   const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
   const [treasuryOption, updateTreasuryOption] = useState<TreasuryTypeOption | undefined>(

@@ -5,6 +5,7 @@ import { DEFAULT_RPCS, RpcConfig } from '../services/connections-hq';
 import { useLocalStorageState } from '../middleware/utils';
 import { TRANSACTION_STATUS_RETRY_TIMEOUT } from '../constants';
 import { ChainID } from 'models/enums';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 const DEFAULT = DEFAULT_RPCS[0].httpProvider;
 const DEFAULT_SLIPPAGE = 0.25;
@@ -70,7 +71,7 @@ export function ConnectionProvider({ children = undefined as any }) {
   const [cachedRpcJson] = useLocalStorageState('cachedRpc');
   const cachedRpc = cachedRpcJson as RpcConfig;
 
-  const [slippage, setSlippage] = useLocalStorageState('slippage', DEFAULT_SLIPPAGE.toString());
+  const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE.toString());
 
   const connection = useMemo(() => new Connection(cachedRpc.httpProvider, failsafeConnectionConfig), [cachedRpc]);
 
