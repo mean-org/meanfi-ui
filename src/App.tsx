@@ -49,8 +49,9 @@ function App() {
 
   useEffect(() => {
     if (!isDesktop) {
-      window.sessionStorage.clear();
-      window.localStorage.clear();
+      window.localStorage.removeItem('walletName');
+      window.localStorage.removeItem('lastUsedAccount');
+      window.localStorage.removeItem('cachedRpc');
     }
   }, []);
 

@@ -1383,7 +1383,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       // First add Native SOL as a token
       list.push(sol);
       // Add items from the MeanFi list
-      console.log('MEAN_TOKEN_LIST:', MEAN_TOKEN_LIST);
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster)).forEach(item =>
         list.push(item),
       );

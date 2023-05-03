@@ -2259,26 +2259,27 @@
   resolved "https://registry.yarnpkg.com/@jup-ag/api/-/api-4.0.1-alpha.0.tgz#6c9fd02e607830206802b5e372fd0c2ec5a6a0c1"
   integrity sha512-H9hyf9K7sXMPd0++/hQ5Fs2eVgi2w9wtJP0YmGFLJMjF8zHYDYqQ0ZCdgmLLSp/vrEjmOHbbiLJT2psuV5W+bw==
 
-"@jup-ag/common@4.0.0-beta.16":
-  version "4.0.0-beta.16"
-  resolved "https://registry.yarnpkg.com/@jup-ag/common/-/common-4.0.0-beta.16.tgz#9e226539cf24d25924650d8d9caef8cca4641fce"
-  integrity sha512-V3DmVTGfn1T47VasqvvMLrp/m1l35BrK4/FAntJWjSZwGLWg2NEXPwkdmaf/GH/DrmqLbZFjamlzWRhj7SrHGQ==
+"@jup-ag/common@4.0.0-beta.18":
+  version "4.0.0-beta.18"
+  resolved "https://registry.yarnpkg.com/@jup-ag/common/-/common-4.0.0-beta.18.tgz#33a8933ab157091a143484eb71c83a5add2b76aa"
+  integrity sha512-sZArRH6dr4lurxBLTClgWnkGVlcD9YWPpdjwnY3WnPhckpoqcmcaS8/rz2WSlcB6NTvOq+tEI8v4SFzoJotwHA==
   dependencies:
     "@jup-ag/api" "4.0.1-alpha.0"
-    "@mercurial-finance/optimist" "0.2.0"
+    "@mercurial-finance/optimist" "0.2.1"
     "@project-serum/anchor" "0.24.2"
     "@solana/spl-token" "0.1.8"
-    "@solana/wallet-adapter-base" "0.9.20"
+    "@solana/wallet-adapter-base" "0.9.22"
     "@solana/web3.js" "~1.72.0"
+    "@types/jest" "27.0.2"
     bs58 "^4.0.1"
     jsbi "4.3.0"
 
-"@jup-ag/core@^4.0.0-beta.16":
-  version "4.0.0-beta.16"
-  resolved "https://registry.yarnpkg.com/@jup-ag/core/-/core-4.0.0-beta.16.tgz#0f6406de4e4844e94584ca02056cad17054cb43d"
-  integrity sha512-Cq1iNT6ONYKjKhB6B7xWK4Ol70ezPxD55zXdpW9u7WfVtO5TDDAnBooUigrBxtIT1Ysof2Mpl8Zrf5CsNG7nCQ==
+"@jup-ag/core@^4.0.0-beta.18":
+  version "4.0.0-beta.18"
+  resolved "https://registry.yarnpkg.com/@jup-ag/core/-/core-4.0.0-beta.18.tgz#26b094258ce280088bc1be5bcdd8492687cd1f3b"
+  integrity sha512-jlik7CwJDNs366ZETH8Cwed2BwwmJhV8JMa1p9bGAcVJVm4od7ZZTrPHnxaSWjrBy/I6h0xIYY4dV5rpmOamMg==
   dependencies:
-    "@jup-ag/common" "4.0.0-beta.16"
+    "@jup-ag/common" "4.0.0-beta.18"
     "@jup-ag/crema-sdk-v2" "2.1.6"
     "@jup-ag/cykura-sdk" "0.1.25"
     "@jup-ag/cykura-sdk-core" "0.1.8"
@@ -2289,13 +2290,12 @@
     "@jup-ag/invariant" "0.9.35"
     "@jup-ag/lifinity-sdk" "0.1.72"
     "@jup-ag/lifinity-sdk-v2" "1.0.8"
-    "@jup-ag/math" "4.0.0-beta.16"
+    "@jup-ag/math" "4.0.0-beta.18"
     "@jup-ag/phoenix-sdk" "1.0.7"
     "@jup-ag/raydium-clmm-sdk" "1.0.5"
     "@jup-ag/whirlpools-sdk" "0.7.2"
-    "@mercurial-finance/dynamic-amm-sdk" "0.2.6"
-    "@mercurial-finance/optimist" "0.2.0"
-    "@mercurial-finance/vault-sdk" "0.3.13"
+    "@mercurial-finance/dynamic-amm-sdk" "0.3.1"
+    "@mercurial-finance/optimist" "0.2.1"
     "@noble/hashes" "1.1.2"
     "@project-serum/anchor" "0.24.2"
     "@project-serum/serum" "0.13.65"
@@ -2402,10 +2402,10 @@
     "@solana/web3.js" "1.31.0"
     decimal.js "^10.3.1"
 
-"@jup-ag/math@4.0.0-beta.16":
-  version "4.0.0-beta.16"
-  resolved "https://registry.yarnpkg.com/@jup-ag/math/-/math-4.0.0-beta.16.tgz#aa56fddd36a423e58f9aa834498dc294bdce78cc"
-  integrity sha512-EsvvojuxHYfB5Y+5+PKYF3TJUNYrMGYgIW8nx9wFs5KwRZ6tRpS0PlRPOoye9JsiAZTVgNBtp+A4Cji2mMFPiA==
+"@jup-ag/math@4.0.0-beta.18":
+  version "4.0.0-beta.18"
+  resolved "https://registry.yarnpkg.com/@jup-ag/math/-/math-4.0.0-beta.18.tgz#8933fad0ed9a2af850c699bc16c62606f382f856"
+  integrity sha512-UvAh5EvzFNsRJz8qFLIPFMItlOZOKcja/5D9KURLjRKet9+olnOZ3IjHo+9cd3/WWE+k3zo81iFfLTL4vi0TCw==
   dependencies:
     decimal.js "10.4.2"
     jsbi "4.3.0"
@@ -2704,13 +2704,14 @@
     strict-event-emitter-types "^2.0.0"
     uuid "^8.3.2"
 
-"@mercurial-finance/dynamic-amm-sdk@0.2.6":
-  version "0.2.6"
-  resolved "https://registry.yarnpkg.com/@mercurial-finance/dynamic-amm-sdk/-/dynamic-amm-sdk-0.2.6.tgz#67270004b7eac61496b25ff94f772d3e6909ebf8"
-  integrity sha512-ucC66w0YDEXIa50qroluq0x7x49DaHapSAImU0IE20kRAohsWJNHL/iSB+aovFo9/wcdhosBlaM50aeAQ/V/xA==
+"@mercurial-finance/dynamic-amm-sdk@0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@mercurial-finance/dynamic-amm-sdk/-/dynamic-amm-sdk-0.3.1.tgz#ba86861dbde3672f634a92da99acecbaa6079fe7"
+  integrity sha512-/eHaBxigFmpzLopg4E4G5Hth+TkLouzOQxiXMJpjmYp/ot4nUye7WF+/NUkVx/UOPviPQcE3V1pYa6iRtciumw==
   dependencies:
-    "@mercurial-finance/vault-sdk" "0.3.13"
+    "@mercurial-finance/vault-sdk" "0.4.0"
     "@project-serum/anchor" "0.24.2"
+    "@project-serum/borsh" "^0.2.5"
     "@saberhq/anchor-contrib" "1.13.32"
     "@saberhq/stableswap-sdk" "1.13.32"
     "@saberhq/token-utils" "1.13.32"
@@ -2755,10 +2756,10 @@
     dotenv "^16.0.3"
     node-kraken-api "^2.2.2"
 
-"@mercurial-finance/optimist@0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@mercurial-finance/optimist/-/optimist-0.2.0.tgz#03992ce6de460611006ac094037013bcb6a999b1"
-  integrity sha512-tUA1y83jTXroEClGN7dyhHxKZ+C+zKbSRx/LA7BltMumNG8mFSWJpi5uwkhmfhmSzvSgDob/qw0py3lFjw/FKQ==
+"@mercurial-finance/optimist@0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@mercurial-finance/optimist/-/optimist-0.2.1.tgz#eb8f90fab1d96c79247f58704131ad68485e6d51"
+  integrity sha512-CiMxriCu6EUr2IGVFVl/d5z+5VvuGaWA3rG4k5Bj2G6t9VvQ7I+Z/1OBQpmu0V3LACSbMLeY7IXjTDzLTyCxFw==
   dependencies:
     promise-retry "2.0.1"
 
@@ -2803,10 +2804,10 @@
     "@solana/web3.js" "^1.66.2"
     lodash "^4.17.21"
 
-"@mercurial-finance/vault-sdk@0.3.13":
-  version "0.3.13"
-  resolved "https://registry.yarnpkg.com/@mercurial-finance/vault-sdk/-/vault-sdk-0.3.13.tgz#e4b7066bf073003b9e3f4edaf223b10873b6aa2e"
-  integrity sha512-mIIta1l2Fe4CQan5LDym0yorPhp+HbXXB3IPTlf7ulyarbzJFPA7kbhtZVdXbJX//bf3MwygOsCy+Xd369mY4A==
+"@mercurial-finance/vault-sdk@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@mercurial-finance/vault-sdk/-/vault-sdk-0.4.0.tgz#ec36d685e311e8664c7be9d27c543e63eb00c0f4"
+  integrity sha512-aaqjm8KFNOO/ViQlpNqBC+O5ruQb3v2F3PJRHJLszonOWA3UXecxVVVPLPPy/lJTglLsWzxBad2Q2n1iWNq2YA==
   dependencies:
     "@blockworks-foundation/mango-client" "^3.4.7"
     "@mercurial-finance/apricot-sdk" "0.17.6"
@@ -2819,7 +2820,8 @@
     "@mercurial-finance/port-sdk" "0.2.69"
     "@mercurial-finance/solend-sdk" "0.6.5"
     "@mercurial-finance/tulip-platform-sdk" "2.0.30"
-    "@project-serum/anchor" "0.24.2"
+    "@mithraic-labs/psylend-utils" "0.0.3-rc39"
+    "@project-serum/anchor" "0.25.0"
     "@quarryprotocol/quarry-sdk" "5.0.2"
     "@saberhq/anchor-contrib" "^1.13.6"
     "@solana/buffer-layout" "^4.0.0"
@@ -2962,6 +2964,19 @@
     "@solana/spl-token" "^0.3.6"
     "@solana/web3.js" "^1.66.2"
 
+"@metaplex-foundation/mpl-token-metadata@2.2.4":
+  version "2.2.4"
+  resolved "https://registry.yarnpkg.com/@metaplex-foundation/mpl-token-metadata/-/mpl-token-metadata-2.2.4.tgz#d934cf20d6e22f7923fc96b80c7534595780eda6"
+  integrity sha512-cayIZ7w/XUKkUygNyWyx5l5Q8PO5qzIemk6c/7dxKhdHLlaVPwKjRhbg6kIuzZ8tvYP5afUmJKln9rWnI8tQCA==
+  dependencies:
+    "@metaplex-foundation/beet" "^0.4.0"
+    "@metaplex-foundation/beet-solana" "^0.3.0"
+    "@metaplex-foundation/cusper" "^0.0.2"
+    "@solana/spl-token" "^0.2.0"
+    "@solana/web3.js" "^1.35.1"
+    bn.js "^5.2.0"
+    debug "^4.3.3"
+
 "@metaplex-foundation/mpl-token-metadata@^2.7.0":
   version "2.8.5"
   resolved "https://registry.yarnpkg.com/@metaplex-foundation/mpl-token-metadata/-/mpl-token-metadata-2.8.5.tgz#b36e5fe8181eab86ba70d6e36cfa6f44be523836"
@@ -3000,6 +3015,19 @@
     prettier "^2.5.1"
     snake-case "^3.0.4"
     spok "^1.4.3"
+
+"@mithraic-labs/psylend-utils@0.0.3-rc39":
+  version "0.0.3-rc39"
+  resolved "https://registry.yarnpkg.com/@mithraic-labs/psylend-utils/-/psylend-utils-0.0.3-rc39.tgz#05b0d2733f5ad8ea0868e20b3e78922808d4a1f3"
+  integrity sha512-7bfGwg9brPF+mxDck8m9GNWUI23YV7eeWA21WKM51aPnz8IJXR6XBTbi3TrQPSA96B77Qx1cP3uE43CsI29tcA==
+  dependencies:
+    "@project-serum/anchor" "0.25.0"
+    "@project-serum/serum" "^0.13.65"
+    "@pythnetwork/client" "2.7.3"
+    "@solana/web3.js" "^1.30.2"
+    chai "^4.3.7"
+    psyfi-euros-test "0.0.2-rc.5"
+    spl2 "npm:@solana/spl-token@^0.2.0"
 
 "@ngraveio/bc-ur@^1.0.0", "@ngraveio/bc-ur@^1.1.5":
   version "1.1.6"
@@ -3151,6 +3179,27 @@
   resolved "https://registry.yarnpkg.com/@project-serum/anchor-cli/-/anchor-cli-0.24.2.tgz#5276e9e9f55bd7b0c18e246c67ab02ad053c26b3"
   integrity sha512-3D+fB3n/PAmY5AF2P+zxNvV2ZKx6YLoDlqHXqFa7wGqxVZfTo4WM2O7ChJjU2WIxS/WoTt6qXnehbuGUJ1JXig==
 
+"@project-serum/anchor@0.23.0", "@project-serum/anchor@^0.23.0":
+  version "0.23.0"
+  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.23.0.tgz#2b2eb6b51601b073e8db26663aa2d6c2f2841771"
+  integrity sha512-LV2/ifZOJVFTZ4GbEloXln3iVfCvO1YM8i7BBCrUm4tehP7irMx4nr4/IabHWOzrQcQElsxSP/lb1tBp+2ff8A==
+  dependencies:
+    "@project-serum/borsh" "^0.2.5"
+    "@solana/web3.js" "^1.36.0"
+    base64-js "^1.5.1"
+    bn.js "^5.1.2"
+    bs58 "^4.0.1"
+    buffer-layout "^1.2.2"
+    camelcase "^5.3.1"
+    cross-fetch "^3.1.5"
+    crypto-hash "^1.3.0"
+    eventemitter3 "^4.0.7"
+    find "^0.3.0"
+    js-sha256 "^0.9.0"
+    pako "^2.0.3"
+    snake-case "^3.0.4"
+    toml "^3.0.0"
+
 "@project-serum/anchor@0.24.2", "@project-serum/anchor@^0.24.0", "@project-serum/anchor@^0.24.2", "@project-serum/anchor@~0.24.2":
   version "0.24.2"
   resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.24.2.tgz#a3c52a99605c80735f446ca9b3a4885034731004"
@@ -3169,6 +3218,27 @@
     js-sha256 "^0.9.0"
     pako "^2.0.3"
     snake-case "^3.0.4"
+    toml "^3.0.0"
+
+"@project-serum/anchor@0.25.0", "@project-serum/anchor@^0.25.0", "@project-serum/anchor@~0.25.0":
+  version "0.25.0"
+  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.25.0.tgz#88ee4843336005cf5a64c80636ce626f0996f503"
+  integrity sha512-E6A5Y/ijqpfMJ5psJvbw0kVTzLZFUcOFgs6eSM2M2iWE1lVRF18T6hWZVNl6zqZsoz98jgnNHtVGJMs+ds9A7A==
+  dependencies:
+    "@project-serum/borsh" "^0.2.5"
+    "@solana/web3.js" "^1.36.0"
+    base64-js "^1.5.1"
+    bn.js "^5.1.2"
+    bs58 "^4.0.1"
+    buffer-layout "^1.2.2"
+    camelcase "^5.3.1"
+    cross-fetch "^3.1.5"
+    crypto-hash "^1.3.0"
+    eventemitter3 "^4.0.7"
+    js-sha256 "^0.9.0"
+    pako "^2.0.3"
+    snake-case "^3.0.4"
+    superstruct "^0.15.4"
     toml "^3.0.0"
 
 "@project-serum/anchor@0.25.0-beta.1":
@@ -3334,27 +3404,6 @@
     snake-case "^3.0.4"
     toml "^3.0.0"
 
-"@project-serum/anchor@^0.25.0", "@project-serum/anchor@~0.25.0":
-  version "0.25.0"
-  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.25.0.tgz#88ee4843336005cf5a64c80636ce626f0996f503"
-  integrity sha512-E6A5Y/ijqpfMJ5psJvbw0kVTzLZFUcOFgs6eSM2M2iWE1lVRF18T6hWZVNl6zqZsoz98jgnNHtVGJMs+ds9A7A==
-  dependencies:
-    "@project-serum/borsh" "^0.2.5"
-    "@solana/web3.js" "^1.36.0"
-    base64-js "^1.5.1"
-    bn.js "^5.1.2"
-    bs58 "^4.0.1"
-    buffer-layout "^1.2.2"
-    camelcase "^5.3.1"
-    cross-fetch "^3.1.5"
-    crypto-hash "^1.3.0"
-    eventemitter3 "^4.0.7"
-    js-sha256 "^0.9.0"
-    pako "^2.0.3"
-    snake-case "^3.0.4"
-    superstruct "^0.15.4"
-    toml "^3.0.0"
-
 "@project-serum/anchor@^0.26.0":
   version "0.26.0"
   resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.26.0.tgz#99e15a3923a5d10514f8185b2d3909e5699d60d5"
@@ -3389,7 +3438,16 @@
     bn.js "^5.1.2"
     buffer-layout "^1.2.0"
 
-"@project-serum/serum@0.13.65", "@project-serum/serum@^0.13.38", "@project-serum/serum@^0.13.60", "@project-serum/serum@^0.13.61", "@project-serum/serum@^0.13.65":
+"@project-serum/common@^0.0.1-beta.3":
+  version "0.0.1-beta.3"
+  resolved "https://registry.yarnpkg.com/@project-serum/common/-/common-0.0.1-beta.3.tgz#53586eaff9d9fd7e8938b1e12080c935b8b6ad07"
+  integrity sha512-gnQE/eUydTtto5okCgLWj1M97R9RRPJqnhKklikYI7jP/pnNhDmngSXC/dmfzED2GXSJEIKNIlxVw1k+E2Aw3w==
+  dependencies:
+    "@project-serum/serum" "^0.13.21"
+    bn.js "^5.1.2"
+    superstruct "0.8.3"
+
+"@project-serum/serum@0.13.65", "@project-serum/serum@^0.13.21", "@project-serum/serum@^0.13.38", "@project-serum/serum@^0.13.60", "@project-serum/serum@^0.13.61", "@project-serum/serum@^0.13.65":
   version "0.13.65"
   resolved "https://registry.yarnpkg.com/@project-serum/serum/-/serum-0.13.65.tgz#6d3cf07912f13985765237f053cca716fe84b0b0"
   integrity sha512-BHRqsTqPSfFB5p+MgI2pjvMBAQtO8ibTK2fYY96boIFkCI3TTwXDt2gUmspeChKO2pqHr5aKevmexzAcXxrSRA==
@@ -3905,7 +3963,7 @@
     "@solana/buffer-layout-utils" "^0.2.0"
     buffer "^6.0.3"
 
-"@solana/spl-token@^0.2.0":
+"@solana/spl-token@^0.2.0", "spl2@npm:@solana/spl-token@^0.2.0":
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/@solana/spl-token/-/spl-token-0.2.0.tgz#329bb6babb5de0f9c40035ddb1657f01a8347acd"
   integrity sha512-RWcn31OXtdqIxmkzQfB2R+WpsJOVS6rKuvpxJFjvik2LyODd+WN58ZP3Rpjpro03fscGAkzlFuP3r42doRJgyQ==
@@ -3935,13 +3993,6 @@
   integrity sha512-vt2OcV39uvuS2bBJU4xFwZkWwjRci6TsnQDs6pGQcbrryt8ahICxyCybhRKY3Y58uRnaejW0EDc7P3tBSsDmig==
   dependencies:
     "@solana/wallet-adapter-base" "^0.9.22"
-
-"@solana/wallet-adapter-base@0.9.20":
-  version "0.9.20"
-  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-base/-/wallet-adapter-base-0.9.20.tgz#42a3a2f42db9f6a41e36a132ee5a06a0bd3784f0"
-  integrity sha512-ZvnhJ4EJk61oyuBH/a9tMpUfeWQ3g3Cc0Nzl1NzE4SdqEhiNoEW8HXDig9HMemZ9bIEUxIpPWxp+SwjVl0u+rg==
-  dependencies:
-    eventemitter3 "^4.0.0"
 
 "@solana/wallet-adapter-base@0.9.22", "@solana/wallet-adapter-base@^0.9.22":
   version "0.9.22"
@@ -4526,7 +4577,7 @@
     rpc-websockets "^7.5.1"
     superstruct "^0.14.2"
 
-"@solana/web3.js@^1.75":
+"@solana/web3.js@^1.35.1", "@solana/web3.js@^1.75":
   version "1.75.0"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.75.0.tgz#824c6f78865007bca758ca18f268d6f7363b42e5"
   integrity sha512-rHQgdo1EWfb+nPUpHe4O7i8qJPELHKNR5PAZRK+a7XxiykqOfbaAlPt5boDWAGPnYbSv0ziWZv5mq9DlFaQCxg==
@@ -6161,6 +6212,14 @@
   dependencies:
     expect "^29.0.0"
     pretty-format "^29.0.0"
+
+"@types/jest@27.0.2":
+  version "27.0.2"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-27.0.2.tgz#ac383c4d4aaddd29bbf2b916d8d105c304a5fcd7"
+  integrity sha512-4dRxkS/AFX0c5XW6IPMNOydLn2tEhNhJV7DnYK+0bjoJZ+QTmfucBlihX7aoEsh/ocYtkLC73UbnBXBXIxsULA==
+  dependencies:
+    jest-diff "^27.0.0"
+    pretty-format "^27.0.0"
 
 "@types/jest@^27.0":
   version "27.5.2"
@@ -11880,7 +11939,7 @@ jest-config@^27.5.1:
     slash "^3.0.0"
     strip-json-comments "^3.1.1"
 
-jest-diff@^27.5.1:
+jest-diff@^27.0.0, jest-diff@^27.5.1:
   version "27.5.1"
   resolved "https://registry.yarnpkg.com/jest-diff/-/jest-diff-27.5.1.tgz#a07f5011ac9e6643cf8a95a462b7b1ecf6680def"
   integrity sha512-m0NvkX55LDt9T4mctTEgnZk3fmEg3NRYutvMPWM/0iPnkFj2wIeF45O1718cMSOFO1vINkqmxqD8vE37uTEbqw==
@@ -14504,6 +14563,30 @@ psl@^1.1.28, psl@^1.1.33:
   resolved "https://registry.yarnpkg.com/psl/-/psl-1.9.0.tgz#d0df2a137f00794565fcaf3b2c00cd09f8d5a5a7"
   integrity sha512-E/ZsdU4HLs/68gYzgGTkMicWTLPdAftJLfJFlLUAAKZGkStNU72sZjT66SnMDVOfOWY/YAoiD7Jxa9iHvngcag==
 
+psyfi-euros-test@0.0.2-rc.5:
+  version "0.0.2-rc.5"
+  resolved "https://registry.yarnpkg.com/psyfi-euros-test/-/psyfi-euros-test-0.0.2-rc.5.tgz#7b0db21ecbe7bac490de764f022feb01a9b501d9"
+  integrity sha512-bTeM4wrS9x6+9Z69uN9wWELTc7MyM3KpNdntp9T3uUkQwnN9Pygwjd/a+Mf/x7PbmAHKMabY7tLbSVxpifVt4g==
+  dependencies:
+    "@metaplex-foundation/mpl-token-metadata" "2.2.4"
+    "@project-serum/anchor" "0.23.0"
+    "@project-serum/common" "^0.0.1-beta.3"
+    "@project-serum/serum" "^0.13.61"
+    "@solana/spl-token" "0.1.8"
+    "@solana/web3.js" "^1.35.1"
+    psystake-test "0.0.1-rc.8"
+
+psystake-test@0.0.1-rc.8:
+  version "0.0.1-rc.8"
+  resolved "https://registry.yarnpkg.com/psystake-test/-/psystake-test-0.0.1-rc.8.tgz#67ce3c7546c47ac44bd213997fadcee346efe440"
+  integrity sha512-wng85jJDM8SwVeH/6fUMKBxHiVPl6SwFm6Y1j3fNmhqEINwu1L+kShO3YCIhPN7oK2tox7Fb7tUrXdbk5HQ54g==
+  dependencies:
+    "@project-serum/anchor" "^0.23.0"
+    "@project-serum/common" "^0.0.1-beta.3"
+    "@project-serum/serum" "^0.13.61"
+    "@solana/spl-token" "^0.1.8"
+    "@solana/web3.js" "^1.35.1"
+
 public-encrypt@^4.0.0:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/public-encrypt/-/public-encrypt-4.0.3.tgz#4fcc9d77a07e48ba7527e7cbe0de33d0701331e0"
@@ -16550,6 +16633,14 @@ stylehacks@^5.1.1:
     browserslist "^4.21.4"
     postcss-selector-parser "^6.0.4"
 
+superstruct@0.8.3:
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/superstruct/-/superstruct-0.8.3.tgz#fb4d8901aca3bf9f79afab1bbab7a7f335cc4ef2"
+  integrity sha512-LbtbFpktW1FcwxVIJlxdk7bCyBq/GzOx2FSFLRLTUhWIA1gHkYPIl3aXRG5mBdGZtnPNT6t+4eEcLDCMOuBHww==
+  dependencies:
+    kind-of "^6.0.2"
+    tiny-invariant "^1.0.6"
+
 superstruct@^0.14.2:
   version "0.14.2"
   resolved "https://registry.yarnpkg.com/superstruct/-/superstruct-0.14.2.tgz#0dbcdf3d83676588828f1cf5ed35cda02f59025b"
@@ -16790,7 +16881,7 @@ tiny-hashes@^1.0.1:
   resolved "https://registry.yarnpkg.com/tiny-hashes/-/tiny-hashes-1.0.1.tgz#ddbe9060312ddb4efe0a174bb3a27e1331c425a1"
   integrity sha512-knIN5zj4fl7kW4EBU5sLP20DWUvi/rVouvJezV0UAym2DkQaqm365Nyc8F3QEiOvunNDMxR8UhcXd1d5g+Wg1g==
 
-tiny-invariant@^1.1.0, tiny-invariant@^1.2.0:
+tiny-invariant@^1.0.6, tiny-invariant@^1.1.0, tiny-invariant@^1.2.0:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/tiny-invariant/-/tiny-invariant-1.3.1.tgz#8560808c916ef02ecfd55e66090df23a4b7aa642"
   integrity sha512-AD5ih2NlSssTCwsMznbvwMZpJ1cbhkGd2uueNxzv2jDlEeZdU04JQfRnggJQ8DrcVBGjAsCKwFBbDlVNtEMlzw==
