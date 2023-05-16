@@ -232,6 +232,7 @@
     "move-from-renbridge-cta-label": "Transfiere tu Bitcoin",
     "not-connected": "Por favor conecte su billetera",
     "operation-cta-label-disabled": "Billetera desconectada",
+    "transak-cta-not-ready-warning": "Transak did not load properly, please try again later!",
     "transak-cta-warning": "Las tarjetas de crédito y débito del Chase Bank (US) no funcionan para comprar crypto. ¡Todos los demás bancos están bien!",
     "send-from-wallet-cta-label": "Enviar desde Billetera/Exchange",
     "transak-cta-label": "Compre con tarjeta de débito/crédito",

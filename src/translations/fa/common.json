@@ -232,6 +232,7 @@
     "move-from-renbridge-cta-label": "بیت کوین خود را انتقال دهید",
     "not-connected": "لطفا ابتدا کیف پول خود را وصل کنید",
     "operation-cta-label-disabled": "کیف پول متصل نیست",
+    "transak-cta-not-ready-warning": "Transak did not load properly, please try again later!",
     "transak-cta-warning": "کارت اعتباری و کارت‌های نقدی چیس بانک (ایالات متحده) برای خرید رمزارز کار نمی‌کنند. همه بانک های دیگر اوکی هستند!",
     "send-from-wallet-cta-label": "ارسال از کیف پول / صرافی",
     "transak-cta-label": "با کارت نقدی/اعتباری خرید کنید",
