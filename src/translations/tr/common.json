@@ -232,6 +232,7 @@
     "move-from-renbridge-cta-label": "Bitconinizi transfer edin",
     "not-connected": "Lütfen önce cüzdanınızı bağlayın",
     "operation-cta-label-disabled": "Cüzdan bağlanmadı",
+    "transak-cta-not-ready-warning": "Transak did not load properly, please try again later!",
     "transak-cta-warning": "Chase Bank (ABD) kredi kartları ve banka kartları ile kripto alım işlemi yapılamaz. Diğer tüm bankalar UYGUNDUR!",
     "send-from-wallet-cta-label": "Cüzdandan/Borsadan Gönder",
     "transak-cta-label": "Banka/Kredi kartıyla al",

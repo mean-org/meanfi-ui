@@ -232,6 +232,7 @@
     "move-from-renbridge-cta-label": "Chuyển khoản Bitcoin của bạn",
     "not-connected": "Vui lòng kết nối ví của bạn trước",
     "operation-cta-label-disabled": "Ví chưa kết nối",
+    "transak-cta-not-ready-warning": "Transak did not load properly, please try again later!",
     "transak-cta-warning": "Thẻ credit và thẻ debit của ngân hàng Chase (Hoa Kỳ) sẽ không hoạt động để mua tiền điện tử. Tất cả các ngân hàng khác đều OK!",
     "send-from-wallet-cta-label": "Gửi từ Ví/Sàn giao dịch",
     "transak-cta-label": "Mua với thẻ debit/credit",

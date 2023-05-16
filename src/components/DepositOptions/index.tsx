@@ -10,12 +10,13 @@ import { IconCopy, IconInfoTriangle, IconSolana } from 'Icons';
 import { appConfig } from 'index';
 import { consoleOut, copyText } from 'middleware/ui';
 import { QRCodeSVG } from 'qrcode.react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
 
 declare const TransakSDK: any;
 let transak: any = undefined;
+type TransakInitStatus = 'initializing' | 'ini-success' | 'init-failure';
 
 export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) => {
   const { handleClose, isVisible } = props;
@@ -24,6 +25,7 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
   const { publicKey, connected } = useWallet();
   const [isCoinbasePayReady, setIsCoinbasePayReady] = useState(false);
   const [isSharingAddress, setIsSharingAddress] = useState(false);
+  const [transakInitStatus, setTransakInitStatus] = useState<TransakInitStatus>('initializing');
 
   //#region Init code
 
@@ -62,7 +64,11 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
     handleClose();
   };
 
-  const handleTransakButtonClick = () => {
+  const handleTransakButtonClick = useCallback(() => {
+    if (transakInitStatus === 'init-failure') {
+      return;
+    }
+
     setTimeout(() => {
       if (transak) {
         transak.init();
@@ -73,7 +79,7 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
       }
     }, 300);
     handleClose();
-  };
+  }, [handleClose, transakInitStatus]);
 
   const handleCoinbaseButtonClick = () => {
     // Nothing else to do for now
@@ -109,21 +115,27 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
   // Transak initialization
   useEffect(() => {
     if (status === 'ready' && !transak) {
-      transak = new TransakSDK.default({
-        apiKey: currentConfig?.transakApiKey, // Your API Key
-        environment: environment === 'production' ? 'PRODUCTION' : 'STAGING', // STAGING/PRODUCTION
-        defaultCryptoCurrency: 'SOL',
-        networks: 'SOLANA',
-        hideMenu: true,
-        walletAddress: publicKey?.toBase58() || '', // Your customer's wallet address
-        themeColor: 'B7001C', // App theme color
-        // fiatCurrency: 'EUR',
-        email: '', // Your customer's email address
-        redirectURL: '',
-        hostURL: window.location.origin,
-        widgetHeight: '634px',
-        widgetWidth: '100%',
-      });
+      setTransakInitStatus('initializing');
+      try {
+        transak = new TransakSDK.default({
+          apiKey: currentConfig?.transakApiKey, // Your API Key
+          environment: environment === 'production' ? 'PRODUCTION' : 'STAGING', // STAGING/PRODUCTION
+          defaultCryptoCurrency: 'SOL',
+          networks: 'SOLANA',
+          hideMenu: true,
+          walletAddress: publicKey?.toBase58() || '', // Your customer's wallet address
+          themeColor: 'B7001C', // App theme color
+          // fiatCurrency: 'EUR',
+          email: '', // Your customer's email address
+          redirectURL: '',
+          hostURL: window.location.origin,
+          widgetHeight: '634px',
+          widgetWidth: '100%',
+        });
+        setTransakInitStatus('ini-success');
+      } catch (error) {
+        setTransakInitStatus('init-failure');
+      }
     }
   }, [currentConfig, publicKey, status]);
 
@@ -199,6 +211,22 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
       window.removeEventListener('resize', resizeListener);
     };
   }, []);
+
+  const getTransakOptionTooltip = useCallback(() => {
+    if (transakInitStatus === 'init-failure') {
+      return t('deposits.transak-cta-not-ready-warning');
+    }
+
+    return t('deposits.transak-cta-warning');
+  }, [t, transakInitStatus]);
+
+  const getTransakWarningSignColorClass = useCallback(() => {
+    if (transakInitStatus === 'init-failure') {
+      return 'error';
+    }
+
+    return 'warning';
+  }, [transakInitStatus]);
 
   return (
     <Modal
@@ -277,7 +305,7 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
                 disabled={status !== 'ready'}
                 onClick={handleTransakButtonClick}
               >
-                <Tooltip placement="bottom" title={t('deposits.transak-cta-warning')}>
+                <Tooltip placement="bottom" title={getTransakOptionTooltip()}>
                   <div className="flex flex-row justify-content-space-between">
                     <img
                       src="/assets/deposit-partners/transak.png"
@@ -285,7 +313,7 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
                       alt={t('deposits.transak-cta-label')}
                     />
                     <span className="option-text">{t('deposits.transak-cta-label')}</span>
-                    <IconInfoTriangle className="mean-svg-icons warning" />
+                    <IconInfoTriangle className={`mean-svg-icons ${getTransakWarningSignColorClass()}`} />
                   </div>
                 </Tooltip>
               </Button>
