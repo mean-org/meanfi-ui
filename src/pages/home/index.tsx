@@ -5,7 +5,7 @@ import {
   getDepositIx,
   getTrancheDepositIx,
   getTrancheWithdrawIx,
-  getWithdrawIx,
+  getCreateWithdrawRequestIx,
 } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
@@ -2122,7 +2122,7 @@ export const HomeView = () => {
 
       const program = await getCredixProgram(connection, investor);
 
-      return getWithdrawIx(program, investor, amount, marketplace);
+      return getCreateWithdrawRequestIx(program, investor, amount, marketplace);
     },
     [connection, connectionConfig, getCredixProgram],
   );
@@ -3589,7 +3589,7 @@ export const HomeView = () => {
                 className="thin-stroke asset-btn"
                 onClick={showReceiveSplOrSolModal}
               >
-                <div className="btn-content">Deposit</div>
+                <div className="btn-content">{t('multisig.multisig-assets.cta-deposit')}</div>
               </Button>
               <Button
                 type="default"
@@ -3599,7 +3599,7 @@ export const HomeView = () => {
                 disabled={isAnyTxPendingConfirmation() || !isSendFundsValid()}
                 onClick={showTransferTokenModal}
               >
-                <div className="btn-content">Propose funds transfer</div>
+                <div className="btn-content">{t('multisig.multisig-assets.cta-transfer')}</div>
               </Button>
               <Button
                 type="default"
@@ -3609,7 +3609,7 @@ export const HomeView = () => {
                 disabled={isAnyTxPendingConfirmation() || !isTransferOwnershipValid()}
                 onClick={showTransferVaultAuthorityModal}
               >
-                <div className="btn-content">Change asset ownership</div>
+                <div className="btn-content">{t('multisig.multisig-assets.cta-change-multisig-authority')}</div>
               </Button>
             </>
           ) : (

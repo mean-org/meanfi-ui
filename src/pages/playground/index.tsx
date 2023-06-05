@@ -1309,15 +1309,9 @@ export const PlaygroundView = () => {
   }, [totalSafeBalance]);
 
   // Deposit Address
-  const renderDepositAddress = useCallback(() => {
-    return (
-      <CopyExtLinkGroup
-        content={selectedMultisig ? selectedMultisig.authority.toBase58() : ''}
-        number={4}
-        externalLink={true}
-      />
-    );
-  }, [selectedMultisig]);
+  const renderAccountAddress = useCallback((account: PublicKey) => {
+    return <CopyExtLinkGroup content={account.toBase58()} number={4} externalLink={true} />;
+  }, []);
 
   const infoSafeData = useMemo(
     () => [
@@ -1335,10 +1329,26 @@ export const PlaygroundView = () => {
       },
       {
         name: 'Deposit address',
-        value: renderDepositAddress(),
+        value: selectedMultisig ? renderAccountAddress(selectedMultisig.authority) : '-',
+      },
+      {
+        name: 'Multisig SOL balance',
+        value: multisigSolBalance ? formatThousands(multisigSolBalance / LAMPORTS_PER_SOL, 9, 9) : 0,
+      },
+      {
+        name: 'Multisig account address',
+        value: selectedMultisig ? renderAccountAddress(selectedMultisig.id) : '-',
       },
     ],
-    [assetsAmout, renderDepositAddress, renderSafeBalance, renderSafeName, renderSecurity, selectedMultisig],
+    [
+      assetsAmout,
+      multisigSolBalance,
+      renderAccountAddress,
+      renderSafeBalance,
+      renderSafeName,
+      renderSecurity,
+      selectedMultisig,
+    ],
   );
 
   const renderMultisigTab = () => {
