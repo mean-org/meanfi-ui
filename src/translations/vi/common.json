@@ -483,7 +483,6 @@
   },
   "multisig": {
     "add-participant-cta": "Thêm người ký",
-    "back-to-multisig-accounts-cta": "Back to SuperSafe",
     "create-multisig": {
       "fee-info-label": "The fee to create this multisig is",
       "main-cta": "Tạo",
@@ -568,7 +567,6 @@
     },
     "multisig-detail-heading": "Chi tiết tài khoản multisig",
     "multisig-mints": {
-      "back-to-multisig-accounts-cta": "Back to SuperSafe",
       "change-mint-authority-modal-title": "Thiết lập quyền hạn Mint",
       "create-mint-modal-title": "Tạo mint",
       "cta-change-mint-authority": "Chuyển quyền sở hữu",
@@ -668,7 +666,6 @@
       "back-to-treasuries": "Back to Streaming Treasuries"
     },
     "multisig-assets": {
-      "back-to-multisig-accounts-cta": "Back to SuperSafe",
       "cta-change-multisig-authority": "Chuyển quyền sở hữu",
       "cta-change-multisig-authority-busy": "Đang thay đổi Multisig",
       "cta-close": "Đóng vault",
@@ -693,7 +690,8 @@
       "screen-title": "Vaults - {{multisigName}} ({{itemCount}})",
       "screen-title-no-assets": "Vaults",
       "validation-amount-high": "Số lượng vượt quá số dư trong vault",
-      "asset-detail-heading": "Chi tiết vault"
+      "asset-detail-heading": "Chi tiết vault",
+      "cta-deposit": "Deposit"
     },
     "pending-transactions": "giao dịch đang chờ xử lý",
     "refresh-tooltip": "Nhấn để làm mới danh sách tài khoản multisig",

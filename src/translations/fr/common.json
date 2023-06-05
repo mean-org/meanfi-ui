@@ -391,7 +391,6 @@
   },
   "multisig": {
     "add-participant-cta": "Ajouter un signataire",
-    "back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
     "create-asset": {
       "delete-multisig": "",
       "edit-multisig": "",
@@ -480,7 +479,7 @@
     },
     "multisig-assets": {
       "asset-detail-heading": "Détails de l'actif",
-      "back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
+      "cta-deposit": "Deposit",
       "cta-change-multisig-authority": "Modifier la propriété de l'actif",
       "cta-change-multisig-authority-busy": "Modification de la multisignature",
       "cta-close": "Fermer le coffre-fort",
@@ -508,7 +507,6 @@
     },
     "multisig-detail-heading": "Détails du compte multisig",
     "multisig-mints": {
-      "back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
       "change-mint-authority-modal-title": "Définir l'autorité de la menthe",
       "create-mint-modal-title": "Créer de la menthe",
       "cta-change-mint-authority": "Transfert de propriété",

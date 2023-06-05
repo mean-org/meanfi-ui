@@ -390,7 +390,6 @@
   },
   "multisig": {
     "add-participant-cta": "امضا کننده را اضافه کنید",
-    "back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
     "create-asset": {
       "main-cta": "ساختن",
       "main-cta-busy": "ایجاد خزانه",
@@ -475,7 +474,7 @@
     },
     "multisig-assets": {
       "asset-detail-heading": "جزئیات خزانه",
-      "back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
+      "cta-deposit": "Deposit",
       "cta-change-multisig-authority": "تغییر مالکیت treasury",
       "cta-change-multisig-authority-busy": "تغییر Multisig",
       "cta-close": "treasury را ببند",
@@ -503,7 +502,6 @@
     },
     "multisig-detail-heading": "جزئیات حساب Multisig",
     "multisig-mints": {
-      "back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
       "change-mint-authority-modal-title": "تنظیم اختیارات مینت",
       "create-mint-modal-title": "ایجاد مینت",
       "cta-change-mint-authority": "انتقال مالکیت",

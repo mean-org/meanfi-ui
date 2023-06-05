@@ -391,7 +391,6 @@
   },
   "multisig": {
     "add-participant-cta": "Añadir firmante.",
-    "back-to-multisig-accounts-cta": "Back to SuperSafe",
     "create-asset": {
       "delete-multisig": "Borrar multisig",
       "edit-multisig": "Editar multisig",
@@ -480,7 +479,7 @@
     },
     "multisig-assets": {
       "asset-detail-heading": "Vault details",
-      "back-to-multisig-accounts-cta": "Back to SuperSafe",
+      "cta-deposit": "Deposit",
       "cta-change-multisig-authority": "Change Vault Ownership",
       "cta-change-multisig-authority-busy": "Changing Multisig",
       "cta-close": "Close vault",
@@ -508,7 +507,6 @@
     },
     "multisig-detail-heading": "Multisig account details",
     "multisig-mints": {
-      "back-to-multisig-accounts-cta": "Back to SuperSafe",
       "change-mint-authority-modal-title": "Set Mint Authority",
       "create-mint-modal-title": "Create mint",
       "cta-change-mint-authority": "Transfer ownership",
