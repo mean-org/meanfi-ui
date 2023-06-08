@@ -6,6 +6,7 @@ import {
   getTrancheDepositIx,
   getTrancheWithdrawIx,
   getCreateWithdrawRequestIx,
+  getRedeemRequestIx,
 } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
@@ -2127,6 +2128,19 @@ export const HomeView = () => {
     [connection, connectionConfig, getCredixProgram],
   );
 
+  const createCredixRedeemRequestIx = useCallback(
+    async (investor: PublicKey, amount: number, marketplace: string) => {
+      if (!connection || !connectionConfig) {
+        return null;
+      }
+
+      const program = await getCredixProgram(connection, investor);
+
+      return getRedeemRequestIx(program, investor, amount, marketplace);
+    },
+    [connection, connectionConfig, getCredixProgram],
+  );
+
   const createCredixWithdrawTrancheIx = useCallback(
     async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
       if (!connection || !connectionConfig) {
@@ -2172,6 +2186,7 @@ export const HomeView = () => {
           const investorPK = new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'investor').value);
           const marketPlaceVal = String(data.instruction.uiElements.find((x: any) => x.name === 'marketName').value);
           let amountVal = 0;
+          consoleOut('instruction name:', data.instruction.name, 'orange');
           switch (data.instruction.name) {
             case 'depositFunds':
               operation = OperationType.CredixDepositFunds;
@@ -2184,7 +2199,7 @@ export const HomeView = () => {
               proposalIx = await createCredixDepositIx(investorPK, amountVal, marketPlaceVal);
               break;
 
-            case 'withdrawFunds':
+            case 'createWithdrawRequest':
               operation = OperationType.CredixWithdrawFunds;
               amountVal = parseFloat(
                 data.instruction.uiElements.find((x: any) => x.name === 'baseWithdrawalAmount').value,
@@ -2195,6 +2210,19 @@ export const HomeView = () => {
                 amountVal,
               });
               proposalIx = await createCredixWithdrawIx(investorPK, amountVal, marketPlaceVal);
+              break;
+
+            case 'redeemFundsForWithdrawRequest':
+              operation = OperationType.CredixRedeemFundsForWithdrawRequest;
+              amountVal = parseFloat(
+                data.instruction.uiElements.find((x: any) => x.name === 'baseWithdrawalAmount').value,
+              );
+              consoleOut('**** common inputs: ', {
+                investorPK: investorPK.toString(),
+                marketPlaceVal,
+                amountVal,
+              });
+              proposalIx = await createCredixRedeemRequestIx(investorPK, amountVal, marketPlaceVal);
               break;
 
             case 'depositTranche':
@@ -2415,6 +2443,7 @@ export const HomeView = () => {
       enqueueTransactionConfirmation,
       createCredixWithdrawTrancheIx,
       createCredixDepositTrancheIx,
+      createCredixRedeemRequestIx,
       setFailureStatusAndNotify,
       resetTransactionStatus,
       createCredixWithdrawIx,

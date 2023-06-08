@@ -552,9 +552,9 @@ export const MultisigProposalModal = (props: {
                           selectedUiIx &&
                           selectedUiIx.id === ix.id &&
                           ix.uiElements.map((element: any) => (
-                            <>
+                            <div key={`${ix.id}-${element.name}`}>
                               {element.visibility === 'show' && (
-                                <Row gutter={[8, 8]} className="mb-1" key={element.id}>
+                                <Row gutter={[8, 8]} className="mb-1">
                                   {element.type === 'inputText' ? (
                                     <>
                                       <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
@@ -748,7 +748,7 @@ export const MultisigProposalModal = (props: {
                                   ) : null}
                                 </Row>
                               )}
-                            </>
+                            </div>
                           )),
                       )}
                     </div>

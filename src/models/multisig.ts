@@ -331,7 +331,8 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
       ix = programIdl.instructions.find(ix => ix.name === 'depositFunds');
       break;
     case OperationType.CredixWithdrawFunds:
-      ix = programIdl.instructions.find(ix => ix.name === 'withdrawFunds');
+    case OperationType.CredixRedeemFundsForWithdrawRequest:
+      ix = programIdl.instructions.find(ix => ix.name === 'withdrawFunds' || ix.name === 'createWithdrawRequest');
       break;
     case OperationType.CredixDepositTranche:
       ix = programIdl.instructions.find(ix => ix.name === 'depositTranche');
