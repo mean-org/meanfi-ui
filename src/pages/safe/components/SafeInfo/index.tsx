@@ -1,6 +1,6 @@
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { Alert, Button, Col, Row, Space, Tabs, Tooltip } from 'antd';
+import { Alert, Button, Col, Dropdown, Row, Space, Tabs, Tooltip } from 'antd';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { MultisigOwnersView } from 'components/MultisigOwnersView';
 import { RightInfoDetails } from 'components/RightInfoDetails';
@@ -9,11 +9,14 @@ import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { IconLoading } from 'Icons';
+import { IconLoading, IconVerticalEllipsis } from 'Icons';
 import { consoleOut, toUsCurrency } from 'middleware/ui';
 import { getAmountFromLamports, shortenAddress } from 'middleware/utils';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { useTranslation } from 'react-i18next';
+import CopyMultisigIdModal from 'components/CopyMultisigIdModal';
 
 export const SafeInfo = (props: {
   onEditMultisigClick?: any;
@@ -37,6 +40,7 @@ export const SafeInfo = (props: {
     selectedTab,
     tabs,
   } = props;
+  const { t } = useTranslation('common');
   const { multisigVaults, selectedAccount, multisigSolBalance, refreshTokenBalance, setActiveTab } =
     useContext(AppStateContext);
   const { address } = useParams();
@@ -54,6 +58,11 @@ export const SafeInfo = (props: {
   const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
   const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
   const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
+
+  // Copy Multisig ID Modal
+  const [isCopyMultisigIdModalOpen, setIsCopyMultisigIdModalOpen] = useState(false);
+  const hideCopyMultisigIdModal = useCallback(() => setIsCopyMultisigIdModalOpen(false), []);
+  const showCopyMultisigIdModal = useCallback(() => setIsCopyMultisigIdModalOpen(true), []);
 
   // Keep account balance updated
   useEffect(() => {
@@ -188,11 +197,23 @@ export const SafeInfo = (props: {
     }
   };
 
-  return (
-    <>
-      <RightInfoDetails infoData={infoSafeData} />
+  const getCtaRowMenuItems = () => {
+    const items: ItemType[] = [];
+    items.push({
+      key: 'cta-row-dropdown-item-01',
+      label: (
+        <span className="menu-item-text" onClick={showCopyMultisigIdModal}>
+          {t('multisig.copy-multisig-id.cta-label')}
+        </span>
+      ),
+    });
 
-      <div className="flex-fixed-right cta-row mb-2">
+    return { items };
+  };
+
+  const renderCtaRow = () => {
+    return (
+      <div className="flex-fixed-right cta-row">
         <Space className="left" size="middle" wrap>
           <Button type="default" shape="round" size="small" className="thin-stroke" onClick={onNewProposalClicked}>
             New proposal
@@ -207,7 +228,26 @@ export const SafeInfo = (props: {
             Edit safe
           </Button>
         </Space>
+        <Dropdown menu={getCtaRowMenuItems()} placement="bottomRight" trigger={['click']}>
+          <span className="icon-button-container">
+            <Button
+              type="default"
+              shape="circle"
+              size="middle"
+              icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+              onClick={e => e.preventDefault()}
+            />
+          </span>
+        </Dropdown>
       </div>
+    );
+  };
+
+  return (
+    <>
+      <RightInfoDetails infoData={infoSafeData} />
+
+      {renderCtaRow()}
 
       {multisigSolBalance !== undefined &&
         (multisigSolBalance / LAMPORTS_PER_SOL <= MIN_SOL_BALANCE_REQUIRED ? (
@@ -224,7 +264,7 @@ export const SafeInfo = (props: {
 
       {renderTabset()}
 
-      {isSolBalanceModalOpen && (
+      {isSolBalanceModalOpen ? (
         <SolBalanceModal
           address={NATIVE_SOL.address || ''}
           accountAddress={selectedAccount.address}
@@ -236,7 +276,14 @@ export const SafeInfo = (props: {
           selectedMultisig={selectedMultisig}
           isStreamingAccount={false}
         />
-      )}
+      ) : null}
+      {isCopyMultisigIdModalOpen && selectedMultisig ? (
+        <CopyMultisigIdModal
+          isOpen={isCopyMultisigIdModalOpen}
+          multisigAddress={selectedMultisig.id.toBase58()}
+          handleClose={hideCopyMultisigIdModal}
+        />
+      ) : null}
     </>
   );
 };

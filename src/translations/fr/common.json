@@ -390,6 +390,14 @@
     "secondary-action": "Fermer"
   },
   "multisig": {
+    "copy-multisig-id": {
+      "cta-label": "Copy Multisig ID",
+      "modal-title": "Multisig Account Address",
+      "disclaimer1": "The Multisig Address is NOT a Vault Address.",
+      "disclaimer2": "DO NOT send funds/assets or set it as an authority in a multisig or any other programs! Doing so can result in loss of funds/assets and possibly loss of functions on a Multisig or program.",
+      "scan-qr-code-label": "Scan the QR code",
+      "copy-address-label": "Or copy address to clipboard"
+    },
     "add-participant-cta": "Ajouter un signataire",
     "create-asset": {
       "delete-multisig": "",
