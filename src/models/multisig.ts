@@ -27,7 +27,8 @@ import { MeanSystemInstructionCoder } from './system-program-coder/instruction';
 import { appConfig } from '..';
 import { getAmountFromLamports } from '../middleware/utils';
 
-export const CREDIX_PROGRAM = new PublicKey('CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX');
+export const CREDIX_PROGRAM_MAINNET = new PublicKey('CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX');
+export const CREDIX_PROGRAM_DEVNET = new PublicKey('crdszSnZQu7j36KfsMJ4VEmMUTJgrNYXwoPVHUANpAu');
 export const NATIVE_LOADER = new PublicKey('NativeLoader1111111111111111111111111111111');
 export const LAMPORTS_PER_SIG = 5000;
 export const DEFAULT_EXPIRATION_TIME_SECONDS = 604800;
@@ -667,4 +668,8 @@ export const getMultisigInstructionSummary = (
     console.error(`Multisig Instruction Summary: ${err}`);
     return null;
   }
+};
+
+export const isCredixFinance = (id: string) => {
+  return id === CREDIX_PROGRAM_DEVNET.toBase58() || id === CREDIX_PROGRAM_MAINNET.toBase58();
 };

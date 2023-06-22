@@ -21,6 +21,7 @@ import { TransactionStatus } from 'models/enums';
 import {
   CreateNewProposalParams,
   getMultisigInstructionSummary,
+  isCredixFinance,
   NATIVE_LOADER,
   parseSerializedTx,
 } from 'models/multisig';
@@ -440,7 +441,7 @@ export const MultisigProposalModal = (props: {
                         </div>
                       </Col>
 
-                      {selectedApp && selectedApp.id === 'CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX' && (
+                      {selectedApp && isCredixFinance(selectedApp.id) ? (
                         <Col span={24} className="alert-info-message mb-1">
                           <Alert
                             message="This multisig authority needs to have credix and civic pass accounts activated."
@@ -449,7 +450,7 @@ export const MultisigProposalModal = (props: {
                             closable
                           />
                         </Col>
-                      )}
+                      ) : null}
 
                       {/* Proposal title */}
                       <Col xs={24} sm={24} md={16} lg={16}>
