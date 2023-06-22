@@ -106,7 +106,7 @@ import { MetaInfoCta } from 'models/common-types';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import {
   CreateNewProposalParams,
-  CREDIX_PROGRAM,
+  isCredixFinance,
   NATIVE_LOADER,
   parseSerializedTx,
   SetAssetAuthPayload,
@@ -2095,9 +2095,17 @@ export const HomeView = () => {
         return null;
       }
 
-      const program = await getCredixProgram(connection, investor);
+      try {
+        console.log('call getCredixProgram...');
+        const program = await getCredixProgram(connection, investor);
 
-      return getDepositIx(program, investor, amount, marketplace);
+        console.log('call getDepositIx...');
+        return getDepositIx(program, investor, amount, marketplace);
+      } catch (error) {
+        console.error(error);
+
+        return null;
+      }
     },
     [connection, connectionConfig, getCredixProgram],
   );
@@ -2181,8 +2189,7 @@ export const HomeView = () => {
           // TODO: Implement GetOperationFromProposal
           // operation = getProposalOperation(data);
           proposalIx = tx.instructions[0];
-        } else if (data.appId === CREDIX_PROGRAM.toBase58()) {
-          //
+        } else if (isCredixFinance(data.appId)) {
           const investorPK = new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'investor').value);
           const marketPlaceVal = String(data.instruction.uiElements.find((x: any) => x.name === 'marketName').value);
           let amountVal = 0;
