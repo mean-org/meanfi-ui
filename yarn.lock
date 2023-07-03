@@ -2622,10 +2622,10 @@
     decimal.js "^10.3.1"
     jsbi "^4.1.0"
 
-"@mean-dao/mean-multisig-apps@1.3.19":
-  version "1.3.19"
-  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-apps/-/mean-multisig-apps-1.3.19.tgz#fa36477ddac17f86e733c0b4c2bcb11e14ae9ed8"
-  integrity sha512-3hxUr3ms7WnwfUAfUAiDaLnrDxHCHkeltP9APicyrUsrYfmlOpDnIDW/o/Ko+1xaOJRFj/hEBHch6Dng/vS4rA==
+"@mean-dao/mean-multisig-apps@1.3.20":
+  version "1.3.20"
+  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-apps/-/mean-multisig-apps-1.3.20.tgz#7d9ce1369882d1ebf6d2aa8f51cb8145c29c2a2c"
+  integrity sha512-U51DnPljOWifxk4bGHHLxUfjqsMXp6/RpJNQW6OV8ozS0TLN3jcKcBj3Mqf9xIlB3cf+SikBTVsJacqFvoSvPg==
   dependencies:
     "@coral-xyz/anchor" "^0.26.0"
     "@coral-xyz/anchor-cli" "^0.26.0"
