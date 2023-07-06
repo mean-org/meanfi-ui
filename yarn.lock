@@ -1274,17 +1274,6 @@
     bn.js "^5.1.2"
     buffer-layout "^1.2.0"
 
-"@credix/credix-client@3.0.1-alpha.4":
-  version "3.0.1-alpha.4"
-  resolved "https://registry.yarnpkg.com/@credix/credix-client/-/credix-client-3.0.1-alpha.4.tgz#f31ac2aeb90df7def7373d0cf267252f13ad8354"
-  integrity sha512-8SC5MCZZdKHH4Ts+7/kH1Ra44aY1twpMbErWhq0x0PpJw2zXfIdDLTxQiiYkUCvJf63xN5Ao5Szn0EFD10O/Lg==
-  dependencies:
-    "@project-serum/anchor" "0.26.0"
-    "@saberhq/anchor-contrib" "^1.14.11"
-    "@solana/spl-token" "^0.3.7"
-    bn.js "^5.2.1"
-    node-irr "^2.0.3"
-
 "@cremafinance/anchor-contrib@1.14.3":
   version "1.14.3"
   resolved "https://registry.yarnpkg.com/@cremafinance/anchor-contrib/-/anchor-contrib-1.14.3.tgz#87a0d9f734a990641ba4a79939e7ec0658ffb6f8"
@@ -2622,14 +2611,13 @@
     decimal.js "^10.3.1"
     jsbi "^4.1.0"
 
-"@mean-dao/mean-multisig-apps@1.3.20":
-  version "1.3.20"
-  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-apps/-/mean-multisig-apps-1.3.20.tgz#7d9ce1369882d1ebf6d2aa8f51cb8145c29c2a2c"
-  integrity sha512-U51DnPljOWifxk4bGHHLxUfjqsMXp6/RpJNQW6OV8ozS0TLN3jcKcBj3Mqf9xIlB3cf+SikBTVsJacqFvoSvPg==
+"@mean-dao/mean-multisig-apps@1.3.21":
+  version "1.3.21"
+  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-apps/-/mean-multisig-apps-1.3.21.tgz#487d72ac1abeab799123e282c38a57863256b28d"
+  integrity sha512-bzM1la9/iakGvC71ydorebdtn5DYLLU0ZetIcMNPgAoDOhKaExA/FOBKcdgaR40OFn090I1K8SP6LA0NRzYo+A==
   dependencies:
     "@coral-xyz/anchor" "^0.26.0"
     "@coral-xyz/anchor-cli" "^0.26.0"
-    "@credix/credix-client" "3.0.1-alpha.4"
     "@solana/spl-token" "0.1.8"
     "@solana/web3.js" "1.36.0"
     cross-fetch "^3.1.5"
@@ -3274,27 +3262,6 @@
     superstruct "^0.15.4"
     toml "^3.0.0"
 
-"@project-serum/anchor@0.26.0", "@project-serum/anchor@^0.26.0":
-  version "0.26.0"
-  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.26.0.tgz#99e15a3923a5d10514f8185b2d3909e5699d60d5"
-  integrity sha512-Nq+COIjE1135T7qfnOHEn7E0q39bQTgXLFk837/rgFe6Hkew9WML7eHsS+lSYD2p3OJaTiUOHTAq1lHy36oIqQ==
-  dependencies:
-    "@coral-xyz/borsh" "^0.26.0"
-    "@solana/web3.js" "^1.68.0"
-    base64-js "^1.5.1"
-    bn.js "^5.1.2"
-    bs58 "^4.0.1"
-    buffer-layout "^1.2.2"
-    camelcase "^6.3.0"
-    cross-fetch "^3.1.5"
-    crypto-hash "^1.3.0"
-    eventemitter3 "^4.0.7"
-    js-sha256 "^0.9.0"
-    pako "^2.0.3"
-    snake-case "^3.0.4"
-    superstruct "^0.15.4"
-    toml "^3.0.0"
-
 "@project-serum/anchor@^0.11.1":
   version "0.11.1"
   resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.11.1.tgz#155bff2c70652eafdcfd5559c81a83bb19cec9ff"
@@ -3435,6 +3402,27 @@
     js-sha256 "^0.9.0"
     pako "^2.0.3"
     snake-case "^3.0.4"
+    toml "^3.0.0"
+
+"@project-serum/anchor@^0.26.0":
+  version "0.26.0"
+  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.26.0.tgz#99e15a3923a5d10514f8185b2d3909e5699d60d5"
+  integrity sha512-Nq+COIjE1135T7qfnOHEn7E0q39bQTgXLFk837/rgFe6Hkew9WML7eHsS+lSYD2p3OJaTiUOHTAq1lHy36oIqQ==
+  dependencies:
+    "@coral-xyz/borsh" "^0.26.0"
+    "@solana/web3.js" "^1.68.0"
+    base64-js "^1.5.1"
+    bn.js "^5.1.2"
+    bs58 "^4.0.1"
+    buffer-layout "^1.2.2"
+    camelcase "^6.3.0"
+    cross-fetch "^3.1.5"
+    crypto-hash "^1.3.0"
+    eventemitter3 "^4.0.7"
+    js-sha256 "^0.9.0"
+    pako "^2.0.3"
+    snake-case "^3.0.4"
+    superstruct "^0.15.4"
     toml "^3.0.0"
 
 "@project-serum/associated-token@^0.1.1":
@@ -3688,7 +3676,7 @@
     lodash.mapvalues "^4.6.0"
     tslib "^2.4.0"
 
-"@saberhq/anchor-contrib@^1.13.6", "@saberhq/anchor-contrib@^1.14.11":
+"@saberhq/anchor-contrib@^1.13.6":
   version "1.14.11"
   resolved "https://registry.yarnpkg.com/@saberhq/anchor-contrib/-/anchor-contrib-1.14.11.tgz#cebaac040faea643ade8ecb6afeeb2dcdf5a33a2"
   integrity sha512-6fOMC9XjuMSpGin/5HGqDita/dYzndjMMUNjht7yQZzD9638cdjrAutwZjvYwMUepKLdJ5CQV4bE74bSeMF9HQ==
@@ -13351,11 +13339,6 @@ node-int64@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/node-int64/-/node-int64-0.4.0.tgz#87a9065cdb355d3182d8f94ce11188b825c68a3b"
   integrity sha512-O5lz91xSOeoXP6DulyHfllpq+Eg00MWitZIbtPfoSEvqIHdl5gfcY6hYzDWnj0qD5tz52PI08u9qUvSVeUBeHw==
-
-node-irr@^2.0.3:
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/node-irr/-/node-irr-2.0.5.tgz#1d7ed800cdf50257983e64d7d6a47ef65e356901"
-  integrity sha512-DSRNHoh51f00dK/fvrYqPqp9/dW3K3dlsr2fqC4zSDVAWmqTtnDsJKHV5AAOMiJAsIfGpJsyIb34RCh4+8OoPg==
 
 node-kraken-api@^2.2.2:
   version "2.2.2"
