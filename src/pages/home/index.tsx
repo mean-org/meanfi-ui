@@ -6,7 +6,7 @@ import {
   getTrancheDepositIx,
   getTrancheWithdrawIx,
   getCreateWithdrawRequestIx,
-  getRedeemRequestIx,
+  getRedeemWithdrawRequestIx,
 } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
@@ -15,7 +15,7 @@ import {
   MultisigTransactionFees,
   MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
-import { MoneyStreaming, StreamInfo, STREAM_STATE, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming';
+import { MoneyStreaming, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming';
 import {
   Category,
   PaymentStreaming,
@@ -608,7 +608,7 @@ export const HomeView = () => {
 
   const getScanAddress = useCallback(
     (asset: UserTokenAccount): PublicKey | null => {
-      if (asset && asset.publicAddress) {
+      if (asset.publicAddress) {
         return asset.publicAddress !== SOL_MINT.toBase58()
           ? new PublicKey(asset.publicAddress)
           : new PublicKey(selectedAccount.address);
@@ -669,12 +669,12 @@ export const HomeView = () => {
           const balance = tokenAmount.value.uiAmount;
           consoleOut('balance:', balance, 'blue');
           const price = getTokenPriceByAddress(selectedAsset.address) || getTokenPriceBySymbol(selectedAsset.symbol);
-          const valueInUSD = (balance || 0) * price;
+          const valueInUSD = (balance ?? 0) * price;
           consoleOut('valueInUSD:', valueInUSD, 'blue');
           // Find the token and update it if found
           itemIndex = tokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
           if (itemIndex !== -1) {
-            tokensCopy[itemIndex].balance = balance || 0;
+            tokensCopy[itemIndex].balance = balance ?? 0;
             tokensCopy[itemIndex].valueInUsd = valueInUSD;
             setAccountTokens(tokensCopy);
             setSelectedAsset(tokensCopy[itemIndex]);
@@ -900,7 +900,7 @@ export const HomeView = () => {
       };
 
       const notifyMultisigActionFollowup = (item: TxConfirmationInfo) => {
-        if (!item || !item.extras || !item.extras.multisigAuthority) {
+        if (!item?.extras?.multisigAuthority) {
           turnOffLockWorkflow();
           return;
         }
@@ -939,16 +939,12 @@ export const HomeView = () => {
         }
 
         // Lock the workflow
-        if (item.extras && item.extras.multisigAuthority) {
+        if (item?.extras?.multisigAuthority) {
           isWorkflowLocked = true;
         }
 
         recordTxConfirmationSuccess(item);
         switch (item.operationType) {
-          case OperationType.StreamCreate:
-            logEventHandling(item);
-            accountRefresh();
-            break;
           case OperationType.CreateMultisig:
           case OperationType.CreateTransaction:
             logEventHandling(item);
@@ -962,6 +958,7 @@ export const HomeView = () => {
             accountRefresh();
             break;
           case OperationType.CreateAsset:
+          case OperationType.StreamCreate:
           case OperationType.CloseTokenAccount:
             logEventHandling(item);
             accountRefresh();
@@ -970,7 +967,7 @@ export const HomeView = () => {
           case OperationType.SetAssetAuthority:
           case OperationType.TransferTokens:
             logEventHandling(item);
-            if (item.extras && item.extras.multisigAuthority) {
+            if (item?.extras?.multisigAuthority) {
               refreshMultisigs();
               notifyMultisigActionFollowup(item);
             }
@@ -1005,7 +1002,7 @@ export const HomeView = () => {
     (txs: MappedTransaction[]): number => {
       // Show only txs that have SOL changes
       const filtered = txs.filter(tx => {
-        const meta = tx.parsedTransaction && tx.parsedTransaction.meta ? tx.parsedTransaction.meta : null;
+        const meta = tx.parsedTransaction?.meta ? tx.parsedTransaction.meta : null;
         if (!meta || meta.err !== null) {
           return false;
         }
@@ -1652,9 +1649,9 @@ export const HomeView = () => {
       }
 
       if (addr || selectedAccount.address) {
-        const pk = new PublicKey(addr || selectedAccount.address);
+        const pk = new PublicKey(addr ?? selectedAccount.address);
 
-        consoleOut('Fetching treasuries for:', addr || selectedAccount.address, 'orange');
+        consoleOut('Fetching treasuries for:', addr ?? selectedAccount.address, 'orange');
         const allTreasuries = await paymentStreaming.listAccounts(pk, true);
 
         const treasuries = allTreasuries.filter(t => t.category === Category.default);
@@ -1767,7 +1764,7 @@ export const HomeView = () => {
 
       const treasuryType = isNew
         ? +(treasury as PaymentStreamingAccount).accountType
-        : +((treasury as TreasuryInfo).type as TreasuryType);
+        : +(treasury as TreasuryInfo).type;
 
       const associatedToken = isNew
         ? (treasury as PaymentStreamingAccount).mint.toBase58()
@@ -1870,7 +1867,7 @@ export const HomeView = () => {
 
       let fundsLeftValue = 0;
       for await (const stream of updatedStreamsv2) {
-        const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
+        const isIncoming = stream.beneficiary?.equals(treasurer) ? true : false;
 
         // Get refreshed data
         const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
@@ -1903,7 +1900,7 @@ export const HomeView = () => {
 
       let withdrawableValue = 0;
       for await (const stream of updatedStreamsv2) {
-        const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
+        const isIncoming = stream.beneficiary?.equals(treasurer) ? true : false;
 
         // Get refreshed data
         const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
@@ -1944,8 +1941,8 @@ export const HomeView = () => {
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 || [], treasurer);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 ?? [], treasurer);
+    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 ?? [], treasurer);
 
     const vested = await getV1VestedValue(updatedStreamsv1, treasurer);
     resume['totalNet'] = vested;
@@ -1982,8 +1979,8 @@ export const HomeView = () => {
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 || [], treasurer);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 ?? [], treasurer);
+    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 ?? [], treasurer);
 
     const unvested = await getV1UnvestedValue(updatedStreamsv1, treasurer);
     resume['totalNet'] = unvested;
@@ -2144,20 +2141,20 @@ export const HomeView = () => {
 
       const program = await getCredixProgram(connection, investor);
 
-      return getRedeemRequestIx(program, investor, amount, marketplace);
+      return getRedeemWithdrawRequestIx(program, investor, amount, marketplace);
     },
     [connection, connectionConfig, getCredixProgram],
   );
 
   const createCredixWithdrawTrancheIx = useCallback(
-    async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
+    async (investor: PublicKey, deal: PublicKey, trancheIndex: number, marketplace: string) => {
       if (!connection || !connectionConfig) {
         return null;
       }
 
       const program = await getCredixProgram(connection, investor);
 
-      return getTrancheWithdrawIx(program, investor, deal, amount, trancheIndex, marketplace);
+      return getTrancheWithdrawIx(program, investor, deal, trancheIndex, marketplace);
     },
     [connection, connectionConfig, getCredixProgram],
   );
@@ -2251,7 +2248,6 @@ export const HomeView = () => {
 
             case 'withdrawTranche':
               operation = OperationType.CredixWithdrawTranche;
-              amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
               consoleOut('**** common inputs: ', {
                 investorPK: investorPK.toString(),
                 marketPlaceVal,
@@ -2260,7 +2256,6 @@ export const HomeView = () => {
               proposalIx = await createCredixWithdrawTrancheIx(
                 investorPK,
                 new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
-                amountVal,
                 parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
                 marketPlaceVal,
               );
@@ -3063,7 +3058,7 @@ export const HomeView = () => {
     const wSol = accountTokens.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
     consoleOut('unwrapAmount:', wSolBalance, 'blue');
 
-    if (!wSol || !wSol.publicAddress) {
+    if (!wSol?.publicAddress) {
       openNotification({
         title: 'Cannot unwrap SOL',
         description: `Wrapped SOL token account not found for the currently connected wallet account`,
@@ -3377,7 +3372,7 @@ export const HomeView = () => {
                     }}
                   >
                     <span className="font-size-75 font-bold text-shadow">
-                      {kFormatter(totalStreamsAmount || 0, 1) || 0}
+                      {kFormatter(totalStreamsAmount ?? 0, 1) || 0}
                     </span>
                   </div>
                 </div>
@@ -3724,7 +3719,7 @@ export const HomeView = () => {
                 <div className="transaction-detail-row">
                   <div className="info-data">
                     {getAmountWithSymbol(
-                      selectedAsset.balance || 0,
+                      selectedAsset.balance ?? 0,
                       selectedAsset.address,
                       false,
                       splTokenList,
@@ -4069,7 +4064,7 @@ export const HomeView = () => {
 
       {isReceiveSplOrSolModalOpen && selectedAsset && (
         <ReceiveSplOrSolModal
-          address={selectedAsset.publicAddress || ''}
+          address={selectedAsset.publicAddress ?? ''}
           accountAddress={selectedAccount.address}
           multisigAddress={selectedAccount.address}
           isVisible={isReceiveSplOrSolModalOpen}
@@ -4128,7 +4123,7 @@ export const HomeView = () => {
             onAfterEveryModalClose();
             setIsTransferTokenModalVisible(false);
           }}
-          selectedMultisig={selectedMultisig || undefined}
+          selectedMultisig={selectedMultisig ?? undefined}
           selectedVault={selectedAsset}
           isBusy={isBusy}
           assets={accountTokens}
@@ -4165,7 +4160,7 @@ export const HomeView = () => {
           }}
           isBusy={isBusy}
           selectedVault={selectedAsset}
-          selectedMultisig={selectedMultisig || undefined}
+          selectedMultisig={selectedMultisig ?? undefined}
         />
       )}
 
