@@ -277,11 +277,11 @@ export const serializeTx = (signed: Transaction | VersionedTransaction) => {
   const isVersioned = 'version' in signed ? true : false;
 
   if (isVersioned) {
-    const encodedTx = signed.serialize({ verifySignatures: false });
+    const encodedTx = signed.serialize();
     const asBuffer = toBuffer(encodedTx);
     base64Tx = asBuffer.toString('base64');
   } else {
-    base64Tx = signed.serialize({ verifySignatures: false }).toString('base64');
+    base64Tx = signed.serialize().toString('base64');
   }
 
   consoleOut('encodedTx:', base64Tx, 'orange');
