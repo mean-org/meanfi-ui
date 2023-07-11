@@ -1,13 +1,10 @@
 import { ArrowLeftOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 import { App, AppConfig, AppsProvider, Arg, NETWORK, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
-import {
-  createProgram,
-  getDepositIx,
-  getTrancheDepositIx,
-  getTrancheWithdrawIx,
-  getCreateWithdrawRequestIx,
-  getRedeemWithdrawRequestIx,
-} from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
+
+// Credix imports
+import * as credixMainnet from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
+import * as credixDevnet from '@mean-dao/mean-multisig-apps/lib/apps/credix-devnet/func';
+
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   getFees,
@@ -80,7 +77,7 @@ import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { getChange, sendTx, signTx } from 'middleware/transactions';
-import { consoleOut, copyText, getTransactionStatusForLogs, kFormatter, toUsCurrency } from 'middleware/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isDev, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports,
@@ -2081,7 +2078,12 @@ export const HomeView = () => {
   );
 
   const getCredixProgram = useCallback(async (connection: Connection, investor: PublicKey) => {
-    const program = createProgram(connection, 'confirmed');
+    let program;
+    if (isDev()) {
+      program = credixDevnet.createProgram(connection, 'confirmed');
+    } else {
+      program = credixMainnet.createProgram(connection, 'confirmed');
+    }
     console.log('data => ', investor.toBase58());
     return program;
   }, []);
@@ -2097,7 +2099,11 @@ export const HomeView = () => {
         const program = await getCredixProgram(connection, investor);
 
         console.log('call getDepositIx...');
-        return getDepositIx(program, investor, amount, marketplace);
+        if (isDev()) {
+          return credixDevnet.getDepositIx(program, investor, amount, marketplace);
+        } else {
+          return credixMainnet.getDepositIx(program, investor, amount, marketplace);
+        }
       } catch (error) {
         console.error(error);
 
@@ -2115,7 +2121,11 @@ export const HomeView = () => {
 
       const program = await getCredixProgram(connection, investor);
 
-      return getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
+      if (isDev()) {
+        return credixDevnet.getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
+      } else {
+        return credixMainnet.getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
+      }
     },
     [connection, connectionConfig, getCredixProgram],
   );
@@ -2127,8 +2137,11 @@ export const HomeView = () => {
       }
 
       const program = await getCredixProgram(connection, investor);
-
-      return getCreateWithdrawRequestIx(program, investor, amount, marketplace);
+      if (isDev()) {
+        return credixDevnet.getCreateWithdrawRequestIx(program, investor, amount, marketplace);
+      } else {
+        return credixMainnet.getCreateWithdrawRequestIx(program, investor, amount, marketplace);
+      }
     },
     [connection, connectionConfig, getCredixProgram],
   );
@@ -2140,8 +2153,11 @@ export const HomeView = () => {
       }
 
       const program = await getCredixProgram(connection, investor);
-
-      return getRedeemWithdrawRequestIx(program, investor, amount, marketplace);
+      if (isDev()) {
+        return credixDevnet.getRedeemWithdrawRequestIx(program, investor, amount, marketplace);
+      } else {
+        return credixMainnet.getRedeemWithdrawRequestIx(program, investor, amount, marketplace);
+      }
     },
     [connection, connectionConfig, getCredixProgram],
   );
@@ -2153,8 +2169,11 @@ export const HomeView = () => {
       }
 
       const program = await getCredixProgram(connection, investor);
-
-      return getTrancheWithdrawIx(program, investor, deal, trancheIndex, marketplace);
+      if (isDev()) {
+        return credixDevnet.getTrancheWithdrawIx(program, investor, deal, trancheIndex, marketplace);
+      } else {
+        return credixMainnet.getTrancheWithdrawIx(program, investor, deal, trancheIndex, marketplace);
+      }
     },
     [connection, connectionConfig, getCredixProgram],
   );
