@@ -4,7 +4,6 @@ import { TransactionFees } from '@mean-dao/money-streaming';
 import { PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
-import { BN } from 'bn.js';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -28,6 +27,7 @@ import { VestingContractWithdrawOptions } from 'models/vesting';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
+import { BN } from '@project-serum/anchor';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

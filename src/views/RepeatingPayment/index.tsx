@@ -11,7 +11,6 @@ import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, DatePicker, Dropdown } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
-import BN from 'bn.js';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
 import { openNotification } from 'components/Notifications';
@@ -62,6 +61,7 @@ import moment from 'moment';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { customLogger } from '../..';
+import { BN } from '@project-serum/anchor';
 
 export const RepeatingPayment = (props: {
   onOpenTokenSelector: any;

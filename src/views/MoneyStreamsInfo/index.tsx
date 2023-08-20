@@ -27,7 +27,6 @@ import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/we
 import { Button, Col, Dropdown, Row, Space, Spin, Tabs } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
-import BN from 'bn.js';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { Identicon } from 'components/Identicon';
 import { openNotification } from 'components/Notifications';
@@ -84,6 +83,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Wave from 'react-wavify';
 import './style.scss';
+import { BN } from '@project-serum/anchor';
 
 export const MoneyStreamsInfoView = (props: {
   loadingStreams: boolean;
@@ -206,7 +206,7 @@ export const MoneyStreamsInfoView = (props: {
   }, [connection, streamV2ProgramAddress]);
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   /////////////////
@@ -248,13 +248,12 @@ export const MoneyStreamsInfoView = (props: {
       }
 
       const balancesMap: any = {};
-      const pk = source || publicKey;
+      const pk = source ?? publicKey;
       consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
 
       connection.getBalance(pk).then(solBalance => {
         const uiBalance = getAmountFromLamports(solBalance);
         balancesMap[NATIVE_SOL.address] = uiBalance;
-        // setNativeBalance(uiBalance);
       });
 
       fetchAccountTokens(connection, pk)
@@ -262,7 +261,7 @@ export const MoneyStreamsInfoView = (props: {
           if (accTks) {
             for (const item of accTks) {
               const address = item.parsedInfo.mint;
-              const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+              const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
               balancesMap[address] = balance;
             }
           } else {
@@ -293,7 +292,7 @@ export const MoneyStreamsInfoView = (props: {
   }, []);
 
   const isNewTreasury = useCallback((tsry: PaymentStreamingAccount | TreasuryInfo): boolean => {
-    return tsry.version >= 2 ? true : false;
+    return tsry.version >= 2;
   }, []);
 
   const getTreasuryUnallocatedBalance = useCallback(
@@ -334,7 +333,7 @@ export const MoneyStreamsInfoView = (props: {
 
       const treasuryType = isNew
         ? +(treasury as PaymentStreamingAccount).accountType
-        : +((treasury as TreasuryInfo).type as TreasuryType);
+        : +(treasury as TreasuryInfo).type;
 
       const associatedToken = isNew
         ? (treasury as PaymentStreamingAccount).mint.toBase58()
@@ -385,11 +384,11 @@ export const MoneyStreamsInfoView = (props: {
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 || [], treasurer);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 ?? [], treasurer);
+    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 ?? [], treasurer);
 
     for (const stream of updatedStreamsv1) {
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
+      const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
 
       // Get refreshed data
       const freshStream = await ms.refreshStream(stream, undefined, false);
@@ -411,7 +410,7 @@ export const MoneyStreamsInfoView = (props: {
     resume['totalAmount'] = updatedStreamsv1.length;
 
     for (const stream of updatedStreamsv2) {
-      const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
+      const isIncoming = !!stream.beneficiary?.equals(treasurer);
 
       // Get refreshed data
       const freshStream = await paymentStreaming.refreshStream(stream);
@@ -464,11 +463,11 @@ export const MoneyStreamsInfoView = (props: {
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 || [], treasurer);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 ?? [], treasurer);
+    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 ?? [], treasurer);
 
     for (const stream of updatedStreamsv1) {
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
+      const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
 
       // Get refreshed data
       const freshStream = await ms.refreshStream(stream);
@@ -490,7 +489,7 @@ export const MoneyStreamsInfoView = (props: {
     resume['totalAmount'] = updatedStreamsv1.length;
 
     for (const stream of updatedStreamsv2) {
-      const isIncoming = stream.beneficiary && stream.beneficiary.equals(treasurer) ? true : false;
+      const isIncoming = !!stream.beneficiary?.equals(treasurer);
 
       // Get refreshed data
       const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
@@ -825,9 +824,9 @@ export const MoneyStreamsInfoView = (props: {
       const ixAccounts = addFundsTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
-        data.proposalTitle || 'Add Funds',
+        data.proposalTitle ?? 'Add Funds',
         '', // description
         new Date(expirationTime * 1_000),
         operationType,
@@ -837,7 +836,7 @@ export const MoneyStreamsInfoView = (props: {
         ixData,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTxV2 = async (): Promise<boolean> => {
@@ -865,7 +864,7 @@ export const MoneyStreamsInfoView = (props: {
       consoleOut('raw amount:', params.tokenAmount, 'blue');
       consoleOut('amount.toNumber():', amount, 'blue');
       consoleOut('amount.toString():', params.tokenAmount.toString(), 'blue');
-      const contributor = params.contributor || publicKey.toBase58();
+      const contributor = params.contributor ?? publicKey.toBase58();
       const data: AddFundsParams = {
         proposalTitle: params.proposalTitle, // proposalTitle
         payer: publicKey.toBase58(), // payer
@@ -1170,7 +1169,7 @@ export const MoneyStreamsInfoView = (props: {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
         data.title === '' ? 'Create streaming account' : data.title,
         '', // description
@@ -1182,7 +1181,7 @@ export const MoneyStreamsInfoView = (props: {
         ixData,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTx = async () => {
@@ -1367,7 +1366,7 @@ export const MoneyStreamsInfoView = (props: {
         } else {
           beneficiary = typeof v2.beneficiary === 'string' ? v2.beneficiary : v2.beneficiary.toBase58();
         }
-        return beneficiary === selectedAccount.address ? true : false;
+        return beneficiary === selectedAccount.address;
       }
       return false;
     },
@@ -1378,7 +1377,7 @@ export const MoneyStreamsInfoView = (props: {
     (item: Stream | StreamInfo): string => {
       const associatedToken = getStreamAssociatedMint(item);
       const token = getTokenByMintAddress(associatedToken);
-      const decimals = token?.decimals || 9;
+      const decimals = token?.decimals ?? 9;
       const rateAmount = getRateAmountBn(item, decimals);
 
       const rate = displayAmountWithSymbol(rateAmount, associatedToken, decimals, splTokenList, true, true);
@@ -1393,10 +1392,12 @@ export const MoneyStreamsInfoView = (props: {
       let value = '';
 
       const associatedToken = getStreamAssociatedMint(item);
+      const allocAssgnd =
+        item.version < 2 ? new BN((item as StreamInfo).allocationAssigned) : (item as Stream).allocationAssigned;
 
-      if (item && item.rateIntervalInSeconds === 0 && item.allocationAssigned > 0) {
+      if (item.rateIntervalInSeconds === 0 && allocAssgnd.gtn(0)) {
         const token = getTokenByMintAddress(associatedToken);
-        const decimals = token?.decimals || 9;
+        const decimals = token?.decimals ?? 9;
 
         if (item.version < 2) {
           const allocationAssigned = new BN(item.allocationAssigned).toNumber();
@@ -1438,9 +1439,9 @@ export const MoneyStreamsInfoView = (props: {
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
     if (stream.version < 2) {
-      return v1.state === STREAM_STATE.Running ? true : false;
+      return v1.state === STREAM_STATE.Running;
     } else {
-      return v2.statusCode === STREAM_STATUS_CODE.Running ? true : false;
+      return v2.statusCode === STREAM_STATUS_CODE.Running;
     }
   }, []);
 
@@ -1541,7 +1542,7 @@ export const MoneyStreamsInfoView = (props: {
       const vB1 = b as StreamInfo;
       const vB2 = b as Stream;
 
-      const isNew = vA2.version && vA2.version >= 2 && vB2.version && vB2.version >= 2 ? true : false;
+      const isNew = !!(vA2.version && vA2.version >= 2 && vB2.version && vB2.version >= 2);
 
       const associatedTokenA = isNew ? vA2.mint.toBase58() : (vA1.associatedToken as string);
 
@@ -1587,7 +1588,7 @@ export const MoneyStreamsInfoView = (props: {
     const vB1 = b as StreamInfo;
     const vB2 = b as Stream;
 
-    const isNew = vA2.version && vA2.version >= 2 && vB2.version && vB2.version >= 2 ? true : false;
+    const isNew = !!(vA2.version && vA2.version >= 2 && vB2.version && vB2.version >= 2);
 
     const timeA = isNew
       ? new Date(vA2.estimatedDepletionDate).getTime()
@@ -1792,7 +1793,7 @@ export const MoneyStreamsInfoView = (props: {
       for (const stream of runningIncomingStreams) {
         const v1 = stream as StreamInfo;
         const v2 = stream as Stream;
-        const isNew = v2.version && v2.version >= 2 ? true : false;
+        const isNew = !!(v2.version && v2.version >= 2);
 
         const associatedToken = getStreamAssociatedMint(stream);
         const token = getTokenByMintAddress(associatedToken);
@@ -2309,7 +2310,7 @@ export const MoneyStreamsInfoView = (props: {
 
       const v1 = stream as StreamInfo;
       const v2 = stream as Stream;
-      const isNew = stream.version >= 2 ? true : false;
+      const isNew = stream.version >= 2;
 
       const associatedToken = getStreamAssociatedMint(stream);
       const token = getTokenByMintAddress(associatedToken);
@@ -2317,7 +2318,7 @@ export const MoneyStreamsInfoView = (props: {
       let img;
 
       if (associatedToken) {
-        if (token && token.logoURI) {
+        if (token?.logoURI) {
           img = (
             <img
               alt={`${token.name}`}
@@ -2348,16 +2349,16 @@ export const MoneyStreamsInfoView = (props: {
       }
 
       const title = stream ? getStreamTitle(stream, t) : 'Unknown incoming stream';
-      const subtitle = getStreamSubtitle(stream) || '0.00';
+      const subtitle = getStreamSubtitle(stream) ?? '0.00';
       const status = getStreamStatus(stream);
 
       const withdrawResume = isNew
-        ? displayAmountWithSymbol(v2.withdrawableAmount, associatedToken, token?.decimals || 9, splTokenList)
-        : getAmountWithSymbol(v1.escrowVestedAmount, associatedToken, false, splTokenList, token?.decimals || 9);
+        ? displayAmountWithSymbol(v2.withdrawableAmount, associatedToken, token?.decimals ?? 9, splTokenList)
+        : getAmountWithSymbol(v1.escrowVestedAmount, associatedToken, false, splTokenList, token?.decimals ?? 9);
 
       return (
         <div
-          key={`incoming-stream-${index}`}
+          key={`incoming-stream-${stream.id?.toString()}`}
           onClick={onSelectStream}
           className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
         >
@@ -2407,7 +2408,7 @@ export const MoneyStreamsInfoView = (props: {
 
       const v1 = stream as StreamInfo;
       const v2 = stream as Stream;
-      const isNew = stream.version >= 2 ? true : false;
+      const isNew = stream.version >= 2;
 
       const associatedToken = getStreamAssociatedMint(stream);
       const token = getTokenByMintAddress(associatedToken);
@@ -2415,7 +2416,7 @@ export const MoneyStreamsInfoView = (props: {
       let img;
 
       if (associatedToken) {
-        if (token && token.logoURI) {
+        if (token?.logoURI) {
           img = (
             <img
               alt={`${token.name}`}
@@ -2451,7 +2452,7 @@ export const MoneyStreamsInfoView = (props: {
 
       return (
         <div
-          key={`outgoing-stream-${index}}`}
+          key={`outgoing-stream-${stream.id?.toString()}}`}
           onClick={onSelectStream}
           className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
         >
@@ -2492,7 +2493,7 @@ export const MoneyStreamsInfoView = (props: {
         onSendFromStreamingAccountInfo(streamingAccount);
       };
 
-      const treasuryType = isNew ? +v2.accountType : +(v1.type as TreasuryType);
+      const treasuryType = isNew ? +v2.accountType : +v1.type;
       const type = treasuryType === 0 ? 'Open' : 'Locked';
 
       const badges = [type];
@@ -2504,7 +2505,7 @@ export const MoneyStreamsInfoView = (props: {
 
       return (
         <div
-          key={`streaming-account-${index}`}
+          key={`streaming-account-${streamingAccount.id?.toString()}`}
           onClick={onSelectedStreamingAccount}
           className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
         >
@@ -2526,6 +2527,13 @@ export const MoneyStreamsInfoView = (props: {
         </div>
       );
     });
+  };
+
+  const outgoingCount = () => {
+    if (loadingStreams) {
+      return '';
+    }
+    return ` (${outgoingAmount && outgoingAmount >= 0 && outgoingAmount})`;
   };
 
   // Tabs
@@ -2553,7 +2561,7 @@ export const MoneyStreamsInfoView = (props: {
     },
     {
       key: 'outgoing',
-      label: `Outgoing ${!loadingStreams ? `(${outgoingAmount && outgoingAmount >= 0 && outgoingAmount})` : ''}`,
+      label: `Outgoing${outgoingCount()}`,
       children: renderListOfOutgoingStreams(),
     },
   ];
@@ -2731,7 +2739,7 @@ export const MoneyStreamsInfoView = (props: {
           treasuryDetails={undefined}
           treasuryList={treasuryList}
           isVisible={isAddFundsModalVisible}
-          selectedMultisig={selectedMultisig || undefined}
+          selectedMultisig={selectedMultisig ?? undefined}
           userBalances={userBalances}
           treasuryStreams={undefined}
           associatedToken=""

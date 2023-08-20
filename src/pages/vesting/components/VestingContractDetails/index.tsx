@@ -1,7 +1,7 @@
 import { StreamTemplate, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { Progress } from 'antd';
 import BigNumber from 'bignumber.js';
-import BN from 'bn.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { Identicon } from 'components/Identicon';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';

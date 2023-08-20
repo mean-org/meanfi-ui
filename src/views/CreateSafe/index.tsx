@@ -252,7 +252,7 @@ const CreateSafeView = () => {
   //////////////
 
   const onSliderChange = (value?: number) => {
-    setMultisigThreshold(value || rangeMin || 1);
+    setMultisigThreshold(value ?? rangeMin ?? 1);
   };
 
   const onBackClick = () => {
@@ -291,7 +291,7 @@ const CreateSafeView = () => {
         };
       });
 
-      const tx = await multisigClient.createFundedMultisig(
+      const tx = await multisigClient.buildCreateFundedMultisigTransaction(
         publicKey,
         MEAN_MULTISIG_ACCOUNT_LAMPORTS,
         createParams.label,
@@ -299,7 +299,7 @@ const CreateSafeView = () => {
         owners,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTx = async (): Promise<boolean> => {
@@ -483,7 +483,7 @@ const CreateSafeView = () => {
 
   const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
     const items = arr.map(i => i.address);
-    return new Set(items).size === items.length ? true : false;
+    return new Set(items).size === items.length;
   };
 
   const isOwnersListValid = () => {
@@ -491,7 +491,8 @@ const CreateSafeView = () => {
   };
 
   const isFormValid = () => {
-    return multisigThreshold >= 1 &&
+    return !!(
+      multisigThreshold >= 1 &&
       multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
       multisigLabel &&
       multisigOwners.length >= multisigThreshold &&
@@ -499,8 +500,7 @@ const CreateSafeView = () => {
       isOwnersListValid() &&
       noDuplicateExists(multisigOwners) &&
       nativeBalance >= minRequiredBalance
-      ? true
-      : false;
+    );
   };
 
   ///////////////
@@ -647,7 +647,7 @@ const CreateSafeView = () => {
               {renderMultisigThresholdSlider()}
 
               {/* Fee info */}
-              {multisigTransactionFees.multisigFee && (
+              {multisigTransactionFees.multisigFee ? (
                 <div className="p-2 mt-2 mb-2">
                   {infoRow(
                     t('multisig.create-multisig.fee-info-label') + ' ≈',
@@ -657,7 +657,7 @@ const CreateSafeView = () => {
                     )} SOL`,
                   )}
                 </div>
-              )}
+              ) : null}
 
               {/* CTAs */}
               <div className={`two-column-form-layout${isXsDevice ? ' reverse' : ''}`}>

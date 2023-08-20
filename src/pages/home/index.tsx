@@ -298,10 +298,7 @@ export const HomeView = () => {
     return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
   }, [connection, streamV2ProgramAddress]);
 
-  const isCustomAsset = useMemo(
-    () => (selectedAsset && selectedAsset.name === 'Custom account' ? true : false),
-    [selectedAsset],
-  );
+  const isCustomAsset = useMemo(() => !!(selectedAsset && selectedAsset.name === 'Custom account'), [selectedAsset]);
 
   const selectedMultisigRef = useRef(selectedMultisig);
   useEffect(() => {
@@ -314,7 +311,7 @@ export const HomeView = () => {
   }, [selectedAccount.address]);
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   ////////////////////////////
@@ -356,7 +353,7 @@ export const HomeView = () => {
         } else {
           beneficiary = typeof v2.beneficiary === 'string' ? v2.beneficiary : v2.beneficiary.toBase58();
         }
-        return beneficiary === selectedAccount.address ? true : false;
+        return beneficiary === selectedAccount.address;
       }
       return false;
     },
@@ -484,21 +481,21 @@ export const HomeView = () => {
   };
 
   const isInspectedAccountTheConnectedWallet = useCallback(() => {
-    return publicKey && publicKey.toBase58() === selectedAccount.address ? true : false;
+    return !!(publicKey && publicKey.toBase58() === selectedAccount.address);
   }, [selectedAccount.address, publicKey]);
 
   const isSelectedAssetNativeAccount = useCallback(
     (asset?: UserTokenAccount) => {
       if (asset) {
-        return selectedAccount.address === asset.publicAddress ? true : false;
+        return selectedAccount.address === asset.publicAddress;
       }
-      return selectedAsset && selectedAccount.address === selectedAsset.publicAddress ? true : false;
+      return !!(selectedAsset && selectedAccount.address === selectedAsset.publicAddress);
     },
     [selectedAsset, selectedAccount.address],
   );
 
   const isSelectedAssetWsol = useCallback(() => {
-    return selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS ? true : false;
+    return !!(selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS);
   }, [selectedAsset]);
 
   const goToExchangeWithPresetAsset = useCallback(() => {
@@ -600,7 +597,7 @@ export const HomeView = () => {
   );
 
   const hasTransactions = useCallback(() => {
-    return transactions && transactions.length > 0 ? true : false;
+    return !!(transactions && transactions.length > 0);
   }, [transactions]);
 
   const getScanAddress = useCallback(
@@ -620,7 +617,7 @@ export const HomeView = () => {
       const acc = tokenAccountGroups.has(selectedAsset.address);
       if (acc) {
         const item = tokenAccountGroups.get(selectedAsset.address);
-        return item && item.length > 1 ? true : false;
+        return !!(item && item.length > 1);
       }
     }
     return false;
@@ -774,7 +771,7 @@ export const HomeView = () => {
     (asset: UserTokenAccount) => {
       const priceByAddress = getTokenPriceByAddress(asset.address);
       const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
-      return tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT) ? true : false;
+      return !!(tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT));
     },
     [getTokenPriceByAddress, getTokenPriceBySymbol],
   );
@@ -1009,7 +1006,7 @@ export const HomeView = () => {
           return false;
         }
         const change = getChange(accIdx, meta);
-        return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
+        return !!(isSelectedAssetNativeAccount() && change !== 0);
       });
 
       consoleOut(`${filtered.length} useful Txs`);
@@ -1021,10 +1018,10 @@ export const HomeView = () => {
   // Lets consider there are items to render if there are transactions for selected asset (NOT SOL)
   // or if there are transactions with balance changes for the selected asset (SOL)
   const hasItemsToRender = useCallback((): boolean => {
-    return (!isSelectedAssetNativeAccount() && hasTransactions()) ||
+    return !!(
+      (!isSelectedAssetNativeAccount() && hasTransactions()) ||
       (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0)
-      ? true
-      : false;
+    );
   }, [hasTransactions, isSelectedAssetNativeAccount, solAccountItems]);
 
   //////////////////////
@@ -1152,7 +1149,7 @@ export const HomeView = () => {
           selectedAsset?.symbol
         } to ${shortenAddress(params.to)} was submitted for Multisig approval.`;
 
-      const isNative = params.from === NATIVE_SOL.address ? true : false;
+      const isNative = params.from === NATIVE_SOL.address;
 
       const bf = transactionAssetFees.blockchainFee; // Blockchain fee
       const ff = transactionAssetFees.mspFlatFee; // Flat fee (protocol)
@@ -1251,7 +1248,7 @@ export const HomeView = () => {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.createTransaction(
+        const tx = await multisigClient.buildCreateProposalTransaction(
           publicKey,
           data.proposalTitle === '' ? 'Change asset ownership' : data.proposalTitle,
           '', // description
@@ -1263,7 +1260,7 @@ export const HomeView = () => {
           setAuthIx.data,
         );
 
-        return tx;
+        return tx?.transaction ?? null;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -1463,7 +1460,7 @@ export const HomeView = () => {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.createTransaction(
+        const tx = await multisigClient.buildCreateProposalTransaction(
           publicKey,
           data.title === '' ? 'Close asset' : data.title,
           '', // description
@@ -1475,7 +1472,7 @@ export const HomeView = () => {
           closeIx.data,
         );
 
-        return tx;
+        return tx?.transaction ?? null;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -1698,7 +1695,7 @@ export const HomeView = () => {
               const vB1 = b as TreasuryInfo;
               const vB2 = b as PaymentStreamingAccount;
 
-              const isNewTreasury = vA2.version && vA2.version >= 2 && vB2.version && vB2.version >= 2 ? true : false;
+              const isNewTreasury = !!(vA2.version && vA2.version >= 2 && vB2.version && vB2.version >= 2);
 
               if (isNewTreasury) {
                 return +getSdkValue(vB2.totalStreams) - +getSdkValue(vA2.totalStreams);
@@ -1729,8 +1726,9 @@ export const HomeView = () => {
       if (tsry) {
         const decimals = assToken ? assToken.decimals : 9;
         const unallocated = getUnallocatedBalance(tsry);
-        const isNewTreasury =
-          (tsry as PaymentStreamingAccount).version && (tsry as PaymentStreamingAccount).version >= 2 ? true : false;
+        const isNewTreasury = !!(
+          (tsry as PaymentStreamingAccount).version && (tsry as PaymentStreamingAccount).version >= 2
+        );
         const ub = isNewTreasury
           ? new BigNumber(toUiAmount(unallocated, decimals)).toNumber()
           : new BigNumber(unallocated.toString()).toNumber();
@@ -1754,10 +1752,9 @@ export const HomeView = () => {
     };
 
     for (const treasury of treasuryList) {
-      const isNew =
+      const isNew = !!(
         (treasury as PaymentStreamingAccount).version && (treasury as PaymentStreamingAccount).version >= 2
-          ? true
-          : false;
+      );
 
       const treasuryType = isNew
         ? +(treasury as PaymentStreamingAccount).accountType
@@ -1804,8 +1801,7 @@ export const HomeView = () => {
 
       let vestedValue = 0;
       for await (const stream of updatedStreamsv1) {
-        const isIncoming =
-          stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
+        const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
 
         // Get refreshed data
         const freshStream = await ms.refreshStream(stream);
@@ -1834,8 +1830,7 @@ export const HomeView = () => {
 
       let unvestedValue = 0;
       for await (const stream of updatedStreamsv1) {
-        const isIncoming =
-          stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58() ? true : false;
+        const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
 
         // Get refreshed data
         const freshStream = await ms.refreshStream(stream, undefined, false);
@@ -1864,7 +1859,7 @@ export const HomeView = () => {
 
       let fundsLeftValue = 0;
       for await (const stream of updatedStreamsv2) {
-        const isIncoming = stream.beneficiary?.equals(treasurer) ? true : false;
+        const isIncoming = !!stream.beneficiary?.equals(treasurer);
 
         // Get refreshed data
         const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
@@ -1897,7 +1892,7 @@ export const HomeView = () => {
 
       let withdrawableValue = 0;
       for await (const stream of updatedStreamsv2) {
-        const isIncoming = stream.beneficiary?.equals(treasurer) ? true : false;
+        const isIncoming = !!stream.beneficiary?.equals(treasurer);
 
         // Get refreshed data
         const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
@@ -2292,7 +2287,7 @@ export const HomeView = () => {
 
         const expirationTimeInSeconds = Date.now() / 1_000 + data.expires;
         const expirationDate = data.expires === 0 ? undefined : new Date(expirationTimeInSeconds * 1_000);
-        const tx = await multisigClient.createTransaction(
+        const tx = await multisigClient.buildCreateProposalTransaction(
           publicKey,
           data.title,
           data.description,
@@ -2304,7 +2299,7 @@ export const HomeView = () => {
           proposalIx.data,
         );
 
-        return tx;
+        return tx?.transaction ?? null;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -3180,7 +3175,7 @@ export const HomeView = () => {
 
   const isDeleteAssetValid = () => {
     if (selectedAsset) {
-      const isSol = selectedAsset.address === SOL_MINT.toBase58() ? true : false;
+      const isSol = selectedAsset.address === SOL_MINT.toBase58();
 
       if (!isSol && (selectedAsset.balance as number) === 0) {
         return true;
@@ -3201,7 +3196,7 @@ export const HomeView = () => {
 
   const isTransferOwnershipValid = () => {
     if (selectedAsset) {
-      const isSol = selectedAsset.address === SOL_MINT.toBase58() ? true : false;
+      const isSol = selectedAsset.address === SOL_MINT.toBase58();
 
       if (!isSol) {
         return true;

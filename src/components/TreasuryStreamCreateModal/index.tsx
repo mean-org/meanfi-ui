@@ -9,9 +9,9 @@ import {
   AccountType,
   CreateStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, Col, DatePicker, Divider, Dropdown, MenuProps, Modal, Row, Select, Tooltip } from 'antd';
-import { BN } from 'bn.js';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
 import { InputMean } from 'components/InputMean';
@@ -162,7 +162,7 @@ export const TreasuryStreamCreateModal = (props: {
   }, [connection, mspV2AddressPK]);
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const resetTransactionStatus = useCallback(() => {
@@ -245,7 +245,7 @@ export const TreasuryStreamCreateModal = (props: {
   );
 
   const hasNoStreamingAccounts = useMemo(() => {
-    return isMultisigContext && selectedMultisig && (!treasuryList || treasuryList.length === 0) ? true : false;
+    return !!(isMultisigContext && selectedMultisig && (!treasuryList || treasuryList.length === 0));
   }, [isMultisigContext, selectedMultisig, treasuryList]);
 
   /////////////////
@@ -500,7 +500,7 @@ export const TreasuryStreamCreateModal = (props: {
           selectedToken.address,
           false,
           splTokenList,
-          friendlyDisplayDecimalPlaces(parseFloat(paymentRateAmount)) || selectedToken.decimals,
+          friendlyDisplayDecimalPlaces(parseFloat(paymentRateAmount)) ?? selectedToken.decimals,
         )
       : '-';
     outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t);
@@ -560,7 +560,7 @@ export const TreasuryStreamCreateModal = (props: {
     }
 
     const getUnallocatedBalance = (details: PaymentStreamingAccount | TreasuryInfo) => {
-      const isNew = details && details.version >= 2 ? true : false;
+      const isNew = !!(details && details.version >= 2);
       let result = new BN(0);
       let balance;
       let allocationAssigned;
@@ -1053,7 +1053,7 @@ export const TreasuryStreamCreateModal = (props: {
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
         proposalTitle === '' ? 'Create Stream' : proposalTitle,
         '', // description
@@ -1069,7 +1069,7 @@ export const TreasuryStreamCreateModal = (props: {
         throw new Error("Could not create 'create stream' proposal");
       }
 
-      return tx;
+      return tx.transaction;
     };
 
     const createTx = async (): Promise<boolean> => {
@@ -1113,7 +1113,7 @@ export const TreasuryStreamCreateModal = (props: {
       startUtc.setSeconds(now.getSeconds());
       startUtc.setMilliseconds(now.getMilliseconds());
 
-      const isLockedTreasury = workingTreasuryType === AccountType.Lock ? true : false;
+      const isLockedTreasury = workingTreasuryType === AccountType.Lock;
 
       consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
 
@@ -1234,7 +1234,7 @@ export const TreasuryStreamCreateModal = (props: {
           if (sent.signature && !transactionCancelled) {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
-            const isLockedTreasury = workingTreasuryType === AccountType.Lock ? true : false;
+            const isLockedTreasury = workingTreasuryType === AccountType.Lock;
             const rateDisplay = isLockedTreasury ? getReleaseRate() : getPaymentRateAmount();
             const messageLoading = multisigAuth
               ? `Proposal to create stream to send ${rateDisplay}.`
@@ -1285,36 +1285,34 @@ export const TreasuryStreamCreateModal = (props: {
   //////////////////
 
   const isStreamingAccountSelected = (): boolean => {
-    const isMultisig = isMultisigContext && selectedMultisig ? true : false;
-    return !isMultisig || (isMultisig && selectedStreamingAccountId && isValidAddress(selectedStreamingAccountId))
-      ? true
-      : false;
+    const isMultisig = !!(isMultisigContext && selectedMultisig);
+    return !!(!isMultisig || (isMultisig && selectedStreamingAccountId && isValidAddress(selectedStreamingAccountId)));
   };
 
   const isMemoValid = (): boolean => {
-    return recipientNote && recipientNote.length <= 32 ? true : false;
+    return !!(recipientNote && recipientNote.length <= 32);
   };
 
   const isSendAmountValid = (): boolean => {
-    return publicKey &&
+    return !!(
+      publicKey &&
       selectedToken &&
       tokenAmount &&
       tokenAmount.gtn(0) &&
       ((isFeePaidByTreasurer && tokenAmount.lte(maxAllocatableAmount)) ||
         (!isFeePaidByTreasurer && tokenAmount.lte(unallocatedBalance)))
-      ? true
-      : false;
+    );
   };
 
   const isRateAmountValid = (): boolean => {
-    return (paymentRateAmount && parseFloat(paymentRateAmount) > 0) ||
+    return !!(
+      (paymentRateAmount && parseFloat(paymentRateAmount) > 0) ||
       (fromCoinAmount && parseFloat(fromCoinAmount) > 0)
-      ? true
-      : false;
+    );
   };
 
   const areSendAmountSettingsValid = (): boolean => {
-    return isSendAmountValid() && paymentStartDate ? true : false;
+    return !!(isSendAmountValid() && paymentStartDate);
   };
 
   const arePaymentSettingsValid = (): boolean => {
@@ -1397,7 +1395,7 @@ export const TreasuryStreamCreateModal = (props: {
       <div className="token-icon">
         {treasuryAssociatedToken ? (
           <>
-            {token && token.logoURI ? (
+            {token?.logoURI ? (
               <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
               <Identicon address={treasuryAssociatedToken} style={{ width: '20', display: 'inline-flex' }} />
@@ -1415,7 +1413,7 @@ export const TreasuryStreamCreateModal = (props: {
       return null;
     }
     const treasuryType = getStreamingAccountType(item);
-    const isV2Treasury = item && item.version >= 2 ? true : false;
+    const isV2Treasury = !!(item && item.version >= 2);
     const v1 = item as TreasuryInfo;
     const v2 = item as PaymentStreamingAccount;
     const name = isV2Treasury ? v2.name : v1.label;
@@ -1442,7 +1440,7 @@ export const TreasuryStreamCreateModal = (props: {
     if (!item) {
       return null;
     }
-    const isV2Treasury = item && item.version >= 2 ? true : false;
+    const isV2Treasury = !!(item && item.version >= 2);
     const v1 = item as TreasuryInfo;
     const v2 = item as PaymentStreamingAccount;
     return (
@@ -1637,7 +1635,7 @@ export const TreasuryStreamCreateModal = (props: {
                           id="payment-recipient-static-field"
                           className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
                         >
-                          {recipientAddress ? recipientAddress : t('transactions.recipient.placeholder')}
+                          {recipientAddress ?? t('transactions.recipient.placeholder')}
                         </span>
                       </span>
                     </div>
@@ -2072,7 +2070,7 @@ export const TreasuryStreamCreateModal = (props: {
                               parseFloat(fromCoinAmount),
                               friendlyDisplayDecimalPlaces(fromCoinAmount, selectedToken.decimals),
                             ),
-                            selectedTokenName: selectedToken && selectedToken.name,
+                            selectedTokenName: selectedToken?.name,
                             recipientShortenAddress: shortenAddress(recipientAddress),
                           })}
                         </div>
@@ -2234,8 +2232,7 @@ export const TreasuryStreamCreateModal = (props: {
                   </div>
 
                   <div className="mb-2">
-                    {t('treasuries.treasury-streams.add-stream-locked.panel3-text-one')}{' '}
-                    {recipientNote ? recipientNote : '--'}
+                    {t('treasuries.treasury-streams.add-stream-locked.panel3-text-one')} {recipientNote ?? '--'}
                   </div>
 
                   <Row className="mb-2">
@@ -2255,7 +2252,7 @@ export const TreasuryStreamCreateModal = (props: {
                     </Col>
                     <Col span={24} className="text-truncate">
                       <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}</strong>
-                      <span className="ml-1">{recipientAddress ? recipientAddress : '--'}</span>
+                      <span className="ml-1">{recipientAddress ?? '--'}</span>
                     </Col>
                     <Col span={24}>
                       <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}</strong>

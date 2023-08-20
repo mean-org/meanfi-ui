@@ -5,7 +5,6 @@ import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Button, Checkbox, DatePicker, Drawer, Dropdown, Modal, Spin, TimePicker } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
-import { BN } from 'bn.js';
 import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
@@ -53,6 +52,7 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { PendingProposalsComponent } from '../PendingProposalsComponent';
+import { BN } from '@project-serum/anchor';
 
 const timeFormat = 'hh:mm A';
 
@@ -341,7 +341,7 @@ export const VestingContractCreateForm = (props: {
       if (selectedToken.address === NATIVE_SOL.address) {
         return tokenBalance > getMinSolBlanceRequired() ? true : false;
       }
-      return tokenBalance > 0 ? true : false;
+      return tokenBalance > 0;
     }
     return false;
   };

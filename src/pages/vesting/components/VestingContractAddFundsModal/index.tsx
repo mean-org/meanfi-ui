@@ -2,8 +2,8 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream, StreamTemplate, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
-import BN from 'bn.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -88,7 +88,7 @@ export const VestingContractAddFundsModal = (props: {
   /////////////////
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const getTokenPrice = useCallback(
@@ -261,10 +261,10 @@ export const VestingContractAddFundsModal = (props: {
       amount: topupAmount,
       tokenAmount: tokenAmount,
       associatedToken: selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? NATIVE_SOL : selectedToken,
-      streamId: highLightableStreamId || '',
+      streamId: highLightableStreamId ?? '',
       contributor: fundFromSafeOption && selectedMultisig ? selectedMultisig.authority.toBase58() : '',
       fundFromSafe: fundFromSafeOption,
-      proposalTitle: proposalTitle || '',
+      proposalTitle: proposalTitle ?? '',
     };
     handleOk(params);
   };
@@ -327,7 +327,8 @@ export const VestingContractAddFundsModal = (props: {
   //////////////////
 
   const isValidInput = (): boolean => {
-    return publicKey &&
+    return !!(
+      publicKey &&
       (!fundFromSafeOption || (isMultisigContext && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
       selectedToken &&
       ((fundFromSafeOption && tokenBalance) ||
@@ -336,22 +337,23 @@ export const VestingContractAddFundsModal = (props: {
       tokenAmount &&
       (tokenAmount as BN).gtn(0) &&
       (tokenAmount as BN).lte(getMaxAmount())
-      ? true
-      : false;
+    );
   };
 
   const isTopupFormValid = () => {
-    return publicKey && isValidInput() ? true : false;
+    return !!(publicKey && isValidInput());
   };
 
   const isProposalTitleRequired = () => {
-    return fundFromSafeOption && isMultisigContext && selectedMultisig && !proposalTitle ? true : false;
+    return !!(fundFromSafeOption && isMultisigContext && selectedMultisig && !proposalTitle);
   };
 
   const isTokenBalanceEmpty = () => {
-    return !selectedToken || (fundFromSafeOption && !tokenBalance) || (!fundFromSafeOption && availableBalance.isZero())
-      ? true
-      : false;
+    return !!(
+      !selectedToken ||
+      (fundFromSafeOption && !tokenBalance) ||
+      (!fundFromSafeOption && availableBalance.isZero())
+    );
   };
 
   const getTransactionStartButtonLabel = () => {

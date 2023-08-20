@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
-import { useContext, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+
 import { Modal, Button } from 'antd';
 import { AppStateContext } from 'contexts/appstate';
 import {
@@ -22,13 +22,13 @@ import { useConnection } from 'contexts/connection';
 import { PublicKey } from '@solana/web3.js';
 import { consoleOut, toUsCurrency } from 'middleware/ui';
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import BN from 'bn.js';
 import { StreamTopupParams } from 'models/common-types';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { SOL_MINT } from 'middleware/ids';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { InputMean } from 'components/InputMean';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
+import { BN } from '@project-serum/anchor';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
@@ -37,7 +37,7 @@ export const StreamAddFundsModal = (props: {
   mspClient: MoneyStreaming | PaymentStreaming | undefined;
   nativeBalance: number;
   userBalances: any;
-  selectedToken?: TokenInfo | undefined;
+  selectedToken?: TokenInfo;
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
   withdrawTransactionFees: TransactionFees;
@@ -63,10 +63,10 @@ export const StreamAddFundsModal = (props: {
   const [topupAmount, setTopupAmount] = useState<string>('');
 
   // PaymentStreamingAccount related
-  const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
+  const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType>();
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
-  const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
-  const [treasuryDetails, setTreasuryDetails] = useState<PaymentStreamingAccount | TreasuryInfo | undefined>(undefined);
+  const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo>();
+  const [treasuryDetails, setTreasuryDetails] = useState<PaymentStreamingAccount | TreasuryInfo>();
   const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
@@ -74,7 +74,7 @@ export const StreamAddFundsModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const getTreasuryType = useCallback(
-    (details?: PaymentStreamingAccount | TreasuryInfo | undefined): StreamTreasuryType | undefined => {
+    (details?: PaymentStreamingAccount | TreasuryInfo): StreamTreasuryType | undefined => {
       if (details) {
         const type = getStreamingAccountType(details);
         if (type === AccountType.Lock) {
@@ -198,7 +198,7 @@ export const StreamAddFundsModal = (props: {
   }, [topupAmount, selectedToken, getTokenPriceBySymbol]);
 
   const shouldFundFromTreasury = useCallback(() => {
-    if (!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose)) {
+    if (!treasuryDetails || treasuryDetails?.autoClose) {
       return false;
     }
 
@@ -268,10 +268,10 @@ export const StreamAddFundsModal = (props: {
     }
 
     const getUnallocatedBalance = (details: PaymentStreamingAccount | TreasuryInfo) => {
-      const isNew = details && details.version >= 2 ? true : false;
+      const isNew = !!(details && details.version >= 2);
       let result = new BN(0);
-      let balance = new BN(0);
-      let allocationAssigned = new BN(0);
+      let balance: BN;
+      let allocationAssigned: BN;
 
       if (isNew) {
         balance = new BN(details.balance);
@@ -299,72 +299,116 @@ export const StreamAddFundsModal = (props: {
     }
   }, [isVisible, treasuryDetails, withdrawTransactionFees, getMaxAmount]);
 
-  const onAcceptTopup = () => {
+  const getTopupAssociatedToken = useCallback((selectedToken: TokenInfo | undefined) => {
+    if (!selectedToken) {
+      return '';
+    }
+    if (selectedToken.address === WRAPPED_SOL_MINT_ADDRESS) {
+      return SOL_MINT.toBase58();
+    }
+
+    return selectedToken.address;
+  }, []);
+
+  const onAcceptTopup = useCallback(() => {
     const params: StreamTopupParams = {
       proposalTitle,
       amount: topupAmount,
       tokenAmount,
       treasuryType: streamTreasuryType,
       fundFromTreasury: shouldFundFromTreasury(),
-      associatedToken: selectedToken
-        ? selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-          ? SOL_MINT.toBase58()
-          : selectedToken.address
-        : '',
+      associatedToken: getTopupAssociatedToken(selectedToken),
     };
     handleOk(params);
-  };
+  }, [
+    getTopupAssociatedToken,
+    handleOk,
+    proposalTitle,
+    selectedToken,
+    shouldFundFromTreasury,
+    streamTreasuryType,
+    tokenAmount,
+    topupAmount,
+  ]);
 
-  const handleAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleAmountChange = useCallback(
+    (e: any) => {
+      let newValue = e.target.value;
 
-    const decimals = selectedToken ? selectedToken.decimals : 0;
-    const splitted = newValue.toString().split('.');
-    const left = splitted[0];
+      const decimals = selectedToken ? selectedToken.decimals : 0;
+      const splitted = newValue.toString().split('.');
+      const left = splitted[0];
 
-    if (decimals && splitted[1]) {
-      if (splitted[1].length > decimals) {
-        splitted[1] = splitted[1].slice(0, -1);
+      if (decimals && splitted[1]) {
+        if (splitted[1].length > decimals) {
+          splitted[1] = splitted[1].slice(0, -1);
+          newValue = splitted.join('.');
+        }
+      } else if (left.length > 1) {
+        const number = splitted[0] - 0;
+        splitted[0] = `${number}`;
         newValue = splitted.join('.');
       }
-    } else if (left.length > 1) {
-      const number = splitted[0] - 0;
-      splitted[0] = `${number}`;
-      newValue = splitted.join('.');
-    }
 
-    if (newValue === null || newValue === undefined || newValue === '') {
-      setTopupAmount('');
-      setTokenAmount(new BN(0));
-    } else if (newValue === '.') {
-      setTopupAmount('.');
-    } else if (isValidNumber(newValue)) {
-      setTopupAmount(newValue);
-      setTokenAmount(new BN(toTokenAmount(newValue, decimals).toString()));
-    }
-  };
+      if (newValue === null || newValue === undefined || newValue === '') {
+        setTopupAmount('');
+        setTokenAmount(new BN(0));
+      } else if (newValue === '.') {
+        setTopupAmount('.');
+      } else if (isValidNumber(newValue)) {
+        setTopupAmount(newValue);
+        setTokenAmount(new BN(toTokenAmount(newValue, decimals).toString()));
+      }
+    },
+    [selectedToken],
+  );
 
   // Validation
 
-  const isValidInput = (): boolean => {
+  const isValidInput = useCallback((): boolean => {
     if (!selectedToken) {
       return false;
     }
     const userBalance = toTokenAmountBn(selectFromTokenBalance(), selectedToken.decimals);
-    return ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) ||
-      (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
+    return !!(
+      ((shouldFundFromTreasury() && unallocatedBalance.gtn(0)) || (!shouldFundFromTreasury() && userBalance.gtn(0))) &&
       (proposalTitle || !isMultisigContext) &&
-      tokenAmount &&
-      (tokenAmount as BN).gtn(0) &&
+      tokenAmount?.gtn(0) &&
       ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
         (shouldFundFromTreasury() &&
           ((isfeePayedByTreasurerOn() && tokenAmount.lte(maxAllocatableAmount)) ||
             (!isfeePayedByTreasurerOn() && tokenAmount.lte(unallocatedBalance)))))
-      ? true
-      : false;
-  };
+    );
+  }, [
+    isMultisigContext,
+    isfeePayedByTreasurerOn,
+    maxAllocatableAmount,
+    proposalTitle,
+    selectFromTokenBalance,
+    selectedToken,
+    shouldFundFromTreasury,
+    tokenAmount,
+    unallocatedBalance,
+  ]);
 
-  const getTransactionStartButtonLabel = (): string => {
+  const isNoBalanceError = useCallback(
+    (userBalance: BN) =>
+      (shouldFundFromTreasury() && unallocatedBalance.isZero()) || (!shouldFundFromTreasury() && userBalance.isZero()),
+    [shouldFundFromTreasury, unallocatedBalance],
+  );
+
+  const isNoAmountError = useCallback(() => !tokenAmount || tokenAmount.isZero(), [tokenAmount]);
+
+  const isAmountTooHighError = useCallback(
+    (userBalance: BN) =>
+      (!shouldFundFromTreasury() && tokenAmount.gt(userBalance)) ||
+      (shouldFundFromTreasury() &&
+        ((isfeePayedByTreasurerOn() && tokenAmount.gt(maxAllocatableAmount)) ||
+          (!isfeePayedByTreasurerOn() && tokenAmount.gt(unallocatedBalance)))),
+    [isfeePayedByTreasurerOn, maxAllocatableAmount, shouldFundFromTreasury, tokenAmount, unallocatedBalance],
+  );
+
+  const getTransactionStartButtonLabel = useCallback((): string => {
     if (!proposalTitle && isMultisigContext) {
       return 'Add a proposal title';
     }
@@ -372,18 +416,277 @@ export const StreamAddFundsModal = (props: {
       return t('transactions.validation.no-balance');
     }
     const userBalance = toTokenAmountBn(selectFromTokenBalance(), selectedToken.decimals);
-    return (shouldFundFromTreasury() && unallocatedBalance.isZero()) ||
-      (!shouldFundFromTreasury() && userBalance.isZero())
-      ? t('transactions.validation.no-balance')
-      : !tokenAmount || tokenAmount.isZero()
-      ? t('transactions.validation.no-amount')
-      : (!shouldFundFromTreasury() && tokenAmount.gt(userBalance)) ||
-        (shouldFundFromTreasury() &&
-          ((isfeePayedByTreasurerOn() && tokenAmount.gt(maxAllocatableAmount)) ||
-            (!isfeePayedByTreasurerOn() && tokenAmount.gt(unallocatedBalance))))
-      ? t('transactions.validation.amount-high')
-      : t('transactions.validation.valid-approve');
-  };
+    if (isNoBalanceError(userBalance)) {
+      return t('transactions.validation.no-balance');
+    } else if (isNoAmountError()) {
+      return t('transactions.validation.no-amount');
+    } else if (isAmountTooHighError(userBalance)) {
+      return t('transactions.validation.amount-high');
+    } else {
+      return t('transactions.validation.valid-approve');
+    }
+  }, [
+    isAmountTooHighError,
+    isMultisigContext,
+    isNoAmountError,
+    isNoBalanceError,
+    proposalTitle,
+    selectFromTokenBalance,
+    selectedToken,
+    t,
+  ]);
+
+  const renderPreTitleDescription = useCallback(() => {
+    if (!treasuryDetails) {
+      return null;
+    }
+    if (!treasuryDetails.autoClose) {
+      return (
+        <>
+          <h3>{t('streams.add-funds.treasury-money-stream-title')}</h3>
+          <p>{t('streams.add-funds.treasury-money-stream-description')}</p>
+        </>
+      );
+    }
+
+    return null;
+  }, [t, treasuryDetails]);
+
+  const renderProposalTitle = useCallback(() => {
+    if (isMultisigContext) {
+      return (
+        <div className="mb-3 mt-3">
+          <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+          <InputMean
+            id="proposal-title-field"
+            name="Title"
+            className={`w-100 general-text-input`}
+            onChange={(e: any) => {
+              setProposalTitle(e.target.value);
+            }}
+            placeholder="Add a proposal title (required)"
+            value={proposalTitle}
+          />
+        </div>
+      );
+    }
+    return null;
+  }, [isMultisigContext, proposalTitle, t]);
+
+  const getDecimals = useCallback(() => (selectedToken ? selectedToken.decimals : 6), [selectedToken]);
+
+  const getMaxCta = useCallback(() => {
+    if (treasuryDetails?.autoClose) {
+      return (
+        <>
+          {selectedToken && selectFromTokenBalance() ? (
+            <div
+              className="token-max simplelink"
+              onClick={() => {
+                setTopupAmount(cutNumber(selectFromTokenBalance(), selectedToken.decimals));
+                setTokenAmount(toTokenAmountBn(selectFromTokenBalance(), selectedToken.decimals));
+              }}
+            >
+              MAX
+            </div>
+          ) : null}
+        </>
+      );
+    } else {
+      return (
+        <>
+          {selectedToken && unallocatedBalance ? (
+            <div
+              className="token-max simplelink"
+              onClick={() => {
+                const decimals = getDecimals();
+                if (isfeePayedByTreasurerOn()) {
+                  const maxAmount = getMaxAmount(true);
+                  consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+                  consoleOut('maxAmount:', maxAmount.toString(), 'blue');
+                  setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
+                  setTokenAmount(new BN(maxAmount));
+                } else {
+                  const maxAmount = getMaxAmount();
+                  setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
+                  setTokenAmount(new BN(maxAmount));
+                }
+              }}
+            >
+              MAX
+            </div>
+          ) : null}
+        </>
+      );
+    }
+  }, [
+    getDecimals,
+    getMaxAmount,
+    isfeePayedByTreasurerOn,
+    selectFromTokenBalance,
+    selectedToken,
+    tokenAmount,
+    treasuryDetails?.autoClose,
+    unallocatedBalance,
+  ]);
+
+  const renderTopupAmount = useCallback(() => {
+    return (
+      <>
+        <div className="form-label">{t('streams.add-funds.amount-label')}</div>
+        <div className="well">
+          <div className="flex-fixed-left">
+            <div className="left">
+              <span className="add-on">
+                {selectedToken && (
+                  <TokenDisplay
+                    onClick={() => {}}
+                    mintAddress={selectedToken.address}
+                    name={selectedToken.name}
+                    showCaretDown={false}
+                    fullTokenInfo={selectedToken}
+                  />
+                )}
+                {getMaxCta()}
+              </span>
+            </div>
+            <div className="right">
+              <input
+                id="topup-amount-field"
+                className="general-text-input text-right"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                onChange={handleAmountChange}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                value={topupAmount}
+              />
+            </div>
+          </div>
+          <div className="flex-fixed-right">
+            <div className="left inner-label">
+              {!treasuryDetails || treasuryDetails?.autoClose ? (
+                <span>{t('add-funds.label-right')}:</span>
+              ) : (
+                <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
+              )}
+              {treasuryDetails?.autoClose ? (
+                <span>
+                  {`${
+                    selectedToken && selectFromTokenBalance()
+                      ? getAmountWithSymbol(selectFromTokenBalance(), selectedToken?.address)
+                      : '0'
+                  }`}
+                </span>
+              ) : (
+                <>
+                  {selectedToken ? (
+                    <span>
+                      {displayAmountWithSymbol(
+                        unallocatedBalance,
+                        selectedToken.address,
+                        selectedToken.decimals,
+                        splTokenList,
+                      )}
+                    </span>
+                  ) : null}
+                </>
+              )}
+            </div>
+            <div className="right inner-label">
+              {publicKey ? (
+                <>
+                  <span
+                    className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onClick={() => refreshPrices()}
+                  >
+                    ~{topupAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
+                  </span>
+                </>
+              ) : (
+                <span>~$0.00</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }, [
+    getMaxCta,
+    getTokenPrice,
+    handleAmountChange,
+    loadingPrices,
+    publicKey,
+    refreshPrices,
+    selectFromTokenBalance,
+    selectedToken,
+    splTokenList,
+    t,
+    topupAmount,
+    treasuryDetails,
+    unallocatedBalance,
+  ]);
+
+  const renderFormElements = useCallback(() => {
+    return (
+      <>
+        {renderPreTitleDescription()}
+        {/* Proposal title */}
+        {renderProposalTitle()}
+        {/* Top up amount */}
+        {renderTopupAmount()}
+        <Button
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          disabled={!isValidInput()}
+          onClick={onAcceptTopup}
+        >
+          {getTransactionStartButtonLabel()}
+        </Button>
+      </>
+    );
+  }, [
+    getTransactionStartButtonLabel,
+    isValidInput,
+    onAcceptTopup,
+    renderPreTitleDescription,
+    renderProposalTitle,
+    renderTopupAmount,
+  ]);
+
+  const renderStreamAddFundsModalContent = useCallback(() => {
+    if (loadingTreasuryDetails) {
+      return (
+        <div className="transaction-progress">
+          <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
+          <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
+        </div>
+      );
+    } else if (streamTreasuryType === 'locked') {
+      return (
+        // The user can't top-up the stream
+        <div className="transaction-progress">
+          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+          <h4 className="operation">{t('close-stream.cant-topup-message')}</h4>
+          <div className="mt-3">
+            <Button type="primary" shape="round" size="large" onClick={handleClose}>
+              {t('general.cta-close')}
+            </Button>
+          </div>
+        </div>
+      );
+    } else {
+      return renderFormElements();
+    }
+  }, [handleClose, loadingTreasuryDetails, renderFormElements, streamTreasuryType, t]);
 
   return (
     <Modal
@@ -400,180 +703,7 @@ export const StreamAddFundsModal = (props: {
       }}
       width={480}
     >
-      {loadingTreasuryDetails ? (
-        // The loading part
-        <div className="transaction-progress">
-          <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
-          <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
-        </div>
-      ) : streamTreasuryType === 'locked' ? (
-        // The user can't top-up the stream
-        <div className="transaction-progress">
-          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-          <h4 className="operation">{t('close-stream.cant-topup-message')}</h4>
-          <div className="mt-3">
-            <Button type="primary" shape="round" size="large" onClick={handleClose}>
-              {t('general.cta-close')}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {treasuryDetails && !treasuryDetails.autoClose && (
-            <>
-              <h3>{t('streams.add-funds.treasury-money-stream-title')}</h3>
-              <p>{t('streams.add-funds.treasury-money-stream-description')}</p>
-            </>
-          )}
-          {/* Proposal title */}
-          {isMultisigContext && (
-            <div className="mb-3 mt-3">
-              <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
-              <InputMean
-                id="proposal-title-field"
-                name="Title"
-                className={`w-100 general-text-input`}
-                onChange={(e: any) => {
-                  setProposalTitle(e.target.value);
-                }}
-                placeholder="Add a proposal title (required)"
-                value={proposalTitle}
-              />
-            </div>
-          )}
-          {/* Top up amount */}
-          <div className="form-label">{t('streams.add-funds.amount-label')}</div>
-          <div className="well">
-            <div className="flex-fixed-left">
-              <div className="left">
-                <span className="add-on">
-                  {selectedToken && (
-                    <TokenDisplay
-                      onClick={() => {}}
-                      mintAddress={selectedToken.address}
-                      name={selectedToken.name}
-                      showCaretDown={false}
-                      fullTokenInfo={selectedToken}
-                    />
-                  )}
-                  {treasuryDetails && treasuryDetails.autoClose ? (
-                    <>
-                      {selectedToken && selectFromTokenBalance() ? (
-                        <div
-                          className="token-max simplelink"
-                          onClick={() => {
-                            setTopupAmount(cutNumber(selectFromTokenBalance(), selectedToken.decimals));
-                            setTokenAmount(toTokenAmountBn(selectFromTokenBalance(), selectedToken.decimals));
-                          }}
-                        >
-                          MAX
-                        </div>
-                      ) : null}
-                    </>
-                  ) : (
-                    <>
-                      {selectedToken && unallocatedBalance ? (
-                        <div
-                          className="token-max simplelink"
-                          onClick={() => {
-                            const decimals = selectedToken ? selectedToken.decimals : 6;
-                            if (isfeePayedByTreasurerOn()) {
-                              const maxAmount = getMaxAmount(true);
-                              consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
-                              consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                              setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
-                              setTokenAmount(new BN(maxAmount));
-                            } else {
-                              const maxAmount = getMaxAmount();
-                              setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
-                              setTokenAmount(new BN(maxAmount));
-                            }
-                          }}
-                        >
-                          MAX
-                        </div>
-                      ) : null}
-                    </>
-                  )}
-                </span>
-              </div>
-              <div className="right">
-                <input
-                  id="topup-amount-field"
-                  className="general-text-input text-right"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  type="text"
-                  onChange={handleAmountChange}
-                  pattern="^[0-9]*[.,]?[0-9]*$"
-                  placeholder="0.0"
-                  minLength={1}
-                  maxLength={79}
-                  spellCheck="false"
-                  value={topupAmount}
-                />
-              </div>
-            </div>
-            <div className="flex-fixed-right">
-              <div className="left inner-label">
-                {!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose) ? (
-                  <span>{t('add-funds.label-right')}:</span>
-                ) : (
-                  <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
-                )}
-                {treasuryDetails && treasuryDetails.autoClose ? (
-                  <span>
-                    {`${
-                      selectedToken && selectFromTokenBalance()
-                        ? getAmountWithSymbol(selectFromTokenBalance(), selectedToken?.address)
-                        : '0'
-                    }`}
-                  </span>
-                ) : (
-                  <>
-                    {selectedToken ? (
-                      <span>
-                        {displayAmountWithSymbol(
-                          unallocatedBalance,
-                          selectedToken.address,
-                          selectedToken.decimals,
-                          splTokenList,
-                        )}
-                      </span>
-                    ) : null}
-                  </>
-                )}
-              </div>
-              <div className="right inner-label">
-                {publicKey ? (
-                  <>
-                    <span
-                      className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                      onClick={() => refreshPrices()}
-                    >
-                      ~{topupAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
-                    </span>
-                  </>
-                ) : (
-                  <span>~$0.00</span>
-                )}
-              </div>
-            </div>
-          </div>
-          <Button
-            className="main-cta"
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            disabled={!isValidInput()}
-            onClick={onAcceptTopup}
-          >
-            {getTransactionStartButtonLabel()}
-          </Button>
-        </>
-      )}
+      {renderStreamAddFundsModalContent()}
     </Modal>
   );
 };

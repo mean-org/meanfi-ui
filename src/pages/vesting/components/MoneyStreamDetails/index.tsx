@@ -1,7 +1,6 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { Stream, StreamActivity, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
 import { Col, Row, Spin, Tabs } from 'antd';
-import BN from 'bn.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { Identicon } from 'components/Identicon';
 import {
@@ -26,6 +25,8 @@ import { TokenInfo } from 'models/SolanaTokenInfo';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
+import { BN } from '@project-serum/anchor';
+import getStreamStartDate from 'components/common/getStreamStartDate';
 
 export type StreamDetailTab = 'details' | 'activity';
 
@@ -56,17 +57,6 @@ export const MoneyStreamDetails = (props: {
 
   const onTabChanged = useCallback((tab: string) => {
     setTabOption(tab as StreamDetailTab);
-  }, []);
-
-  const isStartDateFuture = useCallback((date: string): boolean => {
-    const now = new Date().toUTCString();
-    const nowUtc = new Date(now);
-    const comparedDate = new Date(date);
-    const dateWithoutOffset = new Date(comparedDate.getTime() - comparedDate.getTimezoneOffset() * 60000);
-    if (dateWithoutOffset > nowUtc) {
-      return true;
-    }
-    return false;
   }, []);
 
   const getStreamTypeIcon = useCallback(() => {
@@ -496,19 +486,14 @@ export const MoneyStreamDetails = (props: {
     t,
   ]);
 
-  const getStartDateLabel = useCallback(
-    (stream: Stream) => {
-      return isStartDateFuture(stream.startUtc) ? 'Starting on:' : 'Started on:';
-    },
-    [isStartDateFuture],
-  );
+  const streamStartDate = useMemo(() => getStreamStartDate(stream), [stream]);
 
   // Tab details
   const detailsData = useMemo(
     () => [
       {
-        label: stream ? getStartDateLabel(stream) : '--',
-        value: stream ? getReadableDate(stream.startUtc, true) : '--',
+        label: streamStartDate.label,
+        value: streamStartDate.value,
       },
       {
         label: isInboundStream && 'Receiving from:',
@@ -560,13 +545,13 @@ export const MoneyStreamDetails = (props: {
     [
       stream,
       isInboundStream,
+      streamStartDate,
       renderFundsSendToRecipient,
       renderFundsLeftInAccount,
       renderReservedAllocation,
       renderCliffVestAmount,
       renderReceivingFrom,
       renderPaymentRate,
-      getStartDateLabel,
       renderSendingTo,
       renderStreamId,
     ],
@@ -617,7 +602,7 @@ export const MoneyStreamDetails = (props: {
         <div className="icon-cell">
           {getStreamTypeIcon()}
           <div className="token-icon">
-            {selectedToken && selectedToken.logoURI ? (
+            {selectedToken?.logoURI ? (
               <img
                 alt={`${selectedToken.name}`}
                 width={36}
