@@ -19,11 +19,14 @@ import {
   TransferStreamTransactionAccounts,
   WithdrawFromStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Dropdown, Modal, Space, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
-import BN from 'bn.js';
+import getStreamWithdrawableAmount from 'components/common/getStreamWithdrawableAmount';
+import getV1Beneficiary from 'components/common/getV1Beneficiary';
+import getV2Beneficiary from 'components/common/getV2Beneficiary';
 import { MoneyStreamDetails } from 'components/MoneyStreamDetails';
 import { openNotification } from 'components/Notifications';
 import { StreamTransferOpenModal } from 'components/StreamTransferOpenModal';
@@ -70,7 +73,7 @@ export const MoneyStreamsIncomingView = (props: {
   loadingStreams: boolean;
   multisigAccounts: MultisigInfo[] | undefined;
   onSendFromIncomingStreamDetails?: any;
-  streamSelected: Stream | StreamInfo | undefined;
+  streamSelected?: Stream | StreamInfo;
 }) => {
   const { loadingStreams, multisigAccounts, onSendFromIncomingStreamDetails, streamSelected } = props;
 
@@ -136,7 +139,7 @@ export const MoneyStreamsIncomingView = (props: {
   }, [endpoint, publicKey, connection, multisigAddressPK]);
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   /////////////////
@@ -145,7 +148,7 @@ export const MoneyStreamsIncomingView = (props: {
 
   const isNewStream = useCallback(() => {
     if (streamSelected) {
-      return streamSelected.version >= 2 ? true : false;
+      return streamSelected.version >= 2;
     }
 
     return false;
@@ -227,20 +230,20 @@ export const MoneyStreamsIncomingView = (props: {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
-  const isSuccess = (): boolean => {
+  const isSuccess = useCallback((): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
-  };
+  }, [transactionStatus.currentOperation]);
 
-  const isError = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+  const isError = useCallback((): boolean => {
+    return !!(
+      transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
       transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
       transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
       transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
       transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ||
       transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled
-      ? true
-      : false;
-  };
+    );
+  }, [transactionStatus.currentOperation]);
 
   // Transfer stream modal
   const [isTransferStreamModalVisible, setIsTransferStreamModalVisibility] = useState(false);
@@ -264,11 +267,11 @@ export const MoneyStreamsIncomingView = (props: {
     onExecuteTransferStreamTransaction(dataStream);
   };
 
-  const onTransferStreamTransactionFinished = () => {
+  const onTransferStreamTransactionFinished = useCallback(() => {
     setIsBusy(false);
     hideTransferStreamTransactionModal();
     resetTransactionStatus();
-  };
+  }, [hideTransferStreamTransactionModal, resetTransactionStatus]);
 
   const onAfterTransferStreamTransactionModalClosed = () => {
     if (isBusy) {
@@ -334,7 +337,7 @@ export const MoneyStreamsIncomingView = (props: {
         const ixAccounts = transaction.instructions[0].keys;
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.createTransaction(
+        const tx = await multisigClient.buildCreateProposalTransaction(
           publicKey,
           dataStream.title === '' ? 'Transfer stream ownership' : dataStream.title,
           '', // description
@@ -346,7 +349,7 @@ export const MoneyStreamsIncomingView = (props: {
           ixData,
         );
 
-        return tx;
+        return tx?.transaction ?? null;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -770,7 +773,7 @@ export const MoneyStreamsIncomingView = (props: {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
         withdrawData.title === '' ? 'Withdraw stream funds' : (withdrawData.title as string),
         '', // description
@@ -782,7 +785,7 @@ export const MoneyStreamsIncomingView = (props: {
         ixData,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTxV2 = async (): Promise<boolean> => {
@@ -983,11 +986,11 @@ export const MoneyStreamsIncomingView = (props: {
   const showWithdrawFundsTransactionModal = useCallback(() => setWithdrawFundsTransactionModalVisibility(true), []);
   const hideWithdrawFundsTransactionModal = useCallback(() => setWithdrawFundsTransactionModalVisibility(false), []);
 
-  const onWithdrawFundsTransactionFinished = () => {
+  const onWithdrawFundsTransactionFinished = useCallback(() => {
     setSuccessStatus();
     hideWithdrawFundsTransactionModal();
     refreshTokenBalance();
-  };
+  }, [hideWithdrawFundsTransactionModal, refreshTokenBalance, setSuccessStatus]);
 
   const hideDetailsHandler = () => {
     onSendFromIncomingStreamDetails();
@@ -1051,7 +1054,7 @@ export const MoneyStreamsIncomingView = (props: {
 
   const isScheduledOtp = useCallback((): boolean => {
     if (streamSelected) {
-      const isNew = streamSelected.version >= 2 ? true : false;
+      const isNew = streamSelected.version >= 2;
       if (isNew) {
         if ((streamSelected.rateAmount as BN).gtn(0)) {
           return false;
@@ -1071,13 +1074,6 @@ export const MoneyStreamsIncomingView = (props: {
     return false;
   }, [streamSelected]);
 
-  const getStreamWithdrawableAmount = useCallback((stream: Stream | StreamInfo) => {
-    const v1 = stream as StreamInfo;
-    const v2 = stream as Stream;
-    const isNew = stream.version >= 2 ? true : false;
-    return isNew ? v2.withdrawableAmount : new BN(v1.escrowVestedAmount);
-  }, []);
-
   const canWithdraw = useCallback(
     (stream: StreamInfo | Stream | undefined) => {
       if (!stream) {
@@ -1089,19 +1085,12 @@ export const MoneyStreamsIncomingView = (props: {
 
       let beneficiary = '';
       if (v1.version < 2) {
-        beneficiary = v1.beneficiaryAddress
-          ? typeof v1.beneficiaryAddress === 'string'
-            ? (v1.beneficiaryAddress as string)
-            : (v1.beneficiaryAddress as PublicKey).toBase58()
-          : '';
+        beneficiary = getV1Beneficiary(v1);
       } else {
-        beneficiary = v2.beneficiary
-          ? typeof v2.beneficiary === 'string'
-            ? (v2.beneficiary as string)
-            : (v2.beneficiary as PublicKey).toBase58()
-          : '';
+        beneficiary = getV2Beneficiary(v2);
       }
-      return beneficiary === selectedAccount.address ? true : false;
+
+      return beneficiary === selectedAccount.address;
     },
     [selectedAccount.address],
   );
@@ -1129,7 +1118,7 @@ export const MoneyStreamsIncomingView = (props: {
       } else {
         if (v1.state === STREAM_STATE.Running) {
           ms.refreshStream(streamSelected as StreamInfo).then(detail => {
-            setStreamDetail(detail as StreamInfo);
+            setStreamDetail(detail);
           });
         }
       }
@@ -1226,9 +1215,7 @@ export const MoneyStreamsIncomingView = (props: {
       key: '02-explorer-link',
       label: (
         <a
-          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-            streamSelected && streamSelected.id
-          }${getSolanaExplorerClusterParam()}`}
+          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected?.id}${getSolanaExplorerClusterParam()}`}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -1279,15 +1266,186 @@ export const MoneyStreamsIncomingView = (props: {
         </Dropdown>
       </div>
     );
+  }, [isBusy, streamSelected, hasStreamPendingTx, renderDropdownMenu, showWithdrawModal, isScheduledOtp, canWithdraw]);
+
+  const renderWithdrawFundsTxExecModalError = useCallback(() => {
+    if (transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled) {
+      return (
+        <>
+          <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
+          <h4 className="mb-4">
+            Money Streams are getting a makeover, and we are making them more awesome! Stand by, you'll be able to
+            withdraw shortly.
+          </h4>
+        </>
+      );
+    }
+    if (transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure) {
+      return (
+        <>
+          <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+          <h4 className="mb-4">
+            {t('transactions.status.tx-start-failure', {
+              accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
+              feeAmount: getAmountWithSymbol(
+                transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                SOL_MINT.toBase58(),
+              ),
+            })}
+          </h4>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+        <h4 className="font-bold mb-1 text-uppercase">
+          {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+        </h4>
+      </>
+    );
+  }, [nativeBalance, t, transactionFees.blockchainFee, transactionFees.mspFlatFee, transactionStatus.currentOperation]);
+
+  const renderWithdrawFundsTxExecModalContent = useCallback(() => {
+    if (isBusy) {
+      return (
+        <>
+          <Spin indicator={bigLoadingIcon} className="icon" />
+          <h4 className="font-bold mb-1">
+            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+          </h4>
+          <h5 className="operation">
+            {t('transactions.status.tx-withdraw-operation')} {withdrawFundsAmount ? withdrawFundsAmount.inputAmount : 0}{' '}
+            {workingToken?.symbol}
+          </h5>
+          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+            <div className="indication">{t('transactions.status.instructions')}</div>
+          )}
+        </>
+      );
+    }
+    if (isSuccess()) {
+      return (
+        <>
+          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+          <h4 className="font-bold mb-1 text-uppercase">
+            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+          </h4>
+          <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
+          <Button block type="primary" shape="round" size="middle" onClick={onWithdrawFundsTransactionFinished}>
+            {t('general.cta-close')}
+          </Button>
+        </>
+      );
+    }
+    if (isError()) {
+      return (
+        <>
+          {renderWithdrawFundsTxExecModalError()}
+          <Button block type="primary" shape="round" size="middle" onClick={hideWithdrawFundsTransactionModal}>
+            {t('general.cta-close')}
+          </Button>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Spin indicator={bigLoadingIcon} className="icon" />
+        <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+      </>
+    );
   }, [
+    hideWithdrawFundsTransactionModal,
     isBusy,
-    streamSelected,
-    getStreamWithdrawableAmount,
-    hasStreamPendingTx,
-    renderDropdownMenu,
-    showWithdrawModal,
-    isScheduledOtp,
-    canWithdraw,
+    isError,
+    isSuccess,
+    onWithdrawFundsTransactionFinished,
+    renderWithdrawFundsTxExecModalError,
+    t,
+    transactionStatus.currentOperation,
+    withdrawFundsAmount,
+    workingToken?.symbol,
+  ]);
+
+  const renderTransferStreamTxExecModalContent = useCallback(() => {
+    if (isBusy) {
+      return (
+        <>
+          <Spin indicator={bigLoadingIcon} className="icon" />
+          <h4 className="font-bold mb-1">
+            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+          </h4>
+          <h5 className="operation">
+            {t('transactions.status.tx-transfer-stream', {
+              newAddress: shortenAddress(lastStreamTransferAddress, 8),
+            })}
+          </h5>
+          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+            <div className="indication">{t('transactions.status.instructions')}</div>
+          )}
+        </>
+      );
+    }
+    if (isSuccess()) {
+      return (
+        <>
+          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+          <h4 className="font-bold mb-1 text-uppercase">
+            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+          </h4>
+          <p className="operation">{t('transactions.status.tx-transfer-stream-success')}</p>
+          <Button block type="primary" shape="round" size="middle" onClick={onTransferStreamTransactionFinished}>
+            {t('general.cta-close')}
+          </Button>
+        </>
+      );
+    }
+    if (isError()) {
+      return (
+        <>
+          <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+          {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+            <h4 className="mb-4">
+              {t('transactions.status.tx-start-failure', {
+                accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
+                feeAmount: getAmountWithSymbol(
+                  transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                  SOL_MINT.toBase58(),
+                ),
+              })}
+            </h4>
+          ) : (
+            <h4 className="font-bold mb-1 text-uppercase">
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+            </h4>
+          )}
+          <Button block type="primary" shape="round" size="middle" onClick={hideTransferStreamTransactionModal}>
+            {t('general.cta-close')}
+          </Button>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Spin indicator={bigLoadingIcon} className="icon" />
+        <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+      </>
+    );
+  }, [
+    hideTransferStreamTransactionModal,
+    isBusy,
+    isError,
+    isSuccess,
+    lastStreamTransferAddress,
+    nativeBalance,
+    onTransferStreamTransactionFinished,
+    t,
+    transactionFees.blockchainFee,
+    transactionFees.mspFlatFee,
+    transactionStatus.currentOperation,
   ]);
 
   return (
@@ -1335,74 +1493,7 @@ export const MoneyStreamsIncomingView = (props: {
         width={330}
         footer={null}
       >
-        <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">
-                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-              </h4>
-              <h5 className="operation">
-                {t('transactions.status.tx-withdraw-operation')}{' '}
-                {withdrawFundsAmount ? withdrawFundsAmount.inputAmount : 0} {workingToken?.symbol}
-              </h5>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
-              )}
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-              </h4>
-              <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
-              <Button block type="primary" shape="round" size="middle" onClick={onWithdrawFundsTransactionFinished}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              {transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled ? (
-                <>
-                  <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
-                  <h4 className="mb-4">
-                    Money Streams are getting a makeover, and we are making them more awesome! Stand by, you'll be able
-                    to withdraw shortly.
-                  </h4>
-                </>
-              ) : transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <>
-                  <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-                  <h4 className="mb-4">
-                    {t('transactions.status.tx-start-failure', {
-                      accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
-                      feeAmount: getAmountWithSymbol(
-                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                        SOL_MINT.toBase58(),
-                      ),
-                    })}
-                  </h4>
-                </>
-              ) : (
-                <>
-                  <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-                  <h4 className="font-bold mb-1 text-uppercase">
-                    {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-                  </h4>
-                </>
-              )}
-              <Button block type="primary" shape="round" size="middle" onClick={hideWithdrawFundsTransactionModal}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-            </>
-          )}
-        </div>
+        <div className="transaction-progress">{renderWithdrawFundsTxExecModalContent()}</div>
       </Modal>
 
       {/* Transfer stream transaction execution modal */}
@@ -1416,62 +1507,7 @@ export const MoneyStreamsIncomingView = (props: {
         width={330}
         footer={null}
       >
-        <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">
-                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-              </h4>
-              <h5 className="operation">
-                {t('transactions.status.tx-transfer-stream', {
-                  newAddress: shortenAddress(lastStreamTransferAddress, 8),
-                })}
-              </h5>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
-              )}
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-              </h4>
-              <p className="operation">{t('transactions.status.tx-transfer-stream-success')}</p>
-              <Button block type="primary" shape="round" size="middle" onClick={onTransferStreamTransactionFinished}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
-                    feeAmount: getAmountWithSymbol(
-                      transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                      SOL_MINT.toBase58(),
-                    ),
-                  })}
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-1 text-uppercase">
-                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-                </h4>
-              )}
-              <Button block type="primary" shape="round" size="middle" onClick={hideTransferStreamTransactionModal}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-            </>
-          )}
-        </div>
+        <div className="transaction-progress">{renderTransferStreamTxExecModalContent()}</div>
       </Modal>
     </>
   );

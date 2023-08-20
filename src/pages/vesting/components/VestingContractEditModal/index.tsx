@@ -24,9 +24,9 @@ import moment from 'moment';
 import { LoadingOutlined } from '@ant-design/icons';
 import { isError } from 'middleware/transactions';
 import { VestingContractEditOptions } from 'models/vesting';
-import BN from 'bn.js';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { InputMean } from 'components/InputMean';
+import { BN } from '@project-serum/anchor';
 
 const timeFormat = 'hh:mm A';
 

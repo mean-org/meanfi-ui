@@ -6,7 +6,6 @@ import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey
 import { Button, Divider, Modal, Space, Tooltip } from 'antd';
 import notification, { IconType } from 'antd/lib/notification';
 import BigNumber from 'bignumber.js';
-import BN from 'bn.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { MultisigOwnersView } from 'components/MultisigOwnersView';
@@ -65,6 +64,7 @@ import ReactJson from 'react-json-view';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
 import './style.scss';
+import { BN } from '@project-serum/anchor';
 
 type TabOption =
   | 'first-tab'
@@ -203,7 +203,7 @@ export const PlaygroundView = () => {
         return;
       }
 
-      const scanAddress = address || targetAddress;
+      const scanAddress = address ?? targetAddress;
       if (!isValidAddress(scanAddress)) {
         return;
       }
@@ -541,7 +541,7 @@ export const PlaygroundView = () => {
         filters: [{ memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, { dataSize: ACCOUNT_LAYOUT.span }],
       });
 
-      if (!accountInfos || !accountInfos.length) {
+      if (!accountInfos?.length) {
         return [];
       }
 
@@ -669,7 +669,7 @@ export const PlaygroundView = () => {
 
   // Reset results when the filter is cleared
   useEffect(() => {
-    if (splTokenList && splTokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+    if (splTokenList?.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
     }
   }, [splTokenList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
@@ -811,35 +811,35 @@ export const PlaygroundView = () => {
   }, []);
 
   const isProgram = useMemo(() => {
-    return parsedAccountInfo &&
+    return !!(
+      parsedAccountInfo &&
       parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
       parsedAccountInfo.data.parsed.type === 'program'
-      ? true
-      : false;
+    );
   }, [parsedAccountInfo]);
 
   const isProgramData = useMemo(() => {
-    return parsedAccountInfo &&
+    return !!(
+      parsedAccountInfo &&
       parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
       parsedAccountInfo.data.parsed.type === 'programData'
-      ? true
-      : false;
+    );
   }, [parsedAccountInfo]);
 
   const isTokenAccount = useMemo(() => {
-    return parsedAccountInfo &&
+    return !!(
+      parsedAccountInfo &&
       parsedAccountInfo.data.program === 'spl-token' &&
       parsedAccountInfo.data.parsed.type === 'account'
-      ? true
-      : false;
+    );
   }, [parsedAccountInfo]);
 
   const isTokenMint = useMemo(() => {
-    return parsedAccountInfo &&
+    return !!(
+      parsedAccountInfo &&
       parsedAccountInfo.data.program === 'spl-token' &&
       parsedAccountInfo.data.parsed.type === 'mint'
-      ? true
-      : false;
+    );
   }, [parsedAccountInfo]);
 
   const selectedTokenDecimals = useMemo(() => {
@@ -1424,7 +1424,7 @@ export const PlaygroundView = () => {
             <>
               <div className="well-group text-monospace flex-row two-column-form-layout flex-wrap">
                 {infoSafeData.map((info, index: number) => {
-                  const isEven = index % 2 === 0 ? true : false;
+                  const isEven = index % 2 === 0;
                   return (
                     <div key={`${info.name}`} className={isEven ? 'left' : 'right'}>
                       <div className="info-label">{info.name}</div>

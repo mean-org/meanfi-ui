@@ -1,7 +1,6 @@
 import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
-import BN from 'bn.js';
 import { ResumeItem } from 'components/ResumeItem';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
@@ -14,6 +13,7 @@ import { getAmountFromLamports } from 'middleware/utils';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SafeInfo } from '../SafeInfo';
+import { BN } from '@project-serum/anchor';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
@@ -58,7 +58,7 @@ export const SafeMeanInfo = (props: {
         filters: [{ memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, { dataSize: ACCOUNT_LAYOUT.span }],
       });
 
-      if (!accountInfos || !accountInfos.length) {
+      if (!accountInfos?.length) {
         return [];
       }
 
@@ -171,7 +171,7 @@ export const SafeMeanInfo = (props: {
   }, [multisigTxs]);
 
   useEffect(() => {
-    const loading = selectedMultisig ? true : false;
+    const loading = !!selectedMultisig;
     const timeout = setTimeout(() => {
       setLoadingAssets(loading);
     });
@@ -202,7 +202,7 @@ export const SafeMeanInfo = (props: {
             const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : '';
             return (
               <div
-                key={index}
+                key={proposal.id.toBase58()}
                 onClick={onSelectProposal}
                 className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
               >

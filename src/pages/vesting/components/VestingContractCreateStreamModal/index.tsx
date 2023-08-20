@@ -1,8 +1,8 @@
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { StreamTemplate, TransactionFees, PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { Button, Checkbox, Col, Modal, Row } from 'antd';
-import BN from 'bn.js';
 import { InfoIcon } from 'components/InfoIcon';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';

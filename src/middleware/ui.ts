@@ -1,6 +1,5 @@
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import BigNumber from 'bignumber.js';
-import BN from 'bn.js';
 import bs58 from 'bs58';
 import dateFormat from 'dateformat';
 import { customLogger } from 'index';
@@ -16,6 +15,7 @@ import { TransactionStatusInfo } from '../contexts/appstate';
 import { environment } from '../environments/environment';
 import { TimeData } from '../models/common-types';
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from '../models/enums';
+import { BN } from '@project-serum/anchor';
 
 export const isDev = (): boolean => {
   return environment === 'development';
@@ -30,7 +30,7 @@ const isLocalhost = Boolean(
     // [::1] is the IPv6 localhost address.
     window.location.hostname === '[::1]' ||
     // 127.0.0.0/8 are considered localhost for IPv4.
-    window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/),
+    RegExp(/^127(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/).exec(window.location.hostname),
 );
 
 export const isLocal = (): boolean => {
@@ -813,7 +813,7 @@ export const getPercentualTsBetweenTwoDates = (
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {
   let fee = 0;
   const inputAmount = amount ? parseFloat(amount) : 0;
-  if (fees && fees.mspPercentFee) {
+  if (fees?.mspPercentFee) {
     fee = percentage(fees.mspPercentFee, inputAmount);
   }
   return fee;

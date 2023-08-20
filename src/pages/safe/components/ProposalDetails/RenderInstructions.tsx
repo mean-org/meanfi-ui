@@ -1,6 +1,6 @@
+import { BN } from '@project-serum/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { Col, Row, Tooltip } from 'antd';
-import BN from 'bn.js';
 import { openNotification } from 'components/Notifications';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
@@ -53,9 +53,7 @@ export const RenderInstructions = (props: {
       case 'RateIntervalInSeconds':
         return `${formatThousands(item.value)}s (${getDurationUnitFromSeconds(+item.value)})`;
       case 'StartUtc':
-        return moment(+item.value)
-          .format('LLL')
-          .toLocaleString();
+        return moment(+item.value).format('LLL').toLocaleString();
       case 'Amount':
       case 'RateAmountUnits':
       case 'AllocationAssignedUnits':
@@ -73,7 +71,7 @@ export const RenderInstructions = (props: {
   };
 
   useEffect(() => {
-    if (!proposalIxInfo || !proposalIxInfo.accounts || proposalIxInfo.accounts.length === 0) {
+    if (!proposalIxInfo?.accounts || proposalIxInfo.accounts.length === 0) {
       return undefined;
     }
     const idx = proposalIxInfo.accounts.findIndex(p => p.label === 'Associated Token');

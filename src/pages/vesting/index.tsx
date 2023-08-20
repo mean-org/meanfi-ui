@@ -32,7 +32,6 @@ import { Alert, Button, Dropdown, notification, Space, Tabs, Tooltip } from 'ant
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
 import BigNumber from 'bignumber.js';
-import { BN } from 'bn.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { AppSocialLinks } from 'components/AppSocialLinks';
 import { openNotification } from 'components/Notifications';
@@ -125,6 +124,8 @@ import { VestingContractSolBalanceModal } from './components/VestingContractSolB
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
 import './style.scss';
+import { objectToJson } from 'services/logger';
+import { BN } from '@project-serum/anchor';
 
 export type VestingAccountDetailTab = 'overview' | 'streams' | 'activity' | undefined;
 let isWorkflowLocked = false;
@@ -250,7 +251,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   }, [connection, mspV2AddressPK, publicKey]);
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const selectedVestingContractRef = useRef(selectedVestingContract);
@@ -266,7 +267,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     if (!selectedVestingContract) {
       return false;
     }
-    return associatedTokenBalance.eq(new BN(selectedVestingContract.balance)) ? false : true;
+    return !associatedTokenBalance.eq(new BN(selectedVestingContract.balance));
   };
 
   const resetTransactionStatus = useCallback(() => {
@@ -360,7 +361,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const notifyMultisigVestingContractActionFollowup = useCallback(
     async (message1: string, message2: string, item: TxConfirmationInfo) => {
-      if (!item || !item.extras || !item.extras.multisigId) {
+      if (!item?.extras?.multisigId) {
         isWorkflowLocked = false;
         return;
       }
@@ -609,8 +610,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   );
 
   const canPerformAnyAction = useCallback(() => {
-    const itsMe = selectedAccount && publicKey && publicKey.toBase58() === selectedAccount.address ? true : false;
-    return itsMe || isMultisigContext ? true : false;
+    const itsMe = !!(selectedAccount && publicKey && publicKey.toBase58() === selectedAccount.address);
+    return !!(itsMe || isMultisigContext);
   }, [selectedAccount, isMultisigContext, publicKey]);
 
   const navigateToContracts = useCallback(() => {
@@ -656,9 +657,10 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const now = new Date();
       const startDate = new Date(streamTemplate.startUtc);
       const finishDate = getContractFinishDate();
-      const hastStarted = now > startDate ? true : false;
-      const hasFinished = finishDate && finishDate > now ? true : false;
-      return hastStarted && !hasFinished ? true : false;
+      const hastStarted = now > startDate;
+      const hasFinished = !!(finishDate && finishDate > now);
+
+      return !!(hastStarted && !hasFinished);
     }
     return false;
   }, [getContractFinishDate, streamTemplate]);
@@ -939,7 +941,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           return null;
         }
 
-        const solFeePayedByTreasury = data.multisig ? true : false;
+        const solFeePayedByTreasury = !!data.multisig;
 
         if (!data.multisig) {
           consoleOut('received data:', data, 'blue');
@@ -998,7 +1000,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
         const titleProposal = createOptions.vestingContractTitle;
 
-        const tx = await multisigClient.createTransaction(
+        const tx = await multisigClient.buildCreateProposalTransaction(
           publicKey,
           titleProposal === '' ? 'Create Vesting Contract' : titleProposal,
           '', // description
@@ -1014,7 +1016,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           return null;
         }
 
-        createVestingContractTx.transaction = tx;
+        createVestingContractTx.transaction = tx.transaction;
         return createVestingContractTx;
       };
 
@@ -1343,7 +1345,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
         data.proposalTitle || 'Close Vesting Contract',
         '', // description
@@ -1355,7 +1357,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         ixData,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTx = async (): Promise<boolean> => {
@@ -1653,9 +1655,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const ixAccounts = addFundsTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
-        data.proposalTitle || 'Add Funds',
+        data.proposalTitle ?? 'Add Funds',
         '', // description
         new Date(expirationTime * 1_000),
         operationType,
@@ -1665,7 +1667,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         ixData,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTx = async (): Promise<boolean> => {
@@ -1695,8 +1697,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           : new PublicKey(params.associatedToken.address);
       const amount = params.tokenAmount.toString();
       const token = params.associatedToken;
-      const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
-      const contributor = params.contributor || publicKey.toBase58();
+      const price = getTokenPriceByAddress(token.address) ?? getTokenPriceBySymbol(token.symbol);
+      const contributor = params.contributor ?? publicKey.toBase58();
 
       const data: AddFundsParams = {
         proposalTitle: params.proposalTitle, // proposalTitle
@@ -1970,9 +1972,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
-        data.proposalTitle || 'Create Vesting Stream',
+        data.proposalTitle ?? 'Create Vesting Stream',
         '', // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryStreamCreate,
@@ -1986,7 +1988,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         return null;
       }
 
-      return [tx, stream];
+      return [tx.transaction, stream];
     };
 
     const createTx = async (): Promise<boolean> => {
@@ -2010,7 +2012,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       const associatedToken =
         params.associatedToken.address === WRAPPED_SOL_MINT_ADDRESS ? NATIVE_SOL : params.associatedToken;
-      consoleOut('associatedToken:', associatedToken.toString(), 'blue');
+      consoleOut('associatedToken:', objectToJson(associatedToken), 'blue');
       const treasury = selectedVestingContract.id;
       // const treasurer = new PublicKey(selectedVestingContract.treasurer as string);
       const treasurer = isMultisigContext && selectedMultisig ? selectedMultisig.authority : publicKey;
@@ -2087,7 +2089,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       const result = await createVestingStream(data)
         .then(values => {
-          if (!values || !values.length) {
+          if (!values?.length) {
             return false;
           }
           setTransactionStatus({
@@ -2257,7 +2259,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       const proposalTitle = data.proposalTitle;
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
         proposalTitle,
         '', // description
@@ -2269,7 +2271,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         ixData,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTx = async () => {
@@ -2668,7 +2670,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const onExecuteEditContractSettingsTx = async (editOptions: VestingContractEditOptions) => {
     const vestingContract = selectedVestingContract;
-    const vestingContractName = vestingContract?.name || '';
+    const vestingContractName = vestingContract?.name ?? '';
 
     const multisigAuthority = getMultisigIdFromContext();
     const payload = () => {
@@ -3022,7 +3024,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       return;
     }
 
-    const hasNoVestingAccounts = () => (treasuriesLoaded && treasuryList && treasuryList.length === 0 ? true : false);
+    const hasNoVestingAccounts = () => !!(treasuriesLoaded && treasuryList && treasuryList.length === 0);
 
     if (vestingContract && treasuryList && treasuryList.length > 0) {
       const item = treasuryList.find(i => i.id.toBase58() === vestingContract);

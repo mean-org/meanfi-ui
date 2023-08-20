@@ -16,11 +16,11 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
-import BN from 'bn.js';
 import { BaseProposal } from 'models/multisig';
 import { SOL_MINT } from './ids';
 import { consoleOut } from './ui';
 import { toTokenAmount } from './utils';
+import { BN } from '@project-serum/anchor';
 
 export interface TransferTokensTxParams extends BaseProposal {
   amount: number;

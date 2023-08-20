@@ -225,7 +225,7 @@ const SafeView = (props: {
       const errorString = error.toString() as string;
       // match returns 3 groups, the whole string at 0, first (.*) group match at 1 and second (.*) groups match at 3
       // that would be the Error Message part
-      const anchorErrorMatcher = errorString.match(/> Program logged: "AnchorError(.*)Error Message: (.*)"/);
+      const anchorErrorMatcher = RegExp(/> Program logged: "AnchorError(.*)Error Message: (.*)"/).exec(errorString);
 
       if (anchorErrorMatcher) {
         anchorError = anchorErrorMatcher[2];
@@ -299,12 +299,14 @@ const SafeView = (props: {
             'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token and LP Token Accounts of the Investor.\n',
           data: selectedMultisig?.authority.toBase58(),
         };
-      } else if (anchorError) {   // Handle any anchorError not matched above by any "custom program error: 0x1XXX"
+      } else if (anchorError) {
+        // Handle any anchorError not matched above by any "custom program error: 0x1XXX"
         txStatus.customError = {
           message: anchorError,
           data: undefined,
         };
-      } else if (error.toString().indexOf('0x1') !== -1) {  // Leave classic Insufficient lamports message for last
+      } else if (error.toString().indexOf('0x1') !== -1) {
+        // Leave classic Insufficient lamports message for last
         const accountIndex =
           transaction.operation === OperationType.TransferTokens || transaction.operation === OperationType.Transfer
             ? 0
@@ -335,19 +337,14 @@ const SafeView = (props: {
 
   // Search for pending proposal in confirmation history
   const hasMultisigPendingProposal = useCallback(() => {
-    if (!selectedMultisigRef || !selectedMultisigRef.current) {
+    if (!selectedMultisigRef?.current) {
       return false;
     }
     const isTheReference = (item: TxConfirmationInfo) => {
       if (
-        (item &&
-          item.extras &&
-          item.extras.multisigAuthority &&
+        (item?.extras?.multisigAuthority &&
           item.extras.multisigAuthority === selectedMultisigRef.current?.authority.toBase58()) ||
-        (item &&
-          item.extras &&
-          item.extras.multisigId &&
-          item.extras.multisigId === selectedMultisigRef.current?.authority.toBase58())
+        (item?.extras?.multisigId && item.extras.multisigId === selectedMultisigRef.current?.authority.toBase58())
       ) {
         return true;
       }
@@ -446,7 +443,7 @@ const SafeView = (props: {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.createTransaction(
+        const tx = await multisigClient.buildCreateProposalTransaction(
           publicKey,
           data.title === '' ? 'Edit safe' : data.title,
           '', // description
@@ -458,7 +455,7 @@ const SafeView = (props: {
           ixData,
         );
 
-        return tx;
+        return tx?.transaction ?? null;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -998,7 +995,7 @@ const SafeView = (props: {
       description: t('notifications.tx-not-executed'),
     });
     consoleOut('lastError:', lastErrorRef.current, 'blue');
-    if (lastErrorRef.current && lastErrorRef.current.customError) {
+    if (lastErrorRef.current?.customError) {
       // Show the error reporting modal
       setTransactionStatus(lastErrorRef.current);
       showErrorReportingModal();
@@ -1526,7 +1523,7 @@ const SafeView = (props: {
   }, [publicKey, refreshMultisigs]);
 
   const getActiveMultisigAuthorityByReference = useCallback(() => {
-    if (!selectedMultisigRef || !selectedMultisigRef.current) {
+    if (!selectedMultisigRef?.current) {
       return '';
     }
     return selectedMultisigRef.current.authority.toBase58();
@@ -1629,7 +1626,7 @@ const SafeView = (props: {
       if (multisigAccounts.length > 0) {
         item = multisigAccounts.find(m => m.authority.toBase58() === selectedAccount.address);
         if (item) {
-          if (selectedMultisigRef.current && selectedMultisigRef.current.authority.equals(item.authority)) {
+          if (selectedMultisigRef?.current?.authority.equals(item.authority)) {
             consoleOut('Multisig is already selected!', 'skipping...', 'blue');
             return;
           }
@@ -1653,8 +1650,11 @@ const SafeView = (props: {
       return;
     }
 
-    const isProposalsFork =
-      queryParamV === 'proposals' || queryParamV === 'instruction' || queryParamV === 'activity' ? true : false;
+    const isProposalsFork = !!(
+      queryParamV === 'proposals' ||
+      queryParamV === 'instruction' ||
+      queryParamV === 'activity'
+    );
     if (isProposalsFork) {
       consoleOut('id:', id, 'purple');
       consoleOut('queryParamV:', queryParamV, 'purple');
@@ -1791,6 +1791,18 @@ const SafeView = (props: {
     }
   };
 
+  const getErrorDescription = useCallback(() => {
+    let message = '';
+    if (!connected) {
+      message = t('multisig.multisig-accounts.not-connected');
+    } else if (loadingMultisigAccounts) {
+      message = t('multisig.multisig-accounts.loading-multisig-accounts');
+    } else {
+      message = t('multisig.multisig-account-detail.no-multisig-loaded');
+    }
+    return <p>{message}</p>;
+  }, [connected, loadingMultisigAccounts, t]);
+
   return (
     <>
       <span id="multisig-refresh-cta" onClick={() => getMultisigList()}></span>
@@ -1823,18 +1835,7 @@ const SafeView = (props: {
         ) : (
           <div className="h-100 flex-center">
             <Spin spinning={loadingMultisigAccounts}>
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={
-                  <p>
-                    {!connected
-                      ? t('multisig.multisig-accounts.not-connected')
-                      : loadingMultisigAccounts
-                      ? t('multisig.multisig-accounts.loading-multisig-accounts')
-                      : t('multisig.multisig-account-detail.no-multisig-loaded')}
-                  </p>
-                }
-              />
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={getErrorDescription()} />
             </Spin>
           </div>
         )}

@@ -8,23 +8,11 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
-import {
-  AnchorProvider,
-  BN,
-  BorshInstructionCoder,
-  Idl,
-  Program,
-  SplToken,
-  SplTokenCoder,
-} from '@project-serum/anchor';
-import bs58 from 'bs58';
+import { AnchorProvider, BN, Idl, Program, SplToken, SplTokenCoder } from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { AppConfig, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { OperationType } from './enums';
-import { MeanSplTokenInstructionCoder } from './spl-token-coder/instruction';
-import { MeanSystemInstructionCoder } from './system-program-coder/instruction';
-import { appConfig } from '..';
 import { getAmountFromLamports } from '../middleware/utils';
 
 export const CREDIX_PROGRAM_MAINNET = new PublicKey('CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX');
@@ -189,7 +177,7 @@ export interface SetAssetAuthPayload extends BaseProposal {
   selectedAuthority: string;
 }
 
-export enum MULTISIG_ACTIONS {
+enum MULTISIG_ACTIONS {
   createMultisig = 1,
   createTransaction = 2,
   cancelTransaction = 3,
@@ -385,209 +373,6 @@ export const createAnchorProgram = (
   return new Program(programIdl, programId, provider);
 };
 
-export const parseMultisigProposalIx = (
-  transaction: MultisigTransaction,
-  program?: Program<any> | undefined,
-): MultisigTransactionInstructionInfo | null => {
-  try {
-    const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
-
-    const ix = new TransactionInstruction({
-      programId: transaction.programId,
-      keys: transaction.accounts,
-      data: transaction.data,
-    });
-
-    // console.log('ix', ix);
-
-    // if (!program || program.programId.equals(TOKEN_PROGRAM_ID)) { // HERE TOKEN IX
-    //   return getMultisigInstructionSummary(ix);
-    // }
-
-    if (!program) {
-      return getMultisigInstructionSummary(ix);
-    }
-
-    const ixName = getIxNameFromMultisigTransaction(transaction, program.idl);
-    console.log('ixName', ixName);
-
-    if (!ixName) {
-      return getMultisigInstructionSummary(ix);
-    }
-
-    const coder = program.programId.equals(TOKEN_PROGRAM_ID)
-      ? new MeanSplTokenInstructionCoder(program.idl)
-      : new BorshInstructionCoder(program.idl);
-
-    // console.log('coder', coder);
-
-    const dataEncoded = bs58.encode(ix.data);
-    const dataDecoded = coder.decode(dataEncoded, 'base58');
-    // console.log('dataDecoded', dataDecoded);
-
-    if (!dataDecoded) {
-      return getMultisigInstructionSummary(ix);
-    }
-
-    const ixData = dataDecoded.data as any;
-
-    const formattedData = coder.format(
-      {
-        name: dataDecoded.name,
-        data: !program.programId.equals(multisigAddressPK)
-          ? ixData
-          : {
-              label: ixData['label'],
-              threshold: ixData['threshold'],
-              owners: [],
-            },
-      },
-      ix.keys,
-    );
-
-    // console.log('formattedData', formattedData);
-
-    if (!formattedData) {
-      return getMultisigInstructionSummary(ix);
-    }
-
-    if (program.programId.equals(multisigAddressPK)) {
-      for (const arg of formattedData.args) {
-        if (arg.name === 'owners') {
-          arg.data = ixData['owners'].map((o: any) => {
-            return {
-              label: o.name,
-              type: 'string',
-              data: o.address.toBase58(),
-            };
-          });
-        }
-      }
-    }
-
-    const ixAccInfos: InstructionAccountInfo[] = [];
-    let accIndex = 0;
-
-    for (const acc of ix.keys) {
-      ixAccInfos.push({
-        index: accIndex,
-        label: formattedData.accounts[accIndex].name,
-        value: acc.pubkey.toBase58(),
-      } as InstructionAccountInfo);
-
-      accIndex++;
-    }
-
-    const dataInfos: InstructionDataInfo[] = [];
-    let dataIndex = 0;
-
-    for (const dataItem of formattedData.args) {
-      dataInfos.push({
-        label: `${dataItem.name[0].toUpperCase()}${dataItem.name.substring(1)}`,
-        value: dataItem.data,
-        index: dataIndex,
-      } as InstructionDataInfo);
-      dataIndex++;
-    }
-
-    const nameArray = (program?.idl.name as string).split('_');
-    const ixInfo = {
-      programId: ix.programId.toBase58(),
-      programName: nameArray.map(i => `${i[0].toUpperCase()}${i.substring(1)}`).join(' '),
-      accounts: ixAccInfos,
-      data: dataInfos,
-    } as MultisigTransactionInstructionInfo;
-
-    return ixInfo;
-  } catch (err: any) {
-    console.error(`Parse Multisig Transaction: ${err}`);
-    return null;
-  }
-};
-
-export const parseMultisigSystemProposalIx = (
-  transaction: MultisigTransaction,
-): MultisigTransactionInstructionInfo | null => {
-  try {
-    const ix = new TransactionInstruction({
-      programId: transaction.programId,
-      keys: transaction.accounts,
-      data: transaction.data,
-    });
-
-    const ixName = getIxNameFromMultisigTransaction(transaction);
-    // console.log('ixName', ixName);
-
-    if (!ixName) {
-      return getMultisigInstructionSummary(ix);
-    }
-
-    const coder = new MeanSystemInstructionCoder();
-    // console.log('coder', coder);
-
-    // const dataEncoded = bs58.encode(ix.data);
-    const dataDecoded = coder.decode(ix.data);
-    // console.log('dataDecoded', dataDecoded);
-
-    if (!dataDecoded) {
-      return getMultisigInstructionSummary(ix);
-    }
-
-    const ixData = dataDecoded.data as any;
-
-    const formattedData = coder.format(
-      {
-        name: dataDecoded.name,
-        data: ixData,
-      },
-      ix.keys,
-    );
-
-    // console.log('formattedData', formattedData);
-
-    if (!formattedData) {
-      return getMultisigInstructionSummary(ix);
-    }
-
-    const ixAccInfos: InstructionAccountInfo[] = [];
-    let accIndex = 0;
-
-    for (const acc of ix.keys) {
-      ixAccInfos.push({
-        index: accIndex,
-        label: formattedData.accounts[accIndex].name,
-        value: acc.pubkey.toBase58(),
-      } as InstructionAccountInfo);
-
-      accIndex++;
-    }
-
-    const dataInfos: InstructionDataInfo[] = [];
-    let dataIndex = 0;
-
-    for (const dataItem of formattedData.args) {
-      dataInfos.push({
-        label: `${dataItem.name[0].toUpperCase()}${dataItem.name.substring(1)}`,
-        value: dataItem.data,
-        index: dataIndex,
-      } as InstructionDataInfo);
-      dataIndex++;
-    }
-
-    const ixInfo = {
-      programId: ix.programId.toBase58(),
-      programName: 'System Program',
-      accounts: ixAccInfos,
-      data: dataInfos,
-    } as MultisigTransactionInstructionInfo;
-
-    return ixInfo;
-  } catch (err: any) {
-    console.error(`Parse Multisig Transaction: ${err}`);
-    return null;
-  }
-};
-
 export const sentenceCase = (field: string): string => {
   const result = field.replace(/([A-Z])/g, ' $1');
   return result.charAt(0).toUpperCase() + result.slice(1);
@@ -599,7 +384,6 @@ export const parseSerializedTx = async (connection: Connection, base64Str: strin
       throw Error(`Parse Serialized Transaction: Invalid parameters.`);
     }
 
-    // const base64Str = uiInstruction.uiElements[0].value;
     const base64StrRegx = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
 
     if (!base64StrRegx.test(base64Str)) {

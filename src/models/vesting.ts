@@ -1,6 +1,6 @@
 import { AccountType, SubCategory, TimeUnit } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
-import BN from 'bn.js';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 
 export type VestingFlowRateInfo = {
@@ -72,7 +72,7 @@ export interface CreateVestingTreasuryParams {
   startUtc: Date;
   vestingCategory: SubCategory;
   cliffVestPercent: number;
-  tokenFeePayedFromAccount?: boolean | undefined;
+  tokenFeePayedFromAccount?: boolean;
   multisig: string;
   fundingAmount: string | number;
 }
@@ -101,7 +101,7 @@ export interface VestingContractEditParams {
   durationUnit: TimeUnit;
   startUtc: Date;
   cliffVestPercent: number;
-  feePayedByTreasurer?: boolean | undefined;
+  feePayedByTreasurer?: boolean;
   vestingTreasury: PublicKey;
 }
 
