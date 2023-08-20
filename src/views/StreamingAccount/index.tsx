@@ -32,11 +32,11 @@ import {
   RefreshAccountDataTransactionAccounts,
   NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Alert, Button, Dropdown, Row, Space, Spin, Tabs } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
-import BN from 'bn.js';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { Identicon } from 'components/Identicon';
 import { openNotification } from 'components/Notifications';
@@ -190,7 +190,7 @@ export const StreamingAccountView = (props: {
   }, [connection, mspV2AddressPK]);
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const isNewTreasury = useMemo(() => {
@@ -198,7 +198,7 @@ export const StreamingAccountView = (props: {
       return false;
     }
 
-    return streamingAccountSelected.version && streamingAccountSelected.version >= 2 ? true : false;
+    return !!(streamingAccountSelected.version && streamingAccountSelected.version >= 2);
   }, [streamingAccountSelected]);
 
   /////////////////////////
@@ -219,7 +219,7 @@ export const StreamingAccountView = (props: {
       }
 
       const balancesMap: any = {};
-      const pk = source || publicKey;
+      const pk = source ?? publicKey;
       consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
 
       connection.getBalance(pk).then(solBalance => {
@@ -233,7 +233,7 @@ export const StreamingAccountView = (props: {
           if (accTks) {
             for (const item of accTks) {
               const address = item.parsedInfo.mint;
-              const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+              const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
               balancesMap[address] = balance;
             }
           } else {
@@ -311,9 +311,39 @@ export const StreamingAccountView = (props: {
 
   const navigateToTab = useCallback(
     (tab: string) => {
-      setSearchParams({ v: tab as string });
+      setSearchParams({ v: tab });
     },
     [setSearchParams],
+  );
+
+  const getSearchSignatureMarker = useCallback(
+    (clearHistory: boolean) => {
+      const activityLength = streamingAccountActivity.length;
+      if (clearHistory) {
+        return '';
+      }
+      if (activityLength > 0) {
+        return streamingAccountActivity[activityLength - 1].signature;
+      }
+
+      return '';
+    },
+    [streamingAccountActivity],
+  );
+
+  const getActivitiesCopy = useCallback(
+    (clearHistory: boolean) => {
+      const activityLength = streamingAccountActivity.length;
+      if (clearHistory) {
+        return [];
+      }
+      if (activityLength > 0) {
+        return JSON.parse(JSON.stringify(streamingAccountActivity));
+      }
+
+      return [];
+    },
+    [streamingAccountActivity],
   );
 
   const getStreamingAccountActivity = useCallback(
@@ -327,21 +357,13 @@ export const StreamingAccountView = (props: {
       setLoadingStreamingAccountActivity(true);
       const streamingAccountPublicKey = new PublicKey(streamingAccountSelectedId);
 
-      const before = clearHistory
-        ? ''
-        : streamingAccountActivity && streamingAccountActivity.length > 0
-        ? streamingAccountActivity[streamingAccountActivity.length - 1].signature
-        : '';
+      const before = getSearchSignatureMarker(clearHistory);
       consoleOut('before:', before, 'crimson');
       paymentStreaming
         .listAccountActivity(streamingAccountPublicKey, before, 5)
         .then(value => {
           consoleOut('Streaming Account activity:', value);
-          const activities = clearHistory
-            ? []
-            : streamingAccountActivity && streamingAccountActivity.length > 0
-            ? JSON.parse(JSON.stringify(streamingAccountActivity))
-            : [];
+          const activities = getActivitiesCopy(clearHistory);
 
           if (value && value.length > 0) {
             activities.push(...value);
@@ -358,7 +380,7 @@ export const StreamingAccountView = (props: {
         })
         .finally(() => setLoadingStreamingAccountActivity(false));
     },
-    [loadingStreamingAccountActivity, paymentStreaming, streamingAccountActivity],
+    [getActivitiesCopy, getSearchSignatureMarker, loadingStreamingAccountActivity, paymentStreaming],
   );
 
   const getStreamingAccountName = useCallback(() => {
@@ -384,7 +406,7 @@ export const StreamingAccountView = (props: {
     }
 
     const amount = displayAmountWithSymbol(
-      new BN(item.amount || 0),
+      new BN(item.amount ?? 0),
       selectedToken.address,
       selectedToken.decimals,
       splTokenList,
@@ -410,7 +432,7 @@ export const StreamingAccountView = (props: {
   };
 
   const isTreasurer = useCallback((): boolean => {
-    if (!selectedAccount || !selectedAccount.address || !streamingAccountSelected) {
+    if (!selectedAccount?.address || !streamingAccountSelected) {
       return false;
     }
 
@@ -952,9 +974,9 @@ export const StreamingAccountView = (props: {
       const ixAccounts = addFundsTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
-        data.proposalTitle || 'Add Funds',
+        data.proposalTitle ?? 'Add Funds',
         '', // description
         new Date(expirationTime * 1_000),
         operationType,
@@ -964,7 +986,7 @@ export const StreamingAccountView = (props: {
         ixData,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTxV2 = async (): Promise<boolean> => {
@@ -992,7 +1014,7 @@ export const StreamingAccountView = (props: {
       const amount = params.tokenAmount.toString();
       consoleOut('raw amount:', params.tokenAmount, 'blue');
       consoleOut('amount.toString():', amount, 'blue');
-      const contributor = params.contributor || selectedAccount.address;
+      const contributor = params.contributor ?? selectedAccount.address;
       const data = {
         proposalTitle: params.proposalTitle, // proposalTitle
         payer: selectedAccount.address, // payer
@@ -1249,9 +1271,9 @@ export const StreamingAccountView = (props: {
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       const proposalTitle = data.proposalTitle;
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
-        proposalTitle || 'Withdraw treasury funds',
+        proposalTitle ?? 'Withdraw treasury funds',
         '', // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryWithdraw,
@@ -1261,7 +1283,7 @@ export const StreamingAccountView = (props: {
         ixData,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTx = async () => {
@@ -1522,7 +1544,7 @@ export const StreamingAccountView = (props: {
 
         const treasury = new PublicKey(streamingAccountSelected.id.toString());
         const data = {
-          title: title as string, // title
+          title, // title
           treasurer: publicKey.toBase58(), // treasurer
           treasury: treasury.toBase58(), // treasury
         };
@@ -1661,7 +1683,7 @@ export const StreamingAccountView = (props: {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
         data.title === '' ? 'Close streaming account' : data.title,
         '', // description
@@ -1673,7 +1695,7 @@ export const StreamingAccountView = (props: {
         ixData,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTxV2 = async (): Promise<boolean> => {
@@ -1695,7 +1717,7 @@ export const StreamingAccountView = (props: {
 
       const treasury = new PublicKey(streamingAccountSelected.id.toString());
       const data = {
-        title: title as string, // title
+        title, // title
         treasurer: publicKey.toBase58(), // treasurer
         treasury: treasury.toBase58(), // treasury
       };
@@ -1787,10 +1809,10 @@ export const StreamingAccountView = (props: {
       let created: boolean;
       let streamingAccountName = '';
       if (streamingAccountSelected.version && streamingAccountSelected.version >= 2) {
-        streamingAccountName = (streamingAccountSelected as PaymentStreamingAccount).name as string;
+        streamingAccountName = (streamingAccountSelected as PaymentStreamingAccount).name;
         created = await createTxV2();
       } else {
-        streamingAccountName = (streamingAccountSelected as TreasuryInfo).label as string;
+        streamingAccountName = (streamingAccountSelected as TreasuryInfo).label;
         created = await createTxV1();
       }
       consoleOut('created:', created, 'blue');
@@ -1877,7 +1899,7 @@ export const StreamingAccountView = (props: {
         programId: TOKEN_PROGRAM_ID,
       });
 
-      if (!value || !value.length) {
+      if (!value?.length) {
         return false;
       }
 
@@ -2404,24 +2426,24 @@ export const StreamingAccountView = (props: {
     isTreasurer,
   ]);
 
-  const renderStreamingAccountStreams = () => {
-    const sortedStreamingAccountsStreamsList =
-      streamingAccountStreams &&
-      streamingAccountStreams.sort((a, b) => {
-        const vA1 = a as StreamInfo;
-        const vA2 = a as Stream;
-        const vB1 = b as StreamInfo;
-        const vB2 = b as Stream;
+  const streamSortFunc = (a: Stream | StreamInfo, b: Stream | StreamInfo) => {
+    const vA1 = a as StreamInfo;
+    const vA2 = a as Stream;
+    const vB1 = b as StreamInfo;
+    const vB2 = b as Stream;
 
-        if (a && b) {
-          return (
-            new Date(vA2.estimatedDepletionDate || (vA1.escrowEstimatedDepletionUtc as string) || '0').getTime() -
-            new Date(vB2.estimatedDepletionDate || (vB1.escrowEstimatedDepletionUtc as string) || '0').getTime()
-          );
-        } else {
-          return 0;
-        }
-      });
+    if (a && b) {
+      return (
+        new Date(vA2.estimatedDepletionDate || (vA1.escrowEstimatedDepletionUtc as string) || '0').getTime() -
+        new Date(vB2.estimatedDepletionDate || (vB1.escrowEstimatedDepletionUtc as string) || '0').getTime()
+      );
+    } else {
+      return 0;
+    }
+  };
+
+  const renderStreamingAccountStreams = () => {
+    const sortedStreamingAccountsStreamsList = streamingAccountStreams?.sort(streamSortFunc);
 
     const renderMessages = () => {
       if (
@@ -2450,7 +2472,7 @@ export const StreamingAccountView = (props: {
 
               let img;
 
-              if (selectedToken && selectedToken.logoURI) {
+              if (selectedToken?.logoURI) {
                 img = (
                   <img
                     alt={`${selectedToken.name}`}
@@ -2476,7 +2498,7 @@ export const StreamingAccountView = (props: {
 
               return (
                 <div
-                  key={index}
+                  key={stream.id?.toString()}
                   onClick={onSelectStream}
                   className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
                 >
@@ -2502,65 +2524,71 @@ export const StreamingAccountView = (props: {
     );
   };
 
-  const renderStreamingAccountActivity = (
-    <>
-      {!loadingStreamingAccountActivity ? (
-        streamingAccountActivity !== undefined && streamingAccountActivity.length > 0 ? (
-          streamingAccountActivity.map((item, index) => {
-            const title = getStreamingAccountActivityAction(item);
-            const subtitle = <CopyExtLinkGroup content={item.signature} number={8} externalLink={false} />;
+  const renderActivityItem = (item: AccountActivity, index: number) => {
+    const title = getStreamingAccountActivityAction(item);
+    const subtitle = <CopyExtLinkGroup content={item.signature} number={8} externalLink={false} />;
+    const amount = getStreamingAccountActivityAssociatedToken(item);
+    const resume = getShortDate(item.utcDate, true);
 
-            const amount = getStreamingAccountActivityAssociatedToken(item);
-            const resume = getShortDate(item.utcDate as string, true);
+    return (
+      <div
+        key={item.signature}
+        onClick={() =>
+          openLinkInNewTab(
+            `${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`,
+          )
+        }
+        className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
+      >
+        <ResumeItem
+          id={`${index}`}
+          title={title}
+          subtitle={subtitle}
+          amount={amount}
+          resume={resume}
+          hasRightIcon={true}
+          rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
+          isLink={false}
+          classNameRightContent="resume-activity-row"
+          classNameIcon="icon-stream-row"
+        />
+      </div>
+    );
+  };
 
-            return (
-              <div
-                key={index}
-                onClick={() =>
-                  openLinkInNewTab(
-                    `${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`,
-                  )
+  const renderStreamingAccountActivity = () => {
+    const renderList = () => {
+      if (loadingStreamingAccountActivity) {
+        return <span className="pl-1">Loading streaming account activity ...</span>;
+      }
+      if (streamingAccountActivity !== undefined && streamingAccountActivity.length > 0) {
+        return streamingAccountActivity.map((item, index) => renderActivityItem(item, index));
+      } else {
+        return <span className="pl-1">This streaming account has no activity</span>;
+      }
+    };
+
+    return (
+      <>
+        {renderList()}
+        {streamingAccountActivity && streamingAccountActivity.length >= 5 && hasMoreStreamingAccountActivity && (
+          <div className="mt-1 text-center">
+            <span
+              className={loadingStreamingAccountActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
+              role="link"
+              onClick={() => {
+                if (streamingAccountSelected) {
+                  getStreamingAccountActivity(streamingAccountSelected.id.toString());
                 }
-                className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
-              >
-                <ResumeItem
-                  id={`${index}`}
-                  title={title}
-                  subtitle={subtitle}
-                  amount={amount}
-                  resume={resume}
-                  hasRightIcon={true}
-                  rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
-                  isLink={false}
-                  classNameRightContent="resume-activity-row"
-                  classNameIcon="icon-stream-row"
-                />
-              </div>
-            );
-          })
-        ) : (
-          <span className="pl-1">This streaming account has no activity</span>
-        )
-      ) : (
-        <span className="pl-1">Loading streaming account activity ...</span>
-      )}
-      {streamingAccountActivity && streamingAccountActivity.length >= 5 && hasMoreStreamingAccountActivity && (
-        <div className="mt-1 text-center">
-          <span
-            className={loadingStreamingAccountActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
-            role="link"
-            onClick={() => {
-              if (streamingAccountSelected) {
-                getStreamingAccountActivity(streamingAccountSelected.id.toString());
-              }
-            }}
-          >
-            {t('general.cta-load-more')}
-          </span>
-        </div>
-      )}
-    </>
-  );
+              }}
+            >
+              {t('general.cta-load-more')}
+            </span>
+          </div>
+        )}
+      </>
+    );
+  };
 
   // Tabs
   const tabs = [
@@ -2572,7 +2600,7 @@ export const StreamingAccountView = (props: {
     {
       key: 'activity',
       label: 'Activity',
-      children: renderStreamingAccountActivity,
+      children: renderStreamingAccountActivity(),
     },
   ];
 
@@ -2583,7 +2611,7 @@ export const StreamingAccountView = (props: {
   const streamAccountContent = t('treasuries.treasury-detail.unallocated-treasury-balance');
 
   const renderTabset = () => {
-    const option = getQueryTabOption() || 'streams';
+    const option = getQueryTabOption() ?? 'streams';
     return <Tabs items={tabs} activeKey={option} onChange={navigateToTab} className="neutral" />;
   };
 
@@ -2610,8 +2638,18 @@ export const StreamingAccountView = (props: {
     if (!streamingAccountSelected) {
       return false;
     }
-    return associatedTokenBalance.eq(new BN(streamingAccountSelected.balance)) ? false : true;
+    return !associatedTokenBalance.eq(new BN(streamingAccountSelected.balance));
   };
+
+  const selectDetailsForStreamCreateModal = useCallback(() => {
+    if (streamingAccountSelected) {
+      return streamingAccountSelected;
+    }
+
+    if (treasuryList && treasuryList.length > 0) {
+      return treasuryList[0];
+    }
+  }, [streamingAccountSelected, treasuryList]);
 
   return (
     <>
@@ -2728,13 +2766,7 @@ export const StreamingAccountView = (props: {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           withdrawTransactionFees={withdrawTransactionFees}
-          treasuryDetails={
-            streamingAccountSelected
-              ? streamingAccountSelected
-              : treasuryList && treasuryList.length > 0
-              ? treasuryList[0]
-              : undefined
-          }
+          treasuryDetails={selectDetailsForStreamCreateModal()}
           treasuryList={treasuryList?.filter(t => t.version >= 2)}
           minRequiredBalance={minRequiredBalance}
           selectedMultisig={selectedMultisig}
@@ -2753,7 +2785,7 @@ export const StreamingAccountView = (props: {
           treasuryDetails={streamingAccountSelected}
           treasuryList={[]}
           isVisible={isAddFundsModalVisible}
-          selectedMultisig={selectedMultisig || undefined}
+          selectedMultisig={selectedMultisig ?? undefined}
           userBalances={userBalances}
           treasuryStreams={streamingAccountStreams}
           associatedToken={streamingAccountSelected ? getStreamingAccountMint(streamingAccountSelected) : ''}
@@ -2790,7 +2822,7 @@ export const StreamingAccountView = (props: {
           content={getTreasuryClosureMessage()}
           transactionStatus={transactionStatus.currentOperation}
           isBusy={isBusy}
-          selectedMultisig={selectedMultisig || undefined}
+          selectedMultisig={selectedMultisig ?? undefined}
         />
       )}
 

@@ -8,10 +8,10 @@ import {
   ScheduleTransferTransactionAccounts,
   NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Checkbox, DatePicker, Select } from 'antd';
 import { segmentAnalytics } from 'App';
-import BN from 'bn.js';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
@@ -581,9 +581,10 @@ export const OneTimePayment = (props: {
       consoleOut('Beneficiary address:', recipientAddress);
       const beneficiary = new PublicKey(recipientAddress);
       consoleOut('associatedToken:', selectedToken.address);
-      const associatedToken = selectedToken.address === SOL_MINT.toBase58() // && isScheduledPayment()
-        ? NATIVE_SOL_MINT   // imported from SDK
-        : new PublicKey(selectedToken.address);
+      const associatedToken =
+        selectedToken.address === SOL_MINT.toBase58() // && isScheduledPayment()
+          ? NATIVE_SOL_MINT // imported from SDK
+          : new PublicKey(selectedToken.address);
       const amount = toTokenAmount(fromCoinAmount, selectedToken.decimals, true);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);

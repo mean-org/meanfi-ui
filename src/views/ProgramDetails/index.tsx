@@ -117,7 +117,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   );
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const resetTransactionStatus = useCallback(() => {
@@ -202,7 +202,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       };
 
       const notifyMultisigActionFollowup = (item: TxConfirmationInfo) => {
-        if (!item || !item.extras || !item.extras.multisigAuthority) {
+        if (!item?.extras?.multisigAuthority) {
           turnOffLockWorkflow();
           return;
         }
@@ -241,7 +241,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
         }
 
         // Lock the workflow
-        if (item.extras && item.extras.multisigAuthority) {
+        if (item.extras?.multisigAuthority) {
           isWorkflowLocked = true;
         }
 
@@ -249,17 +249,17 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
         switch (item.operationType) {
           case OperationType.UpgradeProgram:
             logEventHandling(item);
-            if (item.extras && item.extras.multisigAuthority) {
+            if (item.extras?.multisigAuthority) {
               notifyMultisigActionFollowup(item);
               reloadMultisigs();
             }
             break;
           case OperationType.SetMultisigAuthority:
             logEventHandling(item);
-            if (item.extras && item.extras.multisigAuthority) {
+            if (item.extras?.multisigAuthority) {
               notifyMultisigActionFollowup(item);
               reloadMultisigs();
-            } else if (!item.extras || !item.extras.multisigAuthority) {
+            } else if (!item.extras?.multisigAuthority) {
               window.location.href = '/';
             }
             break;
@@ -399,7 +399,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.createTransaction(
+        const tx = await multisigClient.buildCreateProposalTransaction(
           publicKey,
           data.proposalTitle,
           '', // description
@@ -411,7 +411,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           dataBuffer,
         );
 
-        return tx;
+        return tx?.transaction ?? null;
       };
 
       const upgradeProgram = async (data: ProgramUpgradeParams) => {
@@ -630,7 +630,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       };
       setTransactionFees(fees);
       const params: SetProgramAuthPayload = {
-        proposalTitle: proposalTitle || '',
+        proposalTitle: proposalTitle ?? '',
         programAddress: programId,
         programDataAddress: programDataAddress.toBase58(),
         newAuthAddress: '', // Empty to make program non-upgradable (inmutable)
@@ -732,7 +732,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.createTransaction(
+        const tx = await multisigClient.buildCreateProposalTransaction(
           publicKey,
           data.proposalTitle,
           '', // description
@@ -744,7 +744,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           ixData,
         );
 
-        return tx;
+        return tx?.transaction ?? null;
       };
 
       const setProgramAuth = async (data: SetProgramAuthPayload) => {
@@ -863,7 +863,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
               consoleOut('Send Tx to confirmation queue:', signature);
               //
               const multisigAuth = isMultisigContext && selectedMultisig ? selectedMultisig.authority.toBase58() : '';
-              const isAuthChange = params.newAuthAddress ? true : false;
+              const isAuthChange = !!params.newAuthAddress;
               const authChangeLoadingMessage = multisigAuth
                 ? `Create proposal to set program authority to ${shortenAddress(params.newAuthAddress)}`
                 : `Set program authority to ${shortenAddress(params.newAuthAddress)}`;
@@ -1023,7 +1023,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     // },
     {
       name: 'Balance (SOL)',
-      value: balanceSol ? balanceSol : '--',
+      value: balanceSol ?? '--',
     },
   ];
 
@@ -1033,10 +1033,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       return null;
     }
 
-    const signaturesInfo = await connection.getConfirmedSignaturesForAddress2(
-      programSelected.pubkey,
-      { limit: 50 }, // TODO: Implement pagination
-    );
+    const signaturesInfo = await connection.getConfirmedSignaturesForAddress2(programSelected.pubkey, { limit: 50 });
 
     if (signaturesInfo.length === 0) {
       return null;
@@ -1170,8 +1167,8 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       <span id="multisig-refresh-cta" onClick={() => getMultisigList()}></span>
       <div className="program-details-container">
         <Row gutter={[8, 8]} className="safe-info-container mr-0 ml-0">
-          {infoProgramData.map((info, index) => (
-            <Col xs={12} sm={12} md={12} lg={12} key={index}>
+          {infoProgramData.map(info => (
+            <Col xs={12} sm={12} md={12} lg={12} key={info.name}>
               <div className="info-safe-group">
                 <span className="info-label">{info.name}</span>
                 <span className="info-data">{info.value}</span>

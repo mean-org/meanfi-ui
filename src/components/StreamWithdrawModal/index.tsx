@@ -4,7 +4,6 @@ import { PaymentStreaming, Stream, STREAM_STATUS_CODE } from '@mean-dao/payment-
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
 import BigNumber from 'bignumber.js';
-import { BN } from 'bn.js';
 import { InputMean } from 'components/InputMean';
 import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
@@ -19,6 +18,7 @@ import { StreamWithdrawData } from 'models/streams';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../Notifications';
+import { BN } from '@project-serum/anchor';
 
 export const StreamWithdrawModal = (props: {
   handleClose: any;
