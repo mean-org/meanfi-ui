@@ -16,7 +16,6 @@ import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Dropdown, Modal, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
-import BN from 'bn.js';
 import { openNotification } from 'components/Notifications';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
@@ -47,6 +46,7 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StreamCloseModal } from '../StreamCloseModal';
 import { VestingContractStreamDetailModal } from '../VestingContractStreamDetailModal';
+import { BN } from '@project-serum/anchor';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -152,7 +152,7 @@ export const VestingContractStreamList = (props: {
 
   const isInboundStream = useCallback(
     (item: Stream): boolean => {
-      return item && accountAddress && item.beneficiary.toBase58() === accountAddress ? true : false;
+      return !!(item && accountAddress && item.beneficiary.toBase58() === accountAddress);
     },
     [accountAddress],
   );
@@ -484,7 +484,7 @@ export const VestingContractStreamList = (props: {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
         data.proposalTitle,
         '', // description
@@ -496,7 +496,7 @@ export const VestingContractStreamList = (props: {
         ixData,
       );
 
-      return tx;
+      return tx?.transaction ?? null;
     };
 
     const createTx = async (): Promise<boolean> => {
@@ -984,7 +984,7 @@ export const VestingContractStreamList = (props: {
 
       {isCloseStreamModalVisible && (
         <StreamCloseModal
-          canCloseTreasury={treasuryStreams.length === 1 ? true : false}
+          canCloseTreasury={treasuryStreams.length === 1}
           content={getStreamClosureMessage()}
           handleClose={hideCloseStreamModal}
           handleOk={(options: VestingContractCloseStreamOptions) => onAcceptCloseStream(options)}

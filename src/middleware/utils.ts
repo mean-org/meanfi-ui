@@ -16,8 +16,8 @@ import { TokenInfo } from 'models/SolanaTokenInfo';
 import { getNetworkIdByEnvironment } from '../contexts/connection';
 import { environment } from '../environments/environment';
 import { BigNumber } from 'bignumber.js';
-import BN from 'bn.js';
 import { resolveParsedAccountInfo } from './accounts';
+import { BN } from '@project-serum/anchor';
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -137,7 +137,7 @@ export const formatUSD = new Intl.NumberFormat('en-US', {
 export const formatPercent = (val: number, maxDecimals?: number) => {
   const convertedVlue = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
-    maximumFractionDigits: maxDecimals || 0,
+    maximumFractionDigits: maxDecimals ?? 0,
   });
 
   return convertedVlue.format(val);
@@ -287,7 +287,7 @@ export const getAmountWithSymbol = (
     const bigNumberAmount =
       typeof amount === 'string' ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
     const decimalPlaces = friendlyDecimals
-      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
+      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) ?? decimals
       : decimals;
     if (friendlyDecimals) {
       BigNumber.set({
@@ -357,7 +357,7 @@ export const displayAmountWithSymbol = (
       const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
       const decimalPlaces = friendlyDecimals
-        ? friendlyDisplayDecimalPlaces(parseFloat(formatted2), decimals) || decimals
+        ? friendlyDisplayDecimalPlaces(parseFloat(formatted2), decimals) ?? decimals
         : decimals;
       const toLocale = formatThousands(parseFloat(formatted2), decimalPlaces, decimalPlaces);
       return `${toLocale} ${token.symbol}`;
@@ -378,7 +378,7 @@ export const displayAmountWithSymbol = (
     const bigNumberAmount = typeof amount === 'string' ? new BigNumber(amount) : new BigNumber(amount.toString());
     const value = bigNumberAmount.div(baseConvert);
     const decimalPlaces = friendlyDecimals
-      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) || decimals
+      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) ?? decimals
       : decimals;
     if (friendlyDecimals) {
       BigNumber.set({

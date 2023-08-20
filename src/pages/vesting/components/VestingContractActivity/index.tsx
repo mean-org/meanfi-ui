@@ -1,6 +1,6 @@
 import { PaymentStreamingAccount, ActivityActionCode, AccountActivity } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { Spin } from 'antd';
-import { BN } from 'bn.js';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';

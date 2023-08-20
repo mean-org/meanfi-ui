@@ -18,13 +18,13 @@ import {
   percentualBn,
 } from 'middleware/ui';
 import { displayAmountWithSymbol, makeDecimal } from 'middleware/utils';
-import BN from 'bn.js';
 import { Alert, Progress } from 'antd';
 import { TokenIcon } from 'components/TokenIcon';
 import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons';
 import { IconInfoCircle } from 'Icons';
 import { VestingFlowRateInfo } from 'models/vesting';
 import BigNumber from 'bignumber.js';
+import { BN } from '@project-serum/anchor';
 
 export const VestingContractOverview = (props: {
   availableStreamingBalance: number | BN;

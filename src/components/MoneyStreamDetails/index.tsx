@@ -17,7 +17,6 @@ import {
 } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Col, Row, Spin, Tabs } from 'antd';
-import BN from 'bn.js';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { Identicon } from 'components/Identicon';
 import { ResumeItem } from 'components/ResumeItem';
@@ -38,7 +37,7 @@ import {
   getShortDate,
   relativeTimeFromDates,
 } from 'middleware/ui';
-import { displayAmountWithSymbol, getAmountWithSymbol, shortenAddress, toTokenAmountBn } from 'middleware/utils';
+import { displayAmountWithSymbol, getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { getCategoryLabelByValue } from 'models/vesting';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -47,16 +46,23 @@ import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import './style.scss';
+import { BN } from '@project-serum/anchor';
+import getV2Beneficiary from 'components/common/getV2Beneficiary';
+import getV1Beneficiary from 'components/common/getV1Beneficiary';
+import getIsV2Treasury from 'components/common/getIsV2Treasury';
+import getStreamStartDate from 'components/common/getStreamStartDate';
+import getIsV2Stream from 'components/common/getIsV2Stream';
+import getRateAmountBn from 'components/common/getRateAmountBn';
 
 export const MoneyStreamDetails = (props: {
   accountAddress: string;
-  stream?: Stream | StreamInfo | undefined;
+  stream?: Stream | StreamInfo;
   hideDetailsHandler?: any;
   infoData?: any;
   isStreamIncoming?: boolean;
   isStreamOutgoing?: boolean;
   buttons?: any;
-  selectedToken?: TokenInfo | undefined;
+  selectedToken?: TokenInfo;
 }) => {
   const {
     accountAddress,
@@ -98,12 +104,7 @@ export const MoneyStreamDetails = (props: {
     return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
   }, [connection, streamV2ProgramAddress]);
 
-  const isV2tream = useMemo(() => {
-    if (stream?.version) {
-      return stream.version >= 2;
-    }
-    return false;
-  }, [stream?.version]);
+  const isV2tream = useMemo(() => getIsV2Stream(stream), [stream]);
 
   const treasuryId = useMemo(() => {
     if (stream) {
@@ -120,12 +121,12 @@ export const MoneyStreamDetails = (props: {
         return tabOptionInQuery;
       }
     }
-    return tabOptionInQuery || 'details';
+    return tabOptionInQuery ?? 'details';
   }, [searchParams]);
 
   const navigateToTab = useCallback(
     (tab: string) => {
-      setSearchParams({ v: tab as string });
+      setSearchParams({ v: tab });
     },
     [setSearchParams],
   );
@@ -144,25 +145,12 @@ export const MoneyStreamDetails = (props: {
     [getStreamActivity, isV2tream, stream],
   );
 
-  const getRateAmountBn = useCallback(
-    (item: Stream | StreamInfo) => {
-      if (item && selectedToken) {
-        const rateAmount = isV2tream
-          ? (item.rateAmount as BN)
-          : toTokenAmountBn(item.rateAmount as number, selectedToken.decimals);
-        return rateAmount;
-      }
-      return new BN(0);
-    },
-    [isV2tream, selectedToken],
-  );
-
   const getRateAmountDisplay = useCallback((): string => {
     if (!selectedToken || !stream) {
       return '';
     }
 
-    const rateAmount = getRateAmountBn(stream);
+    const rateAmount = getRateAmountBn(stream, selectedToken);
     const value = displayAmountWithSymbol(
       rateAmount,
       selectedToken.address,
@@ -173,7 +161,7 @@ export const MoneyStreamDetails = (props: {
     );
 
     return value;
-  }, [getRateAmountBn, selectedToken, splTokenList, stream]);
+  }, [selectedToken, splTokenList, stream]);
 
   const getDepositAmountDisplay = useCallback((): string => {
     if (!selectedToken || !stream) {
@@ -295,34 +283,17 @@ export const MoneyStreamDetails = (props: {
         const v2 = item as Stream;
         let beneficiary = '';
         if (isV2tream) {
-          beneficiary = v2.beneficiary
-            ? typeof v2.beneficiary === 'string'
-              ? (v2.beneficiary as string)
-              : (v2.beneficiary as PublicKey).toBase58()
-            : '';
+          beneficiary = getV2Beneficiary(v2);
         } else {
-          beneficiary = v1.beneficiaryAddress
-            ? typeof v1.beneficiaryAddress === 'string'
-              ? (v1.beneficiaryAddress as string)
-              : (v1.beneficiaryAddress as PublicKey).toBase58()
-            : '';
+          beneficiary = getV1Beneficiary(v1);
         }
-        return beneficiary === accountAddress ? true : false;
+
+        return beneficiary === accountAddress;
       }
       return false;
     },
     [accountAddress, isV2tream, publicKey],
   );
-
-  const isStartDateFuture = useCallback((date: string): boolean => {
-    const now = new Date().toUTCString();
-    const nowUtc = new Date(now);
-    const comparedDate = new Date(date);
-    if (comparedDate > nowUtc) {
-      return true;
-    }
-    return false;
-  }, []);
 
   const getActivityIcon = (item: StreamActivityV1 | StreamActivity) => {
     if (isInboundStream(stream as StreamInfo)) {
@@ -357,7 +328,7 @@ export const MoneyStreamDetails = (props: {
 
       const associatedToken = getStreamAssociatedMint(item);
 
-      if (selectedToken && selectedToken.logoURI) {
+      if (selectedToken?.logoURI) {
         return (
           <img
             alt={`${selectedToken.name}`}
@@ -455,15 +426,15 @@ export const MoneyStreamDetails = (props: {
 
   const isOtp = (): boolean => {
     if (stream) {
-      const rateAmount = getRateAmountBn(stream);
-      return rateAmount.isZero() ? true : false;
+      const rateAmount = getRateAmountBn(stream, selectedToken);
+      return !!rateAmount.isZero();
     }
     return false;
   };
 
   const isScheduledOtp = (): boolean => {
     if (stream) {
-      const rateAmount = getRateAmountBn(stream);
+      const rateAmount = getRateAmountBn(stream, selectedToken);
       if (rateAmount.isZero()) {
         const now = new Date().toUTCString();
         const nowUtc = new Date(now);
@@ -513,7 +484,7 @@ export const MoneyStreamDetails = (props: {
                             )
                           : '--'}
                       </div>
-                      <div className="interval">{getShortDate(item.utcDate as string, true)}</div>
+                      <div className="interval">{getShortDate(item.utcDate, true)}</div>
                     </div>
                     <div className="actions-cell">
                       <IconExternalLink className="mean-svg-icons" style={{ width: '15', height: '15' }} />
@@ -588,7 +559,7 @@ export const MoneyStreamDetails = (props: {
       return '--';
     }
 
-    const rateAmount = getRateAmountBn(stream);
+    const rateAmount = getRateAmountBn(stream, selectedToken);
     let rate = !isOtp() ? getRateAmountDisplay() : getDepositAmountDisplay();
 
     if (rateAmount.gtn(0)) {
@@ -698,12 +669,12 @@ export const MoneyStreamDetails = (props: {
 
     const v1 = treasuryDetails as TreasuryInfo;
     const v2 = treasuryDetails as PaymentStreamingAccount;
-    const isV2Treasury = treasuryDetails.version >= 2 ? true : false;
-
+    const isV2Treasury = getIsV2Treasury(treasuryDetails);
+    const v2Type = v2.accountType === AccountType.Open ? 'Open' : 'Locked';
     let type = '';
 
     if (isV2Treasury) {
-      type = v2.category === 1 ? 'Vesting' : v2.accountType === AccountType.Open ? 'Open' : 'Locked';
+      type = v2.category === 1 ? 'Vesting' : v2Type;
     } else {
       type = v1.type === TreasuryType.Open ? 'Open' : 'Locked';
     }
@@ -717,8 +688,13 @@ export const MoneyStreamDetails = (props: {
     const subCategory = isV2Treasury && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
 
     let badges;
-
-    type && (category ? (subCategory ? (badges = [type, subCategory]) : (badges = [type])) : (badges = [type]));
+    if (type) {
+      if (category && subCategory) {
+        badges = [type, subCategory];
+      } else {
+        badges = [type];
+      }
+    }
 
     return badges;
   };
@@ -733,21 +709,26 @@ export const MoneyStreamDetails = (props: {
       return <Completionist />;
     } else {
       // Render a countdown
-      const showYears = years > 0 ? (years > 1 ? `${years} years` : `${years} year`) : '';
-      const showDays = days > 0 ? (days > 1 ? `${days} days` : `${days} day`) : '';
-      const showHours = hours > 0 ? (hours > 1 ? `${hours} hours` : `${hours} hour`) : '';
-      const showMinutes = minutes > 0 ? (minutes > 1 ? `${minutes} minutes` : `${minutes} minute`) : '';
-      // const showSeconds = seconds > 0 ? (seconds > 1 ? `${seconds} seconds` : `${seconds} second`) : "";
+      const whenYearsPlusOne = years > 1 ? `${years} years` : `${years} year`;
+      const showYears = years > 0 ? whenYearsPlusOne : '';
+      const whenDaysPlusOne = days > 1 ? `${days} days` : `${days} day`;
+      const showDays = days > 0 ? whenDaysPlusOne : '';
+      const whenHoursPlusOne = hours > 1 ? `${hours} hours` : `${hours} hour`;
+      const showHours = hours > 0 ? whenHoursPlusOne : '';
+      const whenMinutesPlusOne = minutes > 1 ? `${minutes} minutes` : `${minutes} minute`;
+      const showMinutes = minutes > 0 ? whenMinutesPlusOne : '';
 
       return <span>{`${showYears} ${showDays} ${showHours} ${showMinutes}`}</span>;
     }
   };
 
+  const streamStartDate = useMemo(() => getStreamStartDate(stream), [stream]);
+
   // Tab details
   const detailsData = [
     {
-      label: stream ? (isStartDateFuture(stream.startUtc as string) ? 'Starting on:' : 'Started on:') : '--',
-      value: stream ? getReadableDate(stream.startUtc as string, true) : '--',
+      label: streamStartDate.label,
+      value: streamStartDate.value,
     },
     {
       label: isStreamIncoming && 'Receiving from:',
@@ -842,7 +823,8 @@ export const MoneyStreamDetails = (props: {
     return <Tabs items={tabs} activeKey={tabOption} onChange={navigateToTab} className="neutral" />;
   };
 
-  const title = stream ? getStreamTitle(stream, t) : `Unknown ${isStreamIncoming ? 'incoming' : 'outgoing'} stream`;
+  const streamFlowDirection = isStreamIncoming ? 'incoming' : 'outgoing';
+  const title = stream ? getStreamTitle(stream, t) : `Unknown ${streamFlowDirection} stream`;
   const subtitle = stream ? getStreamSubtitle() : '--';
   const resume = stream ? getStreamStatusResume(stream, t) : '--';
 

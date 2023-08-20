@@ -2,8 +2,8 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, Warn
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
-import BN from 'bn.js';
 import { InputMean } from 'components/InputMean';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';

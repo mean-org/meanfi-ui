@@ -4,9 +4,11 @@ import {
   MultisigParticipant,
   MultisigTransaction,
   MultisigTransactionActivityItem,
+  MultisigTransactionInstructionInfo,
   MultisigTransactionStatus,
+  createAnchorProgram,
+  parseMultisigProposalIx,
 } from '@mean-dao/mean-multisig-sdk';
-import { IDL as SplTokenIdl } from '@project-serum/anchor/dist/cjs/spl/token';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey, SystemProgram } from '@solana/web3.js';
 import { Button, Col, Row } from 'antd';
@@ -14,19 +16,13 @@ import { openNotification } from 'components/Notifications';
 import { RejectCancelModal } from 'components/RejectCancelModal';
 import { ResumeItem } from 'components/ResumeItem';
 import { TabsMean } from 'components/TabsMean';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import {
   IconApprove,
   IconArrowBack,
-  IconCreated,
-  IconCross,
-  IconExternalLink,
   IconLightning,
-  IconMinus,
   IconThumbsDown,
   IconThumbsUp,
   IconUser,
@@ -35,17 +31,11 @@ import {
 import { consoleOut, copyText } from 'middleware/ui';
 import { shortenAddress } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
-import {
-  createAnchorProgram,
-  MultisigTransactionInstructionInfo,
-  parseMultisigProposalIx,
-  parseMultisigSystemProposalIx,
-} from 'models/multisig';
-import moment from 'moment';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RenderInstructions } from './RenderInstructions';
 import './style.scss';
+import ActivityRow from './ActivityRow';
 
 export const ProposalDetailsView = (props: {
   appsProvider?: any;
@@ -53,7 +43,7 @@ export const ProposalDetailsView = (props: {
   hasMultisigPendingProposal?: boolean;
   isBusy: boolean;
   loadingData: boolean;
-  multisigClient?: MeanMultisig | undefined;
+  multisigClient?: MeanMultisig;
   onDataToSafeView: any;
   onProposalApprove?: any;
   onProposalCancel?: any;
@@ -203,6 +193,24 @@ export const ProposalDetailsView = (props: {
     [confirmationHistory],
   );
 
+  const getAppFromProposal = useCallback(
+    () => solanaApps.find((app: App) => app.id === selectedProposal.programId.toBase58()) as App,
+    [selectedProposal.programId, solanaApps],
+  );
+
+  const settleProposalIxInfo = useCallback(
+    (config: AppConfig, proposalApp: App) => {
+      if (!multisigClient) {
+        return null;
+      }
+      const idl = config ? config.definition : undefined;
+      const program = idl ? createAnchorProgram(connection, new PublicKey(proposalApp.id), idl) : undefined;
+      const ixInfo = parseMultisigProposalIx(proposalSelected, multisigClient.program.programId, program);
+      setProposalIxInfo(ixInfo);
+    },
+    [connection, multisigClient, proposalSelected],
+  );
+
   useEffect(() => {
     if (!selectedMultisig || !proposalSelected) {
       return;
@@ -212,40 +220,32 @@ export const ProposalDetailsView = (props: {
   }, [selectedMultisig, proposalSelected]);
 
   useEffect(() => {
-    if (!selectedMultisig || !solanaApps || !appsProvider || !proposalSelected || !selectedProposal) {
+    if (!multisigClient || !appsProvider || !proposalSelected) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      if (proposalSelected.programId.equals(SystemProgram.programId)) {
-        const ixInfo = parseMultisigSystemProposalIx(proposalSelected);
+      if (
+        proposalSelected.programId.equals(SystemProgram.programId) ||
+        proposalSelected.programId.equals(TOKEN_PROGRAM_ID)
+      ) {
+        const ixInfo = multisigClient.decodeProposalInstruction(proposalSelected);
         setProposalIxInfo(ixInfo);
-        // console.log('ixInfo', ixInfo);
-      } else if (proposalSelected.programId.equals(TOKEN_PROGRAM_ID)) {
-        const program = createAnchorProgram(connection, TOKEN_PROGRAM_ID, SplTokenIdl);
-        const ixInfo = parseMultisigProposalIx(proposalSelected, program);
-        setProposalIxInfo(ixInfo);
-        // console.log('ixInfo', ixInfo);
       } else {
-        const proposalApp = solanaApps.filter((app: App) => app.id === selectedProposal.programId.toBase58())[0];
+        const proposalApp = getAppFromProposal();
         if (proposalApp) {
-          appsProvider.getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl).then((config: AppConfig) => {
-            const idl = config ? config.definition : undefined;
-            const program = idl ? createAnchorProgram(connection, new PublicKey(proposalApp.id), idl) : undefined;
-            const ixInfo = parseMultisigProposalIx(proposalSelected, program);
-            setProposalIxInfo(ixInfo);
-            // console.log('ixInfo', ixInfo);
-          });
+          appsProvider
+            .getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl)
+            .then((config: AppConfig) => settleProposalIxInfo(config, proposalApp));
         } else {
-          const ixInfo = parseMultisigProposalIx(proposalSelected);
+          const ixInfo = parseMultisigProposalIx(proposalSelected, multisigClient.program.programId);
           setProposalIxInfo(ixInfo);
-          // console.log('ixInfo', ixInfo);
         }
       }
     });
 
     return () => clearTimeout(timeout);
-  }, [appsProvider, connection, proposalSelected, selectedMultisig, selectedProposal, solanaApps]);
+  }, [appsProvider, getAppFromProposal, multisigClient, proposalSelected, settleProposalIxInfo]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -307,80 +307,26 @@ export const ProposalDetailsView = (props: {
   );
 
   // Display the activities in the "Activity" tab, on safe details page
-  const renderActivities = !loadingActivity ? (
-    proposalActivity.length > 0 ? (
+  const renderActivities = () => {
+    if (loadingActivity) {
+      return <span className="pl-1">Loading activities...</span>;
+    }
+    if (proposalActivity.length === 0) {
+      return <span className="pl-1">This proposal has no activities</span>;
+    }
+
+    return (
       <Row>
-        {proposalActivity.map((activity: any) => {
-          let icon = null;
-
-          switch (activity.action) {
-            case 'created':
-              icon = <IconCreated className="mean-svg-icons fg-purple activity-icon" />;
-              break;
-            case 'approved':
-              icon = <IconApprove className="mean-svg-icons fg-green activity-icon" />;
-              break;
-            case 'executed':
-              icon = <IconApprove className="mean-svg-icons fg-green activity-icon" />;
-              break;
-            case 'rejected':
-              icon = <IconCross className="mean-svg-icons fg-red activity-icon" />;
-              break;
-            case 'deleted':
-              icon = <IconMinus className="mean-svg-icons fg-yellow activity-icon" />;
-              break;
-            default:
-              icon = '';
-              break;
-          }
-
-          const title = moment(activity.createdOn).format('LLL').toLocaleString();
-          const resume = (
-            <div className="d-flex align-items-center activity-container">
-              <div className="d-flex align-items-center">
-                {icon} {`Proposal ${activity.action} by ${activity.owner.name} `}
-              </div>
-              <div
-                onClick={() => copyAddressToClipboard(activity.address)}
-                className="simplelink underline-on-hover activity-address ml-1"
-              >
-                ({shortenAddress(activity.address, 4)})
-              </div>
-            </div>
-          );
-
-          return (
-            <div
-              key={`${activity.index + 1}`}
-              className={`w-100 activities-list mr-1 pr-4 ${(activity.index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
-            >
-              <div className="resume-item-container">
-                <div className="d-flex">
-                  <span className="mr-1">{title}</span>
-                  {resume}
-                </div>
-                <span className="icon-button-container icon-stream-row">
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${
-                      activity.address
-                    }${getSolanaExplorerClusterParam()}`}
-                  >
-                    <IconExternalLink className="mean-svg-icons external-icon ml-1" />
-                  </a>
-                </span>
-              </div>
-            </div>
-          );
-        })}
+        {proposalActivity.map(activity => (
+          <ActivityRow
+            key={`${activity.action}-${activity.index}-${activity.address}`}
+            activity={activity}
+            onCopyAddress={address => copyAddressToClipboard(address)}
+          />
+        ))}
       </Row>
-    ) : (
-      <span className="pl-1">This proposal has no activities</span>
-    )
-  ) : (
-    <span className="pl-1">Loading activities...</span>
-  );
+    );
+  };
 
   // Tabs
   const tabs = [
@@ -392,16 +338,13 @@ export const ProposalDetailsView = (props: {
     {
       id: 'activity',
       name: 'Activity',
-      render: renderActivities,
+      render: renderActivities(),
     },
   ];
 
-  const isProposer =
-    selectedProposal && selectedProposal.proposer && selectedProposal.proposer.toBase58() === publicKey?.toBase58()
-      ? true
-      : false;
+  const isProposer = !!(selectedProposal?.proposer && selectedProposal.proposer.toBase58() === publicKey?.toBase58());
 
-  if (!selectedProposal || !selectedProposal.proposer) {
+  if (!selectedProposal?.proposer) {
     return <></>;
   }
 
@@ -424,6 +367,40 @@ export const ProposalDetailsView = (props: {
     selectedProposal.status === 0 &&
     neededSigners() > 0 &&
     `Needs ${neededSigners()} ${neededSigners() > 1 ? 'approvals' : 'approval'} to pass`;
+
+  const renderProposedBy = () => {
+    if (selectedProposal.status === MultisigTransactionStatus.Passed) {
+      return (
+        <Col className="safe-details-left-container">
+          <IconUserClock className="user-image mean-svg-icons bg-yellow" />
+          <div className="proposal-resume-left-text">
+            <div className="info-label">Pending execution</div>
+            <span>Proposed by {proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
+          </div>
+        </Col>
+      );
+    } else if (selectedProposal.status === MultisigTransactionStatus.Executed) {
+      return (
+        <Col className="safe-details-left-container">
+          <IconLightning className="user-image mean-svg-icons bg-green" />
+          <div className="proposal-resume-left-text">
+            <div className="info-label">Proposed by</div>
+            <span>{proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
+          </div>
+        </Col>
+      );
+    } else {
+      return (
+        <Col className="safe-details-left-container">
+          <IconUser className="user-image mean-svg-icons" />
+          <div className="proposal-resume-left-text">
+            <div className="info-label">Proposed by</div>
+            <span>{proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
+          </div>
+        </Col>
+      );
+    }
+  };
 
   return (
     <>
@@ -455,41 +432,7 @@ export const ProposalDetailsView = (props: {
         )}
 
         <div className="safe-details-proposal">
-          <div className="safe-details-proposal-left">
-            {selectedProposal.status === MultisigTransactionStatus.Passed ? (
-              <Col className="safe-details-left-container">
-                <IconUserClock className="user-image mean-svg-icons bg-yellow" />
-                <div className="proposal-resume-left-text">
-                  <div className="info-label">Pending execution</div>
-                  <span>
-                    Proposed by{' '}
-                    {proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}
-                  </span>
-                </div>
-              </Col>
-            ) : selectedProposal.status === MultisigTransactionStatus.Executed ? (
-              <Col className="safe-details-left-container">
-                <IconLightning className="user-image mean-svg-icons bg-green" />
-                <div className="proposal-resume-left-text">
-                  <div className="info-label">Proposed by</div>
-                  <span>
-                    {proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}
-                  </span>
-                </div>
-              </Col>
-            ) : (
-              <Col className="safe-details-left-container">
-                <IconUser className="user-image mean-svg-icons" />
-                <div className="proposal-resume-left-text">
-                  <div className="info-label">Proposed by</div>
-                  <span>
-                    {proposedBy && proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer, 4)}
-                  </span>
-                </div>
-              </Col>
-            )}
-            {/* {renderCoolOffPeriod} */}
-          </div>
+          <div className="safe-details-proposal-left">{renderProposedBy()}</div>
           <div>
             <div className="safe-details-right-container btn-group mr-1">
               {(selectedProposal.status === MultisigTransactionStatus.Voided ||
@@ -502,7 +445,7 @@ export const ProposalDetailsView = (props: {
                     size="small"
                     className="thin-stroke d-flex justify-content-center align-items-center"
                     disabled={
-                      hasMultisigPendingProposal ||
+                      !!hasMultisigPendingProposal ||
                       isBusy ||
                       isCancelTxPendingConfirmation(selectedProposal.id) ||
                       isExecuteTxPendingConfirmation(selectedProposal.id) ||
@@ -522,7 +465,7 @@ export const ProposalDetailsView = (props: {
                     className="thin-stroke"
                     disabled={
                       selectedProposal.didSigned === true ||
-                      hasMultisigPendingProposal ||
+                      !!hasMultisigPendingProposal ||
                       isBusy ||
                       isApproveTxPendingConfirmation(selectedProposal.id) ||
                       isRejectTxPendingConfirmation(selectedProposal.id) ||
@@ -554,7 +497,7 @@ export const ProposalDetailsView = (props: {
                     className="thin-stroke"
                     disabled={
                       selectedProposal.didSigned === false ||
-                      hasMultisigPendingProposal ||
+                      !!hasMultisigPendingProposal ||
                       isBusy ||
                       isApproveTxPendingConfirmation(selectedProposal.id) ||
                       isRejectTxPendingConfirmation(selectedProposal.id) ||
@@ -586,7 +529,7 @@ export const ProposalDetailsView = (props: {
                       size="small"
                       className="thin-stroke d-flex justify-content-center align-items-center"
                       disabled={
-                        hasMultisigPendingProposal ||
+                        !!hasMultisigPendingProposal ||
                         isBusy ||
                         isExecuteTxPendingConfirmation(selectedProposal.id) ||
                         isCancelTxPendingConfirmation(selectedProposal.id) ||
@@ -607,7 +550,7 @@ export const ProposalDetailsView = (props: {
                     size="small"
                     className="thin-stroke d-flex justify-content-center align-items-center"
                     disabled={
-                      hasMultisigPendingProposal ||
+                      !!hasMultisigPendingProposal ||
                       isBusy ||
                       isExecuteTxPendingConfirmation(selectedProposal.id) ||
                       isApproveTxPendingConfirmation(selectedProposal.id) ||
@@ -629,7 +572,7 @@ export const ProposalDetailsView = (props: {
                       size="small"
                       className="thin-stroke d-flex justify-content-center align-items-center"
                       disabled={
-                        hasMultisigPendingProposal ||
+                        !!hasMultisigPendingProposal ||
                         isBusy ||
                         isExecuteTxPendingConfirmation(selectedProposal.id) ||
                         isCancelTxPendingConfirmation(selectedProposal.id) ||

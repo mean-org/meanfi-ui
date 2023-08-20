@@ -94,7 +94,7 @@ const useTransaction = () => {
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -180,7 +180,7 @@ const useTransaction = () => {
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.buildCreateProposalTransaction(
         publicKey,
         proposalTitle,
         '', // description
@@ -193,7 +193,7 @@ const useTransaction = () => {
         generatedArgs.ixs,
       );
 
-      return tx || null;
+      return tx?.transaction ?? null;
     };
 
     const createTx = async () => {
@@ -230,7 +230,7 @@ const useTransaction = () => {
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
 
-      const minBalanceRequired = minRequired || MIN_SOL_BALANCE_REQUIRED;
+      const minBalanceRequired = minRequired ?? MIN_SOL_BALANCE_REQUIRED;
       consoleOut('Min balance required:', minBalanceRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 

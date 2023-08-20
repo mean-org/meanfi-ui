@@ -1,6 +1,6 @@
 import { PaymentStreaming, StreamTemplate, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { Progress } from 'antd';
-import BN from 'bn.js';
 import { Identicon } from 'components/Identicon';
 import { FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
