@@ -193,6 +193,24 @@ export const ProposalDetailsView = (props: {
     [confirmationHistory],
   );
 
+  const getAppFromProposal = useCallback(
+    () => solanaApps.find((app: App) => app.id === selectedProposal.programId.toBase58()) as App,
+    [selectedProposal.programId, solanaApps],
+  );
+
+  const settleProposalIxInfo = useCallback(
+    (config: AppConfig, proposalApp: App) => {
+      if (!multisigClient) {
+        return null;
+      }
+      const idl = config ? config.definition : undefined;
+      const program = idl ? createAnchorProgram(connection, new PublicKey(proposalApp.id), idl) : undefined;
+      const ixInfo = parseMultisigProposalIx(proposalSelected, multisigClient.program.programId, program);
+      setProposalIxInfo(ixInfo);
+    },
+    [connection, multisigClient, proposalSelected],
+  );
+
   useEffect(() => {
     if (!selectedMultisig || !proposalSelected) {
       return;
@@ -202,14 +220,7 @@ export const ProposalDetailsView = (props: {
   }, [selectedMultisig, proposalSelected]);
 
   useEffect(() => {
-    if (
-      !selectedMultisig ||
-      !multisigClient ||
-      !solanaApps ||
-      !appsProvider ||
-      !proposalSelected ||
-      !selectedProposal
-    ) {
+    if (!multisigClient || !appsProvider || !proposalSelected) {
       return;
     }
 
@@ -221,14 +232,11 @@ export const ProposalDetailsView = (props: {
         const ixInfo = multisigClient.decodeProposalInstruction(proposalSelected);
         setProposalIxInfo(ixInfo);
       } else {
-        const proposalApp = solanaApps.find((app: App) => app.id === selectedProposal.programId.toBase58());
+        const proposalApp = getAppFromProposal();
         if (proposalApp) {
-          appsProvider.getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl).then((config: AppConfig) => {
-            const idl = config ? config.definition : undefined;
-            const program = idl ? createAnchorProgram(connection, new PublicKey(proposalApp.id), idl) : undefined;
-            const ixInfo = parseMultisigProposalIx(proposalSelected, multisigClient.program.programId, program);
-            setProposalIxInfo(ixInfo);
-          });
+          appsProvider
+            .getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl)
+            .then((config: AppConfig) => settleProposalIxInfo(config, proposalApp));
         } else {
           const ixInfo = parseMultisigProposalIx(proposalSelected, multisigClient.program.programId);
           setProposalIxInfo(ixInfo);
@@ -237,7 +245,7 @@ export const ProposalDetailsView = (props: {
     });
 
     return () => clearTimeout(timeout);
-  }, [appsProvider, connection, multisigClient, proposalSelected, selectedMultisig, selectedProposal, solanaApps]);
+  }, [appsProvider, getAppFromProposal, multisigClient, proposalSelected, settleProposalIxInfo]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -361,9 +369,8 @@ export const ProposalDetailsView = (props: {
     `Needs ${neededSigners()} ${neededSigners() > 1 ? 'approvals' : 'approval'} to pass`;
 
   const renderProposedBy = () => {
-    return (
-      <>
-        selectedProposal.status === MultisigTransactionStatus.Passed ? (
+    if (selectedProposal.status === MultisigTransactionStatus.Passed) {
+      return (
         <Col className="safe-details-left-container">
           <IconUserClock className="user-image mean-svg-icons bg-yellow" />
           <div className="proposal-resume-left-text">
@@ -371,7 +378,9 @@ export const ProposalDetailsView = (props: {
             <span>Proposed by {proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
           </div>
         </Col>
-        ) : selectedProposal.status === MultisigTransactionStatus.Executed ? (
+      );
+    } else if (selectedProposal.status === MultisigTransactionStatus.Executed) {
+      return (
         <Col className="safe-details-left-container">
           <IconLightning className="user-image mean-svg-icons bg-green" />
           <div className="proposal-resume-left-text">
@@ -379,7 +388,9 @@ export const ProposalDetailsView = (props: {
             <span>{proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
           </div>
         </Col>
-        ) : (
+      );
+    } else {
+      return (
         <Col className="safe-details-left-container">
           <IconUser className="user-image mean-svg-icons" />
           <div className="proposal-resume-left-text">
@@ -387,9 +398,8 @@ export const ProposalDetailsView = (props: {
             <span>{proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
           </div>
         </Col>
-        )
-      </>
-    );
+      );
+    }
   };
 
   return (
