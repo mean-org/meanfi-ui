@@ -6,12 +6,12 @@ env:
   NODE_VERSION: 18
   BUILD_NUMBER: $GITHUB_RUN_NUMBER
   APP_ENV: production
-  BUCKET_NAME: "meanfi-production"
-  ROBOTS_TXT_FILE_NAME: "robots_allow.txt"
+  BUCKET_NAME: 'meanfi-production'
+  ROBOTS_TXT_FILE_NAME: 'robots_allow.txt'
   ARTIFACT_NAME: mean-ui-build-production
   DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID_PROD }}
   AWS_S3_SKIP_FOLDERS: 5 # keep only last 5 deploys
-  APPROVAL_ADMINS_PROD: MexicanSparker,welldan97,eydelrivero,micheltriana
+  APPROVAL_ADMINS_PROD: MexicanSparker,edalmasso,eydelrivero,micheltriana
   MINIMUM_APPROVALS: 1
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
           secret: ${{ github.TOKEN }}
           approvers: ${{ env.APPROVAL_ADMINS_PROD }}
           minimum-approvals: ${{ env.MINIMUM_APPROVALS }}
-          issue-title: "Deploying to PROD for build number #${{ github.run_number }}"
+          issue-title: 'Deploying to PROD for build number #${{ github.run_number }}'
 
   build:
     runs-on: ubuntu-latest
@@ -34,13 +34,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{env.NODE_VERSION}}
-          cache: "yarn"
+          cache: 'yarn'
 
       # Cache node modules
       - name: Cache packages
         uses: actions/cache@v3
         with:
-          path: "**/node_modules"
+          path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
 
       # Install Yarn
@@ -88,7 +88,7 @@ jobs:
       # Copy the files from build folder to the S3 bucket
       - name: Deploy to S3
         env:
-          AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
+          AWS_S3_PATH: 's3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}'
         run: |
           aws s3 sync . ${{env.AWS_S3_PATH}}/ --acl public-read --cache-control 'public, max-age=604800' --exclude 'index.html'
           aws s3 cp index.html ${{env.AWS_S3_PATH}}/index.html --acl public-read --cache-control max-age=0
@@ -98,11 +98,11 @@ jobs:
       - name: Update originPath
         uses: supermean-org/aws-web-deploy@v1
         env:
-          FOLDER_PATH: "/v${{ github.run_number }}"
+          FOLDER_PATH: '/v${{ github.run_number }}'
         with:
-          ORIGIN_PATH: "/v${{ github.run_number }}"
+          ORIGIN_PATH: '/v${{ github.run_number }}'
           AWS_DISTRIBUTION_ID: ${{ env.DISTRIBUTION_ID }}
-          AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
+          AWS_S3_PATH: 's3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}'
 
       # get list of folders and remove older ones
       - name: S3 Cleanup
