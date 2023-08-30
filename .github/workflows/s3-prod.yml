@@ -16,6 +16,7 @@ env:
 
 jobs:
   approval:
+    if: false
     runs-on: ubuntu-latest
     steps:
       # Get Approval
