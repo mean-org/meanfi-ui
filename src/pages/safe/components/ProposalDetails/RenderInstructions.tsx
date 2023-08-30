@@ -72,7 +72,7 @@ export const RenderInstructions = (props: {
 
   useEffect(() => {
     if (!proposalIxInfo?.accounts || proposalIxInfo.accounts.length === 0) {
-      return undefined;
+      return;
     }
     const idx = proposalIxInfo.accounts.findIndex(p => p.label === 'Associated Token');
     if (idx !== -1) {

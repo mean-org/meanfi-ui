@@ -206,6 +206,7 @@ export const ProposalDetailsView = (props: {
       const idl = config ? config.definition : undefined;
       const program = idl ? createAnchorProgram(connection, new PublicKey(proposalApp.id), idl) : undefined;
       const ixInfo = parseMultisigProposalIx(proposalSelected, multisigClient.program.programId, program);
+      consoleOut('ixInfo:', ixInfo, 'purple');
       setProposalIxInfo(ixInfo);
     },
     [connection, multisigClient, proposalSelected],
@@ -233,10 +234,12 @@ export const ProposalDetailsView = (props: {
         setProposalIxInfo(ixInfo);
       } else {
         const proposalApp = getAppFromProposal();
+        console.log('proposalApp:', proposalApp);
         if (proposalApp) {
-          appsProvider
-            .getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl)
-            .then((config: AppConfig) => settleProposalIxInfo(config, proposalApp));
+          appsProvider.getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl).then((config: AppConfig) => {
+            console.log('config:', config);
+            settleProposalIxInfo(config, proposalApp);
+          });
         } else {
           const ixInfo = parseMultisigProposalIx(proposalSelected, multisigClient.program.programId);
           setProposalIxInfo(ixInfo);

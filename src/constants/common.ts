@@ -152,26 +152,16 @@ export const LANGUAGES: Language[] = [
 
 export const DAO_CORE_TEAM_WHITELIST = [
   '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi', // ERR
-  '7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4', // MRP
-  'JAMR7AvQSbU3v6tfNidEZE3odxoRCahGFgiA4ksvdDkJ', // MRP
-  '8XkcFZsRcQCtVxRCsqAbtKTsm4mj9CW9vbNPBtjqYWXw', // MRP
-  'ETo8bzsqfqS1ZcNK7W49vNe5pHh2qgE6jKaC2JTPyJDE', // MRP
-  'CmbwXRT5z5aCxCzATqm5aZr7XpTh2AN7ToG35csw7YV', // Moe
   'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
   'FkRtTexEwLtYerHRKUku7ZZJx1VuTqxwGF636nAuer3B', // YAF
   'DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ', // YAF
   'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
   '746bzDBsHjjTG6UByDhj8z3ozdqV1sfujH9pAKMdeyuU', // MT
-  'HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv', // PNL
-  'eKWANE4MKkxq6HgQ1EWjW6WY158fHUMgyJWnhCD9kPi', // PNL
-  '49XcDH9tWX67uw53TzNrPE5ovGsXd7VxgH735jBg6K64', // PL
   '9gB9rcJiaKq6iXcJn8AqD5xoxTr3ZLPHpFGWRaVx99jH', // TAB trader
   '4esXsAJjoExvhPZf1EMvDaajJeCTm72EYt3aurn3fFUG', // J
   'EjchiDcivSQnC282UF4d751JDd7vMb2VCFrQaNeUAjwz', // J
   'c8fLDB5oFSwGnwAV1LGQqaadHt2WbvWv7o79YnnUWxd', // J
   '5rtv52oecUAYAMXN9UzYBwoHGsRD1arLQN6WmRfcMDBP', // J
-  'B1HWEeZCC6Hy3PF24TUmnW8x23oxQirkKwootk27kQTb', // D
-  'F4cjCGtoG3Q58c8Qm3DQSq7m74nDYvUBFwSqReRAeZ23', // D
   '468Z5p52439dAqjLzBm2FCNxvDSnpbMsNx85b7Kmz3TQ', // Ayaz
   '4gCGAWB4bVva2tsEsjmK8iVEKobs3ZsZB7n9HShGnN4o', // Ayaz
   'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL', // Maxim Credix
