@@ -933,6 +933,7 @@
     "settings-versioned-tx": "Versioned Transaction",
     "settings-versioned-tx-help": "Versioned Tx is a significant upgrade that allows for more advanced routings and better prices! Make sure your connected wallet is compatible before toggling this feature. Current compatible wallets: Phantom, Solflare, Glow and Backpack.",
     "ledger-upgrade-warning": "If you are using Ledger to sign transactions it is recommended to update your ledger firmware to support Versioned Transactions.",
+    "ledger-owner-notice": "Ledger owners",
     "tabset": {
       "one-time": "Tek seferlik",
       "recurring": "Yinelenen"
