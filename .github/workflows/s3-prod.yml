@@ -16,7 +16,6 @@ env:
 
 jobs:
   approval:
-    if: false
     runs-on: ubuntu-latest
     steps:
       # Get Approval
@@ -29,7 +28,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    # needs: approval
+    needs: approval
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
