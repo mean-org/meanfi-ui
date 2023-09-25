@@ -349,7 +349,7 @@ export const MultisigProposalModal = (props: {
               }
             };
             return (
-              <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={`app-${app.id}`}>
+              <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={`app-${app.folder}-${app.id}`}>
                 <div
                   className={`select-app-item simplelink ${
                     selectedApp && selectedApp.name === app.name ? 'selected-app' : 'no-selected-app'
