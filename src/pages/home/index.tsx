@@ -2090,10 +2090,8 @@ export const HomeView = () => {
       }
 
       try {
-        console.log('call getCredixProgram...');
         const program = await getCredixProgram(connection, investor);
 
-        console.log('call getDepositIx...');
         if (isDev()) {
           return credixDevnet.getDepositIx(program, investor, amount, marketplace);
         } else {
