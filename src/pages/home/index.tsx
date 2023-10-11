@@ -132,6 +132,7 @@ import getNftMint from './getNftMint';
 import './style.scss';
 import useAccountPrograms from './useAccountPrograms';
 import useAppNavigation from './useAppNavigation';
+import { objectToJson } from 'services/logger';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));
@@ -472,7 +473,6 @@ export const HomeView = () => {
   }, [multisigClient, resetTransactionStatus]);
 
   const onAcceptCreateProposalModal = (data: CreateNewProposalParams) => {
-    consoleOut('proposal data: ', data, 'blue');
     onExecuteCreateTransactionProposal(data);
   };
 
@@ -2079,7 +2079,8 @@ export const HomeView = () => {
     } else {
       program = credixMainnet.createProgram(connection, 'confirmed');
     }
-    console.log('data => ', investor.toBase58());
+    consoleOut('getCredixProgram => investor:', investor.toBase58());
+    consoleOut('getCredixProgram => programId:', program.programId.toBase58());
     return program;
   }, []);
 
@@ -2228,8 +2229,8 @@ export const HomeView = () => {
               proposalIx = await createCredixWithdrawIx(investorPK, amountVal, marketPlaceVal);
               break;
 
-            case 'redeemFundsForWithdrawRequest':
-              operation = OperationType.CredixRedeemFundsForWithdrawRequest;
+            case 'redeemWithdrawRequest':
+              operation = OperationType.CredixRedeemWithdrawRequest;
               amountVal = parseFloat(
                 data.instruction.uiElements.find((x: any) => x.name === 'baseWithdrawalAmount').value,
               );
@@ -2321,7 +2322,7 @@ export const HomeView = () => {
         });
 
         // Data
-        consoleOut('data:', params);
+        consoleOut('Proposal data:', params);
 
         // Log input data
         transactionLog.push({
