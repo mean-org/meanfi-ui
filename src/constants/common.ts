@@ -166,7 +166,6 @@ export const DAO_CORE_TEAM_WHITELIST = [
   '4gCGAWB4bVva2tsEsjmK8iVEKobs3ZsZB7n9HShGnN4o', // Ayaz
   'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL', // Maxim Credix
   '63cUbJ3yecyduEPPYbPERPSJzAy6ZnRWvjE6u4qkkAVd', // Maxim Credix 2
-  'E9Z6RHa2Bhf7d5T455FKCag9gNbvqHuAcF3vgwkYHWGy', // INNA
 ];
 
 export const BIGNUMBER_FORMAT = {
