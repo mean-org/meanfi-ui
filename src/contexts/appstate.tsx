@@ -1109,17 +1109,16 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [ddcaOptionName, ddcaOptFromCache, setDdcaOptionName, updateDdcaOption]);
 
   const refreshStreamList = useCallback(
-    (reset = false, userAddress?: PublicKey) => {
+    (reset = false) => {
       if (loadingStreams || customStreamDocked || !ms || !paymentStreaming) {
         return;
       }
 
-      if (!selectedAccount.address && !userAddress && !publicKey) {
+      if (!publicKey) {
         return;
       }
 
-      const fallback = selectedAccount.address ? new PublicKey(selectedAccount.address) : (publicKey as PublicKey);
-      const userPk = userAddress ?? fallback;
+      const userPk = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
       consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
 
       if (paymentStreaming) {
@@ -1238,6 +1237,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
+    const userPk = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
+
     const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
       if (!address) return 0;
       try {
@@ -1255,10 +1256,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     };
 
     let balance = 0;
-    const selectedTokenAddress = findATokenAddress(publicKey, new PublicKey(selectedToken.address));
+    const selectedTokenAddress = findATokenAddress(userPk, new PublicKey(selectedToken.address));
     balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
     updateTokenBalance(balance);
-  }, [tokenAccounts, connection, publicKey, selectedToken, tokenList]);
+  }, [connection, publicKey, tokenList, tokenAccounts, selectedToken?.address, selectedAccount.address]);
 
   // Effect to refresh token balance if needed
   useEffect(() => {
@@ -1435,13 +1436,13 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   // Keep track of current balance
   useEffect(() => {
-    if (publicKey && account?.lamports) {
+    if (publicKey && account?.lamports && selectedAccount.address) {
       consoleOut('--------------------------------', '', 'darkorange');
       consoleOut('Native account lamports changed.', 'Reloading tokens...', 'darkorange');
       consoleOut('--------------------------------', '', 'darkorange');
       updateShouldLoadTokens(true);
     }
-  }, [account?.lamports, publicKey]);
+  }, [account?.lamports, publicKey, selectedAccount.address]);
 
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   // Also, do this after any Tx is completed in places where token balances were indeed changed)

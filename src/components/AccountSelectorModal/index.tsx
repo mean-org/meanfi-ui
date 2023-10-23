@@ -6,10 +6,10 @@ import { isInXnftWallet } from 'integrations/xnft/xnft-wallet-adapter';
 export const AccountSelectorModal = (props: {
   isFullWorkflowEnabled?: boolean;
   isVisible: boolean;
-  onAccountSelected?: any;
-  onCreateSafe: any;
-  onGotoSelectWallet?: any;
-  onHandleClose?: any;
+  onAccountSelected?: () => void;
+  onCreateSafe: () => void;
+  onGotoSelectWallet?: () => void;
+  onHandleClose?: () => void;
 }) => {
   const { isFullWorkflowEnabled, isVisible, onAccountSelected, onCreateSafe, onGotoSelectWallet, onHandleClose } =
     props;

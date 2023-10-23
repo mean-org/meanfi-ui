@@ -1014,11 +1014,12 @@ export const StreamingAccountView = (props: {
       const amount = params.tokenAmount.toString();
       consoleOut('raw amount:', params.tokenAmount, 'blue');
       consoleOut('amount.toString():', amount, 'blue');
-      const contributor = params.contributor ?? selectedAccount.address;
+      const contributor = params.contributor || selectedAccount.address;
+      consoleOut('contributor:', contributor, 'purple');
       const data = {
         proposalTitle: params.proposalTitle, // proposalTitle
-        payer: selectedAccount.address, // payer
-        contributor: contributor, // contributor
+        payer: publicKey.toBase58(), // payer
+        contributor, // contributor
         treasury: treasury.toBase58(), // treasury
         associatedToken: associatedToken.toBase58(), // associatedToken
         stream: params.streamId ? params.streamId : '', // stream

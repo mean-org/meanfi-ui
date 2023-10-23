@@ -17,9 +17,9 @@ import './style.scss';
 
 export const AccountSelector = (props: {
   isFullWorkflowEnabled?: boolean;
-  onAccountSelected?: any;
-  onCreateSafeClick: any;
-  onDisconnectWallet?: any;
+  onAccountSelected?: () => void;
+  onCreateSafeClick: () => void;
+  onDisconnectWallet?: () => void;
 }) => {
   const { isFullWorkflowEnabled, onAccountSelected, onCreateSafeClick, onDisconnectWallet } = props;
   const {
