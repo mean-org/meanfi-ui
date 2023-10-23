@@ -132,7 +132,6 @@ import getNftMint from './getNftMint';
 import './style.scss';
 import useAccountPrograms from './useAccountPrograms';
 import useAppNavigation from './useAppNavigation';
-import { objectToJson } from 'services/logger';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));
