@@ -486,7 +486,7 @@ export const TreasuryAddFundsModal = (props: {
     } else {
       return transactionStatus.currentOperation === TransactionStatus.Iddle
         ? getTransactionStartButtonLabel()
-        : t('general.refresh');
+        : t('general.cta-try-again');
     }
   };
 

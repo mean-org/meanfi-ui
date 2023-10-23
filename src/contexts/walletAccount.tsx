@@ -1,6 +1,6 @@
 import { useLocalStorageState } from 'middleware/utils';
 import { AccountContext } from 'models/accounts';
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useWallet } from './wallet';
 
 export const emptyAccount: AccountContext = {
@@ -32,10 +32,16 @@ export function WalletAccountProvider({ children = null }: WalletAccountProvider
     AccountContext,
     (account: AccountContext | null) => void,
   ];
+  const [isOverride, setIsOverride] = useState(false);
 
   const setSelectedAccount = useCallback(
-    (account?: AccountContext) => {
+    (account?: AccountContext, override?: boolean) => {
       setLastUsedAccount(account ?? null);
+      if (override) {
+        setIsOverride(true);
+      } else {
+        setIsOverride(false);
+      }
     },
     [setLastUsedAccount],
   );
@@ -43,11 +49,15 @@ export function WalletAccountProvider({ children = null }: WalletAccountProvider
   const selectedAccount = useMemo(() => {
     if (!publicKey) return emptyAccount;
     if (!lastUsedAccount?.address) return emptyAccount;
+    if (isOverride) {
+      return lastUsedAccount;
+    }
+
     if (lastUsedAccount.owner !== publicKey.toBase58() && lastUsedAccount.address !== publicKey.toBase58())
       return emptyAccount;
 
     return lastUsedAccount;
-  }, [lastUsedAccount, publicKey]);
+  }, [isOverride, lastUsedAccount, publicKey]);
 
   const providerValues = useMemo(() => {
     return {

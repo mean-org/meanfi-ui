@@ -65,6 +65,8 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
 import './style.scss';
 import { BN } from '@project-serum/anchor';
+import { useWalletAccount } from 'contexts/walletAccount';
+import { AccountContext } from 'models/accounts/AccountContext';
 
 type TabOption =
   | 'first-tab'
@@ -89,6 +91,7 @@ export const PlaygroundView = () => {
   const navigate = useNavigate();
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
+  const { selectedAccount, setSelectedAccount } = useWalletAccount();
   const connectionConfig = useConnectionConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
@@ -143,6 +146,18 @@ export const PlaygroundView = () => {
 
     return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
   }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
+
+  const isImpersonating = useMemo(() => {
+    if (!publicKey) {
+      return false;
+    }
+
+    const walletAddress = publicKey.toBase58();
+    // To be impersonating there has to be an inspected address other than the selected account
+    // and other than the connected wallet address
+
+    return targetAddress && targetAddress !== walletAddress && selectedAccount.address === targetAddress;
+  }, [publicKey, selectedAccount.address, targetAddress]);
 
   ///////////////
   //  Actions  //
@@ -289,13 +304,6 @@ export const PlaygroundView = () => {
     }, 10);
   };
 
-  const onClearResults = () => {
-    setAccountInfo(null);
-    setParsedAccountInfo(null);
-    setTargetAddress('');
-    setSelectedMultisig(undefined);
-  };
-
   const onClearStreamId = () => {
     setStreamId('');
     setDisplayStreamData(false);
@@ -320,6 +328,50 @@ export const PlaygroundView = () => {
       setTargetAddress(asset.address);
       getAccountInfoByAddress(asset.address);
     }
+  };
+
+  const activateAccount = useCallback(
+    (address: string, override?: boolean) => {
+      if (publicKey) {
+        const walletAddress = publicKey.toBase58();
+        // To be impersonating there has to be an inspected address other than the selected account
+        // and other than the connected wallet address
+
+        const isExternal = address && address !== walletAddress;
+        const account: AccountContext = {
+          name: isExternal ? 'External account' : 'Personal account',
+          address,
+          isMultisig: false,
+          owner: SYSTEM_PROGRAM_ID.toBase58(),
+        };
+        consoleOut('Setting selectedAccount onImpersonateAccount:', account, 'crimson');
+        setSelectedAccount(account, override);
+      }
+    },
+    [publicKey, setSelectedAccount],
+  );
+
+  const toggleImpersonation = useCallback(() => {
+    if (!publicKey) {
+      return;
+    }
+    const walletAddress = publicKey.toBase58();
+
+    if (isImpersonating) {
+      activateAccount(walletAddress);
+    } else {
+      activateAccount(targetAddress, true);
+    }
+  }, [activateAccount, isImpersonating, publicKey, targetAddress]);
+
+  const onClearResults = () => {
+    setAccountInfo(null);
+    setParsedAccountInfo(null);
+    if (publicKey) {
+      activateAccount(publicKey.toBase58());
+    }
+    setTargetAddress('');
+    setSelectedMultisig(undefined);
   };
 
   const autoFocusInput = useCallback(() => {
@@ -1273,6 +1325,17 @@ export const PlaygroundView = () => {
         </div>
 
         <div className="mb-3">{renderAccountInfoResults()}</div>
+        <Divider />
+        <div className="tabset-heading">User impersonation</div>
+        {publicKey ? (
+          <Space size="middle" wrap={true}>
+            <Button type="default" shape="round" size="large" onClick={toggleImpersonation} disabled={!targetAddress}>
+              {isImpersonating ? 'Stop impersonation' : 'Start impersonation'}
+            </Button>
+          </Space>
+        ) : (
+          <span>No connection, please connect wallet.</span>
+        )}
       </>
     );
   };
