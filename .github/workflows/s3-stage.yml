@@ -89,7 +89,7 @@ jobs:
 
       # Updates the distribution origin path
       - name: Update originPath
-        uses: supermean-org/aws-web-deploy@v1
+        uses: mean-dao/aws-webdeploy@v1
         env:
           FOLDER_PATH: "/v${{ github.run_number }}"
         with:
