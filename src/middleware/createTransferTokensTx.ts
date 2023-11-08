@@ -1,16 +1,9 @@
-import { MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import {
-  AccountLayout,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  MintLayout,
-  Token,
-  TOKEN_PROGRAM_ID,
-  u64,
-} from '@solana/spl-token';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import {
   AccountInfo,
   Connection,
   LAMPORTS_PER_SOL,
+  ParsedAccountData,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -18,9 +11,10 @@ import {
 } from '@solana/web3.js';
 import { BaseProposal } from 'models/multisig';
 import { SOL_MINT } from './ids';
-import { consoleOut } from './ui';
 import { toTokenAmount } from './utils';
 import { BN } from '@project-serum/anchor';
+import getAccountInfoByAddress from './getAccountInfoByAddress';
+import { consoleOut } from './ui';
 
 export interface TransferTokensTxParams extends BaseProposal {
   amount: number;
@@ -28,100 +22,119 @@ export interface TransferTokensTxParams extends BaseProposal {
   to: string;
 }
 
-const getFromAccount = (fromAccountInfo: AccountInfo<Buffer>) => {
-  return fromAccountInfo.owner.equals(SystemProgram.programId)
-    ? fromAccountInfo
-    : AccountLayout.decode(Buffer.from(fromAccountInfo.data));
+const isTokenAccount = (parsedAccountInfo: AccountInfo<ParsedAccountData> | null) => {
+  return !!(
+    parsedAccountInfo &&
+    parsedAccountInfo.data.program === 'spl-token' &&
+    parsedAccountInfo.data.parsed.type === 'account'
+  );
 };
 
-const getFromMint = (fromAccountInfo: AccountInfo<Buffer>) => {
-  const fromAccount = getFromAccount(fromAccountInfo);
-  return fromAccountInfo.owner.equals(SystemProgram.programId) ? SOL_MINT : new PublicKey(fromAccount.mint);
+const getMintDecimals = (parsedAccountInfo: AccountInfo<ParsedAccountData> | null) => {
+  return parsedAccountInfo && parsedAccountInfo.data.parsed ? parsedAccountInfo.data.parsed.info.decimals : 0;
 };
 
-export const createTransferTokensTx = async (
-  connection?: Connection,
-  publicKey?: PublicKey,
-  selectedMultisig?: MultisigInfo,
-  multisigClient?: MeanMultisig,
-  data?: TransferTokensTxParams,
+/**
+ * Builds a transaction to transfer tokens from a Safe to a beneficiary account
+ * using the Token program. The beneficiary account must exist and it should be
+ * either a wallet which already contains the corresponding ATA for the mint
+ * or can also be an ATA account. No ATA will be auto-created!
+ *
+ * @param connection - A Solana connection
+ * @param multisigAuthority - Public key of the sender holding the asset (Multisig Authority)
+ * @param feePayer - Fee payer account
+ * @param from - Public key of the source token account
+ * @param beneficiary - Public key of the beneficiary wallet or ATA address
+ * @param data - beneficiary, mint and token amount to be transferred
+ */
+export const createFundsTransferProposal = async (
+  connection: Connection,
+  multisigAuthority: PublicKey,
+  feePayer: PublicKey,
+  from: PublicKey,
+  beneficiary: PublicKey,
+  amount: number,
 ) => {
-  if (!connection || !publicKey || !selectedMultisig || !multisigClient || !data) {
-    throw Error('Invalid transaction data');
-  }
-
-  const fromAddress = new PublicKey(data.from);
-  const fromAccountInfo = await connection.getAccountInfo(fromAddress);
-
-  if (!fromAccountInfo) {
-    throw Error('Invalid from token account');
-  }
-
-  const fromMintAddress = getFromMint(fromAccountInfo);
-  let toAddress = new PublicKey(data.to);
+  let toAddress = beneficiary;
   let transferIx: TransactionInstruction;
-  const ixs: TransactionInstruction[] = [];
 
-  if (fromMintAddress.equals(SOL_MINT)) {
+  // Check from address
+  const fromAccountInfo = await getAccountInfoByAddress(connection, from);
+  if (!fromAccountInfo) {
+    throw Error('Invalid from account');
+  }
+
+  // Set the mint & owner based on the from address
+  const { accountInfo, parsedAccountInfo } = fromAccountInfo;
+  const fromAccountOwner = parsedAccountInfo
+    ? new PublicKey(parsedAccountInfo.data.parsed.info.owner)
+    : accountInfo?.owner;
+  const fromMintAddress = parsedAccountInfo ? new PublicKey(parsedAccountInfo.data.parsed.info.mint) : SOL_MINT;
+
+  consoleOut('Account Owner:', fromAccountOwner.toBase58(), 'blue');
+  consoleOut('Mint:', fromMintAddress.toBase58(), 'blue');
+
+  if (fromMintAddress.equals(SystemProgram.programId)) {
     transferIx = SystemProgram.transfer({
-      fromPubkey: fromAddress,
+      fromPubkey: from,
       toPubkey: toAddress,
-      lamports: new BN(data.amount * LAMPORTS_PER_SOL).toNumber(),
+      lamports: new BN(amount * LAMPORTS_PER_SOL).toNumber(),
     });
   } else {
-    const mintInfo = await connection.getAccountInfo(fromMintAddress);
-
-    if (!mintInfo) {
+    // Check mint
+    const mintAccountInfo = await getAccountInfoByAddress(connection, fromMintAddress);
+    if (!mintAccountInfo) {
       throw Error('Invalid token mint account');
     }
 
-    const mint = MintLayout.decode(Buffer.from(mintInfo.data));
+    const decimals = getMintDecimals(mintAccountInfo.parsedAccountInfo);
+    consoleOut('decimals:', decimals, 'blue');
 
-    const toAccountATA = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      fromMintAddress,
-      toAddress,
-      true,
-    );
-    consoleOut('toAccountATA:', toAccountATA.toBase58(), 'blue');
+    let beneficiaryToken = toAddress;
 
-    const toAccountATAInfo = await connection.getAccountInfo(toAccountATA);
-
-    if (!toAccountATAInfo) {
-      ixs.push(
-        Token.createAssociatedTokenAccountInstruction(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          fromMintAddress,
-          toAccountATA,
-          toAddress,
-          publicKey,
-        ),
-      );
+    // Check beneficiary address
+    let isBeneficiaryAta = false;
+    const beneficiaryAccountInfo = await getAccountInfoByAddress(connection, toAddress);
+    if (beneficiaryAccountInfo?.parsedAccountInfo) {
+      isBeneficiaryAta = isTokenAccount(beneficiaryAccountInfo.parsedAccountInfo);
     }
 
-    toAddress = toAccountATA;
+    if (!isBeneficiaryAta) {
+      // beneficiary could be a wallet, lets check if it has ATA created
+      beneficiaryToken = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMintAddress,
+        toAddress,
+        true,
+      );
+      const beneficiaryTokenAccountInfo = await connection.getAccountInfo(beneficiaryToken);
 
-    const tokenAmount = toTokenAmount(data.amount, mint.decimals, true) as string;
+      if (!beneficiaryTokenAccountInfo) {
+        throw Error('Beneficiary token account not found');
+      }
+    }
+
+    toAddress = beneficiaryToken;
+
+    const tokenAmount = toTokenAmount(amount, decimals, true) as string;
 
     transferIx = Token.createTransferInstruction(
       TOKEN_PROGRAM_ID,
-      fromAddress,
+      from,
       toAddress,
-      selectedMultisig.authority,
+      multisigAuthority,
       [],
       new u64(tokenAmount),
     );
   }
 
   const tx = new Transaction().add(transferIx);
-  tx.feePayer = publicKey;
+  tx.feePayer = feePayer;
   const { blockhash } = await connection.getLatestBlockhash('confirmed');
   tx.recentBlockhash = blockhash;
 
   return {
     tx,
-    preInstructions: ixs,
   };
 };

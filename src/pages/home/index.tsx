@@ -71,7 +71,7 @@ import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, I
 import { appConfig, customLogger } from 'index';
 import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
 import { createAddSafeAssetTx, CreateSafeAssetTxParams } from 'middleware/createAddSafeAssetTx';
-import { createTransferTokensTx, TransferTokensTxParams } from 'middleware/createTransferTokensTx';
+import { createFundsTransferProposal, TransferTokensTxParams } from 'middleware/createTransferTokensTx';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { SOL_MINT } from 'middleware/ids';
@@ -1128,7 +1128,6 @@ export const HomeView = () => {
   }, [resetTransactionStatus, getMultisigTxProposalFees]);
 
   const onAcceptTransferToken = (params: TransferTokensTxParams) => {
-    consoleOut('params', params, 'blue');
     onExecuteTransferTokensTx(params);
   };
 
@@ -1172,12 +1171,21 @@ export const HomeView = () => {
         generateMultisigArgs: async ({ multisig, data }) => {
           consoleOut('multisig:', multisig, 'purple');
           consoleOut('data:', data, 'purple');
-          if (!publicKey || !multisigClient || !multisig || !data) return null;
-          const txResult = await createTransferTokensTx(connection, publicKey, multisig, multisigClient, data);
-
-          const programId = txResult.tx.instructions[0].programId;
-          const ixData = Buffer.from(txResult.tx.instructions[0].data);
-          const ixAccounts = txResult.tx.instructions[0].keys;
+          if (!publicKey || !multisig || !data) return null;
+          const fromPk = new PublicKey(data.from);
+          const beneficiaryPk = new PublicKey(data.to);
+          const txResult = await createFundsTransferProposal(
+            connection,
+            multisig.authority,
+            publicKey,
+            fromPk,
+            beneficiaryPk,
+            data.amount,
+          );
+          const ix = txResult.tx.instructions[0];
+          const programId = ix.programId;
+          const ixData = Buffer.from(ix.data);
+          const ixAccounts = ix.keys;
 
           return {
             programId, // program
@@ -1193,7 +1201,6 @@ export const HomeView = () => {
       publicKey,
       connection,
       nativeBalance,
-      multisigClient,
       selectedMultisig,
       selectedAsset?.symbol,
       selectedAsset?.decimals,
