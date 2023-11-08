@@ -138,7 +138,6 @@ const useTransaction = () => {
     setIsBusy,
   }: Args<T>) => {
     const payload = basePayload();
-    consoleOut('params', payload, 'blue');
 
     let transaction: Transaction | VersionedTransaction | undefined = undefined;
     let encodedTx: string;
