@@ -22,9 +22,14 @@ export interface TransferTokensTxParams extends BaseProposal {
   to: string;
 }
 
+/**
+ * Checks if the accountInfo provided by getParsedAccountInfo corresponds to a token account
+ * @param parsedAccountInfo
+ * @returns true if the accountInfo indicates that the account belongs to to the spl-token program and it is a token account
+ */
 const isTokenAccount = (parsedAccountInfo: AccountInfo<ParsedAccountData> | null) => {
   return !!(
-    parsedAccountInfo &&
+    parsedAccountInfo?.data &&
     parsedAccountInfo.data.program === 'spl-token' &&
     parsedAccountInfo.data.parsed.type === 'account'
   );
@@ -44,7 +49,7 @@ const getMintDecimals = (parsedAccountInfo: AccountInfo<ParsedAccountData> | nul
  * @param multisigAuthority - Public key of the sender holding the asset (Multisig Authority)
  * @param feePayer - Fee payer account
  * @param from - Public key of the source token account
- * @param beneficiary - Public key of the beneficiary wallet or ATA address
+ * @param to - Public key of the beneficiary wallet or ATA address
  * @param data - beneficiary, mint and token amount to be transferred
  */
 export const createFundsTransferProposal = async (
@@ -52,10 +57,10 @@ export const createFundsTransferProposal = async (
   multisigAuthority: PublicKey,
   feePayer: PublicKey,
   from: PublicKey,
-  beneficiary: PublicKey,
+  to: PublicKey,
   amount: number,
 ) => {
-  let toAddress = beneficiary;
+  let toAddress = to;
   let transferIx: TransactionInstruction;
 
   // Check from address
@@ -74,7 +79,7 @@ export const createFundsTransferProposal = async (
   consoleOut('Account Owner:', fromAccountOwner.toBase58(), 'blue');
   consoleOut('Mint:', fromMintAddress.toBase58(), 'blue');
 
-  if (fromMintAddress.equals(SystemProgram.programId)) {
+  if (fromMintAddress.equals(SOL_MINT)) {
     transferIx = SystemProgram.transfer({
       fromPubkey: from,
       toPubkey: toAddress,

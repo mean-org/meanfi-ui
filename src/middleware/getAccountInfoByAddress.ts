@@ -1,6 +1,12 @@
 import { AccountInfo, Connection, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { consoleOut } from './ui';
 
+/**
+ * Fetch parsed account info for the specified public key
+ * @param connection A Solana connection object
+ * @param address The account Public Key to be inspected
+ * @returns The account info for the inspected account or null if no info found
+ */
 const getAccountInfoByAddress = async (connection: Connection, address: PublicKey) => {
   let accInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
   try {
