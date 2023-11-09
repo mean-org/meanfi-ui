@@ -1,18 +1,16 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import {
-  AccountInfo,
   Connection,
-  LAMPORTS_PER_SOL,
-  ParsedAccountData,
-  PublicKey,
+  LAMPORTS_PER_SOL, PublicKey,
   SystemProgram,
   Transaction,
-  TransactionInstruction,
+  TransactionInstruction
 } from '@solana/web3.js';
 import { BaseProposal } from 'models/multisig';
 import { SOL_MINT } from './ids';
 import { toTokenAmount } from './utils';
 import { BN } from '@project-serum/anchor';
+import { getMintDecimals, isTokenAccount } from './accountInfoGetters';
 import getAccountInfoByAddress from './getAccountInfoByAddress';
 import { consoleOut } from './ui';
 
@@ -21,23 +19,6 @@ export interface TransferTokensTxParams extends BaseProposal {
   from: string;
   to: string;
 }
-
-/**
- * Checks if the accountInfo provided by getParsedAccountInfo corresponds to a token account
- * @param parsedAccountInfo
- * @returns true if the accountInfo indicates that the account belongs to to the spl-token program and it is a token account
- */
-const isTokenAccount = (parsedAccountInfo: AccountInfo<ParsedAccountData> | null) => {
-  return !!(
-    parsedAccountInfo?.data &&
-    parsedAccountInfo.data.program === 'spl-token' &&
-    parsedAccountInfo.data.parsed.type === 'account'
-  );
-};
-
-const getMintDecimals = (parsedAccountInfo: AccountInfo<ParsedAccountData> | null) => {
-  return parsedAccountInfo && parsedAccountInfo.data.parsed ? parsedAccountInfo.data.parsed.info.decimals : 0;
-};
 
 /**
  * Builds a transaction to transfer tokens from a Safe to a beneficiary account
