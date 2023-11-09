@@ -2446,6 +2446,12 @@ em {
       border-color: rgba(233, 160, 16, 0.87);
     }
   }
+
+  .ant-alert-icon {
+    margin-right: 10px;
+    align-self: flex-start;
+    padding-top: 4px;
+  }
 }
 
 .slider-container {
@@ -9254,14 +9260,16 @@ code {
   .icon {
     margin: 1rem;
 
-    &.anticon-check {
+    &.anticon-check,
+    &.anticon-check-circle {
       color: var(--color-notify-success);
     }
 
-    &.anticon-warning {
-      color: var(--color-notify-warning);
+    &.anticon-info-circle {
+      color: var(--color-notify-info);
     }
 
+    &.anticon-warning,
     &.anticon-exclamation-circle {
       color: var(--color-notify-warning);
     }

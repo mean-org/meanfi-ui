@@ -1,18 +1,16 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import {
-  AccountInfo,
   Connection,
-  LAMPORTS_PER_SOL,
-  ParsedAccountData,
-  PublicKey,
+  LAMPORTS_PER_SOL, PublicKey,
   SystemProgram,
   Transaction,
-  TransactionInstruction,
+  TransactionInstruction
 } from '@solana/web3.js';
 import { BaseProposal } from 'models/multisig';
 import { SOL_MINT } from './ids';
 import { toTokenAmount } from './utils';
 import { BN } from '@project-serum/anchor';
+import { getMintDecimals, isTokenAccount } from './accountInfoGetters';
 import getAccountInfoByAddress from './getAccountInfoByAddress';
 import { consoleOut } from './ui';
 
@@ -21,18 +19,6 @@ export interface TransferTokensTxParams extends BaseProposal {
   from: string;
   to: string;
 }
-
-const isTokenAccount = (parsedAccountInfo: AccountInfo<ParsedAccountData> | null) => {
-  return !!(
-    parsedAccountInfo &&
-    parsedAccountInfo.data.program === 'spl-token' &&
-    parsedAccountInfo.data.parsed.type === 'account'
-  );
-};
-
-const getMintDecimals = (parsedAccountInfo: AccountInfo<ParsedAccountData> | null) => {
-  return parsedAccountInfo && parsedAccountInfo.data.parsed ? parsedAccountInfo.data.parsed.info.decimals : 0;
-};
 
 /**
  * Builds a transaction to transfer tokens from a Safe to a beneficiary account
@@ -44,7 +30,7 @@ const getMintDecimals = (parsedAccountInfo: AccountInfo<ParsedAccountData> | nul
  * @param multisigAuthority - Public key of the sender holding the asset (Multisig Authority)
  * @param feePayer - Fee payer account
  * @param from - Public key of the source token account
- * @param beneficiary - Public key of the beneficiary wallet or ATA address
+ * @param to - Public key of the beneficiary wallet or ATA address
  * @param data - beneficiary, mint and token amount to be transferred
  */
 export const createFundsTransferProposal = async (
@@ -52,10 +38,10 @@ export const createFundsTransferProposal = async (
   multisigAuthority: PublicKey,
   feePayer: PublicKey,
   from: PublicKey,
-  beneficiary: PublicKey,
+  to: PublicKey,
   amount: number,
 ) => {
-  let toAddress = beneficiary;
+  let toAddress = to;
   let transferIx: TransactionInstruction;
 
   // Check from address
@@ -74,7 +60,7 @@ export const createFundsTransferProposal = async (
   consoleOut('Account Owner:', fromAccountOwner.toBase58(), 'blue');
   consoleOut('Mint:', fromMintAddress.toBase58(), 'blue');
 
-  if (fromMintAddress.equals(SystemProgram.programId)) {
+  if (fromMintAddress.equals(SOL_MINT)) {
     transferIx = SystemProgram.transfer({
       fromPubkey: from,
       toPubkey: toAddress,

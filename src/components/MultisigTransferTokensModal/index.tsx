@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
 import './style.scss';
 import { Modal, Button, Spin, Drawer, Checkbox } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ import { getAmountWithSymbol, isValidNumber, shortenAddress } from 'middleware/u
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { MAX_TOKEN_LIST_ITEMS, MEAN_MULTISIG_ACCOUNT_LAMPORTS, MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
+import { INPUT_DEBOUNCE_TIME, MAX_TOKEN_LIST_ITEMS, MEAN_MULTISIG_ACCOUNT_LAMPORTS, MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { UserTokenAccount } from 'models/accounts';
 import { InputMean } from '../InputMean';
 import { TokenDisplay } from '../TokenDisplay';
@@ -24,6 +24,9 @@ import { environment } from 'environments/environment';
 import { MultisigInfo, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { TransferTokensTxParams } from 'middleware/createTransferTokensTx';
+import { useDebounce } from 'hooks/useDebounce';
+import useRecipientAddressValidation from 'hooks/useRecipientAddressValidation';
+import ValidationStatusDisplay from 'components/ValidationStatusDisplay';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -65,18 +68,20 @@ export const MultisigTransferTokensModal = (props: {
     setEffectiveRate,
     refreshPrices,
   } = useContext(AppStateContext);
+  const { validationStatus, isTransferDisabled, validateAddress } = useRecipientAddressValidation({ connection })
 
   const [proposalTitle, setProposalTitle] = useState('');
   const [fromVault, setFromVault] = useState<UserTokenAccount>();
   const [fromAddress, setFromAddress] = useState('');
   const [to, setTo] = useState('');
+  const debouncedToAddress = useDebounce<string>(to, INPUT_DEBOUNCE_TIME)
   const [amount, setAmount] = useState('');
   const [userBalances, setUserBalances] = useState<any>();
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenFilter, setTokenFilter] = useState('');
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
-  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+  const [tokenBalance, setTokenBalance] = useState<number>(0);
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
 
@@ -192,7 +197,7 @@ export const MultisigTransferTokensModal = (props: {
             balancesMap[NATIVE_SOL.address] = nativeBalance;
             // Create a list containing tokens for the user owned token accounts
             accTks.forEach(item => {
-              balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+              balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount ?? 0;
               const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
               const tokenFromSplTokensCopy = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
               if (tokenFromSplTokensCopy && !isTokenAccountInTheList) {
@@ -201,9 +206,9 @@ export const MultisigTransferTokensModal = (props: {
             });
 
             intersectedList.sort((a, b) => {
-              if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              if ((balancesMap[a.address] ?? 0) < (balancesMap[b.address] ?? 0)) {
                 return 1;
-              } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              } else if ((balancesMap[a.address] ?? 0) > (balancesMap[b.address] ?? 0)) {
                 return -1;
               }
               return 0;
@@ -236,7 +241,7 @@ export const MultisigTransferTokensModal = (props: {
 
   // Reset results when the filter is cleared
   useEffect(() => {
-    if (selectedList && selectedList.length && filteredTokenList.length === 0 && !tokenFilter) {
+    if (selectedList?.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
     }
   }, [selectedList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
@@ -244,12 +249,12 @@ export const MultisigTransferTokensModal = (props: {
   // Keep token balance updated
   useEffect(() => {
     if (!connection || !publicKey || !userBalances || !selectedToken) {
-      setSelectedTokenBalance(0);
+      setTokenBalance(0);
       return;
     }
 
     const timeout = setTimeout(() => {
-      setSelectedTokenBalance(userBalances[selectedToken.address]);
+      setTokenBalance(userBalances[selectedToken.address]);
     });
 
     return () => {
@@ -264,14 +269,28 @@ export const MultisigTransferTokensModal = (props: {
     }
 
     const timeout = setTimeout(() => {
-      const asset = selectedVault || assets[0];
+      const asset = selectedVault ?? assets[0];
       consoleOut('From asset:', asset, 'blue');
       setFromVault(asset);
-      setFromAddress(asset.publicAddress || '');
+      setFromAddress(asset.publicAddress ?? '');
     });
 
     return () => clearTimeout(timeout);
   }, [connection, assets, isVisible, selectedVault, publicKey]);
+
+  useEffect(() => {
+    // We need to debounce the recipient address input value to avoid numerous calls
+    // Triggers when "debouncedToAddress" changes
+    // Do validation of the recipient address here
+    if (fromVault) {
+      console.log('debouncedToAddress:', debouncedToAddress)
+      console.log('fromMint:', fromVault.address)
+      validateAddress(debouncedToAddress, fromVault.address)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedToAddress, fromVault])
+
+  useEffect(() => console.log('validationStatus:', validationStatus), [validationStatus])
 
   const onAcceptModal = () => {
     const params: TransferTokensTxParams = {
@@ -292,8 +311,8 @@ export const MultisigTransferTokensModal = (props: {
     setProposalTitle(e.target.value);
   };
 
-  const onMintToAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
+  const onTransferToAddressChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const inputValue = event.target.value;
     const trimmedValue = inputValue.trim();
     setTo(trimmedValue);
   };
@@ -328,20 +347,18 @@ export const MultisigTransferTokensModal = (props: {
   };
 
   const isValidForm = (): boolean => {
-    return proposalTitle &&
+    return !!(!!(proposalTitle &&
       fromVault &&
-      to &&
+      to) &&
       isValidAddress(fromVault.publicAddress) &&
       isValidAddress(to) &&
       amount &&
       +amount > 0 &&
-      +amount <= (fromVault.balance || 0)
-      ? true
-      : false;
+      +amount <= (fromVault.balance ?? 0));
   };
 
   const isAmountTooHigh = () => {
-    return amount && fromVault && +amount > (fromVault.balance || 0);
+    return amount && fromVault && +amount > (fromVault.balance ?? 0);
   };
 
   const getTransactionStartButtonLabel = () => {
@@ -498,7 +515,7 @@ export const MultisigTransferTokensModal = (props: {
               };
               setSelectedToken(uknwnToken);
               if (userBalances && userBalances[address]) {
-                setSelectedTokenBalance(userBalances[address]);
+                setTokenBalance(userBalances[address]);
               }
               consoleOut('token selected:', uknwnToken, 'blue');
               // Do not close on errors (-1 or -2)
@@ -535,263 +552,265 @@ export const MultisigTransferTokensModal = (props: {
       );
     }
     return (
-      <>
-        <div className="transaction-progress p-0">
-          <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-          {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-            <h4 className="mb-4">
-              {t('transactions.status.tx-start-failure', {
-                accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
-                feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
-              })}
-            </h4>
-          ) : (
-            <h4 className="font-bold mb-3">
-              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-            </h4>
-          )}
-          {!isBusy ? (
-            <div className="row two-col-ctas mt-3 transaction-progress p-2">
-              <div className="col-12">
-                <Button
-                  block
-                  type="text"
-                  shape="round"
-                  size="middle"
-                  className={`center-text-in-btn thin-stroke ${isBusy ? 'inactive' : ''}`}
-                  onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
-                >
-                  {isError(transactionStatus.currentOperation) &&
+      <div className="transaction-progress p-0">
+        <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+        {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+          <h4 className="mb-4">
+            {t('transactions.status.tx-start-failure', {
+              accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
+              feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
+            })}
+          </h4>
+        ) : (
+          <h4 className="font-bold mb-3">
+            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+          </h4>
+        )}
+        {!isBusy ? (
+          <div className="row two-col-ctas mt-3 transaction-progress p-2">
+            <div className="col-12">
+              <Button
+                block
+                type="text"
+                shape="round"
+                size="middle"
+                className={`center-text-in-btn thin-stroke ${isBusy ? 'inactive' : ''}`}
+                onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
+              >
+                {isError(transactionStatus.currentOperation) &&
                   transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure
-                    ? t('general.retry')
-                    : t('general.cta-close')}
-                </Button>
-              </div>
+                  ? t('general.retry')
+                  : t('general.cta-close')}
+              </Button>
             </div>
-          ) : null}
-        </div>
-      </>
+          </div>
+        ) : null}
+      </div>
     );
   };
 
   return (
-    <>
-      <Modal
-        className="mean-modal simple-modal"
-        title={<div className="modal-title">{t('multisig.transfer-tokens.modal-title')}</div>}
-        maskClosable={false}
-        footer={null}
-        open={isVisible}
-        onOk={onAcceptModal}
-        onCancel={onCloseModal}
-        width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
-      >
-        <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-          {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
-            <>
-              {/* Proposal title */}
-              <div className="mb-3">
-                <div className="form-label">{t('multisig.proposal-modal.title')}</div>
-                <InputMean
-                  id="proposal-title-field"
-                  name="Title"
-                  className="w-100 general-text-input"
-                  onChange={onTitleInputValueChange}
-                  placeholder="Add a proposal title (required)"
-                  value={proposalTitle}
+    <Modal
+      className="mean-modal simple-modal"
+      title={<div className="modal-title">{t('multisig.transfer-tokens.modal-title')}</div>}
+      maskClosable={false}
+      footer={null}
+      open={isVisible}
+      onOk={onAcceptModal}
+      onCancel={onCloseModal}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+    >
+      <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
+        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+          <>
+            {/* Proposal title */}
+            <div className="mb-3">
+              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+              <InputMean
+                id="proposal-title-field"
+                name="Title"
+                className="w-100 general-text-input"
+                onChange={onTitleInputValueChange}
+                placeholder="Add a proposal title (required)"
+                value={proposalTitle}
+              />
+            </div>
+
+            {/* From */}
+            <div className="mb-3">
+              <div className="form-label">From</div>
+              <div className={`well ${(fromVault?.publicAddress as string) ? 'disabled' : ''}`}>
+                <input
+                  id="token-address-field"
+                  className="general-text-input"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  type="text"
+                  readOnly
+                  value={fromAddress}
                 />
               </div>
+            </div>
 
-              {/* From */}
-              <div className="mb-3">
-                <div className="form-label">From</div>
-                <div className={`well ${(fromVault?.publicAddress as string) ? 'disabled' : ''}`}>
+            {/* Send amount */}
+            <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
+            <div className="well">
+              <div className="flex-fixed-left">
+                <div className="left">
+                  <span className="add-on simplelink">
+                    {selectedToken && (
+                      <TokenDisplay
+                        onClick={() => showDrawer()}
+                        mintAddress={selectedToken.address}
+                        name={selectedToken.name}
+                        showCaretDown={true}
+                        fullTokenInfo={selectedToken}
+                      />
+                    )}
+                    {selectedToken && fromVault ? (
+                      <div
+                        className="token-max simplelink"
+                        onClick={() => {
+                          setAmount(
+                            getAmountWithSymbol(
+                              fromVault.balance as number,
+                              selectedToken.address,
+                              true,
+                              splTokenList,
+                              selectedToken.decimals,
+                            ),
+                          );
+                        }}
+                      >
+                        MAX
+                      </div>
+                    ) : null}
+                  </span>
+                </div>
+                <div className="right">
                   <input
-                    id="token-address-field"
-                    className="general-text-input"
+                    className="general-text-input text-right"
+                    inputMode="decimal"
                     autoComplete="off"
                     autoCorrect="off"
                     type="text"
-                    readOnly
-                    value={fromAddress}
+                    onChange={onMintAmountChange}
+                    pattern="^[0-9]*[.,]?[0-9]*$"
+                    placeholder="0.0"
+                    minLength={1}
+                    maxLength={79}
+                    spellCheck="false"
+                    onPaste={pasteHandler}
+                    value={amount}
                   />
                 </div>
               </div>
-
-              {/* Send amount */}
-              <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
-              <div className="well">
-                <div className="flex-fixed-left">
-                  <div className="left">
-                    <span className="add-on simplelink">
-                      {selectedToken && (
-                        <TokenDisplay
-                          onClick={() => showDrawer()}
-                          mintAddress={selectedToken.address}
-                          name={selectedToken.name}
-                          showCaretDown={true}
-                          fullTokenInfo={selectedToken}
-                        />
+              <div className="flex-fixed-right">
+                <div className="left inner-label">
+                  <span>{t('transactions.send-amount.label-right')}:</span>
+                  <span>
+                    {fromVault &&
+                      getAmountWithSymbol(
+                        fromVault.balance || 0,
+                        fromVault.publicAddress as string,
+                        true,
+                        splTokenList,
+                        fromVault.decimals,
                       )}
-                      {selectedToken && fromVault ? (
-                        <div
-                          className="token-max simplelink"
-                          onClick={() => {
-                            setAmount(
-                              getAmountWithSymbol(
-                                fromVault.balance as number,
-                                selectedToken.address,
-                                true,
-                                splTokenList,
-                                selectedToken.decimals,
-                              ),
-                            );
-                          }}
-                        >
-                          MAX
-                        </div>
-                      ) : null}
-                    </span>
-                  </div>
-                  <div className="right">
-                    <input
-                      className="general-text-input text-right"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      type="text"
-                      onChange={onMintAmountChange}
-                      pattern="^[0-9]*[.,]?[0-9]*$"
-                      placeholder="0.0"
-                      minLength={1}
-                      maxLength={79}
-                      spellCheck="false"
-                      onPaste={pasteHandler}
-                      value={amount}
-                    />
-                  </div>
+                  </span>
                 </div>
-                <div className="flex-fixed-right">
-                  <div className="left inner-label">
-                    <span>{t('transactions.send-amount.label-right')}:</span>
-                    <span>
-                      {fromVault &&
-                        getAmountWithSymbol(
-                          fromVault.balance || 0,
-                          fromVault.publicAddress as string,
-                          true,
-                          splTokenList,
-                          fromVault.decimals,
-                        )}
-                    </span>
-                  </div>
-                  <div className="right inner-label">
-                    <span
-                      className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                      onClick={() => refreshPrices()}
-                    >
-                      ~{amount ? toUsCurrency(getTokenPrice()) : '$0.00'}
-                    </span>
-                  </div>
-                </div>
-                {selectedToken &&
-                  selectedToken.address === NATIVE_SOL.address &&
-                  (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
-                    <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
-                  )}
-              </div>
-
-              {/* Transfer to */}
-              <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
-              <div className="well">
-                <input
-                  id="mint-to-field"
-                  className="general-text-input"
-                  autoComplete="on"
-                  autoCorrect="off"
-                  type="text"
-                  onChange={onMintToAddressChange}
-                  placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
-                  required={true}
-                  spellCheck="false"
-                  value={to}
-                />
-                {to && !isValidAddress(to) && (
-                  <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
-                )}
-              </div>
-
-              {/* explanatory paragraph */}
-              <p>{t('multisig.multisig-assets.explanatory-paragraph')}</p>
-
-              {/* Confirm recipient address is correct Checkbox */}
-              <div className="mb-2">
-                <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
-                  {t('transfers.verified-recipient-disclaimer')}
-                </Checkbox>
-              </div>
-
-              {!isError(transactionStatus.currentOperation) && (
-                <div className="col-12 p-0 mt-3">
-                  <Button
-                    className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
-                    block
-                    type="primary"
-                    shape="round"
-                    size="large"
-                    disabled={!isValidForm() || !isVerifiedRecipient}
-                    onClick={() => {
-                      if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                        onAcceptModal();
-                      } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                        onCloseModal();
-                      } else {
-                        refreshPage();
-                      }
-                    }}
+                <div className="right inner-label">
+                  <span
+                    className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onClick={() => refreshPrices()}
                   >
-                    {getCtaButtonLabel()}
-                  </Button>
+                    ~{amount ? toUsCurrency(getTokenPrice()) : '$0.00'}
+                  </span>
                 </div>
-              )}
-            </>
-          ) : (
-            getAlternateStateModalContent()
-          )}
-        </div>
+              </div>
+              {selectedToken &&
+                selectedToken.address === NATIVE_SOL.address &&
+                (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+                  <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+                )}
+            </div>
 
-        <div
-          className={
-            isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
-          }
-        >
-          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-            <div className="transaction-progress">
-              <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-              <h4 className="font-bold mb-1">
-                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-              </h4>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
+            {/* Transfer to */}
+            <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
+            <div className="well">
+              <input
+                id="mint-to-field"
+                className="general-text-input"
+                autoComplete="on"
+                autoCorrect="off"
+                type="text"
+                onChange={onTransferToAddressChange}
+                placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
+                required={true}
+                spellCheck="false"
+                value={to}
+              />
+              {to && !isValidAddress(to) && (
+                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
               )}
             </div>
-          )}
-        </div>
 
-        {isTokenSelectorVisible && (
-          <Drawer
-            title={t('token-selector.modal-title')}
-            placement="bottom"
-            closable={true}
-            onClose={onCloseTokenSelector}
-            open={isTokenSelectorVisible}
-            getContainer={false}
-            style={{ position: 'absolute' }}
-          >
-            {renderTokenSelectorInner}
-          </Drawer>
+            {/* explanatory paragraph */}
+            <p>{t('multisig.multisig-assets.explanatory-paragraph')}</p>
+
+            {validationStatus.severity === 'error' || validationStatus.severity === 'warning' ? (
+              <div className="mb-2">
+                <ValidationStatusDisplay validationStatus={validationStatus} />
+              </div>
+            ) : null}
+
+            {/* Confirm recipient address is correct Checkbox */}
+            <div className="mb-2">
+              <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
+                {t('transfers.verified-recipient-disclaimer')}
+              </Checkbox>
+            </div>
+
+            {!isError(transactionStatus.currentOperation) && (
+              <div className="col-12 p-0 mt-3">
+                <Button
+                  className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
+                  block
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  disabled={!isValidForm() || !isVerifiedRecipient || isTransferDisabled}
+                  onClick={() => {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                      onAcceptModal();
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                      onCloseModal();
+                    } else {
+                      refreshPage();
+                    }
+                  }}
+                >
+                  {getCtaButtonLabel()}
+                </Button>
+              </div>
+            )}
+          </>
+        ) : (
+          getAlternateStateModalContent()
         )}
-      </Modal>
-    </>
+      </div>
+
+      <div
+        className={
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+        }
+      >
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+          <div className="transaction-progress">
+            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+            <h4 className="font-bold mb-1">
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+            </h4>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {isTokenSelectorVisible && (
+        <Drawer
+          title={t('token-selector.modal-title')}
+          placement="bottom"
+          closable={true}
+          onClose={onCloseTokenSelector}
+          open={isTokenSelectorVisible}
+          getContainer={false}
+          style={{ position: 'absolute' }}
+        >
+          {renderTokenSelectorInner}
+        </Drawer>
+      )}
+    </Modal>
   );
 };
