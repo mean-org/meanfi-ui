@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
 import './style.scss';
-import { Modal, Button, Spin, Drawer, Checkbox } from 'antd';
+import { Modal, Button, Spin, Drawer } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from 'contexts/appstate';
@@ -61,9 +61,7 @@ export const MultisigTransferTokensModal = (props: {
     tokenAccounts,
     loadingPrices,
     transactionStatus,
-    isVerifiedRecipient,
     getTokenPriceByAddress,
-    setIsVerifiedRecipient,
     getTokenPriceBySymbol,
     setEffectiveRate,
     refreshPrices,
@@ -317,10 +315,6 @@ export const MultisigTransferTokensModal = (props: {
     setTo(trimmedValue);
   };
 
-  const onIsVerifiedRecipientChange = (e: any) => {
-    setIsVerifiedRecipient(e.target.checked);
-  };
-
   const onMintAmountChange = (e: any) => {
     let newValue = e.target.value;
 
@@ -374,8 +368,6 @@ export const MultisigTransferTokensModal = (props: {
       return 'Enter an address';
     } else if (!isValidAddress(to)) {
       return 'Invalid address';
-    } else if (!isVerifiedRecipient) {
-      return t('transactions.validation.verified-recipient-unchecked');
     } else {
       return 'Sign proposal';
     }
@@ -744,13 +736,6 @@ export const MultisigTransferTokensModal = (props: {
               </div>
             ) : null}
 
-            {/* Confirm recipient address is correct Checkbox */}
-            <div className="mb-2">
-              <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
-                {t('transfers.verified-recipient-disclaimer')}
-              </Checkbox>
-            </div>
-
             {!isError(transactionStatus.currentOperation) && (
               <div className="col-12 p-0 mt-3">
                 <Button
@@ -759,7 +744,7 @@ export const MultisigTransferTokensModal = (props: {
                   type="primary"
                   shape="round"
                   size="large"
-                  disabled={!isValidForm() || !isVerifiedRecipient || isTransferDisabled}
+                  disabled={!isValidForm() || isTransferDisabled}
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                       onAcceptModal();

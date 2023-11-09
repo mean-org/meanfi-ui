@@ -41,15 +41,16 @@ const ValidationStatusDisplay = ({ validationStatus }: Props) => {
   const alertTitle = useMemo(() => {
     switch (validationStatus.code) {
       case ValidationStatusCode.RECIPIENT_INVALID_ADDRESS:
-        return 'Invalid account'
-      case ValidationStatusCode.RECIPIENT_ATA_MINT_MATCH:
+        return 'Invalid account address'
+      case ValidationStatusCode.RECIPIENT_IS_TOKEN_ACCOUNT:
         return 'Destination address is a token account'
-      case ValidationStatusCode.RECIPIENT_ATA_MINT_MISSMATCH:
-      case ValidationStatusCode.RECIPIENT_MINT:
+      case ValidationStatusCode.RECIPIENT_TOKEN_ACCOUNT_MINT_MISSMATCH:
+      case ValidationStatusCode.RECIPIENT_IS_TOKEN_MINT:
         return 'Invalid destination address'
-      case ValidationStatusCode.RECIPIENT_SYSTEM_ACCOUNT:
+      case ValidationStatusCode.RECIPIENT_IS_SYSTEM_ACCOUNT:
+      case ValidationStatusCode.RECIPIENT_IS_PROGRAM_ACCOUNT:
       case ValidationStatusCode.RECIPIENT_NO_ACCOUNT_INFO:
-        return 'Destination address could be a wallet'
+        return 'Destination is not a regular wallet'
       default:
         return null
     }
@@ -59,16 +60,16 @@ const ValidationStatusDisplay = ({ validationStatus }: Props) => {
     switch (validationStatus.code) {
       case ValidationStatusCode.RECIPIENT_INVALID_ADDRESS:
         return 'The entered address is not a valid Solana address, please review your input.'
-      case ValidationStatusCode.RECIPIENT_ATA_MINT_MATCH:
+      case ValidationStatusCode.RECIPIENT_IS_TOKEN_ACCOUNT:
         return 'You are sending directly to a token account, not to a regular wallet. Proceed only if you understand what you are doing.'
-      case ValidationStatusCode.RECIPIENT_ATA_MINT_MISSMATCH:
+      case ValidationStatusCode.RECIPIENT_TOKEN_ACCOUNT_MINT_MISSMATCH:
         return 'The entered address cannot be used for transferring your tokens. Find the correct destination address.'
-      case ValidationStatusCode.RECIPIENT_MINT:
+      case ValidationStatusCode.RECIPIENT_IS_TOKEN_MINT:
         return 'The entered address corresponds to a mint address. Find the correct destination address.'
-      case ValidationStatusCode.RECIPIENT_SYSTEM_ACCOUNT:
-        return 'Destination address seems to be a regular wallet. Proceed only if you are sure the address is correct.'
+      case ValidationStatusCode.RECIPIENT_IS_SYSTEM_ACCOUNT:
+      case ValidationStatusCode.RECIPIENT_IS_PROGRAM_ACCOUNT:
       case ValidationStatusCode.RECIPIENT_NO_ACCOUNT_INFO:
-        return 'Destination is not a regular wallet. Proceed only if you are sure the address is correct.'
+        return 'Proceed only if you are sure the address is correct.'
       default:
         return null
     }
