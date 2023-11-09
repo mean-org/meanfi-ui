@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react"
-import { AccountInfo, Connection, ParsedAccountData } from "@solana/web3.js"
+import { AccountInfo, Connection, ParsedAccountData, SystemProgram } from "@solana/web3.js"
 import getAccountInfoByAddress from "middleware/getAccountInfoByAddress"
 import { isValidAddress as isValidSolanaAddress } from "middleware/ui"
 import { ValidationStatus, ValidationStatusCode } from "models/ValidationStatus"
@@ -39,7 +39,7 @@ const useRecipientAddressValidation = ({ connection }: { connection: Connection 
     setIsFetching(false)
 
     if (!result) {
-      setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_NO_ACCOUNT_INFO, severity: 'warning' })
+      setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_NO_ACCOUNT_INFO, severity: 'info' })
       setIsTransferDisabled(false)
       return
     }
@@ -50,13 +50,15 @@ const useRecipientAddressValidation = ({ connection }: { connection: Connection 
     console.log('parsedAccInfo:', parsedAccInfo)
 
     // const nativeAccountBalance = accInfo?.lamports ?? 0
-    // const accountOwner = accInfo?.owner ?? parsedAccInfo?.owner
+    const accountOwner = accInfo?.owner ?? parsedAccInfo?.owner
+    const isSystemOwnedAccount = !!(accountOwner?.equals(SystemProgram.programId))
     const addressIsTokenAccount = isTokenAccount(parsedAccInfo)
     const addressIsTokenMint = isTokenMint(parsedAccInfo)
     const sourceMintAddress = getMintAddress(parsedAccInfo)
     console.log('isAta:', addressIsTokenAccount)
     console.log('isMint:', addressIsTokenMint)
     console.log('mint:', sourceMintAddress)
+    console.log('owner:', accountOwner?.toString())
 
     if (addressIsTokenAccount) {
       if (sourceMintAddress === destinationMintAddress) {
@@ -68,10 +70,12 @@ const useRecipientAddressValidation = ({ connection }: { connection: Connection 
     } else if (addressIsTokenMint) {
       transferDisabled = true
       setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_IS_TOKEN_MINT, severity: 'error' })
-    } else if (isProgramAccount(parsedAccInfo) || isProgramDataAccount(parsedAccInfo)) {
-      setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_IS_PROGRAM_ACCOUNT, severity: 'info' })
-    } else {
+    } else if (isSystemOwnedAccount) {
       setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_IS_SYSTEM_ACCOUNT, severity: 'info' })
+    } else if (isProgramAccount(parsedAccInfo) || isProgramDataAccount(parsedAccInfo)) {
+      setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_IS_PROGRAM_ACCOUNT, severity: 'warning' })
+    } else {
+      setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_IS_SYSTEM_ACCOUNT, severity: 'warning' })
     }
 
     setIsTransferDisabled(transferDisabled)

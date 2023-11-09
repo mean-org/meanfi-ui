@@ -49,8 +49,8 @@ const ValidationStatusDisplay = ({ validationStatus }: Props) => {
         return 'Invalid destination address'
       case ValidationStatusCode.RECIPIENT_IS_SYSTEM_ACCOUNT:
       case ValidationStatusCode.RECIPIENT_IS_PROGRAM_ACCOUNT:
-      case ValidationStatusCode.RECIPIENT_NO_ACCOUNT_INFO:
         return 'Destination is not a regular wallet'
+      case ValidationStatusCode.RECIPIENT_NO_ACCOUNT_INFO:
       default:
         return null
     }
@@ -68,8 +68,8 @@ const ValidationStatusDisplay = ({ validationStatus }: Props) => {
         return 'The entered address corresponds to a mint address. Find the correct destination address.'
       case ValidationStatusCode.RECIPIENT_IS_SYSTEM_ACCOUNT:
       case ValidationStatusCode.RECIPIENT_IS_PROGRAM_ACCOUNT:
-      case ValidationStatusCode.RECIPIENT_NO_ACCOUNT_INFO:
         return 'Proceed only if you are sure the address is correct.'
+      case ValidationStatusCode.RECIPIENT_NO_ACCOUNT_INFO:
       default:
         return null
     }
