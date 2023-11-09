@@ -3,12 +3,12 @@ import { AppStateContext } from 'contexts/appstate';
 import { toUsCurrency } from 'middleware/ui';
 import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import { useContext, useMemo } from 'react';
+import { ReactNode, useContext, useMemo } from 'react';
 
 export const TokenListItem = (props: {
   mintAddress: string;
   name?: string;
-  icon?: JSX.Element;
+  icon?: ReactNode;
   className?: string;
   balance: number;
   onClick: any;

@@ -1,13 +1,13 @@
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 import { Button, Col, Modal, Row } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAmountWithSymbol } from '../../middleware/utils';
 
 export const DdcaCloseModal = (props: {
   handleClose: any;
   handleOk: any;
-  content: JSX.Element;
+  content: ReactNode;
   isVisible: boolean;
   ddcaDetails: DdcaDetails | undefined;
   transactionFees: TransactionFees;

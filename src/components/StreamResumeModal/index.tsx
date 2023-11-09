@@ -1,4 +1,4 @@
-import React, { useContext, useCallback, useEffect, useState, useMemo } from 'react';
+import { useContext, useCallback, useEffect, useState, useMemo, ReactNode } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { useWallet } from 'contexts/wallet';
@@ -15,7 +15,7 @@ export const StreamResumeModal = (props: {
   handleClose: any;
   handleOk: any;
   tokenBalance: number;
-  content: JSX.Element;
+  content: ReactNode;
   isVisible: boolean;
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;

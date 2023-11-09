@@ -37,7 +37,7 @@ const getAccountInfoByAddress = async (connection: Connection, address: string |
       return { accountInfo: null, parsedAccountInfo: accInfo as AccountInfo<ParsedAccountData> };
     }
   } catch (error) {
-    console.error(error);
+    console.error('getParsedAccountInfo error:', error);
     return null;
   }
 };

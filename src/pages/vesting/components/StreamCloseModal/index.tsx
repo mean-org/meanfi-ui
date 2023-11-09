@@ -18,12 +18,12 @@ import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { StreamTreasuryType } from 'models/treasuries';
 import { VestingContractCloseStreamOptions } from 'models/vesting';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;
-  content: JSX.Element;
+  content: ReactNode;
   handleClose: any;
   handleOk: any;
   hasContractFinished: boolean;

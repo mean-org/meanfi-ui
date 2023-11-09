@@ -1,12 +1,13 @@
 import { Card, Col } from 'antd';
+import { ReactNode } from 'react';
 
 const CardWithHeader = (props: {
   xs: number;
   sm: number;
   md: number;
   lg: number;
-  header: JSX.Element;
-  body: JSX.Element;
+  header: ReactNode;
+  body: ReactNode;
   className: string;
 }) => {
   const { xs, sm, md, lg, header, body, className } = props;

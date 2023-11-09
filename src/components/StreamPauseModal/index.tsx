@@ -1,3 +1,4 @@
+import { ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/payment-streaming';
@@ -8,14 +9,13 @@ import { useWallet } from 'contexts/wallet';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { percentage, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const StreamPauseModal = (props: {
   handleClose: any;
   handleOk: any;
   tokenBalance: number;
-  content: JSX.Element;
+  content: ReactNode;
   isVisible: boolean;
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;

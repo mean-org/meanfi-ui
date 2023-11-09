@@ -3,7 +3,7 @@ import { AccountInfo, Connection, ParsedAccountData } from "@solana/web3.js"
 import getAccountInfoByAddress from "middleware/getAccountInfoByAddress"
 import { isValidAddress as isValidSolanaAddress } from "middleware/ui"
 import { ValidationStatus, ValidationStatusCode } from "models/ValidationStatus"
-import { getMintAddress, isTokenAccount, isTokenMint } from "middleware/accountInfoGetters"
+import { getMintAddress, isProgramAccount, isProgramDataAccount, isTokenAccount, isTokenMint } from "middleware/accountInfoGetters"
 
 const DEFAULT_VALIDATION_STATUS: ValidationStatus = {
   code: ValidationStatusCode.PRISTINE,
@@ -18,7 +18,7 @@ const useRecipientAddressValidation = ({ connection }: { connection: Connection 
   const [validationStatus, setValidationStatus] = useState<ValidationStatus>(DEFAULT_VALIDATION_STATUS)
   const [isTransferDisabled, setIsTransferDisabled] = useState(false)
 
-  const validateAddress = useCallback(async (address: string, forMint: string) => {
+  const validateAddress = useCallback(async (address: string, destinationMintAddress: string) => {
     const validAddress = isValidSolanaAddress(address)
 
     if (!validAddress) {
@@ -40,7 +40,7 @@ const useRecipientAddressValidation = ({ connection }: { connection: Connection 
 
     if (!result) {
       setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_NO_ACCOUNT_INFO, severity: 'warning' })
-      setIsTransferDisabled(true)
+      setIsTransferDisabled(false)
       return
     }
 
@@ -51,25 +51,27 @@ const useRecipientAddressValidation = ({ connection }: { connection: Connection 
 
     // const nativeAccountBalance = accInfo?.lamports ?? 0
     // const accountOwner = accInfo?.owner ?? parsedAccInfo?.owner
-    const isAta = isTokenAccount(parsedAccInfo)
-    const isMint = isTokenMint(parsedAccInfo)
-    const mint = getMintAddress(parsedAccInfo)
-    console.log('isAta:', isAta)
-    console.log('isMint:', isMint)
-    console.log('mint:', mint)
+    const addressIsTokenAccount = isTokenAccount(parsedAccInfo)
+    const addressIsTokenMint = isTokenMint(parsedAccInfo)
+    const sourceMintAddress = getMintAddress(parsedAccInfo)
+    console.log('isAta:', addressIsTokenAccount)
+    console.log('isMint:', addressIsTokenMint)
+    console.log('mint:', sourceMintAddress)
 
-    if (isAta) {
-      if (mint === forMint) {
-        setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_ATA_MINT_MATCH, severity: 'warning' })
+    if (addressIsTokenAccount) {
+      if (sourceMintAddress === destinationMintAddress) {
+        setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_IS_TOKEN_ACCOUNT, severity: 'warning' })
       } else {
         transferDisabled = true
-        setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_ATA_MINT_MISSMATCH, severity: 'error' })
+        setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_TOKEN_ACCOUNT_MINT_MISSMATCH, severity: 'error' })
       }
-    } else if (isMint) {
+    } else if (addressIsTokenMint) {
       transferDisabled = true
-      setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_MINT, severity: 'error' })
+      setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_IS_TOKEN_MINT, severity: 'error' })
+    } else if (isProgramAccount(parsedAccInfo) || isProgramDataAccount(parsedAccInfo)) {
+      setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_IS_PROGRAM_ACCOUNT, severity: 'info' })
     } else {
-      setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_SYSTEM_ACCOUNT, severity: 'warning' })
+      setValidationStatus({ ...validationStatus, code: ValidationStatusCode.RECIPIENT_IS_SYSTEM_ACCOUNT, severity: 'info' })
     }
 
     setIsTransferDisabled(transferDisabled)

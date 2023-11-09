@@ -2442,8 +2442,24 @@ em {
       line-height: 1.5;
     }
 
+    &.ant-alert-info {
+      border-color: var(--color-notify-info);
+    }
+
+    &.ant-alert-success {
+      border-color: var(--color-notify-success);
+    }
+
     &.ant-alert-warning {
-      border-color: rgba(233, 160, 16, 0.87);
+      border-color: var(--color-notify-warning);
+    }
+
+    &.ant-alert-error {
+      border-color: var(--color-primary-highlight);
+    }
+
+    &.ant-alert-error {
+      border-color: var(--color-primary-highlight);
     }
   }
 
