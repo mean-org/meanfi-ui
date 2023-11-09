@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { CSSProperties, ReactNode, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconExternalLink } from '../../Icons';
 import { copyText } from '../../middleware/ui';
@@ -11,10 +11,10 @@ export const AddressDisplay = (props: {
   maxChars?: number;
   linkText?: string;
   newTabLink?: string;
-  newTabIcon?: JSX.Element;
+  newTabIcon?: ReactNode;
   className?: string;
-  style?: React.CSSProperties;
-  iconStyles?: React.CSSProperties;
+  style?: CSSProperties;
+  iconStyles?: CSSProperties;
   prefix?: string;
   suffix?: string;
 }) => {

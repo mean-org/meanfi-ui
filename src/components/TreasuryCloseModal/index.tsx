@@ -15,7 +15,7 @@ import { isError } from 'middleware/transactions';
 import { getTransactionOperationDescription } from 'middleware/ui';
 import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { ReactNode, SyntheticEvent, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -25,7 +25,7 @@ export const TreasuryCloseModal = (props: {
   handleOk: any;
   tokenBalance: number;
   nativeBalance: number;
-  content: JSX.Element;
+  content: ReactNode;
   isVisible: boolean;
   treasuryDetails?: TreasuryInfo | PaymentStreamingAccount;
   transactionFees: TransactionFees;
@@ -43,7 +43,7 @@ export const TreasuryCloseModal = (props: {
     return publicKey && selectedAccount.isMultisig ? true : false;
   }, [publicKey, selectedAccount]);
 
-  const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const imageOnErrorHandler = (event: SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
     event.currentTarget.className = 'error';
   };
@@ -222,9 +222,8 @@ export const TreasuryCloseModal = (props: {
             </div>
 
             {props.selectedMultisig && (
-              <div className="operation">{`Closing streaming account ${
-                isNewTreasury ? v2.name : v1.label
-              } will remove it completely from the multisig safe ${props.selectedMultisig?.label}`}</div>
+              <div className="operation">{`Closing streaming account ${isNewTreasury ? v2.name : v1.label
+                } will remove it completely from the multisig safe ${props.selectedMultisig?.label}`}</div>
             )}
 
             {/* Proposal title */}

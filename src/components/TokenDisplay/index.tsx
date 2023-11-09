@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import { ReactNode, useContext } from 'react';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { IconCaretDown } from '../../Icons';
 import { shortenAddress } from '../../middleware/utils';
@@ -8,7 +8,7 @@ import { AppStateContext } from '../../contexts/appstate';
 export const TokenDisplay = (props: {
   fullTokenInfo?: TokenInfo | undefined;
   name?: string;
-  icon?: JSX.Element;
+  icon?: ReactNode;
   className?: string;
   mintAddress: string;
   showName?: boolean;

@@ -1,11 +1,11 @@
-import notification, { IconType } from 'antd/lib/notification';
 import { ReactNode } from 'react';
+import notification, { IconType } from 'antd/lib/notification';
 
 export const openNotification = (props: {
   type?: IconType;
   handleClose?: any;
   title?: string;
-  description: JSX.Element | string;
+  description: ReactNode | string;
   duration?: number | null | undefined;
   key?: string;
   btn?: ReactNode;

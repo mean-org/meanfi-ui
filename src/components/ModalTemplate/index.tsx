@@ -1,10 +1,10 @@
-import React from 'react';
+import { ReactNode } from 'react';
 import { Modal } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 export const ModalTemplate = (props: {
   centered?: boolean;
-  content?: JSX.Element;
+  content?: ReactNode;
   handleClose: any;
   heading?: string;
   isVisible: boolean;

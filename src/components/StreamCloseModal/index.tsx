@@ -1,3 +1,4 @@
+import { ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
@@ -21,12 +22,11 @@ import { TransactionStatus } from 'models/enums';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { CloseStreamParams } from 'models/streams';
 import { StreamTreasuryType } from 'models/treasuries';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;
-  content: JSX.Element;
+  content: ReactNode;
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
