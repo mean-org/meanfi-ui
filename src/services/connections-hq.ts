@@ -22,7 +22,7 @@ export const GET_RPC_API_ENDPOINT = '/meanfi-rpcs';
 export const DEFAULT_RPCS: RpcConfig[] = [
   {
     cluster: 'mainnet-beta',
-    httpProvider: 'https://meanfi.rpcpool.com/', // clusterApiUrl('mainnet-beta')
+    httpProvider: clusterApiUrl('mainnet-beta'),
     networkId: ChainID.MainnetBeta,
     network: 'Mainnet Beta',
     id: 0,
@@ -88,9 +88,8 @@ export const isRpcLive = async (rpcConfig: RpcConfig): Promise<boolean> => {
 
 export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Promise<RpcConfig | null> => {
   networkId = networkId ?? getDefaultRpc().networkId;
-  const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${
-    previousRpcId || 0
-  }`;
+  const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${previousRpcId || 0
+    }`;
   const rpcConfig = await getRpcApiEndpoint(url, requestOptions);
   if (rpcConfig === null) {
     return null;
@@ -106,13 +105,19 @@ export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Pr
 };
 
 export const refreshCachedRpc = async () => {
-  // Process special case when debugging in mainnet from localhost
-  if (environment === 'production' && isLocal()) {
-    const debugRpc = Object.assign({}, getDefaultRpc(), {
-      httpProvider: TRITON_ONE_DEBUG_RPC,
-    }) as RpcConfig;
-    window.localStorage.setItem('cachedRpc', JSON.stringify(debugRpc));
-    return;
+  // Process special case when debugging from localhost
+  // valid for devnet or mainnet but the variable REACT_APP_TRITON_ONE_DEBUG_RPC
+  // on the .env files needs to contain the rpc url
+  if (isLocal()) {
+    if (TRITON_ONE_DEBUG_RPC) {
+      const debugRpc = Object.assign({}, getDefaultRpc(), {
+        httpProvider: TRITON_ONE_DEBUG_RPC,
+      }) as RpcConfig;
+      window.localStorage.setItem('cachedRpc', JSON.stringify(debugRpc));
+      return;
+    }
+    console.warn('No RPC preset in environment!')
+    console.error('RPC selection error:', 'You are running from localhost but your .env variable REACT_APP_TRITON_ONE_DEBUG_RPC does nt contain an RPC url to work with! Switching to defaults...')
   }
 
   const cachedRpcJson = window.localStorage.getItem('cachedRpc');
