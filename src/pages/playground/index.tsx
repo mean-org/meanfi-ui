@@ -67,6 +67,7 @@ import './style.scss';
 import { BN } from '@project-serum/anchor';
 import { useWalletAccount } from 'contexts/walletAccount';
 import { AccountContext } from 'models/accounts/AccountContext';
+import { isSystemOwnedAccount } from 'middleware/accountInfoGetters';
 
 type TabOption =
   | 'first-tab'
@@ -120,6 +121,7 @@ export const PlaygroundView = () => {
   const [streamParsedData, setStreamParsedData] = useState<Stream | undefined>(undefined);
   const [displayStreamData, setDisplayStreamData] = useState<boolean>(false);
   const [targetAddress, setTargetAddress] = useState<string>('');
+  const [isImpersonating, setIsImpersonating] = useState<boolean>(false);
   // Multisig
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [assetsAmout, setAssetsAmount] = useState<string>();
@@ -147,17 +149,11 @@ export const PlaygroundView = () => {
     return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
   }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
 
-  const isImpersonating = useMemo(() => {
-    if (!publicKey) {
-      return false;
-    }
-
-    const walletAddress = publicKey.toBase58();
-    // To be impersonating there has to be an inspected address other than the selected account
-    // and other than the connected wallet address
-
-    return targetAddress && targetAddress !== walletAddress && selectedAccount.address === targetAddress;
-  }, [publicKey, selectedAccount.address, targetAddress]);
+  const isSystemAccount = useCallback((account: string) => {
+    const native = NATIVE_LOADER.toBase58();
+    const system = SYSTEM_PROGRAM_ID.toBase58();
+    return account === native || account === system;
+  }, []);
 
   ///////////////
   //  Actions  //
@@ -350,19 +346,6 @@ export const PlaygroundView = () => {
     },
     [publicKey, setSelectedAccount],
   );
-
-  const toggleImpersonation = useCallback(() => {
-    if (!publicKey) {
-      return;
-    }
-    const walletAddress = publicKey.toBase58();
-
-    if (isImpersonating) {
-      activateAccount(walletAddress);
-    } else {
-      activateAccount(targetAddress, true);
-    }
-  }, [activateAccount, isImpersonating, publicKey, targetAddress]);
 
   const onClearResults = () => {
     setAccountInfo(null);
@@ -853,14 +836,8 @@ export const PlaygroundView = () => {
   }, [connection, getTokenByMintAddress, publicKey, selectedToken, streamParsedData]);
 
   ////////////////////////
-  // Getters and values //
+  // Getters and events //
   ////////////////////////
-
-  const isSystemAccount = useCallback((account: string) => {
-    const native = NATIVE_LOADER.toBase58();
-    const system = SYSTEM_PROGRAM_ID.toBase58();
-    return account === native || account === system;
-  }, []);
 
   const isProgram = useMemo(() => {
     return !!(
@@ -906,6 +883,60 @@ export const PlaygroundView = () => {
     }
     return 0;
   }, [parsedAccountInfo, isTokenMint, isTokenAccount]);
+
+  const getImpersonationStatus = useCallback(async () => {
+    if (!publicKey) {
+      return false;
+    }
+
+    const walletAddress = publicKey.toBase58();
+    if (walletAddress === selectedAccount.address) {
+      return false;
+    }
+
+    let accInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+    let isSystemAccount = false;
+
+    try {
+      accInfo = (await connection.getParsedAccountInfo(new PublicKey(selectedAccount.address))).value;
+      if (accInfo) {
+        isSystemAccount = isSystemOwnedAccount(accInfo);
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+
+    return isSystemAccount && selectedAccount.address !== walletAddress;
+  }, [connection, publicKey, selectedAccount.address]);
+
+  const startImpersonation = useCallback(() => {
+    if (!publicKey) {
+      return;
+    }
+    const walletAddress = publicKey.toBase58();
+
+    if (isImpersonating) {
+      activateAccount(walletAddress);
+    } else {
+      activateAccount(targetAddress, true);
+    }
+  }, [activateAccount, isImpersonating, publicKey, targetAddress]);
+
+  const stopImpersonation = useCallback(() => {
+    if (!publicKey) {
+      return;
+    }
+
+    const walletAddress = publicKey.toBase58();
+    activateAccount(walletAddress);
+  }, [activateAccount, publicKey]);
+
+  useEffect(() => {
+    getImpersonationStatus().then(value => setIsImpersonating(value));
+  }, [getImpersonationStatus]);
 
   ///////////////
   // Rendering //
@@ -1230,9 +1261,9 @@ export const PlaygroundView = () => {
   };
 
   const renderAccountInfoResults = () => {
-    if (targetAddress) {
+    if (targetAddress && (accountInfo || parsedAccountInfo)) {
       return (
-        <div className="well-group text-monospace">
+        <div className="well-group text-monospace mb-3">
           {accountInfo && renderAccountInfo()}
           {parsedAccountInfo && renderparsedAccountInfo()}
         </div>
@@ -1312,7 +1343,7 @@ export const PlaygroundView = () => {
             <div className="flex-fixed-right">
               <div className="left">
                 <Button block type="primary" shape="round" size="large" onClick={() => getAccountInfoByAddress()}>
-                  Get info
+                  Get Account Info
                 </Button>
               </div>
               <div className="right">
@@ -1324,14 +1355,33 @@ export const PlaygroundView = () => {
           </div>
         </div>
 
-        <div className="mb-3">{renderAccountInfoResults()}</div>
+        {renderAccountInfoResults()}
         <Divider />
+
         <div className="tabset-heading">User impersonation</div>
         {publicKey ? (
-          <Space size="middle" wrap={true}>
-            <Button type="default" shape="round" size="large" onClick={toggleImpersonation} disabled={!targetAddress}>
-              {isImpersonating ? 'Stop impersonation' : 'Start impersonation'}
-            </Button>
+          <Space size="middle" direction="vertical" wrap={true}>
+            {isImpersonating ? (
+              <Button type="default" shape="round" size="large" onClick={stopImpersonation}>
+                Stop impersonation
+              </Button>
+            ) : null}
+            {!isImpersonating ? (
+              <Button
+                type="default"
+                shape="round"
+                size="large"
+                onClick={startImpersonation}
+                disabled={!targetAddress || !accountInfo || !isSystemOwnedAccount(accountInfo)}
+              >
+                Start impersonation
+              </Button>
+            ) : null}
+            <p>Impersonation is only available for system owned accounts.</p>
+            <p>
+              To start impersonation input a wallet address in the Get Account Info field and click Get Account Info.
+              Once the info confirms the account is system owned you can start impersonation.
+            </p>
           </Space>
         ) : (
           <span>No connection, please connect wallet.</span>
