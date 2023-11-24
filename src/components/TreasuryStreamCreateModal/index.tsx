@@ -117,7 +117,6 @@ export const TreasuryStreamCreateModal = (props: {
     setIsVerifiedRecipient,
     setLockPeriodFrequency,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     setPaymentRateAmount,
@@ -237,11 +236,11 @@ export const TreasuryStreamCreateModal = (props: {
       if (!selectedToken) {
         return 0;
       }
-      const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+      const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
       return parseFloat(inputAmount) * price;
     },
-    [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken],
+    [getTokenPriceByAddress, selectedToken],
   );
 
   const hasNoStreamingAccounts = useMemo(() => {
@@ -1537,41 +1536,39 @@ export const TreasuryStreamCreateModal = (props: {
               {!enableMultipleStreamsOption && (
                 <>
                   {isMultisigContext && selectedMultisig && !treasuryDetails && (
-                    <>
-                      <div className="mb-3">
-                        <div className="form-label icon-label">
-                          {t('treasuries.add-funds.select-streaming-account-label')}
-                          <Tooltip
-                            placement="bottom"
-                            title="Every payment stream is set up and funded from a streaming account. Select the account you want for the stream to be created and funded from. If you do not have the streaming account set up yet, first create and fund the account before proceeding."
-                          >
-                            <span>
-                              <IconHelpCircle className="mean-svg-icons" />
-                            </span>
-                          </Tooltip>
-                        </div>
-                        <div className={`well ${isBusy ? 'disabled' : ''}`}>
-                          <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                            {treasuryList && treasuryList.length > 0 && (
-                              <Select
-                                className={`auto-height`}
-                                value={selectedStreamingAccountId}
-                                style={{ width: '100%', maxWidth: 'none' }}
-                                popupClassName="stream-select-dropdown"
-                                onChange={onStreamingAccountSelected}
-                                bordered={false}
-                                showArrow={false}
-                                dropdownRender={menu => <div>{menu}</div>}
-                              >
-                                {treasuryList.map(option => {
-                                  return renderStreamingAccountItem(option);
-                                })}
-                              </Select>
-                            )}
-                          </div>
+                    <div className="mb-3">
+                      <div className="form-label icon-label">
+                        {t('treasuries.add-funds.select-streaming-account-label')}
+                        <Tooltip
+                          placement="bottom"
+                          title="Every payment stream is set up and funded from a streaming account. Select the account you want for the stream to be created and funded from. If you do not have the streaming account set up yet, first create and fund the account before proceeding."
+                        >
+                          <span>
+                            <IconHelpCircle className="mean-svg-icons" />
+                          </span>
+                        </Tooltip>
+                      </div>
+                      <div className={`well ${isBusy ? 'disabled' : ''}`}>
+                        <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                          {treasuryList && treasuryList.length > 0 && (
+                            <Select
+                              className={`auto-height`}
+                              value={selectedStreamingAccountId}
+                              style={{ width: '100%', maxWidth: 'none' }}
+                              popupClassName="stream-select-dropdown"
+                              onChange={onStreamingAccountSelected}
+                              bordered={false}
+                              showArrow={false}
+                              dropdownRender={menu => <div>{menu}</div>}
+                            >
+                              {treasuryList.map(option => {
+                                return renderStreamingAccountItem(option);
+                              })}
+                            </Select>
+                          )}
                         </div>
                       </div>
-                    </>
+                    </div>
                   )}
 
                   <div className="form-label">{t('transactions.memo2.label')}</div>
@@ -1811,22 +1808,18 @@ export const TreasuryStreamCreateModal = (props: {
                       </div>
                       <div className="right">
                         <div className="add-on simplelink">
-                          <>
-                            {
-                              <DatePicker
-                                size="middle"
-                                bordered={false}
-                                className="addon-date-picker"
-                                aria-required={true}
-                                allowClear={false}
-                                disabledDate={disabledDate}
-                                placeholder={t('transactions.send-date.placeholder')}
-                                onChange={(value: any, date: string) => handleDateChange(date)}
-                                defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
-                                format={DATEPICKER_FORMAT}
-                              />
-                            }
-                          </>
+                          <DatePicker
+                            size="middle"
+                            bordered={false}
+                            className="addon-date-picker"
+                            aria-required={true}
+                            allowClear={false}
+                            disabledDate={disabledDate}
+                            placeholder={t('transactions.send-date.placeholder')}
+                            onChange={(value: any, date: string) => handleDateChange(date)}
+                            defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
+                            format={DATEPICKER_FORMAT}
+                          />
                         </div>
                       </div>
                     </div>
@@ -2030,14 +2023,12 @@ export const TreasuryStreamCreateModal = (props: {
                         </span>
                       </div>
                       <div className="right inner-label">
-                        <>
-                          <span
-                            className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                            onClick={() => refreshPrices()}
-                          >
-                            ~{fromCoinAmount ? toUsCurrency(getTokenPrice(fromCoinAmount)) : '$0.00'}
-                          </span>
-                        </>
+                        <span
+                          className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                          onClick={() => refreshPrices()}
+                        >
+                          ~{fromCoinAmount ? toUsCurrency(getTokenPrice(fromCoinAmount)) : '$0.00'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -2126,22 +2117,18 @@ export const TreasuryStreamCreateModal = (props: {
                       </div>
                       <div className="right">
                         <div className="add-on simplelink">
-                          <>
-                            {
-                              <DatePicker
-                                size="middle"
-                                bordered={false}
-                                className="addon-date-picker"
-                                aria-required={true}
-                                allowClear={false}
-                                disabledDate={disabledDate}
-                                placeholder={t('transactions.send-date.placeholder')}
-                                onChange={(value: any, date: string) => handleDateChange(date)}
-                                defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
-                                format={DATEPICKER_FORMAT}
-                              />
-                            }
-                          </>
+                          <DatePicker
+                            size="middle"
+                            bordered={false}
+                            className="addon-date-picker"
+                            aria-required={true}
+                            allowClear={false}
+                            disabledDate={disabledDate}
+                            placeholder={t('transactions.send-date.placeholder')}
+                            onChange={(value: any, date: string) => handleDateChange(date)}
+                            defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
+                            format={DATEPICKER_FORMAT}
+                          />
                         </div>
                       </div>
                     </div>
@@ -2201,14 +2188,12 @@ export const TreasuryStreamCreateModal = (props: {
                         </span>
                       </div>
                       <div className="right inner-label">
-                        <>
-                          <span
-                            className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                            onClick={() => refreshPrices()}
-                          >
-                            ~{cliffRelease ? toUsCurrency(getTokenPrice(cliffRelease)) : '$0.00'}
-                          </span>
-                        </>
+                        <span
+                          className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                          onClick={() => refreshPrices()}
+                        >
+                          ~{cliffRelease ? toUsCurrency(getTokenPrice(cliffRelease)) : '$0.00'}
+                        </span>
                       </div>
                     </div>
                   </div>

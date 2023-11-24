@@ -17,26 +17,21 @@ export const TokenListItem = (props: {
   showZeroBalances?: boolean;
 }) => {
   const { name, icon, className, mintAddress, balance, token, showUsdValues, showZeroBalances } = props;
-  const { theme, getTokenByMintAddress, getTokenPriceBySymbol, getTokenPriceByAddress } = useContext(AppStateContext);
+  const { theme, getTokenByMintAddress, getTokenPriceByAddress } = useContext(AppStateContext);
 
-  const displayToken = token || getTokenByMintAddress(mintAddress);
+  const displayToken = token ?? getTokenByMintAddress(mintAddress);
 
   const tokenPrice = useMemo(() => {
-    const tokenAddress = displayToken ? displayToken.address : mintAddress;
-    const priceByAddress = getTokenPriceByAddress(tokenAddress);
-    if (!priceByAddress && displayToken) {
-      return getTokenPriceBySymbol(displayToken.symbol);
-    } else {
-      return priceByAddress;
-    }
-  }, [displayToken, mintAddress, getTokenPriceBySymbol, getTokenPriceByAddress]);
+    const tokenAddress = displayToken?.address ?? mintAddress;
+    return getTokenPriceByAddress(tokenAddress, displayToken?.symbol ?? '');
+  }, [displayToken?.address, displayToken?.symbol, getTokenPriceByAddress, mintAddress]);
 
   const getDisplayTokenName = () => {
     if (name) {
       return name;
     }
 
-    return displayToken && displayToken.name ? displayToken.name : shortenAddress(mintAddress);
+    return displayToken?.name ?? shortenAddress(mintAddress);
   };
 
   const getDisplayBalance = () => {
@@ -67,30 +62,21 @@ export const TokenListItem = (props: {
     <div
       title={mintAddress}
       key={mintAddress}
-      className={`token-selector token-item ${className || ''}`}
+      className={`token-selector token-item ${className ?? ''}`}
       onClick={props.onClick}
     >
       <div className="token-icon">
-        {icon ? (
-          icon
-        ) : (
-          <>
-            {displayToken && displayToken.logoURI ? (
-              <img alt={`${displayToken.name}`} width={24} height={24} src={displayToken.logoURI} />
-            ) : (
-              <Identicon
-                address={displayToken ? displayToken.address : mintAddress}
-                style={{ width: '24', display: 'inline-flex' }}
-              />
-            )}
-          </>
-        )}
+        {icon ?? null}
+        {!icon && displayToken?.logoURI ? (
+          <img alt={`${displayToken.name}`} width={24} height={24} src={displayToken.logoURI} />
+        ) : null}
+        {!icon && !displayToken?.logoURI ? (
+          <Identicon address={displayToken?.address ?? mintAddress} style={{ width: '24', display: 'inline-flex' }} />
+        ) : null}
       </div>
       <div className="token-description">
         <div className="token-symbol">
-          <span className="align-middle">
-            {displayToken && displayToken.symbol ? displayToken.symbol : shortenAddress(mintAddress)}
-          </span>
+          <span className="align-middle">{displayToken?.symbol ?? shortenAddress(mintAddress)}</span>
           {showUsdValues && getDisplayPrice()}
         </div>
         <div className="token-name m-0">{getDisplayTokenName()}</div>

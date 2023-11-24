@@ -38,7 +38,6 @@ const StakingView = () => {
     selectedAccount,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     setFromCoinAmount,
   } = useContext(AppStateContext);
   const connection = useConnection();
@@ -91,7 +90,7 @@ const StakingView = () => {
 
     let balance = 0;
 
-    if (!stakingPair || !stakingPair.unstakedToken) {
+    if (!stakingPair?.unstakedToken) {
       setMeanBalance(balance);
       return;
     }
@@ -135,7 +134,7 @@ const StakingView = () => {
       saveAppData(cacheEntryKey, tvl.toString(), selectedAccount.address);
     };
 
-    if (!stakingPair || !stakingPair.stakedToken) {
+    if (!stakingPair?.stakedToken) {
       setSmeanBalance(balance);
       saveTvl(balance);
       return;
@@ -262,13 +261,11 @@ const StakingView = () => {
   useEffect(() => {
     if (priceList && stakingPair && stakingPair.unstakedToken) {
       consoleOut('unstakedToken:', stakingPair.unstakedToken, 'blue');
-      const price =
-        getTokenPriceByAddress(stakingPair.unstakedToken.address) ||
-        getTokenPriceBySymbol(stakingPair.unstakedToken.symbol);
+      const price = getTokenPriceByAddress(stakingPair.unstakedToken.address, stakingPair.unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
       setMeanPrice(price);
     }
-  }, [getTokenPriceByAddress, getTokenPriceBySymbol, priceList, stakingPair, account?.lamports]);
+  }, [getTokenPriceByAddress, priceList, stakingPair, account?.lamports]);
 
   // Keep MEAN balance updated
   useEffect(() => {
@@ -277,7 +274,7 @@ const StakingView = () => {
       return;
     }
 
-    if (stakingPair && stakingPair.unstakedToken) {
+    if (stakingPair?.unstakedToken) {
       refreshMeanBalance();
     }
   }, [tokenAccounts, publicKey, stakingPair, refreshMeanBalance, account?.lamports]);
@@ -288,7 +285,7 @@ const StakingView = () => {
       return;
     }
 
-    if (stakingPair && stakingPair.stakedToken) {
+    if (stakingPair?.stakedToken) {
       refreshStakedMeanBalance();
     }
   }, [tokenAccounts, publicKey, stakingPair, refreshStakedMeanBalance, account?.lamports]);

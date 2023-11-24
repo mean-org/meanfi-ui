@@ -35,7 +35,7 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
     tokenList,
     loadingPrices,
     transactionStatus,
-    getTokenPriceBySymbol,
+    getTokenPriceByAddress,
     setTransactionStatus,
     refreshTokenBalance,
     refreshPrices,
@@ -226,11 +226,9 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Wrap ${formatThousands(parseFloat(wrapAmount as string), wSol.decimals)} ${wSol.symbol}`,
+              loadingMessage: `Wrap ${formatThousands(parseFloat(wrapAmount), wSol.decimals)} ${wSol.symbol}`,
               completedTitle: 'Transaction confirmed',
-              completedMessage: `Wrapped ${formatThousands(parseFloat(wrapAmount as string), wSol.decimals)} ${
-                wSol.symbol
-              }`,
+              completedMessage: `Wrapped ${formatThousands(parseFloat(wrapAmount), wSol.decimals)} ${wSol.symbol}`,
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -404,7 +402,10 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
                 className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                 onClick={() => refreshPrices()}
               >
-                ~{wSol ? toUsCurrency((parseFloat(wrapAmount) || 0) * getTokenPriceBySymbol(wSol.symbol)) : '$0.00'}
+                ~
+                {wSol
+                  ? toUsCurrency((parseFloat(wrapAmount) || 0) * getTokenPriceByAddress(wSol.address, wSol.symbol))
+                  : '$0.00'}
               </span>
             </div>
           </div>

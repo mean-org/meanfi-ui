@@ -77,7 +77,7 @@ export const FirstCardsLayout = () => {
     },
   ];
 
-  const { getTokenPriceBySymbol } = useContext(AppStateContext);
+  const { getTokenPriceByAddress } = useContext(AppStateContext);
 
   // Returns an information or error notification each time the copy icon is clicked
   const onCopyText = (event: any) => {
@@ -140,7 +140,7 @@ export const FirstCardsLayout = () => {
       {meanPrice ? (
         <span>$ {formatThousands(meanPrice, 8)}</span>
       ) : (
-        <span>$ {getTokenPriceBySymbol(MEAN_TOKEN.symbol)}</span>
+        <span>$ {getTokenPriceByAddress(MEAN_TOKEN.address, MEAN_TOKEN.symbol)}</span>
       )}
     </div>
   );

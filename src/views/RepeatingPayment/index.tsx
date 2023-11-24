@@ -87,7 +87,6 @@ export const RepeatingPayment = (props: {
     setPaymentRateFrequency,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     setPaymentRateAmount,
     setTransactionStatus,
     resetContractValues,
@@ -122,9 +121,7 @@ export const RepeatingPayment = (props: {
     return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
   }, [connection, streamV2ProgramAddress]);
 
-  const isNative = useMemo(() => {
-    return selectedToken && selectedToken.address === NATIVE_SOL.address ? true : false;
-  }, [selectedToken]);
+  const isNative = useMemo(() => !!(selectedToken && selectedToken.address === NATIVE_SOL.address), [selectedToken]);
 
   const getTransactionFees = useCallback(async (action: ACTION_CODES): Promise<TransactionFees> => {
     return calculateFeesForAction(action);
@@ -295,10 +292,10 @@ export const RepeatingPayment = (props: {
     if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
-    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+    const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
     return parseFloat(fromCoinAmount) * price;
-  }, [fromCoinAmount, selectedToken, getTokenPriceByAddress, getTokenPriceBySymbol]);
+  }, [fromCoinAmount, selectedToken, getTokenPriceByAddress]);
 
   const getPaymentRateAmount = useCallback(() => {
     let outStr = selectedToken
@@ -507,11 +504,11 @@ export const RepeatingPayment = (props: {
   };
 
   const isMemoValid = (): boolean => {
-    return recipientNote && recipientNote.length <= 32 ? true : false;
+    return !!(recipientNote && recipientNote.length <= 32);
   };
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58() ? true : false;
+    return !!(recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58());
   };
 
   const isSendAmountValid = (): boolean => {
@@ -532,7 +529,7 @@ export const RepeatingPayment = (props: {
   };
 
   const areSendAmountSettingsValid = (): boolean => {
-    return isSendAmountValid() && paymentStartDate ? true : false;
+    return !!(isSendAmountValid() && paymentStartDate);
   };
 
   const arePaymentSettingsValid = (): boolean => {

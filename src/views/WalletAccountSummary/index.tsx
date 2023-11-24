@@ -11,8 +11,7 @@ import { useContext, useEffect, useState } from 'react';
 const WalletAccountSummary = (props: { accountBalance?: number }) => {
   const { accountBalance } = props;
 
-  const { splTokenList, selectedAccount, userTokensResponse, getTokenPriceByAddress, getTokenPriceBySymbol } =
-    useContext(AppStateContext);
+  const { splTokenList, selectedAccount, userTokensResponse, getTokenPriceByAddress } = useContext(AppStateContext);
 
   const [selectedAsset, setSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
 
@@ -29,8 +28,7 @@ const WalletAccountSummary = (props: { accountBalance?: number }) => {
       return '$0.00';
     }
 
-    const priceByAddress = getTokenPriceByAddress(selectedAsset.address);
-    const tokenPrice = priceByAddress || getTokenPriceBySymbol(selectedAsset.symbol);
+    const tokenPrice = getTokenPriceByAddress(selectedAsset.address, selectedAsset.symbol);
 
     if (tokenPrice > 0) {
       return selectedAsset.balance ? toUsCurrency((selectedAsset.balance || 0) * tokenPrice) : '$0.00';
@@ -49,66 +47,57 @@ const WalletAccountSummary = (props: { accountBalance?: number }) => {
   }, [selectedAccount.address, userTokensResponse]);
 
   return (
-    <>
-      <div className="accounts-category-meta">
-        {selectedAsset ? (
-          <>
-            <Row className="mb-2">
-              <Col span={14}>
-                <div className="info-label">Account address</div>
-                <div className="transaction-detail-row">
-                  <div className="info-data">
-                    <AddressDisplay
-                      address={selectedAsset.publicAddress as string}
-                      iconStyles={{ width: '16', height: '16' }}
-                      newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-                        selectedAsset.publicAddress
-                      }${getSolanaExplorerClusterParam()}`}
-                    />
-                  </div>
+    <div className="accounts-category-meta">
+      {selectedAsset ? (
+        <>
+          <Row className="mb-2">
+            <Col span={14}>
+              <div className="info-label">Account address</div>
+              <div className="transaction-detail-row">
+                <div className="info-data">
+                  <AddressDisplay
+                    address={selectedAsset.publicAddress as string}
+                    iconStyles={{ width: '16', height: '16' }}
+                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
+                      selectedAsset.publicAddress
+                    }${getSolanaExplorerClusterParam()}`}
+                  />
                 </div>
-              </Col>
-              <Col span={10}>
-                <div className="info-label">Total account value</div>
-                <div className="transaction-detail-row">
-                  <span className="info-data">{renderNetworth()}</span>
-                </div>
-              </Col>
-            </Row>
+              </div>
+            </Col>
+            <Col span={10}>
+              <div className="info-label">Total account value</div>
+              <div className="transaction-detail-row">
+                <span className="info-data">{renderNetworth()}</span>
+              </div>
+            </Col>
+          </Row>
 
-            <Row className="mb-2">
-              <Col span={14}>
-                <div className="info-label">Native balance</div>
-                <div className="transaction-detail-row">
-                  <div className="info-data">
-                    {getAmountWithSymbol(
-                      selectedAsset.balance || 0,
-                      selectedAsset.address,
-                      false,
-                      splTokenList,
-                      selectedAsset.decimals,
-                    )}
-                  </div>
+          <Row className="mb-2">
+            <Col span={14}>
+              <div className="info-label">Native balance</div>
+              <div className="transaction-detail-row">
+                <div className="info-data">
+                  {getAmountWithSymbol(
+                    selectedAsset.balance ?? 0,
+                    selectedAsset.address,
+                    false,
+                    splTokenList,
+                    selectedAsset.decimals,
+                  )}
                 </div>
-                {/* <div className="info-extra font-size-85">
-                                    <AddressDisplay
-                                        address={selectedAsset.publicAddress as string}
-                                        iconStyles={{ width: "16", height: "16" }}
-                                        newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedAsset.publicAddress}${getSolanaExplorerClusterParam()}`}
-                                    />
-                                </div> */}
-              </Col>
-              <Col span={10}>
-                <div className="info-label">Asset value</div>
-                <div className="transaction-detail-row">
-                  <span className="info-data">{renderBalance()}</span>
-                </div>
-              </Col>
-            </Row>
-          </>
-        ) : null}
-      </div>
-    </>
+              </div>
+            </Col>
+            <Col span={10}>
+              <div className="info-label">Asset value</div>
+              <div className="transaction-detail-row">
+                <span className="info-data">{renderBalance()}</span>
+              </div>
+            </Col>
+          </Row>
+        </>
+      ) : null}
+    </div>
   );
 };
 

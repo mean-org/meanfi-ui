@@ -14,7 +14,7 @@ export const AssetList = (props: {
   selectedCategory: AccountsPageCategory;
 }) => {
   const { accountTokens, hideLowBalances, onTokenAccountClick, selectedAsset, selectedCategory } = props;
-  const { theme, getTokenPriceByAddress, getTokenPriceBySymbol } = useContext(AppStateContext);
+  const { theme, getTokenPriceByAddress } = useContext(AppStateContext);
 
   const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -22,26 +22,24 @@ export const AssetList = (props: {
   };
 
   const isSelectedToken = (asset: UserTokenAccount): boolean => {
-    return selectedAsset && asset && selectedAsset.displayIndex === asset.displayIndex ? true : false;
+    return !!(selectedAsset && asset && selectedAsset.displayIndex === asset.displayIndex);
   };
 
   const shouldHideAsset = useCallback(
     (asset: UserTokenAccount) => {
-      const priceByAddress = getTokenPriceByAddress(asset.address);
-      const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
-      return tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT) ? true : false;
+      const tokenPrice = getTokenPriceByAddress(asset.address, asset.symbol);
+      return !!(tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT));
     },
-    [getTokenPriceByAddress, getTokenPriceBySymbol],
+    [getTokenPriceByAddress],
   );
 
   const getRowSelectionClass = (asset: UserTokenAccount): string => {
     if (isSelectedToken(asset) && selectedCategory === 'assets') {
       return 'selected';
-    } else {
-      if (hideLowBalances && (shouldHideAsset(asset) || !asset.balance)) {
-        return 'hidden';
-      }
+    } else if (hideLowBalances && (shouldHideAsset(asset) || !asset.balance)) {
+      return 'hidden';
     }
+
     return '';
   };
 
@@ -58,8 +56,7 @@ export const AssetList = (props: {
   };
 
   const renderAsset = (asset: UserTokenAccount) => {
-    const priceByAddress = getTokenPriceByAddress(asset.address);
-    const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
+    const tokenPrice = getTokenPriceByAddress(asset.address, asset.symbol);
 
     return (
       <div
@@ -93,7 +90,7 @@ export const AssetList = (props: {
         <div className="rate-cell">
           <div className="rate-amount">{getRateAmountDisplay(tokenPrice, asset)}</div>
           <div className="interval">
-            {(asset.balance || 0) > 0 ? formatThousands(asset.balance || 0, asset.decimals, asset.decimals) : '0'}
+            {(asset.balance || 0) > 0 ? formatThousands(asset.balance ?? 0, asset.decimals, asset.decimals) : '0'}
           </div>
         </div>
       </div>

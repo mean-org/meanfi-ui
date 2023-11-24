@@ -36,7 +36,7 @@ export const JupiterExchangeInput = (props: {
     tokenBalance,
   } = props;
   const { t } = useTranslation('common');
-  const { loadingPrices, getTokenPriceByAddress, getTokenPriceBySymbol, refreshPrices } = useContext(AppStateContext);
+  const { loadingPrices, getTokenPriceByAddress, refreshPrices } = useContext(AppStateContext);
   const { publicKey } = useWallet();
 
   const getTokenAmountValue = useCallback(
@@ -44,110 +44,106 @@ export const JupiterExchangeInput = (props: {
       if (!token || !amount) {
         return 0;
       }
-      const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+      const price = getTokenPriceByAddress(token.address, token.symbol);
       return amount * price;
     },
-    [getTokenPriceByAddress, getTokenPriceBySymbol, token],
+    [getTokenPriceByAddress, token],
   );
 
   return (
-    <>
-      <div className={`well ${className} ${disabled ? 'disabled' : ''}`}>
-        {/* Balance row */}
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
-            <span>{t('transactions.send-amount.label-right')}:</span>
-            {publicKey ? (
-              <>
-                <span className="simplelink" onClick={onBalanceClick}>
-                  {token && tokenBalance !== undefined && formatThousands(tokenBalance, token.decimals, token.decimals)}
-                </span>
-                {tokenBalance && (
-                  <span
-                    className={`balance-amount ${
-                      loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'
-                    }`}
-                    onClick={() => refreshPrices()}
-                  >
-                    {`(~${token && tokenBalance ? toUsCurrency(getTokenAmountValue(tokenBalance)) : '$0.00'})`}
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="balance-amount">0</span>
-            )}
-          </div>
-          <div className="right inner-label">
-            {publicKey ? (
-              <>
+    <div className={`well ${className} ${disabled ? 'disabled' : ''}`}>
+      {/* Balance row */}
+      <div className="flex-fixed-right">
+        <div className="left inner-label">
+          <span>{t('transactions.send-amount.label-right')}:</span>
+          {publicKey ? (
+            <>
+              <span className="simplelink" onClick={onBalanceClick}>
+                {token && tokenBalance !== undefined && formatThousands(tokenBalance, token.decimals, token.decimals)}
+              </span>
+              {tokenBalance && (
                 <span
-                  className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                  className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`}
                   onClick={() => refreshPrices()}
                 >
-                  ~{token && tokenAmount ? toUsCurrency(getTokenAmountValue(parseFloat(tokenAmount))) : '$0.00'}
+                  {`(~${token && tokenBalance ? toUsCurrency(getTokenAmountValue(tokenBalance)) : '$0.00'})`}
                 </span>
-              </>
-            ) : (
-              <span>~$0.00</span>
-            )}
-          </div>
+              )}
+            </>
+          ) : (
+            <span className="balance-amount">0</span>
+          )}
         </div>
-
-        <div className="flex-fixed-left">
-          <div className="left">
-            {loadingTokens ? (
-              <span className="add-on simplelink">
-                <div className="d-flex flex-column">
-                  <div title="" className="token-selector">
-                    <span className="notoken-label">{t('general.loading')}</span>
-                  </div>
-                </div>
+        <div className="right inner-label">
+          {publicKey ? (
+            <>
+              <span
+                className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                onClick={() => refreshPrices()}
+              >
+                ~{token && tokenAmount ? toUsCurrency(getTokenAmountValue(parseFloat(tokenAmount))) : '$0.00'}
               </span>
-            ) : (
-              <span className={`add-on ${!readonly ? 'simplelink' : ''}`}>
-                <TokenDisplay
-                  onClick={() => {
-                    if (!readonly) {
-                      onSelectToken();
-                    }
-                  }}
-                  fullTokenInfo={token}
-                  mintAddress={token ? token.address : ''}
-                  name={token ? token.name : ''}
-                  className={!readonly ? 'simplelink' : ''}
-                  noTokenLabel={t('swap.token-select-destination')}
-                  showName={false}
-                  showCaretDown={!readonly}
-                />
-                {publicKey && token && tokenBalance && onMaxAmount ? (
-                  <div className="token-max simplelink" onClick={onMaxAmount}>
-                    MAX
-                  </div>
-                ) : null}
-              </span>
-            )}
-          </div>
-          <div className="right">
-            <input
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={onInputChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              readOnly={readonly ? true : false}
-              value={tokenAmount}
-            />
-          </div>
+            </>
+          ) : (
+            <span>~$0.00</span>
+          )}
         </div>
-
-        {hint && <div className="form-field-hint">{hint}</div>}
       </div>
-    </>
+
+      <div className="flex-fixed-left">
+        <div className="left">
+          {loadingTokens ? (
+            <span className="add-on simplelink">
+              <div className="d-flex flex-column">
+                <div title="" className="token-selector">
+                  <span className="notoken-label">{t('general.loading')}</span>
+                </div>
+              </div>
+            </span>
+          ) : (
+            <span className={`add-on ${!readonly ? 'simplelink' : ''}`}>
+              <TokenDisplay
+                onClick={() => {
+                  if (!readonly) {
+                    onSelectToken();
+                  }
+                }}
+                fullTokenInfo={token}
+                mintAddress={token ? token.address : ''}
+                name={token ? token.name : ''}
+                className={!readonly ? 'simplelink' : ''}
+                noTokenLabel={t('swap.token-select-destination')}
+                showName={false}
+                showCaretDown={!readonly}
+              />
+              {publicKey && token && tokenBalance && onMaxAmount ? (
+                <div className="token-max simplelink" onClick={onMaxAmount}>
+                  MAX
+                </div>
+              ) : null}
+            </span>
+          )}
+        </div>
+        <div className="right">
+          <input
+            className="general-text-input text-right"
+            inputMode="decimal"
+            autoComplete="off"
+            autoCorrect="off"
+            type="text"
+            onChange={onInputChange}
+            pattern="^[0-9]*[.,]?[0-9]*$"
+            placeholder="0.0"
+            minLength={1}
+            maxLength={79}
+            spellCheck="false"
+            readOnly={!!readonly}
+            value={tokenAmount}
+          />
+        </div>
+      </div>
+
+      {hint && <div className="form-field-hint">{hint}</div>}
+    </div>
   );
 };

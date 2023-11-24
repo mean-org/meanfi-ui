@@ -32,15 +32,8 @@ export const UnstakeTabView = (props: {
 }) => {
   const { stakeClient, tokenBalance, selectedToken, unstakedToken } = props;
 
-  const {
-    priceList,
-    loadingPrices,
-    transactionStatus,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    setTransactionStatus,
-    refreshPrices,
-  } = useContext(AppStateContext);
+  const { priceList, loadingPrices, transactionStatus, getTokenPriceByAddress, setTransactionStatus, refreshPrices } =
+    useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -133,20 +126,18 @@ export const UnstakeTabView = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-      ? `${t('staking.panel-right.tabset.unstake.unstake-button-busy')} ${selectedToken && selectedToken.symbol}`
+      ? `${t('staking.panel-right.tabset.unstake.unstake-button-busy')} ${selectedToken?.symbol}`
       : !selectedToken || !tokenBalance
-      ? `${t('staking.panel-right.tabset.unstake.unstake-button-unavailable')} ${selectedToken && selectedToken.symbol}`
+      ? `${t('staking.panel-right.tabset.unstake.unstake-button-unavailable')} ${selectedToken?.symbol}`
       : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : `${t('staking.panel-right.tabset.unstake.unstake-button-available')} ${selectedToken && selectedToken.symbol}`;
+      : `${t('staking.panel-right.tabset.unstake.unstake-button-available')} ${selectedToken?.symbol}`;
   }, [fromCoinAmount, selectedToken, tokenBalance, connected, isBusy, t]);
 
   const isUnstakingFormValid = (): boolean => {
-    return fromCoinAmount && parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= tokenBalance
-      ? true
-      : false;
+    return !!(fromCoinAmount && parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= tokenBalance);
   };
 
   // Handler paste clipboard data
@@ -400,11 +391,11 @@ export const UnstakeTabView = (props: {
   // Keep MEAN price updated
   useEffect(() => {
     if (priceList && unstakedToken) {
-      const price = getTokenPriceByAddress(unstakedToken.address) || getTokenPriceBySymbol(unstakedToken.symbol);
+      const price = getTokenPriceByAddress(unstakedToken.address, unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
       setMeanPrice(price);
     }
-  }, [getTokenPriceByAddress, getTokenPriceBySymbol, priceList, unstakedToken]);
+  }, [getTokenPriceByAddress, priceList, unstakedToken]);
 
   // Unstake quote - For full unstaked balance
   useEffect(() => {
@@ -454,7 +445,7 @@ export const UnstakeTabView = (props: {
   useEffect(() => {
     const percentageFromCoinAmount =
       tokenBalance > 0
-        ? `${((tokenBalance * parseFloat(percentageValue)) / 100).toFixed(selectedToken?.decimals || 9)}`
+        ? `${((tokenBalance * parseFloat(percentageValue)) / 100).toFixed(selectedToken?.decimals ?? 9)}`
         : '';
 
     if (percentageValue) {

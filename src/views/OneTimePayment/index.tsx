@@ -86,7 +86,6 @@ export const OneTimePayment = (props: {
     streamV2ProgramAddress,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     setTransactionStatus,
     resetContractValues,
     setRecipientAddress,
@@ -120,14 +119,14 @@ export const OneTimePayment = (props: {
   }, [connection, streamV2ProgramAddress]);
 
   const isNative = useMemo(() => {
-    return selectedToken && selectedToken.address === NATIVE_SOL.address ? true : false;
+    return !!(selectedToken && selectedToken.address === NATIVE_SOL.address);
   }, [selectedToken]);
 
   const isScheduledPayment = useCallback((): boolean => {
     const now = new Date();
     const parsedDate = Date.parse(paymentStartDate as string);
     const fromParsedDate = new Date(parsedDate);
-    return fromParsedDate.getDate() > now.getDate() ? true : false;
+    return fromParsedDate.getDate() > now.getDate();
   }, [paymentStartDate]);
 
   const isTestingScheduledOtp = useMemo(() => {
@@ -175,10 +174,10 @@ export const OneTimePayment = (props: {
     if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
-    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+    const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
     return parseFloat(fromCoinAmount) * price;
-  }, [fromCoinAmount, selectedToken, getTokenPriceByAddress, getTokenPriceBySymbol]);
+  }, [fromCoinAmount, selectedToken, getTokenPriceByAddress]);
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
@@ -443,11 +442,11 @@ export const OneTimePayment = (props: {
   };
 
   const isMemoValid = (): boolean => {
-    return recipientNote && recipientNote.length <= 32 ? true : false;
+    return !!(recipientNote && recipientNote.length <= 32);
   };
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58() ? true : false;
+    return !!(recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58());
   };
 
   const isSendAmountValid = (): boolean => {
@@ -468,7 +467,7 @@ export const OneTimePayment = (props: {
   };
 
   const areSendAmountSettingsValid = (): boolean => {
-    return paymentStartDate && isSendAmountValid() ? true : false;
+    return !!(paymentStartDate && isSendAmountValid());
   };
 
   // Ui helpers
@@ -617,7 +616,7 @@ export const OneTimePayment = (props: {
       };
 
       consoleOut('data:', data, 'blue');
-      const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+      const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
       // Report event to Segment analytics
       const segmentData: SegmentStreamOTPTransferData = {
@@ -806,7 +805,6 @@ export const OneTimePayment = (props: {
     resetTransactionStatus,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     setTransactionStatus,
     resetContractValues,
     isScheduledPayment,
@@ -824,231 +822,227 @@ export const OneTimePayment = (props: {
   };
 
   return (
-    <>
-      <div className="contract-wrapper">
-        {/* Recipient */}
-        <div className="form-label">{t('transactions.recipient.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left position-relative">
-              <span className="recipient-field-wrapper">
-                <input
-                  id="payment-recipient-field"
-                  className="general-text-input"
-                  autoComplete="on"
-                  autoCorrect="off"
-                  type="text"
-                  onFocus={handleRecipientAddressFocusInOut}
-                  onChange={handleRecipientAddressChange}
-                  onBlur={handleRecipientAddressFocusInOut}
-                  placeholder={t('transactions.recipient.placeholder')}
-                  required={true}
-                  spellCheck="false"
-                  value={recipientAddress}
-                />
-                <span
-                  id="payment-recipient-static-field"
-                  className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
-                >
-                  {recipientAddress || t('transactions.recipient.placeholder')}
-                </span>
-              </span>
-            </div>
-            <div className="right">
-              <span>&nbsp;</span>
-            </div>
-          </div>
-          {recipientAddress && !isValidAddress(recipientAddress) && (
-            <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
-          )}
-          {isAddressOwnAccount() && (
-            <span className="form-field-error">{t('transactions.recipient.recipient-is-own-account')}</span>
-          )}
-          {recipientAddress && !isRecipientAddressValid() && (
-            <span className="form-field-error">{getRecipientAddressValidation()}</span>
-          )}
-        </div>
-
-        {/* Send amount */}
-        <div className="form-label">{t('transactions.send-amount.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on simplelink">
-                {selectedToken && (
-                  <>
-                    <TokenDisplay
-                      onClick={() => onOpenTokenSelector()}
-                      mintAddress={selectedToken.address}
-                      showCaretDown={true}
-                      showName={
-                        selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-                          ? true
-                          : false
-                      }
-                      fullTokenInfo={selectedToken}
-                    />
-                  </>
-                )}
-                {selectedToken && tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() => {
-                      console.log('decimals:', selectedToken.decimals);
-                      if (selectedToken.address === NATIVE_SOL.address) {
-                        const amount = nativeBalance - getMinSolBlanceRequired();
-                        setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-                      } else {
-                        setFromCoinAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
-                      }
-                    }}
-                  >
-                    MAX
-                  </div>
-                ) : null}
-              </span>
-            </div>
-            <div className="right">
+    <div className="contract-wrapper">
+      {/* Recipient */}
+      <div className="form-label">{t('transactions.recipient.label')}</div>
+      <div className="well">
+        <div className="flex-fixed-right">
+          <div className="left position-relative">
+            <span className="recipient-field-wrapper">
               <input
-                className="general-text-input text-right"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={handleFromCoinAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                value={fromCoinAmount}
-              />
-            </div>
-          </div>
-          <div className="flex-fixed-right">
-            <div className="left inner-label">
-              <span>{t('transactions.send-amount.label-right')}:</span>
-              <span>{getDisplayAmount(tokenBalanceBn)}</span>
-            </div>
-            <div className="right inner-label">
-              <span
-                className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                onClick={() => refreshPrices()}
-              >
-                ~${fromCoinAmount ? formatAmount(getTokenPrice(), 2) : '0.00'}
-              </span>
-            </div>
-          </div>
-          {selectedToken &&
-            selectedToken.address === NATIVE_SOL.address &&
-            (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
-              <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
-            )}
-        </div>
-
-        {/* Optional note */}
-        <div className="form-label">{t('transactions.memo.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left">
-              <input
-                id="payment-memo-field"
-                className="w-100 general-text-input"
+                id="payment-recipient-field"
+                className="general-text-input"
                 autoComplete="on"
                 autoCorrect="off"
                 type="text"
-                maxLength={32}
-                onChange={handleRecipientNoteChange}
-                placeholder={t('transactions.memo.placeholder')}
+                onFocus={handleRecipientAddressFocusInOut}
+                onChange={handleRecipientAddressChange}
+                onBlur={handleRecipientAddressFocusInOut}
+                placeholder={t('transactions.recipient.placeholder')}
+                required={true}
                 spellCheck="false"
-                value={recipientNote}
+                value={recipientAddress}
+              />
+              <span
+                id="payment-recipient-static-field"
+                className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
+              >
+                {recipientAddress || t('transactions.recipient.placeholder')}
+              </span>
+            </span>
+          </div>
+          <div className="right">
+            <span>&nbsp;</span>
+          </div>
+        </div>
+        {recipientAddress && !isValidAddress(recipientAddress) && (
+          <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+        )}
+        {isAddressOwnAccount() && (
+          <span className="form-field-error">{t('transactions.recipient.recipient-is-own-account')}</span>
+        )}
+        {recipientAddress && !isRecipientAddressValid() && (
+          <span className="form-field-error">{getRecipientAddressValidation()}</span>
+        )}
+      </div>
+
+      {/* Send amount */}
+      <div className="form-label">{t('transactions.send-amount.label')}</div>
+      <div className="well">
+        <div className="flex-fixed-left">
+          <div className="left">
+            <span className="add-on simplelink">
+              {selectedToken && (
+                <TokenDisplay
+                  onClick={() => onOpenTokenSelector()}
+                  mintAddress={selectedToken.address}
+                  showCaretDown={true}
+                  showName={
+                    selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+                      ? true
+                      : false
+                  }
+                  fullTokenInfo={selectedToken}
+                />
+              )}
+              {selectedToken && tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
+                <div
+                  className="token-max simplelink"
+                  onClick={() => {
+                    console.log('decimals:', selectedToken.decimals);
+                    if (selectedToken.address === NATIVE_SOL.address) {
+                      const amount = nativeBalance - getMinSolBlanceRequired();
+                      setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                    } else {
+                      setFromCoinAmount(toUiAmount(tokenBalanceBn, selectedToken.decimals));
+                    }
+                  }}
+                >
+                  MAX
+                </div>
+              ) : null}
+            </span>
+          </div>
+          <div className="right">
+            <input
+              className="general-text-input text-right"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              type="text"
+              onChange={handleFromCoinAmountChange}
+              pattern="^[0-9]*[.,]?[0-9]*$"
+              placeholder="0.0"
+              minLength={1}
+              maxLength={79}
+              spellCheck="false"
+              value={fromCoinAmount}
+            />
+          </div>
+        </div>
+        <div className="flex-fixed-right">
+          <div className="left inner-label">
+            <span>{t('transactions.send-amount.label-right')}:</span>
+            <span>{getDisplayAmount(tokenBalanceBn)}</span>
+          </div>
+          <div className="right inner-label">
+            <span
+              className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+              onClick={() => refreshPrices()}
+            >
+              ~${fromCoinAmount ? formatAmount(getTokenPrice(), 2) : '0.00'}
+            </span>
+          </div>
+        </div>
+        {selectedToken &&
+          selectedToken.address === NATIVE_SOL.address &&
+          (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+          )}
+      </div>
+
+      {/* Optional note */}
+      <div className="form-label">{t('transactions.memo.label')}</div>
+      <div className="well">
+        <div className="flex-fixed-right">
+          <div className="left">
+            <input
+              id="payment-memo-field"
+              className="w-100 general-text-input"
+              autoComplete="on"
+              autoCorrect="off"
+              type="text"
+              maxLength={32}
+              onChange={handleRecipientNoteChange}
+              placeholder={t('transactions.memo.placeholder')}
+              spellCheck="false"
+              value={recipientNote}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Send date */}
+      <div className="form-label">{t('transactions.send-date.label')}</div>
+      <div className="well">
+        <div className="flex-fixed-right">
+          <div className="left static-data-field">
+            {isToday(paymentStartDate || '')
+              ? `${paymentStartDate} (${t('common:general.now')})`
+              : `${paymentStartDate}`}
+          </div>
+          <div className="right">
+            <div className="add-on simplelink">
+              <DatePicker
+                size="middle"
+                bordered={false}
+                className="addon-date-picker"
+                aria-required={true}
+                allowClear={false}
+                disabledDate={disabledDate}
+                placeholder={t('transactions.send-date.placeholder')}
+                onChange={(value, date) => handleDateChange(date)}
+                defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
+                format={DATEPICKER_FORMAT}
               />
             </div>
           </div>
         </div>
-
-        {/* Send date */}
-        <div className="form-label">{t('transactions.send-date.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left static-data-field">
-              {isToday(paymentStartDate || '')
-                ? `${paymentStartDate} (${t('common:general.now')})`
-                : `${paymentStartDate}`}
-            </div>
-            <div className="right">
-              <div className="add-on simplelink">
-                <DatePicker
-                  size="middle"
-                  bordered={false}
-                  className="addon-date-picker"
-                  aria-required={true}
-                  allowClear={false}
-                  disabledDate={disabledDate}
-                  placeholder={t('transactions.send-date.placeholder')}
-                  onChange={(value, date) => handleDateChange(date)}
-                  defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
-                  format={DATEPICKER_FORMAT}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {isWhitelisted && (
-          <>
-            <div className="form-label">Schedule transfer for: (For dev team only)</div>
-            <div className="well">
-              <Select
-                value={fixedScheduleValue}
-                bordered={false}
-                onChange={onFixedScheduleValueChange}
-                style={{ width: '100%' }}
-              >
-                <Option value={0}>No fixed scheduling</Option>
-                <Option value={5}>5 minutes from now</Option>
-                <Option value={10}>10 minutes from now</Option>
-                <Option value={15}>15 minutes from now</Option>
-                <Option value={20}>20 minutes from now</Option>
-                <Option value={30}>30 minutes from now</Option>
-              </Select>
-              <div className="form-field-hint">Selecting a value will override your date selection</div>
-            </div>
-          </>
-        )}
-
-        {/* Confirm recipient address is correct Checkbox */}
-        <div className="mb-2">
-          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
-            {t('transfers.verified-recipient-disclaimer')}
-          </Checkbox>
-        </div>
-
-        {/* Action button */}
-        <Button
-          className={`main-cta ${isBusy ? 'inactive' : ''}`}
-          block
-          type="primary"
-          shape="round"
-          size="large"
-          onClick={onStartTransaction}
-          disabled={
-            !connected ||
-            !isMemoValid() ||
-            !isValidAddress(recipientAddress) ||
-            isAddressOwnAccount() ||
-            !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient
-          }
-        >
-          {isBusy && (
-            <span className="mr-1">
-              <LoadingOutlined style={{ fontSize: '16px' }} />
-            </span>
-          )}
-          {getMainCtaLabel()}
-        </Button>
       </div>
-    </>
+
+      {isWhitelisted && (
+        <>
+          <div className="form-label">Schedule transfer for: (For dev team only)</div>
+          <div className="well">
+            <Select
+              value={fixedScheduleValue}
+              bordered={false}
+              onChange={onFixedScheduleValueChange}
+              style={{ width: '100%' }}
+            >
+              <Option value={0}>No fixed scheduling</Option>
+              <Option value={5}>5 minutes from now</Option>
+              <Option value={10}>10 minutes from now</Option>
+              <Option value={15}>15 minutes from now</Option>
+              <Option value={20}>20 minutes from now</Option>
+              <Option value={30}>30 minutes from now</Option>
+            </Select>
+            <div className="form-field-hint">Selecting a value will override your date selection</div>
+          </div>
+        </>
+      )}
+
+      {/* Confirm recipient address is correct Checkbox */}
+      <div className="mb-2">
+        <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
+          {t('transfers.verified-recipient-disclaimer')}
+        </Checkbox>
+      </div>
+
+      {/* Action button */}
+      <Button
+        className={`main-cta ${isBusy ? 'inactive' : ''}`}
+        block
+        type="primary"
+        shape="round"
+        size="large"
+        onClick={onStartTransaction}
+        disabled={
+          !connected ||
+          !isMemoValid() ||
+          !isValidAddress(recipientAddress) ||
+          isAddressOwnAccount() ||
+          !areSendAmountSettingsValid() ||
+          !isVerifiedRecipient
+        }
+      >
+        {isBusy && (
+          <span className="mr-1">
+            <LoadingOutlined style={{ fontSize: '16px' }} />
+          </span>
+        )}
+        {getMainCtaLabel()}
+      </Button>
+    </div>
   );
 };

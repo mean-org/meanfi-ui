@@ -95,14 +95,8 @@ export const PlaygroundView = () => {
   const { selectedAccount, setSelectedAccount } = useWalletAccount();
   const connectionConfig = useConnectionConfig();
   const [searchParams, setSearchParams] = useSearchParams();
-  const {
-    priceList,
-    splTokenList,
-    isWhitelisted,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    getTokenByMintAddress,
-  } = useContext(AppStateContext);
+  const { priceList, splTokenList, isWhitelisted, getTokenPriceByAddress, getTokenByMintAddress } =
+    useContext(AppStateContext);
   const { account } = useNativeAccount();
   const { width } = useWindowSize();
   const [userBalances, setUserBalances] = useState<any>();
@@ -561,11 +555,11 @@ export const PlaygroundView = () => {
       if (!token || !priceList) {
         return 0;
       }
-      const price = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+      const price = getTokenPriceByAddress(token.address, token.symbol);
 
       return price || 0;
     },
-    [getTokenPriceByAddress, getTokenPriceBySymbol, priceList],
+    [getTokenPriceByAddress, priceList],
   );
 
   const getMultisigAssets = useCallback(
@@ -792,7 +786,7 @@ export const PlaygroundView = () => {
       const token = getTokenByMintAddress(asset.mint.toBase58());
 
       if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
         if (!tokenPrice) {
           continue;
         }
@@ -813,7 +807,6 @@ export const PlaygroundView = () => {
     getPricePerToken,
     getTokenByMintAddress,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     multisigAssets,
     publicKey,
     selectedMultisig,

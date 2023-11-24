@@ -68,7 +68,6 @@ export const VestingContractAddFundsModal = (props: {
     transactionStatus,
     highLightableStreamId,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     setTransactionStatus,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -96,11 +95,11 @@ export const VestingContractAddFundsModal = (props: {
       if (!selectedToken) {
         return 0;
       }
-      const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+      const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
       return parseFloat(inputAmount) * price;
     },
-    [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken],
+    [getTokenPriceByAddress, selectedToken],
   );
 
   const getSelectedStream = useCallback(
