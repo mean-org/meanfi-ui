@@ -482,7 +482,7 @@ export const getUserAccountTokens = async (
           address: shortenAddress(t.address),
           publicAddress: shortenAddress(t.publicAddress ?? '-'),
           balance: t.balance ?? 0,
-          price: (t.balance ?? 0) * getPriceByAddressOrSymbol(coinPrices, t.address),
+          price: getPriceByAddressOrSymbol(coinPrices, t.address),
           valueInUsd: t.valueInUsd ?? 0
         }
       })

@@ -3025,7 +3025,8 @@ export const HomeView = () => {
       const total = totalTokensValue + totalAccountBalance;
       setNetWorth(total);
     }
-  }, [accountTokens, getTokenPriceBySymbol, tokensLoaded, totalAccountBalance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountTokens, tokensLoaded, totalAccountBalance]);
 
   // Setup event listeners
   useEffect(() => {

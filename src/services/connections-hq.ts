@@ -1,7 +1,7 @@
 import { Cluster, clusterApiUrl, Connection } from '@solana/web3.js';
 import { isLocal } from 'middleware/ui';
 import { appConfig } from '..';
-import { requestOptions, TRITON_ONE_DEBUG_RPC } from '../constants';
+import { requestOptions } from '../constants';
 import { environment } from '../environments/environment';
 import { getRpcApiEndpoint } from '../middleware/api';
 import { ChainID } from '../models/enums';
@@ -109,6 +109,8 @@ export const refreshCachedRpc = async () => {
   // valid for devnet or mainnet but the variable REACT_APP_TRITON_ONE_DEBUG_RPC
   // on the .env files needs to contain the rpc url
   if (isLocal()) {
+    console.log('env:', process.env)
+    const TRITON_ONE_DEBUG_RPC = process.env.REACT_APP_TRITON_ONE_DEBUG_RPC ?? ''
     if (TRITON_ONE_DEBUG_RPC) {
       const debugRpc = ({ ...getDefaultRpc(), httpProvider: TRITON_ONE_DEBUG_RPC, }) as RpcConfig;
       window.localStorage.setItem('cachedRpc', JSON.stringify(debugRpc));

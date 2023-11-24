@@ -17,7 +17,7 @@ import {
   DDCA_ACTIONS,
   TransactionFees,
 } from '@mean-dao/ddca';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, clusterApiUrl } from '@solana/web3.js';
 import { Button, Col, Dropdown, Empty, MenuProps, Modal, Row, Spin, Tooltip } from 'antd';
 import { DdcaAddFundsModal } from 'components/DdcaAddFundsModal';
 import { DdcaCloseModal } from 'components/DdcaCloseModal';
@@ -28,7 +28,6 @@ import { PreFooter } from 'components/PreFooter';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-  TRITON_ONE_DEBUG_RPC,
   VERBOSE_DATE_FORMAT,
   VERBOSE_DATE_TIME_FORMAT,
 } from 'constants/common';
@@ -117,11 +116,12 @@ export const ExchangeDcasView = () => {
           navigate('/service-unavailable');
         }
         if (environment === 'production' && isLocal()) {
-          debugRpc = Object.assign({}, mainnetRpc, {
-            httpProvider: TRITON_ONE_DEBUG_RPC,
-          }) as RpcConfig;
+          debugRpc = {
+            ...mainnetRpc,
+            httpProvider: process.env.REACT_APP_TRITON_ONE_DEBUG_RPC ?? clusterApiUrl('mainnet-beta'),
+          } as RpcConfig;
         }
-        setMainnetRpc(debugRpc || mainnetRpc);
+        setMainnetRpc(debugRpc ?? mainnetRpc);
       } else {
         setMainnetRpc(null);
       }
