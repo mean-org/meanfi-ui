@@ -3016,17 +3016,13 @@ export const HomeView = () => {
   useEffect(() => {
     if (tokensLoaded && accountTokens) {
       // Total USD value
-      let sumMeanTokens = 0;
-      accountTokens.forEach((asset: UserTokenAccount, index: number) => {
-        const tokenPrice = getTokenPriceBySymbol(asset.symbol);
-        if (asset.balance && tokenPrice) {
-          sumMeanTokens += asset.balance * tokenPrice;
-        }
-      });
-      setTotalTokenAccountsValue(sumMeanTokens);
+      const totalTokensValue = accountTokens.reduce((accumulator, item) => {
+        return accumulator + (item.valueInUsd ?? 0);
+      }, 0);
+      setTotalTokenAccountsValue(totalTokensValue);
 
       // Net Worth
-      const total = sumMeanTokens + totalAccountBalance;
+      const total = totalTokensValue + totalAccountBalance;
       setNetWorth(total);
     }
   }, [accountTokens, getTokenPriceBySymbol, tokensLoaded, totalAccountBalance]);

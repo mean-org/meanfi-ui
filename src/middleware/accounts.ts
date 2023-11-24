@@ -22,7 +22,7 @@ import { TokenInfo } from 'models/SolanaTokenInfo';
 import { TokenPrice } from 'models/TokenPrice';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../constants';
 import { MEAN_TOKEN_LIST, NATIVE_SOL } from '../constants/tokens';
-import { consoleOut } from './ui';
+import { consoleOut, isLocal } from './ui';
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from './utils';
 
 export async function getMultipleAccounts(
@@ -419,19 +419,6 @@ export const getUserAccountTokens = async (
       return response;
     }
 
-    consoleOut(
-      'fetched accountTokens:',
-      accTks.map(i => {
-        return {
-          decimals: i.parsedInfo.tokenAmount.decimals,
-          balance: `${i.parsedInfo.tokenAmount.uiAmount}`,
-          pubAddress: i.pubkey.toBase58(),
-          mintAddress: i.parsedInfo.mint,
-        };
-      }),
-      'blue',
-    );
-
     response.userTokenAccouns = accTks;
     response.tokenAccountGroups = getGroupedTokenAccounts(accTks, splTokenList);
 
@@ -455,7 +442,7 @@ export const getUserAccountTokens = async (
     // Build a list with all token accounts holded by the user not already in sortedList as custom tokens
     accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
       if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
-        const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+        const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
         const price = getPriceByAddressOrSymbol(coinPrices, item.parsedInfo.mint);
         const valueInUsd = balance * price;
         const customToken: UserTokenAccount = {
@@ -486,6 +473,26 @@ export const getUserAccountTokens = async (
 
     // Update the state
     response.accountTokens = finalList;
+
+    if (isLocal()) {
+      consoleOut('fetched accountTokens:', finalList, 'blue');
+      const mappedList = finalList.map(t => {
+        return {
+          symbol: t.symbol,
+          address: shortenAddress(t.address),
+          publicAddress: shortenAddress(t.publicAddress ?? '-'),
+          balance: t.balance ?? 0,
+          price: (t.balance ?? 0) * getPriceByAddressOrSymbol(coinPrices, t.address),
+          valueInUsd: t.valueInUsd ?? 0
+        }
+      })
+      console.table(mappedList);
+      const totalTokensValue = mappedList.reduce((accumulator, item) => {
+        return accumulator + item.valueInUsd;
+      }, 0);
+      consoleOut('totalTokensValue:', totalTokensValue, 'blue');
+    }
+
   } catch (error) {
     console.error(error);
     response.wSolBalance = 0;
