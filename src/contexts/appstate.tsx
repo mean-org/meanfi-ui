@@ -975,6 +975,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateEffectiveRate(rate);
   };
 
+  /**
+   * Gets the price of a token given its mint address if the price is available or the first match by symbol
+   * @see {getPriceByAddressOrSymbol}
+   */
   const getTokenPriceByAddress = useCallback(
     (address: string, symbol = ''): number => getPriceByAddressOrSymbol(priceList, address, symbol),
     [priceList],
