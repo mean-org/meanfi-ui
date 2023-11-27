@@ -80,7 +80,6 @@ export const VestingContractCreateStreamModal = (props: {
     isVerifiedRecipient,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     setRecipientAddress,
     setFromCoinAmount,
     refreshPrices,
@@ -166,10 +165,10 @@ export const VestingContractCreateStreamModal = (props: {
     if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
-    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+    const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
     return parseFloat(fromCoinAmount) * price;
-  }, [fromCoinAmount, getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken]);
+  }, [fromCoinAmount, getTokenPriceByAddress, selectedToken]);
 
   const getMinBalanceRequired = useCallback(() => {
     if (!transactionFees) {
@@ -503,7 +502,7 @@ export const VestingContractCreateStreamModal = (props: {
   };
 
   const isStepTwoValid = (): boolean => {
-    return isStepOneValid() && isVerifiedRecipient ? true : false;
+    return isStepOneValid() && isVerifiedRecipient;
   };
 
   const getStepOneButtonLabel = (): string => {

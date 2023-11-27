@@ -42,7 +42,7 @@ export const StakeTabView = (props: {
   stakeClient: StakingClient;
 }) => {
   const { meanBalance, onTxFinished, selectedToken, smeanBalance, smeanDecimals, stakeClient } = props;
-  const { loadingPrices, transactionStatus, getTokenPriceBySymbol, setTransactionStatus, refreshPrices } =
+  const { loadingPrices, transactionStatus, getTokenPriceByAddress, setTransactionStatus, refreshPrices } =
     useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { refreshAccount } = useAccountsContext();
@@ -141,25 +141,25 @@ export const StakeTabView = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-      ? `${t('staking.panel-right.tabset.stake.stake-button-busy')} ${selectedToken && selectedToken.symbol}`
+      ? `${t('staking.panel-right.tabset.stake.stake-button-busy')} ${selectedToken?.symbol}`
       : !selectedToken || !meanBalance
       ? t('transactions.validation.no-balance')
       : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > meanBalance
       ? t('transactions.validation.amount-high')
-      : `${t('staking.panel-right.tabset.stake.stake-button')} ${selectedToken && selectedToken.symbol}`;
+      : `${t('staking.panel-right.tabset.stake.stake-button')} ${selectedToken?.symbol}`;
   }, [fromCoinAmount, selectedToken, meanBalance, connected, isBusy, t]);
 
   const isStakingFormValid = (): boolean => {
-    return connected &&
+    return !!(
+      connected &&
       selectedToken &&
       meanBalance &&
       fromCoinAmount &&
       parseFloat(fromCoinAmount) > 0 &&
       parseFloat(fromCoinAmount) <= meanBalance
-      ? true
-      : false;
+    );
   };
 
   // Handler paste clipboard data
@@ -211,7 +211,7 @@ export const StakeTabView = (props: {
           result: '',
         });
 
-        const price = getTokenPriceBySymbol(selectedToken.symbol);
+        const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
         // Report event to Segment analytics
         const segmentData: SegmentStakeMeanData = {
@@ -334,8 +334,8 @@ export const StakeTabView = (props: {
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
     setFailureStatusAndNotify,
+    getTokenPriceByAddress,
     resetTransactionStatus,
-    getTokenPriceBySymbol,
     setTransactionStatus,
     setSuccessStatus,
   ]);
@@ -588,7 +588,10 @@ export const StakeTabView = (props: {
             >
               ~$
               {fromCoinAmount && selectedToken
-                ? formatAmount(parseFloat(fromCoinAmount) * getTokenPriceBySymbol(selectedToken.symbol), 2)
+                ? formatAmount(
+                    parseFloat(fromCoinAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol),
+                    2,
+                  )
                 : '0.00'}
             </span>
           </div>

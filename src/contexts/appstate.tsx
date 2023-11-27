@@ -19,7 +19,7 @@ import { getAccountNFTs, getUserAccountTokens } from 'middleware/accounts';
 import { getPrices, getSolanaTokenListKeyNameByCluster, getSolFlareTokenList, getSplTokens } from 'middleware/api';
 import { MappedTransaction } from 'middleware/history';
 import { PerformanceCounter } from 'middleware/perf-counter';
-import { consoleOut, isProd, msToTime } from 'middleware/ui';
+import { consoleOut, isLocal, isProd, msToTime } from 'middleware/ui';
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from 'middleware/utils';
 import {
   AccountContext,
@@ -58,6 +58,7 @@ import { useWallet } from './wallet';
 import { emptyAccount, useWalletAccount } from './walletAccount';
 import useLocalStorage from 'hooks/useLocalStorage';
 import { BN } from '@project-serum/anchor';
+import getPriceByAddressOrSymbol from 'middleware/getPriceByAddressOrSymbol';
 
 const pricesPerformanceCounter = new PerformanceCounter();
 const tokenListPerformanceCounter = new PerformanceCounter();
@@ -174,8 +175,7 @@ interface AppStateConfig {
   setFromCoinAmount: (data: string) => void;
   refreshPrices: () => void;
   setEffectiveRate: (rate: number) => void;
-  getTokenPriceByAddress: (address: string) => number;
-  getTokenPriceBySymbol: (symbol: string) => number;
+  getTokenPriceByAddress: (address: string, symbol?: string) => number;
   getTokenByMintAddress: (address: string) => TokenInfo | undefined;
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
@@ -348,7 +348,6 @@ const contextDefaultValues: AppStateConfig = {
   refreshPrices: () => {},
   setEffectiveRate: () => {},
   getTokenPriceByAddress: () => 0,
-  getTokenPriceBySymbol: () => 0,
   getTokenByMintAddress: () => undefined,
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
@@ -795,16 +794,14 @@ const AppStateProvider: React.FC = ({ children }) => {
                   type: 'success',
                 });
               }
-            } else {
-              if (dock) {
-                openNotification({
-                  title: t('notifications.error-title'),
-                  description: t('notifications.error-loading-streamid-message', {
-                    streamId: shortenAddress(streamId, 10),
-                  }),
-                  type: 'error',
-                });
-              }
+            } else if (dock) {
+              openNotification({
+                title: t('notifications.error-title'),
+                description: t('notifications.error-loading-streamid-message', {
+                  streamId: shortenAddress(streamId, 10),
+                }),
+                type: 'error',
+              });
             }
           } else {
             openNotification({
@@ -978,29 +975,12 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateEffectiveRate(rate);
   };
 
+  /**
+   * Gets the price of a token given its mint address if the price is available or the first match by symbol
+   * @see {getPriceByAddressOrSymbol}
+   */
   const getTokenPriceByAddress = useCallback(
-    (address: string): number => {
-      if (!address || !priceList || priceList.length === 0) {
-        return 0;
-      }
-
-      const item = priceList.find(i => i.address === address);
-
-      return item ? item.price || 0 : 0;
-    },
-    [priceList],
-  );
-
-  const getTokenPriceBySymbol = useCallback(
-    (symbol: string): number => {
-      if (!symbol || !priceList || priceList.length === 0) {
-        return 0;
-      }
-
-      const item = priceList.find(i => i.symbol === symbol);
-
-      return item ? item.price || 0 : 0;
-    },
+    (address: string, symbol = ''): number => getPriceByAddressOrSymbol(priceList, address, symbol),
     [priceList],
   );
 
@@ -1025,6 +1005,22 @@ const AppStateProvider: React.FC = ({ children }) => {
         });
       }
       setPriceList(listCopy);
+      // This debug info is only available in development mode
+      if (isLocal()) {
+        consoleOut('Token prices sorted by SYMBOL:', '...looking for duplicates?', 'purple');
+        const sortedList = listCopy.slice().sort((a, b) => {
+          const nameA = a.symbol.toUpperCase();
+          const nameB = b.symbol.toUpperCase();
+          if (nameA < nameB) {
+            return -1;
+          }
+          if (nameA > nameB) {
+            return 1;
+          }
+          return 0;
+        });
+        console.table(sortedList);
+      }
       consoleOut('Price items:', prices.length, 'blue');
     } else {
       consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');
@@ -1075,10 +1071,10 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Update token price while list of prices change
   useEffect(() => {
     if (priceList && selectedToken) {
-      const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+      const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
       updateEffectiveRate(price);
     }
-  }, [getTokenPriceByAddress, getTokenPriceBySymbol, priceList, selectedToken]);
+  }, [getTokenPriceByAddress, priceList, selectedToken]);
 
   // Cache selected DDCA frequency option
   const ddcaOptFromCache = useMemo(
@@ -1740,7 +1736,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       refreshPrices,
       setEffectiveRate,
       getTokenPriceByAddress,
-      getTokenPriceBySymbol,
       getTokenByMintAddress,
       refreshTokenBalance,
       resetContractValues,
@@ -1816,7 +1811,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     getStreamActivity,
     getTokenByMintAddress,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     hasMoreStreamActivity,
     hideDepositOptionsModal,
     highLightableMultisigId,

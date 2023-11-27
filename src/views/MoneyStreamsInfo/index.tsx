@@ -120,7 +120,6 @@ export const MoneyStreamsInfoView = (props: {
     streamV2ProgramAddress,
     getTokenPriceByAddress,
     setIsVerifiedRecipient,
-    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
@@ -350,7 +349,7 @@ export const MoneyStreamsInfoView = (props: {
       const token = getTokenByMintAddress(associatedToken);
 
       if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
         const amount = getTreasuryUnallocatedBalance(treasury, token);
         amountChange = amount * tokenPrice;
       }
@@ -361,14 +360,7 @@ export const MoneyStreamsInfoView = (props: {
     resume['totalAmount'] += treasuryList.length;
 
     return resume;
-  }, [
-    treasuryList,
-    isNewTreasury,
-    getTokenByMintAddress,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    getTreasuryUnallocatedBalance,
-  ]);
+  }, [treasuryList, isNewTreasury, getTokenByMintAddress, getTokenPriceByAddress, getTreasuryUnallocatedBalance]);
 
   const refreshIncomingStreamSummary = useCallback(async () => {
     if (!ms || !paymentStreaming || !publicKey || (!streamListv1 && !streamListv2)) {
@@ -399,7 +391,7 @@ export const MoneyStreamsInfoView = (props: {
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
       if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
 
         if (isIncoming) {
           resume['totalNet'] = resume['totalNet'] + (freshStream.escrowVestedAmount || 0) * tokenPrice;
@@ -421,7 +413,7 @@ export const MoneyStreamsInfoView = (props: {
       const token = getTokenByMintAddress(freshStream.mint.toBase58());
 
       if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
         const decimals = token.decimals || 9;
         const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
@@ -445,7 +437,6 @@ export const MoneyStreamsInfoView = (props: {
     streamListv2,
     selectedAccount.address,
     getTokenByMintAddress,
-    getTokenPriceBySymbol,
     getTokenPriceByAddress,
   ]);
 
@@ -478,7 +469,7 @@ export const MoneyStreamsInfoView = (props: {
       const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
       if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
 
         if (!isIncoming) {
           resume['totalNet'] = resume['totalNet'] + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
@@ -501,7 +492,7 @@ export const MoneyStreamsInfoView = (props: {
       const token = getTokenByMintAddress(streamMint);
 
       if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
         const decimals = token.decimals || 9;
         const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
         const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
@@ -523,7 +514,6 @@ export const MoneyStreamsInfoView = (props: {
     streamListv1,
     streamListv2,
     selectedAccount.address,
-    getTokenPriceBySymbol,
     getTokenByMintAddress,
     getTokenPriceByAddress,
   ]);
@@ -1555,13 +1545,13 @@ export const MoneyStreamsInfoView = (props: {
       let tokenPriceB;
 
       if (tokenA) {
-        tokenPriceA = getTokenPriceByAddress(tokenA.address) || getTokenPriceBySymbol(tokenA.symbol);
+        tokenPriceA = getTokenPriceByAddress(tokenA.address, tokenA.symbol);
       } else {
         tokenPriceA = 0;
       }
 
       if (tokenB) {
-        tokenPriceB = getTokenPriceByAddress(tokenB.address) || getTokenPriceBySymbol(tokenB.symbol);
+        tokenPriceB = getTokenPriceByAddress(tokenB.address, tokenB.symbol);
       } else {
         tokenPriceB = 0;
       }
@@ -1579,7 +1569,7 @@ export const MoneyStreamsInfoView = (props: {
         return 0;
       }
     },
-    [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol],
+    [getTokenByMintAddress, getTokenPriceByAddress],
   );
 
   const sortStreamsByEstimatedDepletionDate = useCallback((a, b) => {
@@ -1799,7 +1789,7 @@ export const MoneyStreamsInfoView = (props: {
         const token = getTokenByMintAddress(associatedToken);
 
         if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
           const rateAmountValue = isNew
             ? new BigNumber(toUiAmount(new BN(v2.rateAmount), token.decimals)).toNumber()
             : v1.rateAmount;
@@ -1821,7 +1811,6 @@ export const MoneyStreamsInfoView = (props: {
     getDepositAmountDisplay,
     getTokenPriceByAddress,
     getTokenByMintAddress,
-    getTokenPriceBySymbol,
     getRateAmountDisplay,
     isStreamRunning,
     t,
@@ -1842,7 +1831,7 @@ export const MoneyStreamsInfoView = (props: {
         const token = getTokenByMintAddress(associatedToken);
 
         if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
           if (!tokenPrice) {
             continue;
           }
@@ -1869,7 +1858,6 @@ export const MoneyStreamsInfoView = (props: {
     outgoingStreamList,
     getTokenPriceByAddress,
     getTokenByMintAddress,
-    getTokenPriceBySymbol,
     isStreamRunning,
     getRateAmountBn,
     t,
@@ -2109,184 +2097,182 @@ export const MoneyStreamsInfoView = (props: {
   };
 
   const renderSummary = (
-    <>
-      <Row gutter={[8, 8]} className="ml-0 mr-0">
-        <Col
-          xs={11}
-          sm={11}
-          md={11}
-          lg={11}
-          className="background-card simplelink bg-secondary-02 hover-list"
-          onClick={goToIncomingTabHandler}
-        >
-          {/* Background animation */}
-          {hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0
-            ? !loadingTreasuries &&
-              !loadingStreams && (
-                <div className="stream-background stream-background-incoming">
-                  <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
-                </div>
-              )
-            : null}
-          <div className="incoming-stream-amount">
-            <div className="incoming-stream-running mb-1">
-              <div className="d-flex align-items-center text-center">
-                <h4>
-                  {loadingTreasuries || loadingStreams ? (
-                    <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
-                  ) : (
-                    formatThousands(incomingAmount as number)
-                  )}
-                  <span className="ml-1">Incoming streams</span>
-                </h4>
-                <span className="info-icon">
-                  {hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0 ? (
-                    <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
-                  ) : (
-                    <ArrowDownOutlined className="mean-svg-icons incoming ml-1" />
-                  )}
-                </span>
+    <Row gutter={[8, 8]} className="ml-0 mr-0">
+      <Col
+        xs={11}
+        sm={11}
+        md={11}
+        lg={11}
+        className="background-card simplelink bg-secondary-02 hover-list"
+        onClick={goToIncomingTabHandler}
+      >
+        {/* Background animation */}
+        {hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0
+          ? !loadingTreasuries &&
+            !loadingStreams && (
+              <div className="stream-background stream-background-incoming">
+                <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
               </div>
-            </div>
-            <div className="incoming-stream-rates">
-              {loadingTreasuries || loadingStreams ? (
-                <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
-              ) : (
-                <span className="incoming-amount">{renderIncomingRatePerSecond()}</span>
-              )}
-              {loadingTreasuries || loadingStreams ? (
-                <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
-              ) : (
-                <span className="incoming-amount">{renderIncomingRatePerDay()}</span>
-              )}
-            </div>
-          </div>
-          <div className="stream-balance">
-            <div className="info-label">Available to withdraw:</div>
-            <div className="info-value">
-              {loadingStreams || !canDisplayIncomingBalance ? (
-                <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
-              ) : (
-                renderWithdrawalBalance()
-              )}
+            )
+          : null}
+        <div className="incoming-stream-amount">
+          <div className="incoming-stream-running mb-1">
+            <div className="d-flex align-items-center text-center">
+              <h4>
+                {loadingTreasuries || loadingStreams ? (
+                  <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+                ) : (
+                  formatThousands(incomingAmount as number)
+                )}
+                <span className="ml-1">Incoming streams</span>
+              </h4>
+              <span className="info-icon">
+                {hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0 ? (
+                  <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
+                ) : (
+                  <ArrowDownOutlined className="mean-svg-icons incoming ml-1" />
+                )}
+              </span>
             </div>
           </div>
-          {!loadingTreasuries && !loadingStreams && (
-            <div className="wave-container wave wave-green">
-              <Wave
-                fill="url(#gradient1)"
-                paused={isPaused}
-                className="svg-container"
-                style={{
-                  height: `${withdrawalScale}vh`,
-                  position: 'absolute',
-                  bottom: 0,
-                }}
-                options={{
-                  amplitude: 6,
-                  speed: 0.25,
-                  points: 6,
-                }}
-              >
-                <defs>
-                  <linearGradient id="gradient1" gradientTransform="rotate(180)">
-                    <stop offset="10%" stopColor="#006820" />
-                    <stop offset="100%" stopColor="#181a2a" />
-                  </linearGradient>
-                </defs>
-              </Wave>
-            </div>
-          )}
-        </Col>
-        <Col
-          xs={11}
-          sm={11}
-          md={11}
-          lg={11}
-          className="background-card simplelink bg-secondary-02 hover-list"
-          onClick={goToOutgoingTabHandler}
-        >
-          {/* Background animation */}
-          {hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0
-            ? !loadingTreasuries &&
-              !loadingStreams && (
-                <div className="stream-background stream-background-outgoing">
-                  <img className="inbound" src="/assets/outgoing-crypto.svg" alt="" />
-                </div>
-              )
-            : null}
-          <div className="outgoing-stream-amount">
-            <div className="outgoing-stream-running mb-1">
-              <div className="d-flex align-items-center text-center">
-                <h4>
-                  {loadingTreasuries || loadingStreams ? (
-                    <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
-                  ) : (
-                    formatThousands(outgoingAmount as number)
-                  )}
-                  <span className="ml-1">Outgoing streams</span>
-                </h4>
-                <span className="info-icon">
-                  {hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0 ? (
-                    <ArrowUpOutlined className="mean-svg-icons outgoing bounce ml-1" />
-                  ) : (
-                    <ArrowUpOutlined className="mean-svg-icons outgoing ml-1" />
-                  )}
-                </span>
+          <div className="incoming-stream-rates">
+            {loadingTreasuries || loadingStreams ? (
+              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+            ) : (
+              <span className="incoming-amount">{renderIncomingRatePerSecond()}</span>
+            )}
+            {loadingTreasuries || loadingStreams ? (
+              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+            ) : (
+              <span className="incoming-amount">{renderIncomingRatePerDay()}</span>
+            )}
+          </div>
+        </div>
+        <div className="stream-balance">
+          <div className="info-label">Available to withdraw:</div>
+          <div className="info-value">
+            {loadingStreams || !canDisplayIncomingBalance ? (
+              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+            ) : (
+              renderWithdrawalBalance()
+            )}
+          </div>
+        </div>
+        {!loadingTreasuries && !loadingStreams && (
+          <div className="wave-container wave wave-green">
+            <Wave
+              fill="url(#gradient1)"
+              paused={isPaused}
+              className="svg-container"
+              style={{
+                height: `${withdrawalScale}vh`,
+                position: 'absolute',
+                bottom: 0,
+              }}
+              options={{
+                amplitude: 6,
+                speed: 0.25,
+                points: 6,
+              }}
+            >
+              <defs>
+                <linearGradient id="gradient1" gradientTransform="rotate(180)">
+                  <stop offset="10%" stopColor="#006820" />
+                  <stop offset="100%" stopColor="#181a2a" />
+                </linearGradient>
+              </defs>
+            </Wave>
+          </div>
+        )}
+      </Col>
+      <Col
+        xs={11}
+        sm={11}
+        md={11}
+        lg={11}
+        className="background-card simplelink bg-secondary-02 hover-list"
+        onClick={goToOutgoingTabHandler}
+      >
+        {/* Background animation */}
+        {hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0
+          ? !loadingTreasuries &&
+            !loadingStreams && (
+              <div className="stream-background stream-background-outgoing">
+                <img className="inbound" src="/assets/outgoing-crypto.svg" alt="" />
               </div>
-            </div>
-            <div className="outgoing-stream-rates">
-              {loadingTreasuries || loadingStreams ? (
-                <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
-              ) : (
-                <span className="outgoing-amount">{renderOutgoingRatePerSecond()}</span>
-              )}
-              {loadingTreasuries || loadingStreams ? (
-                <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
-              ) : (
-                <span className="outgoing-amount">{renderOutgoingRatePerDay()}</span>
-              )}
-            </div>
-          </div>
-          <div className="stream-balance">
-            <div className="info-label">Remaining balance:</div>
-            <div className="info-value">
-              {loadingStreams || loadingTreasuries || !canDisplayOutgoingBalance ? (
-                <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
-              ) : (
-                renderUnallocatedBalance()
-              )}
+            )
+          : null}
+        <div className="outgoing-stream-amount">
+          <div className="outgoing-stream-running mb-1">
+            <div className="d-flex align-items-center text-center">
+              <h4>
+                {loadingTreasuries || loadingStreams ? (
+                  <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+                ) : (
+                  formatThousands(outgoingAmount as number)
+                )}
+                <span className="ml-1">Outgoing streams</span>
+              </h4>
+              <span className="info-icon">
+                {hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0 ? (
+                  <ArrowUpOutlined className="mean-svg-icons outgoing bounce ml-1" />
+                ) : (
+                  <ArrowUpOutlined className="mean-svg-icons outgoing ml-1" />
+                )}
+              </span>
             </div>
           </div>
-          {!loadingTreasuries && !loadingStreams && (
-            <div className="wave-container wave wave-red">
-              <Wave
-                fill="url(#gradient2)"
-                paused={isPaused}
-                className="svg-container"
-                style={{
-                  height: `${unallocatedScale}vh`,
-                  position: 'absolute',
-                  bottom: 0,
-                }}
-                options={{
-                  amplitude: 6,
-                  speed: 0.25,
-                  points: 6,
-                }}
-              >
-                <defs>
-                  <linearGradient id="gradient2" gradientTransform="rotate(180)">
-                    <stop offset="10%" stopColor="#b7001c" />
-                    <stop offset="100%" stopColor="#181a2a" />
-                  </linearGradient>
-                </defs>
-              </Wave>
-            </div>
-          )}
-        </Col>
-      </Row>
-    </>
+          <div className="outgoing-stream-rates">
+            {loadingTreasuries || loadingStreams ? (
+              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+            ) : (
+              <span className="outgoing-amount">{renderOutgoingRatePerSecond()}</span>
+            )}
+            {loadingTreasuries || loadingStreams ? (
+              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+            ) : (
+              <span className="outgoing-amount">{renderOutgoingRatePerDay()}</span>
+            )}
+          </div>
+        </div>
+        <div className="stream-balance">
+          <div className="info-label">Remaining balance:</div>
+          <div className="info-value">
+            {loadingStreams || loadingTreasuries || !canDisplayOutgoingBalance ? (
+              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+            ) : (
+              renderUnallocatedBalance()
+            )}
+          </div>
+        </div>
+        {!loadingTreasuries && !loadingStreams && (
+          <div className="wave-container wave wave-red">
+            <Wave
+              fill="url(#gradient2)"
+              paused={isPaused}
+              className="svg-container"
+              style={{
+                height: `${unallocatedScale}vh`,
+                position: 'absolute',
+                bottom: 0,
+              }}
+              options={{
+                amplitude: 6,
+                speed: 0.25,
+                points: 6,
+              }}
+            >
+              <defs>
+                <linearGradient id="gradient2" gradientTransform="rotate(180)">
+                  <stop offset="10%" stopColor="#b7001c" />
+                  <stop offset="100%" stopColor="#181a2a" />
+                </linearGradient>
+              </defs>
+            </Wave>
+          </div>
+        )}
+      </Col>
+    </Row>
   );
 
   // Incoming streams list

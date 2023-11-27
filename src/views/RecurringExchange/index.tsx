@@ -72,7 +72,6 @@ export const RecurringExchange = (props: {
     previousWalletConnectState,
     setPreviousWalletConnectState,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     setDdcaOption,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -136,11 +135,11 @@ export const RecurringExchange = (props: {
       }
     } else if (!props.queryFromMint && !props.queryToMint) {
       const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
-      if (from && from.length) {
+      if (from?.length) {
         setFromMint(from[0].address);
       }
       const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
-      if (to && to.length) {
+      if (to?.length) {
         setToMint(to[0].address);
       }
     }
@@ -394,7 +393,7 @@ export const RecurringExchange = (props: {
 
       //TODO: Remove token filtering when HLA program implementation covers all tokens
       for (const info of TOKENS) {
-        const mint = Object.assign({}, info);
+        const mint = { ...info } as TokenInfo;
         if (mint.logoURI) {
           list[mint.address] = mint;
         }
@@ -775,11 +774,11 @@ export const RecurringExchange = (props: {
         let needed = 0;
 
         if (isWrap()) {
-          needed = feesInfo?.network || 0;
+          needed = feesInfo?.network ?? 0;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
           needed = fromSwapAmount + (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
         } else {
-          needed = feesInfo?.network || 0;
+          needed = feesInfo?.network ?? 0;
         }
 
         needed = parseFloat(needed.toFixed(6));
@@ -796,24 +795,22 @@ export const RecurringExchange = (props: {
       } else if (!isSwapAmountValid()) {
         let needed = 0;
         const fromSymbol = mintList[fromMint].symbol;
-        const isFromSerum = selectedClient && selectedClient.protocol.equals(SERUM);
+        const isFromSerum = selectedClient?.protocol.equals(SERUM);
         const exchange = !exchangeInfo ? selectedClient.exchange : exchangeInfo;
 
         if (isFromSerum) {
           const from = fromMint === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : fromMint;
           if (selectedClient.market.baseMintAddress.toBase58() === from) {
-            needed = selectedClient.market.minOrderSize + (feesInfo?.protocol || 0);
+            needed = selectedClient.market.minOrderSize + (feesInfo?.protocol ?? 0);
           } else {
-            needed = selectedClient.market.minOrderSize / (exchange.outPrice || 1) + (feesInfo?.protocol || 0);
+            needed = selectedClient.market.minOrderSize / (exchange.outPrice ?? 1) + (feesInfo?.protocol ?? 0);
           }
+        } else if (isWrap()) {
+          needed = fromSwapAmount + (feesInfo?.network ?? 0);
+        } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
+          needed = fromSwapAmount + (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
         } else {
-          if (isWrap()) {
-            needed = fromSwapAmount + (feesInfo?.network || 0);
-          } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-            needed = fromSwapAmount + (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
-          } else {
-            needed = fromSwapAmount + (feesInfo?.total || 0);
-          }
+          needed = fromSwapAmount + (feesInfo?.total ?? 0);
         }
 
         needed = parseFloat(needed.toFixed(6));
@@ -1020,9 +1017,7 @@ export const RecurringExchange = (props: {
   }, [updateRenderCount]);
 
   const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
-    return source && destination && source.name === destination.name && source.address === destination.address
-      ? true
-      : false;
+    return !!(source?.name === destination?.name && source.address === destination.address);
   };
 
   const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
@@ -1074,7 +1069,7 @@ export const RecurringExchange = (props: {
           fromAmount &&
           infoRow(
             t('transactions.transaction-info.price-impact'),
-            `${parseFloat((exchangeInfo.priceImpact || 0).toFixed(2))}%`,
+            `${parseFloat((exchangeInfo.priceImpact ?? 0).toFixed(2))}%`,
           )}
         {!refreshing &&
           fromAmount &&
@@ -1198,9 +1193,8 @@ export const RecurringExchange = (props: {
 
   const getOutputAmountPrice = () => {
     if (toMint && mintList[toMint]) {
-      if (exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut) {
-        const price =
-          getTokenPriceByAddress(mintList[toMint].address) || getTokenPriceBySymbol(mintList[toMint].symbol);
+      if (exchangeInfo?.amountIn && exchangeInfo.amountOut) {
+        const price = getTokenPriceByAddress(mintList[toMint].address, mintList[toMint].symbol);
         const outAmount = parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals));
         return toUsCurrency(outAmount * price);
       }
@@ -1210,231 +1204,225 @@ export const RecurringExchange = (props: {
   };
 
   return (
-    <>
-      <Spin spinning={refreshing}>
-        <div className="swap-wrapper">
-          {/* DDCA Option selector */}
-          <div className="ddca-option-select-row">
-            <span className="label">{t('swap.frequency-label')}</span>
-            {ddcaOption && (
-              <Button type="default" size="middle" className="dropdown-like-button" onClick={showDdcaOptionSelector}>
-                <span className="mr-2">{t(`ddca-selector.${ddcaOption.translationId}.name`)}</span>
-                <IconCaretDown className="mean-svg-icons" />
-              </Button>
-            )}
-          </div>
-
-          {/* Source token / amount */}
-          <ExchangeInput
-            token={fromMint && mintList[fromMint]}
-            tokenBalance={
-              fromMint && fromBalance && mintList[fromMint] && parseFloat(fromBalance) > 0
-                ? parseFloat(fromBalance).toFixed(mintList[fromMint].decimals)
-                : ''
-            }
-            tokenAmount={fromAmount}
-            onInputChange={handleSwapFromAmountChange}
-            onMaxAmount={() => {
-              const maxFromAmount = getMaxAllowedSwapAmount();
-              console.log('maxFromAmount', maxFromAmount);
-              if (fromMint && toMint && mintList[fromMint] && maxFromAmount && maxFromAmount > 0) {
-                setFromSwapAmount(maxFromAmount);
-                const formattedAmount = maxFromAmount.toFixed(mintList[fromMint].decimals);
-                setFromAmount(formattedAmount);
-              }
-            }}
-            onSelectToken={() => {
-              setSubjectTokenSelection('source');
-              showTokenSelector();
-            }}
-            onPriceClick={() => refreshPrices()}
-            className="mb-0"
-          />
-
-          <div className="flip-button-container">
-            {/* Flip button */}
-            <div className="flip-button" onClick={flipMintsCallback}>
-              <IconSwapFlip className="mean-svg-icons" />
-            </div>
-            {/* Settings icon */}
-            <span className="settings-wrapper pr-3">
-              <RecurringExchangeSettings currentValue={slippage} onValueSelected={onSlippageChanged} />
-            </span>
-          </div>
-
-          {/* Destination token / amount */}
-          {
-            <ExchangeOutput
-              fromToken={fromMint && mintList[fromMint]}
-              fromTokenAmount={fromAmount}
-              toToken={toMint && mintList[toMint]}
-              toTokenBalance={
-                toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
-                  ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
-                  : ''
-              }
-              toTokenAmount={
-                toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
-                  ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
-                  : ''
-              }
-              onSelectToken={() => {
-                setSubjectTokenSelection('destination');
-                showTokenSelector();
-              }}
-              inputLabel={getOutputAmountPrice()}
-              clients={clients}
-              onSelectedClient={(client: Client) => {
-                consoleOut('onSelectedClient:', client, 'blue');
-                setSelectedClient(client);
-              }}
-              showLpList={showLpList && !isWrap() && !isUnwrap()}
-            />
-          }
-
-          {/* Title bar with settings */}
-          <div className="info-line-and-settings flexible-left">
-            <div className="left">
-              <span>&nbsp;</span>
-            </div>
-            {/* Info */}
-            <div className="right info-line">
-              {fromMint && toMint && exchangeInfo && exchangeInfo.outPrice ? (
-                <>
-                  {!refreshing && (
-                    <>
-                      <div className="left">
-                        {`1 ${mintList[fromMint].symbol} ≈ ${parseFloat(
-                          exchangeInfo.outPrice.toFixed(mintList[toMint].decimals),
-                        )} ${mintList[toMint].symbol}`}
-                      </div>
-                      <div className="right pl-1">
-                        {fromAmount ? (
-                          <InfoIcon content={txInfoContent()} placement="leftBottom">
-                            <InfoCircleOutlined />
-                          </InfoIcon>
-                        ) : null}
-                      </div>
-                    </>
-                  )}
-                </>
-              ) : (
-                <span>-</span>
-              )}
-            </div>
-          </div>
-
-          {/* Action button */}
-          <Button
-            className="main-cta"
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={showDdcaSetup}
-            disabled={
-              !isValidBalance() ||
-              !isSwapAmountValid() ||
-              !exchangeInfo ||
-              !exchangeInfo?.amountOut ||
-              (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange)
-            }
-          >
-            {transactionStartButtonLabel}
-          </Button>
-
-          {/* Warning */}
-          {environment !== 'production' && (
-            <div className="mt-3">
-              <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
-                <span
-                  role="img"
-                  aria-label="exclamation-circle"
-                  className="anticon anticon-exclamation-circle ant-alert-icon"
-                >
-                  <WarningFilled />
-                </span>
-                <div className="ant-alert-content">
-                  <div className="ant-alert-message">
-                    {t('swap.exchange-warning')}&nbsp;
-                    <a
-                      className="primary-link"
-                      href={`${appConfig.getConfig('production').appUrl}/exchange`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      MAINNET
-                    </a>
-                    <span className="ml-1">
-                      (
-                      <a
-                        className="simplelink underline-on-hover"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        href={`${MEANFI_DOCS_URL}tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet`}
-                      >
-                        Why?
-                      </a>
-                      )
-                    </span>
-                  </div>
-                  <div className="ant-alert-description"></div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Token selection modal */}
-          <Modal
-            className="mean-modal unpadded-content"
-            open={isTokenSelectorModalVisible}
-            title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
-            onCancel={onCloseTokenSelector}
-            width={450}
-            footer={null}
-          >
-            <div className="token-selector-wrapper">
-              <div className="token-search-wrapper">
-                <TextInput
-                  value={tokenFilter}
-                  placeholder={t('token-selector.search-input-placeholder')}
-                  onInputChange={onTokenSearchInputChange}
-                />
-              </div>
-              <div className="token-list vertical-scroll">
-                {subjectTokenSelection === 'source' ? renderSourceTokenList : renderDestinationTokenList}
-              </div>
-            </div>
-          </Modal>
-
-          {/* DDCA Option selector modal */}
-          <DdcaFrequencySelectorModal
-            isVisible={isDdcaOptionSelectorModalVisible}
-            handleClose={onCloseDdcaOptionSelector}
-            handleOk={onCloseDdcaOptionSelector}
-          />
-
-          {/* DDCA Setup modal */}
-          {isDdcaSetupModalVisible && (
-            <DdcaSetupModal
-              endpoint={props.endpoint}
-              connection={connection}
-              isVisible={isDdcaSetupModalVisible}
-              handleClose={onDdcaSetupModalClosed}
-              handleOk={onFinishedDdca}
-              onAfterClose={onAfterTransactionModalClosed}
-              fromToken={fromMint && mintList[fromMint]}
-              fromTokenBalance={fromMint && fromBalance && mintList[fromMint] ? parseFloat(fromBalance) : 0}
-              fromTokenAmount={parseFloat(fromAmount) || 0}
-              toToken={toMint && mintList[toMint]}
-              userBalance={userBalances[NATIVE_SOL_MINT.toBase58()]}
-              ddcaTxFees={ddcaTxFees}
-              slippage={slippage}
-              hlaInfo={hlaInfo as HlaInfo}
-            />
+    <Spin spinning={refreshing}>
+      <div className="swap-wrapper">
+        {/* DDCA Option selector */}
+        <div className="ddca-option-select-row">
+          <span className="label">{t('swap.frequency-label')}</span>
+          {ddcaOption && (
+            <Button type="default" size="middle" className="dropdown-like-button" onClick={showDdcaOptionSelector}>
+              <span className="mr-2">{t(`ddca-selector.${ddcaOption.translationId}.name`)}</span>
+              <IconCaretDown className="mean-svg-icons" />
+            </Button>
           )}
         </div>
-      </Spin>
-    </>
+
+        {/* Source token / amount */}
+        <ExchangeInput
+          token={fromMint && mintList[fromMint]}
+          tokenBalance={
+            fromMint && fromBalance && mintList[fromMint] && parseFloat(fromBalance) > 0
+              ? parseFloat(fromBalance).toFixed(mintList[fromMint].decimals)
+              : ''
+          }
+          tokenAmount={fromAmount}
+          onInputChange={handleSwapFromAmountChange}
+          onMaxAmount={() => {
+            const maxFromAmount = getMaxAllowedSwapAmount();
+            console.log('maxFromAmount', maxFromAmount);
+            if (fromMint && toMint && mintList[fromMint] && maxFromAmount && maxFromAmount > 0) {
+              setFromSwapAmount(maxFromAmount);
+              const formattedAmount = maxFromAmount.toFixed(mintList[fromMint].decimals);
+              setFromAmount(formattedAmount);
+            }
+          }}
+          onSelectToken={() => {
+            setSubjectTokenSelection('source');
+            showTokenSelector();
+          }}
+          onPriceClick={() => refreshPrices()}
+          className="mb-0"
+        />
+
+        <div className="flip-button-container">
+          {/* Flip button */}
+          <div className="flip-button" onClick={flipMintsCallback}>
+            <IconSwapFlip className="mean-svg-icons" />
+          </div>
+          {/* Settings icon */}
+          <span className="settings-wrapper pr-3">
+            <RecurringExchangeSettings currentValue={slippage} onValueSelected={onSlippageChanged} />
+          </span>
+        </div>
+
+        {/* Destination token / amount */}
+        {
+          <ExchangeOutput
+            fromToken={fromMint && mintList[fromMint]}
+            fromTokenAmount={fromAmount}
+            toToken={toMint && mintList[toMint]}
+            toTokenBalance={
+              toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
+                ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
+                : ''
+            }
+            toTokenAmount={
+              toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
+                ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
+                : ''
+            }
+            onSelectToken={() => {
+              setSubjectTokenSelection('destination');
+              showTokenSelector();
+            }}
+            inputLabel={getOutputAmountPrice()}
+            clients={clients}
+            onSelectedClient={(client: Client) => {
+              consoleOut('onSelectedClient:', client, 'blue');
+              setSelectedClient(client);
+            }}
+            showLpList={showLpList && !isWrap() && !isUnwrap()}
+          />
+        }
+
+        {/* Title bar with settings */}
+        <div className="info-line-and-settings flexible-left">
+          <div className="left">
+            <span>&nbsp;</span>
+          </div>
+          {/* Info */}
+          <div className="right info-line">
+            {fromMint && toMint && exchangeInfo && exchangeInfo.outPrice ? (
+              <>
+                {!refreshing && (
+                  <>
+                    <div className="left">
+                      {`1 ${mintList[fromMint].symbol} ≈ ${parseFloat(
+                        exchangeInfo.outPrice.toFixed(mintList[toMint].decimals),
+                      )} ${mintList[toMint].symbol}`}
+                    </div>
+                    <div className="right pl-1">
+                      {fromAmount ? (
+                        <InfoIcon content={txInfoContent()} placement="leftBottom">
+                          <InfoCircleOutlined />
+                        </InfoIcon>
+                      ) : null}
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <span>-</span>
+            )}
+          </div>
+        </div>
+
+        {/* Action button */}
+        <Button
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={showDdcaSetup}
+          disabled={
+            !isValidBalance() ||
+            !isSwapAmountValid() ||
+            !exchangeInfo ||
+            !exchangeInfo?.amountOut ||
+            (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange)
+          }
+        >
+          {transactionStartButtonLabel}
+        </Button>
+
+        {/* Warning */}
+        {environment !== 'production' && (
+          <div className="mt-3">
+            <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
+              <span
+                role="img"
+                aria-label="exclamation-circle"
+                className="anticon anticon-exclamation-circle ant-alert-icon"
+              >
+                <WarningFilled />
+              </span>
+              <div className="ant-alert-content">
+                <div className="ant-alert-message">
+                  {t('swap.exchange-warning')}&nbsp;
+                  <a
+                    className="primary-link"
+                    href={`${appConfig.getConfig('production').appUrl}/exchange`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    MAINNET
+                  </a>{' '}
+                  <a
+                    className="simplelink underline-on-hover"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`${MEANFI_DOCS_URL}tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet`}
+                  >
+                    Why?
+                  </a>
+                </div>
+                <div className="ant-alert-description"></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Token selection modal */}
+        <Modal
+          className="mean-modal unpadded-content"
+          open={isTokenSelectorModalVisible}
+          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+          onCancel={onCloseTokenSelector}
+          width={450}
+          footer={null}
+        >
+          <div className="token-selector-wrapper">
+            <div className="token-search-wrapper">
+              <TextInput
+                value={tokenFilter}
+                placeholder={t('token-selector.search-input-placeholder')}
+                onInputChange={onTokenSearchInputChange}
+              />
+            </div>
+            <div className="token-list vertical-scroll">
+              {subjectTokenSelection === 'source' ? renderSourceTokenList : renderDestinationTokenList}
+            </div>
+          </div>
+        </Modal>
+
+        {/* DDCA Option selector modal */}
+        <DdcaFrequencySelectorModal
+          isVisible={isDdcaOptionSelectorModalVisible}
+          handleClose={onCloseDdcaOptionSelector}
+          handleOk={onCloseDdcaOptionSelector}
+        />
+
+        {/* DDCA Setup modal */}
+        {isDdcaSetupModalVisible && (
+          <DdcaSetupModal
+            endpoint={props.endpoint}
+            connection={connection}
+            isVisible={isDdcaSetupModalVisible}
+            handleClose={onDdcaSetupModalClosed}
+            handleOk={onFinishedDdca}
+            onAfterClose={onAfterTransactionModalClosed}
+            fromToken={fromMint && mintList[fromMint]}
+            fromTokenBalance={fromMint && fromBalance && mintList[fromMint] ? parseFloat(fromBalance) : 0}
+            fromTokenAmount={parseFloat(fromAmount) || 0}
+            toToken={toMint && mintList[toMint]}
+            userBalance={userBalances[NATIVE_SOL_MINT.toBase58()]}
+            ddcaTxFees={ddcaTxFees}
+            slippage={slippage}
+            hlaInfo={hlaInfo as HlaInfo}
+          />
+        )}
+      </div>
+    </Spin>
   );
 };

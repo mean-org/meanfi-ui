@@ -86,7 +86,6 @@ export const VestingContractStreamList = (props: {
     transactionStatus,
     setHighLightableStreamId,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     setTransactionStatus,
     refreshTokenBalance,
   } = useContext(AppStateContext);
@@ -295,16 +294,14 @@ export const VestingContractStreamList = (props: {
               rate: rateAmount,
             });
           }
+        } else if (item.statusCode === STREAM_STATUS_CODE.Scheduled) {
+          title = t('streams.stream-list.subtitle-scheduled-outbound', {
+            rate: rateAmount,
+          });
         } else {
-          if (item.statusCode === STREAM_STATUS_CODE.Scheduled) {
-            title = t('streams.stream-list.subtitle-scheduled-outbound', {
-              rate: rateAmount,
-            });
-          } else {
-            title = t('streams.stream-list.subtitle-running-outbound', {
-              rate: rateAmount,
-            });
-          }
+          title = t('streams.stream-list.subtitle-running-outbound', {
+            rate: rateAmount,
+          });
         }
       }
 
@@ -524,9 +521,7 @@ export const VestingContractStreamList = (props: {
         proposalTitle: closeStreamOptions.proposalTitle,
       };
       consoleOut('data:', data);
-      const price = selectedToken
-        ? getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol)
-        : 0;
+      const price = selectedToken ? getTokenPriceByAddress(selectedToken.address, selectedToken.symbol) : 0;
       const usdValue =
         (parseFloat(closeStreamOptions.vestedReturns as string) +
           parseFloat(closeStreamOptions.unvestedReturns as string)) *
@@ -962,9 +957,7 @@ export const VestingContractStreamList = (props: {
               {loadingTreasuryStreams ? (
                 <p>{t('treasuries.treasury-streams.loading-streams')}</p>
               ) : (
-                <>
-                  <p>{getNoStreamsMessage()}</p>
-                </>
+                <p>{getNoStreamsMessage()}</p>
               )}
             </>
           )}

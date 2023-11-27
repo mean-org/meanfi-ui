@@ -12,7 +12,12 @@ import { getAmountWithSymbol, isValidNumber, shortenAddress } from 'middleware/u
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { INPUT_DEBOUNCE_TIME, MAX_TOKEN_LIST_ITEMS, MEAN_MULTISIG_ACCOUNT_LAMPORTS, MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
+import {
+  INPUT_DEBOUNCE_TIME,
+  MAX_TOKEN_LIST_ITEMS,
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  MIN_SOL_BALANCE_REQUIRED,
+} from 'constants/common';
 import { UserTokenAccount } from 'models/accounts';
 import { InputMean } from '../InputMean';
 import { TokenDisplay } from '../TokenDisplay';
@@ -62,17 +67,16 @@ export const MultisigTransferTokensModal = (props: {
     loadingPrices,
     transactionStatus,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     setEffectiveRate,
     refreshPrices,
   } = useContext(AppStateContext);
-  const { validationStatus, isTransferDisabled, validateAddress } = useRecipientAddressValidation({ connection })
+  const { validationStatus, isTransferDisabled, validateAddress } = useRecipientAddressValidation({ connection });
 
   const [proposalTitle, setProposalTitle] = useState('');
   const [fromVault, setFromVault] = useState<UserTokenAccount>();
   const [fromAddress, setFromAddress] = useState('');
   const [to, setTo] = useState('');
-  const debouncedToAddress = useDebounce<string>(to, INPUT_DEBOUNCE_TIME)
+  const debouncedToAddress = useDebounce<string>(to, INPUT_DEBOUNCE_TIME);
   const [amount, setAmount] = useState('');
   const [userBalances, setUserBalances] = useState<any>();
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
@@ -147,10 +151,10 @@ export const MultisigTransferTokensModal = (props: {
     if (!amount || !selectedToken) {
       return 0;
     }
-    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+    const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
     return parseFloat(amount) * price;
-  }, [amount, selectedToken, getTokenPriceByAddress, getTokenPriceBySymbol]);
+  }, [amount, selectedToken, getTokenPriceByAddress]);
 
   const autoFocusInput = useCallback(() => {
     const input = document.getElementById('token-search-otp');
@@ -281,14 +285,14 @@ export const MultisigTransferTokensModal = (props: {
     // Triggers when "debouncedToAddress" changes
     // Do validation of the recipient address here
     if (fromVault) {
-      console.log('debouncedToAddress:', debouncedToAddress)
-      console.log('fromMint:', fromVault.address)
-      validateAddress(debouncedToAddress, fromVault.address)
+      console.log('debouncedToAddress:', debouncedToAddress);
+      console.log('fromMint:', fromVault.address);
+      validateAddress(debouncedToAddress, fromVault.address);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedToAddress, fromVault])
+  }, [debouncedToAddress, fromVault]);
 
-  useEffect(() => console.log('validationStatus:', validationStatus), [validationStatus])
+  useEffect(() => console.log('validationStatus:', validationStatus), [validationStatus]);
 
   const onAcceptModal = () => {
     const params: TransferTokensTxParams = {
@@ -341,14 +345,14 @@ export const MultisigTransferTokensModal = (props: {
   };
 
   const isValidForm = (): boolean => {
-    return !!(!!(proposalTitle &&
-      fromVault &&
-      to) &&
+    return !!(
+      !!(proposalTitle && fromVault && to) &&
       isValidAddress(fromVault.publicAddress) &&
       isValidAddress(to) &&
       amount &&
       +amount > 0 &&
-      +amount <= (fromVault.balance ?? 0));
+      +amount <= (fromVault.balance ?? 0)
+    );
   };
 
   const isAmountTooHigh = () => {
@@ -416,7 +420,7 @@ export const MultisigTransferTokensModal = (props: {
             setSelectedToken(t);
 
             consoleOut('token selected:', t.symbol, 'blue');
-            const price = getTokenPriceByAddress(t.address) || getTokenPriceBySymbol(t.symbol);
+            const price = getTokenPriceByAddress(t.address, t.symbol);
             setEffectiveRate(price);
             onCloseTokenSelector();
           };
@@ -570,7 +574,7 @@ export const MultisigTransferTokensModal = (props: {
                 onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
               >
                 {isError(transactionStatus.currentOperation) &&
-                  transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure
+                transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure
                   ? t('general.retry')
                   : t('general.cta-close')}
               </Button>

@@ -18,12 +18,12 @@ export const ExchangeOutput = (props: {
   showLpList: boolean;
 }) => {
   const { t } = useTranslation('common');
-  const { loadingPrices, getTokenPriceBySymbol, refreshPrices } = useContext(AppStateContext);
+  const { loadingPrices, getTokenPriceByAddress, refreshPrices } = useContext(AppStateContext);
   const [selectedClient, setSelectedClient] = useState<any>();
   const [savings, setSavings] = useState(0);
 
   useEffect(() => {
-    if (!props.clients || !props.clients.length) {
+    if (!props.clients?.length) {
       return;
     }
 
@@ -37,7 +37,7 @@ export const ExchangeOutput = (props: {
   }, [props.clients]);
 
   useEffect(() => {
-    if (!props.clients || !props.clients.length) {
+    if (!props.clients?.length) {
       return;
     }
 
@@ -65,124 +65,112 @@ export const ExchangeOutput = (props: {
     };
   }, [props.clients, props.fromTokenAmount]);
 
-  // useEffect(() => {
-  //     if (props.clients && props.clients.length &&
-  //         (!selectedClient || selectedClient.exchangeInfo.fromAmm !== props.clients[0].exchangeInfo.fromAmm)) {
-  //         setSelectedClient(props.clients[0]);
-  //     }
-  // }, [
-  //     selectedClient,
-  //     props.clients
-  // ]);
-
   return (
-    <>
-      <div className="well">
-        {/* Balance row */}
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
-            <span>{t('transactions.send-amount.label-right')}:</span>
-            <span>{`${props.toToken && props.toTokenBalance ? props.toTokenBalance : '0'}`}</span>
-            {props.toTokenBalance && (
-              <span
-                className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`}
-                onClick={() => refreshPrices()}
-              >
-                {`(~$${
-                  props.toToken && props.toTokenBalance
-                    ? formatAmount(parseFloat(props.toTokenBalance) * getTokenPriceBySymbol(props.toToken.symbol), 2)
-                    : '0.00'
-                })`}
-              </span>
-            )}
-          </div>
-          <div className="right inner-label">
+    <div className="well">
+      {/* Balance row */}
+      <div className="flex-fixed-right">
+        <div className="left inner-label">
+          <span>{t('transactions.send-amount.label-right')}:</span>
+          <span>{`${props.toToken && props.toTokenBalance ? props.toTokenBalance : '0'}`}</span>
+          {props.toTokenBalance && (
             <span
-              className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+              className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`}
               onClick={() => refreshPrices()}
             >
-              ~$
-              {props.toToken && props.toTokenBalance
-                ? formatAmount(parseFloat(props.toTokenBalance) * getTokenPriceBySymbol(props.toToken.symbol), 2)
-                : '0.00'}
+              {`(~$${
+                props.toToken && props.toTokenBalance
+                  ? formatAmount(parseFloat(props.toTokenBalance) * getTokenPriceByAddress(props.toToken.address), 2)
+                  : '0.00'
+              })`}
             </span>
-          </div>
+          )}
         </div>
-
-        {/* Main row */}
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on simplelink">
-              <TokenDisplay
-                onClick={props.onSelectToken}
-                mintAddress={props.toToken ? props.toToken.address : ''}
-                name={props.toToken ? props.toToken.name : ''}
-                className="simplelink"
-                noTokenLabel={t('swap.token-select-destination')}
-                showName={false}
-                showCaretDown={true}
-              />
-            </span>
-          </div>
-          <div className="right">
-            {props.showLpList && props.toTokenAmount && props.clients && props.clients.length > 1 ? (
-              <span>&nbsp;</span>
-            ) : (
-              <div className="static-data-field text-right">{props.toTokenAmount}</div>
-            )}
-          </div>
+        <div className="right inner-label">
+          <span
+            className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+            onClick={() => refreshPrices()}
+          >
+            ~$
+            {props.toToken && props.toTokenBalance
+              ? formatAmount(parseFloat(props.toTokenBalance) * getTokenPriceByAddress(props.toToken.address), 2)
+              : '0.00'}
+          </span>
         </div>
-
-        {props.fromTokenAmount && props.showLpList && props.clients && props.clients.length > 0 && (
-          <div className="mt-2" style={{ marginTop: '2rem' }}>
-            {props.clients.map((c: any, index: number) => {
-              if (c.exchange) {
-                const fromAmount = parseFloat(props.fromTokenAmount);
-                const amountOut = c.exchange.amountOut * fromAmount;
-                const firstInfo = props.clients[0].exchange;
-                const lastInfo = props.clients[props.clients.length - 1].exchange;
-
-                // Savings
-                const showBadge = props.clients.length > 1 && (firstInfo.amountOut || 0) > (lastInfo?.amountOut || 0);
-                let selected = selectedClient && selectedClient.exchange.fromAmm === c.exchange.fromAmm;
-
-                if (selected && selectedClient.pool && c.pool) {
-                  selected = selectedClient.pool.name === c.pool.name;
-                }
-
-                return (
-                  <div
-                    key={`${index}`}
-                    className={selected ? 'swap-client-card selected' : 'swap-client-card'}
-                    onClick={() => {
-                      setSelectedClient(c);
-                      props.onSelectedClient(c);
-                    }}
-                  >
-                    <div className="card-content">
-                      {index === 0 && showBadge && (
-                        <span className={`badge ${selected ? 'bg-orange-red' : 'disabled'}`}>
-                          {t('swap.routes-best-price-label')}: {formatAmount(savings, props.toToken?.decimals || 2)}
-                        </span>
-                      )}
-                      <div className="highlight flex-column">
-                        <span className="font-size-100 font-bold">{c.exchange.fromAmm}</span>
-                        {/* TODO: Update route when routes are available */}
-                        <span>
-                          {props.fromToken?.symbol} → {props.toToken?.symbol}
-                        </span>
-                      </div>
-                      <div className="amount">{formatAmount(amountOut, props.toToken?.decimals || 2)}</div>
-                    </div>
-                  </div>
-                );
-              } else {
-                return null;
-              }
-            })}
-          </div>
-        )}
       </div>
-    </>
+
+      {/* Main row */}
+      <div className="flex-fixed-left">
+        <div className="left">
+          <span className="add-on simplelink">
+            <TokenDisplay
+              onClick={props.onSelectToken}
+              mintAddress={props.toToken ? props.toToken.address : ''}
+              name={props.toToken ? props.toToken.name : ''}
+              className="simplelink"
+              noTokenLabel={t('swap.token-select-destination')}
+              showName={false}
+              showCaretDown={true}
+            />
+          </span>
+        </div>
+        <div className="right">
+          {props.showLpList && props.toTokenAmount && props.clients && props.clients.length > 1 ? (
+            <span>&nbsp;</span>
+          ) : (
+            <div className="static-data-field text-right">{props.toTokenAmount}</div>
+          )}
+        </div>
+      </div>
+
+      {props.fromTokenAmount && props.showLpList && props.clients && props.clients.length > 0 && (
+        <div className="mt-2" style={{ marginTop: '2rem' }}>
+          {props.clients.map((c: any, index: number) => {
+            if (c.exchange) {
+              const fromAmount = parseFloat(props.fromTokenAmount);
+              const amountOut = c.exchange.amountOut * fromAmount;
+              const firstInfo = props.clients[0].exchange;
+              const lastInfo = props.clients[props.clients.length - 1].exchange;
+
+              // Savings
+              const showBadge = props.clients.length > 1 && (firstInfo.amountOut || 0) > (lastInfo?.amountOut || 0);
+              let selected = selectedClient && selectedClient.exchange.fromAmm === c.exchange.fromAmm;
+
+              if (selected && selectedClient.pool && c.pool) {
+                selected = selectedClient.pool.name === c.pool.name;
+              }
+
+              return (
+                <div
+                  key={`${index}`}
+                  className={selected ? 'swap-client-card selected' : 'swap-client-card'}
+                  onClick={() => {
+                    setSelectedClient(c);
+                    props.onSelectedClient(c);
+                  }}
+                >
+                  <div className="card-content">
+                    {index === 0 && showBadge && (
+                      <span className={`badge ${selected ? 'bg-orange-red' : 'disabled'}`}>
+                        {t('swap.routes-best-price-label')}: {formatAmount(savings, props.toToken?.decimals || 2)}
+                      </span>
+                    )}
+                    <div className="highlight flex-column">
+                      <span className="font-size-100 font-bold">{c.exchange.fromAmm}</span>
+                      {/* TODO: Update route when routes are available */}
+                      <span>
+                        {props.fromToken?.symbol} → {props.toToken?.symbol}
+                      </span>
+                    </div>
+                    <div className="amount">{formatAmount(amountOut, props.toToken?.decimals || 2)}</div>
+                  </div>
+                </div>
+              );
+            } else {
+              return null;
+            }
+          })}
+        </div>
+      )}
+    </div>
   );
 };

@@ -83,7 +83,6 @@ export const MoneyStreamsIncomingView = (props: {
     transactionStatus,
     streamProgramAddress,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
@@ -547,7 +546,7 @@ export const MoneyStreamsIncomingView = (props: {
   const showWithdrawModal = useCallback(async () => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalButton);
-    const lastDetail = Object.assign({}, streamSelected);
+    const lastDetail = { ...streamSelected } as Stream | StreamInfo;
     resetTransactionStatus();
     setLastStreamDetail(lastDetail);
     setIsWithdrawModalVisibility(true);
@@ -609,9 +608,7 @@ export const MoneyStreamsIncomingView = (props: {
 
         const beneficiary = new PublicKey((streamSelected as StreamInfo).beneficiaryAddress as string);
         const amount = parseFloat(withdrawData.amount);
-        const price = workingToken
-          ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol)
-          : 0;
+        const price = workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0;
         const valueInUsd = price * amount;
 
         const data = {
@@ -811,9 +808,7 @@ export const MoneyStreamsIncomingView = (props: {
       const stream = (streamSelected as Stream).id;
       const beneficiary = (streamSelected as Stream).beneficiary;
       const amount = withdrawData.amount;
-      const price = workingToken
-        ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol)
-        : 0;
+      const price = workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0;
       const valueInUsd = price * withdrawData.inputAmount;
 
       const data = {
@@ -1059,11 +1054,10 @@ export const MoneyStreamsIncomingView = (props: {
         if ((streamSelected.rateAmount as BN).gtn(0)) {
           return false;
         }
-      } else {
-        if ((streamSelected.rateAmount as number) > 0) {
-          return false;
-        }
+      } else if ((streamSelected.rateAmount as number) > 0) {
+        return false;
       }
+
       const now = new Date().toUTCString();
       const nowUtc = new Date(now);
       const streamStartDate = new Date(streamSelected.startUtc as string);
@@ -1115,12 +1109,10 @@ export const MoneyStreamsIncomingView = (props: {
             setStreamDetail(detail as Stream);
           });
         }
-      } else {
-        if (v1.state === STREAM_STATE.Running) {
-          ms.refreshStream(streamSelected as StreamInfo).then(detail => {
-            setStreamDetail(detail);
-          });
-        }
+      } else if (v1.state === STREAM_STATE.Running) {
+        ms.refreshStream(streamSelected as StreamInfo).then(detail => {
+          setStreamDetail(detail);
+        });
       }
     }, 1000);
 

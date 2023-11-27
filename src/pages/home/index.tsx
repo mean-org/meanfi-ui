@@ -179,7 +179,6 @@ export const HomeView = () => {
     showDepositOptionsModal,
     getTokenPriceByAddress,
     setIsVerifiedRecipient,
-    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
@@ -642,7 +641,8 @@ export const HomeView = () => {
           if (itemIndex !== -1) {
             tokensCopy[itemIndex].balance = getAmountFromLamports(solBalance);
             tokensCopy[itemIndex].valueInUsd =
-              getAmountFromLamports(solBalance) * getTokenPriceBySymbol(tokensCopy[itemIndex].symbol);
+              getAmountFromLamports(solBalance) *
+              getTokenPriceByAddress(tokensCopy[itemIndex].address, tokensCopy[itemIndex].symbol);
             consoleOut('solBalance:', getAmountFromLamports(solBalance), 'blue');
             setAccountTokens(tokensCopy);
             setSelectedAsset(tokensCopy[itemIndex]);
@@ -661,7 +661,7 @@ export const HomeView = () => {
         .then(tokenAmount => {
           const balance = tokenAmount.value.uiAmount;
           consoleOut('balance:', balance, 'blue');
-          const price = getTokenPriceByAddress(selectedAsset.address) || getTokenPriceBySymbol(selectedAsset.symbol);
+          const price = getTokenPriceByAddress(selectedAsset.address, selectedAsset.symbol);
           const valueInUSD = (balance ?? 0) * price;
           consoleOut('valueInUSD:', valueInUSD, 'blue');
           // Find the token and update it if found
@@ -686,7 +686,6 @@ export const HomeView = () => {
     refreshingBalance,
     isSelectedAssetNativeAccount,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     setSelectedAsset,
   ]);
 
@@ -768,11 +767,10 @@ export const HomeView = () => {
 
   const shouldHideAsset = useCallback(
     (asset: UserTokenAccount) => {
-      const priceByAddress = getTokenPriceByAddress(asset.address);
-      const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
+      const tokenPrice = getTokenPriceByAddress(asset.address, asset.symbol);
       return !!(tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT));
     },
-    [getTokenPriceByAddress, getTokenPriceBySymbol],
+    [getTokenPriceByAddress],
   );
 
   const toggleHideLowBalances = useCallback(
@@ -1781,7 +1779,7 @@ export const HomeView = () => {
       const token = getTokenByMintAddress(associatedToken);
 
       if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
         const amount = getTreasuryUnallocatedBalance(treasury, token);
         amountChange = amount * tokenPrice;
       }
@@ -1793,13 +1791,7 @@ export const HomeView = () => {
 
     // Update state
     setStreamingAccountsSummary(resume);
-  }, [
-    treasuryList,
-    getTreasuryUnallocatedBalance,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    getTokenByMintAddress,
-  ]);
+  }, [treasuryList, getTreasuryUnallocatedBalance, getTokenPriceByAddress, getTokenByMintAddress]);
 
   const getV1VestedValue = useCallback(
     async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
@@ -1818,7 +1810,7 @@ export const HomeView = () => {
         const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
         if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
 
           if (isIncoming) {
             vestedValue = vestedValue + (freshStream.escrowVestedAmount || 0) * tokenPrice;
@@ -1827,7 +1819,7 @@ export const HomeView = () => {
       }
       return vestedValue;
     },
-    [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, ms],
+    [getTokenByMintAddress, getTokenPriceByAddress, ms],
   );
 
   const getV1UnvestedValue = useCallback(
@@ -1847,7 +1839,7 @@ export const HomeView = () => {
         const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
         if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
 
           if (!isIncoming) {
             unvestedValue = unvestedValue + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
@@ -1856,7 +1848,7 @@ export const HomeView = () => {
       }
       return unvestedValue;
     },
-    [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, ms],
+    [getTokenByMintAddress, getTokenPriceByAddress, ms],
   );
 
   const getV2FundsLeftValue = useCallback(
@@ -1877,7 +1869,7 @@ export const HomeView = () => {
         const token = getTokenByMintAddress(associatedToken);
 
         if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
           const decimals = token.decimals || 9;
           const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
           const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
@@ -1889,7 +1881,7 @@ export const HomeView = () => {
       }
       return fundsLeftValue;
     },
-    [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, paymentStreaming],
+    [getTokenByMintAddress, getTokenPriceByAddress, paymentStreaming],
   );
 
   const getV2WithdrawableValue = useCallback(
@@ -1910,7 +1902,7 @@ export const HomeView = () => {
         const token = getTokenByMintAddress(associatedToken);
 
         if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+          const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
           const decimals = token.decimals || 9;
           const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
           const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
@@ -1922,7 +1914,7 @@ export const HomeView = () => {
       }
       return withdrawableValue;
     },
-    [getTokenByMintAddress, getTokenPriceByAddress, getTokenPriceBySymbol, paymentStreaming],
+    [getTokenByMintAddress, getTokenPriceByAddress, paymentStreaming],
   );
 
   const refreshIncomingStreamSummary = useCallback(async () => {
@@ -3016,20 +3008,17 @@ export const HomeView = () => {
   useEffect(() => {
     if (tokensLoaded && accountTokens) {
       // Total USD value
-      let sumMeanTokens = 0;
-      accountTokens.forEach((asset: UserTokenAccount, index: number) => {
-        const tokenPrice = getTokenPriceBySymbol(asset.symbol);
-        if (asset.balance && tokenPrice) {
-          sumMeanTokens += asset.balance * tokenPrice;
-        }
-      });
-      setTotalTokenAccountsValue(sumMeanTokens);
+      const totalTokensValue = accountTokens.reduce((accumulator, item) => {
+        return accumulator + (item.valueInUsd ?? 0);
+      }, 0);
+      setTotalTokenAccountsValue(totalTokensValue);
 
       // Net Worth
-      const total = sumMeanTokens + totalAccountBalance;
+      const total = totalTokensValue + totalAccountBalance;
       setNetWorth(total);
     }
-  }, [accountTokens, getTokenPriceBySymbol, tokensLoaded, totalAccountBalance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountTokens, tokensLoaded, totalAccountBalance]);
 
   // Setup event listeners
   useEffect(() => {
@@ -3513,17 +3502,15 @@ export const HomeView = () => {
     const nftMint = asset ? getNftMint(asset, accountTokens, accountNfts) : undefined;
 
     return (
-      <>
-        <NftPaginatedList
-          connection={connection}
-          loadingTokenAccounts={loadingTokenAccounts}
-          nftList={accountNfts}
-          onNftItemClick={(nft: MeanNft) => onNftItemClick(nft)}
-          presetNftMint={selectedNft ? undefined : nftMint}
-          selectedNft={selectedNft}
-          tokensLoaded={tokensLoaded}
-        />
-      </>
+      <NftPaginatedList
+        connection={connection}
+        loadingTokenAccounts={loadingTokenAccounts}
+        nftList={accountNfts}
+        onNftItemClick={(nft: MeanNft) => onNftItemClick(nft)}
+        presetNftMint={selectedNft ? undefined : nftMint}
+        selectedNft={selectedNft}
+        tokensLoaded={tokensLoaded}
+      />
     );
   };
 
@@ -3725,47 +3712,44 @@ export const HomeView = () => {
         return '$0.00';
       }
     };
-    const priceByAddress = getTokenPriceByAddress(selectedAsset.address);
-    const tokenPrice = priceByAddress || getTokenPriceBySymbol(selectedAsset.symbol);
+    const tokenPrice = getTokenPriceByAddress(selectedAsset.address, selectedAsset.symbol);
 
     return (
-      <>
-        <div className="accounts-category-meta">
-          <div className="mb-2">
-            <Row>
-              <Col span={14}>
-                <div className="info-label">Balance</div>
-                <div className="transaction-detail-row">
-                  <div className="info-data">
-                    {getAmountWithSymbol(
-                      selectedAsset.balance ?? 0,
-                      selectedAsset.address,
-                      false,
-                      splTokenList,
-                      selectedAsset.decimals,
-                    )}
-                  </div>
+      <div className="accounts-category-meta">
+        <div className="mb-2">
+          <Row>
+            <Col span={14}>
+              <div className="info-label">Balance</div>
+              <div className="transaction-detail-row">
+                <div className="info-data">
+                  {getAmountWithSymbol(
+                    selectedAsset.balance ?? 0,
+                    selectedAsset.address,
+                    false,
+                    splTokenList,
+                    selectedAsset.decimals,
+                  )}
                 </div>
-                <div className="info-extra font-size-85">
-                  <AddressDisplay
-                    address={selectedAsset.publicAddress as string}
-                    iconStyles={{ width: '16', height: '16' }}
-                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-                      selectedAsset.publicAddress
-                    }${getSolanaExplorerClusterParam()}`}
-                  />
-                </div>
-              </Col>
-              <Col span={10}>
-                <div className="info-label">Value</div>
-                <div className="transaction-detail-row">
-                  <span className="info-data">{renderBalance()}</span>
-                </div>
-              </Col>
-            </Row>
-          </div>
+              </div>
+              <div className="info-extra font-size-85">
+                <AddressDisplay
+                  address={selectedAsset.publicAddress as string}
+                  iconStyles={{ width: '16', height: '16' }}
+                  newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
+                    selectedAsset.publicAddress
+                  }${getSolanaExplorerClusterParam()}`}
+                />
+              </div>
+            </Col>
+            <Col span={10}>
+              <div className="info-label">Value</div>
+              <div className="transaction-detail-row">
+                <span className="info-data">{renderBalance()}</span>
+              </div>
+            </Col>
+          </Row>
         </div>
-      </>
+      </div>
     );
   };
 
@@ -3848,31 +3832,21 @@ export const HomeView = () => {
                     <div className="bottom-ctas">
                       <div className="primary-action">
                         {isMultisigContext ? (
-                          <>
-                            <Button
-                              block
-                              className="flex-center"
-                              type="primary"
-                              shape="round"
-                              onClick={onNewProposalClicked}
-                            >
-                              <IconSafe className="mean-svg-icons" style={{ width: 24, height: 24 }} />
-                              <span className="ml-1">New proposal</span>
-                            </Button>
-                          </>
+                          <Button
+                            block
+                            className="flex-center"
+                            type="primary"
+                            shape="round"
+                            onClick={onNewProposalClicked}
+                          >
+                            <IconSafe className="mean-svg-icons" style={{ width: 24, height: 24 }} />
+                            <span className="ml-1">New proposal</span>
+                          </Button>
                         ) : (
-                          <>
-                            <Button
-                              block
-                              className="flex-center"
-                              type="primary"
-                              shape="round"
-                              onClick={showInitAtaModal}
-                            >
-                              <IconAdd className="mean-svg-icons" />
-                              <span className="ml-1">Add asset</span>
-                            </Button>
-                          </>
+                          <Button block className="flex-center" type="primary" shape="round" onClick={showInitAtaModal}>
+                            <IconAdd className="mean-svg-icons" />
+                            <span className="ml-1">Add asset</span>
+                          </Button>
                         )}
                       </div>
                       <Dropdown
@@ -3933,38 +3907,32 @@ export const HomeView = () => {
                     ) : null}
 
                     {selectedApp?.slug === RegisteredAppPaths.SuperSafe ? (
-                      <>
-                        <Suspense fallback={renderSpinner()}>
-                          <SafeDetails
-                            appsProvider={appsProvider}
-                            safeBalance={netWorth}
-                            solanaApps={solanaApps}
-                            onNewProposalClicked={onNewProposalClicked}
-                            onProposalExecuted={() => {
-                              consoleOut('Triggering onRefreshStreamsReset...');
-                              onRefreshStreamsReset();
-                            }}
-                          />
-                        </Suspense>
-                      </>
+                      <Suspense fallback={renderSpinner()}>
+                        <SafeDetails
+                          appsProvider={appsProvider}
+                          safeBalance={netWorth}
+                          solanaApps={solanaApps}
+                          onNewProposalClicked={onNewProposalClicked}
+                          onProposalExecuted={() => {
+                            consoleOut('Triggering onRefreshStreamsReset...');
+                            onRefreshStreamsReset();
+                          }}
+                        />
+                      </Suspense>
                     ) : null}
 
                     {selectedApp?.slug === RegisteredAppPaths.Staking &&
                     location.pathname.startsWith(`/${RegisteredAppPaths.Staking}`) ? (
-                      <>
-                        <Suspense fallback={renderSpinner()}>
-                          <StakingComponent />
-                        </Suspense>
-                      </>
+                      <Suspense fallback={renderSpinner()}>
+                        <StakingComponent />
+                      </Suspense>
                     ) : null}
 
                     {selectedApp?.slug === RegisteredAppPaths.Vesting &&
                     location.pathname.startsWith(`/${RegisteredAppPaths.Vesting}`) ? (
-                      <>
-                        <Suspense fallback={renderSpinner()}>
-                          <VestingComponent appSocialLinks={selectedApp.socials} />
-                        </Suspense>
-                      </>
+                      <Suspense fallback={renderSpinner()}>
+                        <VestingComponent appSocialLinks={selectedApp.socials} />
+                      </Suspense>
                     ) : null}
 
                     {location.pathname.startsWith('/programs/') ? (
@@ -3980,11 +3948,9 @@ export const HomeView = () => {
                     ) : null}
 
                     {selectedCategory === 'account-summary' && location.pathname === '/my-account' ? (
-                      <>
-                        <Suspense fallback={renderSpinner()}>
-                          <PersonalAccountSummary accountBalance={netWorth} />
-                        </Suspense>
-                      </>
+                      <Suspense fallback={renderSpinner()}>
+                        <PersonalAccountSummary accountBalance={netWorth} />
+                      </Suspense>
                     ) : null}
 
                     {location.pathname.startsWith('/assets') ? (

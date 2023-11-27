@@ -90,7 +90,6 @@ export const MoneyStreamsOutgoingView = (props: {
     transactionStatus,
     streamProgramAddress,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
@@ -626,9 +625,7 @@ export const MoneyStreamsOutgoingView = (props: {
         const treasury = new PublicKey((streamSelected as StreamInfo).treasuryAddress as string);
         const contributorMint = getStreamAssociatedMint(streamSelected);
         const amount = parseFloat(addFundsData.amount as string);
-        const price = workingToken
-          ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol)
-          : 0;
+        const price = workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0;
         setAddFundsPayload(addFundsData);
 
         const data = {
@@ -772,9 +769,7 @@ export const MoneyStreamsOutgoingView = (props: {
       const streamMint = getStreamAssociatedMint(streamSelected);
       const associatedToken = new PublicKey(streamMint);
       const amount = addFundsData.tokenAmount.toString();
-      const price = workingToken
-        ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol)
-        : 0;
+      const price = workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0;
       setAddFundsPayload(addFundsData);
 
       const data = {
@@ -862,7 +857,7 @@ export const MoneyStreamsOutgoingView = (props: {
     };
 
     if (wallet && publicKey && streamSelected && workingToken) {
-      const token = Object.assign({}, workingToken);
+      const token = { ...workingToken } as TokenInfo;
       showAddFundsTransactionModal();
       let created: boolean;
       if (streamSelected.version < 2) {
@@ -1846,9 +1841,7 @@ export const MoneyStreamsOutgoingView = (props: {
           currentOperation: TransactionStatus.InitTransaction,
         });
         const streamPublicKey = new PublicKey(streamSelected.id as string);
-        const price = workingToken
-          ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol)
-          : 0;
+        const price = workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0;
 
         const data = {
           title: closeTreasuryData.title, // title
@@ -2041,9 +2034,7 @@ export const MoneyStreamsOutgoingView = (props: {
           currentOperation: TransactionStatus.InitTransaction,
         });
         const streamPublicKey = new PublicKey(streamSelected.id as string);
-        const price = workingToken
-          ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol)
-          : 0;
+        const price = workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0;
 
         consoleOut('createTxV2 received params:', closeTreasuryData, 'blue');
         const data = {
@@ -2057,7 +2048,7 @@ export const MoneyStreamsOutgoingView = (props: {
         // Report event to Segment analytics
         const segmentData: SegmentStreamCloseData = {
           asset: workingToken ? workingToken.symbol : '-',
-          assetPrice: workingToken ? getTokenPriceBySymbol(workingToken.symbol) : 0,
+          assetPrice: workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0,
           stream: data.stream,
           initializer: data.payer,
           closeTreasury: data.closeTreasury,
@@ -2362,12 +2353,10 @@ export const MoneyStreamsOutgoingView = (props: {
             setStreamDetail(detail as Stream);
           });
         }
-      } else {
-        if (v1.state === STREAM_STATE.Running) {
-          ms.refreshStream(streamSelected as StreamInfo).then(detail => {
-            setStreamDetail(detail);
-          });
-        }
+      } else if (v1.state === STREAM_STATE.Running) {
+        ms.refreshStream(streamSelected as StreamInfo).then(detail => {
+          setStreamDetail(detail);
+        });
       }
     }, 1000);
 

@@ -1,7 +1,7 @@
 import { Cluster, clusterApiUrl, Connection } from '@solana/web3.js';
 import { isLocal } from 'middleware/ui';
 import { appConfig } from '..';
-import { requestOptions, TRITON_ONE_DEBUG_RPC } from '../constants';
+import { requestOptions } from '../constants';
 import { environment } from '../environments/environment';
 import { getRpcApiEndpoint } from '../middleware/api';
 import { ChainID } from '../models/enums';
@@ -73,7 +73,7 @@ export const isRpcLive = async (rpcConfig: RpcConfig): Promise<boolean> => {
     return connection
       .getLatestBlockhashAndContext('confirmed')
       .then((response: any) => {
-        const rpcTestPassed = response && response.value && !response.value.err ? true : false;
+        const rpcTestPassed = !!(response?.value && !response.value.err);
         return rpcTestPassed;
       })
       .catch(error => {
@@ -88,7 +88,7 @@ export const isRpcLive = async (rpcConfig: RpcConfig): Promise<boolean> => {
 
 export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Promise<RpcConfig | null> => {
   networkId = networkId ?? getDefaultRpc().networkId;
-  const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${previousRpcId || 0
+  const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${previousRpcId ?? 0
     }`;
   const rpcConfig = await getRpcApiEndpoint(url, requestOptions);
   if (rpcConfig === null) {
@@ -109,10 +109,10 @@ export const refreshCachedRpc = async () => {
   // valid for devnet or mainnet but the variable REACT_APP_TRITON_ONE_DEBUG_RPC
   // on the .env files needs to contain the rpc url
   if (isLocal()) {
+    console.log('env:', process.env)
+    const TRITON_ONE_DEBUG_RPC = process.env.REACT_APP_TRITON_ONE_DEBUG_RPC ?? ''
     if (TRITON_ONE_DEBUG_RPC) {
-      const debugRpc = Object.assign({}, getDefaultRpc(), {
-        httpProvider: TRITON_ONE_DEBUG_RPC,
-      }) as RpcConfig;
+      const debugRpc = ({ ...getDefaultRpc(), httpProvider: TRITON_ONE_DEBUG_RPC, }) as RpcConfig;
       window.localStorage.setItem('cachedRpc', JSON.stringify(debugRpc));
       return;
     }

@@ -65,7 +65,6 @@ export const VestingContractWithdrawFundsModal = (props: {
     isVerifiedRecipient,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshPrices,
@@ -83,11 +82,11 @@ export const VestingContractWithdrawFundsModal = (props: {
       if (!selectedToken) {
         return 0;
       }
-      const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+      const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
       return parseFloat(inputAmount) * price;
     },
-    [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken],
+    [getTokenPriceByAddress, selectedToken],
   );
 
   const onAcceptWithdrawTreasuryFunds = () => {
@@ -203,8 +202,7 @@ export const VestingContractWithdrawFundsModal = (props: {
 
   const isNewTreasury = useCallback(() => {
     if (vestingContract) {
-      const v2 = vestingContract as PaymentStreamingAccount;
-      return v2.version >= 2 ? true : false;
+      return vestingContract.version >= 2;
     }
 
     return false;
@@ -226,9 +224,7 @@ export const VestingContractWithdrawFundsModal = (props: {
     if (vestingContract) {
       let token = getTokenByMintAddress(vestingContract.mint.toBase58());
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
-        token = Object.assign({}, token, {
-          symbol: 'SOL',
-        }) as TokenInfo;
+        token = { ...token, symbol: 'SOL' } as TokenInfo;
       }
       setSelectedToken(token);
     }
@@ -265,7 +261,7 @@ export const VestingContractWithdrawFundsModal = (props: {
       <div className="transaction-list-row no-pointer">
         <div className="icon-cell">
           <div className="token-icon">
-            {token && token.logoURI ? (
+            {token?.logoURI ? (
               <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
               <Identicon
@@ -408,12 +404,12 @@ export const VestingContractWithdrawFundsModal = (props: {
               </div>
               <div className="flex-fixed-right">
                 <div className="left inner-label">
-                  {!vestingContract || (vestingContract && vestingContract.autoClose) ? (
+                  {!vestingContract || vestingContract?.autoClose ? (
                     <span>{t('add-funds.label-right')}:</span>
                   ) : (
                     <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                   )}
-                  {vestingContract && vestingContract.autoClose ? (
+                  {vestingContract?.autoClose ? (
                     <span>
                       {`${
                         tokenBalance && selectedToken
@@ -460,30 +456,26 @@ export const VestingContractWithdrawFundsModal = (props: {
             </div>
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
-          <>
-            <div className="transaction-progress">
-              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
-            </div>
-          </>
+          <div className="transaction-progress">
+            <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+            <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
+          </div>
         ) : (
-          <>
-            <div className="transaction-progress p-0">
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
-                    feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
-                  })}
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-                </h4>
-              )}
-            </div>
-          </>
+          <div className="transaction-progress p-0">
+            <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+            {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+              <h4 className="mb-4">
+                {t('transactions.status.tx-start-failure', {
+                  accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
+                  feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
+                })}
+              </h4>
+            ) : (
+              <h4 className="font-bold mb-3">
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+              </h4>
+            )}
+          </div>
         )}
       </div>
 
@@ -506,27 +498,25 @@ export const VestingContractWithdrawFundsModal = (props: {
       </div>
 
       {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
-        <>
-          <div className="cta-container">
-            <Button
-              type="primary"
-              shape="round"
-              size="large"
-              disabled={isBusy || !isValidForm()}
-              onClick={() => {
-                if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                  onAcceptWithdrawTreasuryFunds();
-                } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                  onCloseModal();
-                } else {
-                  onAcceptWithdrawTreasuryFunds();
-                }
-              }}
-            >
-              {isBusy ? t('multisig.transfer-tokens.main-cta-busy') : getButtonLabel()}
-            </Button>
-          </div>
-        </>
+        <div className="cta-container">
+          <Button
+            type="primary"
+            shape="round"
+            size="large"
+            disabled={isBusy || !isValidForm()}
+            onClick={() => {
+              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                onAcceptWithdrawTreasuryFunds();
+              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                onCloseModal();
+              } else {
+                onAcceptWithdrawTreasuryFunds();
+              }
+            }}
+          >
+            {isBusy ? t('multisig.transfer-tokens.main-cta-busy') : getButtonLabel()}
+          </Button>
+        </div>
       )}
     </Modal>
   );

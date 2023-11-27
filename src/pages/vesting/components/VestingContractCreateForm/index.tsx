@@ -97,7 +97,7 @@ export const VestingContractCreateForm = (props: {
     lockPeriodFrequency,
     pendingMultisigTxCount,
     setLockPeriodFrequency,
-    getTokenPriceBySymbol,
+    getTokenPriceByAddress,
     setLockPeriodAmount,
     setEffectiveRate,
     refreshPrices,
@@ -140,8 +140,8 @@ export const VestingContractCreateForm = (props: {
       return 0;
     }
 
-    return parseFloat(vestingLockFundingAmount) * getTokenPriceBySymbol(selectedToken.symbol);
-  }, [vestingLockFundingAmount, selectedToken, getTokenPriceBySymbol]);
+    return parseFloat(vestingLockFundingAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
+  }, [vestingLockFundingAmount, selectedToken, getTokenPriceByAddress]);
 
   const autoFocusInput = useCallback(() => {
     const input = document.getElementById('token-search-otp');
@@ -292,7 +292,7 @@ export const VestingContractCreateForm = (props: {
 
   // Reset results when the filter is cleared
   useEffect(() => {
-    if (selectedList && selectedList.length && filteredTokenList.length === 0 && !tokenFilter) {
+    if (selectedList?.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
     }
   }, [selectedList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
@@ -339,7 +339,7 @@ export const VestingContractCreateForm = (props: {
   const canShowMaxCta = () => {
     if (tokenBalance && selectedToken) {
       if (selectedToken.address === NATIVE_SOL.address) {
-        return tokenBalance > getMinSolBlanceRequired() ? true : false;
+        return tokenBalance > getMinSolBlanceRequired();
       }
       return tokenBalance > 0;
     }
@@ -689,7 +689,7 @@ export const VestingContractCreateForm = (props: {
         setSelectedToken(t);
 
         consoleOut('token selected:', t.symbol, 'blue');
-        setEffectiveRate(getTokenPriceBySymbol(t.symbol));
+        setEffectiveRate(getTokenPriceByAddress(t.address, t.symbol));
         onCloseTokenSelector();
       };
 
@@ -995,14 +995,12 @@ export const VestingContractCreateForm = (props: {
             {!isMultisigContext && (
               <div className="right inner-label">
                 {publicKey ? (
-                  <>
-                    <span
-                      className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                      onClick={() => refreshPrices()}
-                    >
-                      ~{vestingLockFundingAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
-                    </span>
-                  </>
+                  <span
+                    className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onClick={() => refreshPrices()}
+                  >
+                    ~{vestingLockFundingAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
+                  </span>
                 ) : (
                   <span>~$0.00</span>
                 )}
@@ -1140,25 +1138,21 @@ export const VestingContractCreateForm = (props: {
                 <div className="left static-data-field">{paymentStartDate}</div>
                 <div className="right">
                   <div className="add-on simplelink">
-                    <>
-                      {
-                        <DatePicker
-                          size="middle"
-                          bordered={false}
-                          className="addon-date-picker"
-                          aria-required={true}
-                          allowClear={false}
-                          disabledDate={todayAndPriorDatesDisabled}
-                          placeholder="Pick a date"
-                          onChange={(value: any, date: string) => handleDateChange(date)}
-                          value={moment(paymentStartDate, DATEPICKER_FORMAT) as any}
-                          format={DATEPICKER_FORMAT}
-                          showNow={true}
-                          showToday={false}
-                          renderExtraFooter={renderDatePickerExtraPanel}
-                        />
-                      }
-                    </>
+                    <DatePicker
+                      size="middle"
+                      bordered={false}
+                      className="addon-date-picker"
+                      aria-required={true}
+                      allowClear={false}
+                      disabledDate={todayAndPriorDatesDisabled}
+                      placeholder="Pick a date"
+                      onChange={(value: any, date: string) => handleDateChange(date)}
+                      value={moment(paymentStartDate, DATEPICKER_FORMAT) as any}
+                      format={DATEPICKER_FORMAT}
+                      showNow={true}
+                      showToday={false}
+                      renderExtraFooter={renderDatePickerExtraPanel}
+                    />
                   </div>
                 </div>
               </div>

@@ -82,7 +82,6 @@ export const TreasuryAddFundsModal = (props: {
     transactionStatus,
     highLightableStreamId,
     getTokenPriceByAddress,
-    getTokenPriceBySymbol,
     getTokenByMintAddress,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -144,10 +143,10 @@ export const TreasuryAddFundsModal = (props: {
       return 0;
     }
 
-    const price = getTokenPriceByAddress(selectedToken.address) || getTokenPriceBySymbol(selectedToken.symbol);
+    const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
     return parseFloat(topupAmount) * price;
-  }, [getTokenPriceByAddress, getTokenPriceBySymbol, selectedToken, topupAmount]);
+  }, [getTokenPriceByAddress, selectedToken, topupAmount]);
 
   const isfeePayedByTreasurerOn = useCallback(() => {
     if (highLightableStreamId) {
@@ -499,7 +498,7 @@ export const TreasuryAddFundsModal = (props: {
     event.currentTarget.className = 'error';
   };
 
-  const getStreamingAccountIcon = (item: PaymentStreamingAccount | TreasuryInfo | undefined) => {
+  const getStreamingAccountIcon = (item?: PaymentStreamingAccount | TreasuryInfo) => {
     if (!item) {
       return null;
     }
@@ -642,44 +641,42 @@ export const TreasuryAddFundsModal = (props: {
                 )}
 
                 {isMultisigContext && selectedMultisig && !treasuryDetails && (
-                  <>
-                    <div className="mb-3">
-                      <div className="form-label icon-label">
-                        {t('treasuries.add-funds.select-streaming-account-label')}
-                        <Tooltip
-                          placement="bottom"
-                          title="Every payment stream is funded from a streaming account. Select the account to fund below."
-                        >
-                          <span>
-                            <IconHelpCircle className="mean-svg-icons" />
-                          </span>
-                        </Tooltip>
-                      </div>
-                      <div className={`well ${isBusy ? 'disabled' : ''}`}>
-                        <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                          {treasuryList && treasuryList.length > 0 && (
-                            <Select
-                              className={`auto-height`}
-                              value={selectedStreamingAccountId}
-                              style={{ width: '100%', maxWidth: 'none' }}
-                              popupClassName="stream-select-dropdown"
-                              onChange={onStreamingAccountSelected}
-                              bordered={false}
-                              showArrow={false}
-                              dropdownRender={menu => <div>{menu}</div>}
-                            >
-                              {treasuryList.map(option => {
-                                return renderStreamingAccountItem(option);
-                              })}
-                            </Select>
-                          )}
-                        </div>
-                        {selectedStreamingAccountId && !isValidAddress(selectedStreamingAccountId) && (
-                          <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                  <div className="mb-3">
+                    <div className="form-label icon-label">
+                      {t('treasuries.add-funds.select-streaming-account-label')}
+                      <Tooltip
+                        placement="bottom"
+                        title="Every payment stream is funded from a streaming account. Select the account to fund below."
+                      >
+                        <span>
+                          <IconHelpCircle className="mean-svg-icons" />
+                        </span>
+                      </Tooltip>
+                    </div>
+                    <div className={`well ${isBusy ? 'disabled' : ''}`}>
+                      <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                        {treasuryList && treasuryList.length > 0 && (
+                          <Select
+                            className={`auto-height`}
+                            value={selectedStreamingAccountId}
+                            style={{ width: '100%', maxWidth: 'none' }}
+                            popupClassName="stream-select-dropdown"
+                            onChange={onStreamingAccountSelected}
+                            bordered={false}
+                            showArrow={false}
+                            dropdownRender={menu => <div>{menu}</div>}
+                          >
+                            {treasuryList.map(option => {
+                              return renderStreamingAccountItem(option);
+                            })}
+                          </Select>
                         )}
                       </div>
+                      {selectedStreamingAccountId && !isValidAddress(selectedStreamingAccountId) && (
+                        <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                      )}
                     </div>
-                  </>
+                  </div>
                 )}
 
                 {/* Top up amount */}
@@ -769,14 +766,12 @@ export const TreasuryAddFundsModal = (props: {
                       </div>
                       <div className="right inner-label">
                         {publicKey ? (
-                          <>
-                            <span
-                              className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                              onClick={() => refreshPrices()}
-                            >
-                              ~{topupAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
-                            </span>
-                          </>
+                          <span
+                            className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                            onClick={() => refreshPrices()}
+                          >
+                            ~{topupAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
+                          </span>
                         ) : (
                           <span>~$0.00</span>
                         )}
@@ -786,25 +781,21 @@ export const TreasuryAddFundsModal = (props: {
                 </div>
               </>
             ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
-              <>
-                <div className="transaction-progress">
-                  <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                  <h4 className="font-bold">{t('treasuries.add-funds.success-message')}</h4>
-                </div>
-              </>
+              <div className="transaction-progress">
+                <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                <h4 className="font-bold">{t('treasuries.add-funds.success-message')}</h4>
+              </div>
             ) : (
-              <>
-                <div className="transaction-progress p-0">
-                  <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                  {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                    <h4 className="mb-4">{transactionStatus.customError}</h4>
-                  ) : (
-                    <h4 className="font-bold mb-3">
-                      {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-                    </h4>
-                  )}
-                </div>
-              </>
+              <div className="transaction-progress p-0">
+                <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                  <h4 className="mb-4">{transactionStatus.customError}</h4>
+                ) : (
+                  <h4 className="font-bold mb-3">
+                    {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                  </h4>
+                )}
+              </div>
             )}
           </div>
 
@@ -844,11 +835,9 @@ export const TreasuryAddFundsModal = (props: {
                 <p>You can also fund this streaming account by sending {selectedToken?.symbol} tokens to:</p>
 
                 {showQrCode && workingTreasuryDetails && (
-                  <>
-                    <div className="qr-container bg-white">
-                      <QRCodeSVG value={workingTreasuryDetails.id.toString()} size={200} />
-                    </div>
-                  </>
+                  <div className="qr-container bg-white">
+                    <QRCodeSVG value={workingTreasuryDetails.id.toString()} size={200} />
+                  </div>
                 )}
 
                 {workingTreasuryDetails && (

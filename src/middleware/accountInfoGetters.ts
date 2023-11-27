@@ -1,4 +1,13 @@
-import { AccountInfo, ParsedAccountData } from "@solana/web3.js";
+import { AccountInfo, ParsedAccountData, SystemProgram } from "@solana/web3.js";
+
+/**
+ * Checks if the accountInfo provided by getParsedAccountInfo corresponds to a system owned account
+ * @param parsedAccountInfo Parsed accountInfo. Presumably a wallet account
+ * @returns true if the accountInfo indicates that the account belongs to the system program
+ */
+export const isSystemOwnedAccount = (parsedAccountInfo: AccountInfo<Buffer | ParsedAccountData> | null) => {
+  return !!(parsedAccountInfo?.owner && parsedAccountInfo.owner.equals(SystemProgram.programId));
+}
 
 /**
  * Checks if the accountInfo provided by getParsedAccountInfo corresponds to a token account

@@ -55,7 +55,7 @@ export const StreamAddFundsModal = (props: {
     withdrawTransactionFees,
     isMultisigContext,
   } = props;
-  const { splTokenList, loadingPrices, isWhitelisted, getTokenPriceBySymbol, refreshPrices } =
+  const { splTokenList, loadingPrices, isWhitelisted, getTokenPriceByAddress, refreshPrices } =
     useContext(AppStateContext);
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -194,8 +194,8 @@ export const StreamAddFundsModal = (props: {
       return 0;
     }
 
-    return parseFloat(topupAmount) * getTokenPriceBySymbol(selectedToken.symbol);
-  }, [topupAmount, selectedToken, getTokenPriceBySymbol]);
+    return parseFloat(topupAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
+  }, [topupAmount, selectedToken, getTokenPriceByAddress]);
 
   const shouldFundFromTreasury = useCallback(() => {
     if (!treasuryDetails || treasuryDetails?.autoClose) {

@@ -7,11 +7,11 @@ import { DdcaClient } from '@mean-dao/ddca';
 import { AppStateContext } from 'contexts/appstate';
 import { getTokenBySymbol, useLocalStorageState } from 'middleware/utils';
 import { getLiveRpc, RpcConfig } from 'services/connections-hq';
-import { Connection } from '@solana/web3.js';
+import { Connection, clusterApiUrl } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from 'Icons';
 import { RecurringExchange } from 'views';
-import { TRITON_ONE_DEBUG_RPC, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { environment } from 'environments/environment';
 import JupiterExchangeV4 from 'views/JupiterExchangeV4';
@@ -44,11 +44,12 @@ export const SwapView = () => {
           navigate('/service-unavailable');
         }
         if (environment === 'production' && isLocal()) {
-          debugRpc = Object.assign({}, mainnetRpc, {
-            httpProvider: TRITON_ONE_DEBUG_RPC,
-          }) as RpcConfig;
+          debugRpc = {
+            ...mainnetRpc,
+            httpProvider: process.env.REACT_APP_TRITON_ONE_DEBUG_RPC ?? clusterApiUrl('mainnet-beta'),
+          } as RpcConfig;
         }
-        setMainnetRpc(debugRpc || mainnetRpc);
+        setMainnetRpc(debugRpc ?? mainnetRpc);
       } else {
         setMainnetRpc(null);
       }

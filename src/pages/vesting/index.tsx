@@ -148,7 +148,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
     setLockPeriodFrequency,
-    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setTransactionStatus,
     setLockPeriodAmount,
@@ -705,9 +704,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           consoleOut('Vesting contracts:', contracts, 'blue');
           setTreasuryList(
             contracts.map(vc => {
-              return Object.assign({}, vc, {
-                name: vc.name.trim(),
-              });
+              return { ...vc, name: vc.name.trim() };
             }),
           );
         })
@@ -740,9 +737,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           consoleOut('treasuryStreams:', streams, 'blue');
           setTreasuryStreams(
             streams.map(vc => {
-              return Object.assign({}, vc, {
-                name: vc.name.trim(),
-              });
+              return { ...vc, name: vc.name.trim() };
             }),
           );
         })
@@ -881,7 +876,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       let amountChange = 0;
       const token = getTokenByMintAddress(associatedToken);
       if (token) {
-        const tokenPrice = getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol);
+        const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
         const amount = getTreasuryUnallocatedBalance(treasury, token);
         amountChange = amount * tokenPrice;
       }
@@ -891,13 +886,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     resume['totalAmount'] += treasuryList.length;
 
     return resume;
-  }, [
-    treasuryList,
-    getTokenByMintAddress,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol,
-    getTreasuryUnallocatedBalance,
-  ]);
+  }, [treasuryList, getTokenByMintAddress, getTokenPriceByAddress, getTreasuryUnallocatedBalance]);
 
   //////////////
   //  Modals  //
@@ -1042,9 +1031,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
         const multisigAuthority = getMultisigIdFromContext();
         const associatedToken = createOptions.token;
-        const price = workingToken
-          ? getTokenPriceByAddress(workingToken.address) || getTokenPriceBySymbol(workingToken.symbol)
-          : 0;
+        const price = workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0;
 
         consoleOut('workingToken:', workingToken, 'blue');
 
@@ -1247,7 +1234,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       getMultisigIdFromContext,
       getTokenPriceByAddress,
       resetTransactionStatus,
-      getTokenPriceBySymbol,
       setTransactionStatus,
       setSuccessStatus,
       t,
@@ -1697,7 +1683,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           : new PublicKey(params.associatedToken.address);
       const amount = params.tokenAmount.toString();
       const token = params.associatedToken;
-      const price = getTokenPriceByAddress(token.address) ?? getTokenPriceBySymbol(token.symbol);
+      const price = getTokenPriceByAddress(token.address, token.symbol);
       const contributor = params.contributor ?? publicKey.toBase58();
 
       const data: AddFundsParams = {
@@ -2016,9 +2002,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const treasury = selectedVestingContract.id;
       // const treasurer = new PublicKey(selectedVestingContract.treasurer as string);
       const treasurer = isMultisigContext && selectedMultisig ? selectedMultisig.authority : publicKey;
-      const price = associatedToken
-        ? getTokenPriceByAddress(associatedToken.address) || getTokenPriceBySymbol(associatedToken.symbol)
-        : 0;
+      const price = associatedToken ? getTokenPriceByAddress(associatedToken.address, associatedToken.symbol) : 0;
       const segmentAmount = toUiAmount(params.tokenAmount, associatedToken.decimals);
 
       // Create a transaction
@@ -2306,7 +2290,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const treasury = selectedVestingContract.id;
       const amount = params.tokenAmount;
       const token = params.associatedToken;
-      const price = token ? getTokenPriceByAddress(token.address) || getTokenPriceBySymbol(token.symbol) : 0;
+      const price = token ? getTokenPriceByAddress(token.address, token.symbol) : 0;
 
       // Create a transaction
       const payload: TreasuryWithdrawParams = {
@@ -3452,15 +3436,13 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const renderProtocol = () => {
     const programAddress = appConfig.getConfig().streamV2ProgramAddress;
     return (
-      <>
-        <AddressDisplay
-          address={programAddress}
-          maxChars={isLgDevice ? 12 : 6}
-          linkText="Token Vesting"
-          iconStyles={{ width: '15', height: '15' }}
-          newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${programAddress}${getSolanaExplorerClusterParam()}`}
-        />
-      </>
+      <AddressDisplay
+        address={programAddress}
+        maxChars={isLgDevice ? 12 : 6}
+        linkText="Token Vesting"
+        iconStyles={{ width: '15', height: '15' }}
+        newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${programAddress}${getSolanaExplorerClusterParam()}`}
+      />
     );
   };
 
@@ -3484,26 +3466,24 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const renderVestingProtocolHeader = () => {
     return (
-      <>
-        <div className="two-column-layout mb-2 right-info-container">
-          <div className="left right-info-group">
-            <span className="info-label">Protocol</span>
-            <span className="info-value">{renderProtocol()}</span>
-            <div className="info-content">
-              {listOfBadges.map((badge, index) => (
-                <span key={`${badge}+${index}`} className="badge darken medium mr-1">
-                  {badge}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="right right-info-group">
-            <span className="info-label">Balance (My TVL)</span>
-            <span className="info-value">{renderBalance()}</span>
-            <span className="info-content">{renderBalanceContracts}</span>
+      <div className="two-column-layout mb-2 right-info-container">
+        <div className="left right-info-group">
+          <span className="info-label">Protocol</span>
+          <span className="info-value">{renderProtocol()}</span>
+          <div className="info-content">
+            {listOfBadges.map((badge, index) => (
+              <span key={`${badge}+${index}`} className="badge darken medium mr-1">
+                {badge}
+              </span>
+            ))}
           </div>
         </div>
-      </>
+        <div className="right right-info-group">
+          <span className="info-label">Balance (My TVL)</span>
+          <span className="info-value">{renderBalance()}</span>
+          <span className="info-content">{renderBalanceContracts}</span>
+        </div>
+      </div>
     );
   };
 
@@ -3529,21 +3509,19 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const renderFeatureSummary = () => {
     return (
-      <>
-        <div className="tab-inner-content-wrapper vertical-scroll">
-          <p>
-            Token vesting allows teams and companies to release locked tokens over time according to a pre-determined
-            contract release rate. Locked vesting contracts are perfect for investors and token locks as they can not be
-            paused or cancelled.
-          </p>
-          <p>
-            Investors and recipients of the token vesting contracts will be able to redeem their tokens using MeanFi's
-            Payment Streaming App under their accounts.
-          </p>
-          <div className="mb-1">Links and Socials</div>
-          <AppSocialLinks appSocialLinks={appSocialLinks} />
-        </div>
-      </>
+      <div className="tab-inner-content-wrapper vertical-scroll">
+        <p>
+          Token vesting allows teams and companies to release locked tokens over time according to a pre-determined
+          contract release rate. Locked vesting contracts are perfect for investors and token locks as they can not be
+          paused or cancelled.
+        </p>
+        <p>
+          Investors and recipients of the token vesting contracts will be able to redeem their tokens using MeanFi's
+          Payment Streaming App under their accounts.
+        </p>
+        <div className="mb-1">Links and Socials</div>
+        <AppSocialLinks appSocialLinks={appSocialLinks} />
+      </div>
     );
   };
 
@@ -3788,58 +3766,54 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       {/* Vesting contract details */}
       {detailsPanelOpen ? (
-        <>
-          <div className="flexible-column-bottom">
-            <div className="top">
-              <div className="mb-2">
-                <div onClick={navigateToContracts} className="back-button icon-button-container">
-                  <IconArrowBack className="mean-svg-icons" />
-                  <span className="ml-1">See all contracts</span>
-                </div>
+        <div className="flexible-column-bottom">
+          <div className="top">
+            <div className="mb-2">
+              <div onClick={navigateToContracts} className="back-button icon-button-container">
+                <IconArrowBack className="mean-svg-icons" />
+                <span className="ml-1">See all contracts</span>
               </div>
-              <VestingContractDetails
-                isXsDevice={isXsDevice}
-                loadingVestingContractFlowRate={loadingVestingContractFlowRate}
-                selectedToken={workingToken}
-                streamTemplate={streamTemplate}
-                vestingContract={selectedVestingContract}
-                vestingContractFlowRate={vestingContractFlowRate}
-              />
-              {/* Render CTAs row here */}
-              {renderVestingContractDetailCtaRow()}
+            </div>
+            <VestingContractDetails
+              isXsDevice={isXsDevice}
+              loadingVestingContractFlowRate={loadingVestingContractFlowRate}
+              selectedToken={workingToken}
+              streamTemplate={streamTemplate}
+              vestingContract={selectedVestingContract}
+              vestingContractFlowRate={vestingContractFlowRate}
+            />
+            {/* Render CTAs row here */}
+            {renderVestingContractDetailCtaRow()}
 
-              {/* Alert to offer refresh vesting contract */}
-              {selectedVestingContract && hasBalanceChanged() && (
-                <div className="alert-info-message mb-2">
-                  <Alert
-                    message={
-                      <>
-                        <span>This vesting contract received an incoming funds transfer.&nbsp;</span>
-                        <span className="simplelink underline" onClick={() => onExecuteRefreshVestingContractBalance()}>
-                          Refresh the account data
-                        </span>
-                        <span>&nbsp;to update the account balance.</span>
-                      </>
-                    }
-                    type="info"
-                    showIcon
-                  />
-                </div>
-              )}
-            </div>
-            <div className="bottom">{renderVestingContractDetailTabset()}</div>
+            {/* Alert to offer refresh vesting contract */}
+            {selectedVestingContract && hasBalanceChanged() && (
+              <div className="alert-info-message mb-2">
+                <Alert
+                  message={
+                    <>
+                      <span>This vesting contract received an incoming funds transfer.&nbsp;</span>
+                      <span className="simplelink underline" onClick={() => onExecuteRefreshVestingContractBalance()}>
+                        Refresh the account data
+                      </span>
+                      <span>&nbsp;to update the account balance.</span>
+                    </>
+                  }
+                  type="info"
+                  showIcon
+                />
+              </div>
+            )}
           </div>
-        </>
+          <div className="bottom">{renderVestingContractDetailTabset()}</div>
+        </div>
       ) : (
-        <>
-          <div className="flexible-column-bottom">
-            <div className="top">
-              {renderVestingProtocolHeader()}
-              {renderFeatureCtaRow()}
-            </div>
-            <div className="bottom">{renderFeatureTabset()}</div>
+        <div className="flexible-column-bottom">
+          <div className="top">
+            {renderVestingProtocolHeader()}
+            {renderFeatureCtaRow()}
           </div>
-        </>
+          <div className="bottom">{renderFeatureTabset()}</div>
+        </div>
       )}
 
       {isVestingContractCreateModalVisible && (

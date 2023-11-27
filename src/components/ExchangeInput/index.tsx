@@ -20,106 +20,100 @@ export const ExchangeInput = (props: {
   className?: string;
 }) => {
   const { t } = useTranslation('common');
-  const { loadingPrices, getTokenPriceBySymbol, refreshPrices } = useContext(AppStateContext);
+  const { loadingPrices, getTokenPriceByAddress, refreshPrices } = useContext(AppStateContext);
   const { publicKey } = useWallet();
 
   return (
-    <>
-      <div className={`well ${props.className || ''}`}>
-        {/* Balance row */}
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
-            <span>{t('transactions.send-amount.label-right')}:</span>
-            {publicKey ? (
-              <>
-                <span className="simplelink" onClick={props.onBalanceClick}>
-                  {`${
-                    props.token && props.tokenBalance
-                      ? getAmountWithSymbol(parseFloat(props.tokenBalance), props.token.address, true)
-                      : '0'
-                  }`}
-                </span>
-                {props.tokenBalance && (
-                  <span
-                    className={`balance-amount ${
-                      loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'
-                    }`}
-                    onClick={() => refreshPrices()}
-                  >
-                    {`(~${
-                      props.token && props.tokenBalance
-                        ? toUsCurrency(parseFloat(props.tokenBalance) * getTokenPriceBySymbol(props.token.symbol))
-                        : '$0.00'
-                    })`}
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="balance-amount">0</span>
-            )}
-          </div>
-          <div className="right inner-label">
-            {publicKey ? (
-              <>
+    <div className={`well ${props.className || ''}`}>
+      {/* Balance row */}
+      <div className="flex-fixed-right">
+        <div className="left inner-label">
+          <span>{t('transactions.send-amount.label-right')}:</span>
+          {publicKey ? (
+            <>
+              <span className="simplelink" onClick={props.onBalanceClick}>
+                {`${
+                  props.token && props.tokenBalance
+                    ? getAmountWithSymbol(parseFloat(props.tokenBalance), props.token.address, true)
+                    : '0'
+                }`}
+              </span>
+              {props.tokenBalance && (
                 <span
-                  className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                  className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`}
                   onClick={() => refreshPrices()}
                 >
-                  ~
-                  {props.token && props.tokenBalance
-                    ? toUsCurrency(parseFloat(props.tokenBalance) * getTokenPriceBySymbol(props.token.symbol))
-                    : '$0.00'}
+                  {`(~${
+                    props.token && props.tokenBalance
+                      ? toUsCurrency(parseFloat(props.tokenBalance) * getTokenPriceByAddress(props.token.address))
+                      : '$0.00'
+                  })`}
                 </span>
-              </>
-            ) : (
-              <span>~$0.00</span>
-            )}
-          </div>
+              )}
+            </>
+          ) : (
+            <span className="balance-amount">0</span>
+          )}
         </div>
-
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className={`add-on ${!props.readonly ? 'simplelink' : ''}`}>
-              <TokenDisplay
-                onClick={() => {
-                  if (!props.readonly) {
-                    props.onSelectToken();
-                  }
-                }}
-                fullTokenInfo={props.token}
-                mintAddress={props.token ? props.token.address : ''}
-                name={props.token ? props.token.name : ''}
-                className={!props.readonly ? 'simplelink' : ''}
-                noTokenLabel={t('swap.token-select-destination')}
-                showName={false}
-                showCaretDown={!props.readonly}
-              />
-              {publicKey && props.token && props.tokenBalance && props.onMaxAmount ? (
-                <div className="token-max simplelink" onClick={props.onMaxAmount}>
-                  MAX
-                </div>
-              ) : null}
+        <div className="right inner-label">
+          {publicKey ? (
+            <span
+              className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+              onClick={() => refreshPrices()}
+            >
+              ~
+              {props.token && props.tokenBalance
+                ? toUsCurrency(parseFloat(props.tokenBalance) * getTokenPriceByAddress(props.token.address))
+                : '$0.00'}
             </span>
-          </div>
-          <div className="right">
-            <input
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={props.onInputChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              readOnly={props.readonly ? true : false}
-              value={props.tokenAmount}
-            />
-          </div>
+          ) : (
+            <span>~$0.00</span>
+          )}
         </div>
       </div>
-    </>
+
+      <div className="flex-fixed-left">
+        <div className="left">
+          <span className={`add-on ${!props.readonly ? 'simplelink' : ''}`}>
+            <TokenDisplay
+              onClick={() => {
+                if (!props.readonly) {
+                  props.onSelectToken();
+                }
+              }}
+              fullTokenInfo={props.token}
+              mintAddress={props.token ? props.token.address : ''}
+              name={props.token ? props.token.name : ''}
+              className={!props.readonly ? 'simplelink' : ''}
+              noTokenLabel={t('swap.token-select-destination')}
+              showName={false}
+              showCaretDown={!props.readonly}
+            />
+            {publicKey && props.token && props.tokenBalance && props.onMaxAmount ? (
+              <div className="token-max simplelink" onClick={props.onMaxAmount}>
+                MAX
+              </div>
+            ) : null}
+          </span>
+        </div>
+        <div className="right">
+          <input
+            className="general-text-input text-right"
+            inputMode="decimal"
+            autoComplete="off"
+            autoCorrect="off"
+            type="text"
+            onChange={props.onInputChange}
+            pattern="^[0-9]*[.,]?[0-9]*$"
+            placeholder="0.0"
+            minLength={1}
+            maxLength={79}
+            spellCheck="false"
+            readOnly={!!props.readonly}
+            value={props.tokenAmount}
+          />
+        </div>
+      </div>
+    </div>
   );
 };

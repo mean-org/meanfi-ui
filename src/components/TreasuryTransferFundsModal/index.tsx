@@ -71,7 +71,7 @@ export const TreasuryTransferFundsModal = (props: {
     loadingPrices,
     selectedAccount,
     transactionStatus,
-    getTokenPriceBySymbol,
+    getTokenPriceByAddress,
     getTokenByMintAddress,
     setTransactionStatus,
     refreshPrices,
@@ -86,11 +86,11 @@ export const TreasuryTransferFundsModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const shouldFundFromTreasury = useCallback(() => {
-    if (!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose)) {
+    if (!treasuryDetails || treasuryDetails?.autoClose) {
       return false;
     }
 
@@ -103,7 +103,7 @@ export const TreasuryTransferFundsModal = (props: {
       amount: tokenAmount.toString(),
       destination: to,
       payer: selectedAccount.address,
-      treasury: treasuryDetails ? treasuryDetails.id.toString() : '',
+      treasury: treasuryDetails?.id.toString() ?? '',
     };
     handleOk(params);
   };
@@ -115,7 +115,7 @@ export const TreasuryTransferFundsModal = (props: {
       ? 'Invalid address'
       : !tokenAmount || +tokenAmount === 0
       ? 'Enter amount'
-      : unallocatedBalance && unallocatedBalance.isZero()
+      : unallocatedBalance.isZero()
       ? 'No balance'
       : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance || new BN(0))
       ? 'Amount exceeded'
@@ -133,7 +133,7 @@ export const TreasuryTransferFundsModal = (props: {
       ? 'Invalid address'
       : !tokenAmount || +tokenAmount === 0
       ? 'Enter amount'
-      : unallocatedBalance && unallocatedBalance.isZero()
+      : unallocatedBalance.isZero()
       ? 'No balance'
       : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance || new BN(0))
       ? 'Amount exceeded'
@@ -302,8 +302,8 @@ export const TreasuryTransferFundsModal = (props: {
       return 0;
     }
 
-    return parseFloat(topupAmount) * getTokenPriceBySymbol(selectedToken.symbol);
-  }, [topupAmount, selectedToken, getTokenPriceBySymbol]);
+    return parseFloat(topupAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
+  }, [topupAmount, selectedToken, getTokenPriceByAddress]);
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
@@ -313,7 +313,7 @@ export const TreasuryTransferFundsModal = (props: {
     }
 
     const getUnallocatedBalance = (details: PaymentStreamingAccount | TreasuryInfo) => {
-      const isNew = details && details.version >= 2 ? true : false;
+      const isNew = !!(details?.version >= 2);
       let result = new BN(0);
       let balance = new BN(0);
       let allocationAssigned = new BN(0);
@@ -340,12 +340,12 @@ export const TreasuryTransferFundsModal = (props: {
   const renderTreasury = (item: PaymentStreamingAccount | TreasuryInfo) => {
     const v1 = item as TreasuryInfo;
     const v2 = item as PaymentStreamingAccount;
-    const isNewTreasury = item.version >= 2 ? true : false;
+    const isNewTreasury = item.version >= 2;
 
     const treasuryType = getStreamingAccountType(item);
 
     const associatedToken = getStreamingAccountMint(item);
-    const token = associatedToken ? getTokenByMintAddress(associatedToken as string) : undefined;
+    const token = associatedToken ? getTokenByMintAddress(associatedToken) : undefined;
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -355,7 +355,7 @@ export const TreasuryTransferFundsModal = (props: {
     let img;
 
     if (associatedToken) {
-      if (token && token.logoURI) {
+      if (token?.logoURI) {
         img = (
           <img
             alt={`${token.name}`}
@@ -501,7 +501,7 @@ export const TreasuryTransferFundsModal = (props: {
                         showCaretDown={false}
                       />
                     )}
-                    {treasuryDetails && treasuryDetails.autoClose ? (
+                    {treasuryDetails?.autoClose ? (
                       <>
                         {selectedToken && tokenBalance ? (
                           <div
@@ -586,24 +586,17 @@ export const TreasuryTransferFundsModal = (props: {
                 </div>
                 <div className="right inner-label">
                   {publicKey ? (
-                    <>
-                      <span
-                        className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                        onClick={() => refreshPrices()}
-                      >
-                        ~{topupAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
-                      </span>
-                    </>
+                    <span
+                      className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                      onClick={() => refreshPrices()}
+                    >
+                      ~{topupAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
+                    </span>
                   ) : (
                     <span>~$0.00</span>
                   )}
                 </div>
               </div>
-              {/* {(parseFloat(topupAmount) > makeDecimal(unallocatedBalance, selectedToken?.decimals || 9)) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.invalid-amount')}
-                </span>
-              )} */}
             </div>
 
             {/* explanatory paragraph */}
@@ -649,30 +642,26 @@ export const TreasuryTransferFundsModal = (props: {
             )}
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
-          <>
-            <div className="transaction-progress">
-              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
-            </div>
-          </>
+          <div className="transaction-progress">
+            <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+            <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
+          </div>
         ) : (
-          <>
-            <div className="transaction-progress p-0">
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
-                    feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
-                  })}
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-                </h4>
-              )}
-            </div>
-          </>
+          <div className="transaction-progress p-0">
+            <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+            {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+              <h4 className="mb-4">
+                {t('transactions.status.tx-start-failure', {
+                  accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
+                  feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
+                })}
+              </h4>
+            ) : (
+              <h4 className="font-bold mb-3">
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+              </h4>
+            )}
+          </div>
         )}
       </div>
 
