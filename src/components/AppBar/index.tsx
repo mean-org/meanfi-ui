@@ -53,7 +53,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
-  const { isDepositOptionsModalVisible, hideDepositOptionsModal } = useContext(AppStateContext);
+  const { isWhitelisted, isDepositOptionsModalVisible, hideDepositOptionsModal } = useContext(AppStateContext);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -131,6 +131,10 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
 
   // Prebuild the menu options
   const mainNav = () => {
+    if (!isWhitelisted) {
+      return null;
+    }
+
     const items: ItemType[] = [];
     items.push({
       key: 'accounts',
@@ -150,9 +154,6 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
         <Link to={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
           {t('ui-menus.app-context-menu.how-to-use')}
         </Link>
-        // <a href={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
-        //   <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
-        // </a>
       ),
     });
     return <Menu selectedKeys={selectedItems} mode="horizontal" items={items} />;
