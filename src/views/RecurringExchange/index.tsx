@@ -184,7 +184,7 @@ export const RecurringExchange = (props: {
         onRefreshRequested();
       }
     },
-    [props],
+    [onRefreshRequested],
   );
 
   const isWrap = useCallback(() => {
