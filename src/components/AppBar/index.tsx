@@ -21,11 +21,6 @@ import { MEAN_DAO_DOCS_URL } from 'constants/common';
 
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
-    key: 'accounts',
-    path: '/',
-    parent: 'root',
-  },
-  {
     key: 'exchange',
     path: '/exchange',
     parent: 'root',
@@ -39,6 +34,11 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
     key: 'docs',
     path: undefined,
     parent: undefined,
+  },
+  {
+    key: 'accounts',
+    path: '/',
+    parent: 'root',
   },
 ];
 

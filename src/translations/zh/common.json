@@ -942,6 +942,10 @@
     "token-select-source": "选择代币",
     "transaction-settings": "交易设置"
   },
+  "bridge": {
+    "screen-title": "Bridge",
+    "screen-subtitle": "Decentralized asset transfers between blockchains"
+  },
   "token-selector": {
     "exchange-search-input-placeholder": "按名称或符号搜索代币",
     "looking-for-sol": "正在找SOL？你需要",

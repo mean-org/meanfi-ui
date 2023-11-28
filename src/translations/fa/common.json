@@ -935,6 +935,10 @@
     "token-select-source": "انتخاب توکن",
     "transaction-settings": "تنظیمات تراکنش"
   },
+  "bridge": {
+    "screen-title": "Bridge",
+    "screen-subtitle": "Decentralized asset transfers between blockchains"
+  },
   "token-selector": {
     "exchange-search-input-placeholder": "جستجوی توکن بر اساس نام یا نماد",
     "looking-for-sol": "به دنبال SOL هستید؟ شما نیاز دارید که",

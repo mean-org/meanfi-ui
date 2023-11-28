@@ -1030,6 +1030,10 @@
     "token-select-source": "토큰 선택",
     "transaction-settings": "거래 설정"
   },
+  "bridge": {
+    "screen-title": "Bridge",
+    "screen-subtitle": "Decentralized asset transfers between blockchains"
+  },
   "token-selector": {
     "exchange-search-input-placeholder": "이름 또는 기호로 토큰 검색",
     "looking-for-sol": "SOL을 찾고 계십니까?",

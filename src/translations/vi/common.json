@@ -1028,6 +1028,10 @@
     "token-select-source": "Chọn token",
     "transaction-settings": "Thiết lập giao dịch"
   },
+  "bridge": {
+    "screen-title": "Bridge",
+    "screen-subtitle": "Decentralized asset transfers between blockchains"
+  },
   "token-selector": {
     "exchange-search-input-placeholder": "Tìm token theo tên hoặc ký hiệu",
     "looking-for-sol": "TÌm kiếm SOL? Bạn cần phải",

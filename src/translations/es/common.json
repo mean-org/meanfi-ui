@@ -942,6 +942,10 @@
     "token-select-source": "Seleccione un token",
     "transaction-settings": "Transaction settings"
   },
+  "bridge": {
+    "screen-title": "Bridge",
+    "screen-subtitle": "Decentralized asset transfers between blockchains"
+  },
   "token-selector": {
     "exchange-search-input-placeholder": "Buscar token por nombre o símbolo",
     "looking-for-sol": "Looking for SOL? You need to",
