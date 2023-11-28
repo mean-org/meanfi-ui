@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PreFooter } from 'components/PreFooter';
 import { consoleOut, isLocal, isProd } from 'middleware/ui';
@@ -13,7 +13,6 @@ import { IconExchange } from 'Icons';
 import { RecurringExchange } from 'views';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
-import { environment } from 'environments/environment';
 import JupiterExchangeV4 from 'views/JupiterExchangeV4';
 
 type SwapOption = 'one-time' | 'recurring';
@@ -36,14 +35,29 @@ export const SwapView = () => {
 
   // Select, Connect to and test the network
   useEffect(() => {
-    (async () => {
-      if (cachedRpc.networkId !== 101) {
+    if (!isProd()) {
+      setMainnetRpc(null);
+      console.log('This is not PROD!', 'Moving out...');
+      return;
+    }
+
+    if (cachedRpc.networkId === 101) {
+      setMainnetRpc(cachedRpc);
+      console.log('Cached RPC is not mainnet!', 'Setting up connection...');
+      return;
+    }
+
+    const forcefullyGetMainNetRpc = async () => {
+      if (cachedRpc.networkId === 101) {
+        console.log('Trying to get an RPC provider...');
         let debugRpc: RpcConfig | null = null;
         const mainnetRpc = await getLiveRpc(101);
         if (!mainnetRpc) {
+          console.log('Could not get an RPC provider for mainnet!', 'Service unavailable');
           navigate('/service-unavailable');
         }
-        if (environment === 'production' && isLocal()) {
+        if (isLocal()) {
+          console.log('Setting up a debug RPC provider...');
           debugRpc = {
             ...mainnetRpc,
             httpProvider: process.env.REACT_APP_TRITON_ONE_DEBUG_RPC ?? clusterApiUrl('mainnet-beta'),
@@ -53,17 +67,23 @@ export const SwapView = () => {
       } else {
         setMainnetRpc(null);
       }
-    })();
-    return () => {};
-  }, [cachedRpc.networkId, navigate]);
+    };
 
-  const endpoint = useMemo(
-    () => (mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider),
-    [cachedRpc.httpProvider, mainnetRpc],
-  );
+    forcefullyGetMainNetRpc();
+
+    return () => {};
+  }, [cachedRpc, navigate]);
+
+  const endpoint = useMemo(() => {
+    if (!mainnetRpc) {
+      return undefined;
+    }
+
+    return mainnetRpc.httpProvider;
+  }, [mainnetRpc]);
 
   // Set and cache connection
-  const connection = useMemo(() => new Connection(endpoint, 'confirmed'), [endpoint]);
+  const connection = useMemo(() => (endpoint ? new Connection(endpoint, 'confirmed') : undefined), [endpoint]);
 
   /////////////////
   //  CALLBACKS  //
@@ -71,7 +91,7 @@ export const SwapView = () => {
 
   // Gets the recurring buys on demmand
   const reloadRecurringBuys = useCallback(() => {
-    if (!publicKey) {
+    if (!publicKey || !connection) {
       return;
     }
 
@@ -96,9 +116,9 @@ export const SwapView = () => {
     wallet,
     publicKey,
     mainnetRpc,
+    connection,
     loadingRecurringBuys,
     cachedRpc.httpProvider,
-    connection.commitment,
     setLoadingRecurringBuys,
     setRecurringBuys,
   ]);
@@ -107,30 +127,14 @@ export const SwapView = () => {
   //  Effects  //
   ///////////////
 
-  // Get RPC endpoint
-  useEffect(() => {
-    (async () => {
-      if (cachedRpc && cachedRpc.networkId !== 101) {
-        const mainnetRpc = await getLiveRpc(101);
-        if (!mainnetRpc) {
-          navigate('/service-unavailable');
-        }
-        setMainnetRpc(mainnetRpc);
-      } else {
-        setMainnetRpc(null);
-      }
-    })();
-    return () => {};
-  }, [cachedRpc, navigate]);
-
   // Load recurring buys once
   useEffect(() => {
-    if (!loadingRecurringBuys) {
+    if (connection && !loadingRecurringBuys) {
       reloadRecurringBuys();
     }
 
     return () => {};
-  }, [loadingRecurringBuys, reloadRecurringBuys]);
+  }, [connection, loadingRecurringBuys, reloadRecurringBuys]);
 
   // Get FROM address from symbol passed via query string param
   const getSourceFromParams = useCallback(
@@ -162,6 +166,10 @@ export const SwapView = () => {
 
   // Parse query params
   useEffect(() => {
+    if (!connection) {
+      return;
+    }
+
     const params = new URLSearchParams(location.search);
     const from = getSourceFromParams(params);
     const to = getDestinationFromParams(params);
@@ -179,7 +187,7 @@ export const SwapView = () => {
       consoleOut('queryFromMint:', from ? from.address : '-', 'blue');
       consoleOut('queryToMint:', to ? to.address : '-', 'blue');
     }
-  }, [getDestinationFromParams, getSourceFromParams, location.search]);
+  }, [connection, getDestinationFromParams, getSourceFromParams, location.search]);
 
   //////////////////////
   //  Event handling  //

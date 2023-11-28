@@ -55,7 +55,7 @@ let inputDebounceTimeout: any;
 const JupiterExchangeV4 = (props: {
   queryFromMint?: string;
   queryToMint?: string;
-  connection: Connection;
+  connection: Connection | undefined;
   inModal?: boolean;
   swapExecuted?: any;
 }) => {
@@ -67,8 +67,13 @@ const JupiterExchangeV4 = (props: {
   const [wSolBalance, setWsolBalance] = useState(0);
   const [wSolPubKey, setWsolPubKey] = useState<PublicKey | undefined>(undefined);
   const [userBalances, setUserBalances] = useState<any>();
-  const { tokenAccounts, transactionStatus, previousWalletConnectState, setTransactionStatus } =
-    useContext(AppStateContext);
+  const {
+    tokenList: meanTokenList,
+    tokenAccounts,
+    transactionStatus,
+    previousWalletConnectState,
+    setTransactionStatus,
+  } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isBusy, setIsBusy] = useState(false);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
@@ -213,27 +218,26 @@ const JupiterExchangeV4 = (props: {
 
   // Set fromMint & toMint from query string if params are provided
   useEffect(() => {
-    if (props.queryFromMint || props.queryToMint) {
+    const getTokenOnDemand = (symbol: string) => MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === symbol);
+
+    // Set from mint based in query params or set a default
+    if (props.queryFromMint) {
       consoleOut('props.queryFromMint:', props.queryFromMint, 'orange');
-      consoleOut('props.queryToMint:', props.queryToMint, 'orange');
-      if (props.queryFromMint) {
-        setFromMint(props.queryFromMint);
-      } else {
-        const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
-        if (from && from.length) {
-          setToMint(from[0].address);
-        }
-      }
-      if (props.queryToMint) {
-        setToMint(props.queryToMint);
-      } else {
-        const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
-        if (to && to.length) {
-          setToMint(to[0].address);
-        }
-      }
+      setFromMint(props.queryFromMint);
+    } else {
+      const from = getTokenOnDemand('MEAN');
+      setFromMint(from?.address);
     }
-  }, [props.queryToMint, props.queryFromMint]);
+
+    // Set to mint based in query params or set a default
+    if (props.queryToMint) {
+      consoleOut('props.queryToMint:', props.queryToMint, 'orange');
+      setToMint(props.queryToMint);
+    } else {
+      const to = getTokenOnDemand('USDC');
+      setToMint(to?.address);
+    }
+  }, [props.queryFromMint, props.queryToMint]);
 
   // Fetch token list from Jupiter API
   useEffect(() => {
@@ -250,11 +254,13 @@ const JupiterExchangeV4 = (props: {
       }
     };
 
-    if (!tokenList || tokenList.length === 0) {
+    if (!isProd) {
+      setTokenList(meanTokenList);
+    } else if (!tokenList || tokenList.length === 0) {
       setLoadingSourceTokens(true);
       loadJupiterTokenList();
     }
-  }, [tokenList]);
+  }, [meanTokenList, tokenList]);
 
   // Get a list of Quick Tokens based on a preferred list of symbols
   useEffect(() => {
@@ -381,6 +387,10 @@ const JupiterExchangeV4 = (props: {
 
   // Init the Jupiter instance
   useEffect(() => {
+    if (!connection) {
+      return;
+    }
+
     const initJupiter = async () => {
       return Jupiter.load({
         connection,
@@ -667,6 +677,7 @@ const JupiterExchangeV4 = (props: {
   // Updates the label of the Swap button
   useEffect(() => {
     if (!connection) {
+      setTransactionStartButtonLabel(t('transactions.validation.exchange-unavailable'));
       return;
     }
 
@@ -951,7 +962,7 @@ const JupiterExchangeV4 = (props: {
     let transactionLog: any[] = [];
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
+      if (connection && wallet && publicKey) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction,
@@ -1049,7 +1060,7 @@ const JupiterExchangeV4 = (props: {
       }
     };
 
-    if (wallet && publicKey) {
+    if (connection && wallet && publicKey) {
       setIsUnwrapping(true);
       const created = await createTx();
       consoleOut('created:', created, 'blue');
@@ -1577,7 +1588,7 @@ const JupiterExchangeV4 = (props: {
             }}
             className="mb-2"
             disabled={!jupiterReady}
-            loadingTokens={loadingDestinationTokens}
+            loadingTokens={isProd() && loadingDestinationTokens}
             routes={routes}
             onSelectedRoute={(route: any) => {
               consoleOut('onSelectedRoute:', route, 'blue');
