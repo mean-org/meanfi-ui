@@ -9,7 +9,7 @@ import { MeanFiStatsModel } from '../models/meanfi-stats';
 import { PriceGraphModel } from '../models/price-graph';
 import { getDefaultRpc, RpcConfig } from '../services/connections-hq';
 
-declare interface RequestInit {}
+declare interface RequestInit { }
 
 export const getSolanaTokenListKeyNameByCluster = (chainId: number) => {
   return `solana-tokens-${chainId}`;
@@ -146,7 +146,6 @@ export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Pro
     const response = await fetch(url, options);
     if (response && response.status === 200) {
       const data = (await response.json()) as RpcConfig;
-      // data.httpProvider = 'https://meanfi.rpcpool.com/'; // Use this to manually test RPC endpoints
       return data;
     }
     return null;

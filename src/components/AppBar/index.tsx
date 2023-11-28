@@ -1,52 +1,244 @@
+import { useContext, useEffect, useMemo, useState } from 'react';
+
+import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+
 import { AccountDetails } from 'components/AccountDetails';
 import { AppContextMenu } from 'components/AppContextMenu';
 import { ConnectButton } from 'components/ConnectButton';
-import { NotificationBell } from 'components/NotificationBell';
 import { DepositOptions } from 'components/DepositOptions';
+import { NotificationBell } from 'components/NotificationBell';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { isProd } from 'middleware/ui';
-import { useContext } from 'react';
+import { RoutingInfo } from 'models/common-types';
+import { useTranslation } from 'react-i18next';
+import { Link, useLocation } from 'react-router-dom';
+import { CustomCSSProps } from 'middleware/css-custom-props';
+import { MEAN_DAO_DOCS_URL } from 'constants/common';
 
-export const AppBar = (props: { menuType: string; topNavVisible: boolean; onOpenDrawer: any }) => {
+const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
+  {
+    key: 'accounts',
+    path: '/',
+    parent: 'root',
+  },
+  {
+    key: 'exchange',
+    path: '/exchange',
+    parent: 'root',
+  },
+  {
+    key: 'bridge',
+    path: '/bridge',
+    parent: 'root',
+  },
+  {
+    key: 'docs',
+    path: undefined,
+    parent: undefined,
+  },
+];
+
+interface AppBarProps {
+  menuType: string;
+  topNavVisible: boolean;
+  onOpenDrawer: () => void;
+}
+
+export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) => {
+  const location = useLocation();
+  const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
   const { isDepositOptionsModalVisible, hideDepositOptionsModal } = useContext(AppStateContext);
 
-  return (
-    <>
-      <div className="App-Bar-left">
-        <span>&nbsp;</span>
-      </div>
-      <div className="App-Bar-right">
-        {!isProd() && (
-          <div className="cluster-indicator">
-            <ThunderboltOutlined />
-            <span className="network-name">{connectionConfig.cluster}</span>
-          </div>
-        )}
-        <NotificationBell onOpenDrawer={props.onOpenDrawer} />
-        {connected ? (
-          <div className="connection-and-account-bar">
-            <AccountDetails />
-          </div>
-        ) : (
-          <>
-            <ConnectButton />
-          </>
-        )}
-        <div className="app-context-menu">
-          <AppContextMenu />
-        </div>
-      </div>
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-      <DepositOptions
-        isVisible={isDepositOptionsModalVisible}
-        key="deposit-modal2"
-        handleClose={hideDepositOptionsModal}
-      />
-    </>
+  const routeInfo = useMemo(
+    () =>
+      MENU_ITEMS_ROUTE_INFO.find(i => {
+        if (!i.path) {
+          return false;
+        }
+        if (i.path === location.pathname) {
+          return true;
+        }
+        return location.pathname.startsWith(i.path);
+      }),
+    [location.pathname],
   );
+
+  const dismissMenu = () => {
+    const mobileMenuTrigger = document.getElementById('overlay-input');
+    if (mobileMenuTrigger) {
+      mobileMenuTrigger?.click();
+    }
+  };
+
+  // Menu selection
+  useEffect(() => {
+    const selection: string[] = [];
+
+    if (routeInfo?.parent) {
+      if (routeInfo.parent !== 'root') {
+        selection.push(routeInfo.parent);
+      }
+      selection.push(routeInfo.key);
+    }
+
+    setSelectedItems(selection);
+  }, [routeInfo?.key, routeInfo?.parent]);
+
+  // Mobile menu triggers and listeners
+  useEffect(() => {
+    const mobileMenuTriggerClickListener = () => {
+      if (!isMenuOpen) {
+        document.body.classList.add('menu-open');
+        setIsMenuOpen(true);
+      } else {
+        document.body.classList.remove('menu-open');
+        setIsMenuOpen(false);
+      }
+    };
+
+    const resizeListener = () => {
+      const mobileMenuTrigger = document.querySelector('#overlay-input');
+      if (mobileMenuTrigger) {
+        mobileMenuTrigger?.addEventListener('click', mobileMenuTriggerClickListener);
+      }
+    };
+
+    // Call it a first time
+    resizeListener();
+
+    // Then set a set resize listener
+    window.addEventListener('resize', resizeListener);
+
+    // clean up function
+    return () => {
+      const mobileMenuTrigger = document.querySelector('#overlay-input');
+      if (mobileMenuTrigger) {
+        mobileMenuTrigger.removeEventListener('click', mobileMenuTriggerClickListener);
+      }
+      // remove resize listener
+      window.removeEventListener('resize', resizeListener);
+    };
+  }, [isMenuOpen]);
+
+  // Prebuild the menu options
+  const mainNav = () => {
+    const items: ItemType[] = [];
+    items.push({
+      key: 'accounts',
+      label: <Link to="/">{t('ui-menus.main-menu.accounts')}</Link>,
+    });
+    items.push({
+      key: 'exchange',
+      label: <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>,
+    });
+    items.push({
+      key: 'bridge',
+      label: <Link to="/bridge">{t('ui-menus.main-menu.bridge')}</Link>,
+    });
+    items.push({
+      key: 'docs',
+      label: (
+        <Link to={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
+          {t('ui-menus.app-context-menu.how-to-use')}
+        </Link>
+        // <a href={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
+        //   <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
+        // </a>
+      ),
+    });
+    return <Menu selectedKeys={selectedItems} mode="horizontal" items={items} />;
+  };
+
+  if (menuType === 'desktop') {
+    return (
+      <>
+        <div className="App-Bar-left">{topNavVisible ? mainNav() : <span>&nbsp;</span>}</div>
+        <div className="App-Bar-right">
+          {!isProd() && (
+            <div className="cluster-indicator">
+              <ThunderboltOutlined />
+              <span className="network-name">{connectionConfig.cluster}</span>
+            </div>
+          )}
+          <NotificationBell onOpenDrawer={onOpenDrawer} />
+          {connected ? (
+            <div className="connection-and-account-bar">
+              <AccountDetails />
+            </div>
+          ) : (
+            <ConnectButton />
+          )}
+          <div className="app-context-menu">
+            <AppContextMenu />
+          </div>
+        </div>
+        <DepositOptions
+          isVisible={isDepositOptionsModalVisible}
+          key="deposit-modal2"
+          handleClose={hideDepositOptionsModal}
+        />
+      </>
+    );
+  } else {
+    return (
+      <>
+        <div className="mobile-menu">
+          <input type="checkbox" id="overlay-input" />
+          <label htmlFor="overlay-input" id="overlay-button">
+            <span></span>
+          </label>
+          <div id="overlay">
+            <div className="h-100 w-100 flex-column flex-center vertical-scroll">
+              <ul onClick={dismissMenu}>
+                <li
+                  key="accounts"
+                  className={selectedItems.includes('accounts') ? 'mobile-menu-item active' : 'mobile-menu-item'}
+                  style={{ '--animation-order': 1 } as CustomCSSProps}
+                >
+                  <Link to="/">{t('ui-menus.main-menu.accounts')}</Link>
+                </li>
+                <li
+                  key="exchange"
+                  className={selectedItems.includes('exchange') ? 'mobile-menu-item active' : 'mobile-menu-item'}
+                  style={{ '--animation-order': 2 } as CustomCSSProps}
+                >
+                  <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
+                </li>
+                <li
+                  key="bridge"
+                  className={selectedItems.includes('bridge') ? 'mobile-menu-item active' : 'mobile-menu-item'}
+                  style={{ '--animation-order': 3 } as CustomCSSProps}
+                >
+                  <Link to="/bridge">{t('ui-menus.main-menu.bridge')}</Link>
+                </li>
+                <li
+                  key="docs"
+                  className={selectedItems.includes('docs') ? 'mobile-menu-item active' : 'mobile-menu-item'}
+                  style={{ '--animation-order': 3 } as CustomCSSProps}
+                >
+                  <Link to={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
+                    {t('ui-menus.app-context-menu.how-to-use')}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <DepositOptions
+            isVisible={isDepositOptionsModalVisible && menuType !== 'desktop'}
+            key="deposit-modal2"
+            handleClose={hideDepositOptionsModal}
+          />
+        </div>
+      </>
+    );
+  }
 };
