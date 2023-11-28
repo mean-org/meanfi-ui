@@ -5,7 +5,6 @@ import { openNotification } from 'components/Notifications';
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from 'constants/common';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
-import useScript from 'hooks/useScript';
 import { IconCopy, IconInfoTriangle, IconSolana } from 'Icons';
 import { appConfig } from 'index';
 import { consoleOut, copyText } from 'middleware/ui';
@@ -13,6 +12,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
+import { useScript } from 'hooks/useScript';
 
 declare const TransakSDK: any;
 let transak: any = undefined;
@@ -30,7 +30,9 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
   //#region Init code
 
   // Load the Transak widget script asynchronously
-  const { status } = useScript(`https://global.transak.com/sdk/v1.1/widget.js`);
+  const status = useScript(`https://global.transak.com/sdk/v1.1/widget.js`, {
+    removeOnUnmount: false,
+  });
 
   // Get App config
   const currentConfig = useMemo(() => appConfig.getConfig(), []);
@@ -114,6 +116,8 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
 
   // Transak initialization
   useEffect(() => {
+    console.log('status:', status);
+    console.log('transak:', transak);
     if (status === 'ready' && !transak) {
       setTransakInitStatus('initializing');
       try {
