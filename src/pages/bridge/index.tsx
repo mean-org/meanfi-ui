@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 
 import { IconExchange } from 'Icons';
 import { PreFooter } from 'components/PreFooter';
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Empty, Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import './style.scss';
+import { AppStateContext } from 'contexts/appstate';
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -17,6 +18,7 @@ type BridgeWidgetInitStatus = 'initializing' | 'ini-success' | 'init-failure';
 
 const Bridge = () => {
   const { t } = useTranslation('common');
+  const { theme } = useContext(AppStateContext);
 
   const status = useScript(`https://app.debridge.finance/assets/scripts/widget.js`, {
     removeOnUnmount: false,
@@ -24,11 +26,23 @@ const Bridge = () => {
 
   const [widgetInitStatus, setWidgetInitStatus] = useState<BridgeWidgetInitStatus>('initializing');
 
+  const widgetStyles = useMemo(
+    () =>
+      theme === 'light'
+        ? 'eyJhcHBCYWNrZ3JvdW5kIjoiI2ZjZmNmYyIsImFwcEFjY2VudEJnIjoiI2ZjZmNmYyIsImJhZGdlIjoiI2ZmMDAxNyIsImJvcmRlclJhZGl1cyI6OCwiZm9ybUNvbnRyb2xCZyI6IiNlY2VmZjEiLCJkcm9wZG93bkJnIjoiI2YwZjBmMCIsInByaW1hcnkiOiIjYjcwMDFjIiwic2Vjb25kYXJ5IjoiI2VlZWVlZSIsInN1Y2Nlc3MiOiIjNDlhYTE5IiwiZXJyb3IiOiIjYTYxZDI0Iiwid2FybmluZyI6IiNkODk2MTQiLCJpY29uQ29sb3IiOiIjZmYwMDE3IiwiZm9udENvbG9yIjoicmdiYSgwLDAsMCwwLjg1KSIsImZvbnRDb2xvckFjY2VudCI6IiNmZjQ0NDAiLCJmb250RmFtaWx5IjoiTGF0byIsInByaW1hcnlCdG5UZXh0IjoiI2ZmZmZmZiIsInNlY29uZGFyeUJ0blRleHQiOiIjZmZmZmZmIn0='
+        : 'eyJhcHBCYWNrZ3JvdW5kIjoiIzFjMWYzMCIsImFwcEFjY2VudEJnIjoicmdiYSgwLDAsMCwwKSIsImJhZGdlIjoicmdiYSgxOTUsMCwwLDAuNzMpIiwiYm9yZGVyUmFkaXVzIjo4LCJmb3JtQ29udHJvbEJnIjoicmdiYSgwLDAsMCwwLjI1KSIsImRyb3Bkb3duQmciOiIjMTgxYTJhIiwicHJpbWFyeSI6IiNiNzAwMWMiLCJzZWNvbmRhcnkiOiIjMmEyYTJhIiwic3VjY2VzcyI6IiM0OWFhMTkiLCJlcnJvciI6IiNhNjFkMjQiLCJ3YXJuaW5nIjoiI2Q4OTYxNCIsImljb25Db2xvciI6IiNmZjAwMTciLCJmb250Q29sb3JBY2NlbnQiOiIjZmYwMDE3IiwiZm9udEZhbWlseSI6IkxhdG8iLCJwcmltYXJ5QnRuVGV4dCI6InJnYmEoMjU1LDI1NSwyNTUsMC44NSkiLCJzZWNvbmRhcnlCdG5UZXh0IjoicmdiYSgyNTUsMjU1LDI1NSwwLjg1KSJ9',
+    [theme],
+  );
+
   useEffect(() => {
     if (status === 'loading') {
       setWidgetInitStatus('initializing');
     } else if (status === 'ready') {
       if (typeof deBridge !== 'undefined') {
+        const widgetElement = document.getElementById('debridgeWidget');
+        if (widgetElement) {
+          widgetElement.innerHTML = '';
+        }
         deBridge.widget({
           v: '1',
           element: 'debridgeWidget',
@@ -52,11 +66,10 @@ const Bridge = () => {
           lang: 'en',
           mode: 'deswap',
           isEnableCalldata: false,
-          styles:
-            'eyJhcHBCYWNrZ3JvdW5kIjoiIzFjMWYzMCIsImFwcEFjY2VudEJnIjoicmdiYSgwLDAsMCwwKSIsImJhZGdlIjoicmdiYSgxOTUsMCwwLDAuNzMpIiwiYm9yZGVyUmFkaXVzIjo4LCJmb3JtQ29udHJvbEJnIjoicmdiYSgwLDAsMCwwLjI1KSIsImRyb3Bkb3duQmciOiIjMTgxYTJhIiwicHJpbWFyeSI6IiNiNzAwMWMiLCJzZWNvbmRhcnkiOiIjMmEyYTJhIiwic3VjY2VzcyI6IiM0OWFhMTkiLCJlcnJvciI6IiNhNjFkMjQiLCJ3YXJuaW5nIjoiI2Q4OTYxNCIsImljb25Db2xvciI6IiNmZjAwMTciLCJmb250Q29sb3JBY2NlbnQiOiIjZmYwMDE3IiwiZm9udEZhbWlseSI6IkxhdG8iLCJwcmltYXJ5QnRuVGV4dCI6InJnYmEoMjU1LDI1NSwyNTUsMC44NSkiLCJzZWNvbmRhcnlCdG5UZXh0IjoicmdiYSgyNTUsMjU1LDI1NSwwLjg1KSJ9',
-          theme: 'dark',
+          styles: widgetStyles,
+          theme: theme,
           isHideLogo: false,
-          logo: 'https://app.meanfi.com/assets/mean-logo-color-light.svg',
+          logo: `https://app.meanfi.com/assets/mean-logo-color-${theme === 'light' ? 'dark' : 'light'}.svg`,
         });
 
         setWidgetInitStatus('ini-success');
@@ -66,7 +79,7 @@ const Bridge = () => {
     } else if (status === 'error') {
       setWidgetInitStatus('init-failure');
     }
-  }, [status]);
+  }, [status, theme, widgetStyles]);
 
   return (
     <>
