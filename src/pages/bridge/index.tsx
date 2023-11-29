@@ -39,10 +39,12 @@ const Bridge = () => {
       setWidgetInitStatus('initializing');
     } else if (status === 'ready') {
       if (typeof deBridge !== 'undefined') {
+        // Init widget only once
         const widgetElement = document.getElementById('debridgeWidget');
-        if (widgetElement) {
-          widgetElement.innerHTML = '';
+        if (widgetElement && widgetElement.querySelector('iframe')) {
+          return;
         }
+
         deBridge.widget({
           v: '1',
           element: 'debridgeWidget',
