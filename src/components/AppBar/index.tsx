@@ -36,6 +36,16 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
     parent: undefined,
   },
   {
+    key: 'stats',
+    path: '/stats',
+    parent: 'root',
+  },
+  {
+    key: 'playground',
+    path: '/playground',
+    parent: 'root',
+  },
+  {
     key: 'accounts',
     path: '/',
     parent: 'root',

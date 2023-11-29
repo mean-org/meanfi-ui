@@ -937,7 +937,8 @@
   },
   "bridge": {
     "screen-title": "Bridge",
-    "screen-subtitle": "Decentralized asset transfers between blockchains"
+    "screen-subtitle": "Decentralized asset transfers between blockchains",
+    "loading-error": "Error loading bridge, please try again later by reloading the page."
   },
   "token-selector": {
     "exchange-search-input-placeholder": "جستجوی توکن بر اساس نام یا نماد",
