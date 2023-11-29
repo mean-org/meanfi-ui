@@ -35,7 +35,7 @@ const Bridge = () => {
           title: '',
           description: '',
           width: '600',
-          height: '700',
+          height: '800',
           r: null,
           supportedChains:
             '{"inputChains":{"1":"all","10":"all","56":"all","137":"all","8453":"all","42161":"all","43114":"all","59144":"all","7565164":"all"},"outputChains":{"1":"all","10":"all","56":"all","137":"all","8453":"all","42161":"all","43114":"all","59144":"all","7565164":"all"}}',
@@ -53,7 +53,7 @@ const Bridge = () => {
           mode: 'deswap',
           isEnableCalldata: false,
           styles:
-            'eyJhcHBCYWNrZ3JvdW5kIjoiIzFjMWYzMCIsImFwcEFjY2VudEJnIjoicmdiYSgxMyw5LDI2LDAuNzUpIiwiYmFkZ2UiOiJyZ2JhKDE5NSwwLDAsMC43MykiLCJib3JkZXJSYWRpdXMiOjgsImZvcm1Db250cm9sQmciOiJyZ2JhKDAsMCwwLDAuMjUpIiwiZHJvcGRvd25CZyI6IiMxYzFmMzAiLCJwcmltYXJ5IjoiI2I3MDAxYyIsInNlY29uZGFyeSI6IiMyYTJhMmEiLCJzdWNjZXNzIjoiIzQ5YWExOSIsImVycm9yIjoiI2E2MWQyNCIsIndhcm5pbmciOiIjZDg5NjE0IiwiaWNvbkNvbG9yIjoiI2ZmMDAxNyIsImZvbnRDb2xvckFjY2VudCI6IiNmZjAwMTciLCJmb250RmFtaWx5IjoiTGF0byIsInByaW1hcnlCdG5UZXh0IjoicmdiYSgyNTUsMjU1LDI1NSwwLjg1KSIsInNlY29uZGFyeUJ0blRleHQiOiJyZ2JhKDI1NSwyNTUsMjU1LDAuODUpIn0=',
+            'eyJhcHBCYWNrZ3JvdW5kIjoiIzFjMWYzMCIsImFwcEFjY2VudEJnIjoicmdiYSgwLDAsMCwwKSIsImJhZGdlIjoicmdiYSgxOTUsMCwwLDAuNzMpIiwiYm9yZGVyUmFkaXVzIjo4LCJmb3JtQ29udHJvbEJnIjoicmdiYSgwLDAsMCwwLjI1KSIsImRyb3Bkb3duQmciOiIjMTgxYTJhIiwicHJpbWFyeSI6IiNiNzAwMWMiLCJzZWNvbmRhcnkiOiIjMmEyYTJhIiwic3VjY2VzcyI6IiM0OWFhMTkiLCJlcnJvciI6IiNhNjFkMjQiLCJ3YXJuaW5nIjoiI2Q4OTYxNCIsImljb25Db2xvciI6IiNmZjAwMTciLCJmb250Q29sb3JBY2NlbnQiOiIjZmYwMDE3IiwiZm9udEZhbWlseSI6IkxhdG8iLCJwcmltYXJ5QnRuVGV4dCI6InJnYmEoMjU1LDI1NSwyNTUsMC44NSkiLCJzZWNvbmRhcnlCdG5UZXh0IjoicmdiYSgyNTUsMjU1LDI1NSwwLjg1KSJ9',
           theme: 'dark',
           isHideLogo: false,
           logo: 'https://app.meanfi.com/assets/mean-logo-color-light.svg',
