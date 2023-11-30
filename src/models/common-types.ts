@@ -4,8 +4,8 @@ import { StreamTreasuryType } from './treasuries';
 
 export interface RoutingInfo {
   key: string;
-  path: string;
-  parent: string;
+  path?: string;
+  parent?: string;
 }
 
 export interface SelectOption {

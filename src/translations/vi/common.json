@@ -1028,6 +1028,11 @@
     "token-select-source": "Chọn token",
     "transaction-settings": "Thiết lập giao dịch"
   },
+  "bridge": {
+    "screen-title": "Bridge",
+    "screen-subtitle": "Decentralized asset transfers between blockchains",
+    "loading-error": "Error loading bridge, please try again later by reloading the page."
+  },
   "token-selector": {
     "exchange-search-input-placeholder": "Tìm token theo tên hoặc ký hiệu",
     "looking-for-sol": "TÌm kiếm SOL? Bạn cần phải",
@@ -1401,6 +1406,7 @@
       "vesting": "Vesting",
       "wallet-guide": "Hướng dẫn Ví",
       "stats": "Thống kê",
+      "bridge": "Bridge",
       "swap": "Giao dịch",
       "transfers": "Chuyển khoản"
     }

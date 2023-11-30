@@ -1,0 +1,11 @@
+#debridgeWidget.place-transaction-box {
+  width: auto;
+  min-width: 450px;
+  max-width: max-content;
+  min-height: 450px;
+  overflow: hidden;
+
+  >iframe.debridge-widget-iframe {
+    margin-bottom: -6px;
+  }
+}

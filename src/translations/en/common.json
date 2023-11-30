@@ -946,6 +946,11 @@
     "token-select-source": "Select token",
     "transaction-settings": "Transaction settings"
   },
+  "bridge": {
+    "screen-title": "Bridge",
+    "screen-subtitle": "Decentralized asset transfers between blockchains",
+    "loading-error": "Error loading bridge, please try again later by reloading the page."
+  },
   "token-selector": {
     "exchange-search-input-placeholder": "Search token by name or symbol",
     "looking-for-sol": "Looking for SOL? You need to",
@@ -1333,6 +1338,7 @@
       "vesting": "Vesting",
       "wallet-guide": "Wallet Guide",
       "stats": "Stats",
+      "bridge": "Bridge",
       "swap": "Exchange",
       "transfers": "Transfers"
     }

@@ -1030,6 +1030,11 @@
     "token-select-source": "토큰 선택",
     "transaction-settings": "거래 설정"
   },
+  "bridge": {
+    "screen-title": "Bridge",
+    "screen-subtitle": "Decentralized asset transfers between blockchains",
+    "loading-error": "Error loading bridge, please try again later by reloading the page."
+  },
   "token-selector": {
     "exchange-search-input-placeholder": "이름 또는 기호로 토큰 검색",
     "looking-for-sol": "SOL을 찾고 계십니까?",
@@ -1406,6 +1411,7 @@
       "vesting": "Vesting",
       "wallet-guide": "지갑 가이드",
       "stats": "통계",
+      "bridge": "Bridge",
       "swap": "교환",
       "transfers": "전송"
     }

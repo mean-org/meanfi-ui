@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  MEAN_DAO_GITBOOKS_URL,
+  MEAN_DAO_DOCS_URL,
   MEAN_DAO_MEDIUM_BLOG_URL,
   MEAN_FINANCE_DISCORD_URL,
   MEAN_FINANCE_TWITTER_URL,
@@ -48,12 +48,7 @@ export const PreFooter = () => {
                   </a>
                 </li>
                 <li>
-                  <a
-                    className="standard-menu-item"
-                    href={MEAN_DAO_GITBOOKS_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a className="standard-menu-item" href={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
                     <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
                   </a>
                 </li>

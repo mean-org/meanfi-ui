@@ -7,7 +7,7 @@ import { ReferFriendModal } from 'components/ReferFriendModal';
 import {
   LANGUAGES,
   MEANFI_SUPPORT_URL,
-  MEAN_DAO_GITBOOKS_URL,
+  MEAN_DAO_DOCS_URL,
   MEAN_DAO_GITHUB_ORG_URL,
   MEAN_FINANCE_DISCORD_URL,
 } from 'constants/common';
@@ -200,7 +200,7 @@ export const AppContextMenu = () => {
     items.push({
       key: '06-docs',
       label: (
-        <a href={MEAN_DAO_GITBOOKS_URL} target="_blank" rel="noopener noreferrer">
+        <a href={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
           <IconBookOpen className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
         </a>

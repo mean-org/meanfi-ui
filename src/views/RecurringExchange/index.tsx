@@ -49,7 +49,7 @@ import { appConfig } from 'index';
 import { consoleOut, getTxPercentFeeAmount, toUsCurrency } from 'middleware/ui';
 import { formatThousands, getAmountFromLamports, isValidNumber } from 'middleware/utils';
 import { DcaInterval } from 'models/ddca-models';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import './style.scss';
@@ -59,9 +59,9 @@ let inputDebounceTimeout: any;
 export const RecurringExchange = (props: {
   queryFromMint?: string;
   queryToMint?: string;
-  connection: Connection;
+  connection: Connection | undefined;
   onRefreshRequested: any;
-  endpoint: string;
+  endpoint: string | undefined;
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation('common');
@@ -76,7 +76,8 @@ export const RecurringExchange = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
 
-  const connection = useMemo(() => props.connection, [props.connection]);
+  const { queryFromMint, queryToMint, connection, endpoint, onRefreshRequested } = props;
+
   const [refreshing, setRefreshing] = useState(false);
   const [paramsProcessed, setParamsProcessed] = useState(false);
   // Get them from the localStorage and set defaults if they are not already stored
@@ -126,14 +127,14 @@ export const RecurringExchange = (props: {
 
     setParamsProcessed(true);
 
-    if (props.queryFromMint || props.queryToMint) {
-      if (props.queryFromMint) {
-        setFromMint(props.queryFromMint);
+    if (queryFromMint || queryToMint) {
+      if (queryFromMint) {
+        setFromMint(queryFromMint);
       }
-      if (props.queryToMint) {
-        setToMint(props.queryToMint);
+      if (queryToMint) {
+        setToMint(queryToMint);
       }
-    } else if (!props.queryFromMint && !props.queryToMint) {
+    } else if (!queryFromMint && !queryToMint) {
       const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
       if (from?.length) {
         setFromMint(from[0].address);
@@ -143,7 +144,7 @@ export const RecurringExchange = (props: {
         setToMint(to[0].address);
       }
     }
-  }, [paramsProcessed, props.queryToMint, props.queryFromMint]);
+  }, [paramsProcessed, queryToMint, queryFromMint]);
 
   // DDCA Option selector modal
   const [isDdcaOptionSelectorModalVisible, setDdcaOptionSelectorModalVisibility] = useState(false);
@@ -180,10 +181,10 @@ export const RecurringExchange = (props: {
     (shouldReload = false) => {
       setDdcaSetupModalVisibility(false);
       if (shouldReload) {
-        props.onRefreshRequested();
+        onRefreshRequested();
       }
     },
-    [props],
+    [onRefreshRequested],
   );
 
   const isWrap = useCallback(() => {
@@ -1404,9 +1405,9 @@ export const RecurringExchange = (props: {
         />
 
         {/* DDCA Setup modal */}
-        {isDdcaSetupModalVisible && (
+        {connection && endpoint && isDdcaSetupModalVisible && (
           <DdcaSetupModal
-            endpoint={props.endpoint}
+            endpoint={endpoint}
             connection={connection}
             isVisible={isDdcaSetupModalVisible}
             handleClose={onDdcaSetupModalClosed}

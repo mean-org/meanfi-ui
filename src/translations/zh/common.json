@@ -942,6 +942,11 @@
     "token-select-source": "选择代币",
     "transaction-settings": "交易设置"
   },
+  "bridge": {
+    "screen-title": "Bridge",
+    "screen-subtitle": "Decentralized asset transfers between blockchains",
+    "loading-error": "Error loading bridge, please try again later by reloading the page."
+  },
   "token-selector": {
     "exchange-search-input-placeholder": "按名称或符号搜索代币",
     "looking-for-sol": "正在找SOL？你需要",
@@ -1329,6 +1334,7 @@
       "vesting": "Vesting",
       "wallet-guide": "钱包指南",
       "stats": "统计数据",
+      "bridge": "Bridge",
       "swap": "交换",
       "transfers": "转换"
     }
