@@ -116,8 +116,6 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
 
   // Transak initialization
   useEffect(() => {
-    console.log('status:', status);
-    console.log('transak:', transak);
     if (status === 'ready' && !transak) {
       setTransakInitStatus('initializing');
       try {
@@ -155,7 +153,7 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
       return;
     }
 
-    console.log('Calling initOnRamp...');
+    consoleOut('Calling initOnRamp...');
     initOnRamp(
       {
         appId: currentConfig.coinBaseAppId,
@@ -170,22 +168,22 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
         },
         onSuccess: () => {
           // handle navigation when user successfully completes the flow
-          console.log(`Processing onSuccess!`);
+          consoleOut(`Processing onSuccess!`);
         },
         onExit: () => {
           // handle navigation from dismiss / exit events due to errors
-          console.log(`Processing onExit!`);
+          consoleOut(`Processing onExit!`);
         },
         onEvent: event => {
           // event stream
-          console.log(`Processing onEvent ->`, event);
+          consoleOut(`Processing onEvent ->`, event);
         },
         experienceLoggedIn: 'embedded',
         experienceLoggedOut: 'popup',
       },
       () => {
         setIsCoinbasePayReady(true);
-        console.log('Coinbase Pay is initialized!');
+        consoleOut('Coinbase Pay is initialized!');
       },
     );
   }, [currentConfig.coinBaseAppId, isCoinbasePayReady, isVisible, publicKey]);
