@@ -116,6 +116,8 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
 
   // Transak initialization
   useEffect(() => {
+    console.log('status:', status);
+    console.log('transak:', transak);
     if (status === 'ready' && !transak) {
       setTransakInitStatus('initializing');
       try {
