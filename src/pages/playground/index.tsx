@@ -68,15 +68,9 @@ import { BN } from '@project-serum/anchor';
 import { useWalletAccount } from 'contexts/walletAccount';
 import { AccountContext } from 'models/accounts/AccountContext';
 import { isSystemOwnedAccount } from 'middleware/accountInfoGetters';
+import DlnBridge from 'views/DlnBridge';
 
-type TabOption =
-  | 'first-tab'
-  | 'test-stream'
-  | 'account-info'
-  | 'multisig-tab'
-  | 'demo-notifications'
-  | 'misc-tab'
-  | undefined;
+type TabOption = 'first-tab' | 'test-stream' | 'account-info' | 'multisig-tab' | 'dln-bridge' | 'misc-tab' | undefined;
 type StreamViewerOption = 'treasurer' | 'beneficiary';
 const notificationKey = 'updatable';
 
@@ -653,8 +647,8 @@ export const PlaygroundView = () => {
       case 'multisig-tab':
         setCurrentTab('multisig-tab');
         break;
-      case 'demo-notifications':
-        setCurrentTab('demo-notifications');
+      case 'dln-bridge':
+        setCurrentTab('dln-bridge');
         break;
       case 'misc-tab':
         setCurrentTab('misc-tab');
@@ -1629,8 +1623,96 @@ export const PlaygroundView = () => {
     </>
   );
 
-  const renderDemo3Tab = (
+  const renderDlnBridgeDemoTab = (
+    <div className="text-left mb-3">
+      <DlnBridge />
+    </div>
+  );
+
+  const renderMiscTab = (
     <>
+      <div className="tabset-heading">Miscelaneous features</div>
+
+      <h3>Primary, Secondary and Terciary buttons</h3>
+      <div className="mb-2">
+        <div className="mb-1">
+          <Space wrap={true} size="middle">
+            <Button type="primary" shape="round" size="small" className="extra-small">
+              Primary
+            </Button>
+            <Button type="default" shape="round" size="small" className="extra-small">
+              Default
+            </Button>
+            <Button type="ghost" shape="round" size="small" className="extra-small">
+              Ghost
+            </Button>
+          </Space>
+        </div>
+        <div className="mb-1">
+          <Space wrap={true} size="middle">
+            <Button type="primary" shape="round" size="middle" className="thin-stroke">
+              Primary
+            </Button>
+            <Button type="default" shape="round" size="middle" className="thin-stroke">
+              Default
+            </Button>
+            <Button type="ghost" shape="round" size="middle" className="thin-stroke">
+              Ghost
+            </Button>
+          </Space>
+        </div>
+      </div>
+      <h3>Primary, Secondary and Terciary buttons disabled</h3>
+      <div className="mb-2">
+        <Space wrap={true} size="middle">
+          <Button type="primary" shape="round" size="small" className="thin-stroke" disabled={true}>
+            Primary disabled
+          </Button>
+          <Button type="default" shape="round" size="small" className="thin-stroke" disabled={true}>
+            Default disabled
+          </Button>
+          <Button type="ghost" shape="round" size="small" className="thin-stroke" disabled={true}>
+            Ghost disabled
+          </Button>
+        </Space>
+      </div>
+
+      <h3>Flat buttons</h3>
+      <div className="mb-2">
+        <Space wrap={true} size="middle">
+          <span className="flat-button tiny">
+            <IconCopy className="mean-svg-icons" />
+            <span className="ml-1">copy item</span>
+          </span>
+          <span className="flat-button tiny">
+            <IconTrash className="mean-svg-icons" />
+            <span className="ml-1">delete item</span>
+          </span>
+          <span className="flat-button tiny">
+            <IconExternalLink className="mean-svg-icons" />
+            <span className="ml-1">view on blockchain</span>
+          </span>
+        </Space>
+      </div>
+
+      <h3>Flat stroked buttons</h3>
+      <div className="mb-2">
+        <Space wrap={true} size="middle">
+          <span className="flat-button tiny stroked">
+            <IconCopy className="mean-svg-icons" />
+            <span className="mx-1">copy item</span>
+          </span>
+          <span className="flat-button tiny stroked">
+            <IconTrash className="mean-svg-icons" />
+            <span className="mx-1">delete item</span>
+          </span>
+          <span className="flat-button tiny stroked">
+            <IconExternalLink className="mean-svg-icons" />
+            <span className="mx-1">view on blockchain</span>
+          </span>
+        </Space>
+      </div>
+
       <div className="tabset-heading">Notify and navigate</div>
       <div className="text-left mb-3">
         <Space wrap={true}>
@@ -1689,126 +1771,6 @@ export const PlaygroundView = () => {
     </>
   );
 
-  const renderMiscTab = (
-    <>
-      <div className="tabset-heading">Miscelaneous features</div>
-
-      <h3>Primary, Secondary and Terciary buttons</h3>
-      <div className="mb-2">
-        <div className="mb-1">
-          <Space wrap={true} size="middle">
-            <Button type="primary" shape="round" size="small" className="extra-small">
-              Primary
-            </Button>
-            <Button type="default" shape="round" size="small" className="extra-small">
-              Default
-            </Button>
-            <Button type="ghost" shape="round" size="small" className="extra-small">
-              Ghost
-            </Button>
-          </Space>
-        </div>
-        <div className="mb-1">
-          <Space wrap={true} size="middle">
-            <Button type="primary" shape="round" size="middle" className="thin-stroke">
-              Primary
-            </Button>
-            <Button type="default" shape="round" size="middle" className="thin-stroke">
-              Default
-            </Button>
-            <Button type="ghost" shape="round" size="middle" className="thin-stroke">
-              Ghost
-            </Button>
-          </Space>
-        </div>
-      </div>
-      <h3>Primary, Secondary and Terciary buttons disabled</h3>
-      <div className="mb-2">
-        <Space wrap={true} size="middle">
-          <Button type="primary" shape="round" size="small" className="thin-stroke" disabled={true}>
-            Primary disabled
-          </Button>
-          <Button type="default" shape="round" size="small" className="thin-stroke" disabled={true}>
-            Default disabled
-          </Button>
-          <Button type="ghost" shape="round" size="small" className="thin-stroke" disabled={true}>
-            Ghost disabled
-          </Button>
-        </Space>
-      </div>
-
-      <h3>Animated buttons</h3>
-      <div className="mb-2">
-        <Space wrap={true} size="middle">
-          <button className="animated-button-red">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            Red
-          </button>
-          <button className="animated-button-green">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            Green
-          </button>
-          <button className="animated-button-blue">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            Blue
-          </button>
-          <button className="animated-button-gold">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            Gold
-          </button>
-        </Space>
-      </div>
-
-      <h3>Flat buttons</h3>
-      <div className="mb-2">
-        <Space wrap={true} size="middle">
-          <span className="flat-button tiny">
-            <IconCopy className="mean-svg-icons" />
-            <span className="ml-1">copy item</span>
-          </span>
-          <span className="flat-button tiny">
-            <IconTrash className="mean-svg-icons" />
-            <span className="ml-1">delete item</span>
-          </span>
-          <span className="flat-button tiny">
-            <IconExternalLink className="mean-svg-icons" />
-            <span className="ml-1">view on blockchain</span>
-          </span>
-        </Space>
-      </div>
-
-      <h3>Flat stroked buttons</h3>
-      <div className="mb-2">
-        <Space wrap={true} size="middle">
-          <span className="flat-button tiny stroked">
-            <IconCopy className="mean-svg-icons" />
-            <span className="mx-1">copy item</span>
-          </span>
-          <span className="flat-button tiny stroked">
-            <IconTrash className="mean-svg-icons" />
-            <span className="mx-1">delete item</span>
-          </span>
-          <span className="flat-button tiny stroked">
-            <IconExternalLink className="mean-svg-icons" />
-            <span className="mx-1">view on blockchain</span>
-          </span>
-        </Space>
-      </div>
-    </>
-  );
-
   const renderTab = () => {
     switch (currentTab) {
       case 'first-tab':
@@ -1819,8 +1781,8 @@ export const PlaygroundView = () => {
         return renderDemo2Tab();
       case 'multisig-tab':
         return renderMultisigTab();
-      case 'demo-notifications':
-        return renderDemo3Tab;
+      case 'dln-bridge':
+        return renderDlnBridgeDemoTab;
       case 'misc-tab':
         return renderMiscTab;
       default:
@@ -1856,10 +1818,10 @@ export const PlaygroundView = () => {
           Account info
         </div>
         <div
-          className={`tab-button ${currentTab === 'demo-notifications' ? 'active' : ''}`}
-          onClick={() => navigateToTab('demo-notifications')}
+          className={`tab-button ${currentTab === 'dln-bridge' ? 'active' : ''}`}
+          onClick={() => navigateToTab('dln-bridge')}
         >
-          Demo 3
+          DLN Bridge Demo
         </div>
         <div
           className={`tab-button ${currentTab === 'misc-tab' ? 'active' : ''}`}

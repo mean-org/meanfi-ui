@@ -69,13 +69,6 @@ export const CREATE_SAFE_ROUTE_PATH = '/create-safe';
 
 export const UNAUTHENTICATED_ROUTES = ['/stats', '/custody'];
 
-export const meanFiHeaders = new Headers();
-meanFiHeaders.append('X-Api-Version', '1.0');
-meanFiHeaders.append('content-type', 'application/json;charset=UTF-8');
-export const requestOptions: RequestInit = {
-  headers: meanFiHeaders,
-};
-
 export const LANGUAGES: Language[] = [
   {
     code: 'en',
@@ -157,14 +150,11 @@ export const DAO_CORE_TEAM_WHITELIST = [
   'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
   '746bzDBsHjjTG6UByDhj8z3ozdqV1sfujH9pAKMdeyuU', // MT
   '9gB9rcJiaKq6iXcJn8AqD5xoxTr3ZLPHpFGWRaVx99jH', // TAB trader
-  '4esXsAJjoExvhPZf1EMvDaajJeCTm72EYt3aurn3fFUG', // J
-  'EjchiDcivSQnC282UF4d751JDd7vMb2VCFrQaNeUAjwz', // J
-  'c8fLDB5oFSwGnwAV1LGQqaadHt2WbvWv7o79YnnUWxd', // J
-  '5rtv52oecUAYAMXN9UzYBwoHGsRD1arLQN6WmRfcMDBP', // J
   '468Z5p52439dAqjLzBm2FCNxvDSnpbMsNx85b7Kmz3TQ', // Ayaz
   '4gCGAWB4bVva2tsEsjmK8iVEKobs3ZsZB7n9HShGnN4o', // Ayaz
   'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL', // Maxim Credix
   '63cUbJ3yecyduEPPYbPERPSJzAy6ZnRWvjE6u4qkkAVd', // Maxim Credix 2
+  'DBtKF3rRXB59AXMWFx6XzgB3SDmgtK87VvrQQF6KbLQ8', // vitalikda
 ];
 
 export const BIGNUMBER_FORMAT = {

@@ -1,9 +1,8 @@
 import { Cluster, clusterApiUrl, Connection } from '@solana/web3.js';
 import { isLocal } from 'middleware/ui';
 import { appConfig } from '..';
-import { requestOptions } from '../constants';
 import { environment } from '../environments/environment';
-import { getRpcApiEndpoint } from '../middleware/api';
+import { getRpcApiEndpoint, meanfiRequestOptions } from '../middleware/api';
 import { ChainID } from '../models/enums';
 
 export interface RpcConfig {
@@ -90,7 +89,7 @@ export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Pr
   networkId = networkId ?? getDefaultRpc().networkId;
   const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${previousRpcId ?? 0
     }`;
-  const rpcConfig = await getRpcApiEndpoint(url, requestOptions);
+  const rpcConfig = await getRpcApiEndpoint(url, meanfiRequestOptions);
   if (rpcConfig === null) {
     return null;
   }

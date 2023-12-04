@@ -1,15 +1,21 @@
 import { TokenPrice } from 'models/TokenPrice';
 import { appConfig } from '..';
 import { readFromCache, removeFromCache, writeToCache } from '../cache/persistentCache';
-import { meanFiHeaders } from '../constants';
 import { SimpleTokenInfo } from '../models/accounts';
 import { Allocation } from '../models/common-types';
 import { WhitelistClaimType } from '../models/enums';
 import { MeanFiStatsModel } from '../models/meanfi-stats';
 import { PriceGraphModel } from '../models/price-graph';
 import { getDefaultRpc, RpcConfig } from '../services/connections-hq';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
-declare interface RequestInit { }
+// MeanFi requests
+export const meanFiHeaders = new Headers();
+meanFiHeaders.append('X-Api-Version', '1.0');
+meanFiHeaders.append('content-type', 'application/json;charset=UTF-8');
+export const meanfiRequestOptions: RequestInit = {
+  headers: meanFiHeaders,
+};
 
 export const getSolanaTokenListKeyNameByCluster = (chainId: number) => {
   return `solana-tokens-${chainId}`;
@@ -100,7 +106,7 @@ export const getSolFlareTokenList = async (): Promise<any> => {
     });
 };
 
-export const getJupiterTokenList = async (path: string): Promise<any> => {
+export const getJupiterTokenList = async (path: string): Promise<TokenInfo[]> => {
   return fetch(path, {
     method: 'GET',
   })
@@ -292,3 +298,26 @@ export const getCoingeckoMarketChart = async (
     return [];
   }
 };
+
+//#region deBridge Liquidity Network (DLN) API
+
+export const dlnApiBaseUrl = 'https://api.dln.trade';
+
+export interface DlnSupportedChain {
+  chainName: string;
+  chainId: number;
+}
+
+export type GetDlnSupportedChainsResponse = { chains: number[] };
+
+export interface DlnTokenInfo {
+  address: string;
+  name: string;
+  decimals: number;
+  symbol: string;
+  logoURI?: string;
+  tags?: string[];
+}
+
+export type GetDlnChainTokenListResponse = { tokens: Map<string, DlnTokenInfo> }
+//#endregion
