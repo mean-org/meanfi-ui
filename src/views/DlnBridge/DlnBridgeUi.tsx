@@ -1,9 +1,10 @@
 import { useContext, useEffect, useState } from 'react';
-import { SUPPORTED_CHAINS, useDlnBridge } from './DlnBridgeProvider';
+import { SOLANA_CHAIN_ID, SUPPORTED_CHAINS, useDlnBridge } from './DlnBridgeProvider';
 import TokenSelector from './TokenSelector';
-import { Modal, Select } from 'antd';
+import { Button, Modal, Select, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from 'components/Identicon';
+import { IconSwapFlip } from 'Icons';
 import { consoleOut, toUsCurrency } from 'middleware/ui';
 import './style.scss';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -27,6 +28,7 @@ import { useConnection } from 'contexts/connection';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import DebugInfo from './DebugInfo';
+import { ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -58,11 +60,14 @@ const DlnBridgeUi = () => {
     amountIn,
     srcChainTokenInAmount,
     dstChainTokenOutAmount,
+    isFetchingQuote,
     setSourceChain,
     setDestinationChain,
     setDstChainTokenOut,
     setSrcChainTokenIn,
     setAmountIn,
+    flipNetworks,
+    forceRefresh,
   } = useDlnBridge();
 
   const getMaxAmount = () => {
@@ -151,7 +156,7 @@ const DlnBridgeUi = () => {
 
   // Keep token balance updated
   useEffect(() => {
-    if (!publicKey || !srcChainTokenIn) {
+    if (sourceChain !== SOLANA_CHAIN_ID || !publicKey || !srcChainTokenIn) {
       setSelectedTokenBalance(0);
       setSelectedTokenBalanceBn(new BN(0));
 
@@ -180,16 +185,17 @@ const DlnBridgeUi = () => {
         setSelectedTokenBalance(0);
         setSelectedTokenBalanceBn(new BN(0));
       });
-  }, [connection, nativeBalance, publicKey, srcChainTokenIn]);
+  }, [connection, nativeBalance, publicKey, sourceChain, srcChainTokenIn]);
 
   // Set srcChainId and dstChainId
   useEffect(() => {
     if (supportedChains.length) {
       console.log('supportedChains:', supportedChains);
-      setSourceChain(7565164);
+      setSourceChain(SOLANA_CHAIN_ID);
       setDestinationChain(137);
     }
-  }, [setDestinationChain, setSourceChain, supportedChains]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supportedChains]);
 
   // srcTokens are loaded by setting srcChainId.
   // dstTokens are loaded by setting dstChainId.
@@ -209,13 +215,6 @@ const DlnBridgeUi = () => {
       setDstChainTokenOut(dstTokens[0]);
     }
   }, [dstTokens, setDstChainTokenOut]);
-
-  // Set an amount in user friendly format. The token amount will be calculated automatically
-  useEffect(() => {
-    if (srcChainTokenIn) {
-      setAmountIn('100');
-    }
-  }, [setAmountIn, srcChainTokenIn]);
 
   return (
     <div className="pt-6">
@@ -334,6 +333,27 @@ const DlnBridgeUi = () => {
             </div>
           </div>
         </div>
+        <div className="flip-button-container">
+          {/* Flip button */}
+          <div className="flip-button" onClick={flipNetworks}>
+            <IconSwapFlip className="mean-svg-icons" />
+          </div>
+          {isFetchingQuote || (srcChainTokenIn && dstChainTokenOut && dstChainTokenOutAmount) ? (
+            <span className="icon-button-container">
+              {isFetchingQuote ? (
+                <span className="icon-container">
+                  <SyncOutlined spin />
+                </span>
+              ) : (
+                <Tooltip placement="bottom" title="Refresh quote">
+                  <Button type="default" shape="circle" size="small" icon={<ReloadOutlined />} onClick={forceRefresh} />
+                </Tooltip>
+              )}
+            </span>
+          ) : (
+            <span>&nbsp;</span>
+          )}
+        </div>
         {/* Destination chain, token & amount */}
         <div className="form-label">TO</div>
         <div className="well mb-0">
@@ -391,12 +411,8 @@ const DlnBridgeUi = () => {
                 <div className="left inner-label">
                   <span>Protocol fee:</span>
                   <span>{`${
-                    quote
-                      ? `${formatThousands(parseFloat(toUiAmount(quote.fixFee, NATIVE_SOL.decimals)), 4)} ${
-                          NATIVE_SOL.symbol
-                        }`
-                      : '-'
-                  }`}</span>
+                    quote ? formatThousands(parseFloat(toUiAmount(quote.fixFee, NATIVE_SOL.decimals)), 4) : '0'
+                  } ${NATIVE_SOL.symbol}`}</span>
                 </div>
                 <div className="right inner-label">
                   {publicKey ? (
@@ -452,7 +468,7 @@ const DlnBridgeUi = () => {
           {selectedTokenSet === 'source' ? (
             <TokenSelector
               tokens={srcTokens}
-              isSolana={sourceChain === 7565164}
+              isSolana={sourceChain === SOLANA_CHAIN_ID}
               selectedToken={srcChainTokenIn?.address}
               onClose={closeTokenSelector}
               onTokenSelected={t => setSrcChainTokenIn(t)}
@@ -460,7 +476,7 @@ const DlnBridgeUi = () => {
           ) : (
             <TokenSelector
               tokens={dstTokens}
-              isSolana={destinationChain === 7565164}
+              isSolana={destinationChain === SOLANA_CHAIN_ID}
               selectedToken={dstChainTokenOut?.address}
               onClose={closeTokenSelector}
               onTokenSelected={t => setDstChainTokenOut(t)}
