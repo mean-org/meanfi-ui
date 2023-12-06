@@ -1623,12 +1623,6 @@ export const PlaygroundView = () => {
     </>
   );
 
-  const renderDlnBridgeDemoTab = (
-    <div className="text-left mb-3">
-      <DlnBridge />
-    </div>
-  );
-
   const renderMiscTab = (
     <>
       <div className="tabset-heading">Miscelaneous features</div>
@@ -1782,7 +1776,7 @@ export const PlaygroundView = () => {
       case 'multisig-tab':
         return renderMultisigTab();
       case 'dln-bridge':
-        return renderDlnBridgeDemoTab;
+        return <DlnBridge />;
       case 'misc-tab':
         return renderMiscTab;
       default:

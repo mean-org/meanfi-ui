@@ -1,5 +1,5 @@
-import { TokenPrice } from 'models/TokenPrice';
 import { appConfig } from '..';
+import { TokenPrice } from 'models/TokenPrice';
 import { readFromCache, removeFromCache, writeToCache } from '../cache/persistentCache';
 import { SimpleTokenInfo } from '../models/accounts';
 import { Allocation } from '../models/common-types';
@@ -298,26 +298,3 @@ export const getCoingeckoMarketChart = async (
     return [];
   }
 };
-
-//#region deBridge Liquidity Network (DLN) API
-
-export const dlnApiBaseUrl = 'https://api.dln.trade';
-
-export interface DlnSupportedChain {
-  chainName: string;
-  chainId: number;
-}
-
-export type GetDlnSupportedChainsResponse = { chains: number[] };
-
-export interface DlnTokenInfo {
-  address: string;
-  name: string;
-  decimals: number;
-  symbol: string;
-  logoURI?: string;
-  tags?: string[];
-}
-
-export type GetDlnChainTokenListResponse = { tokens: Map<string, DlnTokenInfo> }
-//#endregion

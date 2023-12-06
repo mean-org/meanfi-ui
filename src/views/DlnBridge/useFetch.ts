@@ -1,4 +1,4 @@
-import { FetchOptions, fetcher } from 'middleware/fetchInstance'
+import { FetchOptions, fetcher } from 'views/DlnBridge/fetchInstance'
 import { useEffect, useReducer, useRef } from 'react'
 
 interface State<T> {

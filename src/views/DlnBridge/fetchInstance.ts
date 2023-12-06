@@ -1,8 +1,8 @@
-import { dlnApiBaseUrl } from "./api"
+const dlnApiBaseUrl = 'https://api.dln.trade';
 
-export type ErrorType<ErrorData> = ErrorData
+type ErrorType<ErrorData> = ErrorData
 
-export type BodyType<BodyData> = BodyData
+type BodyType<BodyData> = BodyData
 
 export class ApiError extends Error {
   public status: number
