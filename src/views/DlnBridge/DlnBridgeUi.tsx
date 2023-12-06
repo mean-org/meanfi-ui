@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { SUPPORTED_CHAINS, useDlnBridge } from './DlnBridgeProvider';
 import TokenSelector from './TokenSelector';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { Modal, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from 'components/Identicon';
@@ -13,6 +12,7 @@ import { useNativeAccount } from 'contexts/accounts';
 import {
   cutNumber,
   findATokenAddress,
+  formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
   isValidNumber,
@@ -26,6 +26,7 @@ import { useWallet } from 'contexts/wallet';
 import { useConnection } from 'contexts/connection';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { AppStateContext } from 'contexts/appstate';
+import DebugInfo from './DebugInfo';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -53,8 +54,10 @@ const DlnBridgeUi = () => {
     dstTokens,
     srcChainTokenIn,
     dstChainTokenOut,
+    quote,
     amountIn,
     srcChainTokenInAmount,
+    dstChainTokenOutAmount,
     setSourceChain,
     setDestinationChain,
     setDstChainTokenOut,
@@ -75,6 +78,24 @@ const DlnBridgeUi = () => {
     return parseFloat(amountIn) * getTokenPriceByAddress(srcChainTokenIn.address, srcChainTokenIn.symbol);
   };
 
+  const getOutputAmount = () => {
+    if (!dstChainTokenOut || !dstChainTokenOutAmount) {
+      return '0';
+    }
+
+    return toUiAmount(dstChainTokenOutAmount, dstChainTokenOut.decimals);
+  };
+
+  const getDstTokenPrice = () => {
+    if (!dstChainTokenOut || !dstChainTokenOutAmount) {
+      return 0;
+    }
+
+    const uiAmount = getOutputAmount();
+
+    return parseFloat(uiAmount) * getTokenPriceByAddress('', dstChainTokenOut.symbol);
+  };
+
   const showTokenSelector = (tokenSet: ActionTarget) => {
     setSelectedTokenSet(tokenSet);
     setTokenSelectorModalVisibility(true);
@@ -82,18 +103,17 @@ const DlnBridgeUi = () => {
 
   const closeTokenSelector = () => setTokenSelectorModalVisibility(false);
 
-  const setSelectedToken = (token: TokenInfo) => {
-    if (selectedTokenSet === 'source') {
-      setSrcChainTokenIn(token);
-    } else {
-      setDstChainTokenOut(token);
-    }
-  };
-
   const onSrcChainSelected = (e: any) => {
     consoleOut('Selected chain:', e, 'blue');
     if (e !== destinationChain) {
       setSourceChain(e);
+    }
+  };
+
+  const onDstChainSelected = (e: any) => {
+    consoleOut('Selected chain:', e, 'blue');
+    if (e !== sourceChain) {
+      setDestinationChain(e);
     }
   };
 
@@ -178,7 +198,7 @@ const DlnBridgeUi = () => {
   useEffect(() => {
     if (srcTokens) {
       console.log('srcTokens:', srcTokens);
-      setSrcChainTokenIn(srcTokens['EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v']);
+      setSrcChainTokenIn(srcTokens[0]);
     }
   }, [setSrcChainTokenIn, srcTokens]);
 
@@ -186,7 +206,7 @@ const DlnBridgeUi = () => {
   useEffect(() => {
     if (dstTokens) {
       console.log('dstTokens:', dstTokens);
-      setDstChainTokenOut(dstTokens['0x0000000000000000000000000000000000000000']);
+      setDstChainTokenOut(dstTokens[0]);
     }
   }, [dstTokens, setDstChainTokenOut]);
 
@@ -199,7 +219,8 @@ const DlnBridgeUi = () => {
 
   return (
     <div className="pt-6">
-      <div className="debridge-wrapper">
+      <div className="debridge-wrapper mb-4">
+        {/* Source chain, token & amount */}
         <div className="form-label">FROM</div>
         <div className="well mb-0">
           <div className="two-column-form-layout col40x60 mb-0">
@@ -313,25 +334,110 @@ const DlnBridgeUi = () => {
             </div>
           </div>
         </div>
+        {/* Destination chain, token & amount */}
+        <div className="form-label">TO</div>
+        <div className="well mb-0">
+          <div className="two-column-form-layout col40x60 mb-0">
+            <div className="left">
+              <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                <Select
+                  className={`auto-height`}
+                  value={destinationChain}
+                  style={{ width: '100%', maxWidth: 'none' }}
+                  popupClassName="chain-select-dropdown"
+                  onChange={onDstChainSelected}
+                  bordered={false}
+                  showArrow={true}
+                  dropdownRender={menu => <div>{menu}</div>}
+                >
+                  {SUPPORTED_CHAINS.map(item => (
+                    <Option key={`source-${item.chainId}`} value={item.chainId}>
+                      <div className={`transaction-list-row ${item.chainId === sourceChain && 'no-pointer disabled'}`}>
+                        <div className="icon-cell">
+                          {item.chainIcon ? (
+                            <img alt={`${item.chainName}`} width={30} height={30} src={item.chainIcon} />
+                          ) : (
+                            <Identicon address={item.chainName} style={{ width: '30', display: 'inline-flex' }} />
+                          )}
+                        </div>
+                        <div className="description-cell">{item.chainName}</div>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+            <div className="well-divider">&nbsp;</div>
+            <div className="right pl-3">
+              <div className="flex-fixed-left">
+                <div className="left">
+                  <span className="add-on simplelink">
+                    {dstChainTokenOut ? (
+                      <TokenDisplay
+                        onClick={() => showTokenSelector('destination')}
+                        mintAddress={dstChainTokenOut.address}
+                        name={dstChainTokenOut.name}
+                        showCaretDown={true}
+                        fullTokenInfo={dstChainTokenOut}
+                      />
+                    ) : null}
+                  </span>
+                </div>
+                <div className="right">
+                  <div className="static-data-field text-right">{`${parseFloat(getOutputAmount())}`}</div>
+                </div>
+              </div>
+              <div className="flex-fixed-right">
+                <div className="left inner-label">
+                  <span>Protocol fee:</span>
+                  <span>{`${
+                    quote
+                      ? `${formatThousands(parseFloat(toUiAmount(quote.fixFee, NATIVE_SOL.decimals)), 4)} ${
+                          NATIVE_SOL.symbol
+                        }`
+                      : '-'
+                  }`}</span>
+                </div>
+                <div className="right inner-label">
+                  {publicKey ? (
+                    <span
+                      className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                      onClick={() => refreshPrices()}
+                    >
+                      ~{amountIn ? toUsCurrency(getDstTokenPrice()) : '$0.00'}
+                    </span>
+                  ) : (
+                    <span>~$0.00</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div>Source chain ID: {sourceChain}</div>
-      <div>Destination chain ID: {destinationChain}</div>
-      <div>Source chain tokens: {srcTokens ? Object.keys(srcTokens).length : '-'}</div>
-      <div>Destination chain tokens: {dstTokens ? Object.keys(dstTokens).length : '-'}</div>
-      {srcChainTokenIn ? (
-        <div>
-          Selected In token: {srcChainTokenIn.name} | {srcChainTokenIn.address}
-        </div>
-      ) : null}
-      <div>
-        Amount in:{amountIn} | Token amount in: {srcChainTokenInAmount}
+      <div className="well-group text-monospace">
+        <DebugInfo caption="Source chain ID:" value={sourceChain} />
+        <DebugInfo caption="Destination chain ID:" value={destinationChain} />
+        <DebugInfo caption="Source chain tokens:" value={srcTokens ? Object.keys(srcTokens).length : '-'} />
+        <DebugInfo caption="Destination chain tokens:" value={dstTokens ? Object.keys(dstTokens).length : '-'} />
+        <DebugInfo
+          caption="Selected In token:"
+          value={
+            srcChainTokenIn ? `${srcChainTokenIn.symbol} (${srcChainTokenIn.name}) | ${srcChainTokenIn.address}` : null
+          }
+        />
+        <DebugInfo caption="Amount in:" value={amountIn} />
+        <DebugInfo caption="Token amount in:" value={srcChainTokenInAmount} />
+        <DebugInfo
+          caption="Selected Out token:"
+          value={
+            dstChainTokenOut
+              ? `${dstChainTokenOut.symbol} (${dstChainTokenOut.name}) | ${dstChainTokenOut.address}`
+              : null
+          }
+        />
       </div>
-      {dstChainTokenOut ? (
-        <div>
-          Selected Out token: {dstChainTokenOut.name} | {dstChainTokenOut.address}
-        </div>
-      ) : null}
 
       {/* Token selection modal */}
       {isTokenSelectorModalVisible ? (
@@ -343,12 +449,23 @@ const DlnBridgeUi = () => {
           width={420}
           footer={null}
         >
-          <TokenSelector
-            tokens={selectedTokenSet === 'source' ? srcTokens : dstTokens}
-            selectedToken={selectedTokenSet === 'source' ? srcChainTokenIn?.address : dstChainTokenOut?.address}
-            onClose={closeTokenSelector}
-            onTokenSelected={setSelectedToken}
-          />
+          {selectedTokenSet === 'source' ? (
+            <TokenSelector
+              tokens={srcTokens}
+              isSolana={sourceChain === 7565164}
+              selectedToken={srcChainTokenIn?.address}
+              onClose={closeTokenSelector}
+              onTokenSelected={t => setSrcChainTokenIn(t)}
+            />
+          ) : (
+            <TokenSelector
+              tokens={dstTokens}
+              isSolana={destinationChain === 7565164}
+              selectedToken={dstChainTokenOut?.address}
+              onClose={closeTokenSelector}
+              onTokenSelected={t => setDstChainTokenOut(t)}
+            />
+          )}
         </Modal>
       ) : null}
     </div>

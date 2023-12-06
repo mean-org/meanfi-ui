@@ -7,19 +7,18 @@ import {
   FeeRecipient,
   GetDlnChainTokenListResponse,
   GetDlnSupportedChainsResponse,
-  TokenMap,
 } from './types';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 
 export const SUPPORTED_CHAINS: FeeRecipient[] = [
-  { chainName: 'Ethereum', chainId: 1, chainIcon: '/assets/networks/ethereum.svg', feeRecipient: 'xxx' },
-  { chainName: 'Optimism', chainId: 10, chainIcon: '/assets/networks/optimism.svg', feeRecipient: 'xxx' },
-  // { chainName: 'BNB Chain', chainId: 56, chainIcon: '/assets/networks/bnb.svg', feeRecipient: 'xxx' },
-  { chainName: 'Polygon', chainId: 137, chainIcon: '/assets/networks/polygon.svg', feeRecipient: 'xxx' },
-  // { chainName: 'Base', chainId: 8453, chainIcon: '', feeRecipient: 'xxx' },
-  // { chainName: 'Arbitrum', chainId: 42161, chainIcon: '', feeRecipient: 'xxx' },
-  { chainName: 'Avalanche', chainId: 43114, chainIcon: '/assets/networks/avalanche.svg', feeRecipient: 'xxx' },
-  // { chainName: 'Linea', chainId: 59144, chainIcon: '', feeRecipient: 'xxx' },
+  { chainName: 'Ethereum', chainId: 1, chainIcon: '/assets/networks/ethereum.svg', feeRecipient: '' },
+  { chainName: 'Optimism', chainId: 10, chainIcon: '/assets/networks/optimism.svg', feeRecipient: '' },
+  // { chainName: 'BNB Chain', chainId: 56, chainIcon: '/assets/networks/bnb.svg', feeRecipient: '' },
+  { chainName: 'Polygon', chainId: 137, chainIcon: '/assets/networks/polygon.svg', feeRecipient: '' },
+  // { chainName: 'Base', chainId: 8453, chainIcon: '', feeRecipient: '' },
+  // { chainName: 'Arbitrum', chainId: 42161, chainIcon: '', feeRecipient: '' },
+  { chainName: 'Avalanche', chainId: 43114, chainIcon: '/assets/networks/avalanche.svg', feeRecipient: '' },
+  // { chainName: 'Linea', chainId: 59144, chainIcon: '', feeRecipient: '' },
   {
     chainName: 'Solana',
     chainId: 7565164,
@@ -35,13 +34,14 @@ type Value = {
   supportedChains: number[];
   sourceChain: number;
   destinationChain: number;
-  srcTokens: TokenMap | undefined;
-  dstTokens: TokenMap | undefined;
+  srcTokens: TokenInfo[] | undefined;
+  dstTokens: TokenInfo[] | undefined;
   srcChainTokenIn: TokenInfo | undefined;
   dstChainTokenOut: TokenInfo | undefined;
   amountIn: string;
   srcChainTokenInAmount: string;
   quote: DlnOrderQuoteResponse | undefined;
+  dstChainTokenOutAmount: string;
   setSourceChain: (chainId: number) => void;
   setDestinationChain: (chainId: number) => void;
   setSrcChainTokenIn: (token: TokenInfo | undefined) => void;
@@ -60,6 +60,7 @@ const defaultProvider: Value = {
   amountIn: '',
   srcChainTokenInAmount: '',
   quote: undefined,
+  dstChainTokenOutAmount: '',
   setSourceChain: () => void 0,
   setDestinationChain: () => void 0,
   setSrcChainTokenIn: () => void 0,
@@ -87,26 +88,56 @@ const DlnBridgeProvider = ({ children }: Props) => {
   const [dstChainTokenOut, setDstChainTokenOut] = useState<TokenInfo | undefined>(defaultProvider.dstChainTokenOut);
   const [amountIn, setAmountIn] = useState(defaultProvider.amountIn);
   const [srcChainTokenInAmount, setSrcChainTokenInAmount] = useState('');
+  const [dstChainTokenOutAmount, setDstChainTokenOutAmount] = useState('');
+  const [srcChainTokensResponse, setSrcChainTokensResponse] = useState<GetDlnChainTokenListResponse>();
+  const [dstChainTokensResponse, setDstChainTokensResponse] = useState<GetDlnChainTokenListResponse>();
   const [quote, setQuote] = useState<DlnOrderQuoteResponse>();
 
   const affiliateFeeRecipient = useMemo(() => getAffiliateFeeRecipient(sourceChain), [sourceChain]);
 
-  const { data: srcChainTokensResponse } = useFetch<GetDlnChainTokenListResponse>({
-    url: '/v1.0/token-list',
-    method: 'get',
-    params: { chainId: sourceChain },
-  });
+  // Get tokens map for source chain
+  useEffect(() => {
+    fetchInstance<GetDlnChainTokenListResponse>({
+      url: '/v1.0/token-list',
+      method: 'get',
+      params: { chainId: sourceChain },
+    }).then(response => setSrcChainTokensResponse(response));
+  }, [sourceChain]);
 
-  const { data: dstChainTokensResponse } = useFetch<GetDlnChainTokenListResponse>({
-    url: '/v1.0/token-list',
-    method: 'get',
-    params: { chainId: destinationChain },
-  });
+  // Convert source chain tokens map to array
+  const srcTokens = useMemo(() => {
+    if (!srcChainTokensResponse?.tokens) {
+      return [];
+    }
 
+    return Object.keys(srcChainTokensResponse.tokens).map(key => srcChainTokensResponse.tokens[key]) as TokenInfo[];
+  }, [srcChainTokensResponse]);
+
+  // Get tokens map for destination chain
+  useEffect(() => {
+    fetchInstance<GetDlnChainTokenListResponse>({
+      url: '/v1.0/token-list',
+      method: 'get',
+      params: { chainId: destinationChain },
+    }).then(response => setDstChainTokensResponse(response));
+  }, [destinationChain]);
+
+  // Convert destination chain tokens map to array
+  const dstTokens = useMemo(() => {
+    if (!dstChainTokensResponse?.tokens) {
+      return [];
+    }
+
+    return Object.keys(dstChainTokensResponse.tokens).map(key => dstChainTokensResponse.tokens[key]) as TokenInfo[];
+  }, [dstChainTokensResponse]);
+
+  // Set input token amount from input value
   useEffect(() => {
     if (amountIn && srcChainTokenIn) {
       const tokenAmount = toTokenAmount(amountIn, srcChainTokenIn.decimals, true) as string;
       setSrcChainTokenInAmount(tokenAmount);
+    } else {
+      setSrcChainTokenInAmount('');
     }
   }, [amountIn, srcChainTokenIn]);
 
@@ -133,15 +164,18 @@ const DlnBridgeProvider = ({ children }: Props) => {
       }).then(quoteResponse => {
         console.log('quoteResponse:', quoteResponse);
         setQuote(quoteResponse);
+        setDstChainTokenOutAmount(quoteResponse.estimation.dstChainTokenOut.amount);
       });
     } else {
       setQuote(undefined);
+      setDstChainTokenOutAmount('');
     }
   }, [
     affiliateFeeRecipient,
     amountIn,
     destinationChain,
     dstChainTokenOut?.address,
+    dstChainTokenOut?.decimals,
     sourceChain,
     srcChainTokenIn?.address,
     srcChainTokenIn?.decimals,
@@ -153,12 +187,13 @@ const DlnBridgeProvider = ({ children }: Props) => {
         supportedChains: suppChains,
         sourceChain,
         destinationChain,
-        srcTokens: srcChainTokensResponse?.tokens,
-        dstTokens: dstChainTokensResponse?.tokens,
+        srcTokens,
+        dstTokens,
         srcChainTokenIn,
         dstChainTokenOut,
         amountIn,
         srcChainTokenInAmount,
+        dstChainTokenOutAmount,
         quote,
         setSourceChain,
         setDestinationChain,
@@ -170,12 +205,13 @@ const DlnBridgeProvider = ({ children }: Props) => {
       suppChains,
       sourceChain,
       destinationChain,
-      srcChainTokensResponse?.tokens,
-      dstChainTokensResponse?.tokens,
+      srcTokens,
+      dstTokens,
       srcChainTokenIn,
       dstChainTokenOut,
       amountIn,
       srcChainTokenInAmount,
+      dstChainTokenOutAmount,
       quote,
     ],
   );

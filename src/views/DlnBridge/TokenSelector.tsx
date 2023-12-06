@@ -1,7 +1,6 @@
 import { TextInput } from 'components/TextInput';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TokenMap } from './types';
 import { AppStateContext } from 'contexts/appstate';
 import { UserTokenAccount } from 'models/accounts/UserTokenAccount';
 import { useConnection } from 'contexts/connection';
@@ -13,13 +12,14 @@ import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
 import { TokenListItem } from 'components/TokenListItem';
 
 interface TokenSelectorProps {
-  tokens: TokenMap | undefined;
+  tokens: TokenInfo[] | undefined;
   selectedToken: string | undefined;
+  isSolana?: boolean;
   onClose: () => void;
   onTokenSelected: (t: TokenInfo) => void;
 }
 
-const TokenSelector = ({ tokens, selectedToken, onClose, onTokenSelected }: TokenSelectorProps) => {
+const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelected }: TokenSelectorProps) => {
   const { t } = useTranslation('common');
   const { priceList } = useContext(AppStateContext);
   const connection = useConnection();
@@ -30,13 +30,7 @@ const TokenSelector = ({ tokens, selectedToken, onClose, onTokenSelected }: Toke
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
 
-  const tokenList = useMemo(() => {
-    if (!tokens) {
-      return [];
-    }
-
-    return Object.keys(tokens).map(key => tokens[key]) as UserTokenAccount[];
-  }, [tokens]);
+  const tokenList = useMemo(() => (tokens ? (tokens.slice() as UserTokenAccount[]) : []), [tokens]);
 
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback(
@@ -47,16 +41,14 @@ const TokenSelector = ({ tokens, selectedToken, onClose, onTokenSelected }: Toke
 
       const timeout = setTimeout(() => {
         const filter = (t: any) => {
-          return (
-            t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
-            t.name.toLowerCase().includes(searchString.toLowerCase()) ||
-            t.address.toLowerCase().includes(searchString.toLowerCase())
-          );
+          return t.name.toLowerCase().includes(searchString.toLowerCase());
+          // t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+          // t.address.toLowerCase().includes(searchString.toLowerCase())
         };
 
-        const showFromList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
+        const filteredList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
 
-        setFilteredTokenList(showFromList);
+        setFilteredTokenList(filteredList);
       });
 
       return () => {
@@ -109,17 +101,23 @@ const TokenSelector = ({ tokens, selectedToken, onClose, onTokenSelected }: Toke
 
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
-    if (!connection) {
+    if (!tokenList) {
+      return;
+    }
+
+    if (!isSolana) {
+      setSelectedList(tokenList);
+      setUserBalances({});
+      return;
+    }
+
+    if (!connection || !publicKey) {
       console.error('No connection');
       return;
     }
 
-    if (!publicKey || !tokenList) {
-      return;
-    }
-
     const timeout = setTimeout(() => {
-      getTokensWithBalances(connection, publicKey.toBase58(), priceList, tokenList, true).then(response => {
+      getTokensWithBalances(connection, publicKey.toBase58(), priceList, tokenList, false).then(response => {
         if (response) {
           setSelectedList(response.tokenList);
           setUserBalances(response.balancesMap);
@@ -130,7 +128,7 @@ const TokenSelector = ({ tokens, selectedToken, onClose, onTokenSelected }: Toke
     return () => {
       clearTimeout(timeout);
     };
-  }, [publicKey, connection, priceList, tokenList]);
+  }, [connection, isSolana, priceList, publicKey, tokenList]);
 
   // Reset results when the filter is cleared
   useEffect(() => {
@@ -146,7 +144,7 @@ const TokenSelector = ({ tokens, selectedToken, onClose, onTokenSelected }: Toke
     autoFocusInput();
   }, [autoFocusInput, updateTokenListByFilter]);
 
-  useEffect(() => console.log('tokenList:', tokenList), [tokenList]);
+  useEffect(() => console.log('filteredTokenList:', filteredTokenList), [filteredTokenList]);
 
   const getTokenListItemClass = (item: TokenInfo) => {
     return selectedToken === item.address ? 'selected' : 'simplelink';
@@ -168,7 +166,7 @@ const TokenSelector = ({ tokens, selectedToken, onClose, onTokenSelected }: Toke
             name={t.name || CUSTOM_TOKEN_NAME}
             mintAddress={t.address}
             token={t}
-            className={balance ? getTokenListItemClass(t) : 'hidden'}
+            className={getTokenListItemClass(t)}
             onClick={onClick}
             balance={balance}
             showUsdValues={true}
