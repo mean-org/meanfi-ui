@@ -4,6 +4,7 @@ export interface DlnSupportedChain {
   chainName: string;
   chainIcon: string;
   chainId: number;
+  networkFeeToken: string;
 }
 
 export interface FeeRecipient extends DlnSupportedChain {

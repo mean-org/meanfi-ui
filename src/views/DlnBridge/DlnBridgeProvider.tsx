@@ -13,18 +13,43 @@ import { TokenInfo } from 'models/SolanaTokenInfo';
 export const SOLANA_CHAIN_ID = 7565164;
 
 export const SUPPORTED_CHAINS: FeeRecipient[] = [
-  { chainName: 'Ethereum', chainId: 1, chainIcon: '/assets/networks/ethereum.svg', feeRecipient: '' },
-  { chainName: 'Optimism', chainId: 10, chainIcon: '/assets/networks/optimism.svg', feeRecipient: '' },
+  {
+    chainName: 'Ethereum',
+    chainId: 1,
+    chainIcon: '/assets/networks/ethereum.svg',
+    networkFeeToken: '0x0000000000000000000000000000000000000000',
+    feeRecipient: '',
+  },
+  {
+    chainName: 'Optimism',
+    chainId: 10,
+    chainIcon: '/assets/networks/optimism.svg',
+    networkFeeToken: '0x0000000000000000000000000000000000000000',
+    feeRecipient: '',
+  },
   // { chainName: 'BNB Chain', chainId: 56, chainIcon: '/assets/networks/bnb.svg', feeRecipient: '' },
-  { chainName: 'Polygon', chainId: 137, chainIcon: '/assets/networks/polygon.svg', feeRecipient: '' },
+  {
+    chainName: 'Polygon',
+    chainId: 137,
+    chainIcon: '/assets/networks/polygon.svg',
+    networkFeeToken: '0x0000000000000000000000000000000000000000',
+    feeRecipient: '',
+  },
   // { chainName: 'Base', chainId: 8453, chainIcon: '', feeRecipient: '' },
   // { chainName: 'Arbitrum', chainId: 42161, chainIcon: '', feeRecipient: '' },
-  { chainName: 'Avalanche', chainId: 43114, chainIcon: '/assets/networks/avalanche.svg', feeRecipient: '' },
+  {
+    chainName: 'Avalanche',
+    chainId: 43114,
+    chainIcon: '/assets/networks/avalanche.svg',
+    networkFeeToken: '0x0000000000000000000000000000000000000000',
+    feeRecipient: '',
+  },
   // { chainName: 'Linea', chainId: 59144, chainIcon: '', feeRecipient: '' },
   {
     chainName: 'Solana',
     chainId: SOLANA_CHAIN_ID,
     chainIcon: '/assets/networks/sol-dark.svg',
+    networkFeeToken: '11111111111111111111111111111111',
     feeRecipient: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
   },
 ];
@@ -150,9 +175,9 @@ const DlnBridgeProvider = ({ children }: Props) => {
     }
   }, [amountIn, srcChainTokenIn]);
 
-  const forceRefresh = () => {
+  const forceRefresh = useCallback(() => {
     setForceRenderRef(current => current + 1);
-  };
+  }, []);
 
   const flipNetworks = useCallback(() => {
     if (!srcTokens || !dstTokens || !srcChainTokenIn || !dstChainTokenOut) {
@@ -162,17 +187,16 @@ const DlnBridgeProvider = ({ children }: Props) => {
     // New source network params => those of the destination network
     const newSrcChain = destinationChain;
     const newSrcToken = dstChainTokenOut;
-    const newInAmount = dstChainTokenOutAmount ? toUiAmount(dstChainTokenOutAmount, dstChainTokenOut.decimals) : '';
     // New destination network params => chainId and token from source network
     setDestinationChain(sourceChain);
     setDstChainTokenOut(srcChainTokenIn);
     setSourceChain(newSrcChain);
     setSrcChainTokenIn(newSrcToken);
-    setAmountIn(newInAmount);
-  }, [destinationChain, dstChainTokenOut, dstChainTokenOutAmount, dstTokens, sourceChain, srcChainTokenIn, srcTokens]);
+    setAmountIn('');
+  }, [destinationChain, dstChainTokenOut, dstTokens, sourceChain, srcChainTokenIn, srcTokens]);
 
   useEffect(() => {
-    if (sourceChain && srcChainTokenIn?.address && amountIn && dstChainTokenOut?.address && affiliateFeeRecipient) {
+    if (sourceChain && srcChainTokenIn?.address && amountIn && dstChainTokenOut?.address) {
       const tokenAmount = toTokenAmount(amountIn, srcChainTokenIn.decimals, true) as string;
       setSrcChainTokenInAmount(tokenAmount);
 
@@ -188,7 +212,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
           dstChainTokenOut: dstChainTokenOut.address,
           dstChainTokenOutAmount: 'auto',
           additionalTakerRewardBps: 0.25 * 100,
-          affiliateFeePercent: 0.1,
+          affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
           affiliateFeeRecipient,
           prependOperatingExpenses: true,
         },
@@ -251,6 +275,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
       dstChainTokenOutAmount,
       isFetchingQuote,
       quote,
+      forceRefresh,
       flipNetworks,
     ],
   );

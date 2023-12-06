@@ -146,6 +146,7 @@ const DlnBridgeUi = () => {
       setAmountIn('.');
     } else if (isValidNumber(newValue)) {
       setAmountIn(newValue);
+      forceRefresh();
     }
   };
 
@@ -156,6 +157,14 @@ const DlnBridgeUi = () => {
 
   // Keep token balance updated
   useEffect(() => {
+    if (sourceChain !== SOLANA_CHAIN_ID) {
+      setSelectedTokenBalance(0);
+      setSelectedTokenBalanceBn(new BN(0));
+
+      return;
+    }
+
+    console.log('Solana is the source, is it?');
     if (sourceChain !== SOLANA_CHAIN_ID || !publicKey || !srcChainTokenIn) {
       setSelectedTokenBalance(0);
       setSelectedTokenBalanceBn(new BN(0));
@@ -327,7 +336,7 @@ const DlnBridgeUi = () => {
                   )}
                 </div>
               </div>
-              {nativeBalance < MIN_SOL_BALANCE_REQUIRED && (
+              {sourceChain === SOLANA_CHAIN_ID && nativeBalance < MIN_SOL_BALANCE_REQUIRED && (
                 <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
               )}
             </div>
@@ -411,7 +420,12 @@ const DlnBridgeUi = () => {
                 <div className="left inner-label">
                   <span>Protocol fee:</span>
                   <span>{`${
-                    quote ? formatThousands(parseFloat(toUiAmount(quote.fixFee, NATIVE_SOL.decimals)), 4) : '0'
+                    quote
+                      ? formatThousands(
+                          parseFloat(toUiAmount(quote.fixFee, quote.estimation.srcChainTokenIn.decimals)),
+                          4,
+                        )
+                      : '0'
                   } ${NATIVE_SOL.symbol}`}</span>
                 </div>
                 <div className="right inner-label">
