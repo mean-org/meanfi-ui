@@ -247,7 +247,7 @@ const DlnBridgeUi = () => {
       return;
     }
 
-    if (sourceChain !== SOLANA_CHAIN_ID || !publicKey || !srcChainTokenIn) {
+    if (!publicKey || !srcChainTokenIn) {
       setSelectedTokenBalance(0);
       setSelectedTokenBalanceBn(new BN(0));
 
@@ -262,6 +262,7 @@ const DlnBridgeUi = () => {
       return;
     }
 
+    console.log('Creating PK for:', srcChainTokenIn.address);
     const srcTokenPk = new PublicKey(srcChainTokenIn.address);
     const srcTokenAddress = findATokenAddress(publicKey, srcTokenPk);
     getTokenAccountBalanceByAddress(connection, srcTokenAddress)
