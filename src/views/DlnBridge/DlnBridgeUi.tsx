@@ -1,11 +1,11 @@
-import { useContext, useEffect, useState } from 'react';
-import { SOLANA_CHAIN_ID, SUPPORTED_CHAINS, useDlnBridge } from './DlnBridgeProvider';
+import { useContext, useEffect, useMemo, useState } from 'react';
+import { SOLANA_CHAIN_ID, SUPPORTED_CHAINS, getChainById, useDlnBridge } from './DlnBridgeProvider';
 import TokenSelector from './TokenSelector';
-import { Button, Modal, Select, Tooltip } from 'antd';
+import { Button, Modal, Select, Switch, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from 'components/Identicon';
 import { IconSwapFlip } from 'Icons';
-import { consoleOut, toUsCurrency } from 'middleware/ui';
+import { consoleOut, isValidAddress, toUsCurrency } from 'middleware/ui';
 import './style.scss';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { NATIVE_SOL } from 'constants/tokens';
@@ -20,7 +20,7 @@ import {
   toTokenAmount,
   toUiAmount,
 } from 'middleware/utils';
-import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
+import { INPUT_DEBOUNCE_TIME, MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { useWallet } from 'contexts/wallet';
@@ -28,7 +28,8 @@ import { useConnection } from 'contexts/connection';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import DebugInfo from './DebugInfo';
-import { ReloadOutlined, SyncOutlined } from '@ant-design/icons';
+import { LoadingOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
+import { useDebounce } from 'hooks/useDebounce';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -39,6 +40,11 @@ const DlnBridgeUi = () => {
   const connection = useConnection();
   const { publicKey } = useWallet();
   const { loadingPrices, refreshPrices, getTokenPriceByAddress } = useContext(AppStateContext);
+
+  const isBusy = false; // Later on when Tx is executing it should reflect busy state
+
+  const [amountInput, setAmountInput] = useState('');
+  const debouncedAmountInput = useDebounce<string>(amountInput, INPUT_DEBOUNCE_TIME);
 
   const [nativeBalance, setNativeBalance] = useState(0);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
@@ -58,13 +64,19 @@ const DlnBridgeUi = () => {
     dstChainTokenOut,
     quote,
     amountIn,
+    senderAddress,
     srcChainTokenInAmount,
     dstChainTokenOutAmount,
+    dstChainTokenOutRecipient,
+    sendToDifferentAddress,
     isFetchingQuote,
     setSourceChain,
     setDestinationChain,
     setDstChainTokenOut,
     setSrcChainTokenIn,
+    setSendToDifferentAddress,
+    setDstChainTokenOutRecipient,
+    setSenderAddress,
     setAmountIn,
     flipNetworks,
     forceRefresh,
@@ -110,16 +122,12 @@ const DlnBridgeUi = () => {
 
   const onSrcChainSelected = (e: any) => {
     consoleOut('Selected chain:', e, 'blue');
-    if (e !== destinationChain) {
-      setSourceChain(e);
-    }
+    setSourceChain(e);
   };
 
   const onDstChainSelected = (e: any) => {
     consoleOut('Selected chain:', e, 'blue');
-    if (e !== sourceChain) {
-      setDestinationChain(e);
-    }
+    setDestinationChain(e);
   };
 
   const onAmountInChange = (e: any) => {
@@ -141,14 +149,89 @@ const DlnBridgeUi = () => {
     }
 
     if (newValue === null || newValue === undefined || newValue === '') {
-      setAmountIn('');
+      setAmountInput('');
     } else if (newValue === '.') {
-      setAmountIn('.');
+      setAmountInput('.');
     } else if (isValidNumber(newValue)) {
-      setAmountIn(newValue);
-      forceRefresh();
+      setAmountInput(newValue);
     }
   };
+
+  const handleRecipientAddressChange = (e: any) => {
+    const inputValue = e.target.value as string;
+    // Set the input value
+    const trimmedValue = inputValue.trim();
+    setDstChainTokenOutRecipient(trimmedValue);
+  };
+
+  const onToggleSendToDifferentAddress = (value: boolean) => {
+    setSendToDifferentAddress(value);
+    if (
+      !dstChainTokenOutRecipient &&
+      senderAddress &&
+      sourceChain === destinationChain &&
+      sourceChain === SOLANA_CHAIN_ID &&
+      value
+    ) {
+      setDstChainTokenOutRecipient(senderAddress);
+    }
+  };
+
+  const srcChainData = useMemo(() => getChainById(sourceChain), [sourceChain]);
+  const networkFeeToken = useMemo(() => {
+    if (srcTokens && srcChainData?.networkFeeToken) {
+      const feeToken = srcTokens.find(t => t.address === srcChainData.networkFeeToken);
+      console.log('feeToken:', feeToken);
+      return feeToken;
+    }
+
+    return undefined;
+  }, [srcChainData?.networkFeeToken, srcTokens]);
+  const dstChainName = useMemo(() => getChainById(destinationChain)?.chainName ?? 'Unknown', [destinationChain]);
+
+  const isTransferValid = useMemo(() => {
+    if (sourceChain !== SOLANA_CHAIN_ID) {
+      return false;
+    } else if (!publicKey) {
+      return false;
+    } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
+      return false;
+    } else if (sourceChain === destinationChain) {
+      return true;
+    } else {
+      return true;
+    }
+  }, [destinationChain, dstChainTokenOutRecipient, publicKey, sourceChain]);
+
+  const transactionStartButtonLabel = useMemo(() => {
+    if (sourceChain !== SOLANA_CHAIN_ID) {
+      return srcChainData ? `Cannot execute on ${srcChainData.chainName} yet` : 'Unsupported network';
+    } else if (!publicKey) {
+      return 'Connect wallet';
+    } else if (sourceChain === destinationChain) {
+      return 'Confirm transfer';
+    } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
+      return `Missing recipient's ${dstChainName} address`;
+    } else {
+      return 'Create trade';
+    }
+  }, [destinationChain, dstChainName, dstChainTokenOutRecipient, publicKey, sourceChain, srcChainData]);
+
+  const onStartSwapTx = () => {
+    console.log('So far so good...');
+  };
+
+  // Establish sender address. So far only for Solana
+  useEffect(() => {
+    if (sourceChain !== SOLANA_CHAIN_ID) {
+      setSenderAddress('');
+      return;
+    }
+
+    if (publicKey) {
+      setSenderAddress(publicKey.toBase58());
+    }
+  }, [sourceChain, publicKey, setSenderAddress]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -164,7 +247,6 @@ const DlnBridgeUi = () => {
       return;
     }
 
-    console.log('Solana is the source, is it?');
     if (sourceChain !== SOLANA_CHAIN_ID || !publicKey || !srcChainTokenIn) {
       setSelectedTokenBalance(0);
       setSelectedTokenBalanceBn(new BN(0));
@@ -225,6 +307,21 @@ const DlnBridgeUi = () => {
     }
   }, [dstTokens, setDstChainTokenOut]);
 
+  // Force switch ON on different chains if OFF
+  useEffect(() => {
+    if (sourceChain === destinationChain && !sendToDifferentAddress) {
+      setSendToDifferentAddress(false);
+    } else if (sourceChain !== destinationChain && !sendToDifferentAddress) {
+      setSendToDifferentAddress(true);
+    }
+  }, [destinationChain, sendToDifferentAddress, setSendToDifferentAddress, sourceChain]);
+
+  // Process debounced input
+  useEffect(() => {
+    console.log('Reflecting debounced value:', debouncedAmountInput);
+    setAmountIn(debouncedAmountInput);
+  }, [debouncedAmountInput, setAmountIn]);
+
   return (
     <div className="pt-6">
       <div className="debridge-wrapper mb-4">
@@ -246,9 +343,7 @@ const DlnBridgeUi = () => {
                 >
                   {SUPPORTED_CHAINS.map(item => (
                     <Option key={`source-${item.chainId}`} value={item.chainId}>
-                      <div
-                        className={`transaction-list-row ${item.chainId === destinationChain && 'no-pointer disabled'}`}
-                      >
+                      <div className="transaction-list-row">
                         <div className="icon-cell">
                           {item.chainIcon ? (
                             <img alt={`${item.chainName}`} width={30} height={30} src={item.chainIcon} />
@@ -284,9 +379,9 @@ const DlnBridgeUi = () => {
                         onClick={() => {
                           if (srcChainTokenIn.address === NATIVE_SOL.address) {
                             const amount = getMaxAmount();
-                            setAmountIn(cutNumber(amount > 0 ? amount : 0, srcChainTokenIn.decimals));
+                            setAmountInput(cutNumber(amount > 0 ? amount : 0, srcChainTokenIn.decimals));
                           } else {
-                            setAmountIn(toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals));
+                            setAmountInput(toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals));
                           }
                         }}
                       >
@@ -308,7 +403,7 @@ const DlnBridgeUi = () => {
                     minLength={1}
                     maxLength={79}
                     spellCheck="false"
-                    value={amountIn}
+                    value={amountInput}
                   />
                 </div>
               </div>
@@ -365,7 +460,7 @@ const DlnBridgeUi = () => {
         </div>
         {/* Destination chain, token & amount */}
         <div className="form-label">TO</div>
-        <div className="well mb-0">
+        <div className="well mb-3">
           <div className="two-column-form-layout col40x60 mb-0">
             <div className="left">
               <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
@@ -381,7 +476,7 @@ const DlnBridgeUi = () => {
                 >
                   {SUPPORTED_CHAINS.map(item => (
                     <Option key={`source-${item.chainId}`} value={item.chainId}>
-                      <div className={`transaction-list-row ${item.chainId === sourceChain && 'no-pointer disabled'}`}>
+                      <div className="transaction-list-row">
                         <div className="icon-cell">
                           {item.chainIcon ? (
                             <img alt={`${item.chainName}`} width={30} height={30} src={item.chainIcon} />
@@ -420,13 +515,10 @@ const DlnBridgeUi = () => {
                 <div className="left inner-label">
                   <span>Protocol fee:</span>
                   <span>{`${
-                    quote
-                      ? formatThousands(
-                          parseFloat(toUiAmount(quote.fixFee, quote.estimation.srcChainTokenIn.decimals)),
-                          4,
-                        )
+                    quote && networkFeeToken
+                      ? formatThousands(parseFloat(toUiAmount(quote.fixFee, networkFeeToken.decimals)), 4)
                       : '0'
-                  } ${NATIVE_SOL.symbol}`}</span>
+                  } ${networkFeeToken?.symbol}`}</span>
                 </div>
                 <div className="right inner-label">
                   {publicKey ? (
@@ -444,11 +536,79 @@ const DlnBridgeUi = () => {
             </div>
           </div>
         </div>
+        {/* Recipient address switch */}
+        <div
+          className="flex-row align-items-center mb-2"
+          onClick={() => onToggleSendToDifferentAddress(!sendToDifferentAddress)}
+        >
+          <Switch
+            size="small"
+            checked={sendToDifferentAddress}
+            onChange={onToggleSendToDifferentAddress}
+            disabled={sourceChain !== destinationChain}
+          />
+          <div className="form-label mb-0 ml-1 simplelink">Send to different wallet</div>
+        </div>
+        {/* Recipient address */}
+        {sendToDifferentAddress ? (
+          <div className="well mb-3">
+            <div className="flex-fixed-right mb-1">
+              <div className="left position-relative">
+                <span className="recipient-field-wrapper">
+                  <input
+                    id="payment-recipient-field"
+                    className="general-text-input"
+                    autoComplete="on"
+                    autoCorrect="off"
+                    type="text"
+                    onChange={handleRecipientAddressChange}
+                    placeholder={`Recipient's ${dstChainName} address`}
+                    required={true}
+                    spellCheck="false"
+                    value={dstChainTokenOutRecipient}
+                  />
+                  <span
+                    id="payment-recipient-static-field"
+                    className={`${dstChainTokenOutRecipient ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
+                  >
+                    {dstChainTokenOutRecipient || `Recipient's ${dstChainName} address`}
+                  </span>
+                </span>
+              </div>
+              <div className="right">
+                <span>&nbsp;</span>
+              </div>
+            </div>
+            {!dstChainTokenOutRecipient ||
+            (dstChainTokenOutRecipient &&
+              destinationChain === SOLANA_CHAIN_ID &&
+              !isValidAddress(dstChainTokenOutRecipient)) ? (
+              <span className="form-field-error">Please enter a valid address</span>
+            ) : null}
+          </div>
+        ) : null}
+        {/* Action button */}
+        <Button
+          className={`main-cta ${isBusy ? 'inactive' : ''}`}
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={onStartSwapTx}
+          disabled={isBusy || isFetchingQuote || !isTransferValid}
+        >
+          {isBusy && (
+            <span className="mr-1">
+              <LoadingOutlined style={{ fontSize: '16px' }} />
+            </span>
+          )}
+          {isBusy ? 'Swapping' : transactionStartButtonLabel}
+        </Button>
       </div>
 
       <div className="well-group text-monospace">
-        <DebugInfo caption="Source chain ID:" value={sourceChain} />
-        <DebugInfo caption="Destination chain ID:" value={destinationChain} />
+        <DebugInfo caption="Source chain ID:" value={`${sourceChain} (${srcChainData?.chainName ?? '?'})`} />
+        <DebugInfo caption="Destination chain ID:" value={`${destinationChain} (${dstChainName})`} />
         <DebugInfo caption="Source chain tokens:" value={srcTokens ? Object.keys(srcTokens).length : '-'} />
         <DebugInfo caption="Destination chain tokens:" value={dstTokens ? Object.keys(dstTokens).length : '-'} />
         <DebugInfo
@@ -467,6 +627,7 @@ const DlnBridgeUi = () => {
               : null
           }
         />
+        <DebugInfo caption="Sender address:" value={senderAddress} />
       </div>
 
       {/* Token selection modal */}

@@ -1,16 +1,20 @@
-import { useFetch } from 'views/DlnBridge/useFetch';
-import { fetchInstance } from 'views/DlnBridge/fetchInstance';
-import { toTokenAmount, toUiAmount } from 'middleware/utils';
 import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+
+import { toTokenAmount } from 'middleware/utils';
+import { TokenInfo } from 'models/SolanaTokenInfo';
+import { fetchInstance } from 'views/DlnBridge/fetchInstance';
+import { useFetch } from 'views/DlnBridge/useFetch';
 import {
+  DlnOrderCreateTxResponse,
   DlnOrderQuoteResponse,
   FeeRecipient,
   GetDlnChainTokenListResponse,
   GetDlnSupportedChainsResponse,
 } from './types';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import { consoleOut } from 'middleware/ui';
 
 export const SOLANA_CHAIN_ID = 7565164;
+const QUOTE_REFRESH_TIMEOUT = 29000;
 
 export const SUPPORTED_CHAINS: FeeRecipient[] = [
   {
@@ -54,26 +58,33 @@ export const SUPPORTED_CHAINS: FeeRecipient[] = [
   },
 ];
 
-const getAffiliateFeeRecipient = (srcChainId: number) =>
-  SUPPORTED_CHAINS.find(c => c.chainId === srcChainId)?.feeRecipient ?? '';
+export const getChainById = (srcChainId: number) => SUPPORTED_CHAINS.find(c => c.chainId === srcChainId);
+
+const getAffiliateFeeRecipient = (srcChainId: number) => getChainById(srcChainId)?.feeRecipient ?? '';
 
 type Value = {
   supportedChains: number[];
   sourceChain: number;
-  destinationChain: number;
   srcTokens: TokenInfo[] | undefined;
-  dstTokens: TokenInfo[] | undefined;
   srcChainTokenIn: TokenInfo | undefined;
-  dstChainTokenOut: TokenInfo | undefined;
-  amountIn: string;
   srcChainTokenInAmount: string;
-  quote: DlnOrderQuoteResponse | undefined;
+  amountIn: string;
+  senderAddress: string;
+  destinationChain: number;
+  dstTokens: TokenInfo[] | undefined;
+  dstChainTokenOut: TokenInfo | undefined;
   dstChainTokenOutAmount: string;
+  dstChainTokenOutRecipient: string;
+  quote: DlnOrderQuoteResponse | DlnOrderCreateTxResponse | undefined;
   isFetchingQuote: boolean;
+  sendToDifferentAddress: boolean;
   setSourceChain: (chainId: number) => void;
   setDestinationChain: (chainId: number) => void;
   setSrcChainTokenIn: (token: TokenInfo | undefined) => void;
   setDstChainTokenOut: (token: TokenInfo | undefined) => void;
+  setDstChainTokenOutRecipient: (address: string) => void;
+  setSendToDifferentAddress: (value: boolean) => void;
+  setSenderAddress: (address: string) => void;
   setAmountIn: (amount: string) => void;
   flipNetworks: () => void;
   forceRefresh: () => void;
@@ -82,20 +93,26 @@ type Value = {
 const defaultProvider: Value = {
   supportedChains: [],
   sourceChain: SOLANA_CHAIN_ID,
-  destinationChain: 1,
   srcTokens: undefined,
-  dstTokens: undefined,
   srcChainTokenIn: undefined,
-  dstChainTokenOut: undefined,
-  amountIn: '',
   srcChainTokenInAmount: '',
-  quote: undefined,
+  amountIn: '',
+  senderAddress: '',
+  destinationChain: 1,
+  dstTokens: undefined,
+  dstChainTokenOut: undefined,
   dstChainTokenOutAmount: '',
+  dstChainTokenOutRecipient: '',
+  quote: undefined,
   isFetchingQuote: false,
+  sendToDifferentAddress: true,
   setSourceChain: () => void 0,
   setDestinationChain: () => void 0,
   setSrcChainTokenIn: () => void 0,
   setDstChainTokenOut: () => void 0,
+  setDstChainTokenOutRecipient: () => void 0,
+  setSendToDifferentAddress: () => void 0,
+  setSenderAddress: () => void 0,
   setAmountIn: () => void 0,
   flipNetworks: () => void 0,
   forceRefresh: () => void 0,
@@ -119,13 +136,16 @@ const DlnBridgeProvider = ({ children }: Props) => {
   const [destinationChain, setDestinationChain] = useState<number>(defaultProvider.destinationChain);
   const [srcChainTokenIn, setSrcChainTokenIn] = useState<TokenInfo | undefined>(defaultProvider.srcChainTokenIn);
   const [dstChainTokenOut, setDstChainTokenOut] = useState<TokenInfo | undefined>(defaultProvider.dstChainTokenOut);
+  const [sendToDifferentAddress, setSendToDifferentAddress] = useState<boolean>(defaultProvider.sendToDifferentAddress);
   const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(defaultProvider.isFetchingQuote);
   const [amountIn, setAmountIn] = useState(defaultProvider.amountIn);
-  const [srcChainTokenInAmount, setSrcChainTokenInAmount] = useState('');
-  const [dstChainTokenOutAmount, setDstChainTokenOutAmount] = useState('');
+  const [srcChainTokenInAmount, setSrcChainTokenInAmount] = useState(defaultProvider.srcChainTokenInAmount);
+  const [dstChainTokenOutAmount, setDstChainTokenOutAmount] = useState(defaultProvider.dstChainTokenOutAmount);
+  const [dstChainTokenOutRecipient, setDstChainTokenOutRecipient] = useState(defaultProvider.dstChainTokenOutRecipient);
+  const [senderAddress, setSenderAddress] = useState(defaultProvider.senderAddress);
   const [srcChainTokensResponse, setSrcChainTokensResponse] = useState<GetDlnChainTokenListResponse>();
   const [dstChainTokensResponse, setDstChainTokensResponse] = useState<GetDlnChainTokenListResponse>();
-  const [quote, setQuote] = useState<DlnOrderQuoteResponse>();
+  const [quote, setQuote] = useState<DlnOrderQuoteResponse | DlnOrderCreateTxResponse>();
 
   const affiliateFeeRecipient = useMemo(() => getAffiliateFeeRecipient(sourceChain), [sourceChain]);
 
@@ -201,28 +221,61 @@ const DlnBridgeProvider = ({ children }: Props) => {
       setSrcChainTokenInAmount(tokenAmount);
 
       setIsFetchingQuote(true);
-      fetchInstance<DlnOrderQuoteResponse>({
-        url: '/v1.0/dln/order/quote',
-        method: 'get',
-        params: {
-          srcChainId: sourceChain,
-          srcChainTokenIn: srcChainTokenIn.address,
-          srcChainTokenInAmount: tokenAmount,
-          dstChainId: destinationChain,
-          dstChainTokenOut: dstChainTokenOut.address,
-          dstChainTokenOutAmount: 'auto',
-          additionalTakerRewardBps: 0.25 * 100,
-          affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
-          affiliateFeeRecipient,
-          prependOperatingExpenses: true,
-        },
-      })
-        .then(quoteResponse => {
-          console.log('quoteResponse:', quoteResponse);
-          setQuote(quoteResponse);
-          setDstChainTokenOutAmount(quoteResponse.estimation.dstChainTokenOut.amount);
+      if (dstChainTokenOutRecipient) {
+        // If recipient is available then call /v1.0/dln/order/create-tx
+        fetchInstance<DlnOrderCreateTxResponse>({
+          url: '/v1.0/dln/order/create-tx',
+          method: 'get',
+          params: {
+            srcChainId: sourceChain,
+            srcChainTokenIn: srcChainTokenIn.address,
+            srcChainTokenInAmount: tokenAmount,
+            dstChainId: destinationChain,
+            dstChainTokenOut: dstChainTokenOut.address,
+            dstChainTokenOutAmount: 'auto',
+            dstChainTokenOutRecipient,
+            dstChainOrderAuthorityAddress: dstChainTokenOutRecipient,
+            senderAddress,
+            srcChainOrderAuthorityAddress: senderAddress,
+            additionalTakerRewardBps: 0.1 * 100,
+            affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
+            ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
+            prependOperatingExpenses: true,
+            enableEstimate: false,
+            deBridgeApp: 'DLN',
+          },
         })
-        .finally(() => setIsFetchingQuote(false));
+          .then(quoteResponse => {
+            console.log('quoteResponse:', quoteResponse);
+            setQuote(quoteResponse);
+            setDstChainTokenOutAmount(quoteResponse.estimation.dstChainTokenOut.amount);
+          })
+          .finally(() => setIsFetchingQuote(false));
+      } else {
+        // Otherwise go with a quote
+        fetchInstance<DlnOrderQuoteResponse>({
+          url: '/v1.0/dln/order/quote',
+          method: 'get',
+          params: {
+            srcChainId: sourceChain,
+            srcChainTokenIn: srcChainTokenIn.address,
+            srcChainTokenInAmount: tokenAmount,
+            dstChainId: destinationChain,
+            dstChainTokenOut: dstChainTokenOut.address,
+            dstChainTokenOutAmount: 'auto',
+            additionalTakerRewardBps: 0.1 * 100,
+            affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
+            affiliateFeeRecipient,
+            prependOperatingExpenses: true,
+          },
+        })
+          .then(quoteResponse => {
+            console.log('quoteResponse:', quoteResponse);
+            setQuote(quoteResponse);
+            setDstChainTokenOutAmount(quoteResponse.estimation.dstChainTokenOut.amount);
+          })
+          .finally(() => setIsFetchingQuote(false));
+      }
     } else {
       setQuote(undefined);
       setDstChainTokenOutAmount('');
@@ -230,6 +283,8 @@ const DlnBridgeProvider = ({ children }: Props) => {
   }, [
     forceRenderRef,
     affiliateFeeRecipient,
+    dstChainTokenOutRecipient,
+    senderAddress,
     amountIn,
     destinationChain,
     dstChainTokenOut?.address,
@@ -238,6 +293,26 @@ const DlnBridgeProvider = ({ children }: Props) => {
     srcChainTokenIn?.address,
     srcChainTokenIn?.decimals,
   ]);
+
+  // Refresh routes every 29 seconds
+  useEffect(() => {
+    let timer: any;
+
+    if (sourceChain && srcChainTokenIn?.address && amountIn && dstChainTokenOut?.address) {
+      timer = setInterval(() => {
+        if (!isFetchingQuote) {
+          consoleOut(`Trigger refresh quote after ${QUOTE_REFRESH_TIMEOUT / 1000} seconds`);
+          forceRefresh();
+        }
+      }, QUOTE_REFRESH_TIMEOUT);
+    }
+
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [amountIn, dstChainTokenOut?.address, forceRefresh, isFetchingQuote, sourceChain, srcChainTokenIn?.address]);
 
   const value = useMemo(
     () =>
@@ -250,14 +325,20 @@ const DlnBridgeProvider = ({ children }: Props) => {
         srcChainTokenIn,
         dstChainTokenOut,
         amountIn,
+        senderAddress,
         srcChainTokenInAmount,
         dstChainTokenOutAmount,
+        sendToDifferentAddress,
+        dstChainTokenOutRecipient,
         isFetchingQuote,
         quote,
         setSourceChain,
         setDestinationChain,
         setSrcChainTokenIn,
         setDstChainTokenOut,
+        setDstChainTokenOutRecipient,
+        setSendToDifferentAddress,
+        setSenderAddress,
         setAmountIn,
         flipNetworks,
         forceRefresh,
@@ -266,6 +347,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
       suppChains,
       sourceChain,
       destinationChain,
+      senderAddress,
       srcTokens,
       dstTokens,
       srcChainTokenIn,
@@ -273,6 +355,8 @@ const DlnBridgeProvider = ({ children }: Props) => {
       amountIn,
       srcChainTokenInAmount,
       dstChainTokenOutAmount,
+      sendToDifferentAddress,
+      dstChainTokenOutRecipient,
       isFetchingQuote,
       quote,
       forceRefresh,

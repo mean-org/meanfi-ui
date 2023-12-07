@@ -30,6 +30,16 @@ export interface SrcChainTokenIn {
   mutatedWithOperatingExpense: boolean;
 }
 
+export interface CreateTxSrcChainTokenOut {
+  name: string;
+  symbol: string;
+  chainId: number;
+  address: string;
+  decimals: number;
+  amount: string;
+  maxRefundAmount: string;
+}
+
 export interface DstChainTokenOut {
   address: string;
   chainId: number;
@@ -39,7 +49,7 @@ export interface DstChainTokenOut {
   amount: string;
   recommendedAmount: string;
   maxTheoreticalAmount: string;
-  withoutAdditionalTakerRewardsAmount: string;
+  withoutAdditionalTakerRewardsAmount?: string;
 }
 
 export interface Payload {
@@ -64,12 +74,32 @@ export interface Estimation {
   recommendedSlippage: number;
 }
 
+export interface CreateTxEstimation {
+  srcChainTokenIn: SrcChainTokenIn;
+  srcChainTokenOut: CreateTxSrcChainTokenOut;
+  dstChainTokenOut: DstChainTokenOut;
+  costsDetails: CostsDetail[];
+  recommendedSlippage: number;
+}
+
 export interface Order {
   approximateFulfillmentDelay: number;
 }
 
+export interface Tx {
+  data: string;
+}
+
 export interface DlnOrderQuoteResponse {
   estimation: Estimation;
+  prependedOperatingExpenseCost: string;
+  order: Order;
+  fixFee: string;
+}
+
+export interface DlnOrderCreateTxResponse {
+  estimation: CreateTxEstimation;
+  tx: Tx;
   prependedOperatingExpenseCost: string;
   order: Order;
   fixFee: string;
