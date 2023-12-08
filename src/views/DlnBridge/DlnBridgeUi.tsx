@@ -30,6 +30,10 @@ import { AppStateContext } from 'contexts/appstate';
 import DebugInfo from './DebugInfo';
 import { LoadingOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 import { useDebounce } from 'hooks/useDebounce';
+import useTransaction from 'hooks/useTransaction';
+import { DlnOrderCreateTxResponse } from './types';
+import { OperationType } from 'models/enums';
+import createVersionedTxFromEncodedTx from './createVersionedTxFromEncodedTx';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -40,9 +44,7 @@ const DlnBridgeUi = () => {
   const connection = useConnection();
   const { publicKey } = useWallet();
   const { loadingPrices, refreshPrices, getTokenPriceByAddress } = useContext(AppStateContext);
-
-  const isBusy = false; // Later on when Tx is executing it should reflect busy state
-
+  const [isBusy, setIsBusy] = useState(false);
   const [amountInput, setAmountInput] = useState('');
   const debouncedAmountInput = useDebounce<string>(amountInput, INPUT_DEBOUNCE_TIME);
 
@@ -217,8 +219,63 @@ const DlnBridgeUi = () => {
     }
   }, [destinationChain, dstChainName, dstChainTokenOutRecipient, publicKey, sourceChain, srcChainData]);
 
-  const onStartSwapTx = () => {
-    console.log('So far so good...');
+  const onTransactionFinished = () => {
+    console.log('Transaction finished!');
+  };
+
+  const { onExecute } = useTransaction();
+
+  const onStartSwapTx = async () => {
+    if (sourceChain !== SOLANA_CHAIN_ID) return;
+
+    if (!publicKey) return;
+
+    const txData = quote as DlnOrderCreateTxResponse;
+    const sameChainSwap = sourceChain === destinationChain;
+    const displayAmountIn = `${
+      txData && srcChainTokenIn
+        ? formatThousands(parseFloat(toUiAmount(txData.estimation.srcChainTokenIn.amount, srcChainTokenIn.decimals)), 4)
+        : '0'
+    } ${srcChainTokenIn?.symbol}`;
+    const displayAmountOut = `${
+      txData && dstChainTokenOut
+        ? formatThousands(
+            parseFloat(toUiAmount(txData.estimation.dstChainTokenOut.amount, dstChainTokenOut.decimals)),
+            4,
+          )
+        : '0'
+    } ${dstChainTokenOut?.symbol}`;
+
+    const payload = () => {
+      if (!txData.tx.data) return;
+      return {
+        txData,
+      };
+    };
+
+    await onExecute({
+      name: 'Swap asset',
+      loadingMessage: () =>
+        sameChainSwap
+          ? `Swapping ${srcChainData?.chainName} tokens`
+          : `Bridge ${displayAmountIn} ${srcChainData?.chainName} => ${displayAmountOut} in ${dstChainName}`,
+      completedMessage: () =>
+        sameChainSwap
+          ? `Successfully swapped ${srcChainData?.chainName} tokens`
+          : `Order created to bridge ${displayAmountIn} ${srcChainData?.chainName} => ${displayAmountOut} in ${dstChainName}`,
+      operationType: OperationType.Swap,
+      payload,
+      setIsBusy,
+      nativeBalance,
+      generateTransaction: async ({ data }) => {
+        return createVersionedTxFromEncodedTx(
+          connection, // connection
+          publicKey, // feePayer
+          data.txData.tx.data, // hex-encoded tx
+        );
+      },
+    });
+    onTransactionFinished();
   };
 
   // Establish sender address. So far only for Solana
