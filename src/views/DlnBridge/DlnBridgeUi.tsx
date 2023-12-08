@@ -31,9 +31,10 @@ import DebugInfo from './DebugInfo';
 import { LoadingOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 import { useDebounce } from 'hooks/useDebounce';
 import useTransaction from 'hooks/useTransaction';
-import { DlnOrderCreateTxResponse } from './types';
+import { DlnOrderCreateTxResponse } from './dlnOrderTypes';
 import { OperationType } from 'models/enums';
 import createVersionedTxFromEncodedTx from './createVersionedTxFromEncodedTx';
+import { SwapCreateTxResponse } from './singlChainOrderTypes';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -65,6 +66,7 @@ const DlnBridgeUi = () => {
     srcChainTokenIn,
     dstChainTokenOut,
     quote,
+    singlChainQuote,
     amountIn,
     senderAddress,
     srcChainTokenInAmount,
@@ -83,6 +85,8 @@ const DlnBridgeUi = () => {
     flipNetworks,
     forceRefresh,
   } = useDlnBridge();
+
+  const sameChainSwap = sourceChain === destinationChain;
 
   const getMaxAmount = () => {
     const amount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
@@ -230,26 +234,46 @@ const DlnBridgeUi = () => {
 
     if (!publicKey) return;
 
-    const txData = quote as DlnOrderCreateTxResponse;
-    const sameChainSwap = sourceChain === destinationChain;
-    const displayAmountIn = `${
-      txData && srcChainTokenIn
-        ? formatThousands(parseFloat(toUiAmount(txData.estimation.srcChainTokenIn.amount, srcChainTokenIn.decimals)), 4)
-        : '0'
-    } ${srcChainTokenIn?.symbol}`;
-    const displayAmountOut = `${
-      txData && dstChainTokenOut
-        ? formatThousands(
-            parseFloat(toUiAmount(txData.estimation.dstChainTokenOut.amount, dstChainTokenOut.decimals)),
-            4,
-          )
-        : '0'
-    } ${dstChainTokenOut?.symbol}`;
+    const dlnOrderTxData = quote as DlnOrderCreateTxResponse;
+    const singleChainSwapTxData = singlChainQuote as SwapCreateTxResponse;
+
+    const displayAmountIn = sameChainSwap
+      ? `${
+          singleChainSwapTxData && srcChainTokenIn
+            ? formatThousands(parseFloat(toUiAmount(singleChainSwapTxData.tokenIn.amount, srcChainTokenIn.decimals)), 4)
+            : '0'
+        } ${srcChainTokenIn?.symbol}`
+      : `${
+          dlnOrderTxData && srcChainTokenIn
+            ? formatThousands(
+                parseFloat(toUiAmount(dlnOrderTxData.estimation.srcChainTokenIn.amount, srcChainTokenIn.decimals)),
+                4,
+              )
+            : '0'
+        } ${srcChainTokenIn?.symbol}`;
+    const displayAmountOut = sameChainSwap
+      ? `${
+          singleChainSwapTxData && dstChainTokenOut
+            ? formatThousands(
+                parseFloat(toUiAmount(singleChainSwapTxData.tokenOut.amount, dstChainTokenOut.decimals)),
+                4,
+              )
+            : '0'
+        } ${dstChainTokenOut?.symbol}`
+      : `${
+          dlnOrderTxData && dstChainTokenOut
+            ? formatThousands(
+                parseFloat(toUiAmount(dlnOrderTxData.estimation.dstChainTokenOut.amount, dstChainTokenOut.decimals)),
+                4,
+              )
+            : '0'
+        } ${dstChainTokenOut?.symbol}`;
 
     const payload = () => {
-      if (!txData.tx.data) return;
+      // Lets ensure we have the tx data
+      if ((sameChainSwap && !singleChainSwapTxData.tx.data) || (!sameChainSwap && !dlnOrderTxData.tx.data)) return;
       return {
-        txData,
+        txData: sameChainSwap ? singleChainSwapTxData : dlnOrderTxData,
       };
     };
 
@@ -257,12 +281,12 @@ const DlnBridgeUi = () => {
       name: 'Swap asset',
       loadingMessage: () =>
         sameChainSwap
-          ? `Swapping ${srcChainData?.chainName} tokens`
-          : `Bridge ${displayAmountIn} ${srcChainData?.chainName} => ${displayAmountOut} in ${dstChainName}`,
+          ? `Swapping ${displayAmountIn} → ${displayAmountOut} in ${dstChainName}`
+          : `Bridge ${displayAmountIn} ${srcChainData?.chainName} → ${displayAmountOut} in ${dstChainName}`,
       completedMessage: () =>
         sameChainSwap
-          ? `Successfully swapped ${srcChainData?.chainName} tokens`
-          : `Order created to bridge ${displayAmountIn} ${srcChainData?.chainName} => ${displayAmountOut} in ${dstChainName}`,
+          ? `Successfully swapped ${displayAmountIn} → ${displayAmountOut} in ${dstChainName}`
+          : `Order created to bridge ${displayAmountIn} ${srcChainData?.chainName} → ${displayAmountOut} in ${dstChainName}`,
       operationType: OperationType.Swap,
       payload,
       setIsBusy,
@@ -369,10 +393,18 @@ const DlnBridgeUi = () => {
   useEffect(() => {
     if (sourceChain === destinationChain && !sendToDifferentAddress) {
       setSendToDifferentAddress(false);
+      setDstChainTokenOutRecipient(senderAddress);
     } else if (sourceChain !== destinationChain && !sendToDifferentAddress) {
       setSendToDifferentAddress(true);
     }
-  }, [destinationChain, sendToDifferentAddress, setSendToDifferentAddress, sourceChain]);
+  }, [
+    sourceChain,
+    senderAddress,
+    destinationChain,
+    sendToDifferentAddress,
+    setDstChainTokenOutRecipient,
+    setSendToDifferentAddress,
+  ]);
 
   // Process debounced input
   useEffect(() => {
