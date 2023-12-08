@@ -56,9 +56,7 @@ const DlnBridgeUi = () => {
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [selectedTokenSet, setSelectedTokenSet] = useState<ActionTarget>('source');
 
-  // supportedChains load automatically as an array of number
   const {
-    supportedChains,
     sourceChain,
     destinationChain,
     srcTokens,
