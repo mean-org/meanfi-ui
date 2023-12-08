@@ -100,7 +100,7 @@ const defaultProvider: Value = {
   srcChainTokenInAmount: '',
   amountIn: '',
   senderAddress: '',
-  destinationChain: 1,
+  destinationChain: 137,
   dstTokens: undefined,
   dstChainTokenOut: undefined,
   dstChainTokenOutAmount: '',

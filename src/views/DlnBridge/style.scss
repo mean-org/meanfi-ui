@@ -1,13 +1,12 @@
-.playground {
-  .debridge-wrapper {
-    width: 100%;
-    max-width: var(--container-max-width-640) !important;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 1rem;
-    box-shadow: none;
-    border-radius: var(--custom-control-border-radius);
+.bridge {
+  .place-transaction-box {
+    padding: 1.5rem;
+    min-width: 600px;
+    width: auto;
+    max-width: 720px;
+  }
 
+  .debridge-wrapper {
     .flip-button-container {
       display: flex;
       position: relative;

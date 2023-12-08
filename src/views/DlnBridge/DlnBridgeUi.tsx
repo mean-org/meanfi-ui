@@ -44,7 +44,7 @@ const DlnBridgeUi = () => {
   const { account } = useNativeAccount();
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const { loadingPrices, refreshPrices, getTokenPriceByAddress } = useContext(AppStateContext);
+  const { loadingPrices, isWhitelisted, refreshPrices, getTokenPriceByAddress } = useContext(AppStateContext);
   const [isBusy, setIsBusy] = useState(false);
   const [amountInput, setAmountInput] = useState('');
   const debouncedAmountInput = useDebounce<string>(amountInput, INPUT_DEBOUNCE_TIME);
@@ -360,16 +360,6 @@ const DlnBridgeUi = () => {
       });
   }, [connection, nativeBalance, publicKey, sourceChain, srcChainTokenIn]);
 
-  // Set srcChainId and dstChainId
-  useEffect(() => {
-    if (supportedChains.length) {
-      console.log('supportedChains:', supportedChains);
-      setSourceChain(SOLANA_CHAIN_ID);
-      setDestinationChain(137);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supportedChains]);
-
   // srcTokens are loaded by setting srcChainId.
   // dstTokens are loaded by setting dstChainId.
 
@@ -413,8 +403,8 @@ const DlnBridgeUi = () => {
   }, [debouncedAmountInput, setAmountIn]);
 
   return (
-    <div className="pt-6">
-      <div className="debridge-wrapper mb-4">
+    <>
+      <div className="debridge-wrapper">
         {/* Source chain, token & amount */}
         <div className="form-label">FROM</div>
         <div className="well mb-0">
@@ -696,29 +686,36 @@ const DlnBridgeUi = () => {
         </Button>
       </div>
 
-      <div className="well-group text-monospace">
-        <DebugInfo caption="Source chain ID:" value={`${sourceChain} (${srcChainData?.chainName ?? '?'})`} />
-        <DebugInfo caption="Destination chain ID:" value={`${destinationChain} (${dstChainName})`} />
-        <DebugInfo caption="Source chain tokens:" value={srcTokens ? Object.keys(srcTokens).length : '-'} />
-        <DebugInfo caption="Destination chain tokens:" value={dstTokens ? Object.keys(dstTokens).length : '-'} />
-        <DebugInfo
-          caption="Selected In token:"
-          value={
-            srcChainTokenIn ? `${srcChainTokenIn.symbol} (${srcChainTokenIn.name}) | ${srcChainTokenIn.address}` : null
-          }
-        />
-        <DebugInfo caption="Amount in:" value={amountIn} />
-        <DebugInfo caption="Token amount in:" value={srcChainTokenInAmount} />
-        <DebugInfo
-          caption="Selected Out token:"
-          value={
-            dstChainTokenOut
-              ? `${dstChainTokenOut.symbol} (${dstChainTokenOut.name}) | ${dstChainTokenOut.address}`
-              : null
-          }
-        />
-        <DebugInfo caption="Sender address:" value={senderAddress} />
-      </div>
+      {isWhitelisted ? (
+        <div className="well-group text-monospace small mt-4">
+          <DebugInfo caption="Source chain ID:" value={`${sourceChain} (${srcChainData?.chainName ?? '?'})`} />
+          <DebugInfo caption="Destination chain ID:" value={`${destinationChain} (${dstChainName})`} />
+          <DebugInfo caption="Source chain tokens:" value={srcTokens ? Object.keys(srcTokens).length : '-'} />
+          <DebugInfo caption="Destination chain tokens:" value={dstTokens ? Object.keys(dstTokens).length : '-'} />
+          <DebugInfo caption="Amount in:" value={amountIn} />
+          <DebugInfo caption="Token amount in:" value={srcChainTokenInAmount} />
+          <DebugInfo
+            caption="Selected In token:"
+            value={
+              srcChainTokenIn
+                ? `${srcChainTokenIn.symbol} (${srcChainTokenIn.name}) | ${srcChainTokenIn.address}`
+                : null
+            }
+          />
+          <DebugInfo caption="Amount out:" value={`${parseFloat(getOutputAmount())}`} />
+          <DebugInfo caption="Token amount out:" value={dstChainTokenOutAmount} />
+          <DebugInfo
+            caption="Selected Out token:"
+            value={
+              dstChainTokenOut
+                ? `${dstChainTokenOut.symbol} (${dstChainTokenOut.name}) | ${dstChainTokenOut.address}`
+                : null
+            }
+          />
+          <DebugInfo caption="Sender address:" value={senderAddress} />
+          <DebugInfo caption="Recipient address:" value={dstChainTokenOutRecipient} />
+        </div>
+      ) : null}
 
       {/* Token selection modal */}
       {isTokenSelectorModalVisible ? (
@@ -749,7 +746,7 @@ const DlnBridgeUi = () => {
           )}
         </Modal>
       ) : null}
-    </div>
+    </>
   );
 };
 

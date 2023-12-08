@@ -68,9 +68,8 @@ import { BN } from '@project-serum/anchor';
 import { useWalletAccount } from 'contexts/walletAccount';
 import { AccountContext } from 'models/accounts/AccountContext';
 import { isSystemOwnedAccount } from 'middleware/accountInfoGetters';
-import DlnBridge from 'views/DlnBridge';
 
-type TabOption = 'first-tab' | 'test-stream' | 'account-info' | 'multisig-tab' | 'dln-bridge' | 'misc-tab' | undefined;
+type TabOption = 'first-tab' | 'test-stream' | 'account-info' | 'multisig-tab' | 'misc-tab' | undefined;
 type StreamViewerOption = 'treasurer' | 'beneficiary';
 const notificationKey = 'updatable';
 
@@ -646,9 +645,6 @@ export const PlaygroundView = () => {
         break;
       case 'multisig-tab':
         setCurrentTab('multisig-tab');
-        break;
-      case 'dln-bridge':
-        setCurrentTab('dln-bridge');
         break;
       case 'misc-tab':
         setCurrentTab('misc-tab');
@@ -1775,8 +1771,6 @@ export const PlaygroundView = () => {
         return renderDemo2Tab();
       case 'multisig-tab':
         return renderMultisigTab();
-      case 'dln-bridge':
-        return <DlnBridge />;
       case 'misc-tab':
         return renderMiscTab;
       default:
@@ -1810,12 +1804,6 @@ export const PlaygroundView = () => {
           onClick={() => navigateToTab('account-info')}
         >
           Account info
-        </div>
-        <div
-          className={`tab-button ${currentTab === 'dln-bridge' ? 'active' : ''}`}
-          onClick={() => navigateToTab('dln-bridge')}
-        >
-          DLN Bridge Demo
         </div>
         <div
           className={`tab-button ${currentTab === 'misc-tab' ? 'active' : ''}`}
