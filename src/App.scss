@@ -9273,30 +9273,34 @@ code {
   }
 }
 
+.icon {
+
+  &.anticon-check,
+  &.anticon-check-circle {
+    color: var(--color-notify-success);
+  }
+
+  &.anticon-info-circle {
+    color: var(--color-notify-info);
+  }
+
+  &.anticon-warning,
+  &.anticon-exclamation-circle {
+    color: var(--color-notify-warning);
+  }
+
+  &.anticon-close,
+  &.anticon-close-circle {
+    color: var(--color-notify-error);
+  }
+}
+
 .transaction-progress {
   text-align: center;
   padding: 0 1.5em 1.5em;
 
   .icon {
     margin: 1rem;
-
-    &.anticon-check,
-    &.anticon-check-circle {
-      color: var(--color-notify-success);
-    }
-
-    &.anticon-info-circle {
-      color: var(--color-notify-info);
-    }
-
-    &.anticon-warning,
-    &.anticon-exclamation-circle {
-      color: var(--color-notify-warning);
-    }
-
-    &.anticon-close-circle {
-      color: var(--color-notify-error);
-    }
   }
 
   .operation {

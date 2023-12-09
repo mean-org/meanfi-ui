@@ -2,11 +2,30 @@
   .place-transaction-box {
     padding: 1.5rem;
     min-width: 600px;
+    min-height: 430px;
     width: auto;
     max-width: 720px;
   }
 
   .debridge-wrapper {
+    .panel2.show {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      .order-submitted {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 420px;
+        min-height: 320px;
+        padding: 2rem 0;
+        gap: 2rem;
+      }
+    }
+
     .flip-button-container {
       display: flex;
       position: relative;

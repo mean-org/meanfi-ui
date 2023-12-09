@@ -43,6 +43,7 @@ type BaseArgs<T extends LooseObject | undefined> = {
 
   // set busy when transaction starts, unset when it ends
   setIsBusy: (isBusy: boolean) => void;
+  onTxSent?: (txHash: string) => void;
 };
 
 type SinglesigArgs<T extends LooseObject | undefined> = Omit<BaseArgs<T>, 'generateTransaction'> & {
@@ -136,6 +137,7 @@ const useTransaction = () => {
     generateTransaction,
     generateMultisigArgs,
     setIsBusy,
+    onTxSent,
   }: Args<T>) => {
     const payload = basePayload();
 
@@ -343,6 +345,7 @@ const useTransaction = () => {
 
             setIsBusy(false);
             resetTransactionStatus();
+            onTxSent?.(signature);
           } else {
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
