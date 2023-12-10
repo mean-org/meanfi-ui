@@ -3,9 +3,9 @@
 // Normal / Light theme
 :root {
   /* Main colors */
-  --color-primary: #b7001c;
-  --color-primary-highlight: #ff0017;
-  --color-primary-darken: #890014;
+  --color-primary: #DF2F2F;
+  --color-primary-highlight: #EE2727;
+  --color-primary-darken: #C42626;
   --color-secondary: #212121;
   --color-selection: #f0f0f0;
   --color-item-selector-selected: #73c700;
@@ -108,9 +108,9 @@
 // Inverted / Dark theme
 [data-theme='dark'] {
   /* Main colors */
-  --color-primary: #b7001c;
-  --color-primary-highlight: #ff0017;
-  --color-primary-darken: #890014;
+  --color-primary: #DF2F2F;
+  --color-primary-highlight: #EE2727;
+  --color-primary-darken: #C42626;
   --color-secondary: #818cab;
   --color-selection: #1a1a1a;
   --color-item-selector-selected: #73c700;
@@ -3668,13 +3668,6 @@ main section {
       float: right;
       min-width: 48px;
       min-height: 48px;
-    }
-  }
-
-  .cool-off-period-label {
-    .info-value {
-      color: #e1e2fd;
-      font-weight: 600;
     }
   }
 
@@ -9273,30 +9266,34 @@ code {
   }
 }
 
+.icon {
+
+  &.anticon-check,
+  &.anticon-check-circle {
+    color: var(--color-notify-success);
+  }
+
+  &.anticon-info-circle {
+    color: var(--color-notify-info);
+  }
+
+  &.anticon-warning,
+  &.anticon-exclamation-circle {
+    color: var(--color-notify-warning);
+  }
+
+  &.anticon-close,
+  &.anticon-close-circle {
+    color: var(--color-notify-error);
+  }
+}
+
 .transaction-progress {
   text-align: center;
   padding: 0 1.5em 1.5em;
 
   .icon {
     margin: 1rem;
-
-    &.anticon-check,
-    &.anticon-check-circle {
-      color: var(--color-notify-success);
-    }
-
-    &.anticon-info-circle {
-      color: var(--color-notify-info);
-    }
-
-    &.anticon-warning,
-    &.anticon-exclamation-circle {
-      color: var(--color-notify-warning);
-    }
-
-    &.anticon-close-circle {
-      color: var(--color-notify-error);
-    }
   }
 
   .operation {
