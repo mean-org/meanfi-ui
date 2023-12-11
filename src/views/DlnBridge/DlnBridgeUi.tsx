@@ -39,6 +39,8 @@ import { DlnOrderCreateTxResponse } from './dlnOrderTypes';
 import { OperationType } from 'models/enums';
 import createVersionedTxFromEncodedTx from './createVersionedTxFromEncodedTx';
 import { SwapCreateTxResponse } from './singlChainOrderTypes';
+import { useAccount } from 'wagmi';
+import CustomConnectButton from './CustomConnectButton';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -46,6 +48,7 @@ type UiStage = 'order-setup' | 'order-submitted';
 
 const DlnBridgeUi = () => {
   const { t } = useTranslation('common');
+  const { address } = useAccount();
   const { account } = useNativeAccount();
   const connection = useConnection();
   const { publicKey } = useWallet();
@@ -92,6 +95,7 @@ const DlnBridgeUi = () => {
     forceRefresh,
   } = useDlnBridge();
 
+  const isAddressConnected = !!address;
   const sameChainSwap = sourceChain === destinationChain;
 
   const getMaxAmount = () => {
@@ -437,7 +441,14 @@ const DlnBridgeUi = () => {
       <div className="debridge-wrapper">
         <div className={getPanel1Classes()}>
           {/* Source chain, token & amount */}
-          <div className="form-label">FROM</div>
+          <div className="flex-fixed-left mb-1 align-items-center">
+            <div className="left">
+              <div className="form-label mb-0">FROM</div>
+            </div>
+            <div className="right">
+              {sourceChain !== SOLANA_CHAIN_ID && isAddressConnected ? <CustomConnectButton /> : null}
+            </div>
+          </div>
           <div className="well mb-0">
             <div className="two-column-form-layout col40x60 mb-0">
               <div className="left">
@@ -708,22 +719,25 @@ const DlnBridgeUi = () => {
             </div>
           ) : null}
           {/* Action button */}
-          <Button
-            className={`main-cta ${isBusy ? 'inactive' : ''}`}
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={onStartSwapTx}
-            disabled={isBusy || isFetchingQuote || !isTransferValid}
-          >
-            {isBusy && (
-              <span className="mr-1">
-                <LoadingOutlined style={{ fontSize: '16px' }} />
-              </span>
-            )}
-            {isBusy ? 'Swapping' : transactionStartButtonLabel}
-          </Button>
+          {sourceChain !== SOLANA_CHAIN_ID && !isAddressConnected ? <CustomConnectButton /> : null}
+          {sourceChain === SOLANA_CHAIN_ID ? (
+            <Button
+              className={`main-cta ${isBusy ? 'inactive' : ''}`}
+              block
+              type="primary"
+              shape="round"
+              size="large"
+              onClick={onStartSwapTx}
+              disabled={isBusy || isFetchingQuote || !isTransferValid}
+            >
+              {isBusy && (
+                <span className="mr-1">
+                  <LoadingOutlined style={{ fontSize: '16px' }} />
+                </span>
+              )}
+              {isBusy ? 'Swapping' : transactionStartButtonLabel}
+            </Button>
+          ) : null}
           {isLocal() && isWhitelisted ? (
             <div className="well-group text-monospace small mt-4">
               <DebugInfo caption="Source chain ID:" value={`${sourceChain} (${srcChainData?.chainName ?? '?'})`} />
