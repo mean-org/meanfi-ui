@@ -90,6 +90,7 @@ type Value = {
   setAmountIn: (amount: string) => void;
   flipNetworks: () => void;
   forceRefresh: () => void;
+  resetQuote: () => void;
 };
 
 const defaultProvider: Value = {
@@ -119,6 +120,7 @@ const defaultProvider: Value = {
   setAmountIn: () => void 0,
   flipNetworks: () => void 0,
   forceRefresh: () => void 0,
+  resetQuote: () => void 0,
 };
 
 const DlnBridgeContext = createContext(defaultProvider);
@@ -148,8 +150,12 @@ const DlnBridgeProvider = ({ children }: Props) => {
   const [senderAddress, setSenderAddress] = useState(defaultProvider.senderAddress);
   const [srcChainTokensResponse, setSrcChainTokensResponse] = useState<GetDlnChainTokenListResponse>();
   const [dstChainTokensResponse, setDstChainTokensResponse] = useState<GetDlnChainTokenListResponse>();
-  const [quote, setQuote] = useState<DlnOrderQuoteResponse | DlnOrderCreateTxResponse>();
-  const [singlChainQuote, setSinglChainQuote] = useState<SwapEstimationResponse | SwapCreateTxResponse>();
+  const [quote, setQuote] = useState<DlnOrderQuoteResponse | DlnOrderCreateTxResponse | undefined>(
+    defaultProvider.quote,
+  );
+  const [singlChainQuote, setSinglChainQuote] = useState<SwapEstimationResponse | SwapCreateTxResponse | undefined>(
+    defaultProvider.singlChainQuote,
+  );
 
   const affiliateFeeRecipient = useMemo(() => getAffiliateFeeRecipient(sourceChain), [sourceChain]);
 
@@ -218,6 +224,12 @@ const DlnBridgeProvider = ({ children }: Props) => {
     setSrcChainTokenIn(newSrcToken);
     setAmountIn('');
   }, [destinationChain, dstChainTokenOut, dstTokens, sourceChain, srcChainTokenIn, srcTokens]);
+
+  // Clear the quote/estimate
+  const resetQuote = useCallback(() => {
+    setQuote(defaultProvider.quote);
+    setSinglChainQuote(defaultProvider.singlChainQuote);
+  }, []);
 
   // Takes care of running the DlnOrderQuote or DlnOrderTransaction accordingly
   useEffect(() => {
@@ -422,6 +434,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
         isFetchingQuote,
         quote,
         singlChainQuote,
+        resetQuote,
         setSourceChain,
         setDestinationChain,
         setSrcChainTokenIn,
@@ -450,6 +463,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
       isFetchingQuote,
       quote,
       singlChainQuote,
+      resetQuote,
       forceRefresh,
       flipNetworks,
     ],

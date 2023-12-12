@@ -24,6 +24,7 @@ export interface TxConfirmationInfo {
   timestamp?: number;
   extras?: any;
   timestampCompleted?: number;
+  explorerLink?: string;
 }
 
 type Listener = (value: any) => void;
@@ -99,23 +100,25 @@ export const txConfirmationCache = {
   },
 };
 
-interface TxConfirmationState {
+interface TxConfirmationProviderValues {
   lastVaultCreated: string;
   confirmationHistory: TxConfirmationInfo[];
+  addTransactionNotification: (data: TxConfirmationInfo) => void;
   enqueueTransactionConfirmation: (data: TxConfirmationInfo) => void;
   clearConfirmationHistory: () => void;
   setLastVaultCreated: (ddcaAccountPda: string) => void;
 }
 
-const defaultCtxValues: TxConfirmationState = {
+const defaultCtxValues: TxConfirmationProviderValues = {
   lastVaultCreated: '',
   confirmationHistory: [],
+  addTransactionNotification: () => {},
   enqueueTransactionConfirmation: () => {},
   clearConfirmationHistory: () => {},
   setLastVaultCreated: () => {},
 };
 
-export const TxConfirmationContext = React.createContext<TxConfirmationState>(defaultCtxValues);
+export const TxConfirmationContext = React.createContext<TxConfirmationProviderValues>(defaultCtxValues);
 
 const TxConfirmationProvider: React.FC = ({ children }) => {
   const connection = useConnection();
@@ -135,6 +138,41 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
   const setLastVaultCreated = (ddcaAccountPda: string) => {
     updatelastVaultCreated(ddcaAccountPda);
   };
+
+  const addTransactionNotification = useCallback(
+    async (data: TxConfirmationInfo) => {
+      const rebuildHistoryFromCache = () => {
+        const history = Array.from(txStatusCache.values());
+        setConfirmationHistory([...history].reverse());
+        consoleOut('confirmationHistory:', history, 'orange');
+      };
+
+      const now = new Date().getTime();
+      txConfirmationCache.add(data.signature, data, now);
+      openNotification({
+        key: data.signature,
+        type: 'info',
+        title: data.completedTitle,
+        duration: data.completedMessageTimeout || 5,
+        description: (
+          <>
+            <span className="mr-1">
+              {data.completedMessage ? data.completedMessage : OperationType[data.operationType]}
+            </span>
+            {data.explorerLink ? (
+              <div>
+                <a className="secondary-link" href={data.explorerLink} target="_blank" rel="noopener noreferrer">
+                  View on blockchain explorer&gt;
+                </a>
+              </div>
+            ) : null}
+          </>
+        ),
+      });
+      rebuildHistoryFromCache();
+    },
+    [t],
+  );
 
   const enqueueTransactionConfirmation = useCallback(
     async (data: TxConfirmationInfo) => {
@@ -256,6 +294,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
       value={{
         confirmationHistory,
         lastVaultCreated,
+        addTransactionNotification,
         enqueueTransactionConfirmation,
         clearConfirmationHistory,
         setLastVaultCreated,

@@ -39,6 +39,16 @@ import { DlnOrderCreateTxResponse } from './dlnOrderTypes';
 import { OperationType } from 'models/enums';
 import createVersionedTxFromEncodedTx from './createVersionedTxFromEncodedTx';
 import { SwapCreateTxResponse } from './singlChainOrderTypes';
+import {
+  useAccount,
+  useBalance,
+  useNetwork,
+  usePrepareSendTransaction,
+  useSendTransaction,
+  useSwitchNetwork,
+} from 'wagmi';
+import CustomConnectButton from './CustomConnectButton';
+import { TxConfirmationContext } from 'contexts/transaction-status';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -50,6 +60,7 @@ const DlnBridgeUi = () => {
   const connection = useConnection();
   const { publicKey } = useWallet();
   const { loadingPrices, isWhitelisted, refreshPrices, getTokenPriceByAddress } = useContext(AppStateContext);
+  const { addTransactionNotification } = useContext(TxConfirmationContext);
   const [uiStage, setUiStage] = useState<UiStage>('order-setup');
   const [orderSubmittedContent, setOrderSubmittedContent] = useState<{ message: string; txHash: string }>();
   const [orderFailedContent, setOrderFailedContent] = useState('');
@@ -80,6 +91,7 @@ const DlnBridgeUi = () => {
     dstChainTokenOutRecipient,
     sendToDifferentAddress,
     isFetchingQuote,
+    resetQuote,
     setSourceChain,
     setDestinationChain,
     setDstChainTokenOut,
@@ -92,7 +104,33 @@ const DlnBridgeUi = () => {
     forceRefresh,
   } = useDlnBridge();
 
+  const { address } = useAccount();
+  const { chain } = useNetwork();
+
+  const isAddressConnected = !!address;
+  const isSrcChainSolana = sourceChain === SOLANA_CHAIN_ID;
   const sameChainSwap = sourceChain === destinationChain;
+  const srcChainData = useMemo(() => getChainById(sourceChain), [sourceChain]);
+  const networkFeeToken = useMemo(() => {
+    if (srcTokens && srcChainData?.networkFeeToken) {
+      const feeToken = srcTokens.find(t => t.address === srcChainData.networkFeeToken);
+      console.log('feeToken:', feeToken);
+      return feeToken;
+    }
+
+    return undefined;
+  }, [srcChainData?.networkFeeToken, srcTokens]);
+  const dstChainName = useMemo(() => getChainById(destinationChain)?.chainName ?? 'Unknown', [destinationChain]);
+
+  const { switchNetwork } = useSwitchNetwork();
+
+  const balance = useBalance({
+    enabled: sourceChain !== SOLANA_CHAIN_ID && srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID,
+    address,
+    chainId: sourceChain,
+    token:
+      srcChainTokenIn?.address === srcChainData?.networkFeeToken ? undefined : `0x${srcChainTokenIn?.address.slice(2)}`,
+  });
 
   const getMaxAmount = () => {
     const amount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
@@ -184,29 +222,23 @@ const DlnBridgeUi = () => {
     setDstChainTokenOutRecipient(trimmedValue);
   };
 
-  const onToggleSendToDifferentAddress = (value: boolean) => {
+  const handleToggleSendToDifferentAddress = (value: boolean) => {
+    if (sourceChain !== destinationChain) return;
+
     setSendToDifferentAddress(value);
-    if (sourceChain === destinationChain && sourceChain === SOLANA_CHAIN_ID && value) {
+    if (sourceChain === destinationChain && isSrcChainSolana && value) {
       setDstChainTokenOutRecipient(senderAddress);
     }
   };
 
-  const srcChainData = useMemo(() => getChainById(sourceChain), [sourceChain]);
-  const networkFeeToken = useMemo(() => {
-    if (srcTokens && srcChainData?.networkFeeToken) {
-      const feeToken = srcTokens.find(t => t.address === srcChainData.networkFeeToken);
-      console.log('feeToken:', feeToken);
-      return feeToken;
-    }
-
-    return undefined;
-  }, [srcChainData?.networkFeeToken, srcTokens]);
-  const dstChainName = useMemo(() => getChainById(destinationChain)?.chainName ?? 'Unknown', [destinationChain]);
+  const handleFlipNetworks = () => {
+    resetQuote();
+    setDstChainTokenOutRecipient('');
+    flipNetworks();
+  };
 
   const isTransferValid = useMemo(() => {
-    if (sourceChain !== SOLANA_CHAIN_ID) {
-      return false;
-    } else if (!publicKey) {
+    if (isSrcChainSolana && !publicKey) {
       return false;
     } else if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
       return false;
@@ -223,13 +255,12 @@ const DlnBridgeUi = () => {
     dstChainTokenOutRecipient,
     publicKey,
     sourceChain,
+    isSrcChainSolana,
     srcChainTokenIn?.address,
   ]);
 
   const transactionStartButtonLabel = useMemo(() => {
-    if (sourceChain !== SOLANA_CHAIN_ID) {
-      return srcChainData ? `Cannot execute on ${srcChainData.chainName} yet` : 'Unsupported network';
-    } else if (!publicKey) {
+    if (isSrcChainSolana && !publicKey) {
       return 'Connect wallet';
     } else if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
       return 'Change source or destination token';
@@ -247,15 +278,97 @@ const DlnBridgeUi = () => {
     dstChainTokenOutRecipient,
     publicKey,
     sourceChain,
-    srcChainData,
+    isSrcChainSolana,
     srcChainTokenIn?.address,
   ]);
 
+  const { config } = usePrepareSendTransaction({
+    enabled: !isSrcChainSolana && !!(quote && (quote as DlnOrderCreateTxResponse).tx.data),
+    to: !isSrcChainSolana && quote ? (quote as DlnOrderCreateTxResponse).tx.to : undefined,
+    value: !isSrcChainSolana && quote ? BigInt((quote as DlnOrderCreateTxResponse).tx?.value ?? 0) : undefined,
+    data: !isSrcChainSolana && quote ? `0x${(quote as DlnOrderCreateTxResponse).tx?.data?.slice(2)}` : undefined,
+  });
+
+  const { isLoading, sendTransactionAsync } = useSendTransaction(config);
+
+  const evmSwapTx = async () => {
+    if (!isAddressConnected) return;
+
+    console.log('config:', config);
+
+    setOrderFailedContent('');
+    setOrderSubmittedContent(undefined);
+
+    const dlnOrderTxData = quote as DlnOrderCreateTxResponse;
+    const singleChainSwapTxData = singlChainQuote as SwapCreateTxResponse;
+
+    const displayAmountIn = sameChainSwap
+      ? `${
+          singleChainSwapTxData && srcChainTokenIn
+            ? formatThousands(parseFloat(toUiAmount(singleChainSwapTxData.tokenIn.amount, srcChainTokenIn.decimals)), 4)
+            : '0'
+        } ${srcChainTokenIn?.symbol}`
+      : `${
+          dlnOrderTxData && srcChainTokenIn
+            ? formatThousands(
+                parseFloat(toUiAmount(dlnOrderTxData.estimation.srcChainTokenIn.amount, srcChainTokenIn.decimals)),
+                4,
+              )
+            : '0'
+        } ${srcChainTokenIn?.symbol}`;
+    const displayAmountOut = sameChainSwap
+      ? `${
+          singleChainSwapTxData && dstChainTokenOut
+            ? formatThousands(
+                parseFloat(toUiAmount(singleChainSwapTxData.tokenOut.amount, dstChainTokenOut.decimals)),
+                4,
+              )
+            : '0'
+        } ${dstChainTokenOut?.symbol}`
+      : `${
+          dlnOrderTxData && dstChainTokenOut
+            ? formatThousands(
+                parseFloat(toUiAmount(dlnOrderTxData.estimation.dstChainTokenOut.amount, dstChainTokenOut.decimals)),
+                4,
+              )
+            : '0'
+        } ${dstChainTokenOut?.symbol}`;
+
+    const orderSubmittedMessage = sameChainSwap
+      ? `You have successfully submitted the order to swap ${displayAmountIn} for ${displayAmountOut} in ${dstChainName}.`
+      : `You have successfully submitted the order to move ${displayAmountIn} from ${srcChainData?.chainName} to ${dstChainName} for ${displayAmountOut}.`;
+
+    if (sendTransactionAsync) {
+      try {
+        const result = await sendTransactionAsync();
+        if (result.hash) {
+          const explorerLink = `${chain?.blockExplorers?.default.url}/tx/${result.hash}`;
+          addTransactionNotification({
+            completedTitle: sameChainSwap ? 'Swap transaction' : 'Cross-chain trade',
+            completedMessage: orderSubmittedMessage,
+            finality: 'processed',
+            operationType: OperationType.Swap,
+            signature: result.hash as string,
+            txInfoFetchStatus: 'fetched',
+            explorerLink,
+          });
+          console.log('explorerLink:', explorerLink);
+          setUiStage('order-submitted');
+          setOrderSubmittedContent({
+            message: orderSubmittedMessage,
+            txHash: result.hash,
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        setOrderFailedContent(`${error}`);
+      }
+    }
+  };
+
   const { onExecute } = useTransaction();
 
-  const onStartSwapTx = async () => {
-    if (sourceChain !== SOLANA_CHAIN_ID) return;
-
+  const solanaSwapTx = async () => {
     if (!publicKey) return;
 
     setOrderFailedContent('');
@@ -301,7 +414,9 @@ const DlnBridgeUi = () => {
 
     const payload = () => {
       // Lets ensure we have the tx data
-      if ((sameChainSwap && !singleChainSwapTxData.tx.data) || (!sameChainSwap && !dlnOrderTxData.tx.data)) return;
+      if ((sameChainSwap && !singleChainSwapTxData?.tx.data) || (!sameChainSwap && !dlnOrderTxData?.tx.data))
+        return undefined;
+
       return {
         txData: sameChainSwap ? singleChainSwapTxData : dlnOrderTxData,
       };
@@ -325,7 +440,7 @@ const DlnBridgeUi = () => {
         return createVersionedTxFromEncodedTx(
           connection, // connection
           publicKey, // feePayer
-          data.txData.tx.data, // hex-encoded tx
+          data.txData?.tx.data, // hex-encoded tx
         );
       },
       onTxSent: txHash => {
@@ -341,31 +456,51 @@ const DlnBridgeUi = () => {
     });
   };
 
+  const onStartTransaction = () => {
+    if (isSrcChainSolana) {
+      solanaSwapTx();
+    } else {
+      evmSwapTx();
+    }
+  };
+
+  // Set EVM chain on the connected adapter when source chain is changed
+  useEffect(() => {
+    if (isAddressConnected && sourceChain !== SOLANA_CHAIN_ID) {
+      switchNetwork?.(sourceChain);
+    }
+  }, [isAddressConnected, sourceChain, switchNetwork]);
+
   // Establish sender address. So far only for Solana
   useEffect(() => {
-    if (sourceChain !== SOLANA_CHAIN_ID) {
-      setSenderAddress('');
-      return;
-    }
-
-    if (publicKey) {
+    if (isSrcChainSolana && publicKey) {
       setSenderAddress(publicKey.toBase58());
+    } else if (!isSrcChainSolana && address) {
+      setSenderAddress(address);
+    } else {
+      setSenderAddress('');
     }
-  }, [sourceChain, publicKey, setSenderAddress]);
+  }, [address, isSrcChainSolana, publicKey, setSenderAddress, sourceChain]);
 
-  // Keep account balance updated
+  // Keep solana account balance updated
   useEffect(() => {
     setNativeBalance(getAmountFromLamports(account?.lamports));
   }, [account?.lamports]);
 
-  // Keep token balance updated
+  // Keep selected token balance updated for EVM
   useEffect(() => {
-    if (sourceChain !== SOLANA_CHAIN_ID) {
-      setSelectedTokenBalance(0);
-      setSelectedTokenBalanceBn(new BN(0));
-
-      return;
+    if (srcChainTokenIn && srcChainTokenIn.chainId !== SOLANA_CHAIN_ID) {
+      if (balance.data) {
+        console.log('balance:', balance.data);
+        setSelectedTokenBalance(parseFloat(balance.data.formatted));
+        setSelectedTokenBalanceBn(new BN(balance.data.value.toString()));
+      }
     }
+  }, [balance.data, srcChainTokenIn]);
+
+  // Keep selected token balance updated for solana
+  useEffect(() => {
+    if (!isSrcChainSolana) return;
 
     if (!publicKey || !srcChainTokenIn) {
       setSelectedTokenBalance(0);
@@ -397,10 +532,7 @@ const DlnBridgeUi = () => {
         setSelectedTokenBalance(0);
         setSelectedTokenBalanceBn(new BN(0));
       });
-  }, [connection, nativeBalance, publicKey, sourceChain, srcChainTokenIn]);
-
-  // srcTokens are loaded by setting srcChainId.
-  // dstTokens are loaded by setting dstChainId.
+  }, [connection, isSrcChainSolana, nativeBalance, publicKey, srcChainTokenIn]);
 
   // Set srcChainTokenIn if srcTokens are loaded
   useEffect(() => {
@@ -437,7 +569,14 @@ const DlnBridgeUi = () => {
       <div className="debridge-wrapper">
         <div className={getPanel1Classes()}>
           {/* Source chain, token & amount */}
-          <div className="form-label">FROM</div>
+          <div className="flex-fixed-left mb-1 align-items-center">
+            <div className="left">
+              <div className="form-label mb-0">FROM</div>
+            </div>
+            <div className="right flex-row justify-content-end">
+              {!isSrcChainSolana && isAddressConnected ? <CustomConnectButton /> : null}
+            </div>
+          </div>
           <div className="well mb-0">
             <div className="two-column-form-layout col40x60 mb-0">
               <div className="left">
@@ -545,15 +684,16 @@ const DlnBridgeUi = () => {
                     )}
                   </div>
                 </div>
-                {sourceChain === SOLANA_CHAIN_ID && nativeBalance < MIN_SOL_BALANCE_REQUIRED && (
+                {isSrcChainSolana && nativeBalance < MIN_SOL_BALANCE_REQUIRED && (
                   <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
                 )}
               </div>
             </div>
           </div>
+          {/* Flip button */}
           <div className="flip-button-container">
             {/* Flip button */}
-            <div className="flip-button" onClick={flipNetworks}>
+            <div className="flip-button" onClick={handleFlipNetworks}>
               <IconSwapFlip className="mean-svg-icons" />
             </div>
             {isFetchingQuote || (srcChainTokenIn && dstChainTokenOut && dstChainTokenOutAmount) ? (
@@ -659,12 +799,12 @@ const DlnBridgeUi = () => {
           {/* Recipient address switch */}
           <div
             className="flex-row align-items-center mb-2"
-            onClick={() => onToggleSendToDifferentAddress(!sendToDifferentAddress)}
+            onClick={() => handleToggleSendToDifferentAddress(!sendToDifferentAddress)}
           >
             <Switch
               size="small"
               checked={sendToDifferentAddress}
-              onChange={onToggleSendToDifferentAddress}
+              onChange={handleToggleSendToDifferentAddress}
               disabled={sourceChain !== destinationChain}
             />
             <div className="form-label mb-0 ml-1 simplelink">Send to different wallet</div>
@@ -708,22 +848,25 @@ const DlnBridgeUi = () => {
             </div>
           ) : null}
           {/* Action button */}
-          <Button
-            className={`main-cta ${isBusy ? 'inactive' : ''}`}
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={onStartSwapTx}
-            disabled={isBusy || isFetchingQuote || !isTransferValid}
-          >
-            {isBusy && (
-              <span className="mr-1">
-                <LoadingOutlined style={{ fontSize: '16px' }} />
-              </span>
-            )}
-            {isBusy ? 'Swapping' : transactionStartButtonLabel}
-          </Button>
+          {!isSrcChainSolana && !isAddressConnected ? <CustomConnectButton /> : null}
+          {isSrcChainSolana || isAddressConnected ? (
+            <Button
+              className={`main-cta ${isBusy ? 'inactive' : ''}`}
+              block
+              type="primary"
+              shape="round"
+              size="large"
+              onClick={onStartTransaction}
+              disabled={isBusy || isLoading || isFetchingQuote || !isTransferValid}
+            >
+              {isBusy && (
+                <span className="mr-1">
+                  <LoadingOutlined style={{ fontSize: '16px' }} />
+                </span>
+              )}
+              {isBusy ? 'Swapping' : transactionStartButtonLabel}
+            </Button>
+          ) : null}
           {isLocal() && isWhitelisted ? (
             <div className="well-group text-monospace small mt-4">
               <DebugInfo caption="Source chain ID:" value={`${sourceChain} (${srcChainData?.chainName ?? '?'})`} />
@@ -732,6 +875,8 @@ const DlnBridgeUi = () => {
               <DebugInfo caption="Destination chain tokens:" value={dstTokens ? Object.keys(dstTokens).length : '-'} />
               <DebugInfo caption="Amount in:" value={amountIn} />
               <DebugInfo caption="Token amount in:" value={srcChainTokenInAmount} />
+              <DebugInfo caption="Token balance (tokenBalance):" value={tokenBalance} />
+              <DebugInfo caption="balance.data.formatted:" value={balance.data?.formatted} />
               <DebugInfo
                 caption="Selected In token:"
                 value={
@@ -815,7 +960,7 @@ const DlnBridgeUi = () => {
           {selectedTokenSet === 'source' ? (
             <TokenSelector
               tokens={srcTokens}
-              isSolana={sourceChain === SOLANA_CHAIN_ID}
+              isSolana={isSrcChainSolana}
               selectedToken={srcChainTokenIn?.address}
               onClose={closeTokenSelector}
               onTokenSelected={t => setSrcChainTokenIn(t)}

@@ -17,7 +17,7 @@ const Bridge = () => {
             </div>
             <div className="subtitle">{t('bridge.screen-subtitle')}</div>
           </div>
-          <div className="place-transaction-box p-4">
+          <div className="place-transaction-box">
             <DlnBridge />
           </div>
         </div>
