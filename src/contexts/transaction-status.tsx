@@ -139,40 +139,37 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     updatelastVaultCreated(ddcaAccountPda);
   };
 
-  const addTransactionNotification = useCallback(
-    async (data: TxConfirmationInfo) => {
-      const rebuildHistoryFromCache = () => {
-        const history = Array.from(txStatusCache.values());
-        setConfirmationHistory([...history].reverse());
-        consoleOut('confirmationHistory:', history, 'orange');
-      };
+  const addTransactionNotification = useCallback(async (data: TxConfirmationInfo) => {
+    const rebuildHistoryFromCache = () => {
+      const history = Array.from(txStatusCache.values());
+      setConfirmationHistory([...history].reverse());
+      consoleOut('confirmationHistory:', history, 'orange');
+    };
 
-      const now = new Date().getTime();
-      txConfirmationCache.add(data.signature, data, now);
-      openNotification({
-        key: data.signature,
-        type: 'info',
-        title: data.completedTitle,
-        duration: data.completedMessageTimeout || 5,
-        description: (
-          <>
-            <span className="mr-1">
-              {data.completedMessage ? data.completedMessage : OperationType[data.operationType]}
-            </span>
-            {data.explorerLink ? (
-              <div>
-                <a className="secondary-link" href={data.explorerLink} target="_blank" rel="noopener noreferrer">
-                  View on blockchain explorer&gt;
-                </a>
-              </div>
-            ) : null}
-          </>
-        ),
-      });
-      rebuildHistoryFromCache();
-    },
-    [t],
-  );
+    const now = new Date().getTime();
+    txConfirmationCache.add(data.signature, data, now);
+    openNotification({
+      key: data.signature,
+      type: 'info',
+      title: data.completedTitle,
+      duration: data.completedMessageTimeout || 5,
+      description: (
+        <>
+          <span className="mr-1">
+            {data.completedMessage ? data.completedMessage : OperationType[data.operationType]}
+          </span>
+          {data.explorerLink ? (
+            <div>
+              <a className="secondary-link" href={data.explorerLink} target="_blank" rel="noopener noreferrer">
+                View on blockchain explorer&gt;
+              </a>
+            </div>
+          ) : null}
+        </>
+      ),
+    });
+    rebuildHistoryFromCache();
+  }, []);
 
   const enqueueTransactionConfirmation = useCallback(
     async (data: TxConfirmationInfo) => {
