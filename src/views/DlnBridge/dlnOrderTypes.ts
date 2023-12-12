@@ -88,6 +88,8 @@ export interface Order {
 
 export interface Tx {
   data: string;
+  to: string;
+  value: string;
 }
 
 export interface DlnOrderQuoteResponse {
