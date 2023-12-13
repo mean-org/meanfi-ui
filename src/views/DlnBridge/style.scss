@@ -1,9 +1,12 @@
 .bridge {
-  .place-transaction-box {
+
+  .place-transaction-box.debridge-wrapper {
     padding: 1.5rem;
     min-height: 430px;
     max-width: 600px;
+    width: 100%;
     min-width: auto;
+    margin-bottom: 24px;
 
     @media (max-width: 575.98px) {
       padding: 0;
@@ -11,6 +14,25 @@
   }
 
   .debridge-wrapper {
+    padding: 0 1.5rem;
+    max-width: 600px;
+    width: 100%;
+    min-width: auto;
+
+    @media (max-width: 575.98px) {
+      padding: 0;
+    }
+
+    .icon-button-container>button.ant-btn.ant-btn-default {
+      color: var(--color-secondary) !important;
+
+      &:not(:disabled):hover {
+        color: var(--color-secondary-alpha-70) !important;
+      }
+    }
+  }
+
+  .debridge-container {
     .evm-connect-button {
       .account-name {
         margin-right: 6px;

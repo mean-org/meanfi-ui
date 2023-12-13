@@ -1,3 +1,4 @@
+import { SwapOutlined } from '@ant-design/icons';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 
 interface SwapRateProps {
@@ -23,7 +24,7 @@ const SwapRate = ({
   return (
     <>
       {srcChainTokenIn && dstChainTokenOut && !areSameTokens && inputAmount && outputAmount ? (
-        <span className="simplelink underline-on-hover" onClick={onFlipRate}>
+        <span className="secondary-link highlight-on-hover" onClick={onFlipRate}>
           {swapRate ? (
             <>
               1 {srcChainTokenIn.symbol} ≈ {(outputAmount / inputAmount).toFixed(4)} {dstChainTokenOut.symbol}
@@ -33,6 +34,7 @@ const SwapRate = ({
               1 {dstChainTokenOut.symbol} ≈ {(inputAmount / outputAmount).toFixed(4)} {srcChainTokenIn.symbol}
             </>
           )}
+          <SwapOutlined rotate={90} style={{ marginLeft: 4 }} />
         </span>
       ) : (
         <span>&nbsp;</span>

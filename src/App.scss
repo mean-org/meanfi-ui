@@ -6972,9 +6972,14 @@ button.ant-btn-round.ant-btn-icon-only.swap-settings-button {
     text-decoration: underline !important;
   }
 
-  &:hover {
+  &:not(.highlight-on-hover):hover {
     cursor: pointer;
     text-decoration: underline !important;
+  }
+
+  &.highlight-on-hover:hover {
+    cursor: pointer;
+    color: var(--color-secondary-alpha-70) !important;
   }
 
   &:focus {
