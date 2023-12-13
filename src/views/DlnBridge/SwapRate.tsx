@@ -22,7 +22,7 @@ const SwapRate = ({
 
   return (
     <>
-      {srcChainTokenIn && dstChainTokenOut && !areSameTokens && outputAmount ? (
+      {srcChainTokenIn && dstChainTokenOut && !areSameTokens && inputAmount && outputAmount ? (
         <span className="simplelink underline-on-hover" onClick={onFlipRate}>
           {swapRate ? (
             <>

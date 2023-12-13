@@ -14,6 +14,7 @@ import {
 import { SwapCreateTxResponse, SwapEstimationResponse } from './singlChainOrderTypes';
 
 export const SOLANA_CHAIN_ID = 7565164;
+const DLN_REFERRAL_CODE = 5211;
 
 export const SUPPORTED_CHAINS: FeeRecipient[] = [
   {
@@ -234,7 +235,8 @@ const DlnBridgeProvider = ({ children }: Props) => {
             dstChainOrderAuthorityAddress: dstChainTokenOutRecipient,
             senderAddress,
             srcChainOrderAuthorityAddress: senderAddress,
-            additionalTakerRewardBps: 0.1 * 100,
+            referralCode: DLN_REFERRAL_CODE,
+            // additionalTakerRewardBps: 0.1 * 100,
             affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
             ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
             prependOperatingExpenses: true,
@@ -260,9 +262,6 @@ const DlnBridgeProvider = ({ children }: Props) => {
             dstChainId: destinationChain,
             dstChainTokenOut: dstChainTokenOut.address,
             dstChainTokenOutAmount: 'auto',
-            additionalTakerRewardBps: 0.1 * 100,
-            affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
-            affiliateFeeRecipient,
             prependOperatingExpenses: true,
           },
         })
@@ -297,6 +296,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
     if (sourceChain !== destinationChain) return;
 
     if (srcChainTokenIn?.address && amountIn && dstChainTokenOut?.address) {
+      const recipient = dstChainTokenOutRecipient ?? senderAddress;
       const tokenAmount = toTokenAmount(amountIn, srcChainTokenIn.decimals, true) as string;
       setSrcChainTokenInAmount(tokenAmount);
 
@@ -312,9 +312,10 @@ const DlnBridgeProvider = ({ children }: Props) => {
             tokenInAmount: tokenAmount,
             slippage: 1,
             tokenOut: dstChainTokenOut.address,
-            tokenOutRecipient: dstChainTokenOutRecipient ?? senderAddress,
-            // affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
-            // ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
+            tokenOutRecipient: recipient ?? undefined,
+            referralCode: DLN_REFERRAL_CODE,
+            affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
+            ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
           },
         })
           .then(createTxResponse => {
@@ -334,8 +335,6 @@ const DlnBridgeProvider = ({ children }: Props) => {
             tokenInAmount: tokenAmount,
             slippage: 1,
             tokenOut: dstChainTokenOut.address,
-            // affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
-            // ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
           },
         })
           .then(estimationResponse => {
