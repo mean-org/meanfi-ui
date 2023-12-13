@@ -1,10 +1,9 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { SOLANA_CHAIN_ID, SUPPORTED_CHAINS, getChainById, useDlnBridge } from './DlnBridgeProvider';
 import TokenSelector from './TokenSelector';
-import { Button, Modal, Select, Switch, Tooltip } from 'antd';
+import { Button, Modal, Select, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from 'components/Identicon';
-import { IconSwapFlip } from 'Icons';
 import { consoleOut, isLocal, isValidAddress, toUsCurrency } from 'middleware/ui';
 import './style.scss';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -49,10 +48,12 @@ import {
 } from 'wagmi';
 import CustomConnectButton from './CustomConnectButton';
 import { TxConfirmationContext } from 'contexts/transaction-status';
+import SwapRate from './SwapRate';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
 type UiStage = 'order-setup' | 'order-submitted';
+const QUOTE_REFRESH_TIMEOUT = 29000;
 
 const DlnBridgeUi = () => {
   const { t } = useTranslation('common');
@@ -71,7 +72,7 @@ const DlnBridgeUi = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [tokenBalanceBn, setSelectedTokenBalanceBn] = useState(new BN(0));
-
+  const [swapRate, setSwapRate] = useState(false);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [selectedTokenSet, setSelectedTokenSet] = useState<ActionTarget>('source');
 
@@ -89,14 +90,12 @@ const DlnBridgeUi = () => {
     srcChainTokenInAmount,
     dstChainTokenOutAmount,
     dstChainTokenOutRecipient,
-    sendToDifferentAddress,
     isFetchingQuote,
     resetQuote,
     setSourceChain,
     setDestinationChain,
     setDstChainTokenOut,
     setSrcChainTokenIn,
-    setSendToDifferentAddress,
     setDstChainTokenOutRecipient,
     setSenderAddress,
     setAmountIn,
@@ -132,9 +131,52 @@ const DlnBridgeUi = () => {
       srcChainTokenIn?.address === srcChainData?.networkFeeToken ? undefined : `0x${srcChainTokenIn?.address.slice(2)}`,
   });
 
-  const getMaxAmount = () => {
-    const amount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
-    return amount > 0 ? amount : 0;
+  const getMaxAmountIn = () => {
+    if (!srcChainTokenIn) {
+      setAmountInput('');
+      return;
+    }
+
+    if (srcChainTokenIn.address === NATIVE_SOL.address) {
+      const safeAmount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
+      const amount = safeAmount > 0 ? safeAmount : 0;
+      setAmountInput(cutNumber(amount > 0 ? amount : 0, srcChainTokenIn.decimals));
+
+      return;
+    }
+
+    consoleOut('tokenBalanceBn:', tokenBalanceBn, 'brown');
+    if (sameChainSwap) {
+      const balance = toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals);
+      consoleOut('balance:', balance, 'brown');
+      setAmountInput(toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals));
+    } else {
+      if (srcChainTokenIn.address === networkFeeToken?.address) {
+        const estimatedOperatingExpenses = parseFloat(
+          toUiAmount(quote?.prependedOperatingExpenseCost ?? 0, networkFeeToken.decimals),
+        );
+        consoleOut('estimatedOperatingExpenses:', estimatedOperatingExpenses, 'brown');
+        const fixFee = parseFloat(toUiAmount(quote?.fixFee ?? 0, networkFeeToken.decimals));
+        const balance = parseFloat(toUiAmount(tokenBalanceBn, networkFeeToken.decimals));
+        consoleOut('fixFee:', fixFee, 'brown');
+        const suggestedMax = balance - fixFee - estimatedOperatingExpenses;
+        consoleOut('suggestedMaxAmount:', suggestedMax, 'brown');
+        const amount = suggestedMax > 0 ? `${suggestedMax}` : '0';
+        consoleOut('effectiveMaxAmount:', amount, 'brown');
+        setAmountInput(amount);
+      } else {
+        const balance = parseFloat(toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals));
+        const estimatedOperatingExpenses = parseFloat(
+          toUiAmount(quote?.prependedOperatingExpenseCost ?? 0, srcChainTokenIn.decimals),
+        );
+        consoleOut('estimatedOperatingExpenses:', estimatedOperatingExpenses, 'brown');
+        const suggestedMax = balance - estimatedOperatingExpenses;
+        consoleOut('suggestedMaxAmount:', suggestedMax, 'brown');
+        const amount = suggestedMax > 0 ? `${suggestedMax}` : '0';
+        consoleOut('effectiveMaxAmount:', amount, 'brown');
+        setAmountInput(amount);
+      }
+    }
   };
 
   const getSrcTokenPrice = () => {
@@ -174,17 +216,21 @@ const DlnBridgeUi = () => {
     consoleOut('Selected chain:', e, 'blue');
     setSourceChain(e);
     if (e === destinationChain) {
-      setSendToDifferentAddress(false);
-      setDstChainTokenOutRecipient(senderAddress);
+      if (e === SOLANA_CHAIN_ID && publicKey) {
+        setDstChainTokenOutRecipient(publicKey.toBase58());
+      } else if (e !== SOLANA_CHAIN_ID && isAddressConnected) {
+        setDstChainTokenOutRecipient(address);
+      }
     }
   };
 
   const onDstChainSelected = (e: any) => {
     consoleOut('Selected chain:', e, 'blue');
     setDestinationChain(e);
-    if (e === sourceChain) {
-      setSendToDifferentAddress(false);
-      setDstChainTokenOutRecipient(senderAddress);
+    if (e === SOLANA_CHAIN_ID && publicKey) {
+      setDstChainTokenOutRecipient(publicKey.toBase58());
+    } else if (e === sourceChain && isAddressConnected) {
+      setDstChainTokenOutRecipient(address);
     }
   };
 
@@ -222,20 +268,20 @@ const DlnBridgeUi = () => {
     setDstChainTokenOutRecipient(trimmedValue);
   };
 
-  const handleToggleSendToDifferentAddress = (value: boolean) => {
-    if (sourceChain !== destinationChain) return;
-
-    setSendToDifferentAddress(value);
-    if (sourceChain === destinationChain && isSrcChainSolana && value) {
-      setDstChainTokenOutRecipient(senderAddress);
-    }
-  };
-
   const handleFlipNetworks = () => {
     resetQuote();
-    setDstChainTokenOutRecipient('');
+    if (isSrcChainSolana && publicKey) {
+      setDstChainTokenOutRecipient(publicKey.toBase58());
+    } else if (!isSrcChainSolana && isAddressConnected) {
+      setDstChainTokenOutRecipient(address);
+    } else {
+      setDstChainTokenOutRecipient('');
+    }
     flipNetworks();
   };
+
+  const inputAmount = parseFloat(amountIn);
+  const outputAmount = parseFloat(getOutputAmount());
 
   const isTransferValid = useMemo(() => {
     if (isSrcChainSolana && !publicKey) {
@@ -509,6 +555,8 @@ const DlnBridgeUi = () => {
       return;
     }
 
+    if (!isValidAddress(srcChainTokenIn.address)) return;
+
     if (srcChainTokenIn.address === NATIVE_SOL.address) {
       setSelectedTokenBalance(nativeBalance);
       const balanceBn = toTokenAmount(nativeBalance, srcChainTokenIn.decimals);
@@ -556,6 +604,35 @@ const DlnBridgeUi = () => {
     setAmountIn(debouncedAmountInput);
   }, [debouncedAmountInput, setAmountIn]);
 
+  // Refresh routes every 29 seconds
+  useEffect(() => {
+    let timer: any;
+    if (!sourceChain || !destinationChain) return;
+
+    if (amountIn && srcChainTokenIn?.address && dstChainTokenOut?.address) {
+      timer = setInterval(() => {
+        if (!isFetchingQuote) {
+          consoleOut(`Trigger refresh quote after ${QUOTE_REFRESH_TIMEOUT / 1000} seconds`);
+          forceRefresh();
+        }
+      }, QUOTE_REFRESH_TIMEOUT);
+    }
+
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [
+    amountIn,
+    destinationChain,
+    dstChainTokenOut?.address,
+    srcChainTokenIn?.address,
+    isFetchingQuote,
+    forceRefresh,
+    sourceChain,
+  ]);
+
   const getPanel1Classes = () => {
     return `panel1 ${uiStage === 'order-setup' ? 'show' : 'hide'}`;
   };
@@ -570,283 +647,256 @@ const DlnBridgeUi = () => {
         <div className={getPanel1Classes()}>
           {/* Source chain, token & amount */}
           <div className="flex-fixed-left mb-1 align-items-center">
-            <div className="left">
-              <div className="form-label mb-0">FROM</div>
+            <div className="left flex-row align-items-center gap-2">
+              <div className="form-label mb-0">You are paying</div>
+              <div className="dropdown-trigger no-decoration">
+                <Select
+                  className={`auto-height`}
+                  value={sourceChain}
+                  style={{ width: 'auto', minWidth: '140px', maxWidth: 'none' }}
+                  popupClassName="chain-select-dropdown"
+                  onChange={onSrcChainSelected}
+                  bordered={false}
+                  showArrow={true}
+                  dropdownRender={menu => <div>{menu}</div>}
+                >
+                  {SUPPORTED_CHAINS.map(item => (
+                    <Option key={`source-${item.chainId}`} value={item.chainId}>
+                      <div className="transaction-list-row">
+                        <div className="icon-cell">
+                          {item.chainIcon ? (
+                            <img alt={`${item.chainName}`} width={24} height={24} src={item.chainIcon} />
+                          ) : (
+                            <Identicon address={item.chainName} style={{ width: '24', display: 'inline-flex' }} />
+                          )}
+                        </div>
+                        <div className="description-cell">{item.chainName}</div>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </div>
             </div>
             <div className="right flex-row justify-content-end">
               {!isSrcChainSolana && isAddressConnected ? <CustomConnectButton /> : null}
             </div>
           </div>
-          <div className="well mb-0">
-            <div className="two-column-form-layout col40x60 mb-0">
+          <div className="well mb-3">
+            <div className="flex-fixed-left">
               <div className="left">
-                <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                  <Select
-                    className={`auto-height`}
-                    value={sourceChain}
-                    style={{ width: '100%', maxWidth: 'none' }}
-                    popupClassName="chain-select-dropdown"
-                    onChange={onSrcChainSelected}
-                    bordered={false}
-                    showArrow={true}
-                    dropdownRender={menu => <div>{menu}</div>}
-                  >
-                    {SUPPORTED_CHAINS.map(item => (
-                      <Option key={`source-${item.chainId}`} value={item.chainId}>
-                        <div className="transaction-list-row">
-                          <div className="icon-cell">
-                            {item.chainIcon ? (
-                              <img alt={`${item.chainName}`} width={30} height={30} src={item.chainIcon} />
-                            ) : (
-                              <Identicon address={item.chainName} style={{ width: '30', display: 'inline-flex' }} />
-                            )}
-                          </div>
-                          <div className="description-cell">{item.chainName}</div>
-                        </div>
-                      </Option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-              <div className="well-divider">&nbsp;</div>
-              <div className="right pl-3">
-                <div className="flex-fixed-left">
-                  <div className="left">
-                    <span className="add-on simplelink">
-                      {srcChainTokenIn ? (
-                        <TokenDisplay
-                          onClick={() => showTokenSelector('source')}
-                          mintAddress={srcChainTokenIn.address}
-                          name={srcChainTokenIn.name}
-                          showCaretDown={true}
-                          fullTokenInfo={srcChainTokenIn}
-                        />
-                      ) : null}
-                      {/* MAX CTA */}
-                      {srcChainTokenIn ? (
-                        <div
-                          className="token-max simplelink"
-                          onClick={() => {
-                            if (srcChainTokenIn.address === NATIVE_SOL.address) {
-                              const amount = getMaxAmount();
-                              setAmountInput(cutNumber(amount > 0 ? amount : 0, srcChainTokenIn.decimals));
-                            } else {
-                              consoleOut('tokenBalanceBn:', tokenBalanceBn, 'brown');
-                              const uiAmount = toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals);
-                              consoleOut('uiAmount:', uiAmount, 'brown');
-                              setAmountInput(toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals));
-                            }
-                          }}
-                        >
-                          MAX
-                        </div>
-                      ) : null}
-                    </span>
-                  </div>
-                  <div className="right">
-                    <input
-                      className="general-text-input text-right"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      type="text"
-                      onChange={onAmountInChange}
-                      pattern="^[0-9]*[.,]?[0-9]*$"
-                      placeholder="0.0"
-                      minLength={1}
-                      maxLength={79}
-                      spellCheck="false"
-                      value={amountInput}
+                <span className="add-on simplelink">
+                  {srcChainTokenIn ? (
+                    <TokenDisplay
+                      onClick={() => showTokenSelector('source')}
+                      mintAddress={srcChainTokenIn.address}
+                      name={srcChainTokenIn.name}
+                      showCaretDown={true}
+                      fullTokenInfo={srcChainTokenIn}
                     />
-                  </div>
-                </div>
-                <div className="flex-fixed-right">
-                  <div className="left inner-label">
-                    <span>{t('transactions.send-amount.label-right')}:</span>
-                    <span>
-                      {`${
-                        tokenBalance && srcChainTokenIn
-                          ? getAmountWithSymbol(tokenBalance, srcChainTokenIn.address, true)
-                          : '0'
-                      }`}
-                    </span>
-                  </div>
-                  <div className="right inner-label">
-                    {publicKey ? (
-                      <span
-                        className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                        onClick={() => refreshPrices()}
-                      >
-                        ~{amountIn ? toUsCurrency(getSrcTokenPrice()) : '$0.00'}
-                      </span>
-                    ) : (
-                      <span>~$0.00</span>
-                    )}
-                  </div>
-                </div>
-                {isSrcChainSolana && nativeBalance < MIN_SOL_BALANCE_REQUIRED && (
-                  <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
-                )}
+                  ) : null}
+                  {/* MAX CTA */}
+                  {srcChainTokenIn ? (
+                    <div className="token-max simplelink" onClick={getMaxAmountIn}>
+                      MAX
+                    </div>
+                  ) : null}
+                </span>
+              </div>
+              <div className="right">
+                <input
+                  className="general-text-input text-right"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  type="text"
+                  onChange={onAmountInChange}
+                  pattern="^[0-9]*[.,]?[0-9]*$"
+                  placeholder="0.0"
+                  minLength={1}
+                  maxLength={79}
+                  spellCheck="false"
+                  value={amountInput}
+                />
               </div>
             </div>
-          </div>
-          {/* Flip button */}
-          <div className="flip-button-container">
-            {/* Flip button */}
-            <div className="flip-button" onClick={handleFlipNetworks}>
-              <IconSwapFlip className="mean-svg-icons" />
-            </div>
-            {isFetchingQuote || (srcChainTokenIn && dstChainTokenOut && dstChainTokenOutAmount) ? (
-              <span className="icon-button-container">
-                {isFetchingQuote ? (
-                  <span className="icon-container">
-                    <SyncOutlined spin />
+            <div className="flex-fixed-right">
+              <div className="left inner-label">
+                <span>{t('transactions.send-amount.label-right')}:</span>
+                <span>
+                  {`${
+                    tokenBalance && srcChainTokenIn
+                      ? getAmountWithSymbol(tokenBalance, srcChainTokenIn.address, true)
+                      : '0'
+                  }`}
+                </span>
+              </div>
+              <div className="right inner-label">
+                {publicKey ? (
+                  <span
+                    className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onClick={() => refreshPrices()}
+                  >
+                    ~{amountIn ? toUsCurrency(getSrcTokenPrice()) : '$0.00'}
                   </span>
                 ) : (
-                  <Tooltip placement="bottom" title="Refresh quote">
-                    <Button
-                      type="default"
-                      shape="circle"
-                      size="small"
-                      icon={<ReloadOutlined />}
-                      onClick={forceRefresh}
-                    />
-                  </Tooltip>
+                  <span>~$0.00</span>
                 )}
-              </span>
-            ) : (
-              <span>&nbsp;</span>
+              </div>
+            </div>
+            {isSrcChainSolana && nativeBalance < MIN_SOL_BALANCE_REQUIRED && (
+              <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
             )}
           </div>
+
           {/* Destination chain, token & amount */}
-          <div className="form-label">TO</div>
-          <div className="well mb-3">
-            <div className="two-column-form-layout col40x60 mb-0">
-              <div className="left">
-                <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                  <Select
-                    className={`auto-height`}
-                    value={destinationChain}
-                    style={{ width: '100%', maxWidth: 'none' }}
-                    popupClassName="chain-select-dropdown"
-                    onChange={onDstChainSelected}
-                    bordered={false}
-                    showArrow={true}
-                    dropdownRender={menu => <div>{menu}</div>}
-                  >
-                    {SUPPORTED_CHAINS.map(item => (
-                      <Option key={`source-${item.chainId}`} value={item.chainId}>
-                        <div className="transaction-list-row">
-                          <div className="icon-cell">
-                            {item.chainIcon ? (
-                              <img alt={`${item.chainName}`} width={30} height={30} src={item.chainIcon} />
-                            ) : (
-                              <Identicon address={item.chainName} style={{ width: '30', display: 'inline-flex' }} />
-                            )}
-                          </div>
-                          <div className="description-cell">{item.chainName}</div>
+          <div className="flex-fixed-left mb-1 align-items-center">
+            <div className="left flex-row align-items-center gap-2">
+              <div className="form-label mb-0">To receive</div>
+              <div className="dropdown-trigger no-decoration">
+                <Select
+                  className={`auto-height`}
+                  value={destinationChain}
+                  style={{ width: 'auto', minWidth: '140px', maxWidth: 'none' }}
+                  popupClassName="chain-select-dropdown"
+                  onChange={onDstChainSelected}
+                  bordered={false}
+                  showArrow={true}
+                  dropdownRender={menu => <div>{menu}</div>}
+                >
+                  {SUPPORTED_CHAINS.map(item => (
+                    <Option key={`destination-${item.chainId}`} value={item.chainId}>
+                      <div className="transaction-list-row">
+                        <div className="icon-cell">
+                          {item.chainIcon ? (
+                            <img alt={`${item.chainName}`} width={24} height={24} src={item.chainIcon} />
+                          ) : (
+                            <Identicon address={item.chainName} style={{ width: '24', display: 'inline-flex' }} />
+                          )}
                         </div>
-                      </Option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-              <div className="well-divider">&nbsp;</div>
-              <div className="right pl-3">
-                <div className="flex-fixed-left">
-                  <div className="left">
-                    <span className="add-on simplelink">
-                      {dstChainTokenOut ? (
-                        <TokenDisplay
-                          onClick={() => showTokenSelector('destination')}
-                          mintAddress={dstChainTokenOut.address}
-                          name={dstChainTokenOut.name}
-                          showCaretDown={true}
-                          fullTokenInfo={dstChainTokenOut}
-                        />
-                      ) : null}
-                    </span>
-                  </div>
-                  <div className="right">
-                    <div className="static-data-field text-right">{`${parseFloat(getOutputAmount())}`}</div>
-                  </div>
-                </div>
-                <div className="flex-fixed-right">
-                  <div className="left inner-label">
-                    <span>Protocol fee:</span>
-                    <span>{`${
-                      quote && networkFeeToken
-                        ? formatThousands(parseFloat(toUiAmount(quote.fixFee, networkFeeToken.decimals)), 4)
-                        : '0'
-                    } ${networkFeeToken?.symbol}`}</span>
-                  </div>
-                  <div className="right inner-label">
-                    {publicKey ? (
-                      <span
-                        className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                        onClick={() => refreshPrices()}
-                      >
-                        ~{amountIn ? toUsCurrency(getDstTokenPrice()) : '$0.00'}
-                      </span>
-                    ) : (
-                      <span>~$0.00</span>
-                    )}
-                  </div>
-                </div>
+                        <div className="description-cell">{item.chainName}</div>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
               </div>
             </div>
+            <div className="right flex-row justify-content-end gap-3">
+              {/* Rate display */}
+              <div className="flex flex-row justify-content-end">
+                <SwapRate
+                  swapRate={swapRate}
+                  srcChainTokenIn={srcChainTokenIn}
+                  dstChainTokenOut={dstChainTokenOut}
+                  inputAmount={inputAmount}
+                  outputAmount={outputAmount}
+                  onFlipRate={() => setSwapRate(!swapRate)}
+                />
+              </div>
+              {/* Refresh button */}
+              {isFetchingQuote || (srcChainTokenIn && dstChainTokenOut && dstChainTokenOutAmount) ? (
+                <span className="icon-button-container">
+                  {isFetchingQuote ? (
+                    <span className="icon-container">
+                      <SyncOutlined spin />
+                    </span>
+                  ) : (
+                    <Tooltip placement="bottom" title="Refresh quote">
+                      <Button
+                        type="default"
+                        shape="circle"
+                        size="small"
+                        icon={<ReloadOutlined />}
+                        onClick={forceRefresh}
+                      />
+                    </Tooltip>
+                  )}
+                </span>
+              ) : (
+                <span>&nbsp;</span>
+              )}
+            </div>
           </div>
-          {/* Recipient address switch */}
-          <div
-            className="flex-row align-items-center mb-2"
-            onClick={() => handleToggleSendToDifferentAddress(!sendToDifferentAddress)}
-          >
-            <Switch
-              size="small"
-              checked={sendToDifferentAddress}
-              onChange={handleToggleSendToDifferentAddress}
-              disabled={sourceChain !== destinationChain}
-            />
-            <div className="form-label mb-0 ml-1 simplelink">Send to different wallet</div>
-          </div>
-          {/* Recipient address */}
-          {sendToDifferentAddress ? (
-            <div className="well mb-3">
-              <div className="flex-fixed-right mb-1">
-                <div className="left position-relative">
-                  <span className="recipient-field-wrapper">
-                    <input
-                      id="payment-recipient-field"
-                      className="general-text-input"
-                      autoComplete="on"
-                      autoCorrect="off"
-                      type="text"
-                      onChange={handleRecipientAddressChange}
-                      placeholder={`Recipient's ${dstChainName} address`}
-                      required={true}
-                      spellCheck="false"
-                      value={dstChainTokenOutRecipient}
+          <div className="well mb-3">
+            <div className="flex-fixed-left">
+              <div className="left">
+                <span className="add-on simplelink">
+                  {dstChainTokenOut ? (
+                    <TokenDisplay
+                      onClick={() => showTokenSelector('destination')}
+                      mintAddress={dstChainTokenOut.address}
+                      name={dstChainTokenOut.name}
+                      showCaretDown={true}
+                      fullTokenInfo={dstChainTokenOut}
                     />
-                    <span
-                      id="payment-recipient-static-field"
-                      className={`${dstChainTokenOutRecipient ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
-                    >
-                      {dstChainTokenOutRecipient || `Recipient's ${dstChainName} address`}
-                    </span>
-                  </span>
-                </div>
-                <div className="right">
-                  <span>&nbsp;</span>
-                </div>
+                  ) : null}
+                </span>
               </div>
-              {!dstChainTokenOutRecipient ||
-              (dstChainTokenOutRecipient &&
-                destinationChain === SOLANA_CHAIN_ID &&
-                !isValidAddress(dstChainTokenOutRecipient)) ? (
-                <span className="form-field-error">Please enter a valid address</span>
-              ) : null}
+              <div className="right">
+                <div className="static-data-field text-right">{outputAmount}</div>
+              </div>
             </div>
-          ) : null}
+            <div className="flex-fixed-right">
+              <div className="left inner-label">
+                <span>Protocol fee:</span>
+                <span>{`${
+                  quote && networkFeeToken
+                    ? formatThousands(parseFloat(toUiAmount(quote.fixFee, networkFeeToken.decimals)), 4)
+                    : '0'
+                } ${networkFeeToken?.symbol}`}</span>
+              </div>
+              <div className="right inner-label">
+                {publicKey ? (
+                  <span
+                    className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onClick={() => refreshPrices()}
+                  >
+                    ~{amountIn ? toUsCurrency(getDstTokenPrice()) : '$0.00'}
+                  </span>
+                ) : (
+                  <span>~$0.00</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Recipient address */}
+          <div className="form-label">Recipient address</div>
+          <div className="well mb-3">
+            <div className="flex-fixed-right mb-1">
+              <div className="left position-relative">
+                <span className="recipient-field-wrapper">
+                  <input
+                    id="payment-recipient-field"
+                    className="general-text-input"
+                    autoComplete="on"
+                    autoCorrect="off"
+                    type="text"
+                    onChange={handleRecipientAddressChange}
+                    placeholder={`Enter recipient's ${dstChainName} address`}
+                    required={true}
+                    spellCheck="false"
+                    value={dstChainTokenOutRecipient}
+                  />
+                  <span
+                    id="payment-recipient-static-field"
+                    className={`${dstChainTokenOutRecipient ? 'overflow-ellipsis-middle no-tail' : 'placeholder-text'}`}
+                  >
+                    {dstChainTokenOutRecipient || `Enter recipient's ${dstChainName} address`}
+                  </span>
+                </span>
+              </div>
+              <div className="right">
+                <span>&nbsp;</span>
+              </div>
+            </div>
+            {!dstChainTokenOutRecipient ||
+            (dstChainTokenOutRecipient &&
+              destinationChain === SOLANA_CHAIN_ID &&
+              !isValidAddress(dstChainTokenOutRecipient)) ? (
+              <span className="form-field-error">Please enter a valid address</span>
+            ) : null}
+          </div>
+
           {/* Action button */}
           {!isSrcChainSolana && !isAddressConnected ? <CustomConnectButton /> : null}
           {isSrcChainSolana || isAddressConnected ? (
@@ -869,34 +919,52 @@ const DlnBridgeUi = () => {
           ) : null}
           {isLocal() && isWhitelisted ? (
             <div className="well-group text-monospace small mt-4">
-              <DebugInfo caption="Source chain ID:" value={`${sourceChain} (${srcChainData?.chainName ?? '?'})`} />
-              <DebugInfo caption="Destination chain ID:" value={`${destinationChain} (${dstChainName})`} />
+              <DebugInfo
+                caption="Source chain ID:"
+                useSeparator
+                value={
+                  <>
+                    <span>{sourceChain}</span>
+                    <span>{srcChainData?.chainName ?? '?'}</span>
+                  </>
+                }
+              />
+              <DebugInfo
+                caption="Destination chain ID:"
+                useSeparator
+                value={
+                  <>
+                    <span>{destinationChain}</span>
+                    <span>{dstChainName}</span>
+                  </>
+                }
+              />
               <DebugInfo caption="Source chain tokens:" value={srcTokens ? Object.keys(srcTokens).length : '-'} />
               <DebugInfo caption="Destination chain tokens:" value={dstTokens ? Object.keys(dstTokens).length : '-'} />
               <DebugInfo caption="Amount in:" value={amountIn} />
               <DebugInfo caption="Token amount in:" value={srcChainTokenInAmount} />
-              <DebugInfo caption="Token balance (tokenBalance):" value={tokenBalance} />
+              <DebugInfo caption="Token balance (tokenBalance):" value={formatThousands(tokenBalance, 5)} />
               <DebugInfo caption="balance.data.formatted:" value={balance.data?.formatted} />
               <DebugInfo
-                caption="Selected In token:"
-                value={
-                  srcChainTokenIn
-                    ? `${srcChainTokenIn.symbol} (${srcChainTokenIn.name}) | ${srcChainTokenIn.address}`
-                    : null
-                }
+                caption="Source token:"
+                value={srcChainTokenIn ? <span>{`${srcChainTokenIn.symbol} (${srcChainTokenIn.name})`}</span> : '-'}
               />
-              <DebugInfo caption="Amount out:" value={`${parseFloat(getOutputAmount())}`} />
+              <DebugInfo
+                caption="Source token address:"
+                value={srcChainTokenIn ? <code>{srcChainTokenIn.address}</code> : '-'}
+              />
+              <DebugInfo caption="Amount out:" value={outputAmount} />
               <DebugInfo caption="Token amount out:" value={dstChainTokenOutAmount} />
               <DebugInfo
-                caption="Selected Out token:"
-                value={
-                  dstChainTokenOut
-                    ? `${dstChainTokenOut.symbol} (${dstChainTokenOut.name}) | ${dstChainTokenOut.address}`
-                    : null
-                }
+                caption="Destination token:"
+                value={dstChainTokenOut ? <span>{`${dstChainTokenOut.symbol} (${dstChainTokenOut.name})`}</span> : '-'}
               />
-              <DebugInfo caption="Sender address:" value={senderAddress} />
-              <DebugInfo caption="Recipient address:" value={dstChainTokenOutRecipient} />
+              <DebugInfo
+                caption="Destination token address:"
+                value={dstChainTokenOut ? <code>{dstChainTokenOut.address}</code> : '-'}
+              />
+              <DebugInfo caption="Sender address:" value={<code>{senderAddress}</code>} />
+              <DebugInfo caption="Recipient address:" value={<code>{dstChainTokenOutRecipient}</code>} />
             </div>
           ) : null}
         </div>

@@ -6804,6 +6804,22 @@ button.ant-btn-round.ant-btn-icon-only.swap-settings-button {
   flex: 1 1 auto;
 }
 
+.gap-1 {
+  gap: 0.25rem;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-3 {
+  gap: 1rem;
+}
+
+.gap-4 {
+  gap: 1.5rem;
+}
+
 .symbol-at {
   font-size: 22px;
   font-weight: 500;
@@ -7103,7 +7119,7 @@ button.ant-btn-round.ant-btn-icon-only.swap-settings-button {
   text-overflow: ellipsis;
   white-space: nowrap;
 
-  &:before {
+  &:not(.no-tail):before {
     float: right;
     content: attr(data-tail);
   }
