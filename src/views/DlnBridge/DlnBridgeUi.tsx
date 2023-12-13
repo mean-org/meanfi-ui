@@ -91,7 +91,6 @@ const DlnBridgeUi = () => {
     dstChainTokenOutAmount,
     dstChainTokenOutRecipient,
     isFetchingQuote,
-    resetQuote,
     setSourceChain,
     setDestinationChain,
     setDstChainTokenOut,
@@ -99,7 +98,6 @@ const DlnBridgeUi = () => {
     setDstChainTokenOutRecipient,
     setSenderAddress,
     setAmountIn,
-    flipNetworks,
     forceRefresh,
   } = useDlnBridge();
 
@@ -268,18 +266,6 @@ const DlnBridgeUi = () => {
     setDstChainTokenOutRecipient(trimmedValue);
   };
 
-  const handleFlipNetworks = () => {
-    resetQuote();
-    if (isSrcChainSolana && publicKey) {
-      setDstChainTokenOutRecipient(publicKey.toBase58());
-    } else if (!isSrcChainSolana && isAddressConnected) {
-      setDstChainTokenOutRecipient(address);
-    } else {
-      setDstChainTokenOutRecipient('');
-    }
-    flipNetworks();
-  };
-
   const inputAmount = parseFloat(amountIn);
   const outputAmount = parseFloat(getOutputAmount());
 
@@ -329,10 +315,30 @@ const DlnBridgeUi = () => {
   ]);
 
   const { config } = usePrepareSendTransaction({
-    enabled: !isSrcChainSolana && !!(quote && (quote as DlnOrderCreateTxResponse).tx.data),
-    to: !isSrcChainSolana && quote ? (quote as DlnOrderCreateTxResponse).tx.to : undefined,
-    value: !isSrcChainSolana && quote ? BigInt((quote as DlnOrderCreateTxResponse).tx?.value ?? 0) : undefined,
-    data: !isSrcChainSolana && quote ? `0x${(quote as DlnOrderCreateTxResponse).tx?.data?.slice(2)}` : undefined,
+    enabled:
+      !isSrcChainSolana &&
+      !!(
+        (quote && (quote as DlnOrderCreateTxResponse).tx.data) ||
+        (singlChainQuote && (singlChainQuote as SwapCreateTxResponse).tx.data)
+      ),
+    to:
+      !isSrcChainSolana && quote
+        ? (quote as DlnOrderCreateTxResponse).tx.to
+        : singlChainQuote
+        ? (singlChainQuote as SwapCreateTxResponse).tx.data
+        : undefined,
+    value:
+      !isSrcChainSolana && quote
+        ? BigInt((quote as DlnOrderCreateTxResponse).tx?.value ?? 0)
+        : singlChainQuote
+        ? BigInt((singlChainQuote as SwapCreateTxResponse).tx.value ?? 0)
+        : undefined,
+    data:
+      !isSrcChainSolana && quote
+        ? `0x${(quote as DlnOrderCreateTxResponse).tx?.data?.slice(2)}`
+        : singlChainQuote
+        ? `0x${(singlChainQuote as SwapCreateTxResponse).tx?.data?.slice(2)}`
+        : undefined,
   });
 
   const { isLoading, sendTransactionAsync } = useSendTransaction(config);
