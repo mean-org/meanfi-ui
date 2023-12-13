@@ -1,4 +1,4 @@
-import { ReactElement, useEffect } from 'react';
+import { ReactElement } from 'react';
 
 import { configureChains, createConfig, WagmiConfig } from 'wagmi';
 // import { alchemyProvider } from "wagmi/providers/alchemy";
@@ -11,10 +11,10 @@ import {
   getDefaultWallets,
 } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
-import { arbitrum, avalanche, base, mainnet, optimism, polygon, zora } from 'viem/chains';
+import { mainnet, polygon } from 'viem/chains';
 
 const { chains, publicClient } = configureChains(
-  [polygon, mainnet, optimism, avalanche, arbitrum, base, zora],
+  [mainnet, polygon],
   // [alchemyProvider({ apiKey: process.env.ALCHEMY_ID }), publicProvider()]
   [publicProvider()],
 );
@@ -36,8 +36,6 @@ type Props = {
 };
 
 export function Web3Container({ children }: Props): ReactElement {
-  useEffect(() => console.log('chains:', chains), []);
-
   return (
     <WagmiConfig config={wagmiConfig}>
       <RainbowKitProvider chains={chains} theme={null} modalSize="compact" showRecentTransactions={true}>

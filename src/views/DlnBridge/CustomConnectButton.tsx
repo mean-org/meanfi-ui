@@ -1,5 +1,6 @@
 import { Button } from 'antd';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { IconCaretDown, IconWallet } from 'Icons';
 
 const CustomConnectButton = () => {
   return (
@@ -34,37 +35,14 @@ const CustomConnectButton = () => {
               }
 
               return (
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <button
-                    className="flat-button tiny"
-                    onClick={openChainModal}
-                    style={{ display: 'flex', alignItems: 'center' }}
-                    type="button"
-                  >
-                    {chain.hasIcon && (
-                      <div
-                        style={{
-                          background: chain.iconBackground,
-                          width: 12,
-                          height: 12,
-                          borderRadius: 999,
-                          overflow: 'hidden',
-                          marginRight: 4,
-                        }}
-                      >
-                        {chain.iconUrl && (
-                          <img alt={chain.name ?? 'Chain icon'} src={chain.iconUrl} style={{ width: 12, height: 12 }} />
-                        )}
-                      </div>
-                    )}
-                    {chain.name}
-                  </button>
-
-                  <button className="flat-button tiny" onClick={openAccountModal} type="button">
-                    {account.displayName}
+                <button className="flat-button evm-connect-button" onClick={openAccountModal} type="button">
+                  <span className="account-name">{account.displayName}</span>
+                  <span className="account-balance">
                     {account.displayBalance ? ` (${account.displayBalance})` : ''}
-                  </button>
-                </div>
+                  </span>
+                  <IconCaretDown className="mean-svg-icons caret-down" />
+                  <IconWallet className="mean-svg-icons wallet-icon" />
+                </button>
               );
             })()}
           </div>
