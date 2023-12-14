@@ -502,13 +502,6 @@ export const AppLayout = React.memo((props: any) => {
     );
   } else {
     // Render dark MEAN background
-    return (
-      <>
-        {renderAccountSelector()}
-        <div className="background-logo-container">
-          <img className="meanfi-bg-logo" src="/assets/mean-square.svg" alt="" />
-        </div>
-      </>
-    );
+    return <>{renderAccountSelector()}</>;
   }
 });

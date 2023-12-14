@@ -1,9 +1,12 @@
 .bridge {
-  .place-transaction-box {
+
+  .place-transaction-box.debridge-wrapper {
     padding: 1.5rem;
     min-height: 430px;
     max-width: 600px;
+    width: 100%;
     min-width: auto;
+    margin-bottom: 24px;
 
     @media (max-width: 575.98px) {
       padding: 0;
@@ -11,6 +14,25 @@
   }
 
   .debridge-wrapper {
+    padding: 0 1.5rem;
+    max-width: 600px;
+    width: 100%;
+    min-width: auto;
+
+    @media (max-width: 575.98px) {
+      padding: 0;
+    }
+
+    .icon-button-container>button.ant-btn.ant-btn-default {
+      color: var(--color-secondary) !important;
+
+      &:not(:disabled):hover {
+        color: var(--color-secondary-alpha-70) !important;
+      }
+    }
+  }
+
+  .debridge-container {
     .evm-connect-button {
       .account-name {
         margin-right: 6px;
@@ -85,25 +107,29 @@
   }
 
   .dropdown-trigger {
-    &.no-decoration .ant-select.auto-height .ant-select-selector {
-      height: auto;
-      margin: 0;
-      padding: 0;
+    &.no-decoration .ant-select.auto-height {
+      font-size: 14px;
 
-      .ant-select-selection-item {
-        height: 30px;
-        line-height: 1.3;
+      .ant-select-selector {
+        height: auto;
+        margin: 0;
+        padding: 0;
+
+        .ant-select-selection-item {
+          height: 26px;
+          line-height: 1.3;
+        }
       }
     }
 
     .transaction-list-row {
-      min-width: 140px;
-      padding: 3px 4px;
+      background-color: transparent;
+      padding: 3px 8px 3px 6px;
       height: auto;
       align-items: center;
 
       .icon-cell {
-        flex: 0 0 24px;
+        flex: 0 0 18px;
         justify-content: center;
         align-items: center;
       }
@@ -116,15 +142,20 @@
   }
 
   .ant-select-dropdown.chain-select-dropdown {
+    width: auto !important;
+
+    .ant-select-item {
+      font-size: 14px;
+    }
+
     .transaction-list-row {
       pointer-events: none;
-      min-width: 140px;
-      padding: 3px 4px;
+      padding: 3px 8px 3px 6px;
       height: auto;
       align-items: center;
 
       .icon-cell {
-        flex: 0 0 24px;
+        flex: 0 0 18px;
         justify-content: center;
         align-items: center;
       }
