@@ -8,7 +8,7 @@ import { TransactionStatus } from 'models/enums';
 import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
 import { isError } from 'middleware/transactions';
 import { SOL_MINT } from 'middleware/ids';
-import { getAmountWithSymbol, isValidNumber, shortenAddress } from 'middleware/utils';
+import { cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress } from 'middleware/utils';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
@@ -647,15 +647,7 @@ export const MultisigTransferTokensModal = (props: {
                       <div
                         className="token-max simplelink"
                         onClick={() => {
-                          setAmount(
-                            getAmountWithSymbol(
-                              fromVault.balance as number,
-                              selectedToken.address,
-                              true,
-                              splTokenList,
-                              selectedToken.decimals,
-                            ),
-                          );
+                          setAmount(cutNumber(fromVault.balance as number, selectedToken.decimals));
                         }}
                       >
                         MAX
