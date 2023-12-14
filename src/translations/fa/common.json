@@ -1415,7 +1415,7 @@
     }
   },
   "wallet-selector": {
-    "connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",
+    "connect-to-begin": "In order to use the app you need to connect to a Solana wallet.",
     "more-options-collapsed": "نمایش گزینه های بیشتر",
     "more-options-expanded": "نمایش گزینه های کمتر",
     "primary-action": "کیف پول را وصل کنید"

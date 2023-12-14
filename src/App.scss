@@ -640,21 +640,6 @@ h6 {
   position: relative;
 }
 
-.background-logo-container {
-  position: absolute;
-  height: 100%;
-  width: auto;
-  overflow: hidden;
-  z-index: 0;
-
-  .meanfi-bg-logo {
-    width: auto;
-    height: 100%;
-    margin-left: -27%;
-    opacity: 0.15;
-  }
-}
-
 .ant-layout {
   background-color: transparent;
   height: 100%;
@@ -5015,6 +5000,14 @@ main section {
           @media (min-width: 576px) {
             padding: 8px 40px 8px 40px;
           }
+        }
+      }
+    }
+
+    &.header-autoheight {
+      .ant-modal-content {
+        .ant-modal-header {
+          height: auto;
         }
       }
     }

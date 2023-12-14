@@ -1417,7 +1417,7 @@
     }
   },
   "wallet-selector": {
-    "connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",
+    "connect-to-begin": "In order to use the app you need to connect to a Solana wallet.",
     "more-options-collapsed": "더 많은 옵션 표시",
     "more-options-expanded": "더 적은 옵션 표시",
     "primary-action": "지갑 연결"
