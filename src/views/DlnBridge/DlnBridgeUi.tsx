@@ -45,6 +45,7 @@ import {
   useSendTransaction,
   useSwitchNetwork,
 } from 'wagmi';
+import { fetchFeeData, FetchFeeDataResult } from '@wagmi/core';
 import CustomConnectButton from './CustomConnectButton';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import SwapRate from './SwapRate';
@@ -74,6 +75,7 @@ const DlnBridgeUi = () => {
   const [swapRate, setSwapRate] = useState(false);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [selectedTokenSet, setSelectedTokenSet] = useState<ActionTarget>('source');
+  const [chainFeeData, setChainFeeData] = useState<FetchFeeDataResult>();
 
   const {
     sourceChain,
@@ -104,6 +106,7 @@ const DlnBridgeUi = () => {
 
   const isAddressConnected = !!address;
   const isSrcChainSolana = sourceChain === SOLANA_CHAIN_ID;
+  const isCrossChainSwap = sourceChain !== destinationChain;
   const sameChainSwap = sourceChain === destinationChain;
   const srcChainData = useMemo(() => getChainById(sourceChain), [sourceChain]);
   const networkFeeToken = useMemo(() => {
@@ -127,12 +130,22 @@ const DlnBridgeUi = () => {
       srcChainTokenIn?.address === srcChainData?.networkFeeToken ? undefined : `0x${srcChainTokenIn?.address.slice(2)}`,
   });
 
-  const getMaxAmountIn = async () => {
+  useEffect(() => {
+    if (sourceChain === SOLANA_CHAIN_ID) {
+      setChainFeeData(undefined);
+      return;
+    }
+
+    fetchFeeData().then(value => setChainFeeData(value));
+  }, [sourceChain]);
+
+  const getMaxAmountIn = () => {
     if (!srcChainTokenIn) {
       setAmountInput('');
       return;
     }
 
+    // If source chain is Solana lets force a margin of 0.05 SOL as min balance
     if (srcChainTokenIn.address === NATIVE_SOL.address) {
       const safeAmount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
       const amount = safeAmount > 0 ? safeAmount : 0;
@@ -141,37 +154,41 @@ const DlnBridgeUi = () => {
       return;
     }
 
+    /**
+      - userBalance = balance of user's wallet
+      - operatingExpenses = prependedOperatingExpenseCost saved from the last /create-tx query
+      - maxGas = current max gas for the current fromChain (that's a regular gas calculation dapps use for fast confirmation)
+        maxFeePerGas = baseFeePerGas + maxPriorityFeePerGas
+        WAGMI already covers this calculation https://wagmi.sh/core/actions/fetchFeeData
+      - protocolFixFee - fixFee in native token for this chain (https://docs.dln.trade/the-core-protocol/fees-and-supported-chains)
+
+      From balance we deduct maxGas, and also operatingExpenses with 15% margin and fixFee
+      Final formula:
+      max = userBalance - maxGas - (isCrossChainSwap ? protocolFixFee : 0) - (isCrossChainSwap ? operatingExpenses : 0);
+    */
+
     consoleOut('tokenBalanceBn:', tokenBalanceBn, 'brown');
     if (sameChainSwap) {
-      const balance = toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals);
-      consoleOut('balance:', balance, 'brown');
-      setAmountInput(toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals));
+      const maxAmount = toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals);
+      consoleOut('maxAmount:', maxAmount, 'brown');
+      setAmountInput(maxAmount);
     } else {
-      if (srcChainTokenIn.address === networkFeeToken?.address) {
-        const estimatedOperatingExpenses = parseFloat(
-          toUiAmount(quote?.prependedOperatingExpenseCost ?? 0, networkFeeToken.decimals),
-        );
-        consoleOut('estimatedOperatingExpenses:', estimatedOperatingExpenses, 'brown');
-        const fixFee = parseFloat(toUiAmount(quote?.fixFee ?? 0, networkFeeToken.decimals));
-        const balance = parseFloat(toUiAmount(tokenBalanceBn, networkFeeToken.decimals));
-        consoleOut('fixFee:', fixFee, 'brown');
-        const suggestedMax = balance - fixFee - estimatedOperatingExpenses;
-        consoleOut('suggestedMaxAmount:', suggestedMax, 'brown');
-        const amount = suggestedMax > 0 ? `${suggestedMax}` : '0';
-        consoleOut('effectiveMaxAmount:', amount, 'brown');
-        setAmountInput(amount);
-      } else {
-        const balance = parseFloat(toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals));
-        const estimatedOperatingExpenses = parseFloat(
-          toUiAmount(quote?.prependedOperatingExpenseCost ?? 0, srcChainTokenIn.decimals),
-        );
-        consoleOut('estimatedOperatingExpenses:', estimatedOperatingExpenses, 'brown');
-        const suggestedMax = balance - estimatedOperatingExpenses;
-        consoleOut('suggestedMaxAmount:', suggestedMax, 'brown');
-        const amount = suggestedMax > 0 ? `${suggestedMax}` : '0';
-        consoleOut('effectiveMaxAmount:', amount, 'brown');
-        setAmountInput(amount);
-      }
+      const maxGas = chainFeeData?.maxFeePerGas ?? BigInt(0);
+      const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
+      const userBalance = BigInt(tokenBalanceBn.toString());
+      const operatingExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
+      const max = userBalance - maxGas - protocolFixFee - operatingExpenses;
+
+      consoleOut('chainFeeData:', chainFeeData, 'brown');
+      consoleOut('userBalance:', userBalance, 'brown');
+      consoleOut('maxGas:', maxGas, 'brown');
+      consoleOut('protocolFixFee:', protocolFixFee, 'brown');
+      consoleOut('operatingExpenses:', operatingExpenses, 'brown');
+      consoleOut('max = userBalance - maxGas - protocolFixFee - operatingExpenses =>', max.toString(), 'brown');
+
+      const maxAmount = toUiAmount(max.toString(), srcChainTokenIn.decimals);
+      consoleOut('maxAmount:', maxAmount, 'brown');
+      setAmountInput(maxAmount);
     }
   };
 
