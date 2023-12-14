@@ -271,12 +271,17 @@ const DlnBridgeUi = () => {
   const inputAmount = parseFloat(amountIn);
   const outputAmount = parseFloat(getOutputAmount());
 
+  const isRecipientValid =
+    dstChainTokenOutRecipient && destinationChain === SOLANA_CHAIN_ID && isValidAddress(dstChainTokenOutRecipient);
+
   const isTransferValid = useMemo(() => {
     if (isSrcChainSolana && !publicKey) {
       return false;
     } else if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
       return false;
     } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
+      return false;
+    } else if (!isRecipientValid) {
       return false;
     } else if (sourceChain === destinationChain) {
       return true;
@@ -289,6 +294,7 @@ const DlnBridgeUi = () => {
     dstChainTokenOutRecipient,
     publicKey,
     sourceChain,
+    isRecipientValid,
     isSrcChainSolana,
     srcChainTokenIn?.address,
   ]);
@@ -302,6 +308,8 @@ const DlnBridgeUi = () => {
       return 'Confirm transfer';
     } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
       return `Missing recipient's ${dstChainName} address`;
+    } else if (!isRecipientValid) {
+      return `Recipient address is not valid`;
     } else {
       return 'Create trade';
     }
@@ -312,6 +320,7 @@ const DlnBridgeUi = () => {
     dstChainTokenOutRecipient,
     publicKey,
     sourceChain,
+    isRecipientValid,
     isSrcChainSolana,
     srcChainTokenIn?.address,
   ]);
@@ -872,12 +881,6 @@ const DlnBridgeUi = () => {
                   <span>&nbsp;</span>
                 </div>
               </div>
-              {!dstChainTokenOutRecipient ||
-              (dstChainTokenOutRecipient &&
-                destinationChain === SOLANA_CHAIN_ID &&
-                !isValidAddress(dstChainTokenOutRecipient)) ? (
-                <span className="form-field-error">Please enter a valid address</span>
-              ) : null}
             </div>
 
             {/* Action button */}
@@ -890,7 +893,7 @@ const DlnBridgeUi = () => {
                 shape="round"
                 size="large"
                 onClick={onStartTransaction}
-                disabled={isBusy || isLoading || isFetchingQuote || !isTransferValid}
+                disabled={isLoading || isFetchingQuote || !isTransferValid}
               >
                 {isBusy && (
                   <span className="mr-1">
