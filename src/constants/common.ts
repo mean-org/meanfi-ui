@@ -155,6 +155,7 @@ export const DAO_CORE_TEAM_WHITELIST = [
   'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL', // Maxim Credix
   '63cUbJ3yecyduEPPYbPERPSJzAy6ZnRWvjE6u4qkkAVd', // Maxim Credix 2
   'DBtKF3rRXB59AXMWFx6XzgB3SDmgtK87VvrQQF6KbLQ8', // vitalikda
+  '45qD3ei7rT63UumstCEJhehgDJAVzaciLDPacRfMz8QD', // Hugo
 ];
 
 export const BIGNUMBER_FORMAT = {

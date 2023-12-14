@@ -16,6 +16,7 @@ import { environment } from '../environments/environment';
 import { TimeData } from '../models/common-types';
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from '../models/enums';
 import { BN } from '@project-serum/anchor';
+import detectNetworkByAddress from './detectNetworkByAddress';
 
 export const isDev = (): boolean => {
   return environment === 'development';
@@ -27,10 +28,10 @@ export const isProd = (): boolean => {
 
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
-    // [::1] is the IPv6 localhost address.
-    window.location.hostname === '[::1]' ||
-    // 127.0.0.0/8 are considered localhost for IPv4.
-    RegExp(/^127(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/).exec(window.location.hostname),
+  // [::1] is the IPv6 localhost address.
+  window.location.hostname === '[::1]' ||
+  // 127.0.0.0/8 are considered localhost for IPv4.
+  RegExp(/^127(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/).exec(window.location.hostname),
 );
 
 export const isLocal = (): boolean => {
@@ -89,6 +90,16 @@ export function isValidAddress(value: any): boolean {
       return false;
     }
   }
+  return false;
+}
+
+export function isEvmValidAddress(value: any): boolean {
+  if (typeof value === 'string') {
+    const network = detectNetworkByAddress(value);
+
+    return network === 'ETH';
+  }
+
   return false;
 }
 
