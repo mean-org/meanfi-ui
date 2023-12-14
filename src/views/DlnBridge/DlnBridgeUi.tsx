@@ -127,7 +127,7 @@ const DlnBridgeUi = () => {
       srcChainTokenIn?.address === srcChainData?.networkFeeToken ? undefined : `0x${srcChainTokenIn?.address.slice(2)}`,
   });
 
-  const getMaxAmountIn = () => {
+  const getMaxAmountIn = async () => {
     if (!srcChainTokenIn) {
       setAmountInput('');
       return;
@@ -626,7 +626,7 @@ const DlnBridgeUi = () => {
     let timer: any;
     if (!sourceChain || !destinationChain) return;
 
-    if (amountIn && srcChainTokenIn?.address && dstChainTokenOut?.address) {
+    if (amountIn && parseFloat(amountIn) && srcChainTokenIn?.address && dstChainTokenOut?.address) {
       timer = setInterval(() => {
         if (!isFetchingQuote) {
           consoleOut(`Trigger refresh quote after ${QUOTE_REFRESH_TIMEOUT / 1000} seconds`);
@@ -666,26 +666,26 @@ const DlnBridgeUi = () => {
             {/* Source chain, token & amount */}
             <div className="flex-fixed-left mb-1 align-items-center">
               <div className="left flex-row align-items-center gap-2">
-                <div className="form-label mb-0">You are paying</div>
+                <div className="form-label mb-0">From</div>
                 <div className="dropdown-trigger no-decoration">
                   <Select
                     className={`auto-height`}
                     value={sourceChain}
-                    style={{ width: 'auto', minWidth: '140px', maxWidth: 'none' }}
+                    style={{ width: 'auto', maxWidth: 'none' }}
                     popupClassName="chain-select-dropdown"
                     onChange={onSrcChainSelected}
                     bordered={false}
-                    showArrow={true}
+                    showArrow={false}
                     dropdownRender={menu => <div>{menu}</div>}
                   >
                     {SUPPORTED_CHAINS.map(item => (
                       <Option key={`source-${item.chainId}`} value={item.chainId}>
-                        <div className="transaction-list-row">
+                        <div className="transaction-list-row no-pointer">
                           <div className="icon-cell">
                             {item.chainIcon ? (
-                              <img alt={`${item.chainName}`} width={24} height={24} src={item.chainIcon} />
+                              <img alt={`${item.chainName}`} width={18} height={18} src={item.chainIcon} />
                             ) : (
-                              <Identicon address={item.chainName} style={{ width: '24', display: 'inline-flex' }} />
+                              <Identicon address={item.chainName} style={{ width: '18', display: 'inline-flex' }} />
                             )}
                           </div>
                           <div className="description-cell">{item.chainName}</div>
@@ -705,6 +705,7 @@ const DlnBridgeUi = () => {
                   <span className="add-on simplelink">
                     {srcChainTokenIn ? (
                       <TokenDisplay
+                        iconSize="large"
                         onClick={() => showTokenSelector('source')}
                         mintAddress={srcChainTokenIn.address}
                         name={srcChainTokenIn.name}
@@ -769,26 +770,26 @@ const DlnBridgeUi = () => {
             {/* Destination chain, token & amount */}
             <div className="flex-fixed-left mb-1 align-items-center">
               <div className="left flex-row align-items-center gap-2">
-                <div className="form-label mb-0">To receive</div>
+                <div className="form-label mb-0">To</div>
                 <div className="dropdown-trigger no-decoration">
                   <Select
                     className={`auto-height`}
                     value={destinationChain}
-                    style={{ width: 'auto', minWidth: '140px', maxWidth: 'none' }}
+                    style={{ width: 'auto', maxWidth: 'none' }}
                     popupClassName="chain-select-dropdown"
                     onChange={onDstChainSelected}
                     bordered={false}
-                    showArrow={true}
+                    showArrow={false}
                     dropdownRender={menu => <div>{menu}</div>}
                   >
                     {SUPPORTED_CHAINS.map(item => (
                       <Option key={`destination-${item.chainId}`} value={item.chainId}>
-                        <div className="transaction-list-row">
+                        <div className="transaction-list-row no-pointer">
                           <div className="icon-cell">
                             {item.chainIcon ? (
-                              <img alt={`${item.chainName}`} width={24} height={24} src={item.chainIcon} />
+                              <img alt={`${item.chainName}`} width={18} height={18} src={item.chainIcon} />
                             ) : (
-                              <Identicon address={item.chainName} style={{ width: '24', display: 'inline-flex' }} />
+                              <Identicon address={item.chainName} style={{ width: '18', display: 'inline-flex' }} />
                             )}
                           </div>
                           <div className="description-cell">{item.chainName}</div>
@@ -798,7 +799,6 @@ const DlnBridgeUi = () => {
                   </Select>
                 </div>
               </div>
-              {/* <div className="right flex-row justify-content-end gap-3">&nbsp;</div> */}
             </div>
             <div className="well mb-3">
               <div className="flex-fixed-left">
@@ -806,6 +806,7 @@ const DlnBridgeUi = () => {
                   <span className="add-on simplelink">
                     {dstChainTokenOut ? (
                       <TokenDisplay
+                        iconSize="large"
                         onClick={() => showTokenSelector('destination')}
                         mintAddress={dstChainTokenOut.address}
                         name={dstChainTokenOut.name}

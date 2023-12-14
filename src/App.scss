@@ -71,6 +71,8 @@
   --gradEnd: #d2d2d2;
 
   /* Black with alpha */
+  --darken-01: rgba(0, 0, 0, 0.01);
+  --darken-02: rgba(0, 0, 0, 0.02);
   --darken-05: rgba(0, 0, 0, 0.05);
   --darken-10: rgba(0, 0, 0, 0.1);
   --darken-20: rgba(0, 0, 0, 0.2);
@@ -193,15 +195,16 @@
   color-scheme: dark;
   background-color: var(--bg-color);
 
-  .flat-button {
-    background-color: var(--darken-10);
+  .flat-button,
+  .dropdown-trigger.no-decoration .ant-select.ant-select-borderless .ant-select-selector {
+    background-color: var(--darken-10) !important;
 
     &:not(.disabled) {
 
       &:hover,
       &.active,
       &:focus {
-        background-color: var(--darken-20);
+        background-color: var(--darken-20) !important;
         text-decoration: none;
       }
     }
@@ -224,21 +227,26 @@
       color: var(--color-white)
     }
   }
+
+  .token-icon {
+    background-color: var(--color-black);
+  }
 }
 
 [data-theme='light'] {
   color-scheme: light;
   background-color: var(--bg-color);
 
-  .flat-button {
-    background-color: transparent;
+  .flat-button,
+  .dropdown-trigger.no-decoration .ant-select.ant-select-borderless .ant-select-selector {
+    background-color: var(--darken-05) !important;
 
     &:not(.disabled) {
 
       &:hover,
       &.active,
       &:focus {
-        background-color: var(--darken-05);
+        background-color: var(--darken-10) !important;
         text-decoration: none;
       }
     }
@@ -254,6 +262,10 @@
 
   .ant-alert-warning {
     border-radius: var(--custom-border-radius);
+  }
+
+  .token-icon {
+    background-color: var(--color-white);
   }
 }
 
@@ -3532,15 +3544,27 @@ main section {
 .token-icon {
   border-radius: 50%;
   overflow: hidden;
-  width: 20px;
-  height: 20px;
   justify-content: center;
   align-items: center;
   display: inline-flex;
   padding: 2px;
-  background: black;
   margin: 0 8px 0 2px;
   vertical-align: -4px;
+
+  .small {
+    width: 20px;
+    height: 20px;
+  }
+
+  .medium {
+    width: 24px;
+    height: 24px;
+  }
+
+  .large {
+    width: 30px;
+    height: 30px;
+  }
 }
 
 .token-group {
@@ -4500,18 +4524,6 @@ main section {
     align-items: center;
     display: inline-flex;
     margin: 2px 6px 0 0;
-
-    @media (max-width: 575.98px) {
-      width: 16px;
-      height: 16px;
-      margin: -1px 4px 0 0;
-    }
-
-    @media (min-width: 576px) {
-      width: 18px;
-      height: 18px;
-      margin: 0px 4px 0 0;
-    }
   }
 
   .token-symbol {

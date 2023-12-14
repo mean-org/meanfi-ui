@@ -5,42 +5,52 @@ import { shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
 import { AppStateContext } from '../../contexts/appstate';
 
-export const TokenDisplay = (props: {
+interface TokenDisplayProps {
   fullTokenInfo?: TokenInfo | undefined;
   name?: string;
   icon?: ReactNode;
+  iconSize?: 'small' | 'medium' | 'large';
   className?: string;
   mintAddress: string;
   showName?: boolean;
   symbol?: string;
   showCaretDown?: boolean;
   noTokenLabel?: string;
-  onClick: any;
+  onClick: () => void;
   nameInfoLabel?: boolean;
-}) => {
-  const { name, icon, className, mintAddress, showName, showCaretDown, noTokenLabel, fullTokenInfo, nameInfoLabel } =
-    props;
+}
+
+export const TokenDisplay = ({
+  name,
+  icon,
+  iconSize = 'small',
+  className,
+  mintAddress,
+  showName,
+  symbol,
+  showCaretDown,
+  noTokenLabel,
+  fullTokenInfo,
+  nameInfoLabel,
+  onClick,
+}: TokenDisplayProps) => {
   const { getTokenByMintAddress } = useContext(AppStateContext);
 
   const token = getTokenByMintAddress(mintAddress);
+  const size = iconSize === 'large' ? 30 : iconSize === 'medium' ? 24 : 20;
 
   return (
     <div className="d-flex flex-column">
-      <div
-        title={mintAddress}
-        key={mintAddress}
-        className={`token-selector ${className || ''}`}
-        onClick={props.onClick}
-      >
+      <div title={mintAddress} key={mintAddress} className={`token-selector ${className || ''}`} onClick={onClick}>
         {mintAddress ? (
           <>
-            <div className="token-icon mr-1">
+            <div className={`token-icon ${iconSize} mr-1`}>
               {fullTokenInfo ? (
                 <>
                   {fullTokenInfo && fullTokenInfo.logoURI ? (
-                    <img alt={`${fullTokenInfo.name}`} width={20} height={20} src={fullTokenInfo.logoURI} />
+                    <img alt={`${fullTokenInfo.name}`} width={size} height={size} src={fullTokenInfo.logoURI} />
                   ) : (
-                    <Identicon address={mintAddress} style={{ width: '24', display: 'inline-flex' }} />
+                    <Identicon address={mintAddress} style={{ width: size, display: 'inline-flex' }} />
                   )}
                 </>
               ) : icon ? (
@@ -48,9 +58,9 @@ export const TokenDisplay = (props: {
               ) : (
                 <>
                   {token && token.logoURI ? (
-                    <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} />
+                    <img alt={`${token.name}`} width={size} height={size} src={token.logoURI} />
                   ) : (
-                    <Identicon address={mintAddress} style={{ width: '24', display: 'inline-flex' }} />
+                    <Identicon address={mintAddress} style={{ width: size, display: 'inline-flex' }} />
                   )}
                 </>
               )}
@@ -62,8 +72,8 @@ export const TokenDisplay = (props: {
             )}
             {fullTokenInfo ? (
               <div className="token-symbol mr-1">{fullTokenInfo.symbol}</div>
-            ) : props.symbol ? (
-              <div className="token-symbol mr-1">{props.symbol}</div>
+            ) : symbol ? (
+              <div className="token-symbol mr-1">{symbol}</div>
             ) : token && token.symbol ? (
               <div className="token-symbol mr-1">{token.symbol}</div>
             ) : (

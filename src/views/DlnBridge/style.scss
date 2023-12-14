@@ -107,25 +107,29 @@
   }
 
   .dropdown-trigger {
-    &.no-decoration .ant-select.auto-height .ant-select-selector {
-      height: auto;
-      margin: 0;
-      padding: 0;
+    &.no-decoration .ant-select.auto-height {
+      font-size: 14px;
 
-      .ant-select-selection-item {
-        height: 30px;
-        line-height: 1.3;
+      .ant-select-selector {
+        height: auto;
+        margin: 0;
+        padding: 0;
+
+        .ant-select-selection-item {
+          height: 26px;
+          line-height: 1.3;
+        }
       }
     }
 
     .transaction-list-row {
-      min-width: 140px;
-      padding: 3px 4px;
+      background-color: transparent;
+      padding: 3px 8px 3px 6px;
       height: auto;
       align-items: center;
 
       .icon-cell {
-        flex: 0 0 24px;
+        flex: 0 0 18px;
         justify-content: center;
         align-items: center;
       }
@@ -138,15 +142,20 @@
   }
 
   .ant-select-dropdown.chain-select-dropdown {
+    width: auto !important;
+
+    .ant-select-item {
+      font-size: 14px;
+    }
+
     .transaction-list-row {
       pointer-events: none;
-      min-width: 140px;
-      padding: 3px 4px;
+      padding: 3px 8px 3px 6px;
       height: auto;
       align-items: center;
 
       .icon-cell {
-        flex: 0 0 24px;
+        flex: 0 0 18px;
         justify-content: center;
         align-items: center;
       }
