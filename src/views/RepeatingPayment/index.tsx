@@ -298,14 +298,18 @@ export const RepeatingPayment = (props: {
   }, [fromCoinAmount, selectedToken, getTokenPriceByAddress]);
 
   const getPaymentRateAmount = useCallback(() => {
-    let outStr = selectedToken
-      ? displayAmountWithSymbol(
-          toTokenAmountBn(paymentRateAmount, selectedToken.decimals),
-          selectedToken.address,
-          selectedToken.decimals,
-          splTokenList,
-        )
-      : '-';
+    let outStr = '-';
+
+    if (isValidNumber(paymentRateAmount)) {
+      outStr = selectedToken
+        ? displayAmountWithSymbol(
+            toTokenAmountBn(paymentRateAmount, selectedToken.decimals),
+            selectedToken.address,
+            selectedToken.decimals,
+            splTokenList,
+          )
+        : '-';
+    }
     outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t);
 
     return outStr;
