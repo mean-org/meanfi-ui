@@ -2933,10 +2933,6 @@ export const HomeView = () => {
 
   // Total streams amount
   useEffect(() => {
-    if (!incomingAmount && !outgoingAmount) {
-      return;
-    }
-
     setTotalStreamsAmount(incomingAmount + outgoingAmount);
   }, [incomingAmount, outgoingAmount]);
 

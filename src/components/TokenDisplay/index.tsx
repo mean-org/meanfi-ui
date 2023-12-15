@@ -16,7 +16,7 @@ interface TokenDisplayProps {
   symbol?: string;
   showCaretDown?: boolean;
   noTokenLabel?: string;
-  onClick: () => void;
+  onClick?: () => void;
   nameInfoLabel?: boolean;
 }
 
