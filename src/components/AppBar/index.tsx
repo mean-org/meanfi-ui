@@ -192,11 +192,13 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
             <AppContextMenu />
           </div>
         </div>
-        <DepositOptions
-          isVisible={isDepositOptionsModalVisible}
-          key="deposit-modal2"
-          handleClose={hideDepositOptionsModal}
-        />
+        {isDepositOptionsModalVisible ? (
+          <DepositOptions
+            isVisible={isDepositOptionsModalVisible}
+            key="deposit-modal2"
+            handleClose={hideDepositOptionsModal}
+          />
+        ) : null}
       </>
     );
   } else {

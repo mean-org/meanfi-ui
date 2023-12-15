@@ -31,6 +31,7 @@ import {
   CloseAccountTransactionAccounts,
   RefreshAccountDataTransactionAccounts,
   NATIVE_SOL_MINT,
+  FEE_ACCOUNT,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -50,7 +51,6 @@ import { TreasuryTransferFundsModal } from 'components/TreasuryTransferFundsModa
 import {
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-  MSP_FEE_TREASURY,
   NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   WRAPPED_SOL_MINT_ADDRESS,
@@ -1908,7 +1908,6 @@ export const StreamingAccountView = (props: {
       const tokenAccount = AccountLayout.decode(value[0].account.data);
       const associatedTokenMint = new PublicKey(tokenAccount.mint);
       const mspAddress = isProd() ? Constants.MSP_PROGRAM : Constants.MSP_PROGRAM_DEV;
-      const feeTreasuryAddress: PublicKey = new PublicKey(MSP_FEE_TREASURY);
 
       ixs.push(
         await refreshTreasuryBalanceInstruction(
@@ -1917,7 +1916,7 @@ export const StreamingAccountView = (props: {
           associatedTokenMint,
           treasury,
           tokenAddress,
-          feeTreasuryAddress,
+          FEE_ACCOUNT,
         ),
       );
 
