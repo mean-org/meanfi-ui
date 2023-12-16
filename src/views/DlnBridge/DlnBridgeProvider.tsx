@@ -12,6 +12,7 @@ import {
   GetDlnSupportedChainsResponse,
 } from './dlnOrderTypes';
 import { SwapCreateTxResponse, SwapEstimationResponse } from './singlChainOrderTypes';
+import { consoleOut } from 'middleware/ui';
 
 export const SOLANA_CHAIN_ID = 7565164;
 const DLN_REFERRAL_CODE = 5211;
@@ -310,9 +311,10 @@ const DlnBridgeProvider = ({ children }: Props) => {
     if (srcChainTokenIn.address !== dstChainTokenOut.address) {
       const tokenAmount = toTokenAmount(amountIn, srcChainTokenIn.decimals, true) as string;
       setSrcChainTokenInAmount(tokenAmount);
+      const destination = dstChainTokenOutRecipient ?? senderAddress;
 
       setIsFetchingQuote(true);
-      if (dstChainTokenOutRecipient) {
+      if (destination) {
         // If sender is known then call /v1.0/chain/transaction
         fetchInstance<SwapCreateTxResponse>({
           url: '/v1.0/chain/transaction',
@@ -321,7 +323,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
             chainId: sourceChain,
             tokenIn: srcChainTokenIn.address,
             tokenInAmount: tokenAmount,
-            tokenOutRecipient: dstChainTokenOutRecipient,
+            tokenOutRecipient: destination,
             slippage: 1,
             tokenOut: dstChainTokenOut.address,
             referralCode: DLN_REFERRAL_CODE,
@@ -338,7 +340,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
       } else {
         // Otherwise go with estimation /v1.0/chain/estimation
         fetchInstance<SwapEstimationResponse>({
-          url: '/v1.0/dln/order/quote',
+          url: '/v1.0/chain/estimation',
           method: 'get',
           params: {
             chainId: sourceChain,
