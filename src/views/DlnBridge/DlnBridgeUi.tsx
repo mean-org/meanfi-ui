@@ -205,13 +205,13 @@ const DlnBridgeUi = () => {
     return parseFloat(amountIn) * getTokenPriceByAddress(srcChainTokenIn.address, srcChainTokenIn.symbol);
   };
 
-  const getOutputAmount = () => {
+  const getOutputAmount = useCallback(() => {
     if (!dstChainTokenOut || !dstChainTokenOutAmount) {
       return '0';
     }
 
     return toUiAmount(dstChainTokenOutAmount, dstChainTokenOut.decimals);
-  };
+  }, [dstChainTokenOut, dstChainTokenOutAmount]);
 
   const getDstTokenPrice = () => {
     if (!dstChainTokenOut || !dstChainTokenOutAmount) {
