@@ -34,5 +34,5 @@ export interface SwapEstimationResponse {
 }
 
 export interface SwapCreateTxResponse extends Estimation {
-  tx: Tx;
+  tx?: Tx;
 }

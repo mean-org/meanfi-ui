@@ -312,25 +312,25 @@ const DlnBridgeUi = () => {
       !isSrcChainSolana &&
       !!(
         (quote && (quote as DlnOrderCreateTxResponse).tx.data) ||
-        (singlChainQuote && (singlChainQuote as SwapCreateTxResponse).tx.data)
+        (singlChainQuote && (singlChainQuote as SwapCreateTxResponse)?.tx?.data)
       ),
     to:
       !isSrcChainSolana && quote
         ? (quote as DlnOrderCreateTxResponse).tx.to
         : singlChainQuote
-        ? (singlChainQuote as SwapCreateTxResponse).tx.data
+        ? (singlChainQuote as SwapCreateTxResponse)?.tx?.data
         : undefined,
     value:
       !isSrcChainSolana && quote
         ? BigInt((quote as DlnOrderCreateTxResponse).tx?.value ?? 0)
         : singlChainQuote
-        ? BigInt((singlChainQuote as SwapCreateTxResponse).tx.value ?? 0)
+        ? BigInt((singlChainQuote as SwapCreateTxResponse)?.tx?.value ?? 0)
         : undefined,
     data:
       !isSrcChainSolana && quote
         ? `0x${(quote as DlnOrderCreateTxResponse).tx?.data?.slice(2)}`
         : singlChainQuote
-        ? `0x${(singlChainQuote as SwapCreateTxResponse).tx?.data?.slice(2)}`
+        ? `0x${(singlChainQuote as SwapCreateTxResponse)?.tx?.data?.slice(2)}`
         : undefined,
   });
 
@@ -459,7 +459,7 @@ const DlnBridgeUi = () => {
 
     const payload = () => {
       // Lets ensure we have the tx data
-      if ((sameChainSwap && !singleChainSwapTxData?.tx.data) || (!sameChainSwap && !dlnOrderTxData?.tx.data))
+      if ((sameChainSwap && !singleChainSwapTxData?.tx?.data) || (!sameChainSwap && !dlnOrderTxData?.tx.data))
         return undefined;
 
       return {
@@ -484,8 +484,7 @@ const DlnBridgeUi = () => {
       generateTransaction: async ({ data }) => {
         return createVersionedTxFromEncodedTx(
           connection, // connection
-          publicKey, // feePayer
-          data.txData?.tx.data, // hex-encoded tx
+          data.txData?.tx?.data ?? '', // hex-encoded tx
         );
       },
       onTxSent: txHash => {
@@ -537,6 +536,8 @@ const DlnBridgeUi = () => {
       return false;
     } else if (!isRecipientValid) {
       return false;
+    } else if (!parseFloat(getOutputAmount())) {
+      return false;
     } else if (isErrorPreparingTx) {
       return false;
     } else if (sourceChain === destinationChain) {
@@ -552,6 +553,7 @@ const DlnBridgeUi = () => {
     isErrorPreparingTx,
     isRecipientValid,
     isSrcChainSolana,
+    getOutputAmount,
     sourceChain,
     publicKey,
   ]);
@@ -567,6 +569,8 @@ const DlnBridgeUi = () => {
       return `Missing recipient's ${dstChainName} address`;
     } else if (!isRecipientValid) {
       return `Recipient address is not valid`;
+    } else if (!parseFloat(getOutputAmount())) {
+      return `No amount`;
     } else if (isErrorPreparingTx) {
       return getTxPreparationErrorMessage();
     } else {
@@ -582,6 +586,7 @@ const DlnBridgeUi = () => {
     isErrorPreparingTx,
     isRecipientValid,
     isSrcChainSolana,
+    getOutputAmount,
     sourceChain,
     publicKey,
   ]);
@@ -593,16 +598,19 @@ const DlnBridgeUi = () => {
     }
   }, [isAddressConnected, sourceChain, switchNetwork]);
 
-  // Establish sender address. So far only for Solana
+  // Establish sender address.
   useEffect(() => {
     if (isSrcChainSolana && publicKey) {
+      consoleOut('Stablishing sender:', publicKey.toBase58(), 'cadetblue');
       setSenderAddress(publicKey.toBase58());
-    } else if (!isSrcChainSolana && address) {
+    } else if (!isSrcChainSolana && isAddressConnected && address) {
+      consoleOut('Stablishing sender:', address, 'cadetblue');
       setSenderAddress(address);
     } else {
+      consoleOut('Stablishing sender:', '', 'cadetblue');
       setSenderAddress('');
     }
-  }, [address, isSrcChainSolana, publicKey, setSenderAddress, sourceChain]);
+  }, [address, isAddressConnected, isSrcChainSolana, publicKey, setSenderAddress]);
 
   // Keep solana account balance updated
   useEffect(() => {
