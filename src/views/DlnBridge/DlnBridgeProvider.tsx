@@ -12,7 +12,6 @@ import {
   GetDlnSupportedChainsResponse,
 } from './dlnOrderTypes';
 import { SwapCreateTxResponse, SwapEstimationResponse } from './singlChainOrderTypes';
-import { consoleOut } from 'middleware/ui';
 
 export const SOLANA_CHAIN_ID = 7565164;
 const DLN_REFERRAL_CODE = 5211;
