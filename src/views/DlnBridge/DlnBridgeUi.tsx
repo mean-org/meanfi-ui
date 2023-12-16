@@ -49,6 +49,7 @@ import { fetchFeeData, FetchFeeDataResult } from '@wagmi/core';
 import CustomConnectButton from './CustomConnectButton';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import SwapRate from './SwapRate';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -142,6 +143,8 @@ const DlnBridgeUi = () => {
   const getMaxAmountIn = () => {
     if (!srcChainTokenIn) {
       setAmountInput('');
+      resetQuote();
+
       return;
     }
 
@@ -150,6 +153,13 @@ const DlnBridgeUi = () => {
       const safeAmount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
       const amount = safeAmount > 0 ? safeAmount : 0;
       setAmountInput(cutNumber(amount > 0 ? amount : 0, srcChainTokenIn.decimals));
+
+      return;
+    }
+
+    if (tokenBalanceBn.isZero()) {
+      setAmountInput('0');
+      resetQuote();
 
       return;
     }
@@ -167,10 +177,8 @@ const DlnBridgeUi = () => {
       max = userBalance - maxGas - (isCrossChainSwap ? protocolFixFee : 0) - (isCrossChainSwap ? operatingExpenses : 0);
     */
 
-    consoleOut('tokenBalanceBn:', tokenBalanceBn, 'cadetblue');
     if (sameChainSwap) {
       const maxAmount = toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals);
-      consoleOut('maxAmount:', maxAmount, 'cadetblue');
       setAmountInput(maxAmount);
     } else {
       const maxGas = chainFeeData?.maxFeePerGas ?? BigInt(0);
@@ -179,16 +187,13 @@ const DlnBridgeUi = () => {
       const operatingExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
       const max = userBalance - maxGas - protocolFixFee - operatingExpenses;
 
-      consoleOut('chainFeeData:', chainFeeData, 'cadetblue');
-      consoleOut('userBalance:', userBalance, 'cadetblue');
-      consoleOut('maxGas:', maxGas, 'cadetblue');
-      consoleOut('protocolFixFee:', protocolFixFee, 'cadetblue');
-      consoleOut('operatingExpenses:', operatingExpenses, 'cadetblue');
-      consoleOut('max = userBalance - maxGas - protocolFixFee - operatingExpenses =>', max.toString(), 'cadetblue');
-
-      const maxAmount = toUiAmount(max.toString(), srcChainTokenIn.decimals);
-      consoleOut('maxAmount:', maxAmount, 'cadetblue');
-      setAmountInput(maxAmount);
+      if (max <= 0) {
+        setAmountInput('0');
+        resetQuote();
+      } else {
+        const maxAmount = toUiAmount(max.toString(), srcChainTokenIn.decimals);
+        setAmountInput(maxAmount);
+      }
     }
   };
 
@@ -214,8 +219,9 @@ const DlnBridgeUi = () => {
     }
 
     const uiAmount = getOutputAmount();
+    const price = getTokenPriceByAddress('', dstChainTokenOut.symbol);
 
-    return parseFloat(uiAmount) * getTokenPriceByAddress('', dstChainTokenOut.symbol);
+    return parseFloat(uiAmount) * price;
   };
 
   const showTokenSelector = (tokenSet: ActionTarget) => {
@@ -248,6 +254,15 @@ const DlnBridgeUi = () => {
       setDstChainTokenOutRecipient(address);
     } else {
       setDstChainTokenOutRecipient('');
+    }
+  };
+
+  const handleTokenSelection = (target: ActionTarget, token: TokenInfo) => {
+    resetQuote();
+    if (target === 'source') {
+      setSrcChainTokenIn(token);
+    } else {
+      setDstChainTokenOut(token);
     }
   };
 
@@ -545,7 +560,7 @@ const DlnBridgeUi = () => {
     if (isSrcChainSolana && !publicKey) {
       return 'Connect wallet';
     } else if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
-      return 'Change source or destination token';
+      return 'Tokens should be different';
     } else if (sourceChain === destinationChain) {
       return 'Confirm transfer';
     } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
@@ -663,10 +678,7 @@ const DlnBridgeUi = () => {
   }, [dstTokens, setDstChainTokenOut]);
 
   // Process debounced input
-  useEffect(() => {
-    consoleOut('Reflecting debounced value', debouncedAmountInput, 'cadetblue');
-    setAmountIn(debouncedAmountInput);
-  }, [debouncedAmountInput, setAmountIn]);
+  useEffect(() => setAmountIn(debouncedAmountInput), [debouncedAmountInput, setAmountIn]);
 
   // Refresh routes every 29 seconds
   useEffect(() => {
@@ -676,7 +688,7 @@ const DlnBridgeUi = () => {
     if (amountIn && parseFloat(amountIn) && srcChainTokenIn?.address && dstChainTokenOut?.address) {
       timer = setInterval(() => {
         if (!isFetchingQuote) {
-          consoleOut(`Trigger refresh quote after ${QUOTE_REFRESH_TIMEOUT / 1000} seconds`);
+          consoleOut(`Refreshing quote after ${QUOTE_REFRESH_TIMEOUT / 1000} seconds`);
           forceRefresh();
         }
       }, QUOTE_REFRESH_TIMEOUT);
@@ -723,6 +735,7 @@ const DlnBridgeUi = () => {
                     onChange={onSrcChainSelected}
                     bordered={false}
                     showArrow={false}
+                    disabled={isBusy || isFetchingQuote}
                     dropdownRender={menu => <div>{menu}</div>}
                   >
                     {SUPPORTED_CHAINS.map(item => (
@@ -749,7 +762,7 @@ const DlnBridgeUi = () => {
             <div className="well mb-3">
               <div className="flex-fixed-left">
                 <div className="left">
-                  <span className="add-on simplelink">
+                  <span className={`add-on ${isBusy || isFetchingQuote ? 'click-disabled' : 'simplelink'}`}>
                     {srcChainTokenIn ? (
                       <TokenDisplay
                         iconSize="large"
@@ -827,6 +840,7 @@ const DlnBridgeUi = () => {
                     onChange={onDstChainSelected}
                     bordered={false}
                     showArrow={false}
+                    disabled={isBusy || isFetchingQuote}
                     dropdownRender={menu => <div>{menu}</div>}
                   >
                     {SUPPORTED_CHAINS.map(item => (
@@ -850,7 +864,7 @@ const DlnBridgeUi = () => {
             <div className="well mb-3">
               <div className="flex-fixed-left">
                 <div className="left">
-                  <span className="add-on simplelink">
+                  <span className={`add-on ${isBusy || isFetchingQuote ? 'click-disabled' : 'simplelink'}`}>
                     {dstChainTokenOut ? (
                       <TokenDisplay
                         iconSize="large"
@@ -883,16 +897,12 @@ const DlnBridgeUi = () => {
                   } ${networkFeeToken?.symbol}`}</span>
                 </div>
                 <div className="right inner-label">
-                  {publicKey ? (
-                    <span
-                      className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
-                      onClick={() => refreshPrices()}
-                    >
-                      ~{outputAmount ? toUsCurrency(getDstTokenPrice()) : '$0.00'}
-                    </span>
-                  ) : (
-                    <span>~$0.00</span>
-                  )}
+                  <span
+                    className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onClick={() => refreshPrices()}
+                  >
+                    ~{outputAmount ? toUsCurrency(getDstTokenPrice()) : '$0.00'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1014,7 +1024,7 @@ const DlnBridgeUi = () => {
                 isSolana={isSrcChainSolana}
                 selectedToken={srcChainTokenIn?.address}
                 onClose={closeTokenSelector}
-                onTokenSelected={t => setSrcChainTokenIn(t)}
+                onTokenSelected={t => handleTokenSelection('source', t)}
               />
             ) : (
               <TokenSelector
@@ -1022,7 +1032,7 @@ const DlnBridgeUi = () => {
                 isSolana={destinationChain === SOLANA_CHAIN_ID}
                 selectedToken={dstChainTokenOut?.address}
                 onClose={closeTokenSelector}
-                onTokenSelected={t => setDstChainTokenOut(t)}
+                onTokenSelected={t => handleTokenSelection('destination', t)}
               />
             )}
           </Modal>

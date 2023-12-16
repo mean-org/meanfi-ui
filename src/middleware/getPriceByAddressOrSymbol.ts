@@ -8,7 +8,7 @@ import { TokenPrice } from "models/TokenPrice";
  * @returns {number} The price as number. If no price could be resolved it will return 0
  */
 const getPriceByAddressOrSymbol = (prices: TokenPrice[] | null, address: string, symbol = ''): number => {
-  if (!address || !prices || prices.length === 0) {
+  if (!prices || prices.length === 0) {
     return 0;
   }
 
@@ -18,7 +18,7 @@ const getPriceByAddressOrSymbol = (prices: TokenPrice[] | null, address: string,
     item = prices.find(i => i.symbol === symbol);
   }
 
-  return item ? item.price || 0 : 0;
+  return item ? item.price ?? 0 : 0;
 };
 
 export default getPriceByAddressOrSymbol
