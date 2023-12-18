@@ -95,23 +95,23 @@ const MeanDaoStats = () => {
   const renderBodyEmissions = (
     <div className="item-container">
       <table className="btable-table w-100">
-        <thead className="">
+        <thead>
           <tr>
-            <th className="">Slot</th>
-            <th className="">Token</th>
-            <th className="">Signature</th>
+            <th>Slot</th>
+            <th>Token</th>
+            <th>Signature</th>
           </tr>
         </thead>
-        <tbody className="">
+        <tbody>
           {transactions.map((transaction, index) => (
             <tr key={index}>
-              <td className="">
-                <span className="">{formatThousands(transaction.slot)}</span>
+              <td>
+                <span>{formatThousands(transaction.slot)}</span>
               </td>
-              <td className="">
-                <span className="">{transaction.token}</span>
+              <td>
+                <span>{transaction.token}</span>
               </td>
-              <td className="">
+              <td>
                 <span className="icon-button-container">
                   <Button
                     type="default"

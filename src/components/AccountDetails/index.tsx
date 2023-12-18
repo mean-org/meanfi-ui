@@ -41,7 +41,7 @@ export const AccountDetails = () => {
         {provider && <img src={provider.icon} alt={provider.name} width="24" className="wallet-provider-icon" />}
         <div className="account-descriptor">
           <div className="account-name">Personal Account</div>
-          <div className="account-id">{shortenAddress(selectedAccount.address, 8)}</div>
+          <div className="account-id">{shortenAddress(selectedAccount.address, 6)}</div>
         </div>
       </>
     );
@@ -53,7 +53,7 @@ export const AccountDetails = () => {
         <IconSafe className="mean-svg-icons wallet-provider-icon" style={{ width: 24, height: 24 }} />
         <div className="account-descriptor">
           <div className="account-name">{selectedAccount.name}</div>
-          <div className="account-id">{shortenAddress(selectedAccount.address, 8)}</div>
+          <div className="account-id">{shortenAddress(selectedAccount.address, 6)}</div>
         </div>
       </>
     );

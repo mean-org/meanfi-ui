@@ -184,7 +184,6 @@ export const MultisigSafeOwners = (props: {
                   <div className="left">
                     <InputMean
                       id={`participant-name-${index + 1}`}
-                      className=""
                       type="text"
                       value={participant.name}
                       onChange={(e: any) => {

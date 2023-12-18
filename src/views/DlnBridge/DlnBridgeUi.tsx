@@ -4,7 +4,7 @@ import TokenSelector from './TokenSelector';
 import { Button, Modal, Select, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from 'components/Identicon';
-import { consoleOut, isEvmValidAddress, isValidAddress, toUsCurrency } from 'middleware/ui';
+import { consoleOut, isEvmValidAddress, isValidAddress, percentageBn, toUsCurrency } from 'middleware/ui';
 import './style.scss';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { NATIVE_SOL } from 'constants/tokens';
@@ -16,6 +16,7 @@ import {
   getAmountFromLamports,
   getAmountWithSymbol,
   isValidNumber,
+  makeDecimal,
   toTokenAmount,
   toUiAmount,
 } from 'middleware/utils';
@@ -56,7 +57,11 @@ type ActionTarget = 'source' | 'destination';
 type UiStage = 'order-setup' | 'order-submitted';
 const QUOTE_REFRESH_TIMEOUT = 29000;
 
-const DlnBridgeUi = () => {
+interface DlnBridgeUiProps {
+  fromAssetSymbol?: string;
+}
+
+const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const connection = useConnection();
@@ -177,15 +182,33 @@ const DlnBridgeUi = () => {
       max = userBalance - maxGas - (isCrossChainSwap ? protocolFixFee : 0) - (isCrossChainSwap ? operatingExpenses : 0);
     */
 
+    const affiliateFeeBn = percentageBn(0.1, tokenBalanceBn) as BN;
+    consoleOut('userBalance:', makeDecimal(tokenBalanceBn, srcChainTokenIn.decimals), 'cadetblue');
     if (sameChainSwap) {
-      const maxAmount = toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals);
+      const deducted = tokenBalanceBn.sub(affiliateFeeBn);
+      const maxAmount = toUiAmount(deducted, srcChainTokenIn.decimals);
+      consoleOut('affiliateFee:', makeDecimal(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
+      consoleOut('max:', makeDecimal(deducted, srcChainTokenIn.decimals), 'cadetblue');
       setAmountInput(maxAmount);
     } else {
       const maxGas = chainFeeData?.maxFeePerGas ?? BigInt(0);
       const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
       const userBalance = BigInt(tokenBalanceBn.toString());
       const operatingExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
-      const max = userBalance - maxGas - protocolFixFee - operatingExpenses;
+      const affiliateFee = BigInt(affiliateFeeBn.toString());
+      const max = userBalance - maxGas - protocolFixFee - operatingExpenses - affiliateFee;
+      consoleOut(
+        'maxGas + protocolFixFee:',
+        makeDecimal(new BN((maxGas + protocolFixFee).toString()), srcChainTokenIn.decimals),
+        'cadetblue',
+      );
+      consoleOut(
+        'operatingExpenses:',
+        makeDecimal(new BN(operatingExpenses.toString()), srcChainTokenIn.decimals),
+        'cadetblue',
+      );
+      consoleOut('affiliateFee:', makeDecimal(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
+      consoleOut('max:', makeDecimal(new BN(max.toString()), srcChainTokenIn.decimals), 'cadetblue');
 
       if (max <= 0) {
         setAmountInput('0');
@@ -671,11 +694,15 @@ const DlnBridgeUi = () => {
 
   // Set srcChainTokenIn if srcTokens are loaded
   useEffect(() => {
-    if (srcTokens) {
+    if (srcTokens && !srcChainTokenIn) {
+      let initialToken: TokenInfo | undefined = undefined;
       consoleOut('srcTokens', srcTokens, 'cadetblue');
-      setSrcChainTokenIn(srcTokens[0]);
+      if (fromAssetSymbol) {
+        initialToken = srcTokens.find(t => t.symbol === fromAssetSymbol);
+      }
+      setSrcChainTokenIn(initialToken ?? srcTokens[0]);
     }
-  }, [setSrcChainTokenIn, srcTokens]);
+  }, [fromAssetSymbol, setSrcChainTokenIn, srcChainTokenIn, srcTokens]);
 
   // Set dstChainTokenOut if dstTokens are loaded
   useEffect(() => {

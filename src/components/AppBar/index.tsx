@@ -27,7 +27,7 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   },
   {
     key: 'bridge',
-    path: '/bridge',
+    path: '/swap',
     parent: 'root',
   },
   {
@@ -63,7 +63,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
-  const { isWhitelisted, isDepositOptionsModalVisible, hideDepositOptionsModal } = useContext(AppStateContext);
+  const { isDepositOptionsModalVisible, hideDepositOptionsModal } = useContext(AppStateContext);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -141,10 +141,6 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
 
   // Prebuild the menu options
   const mainNav = () => {
-    if (!isWhitelisted) {
-      return null;
-    }
-
     const items: ItemType[] = [];
     items.push({
       key: 'accounts',
@@ -156,7 +152,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
     });
     items.push({
       key: 'bridge',
-      label: <Link to="/bridge">{t('ui-menus.main-menu.bridge')}</Link>,
+      label: <Link to="/swap">{t('ui-menus.main-menu.bridge')}</Link>,
     });
     items.push({
       key: 'docs',
@@ -231,7 +227,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
                   className={selectedItems.includes('bridge') ? 'mobile-menu-item active' : 'mobile-menu-item'}
                   style={{ '--animation-order': 3 } as CustomCSSProps}
                 >
-                  <Link to="/bridge">{t('ui-menus.main-menu.bridge')}</Link>
+                  <Link to="/swap">{t('ui-menus.main-menu.bridge')}</Link>
                 </li>
                 <li
                   key="docs"

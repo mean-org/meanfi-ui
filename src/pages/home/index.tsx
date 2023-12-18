@@ -499,9 +499,9 @@ export const HomeView = () => {
   const goToExchangeWithPresetAsset = useCallback(() => {
     const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
     if (queryParams) {
-      navigate(`/exchange${queryParams}`);
+      navigate(`/swap${queryParams}`);
     } else {
-      navigate('/exchange');
+      navigate('/swap');
     }
   }, [navigate, selectedAsset]);
 
@@ -2802,9 +2802,9 @@ export const HomeView = () => {
     actions.push(getDepositOptionsCta('Deposit', ctaItems, numMaxCtas, showReceiveSplOrSolModal));
     ctaItems++;
 
-    // Exchange
+    // Swap
     const exchangeAssetCta = getExchangeAssetCta(
-      'Exchange',
+      t('ui-menus.main-menu.bridge'),
       ctaItems,
       numMaxCtas,
       isInspectedAccountTheConnectedWallet(),
