@@ -27,7 +27,7 @@ const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   },
   {
     key: 'bridge',
-    path: '/bridge',
+    path: '/swap',
     parent: 'root',
   },
   {
@@ -152,7 +152,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
     });
     items.push({
       key: 'bridge',
-      label: <Link to="/bridge">{t('ui-menus.main-menu.bridge')}</Link>,
+      label: <Link to="/swap">{t('ui-menus.main-menu.bridge')}</Link>,
     });
     items.push({
       key: 'docs',
@@ -227,7 +227,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
                   className={selectedItems.includes('bridge') ? 'mobile-menu-item active' : 'mobile-menu-item'}
                   style={{ '--animation-order': 3 } as CustomCSSProps}
                 >
-                  <Link to="/bridge">{t('ui-menus.main-menu.bridge')}</Link>
+                  <Link to="/swap">{t('ui-menus.main-menu.bridge')}</Link>
                 </li>
                 <li
                   key="docs"

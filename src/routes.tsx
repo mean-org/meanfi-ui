@@ -15,7 +15,7 @@ import {
   SwapView,
 } from './pages';
 import { ServiceUnavailableView } from './pages/service-unavailable';
-import Bridge from 'pages/bridge';
+import Bridge from 'pages/swap';
 
 const CreateSafeView = React.lazy(() => import('views/CreateSafe'));
 
@@ -36,7 +36,7 @@ export function AppRoutes() {
           <Route path="/my-account" element={<HomeView />} />
           <Route path="/exchange" element={<SwapView />} />
           {(isProd() || isLocal()) && <Route path="/exchange-dcas" element={<ExchangeDcasView />} />}
-          <Route path="/bridge" element={<Bridge />} />
+          <Route path="/swap" element={<Bridge />} />
           <Route path="/stats" element={<StatsView />} />
           <Route path="/faucet" element={<FaucetView />} />
           <Route path="/custody" element={<CustodyView />} />

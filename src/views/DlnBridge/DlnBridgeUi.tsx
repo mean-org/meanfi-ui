@@ -16,6 +16,7 @@ import {
   getAmountFromLamports,
   getAmountWithSymbol,
   isValidNumber,
+  makeDecimal,
   toTokenAmount,
   toUiAmount,
 } from 'middleware/utils';
@@ -181,18 +182,33 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       max = userBalance - maxGas - (isCrossChainSwap ? protocolFixFee : 0) - (isCrossChainSwap ? operatingExpenses : 0);
     */
 
+    const affiliateFeeBn = percentageBn(0.1, tokenBalanceBn) as BN;
+    consoleOut('userBalance:', makeDecimal(tokenBalanceBn, srcChainTokenIn.decimals), 'cadetblue');
     if (sameChainSwap) {
-      const affiliateFee = percentageBn(0.1, tokenBalanceBn) as BN;
-      const deducted = tokenBalanceBn.sub(affiliateFee);
+      const deducted = tokenBalanceBn.sub(affiliateFeeBn);
       const maxAmount = toUiAmount(deducted, srcChainTokenIn.decimals);
+      consoleOut('affiliateFee:', makeDecimal(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
+      consoleOut('max:', makeDecimal(deducted, srcChainTokenIn.decimals), 'cadetblue');
       setAmountInput(maxAmount);
     } else {
       const maxGas = chainFeeData?.maxFeePerGas ?? BigInt(0);
       const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
       const userBalance = BigInt(tokenBalanceBn.toString());
       const operatingExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
-      const affiliateFee = (BigInt(0.1) * userBalance) / BigInt(100);
+      const affiliateFee = BigInt(affiliateFeeBn.toString());
       const max = userBalance - maxGas - protocolFixFee - operatingExpenses - affiliateFee;
+      consoleOut(
+        'maxGas + protocolFixFee:',
+        makeDecimal(new BN((maxGas + protocolFixFee).toString()), srcChainTokenIn.decimals),
+        'cadetblue',
+      );
+      consoleOut(
+        'operatingExpenses:',
+        makeDecimal(new BN(operatingExpenses.toString()), srcChainTokenIn.decimals),
+        'cadetblue',
+      );
+      consoleOut('affiliateFee:', makeDecimal(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
+      consoleOut('max:', makeDecimal(new BN(max.toString()), srcChainTokenIn.decimals), 'cadetblue');
 
       if (max <= 0) {
         setAmountInput('0');
