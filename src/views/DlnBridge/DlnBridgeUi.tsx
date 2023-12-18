@@ -4,7 +4,7 @@ import TokenSelector from './TokenSelector';
 import { Button, Modal, Select, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from 'components/Identicon';
-import { consoleOut, isEvmValidAddress, isValidAddress, toUsCurrency } from 'middleware/ui';
+import { consoleOut, isEvmValidAddress, isValidAddress, percentageBn, toUsCurrency } from 'middleware/ui';
 import './style.scss';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { NATIVE_SOL } from 'constants/tokens';
@@ -178,14 +178,17 @@ const DlnBridgeUi = () => {
     */
 
     if (sameChainSwap) {
-      const maxAmount = toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals);
+      const affiliateFee = percentageBn(0.1, tokenBalanceBn) as BN;
+      const deducted = tokenBalanceBn.sub(affiliateFee);
+      const maxAmount = toUiAmount(deducted, srcChainTokenIn.decimals);
       setAmountInput(maxAmount);
     } else {
       const maxGas = chainFeeData?.maxFeePerGas ?? BigInt(0);
       const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
       const userBalance = BigInt(tokenBalanceBn.toString());
       const operatingExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
-      const max = userBalance - maxGas - protocolFixFee - operatingExpenses;
+      const affiliateFee = (BigInt(0.1) * userBalance) / BigInt(100);
+      const max = userBalance - maxGas - protocolFixFee - operatingExpenses - affiliateFee;
 
       if (max <= 0) {
         setAmountInput('0');
