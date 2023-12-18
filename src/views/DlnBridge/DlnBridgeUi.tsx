@@ -56,7 +56,11 @@ type ActionTarget = 'source' | 'destination';
 type UiStage = 'order-setup' | 'order-submitted';
 const QUOTE_REFRESH_TIMEOUT = 29000;
 
-const DlnBridgeUi = () => {
+interface DlnBridgeUiProps {
+  fromAssetSymbol?: string;
+}
+
+const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const connection = useConnection();
@@ -674,11 +678,15 @@ const DlnBridgeUi = () => {
 
   // Set srcChainTokenIn if srcTokens are loaded
   useEffect(() => {
-    if (srcTokens) {
+    if (srcTokens && !srcChainTokenIn) {
+      let initialToken: TokenInfo | undefined = undefined;
       consoleOut('srcTokens', srcTokens, 'cadetblue');
-      setSrcChainTokenIn(srcTokens[0]);
+      if (fromAssetSymbol) {
+        initialToken = srcTokens.find(t => t.symbol === fromAssetSymbol);
+      }
+      setSrcChainTokenIn(initialToken ?? srcTokens[0]);
     }
-  }, [setSrcChainTokenIn, srcTokens]);
+  }, [fromAssetSymbol, setSrcChainTokenIn, srcChainTokenIn, srcTokens]);
 
   // Set dstChainTokenOut if dstTokens are loaded
   useEffect(() => {

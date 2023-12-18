@@ -63,7 +63,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
-  const { isWhitelisted, isDepositOptionsModalVisible, hideDepositOptionsModal } = useContext(AppStateContext);
+  const { isDepositOptionsModalVisible, hideDepositOptionsModal } = useContext(AppStateContext);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -141,10 +141,6 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
 
   // Prebuild the menu options
   const mainNav = () => {
-    if (!isWhitelisted) {
-      return null;
-    }
-
     const items: ItemType[] = [];
     items.push({
       key: 'accounts',

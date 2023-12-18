@@ -499,9 +499,9 @@ export const HomeView = () => {
   const goToExchangeWithPresetAsset = useCallback(() => {
     const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
     if (queryParams) {
-      navigate(`/exchange${queryParams}`);
+      navigate(`/bridge${queryParams}`);
     } else {
-      navigate('/exchange');
+      navigate('/bridge');
     }
   }, [navigate, selectedAsset]);
 
