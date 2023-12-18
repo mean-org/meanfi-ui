@@ -192,7 +192,7 @@ export const SendAssetModal = (props: {
       };
 
       if (index < MAX_TOKEN_LIST_ITEMS) {
-        const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
+        const balance = userBalances ? (userBalances[t.address] as number) : 0;
         return (
           <TokenListItem
             key={t.address}

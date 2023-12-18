@@ -538,7 +538,10 @@ export const getTokensWithBalances = async (
 
     const intersectedList = onlyAccountAssets ? getTokenListForOwnedTokenAccounts(accTks, splTokenList) : splTokensCopy;
 
-    if (!intersectedList.some(l => l.address === sol.address)) {
+    const solItemIndex = intersectedList.findIndex(l => l.address === sol.address);
+    if (solItemIndex !== -1) {
+      intersectedList[solItemIndex] = sol;
+    } else {
       intersectedList.push(sol);
     }
 
