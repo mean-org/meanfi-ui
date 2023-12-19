@@ -12,7 +12,6 @@ import {
   PlaygroundView,
   StakingRewardsView,
   StatsView,
-  SwapView,
 } from './pages';
 import { ServiceUnavailableView } from './pages/service-unavailable';
 import Bridge from 'pages/swap';
@@ -34,7 +33,7 @@ export function AppRoutes() {
             }
           />
           <Route path="/my-account" element={<HomeView />} />
-          <Route path="/exchange" element={<SwapView />} />
+          {/* <Route path="/exchange" element={<SwapView />} /> */}
           {(isProd() || isLocal()) && <Route path="/exchange-dcas" element={<ExchangeDcasView />} />}
           <Route path="/swap" element={<Bridge />} />
           <Route path="/stats" element={<StatsView />} />
