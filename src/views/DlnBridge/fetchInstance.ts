@@ -4,21 +4,26 @@ type ErrorType<ErrorData> = ErrorData
 
 type BodyType<BodyData> = BodyData
 
-export class ApiError extends Error {
+export interface DlnErrorResponse {
+  errorCode: number;
+  errorId: string;
+  errorMessage: string;
+  requestId: string;
+}
+
+export class DlnApiError extends Error {
   public status: number
-  public title?: string
-  public detail?: string
+  public jsonError?: DlnErrorResponse
 
   constructor(
     response: Response,
-    data?: ErrorType<{ title?: string; detail?: string }>
+    data?: ErrorType<DlnErrorResponse>
   ) {
-    super('ApiError')
-    this.status = response.status
-    this.title = data?.title
-    this.detail = data?.detail
+    super('DlnApiError')
+    this.status = response.status;
+    this.jsonError = data;
 
-    Object.setPrototypeOf(this, ApiError.prototype)
+    Object.setPrototypeOf(this, DlnApiError.prototype);
   }
 }
 
@@ -51,11 +56,15 @@ export const fetcher = async (options: FetchOptions): Promise<Response> => {
 }
 
 export const fetchInstance = async <T>(options: FetchOptions): Promise<T> => {
-  const response = await fetcher(options)
-  const data = await response.json().catch(() => undefined)
+  const response = await fetcher(options);
+  const data = await response.json().catch(() => undefined);
 
   if (!response.ok) {
-    throw new ApiError(response, data)
+    response.json().then((jsonError: DlnErrorResponse) => {
+      if (response.status === 500) {
+        throw new DlnApiError(response, jsonError);
+      }
+    })
   }
 
   return data

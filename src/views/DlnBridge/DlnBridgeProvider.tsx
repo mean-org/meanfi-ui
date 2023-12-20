@@ -2,7 +2,7 @@ import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, 
 
 import { toTokenAmount } from 'middleware/utils';
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import { fetchInstance } from 'views/DlnBridge/fetchInstance';
+import { DlnApiError, fetchInstance } from 'views/DlnBridge/fetchInstance';
 import { useFetch } from 'views/DlnBridge/useFetch';
 import {
   DlnOrderCreateTxResponse,
@@ -11,10 +11,17 @@ import {
   GetDlnChainTokenListResponse,
   GetDlnSupportedChainsResponse,
 } from './dlnOrderTypes';
-import { SwapCreateTxResponse, SwapEstimationResponse } from './singlChainOrderTypes';
+import { SwapCreateTxResponse, SwapEstimationResponse } from './singleChainOrderTypes';
 
 export const SOLANA_CHAIN_ID = 7565164;
 const DLN_REFERRAL_CODE = 5211;
+
+export interface DlnErrorResponse {
+  errorCode: number;
+  errorId: string;
+  errorMessage: string;
+  requestId: string;
+}
 
 export const SUPPORTED_CHAINS: FeeRecipient[] = [
   {
@@ -60,6 +67,7 @@ type Value = {
   quote: DlnOrderQuoteResponse | DlnOrderCreateTxResponse | undefined;
   singlChainQuote: SwapEstimationResponse | SwapCreateTxResponse | undefined;
   isFetchingQuote: boolean;
+  lastQuoteError: DlnErrorResponse | undefined;
   setSourceChain: (chainId: number) => void;
   setDestinationChain: (chainId: number) => void;
   setSrcChainTokenIn: (token: TokenInfo | undefined) => void;
@@ -88,6 +96,7 @@ const defaultProvider: Value = {
   quote: undefined,
   singlChainQuote: undefined,
   isFetchingQuote: false,
+  lastQuoteError: undefined,
   setSourceChain: () => void 0,
   setDestinationChain: () => void 0,
   setSrcChainTokenIn: () => void 0,
@@ -132,6 +141,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
   const [singlChainQuote, setSinglChainQuote] = useState<SwapEstimationResponse | SwapCreateTxResponse | undefined>(
     defaultProvider.singlChainQuote,
   );
+  const [lastQuoteError, setLastQuoteError] = useState<DlnErrorResponse | undefined>();
 
   const affiliateFeeRecipient = useMemo(() => getAffiliateFeeRecipient(sourceChain), [sourceChain]);
 
@@ -229,7 +239,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
       setIsFetchingQuote(true);
       if (dstChainTokenOutRecipient) {
         // If recipient is available then call /v1.0/dln/order/create-tx
-        fetchInstance<DlnOrderCreateTxResponse>({
+        fetchInstance<DlnOrderCreateTxResponse | DlnErrorResponse>({
           url: '/v1.0/dln/order/create-tx',
           method: 'get',
           params: {
@@ -244,7 +254,6 @@ const DlnBridgeProvider = ({ children }: Props) => {
             senderAddress,
             srcChainOrderAuthorityAddress: senderAddress,
             referralCode: DLN_REFERRAL_CODE,
-            // additionalTakerRewardBps: 0.1 * 100,
             affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
             ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
             prependOperatingExpenses: true,
@@ -253,14 +262,22 @@ const DlnBridgeProvider = ({ children }: Props) => {
           },
         })
           .then(quoteResponse => {
+            if ('errorId' in quoteResponse) {
+              setLastQuoteError(quoteResponse);
+
+              return;
+            }
             console.log('quoteResponse:', quoteResponse);
+            setLastQuoteError(undefined);
             setQuote(quoteResponse);
             setDstChainTokenOutAmount(quoteResponse.estimation.dstChainTokenOut.amount);
           })
+          .catch(rejection => {
+            console.error('/create-tx rejection:', rejection);
+          })
           .finally(() => setIsFetchingQuote(false));
       } else {
-        // Otherwise go with a quote /v1.0/dln/order/quote
-        fetchInstance<DlnOrderQuoteResponse>({
+        fetchInstance<DlnOrderQuoteResponse | DlnErrorResponse>({
           url: '/v1.0/dln/order/quote',
           method: 'get',
           params: {
@@ -274,9 +291,18 @@ const DlnBridgeProvider = ({ children }: Props) => {
           },
         })
           .then(quoteResponse => {
+            if ('errorId' in quoteResponse) {
+              setLastQuoteError(quoteResponse);
+
+              return;
+            }
             console.log('quoteResponse:', quoteResponse);
+            setLastQuoteError(undefined);
             setQuote(quoteResponse);
             setDstChainTokenOutAmount(quoteResponse.estimation.dstChainTokenOut.amount);
+          })
+          .catch(rejection => {
+            console.error('/quote rejection:', rejection);
           })
           .finally(() => setIsFetchingQuote(false));
       }
@@ -315,7 +341,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
       setIsFetchingQuote(true);
       if (destination) {
         // If sender is known then call /v1.0/chain/transaction
-        fetchInstance<SwapCreateTxResponse>({
+        fetchInstance<SwapCreateTxResponse | DlnErrorResponse>({
           url: '/v1.0/chain/transaction',
           method: 'get',
           params: {
@@ -331,14 +357,23 @@ const DlnBridgeProvider = ({ children }: Props) => {
           },
         })
           .then(createTxResponse => {
+            if ('errorId' in createTxResponse) {
+              setLastQuoteError(createTxResponse);
+
+              return;
+            }
             console.log('createTxResponse:', createTxResponse);
+            setLastQuoteError(undefined);
             setSinglChainQuote(createTxResponse);
             setDstChainTokenOutAmount(createTxResponse.tokenOut.amount);
+          })
+          .catch(rejection => {
+            console.error('/transaction rejection:', rejection);
           })
           .finally(() => setIsFetchingQuote(false));
       } else {
         // Otherwise go with estimation /v1.0/chain/estimation
-        fetchInstance<SwapEstimationResponse>({
+        fetchInstance<SwapEstimationResponse | DlnErrorResponse>({
           url: '/v1.0/chain/estimation',
           method: 'get',
           params: {
@@ -350,9 +385,19 @@ const DlnBridgeProvider = ({ children }: Props) => {
           },
         })
           .then(estimationResponse => {
+            if ('errorId' in estimationResponse) {
+              setLastQuoteError(estimationResponse);
+
+              return;
+            }
+            console.log('estimationResponse:', estimationResponse);
+            setLastQuoteError(undefined);
             console.log('estimationResponse:', estimationResponse);
             setSinglChainQuote(estimationResponse);
             setDstChainTokenOutAmount(estimationResponse.estimation.tokenOut.amount);
+          })
+          .catch(rejection => {
+            console.error('/estimation rejection:', rejection);
           })
           .finally(() => setIsFetchingQuote(false));
       }
@@ -389,6 +434,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
         isFetchingQuote,
         quote,
         singlChainQuote,
+        lastQuoteError,
         resetQuote,
         setSourceChain,
         setDestinationChain,
@@ -416,6 +462,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
       isFetchingQuote,
       quote,
       singlChainQuote,
+      lastQuoteError,
       resetQuote,
       forceRefresh,
       flipNetworks,
