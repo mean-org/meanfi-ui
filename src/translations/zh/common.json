@@ -943,8 +943,9 @@
     "transaction-settings": "交易设置"
   },
   "bridge": {
-    "screen-title": "Bridge",
-    "screen-subtitle": "Decentralized asset transfers between blockchains",
+    "screen-title": "Mean Token Swap",
+    "screen-subtitle": "Swap from anything to anything.",
+    "screen-subtitle2": "Move from anywhere to anywhere.",
     "loading-error": "Error loading bridge, please try again later by reloading the page."
   },
   "token-selector": {
@@ -1334,8 +1335,7 @@
       "vesting": "Vesting",
       "wallet-guide": "钱包指南",
       "stats": "统计数据",
-      "bridge": "Swap",
-      "swap": "交换",
+      "exchange": "交换",
       "transfers": "转换"
     }
   },

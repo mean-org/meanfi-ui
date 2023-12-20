@@ -20,14 +20,14 @@ import { CustomCSSProps } from 'middleware/css-custom-props';
 import { MEAN_DAO_DOCS_URL } from 'constants/common';
 
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
-  // {
-  //   key: 'exchange',
-  //   path: '/exchange',
-  //   parent: 'root',
-  // },
   {
-    key: 'bridge',
-    path: '/swap',
+    key: 'exchange',
+    path: '/exchange',
+    parent: 'root',
+  },
+  {
+    key: 'staking',
+    path: '/staking',
     parent: 'root',
   },
   {
@@ -146,13 +146,13 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
       key: 'accounts',
       label: <Link to="/">{t('ui-menus.main-menu.accounts')}</Link>,
     });
-    // items.push({
-    //   key: 'exchange',
-    //   label: <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>,
-    // });
     items.push({
-      key: 'bridge',
-      label: <Link to="/swap">{t('ui-menus.main-menu.bridge')}</Link>,
+      key: 'exchange',
+      label: <Link to="/exchange">{t('ui-menus.main-menu.exchange')}</Link>,
+    });
+    items.push({
+      key: 'staking',
+      label: <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>,
     });
     items.push({
       key: 'docs',
@@ -215,19 +215,19 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
                 >
                   <Link to="/">{t('ui-menus.main-menu.accounts')}</Link>
                 </li>
-                {/* <li
+                <li
                   key="exchange"
                   className={selectedItems.includes('exchange') ? 'mobile-menu-item active' : 'mobile-menu-item'}
-                  style={{ '--animation-order': 2 } as CustomCSSProps}
-                >
-                  <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
-                </li> */}
-                <li
-                  key="bridge"
-                  className={selectedItems.includes('bridge') ? 'mobile-menu-item active' : 'mobile-menu-item'}
                   style={{ '--animation-order': 3 } as CustomCSSProps}
                 >
-                  <Link to="/swap">{t('ui-menus.main-menu.bridge')}</Link>
+                  <Link to="/exchange">{t('ui-menus.main-menu.exchange')}</Link>
+                </li>
+                <li
+                  key="staking"
+                  className={selectedItems.includes('staking') ? 'mobile-menu-item active' : 'mobile-menu-item'}
+                  style={{ '--animation-order': 3 } as CustomCSSProps}
+                >
+                  <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>
                 </li>
                 <li
                   key="docs"
