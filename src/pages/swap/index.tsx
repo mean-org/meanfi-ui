@@ -36,6 +36,7 @@ const Bridge = () => {
               <div>{t('bridge.screen-title')}</div>
             </div>
             <div className="subtitle">{t('bridge.screen-subtitle')}</div>
+            <div className="subtitle">{t('bridge.screen-subtitle2')}</div>
           </div>
           <DlnBridge fromAssetSymbol={fromAssetSymbol} />
         </div>

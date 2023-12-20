@@ -499,9 +499,9 @@ export const HomeView = () => {
   const goToExchangeWithPresetAsset = useCallback(() => {
     const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
     if (queryParams) {
-      navigate(`/swap${queryParams}`);
+      navigate(`/exchange${queryParams}`);
     } else {
-      navigate('/swap');
+      navigate('/exchange');
     }
   }, [navigate, selectedAsset]);
 
@@ -2804,7 +2804,7 @@ export const HomeView = () => {
 
     // Swap
     const exchangeAssetCta = getExchangeAssetCta(
-      t('ui-menus.main-menu.bridge'),
+      t('ui-menus.main-menu.exchange'),
       ctaItems,
       numMaxCtas,
       isInspectedAccountTheConnectedWallet(),
