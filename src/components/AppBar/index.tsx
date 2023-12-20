@@ -218,7 +218,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
                 <li
                   key="exchange"
                   className={selectedItems.includes('exchange') ? 'mobile-menu-item active' : 'mobile-menu-item'}
-                  style={{ '--animation-order': 3 } as CustomCSSProps}
+                  style={{ '--animation-order': 2 } as CustomCSSProps}
                 >
                   <Link to="/exchange">{t('ui-menus.main-menu.exchange')}</Link>
                 </li>
@@ -232,7 +232,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
                 <li
                   key="docs"
                   className={selectedItems.includes('docs') ? 'mobile-menu-item active' : 'mobile-menu-item'}
-                  style={{ '--animation-order': 3 } as CustomCSSProps}
+                  style={{ '--animation-order': 4 } as CustomCSSProps}
                 >
                   <Link to={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
                     {t('ui-menus.app-context-menu.how-to-use')}
