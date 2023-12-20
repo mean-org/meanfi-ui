@@ -37,7 +37,7 @@ import useTransaction from 'hooks/useTransaction';
 import { DlnOrderCreateTxResponse } from './dlnOrderTypes';
 import { OperationType } from 'models/enums';
 import createVersionedTxFromEncodedTx from './createVersionedTxFromEncodedTx';
-import { SwapCreateTxResponse } from './singlChainOrderTypes';
+import { SwapCreateTxResponse } from './singleChainOrderTypes';
 import {
   useAccount,
   useBalance,
@@ -51,6 +51,7 @@ import CustomConnectButton from './CustomConnectButton';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import SwapRate from './SwapRate';
 import { TokenInfo } from 'models/SolanaTokenInfo';
+import getUiErrorString from './getUiErrorString';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -96,6 +97,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     dstChainTokenOutAmount,
     dstChainTokenOutRecipient,
     isFetchingQuote,
+    lastQuoteError,
     setSourceChain,
     setDestinationChain,
     setDstChainTokenOut,
@@ -550,16 +552,20 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     ((destinationChain !== SOLANA_CHAIN_ID && isEvmValidAddress(dstChainTokenOutRecipient)) ||
       (destinationChain === SOLANA_CHAIN_ID && isValidAddress(dstChainTokenOutRecipient)));
 
+  const isBuildingTx = dstChainTokenOutRecipient && (quote || singlChainQuote);
+
   const isTransferValid = useMemo(() => {
     if (isSrcChainSolana && !publicKey) {
       return false;
     } else if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
       return false;
+    } else if (!parseFloat(amountIn)) {
+      return false;
+    } else if (lastQuoteError) {
+      return false;
     } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
       return false;
     } else if (!isRecipientValid) {
-      return false;
-    } else if (!parseFloat(getOutputAmount())) {
       return false;
     } else if (isErrorPreparingTx) {
       return false;
@@ -569,6 +575,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return true;
     }
   }, [
+    amountIn,
     destinationChain,
     srcChainTokenIn?.address,
     dstChainTokenOut?.address,
@@ -576,31 +583,38 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     isErrorPreparingTx,
     isRecipientValid,
     isSrcChainSolana,
-    getOutputAmount,
+    lastQuoteError,
     sourceChain,
     publicKey,
   ]);
 
   const transactionStartButtonLabel = useMemo(() => {
-    if (isSrcChainSolana && !publicKey) {
+    if (isFetchingQuote) {
+      return isBuildingTx ? 'Refreshing order' : 'Refreshing quote';
+    } else if (isSrcChainSolana && !publicKey) {
       return 'Connect wallet';
     } else if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
       return 'Tokens should be different';
-    } else if (sourceChain === destinationChain) {
-      return 'Confirm transfer';
+    } else if (!parseFloat(amountIn)) {
+      return 'No amount';
+    } else if (lastQuoteError) {
+      return getUiErrorString(lastQuoteError);
     } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
       return `Missing recipient's ${dstChainName} address`;
     } else if (!isRecipientValid) {
-      return `Recipient address is not valid`;
-    } else if (!parseFloat(getOutputAmount())) {
-      return `No amount`;
+      return 'Recipient address is not valid';
     } else if (isErrorPreparingTx) {
       return getTxPreparationErrorMessage();
+    } else if (sourceChain === destinationChain) {
+      return 'Confirm transfer';
     } else {
       return 'Create trade';
     }
   }, [
+    amountIn,
+    isBuildingTx,
     dstChainName,
+    isFetchingQuote,
     destinationChain,
     srcChainTokenIn?.address,
     dstChainTokenOut?.address,
@@ -609,7 +623,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     isErrorPreparingTx,
     isRecipientValid,
     isSrcChainSolana,
-    getOutputAmount,
+    lastQuoteError,
     sourceChain,
     publicKey,
   ]);
@@ -993,7 +1007,9 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                     <LoadingOutlined style={{ fontSize: '16px' }} />
                   </span>
                 )}
-                {isBusy ? 'Swapping' : transactionStartButtonLabel}
+                <span className={isFetchingQuote ? 'inactive fg-orange-red pulsate' : ''}>
+                  {isBusy || isExecutingTx ? 'Swapping' : transactionStartButtonLabel}
+                </span>
               </Button>
             ) : null}
           </div>
