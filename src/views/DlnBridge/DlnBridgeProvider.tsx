@@ -2,7 +2,7 @@ import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, 
 
 import { toTokenAmount } from 'middleware/utils';
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import { DlnApiError, fetchInstance } from 'views/DlnBridge/fetchInstance';
+import { fetchInstance } from 'views/DlnBridge/fetchInstance';
 import { useFetch } from 'views/DlnBridge/useFetch';
 import {
   DlnOrderCreateTxResponse,
