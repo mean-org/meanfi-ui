@@ -47,7 +47,6 @@ import { AppUsageEvent } from '../middleware/segment-service';
 import { consoleOut, isProd } from '../middleware/ui';
 import { isUnauthenticatedRoute, useLocalStorageState } from '../middleware/utils';
 import { XnftWalletAdapter, XnftWalletName, isInXnftWallet } from '../integrations/xnft/xnft-wallet-adapter';
-import useLocalStorage from 'hooks/useLocalStorage';
 
 // Flag to block processing of events when triggered multiple times
 let isDisconnecting = false;
@@ -318,7 +317,6 @@ export function MeanFiWalletProvider({ children = null as any }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [walletName, setWalletName] = useLocalStorageState('walletName');
-  const [theme] = useLocalStorage('theme', 'dark');
   const {
     wallet,
     wallets,
@@ -501,11 +499,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
         className="mean-modal simple-modal header-autoheight"
         title={
           <div className="mt-3">
-            <img
-              className="app-logo"
-              src={theme === 'dark' ? '/assets/mean-logo-color-light.svg' : '/assets/mean-logo-color-dark.svg'}
-              alt="Mean Finance"
-            />
+            <img className="app-logo" src="/assets/mean-lettermark.svg" alt="Mean Finance" />
           </div>
         }
         open={isSelectingWallet}
