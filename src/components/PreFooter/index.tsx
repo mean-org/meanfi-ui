@@ -61,7 +61,7 @@ export const PreFooter = () => {
                   ❤️
                 </span>{' '}
                 {t('pre-footer.on-solana')}{' '}
-                <img className="small-solana-icon" src="/solana-logo.png" alt="Solana logo" />
+                <img className="small-solana-icon" src="/assets/solana-logo.png" alt="Solana logo" />
               </span>
             </div>
           </div>
