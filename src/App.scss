@@ -386,17 +386,21 @@ body {
       font-size: 18px;
       position: relative;
       display: inline-block !important;
-      width: 54px;
-      height: 54px;
+      width: 64px;
+      height: 64px;
       padding-top: 2px;
       overflow: visible;
 
       svg {
-        height: 54px;
+        height: 64px;
         width: auto;
-        max-width: 54px;
-        max-height: 54px;
+        max-width: 64px;
+        max-height: 64px;
         overflow: visible;
+      }
+
+      .lettermark {
+        fill: var(--color-primary);
       }
     }
 
@@ -413,7 +417,7 @@ body {
         stroke-dashoffset: 0;
         animation: dash 1.5s ease-in-out infinite;
         stroke-linecap: round;
-        stroke: var(--color-primary-highlight);
+        stroke: var(--color-primary);
       }
     }
   }
