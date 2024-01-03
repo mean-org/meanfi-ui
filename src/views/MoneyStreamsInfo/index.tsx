@@ -1116,11 +1116,16 @@ export const MoneyStreamsInfoView = (props: {
 
       const treasuryType = data.type === 'Open' ? AccountType.Open : AccountType.Lock;
 
+      const treasuryAssociatedTokenMint =
+        data.associatedTokenAddress === SOL_MINT.toBase58()
+          ? NATIVE_SOL_MINT // imported from SDK
+          : new PublicKey(data.associatedTokenAddress);
+
       if (!data.multisig) {
         const accounts: CreateAccountTransactionAccounts = {
           feePayer: new PublicKey(data.treasurer), // treasurer
           owner: new PublicKey(data.treasurer), // treasurer
-          mint: new PublicKey(data.associatedTokenAddress), // mint
+          mint: treasuryAssociatedTokenMint, // mint
         };
         const { transaction } = await paymentStreaming.buildCreateAccountTransaction(
           accounts, // accounts
@@ -1139,9 +1144,6 @@ export const MoneyStreamsInfoView = (props: {
       if (!multisig) {
         return null;
       }
-
-      // Create Streaming account
-      const treasuryAssociatedTokenMint = new PublicKey(data.associatedTokenAddress);
 
       const accounts: CreateAccountTransactionAccounts = {
         feePayer: multisig.authority, // treasurer
