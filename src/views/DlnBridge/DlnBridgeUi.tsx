@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { SOLANA_CHAIN_ID, SUPPORTED_CHAINS, getChainById, useDlnBridge } from './DlnBridgeProvider';
+import { FEE_PERCENT, SOLANA_CHAIN_ID, SUPPORTED_CHAINS, getChainById, useDlnBridge } from './DlnBridgeProvider';
 import TokenSelector from './TokenSelector';
 import { Button, Modal, Select, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,7 @@ import { TokenDisplay } from 'components/TokenDisplay';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import {
-  cutNumber,
+  displayAmountWithSymbol,
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
@@ -67,7 +67,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   const { account } = useNativeAccount();
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const { loadingPrices, refreshPrices, getTokenPriceByAddress } = useContext(AppStateContext);
+  const { loadingPrices, tokenList, refreshPrices, getTokenPriceByAddress } = useContext(AppStateContext);
   const { addTransactionNotification } = useContext(TxConfirmationContext);
   const [uiStage, setUiStage] = useState<UiStage>('order-setup');
   const [orderSubmittedContent, setOrderSubmittedContent] = useState<{ message: string; txHash: string }>();
@@ -138,6 +138,16 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       srcChainTokenIn?.address === srcChainData?.networkFeeToken ? undefined : `0x${srcChainTokenIn?.address.slice(2)}`,
   });
 
+  const operatingExpenses = useMemo(() => {
+    if (!srcChainTokenIn || !quote?.prependedOperatingExpenseCost) return 0;
+
+    const expenses = BigInt(isCrossChainSwap ? quote.prependedOperatingExpenseCost ?? 0 : 0).toString();
+    const expensesUiAmount = toUiAmount(expenses, srcChainTokenIn.decimals);
+
+    return parseFloat(expensesUiAmount);
+  }, [isCrossChainSwap, quote?.prependedOperatingExpenseCost, srcChainTokenIn]);
+
+  // Get EVM fee data
   useEffect(() => {
     if (sourceChain === SOLANA_CHAIN_ID) {
       setChainFeeData(undefined);
@@ -147,29 +157,17 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     fetchFeeData().then(value => setChainFeeData(value));
   }, [sourceChain]);
 
-  const getMaxAmountIn = () => {
-    if (!srcChainTokenIn) {
-      setAmountInput('');
-      resetQuote();
-
-      return;
-    }
+  const maxAmount = useMemo(() => {
+    if (!srcChainTokenIn) return 0;
 
     // If source chain is Solana lets force a margin of 0.05 SOL as min balance
     if (srcChainTokenIn.address === NATIVE_SOL.address) {
       const safeAmount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
       const amount = safeAmount > 0 ? safeAmount : 0;
-      setAmountInput(cutNumber(amount > 0 ? amount : 0, srcChainTokenIn.decimals));
-
-      return;
+      return amount;
     }
 
-    if (tokenBalanceBn.isZero()) {
-      setAmountInput('0');
-      resetQuote();
-
-      return;
-    }
+    if (tokenBalanceBn.isZero()) return 0;
 
     /**
       - userBalance = balance of user's wallet
@@ -184,43 +182,57 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       max = userBalance - maxGas - (isCrossChainSwap ? protocolFixFee : 0) - (isCrossChainSwap ? operatingExpenses : 0);
     */
 
-    const affiliateFeeBn = percentageBn(0.1, tokenBalanceBn) as BN;
+    const affiliateFeeBn = percentageBn(FEE_PERCENT, tokenBalanceBn) as BN;
     consoleOut('userBalance:', makeDecimal(tokenBalanceBn, srcChainTokenIn.decimals), 'cadetblue');
     if (sameChainSwap) {
       const deducted = tokenBalanceBn.sub(affiliateFeeBn);
-      const maxAmount = toUiAmount(deducted, srcChainTokenIn.decimals);
+      const calculatedMax = toUiAmount(deducted, srcChainTokenIn.decimals);
       consoleOut('affiliateFee:', makeDecimal(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
       consoleOut('max:', makeDecimal(deducted, srcChainTokenIn.decimals), 'cadetblue');
-      setAmountInput(maxAmount);
+      return parseFloat(calculatedMax);
     } else {
       const maxGas = chainFeeData?.maxFeePerGas ?? BigInt(0);
-      const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
+      // const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
       const userBalance = BigInt(tokenBalanceBn.toString());
-      const operatingExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
       const affiliateFee = BigInt(affiliateFeeBn.toString());
-      const max = userBalance - maxGas - protocolFixFee - operatingExpenses - affiliateFee;
-      consoleOut(
-        'maxGas + protocolFixFee:',
-        makeDecimal(new BN((maxGas + protocolFixFee).toString()), srcChainTokenIn.decimals),
-        'cadetblue',
-      );
+      const opsExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
+      const max = userBalance - maxGas - opsExpenses - affiliateFee;
+      consoleOut('maxGas:', makeDecimal(new BN(maxGas.toString()), srcChainTokenIn.decimals), 'cadetblue');
       consoleOut(
         'operatingExpenses:',
-        makeDecimal(new BN(operatingExpenses.toString()), srcChainTokenIn.decimals),
+        makeDecimal(new BN(opsExpenses.toString()), srcChainTokenIn.decimals),
         'cadetblue',
       );
       consoleOut('affiliateFee:', makeDecimal(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
       consoleOut('max:', makeDecimal(new BN(max.toString()), srcChainTokenIn.decimals), 'cadetblue');
 
       if (max <= 0) {
-        setAmountInput('0');
-        resetQuote();
+        return 0;
       } else {
-        const maxAmount = toUiAmount(max.toString(), srcChainTokenIn.decimals);
-        setAmountInput(maxAmount);
+        const calculatedMax = toUiAmount(max.toString(), srcChainTokenIn.decimals);
+        return parseFloat(calculatedMax);
       }
     }
-  };
+  }, [
+    nativeBalance,
+    chainFeeData?.maxFeePerGas,
+    quote?.prependedOperatingExpenseCost,
+    isCrossChainSwap,
+    srcChainTokenIn,
+    tokenBalanceBn,
+    sameChainSwap,
+  ]);
+
+  const getMaxAmountIn = useCallback(() => {
+    if (!srcChainTokenIn) {
+      setAmountInput('');
+      resetQuote();
+
+      return;
+    }
+
+    setAmountInput(maxAmount.toString());
+  }, [maxAmount, resetQuote, srcChainTokenIn]);
 
   const getSrcTokenPrice = () => {
     if (!amountIn || !srcChainTokenIn) {
@@ -563,6 +575,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return false;
     } else if (!tokenBalance || tokenBalance < parseFloat(amountIn)) {
       return false;
+    } else if (tokenBalance < operatingExpenses + parseFloat(amountIn)) {
+      return false;
     } else if (lastQuoteError) {
       return false;
     } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
@@ -580,6 +594,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     amountIn,
     tokenBalance,
     destinationChain,
+    operatingExpenses,
     srcChainTokenIn?.address,
     dstChainTokenOut?.address,
     dstChainTokenOutRecipient,
@@ -604,6 +619,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return 'No balance';
     } else if (tokenBalance < parseFloat(amountIn)) {
       return srcChainTokenIn ? `Amount exceeds your ${srcChainTokenIn.symbol} balance` : 'Amount exceeds your balance';
+    } else if (tokenBalance < operatingExpenses + parseFloat(amountIn)) {
+      return 'Insufficient balance to cover fees';
     } else if (lastQuoteError) {
       return getUiErrorString(lastQuoteError);
     } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
@@ -625,6 +642,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     isFetchingQuote,
     destinationChain,
     srcChainTokenIn,
+    operatingExpenses,
     dstChainTokenOut?.address,
     dstChainTokenOutRecipient,
     getTxPreparationErrorMessage,
@@ -864,6 +882,18 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                         ? getAmountWithSymbol(tokenBalance, srcChainTokenIn.address, true)
                         : '0'
                     }`}
+                  </span>
+                  <span>
+                    {srcChainTokenIn && operatingExpenses > 0
+                      ? ` (min: ${getAmountWithSymbol(
+                          operatingExpenses,
+                          srcChainTokenIn.address,
+                          true,
+                          tokenList,
+                          srcChainTokenIn.decimals,
+                          false,
+                        )})`
+                      : null}
                   </span>
                 </div>
                 <div className="right inner-label">

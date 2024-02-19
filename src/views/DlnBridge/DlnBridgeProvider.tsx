@@ -14,8 +14,8 @@ import {
 import { SwapCreateTxResponse, SwapEstimationResponse } from './singleChainOrderTypes';
 
 export const SOLANA_CHAIN_ID = 7565164;
+export const FEE_PERCENT = 0.25;
 const DLN_REFERRAL_CODE = 5211;
-const FEE_PERCENT = 0.25;
 
 export interface DlnErrorResponse {
   errorCode: number;
