@@ -561,6 +561,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return false;
     } else if (!parseFloat(amountIn)) {
       return false;
+    } else if (!tokenBalance || tokenBalance < parseFloat(amountIn)) {
+      return false;
     } else if (lastQuoteError) {
       return false;
     } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
@@ -576,6 +578,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     }
   }, [
     amountIn,
+    tokenBalance,
     destinationChain,
     srcChainTokenIn?.address,
     dstChainTokenOut?.address,
@@ -597,6 +600,10 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return 'Tokens should be different';
     } else if (!parseFloat(amountIn)) {
       return 'No amount';
+    } else if (!tokenBalance) {
+      return 'No balance';
+    } else if (tokenBalance < parseFloat(amountIn)) {
+      return srcChainTokenIn ? `Amount exceeds your ${srcChainTokenIn.symbol} balance` : 'Amount exceeds your balance';
     } else if (lastQuoteError) {
       return getUiErrorString(lastQuoteError);
     } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
@@ -614,9 +621,10 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     amountIn,
     isBuildingTx,
     dstChainName,
+    tokenBalance,
     isFetchingQuote,
     destinationChain,
-    srcChainTokenIn?.address,
+    srcChainTokenIn,
     dstChainTokenOut?.address,
     dstChainTokenOutRecipient,
     getTxPreparationErrorMessage,

@@ -426,11 +426,12 @@ export const TreasuryAddFundsModal = (props: {
   };
 
   const isValidInput = (): boolean => {
+    const effectiveBalance = selectedToken?.address === WRAPPED_SOL_MINT_ADDRESS ? nativeBalance : tokenBalance;
     return !!(
       publicKey &&
       (!fundFromSafeOption || (isMultisigContext && selectedMultisig && fundFromSafeOption && proposalTitle)) &&
       selectedToken &&
-      ((fundFromSafeOption && tokenBalance) || (!fundFromSafeOption && availableBalance && availableBalance.gtn(0))) &&
+      ((fundFromSafeOption && effectiveBalance) || (!fundFromSafeOption && availableBalance.gtn(0))) &&
       nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
       tokenAmount.gtn(0) &&
       tokenAmount.lte(getMaxAmount())
@@ -450,9 +451,10 @@ export const TreasuryAddFundsModal = (props: {
   };
 
   const isTokenBalanceEmpty = () => {
+    const effectiveBalance = selectedToken?.address === WRAPPED_SOL_MINT_ADDRESS ? nativeBalance : tokenBalance;
     return !!(
       !selectedToken ||
-      (fundFromSafeOption && !tokenBalance) ||
+      (fundFromSafeOption && !effectiveBalance) ||
       (!fundFromSafeOption && availableBalance.isZero())
     );
   };

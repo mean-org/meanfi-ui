@@ -15,6 +15,7 @@ import { SwapCreateTxResponse, SwapEstimationResponse } from './singleChainOrder
 
 export const SOLANA_CHAIN_ID = 7565164;
 const DLN_REFERRAL_CODE = 5211;
+const FEE_PERCENT = 0.25;
 
 export interface DlnErrorResponse {
   errorCode: number;
@@ -143,7 +144,17 @@ const DlnBridgeProvider = ({ children }: Props) => {
   );
   const [lastQuoteError, setLastQuoteError] = useState<DlnErrorResponse | undefined>();
 
-  const affiliateFeeRecipient = useMemo(() => getAffiliateFeeRecipient(sourceChain), [sourceChain]);
+  const isSrcChainSolana = sourceChain === SOLANA_CHAIN_ID;
+  const isSameChainSwap = sourceChain === destinationChain;
+
+  const affiliateFeeRecipient = useMemo(() => {
+    if (isSrcChainSolana && isSameChainSwap) {
+      return undefined;
+      // return appConfig.getConfig().jupiterReferralKey;
+    }
+
+    return getAffiliateFeeRecipient(sourceChain);
+  }, [isSameChainSwap, isSrcChainSolana, sourceChain]);
 
   // Get tokens map for source chain
   useEffect(() => {
@@ -254,7 +265,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
             senderAddress,
             srcChainOrderAuthorityAddress: senderAddress,
             referralCode: DLN_REFERRAL_CODE,
-            affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
+            affiliateFeePercent: affiliateFeeRecipient ? FEE_PERCENT : 0,
             ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
             prependOperatingExpenses: true,
             enableEstimate: false,
@@ -352,7 +363,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
             slippage: 1,
             tokenOut: dstChainTokenOut.address,
             referralCode: DLN_REFERRAL_CODE,
-            affiliateFeePercent: affiliateFeeRecipient ? 0.1 : 0,
+            affiliateFeePercent: affiliateFeeRecipient ? FEE_PERCENT : 0,
             ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
           },
         })
@@ -403,17 +414,17 @@ const DlnBridgeProvider = ({ children }: Props) => {
       }
     }
   }, [
-    forceRenderRef,
-    affiliateFeeRecipient,
-    dstChainTokenOutRecipient,
-    senderAddress,
     amountIn,
-    destinationChain,
-    dstChainTokenOut?.address,
-    dstChainTokenOut?.decimals,
     sourceChain,
+    senderAddress,
+    destinationChain,
+    affiliateFeeRecipient,
     srcChainTokenIn?.address,
     srcChainTokenIn?.decimals,
+    dstChainTokenOutRecipient,
+    dstChainTokenOut?.address,
+    dstChainTokenOut?.decimals,
+    forceRenderRef,
   ]);
 
   const value = useMemo(

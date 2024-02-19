@@ -13,9 +13,6 @@ import { IconExchange } from 'Icons';
 import { RecurringExchange } from 'views';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
-import JupiterExchangeV4 from 'views/JupiterExchangeV4';
-
-type SwapOption = 'one-time' | 'recurring';
 
 export const SwapView = () => {
   const location = useLocation();
@@ -26,7 +23,6 @@ export const SwapView = () => {
   const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
   const [queryFromMint, setQueryFromMint] = useState<string | undefined>(undefined);
   const [queryToMint, setQueryToMint] = useState<string | undefined>(undefined);
-  const [currentTab, setCurrentTab] = useState<SwapOption>('one-time');
 
   // Connection management
   const [cachedRpcJson] = useLocalStorageState('cachedRpc');
@@ -189,14 +185,6 @@ export const SwapView = () => {
     }
   }, [connection, getDestinationFromParams, getSourceFromParams, location.search]);
 
-  //////////////////////
-  //  Event handling  //
-  //////////////////////
-
-  const onTabChange = (option: SwapOption) => {
-    setCurrentTab(option);
-  };
-
   /////////////////
   //  Rendering  //
   /////////////////
@@ -213,34 +201,13 @@ export const SwapView = () => {
             <div className="subtitle">{t('swap.screen-subtitle')}</div>
           </div>
           <div className="place-transaction-box mb-3">
-            <div className="button-tabset-container">
-              <div
-                className={`tab-button ${currentTab === 'one-time' ? 'active' : ''}`}
-                onClick={() => onTabChange('one-time')}
-              >
-                {t('swap.tabset.one-time')}
-              </div>
-              <div
-                className={`tab-button ${currentTab === 'recurring' ? 'active' : ''}`}
-                onClick={() => onTabChange('recurring')}
-              >
-                {t('swap.tabset.recurring')}
-              </div>
-            </div>
-            {/* One time exchange */}
-            {currentTab === 'one-time' && (
-              <JupiterExchangeV4 connection={connection} queryFromMint={queryFromMint} queryToMint={queryToMint} />
-            )}
-            {/* Repeating exchange */}
-            {currentTab === 'recurring' && (
-              <RecurringExchange
-                connection={connection}
-                endpoint={endpoint}
-                queryFromMint={queryFromMint}
-                queryToMint={queryToMint}
-                onRefreshRequested={() => setLoadingRecurringBuys(false)}
-              />
-            )}
+            <RecurringExchange
+              connection={connection}
+              endpoint={endpoint}
+              queryFromMint={queryFromMint}
+              queryToMint={queryToMint}
+              onRefreshRequested={() => setLoadingRecurringBuys(false)}
+            />
           </div>
           {publicKey && recurringBuys && recurringBuys.length > 0 && isProd() && (
             <div className="text-center mb-3">
