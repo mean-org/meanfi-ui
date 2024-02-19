@@ -10,7 +10,6 @@ import { TokenDisplay } from 'components/TokenDisplay';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import {
-  displayAmountWithSymbol,
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
