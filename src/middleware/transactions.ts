@@ -161,7 +161,7 @@ export const signTx = async (
         };
       })
       .catch((error: any) => {
-        console.error('Signing transaction failed!');
+        console.error('Signing transaction failed', error);
         txLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
           result: { signer: `${publicKey.toBase58()}`, error: `${error}` },
@@ -281,7 +281,7 @@ export const serializeTx = (signed: Transaction | VersionedTransaction) => {
     const asBuffer = toBuffer(encodedTx);
     base64Tx = asBuffer.toString('base64');
   } else {
-    base64Tx = signed.serialize().toString('base64');
+    base64Tx = signed.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
   }
 
   consoleOut('encodedTx:', base64Tx, 'orange');
