@@ -624,7 +624,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     tokenBalance,
     isFetchingQuote,
     destinationChain,
-    srcChainTokenIn?.address,
+    srcChainTokenIn,
     dstChainTokenOut?.address,
     dstChainTokenOutRecipient,
     getTxPreparationErrorMessage,

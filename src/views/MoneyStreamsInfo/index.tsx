@@ -1558,8 +1558,12 @@ export const MoneyStreamsInfoView = (props: {
         tokenPriceB = 0;
       }
 
-      const priceB = isNew ? vB2.withdrawableAmount.muln(tokenPriceB) : new BN(vB1.escrowVestedAmount * tokenPriceB);
-      const priceA = isNew ? vA2.withdrawableAmount.muln(tokenPriceB) : new BN(vA1.escrowVestedAmount * tokenPriceB);
+      const priceB = isNew
+        ? new BN(vB2.withdrawableAmount.muln(tokenPriceB))
+        : new BN(vB1.escrowVestedAmount * tokenPriceB);
+      const priceA = isNew
+        ? new BN(vA2.withdrawableAmount.muln(tokenPriceB))
+        : new BN(vA1.escrowVestedAmount * tokenPriceB);
 
       if (tokenPriceA && tokenPriceB) {
         if (priceB.gt(priceA)) {

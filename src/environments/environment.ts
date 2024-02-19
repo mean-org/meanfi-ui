@@ -17,7 +17,7 @@ export interface AppConfig {
   idoAccountAddress: string;
   idoAirdropTreasuryAddress: string;
   idoAirdropTreasurerAddress: string;
-  exchangeFeeAccountOwner: string;
+  jupiterReferralKey: string;
   exchangeFlatFee: number;
   stakingRewardsAcl: string[];
   meanStakingVault: string;
@@ -47,7 +47,7 @@ export class AppConfigService {
       idoAccountAddress: 'E7hiYsz4SRAXjadPYbjML2VDSfY1CwGUYFkHWU9yvk7n',
       idoAirdropTreasuryAddress: 'GFfFaytdGYtiXWfNuJXPusWjS5T792hvr4t6xnAJXEd6',
       idoAirdropTreasurerAddress: '9KYCrkB4LLC3HxLEPqE2PJpvYoDLszgWPKNVWp74uhC5',
-      exchangeFeeAccountOwner: '51HpTxzERCvW7EPeWffDpdK5EkRD2yMyF4UKc81vMSYY',
+      jupiterReferralKey: '5zcvE56n7DHb5Z8RMX2KpJPosnBFxQLsnuv3nKRpGga4',
       exchangeFlatFee: 0.25,
       stakingRewardsAcl: [
         'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1',
@@ -79,7 +79,7 @@ export class AppConfigService {
       idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
       idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
       idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
-      exchangeFeeAccountOwner: '51HpTxzERCvW7EPeWffDpdK5EkRD2yMyF4UKc81vMSYY',
+      jupiterReferralKey: '5zcvE56n7DHb5Z8RMX2KpJPosnBFxQLsnuv3nKRpGga4',
       exchangeFlatFee: 0.25,
       stakingRewardsAcl: [
         'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1',
@@ -111,7 +111,7 @@ export class AppConfigService {
       idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
       idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
       idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
-      exchangeFeeAccountOwner: '51HpTxzERCvW7EPeWffDpdK5EkRD2yMyF4UKc81vMSYY',
+      jupiterReferralKey: '5zcvE56n7DHb5Z8RMX2KpJPosnBFxQLsnuv3nKRpGga4',
       exchangeFlatFee: 0.25,
       stakingRewardsAcl: [
         'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1',
@@ -143,7 +143,7 @@ export class AppConfigService {
       idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
       idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
       idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
-      exchangeFeeAccountOwner: '51HpTxzERCvW7EPeWffDpdK5EkRD2yMyF4UKc81vMSYY',
+      jupiterReferralKey: '5zcvE56n7DHb5Z8RMX2KpJPosnBFxQLsnuv3nKRpGga4',
       exchangeFlatFee: 0.25,
       stakingRewardsAcl: [
         'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1',
@@ -175,7 +175,7 @@ export class AppConfigService {
       idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
       idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
       idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
-      exchangeFeeAccountOwner: '51HpTxzERCvW7EPeWffDpdK5EkRD2yMyF4UKc81vMSYY',
+      jupiterReferralKey: '5zcvE56n7DHb5Z8RMX2KpJPosnBFxQLsnuv3nKRpGga4',
       exchangeFlatFee: 0.25,
       stakingRewardsAcl: [
         'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1',
