@@ -10,6 +10,7 @@ import { TextInput } from 'components/TextInput';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { TokenListItem } from 'components/TokenListItem';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
+import { NATIVE_SOL } from 'constants/tokens';
 import { TREASURY_TYPE_OPTIONS } from 'constants/treasury-type-options';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
@@ -126,7 +127,8 @@ export const TreasuryCreateModal = (props: {
           );
         };
 
-        const showFromList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
+        const preFilterSol = selectedList.filter(t => t.address !== NATIVE_SOL.address);
+        const showFromList = !searchString ? preFilterSol : preFilterSol.filter((t: any) => filter(t));
 
         setFilteredTokenList(showFromList);
       });
