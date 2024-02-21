@@ -1299,7 +1299,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         };
         const { transaction } = await paymentStreaming.buildCloseAccountTransaction(
           accounts, // accounts
-          true, // autoWSol
+          false, // autoWSol
         );
         return transaction;
       }
@@ -1324,7 +1324,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       };
       const { transaction } = await paymentStreaming.buildCloseAccountTransaction(
         accounts, // accounts
-        true, // autoWSol
+        false, // autoWSol
       );
 
       const ixData = Buffer.from(transaction.instructions[0].data);
@@ -2211,7 +2211,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         const { transaction } = await paymentStreaming.buildWithdrawFromAccountTransaction(
           accounts, // accounts
           data.amount, // amount
-          true, // autoWsol
+          false, // autoWsol
         );
         return transaction;
       }

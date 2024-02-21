@@ -740,6 +740,7 @@ export const MoneyStreamsIncomingView = (props: {
         const { transaction } = await paymentStreaming.buildWithdrawFromStreamTransaction(
           accounts, // accounts
           data.amount, // amount
+          false,
         );
         return transaction;
       }
@@ -764,6 +765,7 @@ export const MoneyStreamsIncomingView = (props: {
       const { transaction } = await paymentStreaming.buildWithdrawFromStreamTransaction(
         accounts, // accounts
         data.amount, // amount
+        false,
       );
 
       const ixData = Buffer.from(transaction.instructions[0].data);

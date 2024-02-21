@@ -434,7 +434,7 @@ export const MoneyStreamsOutgoingView = (props: {
         const { transaction } = await paymentStreaming.buildFundStreamTransaction(
           accounts, // accounts
           payload.amount, // amount
-          true, // autoWSol
+          false, // autoWSol
         );
         consoleOut('fundStream returned transaction:', transaction);
         setTransactionStatus({
@@ -1975,7 +1975,7 @@ export const MoneyStreamsOutgoingView = (props: {
         const { transaction } = await paymentStreaming.buildCloseStreamTransaction(
           accounts, // accounts
           data.closeTreasury, // closeTreasury
-          true, // autoWSol
+          false, // autoWSol
         );
         return transaction;
       }

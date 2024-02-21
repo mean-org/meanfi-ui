@@ -184,7 +184,8 @@ export const VestingContractCreateForm = (props: {
           );
         };
 
-        const showFromList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
+        const preFilterSol = selectedList.filter(t => t.address !== NATIVE_SOL.address);
+        const showFromList = !searchString ? preFilterSol : preFilterSol.filter((t: any) => filter(t));
 
         setFilteredTokenList(showFromList);
       });

@@ -448,7 +448,7 @@ export const VestingContractStreamList = (props: {
         const { transaction } = await msp.buildCloseStreamTransaction(
           accounts, // accounts
           data.closeTreasury, // closeTreasury
-          true, // autoWSol
+          false, // autoWSol
         );
         return transaction;
       }
