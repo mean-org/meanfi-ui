@@ -1,10 +1,12 @@
 import { Adapter, SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import {
+  ComputeBudgetProgram,
   Connection,
   ParsedTransactionMeta,
   PublicKey,
   Transaction,
   TransactionConfirmationStatus,
+  TransactionInstruction,
   TransactionSignature,
   VersionedTransaction,
   VersionedTransactionResponse,
@@ -16,6 +18,16 @@ import { TransactionStatus } from '../models/enums';
 import { Confirmations, Timestamp } from '../models/transactions';
 import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { getAmountFromLamports, toBuffer } from './utils';
+
+export interface ComputeBudgetConfig {
+  units?: number;
+  microLamports?: number;
+}
+
+export const DEFAULT_BUDGET_CONFIG: ComputeBudgetConfig = {
+  microLamports: 1000,
+  units: 1000000000,
+};
 
 export class TransactionWithSignature {
   constructor(public signature: string, public confirmedTransaction: VersionedTransactionResponse) {}
@@ -286,4 +298,18 @@ export const serializeTx = (signed: Transaction | VersionedTransaction) => {
 
   consoleOut('encodedTx:', base64Tx, 'orange');
   return base64Tx;
+};
+
+export const getComputeBudgetIx = (config: ComputeBudgetConfig) => {
+  const budgetIxs: TransactionInstruction[] = [];
+
+  if (config.microLamports) {
+    budgetIxs.push(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: config.microLamports }));
+  }
+
+  if (config.units) {
+    budgetIxs.push(ComputeBudgetProgram.setComputeUnitLimit({ units: config.units }));
+  }
+
+  return budgetIxs;
 };

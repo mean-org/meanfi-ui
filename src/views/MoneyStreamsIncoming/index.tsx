@@ -46,7 +46,7 @@ import {
   SegmentStreamTransferOwnershipData,
   SegmentStreamWithdrawData,
 } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   getTransactionModalTitle,
@@ -346,6 +346,7 @@ export const MoneyStreamsIncomingView = (props: {
           mspV2AddressPK,
           ixAccounts,
           ixData,
+          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
         );
 
         return tx?.transaction ?? null;
@@ -782,6 +783,7 @@ export const MoneyStreamsIncomingView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
+        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
       );
 
       return tx?.transaction ?? null;

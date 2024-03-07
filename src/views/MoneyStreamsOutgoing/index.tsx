@@ -47,7 +47,7 @@ import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   getTransactionModalTitle,
@@ -538,6 +538,7 @@ export const MoneyStreamsOutgoingView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
+        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
       );
 
       return tx?.transaction ?? null;
@@ -1115,6 +1116,7 @@ export const MoneyStreamsOutgoingView = (props: {
           mspV2AddressPK,
           ixAccounts,
           ixData,
+          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
         );
 
         return tx?.transaction ?? null;
@@ -1549,6 +1551,7 @@ export const MoneyStreamsOutgoingView = (props: {
           mspV2AddressPK,
           ixAccounts,
           ixData,
+          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
         );
 
         return tx?.transaction ?? null;
@@ -2022,6 +2025,7 @@ export const MoneyStreamsOutgoingView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
+        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
       );
 
       return tx?.transaction ?? null;

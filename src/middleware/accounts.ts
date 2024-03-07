@@ -25,6 +25,7 @@ import { MEAN_TOKEN_LIST, NATIVE_SOL } from '../constants/tokens';
 import { consoleOut, isLocal } from './ui';
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from './utils';
 import getPriceByAddressOrSymbol from './getPriceByAddressOrSymbol';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx } from './transactions';
 
 export async function getMultipleAccounts(
   connection: Connection,
@@ -165,7 +166,8 @@ export async function closeTokenAccount(connection: Connection, tokenPubkey: Pub
   // Close the account
   ixs.push(Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, tokenPubkey, owner, owner, []));
 
-  const tx = new Transaction().add(...ixs);
+  const priorityFeesIx = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
+  const tx = new Transaction().add(...priorityFeesIx, ...ixs);
   tx.feePayer = owner;
   const hash = await connection.getLatestBlockhash('confirmed');
   tx.recentBlockhash = hash.blockhash;
@@ -285,7 +287,7 @@ const getGroupedTokenAccounts = (accTks: AccountTokenParsedInfo[], list: UserTok
   for (const ta of accTks) {
     const key = ta.parsedInfo.mint;
     const info = getTokenByMintAddress(key, list);
-    const updatedTa = { ...ta, description: info ? `${info.name} (${info.symbol})` : '', };
+    const updatedTa = { ...ta, description: info ? `${info.name} (${info.symbol})` : '' };
     if (taGroups.has(key)) {
       const current = taGroups.get(key) as AccountTokenParsedInfo[];
       current.push(updatedTa);
@@ -468,16 +470,15 @@ export const getUserAccountTokens = async (
           publicAddress: shortenAddress(t.publicAddress ?? '-'),
           balance: t.balance ?? 0,
           price: getPriceByAddressOrSymbol(coinPrices, t.address),
-          valueInUsd: t.valueInUsd ?? 0
-        }
-      })
+          valueInUsd: t.valueInUsd ?? 0,
+        };
+      });
       console.table(mappedList);
       const totalTokensValue = mappedList.reduce((accumulator, item) => {
         return accumulator + item.valueInUsd;
       }, 0);
       consoleOut('totalTokensValue:', totalTokensValue, 'blue');
     }
-
   } catch (error) {
     console.error(error);
     response.wSolBalance = 0;

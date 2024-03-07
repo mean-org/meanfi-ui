@@ -26,7 +26,7 @@ import { IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamCloseData } from 'middleware/segment-service';
-import { isError, isSuccess, sendTx, signTx } from 'middleware/transactions';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, isError, isSuccess, sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   copyText,
@@ -491,6 +491,7 @@ export const VestingContractStreamList = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
+        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
       );
 
       return tx?.transaction ?? null;

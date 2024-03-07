@@ -11,6 +11,7 @@ import {
 } from '@solana/web3.js';
 import { appConfig } from 'index';
 import { TokenInfo } from 'models/SolanaTokenInfo';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx } from './transactions';
 
 export type CreateSafeAssetTxParams = {
   token: TokenInfo | undefined;
@@ -72,7 +73,8 @@ export const createAddSafeAssetTx = async (
     signers.push(tokenKeypair);
   }
 
-  const tx = new Transaction().add(...ixs);
+  const priorityFeesIx = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
+  const tx = new Transaction().add(...priorityFeesIx, ...ixs);
   tx.feePayer = publicKey;
   const { blockhash } = await connection.getLatestBlockhash('confirmed');
   tx.recentBlockhash = blockhash;

@@ -26,7 +26,7 @@ import { appConfig, customLogger } from 'index';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
-import { sendTx, signTx } from 'middleware/transactions';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   disabledDate,
@@ -1062,6 +1062,7 @@ export const TreasuryStreamCreateModal = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
+        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
       );
 
       if (!tx) {
@@ -1978,17 +1979,11 @@ export const TreasuryStreamCreateModal = (props: {
                               className="token-max simplelink"
                               onClick={() => {
                                 const decimals = selectedToken ? selectedToken.decimals : 6;
-                                if (isFeePaidByTreasurer) {
-                                  const maxAmount = getMaxAmount(true);
-                                  consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
-                                  consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
-                                  setTokenAmount(new BN(maxAmount));
-                                } else {
-                                  const maxAmount = getMaxAmount();
-                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
-                                  setTokenAmount(new BN(maxAmount));
-                                }
+                                const maxAmount = getMaxAmount(isFeePaidByTreasurer);
+                                consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+                                consoleOut('maxAmount:', maxAmount.toString(), 'blue');
+                                setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
+                                setTokenAmount(new BN(maxAmount));
                               }}
                             >
                               MAX

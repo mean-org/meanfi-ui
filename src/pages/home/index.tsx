@@ -76,7 +76,7 @@ import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { getChange, sendTx, signTx } from 'middleware/transactions';
+import { DEFAULT_BUDGET_CONFIG, getChange, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, copyText, getTransactionStatusForLogs, isDev, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
@@ -1189,6 +1189,7 @@ export const HomeView = () => {
             programId, // program
             ixAccounts, // keys o accounts of the Ix
             ixData, // data of the Ix
+            ixs: getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
           };
         },
       });
@@ -1262,6 +1263,7 @@ export const HomeView = () => {
           setAuthIx.programId,
           setAuthIx.keys,
           setAuthIx.data,
+          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
         );
 
         return tx?.transaction ?? null;
@@ -1474,6 +1476,7 @@ export const HomeView = () => {
           closeIx.programId,
           closeIx.keys,
           closeIx.data,
+          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
         );
 
         return tx?.transaction ?? null;
@@ -1545,7 +1548,7 @@ export const HomeView = () => {
             if (!value) {
               return false;
             }
-            consoleOut('deleteVaultTx returned transaction:', value);
+            consoleOut('closeAssetTx returned transaction:', value, 'blue');
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
               currentOperation: TransactionStatus.SignTransaction,
@@ -2294,6 +2297,7 @@ export const HomeView = () => {
           proposalIx.programId,
           proposalIx.keys,
           proposalIx.data,
+          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
         );
 
         return tx?.transaction ?? null;

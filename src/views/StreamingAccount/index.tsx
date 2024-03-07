@@ -70,7 +70,7 @@ import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
-import { sendTx, signTx } from 'middleware/transactions';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isProd } from 'middleware/ui';
 import {
   displayAmountWithSymbol,
@@ -984,6 +984,7 @@ export const StreamingAccountView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
+        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
       );
 
       return tx?.transaction ?? null;
@@ -1282,6 +1283,7 @@ export const StreamingAccountView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
+        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
       );
 
       return tx?.transaction ?? null;
@@ -1694,6 +1696,7 @@ export const StreamingAccountView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
+        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
       );
 
       return tx?.transaction ?? null;

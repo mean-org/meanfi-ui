@@ -11,7 +11,7 @@ import {
   MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
-import { ConfirmOptions, Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { ComputeBudgetProgram, ConfirmOptions, Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Empty, Spin, Tooltip } from 'antd';
 import { segmentAnalytics } from 'App';
 import { ErrorReportModal } from 'components/ErrorReportModal';
@@ -27,7 +27,7 @@ import useWindowSize from 'hooks/useWindowResize';
 import { appConfig, customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, serializeTx, signTx } from 'middleware/transactions';
 import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
 import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
@@ -453,6 +453,7 @@ const SafeView = (props: {
           program.programId,
           ixAccounts,
           ixData,
+          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
         );
 
         return tx?.transaction ?? null;
@@ -648,6 +649,12 @@ const SafeView = (props: {
 
         const tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
 
+        if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
+          const budgetIxs = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
+          const newIxs = [...budgetIxs, ...tx.instructions];
+          tx.instructions = newIxs;
+        }
+
         return tx;
       };
 
@@ -826,6 +833,12 @@ const SafeView = (props: {
         }
 
         const tx = await multisigClient.rejectTransaction(publicKey, data.transaction.id);
+
+        if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
+          const budgetIxs = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
+          const newIxs = [...budgetIxs, ...tx.instructions];
+          tx.instructions = newIxs;
+        }
 
         return tx;
       };
@@ -1006,7 +1019,7 @@ const SafeView = (props: {
   }, [showErrorReportingModal, resetTransactionStatus, setTransactionStatus, t]);
 
   const onExecuteFinishTx = useCallback(
-    async (data: any) => {
+    async (proposal: MultisigTransaction) => {
       let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
@@ -1016,26 +1029,24 @@ const SafeView = (props: {
       setTransactionCancelled(false);
       setIsBusy(true);
 
-      const finishTx = async (data: any) => {
-        if (!data.transaction || !publicKey || !multisigClient) {
+      const finishTx = async (msTx: MultisigTransaction) => {
+        if (!msTx || !publicKey || !multisigClient) {
           return null;
         }
 
-        let tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
+        const tx = await multisigClient.executeTransaction(publicKey, msTx.id);
 
-        if (
-          data.transaction.operation === OperationType.StreamCreate ||
-          data.transaction.operation === OperationType.TreasuryStreamCreate ||
-          data.transaction.operation === OperationType.StreamCreateWithTemplate
-        ) {
-          tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
+        if (tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
+          const budgetIxs = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
+          const newIxs = [...budgetIxs, ...tx.instructions];
+          tx.instructions = newIxs;
         }
 
         return tx;
       };
 
       const createTx = async (): Promise<boolean> => {
-        if (publicKey && data) {
+        if (publicKey && proposal) {
           consoleOut('Start Multisig ExecuteTransaction Tx', '', 'blue');
           consoleOut('Wallet address:', publicKey.toBase58());
 
@@ -1045,11 +1056,11 @@ const SafeView = (props: {
           });
 
           // Create a transaction
-          consoleOut('data:', data);
+          consoleOut('data:', proposal);
           // Log input data
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-            inputs: data,
+            inputs: proposal,
           });
 
           transactionLog.push({
@@ -1097,12 +1108,12 @@ const SafeView = (props: {
             return false;
           }
 
-          return finishTx(data)
+          return finishTx(proposal)
             .then(value => {
               if (!value) {
                 return false;
               }
-              consoleOut('multisig returned transaction:', value);
+              consoleOut('finishTx returned transaction:', value, 'blue');
               setTransactionStatus({
                 lastOperation: TransactionStatus.InitTransactionSuccess,
                 currentOperation: TransactionStatus.SignTransaction,
@@ -1167,17 +1178,17 @@ const SafeView = (props: {
                 finality: 'confirmed',
                 txInfoFetchStatus: 'fetching',
                 loadingTitle: 'Confirming transaction',
-                loadingMessage: `Execute proposal: ${data.transaction.details.title}`,
+                loadingMessage: `Execute proposal: ${proposal.details.title}`,
                 completedTitle: 'Transaction confirmed',
-                completedMessage: `Successfully executed proposal: ${data.transaction.details.title}`,
+                completedMessage: `Successfully executed proposal: ${proposal.details.title}`,
                 extras: {
-                  multisigAuthority: data.transaction.multisig.toBase58(),
-                  transactionId: data.transaction.id,
+                  multisigAuthority: proposal.multisig.toBase58(),
+                  transactionId: proposal.id,
                 },
               });
               setSuccessStatus();
             } else {
-              parseErrorFromExecuteProposal(sent.error, data.transaction);
+              parseErrorFromExecuteProposal(sent.error, proposal);
               setTimeout(() => {
                 onExecuteFinishTxCancelled();
               }, 30);
@@ -1232,6 +1243,12 @@ const SafeView = (props: {
         }
 
         const tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
+
+        if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
+          const budgetIxs = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
+          const newIxs = [...budgetIxs, ...tx.instructions];
+          tx.instructions = newIxs;
+        }
 
         return tx;
       };

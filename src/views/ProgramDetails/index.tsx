@@ -29,7 +29,7 @@ import { appConfig, customLogger } from 'index';
 import { resolveParsedAccountInfo } from 'middleware/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import {
   formatThousands,
@@ -409,6 +409,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           BPF_LOADER_UPGRADEABLE_PID,
           ixAccounts,
           dataBuffer,
+          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
         );
 
         return tx?.transaction ?? null;
@@ -742,6 +743,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           BPF_LOADER_UPGRADEABLE_PID,
           ixAccounts,
           ixData,
+          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
         );
 
         return tx?.transaction ?? null;

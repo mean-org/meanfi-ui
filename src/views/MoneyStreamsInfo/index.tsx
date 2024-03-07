@@ -55,7 +55,7 @@ import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamingAccountOwner } from 'middleware/getStreamingAccountOwner';
 import { SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
-import { sendTx, signTx } from 'middleware/transactions';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getIntervalFromSeconds, getTransactionStatusForLogs, toUsCurrency } from 'middleware/ui';
 import {
   cutNumber,
@@ -824,6 +824,7 @@ export const MoneyStreamsInfoView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
+        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
       );
 
       return tx?.transaction ?? null;
@@ -1171,6 +1172,7 @@ export const MoneyStreamsInfoView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
+        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
       );
 
       return tx?.transaction ?? null;
