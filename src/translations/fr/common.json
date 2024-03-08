@@ -1458,10 +1458,10 @@
     "priority-turbo-label": "Turbo",
     "priority-ultra-label": "Ultra",
     "priority-disabled-description": "No priority fees will be added to speed up transaction submission and confirmation. Usually the network is quite responsive and transactions are processed very quickly.",
-    "priority-normal-description": "A slightly over the average fee is added up to 0.000015 SOL to speed up transaction submission and confirmation. You can use this boost when transactions are submitted but they take a while to confirm.",
-    "priority-fast-description": "When the economic activity in Solana goes high your transactions might take longer to submit and confirm most likely leading to several attempts. To avoid this situation you can select Fast priority to succeed, this option will add a priority fee up to 0.00015 SOL",
-    "priority-turbo-description": "Turbo adds a prioritization fee of max 0.002 SOL. It is very likely that your transaction gets confirmed very quickly. Please use this option if the network is functional but the amount of activity demands you to increase priority.",
-    "priority-ultra-description": "This option adds a prioritization fee of max 0.2 SOL. It is recommended to use this option if you saw improvement from Normal through Turbo but you need your transactions to have more priority.",
+    "priority-normal-description": "A slightly over the average fee is added up to 0.00001 SOL to speed up transaction submission and confirmation. You can use this boost when transactions are submitted but they take a while to confirm.",
+    "priority-fast-description": "When the economic activity in Solana goes high your transactions might take longer to submit and confirm most likely leading to several attempts. To avoid this situation you can select Fast priority to succeed, this option will add a priority fee up to 0.000025 SOL",
+    "priority-turbo-description": "Turbo adds a prioritization fee of max 0.0002 SOL. It is very likely that your transaction gets confirmed very quickly. Please use this option if the network is functional but the amount of activity demands you to increase priority.",
+    "priority-ultra-description": "This option adds a prioritization fee of max 0.02 SOL. It is recommended to use this option if you saw improvement from Normal through Turbo but you need your transactions to have more priority.",
     "priority-disclaimer": "These values correspond to the maximum computation limit for a transaction. MeanFi Token Streaming, Token Vesting, Staking and All multisig operations never consume the computation limit therefore the amount of fee charged will be substantially less."
   }
 }

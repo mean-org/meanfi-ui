@@ -20,9 +20,9 @@ import { getAmountFromLamports, toBuffer } from './utils';
 
 export type PriorityOption = 'disabled' | 'normal' | 'fast' | 'turbo' | 'ultra';
 
-const COMPUTE_UNIT_LIMIT = 200_000;
+const COMPUTE_UNIT_LIMIT = 100_000;
 
-const COMPUTE_UNIT_PRICE = {
+export const COMPUTE_UNIT_PRICE = {
   disabled: 0,
   normal: 60_000,
   fast: 500_000,

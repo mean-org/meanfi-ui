@@ -5,9 +5,16 @@ import { IconGasStation } from 'Icons';
 import { Button, Popover, Segmented } from 'antd';
 import { SegmentedValue } from 'antd/lib/segmented';
 import useWindowSize from 'hooks/useWindowResize';
-import { ComputeBudgetConfig, DEFAULT_BUDGET_CONFIG, PriorityOption } from 'middleware/transactions';
+import {
+  COMPUTE_UNIT_PRICE,
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  PriorityOption,
+} from 'middleware/transactions';
 import { useTranslation } from 'react-i18next';
 import useLocalStorage from 'hooks/useLocalStorage';
+import { consoleOut } from 'middleware/ui';
+import { formatThousands } from 'middleware/utils';
 
 interface PopoverContentProps {
   transactionPriorityOptions: ComputeBudgetConfig;
@@ -75,11 +82,17 @@ const PrioritizationFeesConfigPopover = () => {
   };
 
   const handleOptionChamge = (val: SegmentedValue) => {
-    console.log('val:', val);
-    setTransactionPriorityOptions({
+    consoleOut('Prioritization:', val, 'blue');
+    const newOptions: ComputeBudgetConfig = {
       cap: transactionPriorityOptions.cap,
       priorityOption: val as PriorityOption,
-    });
+    };
+    consoleOut(
+      'Compute Unit Price:',
+      `${formatThousands(COMPUTE_UNIT_PRICE[newOptions.priorityOption])} microlamports`,
+      'blue',
+    );
+    setTransactionPriorityOptions(newOptions);
   };
 
   return (
