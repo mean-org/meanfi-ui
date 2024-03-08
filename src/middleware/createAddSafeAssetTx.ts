@@ -12,6 +12,7 @@ import {
 import { appConfig } from 'index';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx } from './transactions';
+import { readLocalStorageKey } from './utils';
 
 export type CreateSafeAssetTxParams = {
   token: TokenInfo | undefined;
@@ -73,7 +74,8 @@ export const createAddSafeAssetTx = async (
     signers.push(tokenKeypair);
   }
 
-  const priorityFeesIx = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
+  const config = readLocalStorageKey('transactionPriority');
+  const priorityFeesIx = getComputeBudgetIx(config ?? DEFAULT_BUDGET_CONFIG) ?? [];
   const tx = new Transaction().add(...priorityFeesIx, ...ixs);
   tx.feePayer = publicKey;
   const { blockhash } = await connection.getLatestBlockhash('confirmed');

@@ -55,7 +55,13 @@ import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamingAccountOwner } from 'middleware/getStreamingAccountOwner';
 import { SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getComputeBudgetIx,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import { consoleOut, getIntervalFromSeconds, getTransactionStatusForLogs, toUsCurrency } from 'middleware/ui';
 import {
   cutNumber,
@@ -84,6 +90,7 @@ import { useNavigate } from 'react-router-dom';
 import Wave from 'react-wavify';
 import './style.scss';
 import { BN } from '@project-serum/anchor';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 export const MoneyStreamsInfoView = (props: {
   loadingStreams: boolean;
@@ -172,6 +179,11 @@ export const MoneyStreamsInfoView = (props: {
   ////////////
   //  Init  //
   ////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -824,7 +836,7 @@ export const MoneyStreamsInfoView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
@@ -1172,7 +1184,7 @@ export const MoneyStreamsInfoView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;

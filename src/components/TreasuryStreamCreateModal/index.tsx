@@ -21,12 +21,19 @@ import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getComputeBudgetIx,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import {
   consoleOut,
   disabledDate,
@@ -153,6 +160,11 @@ export const TreasuryStreamCreateModal = (props: {
   const [workingTreasuryType, setWorkingTreasuryType] = useState<AccountType>(AccountType.Open);
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] = useState('');
   const [proposalTitle, setProposalTitle] = useState('');
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -1062,7 +1074,7 @@ export const TreasuryStreamCreateModal = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       if (!tx) {

@@ -738,6 +738,7 @@ footer.ant-layout-footer {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    gap: 0.6rem;
 
     .footer-account-bar {
       display: flex;
@@ -747,35 +748,6 @@ footer.ant-layout-footer {
       border-radius: var(--custom-border-radius);
       height: 36px;
       padding: 0;
-
-      .connected-network {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        justify-content: flex-start;
-        align-items: center;
-        margin-right: 8px;
-        margin-left: 4px;
-
-        .chain-logo {
-          align-items: center;
-          justify-content: center;
-          display: inline-flex;
-          margin-right: 4px;
-
-          >img {
-            margin: 0;
-          }
-        }
-
-        .account-balance {
-          font-size: 1rem;
-          font-weight: 400;
-          letter-spacing: -0.5px;
-          line-height: 1;
-          color: var(--color-dark);
-        }
-      }
     }
   }
 }
@@ -2112,6 +2084,7 @@ footer.ant-layout-footer {
   -webkit-box-align: center;
   align-items: center;
   justify-self: flex-end;
+  gap: 0.6rem;
 
   @media (max-width: 1199.98px) {
     display: none;
@@ -2376,11 +2349,9 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
   }
 }
 
-// Account / Connection info
 .cluster-indicator {
   color: var(--color-light-orange);
-  margin-right: 7px;
-  padding: 8px;
+  padding: 4px;
 
   .network-name {
     font-size: 16px;
@@ -2388,16 +2359,22 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
   }
 }
 
-.connected-network {
+.navbar-utilities {
   display: flex;
   flex: auto;
   justify-content: flex-start;
   align-items: center;
+  gap: 0.6rem;
 
-  .account-balance {
-    .mean-svg-icons {
-      width: 16px;
-      height: 16px;
+  >button.ant-btn-round.ant-btn-icon-only {
+    width: auto;
+    height: auto;
+    border: none;
+    padding: 0 !important;
+    color: var(--color-secondary-alpha-70);
+
+    &:hover {
+      color: var(--color-secondary-alpha-85);
     }
   }
 }
@@ -2412,12 +2389,9 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
     color: var(--text-color) !important;
   }
 
-  &.upper {
-    margin: 4px 8px 0 0;
-  }
-
+  &.upper,
   &.lower {
-    margin: 4px 0 0 6px;
+    margin-top: 4px;
   }
 }
 
@@ -5222,8 +5196,6 @@ main section {
 }
 
 .app-context-menu {
-  margin: 4px;
-
   button.ant-btn-round.ant-btn-icon-only.settings-button {
     width: 24px;
     height: 24px;
@@ -5238,19 +5210,6 @@ button.ant-btn-round.ant-btn-icon-only.settings-button {
   padding: 0;
   border: none;
   height: auto;
-  color: var(--color-secondary-alpha-70);
-
-  &:hover {
-    color: var(--color-secondary-alpha-85);
-  }
-}
-
-.swap-settings-button .ant-btn-round.ant-btn-icon-only,
-button.ant-btn-round.ant-btn-icon-only.swap-settings-button {
-  width: auto;
-  height: auto;
-  border: none;
-  padding: 0 !important;
   color: var(--color-secondary-alpha-70);
 
   &:hover {
@@ -6893,12 +6852,6 @@ button.ant-btn-round.ant-btn-icon-only.swap-settings-button {
 
   &.error {
     color: var(--color-notify-error);
-  }
-
-  &.gas-station {
-    width: auto;
-    max-height: 1em;
-    vertical-align: -1px;
   }
 
   &.link {

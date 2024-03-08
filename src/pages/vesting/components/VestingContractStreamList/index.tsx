@@ -26,7 +26,15 @@ import { IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamCloseData } from 'middleware/segment-service';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, isError, isSuccess, sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getComputeBudgetIx,
+  isError,
+  isSuccess,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import {
   consoleOut,
   copyText,
@@ -47,6 +55,7 @@ import { useTranslation } from 'react-i18next';
 import { StreamCloseModal } from '../StreamCloseModal';
 import { VestingContractStreamDetailModal } from '../VestingContractStreamDetailModal';
 import { BN } from '@project-serum/anchor';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -103,6 +112,11 @@ export const VestingContractStreamList = (props: {
   const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>('');
   const [lockPeriodUnits, setLockPeriodUnits] = useState(0);
   const [streamList, setStreamList] = useState<Stream[]>([]);
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = new PublicKey(appConfig.getConfig().streamV2ProgramAddress);
 
@@ -491,7 +505,7 @@ export const VestingContractStreamList = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;

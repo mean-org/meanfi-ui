@@ -27,14 +27,25 @@ export const formatPriceNumber = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 8,
 });
 
+export const readLocalStorageKey = (key: string) => {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  try {
+    const item = window.localStorage.getItem(key);
+    return item ? JSON.parse(item) : undefined;
+  } catch (error) {
+    console.warn(`Error reading localStorage key “${key}”:`, error);
+    return undefined;
+  }
+};
+
 export function useLocalStorageState(key: string, defaultState?: string) {
   const [state, setState] = useState(() => {
-    // NOTE: Not sure if this is ok
-    const storedState = localStorage.getItem(key);
-    if (storedState) {
-      return JSON.parse(storedState);
-    }
-    return defaultState;
+    const storedState = readLocalStorageKey(key);
+
+    return storedState ?? defaultState;
   });
 
   const setLocalStorageState = useCallback(

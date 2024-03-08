@@ -27,7 +27,13 @@ import useWindowSize from 'hooks/useWindowResize';
 import { appConfig, customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, serializeTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getComputeBudgetIx,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
 import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
@@ -40,6 +46,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProposalDetailsView } from './components/ProposalDetails';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -98,6 +105,11 @@ const SafeView = (props: {
   /////////////////
   //  Init code  //
   /////////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
@@ -453,7 +465,7 @@ const SafeView = (props: {
           program.programId,
           ixAccounts,
           ixData,
-          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -616,6 +628,7 @@ const SafeView = (props: {
       selectedMultisig,
       multisigAddressPK,
       transactionCancelled,
+      transactionPriorityOptions,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
       setFailureStatusAndNotify,
@@ -650,9 +663,11 @@ const SafeView = (props: {
         const tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
 
         if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
-          const budgetIxs = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
-          const newIxs = [...budgetIxs, ...tx.instructions];
-          tx.instructions = newIxs;
+          const budgetIxs = getComputeBudgetIx(transactionPriorityOptions);
+          if (budgetIxs) {
+            const newIxs = [...budgetIxs, ...tx.instructions];
+            tx.instructions = newIxs;
+          }
         }
 
         return tx;
@@ -806,6 +821,7 @@ const SafeView = (props: {
       multisigClient,
       selectedMultisig,
       transactionCancelled,
+      transactionPriorityOptions,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
       setFailureStatusAndNotify,
@@ -835,9 +851,11 @@ const SafeView = (props: {
         const tx = await multisigClient.rejectTransaction(publicKey, data.transaction.id);
 
         if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
-          const budgetIxs = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
-          const newIxs = [...budgetIxs, ...tx.instructions];
-          tx.instructions = newIxs;
+          const budgetIxs = getComputeBudgetIx(transactionPriorityOptions);
+          if (budgetIxs) {
+            const newIxs = [...budgetIxs, ...tx.instructions];
+            tx.instructions = newIxs;
+          }
         }
 
         return tx;
@@ -991,6 +1009,7 @@ const SafeView = (props: {
       multisigClient,
       selectedMultisig,
       transactionCancelled,
+      transactionPriorityOptions,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
       setFailureStatusAndNotify,
@@ -1036,10 +1055,12 @@ const SafeView = (props: {
 
         const tx = await multisigClient.executeTransaction(publicKey, msTx.id);
 
-        if (tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
-          const budgetIxs = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
-          const newIxs = [...budgetIxs, ...tx.instructions];
-          tx.instructions = newIxs;
+        if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
+          const budgetIxs = getComputeBudgetIx(transactionPriorityOptions);
+          if (budgetIxs) {
+            const newIxs = [...budgetIxs, ...tx.instructions];
+            tx.instructions = newIxs;
+          }
         }
 
         return tx;
@@ -1209,6 +1230,7 @@ const SafeView = (props: {
       connection,
       multisigClient,
       transactionCancelled,
+      transactionPriorityOptions,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
       parseErrorFromExecuteProposal,
@@ -1245,9 +1267,11 @@ const SafeView = (props: {
         const tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
 
         if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
-          const budgetIxs = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
-          const newIxs = [...budgetIxs, ...tx.instructions];
-          tx.instructions = newIxs;
+          const budgetIxs = getComputeBudgetIx(transactionPriorityOptions);
+          if (budgetIxs) {
+            const newIxs = [...budgetIxs, ...tx.instructions];
+            tx.instructions = newIxs;
+          }
         }
 
         return tx;
@@ -1398,6 +1422,7 @@ const SafeView = (props: {
       multisigClient,
       selectedMultisig,
       transactionCancelled,
+      transactionPriorityOptions,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
       setFailureStatusAndNotify,

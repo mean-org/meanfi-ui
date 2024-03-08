@@ -29,7 +29,13 @@ import { appConfig, customLogger } from 'index';
 import { resolveParsedAccountInfo } from 'middleware/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getComputeBudgetIx,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import {
   formatThousands,
@@ -48,6 +54,7 @@ import IdlTree from './IdlTree';
 import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutableModal';
 import './style.scss';
 import Transactions from './Transactions';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 let isWorkflowLocked = false;
 
@@ -83,6 +90,11 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   /////////////////
   //  Init code  //
   /////////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const connection = useMemo(
     () =>
@@ -409,7 +421,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           BPF_LOADER_UPGRADEABLE_PID,
           ixAccounts,
           dataBuffer,
-          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -585,6 +597,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       selectedMultisig,
       isMultisigContext,
       transactionCancelled,
+      transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
@@ -743,7 +756,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           BPF_LOADER_UPGRADEABLE_PID,
           ixAccounts,
           ixData,
-          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -916,6 +929,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       isMultisigContext,
       transactionCancelled,
       multisigProgramAddressPK,
+      transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,

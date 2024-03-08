@@ -6,7 +6,6 @@ import {
   PublicKey,
   Transaction,
   TransactionConfirmationStatus,
-  TransactionInstruction,
   TransactionSignature,
   VersionedTransaction,
   VersionedTransactionResponse,
@@ -19,14 +18,26 @@ import { Confirmations, Timestamp } from '../models/transactions';
 import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { getAmountFromLamports, toBuffer } from './utils';
 
+export type PriorityOption = 'disabled' | 'normal' | 'fast' | 'turbo' | 'ultra';
+
+const COMPUTE_UNIT_LIMIT = 200_000;
+
+const COMPUTE_UNIT_PRICE = {
+  disabled: 0,
+  normal: 60_000,
+  fast: 500_000,
+  turbo: 10_000_000,
+  ultra: 1_000_000_000,
+};
+
 export interface ComputeBudgetConfig {
-  units?: number;
-  microLamports?: number;
+  priorityOption: PriorityOption;
+  cap?: number;
 }
 
 export const DEFAULT_BUDGET_CONFIG: ComputeBudgetConfig = {
-  microLamports: 1000,
-  units: 1000000000,
+  priorityOption: 'disabled',
+  cap: 0,
 };
 
 export class TransactionWithSignature {
@@ -301,15 +312,10 @@ export const serializeTx = (signed: Transaction | VersionedTransaction) => {
 };
 
 export const getComputeBudgetIx = (config: ComputeBudgetConfig) => {
-  const budgetIxs: TransactionInstruction[] = [];
+  if (config.priorityOption === 'disabled') return undefined;
 
-  if (config.microLamports) {
-    budgetIxs.push(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: config.microLamports }));
-  }
-
-  if (config.units) {
-    budgetIxs.push(ComputeBudgetProgram.setComputeUnitLimit({ units: config.units }));
-  }
-
-  return budgetIxs;
+  return [
+    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: COMPUTE_UNIT_PRICE[config.priorityOption] }),
+    ComputeBudgetProgram.setComputeUnitLimit({ units: COMPUTE_UNIT_LIMIT }),
+  ];
 };

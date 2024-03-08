@@ -67,7 +67,13 @@ import {
   SegmentVestingContractCreateData,
   SegmentVestingContractWithdrawData,
 } from 'middleware/segment-service';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getComputeBudgetIx,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import {
   consoleOut,
   delay,
@@ -126,6 +132,7 @@ import { VestingContractWithdrawFundsModal } from './components/VestingContractW
 import './style.scss';
 import { objectToJson } from 'services/logger';
 import { BN } from '@project-serum/anchor';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 export type VestingAccountDetailTab = 'overview' | 'streams' | 'activity' | undefined;
 let isWorkflowLocked = false;
@@ -218,6 +225,11 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   /////////////////////////
   //  Setup & Init code  //
   /////////////////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -999,7 +1011,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           mspV2AddressPK, // program
           ixAccounts, // keys o accounts of the Ix
           ixData, // data of the Ix
-          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         if (!tx) {
@@ -1342,7 +1354,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
@@ -1653,7 +1665,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
@@ -1971,7 +1983,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         mspV2AddressPK, // program
         ixAccounts, // keys o accounts of the Ix
         ixData, // data of the Ix
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       if (!tx) {
@@ -2257,7 +2269,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
@@ -2752,7 +2764,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           programId, // program
           ixAccounts, // keys o accounts of the Ix
           ixData, // data of the Ix
-          ixs: getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+          ixs: getComputeBudgetIx(transactionPriorityOptions),
         };
       },
     });

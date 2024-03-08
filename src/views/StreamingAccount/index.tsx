@@ -60,6 +60,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from 'Icons';
 import { appConfig, customLogger } from 'index';
@@ -70,7 +71,13 @@ import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getComputeBudgetIx,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isProd } from 'middleware/ui';
 import {
   displayAmountWithSymbol,
@@ -156,6 +163,11 @@ export const StreamingAccountView = (props: {
   ////////////
   //  Init  //
   ////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -984,7 +996,7 @@ export const StreamingAccountView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
@@ -1283,7 +1295,7 @@ export const StreamingAccountView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
@@ -1696,7 +1708,7 @@ export const StreamingAccountView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;

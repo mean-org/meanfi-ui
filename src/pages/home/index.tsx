@@ -76,7 +76,14 @@ import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { DEFAULT_BUDGET_CONFIG, getChange, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getChange,
+  getComputeBudgetIx,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import { consoleOut, copyText, getTransactionStatusForLogs, isDev, kFormatter, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
@@ -264,6 +271,11 @@ export const HomeView = () => {
   const [isSolBalanceModalOpen, setIsSolBalanceModalOpen] = useState(false);
   const hideSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(false), []);
   const showSolBalanceModal = useCallback(() => setIsSolBalanceModalOpen(true), []);
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
@@ -1189,7 +1201,7 @@ export const HomeView = () => {
             programId, // program
             ixAccounts, // keys o accounts of the Ix
             ixData, // data of the Ix
-            ixs: getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+            ixs: getComputeBudgetIx(transactionPriorityOptions),
           };
         },
       });
@@ -1203,6 +1215,7 @@ export const HomeView = () => {
       selectedMultisig,
       selectedAsset?.symbol,
       selectedAsset?.decimals,
+      transactionPriorityOptions,
       transactionAssetFees.mspFlatFee,
       transactionAssetFees.blockchainFee,
       setSuccessStatus,
@@ -1263,7 +1276,7 @@ export const HomeView = () => {
           setAuthIx.programId,
           setAuthIx.keys,
           setAuthIx.data,
-          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -1412,6 +1425,7 @@ export const HomeView = () => {
       multisigClient,
       selectedMultisig,
       isMultisigContext,
+      transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
@@ -1476,7 +1490,7 @@ export const HomeView = () => {
           closeIx.programId,
           closeIx.keys,
           closeIx.data,
-          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -1632,6 +1646,7 @@ export const HomeView = () => {
       multisigClient,
       selectedMultisig,
       isMultisigContext,
+      transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
@@ -2297,7 +2312,7 @@ export const HomeView = () => {
           proposalIx.programId,
           proposalIx.keys,
           proposalIx.data,
-          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -2453,6 +2468,7 @@ export const HomeView = () => {
       multisigClient,
       selectedMultisig,
       isMultisigContext,
+      transactionPriorityOptions,
       multisigTransactionFees.multisigFee,
       multisigTransactionFees.networkFee,
       multisigTransactionFees.rentExempt,

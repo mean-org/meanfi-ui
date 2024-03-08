@@ -23,7 +23,7 @@ import { TokenPrice } from 'models/TokenPrice';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../constants';
 import { MEAN_TOKEN_LIST, NATIVE_SOL } from '../constants/tokens';
 import { consoleOut, isLocal } from './ui';
-import { findATokenAddress, getAmountFromLamports, shortenAddress } from './utils';
+import { findATokenAddress, getAmountFromLamports, readLocalStorageKey, shortenAddress } from './utils';
 import getPriceByAddressOrSymbol from './getPriceByAddressOrSymbol';
 import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx } from './transactions';
 
@@ -166,7 +166,8 @@ export async function closeTokenAccount(connection: Connection, tokenPubkey: Pub
   // Close the account
   ixs.push(Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, tokenPubkey, owner, owner, []));
 
-  const priorityFeesIx = getComputeBudgetIx(DEFAULT_BUDGET_CONFIG);
+  const config = readLocalStorageKey('transactionPriority');
+  const priorityFeesIx = getComputeBudgetIx(config ?? DEFAULT_BUDGET_CONFIG) ?? [];
   const tx = new Transaction().add(...priorityFeesIx, ...ixs);
   tx.feePayer = owner;
   const hash = await connection.getLatestBlockhash('confirmed');

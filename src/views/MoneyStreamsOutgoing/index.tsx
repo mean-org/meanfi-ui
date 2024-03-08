@@ -40,6 +40,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
 import { IconEllipsisVertical } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { fetchAccountTokens } from 'middleware/accounts';
@@ -47,7 +48,13 @@ import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from 'middleware/segment-service';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx, sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getComputeBudgetIx,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import {
   consoleOut,
   getTransactionModalTitle,
@@ -113,6 +120,11 @@ export const MoneyStreamsOutgoingView = (props: {
   ////////////
   //  Init  //
   ////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -538,7 +550,7 @@ export const MoneyStreamsOutgoingView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
@@ -1116,7 +1128,7 @@ export const MoneyStreamsOutgoingView = (props: {
           mspV2AddressPK,
           ixAccounts,
           ixData,
-          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -1310,29 +1322,30 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     },
     [
-      connection,
-      enqueueTransactionConfirmation,
-      isMultisigContext,
       ms,
-      mspV2AddressPK,
-      multisigAccounts,
-      multisigClient,
-      nativeBalance,
-      onTransactionFinished,
-      paymentStreaming,
-      publicKey,
-      selectedAccount.address,
-      setTransactionStatus,
-      showTransactionExecutionModal,
-      splTokenList,
-      streamSelected,
-      t,
-      transactionCancelled,
-      transactionFees.blockchainFee,
-      transactionFees.mspFlatFee,
-      transactionStatus.currentOperation,
-      treasuryDetails,
       wallet,
+      publicKey,
+      connection,
+      splTokenList,
+      nativeBalance,
+      mspV2AddressPK,
+      multisigClient,
+      streamSelected,
+      treasuryDetails,
+      paymentStreaming,
+      multisigAccounts,
+      isMultisigContext,
+      transactionCancelled,
+      selectedAccount.address,
+      transactionPriorityOptions,
+      transactionFees.mspFlatFee,
+      transactionFees.blockchainFee,
+      transactionStatus.currentOperation,
+      enqueueTransactionConfirmation,
+      showTransactionExecutionModal,
+      onTransactionFinished,
+      setTransactionStatus,
+      t,
     ],
   );
 
@@ -1551,7 +1564,7 @@ export const MoneyStreamsOutgoingView = (props: {
           mspV2AddressPK,
           ixAccounts,
           ixData,
-          getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -1740,28 +1753,29 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     },
     [
-      connection,
-      enqueueTransactionConfirmation,
-      isMultisigContext,
       ms,
-      mspV2AddressPK,
-      multisigAccounts,
-      multisigClient,
-      nativeBalance,
-      onTransactionFinished,
-      paymentStreaming,
-      publicKey,
-      selectedAccount.address,
-      setTransactionStatus,
-      showTransactionExecutionModal,
-      streamSelected,
-      t,
-      transactionCancelled,
-      transactionFees.blockchainFee,
-      transactionFees.mspFlatFee,
-      transactionStatus.currentOperation,
-      treasuryDetails,
       wallet,
+      publicKey,
+      connection,
+      nativeBalance,
+      mspV2AddressPK,
+      multisigClient,
+      streamSelected,
+      treasuryDetails,
+      paymentStreaming,
+      multisigAccounts,
+      isMultisigContext,
+      transactionCancelled,
+      selectedAccount.address,
+      transactionPriorityOptions,
+      transactionFees.mspFlatFee,
+      transactionFees.blockchainFee,
+      transactionStatus.currentOperation,
+      enqueueTransactionConfirmation,
+      showTransactionExecutionModal,
+      onTransactionFinished,
+      setTransactionStatus,
+      t,
     ],
   );
 
@@ -2025,7 +2039,7 @@ export const MoneyStreamsOutgoingView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(DEFAULT_BUDGET_CONFIG),
+        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
