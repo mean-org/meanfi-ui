@@ -1238,6 +1238,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       paymentStreaming,
       multisigAccounts,
       isMultisigContext,
+      transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
