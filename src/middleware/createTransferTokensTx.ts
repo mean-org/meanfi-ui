@@ -1,5 +1,12 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js';
+import {
+  Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { BaseProposal } from 'models/multisig';
 import { SOL_MINT } from './ids';
 import { toTokenAmount } from './utils';
@@ -7,7 +14,7 @@ import { BN } from '@project-serum/anchor';
 import { getMintDecimals, isTokenAccount } from './accountInfoGetters';
 import getAccountInfoByAddress from './getAccountInfoByAddress';
 import { consoleOut } from './ui';
-import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
+import { serializeTx } from './transactions';
 
 export interface TransferTokensTxParams extends BaseProposal {
   amount: number;
@@ -116,7 +123,11 @@ export const createFundsTransferTx = async (
     );
   }
 
-  const transaction = await composeTxWithPrioritizationFees(connection, feePayer, ixs);
+  const { blockhash } = await connection.getLatestBlockhash('confirmed');
+
+  const transaction = new Transaction().add(...ixs);
+  transaction.feePayer = feePayer;
+  transaction.recentBlockhash = blockhash;
 
   serializeTx(transaction);
 

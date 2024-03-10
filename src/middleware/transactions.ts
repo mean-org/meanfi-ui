@@ -390,6 +390,8 @@ export const getProposalWithPrioritizationFees = async (
     return null;
   }
 
+  consoleOut('Transaction Priority option:', instrumental.transactionPriorityOptions.priorityOption, 'darkorange');
+
   if (instrumental.transactionPriorityOptions.priorityOption === 'disabled') {
     return result;
   }
@@ -442,6 +444,8 @@ export const composeTxWithPrioritizationFees = async (
   if (signers?.length) {
     transaction.partialSign(...signers);
   }
+
+  consoleOut('Transaction Priority option:', config.priorityOption, 'darkorange');
 
   if (config.priorityOption === 'disabled') {
     return transaction;
