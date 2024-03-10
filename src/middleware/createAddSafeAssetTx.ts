@@ -1,18 +1,9 @@
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Signer,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, Signer, SystemProgram, TransactionInstruction } from '@solana/web3.js';
 import { appConfig } from 'index';
 import { TokenInfo } from 'models/SolanaTokenInfo';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx } from './transactions';
-import { readLocalStorageKey } from './utils';
+import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
 
 export type CreateSafeAssetTxParams = {
   token: TokenInfo | undefined;
@@ -35,6 +26,7 @@ export const createAddSafeAssetTx = async (
 
   const signers: Signer[] = [];
   const ixs: TransactionInstruction[] = [];
+
   let tokenAccount = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
@@ -74,16 +66,9 @@ export const createAddSafeAssetTx = async (
     signers.push(tokenKeypair);
   }
 
-  const config = readLocalStorageKey('transactionPriority');
-  const priorityFeesIx = getComputeBudgetIx(config ?? DEFAULT_BUDGET_CONFIG) ?? [];
-  const tx = new Transaction().add(...priorityFeesIx, ...ixs);
-  tx.feePayer = publicKey;
-  const { blockhash } = await connection.getLatestBlockhash('confirmed');
-  tx.recentBlockhash = blockhash;
+  const transaction = await composeTxWithPrioritizationFees(connection, publicKey, ixs, signers);
 
-  if (signers.length) {
-    tx.partialSign(...signers);
-  }
+  serializeTx(transaction);
 
-  return tx;
+  return transaction;
 };

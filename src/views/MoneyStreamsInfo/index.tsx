@@ -58,7 +58,7 @@ import { getStreamTitle } from 'middleware/streams';
 import {
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
-  getComputeBudgetIx,
+  getProposalWithPrioritizationFees,
   sendTx,
   signTx,
 } from 'middleware/transactions';
@@ -826,7 +826,12 @@ export const MoneyStreamsInfoView = (props: {
       const ixAccounts = addFundsTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.proposalTitle ?? 'Add Funds',
         '', // description
@@ -836,7 +841,6 @@ export const MoneyStreamsInfoView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
@@ -1174,7 +1178,12 @@ export const MoneyStreamsInfoView = (props: {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.title === '' ? 'Create streaming account' : data.title,
         '', // description
@@ -1184,7 +1193,6 @@ export const MoneyStreamsInfoView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;

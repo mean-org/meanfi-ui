@@ -19,7 +19,7 @@ import { getAccountNFTs, getUserAccountTokens } from 'middleware/accounts';
 import { getPrices, getSolanaTokenListKeyNameByCluster, getSolFlareTokenList, getSplTokens } from 'middleware/api';
 import { MappedTransaction } from 'middleware/history';
 import { PerformanceCounter } from 'middleware/perf-counter';
-import { consoleOut, isLocal, isProd, msToTime } from 'middleware/ui';
+import { consoleOut, isProd, msToTime } from 'middleware/ui';
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from 'middleware/utils';
 import {
   AccountContext,
@@ -1005,22 +1005,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         });
       }
       setPriceList(listCopy);
-      // This debug info is only available in development mode
-      if (isLocal()) {
-        consoleOut('Token prices sorted by SYMBOL:', '...looking for duplicates?', 'purple');
-        const sortedList = listCopy.slice().sort((a, b) => {
-          const nameA = a.symbol.toUpperCase();
-          const nameB = b.symbol.toUpperCase();
-          if (nameA < nameB) {
-            return -1;
-          }
-          if (nameA > nameB) {
-            return 1;
-          }
-          return 0;
-        });
-        console.table(sortedList);
-      }
       consoleOut('Price items:', prices.length, 'blue');
     } else {
       consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');

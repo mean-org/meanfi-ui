@@ -6,9 +6,17 @@ import {
   TransactionMessage,
   VersionedTransaction,
 } from '@solana/web3.js';
+import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx } from './transactions';
+import { readLocalStorageKey } from './utils';
 
 export async function createV0InitAtaAccountTx(connection: Connection, mint: PublicKey, owner: PublicKey) {
   const ixs: TransactionInstruction[] = [];
+
+  const config = readLocalStorageKey('transactionPriority');
+  const priorityFeesIx = getComputeBudgetIx(config ?? DEFAULT_BUDGET_CONFIG) ?? [];
+  if (priorityFeesIx) {
+    ixs.push(...priorityFeesIx);
+  }
 
   const associatedAddress = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,

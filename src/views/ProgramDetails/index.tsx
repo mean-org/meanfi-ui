@@ -32,7 +32,7 @@ import { AppUsageEvent } from 'middleware/segment-service';
 import {
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
-  getComputeBudgetIx,
+  getProposalWithPrioritizationFees,
   sendTx,
   signTx,
 } from 'middleware/transactions';
@@ -411,7 +411,12 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            connection,
+            multisigClient,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.proposalTitle,
           '', // description
@@ -421,7 +426,6 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           BPF_LOADER_UPGRADEABLE_PID,
           ixAccounts,
           dataBuffer,
-          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -746,7 +750,12 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            connection,
+            multisigClient,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.proposalTitle,
           '', // description
@@ -756,7 +765,6 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           BPF_LOADER_UPGRADEABLE_PID,
           ixAccounts,
           ixData,
-          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;

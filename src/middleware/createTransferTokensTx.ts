@@ -1,11 +1,5 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
-import {
-  Connection,
-  LAMPORTS_PER_SOL, PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction
-} from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js';
 import { BaseProposal } from 'models/multisig';
 import { SOL_MINT } from './ids';
 import { toTokenAmount } from './utils';
@@ -13,6 +7,7 @@ import { BN } from '@project-serum/anchor';
 import { getMintDecimals, isTokenAccount } from './accountInfoGetters';
 import getAccountInfoByAddress from './getAccountInfoByAddress';
 import { consoleOut } from './ui';
+import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
 
 export interface TransferTokensTxParams extends BaseProposal {
   amount: number;
@@ -31,9 +26,9 @@ export interface TransferTokensTxParams extends BaseProposal {
  * @param feePayer - Fee payer account
  * @param from - Public key of the source token account
  * @param to - Public key of the beneficiary wallet or ATA address
- * @param data - beneficiary, mint and token amount to be transferred
+ * @param amount - Token amount to transfer
  */
-export const createFundsTransferProposal = async (
+export const createFundsTransferTx = async (
   connection: Connection,
   multisigAuthority: PublicKey,
   feePayer: PublicKey,
@@ -42,7 +37,7 @@ export const createFundsTransferProposal = async (
   amount: number,
 ) => {
   let toAddress = to;
-  let transferIx: TransactionInstruction;
+  const ixs: TransactionInstruction[] = [];
 
   // Check from address
   const fromAccountInfo = await getAccountInfoByAddress(connection, from);
@@ -61,11 +56,13 @@ export const createFundsTransferProposal = async (
   consoleOut('Mint:', fromMintAddress.toBase58(), 'blue');
 
   if (fromMintAddress.equals(SOL_MINT)) {
-    transferIx = SystemProgram.transfer({
-      fromPubkey: from,
-      toPubkey: toAddress,
-      lamports: new BN(amount * LAMPORTS_PER_SOL).toNumber(),
-    });
+    ixs.push(
+      SystemProgram.transfer({
+        fromPubkey: from,
+        toPubkey: toAddress,
+        lamports: new BN(amount * LAMPORTS_PER_SOL).toNumber(),
+      }),
+    );
   } else {
     // Check mint
     const mintAccountInfo = await getAccountInfoByAddress(connection, fromMintAddress);
@@ -97,7 +94,16 @@ export const createFundsTransferProposal = async (
       const beneficiaryTokenAccountInfo = await connection.getAccountInfo(beneficiaryToken);
 
       if (!beneficiaryTokenAccountInfo) {
-        throw Error('Beneficiary token account not found');
+        ixs.push(
+          Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            fromMintAddress,
+            beneficiaryToken,
+            toAddress,
+            feePayer,
+          ),
+        );
       }
     }
 
@@ -105,22 +111,14 @@ export const createFundsTransferProposal = async (
 
     const tokenAmount = toTokenAmount(amount, decimals, true) as string;
 
-    transferIx = Token.createTransferInstruction(
-      TOKEN_PROGRAM_ID,
-      from,
-      toAddress,
-      multisigAuthority,
-      [],
-      new u64(tokenAmount),
+    ixs.push(
+      Token.createTransferInstruction(TOKEN_PROGRAM_ID, from, toAddress, multisigAuthority, [], new u64(tokenAmount)),
     );
   }
 
-  const tx = new Transaction().add(transferIx);
-  tx.feePayer = feePayer;
-  const { blockhash } = await connection.getLatestBlockhash('confirmed');
-  tx.recentBlockhash = blockhash;
+  const transaction = await composeTxWithPrioritizationFees(connection, feePayer, ixs);
 
-  return {
-    tx,
-  };
+  serializeTx(transaction);
+
+  return transaction;
 };

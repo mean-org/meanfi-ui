@@ -29,7 +29,7 @@ import { AppUsageEvent, SegmentStreamCloseData } from 'middleware/segment-servic
 import {
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
-  getComputeBudgetIx,
+  getProposalWithPrioritizationFees,
   isError,
   isSuccess,
   sendTx,
@@ -495,7 +495,12 @@ export const VestingContractStreamList = (props: {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.proposalTitle,
         '', // description
@@ -505,7 +510,6 @@ export const VestingContractStreamList = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;

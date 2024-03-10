@@ -11,7 +11,7 @@ import {
   MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
-import { ComputeBudgetProgram, ConfirmOptions, Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Empty, Spin, Tooltip } from 'antd';
 import { segmentAnalytics } from 'App';
 import { ErrorReportModal } from 'components/ErrorReportModal';
@@ -30,7 +30,8 @@ import { AppUsageEvent } from 'middleware/segment-service';
 import {
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
-  getComputeBudgetIx,
+  composeTxWithPrioritizationFees,
+  getProposalWithPrioritizationFees,
   sendTx,
   signTx,
 } from 'middleware/transactions';
@@ -455,7 +456,12 @@ const SafeView = (props: {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            multisigClient,
+            connection,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.title === '' ? 'Edit safe' : data.title,
           '', // description
@@ -465,7 +471,6 @@ const SafeView = (props: {
           program.programId,
           ixAccounts,
           ixData,
-          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -660,17 +665,13 @@ const SafeView = (props: {
           return null;
         }
 
-        const tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
+        const transaction = await multisigClient.approveTransaction(publicKey, data.transaction.id);
 
-        if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
-          const budgetIxs = getComputeBudgetIx(transactionPriorityOptions);
-          if (budgetIxs) {
-            const newIxs = [...budgetIxs, ...tx.instructions];
-            tx.instructions = newIxs;
-          }
-        }
+        if (!transaction) return null;
 
-        return tx;
+        const prioritizedTx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return prioritizedTx;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -821,7 +822,6 @@ const SafeView = (props: {
       multisigClient,
       selectedMultisig,
       transactionCancelled,
-      transactionPriorityOptions,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
       setFailureStatusAndNotify,
@@ -848,17 +848,13 @@ const SafeView = (props: {
           return null;
         }
 
-        const tx = await multisigClient.rejectTransaction(publicKey, data.transaction.id);
+        const transaction = await multisigClient.rejectTransaction(publicKey, data.transaction.id);
 
-        if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
-          const budgetIxs = getComputeBudgetIx(transactionPriorityOptions);
-          if (budgetIxs) {
-            const newIxs = [...budgetIxs, ...tx.instructions];
-            tx.instructions = newIxs;
-          }
-        }
+        if (!transaction) return null;
 
-        return tx;
+        const prioritizedTx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return prioritizedTx;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -1009,7 +1005,6 @@ const SafeView = (props: {
       multisigClient,
       selectedMultisig,
       transactionCancelled,
-      transactionPriorityOptions,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
       setFailureStatusAndNotify,
@@ -1053,17 +1048,13 @@ const SafeView = (props: {
           return null;
         }
 
-        const tx = await multisigClient.executeTransaction(publicKey, msTx.id);
+        const transaction = await multisigClient.executeTransaction(publicKey, msTx.id);
 
-        if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
-          const budgetIxs = getComputeBudgetIx(transactionPriorityOptions);
-          if (budgetIxs) {
-            const newIxs = [...budgetIxs, ...tx.instructions];
-            tx.instructions = newIxs;
-          }
-        }
+        if (!transaction) return null;
 
-        return tx;
+        const prioritizedTx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return prioritizedTx;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -1230,7 +1221,6 @@ const SafeView = (props: {
       connection,
       multisigClient,
       transactionCancelled,
-      transactionPriorityOptions,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
       parseErrorFromExecuteProposal,
@@ -1264,17 +1254,13 @@ const SafeView = (props: {
           return null;
         }
 
-        const tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
+        const transaction = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
 
-        if (tx && tx.instructions.every(i => !i.programId.equals(ComputeBudgetProgram.programId))) {
-          const budgetIxs = getComputeBudgetIx(transactionPriorityOptions);
-          if (budgetIxs) {
-            const newIxs = [...budgetIxs, ...tx.instructions];
-            tx.instructions = newIxs;
-          }
-        }
+        if (!transaction) return null;
 
-        return tx;
+        const prioritizedTx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return prioritizedTx;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -1422,7 +1408,6 @@ const SafeView = (props: {
       multisigClient,
       selectedMultisig,
       transactionCancelled,
-      transactionPriorityOptions,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
       setFailureStatusAndNotify,
@@ -1436,8 +1421,6 @@ const SafeView = (props: {
     consoleOut('running refreshSelectedProposal...', '', 'blue');
     if (publicKey && multisigClient && selectedMultisigRef.current && selectedProposalRef.current) {
       consoleOut('fetching proposal details...', '', 'blue');
-      consoleOut('selectedMultisigRef:', selectedMultisigRef.current.id.toBase58(), 'blue');
-      consoleOut('selectedProposalRef:', selectedProposalRef.current.id.toBase58(), 'blue');
       setLoadingProposalDetails(true);
       multisigClient
         .getMultisigTransaction(selectedMultisigRef.current.id, selectedProposalRef.current.id, publicKey)

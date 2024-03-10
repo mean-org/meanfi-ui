@@ -74,7 +74,7 @@ import { getStreamTitle } from 'middleware/streams';
 import {
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
-  getComputeBudgetIx,
+  getProposalWithPrioritizationFees,
   sendTx,
   signTx,
 } from 'middleware/transactions';
@@ -986,7 +986,12 @@ export const StreamingAccountView = (props: {
       const ixAccounts = addFundsTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.proposalTitle ?? 'Add Funds',
         '', // description
@@ -996,7 +1001,6 @@ export const StreamingAccountView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
@@ -1283,11 +1287,15 @@ export const StreamingAccountView = (props: {
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      const proposalTitle = data.proposalTitle;
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
-        proposalTitle ?? 'Withdraw treasury funds',
+        data.proposalTitle ?? 'Withdraw treasury funds',
         '', // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryWithdraw,
@@ -1295,7 +1303,6 @@ export const StreamingAccountView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;
@@ -1698,7 +1705,12 @@ export const StreamingAccountView = (props: {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.title === '' ? 'Close streaming account' : data.title,
         '', // description
@@ -1708,7 +1720,6 @@ export const StreamingAccountView = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       return tx?.transaction ?? null;

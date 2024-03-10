@@ -1,17 +1,9 @@
 import { Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
-import {
-  AccountInfo,
-  Connection,
-  ParsedAccountData,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-  TransactionMessage,
-  VersionedTransaction,
-} from '@solana/web3.js';
+import { AccountInfo, Connection, ParsedAccountData, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { TokenAccountInfo } from 'models/accounts';
+import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
 
 export async function hasTokenBalance(connection: Connection, tokenPubkey: PublicKey) {
   let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
@@ -69,27 +61,9 @@ export async function createCloseTokenAccountTx(connection: Connection, tokenPub
   // Close the account
   ixs.push(Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, tokenPubkey, owner, owner, []));
 
-  // Get the latest blockhash
-  const blockhash = await connection.getLatestBlockhash('confirmed').then(res => res.blockhash);
+  const transaction = await composeTxWithPrioritizationFees(connection, owner, ixs);
 
-  if (hasBalance) {
-    const tx = new Transaction().add(...ixs);
-    tx.feePayer = owner;
-    tx.recentBlockhash = blockhash;
-    return tx;
-  }
-
-  // create v0 compatible message
-  const messageV0 = new TransactionMessage({
-    payerKey: owner,
-    recentBlockhash: blockhash,
-    instructions: ixs,
-  }).compileToV0Message();
-
-  // Create a VersionedTransaction passing the v0 compatible message
-  const transaction = new VersionedTransaction(messageV0);
-
-  console.log('transaction:', transaction);
+  serializeTx(transaction);
 
   return transaction;
 }

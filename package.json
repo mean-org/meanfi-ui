@@ -51,7 +51,7 @@
     "build:s3": "NODE_OPTIONS=\"--max_old_space_size=4096\" react-app-rewired build"
   },
   "dependencies": {
-    "@ant-design/icons": "5.0.1",
+    "@ant-design/icons": "5.3.1",
     "@coinbase/cbpay-js": "^1.6.0",
     "@coral-xyz/borsh": "^0.26.0",
     "@jup-ag/core": "^4.0.0-beta.21",

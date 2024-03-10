@@ -71,7 +71,7 @@ import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, I
 import { appConfig, customLogger } from 'index';
 import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
 import { createAddSafeAssetTx, CreateSafeAssetTxParams } from 'middleware/createAddSafeAssetTx';
-import { createFundsTransferProposal, TransferTokensTxParams } from 'middleware/createTransferTokensTx';
+import { createFundsTransferTx, TransferTokensTxParams } from 'middleware/createTransferTokensTx';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { SOL_MINT } from 'middleware/ids';
@@ -80,7 +80,7 @@ import {
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getChange,
-  getComputeBudgetIx,
+  getProposalWithPrioritizationFees,
   sendTx,
   signTx,
 } from 'middleware/transactions';
@@ -993,7 +993,6 @@ export const HomeView = () => {
           setIsBusy(false);
         }
         accountRefresh();
-        accountRefresh();
       }
       resetTransactionStatus();
     },
@@ -1184,7 +1183,7 @@ export const HomeView = () => {
           if (!publicKey || !multisig || !data) return null;
           const fromPk = new PublicKey(data.from);
           const beneficiaryPk = new PublicKey(data.to);
-          const txResult = await createFundsTransferProposal(
+          const txResult = await createFundsTransferTx(
             connection,
             multisig.authority,
             publicKey,
@@ -1192,7 +1191,8 @@ export const HomeView = () => {
             beneficiaryPk,
             data.amount,
           );
-          const ix = txResult.tx.instructions[0];
+
+          const ix = txResult.instructions[0];
           const programId = ix.programId;
           const ixData = Buffer.from(ix.data);
           const ixAccounts = ix.keys;
@@ -1201,7 +1201,6 @@ export const HomeView = () => {
             programId, // program
             ixAccounts, // keys o accounts of the Ix
             ixData, // data of the Ix
-            ixs: getComputeBudgetIx(transactionPriorityOptions),
           };
         },
       });
@@ -1215,7 +1214,6 @@ export const HomeView = () => {
       selectedMultisig,
       selectedAsset?.symbol,
       selectedAsset?.decimals,
-      transactionPriorityOptions,
       transactionAssetFees.mspFlatFee,
       transactionAssetFees.blockchainFee,
       setSuccessStatus,
@@ -1266,7 +1264,12 @@ export const HomeView = () => {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            multisigClient,
+            connection,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.proposalTitle === '' ? 'Change asset ownership' : data.proposalTitle,
           '', // description
@@ -1276,7 +1279,6 @@ export const HomeView = () => {
           setAuthIx.programId,
           setAuthIx.keys,
           setAuthIx.data,
-          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -1480,7 +1482,12 @@ export const HomeView = () => {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            multisigClient,
+            connection,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.title === '' ? 'Close asset' : data.title,
           '', // description
@@ -1490,7 +1497,6 @@ export const HomeView = () => {
           closeIx.programId,
           closeIx.keys,
           closeIx.data,
-          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -1558,7 +1564,7 @@ export const HomeView = () => {
         }
 
         const result = await closeAssetTx(selectedAsset, data)
-          .then((value: any) => {
+          .then(value => {
             if (!value) {
               return false;
             }
@@ -2212,8 +2218,6 @@ export const HomeView = () => {
             return null;
           }
           operation = OperationType.Custom;
-          // TODO: Implement GetOperationFromProposal
-          // operation = getProposalOperation(data);
           proposalIx = tx.instructions[0];
         } else if (isCredixFinance(data.appId)) {
           const investorPK = new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'investor').value);
@@ -2291,8 +2295,6 @@ export const HomeView = () => {
               break;
           }
         } else {
-          // TODO: Implement GetOperationFromProposal
-          // operation = getProposalOperation(data);
           proposalIx = await createProposalIx(new PublicKey(data.appId), data.config, data.instruction);
         }
 
@@ -2302,7 +2304,13 @@ export const HomeView = () => {
 
         const expirationTimeInSeconds = Date.now() / 1_000 + data.expires;
         const expirationDate = data.expires === 0 ? undefined : new Date(expirationTimeInSeconds * 1_000);
-        const tx = await multisigClient.buildCreateProposalTransaction(
+
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            multisigClient,
+            connection,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.title,
           data.description,
@@ -2312,7 +2320,6 @@ export const HomeView = () => {
           proposalIx.programId,
           proposalIx.keys,
           proposalIx.data,
-          getComputeBudgetIx(transactionPriorityOptions),
         );
 
         return tx?.transaction ?? null;
@@ -4119,7 +4126,7 @@ export const HomeView = () => {
           isVisible={isTransferTokenModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={multisigTransactionFees}
-          handleOk={(params: TransferTokensTxParams) => onAcceptTransferToken(params)}
+          handleOk={onAcceptTransferToken}
           handleClose={() => {
             onAfterEveryModalClose();
             setIsTransferTokenModalVisible(false);

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { CloseOutlined } from '@ant-design/icons';
-import { IconGasStation } from 'Icons';
+import { IconCross, IconGasStation } from 'Icons';
 import { Button, Popover, Segmented } from 'antd';
 import { SegmentedValue } from 'antd/lib/segmented';
 import useWindowSize from 'hooks/useWindowResize';
@@ -102,12 +101,15 @@ const PrioritizationFeesConfigPopover = () => {
         <div className="flexible-left container-max-width-450">
           <div className="left">{t('priority-fees.priority-settings-title')}</div>
           <div className="right">
-            <Button
-              type="default"
-              shape="circle"
-              icon={<CloseOutlined />}
-              onClick={() => handlePopoverVisibleChange(false)}
-            />
+            <span className="icon-button-container">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<IconCross className="mean-svg-icons" />}
+                onClick={() => handlePopoverVisibleChange(false)}
+              />
+            </span>
           </div>
         </div>
       }

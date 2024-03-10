@@ -412,15 +412,29 @@ export function isVersionedTransaction(
   return 'version' in transaction;
 }
 
-export function getTxIxResume(tx: Transaction) {
+export function getTxIxResume(tx: Transaction | VersionedTransaction) {
   const programIds: string[] = [];
-  tx.instructions.forEach(t => {
-    const programId = t.programId.toBase58();
-    if (!programIds.includes(programId)) {
-      programIds.push(programId);
-    }
-  });
-  return { numIxs: tx.instructions.length, programIds: programIds };
+  let ixCount = 0;
+  if ('message' in tx) {
+    const txV0 = tx as VersionedTransaction;
+    ixCount = txV0.message.compiledInstructions.length;
+    txV0.message.compiledInstructions.forEach(t => {
+      const programId = (tx as VersionedTransaction).message.staticAccountKeys[t.programIdIndex].toBase58();
+      if (!programIds.includes(programId)) {
+        programIds.push(programId);
+      }
+    });
+  } else {
+    const txLegacy = tx as Transaction;
+    ixCount = txLegacy.instructions.length;
+    txLegacy.instructions.forEach(t => {
+      const programId = t.programId.toBase58();
+      if (!programIds.includes(programId)) {
+        programIds.push(programId);
+      }
+    });
+  }
+  return { numIxs: ixCount, programIds: programIds };
 }
 
 export function getVersionedTxIxResume(tx: VersionedTransaction) {

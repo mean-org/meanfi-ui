@@ -30,7 +30,7 @@ import { SOL_MINT } from 'middleware/ids';
 import {
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
-  getComputeBudgetIx,
+  getProposalWithPrioritizationFees,
   sendTx,
   signTx,
 } from 'middleware/transactions';
@@ -1064,7 +1064,12 @@ export const TreasuryStreamCreateModal = (props: {
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         proposalTitle === '' ? 'Create Stream' : proposalTitle,
         '', // description
@@ -1074,7 +1079,6 @@ export const TreasuryStreamCreateModal = (props: {
         mspV2AddressPK,
         ixAccounts,
         ixData,
-        getComputeBudgetIx(transactionPriorityOptions),
       );
 
       if (!tx) {
