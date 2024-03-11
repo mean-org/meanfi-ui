@@ -776,13 +776,12 @@ export const TreasuryStreamCreateModal = (props: {
   const onFeePayedByTreasurerChange = (e: any) => {
     consoleOut('onFeePayedByTreasurerChange:', e.target.checked, 'blue');
 
-    if (e.target.checked && tokenAmount) {
+    if (e.target.checked && selectedToken && tokenAmount) {
       const maxAmount = getMaxAmount(true);
       consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
       consoleOut('maxAmount:', maxAmount.toString(), 'blue');
       if (tokenAmount.gt(maxAmount)) {
-        const decimals = selectedToken ? selectedToken.decimals : 6;
-        setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
+        setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
         setTokenAmount(new BN(maxAmount));
       }
     }
@@ -1755,16 +1754,15 @@ export const TreasuryStreamCreateModal = (props: {
                             <div
                               className="token-max simplelink"
                               onClick={() => {
-                                const decimals = selectedToken ? selectedToken.decimals : 6;
                                 if (isFeePaidByTreasurer) {
                                   const maxAmount = getMaxAmount(true);
                                   consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
                                   consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
+                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 } else {
                                   const maxAmount = getMaxAmount();
-                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
+                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 }
                               }}
@@ -1994,11 +1992,10 @@ export const TreasuryStreamCreateModal = (props: {
                             <div
                               className="token-max simplelink"
                               onClick={() => {
-                                const decimals = selectedToken ? selectedToken.decimals : 6;
                                 const maxAmount = getMaxAmount(isFeePaidByTreasurer);
                                 consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
                                 consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                                setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
+                                setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
                                 setTokenAmount(new BN(maxAmount));
                               }}
                             >
