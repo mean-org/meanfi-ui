@@ -20,6 +20,7 @@ import {
   STREAM_STATUS_CODE,
   TransactionFees,
   PaymentStreamingAccount,
+  TransferTransactionAccounts,
 } from '@mean-dao/payment-streaming';
 import { AnchorProvider, BN, Idl, Program } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -71,7 +72,6 @@ import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, I
 import { appConfig, customLogger } from 'index';
 import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
 import { createAddSafeAssetTx, CreateSafeAssetTxParams } from 'middleware/createAddSafeAssetTx';
-import { createFundsTransferTx, TransferTokensTxParams } from 'middleware/createTransferTokensTx';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
 import { SOL_MINT } from 'middleware/ids';
@@ -114,6 +114,7 @@ import {
   NATIVE_LOADER,
   parseSerializedTx,
   SetAssetAuthPayload,
+  TransferTokensTxParams,
   ZERO_FEES,
 } from 'models/multisig';
 import { TokenInfo } from 'models/SolanaTokenInfo';
@@ -1181,18 +1182,17 @@ export const HomeView = () => {
           consoleOut('multisig:', multisig, 'purple');
           consoleOut('data:', data, 'purple');
           if (!publicKey || !multisig || !data) return null;
-          const fromPk = new PublicKey(data.from);
-          const beneficiaryPk = new PublicKey(data.to);
-          const txResult = await createFundsTransferTx(
-            connection,
-            multisig.authority,
-            publicKey,
-            fromPk,
-            beneficiaryPk,
-            data.amount,
-          );
 
-          const ix = txResult.instructions[0];
+          const accounts: TransferTransactionAccounts = {
+            feePayer: publicKey,
+            sender: multisig.authority,
+            beneficiary: new PublicKey(data.to),
+            mint: new PublicKey(data.fromMint),
+          };
+
+          const { transaction } = await paymentStreaming.buildTransferTransaction(accounts, data.tokenAmount);
+
+          const ix = transaction.instructions[0];
           const programId = ix.programId;
           const ixData = Buffer.from(ix.data);
           const ixAccounts = ix.keys;
@@ -1209,9 +1209,9 @@ export const HomeView = () => {
     },
     [
       publicKey,
-      connection,
       nativeBalance,
       selectedMultisig,
+      paymentStreaming,
       selectedAsset?.symbol,
       selectedAsset?.decimals,
       transactionAssetFees.mspFlatFee,
