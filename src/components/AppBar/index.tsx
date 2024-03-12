@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { CustomCSSProps } from 'middleware/css-custom-props';
 import { MEAN_DAO_DOCS_URL } from 'constants/common';
+import PrioritizationFeesConfigPopover from 'components/PrioritizationFeesConfigPopover';
 
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
@@ -176,7 +177,10 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
               <span className="network-name">{connectionConfig.cluster}</span>
             </div>
           )}
-          <NotificationBell onOpenDrawer={onOpenDrawer} />
+          <div className="navbar-utilities">
+            <PrioritizationFeesConfigPopover />
+            <NotificationBell onOpenDrawer={onOpenDrawer} />
+          </div>
           {connected ? (
             <div className="connection-and-account-bar">
               <AccountDetails />

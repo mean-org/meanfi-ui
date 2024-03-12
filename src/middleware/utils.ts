@@ -27,14 +27,25 @@ export const formatPriceNumber = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 8,
 });
 
+export const readLocalStorageKey = (key: string) => {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  try {
+    const item = window.localStorage.getItem(key);
+    return item ? JSON.parse(item) : undefined;
+  } catch (error) {
+    console.warn(`Error reading localStorage key “${key}”:`, error);
+    return undefined;
+  }
+};
+
 export function useLocalStorageState(key: string, defaultState?: string) {
   const [state, setState] = useState(() => {
-    // NOTE: Not sure if this is ok
-    const storedState = localStorage.getItem(key);
-    if (storedState) {
-      return JSON.parse(storedState);
-    }
-    return defaultState;
+    const storedState = readLocalStorageKey(key);
+
+    return storedState ?? defaultState;
   });
 
   const setLocalStorageState = useCallback(
@@ -401,15 +412,29 @@ export function isVersionedTransaction(
   return 'version' in transaction;
 }
 
-export function getTxIxResume(tx: Transaction) {
+export function getTxIxResume(tx: Transaction | VersionedTransaction) {
   const programIds: string[] = [];
-  tx.instructions.forEach(t => {
-    const programId = t.programId.toBase58();
-    if (!programIds.includes(programId)) {
-      programIds.push(programId);
-    }
-  });
-  return { numIxs: tx.instructions.length, programIds: programIds };
+  let ixCount = 0;
+  if ('message' in tx) {
+    const txV0 = tx as VersionedTransaction;
+    ixCount = txV0.message.compiledInstructions.length;
+    txV0.message.compiledInstructions.forEach(t => {
+      const programId = (tx as VersionedTransaction).message.staticAccountKeys[t.programIdIndex].toBase58();
+      if (!programIds.includes(programId)) {
+        programIds.push(programId);
+      }
+    });
+  } else {
+    const txLegacy = tx as Transaction;
+    ixCount = txLegacy.instructions.length;
+    txLegacy.instructions.forEach(t => {
+      const programId = t.programId.toBase58();
+      if (!programIds.includes(programId)) {
+        programIds.push(programId);
+      }
+    });
+  }
+  return { numIxs: ixCount, programIds: programIds };
 }
 
 export function getVersionedTxIxResume(tx: VersionedTransaction) {

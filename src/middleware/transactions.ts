@@ -1,10 +1,15 @@
 import { Adapter, SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import {
+  AccountMeta,
+  ComputeBudgetProgram,
   Connection,
   ParsedTransactionMeta,
   PublicKey,
+  Signer,
   Transaction,
   TransactionConfirmationStatus,
+  TransactionInstruction,
+  TransactionMessage,
   TransactionSignature,
   VersionedTransaction,
   VersionedTransactionResponse,
@@ -15,7 +20,30 @@ import { ConfirmTxResult, SendTxResult, SignTxResult } from 'models/CreateTxResu
 import { TransactionStatus } from '../models/enums';
 import { Confirmations, Timestamp } from '../models/transactions';
 import { consoleOut, getTransactionStatusForLogs } from './ui';
-import { getAmountFromLamports, toBuffer } from './utils';
+import { formatThousands, getAmountFromLamports, readLocalStorageKey, toBuffer } from './utils';
+import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
+
+export type PriorityOption = 'disabled' | 'normal' | 'fast' | 'turbo' | 'ultra';
+
+const COMPUTE_UNIT_LIMIT = 150_000;
+
+export const COMPUTE_UNIT_PRICE = {
+  disabled: 0,
+  normal: 60_000,
+  fast: 500_000,
+  turbo: 10_000_000,
+  ultra: 1_000_000_000,
+};
+
+export interface ComputeBudgetConfig {
+  priorityOption: PriorityOption;
+  cap?: number;
+}
+
+export const DEFAULT_BUDGET_CONFIG: ComputeBudgetConfig = {
+  priorityOption: 'disabled',
+  cap: 0,
+};
 
 export class TransactionWithSignature {
   constructor(public signature: string, public confirmedTransaction: VersionedTransactionResponse) {}
@@ -286,4 +314,159 @@ export const serializeTx = (signed: Transaction | VersionedTransaction) => {
 
   consoleOut('encodedTx:', base64Tx, 'orange');
   return base64Tx;
+};
+
+export const getComputeBudgetIx = (config: ComputeBudgetConfig, cuLimit = COMPUTE_UNIT_LIMIT) => {
+  if (config.priorityOption === 'disabled') return undefined;
+
+  consoleOut(
+    'Compute Unit price:',
+    `${formatThousands(COMPUTE_UNIT_PRICE[config.priorityOption])} microlamports`,
+    'darkorange',
+  );
+
+  consoleOut('Compute Unit limit:', formatThousands(cuLimit + 10_000), 'darkorange');
+
+  return [
+    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: COMPUTE_UNIT_PRICE[config.priorityOption] }),
+    ComputeBudgetProgram.setComputeUnitLimit({ units: cuLimit + 10_000 }),
+  ];
+};
+
+const getComputeUnitsEstimate = async (
+  connection: Connection,
+  payer: PublicKey,
+  blockhash: string,
+  ixs: TransactionInstruction[],
+  signers: Signer[] | undefined,
+) => {
+  // Create a VersionedTransaction
+  const messageV0 = new TransactionMessage({
+    payerKey: payer,
+    recentBlockhash: blockhash,
+    instructions: ixs,
+  }).compileToV0Message();
+  const v0Tx = new VersionedTransaction(messageV0);
+  if (signers?.length) {
+    v0Tx.sign(signers);
+  }
+  // Simulate tx without signature verification
+  const { value } = await connection.simulateTransaction(v0Tx, { sigVerify: false });
+
+  return !value.err && value.unitsConsumed ? value.unitsConsumed : undefined;
+};
+
+export const getProposalWithPrioritizationFees = async (
+  instrumental: {
+    multisigClient: MeanMultisig;
+    connection: Connection;
+    transactionPriorityOptions: ComputeBudgetConfig;
+  },
+  proposer: PublicKey,
+  title: string,
+  description: string | undefined,
+  expirationDate: Date | undefined,
+  operation: number,
+  multisig: PublicKey,
+  program: PublicKey,
+  accounts: AccountMeta[],
+  data: Buffer | undefined,
+  preInstructions?: TransactionInstruction[],
+) => {
+  const result = await instrumental.multisigClient.buildCreateProposalTransaction(
+    proposer,
+    title,
+    description,
+    expirationDate,
+    operation,
+    multisig,
+    program,
+    accounts,
+    data,
+    preInstructions,
+  );
+
+  if (!result) {
+    return null;
+  }
+
+  consoleOut('Transaction Priority option:', instrumental.transactionPriorityOptions.priorityOption, 'darkorange');
+
+  if (instrumental.transactionPriorityOptions.priorityOption === 'disabled') {
+    return result;
+  }
+
+  const { blockhash } = await instrumental.connection.getLatestBlockhash('confirmed');
+
+  // Get compute budget
+  const unitsConsumed = await getComputeUnitsEstimate(
+    instrumental.connection,
+    proposer,
+    blockhash,
+    result.transaction.instructions,
+    undefined,
+  );
+  const budgetIxs = getComputeBudgetIx(instrumental.transactionPriorityOptions, unitsConsumed);
+
+  // Rebuild same tx with budget instructions
+  if (budgetIxs) {
+    const newPreIxs = preInstructions ? [...budgetIxs, ...preInstructions] : budgetIxs;
+    return await instrumental.multisigClient.buildCreateProposalTransaction(
+      proposer,
+      title,
+      description,
+      expirationDate,
+      operation,
+      multisig,
+      program,
+      accounts,
+      data,
+      newPreIxs,
+    );
+  }
+
+  return result;
+};
+
+export const composeTxWithPrioritizationFees = async (
+  connection: Connection,
+  payer: PublicKey,
+  ixs: TransactionInstruction[],
+  signers?: Signer[],
+) => {
+  const config: ComputeBudgetConfig = readLocalStorageKey('transactionPriority') ?? DEFAULT_BUDGET_CONFIG;
+
+  const { blockhash } = await connection.getLatestBlockhash('confirmed');
+
+  const transaction = new Transaction().add(...ixs);
+  transaction.feePayer = payer;
+  transaction.recentBlockhash = blockhash;
+  if (signers?.length) {
+    transaction.partialSign(...signers);
+  }
+
+  consoleOut('Transaction Priority option:', config.priorityOption, 'darkorange');
+
+  if (config.priorityOption === 'disabled') {
+    return transaction;
+  }
+
+  // Get compute budget
+  const unitsConsumed = await getComputeUnitsEstimate(connection, payer, blockhash, ixs, signers);
+  const budgetIxs = getComputeBudgetIx(config, unitsConsumed);
+
+  // Rebuild same tx with budget instructions
+  if (budgetIxs) {
+    const newPreIxs = [...budgetIxs, ...ixs];
+    const newTx = new Transaction().add(...newPreIxs);
+    newTx.feePayer = payer;
+    newTx.recentBlockhash = blockhash;
+    if (signers?.length) {
+      newTx.partialSign(...signers);
+    }
+
+    return newTx;
+  }
+
+  return transaction;
 };

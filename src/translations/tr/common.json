@@ -1447,5 +1447,21 @@
   },
   "wrap": {
     "hint-message": ""
+  },
+  "priority-fees": {
+    "priority-settings-title": "Transaction Priority Setting",
+    "prioritization-overview": "The priority fee is paid to the Solana network to achieve faster transactions execution times.",
+    "selector-label": "Choose a priority",
+    "priority-disabled-label": "Disabled",
+    "priority-normal-label": "Normal",
+    "priority-fast-label": "Fast",
+    "priority-turbo-label": "Turbo",
+    "priority-ultra-label": "Ultra",
+    "priority-disabled-description": "No priority fees will be used.",
+    "priority-normal-description": "A maximum of 0.00001 SOL will be used to speed up transaction submission and confirmation.",
+    "priority-fast-description": "A maximum of 0.000025 SOL will be used to speed up transaction submission and confirmation.",
+    "priority-turbo-description": "A maximum of 0.0002 SOL will be used to speed up transaction submission and confirmation.",
+    "priority-ultra-description": "A maximum of 0.02 SOL will be used to speed up transaction submission and confirmation.",
+    "priority-disclaimer": "These fees apply to all MeanFi Apps, Token Streaming, Token Vesting, Staking and SuperSafe operations."
   }
 }

@@ -67,7 +67,14 @@ import {
   SegmentVestingContractCreateData,
   SegmentVestingContractWithdrawData,
 } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  composeTxWithPrioritizationFees,
+  getProposalWithPrioritizationFees,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import {
   consoleOut,
   delay,
@@ -126,6 +133,7 @@ import { VestingContractWithdrawFundsModal } from './components/VestingContractW
 import './style.scss';
 import { objectToJson } from 'services/logger';
 import { BN } from '@project-serum/anchor';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 export type VestingAccountDetailTab = 'overview' | 'streams' | 'activity' | undefined;
 let isWorkflowLocked = false;
@@ -218,6 +226,11 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   /////////////////////////
   //  Setup & Init code  //
   /////////////////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -989,7 +1002,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
         const titleProposal = createOptions.vestingContractTitle;
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            multisigClient,
+            connection,
+            transactionPriorityOptions,
+          },
           publicKey,
           titleProposal === '' ? 'Create Vesting Contract' : titleProposal,
           '', // description
@@ -998,15 +1016,17 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           multisig.id,
           mspV2AddressPK, // program
           ixAccounts, // keys o accounts of the Ix
-          ixData, // data of the Ix
+          ixData,
         );
 
         if (!tx) {
           return null;
         }
 
-        createVestingContractTx.transaction = tx.transaction;
-        return createVestingContractTx;
+        return {
+          transaction: tx.transaction,
+          vestingAccount: createVestingContractTx.vestingAccount,
+        };
       };
 
       const createTx = async () => {
@@ -1126,12 +1146,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
               lastOperation: TransactionStatus.InitTransactionSuccess,
               currentOperation: TransactionStatus.SignTransaction,
             });
-            if (value instanceof Transaction) {
-              transaction = value;
-            } else {
-              transaction = value.transaction;
-              generatedVestingContractId = value.vestingAccount.toBase58();
-            }
+            transaction = value.transaction;
+            generatedVestingContractId = value.vestingAccount.toBase58();
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
               result: getTxIxResume(transaction),
@@ -1225,6 +1241,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       paymentStreaming,
       multisigAccounts,
       isMultisigContext,
+      transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
@@ -1331,7 +1348,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          multisigClient,
+          connection,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.proposalTitle || 'Close Vesting Contract',
         '', // description
@@ -1641,7 +1663,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const ixAccounts = addFundsTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          multisigClient,
+          connection,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.proposalTitle ?? 'Add Funds',
         '', // description
@@ -1755,7 +1782,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
       // Create a transaction
       const result = await addFunds(data)
-        .then((value: Transaction | null) => {
+        .then(value => {
           if (!value) {
             return false;
           }
@@ -1896,7 +1923,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     resetTransactionStatus();
     setIsBusy(true);
 
-    const createVestingStream = async (data: CreateVestingStreamParams): Promise<[Transaction, PublicKey] | null> => {
+    const createVestingStream = async (data: CreateVestingStreamParams) => {
       if (!connection || !paymentStreaming || !publicKey) {
         return null;
       }
@@ -1913,12 +1940,11 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           owner: publicKey, // treasurer
           vestingAccount: treasury, // vestingAccount
         };
-        const { transaction, stream } = await paymentStreaming.buildCreateVestingStreamTransaction(
+        return await paymentStreaming.buildCreateVestingStreamTransaction(
           accounts, // accounts
           data.allocationAssigned, // allocationAssigned
           data.streamName, // streamName
         );
-        return [transaction, stream];
       }
 
       if (!multisigClient || !multisigAccounts) {
@@ -1958,7 +1984,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          multisigClient,
+          connection,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.proposalTitle ?? 'Create Vesting Stream',
         '', // description
@@ -1967,14 +1998,14 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         multisig.id,
         mspV2AddressPK, // program
         ixAccounts, // keys o accounts of the Ix
-        ixData, // data of the Ix
+        ixData,
       );
 
       if (!tx) {
         return null;
       }
 
-      return [tx.transaction, stream];
+      return { transaction: tx.transaction, stream };
     };
 
     const createTx = async (): Promise<boolean> => {
@@ -2072,19 +2103,19 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       }
 
       const result = await createVestingStream(data)
-        .then(values => {
-          if (!values?.length) {
+        .then(value => {
+          if (!value) {
             return false;
           }
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction,
           });
-          transaction = values[0];
-          generatedStremId = values[1].toBase58();
+          transaction = value.transaction;
+          generatedStremId = value.stream.toBase58();
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(values[0]),
+            result: getTxIxResume(value.transaction),
           });
           return true;
         })
@@ -2243,7 +2274,13 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       const proposalTitle = data.proposalTitle;
-      const tx = await multisigClient.buildCreateProposalTransaction(
+
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          multisigClient,
+          connection,
+          transactionPriorityOptions,
+        },
         publicKey,
         proposalTitle,
         '', // description
@@ -2705,7 +2742,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       minRequired,
 
       generateTransaction: async ({ multisig, data }) => {
-        if (!paymentStreaming) return;
+        if (!paymentStreaming || !publicKey) return;
         const accounts: UpdateVestingTemplateTransactionAccounts = {
           feePayer: new PublicKey(data.treasurer), // feePayer
           owner: new PublicKey(data.treasurer), // owner
@@ -2719,7 +2756,10 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           data.cliffVestPercent, // cliffVestPercent
           data.feePayedByTreasurer, // tokenFeePayedFromAccount
         );
-        return transaction;
+
+        const prioritizedV0Tx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return prioritizedV0Tx;
       },
 
       generateMultisigArgs: async ({ multisig, data }) => {

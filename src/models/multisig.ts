@@ -177,6 +177,14 @@ export interface SetAssetAuthPayload extends BaseProposal {
   selectedAuthority: string;
 }
 
+export interface TransferTokensTxParams extends BaseProposal {
+  amount: number;
+  tokenAmount: string;
+  from: string;
+  fromMint: string;
+  to: string;
+}
+
 enum MULTISIG_ACTIONS {
   createMultisig = 1,
   createTransaction = 2,

@@ -6,7 +6,13 @@ import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { appConfig, customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
-import { sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getProposalWithPrioritizationFees,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import { getAmountWithSymbol, getUniversalTxIxResume } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
@@ -16,6 +22,7 @@ import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@me
 import { useTranslation } from 'react-i18next';
 import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { MultisigTxParams } from 'models/multisig';
+import useLocalStorage from './useLocalStorage';
 
 type BaseArgs<T extends LooseObject | undefined> = {
   // name of the transaction, i.e. 'Edit Vesting Contract',
@@ -97,6 +104,11 @@ const useTransaction = () => {
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
@@ -181,7 +193,12 @@ const useTransaction = () => {
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          multisigClient,
+          connection,
+          transactionPriorityOptions,
+        },
         publicKey,
         proposalTitle,
         '', // description

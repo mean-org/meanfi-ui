@@ -55,7 +55,13 @@ import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamingAccountOwner } from 'middleware/getStreamingAccountOwner';
 import { SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
-import { sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getProposalWithPrioritizationFees,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import { consoleOut, getIntervalFromSeconds, getTransactionStatusForLogs, toUsCurrency } from 'middleware/ui';
 import {
   cutNumber,
@@ -84,6 +90,7 @@ import { useNavigate } from 'react-router-dom';
 import Wave from 'react-wavify';
 import './style.scss';
 import { BN } from '@project-serum/anchor';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 export const MoneyStreamsInfoView = (props: {
   loadingStreams: boolean;
@@ -172,6 +179,11 @@ export const MoneyStreamsInfoView = (props: {
   ////////////
   //  Init  //
   ////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -814,7 +826,12 @@ export const MoneyStreamsInfoView = (props: {
       const ixAccounts = addFundsTx.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.proposalTitle ?? 'Add Funds',
         '', // description
@@ -1161,7 +1178,12 @@ export const MoneyStreamsInfoView = (props: {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.title === '' ? 'Create streaming account' : data.title,
         '', // description

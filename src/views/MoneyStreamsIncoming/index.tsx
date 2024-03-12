@@ -37,6 +37,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
 import { IconEllipsisVertical } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
@@ -46,7 +47,13 @@ import {
   SegmentStreamTransferOwnershipData,
   SegmentStreamWithdrawData,
 } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getProposalWithPrioritizationFees,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import {
   consoleOut,
   getTransactionModalTitle,
@@ -103,6 +110,11 @@ export const MoneyStreamsIncomingView = (props: {
   ////////////
   //  Init  //
   ////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -336,7 +348,12 @@ export const MoneyStreamsIncomingView = (props: {
         const ixAccounts = transaction.instructions[0].keys;
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            connection,
+            multisigClient,
+            transactionPriorityOptions,
+          },
           publicKey,
           dataStream.title === '' ? 'Transfer stream ownership' : dataStream.title,
           '', // description
@@ -525,6 +542,7 @@ export const MoneyStreamsIncomingView = (props: {
       multisigAccounts,
       isMultisigContext,
       transactionCancelled,
+      transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
@@ -772,7 +790,12 @@ export const MoneyStreamsIncomingView = (props: {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         withdrawData.title === '' ? 'Withdraw stream funds' : (withdrawData.title as string),
         '', // description

@@ -27,7 +27,14 @@ import useWindowSize from 'hooks/useWindowResize';
 import { appConfig, customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  composeTxWithPrioritizationFees,
+  getProposalWithPrioritizationFees,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
 import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
@@ -40,6 +47,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProposalDetailsView } from './components/ProposalDetails';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -98,6 +106,11 @@ const SafeView = (props: {
   /////////////////
   //  Init code  //
   /////////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
@@ -443,7 +456,12 @@ const SafeView = (props: {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            multisigClient,
+            connection,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.title === '' ? 'Edit safe' : data.title,
           '', // description
@@ -615,6 +633,7 @@ const SafeView = (props: {
       selectedMultisig,
       multisigAddressPK,
       transactionCancelled,
+      transactionPriorityOptions,
       transactionStatus.currentOperation,
       enqueueTransactionConfirmation,
       setFailureStatusAndNotify,
@@ -646,9 +665,13 @@ const SafeView = (props: {
           return null;
         }
 
-        const tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
+        const transaction = await multisigClient.approveTransaction(publicKey, data.transaction.id);
 
-        return tx;
+        if (!transaction) return null;
+
+        const prioritizedTx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return prioritizedTx;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -825,9 +848,13 @@ const SafeView = (props: {
           return null;
         }
 
-        const tx = await multisigClient.rejectTransaction(publicKey, data.transaction.id);
+        const transaction = await multisigClient.rejectTransaction(publicKey, data.transaction.id);
 
-        return tx;
+        if (!transaction) return null;
+
+        const prioritizedTx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return prioritizedTx;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -1006,7 +1033,7 @@ const SafeView = (props: {
   }, [showErrorReportingModal, resetTransactionStatus, setTransactionStatus, t]);
 
   const onExecuteFinishTx = useCallback(
-    async (data: any) => {
+    async (proposal: MultisigTransaction) => {
       let transaction: Transaction | null = null;
       let signature: any;
       let encodedTx: string;
@@ -1016,26 +1043,22 @@ const SafeView = (props: {
       setTransactionCancelled(false);
       setIsBusy(true);
 
-      const finishTx = async (data: any) => {
-        if (!data.transaction || !publicKey || !multisigClient) {
+      const finishTx = async (msTx: MultisigTransaction) => {
+        if (!msTx || !publicKey || !multisigClient) {
           return null;
         }
 
-        let tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
+        const transaction = await multisigClient.executeTransaction(publicKey, msTx.id);
 
-        if (
-          data.transaction.operation === OperationType.StreamCreate ||
-          data.transaction.operation === OperationType.TreasuryStreamCreate ||
-          data.transaction.operation === OperationType.StreamCreateWithTemplate
-        ) {
-          tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
-        }
+        if (!transaction) return null;
 
-        return tx;
+        const prioritizedTx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return prioritizedTx;
       };
 
       const createTx = async (): Promise<boolean> => {
-        if (publicKey && data) {
+        if (publicKey && proposal) {
           consoleOut('Start Multisig ExecuteTransaction Tx', '', 'blue');
           consoleOut('Wallet address:', publicKey.toBase58());
 
@@ -1045,11 +1068,11 @@ const SafeView = (props: {
           });
 
           // Create a transaction
-          consoleOut('data:', data);
+          consoleOut('data:', proposal);
           // Log input data
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-            inputs: data,
+            inputs: proposal,
           });
 
           transactionLog.push({
@@ -1097,12 +1120,12 @@ const SafeView = (props: {
             return false;
           }
 
-          return finishTx(data)
+          return finishTx(proposal)
             .then(value => {
               if (!value) {
                 return false;
               }
-              consoleOut('multisig returned transaction:', value);
+              consoleOut('finishTx returned transaction:', value, 'blue');
               setTransactionStatus({
                 lastOperation: TransactionStatus.InitTransactionSuccess,
                 currentOperation: TransactionStatus.SignTransaction,
@@ -1167,17 +1190,17 @@ const SafeView = (props: {
                 finality: 'confirmed',
                 txInfoFetchStatus: 'fetching',
                 loadingTitle: 'Confirming transaction',
-                loadingMessage: `Execute proposal: ${data.transaction.details.title}`,
+                loadingMessage: `Execute proposal: ${proposal.details.title}`,
                 completedTitle: 'Transaction confirmed',
-                completedMessage: `Successfully executed proposal: ${data.transaction.details.title}`,
+                completedMessage: `Successfully executed proposal: ${proposal.details.title}`,
                 extras: {
-                  multisigAuthority: data.transaction.multisig.toBase58(),
-                  transactionId: data.transaction.id,
+                  multisigAuthority: proposal.multisig.toBase58(),
+                  transactionId: proposal.id,
                 },
               });
               setSuccessStatus();
             } else {
-              parseErrorFromExecuteProposal(sent.error, data.transaction);
+              parseErrorFromExecuteProposal(sent.error, proposal);
               setTimeout(() => {
                 onExecuteFinishTxCancelled();
               }, 30);
@@ -1231,9 +1254,13 @@ const SafeView = (props: {
           return null;
         }
 
-        const tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
+        const transaction = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
 
-        return tx;
+        if (!transaction) return null;
+
+        const prioritizedTx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return prioritizedTx;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -1394,8 +1421,6 @@ const SafeView = (props: {
     consoleOut('running refreshSelectedProposal...', '', 'blue');
     if (publicKey && multisigClient && selectedMultisigRef.current && selectedProposalRef.current) {
       consoleOut('fetching proposal details...', '', 'blue');
-      consoleOut('selectedMultisigRef:', selectedMultisigRef.current.id.toBase58(), 'blue');
-      consoleOut('selectedProposalRef:', selectedProposalRef.current.id.toBase58(), 'blue');
       setLoadingProposalDetails(true);
       multisigClient
         .getMultisigTransaction(selectedMultisigRef.current.id, selectedProposalRef.current.id, publicKey)

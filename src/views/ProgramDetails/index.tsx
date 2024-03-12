@@ -29,7 +29,13 @@ import { appConfig, customLogger } from 'index';
 import { resolveParsedAccountInfo } from 'middleware/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getProposalWithPrioritizationFees,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import {
   formatThousands,
@@ -48,6 +54,7 @@ import IdlTree from './IdlTree';
 import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutableModal';
 import './style.scss';
 import Transactions from './Transactions';
+import useLocalStorage from 'hooks/useLocalStorage';
 
 let isWorkflowLocked = false;
 
@@ -83,6 +90,11 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   /////////////////
   //  Init code  //
   /////////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const connection = useMemo(
     () =>
@@ -399,7 +411,12 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            connection,
+            multisigClient,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.proposalTitle,
           '', // description
@@ -584,6 +601,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       selectedMultisig,
       isMultisigContext,
       transactionCancelled,
+      transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,
@@ -732,7 +750,12 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            connection,
+            multisigClient,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.proposalTitle,
           '', // description
@@ -914,6 +937,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       isMultisigContext,
       transactionCancelled,
       multisigProgramAddressPK,
+      transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
       transactionStatus.currentOperation,

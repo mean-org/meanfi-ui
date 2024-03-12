@@ -40,6 +40,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
 import { IconEllipsisVertical } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { fetchAccountTokens } from 'middleware/accounts';
@@ -47,7 +48,13 @@ import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getProposalWithPrioritizationFees,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import {
   consoleOut,
   getTransactionModalTitle,
@@ -113,6 +120,11 @@ export const MoneyStreamsOutgoingView = (props: {
   ////////////
   //  Init  //
   ////////////
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -527,10 +539,15 @@ export const MoneyStreamsOutgoingView = (props: {
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      const proposalTitle = data.proposalTitle;
-      const tx = await multisigClient.buildCreateProposalTransaction(
+
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
-        proposalTitle,
+        data.proposalTitle ?? 'Stream Add Funds',
         '', // description
         new Date(expirationTime * 1_000),
         OperationType.StreamAddFunds,
@@ -1105,7 +1122,12 @@ export const MoneyStreamsOutgoingView = (props: {
         const ixAccounts = transaction.instructions[0].keys;
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            connection,
+            multisigClient,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.title === '' ? 'Pause Stream' : (data.title as string),
           '', // description
@@ -1308,29 +1330,30 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     },
     [
-      connection,
-      enqueueTransactionConfirmation,
-      isMultisigContext,
       ms,
-      mspV2AddressPK,
-      multisigAccounts,
-      multisigClient,
-      nativeBalance,
-      onTransactionFinished,
-      paymentStreaming,
-      publicKey,
-      selectedAccount.address,
-      setTransactionStatus,
-      showTransactionExecutionModal,
-      splTokenList,
-      streamSelected,
-      t,
-      transactionCancelled,
-      transactionFees.blockchainFee,
-      transactionFees.mspFlatFee,
-      transactionStatus.currentOperation,
-      treasuryDetails,
       wallet,
+      publicKey,
+      connection,
+      splTokenList,
+      nativeBalance,
+      mspV2AddressPK,
+      multisigClient,
+      streamSelected,
+      treasuryDetails,
+      paymentStreaming,
+      multisigAccounts,
+      isMultisigContext,
+      transactionCancelled,
+      selectedAccount.address,
+      transactionPriorityOptions,
+      transactionFees.mspFlatFee,
+      transactionFees.blockchainFee,
+      transactionStatus.currentOperation,
+      enqueueTransactionConfirmation,
+      showTransactionExecutionModal,
+      onTransactionFinished,
+      setTransactionStatus,
+      t,
     ],
   );
 
@@ -1539,7 +1562,12 @@ export const MoneyStreamsOutgoingView = (props: {
         const ixAccounts = transaction.instructions[0].keys;
         const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-        const tx = await multisigClient.buildCreateProposalTransaction(
+        const tx = await getProposalWithPrioritizationFees(
+          {
+            connection,
+            multisigClient,
+            transactionPriorityOptions,
+          },
           publicKey,
           data.title === '' ? 'Resume Stream' : (data.title as string),
           '', // description
@@ -1737,28 +1765,29 @@ export const MoneyStreamsOutgoingView = (props: {
       }
     },
     [
-      connection,
-      enqueueTransactionConfirmation,
-      isMultisigContext,
       ms,
-      mspV2AddressPK,
-      multisigAccounts,
-      multisigClient,
-      nativeBalance,
-      onTransactionFinished,
-      paymentStreaming,
-      publicKey,
-      selectedAccount.address,
-      setTransactionStatus,
-      showTransactionExecutionModal,
-      streamSelected,
-      t,
-      transactionCancelled,
-      transactionFees.blockchainFee,
-      transactionFees.mspFlatFee,
-      transactionStatus.currentOperation,
-      treasuryDetails,
       wallet,
+      publicKey,
+      connection,
+      nativeBalance,
+      mspV2AddressPK,
+      multisigClient,
+      streamSelected,
+      treasuryDetails,
+      paymentStreaming,
+      multisigAccounts,
+      isMultisigContext,
+      transactionCancelled,
+      selectedAccount.address,
+      transactionPriorityOptions,
+      transactionFees.mspFlatFee,
+      transactionFees.blockchainFee,
+      transactionStatus.currentOperation,
+      enqueueTransactionConfirmation,
+      showTransactionExecutionModal,
+      onTransactionFinished,
+      setTransactionStatus,
+      t,
     ],
   );
 
@@ -2012,7 +2041,12 @@ export const MoneyStreamsOutgoingView = (props: {
       const ixAccounts = transaction.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         data.title === '' ? 'Close Stream' : data.title,
         '', // description

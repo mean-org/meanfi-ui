@@ -47,7 +47,7 @@ export const ProposalDetailsView = (props: {
   onDataToSafeView: any;
   onProposalApprove?: any;
   onProposalCancel?: any;
-  onProposalExecute?: any;
+  onProposalExecute: (proposal: MultisigTransaction) => void;
   onProposalReject?: any;
   proposalSelected?: any;
   selectedMultisig?: any;
@@ -562,8 +562,7 @@ export const ProposalDetailsView = (props: {
                       loadingData
                     }
                     onClick={() => {
-                      const operation = { transaction: selectedProposal };
-                      onProposalExecute(operation);
+                      onProposalExecute(selectedProposal);
                     }}
                   >
                     <div className="btn-content">Execute</div>

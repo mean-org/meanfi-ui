@@ -21,12 +21,19 @@ import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
-import { sendTx, signTx } from 'middleware/transactions';
+import {
+  ComputeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+  getProposalWithPrioritizationFees,
+  sendTx,
+  signTx,
+} from 'middleware/transactions';
 import {
   consoleOut,
   disabledDate,
@@ -153,6 +160,11 @@ export const TreasuryStreamCreateModal = (props: {
   const [workingTreasuryType, setWorkingTreasuryType] = useState<AccountType>(AccountType.Open);
   const [selectedStreamingAccountId, setSelectedStreamingAccountId] = useState('');
   const [proposalTitle, setProposalTitle] = useState('');
+
+  const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
+    'transactionPriority',
+    DEFAULT_BUDGET_CONFIG,
+  );
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
@@ -764,13 +776,12 @@ export const TreasuryStreamCreateModal = (props: {
   const onFeePayedByTreasurerChange = (e: any) => {
     consoleOut('onFeePayedByTreasurerChange:', e.target.checked, 'blue');
 
-    if (e.target.checked && tokenAmount) {
+    if (e.target.checked && selectedToken && tokenAmount) {
       const maxAmount = getMaxAmount(true);
       consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
       consoleOut('maxAmount:', maxAmount.toString(), 'blue');
       if (tokenAmount.gt(maxAmount)) {
-        const decimals = selectedToken ? selectedToken.decimals : 6;
-        setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
+        setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
         setTokenAmount(new BN(maxAmount));
       }
     }
@@ -1052,7 +1063,12 @@ export const TreasuryStreamCreateModal = (props: {
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
 
-      const tx = await multisigClient.buildCreateProposalTransaction(
+      const tx = await getProposalWithPrioritizationFees(
+        {
+          connection,
+          multisigClient,
+          transactionPriorityOptions,
+        },
         publicKey,
         proposalTitle === '' ? 'Create Stream' : proposalTitle,
         '', // description
@@ -1738,16 +1754,15 @@ export const TreasuryStreamCreateModal = (props: {
                             <div
                               className="token-max simplelink"
                               onClick={() => {
-                                const decimals = selectedToken ? selectedToken.decimals : 6;
                                 if (isFeePaidByTreasurer) {
                                   const maxAmount = getMaxAmount(true);
                                   consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
                                   consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
+                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 } else {
                                   const maxAmount = getMaxAmount();
-                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
+                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
                                   setTokenAmount(new BN(maxAmount));
                                 }
                               }}
@@ -1977,18 +1992,11 @@ export const TreasuryStreamCreateModal = (props: {
                             <div
                               className="token-max simplelink"
                               onClick={() => {
-                                const decimals = selectedToken ? selectedToken.decimals : 6;
-                                if (isFeePaidByTreasurer) {
-                                  const maxAmount = getMaxAmount(true);
-                                  consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
-                                  consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
-                                  setTokenAmount(new BN(maxAmount));
-                                } else {
-                                  const maxAmount = getMaxAmount();
-                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), decimals));
-                                  setTokenAmount(new BN(maxAmount));
-                                }
+                                const maxAmount = getMaxAmount(isFeePaidByTreasurer);
+                                consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+                                consoleOut('maxAmount:', maxAmount.toString(), 'blue');
+                                setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
+                                setTokenAmount(new BN(maxAmount));
                               }}
                             >
                               MAX

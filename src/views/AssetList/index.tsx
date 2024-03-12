@@ -45,12 +45,11 @@ export const AssetList = (props: {
 
   const getRateAmountDisplay = (tokenPrice: number, asset: UserTokenAccount): string => {
     if (tokenPrice > 0) {
-      if (!asset.valueInUsd) {
+      if (!asset.balance) {
         return '$0.00';
       }
-      return asset.valueInUsd > 0 && asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
-        ? '< $0.01'
-        : toUsCurrency(asset.valueInUsd || 0);
+
+      return toUsCurrency(asset.balance * tokenPrice);
     }
     return '—';
   };

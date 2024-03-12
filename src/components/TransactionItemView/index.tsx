@@ -91,9 +91,6 @@ export const TransactionItemView = (props: {
       return <ArrowUpOutlined className="mean-svg-icons outgoing upright" />;
     } else {
       return <ArrowDownOutlined className="mean-svg-icons incoming downright" />;
-      //   return (
-      //     <IconGasStation className="mean-svg-icons gas-station warning" />
-      //   );
     }
   };
 

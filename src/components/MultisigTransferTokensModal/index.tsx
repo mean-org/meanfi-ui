@@ -8,7 +8,7 @@ import { TransactionStatus } from 'models/enums';
 import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
 import { isError } from 'middleware/transactions';
 import { SOL_MINT } from 'middleware/ids';
-import { cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress } from 'middleware/utils';
+import { cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmount } from 'middleware/utils';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
@@ -28,10 +28,10 @@ import { TokenListItem } from '../TokenListItem';
 import { environment } from 'environments/environment';
 import { MultisigInfo, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { fetchAccountTokens } from 'middleware/accounts';
-import { TransferTokensTxParams } from 'middleware/createTransferTokensTx';
 import { useDebounce } from 'hooks/useDebounce';
 import useRecipientAddressValidation from 'hooks/useRecipientAddressValidation';
 import ValidationStatusDisplay from 'components/ValidationStatusDisplay';
+import { TransferTokensTxParams } from 'models/multisig';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -295,10 +295,14 @@ export const MultisigTransferTokensModal = (props: {
   useEffect(() => console.log('validationStatus:', validationStatus), [validationStatus]);
 
   const onAcceptModal = () => {
+    if (!fromVault) return;
+
     const params: TransferTokensTxParams = {
       proposalTitle,
-      from: fromVault ? (fromVault.publicAddress as string) : '',
+      from: fromVault.publicAddress ?? '',
+      fromMint: fromVault.address,
       amount: +amount,
+      tokenAmount: toTokenAmount(amount, fromVault.decimals, true) as string,
       to: to,
     };
     handleOk(params);
