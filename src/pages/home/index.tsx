@@ -3032,7 +3032,9 @@ export const HomeView = () => {
     if (tokensLoaded && accountTokens) {
       // Total USD value
       const totalTokensValue = accountTokens.reduce((accumulator, item) => {
-        return accumulator + (item.valueInUsd ?? 0);
+        const tokenPrice = getTokenPriceByAddress(item.address, item.symbol);
+        const value = tokenPrice * (item.balance ?? 0);
+        return accumulator + value;
       }, 0);
       setTotalTokenAccountsValue(totalTokensValue);
 
