@@ -28,9 +28,9 @@ export type PriorityOption = 'normal' | 'fast' | 'turbo';
 const COMPUTE_UNIT_LIMIT = 200_000;
 
 export const COMPUTE_UNIT_PRICE = {
-  normal: 60_000,
-  fast: 500_000,
-  turbo: 10_000_000,
+  normal: 250_000,
+  fast: 2_500_000,
+  turbo: 25_000_000,
 };
 
 export interface ComputeBudgetConfig {
