@@ -23,16 +23,14 @@ import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { formatThousands, getAmountFromLamports, readLocalStorageKey, toBuffer } from './utils';
 import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
 
-export type PriorityOption = 'disabled' | 'normal' | 'fast' | 'turbo' | 'ultra';
+export type PriorityOption = 'normal' | 'fast' | 'turbo';
 
-const COMPUTE_UNIT_LIMIT = 150_000;
+const COMPUTE_UNIT_LIMIT = 200_000;
 
 export const COMPUTE_UNIT_PRICE = {
-  disabled: 0,
   normal: 60_000,
   fast: 500_000,
   turbo: 10_000_000,
-  ultra: 1_000_000_000,
 };
 
 export interface ComputeBudgetConfig {
@@ -41,7 +39,7 @@ export interface ComputeBudgetConfig {
 }
 
 export const DEFAULT_BUDGET_CONFIG: ComputeBudgetConfig = {
-  priorityOption: 'disabled',
+  priorityOption: 'normal',
   cap: 0,
 };
 
@@ -317,19 +315,18 @@ export const serializeTx = (signed: Transaction | VersionedTransaction) => {
 };
 
 export const getComputeBudgetIx = (config: ComputeBudgetConfig, cuLimit = COMPUTE_UNIT_LIMIT) => {
-  if (config.priorityOption === 'disabled') return undefined;
+  let o = config.priorityOption;
 
-  consoleOut(
-    'Compute Unit price:',
-    `${formatThousands(COMPUTE_UNIT_PRICE[config.priorityOption])} microlamports`,
-    'darkorange',
-  );
+  // Use 'normal' as default if previously configured for 'disabled' or 'ultra'
+  if (o !== 'normal' && o !== 'fast' && o !== 'turbo') o = 'normal';
 
-  consoleOut('Compute Unit limit:', formatThousands(cuLimit + 10_000), 'darkorange');
+  consoleOut('Transaction Priority option:', o, 'darkorange');
+  consoleOut('Compute Unit price:', `${formatThousands(COMPUTE_UNIT_PRICE[o])} microlamports`, 'darkorange');
+  consoleOut('Compute Unit limit:', formatThousands(cuLimit), 'darkorange');
 
   return [
-    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: COMPUTE_UNIT_PRICE[config.priorityOption] }),
-    ComputeBudgetProgram.setComputeUnitLimit({ units: cuLimit + 10_000 }),
+    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: COMPUTE_UNIT_PRICE[o] }),
+    ComputeBudgetProgram.setComputeUnitLimit({ units: cuLimit }),
   ];
 };
 
@@ -390,12 +387,6 @@ export const getProposalWithPrioritizationFees = async (
     return null;
   }
 
-  consoleOut('Transaction Priority option:', instrumental.transactionPriorityOptions.priorityOption, 'darkorange');
-
-  if (instrumental.transactionPriorityOptions.priorityOption === 'disabled') {
-    return result;
-  }
-
   const { blockhash } = await instrumental.connection.getLatestBlockhash('confirmed');
 
   // Get compute budget
@@ -443,12 +434,6 @@ export const composeTxWithPrioritizationFees = async (
   transaction.recentBlockhash = blockhash;
   if (signers?.length) {
     transaction.partialSign(...signers);
-  }
-
-  consoleOut('Transaction Priority option:', config.priorityOption, 'darkorange');
-
-  if (config.priorityOption === 'disabled') {
-    return transaction;
   }
 
   // Get compute budget

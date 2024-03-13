@@ -101,6 +101,7 @@
   --soft-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
   --hard-shadow: 1px 1px 0px rgba(0, 0, 0, 0.25);
   --footer-bar-height: 56px;
+  --container-max-width-360: 360px;
   --container-max-width-450: 450px;
   --container-max-width-640: 640px;
   --container-max-width-720: 720px;
@@ -3348,6 +3349,11 @@ main section {
   color: var(--color-secondary-alpha-85);
   font-weight: 700;
   margin: 1rem 0;
+}
+
+.container-max-width-360 {
+  width: 100%;
+  max-width: var(--container-max-width-360) !important;
 }
 
 .container-max-width-450 {
