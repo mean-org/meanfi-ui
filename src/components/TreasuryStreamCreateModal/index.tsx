@@ -28,6 +28,7 @@ import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import {
+  composeTxWithPrioritizationFees,
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getProposalWithPrioritizationFees,
@@ -1027,8 +1028,10 @@ export const TreasuryStreamCreateModal = (props: {
           data.cliffVestAmount, // cliffVestAmount
           data.cliffVestPercent, // cliffVestPercent
           data.tokenFeePayedFromAccount, // feePayedByTreasurer
+          true,
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, payer, transaction.instructions);
       }
 
       if (!workingTreasuryDetails || !multisigClient || !selectedMultisig || !publicKey) {

@@ -557,9 +557,9 @@ export const OneTimePayment = (props: {
         data.amount, // amount
       );
 
-      // TODO: The following attempt to patch the Tx with priority fees would throw error
-      // Error: failed to send transaction: Transaction signature verification failure
-      // due to additional signatures other than the payer
+      // TODO: Fix Error: failed to send transaction: Transaction signature verification failure
+      // The following attempt to patch the Tx with priority fees would throw error due to
+      // additional signatures other than the payer
 
       // return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
 
