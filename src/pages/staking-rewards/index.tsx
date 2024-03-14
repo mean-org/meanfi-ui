@@ -12,7 +12,7 @@ import { confirmationEvents, TxConfirmationContext } from 'contexts/transaction-
 import { useWallet } from 'contexts/wallet';
 import { IconStats } from 'Icons';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
-import { sendTx, signTx } from 'middleware/transactions';
+import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from 'middleware/ui';
 import {
   findATokenAddress,
@@ -291,6 +291,22 @@ export const StakingRewardsView = () => {
     resetTransactionStatus();
     setIsBusy(true);
 
+    const stakingVaultDepositTx = async ({
+      stakeClient,
+      depositPercentage,
+    }: {
+      stakeClient: StakingClient;
+      depositPercentage: number;
+    }) => {
+      if (!publicKey) throw new Error('Wallet publicKey not found');
+
+      const transaction = await stakeClient.depositTransaction(
+        depositPercentage, // depositPercentage
+      );
+
+      return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+    };
+
     const createTx = async (): Promise<boolean> => {
       if (wallet && stakeClient && meanToken) {
         setTransactionStatus({
@@ -312,10 +328,10 @@ export const StakingRewardsView = () => {
           result: '',
         });
 
-        return stakeClient
-          .depositTransaction(
-            depositPercentage, // depositPercentage
-          )
+        return stakingVaultDepositTx({
+          stakeClient,
+          depositPercentage, // depositPercentage
+        })
           .then(value => {
             consoleOut('depositTransaction returned transaction:', value);
             // Stage 1 completed - The transaction is created and returned

@@ -28,7 +28,7 @@ import useWindowSize from 'hooks/useWindowResize';
 import { IconCaretDown, IconEdit } from 'Icons';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamRPTransferData } from 'middleware/segment-service';
-import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
+import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   disabledDate,
