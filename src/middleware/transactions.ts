@@ -455,3 +455,43 @@ export const composeTxWithPrioritizationFees = async (
 
   return transaction;
 };
+
+export const composeV0TxWithPrioritizationFees = async (
+  connection: Connection,
+  feePayer: PublicKey,
+  ixs: TransactionInstruction[],
+  signers?: Signer[],
+) => {
+  const config: ComputeBudgetConfig = readLocalStorageKey('transactionPriority') ?? DEFAULT_BUDGET_CONFIG;
+
+  const { blockhash } = await connection.getLatestBlockhash('confirmed');
+
+  const messageV0 = new TransactionMessage({
+    payerKey: feePayer,
+    recentBlockhash: blockhash,
+    instructions: ixs,
+  }).compileToV0Message();
+  const transaction = new VersionedTransaction(messageV0);
+
+  // Get compute budget
+  const unitsConsumed = await getComputeUnitsEstimate(connection, feePayer, blockhash, ixs, signers);
+  const budgetIxs = getComputeBudgetIx(config, unitsConsumed);
+
+  // Rebuild same tx with budget instructions
+  if (budgetIxs) {
+    const newIxs = [...budgetIxs, ...ixs];
+    const newTxMessage = new TransactionMessage({
+      payerKey: feePayer,
+      recentBlockhash: blockhash,
+      instructions: newIxs,
+    }).compileToV0Message();
+    const newTx = new VersionedTransaction(newTxMessage);
+    if (signers?.length) {
+      newTx.sign(signers);
+    }
+
+    return newTx;
+  }
+
+  return transaction;
+};
