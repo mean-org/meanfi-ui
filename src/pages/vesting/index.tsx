@@ -2757,9 +2757,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           data.feePayedByTreasurer, // tokenFeePayedFromAccount
         );
 
-        const prioritizedV0Tx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+        const prioritizedTx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
 
-        return prioritizedV0Tx;
+        return prioritizedTx;
       },
 
       generateMultisigArgs: async ({ multisig, data }) => {

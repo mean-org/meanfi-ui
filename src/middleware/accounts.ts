@@ -583,12 +583,6 @@ export async function closeTokenAccount(connection: Connection, tokenPubkey: Pub
     return null;
   }
 
-  const config = readLocalStorageKey('transactionPriority');
-  const priorityFeesIx = getComputeBudgetIx(config ?? DEFAULT_BUDGET_CONFIG) ?? [];
-  if (priorityFeesIx) {
-    ixs.push(...priorityFeesIx);
-  }
-
   const info = (accountInfo as any).data['parsed']['info'] as TokenAccountInfo;
 
   consoleOut('---- Parsed info ----', '', 'orange');

@@ -79,6 +79,7 @@ import { AppUsageEvent } from 'middleware/segment-service';
 import {
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
+  composeTxWithPrioritizationFees,
   getChange,
   getProposalWithPrioritizationFees,
   sendTx,
@@ -3113,7 +3114,15 @@ export const HomeView = () => {
       minRequired,
       generateTransaction: async ({ multisig, data }) => {
         if (!publicKey) return;
-        return closeTokenAccount(connection, wSolPubKey, publicKey);
+        const transaction = await closeTokenAccount(connection, wSolPubKey, publicKey);
+
+        if (!transaction) {
+          return;
+        }
+
+        const prioritizedTx = await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return prioritizedTx;
       },
     });
     closeCreateAssetModal(true);
