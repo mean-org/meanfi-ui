@@ -48,6 +48,7 @@ import {
   SegmentStreamWithdrawData,
 } from 'middleware/segment-service';
 import {
+  composeTxWithPrioritizationFees,
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getProposalWithPrioritizationFees,
@@ -320,7 +321,8 @@ export const MoneyStreamsIncomingView = (props: {
             stream: getStreamId(streamSelected), // stream
           };
           const { transaction } = await paymentStreaming.buildTransferStreamTransaction(accounts);
-          return transaction;
+
+          return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
         }
 
         if (!streamSelected || !multisigClient || !multisigAccounts) {
@@ -760,7 +762,8 @@ export const MoneyStreamsIncomingView = (props: {
           data.amount, // amount
           false,
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!streamSelected || !multisigClient || !multisigAccounts) {

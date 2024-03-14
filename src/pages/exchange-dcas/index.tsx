@@ -367,8 +367,7 @@ export const ExchangeDcasView = () => {
 
         // TODO: The following attempt to patch the Tx with priority fees would throw error
         // Error: failed to send transaction: Transaction signature verification failure
-        // I think we should modify all SDK methods to accept priority setting and return
-        // Tx already patched with compute budget instructions
+        // due to additional signatures other than the payer
 
         // const prioritizedTx = await composeTxWithPrioritizationFees(connection, publicKey, updatedTx.instructions);
         // prioritizedTx.signatures = updatedTx.signatures;
