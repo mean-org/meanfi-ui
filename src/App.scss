@@ -2564,6 +2564,12 @@ em {
 }
 
 .ant-tooltip {
+  &.ant-slider-tooltip {
+    .ant-tooltip-content .ant-tooltip-inner {
+      background-color: transparent !important;
+    }
+  }
+
   .ant-tooltip-content {
     .ant-tooltip-inner {
       white-space: pre-line;
@@ -5699,6 +5705,7 @@ button.ant-btn-round.ant-btn-icon-only.settings-button {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
+  align-items: center;
   font-size: 1.1rem;
   color: var(--color-secondary);
 

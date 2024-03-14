@@ -322,11 +322,11 @@ export const getComputeBudgetIx = (config: ComputeBudgetConfig, cuLimit = COMPUT
 
   consoleOut('Transaction Priority option:', o, 'darkorange');
   consoleOut('Compute Unit price:', `${formatThousands(COMPUTE_UNIT_PRICE[o])} microlamports`, 'darkorange');
-  consoleOut('Compute Unit limit:', formatThousands(cuLimit), 'darkorange');
+  consoleOut('Compute Unit limit:', formatThousands(cuLimit + 10_000), 'darkorange');
 
   return [
     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: COMPUTE_UNIT_PRICE[o] }),
-    ComputeBudgetProgram.setComputeUnitLimit({ units: cuLimit }),
+    ComputeBudgetProgram.setComputeUnitLimit({ units: cuLimit + 10_000 }),
   ];
 };
 

@@ -43,7 +43,7 @@ import useWindowSize from 'hooks/useWindowResize';
 import { IconClock, IconExchange, IconExternalLink } from 'Icons';
 import { customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
-import { sendTx, serializeTx, signTx } from 'middleware/transactions';
+import { composeTxWithPrioritizationFees, sendTx, serializeTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   copyText,
@@ -243,6 +243,23 @@ export const ExchangeDcasView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
+    const closeDdcaTx = async ({ ddcaAccountAddress }: { ddcaAccountAddress: PublicKey }) => {
+      if (!publicKey) {
+        throw new Error('publicKey not available');
+      }
+
+      if (!ddcaClient) {
+        throw new Error('ddcaClient not available');
+      }
+
+      const tx = await ddcaClient.createCloseTx(ddcaAccountAddress);
+
+      const transaction = await composeTxWithPrioritizationFees(connection, publicKey, tx.instructions);
+      transaction.signatures = tx.signatures;
+
+      return transaction;
+    };
+
     const createTx = async (): Promise<boolean> => {
       if (wallet && ddcaDetails && ddcaClient) {
         setTransactionStatus({
@@ -290,10 +307,9 @@ export const ExchangeDcasView = () => {
         }
 
         // Create a transaction
-        return ddcaClient
-          .createCloseTx(
-            ddcaAccountPda, // ddcaAccountAddress
-          )
+        return closeDdcaTx(
+          { ddcaAccountAddress: ddcaAccountPda }, // ddcaAccountAddress
+        )
           .then(value => {
             consoleOut('createCloseTx returned transaction:', value);
             setTransactionStatus({
@@ -348,6 +364,15 @@ export const ExchangeDcasView = () => {
       try {
         const ddcaAccountPda = new PublicKey(ddcaDetails.ddcaAccountAddress);
         const updatedTx = await ddcaClient.updateCloseTx(ddcaAccountPda, signed);
+
+        // TODO: The following attempt to patch the Tx with priority fees would throw error
+        // Error: failed to send transaction: Transaction signature verification failure
+        // I think we should modify all SDK methods to accept priority setting and return
+        // Tx already patched with compute budget instructions
+
+        // const prioritizedTx = await composeTxWithPrioritizationFees(connection, publicKey, updatedTx.instructions);
+        // prioritizedTx.signatures = updatedTx.signatures;
+
         encodedTx = serializeTx(updatedTx);
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -490,6 +515,29 @@ export const ExchangeDcasView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
+    const ddcaWithdrawTx = async ({
+      ddcaAccountAddress,
+      withdrawAmount,
+    }: {
+      ddcaAccountAddress: PublicKey;
+      withdrawAmount: number;
+    }) => {
+      if (!publicKey) {
+        throw new Error('publicKey not available');
+      }
+
+      if (!ddcaClient) {
+        throw new Error('ddcaClient not available');
+      }
+
+      const tx = await ddcaClient.createWithdrawTx(ddcaAccountAddress, withdrawAmount);
+
+      const transaction = await composeTxWithPrioritizationFees(connection, publicKey, tx.instructions);
+      transaction.signatures = tx.signatures;
+
+      return transaction;
+    };
+
     const createTx = async (): Promise<boolean> => {
       if (wallet && publicKey && ddcaDetails && ddcaClient) {
         setTransactionStatus({
@@ -544,11 +592,10 @@ export const ExchangeDcasView = () => {
         }
 
         // Create a transaction
-        return ddcaClient
-          .createWithdrawTx(
-            ddcaAccountPda, // ddcaAccountAddress
-            amount, // withdrawAmount
-          )
+        return ddcaWithdrawTx({
+          ddcaAccountAddress: ddcaAccountPda, // ddcaAccountAddress
+          withdrawAmount: amount, // withdrawAmount
+        })
           .then(value => {
             consoleOut('createWithdrawTx returned transaction:', value);
             setTransactionStatus({
@@ -1137,6 +1184,10 @@ export const ExchangeDcasView = () => {
     return false;
   };
 
+  const handleBackToDdca = () => {
+    navigate('/ddca');
+  };
+
   const onBackButtonClicked = () => {
     setDetailsPanelOpen(false);
   };
@@ -1567,6 +1618,21 @@ export const ExchangeDcasView = () => {
             {/* Left / top panel*/}
             <div className="meanfi-two-panel-left">
               <div className="meanfi-panel-heading">
+                <span
+                  className="icon-button-container secondary-button"
+                  style={{ position: 'absolute', left: 16, top: 3, zIndex: 1 }}
+                >
+                  <Tooltip placement="bottom" title="Return to Recurring Exchange">
+                    <Button
+                      type="default"
+                      shape="circle"
+                      size="middle"
+                      icon={<ArrowLeftOutlined />}
+                      onClick={handleBackToDdca}
+                    />
+                  </Tooltip>
+                </span>
+                {/* ssdsdsdsdsd */}
                 <span className="title">{t('ddcas.screen-title')}</span>
                 <Tooltip placement="bottom" title="Reload">
                   <div

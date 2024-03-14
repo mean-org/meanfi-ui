@@ -10,7 +10,7 @@ import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { SOL_MINT, WRAPPED_SOL_MINT } from 'middleware/ids';
-import { sendTx, signTx } from 'middleware/transactions';
+import { composeTxWithPrioritizationFees, sendTx, serializeTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from 'middleware/ui';
 import { findATokenAddress, getAmountWithSymbol, getTxIxResume, shortenAddress } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
@@ -311,6 +311,27 @@ export const DdcaAddFundsModal = (props: {
       commitment: 'confirmed',
     });
 
+    const addFundsTx = async ({
+      ddcaAccountAddress,
+      swapsCount,
+      wrapSolIfNeeded,
+    }: {
+      ddcaAccountAddress: PublicKey;
+      swapsCount: number;
+      wrapSolIfNeeded?: boolean;
+    }) => {
+      if (!publicKey) {
+        throw new Error('publicKey not available');
+      }
+
+      const tx = await ddcaClient.createAddFundsTx(ddcaAccountAddress, swapsCount, wrapSolIfNeeded);
+
+      const transaction = await composeTxWithPrioritizationFees(connection, publicKey, tx.instructions);
+      transaction.signatures = tx.signatures;
+
+      return transaction;
+    };
+
     const createTx = async (): Promise<boolean> => {
       if (wallet && publicKey && ddcaDetails) {
         setTransactionStatus({
@@ -333,8 +354,7 @@ export const DdcaAddFundsModal = (props: {
         });
 
         // Create a transaction
-        return ddcaClient
-          .createAddFundsTx(ddcaAccountAddress, payload.swapsCount, isWrappedSol())
+        return addFundsTx({ ddcaAccountAddress, swapsCount: payload.swapsCount, wrapSolIfNeeded: isWrappedSol() })
           .then(value => {
             consoleOut('createAddFundsTx returned transaction:', value);
             setTransactionStatus({
