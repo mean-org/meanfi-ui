@@ -10,7 +10,7 @@ import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { SOL_MINT, WRAPPED_SOL_MINT } from 'middleware/ids';
-import { composeTxWithPrioritizationFees, sendTx, serializeTx, signTx } from 'middleware/transactions';
+import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from 'middleware/ui';
 import { findATokenAddress, getAmountWithSymbol, getTxIxResume, shortenAddress } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';

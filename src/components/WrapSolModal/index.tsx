@@ -12,7 +12,7 @@ import { useConnection } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
-import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
+import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from 'middleware/ui';
 import {
   formatThousands,
@@ -129,14 +129,7 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
       connection: Connection;
       from: PublicKey;
       amount: number;
-    }) => {
-      const tx = await wrapSol(connection, from, amount);
-
-      const transaction = await composeTxWithPrioritizationFees(connection, from, tx.instructions);
-      transaction.signatures = tx.signatures;
-
-      return transaction;
-    };
+    }) => await wrapSol(connection, from, amount);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {

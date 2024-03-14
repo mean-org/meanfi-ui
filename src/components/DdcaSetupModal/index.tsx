@@ -12,7 +12,7 @@ import { useWallet } from 'contexts/wallet';
 import { IconShieldSolid } from 'Icons/IconShieldSolid';
 import { customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
-import { composeTxWithPrioritizationFees, confirmTx, sendTx, serializeTx, signTx } from 'middleware/transactions';
+import { composeTxWithPrioritizationFees, confirmTx, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from 'middleware/ui';
 import { getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { DcaInterval } from 'models/ddca-models';

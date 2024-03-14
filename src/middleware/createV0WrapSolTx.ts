@@ -5,13 +5,17 @@ import {
   LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
-  Transaction,
   TransactionInstruction,
+  VersionedTransaction,
 } from '@solana/web3.js';
 import { WRAPPED_SOL_MINT } from './ids';
-import { composeTxWithPrioritizationFees } from './transactions';
+import { composeV0TxWithPrioritizationFees } from './transactions';
 
-export const wrapSol = async (connection: Connection, from: PublicKey, amount: number): Promise<Transaction> => {
+const createV0WrapSolTx = async (
+  connection: Connection,
+  from: PublicKey,
+  amount: number,
+): Promise<VersionedTransaction> => {
   const ixs: TransactionInstruction[] = [];
   const newAccount = Keypair.generate();
   const minimumWrappedAccountBalance = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
@@ -62,7 +66,9 @@ export const wrapSol = async (connection: Connection, from: PublicKey, amount: n
     Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, newAccount.publicKey, from, from, []),
   );
 
-  const transaction = await composeTxWithPrioritizationFees(connection, from, ixs, [newAccount]);
+  const transaction = await composeV0TxWithPrioritizationFees(connection, from, ixs, [newAccount]);
 
   return transaction;
 };
+
+export default createV0WrapSolTx;

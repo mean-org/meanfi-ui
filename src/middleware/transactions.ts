@@ -3,6 +3,7 @@ import {
   AccountMeta,
   ComputeBudgetProgram,
   Connection,
+  Keypair,
   ParsedTransactionMeta,
   PublicKey,
   Signer,
@@ -335,7 +336,7 @@ const getComputeUnitsEstimate = async (
   payer: PublicKey,
   blockhash: string,
   ixs: TransactionInstruction[],
-  signers: Signer[] | undefined,
+  signers?: Signer[],
 ) => {
   // Create a VersionedTransaction
   const messageV0 = new TransactionMessage({
@@ -395,7 +396,6 @@ export const getProposalWithPrioritizationFees = async (
     proposer,
     blockhash,
     result.transaction.instructions,
-    undefined,
   );
   const budgetIxs = getComputeBudgetIx(instrumental.transactionPriorityOptions, unitsConsumed);
 
@@ -460,7 +460,7 @@ export const composeV0TxWithPrioritizationFees = async (
   connection: Connection,
   feePayer: PublicKey,
   ixs: TransactionInstruction[],
-  signers?: Signer[],
+  additionalAccounts?: Keypair[],
 ) => {
   const config: ComputeBudgetConfig = readLocalStorageKey('transactionPriority') ?? DEFAULT_BUDGET_CONFIG;
 
@@ -472,9 +472,12 @@ export const composeV0TxWithPrioritizationFees = async (
     instructions: ixs,
   }).compileToV0Message();
   const transaction = new VersionedTransaction(messageV0);
+  if (additionalAccounts?.length) {
+    additionalAccounts.forEach(a => transaction.addSignature(a.publicKey, a.secretKey));
+  }
 
   // Get compute budget
-  const unitsConsumed = await getComputeUnitsEstimate(connection, feePayer, blockhash, ixs, signers);
+  const unitsConsumed = await getComputeUnitsEstimate(connection, feePayer, blockhash, ixs);
   const budgetIxs = getComputeBudgetIx(config, unitsConsumed);
 
   // Rebuild same tx with budget instructions
@@ -486,8 +489,8 @@ export const composeV0TxWithPrioritizationFees = async (
       instructions: newIxs,
     }).compileToV0Message();
     const newTx = new VersionedTransaction(newTxMessage);
-    if (signers?.length) {
-      newTx.sign(signers);
+    if (additionalAccounts?.length) {
+      additionalAccounts.forEach(a => newTx.addSignature(a.publicKey, a.secretKey));
     }
 
     return newTx;
