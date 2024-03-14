@@ -28,7 +28,7 @@ import useWindowSize from 'hooks/useWindowResize';
 import { IconCaretDown, IconEdit } from 'Icons';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamRPTransferData } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
   disabledDate,
@@ -740,6 +740,13 @@ export const RepeatingPayment = (props: {
             startUtc, // startUtc
             false, // feePayedByTreasurer
           );
+
+          // TODO: The following attempt to patch the Tx with priority fees would throw error
+          // Error: failed to send transaction: Transaction signature verification failure
+          // due to additional signatures other than the payer
+
+          // const prioritizedTx = await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
           consoleOut('streamPayment returned transaction:', transaction);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
