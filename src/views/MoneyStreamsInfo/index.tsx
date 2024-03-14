@@ -58,6 +58,7 @@ import { getStreamTitle } from 'middleware/streams';
 import {
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
+  composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
@@ -739,7 +740,7 @@ export const MoneyStreamsInfoView = (props: {
     };
 
     const addFunds = async (data: AddFundsParams) => {
-      if (!paymentStreaming) {
+      if (!publicKey || !paymentStreaming) {
         return null;
       }
 
@@ -756,7 +757,8 @@ export const MoneyStreamsInfoView = (props: {
             accounts, // accounts
             data.amount, // amount
           );
-          return transaction;
+
+          return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
         }
 
         consoleOut('Create single signer Tx ->', 'buildAllocateFundsToStreamTransaction', 'darkgreen');
@@ -770,7 +772,8 @@ export const MoneyStreamsInfoView = (props: {
           accounts, // accounts
           data.amount, // amount
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!treasuryList || !multisigClient || !multisigAccounts || !publicKey) {
@@ -1149,7 +1152,8 @@ export const MoneyStreamsInfoView = (props: {
           data.label, // label
           treasuryType, // type
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!multisigClient || !multisigAccounts) {
