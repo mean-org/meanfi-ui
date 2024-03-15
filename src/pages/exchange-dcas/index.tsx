@@ -365,12 +365,6 @@ export const ExchangeDcasView = () => {
         const ddcaAccountPda = new PublicKey(ddcaDetails.ddcaAccountAddress);
         const updatedTx = await ddcaClient.updateCloseTx(ddcaAccountPda, signed);
 
-        // TODO: Fix Error: failed to send transaction: Transaction signature verification failure
-        // The following attempt to patch the Tx with priority fees would throw error due to
-        // additional signatures other than the payer
-
-        // const prioritizedTx = await composeTxWithPrioritizationFees(connection, publicKey, updatedTx.instructions);
-
         encodedTx = serializeTx(updatedTx);
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransactionSuccess,
