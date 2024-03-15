@@ -138,90 +138,6 @@
       "title": "Desteklenen Varlıklar"
     }
   },
-  "ddca-selector": {
-    "modal-title": "Bu alım-satımı tekrarla?",
-    "ote": {
-      "description": "Şimdi Al-Sat. Tek seferlik.",
-      "name": "Tek seferlik alım-satım"
-    },
-    "repeating-daily": {
-      "description": "Bugünden başlayarak, her gün al.",
-      "name": "Günlük tekrarla",
-      "recurrence-period": "Her gün"
-    },
-    "repeating-once-month": {
-      "description": "Her 30 günde 1, bugünden başlar.",
-      "name": "Aylık tekrarla",
-      "recurrence-period": "Her 30 gün"
-    },
-    "repeating-twice-month": {
-      "description": "İki haftada bir {{dayOfWeek}} günü, bugünden başlar.",
-      "name": "Her 2 hafta",
-      "recurrence-period": "her 2 hafta"
-    },
-    "repeating-weekly": {
-      "description": "Her hafta {{dayOfWeek}} günü, bugünden başlar.",
-      "name": "Haftalık tekrarla",
-      "recurrence-period": "Her hafta"
-    }
-  },
-  "ddca-setup-modal": {
-    "cta-label-deposit": "Yatır",
-    "cta-label-depositing": "Yatırılıyor...",
-    "cta-label-vault-created": "Onaylandı",
-    "headline": "<strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} değerinde, <strong>{{fromTokenAmount}}</strong>  al <strong>{{totalPeriod}}</strong>, bugün başlar.",
-    "help": {
-      "help-item-01": "Kişisel kasanıza {{fromTokenAmount}} yatıracaksınız.",
-      "help-item-01-topup": "Kişisel kasanıza {{fromTokenAmount}} ekleme yapın.",
-      "help-item-02": "Kasanız alım-satım için fon sağlar {{recurrencePeriod}}.",
-      "help-item-03": "Hazır olduğunuzda, gelin ve taze {{toTokenSymbol}} kasanızdan alın.",
-      "how-does-it-work": "Nasıl çalışır?"
-    },
-    "modal-title": "Tekrarlı alımı gözden geçir",
-    "notes": {
-      "note-item-01": "Sadece siz kasanızdan fonlarınızı çekebilirsiniz.",
-      "note-item-02": "Planlanmış takas işlemleri için ücretler peşin ödenir.",
-      "note-item-03": "Kullanılmamış tüm işlem ücretleri paranızı çekerken size iade edilir.",
-      "notes-title": "Önemli Notlar"
-    }
-  },
-  "ddcas": {
-    "activity": {
-      "action-deposit": "{{fromAmount}} Yatırıldı",
-      "action-exchange": "{{fromAmount}} dan {{toAmount}} a işlem.",
-      "action-withdraw": "{{toAmount}} Çekildi"
-    },
-    "add-funds": {
-      "headline": "Kişisel hazinene <strong>{{fromTokenAmount}}</strong> ekle.",
-      "modal-title": "Doldur/Fon Ekle"
-    },
-    "add-funds-cta-disabled-closing": "İptal aşamasında...",
-    "add-funds-cta-disabled-executing-swap": "Alım-Satım aşamasında...",
-    "add-funds-cta-disabled-funding": "Fon ekleme aşamasında...",
-    "add-funds-cta-disabled-withdrawing": "Çekme aşamasında...",
-    "close-ddca": {
-      "modal-title": "Emin misin?",
-      "primary-cta": "Onayla",
-      "secondary-cta": "Geri"
-    },
-    "exchange-dcas": {
-      "cancel-withdraw-everything": "İptal et ve her şeyi çek",
-      "deposited": "Yatırıldı",
-      "detail-panel-word-one": "Alınıyor",
-      "detail-panel-word-three": "her",
-      "detail-panel-word-two": "değerinde",
-      "exchange-details": "Alım-Satım detayları",
-      "exchanged-for": "Takaslandı (ortalama oran1",
-      "next-scheduled-exchange": "Bir sonraki planlanmış alım-satım",
-      "rate-amount": "Her",
-      "total-deposits": "Toplam bakiye",
-      "total-left": "Toplam kalan (tarafından harcanacak",
-      "withdraw": "Çekme"
-    },
-    "screen-title": "Tekrarlayan satın alma",
-    "setup-close-warning": "Tıklamadan kapanır. Başlangıç ilk satın alma işlemini atlayacak. Yine de kapansın mı?",
-    "streams-ddcas": "Tekrarlayan satın almayı güncellemek için tıkla"
-  },
   "deposits": {
     "address-share-disclaimer": "Bu adres yalnızca SOL ve SPL tokenlarını yatırmak için kullanılabilir.",
     "back-to-deposit-options": "Yatırma seçeneklerine geri dön",
@@ -998,11 +914,6 @@
     "status": {
       "cta-start-transfer-busy": "",
       "cta-view-stream": "Aktarımı Görüntüle",
-      "ddca-add-funds": "...ile fon kasası",
-      "ddca-add-funds-success": "Fonlar başarıyla eklendi",
-      "ddca-create-tx": "Planlanmış yinelenen alım-satım oluşturun",
-      "ddca-create-tx-failure": "Yinelenen alım-satım işlemi oluşturulamadı",
-      "ddca-create-tx-success": "Yinelenen alım-satım işlemi başarıyla oluşturuldu",
       "instructions": "Bu işlemi cüzdanınızda onaylayın",
       "modal-title-executing-transaction": "İşlem yürütülüyor",
       "modal-title-transaction-completed": "İşlem tamamlandı",
@@ -1111,10 +1022,7 @@
       "valid-address-required": "Geçerli bir solana adresi gerekli",
       "valid-approve": "Cüzdanınızda onaylayın",
       "valid-continue": "Devam et",
-      "valid-ddca-review": "Gözden geçirmek",
-      "valid-start-funding": "Fonlamaya başlayın",
       "valid-start-withdrawal": "Para çekme işlemini başlat",
-      "valid-submit-proposal": "",
       "verified-recipient-unchecked": ""
     }
   },

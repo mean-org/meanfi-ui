@@ -138,90 +138,6 @@
       "title": "Recursos suportados"
     }
   },
-  "ddca-selector": {
-    "modal-title": "Repetir este comércio?",
-    "ote": {
-      "description": "Troque agora.  Um tempo.",
-      "name": "Troca de uma vez"
-    },
-    "repeating-daily": {
-      "description": "Compre todos os dias, começando agora.",
-      "name": "Repetir diariamente",
-      "recurrence-period": "todos os dias"
-    },
-    "repeating-once-month": {
-      "description": "A cada 30 dias, a partir de hoje.",
-      "name": "Repetir mensalmente",
-      "recurrence-period": "a cada 30 dias"
-    },
-    "repeating-twice-month": {
-      "description": "A cada duas semanas em {{dayOfWeek}}, começando hoje.",
-      "name": "A cada duas semanas",
-      "recurrence-period": "a cada duas semanas"
-    },
-    "repeating-weekly": {
-      "description": "Compre a cada {{dayOfWeek}}, a partir de hoje.",
-      "name": "Repetir semanalmente",
-      "recurrence-period": "toda semana"
-    }
-  },
-  "ddca-setup-modal": {
-    "cta-label-deposit": "Depósito",
-    "cta-label-depositing": "Depositando...",
-    "cta-label-vault-created": "Aprovado",
-    "headline": "Compre <strong>{{fromTokenAmount}}</strong> no valor de <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} por <strong>{{totalPeriod}}</strong>, a partir de hoje.",
-    "help": {
-      "help-item-01": "Você depositará {{fromTokenAmount}} em seu cofre pessoal.",
-      "help-item-01-topup": "Deposite um {{fromTokenAmount}} adicional em seu cofre pessoal.",
-      "help-item-02": "O cofre usa o depósito para fazer as trocas {{recurrencePeriod}}.",
-      "help-item-03": "Quando estiver pronto, pegue seu novo {{toTokenSymbol}} do cofre.",
-      "how-does-it-work": "Como funciona?"
-    },
-    "modal-title": "Revisar Compra Repetida",
-    "notes": {
-      "note-item-01": "Só você pode retirar fundos do seu cofre",
-      "note-item-02": "As taxas para as trocas programadas são cobradas antecipadamente",
-      "note-item-03": "Todas as taxas não utilizadas são devolvidas a você após a retirada",
-      "notes-title": "Anotações importantes"
-    }
-  },
-  "ddcas": {
-    "activity": {
-      "action-deposit": "Depositado {{fromAmount}}",
-      "action-exchange": "Trocou {{fromAmount}} por {{toAmount}}",
-      "action-withdraw": "Retirado {{toAmount}}"
-    },
-    "add-funds": {
-      "headline": "Adicione <strong>{{fromTokenAmount}}</strong> ao seu cofre pessoal.",
-      "modal-title": "Recarregar/Adicionar fundos"
-    },
-    "add-funds-cta-disabled-closing": "Cancelando em andamento...",
-    "add-funds-cta-disabled-executing-swap": "Troca em andamento...",
-    "add-funds-cta-disabled-funding": "Adicionar fundos em andamento...",
-    "add-funds-cta-disabled-withdrawing": "Retirada em andamento...",
-    "close-ddca": {
-      "modal-title": "Tem certeza?",
-      "primary-cta": "Confirme",
-      "secondary-cta": "Costas"
-    },
-    "exchange-dcas": {
-      "cancel-withdraw-everything": "Cancel and withdraw everything",
-      "deposited": "Deposited",
-      "detail-panel-word-one": "Buying",
-      "detail-panel-word-three": "every",
-      "detail-panel-word-two": "worth of",
-      "exchange-details": "Exchange details",
-      "exchanged-for": "Exchanged for (avg rate 1",
-      "next-scheduled-exchange": "Next scheduled exchange",
-      "rate-amount": "Every",
-      "total-deposits": "Total deposits",
-      "total-left": "Total left (will run out by",
-      "withdraw": "Withdraw"
-    },
-    "screen-title": "Compras recorrentes",
-    "setup-close-warning": "Fechando sem clicar.  Iniciar pulará sua primeira compra.  Fechar de qualquer maneira?",
-    "streams-ddcas": "Clique para atualizar as compras recorrentes"
-  },
   "deposits": {
     "address-share-disclaimer": "Este endereço só pode ser usado para receber tokens SOL e SPL em Solana.",
     "back-to-deposit-options": "Voltar para as opções de depósito",
@@ -998,11 +914,6 @@
     "status": {
       "cta-start-transfer-busy": "Creating transfer",
       "cta-view-stream": "Ver Stream",
-      "ddca-add-funds": "Cofre de financiamento com",
-      "ddca-add-funds-success": "Fundos adicionados com sucesso",
-      "ddca-create-tx": "Criar troca recorrente agendada",
-      "ddca-create-tx-failure": "Não foi possível criar a troca recorrente",
-      "ddca-create-tx-success": "Troca recorrente criada com sucesso",
       "instructions": "Confirme esta transação em sua carteira",
       "modal-title-executing-transaction": "Executando transação",
       "modal-title-transaction-completed": "Transação concluída",
@@ -1111,10 +1022,7 @@
       "valid-address-required": "É necessário um endereço de solana válido",
       "valid-approve": "Aprove em sua carteira",
       "valid-continue": "Continuar",
-      "valid-ddca-review": "Análise",
-      "valid-start-funding": "Iniciar financiamento",
       "valid-start-withdrawal": "Iniciar retirada",
-      "valid-submit-proposal": "",
       "verified-recipient-unchecked": "Recipient Unchecked"
     }
   },

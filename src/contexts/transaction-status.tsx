@@ -101,21 +101,17 @@ export const txConfirmationCache = {
 };
 
 interface TxConfirmationProviderValues {
-  lastVaultCreated: string;
   confirmationHistory: TxConfirmationInfo[];
   addTransactionNotification: (data: TxConfirmationInfo) => void;
   enqueueTransactionConfirmation: (data: TxConfirmationInfo) => void;
   clearConfirmationHistory: () => void;
-  setLastVaultCreated: (ddcaAccountPda: string) => void;
 }
 
 const defaultCtxValues: TxConfirmationProviderValues = {
-  lastVaultCreated: '',
   confirmationHistory: [],
   addTransactionNotification: () => {},
   enqueueTransactionConfirmation: () => {},
   clearConfirmationHistory: () => {},
-  setLastVaultCreated: () => {},
 };
 
 export const TxConfirmationContext = React.createContext<TxConfirmationProviderValues>(defaultCtxValues);
@@ -126,7 +122,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
   const { t } = useTranslation('common');
 
   // Variables
-  const [lastVaultCreated, updatelastVaultCreated] = useState(defaultCtxValues.lastVaultCreated);
   const [confirmationHistory, setConfirmationHistory] = useState<TxConfirmationInfo[]>(
     defaultCtxValues.confirmationHistory,
   );
@@ -134,10 +129,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
   const clearConfirmationHistory = useCallback(() => {
     setConfirmationHistory([]);
   }, []);
-
-  const setLastVaultCreated = (ddcaAccountPda: string) => {
-    updatelastVaultCreated(ddcaAccountPda);
-  };
 
   const addTransactionNotification = useCallback(async (data: TxConfirmationInfo) => {
     const rebuildHistoryFromCache = () => {
@@ -290,11 +281,9 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     <TxConfirmationContext.Provider
       value={{
         confirmationHistory,
-        lastVaultCreated,
         addTransactionNotification,
         enqueueTransactionConfirmation,
         clearConfirmationHistory,
-        setLastVaultCreated,
       }}
     >
       {children}

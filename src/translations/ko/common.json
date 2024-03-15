@@ -138,90 +138,6 @@
       "title": "Supported Assets"
     }
   },
-  "ddca-selector": {
-    "modal-title": "이 거래를 반복하겠습니까?",
-    "ote": {
-      "description": "즉시 교환",
-      "name": "일회성 교환"
-    },
-    "repeating-daily": {
-      "description": "매일 구매하기",
-      "name": "매일 반복",
-      "recurrence-period": "매일"
-    },
-    "repeating-once-month": {
-      "description": "지금부터 30일마다",
-      "name": "매달 반복",
-      "recurrence-period": "30일 마다"
-    },
-    "repeating-twice-month": {
-      "description": "오늘부터 시작해서 매 주",
-      "name": "2주 마다",
-      "recurrence-period": "2주 마다"
-    },
-    "repeating-weekly": {
-      "description": "오늘부터 {{dayOfWeek}}마다 구매",
-      "name": "매주 반복",
-      "recurrence-period": "매주"
-    }
-  },
-  "ddca-setup-modal": {
-    "cta-label-deposit": "입금",
-    "cta-label-depositing": "입금",
-    "cta-label-vault-created": "승인됨",
-    "headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
-    "help": {
-      "help-item-01": "개인 금고에 입금합니다.",
-      "help-item-01-topup": "개인 금고에 추가로 {{fromTokenAmount}}를 입금하십시오.",
-      "help-item-02": "환전을 위해 보증금을 사용합니다",
-      "help-item-03": "준비가 되면 금고에서 새로운 {{toTokenSymbol}}을(를) 가져옵니다.",
-      "how-does-it-work": "어떻게 작동합니까?"
-    },
-    "modal-title": "반복 매입을 검토합니다",
-    "notes": {
-      "note-item-01": "당신만이 개인금고에서 출금가능합니다",
-      "note-item-02": "예정된 스왑에 대한 수수료는 선불로 청구됩니다.",
-      "note-item-03": "사용하지 않은 모든 수수료는 인출시 귀하에게 반환됩니다.",
-      "notes-title": "중요 메모"
-    }
-  },
-  "ddcas": {
-    "activity": {
-      "action-deposit": "입금{{fromAmount}}",
-      "action-exchange": "환전 {{fromAmount}} 으로 {{toAmount}}",
-      "action-withdraw": "출금"
-    },
-    "add-funds": {
-      "headline": "<strong>{{fromTokenAmount}}</strong>개인 금고에 추가",
-      "modal-title": "충전하기"
-    },
-    "add-funds-cta-disabled-closing": "취소 진행 중",
-    "add-funds-cta-disabled-executing-swap": "교환 진행 중",
-    "add-funds-cta-disabled-funding": "펀드 추가 진행 중",
-    "add-funds-cta-disabled-withdrawing": "출금 진행 중",
-    "close-ddca": {
-      "modal-title": "확인하셨나요?",
-      "primary-cta": "확인",
-      "secondary-cta": "뒤로"
-    },
-    "exchange-dcas": {
-      "cancel-withdraw-everything": "Cancel and withdraw everything",
-      "deposited": "Deposited",
-      "detail-panel-word-one": "Buying",
-      "detail-panel-word-three": "every",
-      "detail-panel-word-two": "worth of",
-      "exchange-details": "Exchange details",
-      "exchanged-for": "Exchanged for (avg rate 1",
-      "next-scheduled-exchange": "Next scheduled exchange",
-      "rate-amount": "Every",
-      "total-deposits": "Total deposits",
-      "total-left": "Total left (will run out by",
-      "withdraw": "Withdraw"
-    },
-    "screen-title": "반복 구매",
-    "setup-close-warning": "클릭하지 않고 종료합니다. 시작은 첫 번째 구매를 건너뜁니다. 닫으시겠습니까?",
-    "streams-ddcas": "반복 구매를 새로 고치려면 클릭하세요."
-  },
   "deposits": {
     "address-share-disclaimer": "이 주소는 Solana에서 SOL 및 SPL 토큰을 받는 데만 사용할 수 있습니다.",
     "back-to-deposit-options": "입금 옵션으로 돌아가기",
@@ -1086,11 +1002,6 @@
     "status": {
       "cta-view-stream": "스트림 보기",
       "cta-start-transfer-busy": "Creating transfer",
-      "ddca-add-funds": "펀딩 금고",
-      "ddca-add-funds-success": "자금이 성공적으로 추가되었습니다.",
-      "ddca-create-tx": "예약된 반복 교환 만들기",
-      "ddca-create-tx-failure": "반복 교환을 생성할 수 없습니다.",
-      "ddca-create-tx-success": "반복 교환이 성공적으로 생성되었습니다.",
       "instructions": "지갑에서 이 거래를 확인하세요",
       "modal-title-executing-transaction": "트랜잭션 실행",
       "modal-title-transaction-completed": "거래 완료",
@@ -1189,8 +1100,6 @@
       "valid-address-required": "유효한 솔라나 주소가 필요합니다",
       "valid-approve": "지갑에서 승인",
       "valid-continue": "계속하기",
-      "valid-ddca-review": "검토",
-      "valid-start-funding": "펀딩 시작",
       "valid-start-withdrawal": "출금 시작",
       "verified-recipient-unchecked": "Recipient Unchecked"
     }

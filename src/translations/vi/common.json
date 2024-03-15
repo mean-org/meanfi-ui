@@ -138,90 +138,6 @@
       "title": "Danh sách tài sản hỗ trợ"
     }
   },
-  "ddca-selector": {
-    "modal-title": "Lặp lại giao dịch này?",
-    "ote": {
-      "description": "Giao dịch ngay. Một lần.",
-      "name": "Giao dịch một lần"
-    },
-    "repeating-daily": {
-      "description": "Mua mỗi ngày, bắt đầu ngay.",
-      "name": "Lặp lại hàng ngày",
-      "recurrence-period": "mỗi ngày"
-    },
-    "repeating-once-month": {
-      "description": "Mỗi 30 ngày, bắt đầu hôm nay.",
-      "name": "Lặp lại hàng tháng",
-      "recurrence-period": "mỗi 30 ngày"
-    },
-    "repeating-twice-month": {
-      "description": "Mỗi tuần một lần vào ngày {{dayOfWeek}}, bắt đầu hôm nay.",
-      "name": "Mỗi 2 tuần",
-      "recurrence-period": "mỗi 2 tuần"
-    },
-    "repeating-weekly": {
-      "description": "Mua mỗi {{dayOfWeek}}, bắt đầu hôm nay.",
-      "name": "Lặp lại hàng tuần",
-      "recurrence-period": "mỗi tuần"
-    }
-  },
-  "ddca-setup-modal": {
-    "cta-label-deposit": "Nạp",
-    "cta-label-depositing": "Đang nạp...",
-    "cta-label-vault-created": "Đã được phê duyệt",
-    "headline": "Mua <strong>{{fromTokenAmount}}</strong> trị giá <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} trong vòng <strong>{{totalPeriod}}</strong>, bắt đầu hôm nay.",
-    "help": {
-      "help-item-01": "Bạn sẽ nạp {{fromTokenAmount}} vào kho tiền cá nhân của bạn.",
-      "help-item-01-topup": "Nạp thêm {{fromTokenAmount}} vào kho tiền cá nhân của bạn.",
-      "help-item-02": "Kho tiền sử dụng tiền gửi để thực hiện giao dịch {{recurrencePeriod}}.",
-      "help-item-03": "Khi bạn đã sẵn sàng, hãy lấy {{toTokenSymbol}} mới của bạn từ kho tiền.",
-      "how-does-it-work": "Nó hoạt động như thế nào?"
-    },
-    "modal-title": "Kiểm tra lại việc Mua lặp lại",
-    "notes": {
-      "note-item-01": "Chỉ bạn mới có thể rút tiền từ kho tiền của mình",
-      "note-item-02": "Phí cho các giao dịch hoán đổi theo lịch trình được tính trả trước",
-      "note-item-03": "Tất cả các khoản phí chưa sử dụng sẽ được trả lại cho bạn khi rút tiền",
-      "notes-title": "Ghi chú quan trọng"
-    }
-  },
-  "ddcas": {
-    "activity": {
-      "action-deposit": "Đã nạp {{fromAmount}}",
-      "action-exchange": "Đã đổi {{fromAmount}} lấy {{toAmount}}",
-      "action-withdraw": "Đã rút {{toAmount}}"
-    },
-    "add-funds": {
-      "headline": "Thêm <strong>{{fromTokenAmount}}</strong> vào kho tiền cá nhân của bạn.",
-      "modal-title": "Nạp tiền/Thêm tiền"
-    },
-    "add-funds-cta-disabled-closing": "Đang hủy...",
-    "add-funds-cta-disabled-executing-swap": "Đang đổi...",
-    "add-funds-cta-disabled-funding": "Đang nạp tiền...",
-    "add-funds-cta-disabled-withdrawing": "Đang rút tiền...",
-    "close-ddca": {
-      "modal-title": "Bạn có chắc không?",
-      "primary-cta": "Xác nhận",
-      "secondary-cta": "Quay lại"
-    },
-    "exchange-dcas": {
-      "detail-panel-word-one": "Buying",
-      "detail-panel-word-two": "worth of",
-      "detail-panel-word-three": "every",
-      "withdraw": "Withdraw",
-      "cancel-withdraw-everything": "Cancel and withdraw everything",
-      "total-deposits": "Total deposits",
-      "total-left": "Total left (will run out by",
-      "exchanged-for": "Exchanged for (avg rate 1",
-      "next-scheduled-exchange": "Next scheduled exchange",
-      "deposited": "Deposited",
-      "rate-amount": "Every",
-      "exchange-details": "Exchange details"
-    },
-    "screen-title": "Mua định kỳ",
-    "setup-close-warning": "Đang đóng không cần nhấn. Việc bắt đầu sẽ bỏ qua lần mua đầu tiên của bạn. Bạn có muốn đóng ngay không?",
-    "streams-ddcas": "Nhấn để làm mới mua định kỳ"
-  },
   "deposits": {
     "address-share-disclaimer": "Địa chỉ này chỉ có thể dùng để nhận SOL và các mã thông báo SPL trên Solana.",
     "back-to-deposit-options": "Quay lại tuỳ chọn Nạp tiền",
@@ -1084,11 +1000,6 @@
     "status": {
       "cta-view-stream": "Xem Stream",
       "cta-start-transfer-busy": "Creating transfer",
-      "ddca-add-funds": "Cấp quỹ vào vault với",
-      "ddca-add-funds-success": "Quỹ được thêm vào thành công",
-      "ddca-create-tx": "Tạo giao dịch định kỳ",
-      "ddca-create-tx-failure": "Không thể tạo giao dịch định kỳ",
-      "ddca-create-tx-success": "Giao dịch định kỳ được tạo thành công",
       "instructions": "Xác nhận giao dịch này trên ví của bạn",
       "modal-title-executing-transaction": "Đang thực thi giao dịch",
       "modal-title-transaction-completed": "Giao dịch hoàn thành",
@@ -1184,8 +1095,6 @@
       "valid-address-required": "Một địa chỉ solana hợp lệ là bắt buộc",
       "valid-approve": "Phê duyệt trên ví của bạn",
       "valid-continue": "Tiếp tục",
-      "valid-ddca-review": "Xem lại",
-      "valid-start-funding": "Bắt đầu cấp tiền",
       "valid-start-withdrawal": "Bắt đầu rút tiền",
       "verified-recipient-unchecked": "Recipient Unchecked"
     }

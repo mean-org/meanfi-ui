@@ -1,5 +1,4 @@
 export { CustodyView } from './custody';
-export { ExchangeDcasView } from './exchange-dcas';
 export { FaucetView } from './faucet';
 export { HomeView } from './home';
 export { NotFoundView } from './404';

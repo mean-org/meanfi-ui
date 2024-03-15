@@ -138,90 +138,6 @@
       "title": "Actifs pris en charge"
     }
   },
-  "ddca-selector": {
-    "modal-title": "Répéter cet échange ?",
-    "ote": {
-      "description": "Échangez maintenant. Une fois.",
-      "name": "Échange unique"
-    },
-    "repeating-daily": {
-      "description": "Achetez tous les jours, dès maintenant.",
-      "name": "Répéter quotidiennement",
-      "recurrence-period": "tous les jours"
-    },
-    "repeating-once-month": {
-      "description": "Tous les 30 jours, à partir d'aujourd'hui.",
-      "name": "Répéter mensuellement",
-      "recurrence-period": "tous les 30 jours"
-    },
-    "repeating-twice-month": {
-      "description": "Toutes les deux semaines le {{dayOfWeek}}, à partir d'aujourd'hui.",
-      "name": "Toutes les deux semaines",
-      "recurrence-period": "toutes les deux semaines"
-    },
-    "repeating-weekly": {
-      "description": "Achetez chaque {{dayOfWeek}}, à partir d'aujourd'hui.",
-      "name": "Répéter chaque semaine",
-      "recurrence-period": "toutes les semaines"
-    }
-  },
-  "ddca-setup-modal": {
-    "cta-label-deposit": "Déposer",
-    "cta-label-depositing": "Dépôt...",
-    "cta-label-vault-created": "Approuvée",
-    "headline": "Achetez pour <strong>{{fromTokenAmount}}</strong> une valeur de <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} pour <strong>{{totalPeriod}}</strong>, à partir d'aujourd'hui.",
-    "help": {
-      "help-item-01": "Vous déposerez {{fromTokenAmount}} dans votre coffre personnel.",
-      "help-item-01-topup": "Déposez un {{fromTokenAmount}} supplémentaire dans votre coffre-fort personnel.",
-      "help-item-02": "Le coffre utilise le dépôt pour effectuer les échanges {{recurrencePeriod}}.",
-      "help-item-03": "Lorsque vous êtes prêt, récupérez votre nouveau {{toTokenSymbol}} dans le coffre-fort.",
-      "how-does-it-work": "Comment ça marche?"
-    },
-    "modal-title": "Examiner l'achat répété",
-    "notes": {
-      "note-item-01": "Vous seul pouvez retirer des fonds de votre coffre-fort",
-      "note-item-02": "Les frais pour les swaps programmés sont facturés à l'avance",
-      "note-item-03": "Tous les frais non utilisés vous sont remboursés lors du retrait",
-      "notes-title": "Notes IMPORTANTES"
-    }
-  },
-  "ddcas": {
-    "activity": {
-      "action-deposit": "{{fromAmount}} déposé",
-      "action-exchange": "Échange {{fromAmount}} contre {{toAmount}}",
-      "action-withdraw": "Retrait de {{toAmount}}"
-    },
-    "add-funds": {
-      "headline": "Ajoutez <strong>{{fromTokenAmount}}</strong> à votre coffre-fort personnel.",
-      "modal-title": "Recharger/Ajouter des fonds"
-    },
-    "add-funds-cta-disabled-closing": "Annulation en cours...",
-    "add-funds-cta-disabled-executing-swap": "Echange en cours...",
-    "add-funds-cta-disabled-funding": "Ajouter des fonds en cours...",
-    "add-funds-cta-disabled-withdrawing": "Retrait en cours...",
-    "close-ddca": {
-      "modal-title": "Êtes-vous sûr?",
-      "primary-cta": "Confirmer",
-      "secondary-cta": "Retour"
-    },
-    "exchange-dcas": {
-      "cancel-withdraw-everything": "Annuler et tout retirer",
-      "deposited": "Déposé",
-      "detail-panel-word-one": "Achat",
-      "detail-panel-word-three": "tous",
-      "detail-panel-word-two": "valeur de",
-      "exchange-details": "Détails de l'échange",
-      "exchanged-for": "Échangé contre (taux moyen 1",
-      "next-scheduled-exchange": "Prochain échange programmé",
-      "rate-amount": "Tous",
-      "total-deposits": "Dépôts totaux",
-      "total-left": "Le total restant sera épuisé de",
-      "withdraw": "Retirer"
-    },
-    "screen-title": "Achats récurrents",
-    "setup-close-warning": "Fermeture sans clic. Commencer ignorera votre premier achat. Fermer quand même ?",
-    "streams-ddcas": "Cliquez pour actualiser les achats récurrents"
-  },
   "deposits": {
     "address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des jetons SOL et SPL sur Solana.",
     "back-to-deposit-options": "Retour aux options de dépôt",
@@ -998,11 +914,6 @@
     "status": {
       "cta-start-transfer-busy": "Creating transfer",
       "cta-view-stream": "Afficher le flux",
-      "ddca-add-funds": "Caisse de financement avec",
-      "ddca-add-funds-success": "Fonds ajoutés avec succès",
-      "ddca-create-tx": "Créer un échange récurrent planifié",
-      "ddca-create-tx-failure": "Impossible de créer l'échange récurrent",
-      "ddca-create-tx-success": "Échange récurrent créé avec succès",
       "instructions": "Confirmez cette transaction dans votre portefeuille",
       "modal-title-executing-transaction": "Exécution de la transaction",
       "modal-title-transaction-completed": "Opération terminée",
@@ -1111,10 +1022,7 @@
       "valid-address-required": "Une adresse solana valide est requise",
       "valid-approve": "Approuver sur votre portefeuille",
       "valid-continue": "Continuez",
-      "valid-ddca-review": "Passer en revue",
-      "valid-start-funding": "Commencer le financement",
       "valid-start-withdrawal": "Commencer le retrait",
-      "valid-submit-proposal": "",
       "verified-recipient-unchecked": "Recipient Unchecked"
     }
   },

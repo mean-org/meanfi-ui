@@ -138,90 +138,6 @@
       "title": "دارایی های پشتیبانی شده"
     }
   },
-  "ddca-selector": {
-    "modal-title": "این معامله را تکرار میکنید؟",
-    "ote": {
-      "description": "اکنون مبادله کنید سر وقت.",
-      "name": "تبادل یکباره"
-    },
-    "repeating-daily": {
-      "description": "هرروز خرید کنید، از هم اکنون شروع کنید.",
-      "name": "روزانه تکرار کنید",
-      "recurrence-period": "هر روز"
-    },
-    "repeating-once-month": {
-      "description": "هر 30 روز، از امروز.",
-      "name": "ماهانه تکرار کنید",
-      "recurrence-period": "هر 30 روز"
-    },
-    "repeating-twice-month": {
-      "description": "از امروز هر هفته در {{dayOfWeek}}.",
-      "name": "هر دو هفته",
-      "recurrence-period": "هر دو هفته"
-    },
-    "repeating-weekly": {
-      "description": "از امروز هر {{dayOfWeek}} خرید کنید.",
-      "name": "هفتگی تکرار کنید",
-      "recurrence-period": "هر هفته"
-    }
-  },
-  "ddca-setup-modal": {
-    "cta-label-deposit": "سپرده",
-    "cta-label-depositing": "سپرده گذاری ...",
-    "cta-label-vault-created": "تایید شده",
-    "headline": "از امروز به ارزش <strong>{{fromTokenAmount}}</strong> به ارزش <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} برای <strong>{{totalPeriod}}</strong> بخرید.",
-    "help": {
-      "help-item-01": "شما {{fromTokenAmount}} را به صندوق شخصی خود واریز خواهید کرد.",
-      "help-item-01-topup": "یک {{fromTokenAmount}} اضافی را به صندوق شخصی خود واریز کنید.",
-      "help-item-02": "خزانه از سپرده برای انجام مبادلات {{recurrencePeriod}} استفاده می کند.",
-      "help-item-03": "وقتی آماده شدید، {{toTokenSymbol}} جدید خود را از خزانه دریافت کنید.",
-      "how-does-it-work": "چگونه کار می کند؟"
-    },
-    "modal-title": "مرور خرید تکراری",
-    "notes": {
-      "note-item-01": "فقط شما می توانید وجوه را از خزانه خود برداشت کنید",
-      "note-item-02": "کارمزد سوآپ های برنامه ریزی شده از قبل دریافت می شود",
-      "note-item-03": "تمام هزینه های استفاده نشده پس از برداشت به شما بازگردانده می شود",
-      "notes-title": "یادداشت های مهم"
-    }
-  },
-  "ddcas": {
-    "activity": {
-      "action-deposit": "{{fromAmount}} واریز شده",
-      "action-exchange": "{{fromAmount}} با {{toAmount}} مبادله شد",
-      "action-withdraw": "برداشت {{toAmount}}"
-    },
-    "add-funds": {
-      "headline": "<strong>{{fromTokenAmount}}</strong> را به خزانه شخصی خود اضافه کنید.",
-      "modal-title": "بالا/افزودن وجوه"
-    },
-    "add-funds-cta-disabled-closing": "لغو در حال انجام است...",
-    "add-funds-cta-disabled-executing-swap": "تبادل در حال انجام است...",
-    "add-funds-cta-disabled-funding": "اضافه کردن وجوه در حال انجام...",
-    "add-funds-cta-disabled-withdrawing": "برداشت در حال انجام است...",
-    "close-ddca": {
-      "modal-title": "مطمئنید؟",
-      "primary-cta": "تایید",
-      "secondary-cta": "بازگشت"
-    },
-    "exchange-dcas": {
-      "cancel-withdraw-everything": "همه چیز را لغو و برداشت کنید",
-      "deposited": "سپرده شده",
-      "detail-panel-word-one": "خریداری کردن",
-      "detail-panel-word-three": "همه",
-      "detail-panel-word-two": "ارزش",
-      "exchange-details": "جزئیات مبادله",
-      "exchanged-for": "مبادله شده برای (متوسط نرخ 1",
-      "next-scheduled-exchange": "مبادله برنامه ریزی شده بعدی",
-      "rate-amount": "همه",
-      "total-deposits": "کل سپرده ها",
-      "total-left": "مجموع باقی مانده (تمام خواهد شد",
-      "withdraw": "برداشت"
-    },
-    "screen-title": "خریدهای تکراری",
-    "setup-close-warning": "بدون کلیک کردن بسته می شود. شروع اولین خرید شما را رد می کند. به هر حال بسته شود؟",
-    "streams-ddcas": "برای بازخوانی خریدهای تکراری کلیک کنید"
-  },
   "deposits": {
     "address-share-disclaimer": "از این آدرس فقط می توان برای دریافت توکن های SOL و SPL در سولانا استفاده کرد.",
     "back-to-deposit-options": "بازگشت به گزینه های سپرده گزاری",
@@ -991,11 +907,6 @@
     "status": {
       "cta-view-stream": "مشاهده Stream",
       "cta-start-transfer-busy": "Creating transfer",
-      "ddca-add-funds": "صندوق سرمایه گذاری با",
-      "ddca-add-funds-success": "وجوه با موفقیت اضافه شد",
-      "ddca-create-tx": "مبادله مکرر برنامه ریزی شده ایجاد کنید",
-      "ddca-create-tx-failure": "مبادله مکرر ایجاد نشد",
-      "ddca-create-tx-success": "مبادله مکرر با موفقیت ایجاد شد",
       "instructions": "این تراکنش را در کیف پول خود تأیید کنید",
       "modal-title-executing-transaction": "انجام معامله",
       "modal-title-transaction-completed": "معامله انجام شد",
@@ -1094,8 +1005,6 @@
       "valid-address-required": "آدرس سولانا معتبر مورد نیاز است",
       "valid-approve": "روی کیف پول خود تأیید کنید",
       "valid-continue": "ادامه دادن",
-      "valid-ddca-review": "بررسی",
-      "valid-start-funding": "شروع به تامین مالی کنید",
       "valid-start-withdrawal": "شروع به برداشت",
       "verified-recipient-unchecked": "Recipient Unchecked"
     }
