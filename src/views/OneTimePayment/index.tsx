@@ -32,7 +32,7 @@ import dateFormat from 'dateformat';
 import { customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamOTPTransferData } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import {
   addMinutes,
   consoleOut,
@@ -542,7 +542,8 @@ export const OneTimePayment = (props: {
           accounts, // accounts
           data.amount, // amount
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       const accounts: ScheduleTransferTransactionAccounts = {
@@ -555,6 +556,13 @@ export const OneTimePayment = (props: {
         accounts, // accounts
         data.amount, // amount
       );
+
+      // TODO: Fix Error: failed to send transaction: Transaction signature verification failure
+      // The following attempt to patch the Tx with priority fees would throw error due to
+      // additional signatures other than the payer
+
+      // return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
       return transaction;
     };
 

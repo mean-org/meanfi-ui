@@ -1,15 +1,6 @@
 import { Metaplex } from '@metaplex-foundation/js';
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import {
-  AccountInfo,
-  Commitment,
-  Connection,
-  ParsedAccountData,
-  PublicKey,
-  TokenAmount,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountInfo, Commitment, Connection, ParsedAccountData, PublicKey, TokenAmount } from '@solana/web3.js';
 import {
   AccountsDictionary,
   AccountTokenParsedInfo,
@@ -23,9 +14,8 @@ import { TokenPrice } from 'models/TokenPrice';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../constants';
 import { MEAN_TOKEN_LIST, NATIVE_SOL } from '../constants/tokens';
 import getPriceByAddressOrSymbol from './getPriceByAddressOrSymbol';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx } from './transactions';
 import { consoleOut, isLocal } from './ui';
-import { findATokenAddress, getAmountFromLamports, readLocalStorageKey, shortenAddress } from './utils';
+import { findATokenAddress, getAmountFromLamports, shortenAddress } from './utils';
 
 //** Account helpers
 
@@ -524,105 +514,3 @@ export const getAccountNFTs = async (connection: Connection, accountAddress: str
   });
   return myNfts;
 };
-
-//** Transactions and Instructions
-
-export async function createAtaAccountIx(connection: Connection, mint: PublicKey, owner: PublicKey, payer: PublicKey) {
-  const ixs: TransactionInstruction[] = [];
-
-  const associatedAddress = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    mint,
-    owner,
-  );
-
-  const ataInfo = await connection.getAccountInfo(associatedAddress);
-
-  if (ataInfo === null) {
-    ixs.push(
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mint,
-        associatedAddress,
-        owner,
-        payer,
-      ),
-    );
-  }
-
-  return { ixs, associatedAddress };
-}
-
-export async function createAtaAccount(connection: Connection, mint: PublicKey, owner: PublicKey, payer: PublicKey) {
-  const result = await createAtaAccountIx(connection, mint, owner, payer);
-
-  const config = readLocalStorageKey('transactionPriority');
-  const priorityFeesIx = getComputeBudgetIx(config ?? DEFAULT_BUDGET_CONFIG) ?? [];
-
-  const tx = new Transaction().add(...priorityFeesIx, ...result.ixs);
-  tx.feePayer = owner;
-  const hash = await connection.getLatestBlockhash('confirmed');
-  tx.recentBlockhash = hash.blockhash;
-
-  return tx;
-}
-
-export async function closeTokenAccount(connection: Connection, tokenPubkey: PublicKey, owner: PublicKey) {
-  const ixs: TransactionInstruction[] = [];
-  let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
-
-  try {
-    accountInfo = (await connection.getParsedAccountInfo(tokenPubkey)).value;
-  } catch (error) {
-    console.error(error);
-  }
-
-  if (!accountInfo) {
-    return null;
-  }
-
-  const config = readLocalStorageKey('transactionPriority');
-  const priorityFeesIx = getComputeBudgetIx(config ?? DEFAULT_BUDGET_CONFIG) ?? [];
-  if (priorityFeesIx) {
-    ixs.push(...priorityFeesIx);
-  }
-
-  const info = (accountInfo as any).data['parsed']['info'] as TokenAccountInfo;
-
-  consoleOut('---- Parsed info ----', '', 'orange');
-  consoleOut('tokenPubkey:', tokenPubkey.toBase58(), 'orange');
-  consoleOut('mint:', info.mint, 'orange');
-  consoleOut('owner:', info.owner, 'orange');
-  consoleOut('decimals:', info.tokenAmount.decimals, 'orange');
-  consoleOut('balance:', info.tokenAmount.uiAmount ?? 0, 'orange');
-
-  // If the account has balance, burn the tokens
-  if (
-    info.mint !== NATIVE_SOL.address &&
-    info.mint !== WRAPPED_SOL_MINT_ADDRESS &&
-    (info.tokenAmount.uiAmount ?? 0) > 0
-  ) {
-    ixs.push(
-      Token.createBurnInstruction(
-        TOKEN_PROGRAM_ID,
-        new PublicKey(info.mint),
-        tokenPubkey,
-        owner,
-        [],
-        (info.tokenAmount.uiAmount ?? 0) * 10 ** info.tokenAmount.decimals,
-      ),
-    );
-  }
-
-  // Close the account
-  ixs.push(Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, tokenPubkey, owner, owner, []));
-
-  const tx = new Transaction().add(...ixs);
-  tx.feePayer = owner;
-  const hash = await connection.getLatestBlockhash('confirmed');
-  tx.recentBlockhash = hash.blockhash;
-
-  return tx;
-}

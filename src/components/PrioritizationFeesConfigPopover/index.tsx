@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { IconCross, IconGasStation } from 'Icons';
 import { Button, Popover, Segmented } from 'antd';
@@ -25,39 +25,32 @@ const PopoverContent = ({ transactionPriorityOptions, onOptionChanged }: Popover
 
   const priorityDescription = useMemo(() => {
     switch (transactionPriorityOptions.priorityOption) {
-      case 'disabled':
-        return t('priority-fees.priority-disabled-description');
       case 'normal':
         return t('priority-fees.priority-normal-description');
       case 'fast':
         return t('priority-fees.priority-fast-description');
       case 'turbo':
         return t('priority-fees.priority-turbo-description');
-      case 'ultra':
-        return t('priority-fees.priority-ultra-description');
       default:
         return '';
     }
   }, [transactionPriorityOptions.priorityOption, t]);
 
   return (
-    <div className="container-max-width-450">
+    <div className="container-max-width-360">
       <p>{t('priority-fees.prioritization-overview')}</p>
       <div className="inner-label">{t('priority-fees.selector-label')}</div>
       <Segmented
         block
         options={[
-          { label: t('priority-fees.priority-disabled-label'), value: 'disabled' },
           { label: t('priority-fees.priority-normal-label'), value: 'normal' },
           { label: t('priority-fees.priority-fast-label'), value: 'fast' },
           { label: t('priority-fees.priority-turbo-label'), value: 'turbo' },
-          { label: t('priority-fees.priority-ultra-label'), value: 'ultra' },
         ]}
         value={transactionPriorityOptions.priorityOption}
         onChange={onOptionChanged}
       />
       <p className="mt-3">{priorityDescription}</p>
-      <p>{t('priority-fees.priority-disclaimer')}</p>
     </div>
   );
 };
@@ -94,11 +87,34 @@ const PrioritizationFeesConfigPopover = () => {
     setTransactionPriorityOptions(newOptions);
   };
 
+  useEffect(() => {
+    if (popoverVisible) {
+      let o = transactionPriorityOptions.priorityOption;
+      const isOptionOk = o === 'normal' || o === 'fast' || o === 'turbo';
+
+      // Do nothing if value is in range
+      if (isOptionOk) return;
+
+      // If users already configured for 'disabled' or 'ultra' normalize value to 'normal'
+      if (o !== 'normal' && o !== 'fast' && o !== 'turbo') o = 'normal';
+
+      consoleOut('Transaction Priority option:', o, 'darkorange');
+      consoleOut('Compute Unit price:', `${formatThousands(COMPUTE_UNIT_PRICE[o])} microlamports`, 'darkorange');
+
+      const newOptions: ComputeBudgetConfig = {
+        cap: transactionPriorityOptions.cap,
+        priorityOption: o as PriorityOption,
+      };
+      setTransactionPriorityOptions(newOptions);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [popoverVisible]);
+
   return (
     <Popover
       placement={isSmScreen() ? 'bottomRight' : 'bottom'}
       title={
-        <div className="flexible-left container-max-width-450">
+        <div className="flexible-left container-max-width-360">
           <div className="left">{t('priority-fees.priority-settings-title')}</div>
           <div className="right">
             <span className="icon-button-container">

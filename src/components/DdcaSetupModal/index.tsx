@@ -12,7 +12,7 @@ import { useWallet } from 'contexts/wallet';
 import { IconShieldSolid } from 'Icons/IconShieldSolid';
 import { customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
-import { confirmTx, sendTx, signTx } from 'middleware/transactions';
+import { composeTxWithPrioritizationFees, confirmTx, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from 'middleware/ui';
 import { getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { DcaInterval } from 'models/ddca-models';
@@ -330,6 +330,41 @@ export const DdcaSetupModal = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
+    const createDdcaTx = async ({
+      fromMint,
+      toMint,
+      amountPerSwap,
+      swapsCount,
+      intervalInSeconds,
+      wrapSolIfNeeded,
+    }: {
+      fromMint: PublicKey;
+      toMint: PublicKey;
+      amountPerSwap: number;
+      swapsCount: number;
+      intervalInSeconds: number;
+      wrapSolIfNeeded?: boolean;
+    }) => {
+      if (!publicKey) {
+        throw new Error('publicKey not available');
+      }
+
+      if (!ddcaClient) {
+        throw new Error('ddcaClient not available');
+      }
+
+      const tx = await ddcaClient.createDdcaTx(
+        fromMint,
+        toMint,
+        amountPerSwap,
+        swapsCount,
+        intervalInSeconds,
+        wrapSolIfNeeded,
+      );
+
+      return { ddca: tx[0], transaction: tx[1] };
+    };
+
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
         setTransactionStatus({
@@ -360,15 +395,14 @@ export const DdcaSetupModal = (props: {
         });
 
         // Create a transaction
-        return await ddcaClient
-          .createDdcaTx(
-            payload.fromMint,
-            payload.toMint,
-            payload.amountPerSwap,
-            payload.totalSwaps,
-            payload.intervalinSeconds,
-          )
-          .then((value: [PublicKey, Transaction]) => {
+        return await createDdcaTx({
+          fromMint: payload.fromMint,
+          toMint: payload.toMint,
+          amountPerSwap: payload.amountPerSwap,
+          swapsCount: payload.totalSwaps,
+          intervalInSeconds: payload.intervalinSeconds,
+        })
+          .then(value => {
             consoleOut('createDdca returned vault pubKey and transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -376,11 +410,11 @@ export const DdcaSetupModal = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-              result: getTxIxResume(value[1]),
+              result: getTxIxResume(value.transaction),
             });
-            setLastVaultCreated(value[0].toBase58());
-            setDdcaAccountPda(value[0]);
-            transaction = value[1];
+            setLastVaultCreated(value.ddca.toBase58());
+            setDdcaAccountPda(value.ddca);
+            transaction = value.transaction;
             return true;
           })
           .catch(error => {
@@ -461,6 +495,29 @@ export const DdcaSetupModal = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
+    const createWakeAndSwapTx = async ({
+      ddcaAccountAddress,
+      hlaInfo,
+    }: {
+      ddcaAccountAddress: PublicKey;
+      hlaInfo: HlaInfo;
+    }) => {
+      if (!publicKey) {
+        throw new Error('publicKey not available');
+      }
+
+      if (!ddcaClient) {
+        throw new Error('ddcaClient not available');
+      }
+
+      const tx = await ddcaClient.createWakeAndSwapTx(ddcaAccountAddress, hlaInfo);
+
+      const transaction = await composeTxWithPrioritizationFees(connection, publicKey, tx.instructions);
+      transaction.signatures = tx.signatures;
+
+      return transaction;
+    };
+
     const createTx = async (): Promise<boolean> => {
       if (wallet && publicKey && ddcaAccountPda) {
         setTransactionStatus({
@@ -482,8 +539,10 @@ export const DdcaSetupModal = (props: {
         });
 
         // Create a transaction
-        return await ddcaClient
-          .createWakeAndSwapTx(ddcaAccountPda, hlaInfo)
+        return await createWakeAndSwapTx({
+          ddcaAccountAddress: ddcaAccountPda,
+          hlaInfo,
+        })
           .then(value => {
             consoleOut('createWakeAndSwapTx returned transaction:', value);
             setTransactionStatus({

@@ -1,7 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -121,6 +121,16 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
     setTransactionCancelled(false);
     setIsBusy(true);
 
+    const wrapSolPrioritized = async ({
+      connection,
+      from,
+      amount,
+    }: {
+      connection: Connection;
+      from: PublicKey;
+      amount: number;
+    }) => await wrapSol(connection, from, amount);
+
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
         const amount = parseFloat(wrapAmount as string);
@@ -157,11 +167,11 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
           return false;
         }
 
-        return await wrapSol(
+        return await wrapSolPrioritized({
           connection, // connection
-          publicKey as PublicKey, // from
+          from: publicKey as PublicKey, // from
           amount, // amount
-        )
+        })
           .then(value => {
             consoleOut('wrapSol returned transaction:', value);
             // Stage 1 completed - The transaction is created and returned

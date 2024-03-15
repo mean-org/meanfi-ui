@@ -70,7 +70,7 @@ import useTransaction from 'hooks/useTransaction';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
-import { closeTokenAccount, resolveParsedAccountInfo } from 'middleware/accounts';
+import { resolveParsedAccountInfo } from 'middleware/accounts';
 import { createAddSafeAssetTx, CreateSafeAssetTxParams } from 'middleware/createAddSafeAssetTx';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
@@ -140,6 +140,7 @@ import getNftMint from './getNftMint';
 import './style.scss';
 import useAccountPrograms from './useAccountPrograms';
 import useAppNavigation from './useAppNavigation';
+import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));
@@ -3113,7 +3114,8 @@ export const HomeView = () => {
       minRequired,
       generateTransaction: async ({ multisig, data }) => {
         if (!publicKey) return;
-        return closeTokenAccount(connection, wSolPubKey, publicKey);
+
+        return await createCloseTokenAccountTx(connection, wSolPubKey, publicKey);
       },
     });
     closeCreateAssetModal(true);

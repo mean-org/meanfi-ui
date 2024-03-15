@@ -72,6 +72,7 @@ import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
 import {
+  composeTxWithPrioritizationFees,
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getProposalWithPrioritizationFees,
@@ -905,7 +906,7 @@ export const StreamingAccountView = (props: {
     };
 
     const addFunds = async (data: AddFundsParams) => {
-      if (!paymentStreaming) {
+      if (!publicKey || !paymentStreaming) {
         return null;
       }
 
@@ -922,7 +923,8 @@ export const StreamingAccountView = (props: {
             accounts, // accounts
             data.amount, // amount
           );
-          return transaction;
+
+          return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
         }
 
         consoleOut('Create single signer Tx ->', 'buildAllocateFundsToStreamTransaction', 'darkgreen');
@@ -936,7 +938,8 @@ export const StreamingAccountView = (props: {
           accounts, // accounts
           data.amount, // amount
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!streamingAccountSelected || !multisigClient || !multisigAccounts || !publicKey) {
@@ -1242,7 +1245,7 @@ export const StreamingAccountView = (props: {
     setIsBusy(true);
 
     const treasuryWithdraw = async (data: TreasuryWithdrawParams) => {
-      if (!paymentStreaming) {
+      if (!publicKey || !paymentStreaming) {
         return null;
       }
 
@@ -1258,7 +1261,8 @@ export const StreamingAccountView = (props: {
           data.amount, // amount
           false, // autoWsol
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!streamingAccountSelected || !multisigClient || !multisigAccounts || !publicKey) {
@@ -1663,7 +1667,7 @@ export const StreamingAccountView = (props: {
     };
 
     const closeTreasury = async (data: any) => {
-      if (!paymentStreaming) {
+      if (!publicKey || !paymentStreaming) {
         return null;
       }
 
@@ -1677,7 +1681,8 @@ export const StreamingAccountView = (props: {
           accounts, // accounts
           false, // autoWSol
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!streamingAccountSelected || !multisigClient || !multisigAccounts || !publicKey) {
@@ -1968,7 +1973,8 @@ export const StreamingAccountView = (props: {
         psAccount: new PublicKey(data.treasury), // psAccount
       };
       const { transaction } = await paymentStreaming.buildRefreshAccountDataTransaction(accounts);
-      return transaction;
+
+      return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
     };
 
     const createTx = async (): Promise<boolean> => {

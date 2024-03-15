@@ -29,7 +29,7 @@ import { useTranslation } from 'react-i18next';
 import useRealmsDeposit from './useRealmsDeposit';
 import './style.scss';
 import useUnstakeQuote from './useUnstakeQuote';
-import { sendTx, signTx } from 'middleware/transactions';
+import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 
 let inputDebounceTimeout: any;
 
@@ -190,6 +190,16 @@ export const StakeTabView = (props: {
 
     resetTransactionStatus();
 
+    const stakeAmountTx = async ({ stakeClient, uiAmount }: { stakeClient: StakingClient; uiAmount: number }) => {
+      if (!publicKey) throw new Error('Wallet publicKey not found');
+
+      const transaction = await stakeClient.stakeTransaction(
+        uiAmount, // uiAmount
+      );
+
+      return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+    };
+
     const createTx = async (): Promise<boolean> => {
       if (wallet && stakeClient && selectedToken) {
         setTransactionStatus({
@@ -226,10 +236,7 @@ export const StakeTabView = (props: {
         consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFormButton, segmentData);
 
-        return await stakeClient
-          .stakeTransaction(
-            uiAmount, // uiAmount
-          )
+        return await stakeAmountTx({ stakeClient, uiAmount })
           .then(value => {
             consoleOut('stakeTransaction returned transaction:', value);
             // Stage 1 completed - The transaction is created and returned

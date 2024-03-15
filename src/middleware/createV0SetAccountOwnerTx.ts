@@ -1,11 +1,6 @@
 import { AuthorityType, Token } from '@solana/spl-token';
-import {
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-  TransactionMessage,
-  VersionedTransaction,
-} from '@solana/web3.js';
+import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { composeV0TxWithPrioritizationFees, serializeTx } from './transactions';
 
 /**
  * Assign a new owner to the account
@@ -37,20 +32,9 @@ export async function setAccountOwner(
     ),
   );
 
-  // Get the latest blockhash
-  const blockhash = await connection.getLatestBlockhash('confirmed').then(res => res.blockhash);
+  const transaction = await composeV0TxWithPrioritizationFees(connection, owner, ixs);
 
-  // create v0 compatible message
-  const messageV0 = new TransactionMessage({
-    payerKey: owner,
-    recentBlockhash: blockhash,
-    instructions: ixs,
-  }).compileToV0Message();
-
-  // Create a VersionedTransaction passing the v0 compatible message
-  const transaction = new VersionedTransaction(messageV0);
-
-  console.log('transaction:', transaction);
+  serializeTx(transaction);
 
   return transaction;
 }

@@ -3,6 +3,7 @@ import {
   AccountMeta,
   ComputeBudgetProgram,
   Connection,
+  Keypair,
   ParsedTransactionMeta,
   PublicKey,
   Signer,
@@ -23,16 +24,14 @@ import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { formatThousands, getAmountFromLamports, readLocalStorageKey, toBuffer } from './utils';
 import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
 
-export type PriorityOption = 'disabled' | 'normal' | 'fast' | 'turbo' | 'ultra';
+export type PriorityOption = 'normal' | 'fast' | 'turbo';
 
-const COMPUTE_UNIT_LIMIT = 150_000;
+const COMPUTE_UNIT_LIMIT = 200_000;
 
 export const COMPUTE_UNIT_PRICE = {
-  disabled: 0,
-  normal: 60_000,
-  fast: 500_000,
-  turbo: 10_000_000,
-  ultra: 1_000_000_000,
+  normal: 250_000,
+  fast: 2_500_000,
+  turbo: 25_000_000,
 };
 
 export interface ComputeBudgetConfig {
@@ -41,7 +40,7 @@ export interface ComputeBudgetConfig {
 }
 
 export const DEFAULT_BUDGET_CONFIG: ComputeBudgetConfig = {
-  priorityOption: 'disabled',
+  priorityOption: 'normal',
   cap: 0,
 };
 
@@ -317,18 +316,17 @@ export const serializeTx = (signed: Transaction | VersionedTransaction) => {
 };
 
 export const getComputeBudgetIx = (config: ComputeBudgetConfig, cuLimit = COMPUTE_UNIT_LIMIT) => {
-  if (config.priorityOption === 'disabled') return undefined;
+  let o = config.priorityOption;
 
-  consoleOut(
-    'Compute Unit price:',
-    `${formatThousands(COMPUTE_UNIT_PRICE[config.priorityOption])} microlamports`,
-    'darkorange',
-  );
+  // Use 'normal' as default if previously configured for 'disabled' or 'ultra'
+  if (o !== 'normal' && o !== 'fast' && o !== 'turbo') o = 'normal';
 
+  consoleOut('Transaction Priority option:', o, 'darkorange');
+  consoleOut('Compute Unit price:', `${formatThousands(COMPUTE_UNIT_PRICE[o])} microlamports`, 'darkorange');
   consoleOut('Compute Unit limit:', formatThousands(cuLimit + 10_000), 'darkorange');
 
   return [
-    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: COMPUTE_UNIT_PRICE[config.priorityOption] }),
+    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: COMPUTE_UNIT_PRICE[o] }),
     ComputeBudgetProgram.setComputeUnitLimit({ units: cuLimit + 10_000 }),
   ];
 };
@@ -338,7 +336,7 @@ const getComputeUnitsEstimate = async (
   payer: PublicKey,
   blockhash: string,
   ixs: TransactionInstruction[],
-  signers: Signer[] | undefined,
+  signers?: Signer[],
 ) => {
   // Create a VersionedTransaction
   const messageV0 = new TransactionMessage({
@@ -390,12 +388,6 @@ export const getProposalWithPrioritizationFees = async (
     return null;
   }
 
-  consoleOut('Transaction Priority option:', instrumental.transactionPriorityOptions.priorityOption, 'darkorange');
-
-  if (instrumental.transactionPriorityOptions.priorityOption === 'disabled') {
-    return result;
-  }
-
   const { blockhash } = await instrumental.connection.getLatestBlockhash('confirmed');
 
   // Get compute budget
@@ -404,7 +396,6 @@ export const getProposalWithPrioritizationFees = async (
     proposer,
     blockhash,
     result.transaction.instructions,
-    undefined,
   );
   const budgetIxs = getComputeBudgetIx(instrumental.transactionPriorityOptions, unitsConsumed);
 
@@ -445,12 +436,6 @@ export const composeTxWithPrioritizationFees = async (
     transaction.partialSign(...signers);
   }
 
-  consoleOut('Transaction Priority option:', config.priorityOption, 'darkorange');
-
-  if (config.priorityOption === 'disabled') {
-    return transaction;
-  }
-
   // Get compute budget
   const unitsConsumed = await getComputeUnitsEstimate(connection, payer, blockhash, ixs, signers);
   const budgetIxs = getComputeBudgetIx(config, unitsConsumed);
@@ -463,6 +448,49 @@ export const composeTxWithPrioritizationFees = async (
     newTx.recentBlockhash = blockhash;
     if (signers?.length) {
       newTx.partialSign(...signers);
+    }
+
+    return newTx;
+  }
+
+  return transaction;
+};
+
+export const composeV0TxWithPrioritizationFees = async (
+  connection: Connection,
+  feePayer: PublicKey,
+  ixs: TransactionInstruction[],
+  additionalAccounts?: Keypair[],
+) => {
+  const config: ComputeBudgetConfig = readLocalStorageKey('transactionPriority') ?? DEFAULT_BUDGET_CONFIG;
+
+  const { blockhash } = await connection.getLatestBlockhash('confirmed');
+
+  const messageV0 = new TransactionMessage({
+    payerKey: feePayer,
+    recentBlockhash: blockhash,
+    instructions: ixs,
+  }).compileToV0Message();
+  const transaction = new VersionedTransaction(messageV0);
+  if (additionalAccounts?.length) {
+    additionalAccounts.forEach(a => transaction.addSignature(a.publicKey, a.secretKey));
+  }
+
+  // Get compute budget
+  const unitsConsumed = await getComputeUnitsEstimate(connection, feePayer, blockhash, ixs);
+  const budgetIxs = getComputeBudgetIx(config, unitsConsumed);
+
+  // Rebuild same tx with budget instructions
+  if (budgetIxs) {
+    const newIxs = [...budgetIxs, ...ixs];
+    const newTxMessage = new TransactionMessage({
+      payerKey: feePayer,
+      recentBlockhash: blockhash,
+      instructions: newIxs,
+    }).compileToV0Message();
+    const newTx = new VersionedTransaction(newTxMessage);
+    if (additionalAccounts?.length) {
+      additionalAccounts.forEach(a => newTx.addSignature(a.publicKey, a.secretKey));
     }
 
     return newTx;

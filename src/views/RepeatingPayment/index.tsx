@@ -740,6 +740,13 @@ export const RepeatingPayment = (props: {
             startUtc, // startUtc
             false, // feePayedByTreasurer
           );
+
+          // TODO: Fix Error: failed to send transaction: Transaction signature verification failure
+          // The following attempt to patch the Tx with priority fees would throw error due to
+          // additional signatures other than the payer
+
+          // const prioritizedTx = await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
           consoleOut('streamPayment returned transaction:', transaction);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,

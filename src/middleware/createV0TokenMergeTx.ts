@@ -1,12 +1,7 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import {
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-  TransactionMessage,
-  VersionedTransaction,
-} from '@solana/web3.js';
+import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { AccountTokenParsedInfo } from 'models/accounts';
+import { composeV0TxWithPrioritizationFees, serializeTx } from './transactions';
 
 export async function createV0TokenMergeTx(
   connection: Connection,
@@ -53,20 +48,9 @@ export async function createV0TokenMergeTx(
     );
   }
 
-  // Get the latest blockhash
-  const blockhash = await connection.getLatestBlockhash('confirmed').then(res => res.blockhash);
+  const transaction = await composeV0TxWithPrioritizationFees(connection, owner, ixs);
 
-  // create v0 compatible message
-  const messageV0 = new TransactionMessage({
-    payerKey: owner,
-    recentBlockhash: blockhash,
-    instructions: ixs,
-  }).compileToV0Message();
-
-  // Create a VersionedTransaction passing the v0 compatible message
-  const transaction = new VersionedTransaction(messageV0);
-
-  console.log('transaction:', transaction);
+  serializeTx(transaction);
 
   return transaction;
 }

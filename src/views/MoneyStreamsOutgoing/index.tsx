@@ -49,6 +49,7 @@ import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from 'middleware/segment-service';
 import {
+  composeTxWithPrioritizationFees,
   ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getProposalWithPrioritizationFees,
@@ -431,7 +432,7 @@ export const MoneyStreamsOutgoingView = (props: {
       stream: PublicKey;
       amount: number | string;
     }) => {
-      if (!paymentStreaming) {
+      if (!publicKey || !paymentStreaming) {
         return false;
       }
 
@@ -448,16 +449,19 @@ export const MoneyStreamsOutgoingView = (props: {
           payload.amount, // amount
           false, // autoWSol
         );
-        consoleOut('fundStream returned transaction:', transaction);
+
+        const prioritizedTx = await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        consoleOut('fundStream returned transaction:', prioritizedTx);
         setTransactionStatus({
           lastOperation: TransactionStatus.InitTransactionSuccess,
           currentOperation: TransactionStatus.SignTransaction,
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-          result: getTxIxResume(transaction),
+          result: getTxIxResume(prioritizedTx),
         });
-        createdTransaction = transaction;
+        createdTransaction = prioritizedTx;
         return true;
       } catch (error) {
         console.error('fundStream error:', error);
@@ -480,7 +484,7 @@ export const MoneyStreamsOutgoingView = (props: {
     };
 
     const allocateToStream = async (data: StreamTopupTxCreateParams) => {
-      if (!paymentStreaming) {
+      if (!publicKey || !paymentStreaming) {
         return null;
       }
 
@@ -495,7 +499,8 @@ export const MoneyStreamsOutgoingView = (props: {
           accounts, // accounts
           data.amount, // amount
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!isMultisigContext) {
@@ -509,7 +514,8 @@ export const MoneyStreamsOutgoingView = (props: {
           accounts, // accounts
           data.amount, // amount
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) {
@@ -1084,7 +1090,7 @@ export const MoneyStreamsOutgoingView = (props: {
       };
 
       const pauseStream = async (data: any) => {
-        if (!paymentStreaming) {
+        if (!publicKey || !paymentStreaming) {
           return null;
         }
 
@@ -1095,7 +1101,8 @@ export const MoneyStreamsOutgoingView = (props: {
             stream: new PublicKey(data.stream), // stream
           };
           const { transaction } = await paymentStreaming.buildPauseStreamTransaction(accounts);
-          return transaction;
+
+          return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
         }
 
         if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) {
@@ -1524,7 +1531,7 @@ export const MoneyStreamsOutgoingView = (props: {
       };
 
       const resumeStream = async (data: any) => {
-        if (!paymentStreaming || !multisigAccounts) {
+        if (!publicKey || !paymentStreaming || !multisigAccounts) {
           return null;
         }
 
@@ -1535,7 +1542,8 @@ export const MoneyStreamsOutgoingView = (props: {
             stream: new PublicKey(data.stream), // stream
           };
           const { transaction } = await paymentStreaming.buildResumeStreamTransaction(accounts);
-          return transaction;
+
+          return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
         }
 
         if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) {
@@ -1991,7 +1999,7 @@ export const MoneyStreamsOutgoingView = (props: {
     const closeStream = async (data: CloseStreamTransactionParams) => {
       consoleOut('closeStream received params:', data, 'blue');
 
-      if (!paymentStreaming) {
+      if (!publicKey || !paymentStreaming) {
         return null;
       }
 
@@ -2006,7 +2014,8 @@ export const MoneyStreamsOutgoingView = (props: {
           data.closeTreasury, // closeTreasury
           false, // autoWSol
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) {

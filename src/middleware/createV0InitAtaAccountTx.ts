@@ -1,22 +1,9 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import {
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-  TransactionMessage,
-  VersionedTransaction,
-} from '@solana/web3.js';
-import { DEFAULT_BUDGET_CONFIG, getComputeBudgetIx } from './transactions';
-import { readLocalStorageKey } from './utils';
+import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { composeV0TxWithPrioritizationFees, serializeTx } from './transactions';
 
 export async function createV0InitAtaAccountTx(connection: Connection, mint: PublicKey, owner: PublicKey) {
   const ixs: TransactionInstruction[] = [];
-
-  const config = readLocalStorageKey('transactionPriority');
-  const priorityFeesIx = getComputeBudgetIx(config ?? DEFAULT_BUDGET_CONFIG) ?? [];
-  if (priorityFeesIx) {
-    ixs.push(...priorityFeesIx);
-  }
 
   const associatedAddress = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -41,20 +28,9 @@ export async function createV0InitAtaAccountTx(connection: Connection, mint: Pub
     );
   }
 
-  // Get the latest blockhash
-  const blockhash = await connection.getLatestBlockhash('confirmed').then(res => res.blockhash);
+  const transaction = await composeV0TxWithPrioritizationFees(connection, owner, ixs);
 
-  // create v0 compatible message
-  const messageV0 = new TransactionMessage({
-    payerKey: owner,
-    recentBlockhash: blockhash,
-    instructions: ixs,
-  }).compileToV0Message();
-
-  // Create a VersionedTransaction passing the v0 compatible message
-  const transaction = new VersionedTransaction(messageV0);
-
-  console.log('transaction:', transaction);
+  serializeTx(transaction);
 
   return transaction;
 }

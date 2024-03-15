@@ -13,7 +13,7 @@ import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'c
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
 import { AppUsageEvent, SegmentUnstakeMeanData } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import { cutNumber, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
@@ -158,6 +158,16 @@ export const UnstakeTabView = (props: {
 
     resetTransactionStatus();
 
+    const unstakeAmountTx = async ({ stakeClient, uiAmount }: { stakeClient: StakingClient; uiAmount: number }) => {
+      if (!publicKey) throw new Error('Wallet publicKey not found');
+
+      const transaction = await stakeClient.unstakeTransaction(
+        uiAmount, // uiAmount
+      );
+
+      return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+    };
+
     const createTx = async (): Promise<boolean> => {
       if (wallet && stakeClient && selectedToken) {
         setTransactionStatus({
@@ -192,10 +202,7 @@ export const UnstakeTabView = (props: {
         consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFormButton, segmentData);
 
-        return await stakeClient
-          .unstakeTransaction(
-            uiAmount, // uiAmount
-          )
+        return await unstakeAmountTx({ stakeClient, uiAmount })
           .then(value => {
             consoleOut('unstakeTransaction returned transaction:', value);
             // Stage 1 completed - The transaction is created and returned

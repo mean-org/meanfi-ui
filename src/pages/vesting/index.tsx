@@ -952,7 +952,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             owner: new PublicKey(data.treasurer), // treasurer
             mint: new PublicKey(data.associatedTokenAddress), // mint
           };
-          return await paymentStreaming.buildCreateVestingAccountTransaction(
+          const { transaction, template, vestingAccount } = await paymentStreaming.buildCreateVestingAccountTransaction(
             accounts, // accounts
             data.label, // label
             data.type, // type
@@ -965,6 +965,10 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             data.cliffVestPercent, // cliffVestPercent
             data.tokenFeePayedFromAccount, // tokenFeePayedFromAccount
           );
+
+          const prioritizedTx = await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+          return { transaction: prioritizedTx, template, vestingAccount };
         }
 
         if (!multisigClient || !multisigAccounts) {
@@ -1304,7 +1308,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     setIsBusy(true);
 
     const closeTreasury = async (data: any) => {
-      if (!paymentStreaming) {
+      if (!publicKey || !paymentStreaming) {
         return null;
       }
 
@@ -1318,7 +1322,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           accounts, // accounts
           false, // autoWSol
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) {
@@ -1585,7 +1590,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     setIsBusy(true);
 
     const addFunds = async (data: AddFundsParams) => {
-      if (!paymentStreaming) {
+      if (!publicKey || !paymentStreaming) {
         return null;
       }
 
@@ -1601,7 +1606,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             accounts, // accounts
             data.amount, // amount
           );
-          return transaction;
+
+          return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
         }
 
         const accounts: AllocateFundsToStreamTransactionAccounts = {
@@ -1614,7 +1620,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           accounts, // accounts
           data.amount, // amount
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) {
@@ -1940,11 +1947,16 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           owner: publicKey, // treasurer
           vestingAccount: treasury, // vestingAccount
         };
-        return await paymentStreaming.buildCreateVestingStreamTransaction(
+        const { transaction, template, stream } = await paymentStreaming.buildCreateVestingStreamTransaction(
           accounts, // accounts
           data.allocationAssigned, // allocationAssigned
           data.streamName, // streamName
+          true,
         );
+
+        const prioritizedTx = await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+
+        return { transaction: prioritizedTx, stream, template };
       }
 
       if (!multisigClient || !multisigAccounts) {
@@ -2229,7 +2241,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     setIsBusy(true);
 
     const treasuryWithdraw = async (data: TreasuryWithdrawParams) => {
-      if (!paymentStreaming) {
+      if (!publicKey || !paymentStreaming) {
         return null;
       }
 
@@ -2244,7 +2256,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           data.amount, // amount
           false, // autoWsol
         );
-        return transaction;
+
+        return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
       }
 
       if (!selectedVestingContract || !multisigClient || !multisigAccounts || !publicKey) {
@@ -2757,9 +2770,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           data.feePayedByTreasurer, // tokenFeePayedFromAccount
         );
 
-        const prioritizedV0Tx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
+        const prioritizedTx = composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
 
-        return prioritizedV0Tx;
+        return prioritizedTx;
       },
 
       generateMultisigArgs: async ({ multisig, data }) => {
