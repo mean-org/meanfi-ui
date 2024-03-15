@@ -34,7 +34,7 @@ export function AppRoutes() {
             }
           />
           <Route path="/my-account" element={<HomeView />} />
-          {isLocal() ? <Route path="/ddca" element={<SwapView />} /> : null}
+          {isProd() || isLocal() ? <Route path="/ddca" element={<SwapView />} /> : null}
           {(isProd() || isLocal()) && <Route path="/exchange-dcas" element={<ExchangeDcasView />} />}
           <Route path="/exchange" element={<Bridge />} />
           <Route path="/stats" element={<StatsView />} />

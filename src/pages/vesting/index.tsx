@@ -1597,8 +1597,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       if (!isMultisigContext || !params.fundFromSafe) {
         if (data.stream === '') {
           const accounts: AddFundsToAccountTransactionAccounts = {
-            feePayer: publicKey, // feePayer
-            contributor: publicKey, // contributor
+            feePayer: new PublicKey(data.payer), // feePayer
+            contributor: new PublicKey(data.contributor), // contributor
             psAccount: new PublicKey(data.treasury), // psAccount
             psAccountMint: new PublicKey(data.associatedToken), // psAccountMint
           };
