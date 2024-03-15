@@ -362,10 +362,7 @@ export const DdcaSetupModal = (props: {
         wrapSolIfNeeded,
       );
 
-      const transaction = await composeTxWithPrioritizationFees(connection, publicKey, tx[1].instructions);
-      transaction.signatures = tx[1].signatures;
-
-      return { ddca: tx[0], transaction };
+      return { ddca: tx[0], transaction: tx[1] };
     };
 
     const createTx = async (): Promise<boolean> => {
