@@ -53,9 +53,6 @@ export enum TransactionStatus {
   ConfirmTransactionFailure = 16,
   TransactionFinished = 17,
   SendTransactionFailureByMinimumAmount = 18,
-  CreateRecurringBuySchedule = 19,
-  CreateRecurringBuyScheduleSuccess = 20,
-  CreateRecurringBuyScheduleFailure = 21,
   FeatureTemporarilyDisabled = 50,
 }
 
@@ -78,11 +75,6 @@ export enum OperationType {
   TreasuryClose = 14,
   TreasuryRefreshBalance = 15,
   TreasuryEdit = 16,
-  // DDCA Options
-  DdcaCreate = 20,
-  DdcaAddFunds = 21,
-  DdcaWithdraw = 22,
-  DdcaClose = 23,
   // Multisig options
   CreateMultisig = 30,
   EditMultisig = 31,

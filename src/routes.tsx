@@ -2,10 +2,8 @@ import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { PageLoadingView } from 'views';
 import { AppLayout } from './components/Layout';
-import { isLocal, isProd } from './middleware/ui';
 import {
   CustodyView,
-  ExchangeDcasView,
   FaucetView,
   HomeView,
   NotFoundView,
@@ -15,7 +13,6 @@ import {
 } from './pages';
 import { ServiceUnavailableView } from './pages/service-unavailable';
 import Bridge from 'pages/swap';
-import { SwapView } from 'pages/exchange';
 
 const CreateSafeView = React.lazy(() => import('views/CreateSafe'));
 
@@ -34,8 +31,6 @@ export function AppRoutes() {
             }
           />
           <Route path="/my-account" element={<HomeView />} />
-          {isProd() || isLocal() ? <Route path="/ddca" element={<SwapView />} /> : null}
-          {(isProd() || isLocal()) && <Route path="/exchange-dcas" element={<ExchangeDcasView />} />}
           <Route path="/exchange" element={<Bridge />} />
           <Route path="/stats" element={<StatsView />} />
           <Route path="/faucet" element={<FaucetView />} />

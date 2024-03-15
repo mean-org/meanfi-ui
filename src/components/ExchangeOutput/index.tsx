@@ -2,8 +2,8 @@ import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount } from '../../middleware/utils';
-import { TokenInfo } from '@mean-dao/hybrid-liquidity-ag/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
+import { TokenInfo } from 'models/SolanaTokenInfo';
 
 export const ExchangeOutput = (props: {
   fromToken: TokenInfo | undefined;

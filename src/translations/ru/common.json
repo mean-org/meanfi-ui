@@ -138,90 +138,6 @@
       "title": "Supported Assets"
     }
   },
-  "ddca-selector": {
-    "modal-title": "Repeat this trade?",
-    "ote": {
-      "description": "Exchange now. One time.",
-      "name": "One time exchange"
-    },
-    "repeating-daily": {
-      "description": "Buy every day, starting now.",
-      "name": "Repeat daily",
-      "recurrence-period": "every day"
-    },
-    "repeating-once-month": {
-      "description": "Every 30 days, starting today.",
-      "name": "Repeat monthly",
-      "recurrence-period": "every 30 days"
-    },
-    "repeating-twice-month": {
-      "description": "Every other week on {{dayOfWeek}}, starting today.",
-      "name": "Every two weeks",
-      "recurrence-period": "every two weeks"
-    },
-    "repeating-weekly": {
-      "description": "Buy every {{dayOfWeek}}, starting today.",
-      "name": "Repeat weekly",
-      "recurrence-period": "every week"
-    }
-  },
-  "ddca-setup-modal": {
-    "cta-label-deposit": "Deposit",
-    "cta-label-depositing": "Depositing...",
-    "cta-label-vault-created": "Approved",
-    "headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
-    "help": {
-      "help-item-01": "You'll deposit {{fromTokenAmount}} into your personal vault.",
-      "help-item-01-topup": "Deposit an additional {{fromTokenAmount}} into your personal vault.",
-      "help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
-      "help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
-      "how-does-it-work": "How does it work?"
-    },
-    "modal-title": "Review Repeating Buy",
-    "notes": {
-      "note-item-01": "Only you can withdraw funds from your vault",
-      "note-item-02": "Fees for the scheduled swaps are charged upfront",
-      "note-item-03": "All unused fees are returned to you upon withdrawal",
-      "notes-title": "Important Notes"
-    }
-  },
-  "ddcas": {
-    "activity": {
-      "action-deposit": "Deposited {{fromAmount}}",
-      "action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
-      "action-withdraw": "Withdrew {{toAmount}}"
-    },
-    "add-funds": {
-      "headline": "Add <strong>{{fromTokenAmount}}</strong> to your personal vault.",
-      "modal-title": "Top Up/Add Funds"
-    },
-    "add-funds-cta-disabled-closing": "Canceling in progress...",
-    "add-funds-cta-disabled-executing-swap": "Exchange in progress...",
-    "add-funds-cta-disabled-funding": "Add funds in progress...",
-    "add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
-    "close-ddca": {
-      "modal-title": "Are you sure?",
-      "primary-cta": "Confirm",
-      "secondary-cta": "Back"
-    },
-    "exchange-dcas": {
-      "cancel-withdraw-everything": "Cancel and withdraw everything",
-      "deposited": "Deposited",
-      "detail-panel-word-one": "Buying",
-      "detail-panel-word-three": "every",
-      "detail-panel-word-two": "worth of",
-      "exchange-details": "Exchange details",
-      "exchanged-for": "Exchanged for (avg rate 1",
-      "next-scheduled-exchange": "Next scheduled exchange",
-      "rate-amount": "Every",
-      "total-deposits": "Total deposits",
-      "total-left": "Total left (will run out by",
-      "withdraw": "Withdraw"
-    },
-    "screen-title": "Recurring buys",
-    "setup-close-warning": "Closing without clicking. Start will skip your first purchase. Close anyways?",
-    "streams-ddcas": "Click to refresh recurring buys"
-  },
   "deposits": {
     "address-share-disclaimer": "This address can only be used to receive SOL and SPL tokens on Solana.",
     "back-to-deposit-options": "Back to Deposit options",
@@ -992,11 +908,6 @@
     "status": {
       "cta-view-stream": "View Stream",
       "cta-start-transfer-busy": "Creating transfer",
-      "ddca-add-funds": "Funding vault with",
-      "ddca-add-funds-success": "Funds added successfully",
-      "ddca-create-tx": "Create scheduled recurring exchange",
-      "ddca-create-tx-failure": "Could not create the recurring exchange",
-      "ddca-create-tx-success": "Recurring exchange created successfully",
       "instructions": "Confirm this transaction in your wallet",
       "modal-title-executing-transaction": "Executing transaction",
       "modal-title-transaction-completed": "Transaction completed",
@@ -1095,8 +1006,6 @@
       "valid-address-required": "A valid solana address is required",
       "valid-approve": "Approve on your wallet",
       "valid-continue": "Continue",
-      "valid-ddca-review": "Review",
-      "valid-start-funding": "Start funding",
       "valid-start-withdrawal": "Start withdrawal",
       "verified-recipient-unchecked": "Recipient Unchecked"
     }

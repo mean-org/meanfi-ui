@@ -8,7 +8,6 @@ export { NftPaginatedList } from './NftPaginatedList';
 export { OneTimePayment } from './OneTimePayment';
 export { OtherAssetsList } from './OtherAssetsList';
 export { PageLoadingView } from './PageLoading';
-export { RecurringExchange } from './RecurringExchange';
 export { RepeatingPayment } from './RepeatingPayment';
 export { StakeTabView } from './StakeTabView';
 export { StreamingAccountView } from './StreamingAccount';

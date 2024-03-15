@@ -28,10 +28,10 @@ export const isProd = (): boolean => {
 
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
-  // [::1] is the IPv6 localhost address.
-  window.location.hostname === '[::1]' ||
-  // 127.0.0.0/8 are considered localhost for IPv4.
-  RegExp(/^127(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/).exec(window.location.hostname),
+    // [::1] is the IPv6 localhost address.
+    window.location.hostname === '[::1]' ||
+    // 127.0.0.0/8 are considered localhost for IPv4.
+    RegExp(/^127(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/).exec(window.location.hostname),
 );
 
 export const isLocal = (): boolean => {
@@ -159,12 +159,6 @@ export function getTransactionStatusForLogs(status: TransactionStatus): string {
       return 'Transaction finished';
     case TransactionStatus.SendTransactionFailureByMinimumAmount:
       return 'Send transaction failure. Minimum amount required';
-    case TransactionStatus.CreateRecurringBuySchedule:
-      return 'Create recurring exchange schedule';
-    case TransactionStatus.CreateRecurringBuyScheduleSuccess:
-      return 'Recurring exchange created successfully';
-    case TransactionStatus.CreateRecurringBuyScheduleFailure:
-      return 'Could not create the recurring exchange';
     default:
       return ''; // 'Idle';
   }
@@ -487,12 +481,6 @@ export const getTransactionOperationDescription = (status: TransactionStatus | u
       return trans ? trans('transactions.status.tx-rejected') : 'Transaction rejected';
     case TransactionStatus.SendTransactionFailure:
       return trans ? trans('transactions.status.tx-send-failure') : 'Failure submitting transaction';
-    case TransactionStatus.CreateRecurringBuySchedule:
-      return trans ? trans('transactions.status.ddca-create-tx') : 'Create scheduled recurring exchange';
-    case TransactionStatus.CreateRecurringBuyScheduleSuccess:
-      return trans ? trans('transactions.status.ddca-create-tx-success') : 'Recurring exchange created successfully';
-    case TransactionStatus.CreateRecurringBuyScheduleFailure:
-      return trans ? trans('transactions.status.ddca-create-tx-failure') : 'Could not create the recurring exchange';
     case TransactionStatus.ConfirmTransactionFailure:
       return trans ? trans('transactions.status.tx-confirm-failure') : 'The transaction could not be confirmed';
     case TransactionStatus.TransactionFinished:

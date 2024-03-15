@@ -138,90 +138,6 @@
       "title": "Supported Assets"
     }
   },
-  "ddca-selector": {
-    "modal-title": "重复这笔交易？",
-    "ote": {
-      "description": "现在兑换。一次性",
-      "name": "一次性交换"
-    },
-    "repeating-daily": {
-      "description": "“从现在开始，每天购买。”",
-      "name": "每天重复",
-      "recurrence-period": "每天"
-    },
-    "repeating-once-month": {
-      "description": "“从今天开始，每30天一次。”",
-      "name": "每月重复",
-      "recurrence-period": "每30天"
-    },
-    "repeating-twice-month": {
-      "description": "“每隔一周的{{dayOfWeek}}，从今天开始。”",
-      "name": "每两周",
-      "recurrence-period": "每两周"
-    },
-    "repeating-weekly": {
-      "description": "“从今天开始，每{{dayOfWeek}}都买。”",
-      "name": "每周重复",
-      "recurrence-period": "每周"
-    }
-  },
-  "ddca-setup-modal": {
-    "cta-label-deposit": "存款",
-    "cta-label-depositing": "存款...",
-    "cta-label-vault-created": "已批准",
-    "headline": "“从今天开始，为<strong>{totalPeriod}</strong>购买价值<strong>{{ToToToTokenSymbol}}</strong>{recurrencePeriod}}}",
-    "help": {
-      "help-item-01": "你将把{fromTokenAmount}} 存入你的个人保险库。",
-      "help-item-01-topup": "将另外一个{fromTokenAmount}存入您的个人保险库。",
-      "help-item-02": "保险库使用存款进行交换{recurrencePeriod}。",
-      "help-item-03": "“准备好后，从保险库拿你的新{{ToToTokenSymbol}}。”",
-      "how-does-it-work": "它是如何工作的？"
-    },
-    "modal-title": "回顾重复购买",
-    "notes": {
-      "note-item-01": "只有你才能从保险库中提取资金",
-      "note-item-02": "定期兑换的费用是预先收取的",
-      "note-item-03": "所有未使用的费用将在提款时退还给您",
-      "notes-title": "重要提示"
-    }
-  },
-  "ddcas": {
-    "activity": {
-      "action-deposit": "存款{fromAmount}",
-      "action-exchange": "将{fromAmount}兑换为{toAmount}",
-      "action-withdraw": "提款{{toAmount}"
-    },
-    "add-funds": {
-      "headline": "将<strong>{{fromTokenAmount}}</strong>添加到您的个人保险库中。",
-      "modal-title": "追加资金"
-    },
-    "add-funds-cta-disabled-closing": "正在取消...",
-    "add-funds-cta-disabled-executing-swap": "正在兑换...",
-    "add-funds-cta-disabled-funding": "添加正在进行的资金……",
-    "add-funds-cta-disabled-withdrawing": "正在提款...",
-    "close-ddca": {
-      "modal-title": "你确定吗？",
-      "primary-cta": "确认",
-      "secondary-cta": "返回"
-    },
-    "exchange-dcas": {
-      "cancel-withdraw-everything": "Cancel and withdraw everything",
-      "deposited": "Deposited",
-      "detail-panel-word-one": "Buying",
-      "detail-panel-word-three": "every",
-      "detail-panel-word-two": "worth of",
-      "exchange-details": "Exchange details",
-      "exchanged-for": "Exchanged for (avg rate 1",
-      "next-scheduled-exchange": "Next scheduled exchange",
-      "rate-amount": "Every",
-      "total-deposits": "Total deposits",
-      "total-left": "Total left (will run out by",
-      "withdraw": "Withdraw"
-    },
-    "screen-title": "重复购买",
-    "setup-close-warning": "无需点击即可关闭。Start将跳过您的首次购买。总之关闭？",
-    "streams-ddcas": "单击以刷新重复购买"
-  },
   "deposits": {
     "address-share-disclaimer": "此地址只能用于在Solana上接收SOL和SPL令牌。",
     "back-to-deposit-options": "返回存款选项",
@@ -998,11 +914,6 @@
     "status": {
       "cta-start-transfer-busy": "Creating transfer",
       "cta-view-stream": "查看流",
-      "ddca-add-funds": "资金保险库",
-      "ddca-add-funds-success": "已成功添加资金",
-      "ddca-create-tx": "创建计划的定期兑换",
-      "ddca-create-tx-failure": "无法创建定期兑换",
-      "ddca-create-tx-success": "已成功创建定期兑换",
       "instructions": "在您的钱包中确认此交易",
       "modal-title-executing-transaction": "正在执行交易",
       "modal-title-transaction-completed": "交易已完成",
@@ -1111,10 +1022,7 @@
       "valid-address-required": "需要有效的solana地址",
       "valid-approve": "批准您的钱包",
       "valid-continue": "持续",
-      "valid-ddca-review": "回顾",
-      "valid-start-funding": "启动资金",
       "valid-start-withdrawal": "开始取款",
-      "valid-submit-proposal": "",
       "verified-recipient-unchecked": "未选中收款人验证"
     }
   },
