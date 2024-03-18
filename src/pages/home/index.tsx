@@ -141,6 +141,7 @@ import './style.scss';
 import useAccountPrograms from './useAccountPrograms';
 import useAppNavigation from './useAppNavigation';
 import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
+import createTokenTransferTx from 'middleware/createTokenTransferTx';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));
@@ -1191,7 +1192,7 @@ export const HomeView = () => {
             mint: new PublicKey(data.fromMint),
           };
 
-          const { transaction } = await paymentStreaming.buildTransferTransaction(accounts, data.tokenAmount);
+          const transaction = await createTokenTransferTx(connection, accounts, data.tokenAmount);
 
           const ix = transaction.instructions[0];
           const programId = ix.programId;
@@ -1210,9 +1211,9 @@ export const HomeView = () => {
     },
     [
       publicKey,
+      connection,
       nativeBalance,
       selectedMultisig,
-      paymentStreaming,
       selectedAsset?.symbol,
       selectedAsset?.decimals,
       transactionAssetFees.mspFlatFee,
