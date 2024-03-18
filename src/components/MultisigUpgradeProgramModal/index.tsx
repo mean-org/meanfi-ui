@@ -73,7 +73,7 @@ export const MultisigUpgradeProgramModal = ({
         .then(info => {
           if (info) {
             console.log('info', info);
-            const programDataAddress = new PublicKey(info.data.slice(4));
+            const programDataAddress = new PublicKey(info.data.subarray(4));
             setProgramDataAddress(programDataAddress.toBase58());
           }
         })

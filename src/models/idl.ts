@@ -22,7 +22,7 @@ const IDL_INSTRUCTION_LAYOUT = rustEnum([
 export function encodeInstruction(i: IdlInstruction): Buffer {
   const buffer = Buffer.alloc(1000); // TODO: use a tighter buffer.
   const len = IDL_INSTRUCTION_LAYOUT.encode(i, buffer);
-  return Buffer.concat([IDL_TAG, buffer.slice(0, len)]);
+  return Buffer.concat([IDL_TAG, buffer.subarray(0, len)]);
 }
 
 // Reverse for little endian.
