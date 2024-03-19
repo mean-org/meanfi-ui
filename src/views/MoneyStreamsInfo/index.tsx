@@ -23,7 +23,7 @@ import {
   AccountType,
   NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Button, Col, Dropdown, Row, Space, Spin, Tabs } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
@@ -626,7 +626,7 @@ export const MoneyStreamsInfoView = (props: {
   };
 
   const onExecuteAddFundsTransaction = async (params: TreasuryTopupParams) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuth = '';
@@ -927,7 +927,7 @@ export const MoneyStreamsInfoView = (props: {
       consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
       // Create a transaction
       const result = await addFunds(data)
-        .then((value: Transaction | null) => {
+        .then(value => {
           if (!value) {
             return false;
           }
@@ -1120,7 +1120,7 @@ export const MoneyStreamsInfoView = (props: {
   );
 
   const onExecuteCreateTreasuryTx = async (createOptions: TreasuryCreateOptions) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let transactionLog: any[] = [];

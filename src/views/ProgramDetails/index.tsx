@@ -10,6 +10,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   Transaction,
   TransactionInstructionCtorFields,
+  VersionedTransaction,
 } from '@solana/web3.js';
 import { Button, Col, notification, Row, Tooltip } from 'antd';
 import { segmentAnalytics } from 'App';
@@ -321,7 +322,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
   const onExecuteUpgradeProgramsTx = useCallback(
     async (params: ProgramUpgradeParams) => {
-      let transaction: Transaction | null = null;
+      let transaction: VersionedTransaction | Transaction | null = null;
       let signature: any;
       let encodedTx: string;
       let transactionLog: any[] = [];
@@ -666,7 +667,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
   const onExecuteSetProgramAuthTx = useCallback(
     async (params: SetProgramAuthPayload) => {
-      let transaction: Transaction | null = null;
+      let transaction: VersionedTransaction | Transaction | null = null;
       let signature: any;
       let encodedTx: string;
       let transactionLog: any[] = [];

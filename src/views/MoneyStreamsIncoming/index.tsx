@@ -20,7 +20,7 @@ import {
   WithdrawFromStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Button, Dropdown, Modal, Space, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
@@ -297,7 +297,7 @@ export const MoneyStreamsIncomingView = (props: {
 
   const onExecuteTransferStreamTransaction = useCallback(
     async (dataStream: any) => {
-      let transaction: Transaction | null = null;
+      let transaction: VersionedTransaction | Transaction | null = null;
       let signature: any;
       let encodedTx: string;
       let multisigAuth = '';
@@ -606,7 +606,7 @@ export const MoneyStreamsIncomingView = (props: {
   };
 
   const onExecuteWithdrawFundsTransaction = async (withdrawData: StreamWithdrawData) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuth = '';

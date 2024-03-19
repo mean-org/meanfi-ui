@@ -24,7 +24,7 @@ import {
   PauseResumeStreamTransactionAccounts,
   CloseStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Button, Dropdown, Modal, Space, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
@@ -415,7 +415,7 @@ export const MoneyStreamsOutgoingView = (props: {
   }, [hideAddFundsTransactionModal, refreshTokenBalance, setSuccessStatus]);
 
   const onExecuteAddFundsTransaction = async (addFundsData: StreamTopupParams) => {
-    let createdTransaction: Transaction | null = null;
+    let createdTransaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuth = '';
@@ -981,7 +981,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
   const onExecutePauseStreamTransaction = useCallback(
     async (title: string) => {
-      let transaction: Transaction | null = null;
+      let transaction: VersionedTransaction | Transaction | null = null;
       let signature: any;
       let encodedTx: string;
       let multisigAuth = '';
@@ -1422,7 +1422,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
   const onExecuteResumeStreamTransaction = useCallback(
     async (title: string) => {
-      let transaction: Transaction | null = null;
+      let transaction: VersionedTransaction | Transaction | null = null;
       let signature: any;
       let encodedTx: string;
       let multisigAuth = '';
@@ -1861,7 +1861,7 @@ export const MoneyStreamsOutgoingView = (props: {
   };
 
   const onExecuteCloseStreamTransaction = async (closeTreasuryData: CloseStreamParams) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuth = '';

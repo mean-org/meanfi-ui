@@ -11,7 +11,7 @@ import {
   MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
-import { ConfirmOptions, Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Button, Empty, Spin, Tooltip } from 'antd';
 import { segmentAnalytics } from 'App';
 import { ErrorReportModal } from 'components/ErrorReportModal';
@@ -409,7 +409,7 @@ const SafeView = (props: {
 
   const onExecuteEditMultisigTx = useCallback(
     async (data: any) => {
-      let transaction: Transaction | null = null;
+      let transaction: VersionedTransaction | Transaction | null = null;
       let signature: any;
       let encodedTx: string;
       let transactionLog: any[] = [];

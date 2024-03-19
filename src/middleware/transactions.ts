@@ -23,6 +23,7 @@ import { Confirmations, Timestamp } from '../models/transactions';
 import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { formatThousands, getAmountFromLamports, readLocalStorageKey, toBuffer } from './utils';
 import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
+import { isCredixFinance } from 'models/multisig';
 
 export type PriorityOption = 'normal' | 'fast' | 'turbo';
 
@@ -402,7 +403,7 @@ export const getProposalWithPrioritizationFees = async (
   // Rebuild same tx with budget instructions
   if (budgetIxs) {
     const newPreIxs = preInstructions ? [...budgetIxs, ...preInstructions] : budgetIxs;
-    return await instrumental.multisigClient.buildCreateProposalTransaction(
+    const newTx = await instrumental.multisigClient.buildCreateProposalTransaction(
       proposer,
       title,
       description,
@@ -414,6 +415,22 @@ export const getProposalWithPrioritizationFees = async (
       data,
       newPreIxs,
     );
+
+    if (isCredixFinance(program.toBase58())) {
+      const messageV0 = new TransactionMessage({
+        payerKey: proposer,
+        recentBlockhash: blockhash,
+        instructions: [...newPreIxs, ...result.transaction.instructions],
+      }).compileToV0Message();
+
+      const newV0Tx = new VersionedTransaction(messageV0);
+      return {
+        transaction: newV0Tx,
+        proposalAccount: result.proposalAccount,
+      };
+    }
+
+    return newTx;
   }
 
   return result;
