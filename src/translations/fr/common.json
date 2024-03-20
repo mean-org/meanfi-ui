@@ -1360,11 +1360,11 @@
     "priority-settings-title": "Transaction Priority Setting",
     "prioritization-overview": "The priority fee is paid to the Solana network to achieve faster transactions execution times.",
     "selector-label": "Choose a priority",
-    "priority-normal-label": "Normal",
+    "priority-standard-label": "Standard",
     "priority-fast-label": "Fast",
-    "priority-turbo-label": "Turbo",
-    "priority-normal-description": "A maximum of 0.00005 SOL will be used to speed up transaction submission and confirmation.",
+    "priority-basic-label": "Basic",
+    "priority-standard-description": "A maximum of 0.00005 SOL will be used to speed up transaction submission and confirmation.",
     "priority-fast-description": "A maximum of 0.0005 SOL will be used to speed up transaction submission and confirmation.",
-    "priority-turbo-description": "A maximum of 0.005 SOL will be used to speed up transaction submission and confirmation."
+    "priority-basic-description": "No priority fees."
   }
 }
