@@ -12,7 +12,7 @@ import {
   AccountType,
   CloseStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Button, Dropdown, Modal, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
@@ -437,7 +437,7 @@ export const VestingContractStreamList = (props: {
   };
 
   const onExecuteCloseStreamTransaction = async (closeStreamOptions: VestingContractCloseStreamOptions) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigId = '';

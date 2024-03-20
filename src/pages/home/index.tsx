@@ -24,7 +24,14 @@ import {
 } from '@mean-dao/payment-streaming';
 import { AnchorProvider, BN, Idl, Program } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import {
+  Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import { Alert, Button, Col, Divider, Dropdown, Empty, Row, Segmented, Space, Spin, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import notification from 'antd/lib/notification';
@@ -1242,7 +1249,7 @@ export const HomeView = () => {
 
   const onExecuteTransferOwnershipTx = useCallback(
     async (data: SetAssetAuthPayload) => {
-      let transaction: Transaction | null = null;
+      let transaction: VersionedTransaction | Transaction | null = null;
       let signature: any;
       let encodedTx: string;
       let transactionLog: any[] = [];
@@ -1453,7 +1460,7 @@ export const HomeView = () => {
 
   const onExecuteCloseAssetTx = useCallback(
     async (data: any) => {
-      let transaction: Transaction | null = null;
+      let transaction: VersionedTransaction | Transaction | null = null;
       let signature: any;
       let encodedTx: string;
       let multisigAuth = '';

@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.28.2",
+  "version": "1.28.3",
   "private": true,
   "browserslist": {
     "production": [
@@ -151,7 +151,7 @@
     "react-scripts": "5.0.1",
     "sass": "^1.56.1",
     "stream-browserify": "^3.0.0",
-    "terser-webpack-plugin": "5.3.0",
+    "terser-webpack-plugin": "^5.3.0",
     "typescript": "^4.8.4",
     "url": "^0.11.0",
     "webpack": "^5.76.3"
@@ -159,7 +159,7 @@
   "resolutions": {
     "crypto-js": "4.2.0",
     "@types/react": "17.0.30",
-    "terser-webpack-plugin": "5.3.0",
+    "terser-webpack-plugin": "5.3.7",
     "recharts/**/d3-color": "3.1.0"
   }
 }

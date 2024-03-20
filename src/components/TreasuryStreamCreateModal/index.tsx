@@ -10,7 +10,7 @@ import {
   CreateStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Button, Checkbox, Col, DatePicker, Divider, Dropdown, MenuProps, Modal, Row, Select, Tooltip } from 'antd';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
@@ -992,7 +992,7 @@ export const TreasuryStreamCreateModal = (props: {
   ////////////////////////
 
   const onStartTransaction = async () => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuth = '';
@@ -1002,7 +1002,7 @@ export const TreasuryStreamCreateModal = (props: {
     setIsBusy(true);
     resetTransactionStatus();
 
-    const createStream = async (data: CreateStreamParams): Promise<Transaction | null> => {
+    const createStream = async (data: CreateStreamParams) => {
       consoleOut('Is Multisig PaymentStreamingAccount: ', isSelectedStreamingAccountMultisigTreasury, 'blue');
       consoleOut('Multisig authority: ', selectedMultisig ? selectedMultisig.authority.toBase58() : '--', 'blue');
       consoleOut('Starting create stream using MSP V2...', '', 'blue');
