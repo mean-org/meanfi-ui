@@ -35,7 +35,14 @@ import {
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import {
+  Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import { Alert, Button, Dropdown, Row, Space, Spin, Tabs } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
@@ -778,7 +785,7 @@ export const StreamingAccountView = (props: {
   };
 
   const onExecuteAddFundsTransaction = async (params: TreasuryTopupParams) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuth = '';
@@ -1095,7 +1102,7 @@ export const StreamingAccountView = (props: {
       consoleOut('onExecuteAddFundsTransaction ->', 'StreamingAccountView', 'darkcyan');
       // Create a transaction
       const result = await addFunds(data)
-        .then((value: Transaction | null) => {
+        .then(value => {
           if (!value) {
             console.error('could not initialize addFunds Tx');
             setTransactionStatus({
@@ -1235,7 +1242,7 @@ export const StreamingAccountView = (props: {
   };
 
   const onExecuteTreasuryTransferFundsTx = async (data: TreasuryWithdrawParams) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let transactionLog: any[] = [];
@@ -1552,7 +1559,7 @@ export const StreamingAccountView = (props: {
   };
 
   const onExecuteCloseTreasuryTransaction = async (title: string) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let transactionLog: any[] = [];
@@ -1911,7 +1918,7 @@ export const StreamingAccountView = (props: {
   }, [isMultisigContext, refreshUserBalances, resetTransactionStatus, selectedMultisig]);
 
   const onExecuteRefreshTreasuryBalance = useCallback(async () => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let transactionLog: any[] = [];

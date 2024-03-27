@@ -27,7 +27,7 @@ import {
   UpdateVestingTemplateTransactionAccounts,
   NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Alert, Button, Dropdown, notification, Space, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
@@ -929,7 +929,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const onExecuteCreateVestingContractTransaction = useCallback(
     async (createOptions: VestingContractCreateOptions) => {
-      let transaction: Transaction | null = null;
+      let transaction: VersionedTransaction | Transaction | null = null;
       let signature: any;
       let encodedTx: string;
       let transactionLog: any[] = [];
@@ -1298,7 +1298,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   };
 
   const onExecuteCloseTreasuryTransaction = async (proposalTitle: string) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuthority = '';
@@ -1580,7 +1580,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   }, [resetTransactionStatus]);
 
   const onExecuteAddFundsTransaction = async (params: VestingContractTopupParams) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuthority = '';
@@ -1921,7 +1921,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   }, [clearFormValues, resetTransactionStatus]);
 
   const onExecuteCreateStreamTransaction = async (params: VestingContractStreamCreateOptions) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let generatedStremId: string;
@@ -2231,7 +2231,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   };
 
   const onExecuteVestingContractTransferFundsTx = async (params: VestingContractWithdrawOptions) => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let multisigAuthority = '';
@@ -2503,7 +2503,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   }, [refreshTokenBalance, resetTransactionStatus]);
 
   const onExecuteRefreshVestingContractBalance = useCallback(async () => {
-    let transaction: Transaction | null = null;
+    let transaction: VersionedTransaction | Transaction | null = null;
     let signature: any;
     let encodedTx: string;
     let transactionLog: any[] = [];

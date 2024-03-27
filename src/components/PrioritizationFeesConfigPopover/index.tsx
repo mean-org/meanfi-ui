@@ -25,12 +25,12 @@ const PopoverContent = ({ transactionPriorityOptions, onOptionChanged }: Popover
 
   const priorityDescription = useMemo(() => {
     switch (transactionPriorityOptions.priorityOption) {
-      case 'normal':
-        return t('priority-fees.priority-normal-description');
+      case 'basic':
+        return t('priority-fees.priority-basic-description');
+      case 'standard':
+        return t('priority-fees.priority-standard-description');
       case 'fast':
         return t('priority-fees.priority-fast-description');
-      case 'turbo':
-        return t('priority-fees.priority-turbo-description');
       default:
         return '';
     }
@@ -43,9 +43,9 @@ const PopoverContent = ({ transactionPriorityOptions, onOptionChanged }: Popover
       <Segmented
         block
         options={[
-          { label: t('priority-fees.priority-normal-label'), value: 'normal' },
+          { label: t('priority-fees.priority-basic-label'), value: 'basic' },
+          { label: t('priority-fees.priority-standard-label'), value: 'standard' },
           { label: t('priority-fees.priority-fast-label'), value: 'fast' },
-          { label: t('priority-fees.priority-turbo-label'), value: 'turbo' },
         ]}
         value={transactionPriorityOptions.priorityOption}
         onChange={onOptionChanged}
@@ -90,13 +90,12 @@ const PrioritizationFeesConfigPopover = () => {
   useEffect(() => {
     if (popoverVisible) {
       let o = transactionPriorityOptions.priorityOption;
-      const isOptionOk = o === 'normal' || o === 'fast' || o === 'turbo';
+      const isOptionOk = o === 'basic' || o === 'standard' || o === 'fast';
 
       // Do nothing if value is in range
       if (isOptionOk) return;
 
-      // If users already configured for 'disabled' or 'ultra' normalize value to 'normal'
-      if (o !== 'normal' && o !== 'fast' && o !== 'turbo') o = 'normal';
+      o = 'standard';
 
       consoleOut('Transaction Priority option:', o, 'darkorange');
       consoleOut('Compute Unit price:', `${formatThousands(COMPUTE_UNIT_PRICE[o])} microlamports`, 'darkorange');

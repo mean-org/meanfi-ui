@@ -24,14 +24,16 @@ import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { formatThousands, getAmountFromLamports, readLocalStorageKey, toBuffer } from './utils';
 import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
 
-export type PriorityOption = 'normal' | 'fast' | 'turbo';
+export type PriorityOption = 'basic' | 'standard' | 'fast';
 
+const LOW_VALUE = 127; // 0x7f
+const HIGH_VALUE = 16383; // 0x3fff
 const COMPUTE_UNIT_LIMIT = 200_000;
 
 export const COMPUTE_UNIT_PRICE = {
-  normal: 250_000,
+  basic: 0,
+  standard: 250_000,
   fast: 2_500_000,
-  turbo: 25_000_000,
 };
 
 export interface ComputeBudgetConfig {
@@ -40,13 +42,28 @@ export interface ComputeBudgetConfig {
 }
 
 export const DEFAULT_BUDGET_CONFIG: ComputeBudgetConfig = {
-  priorityOption: 'normal',
+  priorityOption: 'standard',
   cap: 0,
 };
 
 export class TransactionWithSignature {
   constructor(public signature: string, public confirmedTransaction: VersionedTransactionResponse) {}
 }
+
+/**
+ * Compact u16 array header size
+ * @param n elements in the compact array
+ * @returns size in bytes of array header
+ */
+const compactHeader = (n: number) => (n <= LOW_VALUE ? 1 : n <= HIGH_VALUE ? 2 : 3);
+
+/**
+ * Compact u16 array size
+ * @param n elements in the compact array
+ * @param size bytes per each element
+ * @returns size in bytes of array
+ */
+const compactArraySize = (n: number, size: number) => compactHeader(n) + n * size;
 
 export async function getTransactions(
   connection: Connection,
@@ -317,9 +334,12 @@ export const serializeTx = (signed: Transaction | VersionedTransaction) => {
 
 export const getComputeBudgetIx = (config: ComputeBudgetConfig, cuLimit = COMPUTE_UNIT_LIMIT) => {
   let o = config.priorityOption;
+  const isOptionOk = o === 'basic' || o === 'standard' || o === 'fast';
 
-  // Use 'normal' as default if previously configured for 'disabled' or 'ultra'
-  if (o !== 'normal' && o !== 'fast' && o !== 'turbo') o = 'normal';
+  if (o === 'basic') return [];
+
+  // Use 'standard' as default if value is out of range
+  if (!isOptionOk) o = 'standard';
 
   consoleOut('Transaction Priority option:', o, 'darkorange');
   consoleOut('Compute Unit price:', `${formatThousands(COMPUTE_UNIT_PRICE[o])} microlamports`, 'darkorange');
@@ -329,6 +349,49 @@ export const getComputeBudgetIx = (config: ComputeBudgetConfig, cuLimit = COMPUT
     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: COMPUTE_UNIT_PRICE[o] }),
     ComputeBudgetProgram.setComputeUnitLimit({ units: cuLimit + 10_000 }),
   ];
+};
+
+/**
+ * @param tx a solana transaction
+ * @param feePayer the publicKey of the signer
+ * @returns size in bytes of the transaction
+ */
+const getTxSize = (tx: Transaction, feePayer: PublicKey): number => {
+  const feePayerPk = [feePayer.toBase58()];
+
+  const signers = new Set<string>(feePayerPk);
+  const accounts = new Set<string>(feePayerPk);
+
+  const ixsSize = tx.instructions.reduce((acc, ix) => {
+    ix.keys.forEach(({ pubkey, isSigner }) => {
+      const pk = pubkey.toBase58();
+      if (isSigner) signers.add(pk);
+      accounts.add(pk);
+    });
+
+    accounts.add(ix.programId.toBase58());
+
+    const nIndexes = ix.keys.length;
+    const opaqueData = ix.data.length;
+
+    return (
+      acc +
+      1 + // PID index
+      compactArraySize(nIndexes, 1) +
+      compactArraySize(opaqueData, 1)
+    );
+  }, 0);
+
+  const computedSize =
+    compactArraySize(signers.size, 64) + // signatures
+    3 + // header
+    compactArraySize(accounts.size, 32) + // accounts
+    32 + // blockhash
+    compactHeader(tx.instructions.length) + // instructions
+    ixsSize;
+  consoleOut('Transaction size:', computedSize, 'brown');
+
+  return computedSize + 52; // My calculation could be wrong since I am always 52 bytes below what Solana explorer reports
 };
 
 const getComputeUnitsEstimate = async (
@@ -402,7 +465,7 @@ export const getProposalWithPrioritizationFees = async (
   // Rebuild same tx with budget instructions
   if (budgetIxs) {
     const newPreIxs = preInstructions ? [...budgetIxs, ...preInstructions] : budgetIxs;
-    return await instrumental.multisigClient.buildCreateProposalTransaction(
+    const newTx = await instrumental.multisigClient.buildCreateProposalTransaction(
       proposer,
       title,
       description,
@@ -414,6 +477,13 @@ export const getProposalWithPrioritizationFees = async (
       data,
       newPreIxs,
     );
+
+    const txSize = getTxSize(result.transaction, proposer);
+    if (txSize > 1232) {
+      return result;
+    }
+
+    return newTx;
   }
 
   return result;
@@ -448,6 +518,11 @@ export const composeTxWithPrioritizationFees = async (
     newTx.recentBlockhash = blockhash;
     if (signers?.length) {
       newTx.partialSign(...signers);
+    }
+
+    const txSize = getTxSize(transaction, payer);
+    if (txSize > 1232) {
+      return transaction;
     }
 
     return newTx;
