@@ -10,12 +10,12 @@ import { TokenDisplay } from 'components/TokenDisplay';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import {
+  displayAmountWithSymbol,
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
   isValidNumber,
-  makeDecimal,
   toTokenAmount,
   toUiAmount,
 } from 'middleware/utils';
@@ -89,6 +89,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     srcTokens,
     dstTokens,
     srcChainTokenIn,
+    srcChainTokenInAmount,
     dstChainTokenOut,
     quote,
     singlChainQuote,
@@ -129,6 +130,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
 
   const { switchNetwork } = useSwitchNetwork();
 
+  const inputAmountBn = useMemo(() => new BN(srcChainTokenInAmount ?? 0), [srcChainTokenInAmount]);
+
   const balance = useBalance({
     enabled: sourceChain !== SOLANA_CHAIN_ID && srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID,
     address,
@@ -137,14 +140,11 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       srcChainTokenIn?.address === srcChainData?.networkFeeToken ? undefined : `0x${srcChainTokenIn?.address.slice(2)}`,
   });
 
-  const operatingExpenses = useMemo(() => {
-    if (!srcChainTokenIn || !quote?.prependedOperatingExpenseCost) return 0;
+  const operatingExpensesBn = useMemo(() => {
+    const opsExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
 
-    const expenses = BigInt(isCrossChainSwap ? quote.prependedOperatingExpenseCost ?? 0 : 0).toString();
-    const expensesUiAmount = toUiAmount(expenses, srcChainTokenIn.decimals);
-
-    return parseFloat(expensesUiAmount);
-  }, [isCrossChainSwap, quote?.prependedOperatingExpenseCost, srcChainTokenIn]);
+    return new BN(opsExpenses.toString());
+  }, [isCrossChainSwap, quote?.prependedOperatingExpenseCost]);
 
   // Get EVM fee data
   useEffect(() => {
@@ -181,13 +181,14 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       max = userBalance - maxGas - (isCrossChainSwap ? protocolFixFee : 0) - (isCrossChainSwap ? operatingExpenses : 0);
     */
 
+    consoleOut('tokenBalanceBn:', tokenBalanceBn.toString(), 'blue');
     const affiliateFeeBn = percentageBn(FEE_PERCENT, tokenBalanceBn) as BN;
-    consoleOut('userBalance:', makeDecimal(tokenBalanceBn, srcChainTokenIn.decimals), 'cadetblue');
+    consoleOut('userBalance:', toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals), 'cadetblue');
     if (sameChainSwap) {
       const deducted = tokenBalanceBn.sub(affiliateFeeBn);
       const calculatedMax = toUiAmount(deducted, srcChainTokenIn.decimals);
-      consoleOut('affiliateFee:', makeDecimal(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
-      consoleOut('max:', makeDecimal(deducted, srcChainTokenIn.decimals), 'cadetblue');
+      consoleOut('affiliateFee:', toUiAmount(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
+      consoleOut('max:', toUiAmount(deducted, srcChainTokenIn.decimals), 'cadetblue');
       return parseFloat(calculatedMax);
     } else {
       const maxGas = chainFeeData?.maxFeePerGas ?? BigInt(0);
@@ -196,14 +197,14 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       const affiliateFee = BigInt(affiliateFeeBn.toString());
       const opsExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
       const max = userBalance - maxGas - opsExpenses - affiliateFee;
-      consoleOut('maxGas:', makeDecimal(new BN(maxGas.toString()), srcChainTokenIn.decimals), 'cadetblue');
+      consoleOut('maxGas:', toUiAmount(new BN(maxGas.toString()), srcChainTokenIn.decimals), 'cadetblue');
       consoleOut(
         'operatingExpenses:',
-        makeDecimal(new BN(opsExpenses.toString()), srcChainTokenIn.decimals),
+        toUiAmount(new BN(opsExpenses.toString()), srcChainTokenIn.decimals),
         'cadetblue',
       );
-      consoleOut('affiliateFee:', makeDecimal(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
-      consoleOut('max:', makeDecimal(new BN(max.toString()), srcChainTokenIn.decimals), 'cadetblue');
+      consoleOut('affiliateFee:', toUiAmount(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
+      consoleOut('max:', toUiAmount(new BN(max.toString()), srcChainTokenIn.decimals), 'cadetblue');
 
       if (max <= 0) {
         return 0;
@@ -570,11 +571,11 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return false;
     } else if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
       return false;
-    } else if (!parseFloat(amountIn)) {
+    } else if (inputAmountBn.isZero()) {
       return false;
-    } else if (!tokenBalance || tokenBalance < parseFloat(amountIn)) {
+    } else if (tokenBalanceBn.isZero() || tokenBalanceBn.lt(inputAmountBn)) {
       return false;
-    } else if (tokenBalance < operatingExpenses + parseFloat(amountIn)) {
+    } else if (tokenBalanceBn.lt(operatingExpensesBn.add(inputAmountBn))) {
       return false;
     } else if (lastQuoteError) {
       return false;
@@ -590,10 +591,10 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return true;
     }
   }, [
-    amountIn,
-    tokenBalance,
+    inputAmountBn,
+    tokenBalanceBn,
     destinationChain,
-    operatingExpenses,
+    operatingExpensesBn,
     srcChainTokenIn?.address,
     dstChainTokenOut?.address,
     dstChainTokenOutRecipient,
@@ -612,13 +613,13 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return 'Connect wallet';
     } else if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
       return 'Tokens should be different';
-    } else if (!parseFloat(amountIn)) {
+    } else if (inputAmountBn.isZero()) {
       return 'No amount';
-    } else if (!tokenBalance) {
+    } else if (tokenBalanceBn.isZero()) {
       return 'No balance';
-    } else if (tokenBalance < parseFloat(amountIn)) {
+    } else if (tokenBalanceBn.lt(inputAmountBn)) {
       return srcChainTokenIn ? `Amount exceeds your ${srcChainTokenIn.symbol} balance` : 'Amount exceeds your balance';
-    } else if (tokenBalance < operatingExpenses + parseFloat(amountIn)) {
+    } else if (tokenBalanceBn.lt(operatingExpensesBn.add(inputAmountBn))) {
       return 'Insufficient balance to cover fees';
     } else if (lastQuoteError) {
       return getUiErrorString(lastQuoteError);
@@ -634,14 +635,14 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return 'Create trade';
     }
   }, [
-    amountIn,
     isBuildingTx,
     dstChainName,
-    tokenBalance,
+    inputAmountBn,
+    tokenBalanceBn,
     isFetchingQuote,
-    destinationChain,
     srcChainTokenIn,
-    operatingExpenses,
+    destinationChain,
+    operatingExpensesBn,
     dstChainTokenOut?.address,
     dstChainTokenOutRecipient,
     getTxPreparationErrorMessage,
@@ -663,73 +664,57 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   // Establish sender address.
   useEffect(() => {
     if (isSrcChainSolana && publicKey) {
-      consoleOut('Stablishing sender:', publicKey.toBase58(), 'cadetblue');
+      consoleOut('Establishing sender:', publicKey.toBase58(), 'cadetblue');
       setSenderAddress(publicKey.toBase58());
     } else if (!isSrcChainSolana && isAddressConnected && address) {
-      consoleOut('Stablishing sender:', address, 'cadetblue');
+      consoleOut('Establishing sender:', address, 'cadetblue');
       setSenderAddress(address);
     } else {
-      consoleOut('Stablishing sender:', '', 'cadetblue');
+      consoleOut('Establishing sender:', '', 'cadetblue');
       setSenderAddress('');
     }
   }, [address, isAddressConnected, isSrcChainSolana, publicKey, setSenderAddress]);
 
-  // Keep solana account balance updated
+  // Keep solana native account balance updated
   useEffect(() => {
     setNativeBalance(getAmountFromLamports(account?.lamports));
   }, [account?.lamports]);
 
-  // Keep selected token balance updated for EVM
+  // Keep selected token balance updated
   useEffect(() => {
-    if (isSrcChainSolana) return;
-
-    if (srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID && balance.data) {
-      consoleOut('srcToken balance:', balance.data.formatted, 'cadetblue');
-      setSelectedTokenBalance(parseFloat(balance.data.formatted));
-      setSelectedTokenBalanceBn(new BN(balance.data.value.toString()));
-    } else {
-      setSelectedTokenBalance(0);
-      setSelectedTokenBalanceBn(new BN(0));
-    }
-  }, [balance.data, isSrcChainSolana, srcChainTokenIn?.chainId]);
-
-  // Keep selected token balance updated for solana
-  useEffect(() => {
-    if (!isSrcChainSolana) return;
-
-    if (!publicKey || !srcChainTokenIn) {
-      setSelectedTokenBalance(0);
-      setSelectedTokenBalanceBn(new BN(0));
-
-      return;
-    }
-
-    if (!isValidAddress(srcChainTokenIn.address)) return;
-
-    if (srcChainTokenIn.address === NATIVE_SOL.address) {
-      setSelectedTokenBalance(nativeBalance);
-      const balanceBn = toTokenAmount(nativeBalance, srcChainTokenIn.decimals);
-      setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
-
-      return;
-    }
-
-    consoleOut('Creating PK for', srcChainTokenIn.address, 'cadetblue');
-    const srcTokenPk = new PublicKey(srcChainTokenIn.address);
-    const srcTokenAddress = findATokenAddress(publicKey, srcTokenPk);
-    getTokenAccountBalanceByAddress(connection, srcTokenAddress)
-      .then(result => {
-        const balance = result?.uiAmount ?? 0;
-        consoleOut('srcToken balance:', balance, 'cadetblue');
-        setSelectedTokenBalance(balance);
-        const balanceBn = toTokenAmount(balance, srcChainTokenIn.decimals);
-        setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
-      })
-      .catch(() => {
-        setSelectedTokenBalance(0);
+    if (isSrcChainSolana) {
+      // Update for Solana
+      if (!publicKey || !srcChainTokenIn || !isValidAddress(srcChainTokenIn.address)) {
         setSelectedTokenBalanceBn(new BN(0));
-      });
-  }, [connection, isSrcChainSolana, nativeBalance, publicKey, srcChainTokenIn]);
+
+        return;
+      }
+      consoleOut('Creating PK for', srcChainTokenIn.address, 'cadetblue');
+      const srcTokenPk = new PublicKey(srcChainTokenIn.address);
+      const srcTokenAddress = findATokenAddress(publicKey, srcTokenPk);
+      getTokenAccountBalanceByAddress(connection, srcTokenAddress)
+        .then(result => {
+          const balance = result?.uiAmount ?? 0;
+          consoleOut('srcToken balance:', balance, 'cadetblue');
+          setSelectedTokenBalance(balance);
+          const balanceBn = toTokenAmount(balance, srcChainTokenIn.decimals);
+          setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
+        })
+        .catch(() => {
+          setSelectedTokenBalance(0);
+          setSelectedTokenBalanceBn(new BN(0));
+        });
+    } else {
+      // Update for EVM
+      if (srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID && balance.data) {
+        consoleOut('srcToken balance:', balance.data.value.toString(), 'cadetblue');
+        consoleOut('srcToken formatted balance:', balance.data.formatted, 'cadetblue');
+        setSelectedTokenBalanceBn(new BN(balance.data.value.toString()));
+      } else {
+        setSelectedTokenBalanceBn(new BN(0));
+      }
+    }
+  }, [balance.data, connection, isSrcChainSolana, publicKey, srcChainTokenIn]);
 
   // Set srcChainTokenIn if srcTokens are loaded
   useEffect(() => {
@@ -759,7 +744,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     let timer: any;
     if (!sourceChain || !destinationChain) return;
 
-    if (amountIn && parseFloat(amountIn) && srcChainTokenIn?.address && dstChainTokenOut?.address) {
+    if (inputAmountBn.gt(new BN(0)) && srcChainTokenIn?.address && dstChainTokenOut?.address) {
       timer = setInterval(() => {
         if (!isFetchingQuote) {
           consoleOut(`Refreshing quote after ${QUOTE_REFRESH_TIMEOUT / 1000} seconds`);
@@ -774,7 +759,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       }
     };
   }, [
-    amountIn,
+    inputAmountBn,
     destinationChain,
     dstChainTokenOut?.address,
     srcChainTokenIn?.address,
@@ -883,13 +868,13 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                     }`}
                   </span>
                   <span>
-                    {srcChainTokenIn && operatingExpenses > 0
-                      ? ` (min: ${getAmountWithSymbol(
-                          operatingExpenses,
+                    {srcChainTokenIn && operatingExpensesBn.gt(new BN(0))
+                      ? ` (min: ${displayAmountWithSymbol(
+                          operatingExpensesBn,
                           srcChainTokenIn.address,
-                          true,
-                          tokenList,
                           srcChainTokenIn.decimals,
+                          tokenList,
+                          true,
                           false,
                         )})`
                       : null}
