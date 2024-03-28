@@ -17,11 +17,7 @@ import {
   toTokenAmount,
   toUiAmount,
 } from 'middleware/utils';
-import {
-  INPUT_DEBOUNCE_TIME,
-  MIN_SOL_BALANCE_REQUIRED,
-  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-} from 'constants/common';
+import { INPUT_DEBOUNCE_TIME, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { useWallet } from 'contexts/wallet';
@@ -153,12 +149,21 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     fetchFeeData().then(value => setChainFeeData(value));
   }, [sourceChain]);
 
+  const minBalanceRequired = useMemo(() => {
+    if (!srcChainTokenIn) return 0;
+
+    const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
+    const opsExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
+
+    return parseFloat(toUiAmount(new BN((protocolFixFee + opsExpenses).toString()), srcChainTokenIn.decimals));
+  }, [isCrossChainSwap, quote?.fixFee, quote?.prependedOperatingExpenseCost, srcChainTokenIn]);
+
   const maxAmount = useMemo(() => {
     if (!srcChainTokenIn) return 0;
 
     // If source chain is Solana lets force a margin of 0.05 SOL as min balance
     if (srcChainTokenIn.address === NATIVE_SOL.address) {
-      const safeAmount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
+      const safeAmount = nativeBalance - minBalanceRequired;
       const amount = safeAmount > 0 ? safeAmount : 0;
       return amount;
     }
@@ -214,6 +219,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     chainFeeData?.maxFeePerGas,
     quote?.fixFee,
     quote?.prependedOperatingExpenseCost,
+    minBalanceRequired,
     isCrossChainSwap,
     srcChainTokenIn,
     tokenBalanceBn,
@@ -686,19 +692,24 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
 
         return;
       }
-      consoleOut('Creating PK for', srcChainTokenIn.address, 'cadetblue');
-      const srcTokenPk = new PublicKey(srcChainTokenIn.address);
-      const srcTokenAddress = findATokenAddress(publicKey, srcTokenPk);
-      getTokenAccountBalanceByAddress(connection, srcTokenAddress)
-        .then(result => {
-          const balance = result?.uiAmount ?? 0;
-          consoleOut('srcToken balance:', balance, 'cadetblue');
-          const balanceBn = toTokenAmount(balance, srcChainTokenIn.decimals);
-          setTokenBalanceBn(new BN(balanceBn.toString()));
-        })
-        .catch(() => {
-          setTokenBalanceBn(new BN(0));
-        });
+      if (srcChainTokenIn.address === NATIVE_SOL.address) {
+        const balanceBn = toTokenAmount(nativeBalance, srcChainTokenIn.decimals);
+        setTokenBalanceBn(new BN(balanceBn.toString()));
+      } else {
+        consoleOut('Creating PK for', srcChainTokenIn.address, 'cadetblue');
+        const srcTokenPk = new PublicKey(srcChainTokenIn.address);
+        const srcTokenAddress = findATokenAddress(publicKey, srcTokenPk);
+        getTokenAccountBalanceByAddress(connection, srcTokenAddress)
+          .then(result => {
+            const balance = result?.uiAmount ?? 0;
+            consoleOut('srcToken balance:', balance, 'cadetblue');
+            const balanceBn = toTokenAmount(balance, srcChainTokenIn.decimals);
+            setTokenBalanceBn(new BN(balanceBn.toString()));
+          })
+          .catch(() => {
+            setTokenBalanceBn(new BN(0));
+          });
+      }
     } else {
       // Update for EVM
       if (srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID && balance.data) {
@@ -709,7 +720,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
         setTokenBalanceBn(new BN(0));
       }
     }
-  }, [balance.data, connection, isSrcChainSolana, publicKey, srcChainTokenIn]);
+  }, [balance.data, connection, isSrcChainSolana, nativeBalance, publicKey, srcChainTokenIn]);
 
   // Set srcChainTokenIn if srcTokens are loaded
   useEffect(() => {
@@ -884,9 +895,6 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                   )}
                 </div>
               </div>
-              {isSrcChainSolana && nativeBalance < MIN_SOL_BALANCE_REQUIRED && (
-                <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
-              )}
             </div>
 
             {/* Destination chain, token & amount */}
