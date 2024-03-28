@@ -10,11 +10,9 @@ import { TokenDisplay } from 'components/TokenDisplay';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import {
-  displayAmountWithSymbol,
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
-  getAmountWithSymbol,
   isValidNumber,
   toTokenAmount,
   toUiAmount,
@@ -66,7 +64,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   const { account } = useNativeAccount();
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const { loadingPrices, tokenList, refreshPrices, getTokenPriceByAddress } = useContext(AppStateContext);
+  const { loadingPrices, refreshPrices, getTokenPriceByAddress } = useContext(AppStateContext);
   const { addTransactionNotification } = useContext(TxConfirmationContext);
   const [uiStage, setUiStage] = useState<UiStage>('order-setup');
   const [orderSubmittedContent, setOrderSubmittedContent] = useState<{ message: string; txHash: string }>();
@@ -76,8 +74,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   const debouncedAmountInput = useDebounce<string>(amountInput, INPUT_DEBOUNCE_TIME);
 
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
-  const [tokenBalanceBn, setSelectedTokenBalanceBn] = useState(new BN(0));
+  const [tokenBalanceBn, setTokenBalanceBn] = useState(new BN(0));
   const [swapRate, setSwapRate] = useState(false);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [selectedTokenSet, setSelectedTokenSet] = useState<ActionTarget>('source');
@@ -173,7 +170,6 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       - operatingExpenses = prependedOperatingExpenseCost saved from the last /create-tx query
       - maxGas = current max gas for the current fromChain (that's a regular gas calculation dapps use for fast confirmation)
         maxFeePerGas = baseFeePerGas + maxPriorityFeePerGas https://docs.alchemy.com/docs/maxpriorityfeepergas-vs-maxfeepergas
-        WAGMI already covers this calculation https://wagmi.sh/core/actions/fetchFeeData
       - protocolFixFee - fixFee in native token for this chain (https://docs.dln.trade/the-core-protocol/fees-and-supported-chains)
 
       From balance we deduct maxGas, and also operatingExpenses with 15% margin and fixFee
@@ -192,11 +188,11 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return parseFloat(calculatedMax);
     } else {
       const maxGas = chainFeeData?.maxFeePerGas ?? BigInt(0);
-      // const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
+      const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
       const userBalance = BigInt(tokenBalanceBn.toString());
       const affiliateFee = BigInt(affiliateFeeBn.toString());
       const opsExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
-      const max = userBalance - maxGas - opsExpenses - affiliateFee;
+      const max = userBalance - maxGas - protocolFixFee - opsExpenses - affiliateFee;
       consoleOut('maxGas:', toUiAmount(new BN(maxGas.toString()), srcChainTokenIn.decimals), 'cadetblue');
       consoleOut(
         'operatingExpenses:',
@@ -216,6 +212,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   }, [
     nativeBalance,
     chainFeeData?.maxFeePerGas,
+    quote?.fixFee,
     quote?.prependedOperatingExpenseCost,
     isCrossChainSwap,
     srcChainTokenIn,
@@ -685,7 +682,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     if (isSrcChainSolana) {
       // Update for Solana
       if (!publicKey || !srcChainTokenIn || !isValidAddress(srcChainTokenIn.address)) {
-        setSelectedTokenBalanceBn(new BN(0));
+        setTokenBalanceBn(new BN(0));
 
         return;
       }
@@ -696,22 +693,20 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
         .then(result => {
           const balance = result?.uiAmount ?? 0;
           consoleOut('srcToken balance:', balance, 'cadetblue');
-          setSelectedTokenBalance(balance);
           const balanceBn = toTokenAmount(balance, srcChainTokenIn.decimals);
-          setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
+          setTokenBalanceBn(new BN(balanceBn.toString()));
         })
         .catch(() => {
-          setSelectedTokenBalance(0);
-          setSelectedTokenBalanceBn(new BN(0));
+          setTokenBalanceBn(new BN(0));
         });
     } else {
       // Update for EVM
       if (srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID && balance.data) {
         consoleOut('srcToken balance:', balance.data.value.toString(), 'cadetblue');
         consoleOut('srcToken formatted balance:', balance.data.formatted, 'cadetblue');
-        setSelectedTokenBalanceBn(new BN(balance.data.value.toString()));
+        setTokenBalanceBn(new BN(balance.data.value.toString()));
       } else {
-        setSelectedTokenBalanceBn(new BN(0));
+        setTokenBalanceBn(new BN(0));
       }
     }
   }, [balance.data, connection, isSrcChainSolana, publicKey, srcChainTokenIn]);
@@ -862,20 +857,16 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                   <span>{t('transactions.send-amount.label-right')}:</span>
                   <span>
                     {`${
-                      tokenBalance && srcChainTokenIn
-                        ? getAmountWithSymbol(tokenBalance, srcChainTokenIn.address, true)
+                      tokenBalanceBn && srcChainTokenIn
+                        ? formatThousands(parseFloat(toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals)), 5)
                         : '0'
                     }`}
                   </span>
                   <span>
                     {srcChainTokenIn && operatingExpensesBn.gt(new BN(0))
-                      ? ` (min: ${displayAmountWithSymbol(
-                          operatingExpensesBn,
-                          srcChainTokenIn.address,
-                          srcChainTokenIn.decimals,
-                          tokenList,
-                          true,
-                          false,
+                      ? ` (min: ${formatThousands(
+                          parseFloat(toUiAmount(operatingExpensesBn, srcChainTokenIn.decimals)),
+                          5,
                         )})`
                       : null}
                   </span>

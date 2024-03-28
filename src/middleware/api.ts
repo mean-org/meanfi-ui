@@ -40,7 +40,7 @@ export const getSplTokens = async (chainId: number, honorCache = true): Promise<
     .then(response => response.json())
     .then(response => {
       // Filter out items with no decimals value
-      const filtered = (response as SimpleTokenInfo[]).filter(t => t.decimals !== null);
+      const filtered = (response as SimpleTokenInfo[]).filter(t => t.decimals !== null && t.priceUsd);
       writeToCache(getSolanaTokenListKeyNameByCluster(chainId), filtered);
       return response;
     })
