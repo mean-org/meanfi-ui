@@ -17,11 +17,7 @@ import {
   toTokenAmount,
   toUiAmount,
 } from 'middleware/utils';
-import {
-  INPUT_DEBOUNCE_TIME,
-  MIN_SOL_BALANCE_REQUIRED,
-  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-} from 'constants/common';
+import { INPUT_DEBOUNCE_TIME, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { useWallet } from 'contexts/wallet';
@@ -49,6 +45,7 @@ import { TxConfirmationContext } from 'contexts/transaction-status';
 import SwapRate from './SwapRate';
 import { TokenInfo } from 'models/SolanaTokenInfo';
 import getUiErrorString from './getUiErrorString';
+import { ChainBlockExplorer } from 'viem/_types/types/chain';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -67,7 +64,11 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   const { loadingPrices, refreshPrices, getTokenPriceByAddress } = useContext(AppStateContext);
   const { addTransactionNotification } = useContext(TxConfirmationContext);
   const [uiStage, setUiStage] = useState<UiStage>('order-setup');
-  const [orderSubmittedContent, setOrderSubmittedContent] = useState<{ message: string; txHash: string }>();
+  const [orderSubmittedContent, setOrderSubmittedContent] = useState<{
+    message: string;
+    txHash: string;
+    explorer?: ChainBlockExplorer;
+  }>();
   const [orderFailedContent, setOrderFailedContent] = useState('');
   const [isBusy, setIsBusy] = useState(false);
   const [amountInput, setAmountInput] = useState('');
@@ -153,12 +154,21 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     fetchFeeData().then(value => setChainFeeData(value));
   }, [sourceChain]);
 
+  const minBalanceRequired = useMemo(() => {
+    if (!srcChainTokenIn) return 0;
+
+    const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
+    const opsExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
+
+    return parseFloat(toUiAmount(new BN((protocolFixFee + opsExpenses).toString()), srcChainTokenIn.decimals));
+  }, [isCrossChainSwap, quote?.fixFee, quote?.prependedOperatingExpenseCost, srcChainTokenIn]);
+
   const maxAmount = useMemo(() => {
     if (!srcChainTokenIn) return 0;
 
     // If source chain is Solana lets force a margin of 0.05 SOL as min balance
     if (srcChainTokenIn.address === NATIVE_SOL.address) {
-      const safeAmount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
+      const safeAmount = nativeBalance - minBalanceRequired;
       const amount = safeAmount > 0 ? safeAmount : 0;
       return amount;
     }
@@ -180,15 +190,9 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     consoleOut('tokenBalanceBn:', tokenBalanceBn.toString(), 'blue');
     const affiliateFeeBn = percentageBn(FEE_PERCENT, tokenBalanceBn) as BN;
     consoleOut('userBalance:', toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals), 'cadetblue');
-    if (sameChainSwap) {
-      const deducted = tokenBalanceBn.sub(affiliateFeeBn);
-      const calculatedMax = toUiAmount(deducted, srcChainTokenIn.decimals);
-      consoleOut('affiliateFee:', toUiAmount(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
-      consoleOut('max:', toUiAmount(deducted, srcChainTokenIn.decimals), 'cadetblue');
-      return parseFloat(calculatedMax);
-    } else {
+    if (isCrossChainSwap) {
       const maxGas = chainFeeData?.maxFeePerGas ?? BigInt(0);
-      const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
+      const protocolFixFee = BigInt(!isSrcChainSolana ? quote?.fixFee ?? 0 : 0);
       const userBalance = BigInt(tokenBalanceBn.toString());
       const affiliateFee = BigInt(affiliateFeeBn.toString());
       const opsExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
@@ -208,16 +212,23 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
         const calculatedMax = toUiAmount(max.toString(), srcChainTokenIn.decimals);
         return parseFloat(calculatedMax);
       }
+    } else {
+      const deducted = tokenBalanceBn.sub(affiliateFeeBn);
+      const calculatedMax = toUiAmount(deducted, srcChainTokenIn.decimals);
+      consoleOut('affiliateFee:', toUiAmount(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
+      consoleOut('max:', toUiAmount(deducted, srcChainTokenIn.decimals), 'cadetblue');
+      return parseFloat(calculatedMax);
     }
   }, [
     nativeBalance,
     chainFeeData?.maxFeePerGas,
     quote?.fixFee,
     quote?.prependedOperatingExpenseCost,
+    minBalanceRequired,
+    isSrcChainSolana,
     isCrossChainSwap,
     srcChainTokenIn,
     tokenBalanceBn,
-    sameChainSwap,
   ]);
 
   const getMaxAmountIn = useCallback(() => {
@@ -421,6 +432,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       try {
         const result = await sendTransactionAsync();
         if (result.hash) {
+          const explorerName = chain?.blockExplorers?.default.name;
           const explorerLink = `${chain?.blockExplorers?.default.url}/tx/${result.hash}`;
           addTransactionNotification({
             completedTitle: sameChainSwap ? 'Swap transaction' : 'Cross-chain trade',
@@ -436,6 +448,10 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
           setOrderSubmittedContent({
             message: orderSubmittedMessage,
             txHash: result.hash,
+            explorer: {
+              name: explorerName ?? 'Mainnet Explorer',
+              url: explorerLink,
+            },
           });
         }
       } catch (error) {
@@ -617,7 +633,12 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     } else if (tokenBalanceBn.lt(inputAmountBn)) {
       return srcChainTokenIn ? `Amount exceeds your ${srcChainTokenIn.symbol} balance` : 'Amount exceeds your balance';
     } else if (tokenBalanceBn.lt(operatingExpensesBn.add(inputAmountBn))) {
-      return 'Insufficient balance to cover fees';
+      return srcChainTokenIn
+        ? `Insufficient balance for this trade (min ${formatThousands(
+            parseFloat(toUiAmount(operatingExpensesBn.add(inputAmountBn), srcChainTokenIn.decimals)),
+            5,
+          )})`
+        : 'Insufficient balance to cover fees';
     } else if (lastQuoteError) {
       return getUiErrorString(lastQuoteError);
     } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
@@ -686,19 +707,24 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
 
         return;
       }
-      consoleOut('Creating PK for', srcChainTokenIn.address, 'cadetblue');
-      const srcTokenPk = new PublicKey(srcChainTokenIn.address);
-      const srcTokenAddress = findATokenAddress(publicKey, srcTokenPk);
-      getTokenAccountBalanceByAddress(connection, srcTokenAddress)
-        .then(result => {
-          const balance = result?.uiAmount ?? 0;
-          consoleOut('srcToken balance:', balance, 'cadetblue');
-          const balanceBn = toTokenAmount(balance, srcChainTokenIn.decimals);
-          setTokenBalanceBn(new BN(balanceBn.toString()));
-        })
-        .catch(() => {
-          setTokenBalanceBn(new BN(0));
-        });
+      if (srcChainTokenIn.address === NATIVE_SOL.address) {
+        const balanceBn = toTokenAmount(nativeBalance, srcChainTokenIn.decimals);
+        setTokenBalanceBn(new BN(balanceBn.toString()));
+      } else {
+        consoleOut('Creating PK for', srcChainTokenIn.address, 'cadetblue');
+        const srcTokenPk = new PublicKey(srcChainTokenIn.address);
+        const srcTokenAddress = findATokenAddress(publicKey, srcTokenPk);
+        getTokenAccountBalanceByAddress(connection, srcTokenAddress)
+          .then(result => {
+            const balance = result?.uiAmount ?? 0;
+            consoleOut('srcToken balance:', balance, 'cadetblue');
+            const balanceBn = toTokenAmount(balance, srcChainTokenIn.decimals);
+            setTokenBalanceBn(new BN(balanceBn.toString()));
+          })
+          .catch(() => {
+            setTokenBalanceBn(new BN(0));
+          });
+      }
     } else {
       // Update for EVM
       if (srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID && balance.data) {
@@ -709,7 +735,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
         setTokenBalanceBn(new BN(0));
       }
     }
-  }, [balance.data, connection, isSrcChainSolana, publicKey, srcChainTokenIn]);
+  }, [balance.data, connection, isSrcChainSolana, nativeBalance, publicKey, srcChainTokenIn]);
 
   // Set srcChainTokenIn if srcTokens are loaded
   useEffect(() => {
@@ -884,9 +910,6 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                   )}
                 </div>
               </div>
-              {isSrcChainSolana && nativeBalance < MIN_SOL_BALANCE_REQUIRED && (
-                <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
-              )}
             </div>
 
             {/* Destination chain, token & amount */}
@@ -1035,16 +1058,27 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                   {orderSubmittedContent.message}
                   <br />
                   Check the transaction status on
-                  <a
-                    className="secondary-link ml-1"
-                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${
-                      orderSubmittedContent.txHash
-                    }${getSolanaExplorerClusterParam()}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    solana.fm
-                  </a>
+                  {isSrcChainSolana ? (
+                    <a
+                      className="secondary-link ml-1"
+                      href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${
+                        orderSubmittedContent.txHash
+                      }${getSolanaExplorerClusterParam()}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      solana.fm
+                    </a>
+                  ) : orderSubmittedContent.explorer ? (
+                    <a
+                      className="secondary-link ml-1"
+                      href={orderSubmittedContent.explorer.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {orderSubmittedContent.explorer.name}
+                    </a>
+                  ) : null}
                 </p>
                 <Button
                   block
