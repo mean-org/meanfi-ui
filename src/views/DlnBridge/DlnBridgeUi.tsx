@@ -888,14 +888,19 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                         : '0'
                     }`}
                   </span>
-                  <span>
-                    {srcChainTokenIn && operatingExpensesBn.gt(new BN(0))
-                      ? ` (min: ${formatThousands(
+                  {srcChainTokenIn && operatingExpensesBn.gt(new BN(0)) ? (
+                    <Tooltip
+                      placement="bottom"
+                      title={`Included gas paid on top of the amount and covers takers' gas costs to fulfill your trade`}
+                    >
+                      <span>
+                        {` (Gas: ${formatThousands(
                           parseFloat(toUiAmount(operatingExpensesBn, srcChainTokenIn.decimals)),
                           5,
-                        )})`
-                      : null}
-                  </span>
+                        )})`}
+                      </span>
+                    </Tooltip>
+                  ) : null}
                 </div>
                 <div className="right inner-label">
                   {publicKey ? (
