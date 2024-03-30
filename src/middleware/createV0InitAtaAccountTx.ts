@@ -1,8 +1,14 @@
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { Connection, Keypair, PublicKey, Signer, SystemProgram, TransactionInstruction } from '@solana/web3.js';
 import { composeV0TxWithPrioritizationFees, serializeTx } from './transactions';
 
-export async function createV0InitAtaAccountTx(connection: Connection, mint: PublicKey, owner: PublicKey) {
+export async function createV0InitAtaAccountTx(
+  connection: Connection,
+  mint: PublicKey,
+  owner: PublicKey,
+  createAta = true,
+) {
+  const signers: Signer[] = [];
   const ixs: TransactionInstruction[] = [];
 
   const associatedAddress = await Token.getAssociatedTokenAddress(
@@ -15,7 +21,7 @@ export async function createV0InitAtaAccountTx(connection: Connection, mint: Pub
 
   const ataInfo = await connection.getAccountInfo(associatedAddress);
 
-  if (ataInfo === null) {
+  if (!ataInfo && createAta) {
     ixs.push(
       Token.createAssociatedTokenAccountInstruction(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -26,9 +32,29 @@ export async function createV0InitAtaAccountTx(connection: Connection, mint: Pub
         owner,
       ),
     );
+  } else {
+    const tokenKeypair = Keypair.generate();
+    const tokenAccount = tokenKeypair.publicKey;
+
+    ixs.push(
+      SystemProgram.createAccount({
+        fromPubkey: owner,
+        newAccountPubkey: tokenAccount,
+        programId: TOKEN_PROGRAM_ID,
+        lamports: await Token.getMinBalanceRentForExemptAccount(connection),
+        space: AccountLayout.span,
+      }),
+      Token.createInitAccountInstruction(TOKEN_PROGRAM_ID, mint, tokenAccount, owner),
+    );
+
+    signers.push(tokenKeypair);
   }
 
   const transaction = await composeV0TxWithPrioritizationFees(connection, owner, ixs);
+
+  if (signers) {
+    transaction.sign(signers);
+  }
 
   serializeTx(transaction);
 

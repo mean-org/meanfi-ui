@@ -1,17 +1,18 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { TransferTransactionAccounts } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { Connection, Keypair, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { SOL_MINT } from './ids';
 
 const createTokenTransferTx = async (
   connection: Connection,
+  selectedToken: PublicKey,
   { sender, feePayer, beneficiary, mint }: TransferTransactionAccounts,
   amount: string | number, // Allow both types for compatibility
 ): Promise<Transaction> => {
   const ixs: TransactionInstruction[] = [];
   const amountBN = new BN(amount);
-  feePayer = feePayer || sender;
+  const txFeePayer = feePayer || sender;
 
   if (mint.equals(SOL_MINT)) {
     ixs.push(
@@ -22,19 +23,18 @@ const createTokenTransferTx = async (
       }),
     );
   } else {
-    const senderToken = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      mint,
-      sender,
-      true,
-    );
+    // Create a Token program client
+    const tokenClient: Token = new Token(connection, mint, TOKEN_PROGRAM_ID, Keypair.generate());
 
-    const senderTokenInfo = await connection.getAccountInfo(senderToken);
-    if (!senderTokenInfo) {
-      throw Error('Sender token account not found');
+    try {
+      const selectedTokenAccountInfo = await tokenClient.getAccountInfo(selectedToken);
+      console.log('selectedTokenAccountInfo:', selectedTokenAccountInfo);
+      if (!selectedTokenAccountInfo) throw Error('Sender is not a token account');
+    } catch (error) {
+      throw Error('Sender is not a token account');
     }
 
+    const senderToken = selectedToken;
     let beneficiaryToken = beneficiary;
     const beneficiaryAccountInfo = await connection.getAccountInfo(beneficiary);
 
@@ -64,7 +64,6 @@ const createTokenTransferTx = async (
     } else {
       // At this point the beneficiaryToken is either a mint or a token account
       // Let's make sure it is a token account of the passed mint
-      const tokenClient: Token = new Token(connection, mint, TOKEN_PROGRAM_ID, Keypair.generate());
       try {
         const beneficiaryTokenInfo = await tokenClient.getAccountInfo(beneficiaryToken);
         if (!beneficiaryTokenInfo) throw Error('Reciever is not a token account');
@@ -86,7 +85,7 @@ const createTokenTransferTx = async (
   }
 
   const transaction = new Transaction().add(...ixs);
-  transaction.feePayer = feePayer;
+  transaction.feePayer = txFeePayer;
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
   transaction.recentBlockhash = blockhash;
   transaction.lastValidBlockHeight = lastValidBlockHeight;

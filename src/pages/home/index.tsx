@@ -149,6 +149,7 @@ import useAccountPrograms from './useAccountPrograms';
 import useAppNavigation from './useAppNavigation';
 import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
 import createTokenTransferTx from 'middleware/createTokenTransferTx';
+import { createV0InitAtaAccountTx } from 'middleware/createV0InitAtaAccountTx';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));
@@ -1082,7 +1083,7 @@ export const HomeView = () => {
   );
 
   const onExecuteCreateAssetTx = useCallback(
-    async (params: CreateSafeAssetTxParams) => {
+    async (params: CreateSafeAssetTxParams, createAta = true) => {
       const payload = () => {
         if (!publicKey) return;
         return {
@@ -1106,8 +1107,13 @@ export const HomeView = () => {
         nativeBalance,
         minRequired,
         generateTransaction: async ({ multisig, data }) => {
-          if (!publicKey) return;
-          return createAddSafeAssetTx(connection, publicKey, selectedMultisig, data);
+          if (!publicKey || !data.token) return;
+
+          if (isMultisigContext) {
+            return createAddSafeAssetTx(connection, publicKey, selectedMultisig, data, createAta);
+          } else {
+            return createV0InitAtaAccountTx(connection, new PublicKey(data.token.address), publicKey, createAta);
+          }
         },
       });
       closeCreateAssetModal(true);
@@ -1117,6 +1123,7 @@ export const HomeView = () => {
       connection,
       nativeBalance,
       selectedMultisig,
+      isMultisigContext,
       transactionAssetFees.mspFlatFee,
       transactionAssetFees.blockchainFee,
       closeCreateAssetModal,
@@ -1128,6 +1135,13 @@ export const HomeView = () => {
     (params: CreateSafeAssetTxParams) => {
       consoleOut('Create asset payload:', params);
       onExecuteCreateAssetTx(params);
+    },
+    [onExecuteCreateAssetTx],
+  );
+
+  const onCreateSafeNonAta = useCallback(
+    (token: UserTokenAccount) => {
+      onExecuteCreateAssetTx({ token }, false);
     },
     [onExecuteCreateAssetTx],
   );
@@ -1199,7 +1213,12 @@ export const HomeView = () => {
             mint: new PublicKey(data.fromMint),
           };
 
-          const transaction = await createTokenTransferTx(connection, accounts, data.tokenAmount);
+          const transaction = await createTokenTransferTx(
+            connection,
+            new PublicKey(data.from),
+            accounts,
+            data.tokenAmount,
+          );
 
           const ix = transaction.instructions[0];
           const programId = ix.programId;
@@ -2887,6 +2906,16 @@ export const HomeView = () => {
         tooltip: '',
         callBack: () => copyAddressToClipboard(selectedAsset.address),
       });
+      actions.push({
+        caption: 'Create non-ATA',
+        action: MetaInfoCtaAction.CreateNonAta,
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: false,
+        uiComponentId: `menuitem-${MetaInfoCtaAction.CreateNonAta}`,
+        tooltip: '',
+        callBack: () => onCreateSafeNonAta(selectedAsset),
+      });
     }
 
     // Refresh asset
@@ -2929,6 +2958,7 @@ export const HomeView = () => {
     isXsDevice,
     wSolBalance,
     selectedAsset,
+    isMultisigContext,
     isInspectedAccountTheConnectedWallet,
     isSelectedAssetNativeAccount,
     isSelectedAssetWsol,
