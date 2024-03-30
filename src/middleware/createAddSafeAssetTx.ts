@@ -10,14 +10,16 @@ export type CreateSafeAssetTxParams = {
 };
 
 export const createAddSafeAssetTx = async (
-  connection?: Connection,
-  publicKey?: PublicKey,
-  selectedMultisig?: MultisigInfo,
-  data?: CreateSafeAssetTxParams,
+  connection: Connection,
+  feePayer: PublicKey,
+  selectedMultisig: MultisigInfo | undefined,
+  data: CreateSafeAssetTxParams,
+  createAta = true,
 ) => {
-  if (!connection || !selectedMultisig || !publicKey || !data || !data.token) {
+  if (!selectedMultisig || !data.token) {
     return null;
   }
+
   const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
 
   const [multisigSigner] = PublicKey.findProgramAddressSync([selectedMultisig.id.toBuffer()], multisigAddressPK);
@@ -37,7 +39,7 @@ export const createAddSafeAssetTx = async (
 
   const tokenAccountInfo = await connection.getAccountInfo(tokenAccount);
 
-  if (!tokenAccountInfo) {
+  if (!tokenAccountInfo && createAta) {
     ixs.push(
       Token.createAssociatedTokenAccountInstruction(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -45,7 +47,7 @@ export const createAddSafeAssetTx = async (
         mintAddress,
         tokenAccount,
         multisigSigner,
-        publicKey,
+        feePayer,
       ),
     );
   } else {
@@ -54,7 +56,7 @@ export const createAddSafeAssetTx = async (
 
     ixs.push(
       SystemProgram.createAccount({
-        fromPubkey: publicKey,
+        fromPubkey: feePayer,
         newAccountPubkey: tokenAccount,
         programId: TOKEN_PROGRAM_ID,
         lamports: await Token.getMinBalanceRentForExemptAccount(connection),
@@ -66,7 +68,7 @@ export const createAddSafeAssetTx = async (
     signers.push(tokenKeypair);
   }
 
-  const transaction = await composeTxWithPrioritizationFees(connection, publicKey, ixs, signers);
+  const transaction = await composeTxWithPrioritizationFees(connection, feePayer, ixs, signers);
 
   serializeTx(transaction);
 

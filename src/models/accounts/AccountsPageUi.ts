@@ -11,6 +11,7 @@ export enum MetaInfoCtaAction {
   UnwrapSol = 5,
   WrapSol = 6,
   MergeAccounts = 7,
+  CreateNonAta = 8,
   Divider = 10,
   Refresh = 11,
   CloseAccount = 12,
