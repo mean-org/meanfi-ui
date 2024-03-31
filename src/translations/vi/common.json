@@ -138,6 +138,35 @@
       "title": "Danh sách tài sản hỗ trợ"
     }
   },
+  "ddcas": {
+    "activity": {
+      "action-deposit": "Deposited {{fromAmount}}",
+      "action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
+      "action-withdraw": "Withdrew {{toAmount}}"
+    },
+    "add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
+    "close-ddca": {
+      "modal-title": "Are you sure?",
+      "primary-cta": "Confirm",
+      "secondary-cta": "Back"
+    },
+    "exchange-dcas": {
+      "cancel-withdraw-everything": "Cancel and withdraw everything",
+      "deposited": "Deposited",
+      "detail-panel-word-one": "Buying",
+      "detail-panel-word-three": "every",
+      "detail-panel-word-two": "worth of",
+      "exchange-details": "Exchange details",
+      "exchanged-for": "Exchanged for (avg rate 1",
+      "next-scheduled-exchange": "Next scheduled exchange",
+      "rate-amount": "Every",
+      "total-deposits": "Total deposits",
+      "total-left": "Total left (will run out by",
+      "withdraw": "Withdraw"
+    },
+    "screen-title": "Recurring buys",
+    "refresh-ddcas": "Click to refresh recurring buys"
+  },
   "deposits": {
     "address-share-disclaimer": "Địa chỉ này chỉ có thể dùng để nhận SOL và các mã thông báo SPL trên Solana.",
     "back-to-deposit-options": "Quay lại tuỳ chọn Nạp tiền",

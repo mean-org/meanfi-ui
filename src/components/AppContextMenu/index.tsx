@@ -25,7 +25,7 @@ import {
   IconShareBox,
   IconStats,
 } from 'Icons';
-import { copyText } from 'middleware/ui';
+import { copyText, isProd } from 'middleware/ui';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -233,8 +233,21 @@ export const AppContextMenu = () => {
         </a>
       ),
     });
-    if (isWhitelisted) {
+    if (isWhitelisted || isProd()) {
       items.push({ type: 'divider' });
+      items.push({
+        key: '/exchange-dcas',
+        label: (
+          <div>
+            <IconCodeBlock className="mean-svg-icons" />
+            <Link className="fg-inherit" to="/exchange-dcas">
+              Legacy DDCA
+            </Link>
+          </div>
+        ),
+      });
+    }
+    if (isWhitelisted) {
       items.push({
         key: '/staking-rewards',
         label: (

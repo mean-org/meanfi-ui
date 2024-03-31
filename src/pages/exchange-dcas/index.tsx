@@ -1488,7 +1488,7 @@ export const ExchangeDcasView = () => {
             <div className="meanfi-two-panel-left">
               <div className="meanfi-panel-heading">
                 <span className="title">{t('ddcas.screen-title')}</span>
-                <Tooltip placement="bottom" title="Reload">
+                <Tooltip placement="bottom" title={t('ddcas.refresh-ddcas')}>
                   <div
                     className={`user-address ${loadingRecurringBuys ? 'click-disabled' : 'simplelink'}`}
                     onClick={() => reloadRecurringBuys()}
