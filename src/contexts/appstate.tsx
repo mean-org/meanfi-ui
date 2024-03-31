@@ -56,6 +56,7 @@ import { emptyAccount, useWalletAccount } from './walletAccount';
 import useLocalStorage from 'hooks/useLocalStorage';
 import { BN } from '@project-serum/anchor';
 import getPriceByAddressOrSymbol from 'middleware/getPriceByAddressOrSymbol';
+import { DdcaAccount } from '@mean-dao/ddca';
 
 const pricesPerformanceCounter = new PerformanceCounter();
 const tokenListPerformanceCounter = new PerformanceCounter();
@@ -138,6 +139,9 @@ interface AppStateConfig {
   lastStreamsSummary: StreamsSummary;
   paymentStreamingStats: PaymentStreamingStats;
   accountNfts: FindNftsByOwnerOutput | undefined;
+  // DDCAs
+  recurringBuys: DdcaAccount[];
+  loadingRecurringBuys: boolean;
   // Multisig
   multisigAccounts: MultisigInfo[];
   loadingMultisigAccounts: boolean;
@@ -213,6 +217,9 @@ interface AppStateConfig {
   setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
   setPaymentStreamingStats: (summary: PaymentStreamingStats) => void;
+  // DDCAs
+  setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
+  setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
   setNeedReloadMultisigAccounts: (reload: boolean) => void;
   refreshMultisigs: () => Promise<boolean>;
@@ -301,6 +308,9 @@ const contextDefaultValues: AppStateConfig = {
   lastStreamsSummary: initialSummary,
   paymentStreamingStats: initialStats,
   accountNfts: undefined,
+  // DDCAs
+  recurringBuys: [],
+  loadingRecurringBuys: false,
   // Multisig
   multisigAccounts: [],
   loadingMultisigAccounts: false,
@@ -376,6 +386,9 @@ const contextDefaultValues: AppStateConfig = {
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
   setPaymentStreamingStats: () => {},
+  // DDCAs
+  setRecurringBuys: () => {},
+  setLoadingRecurringBuys: () => {},
   // Multisig
   setNeedReloadMultisigAccounts: () => {},
   refreshMultisigs: async () => false,
@@ -1553,6 +1566,21 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }, [patchedMultisigAccounts]);
 
+  //////////////////////////////////
+  // Added to support /ddcas page //
+  //////////////////////////////////
+
+  const [recurringBuys, updateRecurringBuys] = useState<DdcaAccount[]>([]);
+  const [loadingRecurringBuys, updateLoadingRecurringBuys] = useState(false);
+
+  const setLoadingRecurringBuys = (value: boolean) => {
+    updateLoadingRecurringBuys(value);
+  };
+
+  const setRecurringBuys = (recurringBuys: DdcaAccount[]) => {
+    updateRecurringBuys(recurringBuys);
+  };
+
   const values = useMemo(() => {
     return {
       selectedAccount,
@@ -1618,6 +1646,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       lastStreamsSummary,
       paymentStreamingStats,
       accountNfts,
+      recurringBuys,
+      loadingRecurringBuys,
       multisigAccounts,
       loadingMultisigAccounts,
       loadingMultisigTxPendingCount,
@@ -1687,6 +1717,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       setStreamsSummary,
       setLastStreamsSummary,
       setPaymentStreamingStats,
+      setRecurringBuys,
+      setLoadingRecurringBuys,
       setNeedReloadMultisigAccounts,
       refreshMultisigs,
       setMultisigAccounts,
@@ -1729,6 +1761,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     loadingMultisigAccounts,
     loadingMultisigTxPendingCount,
     loadingPrices,
+    loadingRecurringBuys,
     loadingStreamActivity,
     loadingStreams,
     loadingTokenAccounts,
@@ -1753,6 +1786,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     proposalEndTime,
     recipientAddress,
     recipientNote,
+    recurringBuys,
     refreshInterval,
     refreshMultisigs,
     refreshPrices,

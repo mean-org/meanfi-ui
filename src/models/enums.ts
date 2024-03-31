@@ -75,6 +75,9 @@ export enum OperationType {
   TreasuryClose = 14,
   TreasuryRefreshBalance = 15,
   TreasuryEdit = 16,
+  // DDCA Options
+  DdcaWithdraw = 22,
+  DdcaClose = 23,
   // Multisig options
   CreateMultisig = 30,
   EditMultisig = 31,

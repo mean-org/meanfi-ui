@@ -2502,6 +2502,14 @@
   dependencies:
     "@lukeed/csprng" "^1.1.0"
 
+"@mean-dao/ddca@^1.2.35":
+  version "1.2.35"
+  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.35.tgz#41bf08b1e9c51bae9b6487f1147386eb3f1a784f"
+  integrity sha512-AUnCQXOqjnC6CJOHUU/KF6enmLxm5HuWarRrNyMb9OMkwntFhMN/90g5rJ7qXNkgKtLy6Xu+82fvWI96fZhuVQ==
+  dependencies:
+    "@project-serum/anchor" "^0.20.1"
+    "@solana/spl-token" "^0.1.8"
+
 "@mean-dao/mean-multisig-apps@1.3.23":
   version "1.3.23"
   resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-apps/-/mean-multisig-apps-1.3.23.tgz#35fb50ece8d7a73c760358b7a953c61c1ddc8ebf"
@@ -3215,6 +3223,26 @@
     bn.js "^5.1.2"
     bs58 "^4.0.1"
     buffer-layout "^1.2.0"
+    camelcase "^5.3.1"
+    crypto-hash "^1.3.0"
+    eventemitter3 "^4.0.7"
+    find "^0.3.0"
+    js-sha256 "^0.9.0"
+    pako "^2.0.3"
+    snake-case "^3.0.4"
+    toml "^3.0.0"
+
+"@project-serum/anchor@^0.20.1":
+  version "0.20.1"
+  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.20.1.tgz#0937807e807e8332aa708cfef4bcb6cbb88b4129"
+  integrity sha512-2TuBmGUn9qeYz6sJINJlElrBuPsaUAtYyUsJ3XplEBf1pczrANAgs5ceJUFzdiqGEWLn+84ObSdBeChT/AXYFA==
+  dependencies:
+    "@project-serum/borsh" "^0.2.2"
+    "@solana/web3.js" "^1.17.0"
+    base64-js "^1.5.1"
+    bn.js "^5.1.2"
+    bs58 "^4.0.1"
+    buffer-layout "^1.2.2"
     camelcase "^5.3.1"
     crypto-hash "^1.3.0"
     eventemitter3 "^4.0.7"
