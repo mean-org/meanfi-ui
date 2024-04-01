@@ -1,4 +1,3 @@
-import { Tooltip } from 'antd';
 import { Identicon } from 'components/Identicon';
 import { ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
@@ -60,14 +59,7 @@ export const AssetList = (props: {
       return null;
     }
 
-    return (
-      <Tooltip
-        placement="bottom"
-        title={`This token account is not the Associated Token Account for the ${asset.symbol} token`}
-      >
-        <span className="ml-1">(Non-ATA)</span>
-      </Tooltip>
-    );
+    return ' •';
   };
 
   const getRateAmountDisplay = (tokenPrice: number, asset: UserTokenAccount): string => {
