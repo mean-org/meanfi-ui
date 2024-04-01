@@ -14,12 +14,22 @@ export const AssetList = (props: {
   selectedCategory: AccountsPageCategory;
 }) => {
   const { accountTokens, hideLowBalances, onTokenAccountClick, selectedAsset, selectedCategory } = props;
-  const { theme, getTokenPriceByAddress } = useContext(AppStateContext);
+  const { theme, selectedAccount, getTokenPriceByAddress } = useContext(AppStateContext);
 
   const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
     event.currentTarget.className = 'error';
   };
+
+  const isAssetNativeAccount = useCallback(
+    (asset?: UserTokenAccount) => {
+      if (asset) {
+        return selectedAccount.address === asset.publicAddress;
+      }
+      return !!(selectedAsset && selectedAccount.address === selectedAsset.publicAddress);
+    },
+    [selectedAsset, selectedAccount.address],
+  );
 
   const isSelectedToken = (asset: UserTokenAccount): boolean => {
     return !!(selectedAsset && asset && selectedAsset.displayIndex === asset.displayIndex);
@@ -34,13 +44,22 @@ export const AssetList = (props: {
   );
 
   const getRowSelectionClass = (asset: UserTokenAccount): string => {
+    let assetClass = '';
     if (isSelectedToken(asset) && selectedCategory === 'assets') {
-      return 'selected';
+      assetClass = 'selected';
     } else if (hideLowBalances && (shouldHideAsset(asset) || !asset.balance)) {
-      return 'hidden';
+      assetClass = 'hidden';
     }
 
-    return '';
+    return assetClass;
+  };
+
+  const getNonAtaLabel = (asset: UserTokenAccount) => {
+    if (isAssetNativeAccount(asset) || asset.isAta || asset.decimals === 0) {
+      return null;
+    }
+
+    return ' •';
   };
 
   const getRateAmountDisplay = (tokenPrice: number, asset: UserTokenAccount): string => {
@@ -84,6 +103,7 @@ export const AssetList = (props: {
           </div>
           <div className="subtitle text-truncate">
             {asset.address === WRAPPED_SOL_MINT_ADDRESS ? 'Wrapped SOL' : asset.name}
+            {getNonAtaLabel(asset)}
           </div>
         </div>
         <div className="rate-cell">

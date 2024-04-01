@@ -385,6 +385,7 @@ export const getUserAccountTokens = async (
     response.accountTokens = splTokensCopy;
     response.selectedAsset = splTokensCopy[0];
   }
+  consoleOut('getUserAccountTokens response:', response, 'blue');
 
   return response;
 };
