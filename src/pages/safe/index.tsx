@@ -33,6 +33,7 @@ import {
   composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
   sendTx,
+  serializeTx,
   signTx,
 } from 'middleware/transactions';
 import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
@@ -733,6 +734,7 @@ const SafeView = (props: {
                 return false;
               }
               consoleOut('approveTx returned transaction:', value);
+              serializeTx(value);
               setTransactionStatus({
                 lastOperation: TransactionStatus.InitTransactionSuccess,
                 currentOperation: TransactionStatus.SignTransaction,
@@ -1126,6 +1128,7 @@ const SafeView = (props: {
                 return false;
               }
               consoleOut('finishTx returned transaction:', value, 'blue');
+              serializeTx(value);
               setTransactionStatus({
                 lastOperation: TransactionStatus.InitTransactionSuccess,
                 currentOperation: TransactionStatus.SignTransaction,
