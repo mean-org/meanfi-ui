@@ -56,14 +56,22 @@ export const DdcaCloseModal = (props: {
       width={400}
     >
       <div className="transaction-progress">
-        <h4 className="operation">{props.content}</h4>
+        <h4 className="operation mb-2">{props.content}</h4>
 
         {/* Info */}
-        {props.ddcaDetails && props.ddcaDetails.fromBalance && (
-          <div className="p-2 mb-2">
-            {infoRow('Amount left:', getAmountWithSymbol(props.ddcaDetails.fromBalance, props.ddcaDetails.fromMint))}
-          </div>
-        )}
+        {props.ddcaDetails ? (
+          <>
+            <div className="p-2">
+              {infoRow(
+                'From amount left:',
+                getAmountWithSymbol(props.ddcaDetails.fromBalance, props.ddcaDetails.fromMint),
+              )}
+            </div>
+            <div className="p-2">
+              {infoRow('Exchanged amount:', getAmountWithSymbol(props.ddcaDetails.toBalance, props.ddcaDetails.toMint))}
+            </div>
+          </>
+        ) : null}
 
         <div className="mt-3">
           <Button className="mr-3" type="text" shape="round" size="large" onClick={props.handleClose}>
