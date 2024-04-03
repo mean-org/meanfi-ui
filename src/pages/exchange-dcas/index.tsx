@@ -441,8 +441,19 @@ export const ExchangeDcasView = () => {
             setIsBusy(false);
           }
         } else {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure,
+          });
           if (sign.error) {
             consoleOut('Close DDCA transaction sign error:', sign.error, 'red');
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: `${sign.error}`,
+            });
+            customLogger.logError('Close DDCA transaction failed', {
+              transcript: transactionLog,
+            });
           }
           setIsBusy(false);
         }
@@ -1189,10 +1200,9 @@ export const ExchangeDcasView = () => {
             )}
 
             {/* CTAs */}
-            <div className="mt-3 mb-3 withdraw-container">
+            <div className="mt-3 mb-3 withdraw-container gap-3">
               <Button
-                className="ant-btn-shaded"
-                type="text"
+                type="default"
                 shape="round"
                 size="small"
                 onClick={showWithdrawModal}
@@ -1200,7 +1210,7 @@ export const ExchangeDcasView = () => {
               >
                 {t('ddcas.exchange-dcas.withdraw')}
               </Button>
-              <Button className="ant-btn-shaded" type="text" shape="round" size="small" onClick={showCloseDdcaModal}>
+              <Button type="default" shape="round" size="small" onClick={showCloseDdcaModal}>
                 {t('ddcas.exchange-dcas.cancel-withdraw-everything')}
               </Button>
             </div>
