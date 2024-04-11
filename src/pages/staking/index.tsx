@@ -1,5 +1,5 @@
 import { Env, StakePoolInfo, StakingClient, UnstakeQuote } from '@mean-dao/staking';
-import { ConfirmOptions, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { Col, Row } from 'antd';
 import { InfoIcon } from 'components/InfoIcon';
 import { ONE_MINUTE_REFRESH_TIMEOUT } from 'constants/common';
@@ -23,6 +23,7 @@ import { useSearchParams } from 'react-router-dom';
 import { StakeTabView } from 'views/StakeTabView';
 import { UnstakeTabView } from 'views/UnstakeTabView';
 import './style.scss';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 export type StakeOption = 'stake' | 'unstake' | undefined;
 
@@ -42,7 +43,6 @@ const StakingView = () => {
   } = useContext(AppStateContext);
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
-  const { cluster, endpoint } = useConnectionConfig();
   const { publicKey } = useWallet();
   const [searchParams, setSearchParams] = useSearchParams();
   const { account } = useNativeAccount();
@@ -70,14 +70,17 @@ const StakingView = () => {
   //////////////////
 
   // Create and cache Staking client instance
-  const stakeClient = useMemo(() => {
-    const opts: ConfirmOptions = {
-      preflightCommitment: 'confirmed',
-      commitment: 'confirmed',
-    };
-
-    return new StakingClient(cluster, endpoint, publicKey, opts, isProd() ? false : true);
-  }, [cluster, endpoint, publicKey]);
+  const stakeClient = useMemo(
+    () =>
+      new StakingClient(
+        getFallBackRpcEndpoint().cluster,
+        getFallBackRpcEndpoint().httpProvider,
+        publicKey,
+        failsafeConnectionConfig,
+        isProd() ? false : true,
+      ),
+    [publicKey],
+  );
 
   /////////////////
   //  Callbacks  //

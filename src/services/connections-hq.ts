@@ -11,10 +11,8 @@ export interface RpcConfig {
   network?: string;
 }
 
-export const ironForgeApiUrl = process.env.REACT_APP_IRONFORGE_API_URL ?? '';
-
-const ironForgeApiKeyDevnet = process.env.REACT_APP_IRONFORGE_API_KEY_DEVNET ?? '';
-const ironForgeApiKeyMainnet = process.env.REACT_APP_IRONFORGE_API_KEY_MAINNET ?? '';
+const ironForgeApiUrl = process.env.REACT_APP_IRONFORGE_API_URL ?? '';
+const ironForgeApiKey = process.env.REACT_APP_IRONFORGE_API_KEY ?? '';
 const ironForgeApiAccessToken = process.env.REACT_APP_IRONFORGE_API_ACCESS_TOKEN ?? '';
 
 export const failsafeConnectionConfig: ConnectionConfig = {
@@ -131,9 +129,7 @@ export const refreshCachedRpc = async () => {
 
   const newRpc = getDefaultRpc();
   if (ironforgeEnvironment && ironForgeApiUrl) {
-    newRpc.httpProvider = `${ironForgeApiUrl}${ironforgeEnvironment}?apiKey=${
-      ironforgeEnvironment === 'mainnet' ? ironForgeApiKeyMainnet : ironForgeApiKeyDevnet
-    }`;
+    newRpc.httpProvider = `${ironForgeApiUrl}${ironforgeEnvironment}?apiKey=${ironForgeApiKey}`;
   }
 
   window.localStorage.setItem('cachedRpc', JSON.stringify(newRpc));
