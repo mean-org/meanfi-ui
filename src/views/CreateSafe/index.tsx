@@ -33,6 +33,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import './style.scss';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 
 const CreateSafeView = () => {
   const { t } = useTranslation('common');
@@ -69,7 +70,7 @@ const CreateSafeView = () => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
       return null;
     }
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
 
   const nativeBalance = useMemo(() => {

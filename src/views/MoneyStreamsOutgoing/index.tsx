@@ -78,6 +78,7 @@ import { CloseStreamParams } from 'models/streams';
 import { CloseStreamTransactionParams, StreamTreasuryType } from 'models/treasuries';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -130,14 +131,14 @@ export const MoneyStreamsOutgoingView = (props: {
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
-  // Create and cache Money Streaming Program instance
+  // Use a fallback RPC for Money Streaming Program (v1) instance
   const ms = useMemo(
-    () => new MoneyStreaming(endpoint, streamProgramAddress, 'confirmed'),
-    [endpoint, streamProgramAddress],
+    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
+    [streamProgramAddress],
   );
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, mspV2AddressPK, 'confirmed');
+    return new PaymentStreaming(connection, mspV2AddressPK, connection.commitment);
   }, [connection, mspV2AddressPK]);
 
   // Create and cache Multisig client instance
@@ -146,7 +147,7 @@ export const MoneyStreamsOutgoingView = (props: {
       return null;
     }
 
-    return new MeanMultisig(endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [endpoint, publicKey, connection, multisigAddressPK]);
 
   const isMultisigContext = useMemo(() => {

@@ -68,6 +68,7 @@ import { BN } from '@project-serum/anchor';
 import { useWalletAccount } from 'contexts/walletAccount';
 import { AccountContext } from 'models/accounts/AccountContext';
 import { isSystemOwnedAccount } from 'middleware/accountInfoGetters';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 
 type TabOption = 'first-tab' | 'test-stream' | 'account-info' | 'multisig-tab' | 'misc-tab' | undefined;
 type StreamViewerOption = 'treasurer' | 'beneficiary';
@@ -125,7 +126,7 @@ export const PlaygroundView = () => {
   );
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, streamV2ProgramAddressFromConfig, 'confirmed');
+    return new PaymentStreaming(connection, streamV2ProgramAddressFromConfig, connection.commitment);
   }, [connection, streamV2ProgramAddressFromConfig]);
 
   const multisigClient = useMemo(() => {
@@ -133,7 +134,7 @@ export const PlaygroundView = () => {
       return null;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
 
   const isSystemAccount = useCallback((account: string) => {

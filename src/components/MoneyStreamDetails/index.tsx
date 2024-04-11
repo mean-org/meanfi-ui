@@ -23,7 +23,7 @@ import { ResumeItem } from 'components/ResumeItem';
 import { RightInfoDetails } from 'components/RightInfoDetails';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconArrowBack, IconExternalLink } from 'Icons';
@@ -53,6 +53,7 @@ import getIsV2Treasury from 'components/common/getIsV2Treasury';
 import getStreamStartDate from 'components/common/getStreamStartDate';
 import getIsV2Stream from 'components/common/getIsV2Stream';
 import getRateAmountBn from 'components/common/getRateAmountBn';
+import { getFallBackRpcEndpoint } from 'services/connections-hq';
 
 export const MoneyStreamDetails = (props: {
   accountAddress: string;
@@ -85,7 +86,6 @@ export const MoneyStreamDetails = (props: {
     setStreamDetail,
   } = useContext(AppStateContext);
   const connection = useConnection();
-  const { endpoint } = useConnectionConfig();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { publicKey } = useWallet();
@@ -94,14 +94,14 @@ export const MoneyStreamDetails = (props: {
   const [activityLoaded, setActivityLoaded] = useState(false);
   const [treasuryDetails, setTreasuryDetails] = useState<PaymentStreamingAccount | TreasuryInfo | undefined>(undefined);
 
-  // Create and cache Money Streaming Program instance
+  // Use a fallback RPC for Money Streaming Program (v1) instance
   const ms = useMemo(
-    () => new MoneyStreaming(endpoint, streamProgramAddress, 'confirmed'),
-    [endpoint, streamProgramAddress],
+    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
+    [streamProgramAddress],
   );
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
+    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
   }, [connection, streamV2ProgramAddress]);
 
   const isV2tream = useMemo(() => getIsV2Stream(stream), [stream]);

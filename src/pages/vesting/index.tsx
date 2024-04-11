@@ -134,6 +134,7 @@ import './style.scss';
 import { objectToJson } from 'services/logger';
 import { BN } from '@project-serum/anchor';
 import useLocalStorage from 'hooks/useLocalStorage';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 
 export type VestingAccountDetailTab = 'overview' | 'streams' | 'activity' | undefined;
 let isWorkflowLocked = false;
@@ -241,14 +242,14 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       return null;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
 
   // Create and cache Payment Streaming instance
   const paymentStreaming = useMemo(() => {
     if (publicKey) {
       console.log('New MSP from treasuries');
-      return new PaymentStreaming(connection, mspV2AddressPK, 'confirmed');
+      return new PaymentStreaming(connection, mspV2AddressPK, connection.commitment);
     }
     return undefined;
   }, [connection, mspV2AddressPK, publicKey]);

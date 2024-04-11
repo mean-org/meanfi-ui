@@ -92,6 +92,7 @@ import Wave from 'react-wavify';
 import './style.scss';
 import { BN } from '@project-serum/anchor';
 import useLocalStorage from 'hooks/useLocalStorage';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 export const MoneyStreamsInfoView = (props: {
   loadingStreams: boolean;
@@ -195,17 +196,17 @@ export const MoneyStreamsInfoView = (props: {
       return null;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
 
-  // Create and cache Money Streaming Program V1 instance
+  // Use a fallback RPC for Money Streaming Program (v1) instance
   const ms = useMemo(
-    () => new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress, 'confirmed'),
-    [connectionConfig.endpoint, streamProgramAddress],
+    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
+    [streamProgramAddress],
   );
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
+    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
   }, [connection, streamV2ProgramAddress]);
 
   const isMultisigContext = useMemo(() => {

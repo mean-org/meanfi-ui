@@ -118,7 +118,7 @@ export const RepeatingPayment = (props: {
 
   // Create and cache Payment Streaming instance
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
+    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
   }, [connection, streamV2ProgramAddress]);
 
   const isNative = useMemo(() => !!(selectedToken && selectedToken.address === NATIVE_SOL.address), [selectedToken]);

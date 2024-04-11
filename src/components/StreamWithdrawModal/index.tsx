@@ -7,7 +7,7 @@ import BigNumber from 'bignumber.js';
 import { InputMean } from 'components/InputMean';
 import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnection, useConnectionConfig } from 'contexts/connection';
+import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { getStreamId } from 'middleware/getStreamId';
 import { consoleOut, percentageBn } from 'middleware/ui';
@@ -19,6 +19,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../Notifications';
 import { BN } from '@project-serum/anchor';
+import { getFallBackRpcEndpoint } from 'services/connections-hq';
 
 export const StreamWithdrawModal = (props: {
   handleClose: any;
@@ -31,7 +32,6 @@ export const StreamWithdrawModal = (props: {
   const { handleClose, handleOk, isVisible, selectedToken, startUpData, transactionFees } = props;
   const { t } = useTranslation('common');
   const connection = useConnection();
-  const { endpoint } = useConnectionConfig();
   const { wallet, publicKey } = useWallet();
   const { splTokenList, selectedAccount, streamProgramAddress, streamV2ProgramAddress, setTransactionStatus } =
     useContext(AppStateContext);
@@ -48,7 +48,7 @@ export const StreamWithdrawModal = (props: {
   }, [publicKey, selectedAccount]);
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
+    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
   }, [connection, streamV2ProgramAddress]);
 
   const getFeeAmount = useCallback(
@@ -190,7 +190,7 @@ export const StreamWithdrawModal = (props: {
       if (v1.state === STREAM_STATE.Running) {
         setMaxAmountBn(max);
         setLoadingData(true);
-        const ms = new MoneyStreaming(endpoint, streamProgramAddress, 'confirmed');
+        const ms = new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed');
         getStreamDetails(false, streamId, ms);
       } else {
         setMaxAmountBn(max);
@@ -198,7 +198,6 @@ export const StreamWithdrawModal = (props: {
     }
   }, [
     wallet,
-    endpoint,
     publicKey,
     startUpData,
     selectedToken,

@@ -109,6 +109,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 export const StreamingAccountView = (props: {
   multisigAccounts: MultisigInfo[] | undefined;
@@ -185,18 +186,18 @@ export const StreamingAccountView = (props: {
       return null;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
 
-  // Create and cache Money Streaming Program V1 instance
+  // Use a fallback RPC for Money Streaming Program (v1) instance
   const ms = useMemo(
-    () => new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress, 'confirmed'),
-    [connectionConfig.endpoint, streamProgramAddress],
+    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
+    [streamProgramAddress],
   );
 
   // Create and cache Payment Streaming instance
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, mspV2AddressPK, 'confirmed');
+    return new PaymentStreaming(connection, mspV2AddressPK, connection.commitment);
   }, [connection, mspV2AddressPK]);
 
   const isMultisigContext = useMemo(() => {

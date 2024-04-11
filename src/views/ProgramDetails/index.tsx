@@ -55,6 +55,7 @@ import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutabl
 import './style.scss';
 import Transactions from './Transactions';
 import useLocalStorage from 'hooks/useLocalStorage';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 
 let isWorkflowLocked = false;
 
@@ -103,7 +104,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
       return null;
     }
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigProgramAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigProgramAddressPK);
   }, [publicKey, connection, multisigProgramAddressPK, connectionConfig.endpoint]);
 
   const isTxInProgress = useCallback(

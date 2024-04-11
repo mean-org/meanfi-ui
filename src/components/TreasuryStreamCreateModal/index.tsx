@@ -170,7 +170,7 @@ export const TreasuryStreamCreateModal = (props: {
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, mspV2AddressPK, 'confirmed');
+    return new PaymentStreaming(connection, mspV2AddressPK, connection.commitment);
   }, [connection, mspV2AddressPK]);
 
   const isMultisigContext = useMemo(() => {

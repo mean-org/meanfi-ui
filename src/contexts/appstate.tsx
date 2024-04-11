@@ -57,6 +57,7 @@ import useLocalStorage from 'hooks/useLocalStorage';
 import { BN } from '@project-serum/anchor';
 import getPriceByAddressOrSymbol from 'middleware/getPriceByAddressOrSymbol';
 import { DdcaAccount } from '@mean-dao/ddca';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 const pricesPerformanceCounter = new PerformanceCounter();
 const tokenListPerformanceCounter = new PerformanceCounter();
@@ -529,14 +530,14 @@ const AppStateProvider: React.FC = ({ children }) => {
   const streamProgramAddress = useMemo(() => appConfig.getConfig().streamProgramAddress, []);
   const streamV2ProgramAddress = useMemo(() => appConfig.getConfig().streamV2ProgramAddress, []);
 
-  // Create and cache Money Streaming Program instance
+  // Use a fallback RPC for Money Streaming Program (v1) instance
   const ms = useMemo(
-    () => new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress, 'confirmed'),
-    [connectionConfig.endpoint, streamProgramAddress],
+    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
+    [streamProgramAddress],
   );
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
+    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
   }, [connection, streamV2ProgramAddress]);
 
   const multisigClient = useMemo(() => {
@@ -544,7 +545,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       return null;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
 
   const setTheme = useCallback(

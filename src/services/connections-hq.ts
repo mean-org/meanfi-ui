@@ -89,15 +89,36 @@ export const getIronforgeEnvironment = () => {
   }
 };
 
+export const getFallBackRpcEndpoint = () => {
+  const ironforgeEnvironment = getIronforgeEnvironment();
+  const defaultEndpoint = getDefaultRpc();
+
+  const endpoint =
+    ironforgeEnvironment === 'mainnet'
+      ? process.env.REACT_APP_FALLBACK_MAINNET_RPC_URL ?? ''
+      : process.env.REACT_APP_FALLBACK_DEVNET_RPC_URL ?? '';
+
+  if (endpoint) {
+    return { ...defaultEndpoint, httpProvider: endpoint } as RpcConfig;
+  } else {
+    return defaultEndpoint;
+  }
+};
+
 export const refreshCachedRpc = async () => {
+  const ironforgeEnvironment = getIronforgeEnvironment();
+
   // Process special case when debugging from localhost
   // valid for devnet or mainnet but the variable REACT_APP_TRITON_ONE_DEBUG_RPC
   // on the .env files needs to contain the rpc url
   // if (isLocal()) {
   //   console.log('env:', process.env);
-  //   const TRITON_ONE_DEBUG_RPC = process.env.REACT_APP_TRITON_ONE_DEBUG_RPC ?? '';
-  //   if (TRITON_ONE_DEBUG_RPC) {
-  //     const debugRpc = { ...getDefaultRpc(), httpProvider: TRITON_ONE_DEBUG_RPC } as RpcConfig;
+  //   const endpoint =
+  //     ironforgeEnvironment === 'mainnet'
+  //       ? process.env.REACT_APP_FALLBACK_MAINNET_RPC_URL ?? ''
+  //       : process.env.REACT_APP_FALLBACK_DEVNET_RPC_URL ?? '';
+  //   if (endpoint) {
+  //     const debugRpc = { ...getDefaultRpc(), httpProvider: endpoint } as RpcConfig;
   //     window.localStorage.setItem('cachedRpc', JSON.stringify(debugRpc));
   //     return;
   //   }
@@ -109,7 +130,6 @@ export const refreshCachedRpc = async () => {
   // }
 
   const newRpc = getDefaultRpc();
-  const ironforgeEnvironment = getIronforgeEnvironment();
   if (ironforgeEnvironment && ironForgeApiUrl) {
     newRpc.httpProvider = `${ironForgeApiUrl}${ironforgeEnvironment}?apiKey=${
       ironforgeEnvironment === 'mainnet' ? ironForgeApiKeyMainnet : ironForgeApiKeyDevnet

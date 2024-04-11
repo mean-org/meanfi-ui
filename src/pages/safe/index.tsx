@@ -49,6 +49,7 @@ import { ProposalDetailsView } from './components/ProposalDetails';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import useLocalStorage from 'hooks/useLocalStorage';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -129,7 +130,7 @@ const SafeView = (props: {
       return undefined;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
 
   const multisigSerumClient = useMemo(() => {

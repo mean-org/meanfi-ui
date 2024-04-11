@@ -150,6 +150,7 @@ import useAppNavigation from './useAppNavigation';
 import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
 import createTokenTransferTx from 'middleware/createTokenTransferTx';
 import { createV0InitAtaAccountTx } from 'middleware/createV0InitAtaAccountTx';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));
@@ -298,17 +299,17 @@ export const HomeView = () => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
       return null;
     }
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
 
-  // Create and cache Money Streaming Program instance
+  // Use a fallback RPC for Money Streaming Program (v1) instance
   const ms = useMemo(
-    () => new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress, 'confirmed'),
-    [connectionConfig.endpoint, streamProgramAddress],
+    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
+    [streamProgramAddress],
   );
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
+    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
   }, [connection, streamV2ProgramAddress]);
 
   const isCustomAsset = useMemo(() => !!(selectedAsset && selectedAsset.name === 'Custom account'), [selectedAsset]);
