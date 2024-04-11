@@ -11,11 +11,17 @@ env:
   NODE_VERSION: 18
   BUILD_NUMBER: $GITHUB_RUN_NUMBER
   APP_ENV: staging
-  BUCKET_NAME: "meanfi-staging"
-  ROBOTS_TXT_FILE_NAME: "robots_disallow.txt"
+  BUCKET_NAME: 'meanfi-staging'
+  ROBOTS_TXT_FILE_NAME: 'robots_disallow.txt'
   ARTIFACT_NAME: mean-ui-build-staging
   DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID_STAGE }}
   AWS_S3_SKIP_FOLDERS: 5 # keep only last 5 deploys
+  IRONFORGE_API_URL: ${{ vars.IRONFORGE_API_URL }}
+  FALLBACK_DEVNET_RPC_URL: ${{ vars.FALLBACK_DEVNET_RPC_URL }}
+  FALLBACK_MAINNET_RPC_URL: ${{ vars.FALLBACK_MAINNET_RPC_URL }}
+  IRONFORGE_API_KEY_DEVNET: ${{ secrets.IRONFORGE_API_KEY_DEVNET }}
+  IRONFORGE_API_KEY_MAINNET: ${{ secrets.IRONFORGE_API_KEY_MAINNET }}
+  IRONFORGE_API_ACCESS_TOKEN: ${{ secrets.IRONFORGE_API_ACCESS_TOKEN }}
 
 jobs:
   build:
@@ -26,13 +32,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{env.NODE_VERSION}}
-          cache: "yarn"
+          cache: 'yarn'
 
       # Cache node modules
       - name: Cache packages
         uses: actions/cache@v3
         with:
-          path: "**/node_modules"
+          path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
 
       # Install Yarn
@@ -44,6 +50,12 @@ jobs:
         run: npm run build:s3
         env:
           REACT_APP_ENV: ${{ env.APP_ENV }}
+          REACT_APP_IRONFORGE_API_URL: ${{ env.IRONFORGE_API_URL }}
+          REACT_APP_FALLBACK_DEVNET_RPC_URL: ${{ env.FALLBACK_DEVNET_RPC_URL }}
+          REACT_APP_FALLBACK_MAINNET_RPC_URL: ${{ env.FALLBACK_MAINNET_RPC_URL }}
+          REACT_APP_IRONFORGE_API_KEY_DEVNET: ${{ env.IRONFORGE_API_KEY_DEVNET }}
+          REACT_APP_IRONFORGE_API_KEY_MAINNET: ${{ env.IRONFORGE_API_KEY_MAINNET }}
+          REACT_APP_IRONFORGE_API_ACCESS_TOKEN: ${{ env.IRONFORGE_API_ACCESS_TOKEN }}
 
       # Copy the appropiate robots.txt
       - name: Copy robots.txt
@@ -81,7 +93,7 @@ jobs:
       # Copy the files from build folder to the S3 bucket
       - name: Deploy to S3
         env:
-          AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
+          AWS_S3_PATH: 's3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}'
         run: |
           aws s3 sync . ${{env.AWS_S3_PATH}}/ --acl public-read --cache-control 'public, max-age=604800' --exclude 'index.html'
           aws s3 cp index.html ${{env.AWS_S3_PATH}}/index.html --acl public-read --cache-control max-age=0
@@ -91,11 +103,11 @@ jobs:
       - name: Update originPath
         uses: mean-dao/aws-webdeploy@v1
         env:
-          FOLDER_PATH: "/v${{ github.run_number }}"
+          FOLDER_PATH: '/v${{ github.run_number }}'
         with:
-          ORIGIN_PATH: "/v${{ github.run_number }}"
+          ORIGIN_PATH: '/v${{ github.run_number }}'
           AWS_DISTRIBUTION_ID: ${{ env.DISTRIBUTION_ID }}
-          AWS_S3_PATH: "s3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}"
+          AWS_S3_PATH: 's3://${{ env.BUCKET_NAME }}/v${{ github.run_number }}'
 
       # get list of folders and remove older ones
       - name: S3 Cleanup
