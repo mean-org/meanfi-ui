@@ -16,7 +16,7 @@ import {
   DDCA_ACTIONS,
   TransactionFees,
 } from '@mean-dao/ddca';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, clusterApiUrl } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Empty, Modal, Row, Spin, Tooltip } from 'antd';
 import { DdcaCloseModal } from 'components/DdcaCloseModal';
 import { DdcaWithdrawModal } from 'components/DdcaWithdrawModal';
@@ -32,11 +32,10 @@ import {
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
-import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
 import { IconClock, IconExchange, IconExternalLink } from 'Icons';
 import { customLogger } from 'index';
@@ -51,19 +50,11 @@ import {
   getTransactionStatusForLogs,
   isLocal,
 } from 'middleware/ui';
-import {
-  formatThousands,
-  getAmountFromLamports,
-  getAmountWithSymbol,
-  getTxIxResume,
-  useLocalStorageState,
-} from 'middleware/utils';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { getLiveRpc, RpcConfig } from 'services/connections-hq';
 import './style.scss';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -80,18 +71,13 @@ export const ExchangeDcasView = () => {
     setLoadingRecurringBuys,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
-  const navigate = useNavigate();
   const { t } = useTranslation('common');
+  const connection = useConnection();
+  const connectionConfig = useConnectionConfig();
   const { publicKey, wallet, connected } = useWallet();
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
-
-  // Connection management
-  const [cachedRpcJson] = useLocalStorageState('cachedRpc');
-  const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
-  const cachedRpc = cachedRpcJson as RpcConfig;
-
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [selectedDdca, setSelectedDdca] = useState<DdcaAccount | undefined>();
@@ -103,45 +89,14 @@ export const ExchangeDcasView = () => {
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
 
-  // Select, Connect to and test the network
-  useEffect(() => {
-    (async () => {
-      if (cachedRpc.networkId !== 101) {
-        let debugRpc: RpcConfig | null = null;
-        const mainnetRpc = await getLiveRpc(101);
-        if (!mainnetRpc) {
-          navigate('/service-unavailable');
-        }
-        if (environment === 'production' && isLocal()) {
-          debugRpc = {
-            ...mainnetRpc,
-            httpProvider: process.env.REACT_APP_TRITON_ONE_DEBUG_RPC ?? clusterApiUrl('mainnet-beta'),
-          } as RpcConfig;
-        }
-        setMainnetRpc(debugRpc ?? mainnetRpc);
-      } else {
-        setMainnetRpc(null);
-      }
-    })();
-    return () => {};
-  }, [cachedRpc.networkId, navigate]);
-
-  const endpoint = useMemo(
-    () => (mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider),
-    [cachedRpc.httpProvider, mainnetRpc],
-  );
-
-  // Set and cache connection
-  const connection = useMemo(() => new Connection(endpoint, 'confirmed'), [endpoint]);
-
   // Set and cache the DDCA client
   const ddcaClient = useMemo(() => {
-    if (connection && wallet && publicKey && endpoint) {
-      return new DdcaClient(endpoint, wallet, { commitment: 'confirmed' }, isLocal() ? true : false);
+    if (connection && wallet && publicKey && connectionConfig.endpoint) {
+      return new DdcaClient(connectionConfig.endpoint, wallet, { commitment: 'confirmed' }, isLocal() ? true : false);
     } else {
       return undefined;
     }
-  }, [wallet, endpoint, publicKey, connection]);
+  }, [connection, connectionConfig.endpoint, publicKey, wallet]);
 
   // Keep track of current balance
   useEffect(() => {

@@ -69,7 +69,7 @@ import {
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
@@ -165,9 +165,9 @@ export const HomeView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { asset, streamingItemId, programId } = useParams();
-  const { endpoint } = useConnectionConfig();
-  const { publicKey, connected, wallet } = useWallet();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
+  const { publicKey, connected, wallet } = useWallet();
   const {
     programs,
     streamList,
@@ -290,15 +290,6 @@ export const HomeView = () => {
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
-  const connection = useMemo(
-    () =>
-      new Connection(endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [endpoint],
-  );
-
   /////////////////
   //  Init code  //
   /////////////////
@@ -312,8 +303,8 @@ export const HomeView = () => {
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(
-    () => new MoneyStreaming(endpoint, streamProgramAddress, 'confirmed'),
-    [endpoint, streamProgramAddress],
+    () => new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress, 'confirmed'),
+    [connectionConfig.endpoint, streamProgramAddress],
   );
 
   const paymentStreaming = useMemo(() => {
@@ -2071,7 +2062,7 @@ export const HomeView = () => {
       uiConfig: AppConfig,
       uiInstruction: UiInstruction,
     ): Promise<TransactionInstruction | null> => {
-      if (!connection || !connectionConfig || !publicKey) {
+      if (!connection || !publicKey) {
         return null;
       }
 
@@ -2119,7 +2110,7 @@ export const HomeView = () => {
 
       return ix;
     },
-    [connection, connectionConfig, publicKey],
+    [connection, publicKey],
   );
 
   const getCredixProgram = useCallback(async (connection: Connection, investor: PublicKey) => {
@@ -2136,7 +2127,7 @@ export const HomeView = () => {
 
   const createCredixDepositIx = useCallback(
     async (investor: PublicKey, amount: number, marketplace: string) => {
-      if (!connection || !connectionConfig) {
+      if (!connection) {
         return null;
       }
 
@@ -2154,12 +2145,12 @@ export const HomeView = () => {
         return null;
       }
     },
-    [connection, connectionConfig, getCredixProgram],
+    [connection, getCredixProgram],
   );
 
   const createCredixDepositTrancheIx = useCallback(
     async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
-      if (!connection || !connectionConfig) {
+      if (!connection) {
         return null;
       }
 
@@ -2171,12 +2162,12 @@ export const HomeView = () => {
         return credixMainnet.getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
       }
     },
-    [connection, connectionConfig, getCredixProgram],
+    [connection, getCredixProgram],
   );
 
   const createCredixWithdrawIx = useCallback(
     async (investor: PublicKey, amount: number, marketplace: string) => {
-      if (!connection || !connectionConfig) {
+      if (!connection) {
         return null;
       }
 
@@ -2187,12 +2178,12 @@ export const HomeView = () => {
         return credixMainnet.getCreateWithdrawRequestIx(program, investor, amount, marketplace);
       }
     },
-    [connection, connectionConfig, getCredixProgram],
+    [connection, getCredixProgram],
   );
 
   const createCredixRedeemRequestIx = useCallback(
     async (investor: PublicKey, amount: number, marketplace: string) => {
-      if (!connection || !connectionConfig) {
+      if (!connection) {
         return null;
       }
 
@@ -2203,12 +2194,12 @@ export const HomeView = () => {
         return credixMainnet.getRedeemWithdrawRequestIx(program, investor, amount, marketplace);
       }
     },
-    [connection, connectionConfig, getCredixProgram],
+    [connection, getCredixProgram],
   );
 
   const createCredixWithdrawTrancheIx = useCallback(
     async (investor: PublicKey, deal: PublicKey, trancheIndex: number, marketplace: string) => {
-      if (!connection || !connectionConfig) {
+      if (!connection) {
         return null;
       }
 
@@ -2219,7 +2210,7 @@ export const HomeView = () => {
         return credixMainnet.getTrancheWithdrawIx(program, investor, deal, trancheIndex, marketplace);
       }
     },
-    [connection, connectionConfig, getCredixProgram],
+    [connection, getCredixProgram],
   );
 
   const onExecuteCreateTransactionProposal = useCallback(

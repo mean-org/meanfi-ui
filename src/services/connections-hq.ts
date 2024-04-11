@@ -1,9 +1,7 @@
-import { Cluster, clusterApiUrl, Connection } from '@solana/web3.js';
-import { isLocal } from 'middleware/ui';
-import { appConfig } from '..';
+import { Cluster, clusterApiUrl, ConnectionConfig } from '@solana/web3.js';
 import { environment } from '../environments/environment';
-import { getRpcApiEndpoint, meanfiRequestOptions } from '../middleware/api';
 import { ChainID } from '../models/enums';
+import { TRANSACTION_STATUS_RETRY_TIMEOUT } from 'constants/common';
 
 export interface RpcConfig {
   cluster: Cluster | 'local-validator';
@@ -12,6 +10,21 @@ export interface RpcConfig {
   id: number;
   network?: string;
 }
+
+export const ironForgeApiUrl = process.env.REACT_APP_IRONFORGE_API_URL ?? '';
+
+const ironForgeApiKeyDevnet = process.env.REACT_APP_IRONFORGE_API_KEY_DEVNET ?? '';
+const ironForgeApiKeyMainnet = process.env.REACT_APP_IRONFORGE_API_KEY_MAINNET ?? '';
+const ironForgeApiAccessToken = process.env.REACT_APP_IRONFORGE_API_ACCESS_TOKEN ?? '';
+
+export const failsafeConnectionConfig: ConnectionConfig = {
+  commitment: 'confirmed',
+  confirmTransactionInitialTimeout: TRANSACTION_STATUS_RETRY_TIMEOUT,
+  disableRetryOnRateLimit: true,
+  httpHeaders: {
+    'x-ironforge-auth-token': ironForgeApiAccessToken,
+  },
+};
 
 export const RETRY_TIMER = 10;
 export const NUM_RETRIES = 3;
@@ -63,73 +76,45 @@ export const getDefaultRpc = (): RpcConfig => {
   }
 };
 
-export const isRpcLive = async (rpcConfig: RpcConfig): Promise<boolean> => {
-  try {
-    const connection = new Connection(rpcConfig.httpProvider);
-    if (!connection) {
-      return false;
-    }
-    return connection
-      .getLatestBlockhashAndContext('confirmed')
-      .then((response: any) => {
-        const rpcTestPassed = !!(response?.value && !response.value.err);
-        return rpcTestPassed;
-      })
-      .catch(error => {
-        console.error(error);
-        return false;
-      });
-  } catch (error) {
-    console.error(error);
-    return false;
+export const getIronforgeEnvironment = () => {
+  switch (environment) {
+    case 'production':
+      return 'mainnet';
+    case 'local':
+    case 'development':
+    case 'staging':
+      return 'devnet';
+    default:
+      return '';
   }
-};
-
-export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Promise<RpcConfig | null> => {
-  networkId = networkId ?? getDefaultRpc().networkId;
-  const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${previousRpcId ?? 0
-    }`;
-  const rpcConfig = await getRpcApiEndpoint(url, meanfiRequestOptions);
-  if (rpcConfig === null) {
-    return null;
-  }
-
-  const isLive = await isRpcLive(rpcConfig);
-
-  if (isLive) {
-    return rpcConfig;
-  }
-
-  return await getLiveRpc(networkId, rpcConfig.id);
 };
 
 export const refreshCachedRpc = async () => {
   // Process special case when debugging from localhost
   // valid for devnet or mainnet but the variable REACT_APP_TRITON_ONE_DEBUG_RPC
   // on the .env files needs to contain the rpc url
-  if (isLocal()) {
-    console.log('env:', process.env)
-    const TRITON_ONE_DEBUG_RPC = process.env.REACT_APP_TRITON_ONE_DEBUG_RPC ?? ''
-    if (TRITON_ONE_DEBUG_RPC) {
-      const debugRpc = ({ ...getDefaultRpc(), httpProvider: TRITON_ONE_DEBUG_RPC, }) as RpcConfig;
-      window.localStorage.setItem('cachedRpc', JSON.stringify(debugRpc));
-      return;
-    }
-    console.warn('No RPC preset in environment!')
-    console.error('RPC selection error:', 'You are running from localhost but your .env variable REACT_APP_TRITON_ONE_DEBUG_RPC does nt contain an RPC url to work with! Switching to defaults...')
+  // if (isLocal()) {
+  //   console.log('env:', process.env);
+  //   const TRITON_ONE_DEBUG_RPC = process.env.REACT_APP_TRITON_ONE_DEBUG_RPC ?? '';
+  //   if (TRITON_ONE_DEBUG_RPC) {
+  //     const debugRpc = { ...getDefaultRpc(), httpProvider: TRITON_ONE_DEBUG_RPC } as RpcConfig;
+  //     window.localStorage.setItem('cachedRpc', JSON.stringify(debugRpc));
+  //     return;
+  //   }
+  //   console.warn('No RPC preset in environment!');
+  //   console.error(
+  //     'RPC selection error:',
+  //     'You are running from localhost but your .env variable REACT_APP_TRITON_ONE_DEBUG_RPC does nt contain an RPC url to work with! Switching to defaults...',
+  //   );
+  // }
+
+  const newRpc = getDefaultRpc();
+  const ironforgeEnvironment = getIronforgeEnvironment();
+  if (ironforgeEnvironment && ironForgeApiUrl) {
+    newRpc.httpProvider = `${ironForgeApiUrl}${ironforgeEnvironment}?apiKey=${
+      ironforgeEnvironment === 'mainnet' ? ironForgeApiKeyMainnet : ironForgeApiKeyDevnet
+    }`;
   }
 
-  const cachedRpcJson = window.localStorage.getItem('cachedRpc');
-  if (!cachedRpcJson) {
-    const newRpc = (await getLiveRpc()) ?? getDefaultRpc();
-    window.localStorage.setItem('cachedRpc', JSON.stringify(newRpc));
-    return;
-  }
-
-  const cachedRpc = JSON.parse(cachedRpcJson) as RpcConfig;
-  const isLive = await isRpcLive(cachedRpc);
-  if (!cachedRpc || !isLive) {
-    const newRpc = (await getLiveRpc()) ?? getDefaultRpc();
-    window.localStorage.setItem('cachedRpc', JSON.stringify(newRpc));
-  }
+  window.localStorage.setItem('cachedRpc', JSON.stringify(newRpc));
 };

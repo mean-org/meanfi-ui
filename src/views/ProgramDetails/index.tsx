@@ -3,7 +3,6 @@ import { TransactionFees } from '@mean-dao/payment-streaming';
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import {
   ConfirmOptions,
-  Connection,
   LAMPORTS_PER_SOL,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
@@ -23,7 +22,7 @@ import { MAX_SUPPORTED_TRANSACTION_VERSION, MULTISIG_ROUTE_BASE_PATH, NO_FEES } 
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
+import { useConnection, useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { appConfig, customLogger } from 'index';
@@ -63,6 +62,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const {
@@ -95,15 +95,6 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
     'transactionPriority',
     DEFAULT_BUDGET_CONFIG,
-  );
-
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
   );
 
   const multisigProgramAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);

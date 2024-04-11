@@ -6,7 +6,7 @@ import {
   MultisigTransactionFees,
   MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Row, Slider, Tooltip } from 'antd';
 import { SliderMarks } from 'antd/lib/slider';
 import { segmentAnalytics } from 'App';
@@ -16,7 +16,7 @@ import { PreFooter } from 'components/PreFooter';
 import { MAX_MULTISIG_PARTICIPANTS, MEAN_MULTISIG_ACCOUNT_LAMPORTS } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
+import { useConnection, useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
@@ -37,6 +37,7 @@ import './style.scss';
 const CreateSafeView = () => {
   const { t } = useTranslation('common');
   const { wallet, publicKey } = useWallet();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const account = useAccountsContext();
   const navigate = useNavigate();
@@ -63,15 +64,6 @@ const CreateSafeView = () => {
   /////////////////
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
 
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {

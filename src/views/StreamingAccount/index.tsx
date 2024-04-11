@@ -36,7 +36,6 @@ import {
 import { BN } from '@project-serum/anchor';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
-  Connection,
   LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
@@ -64,7 +63,7 @@ import {
 } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
@@ -141,6 +140,7 @@ export const StreamingAccountView = (props: {
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
 
   const { publicKey, connected, wallet } = useWallet();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation('common');
@@ -179,16 +179,6 @@ export const StreamingAccountView = (props: {
 
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-
-  // Create and cache the connection
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
 
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
