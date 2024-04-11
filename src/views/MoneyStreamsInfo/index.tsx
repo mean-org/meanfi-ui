@@ -23,7 +23,7 @@ import {
   AccountType,
   NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Button, Col, Dropdown, Row, Space, Spin, Tabs } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
@@ -42,7 +42,7 @@ import { FALLBACK_COIN_IMAGE, MEANFI_DOCS_URL, MEAN_MULTISIG_ACCOUNT_LAMPORTS, N
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
+import { useConnection, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
@@ -92,6 +92,7 @@ import Wave from 'react-wavify';
 import './style.scss';
 import { BN } from '@project-serum/anchor';
 import useLocalStorage from 'hooks/useLocalStorage';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 export const MoneyStreamsInfoView = (props: {
   loadingStreams: boolean;
@@ -135,6 +136,7 @@ export const MoneyStreamsInfoView = (props: {
     openStreamById,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const { t } = useTranslation('common');
@@ -189,32 +191,22 @@ export const MoneyStreamsInfoView = (props: {
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
-  // Create and cache the connection
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
-
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
       return null;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
 
-  // Create and cache Money Streaming Program V1 instance
+  // Use a fallback RPC for Money Streaming Program (v1) instance
   const ms = useMemo(
-    () => new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress, 'confirmed'),
-    [connectionConfig.endpoint, streamProgramAddress],
+    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
+    [streamProgramAddress],
   );
 
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), 'confirmed');
+    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
   }, [connection, streamV2ProgramAddress]);
 
   const isMultisigContext = useMemo(() => {

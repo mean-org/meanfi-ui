@@ -20,7 +20,7 @@ import {
   WithdrawFromStreamTransactionAccounts,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Button, Dropdown, Modal, Space, Spin } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
@@ -34,7 +34,7 @@ import { StreamWithdrawModal } from 'components/StreamWithdrawModal';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
@@ -74,6 +74,7 @@ import { TokenInfo } from 'models/SolanaTokenInfo';
 import { StreamWithdrawData } from 'models/streams';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -97,8 +98,8 @@ export const MoneyStreamsIncomingView = (props: {
     setStreamDetail,
   } = useContext(AppStateContext);
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
-  const { endpoint } = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
@@ -120,35 +121,25 @@ export const MoneyStreamsIncomingView = (props: {
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
-  // Create and cache the connection
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
-
-  // Create and cache Money Streaming Program instance
+  // Use a fallback RPC for Money Streaming Program (v1) instance
   const ms = useMemo(
-    () => new MoneyStreaming(endpoint, streamProgramAddress, 'confirmed'),
-    [endpoint, streamProgramAddress],
+    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
+    [streamProgramAddress],
   );
 
   // Create and cache Payment Streaming instance
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, mspV2AddressPK, 'confirmed');
+    return new PaymentStreaming(connection, mspV2AddressPK, connection.commitment);
   }, [connection, mspV2AddressPK]);
 
   // Create and cache Multisig client instance
   const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !endpoint) {
+    if (!connection || !publicKey || !connectionConfig.endpoint) {
       return null;
     }
 
-    return new MeanMultisig(endpoint, publicKey, 'confirmed', multisigAddressPK);
-  }, [endpoint, publicKey, connection, multisigAddressPK]);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
+  }, [connectionConfig.endpoint, publicKey, connection, multisigAddressPK]);
 
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);

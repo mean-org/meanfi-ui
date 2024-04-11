@@ -1,7 +1,7 @@
-import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { openNotification } from 'components/Notifications';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
+import { useConnection, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { appConfig, customLogger } from 'index';
@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { MultisigTxParams } from 'models/multisig';
 import useLocalStorage from './useLocalStorage';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 
 type BaseArgs<T extends LooseObject | undefined> = {
   // name of the transaction, i.e. 'Edit Vesting Contract',
@@ -88,16 +89,8 @@ type Args<T extends LooseObject | undefined> = MultisigArgs<T> | SinglesigArgs<T
 
 const useTransaction = () => {
   const { publicKey, wallet } = useWallet();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
-
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
 
   const { selectedAccount, multisigAccounts, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
@@ -118,7 +111,7 @@ const useTransaction = () => {
       return null;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
 
   const { t } = useTranslation('common');

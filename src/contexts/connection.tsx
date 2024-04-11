@@ -1,19 +1,13 @@
+import { Cluster, Connection } from '@solana/web3.js';
+import useLocalStorage from 'hooks/useLocalStorage';
+import { ChainID } from 'models/enums';
 import React, { useContext, useMemo } from 'react';
 import { environment } from '../environments/environment';
-import { Cluster, Connection, ConnectionConfig } from '@solana/web3.js';
-import { DEFAULT_RPCS, RpcConfig } from '../services/connections-hq';
 import { useLocalStorageState } from '../middleware/utils';
-import { TRANSACTION_STATUS_RETRY_TIMEOUT } from '../constants';
-import { ChainID } from 'models/enums';
-import useLocalStorage from 'hooks/useLocalStorage';
+import { DEFAULT_RPCS, RpcConfig, failsafeConnectionConfig } from '../services/connections-hq';
 
 const DEFAULT = DEFAULT_RPCS[0].httpProvider;
 const DEFAULT_SLIPPAGE = 0.25;
-
-export const failsafeConnectionConfig: ConnectionConfig = {
-  commitment: 'confirmed',
-  confirmTransactionInitialTimeout: TRANSACTION_STATUS_RETRY_TIMEOUT,
-};
 
 export const getNetworkIdByCluster = (cluster: Cluster | 'local-validator') => {
   switch (cluster) {

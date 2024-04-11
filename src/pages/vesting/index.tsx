@@ -27,7 +27,7 @@ import {
   UpdateVestingTemplateTransactionAccounts,
   NATIVE_SOL_MINT,
 } from '@mean-dao/payment-streaming';
-import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Alert, Button, Dropdown, notification, Space, Tabs, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { segmentAnalytics } from 'App';
@@ -48,7 +48,7 @@ import {
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useTransaction from 'hooks/useTransaction';
@@ -134,6 +134,7 @@ import './style.scss';
 import { objectToJson } from 'services/logger';
 import { BN } from '@project-serum/anchor';
 import useLocalStorage from 'hooks/useLocalStorage';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 
 export type VestingAccountDetailTab = 'overview' | 'streams' | 'activity' | undefined;
 let isWorkflowLocked = false;
@@ -169,6 +170,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const location = useLocation();
   const navigate = useNavigate();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { vestingContract, activeTab } = useParams();
   const { t } = useTranslation('common');
@@ -235,29 +237,19 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
-  // Create and cache the connection
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
-
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
       return null;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
 
   // Create and cache Payment Streaming instance
   const paymentStreaming = useMemo(() => {
     if (publicKey) {
       console.log('New MSP from treasuries');
-      return new PaymentStreaming(connection, mspV2AddressPK, 'confirmed');
+      return new PaymentStreaming(connection, mspV2AddressPK, connection.commitment);
     }
     return undefined;
   }, [connection, mspV2AddressPK, publicKey]);

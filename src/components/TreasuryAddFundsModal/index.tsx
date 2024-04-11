@@ -2,7 +2,6 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, Warn
 import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream, PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
-import { Connection } from '@solana/web3.js';
 import { Button, Modal, Select, Spin, Tooltip } from 'antd';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { Identicon } from 'components/Identicon';
@@ -15,7 +14,7 @@ import {
 } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { IconHelpCircle } from 'Icons';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
@@ -87,7 +86,7 @@ export const TreasuryAddFundsModal = (props: {
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const connectionConfig = useConnectionConfig();
+  const connection = useConnection();
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [availableBalance, setAvailableBalance] = useState(new BN(0));
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
@@ -103,15 +102,6 @@ export const TreasuryAddFundsModal = (props: {
   /////////////////
   //   Getters   //
   /////////////////
-
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
 
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);

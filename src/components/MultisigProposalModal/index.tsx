@@ -1,6 +1,6 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
-import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { Alert, Button, Col, Divider, Modal, Row, Spin } from 'antd';
 import { InputMean } from 'components/InputMean';
 import { InputTextAreaMean } from 'components/InputTextAreaMean';
@@ -9,7 +9,7 @@ import { SelectMean } from 'components/SelectMean';
 import { StepSelector } from 'components/StepSelector';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VESTING_ROUTE_BASE_PATH } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { IconExternalLink } from 'Icons';
 import { isError } from 'middleware/transactions';
@@ -23,7 +23,7 @@ import {
   NATIVE_LOADER,
   parseSerializedTx,
 } from 'models/multisig';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import './style.scss';
@@ -53,7 +53,7 @@ export const MultisigProposalModal = (props: {
   const navigate = useNavigate();
   const { publicKey } = useWallet();
   const { t } = useTranslation('common');
-  const connectionConfig = useConnectionConfig();
+  const connection = useConnection();
   const { theme, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
 
   const { handleClose, isVisible, isBusy, proposer, appsProvider, solanaApps, handleOk, selectedMultisig } = props;
@@ -71,15 +71,6 @@ export const MultisigProposalModal = (props: {
   const [selectedUiIx, setSelectedUiIx] = useState<UiInstruction | undefined>();
   const [credixValue, setCredixValue] = useState<number | undefined>();
   const [inputState, setInputState] = useState<any>({});
-
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback(

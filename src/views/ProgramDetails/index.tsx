@@ -3,7 +3,6 @@ import { TransactionFees } from '@mean-dao/payment-streaming';
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import {
   ConfirmOptions,
-  Connection,
   LAMPORTS_PER_SOL,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
@@ -23,7 +22,7 @@ import { MAX_SUPPORTED_TRANSACTION_VERSION, MULTISIG_ROUTE_BASE_PATH, NO_FEES } 
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
+import { useConnection, useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { appConfig, customLogger } from 'index';
@@ -56,6 +55,7 @@ import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutabl
 import './style.scss';
 import Transactions from './Transactions';
 import useLocalStorage from 'hooks/useLocalStorage';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 
 let isWorkflowLocked = false;
 
@@ -63,6 +63,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const {
@@ -97,22 +98,13 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
-
   const multisigProgramAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
       return null;
     }
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigProgramAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigProgramAddressPK);
   }, [publicKey, connection, multisigProgramAddressPK, connectionConfig.endpoint]);
 
   const isTxInProgress = useCallback(

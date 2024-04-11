@@ -36,7 +36,6 @@ import {
 import { BN } from '@project-serum/anchor';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
-  Connection,
   LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
@@ -64,7 +63,7 @@ import {
 } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
@@ -110,6 +109,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 export const StreamingAccountView = (props: {
   multisigAccounts: MultisigInfo[] | undefined;
@@ -141,6 +141,7 @@ export const StreamingAccountView = (props: {
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
 
   const { publicKey, connected, wallet } = useWallet();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation('common');
@@ -180,33 +181,23 @@ export const StreamingAccountView = (props: {
   const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
-  // Create and cache the connection
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
-
   const multisigClient = useMemo(() => {
     if (!connection || !publicKey || !connectionConfig.endpoint) {
       return null;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
 
-  // Create and cache Money Streaming Program V1 instance
+  // Use a fallback RPC for Money Streaming Program (v1) instance
   const ms = useMemo(
-    () => new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress, 'confirmed'),
-    [connectionConfig.endpoint, streamProgramAddress],
+    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
+    [streamProgramAddress],
   );
 
   // Create and cache Payment Streaming instance
   const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, mspV2AddressPK, 'confirmed');
+    return new PaymentStreaming(connection, mspV2AddressPK, connection.commitment);
   }, [connection, mspV2AddressPK]);
 
   const isMultisigContext = useMemo(() => {

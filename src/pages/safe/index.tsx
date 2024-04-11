@@ -11,7 +11,7 @@ import {
   MULTISIG_ACTIONS,
 } from '@mean-dao/mean-multisig-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
-import { ConfirmOptions, Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { ConfirmOptions, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { Button, Empty, Spin, Tooltip } from 'antd';
 import { segmentAnalytics } from 'App';
 import { ErrorReportModal } from 'components/ErrorReportModal';
@@ -20,7 +20,7 @@ import { openNotification } from 'components/Notifications';
 import { MULTISIG_ROUTE_BASE_PATH } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
+import { useConnection, useConnectionConfig } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
@@ -49,6 +49,7 @@ import { ProposalDetailsView } from './components/ProposalDetails';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import useLocalStorage from 'hooks/useLocalStorage';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -74,6 +75,7 @@ const SafeView = (props: {
     setMultisigTxs,
   } = useContext(AppStateContext);
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const [searchParams] = useSearchParams();
@@ -115,15 +117,6 @@ const SafeView = (props: {
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
-
   useEffect(() => {
     let optionInQuery: string | null = null;
     if (searchParams) {
@@ -137,7 +130,7 @@ const SafeView = (props: {
       return undefined;
     }
 
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, 'confirmed', multisigAddressPK);
+    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
   }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
 
   const multisigSerumClient = useMemo(() => {

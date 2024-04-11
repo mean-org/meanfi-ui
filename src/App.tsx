@@ -83,7 +83,7 @@ function App() {
     return () => {};
   }, [theme, updateTheme]);
 
-  // Fire only once
+  // Select a default RPC
   useEffect(() => {
     refreshCachedRpc().then(() => setLoadingStatus('finished'));
     return () => {};

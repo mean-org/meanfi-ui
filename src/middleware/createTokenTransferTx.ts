@@ -1,7 +1,14 @@
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
-import { TransferTransactionAccounts } from '@mean-dao/payment-streaming';
+import type { TransferTransactionAccounts } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { Connection, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
+import {
+  Keypair,
+  SystemProgram,
+  Transaction,
+  type Connection,
+  type PublicKey,
+  type TransactionInstruction,
+} from '@solana/web3.js';
 import { SOL_MINT } from './ids';
 
 const createTokenTransferTx = async (

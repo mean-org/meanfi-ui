@@ -1,3 +1,4 @@
+import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
 import { Adapter, SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import {
   AccountMeta,
@@ -22,7 +23,6 @@ import { TransactionStatus } from '../models/enums';
 import { Confirmations, Timestamp } from '../models/transactions';
 import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { formatThousands, getAmountFromLamports, readLocalStorageKey, toBuffer } from './utils';
-import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
 
 export type PriorityOption = 'basic' | 'standard' | 'fast';
 

@@ -1,4 +1,3 @@
-import { Connection } from '@solana/web3.js';
 import { Drawer, Empty, Layout } from 'antd';
 import { segmentAnalytics } from 'App';
 import { AccountSelectorModal } from 'components/AccountSelectorModal';
@@ -10,13 +9,12 @@ import {
   CREATE_SAFE_ROUTE_PATH,
   GOOGLE_ANALYTICS_PROD_TAG_ID,
   LANGUAGES,
-  PERFORMANCE_SAMPLE_INTERVAL,
   PERFORMANCE_THRESHOLD,
   SOLANA_STATUS_PAGE,
 } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
+import { useConnection, useConnectionConfig } from 'contexts/connection';
 import useOnlineStatus from 'contexts/online-status';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
@@ -28,7 +26,7 @@ import { AppUsageEvent } from 'middleware/segment-service';
 import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
 import { isUnauthenticatedRoute } from 'middleware/utils';
 import { AccountDetails } from 'models/accounts';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   browserName,
   deviceType,
@@ -44,6 +42,8 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './style.scss';
 import './xnft.scss';
+
+export const PERFORMANCE_SAMPLE_INTERVAL = 60 * 60 * 1000;
 
 const { Header, Content, Footer } = Layout;
 
@@ -67,9 +67,9 @@ export const AppLayout = React.memo((props: any) => {
   const { t, i18n } = useTranslation('common');
   const { refreshAccount } = useAccountsContext();
   const { isOnline, responseTime } = useOnlineStatus();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { provider, connected, publicKey, disconnect } = useWallet();
-  const [previousChain, setChain] = useState('');
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
   const [language, setLanguage] = useState('');
@@ -79,15 +79,6 @@ export const AppLayout = React.memo((props: any) => {
   ///////////////
   // Callbacks //
   ///////////////
-
-  const connection = useMemo(
-    () =>
-      new Connection(connectionConfig.endpoint, {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: true,
-      }),
-    [connectionConfig.endpoint],
-  );
 
   // Fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
@@ -199,15 +190,6 @@ export const AppLayout = React.memo((props: any) => {
     // Report page view in Segment
     segmentAnalytics.recordPageVisit(location.pathname);
   }, [publicKey, location.pathname]);
-
-  // Effect Network change
-  useEffect(() => {
-    if (previousChain !== connectionConfig.cluster) {
-      setChain(connectionConfig.cluster);
-      consoleOut('Cluster:', connectionConfig.cluster, 'blue');
-      setNeedRefresh(true);
-    }
-  }, [previousChain, connectionConfig]);
 
   // Show Avg TPS on the console
   useEffect(() => {
@@ -356,7 +338,7 @@ export const AppLayout = React.memo((props: any) => {
 
   // Update diagnosis info
   useEffect(() => {
-    if (connectionConfig && connectionConfig.endpoint && needRefresh) {
+    if (connectionConfig.endpoint && needRefresh) {
       const now = new Date();
       const device = getPlatform();
       const dateTime = `Client time: ${now.toUTCString()}`;
