@@ -13,6 +13,12 @@ env:
   AWS_S3_SKIP_FOLDERS: 5 # keep only last 5 deploys
   APPROVAL_ADMINS_PROD: MexicanSparker,eydelrivero,micheltriana
   MINIMUM_APPROVALS: 1
+  IRONFORGE_API_URL: ${{ vars.IRONFORGE_API_URL }}
+  FALLBACK_DEVNET_RPC_URL: ${{ vars.FALLBACK_DEVNET_RPC_URL }}
+  FALLBACK_MAINNET_RPC_URL: ${{ vars.FALLBACK_MAINNET_RPC_URL }}
+  IRONFORGE_API_KEY_DEVNET: ${{ secrets.IRONFORGE_API_KEY_DEVNET }}
+  IRONFORGE_API_KEY_MAINNET: ${{ secrets.IRONFORGE_API_KEY_MAINNET }}
+  IRONFORGE_API_ACCESS_TOKEN: ${{ secrets.IRONFORGE_API_ACCESS_TOKEN }}
 
 jobs:
   approval:
@@ -52,6 +58,12 @@ jobs:
         run: npm run build:s3
         env:
           REACT_APP_ENV: ${{ env.APP_ENV }}
+          REACT_APP_IRONFORGE_API_URL: ${{ env.IRONFORGE_API_URL }}
+          REACT_APP_FALLBACK_DEVNET_RPC_URL: ${{ env.FALLBACK_DEVNET_RPC_URL }}
+          REACT_APP_FALLBACK_MAINNET_RPC_URL: ${{ env.FALLBACK_MAINNET_RPC_URL }}
+          REACT_APP_IRONFORGE_API_KEY_DEVNET: ${{ env.IRONFORGE_API_KEY_DEVNET }}
+          REACT_APP_IRONFORGE_API_KEY_MAINNET: ${{ env.IRONFORGE_API_KEY_MAINNET }}
+          REACT_APP_IRONFORGE_API_ACCESS_TOKEN: ${{ env.IRONFORGE_API_ACCESS_TOKEN }}
 
       # Copy the appropiate robots.txt
       - name: Copy robots.txt
