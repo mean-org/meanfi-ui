@@ -1,13 +1,13 @@
 import { WarningFilled } from '@ant-design/icons';
 import { DepositRecord, DepositsInfo, StakingClient } from '@mean-dao/staking';
-import { ConfirmOptions, PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Spin } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { PreFooter } from 'components/PreFooter';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { getNetworkIdByCluster, useConnection, useConnectionConfig } from 'contexts/connection';
+import { getNetworkIdByCluster, useConnection } from 'contexts/connection';
 import { confirmationEvents, TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { IconStats } from 'Icons';
@@ -27,13 +27,13 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { appConfig, customLogger } from '../..';
 import './style.scss';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
 export const StakingRewardsView = () => {
   const { tokenAccounts, isWhitelisted, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
-  const { cluster, endpoint } = useConnectionConfig();
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
   const { account } = useNativeAccount();
@@ -85,14 +85,17 @@ export const StakingRewardsView = () => {
   }, [canDepositRewards, isWhitelisted, publicKey]);
 
   // Create and cache Staking client instance
-  const stakeClient = useMemo(() => {
-    const opts: ConfirmOptions = {
-      preflightCommitment: 'confirmed',
-      commitment: 'confirmed',
-    };
-
-    return new StakingClient(cluster, endpoint, publicKey, opts, isProd() ? false : true);
-  }, [cluster, endpoint, publicKey]);
+  const stakeClient = useMemo(
+    () =>
+      new StakingClient(
+        getFallBackRpcEndpoint().cluster,
+        getFallBackRpcEndpoint().httpProvider,
+        publicKey,
+        failsafeConnectionConfig,
+        isProd() ? false : true,
+      ),
+    [publicKey],
+  );
 
   /////////////////
   //  Callbacks  //
@@ -196,13 +199,15 @@ export const StakingRewardsView = () => {
     }
 
     if (!pageInitialized) {
-      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(cluster));
+      const tokenList = MEAN_TOKEN_LIST.filter(
+        t => t.chainId === getNetworkIdByCluster(getFallBackRpcEndpoint().cluster),
+      );
       const token = tokenList.find(t => t.symbol === 'MEAN');
 
       consoleOut('MEAN token', token, 'blue');
       setMeanToken(token);
     }
-  }, [connection, pageInitialized, cluster]);
+  }, [connection, pageInitialized]);
 
   // Keep native account balance updated
   useEffect(() => {
