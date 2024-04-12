@@ -41,14 +41,15 @@ import type React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from '../TokenDisplay';
+import type { LooseObject } from 'types/LooseObject';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const TreasuryAddFundsModal = (props: {
+interface Props {
   associatedToken: string;
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (params: TreasuryTopupParams) => void;
   isBusy: boolean;
   isVisible: boolean;
   nativeBalance: number;
@@ -57,23 +58,24 @@ export const TreasuryAddFundsModal = (props: {
   treasuryDetails?: PaymentStreamingAccount | TreasuryInfo;
   treasuryList?: (PaymentStreamingAccount | TreasuryInfo)[];
   treasuryStreams: Array<Stream | StreamInfo> | undefined;
-  userBalances: any;
+  userBalances: LooseObject | undefined;
   withdrawTransactionFees: TransactionFees;
-}) => {
-  const {
-    associatedToken,
-    handleClose,
-    handleOk,
-    isBusy,
-    isVisible,
-    nativeBalance,
-    selectedMultisig,
-    treasuryDetails,
-    treasuryList,
-    treasuryStreams,
-    userBalances,
-    withdrawTransactionFees,
-  } = props;
+}
+
+export const TreasuryAddFundsModal = ({
+  associatedToken,
+  handleClose,
+  handleOk,
+  isBusy,
+  isVisible,
+  nativeBalance,
+  selectedMultisig,
+  treasuryDetails,
+  treasuryList,
+  treasuryStreams,
+  userBalances,
+  withdrawTransactionFees,
+}: Props) => {
   const {
     theme,
     splTokenList,
@@ -120,7 +122,8 @@ export const TreasuryAddFundsModal = (props: {
 
       if (id) {
         return treasuryStreams.find(ts => ts.id === id);
-      } else if (highLightableStreamId) {
+      }
+      if (highLightableStreamId) {
         return treasuryStreams.find(ts => ts.id === highLightableStreamId);
       }
 
@@ -193,14 +196,14 @@ export const TreasuryAddFundsModal = (props: {
     if (!selectedToken) {
       return nativeBalance;
     }
-    consoleOut(`selectedToken:`, selectedToken ? selectedToken.address : '-', 'blue');
-    consoleOut(`token decimals:`, selectedToken ? selectedToken.decimals : '-', 'blue');
-    consoleOut(`tokenBalance:`, tokenBalance || 0, 'blue');
+    consoleOut('selectedToken:', selectedToken ? selectedToken.address : '-', 'blue');
+    consoleOut('token decimals:', selectedToken ? selectedToken.decimals : '-', 'blue');
+    consoleOut('tokenBalance:', tokenBalance || 0, 'blue');
     if (fundFromSafeOption) {
       return selectProperBalance();
-    } else {
-      return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? nativeBalance : tokenBalance;
     }
+
+    return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? nativeBalance : tokenBalance;
   }, [fundFromSafeOption, nativeBalance, selectProperBalance, selectedToken, tokenBalance]);
 
   const isNewTreasury = useCallback((treasury: PaymentStreamingAccount | TreasuryInfo) => {
@@ -322,7 +325,7 @@ export const TreasuryAddFundsModal = (props: {
         setFundFromSafeOption(false);
       }
     }
-  }, [highLightableStreamId, isVisible, isMultisigContext, selectedMultisig, treasuryDetails]);
+  }, [highLightableStreamId, isVisible, isMultisigContext, selectedMultisig]);
 
   ////////////////
   //   Events   //
@@ -378,6 +381,7 @@ export const TreasuryAddFundsModal = (props: {
     tokenAmount,
   ]);
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const handleAmountChange = (e: any) => {
     let newValue = e.target.value;
 
@@ -433,6 +437,7 @@ export const TreasuryAddFundsModal = (props: {
     return !!(publicKey && isValidInput());
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const onTitleInputValueChange = (e: any) => {
     setProposalTitle(e.target.value);
   };
@@ -453,21 +458,27 @@ export const TreasuryAddFundsModal = (props: {
   const getTransactionStartButtonLabel = () => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (isProposalTitleRequired()) {
-      return 'Add a proposal title';
-    } else if (isTokenBalanceEmpty()) {
-      return t('transactions.validation.no-balance');
-    } else if (!tokenAmount || tokenAmount.isZero()) {
-      return t('transactions.validation.no-amount');
-    } else if (tokenAmount.gt(getMaxAmount())) {
-      return t('transactions.validation.amount-high');
-    } else if (nativeBalance <= MIN_SOL_BALANCE_REQUIRED) {
-      return t('transactions.validation.insufficient-balance-needed', { balance: MIN_SOL_BALANCE_REQUIRED });
-    } else if (highLightableStreamId) {
-      return t('treasuries.add-funds.main-cta-fund-stream');
-    } else {
-      return t('treasuries.add-funds.main-cta');
     }
+    if (isProposalTitleRequired()) {
+      return 'Add a proposal title';
+    }
+    if (isTokenBalanceEmpty()) {
+      return t('transactions.validation.no-balance');
+    }
+    if (!tokenAmount || tokenAmount.isZero()) {
+      return t('transactions.validation.no-amount');
+    }
+    if (tokenAmount.gt(getMaxAmount())) {
+      return t('transactions.validation.amount-high');
+    }
+    if (nativeBalance <= MIN_SOL_BALANCE_REQUIRED) {
+      return t('transactions.validation.insufficient-balance-needed', { balance: MIN_SOL_BALANCE_REQUIRED });
+    }
+    if (highLightableStreamId) {
+      return t('treasuries.add-funds.main-cta-fund-stream');
+    }
+
+    return t('treasuries.add-funds.main-cta');
   };
 
   const getMainCtaLabel = () => {
@@ -475,11 +486,11 @@ export const TreasuryAddFundsModal = (props: {
       return highLightableStreamId
         ? t('treasuries.add-funds.main-cta-fund-stream-busy')
         : t('treasuries.add-funds.main-cta-busy');
-    } else {
-      return transactionStatus.currentOperation === TransactionStatus.Iddle
-        ? getTransactionStartButtonLabel()
-        : t('general.cta-try-again');
     }
+
+    return transactionStatus.currentOperation === TransactionStatus.Iddle
+      ? getTransactionStartButtonLabel()
+      : t('general.cta-try-again');
   };
 
   ///////////////
@@ -574,7 +585,7 @@ export const TreasuryAddFundsModal = (props: {
     const accountId = getStreamingAccountId(item);
     return (
       <Option key={`${item.id}`} value={accountId}>
-        <div className={`transaction-list-row no-pointer`}>
+        <div className='transaction-list-row no-pointer'>
           <div className='icon-cell'>{getStreamingAccountIcon(item)}</div>
           <div className='description-cell'>{getStreamingAccountDescription(item)}</div>
           <div className='rate-cell'>{getStreamingAccountStreamCount(item)}</div>
@@ -605,9 +616,9 @@ export const TreasuryAddFundsModal = (props: {
           {theme === 'light' ? (
             <WarningFilled style={{ fontSize: 48 }} className='icon mt-0 mb-3 fg-warning' />
           ) : (
-            <WarningOutlined style={{ fontSize: 48 }} className={`icon mt-0 mb-3 fg-warning`} />
+            <WarningOutlined style={{ fontSize: 48 }} className='icon mt-0 mb-3 fg-warning' />
           )}
-          <h2 className={`mb-3 fg-warning`}>No streaming accounts</h2>
+          <h2 className='mb-3 fg-warning'>No streaming accounts</h2>
           <p>
             Your super safe needs a streaming account to set up and fund payment streams. To get started, create and
             fund a streaming account and then you can proceed with creating a payment stream.
@@ -650,7 +661,7 @@ export const TreasuryAddFundsModal = (props: {
                       <div className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
                         {treasuryList && treasuryList.length > 0 && (
                           <Select
-                            className={`auto-height`}
+                            className='auto-height'
                             value={selectedStreamingAccountId}
                             style={{ width: '100%', maxWidth: 'none' }}
                             popupClassName='stream-select-dropdown'
@@ -698,6 +709,7 @@ export const TreasuryAddFundsModal = (props: {
                             <div
                               id='treasury-add-funds-max'
                               className='token-max simplelink'
+                              onKeyDown={() => {}}
                               onClick={() => {
                                 const decimals = selectedToken ? selectedToken.decimals : 6;
                                 if (isfeePayedByTreasurerOn()) {
@@ -761,6 +773,7 @@ export const TreasuryAddFundsModal = (props: {
                         {publicKey ? (
                           <span
                             className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                            onKeyDown={() => {}}
                             onClick={() => refreshPrices()}
                           >
                             ~{topupAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
@@ -824,7 +837,7 @@ export const TreasuryAddFundsModal = (props: {
             !highLightableStreamId &&
             workingTreasuryDetails &&
             transactionStatus.currentOperation === TransactionStatus.Iddle && (
-              <div className={`text-center mt-4 mb-2`}>
+              <div className='text-center mt-4 mb-2'>
                 <p>You can also fund this streaming account by sending {selectedToken?.symbol} tokens to:</p>
 
                 {showQrCode && workingTreasuryDetails && (
@@ -847,6 +860,7 @@ export const TreasuryAddFundsModal = (props: {
                 {!showQrCode && (
                   <div
                     className='simplelink underline'
+                    onKeyDown={() => {}}
                     onClick={() => {
                       setShowQrCode(true);
                     }}
