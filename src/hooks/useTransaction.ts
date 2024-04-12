@@ -11,7 +11,6 @@ import {
   DEFAULT_BUDGET_CONFIG,
   getProposalWithPrioritizationFees,
   sendTx,
-  serializeTx,
   signTx,
 } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
@@ -328,7 +327,6 @@ const useTransaction = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && transaction) {
-        serializeTx(transaction);
         const sign = await signTx(name, wallet, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;

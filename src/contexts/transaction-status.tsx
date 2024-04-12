@@ -1,13 +1,13 @@
-import React, { useState, useCallback } from 'react';
 import { TransactionConfirmationStatus } from '@solana/web3.js';
-import { getSolanaExplorerClusterParam, useConnection } from './connection';
-import { fetchTxStatus } from '../middleware/transactions';
-import { consoleOut } from '../middleware/ui';
-import { EventType, OperationType } from '../models/enums';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../constants';
+import confirmOrRetryTx from 'middleware/txConfirmation';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../components/Notifications';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../constants';
+import { consoleOut } from '../middleware/ui';
+import { EventType, OperationType } from '../models/enums';
 import { useAccountsContext } from './accounts';
+import { getSolanaExplorerClusterParam, useConnection } from './connection';
 
 export type TxStatus = 'fetching' | 'fetched' | 'error';
 
@@ -164,6 +164,10 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
 
   const enqueueTransactionConfirmation = useCallback(
     async (data: TxConfirmationInfo) => {
+      // Get Latest Blockhash
+      const blockhashResponse = await connection.getLatestBlockhashAndContext('finalized');
+      const lastValidHeight = blockhashResponse.value.lastValidBlockHeight;
+
       const rebuildHistoryFromCache = () => {
         const history = Array.from(txStatusCache.values());
         setConfirmationHistory([...history].reverse());
@@ -198,8 +202,8 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
         ),
       });
       rebuildHistoryFromCache();
-      const result = await fetchTxStatus(connection, data.signature, data.finality);
-      if (result === data.finality) {
+      const isConfirmSuccess = await confirmOrRetryTx(connection, data.signature, data.finality, lastValidHeight);
+      if (isConfirmSuccess) {
         txConfirmationCache.update(
           data.signature,
           Object.assign({}, data, {

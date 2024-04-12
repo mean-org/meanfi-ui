@@ -88,11 +88,10 @@ export const getIronforgeEnvironment = () => {
 };
 
 export const getFallBackRpcEndpoint = () => {
-  const ironforgeEnvironment = getIronforgeEnvironment();
   const defaultEndpoint = getDefaultRpc();
 
   const endpoint =
-    ironforgeEnvironment === 'mainnet'
+    environment === 'production'
       ? process.env.REACT_APP_FALLBACK_MAINNET_RPC_URL ?? ''
       : process.env.REACT_APP_FALLBACK_DEVNET_RPC_URL ?? '';
 
@@ -104,29 +103,13 @@ export const getFallBackRpcEndpoint = () => {
 };
 
 export const refreshCachedRpc = async () => {
+  // NOTE: To avoid going through Ironforge for debugging purposes
+  // Uncomment next two lines and comment the rest in the method.
+
+  // const forcedRpc = getFallBackRpcEndpoint();
+  // window.localStorage.setItem('cachedRpc', JSON.stringify(forcedRpc));
+
   const ironforgeEnvironment = getIronforgeEnvironment();
-
-  // Process special case when debugging from localhost
-  // valid for devnet or mainnet but the variable REACT_APP_TRITON_ONE_DEBUG_RPC
-  // on the .env files needs to contain the rpc url
-  // if (isLocal()) {
-  //   console.log('env:', process.env);
-  //   const endpoint =
-  //     ironforgeEnvironment === 'mainnet'
-  //       ? process.env.REACT_APP_FALLBACK_MAINNET_RPC_URL ?? ''
-  //       : process.env.REACT_APP_FALLBACK_DEVNET_RPC_URL ?? '';
-  //   if (endpoint) {
-  //     const debugRpc = { ...getDefaultRpc(), httpProvider: endpoint } as RpcConfig;
-  //     window.localStorage.setItem('cachedRpc', JSON.stringify(debugRpc));
-  //     return;
-  //   }
-  //   console.warn('No RPC preset in environment!');
-  //   console.error(
-  //     'RPC selection error:',
-  //     'You are running from localhost but your .env variable REACT_APP_TRITON_ONE_DEBUG_RPC does nt contain an RPC url to work with! Switching to defaults...',
-  //   );
-  // }
-
   const newRpc = getDefaultRpc();
   if (ironforgeEnvironment && ironForgeApiUrl) {
     newRpc.httpProvider = `${ironForgeApiUrl}${ironforgeEnvironment}?apiKey=${ironForgeApiKey}`;

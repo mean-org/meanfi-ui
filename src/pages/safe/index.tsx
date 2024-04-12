@@ -727,7 +727,6 @@ const SafeView = (props: {
                 return false;
               }
               consoleOut('approveTx returned transaction:', value);
-              serializeTx(value);
               setTransactionStatus({
                 lastOperation: TransactionStatus.InitTransactionSuccess,
                 currentOperation: TransactionStatus.SignTransaction,
@@ -1121,7 +1120,6 @@ const SafeView = (props: {
                 return false;
               }
               consoleOut('finishTx returned transaction:', value, 'blue');
-              serializeTx(value);
               setTransactionStatus({
                 lastOperation: TransactionStatus.InitTransactionSuccess,
                 currentOperation: TransactionStatus.SignTransaction,
