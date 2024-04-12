@@ -92,6 +92,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Wave from 'react-wavify';
 import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
+import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
 
 export const MoneyStreamsInfoView = (props: {
@@ -245,13 +246,14 @@ export const MoneyStreamsInfoView = (props: {
     resetTransactionStatus();
   }, [multisigClient, nativeBalance, resetTransactionStatus]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   const refreshUserBalances = useCallback(
     (source?: PublicKey) => {
       if (!connection || !publicKey || !splTokenList) {
         return;
       }
 
-      const balancesMap: any = {};
+      const balancesMap: LooseObject = {};
       const pk = source ?? publicKey;
       consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
 
@@ -282,7 +284,6 @@ export const MoneyStreamsInfoView = (props: {
         })
         .finally(() => setUserBalances(balancesMap));
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [publicKey, connection],
   );
 
@@ -1586,12 +1587,10 @@ export const MoneyStreamsInfoView = (props: {
       if (tokenPriceA && tokenPriceB) {
         if (priceB.gt(priceA)) {
           return 1;
-        } else {
-          return -1;
         }
-      } else {
-        return 0;
+        return -1;
       }
+      return 0;
     },
     [getTokenByMintAddress, getTokenPriceByAddress],
   );
@@ -1615,15 +1614,14 @@ export const MoneyStreamsInfoView = (props: {
     if (timeA && timeB) {
       if (timeA > timeB) {
         return 1;
-      } else {
-        return -1;
       }
-    } else {
-      return 0;
+      return -1;
     }
+    return 0;
   }, []);
 
   // Set the list of incoming and outgoing streams
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!publicKey || !streamList) {
       setIncomingStreamList(undefined);
@@ -1645,7 +1643,6 @@ export const MoneyStreamsInfoView = (props: {
 
     consoleOut('outgoing streams:', sortedOutgoingStreamsList, 'crimson');
     setOutgoingStreamList(sortedOutgoingStreamsList);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, streamList, isInboundStream]);
 
   // Incoming amount
@@ -1676,6 +1673,7 @@ export const MoneyStreamsInfoView = (props: {
   }, [treasuryList]);
 
   // Live data calculation
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!publicKey || !treasuryList) {
       return;
@@ -1703,7 +1701,6 @@ export const MoneyStreamsInfoView = (props: {
     return () => {
       clearTimeout(timeout);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, treasuryList]);
 
   // Set refresh timeout for incomingStreamsSummary but get first time data

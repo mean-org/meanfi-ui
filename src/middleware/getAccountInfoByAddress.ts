@@ -23,19 +23,20 @@ const getAccountInfoByAddress = async (connection: Connection, address: string |
     if (!accInfo) {
       return null;
     }
-    if (!(accInfo as any).data['parsed']) {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    if (!(accInfo as any).data.parsed) {
       const info = Object.assign({}, accInfo, {
         owner: accInfo.owner.toString(),
       }) as AccountInfo<Buffer>;
       consoleOut('Normal accountInfo', info, 'blue');
       return { accountInfo: accInfo as AccountInfo<Buffer>, parsedAccountInfo: null };
-    } else {
-      const info = Object.assign({}, accInfo, {
-        owner: accInfo.owner.toString(),
-      }) as AccountInfo<ParsedAccountData>;
-      consoleOut('Parsed accountInfo:', info, 'blue');
-      return { accountInfo: null, parsedAccountInfo: accInfo as AccountInfo<ParsedAccountData> };
     }
+
+    const info = Object.assign({}, accInfo, {
+      owner: accInfo.owner.toString(),
+    }) as AccountInfo<ParsedAccountData>;
+    consoleOut('Parsed accountInfo:', info, 'blue');
+    return { accountInfo: null, parsedAccountInfo: accInfo as AccountInfo<ParsedAccountData> };
   } catch (error) {
     console.error('getParsedAccountInfo error:', error);
     return null;

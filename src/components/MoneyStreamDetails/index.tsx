@@ -58,10 +58,13 @@ import './style.scss';
 export const MoneyStreamDetails = (props: {
   accountAddress: string;
   stream?: Stream | StreamInfo;
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   hideDetailsHandler?: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   infoData?: any;
   isStreamIncoming?: boolean;
   isStreamOutgoing?: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   buttons?: any;
   selectedToken?: TokenInfo;
 }) => {
@@ -230,15 +233,14 @@ export const MoneyStreamDetails = (props: {
           default:
             return 'running';
         }
-      } else {
-        switch (v1.state) {
-          case STREAM_STATE.Schedule:
-            return 'scheduled';
-          case STREAM_STATE.Paused:
-            return 'stopped';
-          default:
-            return 'running';
-        }
+      }
+      switch (v1.state) {
+        case STREAM_STATE.Schedule:
+          return 'scheduled';
+        case STREAM_STATE.Paused:
+          return 'stopped';
+        default:
+          return 'running';
       }
     },
     [isV2tream],
@@ -261,15 +263,14 @@ export const MoneyStreamDetails = (props: {
             default:
               return t('streams.status.status-running');
           }
-        } else {
-          switch (v1.state) {
-            case STREAM_STATE.Schedule:
-              return t('streams.status.status-scheduled');
-            case STREAM_STATE.Paused:
-              return t('streams.status.status-stopped');
-            default:
-              return t('streams.status.status-running');
-          }
+        }
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATE.Paused:
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
         }
       }
     },
@@ -299,16 +300,13 @@ export const MoneyStreamDetails = (props: {
     if (isInboundStream(stream as StreamInfo)) {
       if (item.action === 'withdrew') {
         return <ArrowUpOutlined className='mean-svg-icons outgoing' />;
-      } else {
-        return <ArrowDownOutlined className='mean-svg-icons incoming' />;
       }
-    } else {
-      if (item.action === 'withdrew') {
-        return <ArrowDownOutlined className='mean-svg-icons incoming' />;
-      } else {
-        return <ArrowUpOutlined className='mean-svg-icons outgoing' />;
-      }
+      return <ArrowDownOutlined className='mean-svg-icons incoming' />;
     }
+    if (item.action === 'withdrew') {
+      return <ArrowDownOutlined className='mean-svg-icons incoming' />;
+    }
+    return <ArrowUpOutlined className='mean-svg-icons outgoing' />;
   };
 
   const getActivityAction = (item: StreamActivityV1 | StreamActivity): string => {
@@ -339,11 +337,10 @@ export const MoneyStreamDetails = (props: {
             className='token-img'
           />
         );
-      } else {
-        return (
-          <Identicon address={associatedToken} style={{ width: '30', display: 'inline-flex' }} className='token-img' />
-        );
       }
+      return (
+        <Identicon address={associatedToken} style={{ width: '30', display: 'inline-flex' }} className='token-img' />
+      );
     },
     [selectedToken],
   );
@@ -416,8 +413,7 @@ export const MoneyStreamDetails = (props: {
       consoleOut('clearing selected stream data...', '', 'blue');
       setStreamDetail(undefined);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setStreamDetail]);
 
   const getRelativeDate = (utcDate: string) => {
     const reference = new Date(utcDate);
@@ -509,6 +505,7 @@ export const MoneyStreamDetails = (props: {
               <span
                 className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
                 role='link'
+                onKeyDown={() => getActivityList(false)}
                 onClick={() => getActivityList(false)}
               >
                 {t('general.cta-load-more')}
@@ -657,9 +654,8 @@ export const MoneyStreamDetails = (props: {
       : ((stream as StreamInfo).escrowEstimatedDepletionUtc as string);
     if (date) {
       return getRelativeDate(date);
-    } else {
-      return getReadableDate(stream.startUtc as string, true);
     }
+    return getReadableDate(stream.startUtc as string, true);
   };
 
   const getBadgesList = () => {
@@ -687,7 +683,7 @@ export const MoneyStreamDetails = (props: {
 
     const subCategory = isV2Treasury && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
 
-    let badges;
+    let badges: string[] = [];
     if (type) {
       if (category && subCategory) {
         badges = [type, subCategory];
@@ -703,23 +699,24 @@ export const MoneyStreamDetails = (props: {
   const Completionist = () => <span>--</span>;
 
   // Renderer callback with condition
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const renderer = ({ years, days, hours, minutes, seconds, completed }: any) => {
     if (completed) {
       // Render a completed state
       return <Completionist />;
-    } else {
-      // Render a countdown
-      const whenYearsPlusOne = years > 1 ? `${years} years` : `${years} year`;
-      const showYears = years > 0 ? whenYearsPlusOne : '';
-      const whenDaysPlusOne = days > 1 ? `${days} days` : `${days} day`;
-      const showDays = days > 0 ? whenDaysPlusOne : '';
-      const whenHoursPlusOne = hours > 1 ? `${hours} hours` : `${hours} hour`;
-      const showHours = hours > 0 ? whenHoursPlusOne : '';
-      const whenMinutesPlusOne = minutes > 1 ? `${minutes} minutes` : `${minutes} minute`;
-      const showMinutes = minutes > 0 ? whenMinutesPlusOne : '';
-
-      return <span>{`${showYears} ${showDays} ${showHours} ${showMinutes}`}</span>;
     }
+
+    // Render a countdown
+    const whenYearsPlusOne = years > 1 ? `${years} years` : `${years} year`;
+    const showYears = years > 0 ? whenYearsPlusOne : '';
+    const whenDaysPlusOne = days > 1 ? `${days} days` : `${days} day`;
+    const showDays = days > 0 ? whenDaysPlusOne : '';
+    const whenHoursPlusOne = hours > 1 ? `${hours} hours` : `${hours} hour`;
+    const showHours = hours > 0 ? whenHoursPlusOne : '';
+    const whenMinutesPlusOne = minutes > 1 ? `${minutes} minutes` : `${minutes} minute`;
+    const showMinutes = minutes > 0 ? whenMinutesPlusOne : '';
+
+    return <span>{`${showYears} ${showDays} ${showHours} ${showMinutes}`}</span>;
   };
 
   const streamStartDate = useMemo(() => getStreamStartDate(stream), [stream]);
@@ -792,8 +789,9 @@ export const MoneyStreamDetails = (props: {
   // Render details
   const renderDetails = (
     <>
+      {/* biome-ignore lint/suspicious/noExplicitAny: <explanation> */}
       {detailsData.map((detail: any, index: number) => (
-        <Row gutter={[8, 8]} key={index} className='pl-1 details-item mr-0 ml-0'>
+        <Row gutter={[8, 8]} key={`${detail.label}`} className='pl-1 details-item mr-0 ml-0'>
           <Col span={8} className='pr-1'>
             <span className='info-label'>{detail.label}</span>
           </Col>
@@ -844,7 +842,11 @@ export const MoneyStreamDetails = (props: {
 
         {!isXsDevice && (
           <Row gutter={[8, 8]} className='safe-details-resume mr-0 ml-0'>
-            <div onClick={hideDetailsHandler} className='back-button icon-button-container'>
+            <div
+              onKeyDown={hideDetailsHandler}
+              onClick={hideDetailsHandler}
+              className='back-button icon-button-container'
+            >
               <IconArrowBack className='mean-svg-icons' />
               <span className='ml-1'>Back</span>
             </div>

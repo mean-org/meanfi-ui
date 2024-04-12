@@ -110,9 +110,7 @@ const StakingView = () => {
     } catch (error) {
       setMeanBalance(balance);
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tokenAccounts, publicKey, stakingPair]);
+  }, [connection, tokenAccounts, publicKey, stakingPair]);
 
   const getUsdAmountForSmeanAmount = useCallback(
     (amount: number) => {
@@ -125,6 +123,7 @@ const StakingView = () => {
     [meanPrice, sMeanToMeanRate],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   const refreshStakedMeanBalance = useCallback(async () => {
     if (!publicKey || !tokenAccounts || !tokenAccounts.length) {
       return;
@@ -154,9 +153,7 @@ const StakingView = () => {
     setSmeanBalance(balance);
     const tvl = getUsdAmountForSmeanAmount(balance);
     saveTvl(tvl);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tokenAccounts, publicKey, stakingPair, selectedAccount.address]);
+  }, [connection, tokenAccounts, publicKey, stakingPair, selectedAccount.address]);
 
   const refreshStakePoolInfo = useCallback(
     (price: number) => {

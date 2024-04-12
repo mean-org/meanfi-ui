@@ -3,7 +3,7 @@ import { Image, Space, Tabs, Tooltip } from 'antd';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { InfoIcon } from 'components/InfoIcon';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, fallbackImgSrc } from 'constants/common';
-import { useMint } from 'contexts/accounts';
+import { useMintInfo } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import useWindowSize from 'hooks/useWindowResize';
@@ -18,7 +18,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
   const { selectedAccount } = useContext(AppStateContext);
 
   const collectionAddress = selectedNft?.collection?.address;
-  const collectionMintInfo = useMint(collectionAddress);
+  const collectionMintInfo = useMintInfo(collectionAddress);
   const { width: browserInnerWidth } = useWindowSize();
   const [shouldShortedAddresses, setShouldShortedAddresses] = useState<boolean>(false);
 
@@ -27,7 +27,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
       return false;
     }
 
-    return selectedNft.collection != null && selectedNft.collection.verified && collectionMintInfo !== undefined;
+    return selectedNft.collection?.verified && collectionMintInfo !== undefined;
   }, [collectionMintInfo, selectedNft]);
 
   const getEditionBody = (nft: MeanNft) => {
@@ -120,12 +120,12 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
         <h3 className='nft-details-heading mb-2'>Attributes</h3>
         {selectedNft.json.attributes ? (
           <div className='nft-attributes-grid mb-2'>
-            {selectedNft.json.attributes.map((attr, index) => {
+            {selectedNft.json.attributes.map(attr => {
               if (!attr.trait_type || !attr.value) {
                 return null;
               }
               return (
-                <div key={`${index}`} className='nft-attribute'>
+                <div key={`${attr.trait_type}${attr.value}`} className='nft-attribute'>
                   <div className='nft-attribute-name'>{attr.trait_type}</div>
                   <div className='nft-attribute-value'>{attr.value}</div>
                 </div>
@@ -148,6 +148,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
     );
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   const renderProfile = useCallback(() => {
     if (!selectedNft || !selectedNft.mint) {
       return null;

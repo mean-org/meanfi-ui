@@ -79,6 +79,7 @@ import type { CloseStreamTransactionParams, StreamTreasuryType } from 'models/tr
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
+import type { LooseObject } from 'types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -272,13 +273,14 @@ export const MoneyStreamsOutgoingView = (props: {
     [ms, paymentStreaming, publicKey, connection],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   const refreshUserBalances = useCallback(
     (source?: PublicKey) => {
       if (!connection || !publicKey || !splTokenList) {
         return;
       }
 
-      const balancesMap: any = {};
+      const balancesMap: LooseObject = {};
       const pk = source ?? publicKey;
       consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
 
@@ -310,7 +312,6 @@ export const MoneyStreamsOutgoingView = (props: {
         })
         .finally(() => setUserBalances(balancesMap));
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [publicKey, connection],
   );
 
@@ -2358,6 +2359,7 @@ export const MoneyStreamsOutgoingView = (props: {
   }, [splTokenList, publicKey, connection, refreshUserBalances]);
 
   // Read treasury data
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!publicKey || !ms || !paymentStreaming || !streamSelected) {
       return;
@@ -2377,11 +2379,10 @@ export const MoneyStreamsOutgoingView = (props: {
     return () => {
       clearTimeout(timeout);
     };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ms, paymentStreaming, publicKey, streamSelected]);
 
   // Refresh stream data
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!ms || !paymentStreaming || !streamSelected) {
       return;
@@ -2407,7 +2408,6 @@ export const MoneyStreamsOutgoingView = (props: {
     return () => {
       clearTimeout(timeout);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ms, paymentStreaming, streamSelected]);
 
   // Set selected token to the stream associated token as soon as the stream is available or changes

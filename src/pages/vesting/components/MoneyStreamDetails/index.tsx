@@ -244,12 +244,12 @@ export const MoneyStreamDetails = (props: {
   // Data management //
   /////////////////////
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (highlightedStream && tabOption === 'activity' && streamActivity.length < 5) {
       onLoadMoreActivities();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabOption]);
+  }, [tabOption, highlightedStream, streamActivity.length]);
 
   ///////////////
   // Rendering //

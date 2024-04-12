@@ -46,7 +46,7 @@ jobs:
 
       # Build react app
       - name: Generate build for ${{ env.APP_ENV }}
-        run: npm run build:s3
+        run: yarn run build:s3
         env:
           REACT_APP_ENV: ${{ env.APP_ENV }}
           REACT_APP_IRONFORGE_API_URL: ${{ env.IRONFORGE_API_URL }}

@@ -11,6 +11,7 @@ import { PaymentStreaming, type Stream, type StreamActivity } from '@mean-dao/pa
 import type { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
+import Item from 'antd/lib/list/Item';
 import { isCacheItemExpired } from 'cache/persistentCache';
 import { openNotification } from 'components/Notifications';
 import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
@@ -68,6 +69,7 @@ export type TpsAverageValues = number | null | undefined;
 export type StreamValues = Stream | StreamInfo | undefined;
 
 export interface TransactionStatusInfo {
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   customError?: any;
   lastOperation?: TransactionStatus;
   currentOperation?: TransactionStatus;
@@ -567,15 +569,18 @@ const AppStateProvider: React.FC = ({ children }) => {
   const refreshInterval = useMemo(() => {
     if (!streamList || streamList.length <= 5) {
       return ONE_MINUTE_REFRESH_TIMEOUT;
-    } else if (streamList.length > 5 && streamList.length <= 25) {
-      return FORTY_SECONDS_REFRESH_TIMEOUT * 2;
-    } else if (streamList.length > 25 && streamList.length <= 60) {
-      return FIVETY_SECONDS_REFRESH_TIMEOUT * 2;
-    } else if (streamList.length > 60 && streamList.length <= 100) {
-      return SEVENTY_SECONDS_REFRESH_TIMEOUT * 2;
-    } else {
-      return FIVE_MINUTES_REFRESH_TIMEOUT;
     }
+    if (streamList.length > 5 && streamList.length <= 25) {
+      return FORTY_SECONDS_REFRESH_TIMEOUT * 2;
+    }
+    if (streamList.length > 25 && streamList.length <= 60) {
+      return FIVETY_SECONDS_REFRESH_TIMEOUT * 2;
+    }
+    if (streamList.length > 60 && streamList.length <= 100) {
+      return SEVENTY_SECONDS_REFRESH_TIMEOUT * 2;
+    }
+
+    return FIVE_MINUTES_REFRESH_TIMEOUT;
   }, [streamList]);
 
   const setShouldLoadTokens = (state: boolean) => {
@@ -594,6 +599,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => {};
   }, [theme, updateTheme]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     setTransactions([]);
     setShouldLoadTokens(true);
@@ -700,6 +706,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateUnstakeStartDate(date);
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   const resetContractValues = useCallback(() => {
     setFromCoinAmount('');
     setRecipientAddress('');
@@ -885,6 +892,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     (stream: StreamValues) => {
       updateSelectedStream(stream);
       if (stream) {
+        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
         const mspInstance: any = stream.version < 2 ? ms : paymentStreaming;
         mspInstance
           .getStream(new PublicKey(stream.id as string))
@@ -895,6 +903,7 @@ const AppStateProvider: React.FC = ({ children }) => {
               setActiveStream(detail);
             }
           })
+          // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
           .catch((error: any) => {
             console.error(error);
           });
@@ -1045,6 +1054,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }, [getTokenPriceByAddress, priceList, selectedToken]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   const refreshStreamList = useCallback(
     (reset = false) => {
       if (loadingStreams || customStreamDocked || !ms || !paymentStreaming) {
@@ -1061,7 +1071,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       if (paymentStreaming) {
         updateLoadingStreams(true);
 
-        const streamAccumulator: any[] = [];
+        const streamAccumulator: (StreamInfo | Stream)[] = [];
         let rawStreamsv1: StreamInfo[] = [];
         let rawStreamsv2: Stream[] = [];
 
@@ -1093,14 +1103,14 @@ const AppStateProvider: React.FC = ({ children }) => {
                 streamAccumulator.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime)) ? 1 : -1));
                 // Start debugging block
                 if (!isProd()) {
-                  const debugTable: any[] = [];
-                  streamAccumulator.forEach(item =>
+                  const debugTable: unknown[] = [];
+                  for (const item of streamAccumulator) {
                     debugTable.push({
                       version: item.version,
-                      name: item.version < 2 ? item.streamName : item.name.trim(),
-                      streamId: shortenAddress(item.id, 8),
-                    }),
-                  );
+                      name: item.version < 2 ? (item as StreamInfo).streamName : (item as Stream).name.trim(),
+                      streamId: shortenAddress(`${item.id}`, 8),
+                    });
+                  }
                   console.table(debugTable);
                 }
                 // End of debugging block
@@ -1149,7 +1159,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    let timer: any;
+    let timer: NodeJS.Timeout;
 
     if (selectedAccount.address && !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
@@ -1295,9 +1305,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         }
       } else {
         consoleOut('Trying Solflare Unified Token List...', '', 'blue');
-        const response = await getSolFlareTokenList();
-        if (response?.tokens && response.tokens.length > 0) {
-          const withDecimals = response.tokens.filter((t: any) => t.decimals && t.decimals > 0);
+        const tokens = await getSolFlareTokenList();
+        if (tokens.length > 0) {
+          const withDecimals = tokens.filter(t => t.decimals && t.decimals > 0);
           consoleOut('Solflare utl:', withDecimals.length, 'blue');
           setMeanTokenlist(withDecimals);
           getCoinPrices();
@@ -1336,20 +1346,21 @@ const AppStateProvider: React.FC = ({ children }) => {
       // First add Native SOL as a token
       list.push(sol);
       // Add items from the MeanFi list
-      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster)).forEach(item =>
-        list.push(item),
-      );
+      const chainFiltered = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster));
+      for (const item of chainFiltered) {
+        list.push(item);
+      }
       // Save the MeanFi list
       updateTokenlist(list.filter(t => t.address !== NATIVE_SOL.address) as TokenInfo[]);
       // Update the list
       const userTokenList = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
       // Add the items from the API
       if (meanTokenList && meanTokenList.length > 0) {
-        meanTokenList.forEach(item => {
+        for (const item of meanTokenList) {
           if (!userTokenList.some(i => i.address === item.address)) {
             userTokenList.push(item);
           }
-        });
+        }
       }
       // Filter out the banned tokens
       const filteredTokens = userTokenList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
@@ -1411,8 +1422,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       });
 
     return () => {};
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
 
   // Get and populate the list of NFTs that the user holds
@@ -1425,9 +1434,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       consoleOut('getAccountNFTs() response:', response, 'blue');
       setAccountNfts(response);
     });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens]);
+  }, [selectedAccount.address, connection, publicKey, shouldLoadTokens]);
 
   // Same as above but on demand
   const getAssetsByAccount = useCallback(
@@ -1444,9 +1451,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         .then(response => {
           if (response) {
             return response;
-          } else {
-            return null;
           }
+          return null;
         })
         .finally(() => {
           setLoadingTokenAccounts(false);
@@ -1484,7 +1490,9 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     try {
       const allInfo = await multisigClient.getMultisigs(publicKey);
-      allInfo.sort((a: any, b: any) => new Date(b.createdOnUtc).getTime() - new Date(a.createdOnUtc).getTime());
+      allInfo.sort(
+        (a: MultisigInfo, b: MultisigInfo) => new Date(b.createdOnUtc).getTime() - new Date(a.createdOnUtc).getTime(),
+      );
       setMultisigAccounts(allInfo);
       consoleOut('multisigAccounts:', allInfo, 'darkorange');
       return true;
@@ -1584,173 +1592,167 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const values = useMemo(() => {
     return {
-      selectedAccount,
-      theme,
-      tpsAvg,
-      refreshInterval,
-      isWhitelisted,
-      shouldLoadTokens,
-      loadingTokenAccounts,
-      tokensLoaded,
-      isDepositOptionsModalVisible,
-      tokenList,
-      selectedToken,
-      tokenBalance,
-      totalSafeBalance,
-      fromCoinAmount,
-      effectiveRate,
-      priceList,
-      loadingPrices,
-      treasuryOption,
-      recipientAddress,
-      recipientNote,
-      paymentStartDate,
-      proposalEndDate,
-      proposalEndTime,
-      paymentRateAmount,
-      lockPeriodAmount,
-      activeTab,
-      selectedTab,
-      coolOffPeriodFrequency,
-      paymentRateFrequency,
-      lockPeriodFrequency,
-      timeSheetRequirement,
-      isVerifiedRecipient,
-      isAllocationReserved,
-      transactionStatus,
-      previousWalletConnectState,
-      loadingStreams,
-      streamListv1,
-      streamListv2,
-      streamList,
-      programs,
-      multisigTxs,
-      selectedStream,
-      streamDetail,
-      activeStream,
-      deletedStreams,
-      highLightableStreamId,
-      streamProgramAddress,
-      streamV2ProgramAddress,
-      loadingStreamActivity,
-      streamActivity,
-      hasMoreStreamActivity,
-      customStreamDocked,
-      diagnosisInfo,
-      splTokenList,
-      selectedAsset,
-      tokenAccounts,
-      userTokensResponse,
-      transactions,
-      lastTxSignature,
-      streamsSummary,
-      lastStreamsSummary,
-      paymentStreamingStats,
       accountNfts,
-      recurringBuys,
-      loadingRecurringBuys,
-      multisigAccounts,
+      activeStream,
+      activeTab,
+      coolOffPeriodFrequency,
+      customStreamDocked,
+      deletedStreams,
+      diagnosisInfo,
+      effectiveRate,
+      fromCoinAmount,
+      hasMoreStreamActivity,
+      highLightableMultisigId,
+      highLightableStreamId,
+      isAllocationReserved,
+      isDepositOptionsModalVisible,
+      isVerifiedRecipient,
+      isWhitelisted,
+      lastStreamsSummary,
+      lastTxSignature,
       loadingMultisigAccounts,
       loadingMultisigTxPendingCount,
-      needReloadMultisigAccounts,
-      selectedMultisig,
+      loadingPrices,
+      loadingRecurringBuys,
+      loadingStreamActivity,
+      loadingStreams,
+      loadingTokenAccounts,
+      lockPeriodAmount,
+      lockPeriodFrequency,
+      multisigAccounts,
       multisigSolBalance,
+      multisigTxs,
       multisigVaults,
-      highLightableMultisigId,
+      needReloadMultisigAccounts,
+      paymentRateAmount,
+      paymentRateFrequency,
+      paymentStartDate,
+      paymentStreamingStats,
       pendingMultisigTxCount,
+      previousRoute,
+      previousWalletConnectState,
+      priceList,
+      programs,
+      proposalEndDate,
+      proposalEndTime,
+      recipientAddress,
+      recipientNote,
+      recurringBuys,
+      refreshInterval,
+      selectedAccount,
+      selectedAsset,
+      selectedMultisig,
+      selectedStream,
+      selectedTab,
+      selectedToken,
+      shouldLoadTokens,
+      splTokenList,
       stakedAmount,
+      stakingMultiplier,
+      streamActivity,
+      streamDetail,
+      streamList,
+      streamListv1,
+      streamListv2,
+      streamProgramAddress,
+      streamsSummary,
+      streamV2ProgramAddress,
+      theme,
+      timeSheetRequirement,
+      tokenAccounts,
+      tokenBalance,
+      tokenList,
+      tokensLoaded,
+      totalSafeBalance,
+      tpsAvg,
+      transactions,
+      transactionStatus,
+      treasuryOption,
       unstakedAmount,
       unstakeStartDate,
-      stakingMultiplier,
-      previousRoute,
+      userTokensResponse,
+      appendHistoryItems,
+      clearStreams,
       getAssetsByAccount,
-      setTheme,
-      setTpsAvg,
-      setShouldLoadTokens,
-      showDepositOptionsModal,
-      hideDepositOptionsModal,
-      setSelectedToken,
-      setSelectedTokenBalance,
-      setTotalSafeBalance,
-      setFromCoinAmount,
-      refreshPrices,
-      setEffectiveRate,
-      getTokenPriceByAddress,
+      getStreamActivity,
       getTokenByMintAddress,
+      getTokenPriceByAddress,
+      hideDepositOptionsModal,
+      openStreamById,
+      refreshMultisigs,
+      refreshPrices,
+      refreshStreamList,
       refreshTokenBalance,
       resetContractValues,
       resetStreamsState,
-      clearStreams,
-      refreshStreamList,
-      setTreasuryOption,
-      setRecipientAddress,
-      setRecipientNote,
+      setActiveStream,
+      setActiveTab,
+      setCoolOffPeriodFrequency,
+      setCustomStreamDocked,
+      setDeletedStream,
+      setDiagnosisInfo,
+      setEffectiveRate,
+      setFromCoinAmount,
+      setHighLightableMultisigId,
+      setHighLightableStreamId,
+      setIsAllocationReserved,
+      setIsVerifiedRecipient,
+      setLastStreamsSummary,
+      setLoadingRecurringBuys,
+      setLoadingStreams,
+      setLockPeriodAmount,
+      setLockPeriodFrequency,
+      setMultisigAccounts,
+      setMultisigSolBalance,
+      setMultisigTxs,
+      setMultisigVaults,
+      setNeedReloadMultisigAccounts,
+      setPaymentRateAmount,
+      setPaymentRateFrequency,
       setPaymentStartDate,
+      setPaymentStreamingStats,
+      setPendingMultisigTxCount,
+      setPreviousRoute,
+      setPreviousWalletConnectState,
+      setPrograms,
       setProposalEndDate,
       setProposalEndTime,
-      setPaymentRateAmount,
-      setLockPeriodAmount,
-      setActiveTab,
-      setSelectedTab,
-      setCoolOffPeriodFrequency,
-      setPaymentRateFrequency,
-      setLockPeriodFrequency,
-      setTimeSheetRequirement,
-      setIsVerifiedRecipient,
-      setIsAllocationReserved,
-      setTransactionStatus,
-      setPreviousWalletConnectState,
-      setLoadingStreams,
-      setStreamList,
-      setPrograms,
-      setMultisigTxs,
-      setSelectedStream,
-      setActiveStream,
-      setStreamDetail,
-      setDeletedStream,
-      setHighLightableStreamId,
-      openStreamById,
-      getStreamActivity,
-      setCustomStreamDocked,
-      setDiagnosisInfo,
-      appendHistoryItems,
-      setSelectedAsset,
-      setStreamsSummary,
-      setLastStreamsSummary,
-      setPaymentStreamingStats,
+      setRecipientAddress,
+      setRecipientNote,
       setRecurringBuys,
-      setLoadingRecurringBuys,
-      setNeedReloadMultisigAccounts,
-      refreshMultisigs,
-      setMultisigAccounts,
+      setSelectedAsset,
       setSelectedMultisig,
-      setMultisigSolBalance,
-      setMultisigVaults,
-      setHighLightableMultisigId,
-      setPendingMultisigTxCount,
+      setSelectedStream,
+      setSelectedTab,
+      setSelectedToken,
+      setSelectedTokenBalance,
+      setShouldLoadTokens,
       setStakedAmount,
+      setStakingMultiplier,
+      setStreamDetail,
+      setStreamList,
+      setStreamsSummary,
+      setTheme,
+      setTimeSheetRequirement,
+      setTotalSafeBalance,
+      setTpsAvg,
+      setTransactionStatus,
+      setTreasuryOption,
       setUnstakedAmount,
       setUnstakeStartDate,
-      setStakingMultiplier,
-      setPreviousRoute,
+      showDepositOptionsModal,
     };
   }, [
     accountNfts,
     activeStream,
     activeTab,
-    appendHistoryItems,
     coolOffPeriodFrequency,
     customStreamDocked,
     deletedStreams,
     diagnosisInfo,
     effectiveRate,
     fromCoinAmount,
-    getAssetsByAccount,
-    getStreamActivity,
-    getTokenByMintAddress,
-    getTokenPriceByAddress,
     hasMoreStreamActivity,
-    hideDepositOptionsModal,
     highLightableMultisigId,
     highLightableStreamId,
     isAllocationReserved,
@@ -1773,7 +1775,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     multisigTxs,
     multisigVaults,
     needReloadMultisigAccounts,
-    openStreamById,
     paymentRateAmount,
     paymentRateFrequency,
     paymentStartDate,
@@ -1789,23 +1790,13 @@ const AppStateProvider: React.FC = ({ children }) => {
     recipientNote,
     recurringBuys,
     refreshInterval,
-    refreshMultisigs,
-    refreshPrices,
-    refreshStreamList,
-    refreshTokenBalance,
-    resetContractValues,
-    resetStreamsState,
     selectedAccount,
     selectedAsset,
     selectedMultisig,
     selectedStream,
     selectedTab,
     selectedToken,
-    setPreviousWalletConnectState,
-    setSelectedStream,
-    setTheme,
     shouldLoadTokens,
-    showDepositOptionsModal,
     splTokenList,
     stakedAmount,
     stakingMultiplier,
@@ -1815,8 +1806,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     streamListv1,
     streamListv2,
     streamProgramAddress,
-    streamV2ProgramAddress,
     streamsSummary,
+    streamV2ProgramAddress,
     theme,
     timeSheetRequirement,
     tokenAccounts,
@@ -1825,12 +1816,62 @@ const AppStateProvider: React.FC = ({ children }) => {
     tokensLoaded,
     totalSafeBalance,
     tpsAvg,
-    transactionStatus,
     transactions,
+    transactionStatus,
     treasuryOption,
-    unstakeStartDate,
     unstakedAmount,
+    unstakeStartDate,
     userTokensResponse,
+    appendHistoryItems,
+    clearStreams,
+    getAssetsByAccount,
+    getStreamActivity,
+    getTokenByMintAddress,
+    getTokenPriceByAddress,
+    hideDepositOptionsModal,
+    openStreamById,
+    refreshMultisigs,
+    refreshPrices,
+    refreshStreamList,
+    refreshTokenBalance,
+    resetContractValues,
+    resetStreamsState,
+    setActiveTab,
+    setCoolOffPeriodFrequency,
+    setDeletedStream,
+    setEffectiveRate,
+    setFromCoinAmount,
+    setLoadingRecurringBuys,
+    setLoadingStreams,
+    setLockPeriodAmount,
+    setLockPeriodFrequency,
+    setMultisigSolBalance,
+    setPaymentRateAmount,
+    setPaymentRateFrequency,
+    setPaymentStartDate,
+    setPreviousWalletConnectState,
+    setProposalEndDate,
+    setProposalEndTime,
+    setRecipientAddress,
+    setRecipientNote,
+    setRecurringBuys,
+    setSelectedAsset,
+    setSelectedStream,
+    setSelectedTab,
+    setSelectedToken,
+    setSelectedTokenBalance,
+    setShouldLoadTokens,
+    setStakedAmount,
+    setStakingMultiplier,
+    setStreamDetail,
+    setTheme,
+    setTimeSheetRequirement,
+    setTotalSafeBalance,
+    setTransactionStatus,
+    setTreasuryOption,
+    setUnstakedAmount,
+    setUnstakeStartDate,
+    showDepositOptionsModal,
   ]);
 
   return <AppStateContext.Provider value={values}>{children}</AppStateContext.Provider>;

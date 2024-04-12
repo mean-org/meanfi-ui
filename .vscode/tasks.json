@@ -16,18 +16,12 @@
       "detail": "REACT_APP_ENV=development npm start"
     },
     {
-      "type": "npm",
-      "script": "lint",
-      "problemMatcher": ["$tsc-watch"],
-      "label": "npm: lint",
-      "detail": "eslint src --ext .js,.jsx,.ts,.tsx",
-      "isBackground": true
-    },
-    {
       "type": "typescript",
       "tsconfig": "tsconfig.json",
       "option": "watch",
-      "problemMatcher": ["$tsc-watch"],
+      "problemMatcher": [
+        "$tsc-watch"
+      ],
       "group": "build",
       "label": "tsc: watch - tsconfig.json"
     }

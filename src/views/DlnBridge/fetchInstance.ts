@@ -27,7 +27,7 @@ export class DlnApiError extends Error {
 export type FetchOptions = {
   url: string;
   method: 'get' | 'post' | 'put' | 'delete' | 'patch';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   params?: Record<string, any>;
   data?: BodyType<unknown>;
   headers?: Record<string, string>;

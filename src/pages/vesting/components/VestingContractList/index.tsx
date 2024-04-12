@@ -10,6 +10,7 @@ import { formatThousands, getSdkValue, makeDecimal } from 'middleware/utils';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 
 export const VestingContractList = (props: {
   loadingVestingAccounts: boolean;
@@ -58,7 +59,7 @@ export const VestingContractList = (props: {
 
     (async () => {
       if (streamingAccounts) {
-        const compiledTemplates: any = {};
+        const compiledTemplates: LooseObject = {};
         // consoleOut('loading of streamTemplates: ', 'STARTS', 'darkred');
         for (const contract of streamingAccounts) {
           if (loadingVestingAccounts) {
@@ -87,15 +88,11 @@ export const VestingContractList = (props: {
             console.error('Error fetching template data:', error);
           }
         }
-        // consoleOut('compiledTemplates:', compiledTemplates, 'blue');
-        // consoleOut('loading of streamTemplates: ', 'ENDS', 'darkred');
         setVcTemplates(compiledTemplates);
       }
       setLoadingTemplates(false);
     })();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [msp, streamingAccounts]);
+  }, [msp, streamingAccounts, loadingTemplates, loadingVestingAccounts]);
 
   // Create a tick every second
   useEffect(() => {

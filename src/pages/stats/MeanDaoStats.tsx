@@ -69,8 +69,8 @@ const MeanDaoStats = () => {
 
   const renderBodyTreasury = (
     <div className='item-container'>
-      {items.map((item, index) => (
-        <div key={index} className='item-inner'>
+      {items.map(item => (
+        <div key={item.address} className='item-inner'>
           <div className='item-header'>
             <img src={item.symbol} alt={item.name} className='avatar-coin' />
             <h3>{item.name}</h3>
@@ -103,8 +103,8 @@ const MeanDaoStats = () => {
           </tr>
         </thead>
         <tbody>
-          {transactions.map((transaction, index) => (
-            <tr key={index}>
+          {transactions.map(transaction => (
+            <tr key={transaction.signature}>
               <td>
                 <span>{formatThousands(transaction.slot)}</span>
               </td>

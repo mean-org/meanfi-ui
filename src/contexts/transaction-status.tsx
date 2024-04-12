@@ -28,7 +28,7 @@ export interface TxConfirmationInfo {
   explorerLink?: string;
 }
 
-type Listener = (value: unknown) => void;
+export type Listener = (value: unknown) => void;
 
 type MapListener = Record<string, Listener[]>;
 

@@ -24,6 +24,7 @@ export const getProgramsByUpgradeAuthority = async (
   }
 
   const programs: ProgramAccounts[] = [];
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const group = (size: number, data: any) => {
     const result = [];
     for (let i = 0; i < data.length; i += size) {
@@ -39,6 +40,7 @@ export const getProgramsByUpgradeAuthority = async (
     return new Promise(resolve => setTimeout(resolve, ms));
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const getProgramAccountsPromise = async (execDataAccount: any) => {
     const execAccountsFilter: MemcmpFilter = {
       memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() },
@@ -71,6 +73,7 @@ export const getProgramsByUpgradeAuthority = async (
   const execDataAccountsGroups = group(8, execDataAccounts);
 
   for (const groupItem of execDataAccountsGroups) {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     const promises: Promise<any>[] = [];
     for (const dataAcc of groupItem) {
       promises.push(getProgramAccountsPromise(dataAcc));

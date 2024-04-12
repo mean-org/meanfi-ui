@@ -272,6 +272,7 @@ export const StakingRewardsView = () => {
   }, [meanToken, pageInitialized]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Stop event subscriptions -> StakingRewardsView', '', 'brown');
@@ -280,7 +281,6 @@ export const StakingRewardsView = () => {
       setCanSubscribe(true);
       setPageInitialized(false);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ///////////////////

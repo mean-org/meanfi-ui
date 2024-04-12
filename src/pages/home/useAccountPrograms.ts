@@ -12,6 +12,7 @@ const useAccountPrograms = () => {
   const [loadingPrograms, setLoadingPrograms] = useState(false);
 
   // Get Programs owned by the account in context
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!connection || !publicKey || !selectedAccount.address) {
       return;
@@ -33,7 +34,6 @@ const useAccountPrograms = () => {
         console.error(error);
       })
       .finally(() => setLoadingPrograms(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, connection, selectedAccount.address]);
 
   return {

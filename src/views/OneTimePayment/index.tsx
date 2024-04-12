@@ -181,7 +181,9 @@ export const OneTimePayment = (props: {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       consoleOut('onTxConfirmed event executed:', item, 'crimson');
       setIsBusy(false);
       resetTransactionStatus();
@@ -194,7 +196,8 @@ export const OneTimePayment = (props: {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
       setIsBusy(false);
       resetTransactionStatus();
     },
@@ -344,6 +347,7 @@ export const OneTimePayment = (props: {
   }, [publicKey, canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Stop event subscriptions -> OneTimePayment', '', 'brown');
@@ -353,7 +357,6 @@ export const OneTimePayment = (props: {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /////////////////////////////

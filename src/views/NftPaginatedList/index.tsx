@@ -47,6 +47,7 @@ export const NftPaginatedList = (props: {
     return Math.ceil(++itemIndex / pageSize);
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!nftList || currentPage === undefined) {
       return;
@@ -70,7 +71,6 @@ export const NftPaginatedList = (props: {
 
     setLoading(true);
     execute();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, nftList, presetNftMint, shouldPresetItem]);
 
   useEffect(() => {
@@ -81,8 +81,7 @@ export const NftPaginatedList = (props: {
       return;
     }
 
-    // Find nft given by presetNftMint in nftList
-    // Calculate and set page number
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     const itemIndex = nftList ? nftList.findIndex((n: any) => n.mintAddress.toBase58() === presetNftMint) : -1;
     if (itemIndex !== -1) {
       const pageNumber = calculatePageNumber(pageSize, itemIndex);
@@ -90,7 +89,7 @@ export const NftPaginatedList = (props: {
     } else {
       setCurrentPage(1);
     }
-  }, [currentPage, nftList, presetNftMint, shouldPresetItem]);
+  }, [currentPage, nftList, presetNftMint, shouldPresetItem, calculatePageNumber]);
 
   const changeCurrentPage = (operation: string) => {
     setLoading(true);
@@ -101,8 +100,9 @@ export const NftPaginatedList = (props: {
     }
   };
 
-  const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) =>
-    (event.currentTarget.src = fallbackImgSrc);
+  const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    event.currentTarget.src = fallbackImgSrc;
+  };
 
   const renderLoadingOrNoNftsMessage = () => {
     if (loadingTokenAccounts) {
@@ -111,7 +111,8 @@ export const NftPaginatedList = (props: {
           <Spin indicator={loadIndicator} />
         </div>
       );
-    } else if (tokensLoaded) {
+    }
+    if (tokensLoaded) {
       return (
         <div className='flex-column flex-center justify-content-center h-100'>
           <IconNoItems className='mean-svg-icons fg-secondary-50' style={{ width: 50, height: 50 }} />
@@ -131,9 +132,9 @@ export const NftPaginatedList = (props: {
           </div>
         </div>
       );
-    } else {
-      return null;
     }
+
+    return null;
   };
 
   if (!nftList || nftList.length === 0) {
