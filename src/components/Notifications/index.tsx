@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import notification, { IconType } from 'antd/lib/notification';
+import notification, { type IconType } from 'antd/lib/notification';
+import type { ReactNode } from 'react';
 
 export const openNotification = (props: {
   type?: IconType;

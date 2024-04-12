@@ -1,4 +1,4 @@
-import { Connection, VersionedTransaction } from '@solana/web3.js';
+import { type Connection, VersionedTransaction } from '@solana/web3.js';
 
 const createVersionedTxFromEncodedTx = async (connection: Connection, txData: string) => {
   if (!txData) return null;

@@ -2,8 +2,8 @@ import { Identicon } from 'components/Identicon';
 import { AppStateContext } from 'contexts/appstate';
 import { toUsCurrency } from 'middleware/ui';
 import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { ReactNode, useContext, useMemo } from 'react';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import { type ReactNode, useContext, useMemo } from 'react';
 
 export const TokenListItem = (props: {
   mintAddress: string;
@@ -53,7 +53,7 @@ export const TokenListItem = (props: {
   const getDisplayUsdValue = () => {
     if (tokenPrice > 0 && balance > 0) {
       const value = balance * tokenPrice || 0;
-      return <div className="text-right font-size-90 font-bold fg-secondary-80">{toUsCurrency(value)}</div>;
+      return <div className='text-right font-size-90 font-bold fg-secondary-80'>{toUsCurrency(value)}</div>;
     }
     return null;
   };
@@ -65,7 +65,7 @@ export const TokenListItem = (props: {
       className={`token-selector token-item ${className ?? ''}`}
       onClick={props.onClick}
     >
-      <div className="token-icon">
+      <div className='token-icon'>
         {icon ?? null}
         {!icon && displayToken?.logoURI ? (
           <img alt={`${displayToken.name}`} width={24} height={24} src={displayToken.logoURI} />
@@ -74,17 +74,17 @@ export const TokenListItem = (props: {
           <Identicon address={displayToken?.address ?? mintAddress} style={{ width: '24', display: 'inline-flex' }} />
         ) : null}
       </div>
-      <div className="token-description">
-        <div className="token-symbol">
-          <span className="align-middle">{displayToken?.symbol ?? shortenAddress(mintAddress)}</span>
+      <div className='token-description'>
+        <div className='token-symbol'>
+          <span className='align-middle'>{displayToken?.symbol ?? shortenAddress(mintAddress)}</span>
           {showUsdValues && getDisplayPrice()}
         </div>
-        <div className="token-name m-0">{getDisplayTokenName()}</div>
+        <div className='token-name m-0'>{getDisplayTokenName()}</div>
       </div>
       {(balance > 0 || showZeroBalances) && (
-        <div className="token-balance">
+        <div className='token-balance'>
           {showUsdValues && getDisplayUsdValue()}
-          <div className="text-right font-size-70">{getDisplayBalance()}</div>
+          <div className='text-right font-size-70'>{getDisplayBalance()}</div>
         </div>
       )}
     </div>

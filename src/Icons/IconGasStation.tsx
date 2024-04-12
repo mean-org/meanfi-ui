@@ -1,24 +1,24 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
 export const IconGasStation = (props: { className: string; style?: CSSProperties }) => {
   return (
     <svg
       className={props.className}
       style={props.style}
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fillRule="evenodd"
-      strokeLinejoin="round"
-      strokeMiterlimit="2"
-      clipRule="evenodd"
-      xmlns="http://www.w3.org/2000/svg"
+      width='24'
+      height='24'
+      viewBox='0 0 24 24'
+      fillRule='evenodd'
+      strokeLinejoin='round'
+      strokeMiterlimit='2'
+      clipRule='evenodd'
+      xmlns='http://www.w3.org/2000/svg'
     >
-      <path fill="none" d="M0 0h24v24H0z" />
+      <path fill='none' d='M0 0h24v24H0z' />
       <path
-        fillRule="nonzero"
-        d="m19.52 7.23.01-.01-3.72-3.72-1.06 1.06 2.11 2.11c-.94.36-1.61 1.26-1.61 2.33a2.5 2.5 0 0 0 2.5 2.5c.36 0 .69-.08 1-.21v7.21c0 .55-.45 1-1 1s-1-.45-1-1V14c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2h-6c-1.1 0-2 .9-2 2v16h10v-7.5h1.5v5a2.5 2.5 0 0 0 5 0V9c0-.69-.28-1.32-.73-1.77M11.75 12v7h-6v-7h6Zm0-2h-6V5h6v5Zm6 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"
-        fill="currentColor"
+        fillRule='nonzero'
+        d='m19.52 7.23.01-.01-3.72-3.72-1.06 1.06 2.11 2.11c-.94.36-1.61 1.26-1.61 2.33a2.5 2.5 0 0 0 2.5 2.5c.36 0 .69-.08 1-.21v7.21c0 .55-.45 1-1 1s-1-.45-1-1V14c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2h-6c-1.1 0-2 .9-2 2v16h10v-7.5h1.5v5a2.5 2.5 0 0 0 5 0V9c0-.69-.28-1.32-.73-1.77M11.75 12v7h-6v-7h6Zm0-2h-6V5h6v5Zm6 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1'
+        fill='currentColor'
       />
     </svg>
   );

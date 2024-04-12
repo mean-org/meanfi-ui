@@ -1,5 +1,5 @@
-import { Beneficiary } from '@mean-dao/payment-streaming';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { Beneficiary } from '@mean-dao/payment-streaming';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 
 export interface StreamsSummary {
   totalNet: number;

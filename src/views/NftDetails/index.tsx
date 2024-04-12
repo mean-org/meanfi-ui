@@ -2,13 +2,14 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Image, Space, Tabs, Tooltip } from 'antd';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { InfoIcon } from 'components/InfoIcon';
-import { fallbackImgSrc, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, fallbackImgSrc } from 'constants/common';
 import { useMint } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import useWindowSize from 'hooks/useWindowResize';
-import { MeanNft } from 'models/accounts/NftTypes';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import type { MeanNft } from 'models/accounts/NftTypes';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { NftCreators } from './NftCreators';
 
 export const NftDetails = (props: { selectedNft?: MeanNft }) => {
@@ -41,7 +42,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
     }
 
     return (
-      <span className="badge medium font-bold text-uppercase fg-white bg-purple">{getEditionBody(selectedNft)}</span>
+      <span className='badge medium font-bold text-uppercase fg-white bg-purple'>{getEditionBody(selectedNft)}</span>
     );
   };
 
@@ -50,14 +51,14 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
       'This NFT has been verified as a member of an on-chain collection. This tag guarantees authenticity.';
     return (
       <Tooltip title={onchainVerifiedToolTip}>
-        <span className="badge medium font-bold text-uppercase fg-white bg-purple">Verified Collection</span>
+        <span className='badge medium font-bold text-uppercase fg-white bg-purple'>Verified Collection</span>
       </Tooltip>
     );
   };
 
   const getIsMutablePill = (isMutable: boolean) => {
     return (
-      <span className="badge medium font-bold text-uppercase fg-white bg-purple">
+      <span className='badge medium font-bold text-uppercase fg-white bg-purple'>
         {isMutable ? 'Mutable' : 'Immutable'}
       </span>
     );
@@ -72,7 +73,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
     return (
       <>
         <Tooltip title={hasPrimarySaleHappened ? secondaryMarketTooltip : primaryMarketTooltip}>
-          <span className="badge medium font-bold text-uppercase fg-white bg-purple">
+          <span className='badge medium font-bold text-uppercase fg-white bg-purple'>
             {hasPrimarySaleHappened ? 'Secondary Market' : 'Primary Market'}
           </span>
         </Tooltip>
@@ -87,12 +88,12 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
 
     return (
       <>
-        <h3 className="nft-details-heading mb-2">Creators and Royalties</h3>
+        <h3 className='nft-details-heading mb-2'>Creators and Royalties</h3>
         {infoRow(
           <>
-            <span className="align-text-bottom">Royalty</span>
+            <span className='align-text-bottom'>Royalty</span>
             <InfoIcon
-              placement="top"
+              placement='top'
               content={
                 <span>
                   Royalties are shared to Creators at this rate if the asset is sold using Metaplex Auction program.
@@ -116,17 +117,17 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
 
     return (
       <>
-        <h3 className="nft-details-heading mb-2">Attributes</h3>
+        <h3 className='nft-details-heading mb-2'>Attributes</h3>
         {selectedNft.json.attributes ? (
-          <div className="nft-attributes-grid mb-2">
+          <div className='nft-attributes-grid mb-2'>
             {selectedNft.json.attributes.map((attr, index) => {
               if (!attr.trait_type || !attr.value) {
                 return null;
               }
               return (
-                <div key={`${index}`} className="nft-attribute">
-                  <div className="nft-attribute-name">{attr.trait_type}</div>
-                  <div className="nft-attribute-value">{attr.value}</div>
+                <div key={`${index}`} className='nft-attribute'>
+                  <div className='nft-attribute-name'>{attr.trait_type}</div>
+                  <div className='nft-attribute-value'>{attr.value}</div>
                 </div>
               );
             })}
@@ -140,9 +141,9 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
 
   const infoRow = (label: React.ReactNode, content: React.ReactNode) => {
     return (
-      <div className="info-row-layout mb-2">
-        <div className="left fg-secondary-60">{label}</div>
-        <div className="right fg-secondary-60">{content}</div>
+      <div className='info-row-layout mb-2'>
+        <div className='left fg-secondary-60'>{label}</div>
+        <div className='right fg-secondary-60'>{content}</div>
       </div>
     );
   };
@@ -154,9 +155,9 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
 
     return (
       <>
-        <h3 className="nft-details-heading mb-2">NFT Token Profile</h3>
+        <h3 className='nft-details-heading mb-2'>NFT Token Profile</h3>
         {infoRow(
-          <span className="align-text-bottom">Token address</span>,
+          <span className='align-text-bottom'>Token address</span>,
           <AddressDisplay
             address={selectedNft.address.toBase58()}
             maxChars={shouldShortedAddresses ? 12 : undefined}
@@ -168,8 +169,8 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
         {selectedNft.mint.mintAuthorityAddress
           ? infoRow(
               <>
-                <span className="align-text-bottom">Mint Authority</span>
-                <InfoIcon placement="top" content={<span>Account permitted to mint this token.</span>}>
+                <span className='align-text-bottom'>Mint Authority</span>
+                <InfoIcon placement='top' content={<span>Account permitted to mint this token.</span>}>
                   <InfoCircleOutlined />
                 </InfoIcon>
               </>,
@@ -185,9 +186,9 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
         {selectedNft.updateAuthorityAddress
           ? infoRow(
               <>
-                <span className="align-text-bottom">Update Authority</span>
+                <span className='align-text-bottom'>Update Authority</span>
                 <InfoIcon
-                  placement="top"
+                  placement='top'
                   content={<span>Account permitted to issue update requests for this token's information.</span>}
                 >
                   <InfoCircleOutlined />
@@ -205,8 +206,8 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
         {selectedAccount
           ? infoRow(
               <>
-                <span className="align-text-bottom">Current Owner</span>
-                <InfoIcon placement="top" content={<span>The owner of this token!</span>}>
+                <span className='align-text-bottom'>Current Owner</span>
+                <InfoIcon placement='top' content={<span>The owner of this token!</span>}>
                   <InfoCircleOutlined />
                 </InfoIcon>
               </>,
@@ -243,7 +244,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
       children: renderAttributes(),
     });
 
-    return <Tabs items={items} className="neutral" />;
+    return <Tabs items={items} className='neutral' />;
   }, [renderAttributes, renderCreatorsAndRoyalties, renderProfile]);
 
   useEffect(() => {
@@ -259,35 +260,35 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
   }
 
   return (
-    <div className="nft-details">
-      <div className="flexible-column-bottom vertical-scroll">
-        <div className="top">
-          <div className="nft-header-layout">
-            <div className="left">
-              <div className="nft-item">
+    <div className='nft-details'>
+      <div className='flexible-column-bottom vertical-scroll'>
+        <div className='top'>
+          <div className='nft-header-layout'>
+            <div className='left'>
+              <div className='nft-item'>
                 {selectedNft.json ? (
                   <Image
-                    className="nft-image"
+                    className='nft-image'
                     src={selectedNft.json.image || fallbackImgSrc}
                     fallback={fallbackImgSrc}
                     alt={selectedNft.json.name}
                   />
                 ) : (
-                  <Image className="nft-image" src={fallbackImgSrc} alt="No image description. Metadata not loaded" />
+                  <Image className='nft-image' src={fallbackImgSrc} alt='No image description. Metadata not loaded' />
                 )}
               </div>
             </div>
-            <div className="right">
+            <div className='right'>
               {selectedNft.json ? (
                 <>
-                  <h3 className="nft-details-heading">NFT Overview</h3>
-                  <div className="font-size-100 font-bold mb-1">
+                  <h3 className='nft-details-heading'>NFT Overview</h3>
+                  <div className='font-size-100 font-bold mb-1'>
                     <span>{selectedNft.name || 'No NFT name found'}</span>
-                    {selectedNft.json.symbol ? <span className="ml-1">({selectedNft.json.symbol})</span> : null}
+                    {selectedNft.json.symbol ? <span className='ml-1'>({selectedNft.json.symbol})</span> : null}
                   </div>
 
-                  <div className="font-size-100 mb-2">
-                    <Space size="small" align="center" wrap>
+                  <div className='font-size-100 mb-2'>
+                    <Space size='small' align='center' wrap>
                       {getEditionPill()}
                       {isVerifiedCollection ? getVerifiedCollectionPill() : null}
                       {getIsMutablePill(selectedNft.isMutable)}
@@ -295,8 +296,8 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
                     </Space>
                   </div>
 
-                  <h3 className="nft-details-heading">Description</h3>
-                  <p className="mr-2">{selectedNft.json.description || 'No description in metadata'}</p>
+                  <h3 className='nft-details-heading'>Description</h3>
+                  <p className='mr-2'>{selectedNft.json.description || 'No description in metadata'}</p>
                 </>
               ) : (
                 <span>No metadata found</span>
@@ -304,15 +305,15 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
             </div>
           </div>
         </div>
-        <div className="bottom">
+        <div className='bottom'>
           {selectedNft.json ? (
-            <div className="transaction-list-data-wrapper">
+            <div className='transaction-list-data-wrapper'>
               {/* CTAs row */}
               {/* Tabset */}
               {renderTabset()}
             </div>
           ) : (
-            <div className="transaction-list-data-wrapper h-100 flex-column">
+            <div className='transaction-list-data-wrapper h-100 flex-column'>
               <span>No metadata found</span>
             </div>
           )}

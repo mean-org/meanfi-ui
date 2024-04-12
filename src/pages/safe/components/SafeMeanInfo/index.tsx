@@ -1,10 +1,11 @@
-import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
+import type { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
+import { BN } from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { type Connection, PublicKey } from '@solana/web3.js';
+import { IconArrowForward } from 'Icons';
 import { ResumeItem } from 'components/ResumeItem';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { IconArrowForward } from 'Icons';
 import { appConfig } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import { ACCOUNT_LAYOUT } from 'middleware/layouts';
@@ -13,7 +14,6 @@ import { getAmountFromLamports } from 'middleware/utils';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SafeInfo } from '../SafeInfo';
-import { BN } from '@project-serum/anchor';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
@@ -184,7 +184,7 @@ export const SafeMeanInfo = (props: {
   // Proposals list
   const renderListOfProposals = useCallback(() => {
     if (loadingProposals) {
-      return <span className="pl-1">Loading proposals ...</span>;
+      return <span className='pl-1'>Loading proposals ...</span>;
     }
 
     return (
@@ -216,16 +216,16 @@ export const SafeMeanInfo = (props: {
                   userSigned={proposal.didSigned}
                   status={proposal.status}
                   hasRightIcon={true}
-                  rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                  rightIcon={<IconArrowForward className='mean-svg-icons' />}
                   isLink={true}
-                  classNameRightContent="resume-stream-row"
-                  classNameIcon="icon-proposal-row"
+                  classNameRightContent='resume-stream-row'
+                  classNameIcon='icon-proposal-row'
                 />
               </div>
             );
           })
         ) : (
-          <span className="pl-1">This multisig has no proposals</span>
+          <span className='pl-1'>This multisig has no proposals</span>
         )}
       </>
     );

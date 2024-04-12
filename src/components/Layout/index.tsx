@@ -1,5 +1,5 @@
-import { Drawer, Empty, Layout } from 'antd';
 import { segmentAnalytics } from 'App';
+import { Drawer, Empty, Layout } from 'antd';
 import { AccountSelectorModal } from 'components/AccountSelectorModal';
 import { AppBar } from 'components/AppBar';
 import { FooterBar } from 'components/FooterBar';
@@ -25,7 +25,7 @@ import { reportConnectedAccount } from 'middleware/api';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
 import { isUnauthenticatedRoute } from 'middleware/utils';
-import { AccountDetails } from 'models/accounts';
+import type { AccountDetails } from 'models/accounts';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   browserName,
@@ -420,15 +420,15 @@ export const AppLayout = React.memo((props: any) => {
     return (
       <>
         {renderAccountSelector()}
-        <div className="App">
+        <div className='App'>
           <Layout>
             {isProd() && tpsAvg !== undefined && tpsAvg !== null && tpsAvg < PERFORMANCE_THRESHOLD && (
-              <div id="performance-warning-bar">
-                <div className="sitemessage">
+              <div id='performance-warning-bar'>
+                <div className='sitemessage'>
                   <a
-                    className="simplelink underline-on-hover"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    className='simplelink underline-on-hover'
+                    target='_blank'
+                    rel='noopener noreferrer'
                     href={SOLANA_STATUS_PAGE}
                   >
                     {t('notifications.network-performance-low')} [TPS: {tpsAvg}]
@@ -436,20 +436,20 @@ export const AppLayout = React.memo((props: any) => {
                 </div>
               </div>
             )}
-            <Header className="App-Bar">
-              <div className="app-bar-inner">
-                <Link to="/" className="flex-center">
-                  <div className="app-title simplelink">
-                    <img className="app-logo" src="/assets/mean-lettermark.svg" alt="Mean Finance" />
+            <Header className='App-Bar'>
+              <div className='app-bar-inner'>
+                <Link to='/' className='flex-center'>
+                  <div className='app-title simplelink'>
+                    <img className='app-logo' src='/assets/mean-lettermark.svg' alt='Mean Finance' />
                   </div>
                 </Link>
                 <AppBar
-                  menuType="desktop"
+                  menuType='desktop'
                   onOpenDrawer={showDrawer}
                   topNavVisible={location.pathname === '/ido' || location.pathname === '/ido-live' ? false : true}
                 />
               </div>
-              <AppBar menuType="mobile" topNavVisible={false} onOpenDrawer={showDrawer} />
+              <AppBar menuType='mobile' topNavVisible={false} onOpenDrawer={showDrawer} />
             </Header>
             <Content>{props.children}</Content>
             <Footer>
@@ -458,17 +458,17 @@ export const AppLayout = React.memo((props: any) => {
           </Layout>
         </div>
         <Drawer
-          title={<div className="ant-drawer-header-title">Recent events</div>}
-          placement="right"
+          title={<div className='ant-drawer-header-title'>Recent events</div>}
+          placement='right'
           width={360}
           onClose={hideDrawer}
-          className="recent-events"
+          className='recent-events'
           open={isDrawerVisible}
         >
           {confirmationHistory && confirmationHistory.length > 0 ? (
             <TransactionConfirmationHistory confirmationHistory={confirmationHistory} />
           ) : (
-            <div className="flex-center h-50">
+            <div className='flex-center h-50'>
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description={<p>{connected ? t('account-area.no-recent-events') : t('general.not-connected')}</p>}

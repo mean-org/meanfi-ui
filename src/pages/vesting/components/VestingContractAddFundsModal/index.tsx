@@ -1,7 +1,7 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { Stream, StreamTemplate, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import type { PaymentStreamingAccount, Stream, StreamTemplate } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
 import { AddressDisplay } from 'components/AddressDisplay';
@@ -20,9 +20,9 @@ import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { consoleOut, getTransactionOperationDescription, toUsCurrency } from 'middleware/ui';
 import { cutNumber, getAmountWithSymbol, isValidNumber, toTokenAmount, toUiAmount } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { VestingContractTopupParams } from 'models/vesting';
+import type { VestingContractTopupParams } from 'models/vesting';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -97,7 +97,7 @@ export const VestingContractAddFundsModal = (props: {
       }
       const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
-      return parseFloat(inputAmount) * price;
+      return Number.parseFloat(inputAmount) * price;
     },
     [getTokenPriceByAddress, selectedToken],
   );
@@ -441,14 +441,14 @@ export const VestingContractAddFundsModal = (props: {
   const renderProposalTitle = () => {
     if (isMultisigContext && selectedMultisig) {
       return (
-        <div className="mb-3 mt-3">
-          <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+        <div className='mb-3 mt-3'>
+          <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
           <InputMean
-            id="proposal-title-field"
-            name="Title"
+            id='proposal-title-field'
+            name='Title'
             className={`w-100 general-text-input${!fundFromSafeOption ? ' disabled' : ''}`}
             onChange={onTitleInputValueChange}
-            placeholder="Title for the multisig proposal"
+            placeholder='Title for the multisig proposal'
             value={proposalTitle}
           />
         </div>
@@ -462,20 +462,20 @@ export const VestingContractAddFundsModal = (props: {
     return (
       <>
         {/* Top up amount */}
-        <div className="mb-3">
+        <div className='mb-3'>
           {highLightableStreamId ? (
             <>
               <p>{t('treasuries.add-funds.allocation-heading')}</p>
-              <div className="form-label">{t('treasuries.add-funds.allocation-amount-label')}</div>
+              <div className='form-label'>{t('treasuries.add-funds.allocation-amount-label')}</div>
             </>
           ) : (
-            <div className="form-label">{t('treasuries.add-funds.label')}</div>
+            <div className='form-label'>{t('treasuries.add-funds.label')}</div>
           )}
           {selectedToken && (
             <div className={`well ${isBusy ? 'disabled' : ''}`}>
-              <div className="flex-fixed-left">
-                <div className="left">
-                  <span className="add-on">
+              <div className='flex-fixed-left'>
+                <div className='left'>
+                  <span className='add-on'>
                     <TokenDisplay
                       onClick={() => {}}
                       mintAddress={selectedToken.address}
@@ -483,32 +483,32 @@ export const VestingContractAddFundsModal = (props: {
                       fullTokenInfo={selectedToken}
                     />
                     {availableBalance ? (
-                      <div id="treasury-add-funds-max" className="token-max simplelink" onClick={handleMaxClick}>
+                      <div id='treasury-add-funds-max' className='token-max simplelink' onClick={handleMaxClick}>
                         MAX
                       </div>
                     ) : null}
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <input
-                    id="topup-amount-field"
-                    className="general-text-input text-right"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    type="text"
+                    id='topup-amount-field'
+                    className='general-text-input text-right'
+                    inputMode='decimal'
+                    autoComplete='off'
+                    autoCorrect='off'
+                    type='text'
                     onChange={handleAmountChange}
-                    pattern="^[0-9]*[.,]?[0-9]*$"
-                    placeholder="0.0"
+                    pattern='^[0-9]*[.,]?[0-9]*$'
+                    placeholder='0.0'
                     minLength={1}
                     maxLength={79}
-                    spellCheck="false"
+                    spellCheck='false'
                     value={topupAmount}
                   />
                 </div>
               </div>
-              <div className="flex-fixed-right">
-                <div className="left inner-label">
+              <div className='flex-fixed-right'>
+                <div className='left inner-label'>
                   {!highLightableStreamId ? (
                     <span>{t('add-funds.label-right')}:</span>
                   ) : (
@@ -528,7 +528,7 @@ export const VestingContractAddFundsModal = (props: {
                     }`}
                   </span>
                 </div>
-                <div className="right inner-label">
+                <div className='right inner-label'>
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                     onClick={() => refreshPrices()}
@@ -546,10 +546,10 @@ export const VestingContractAddFundsModal = (props: {
 
   const renderPanel1ProgressContent = () => {
     return (
-      <div className="transaction-progress p-0">
-        <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+      <div className='transaction-progress p-0'>
+        <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
         {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-          <h4 className="mb-4">
+          <h4 className='mb-4'>
             {t('transactions.status.tx-start-failure', {
               accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
               feeAmount: getAmountWithSymbol(
@@ -559,7 +559,7 @@ export const VestingContractAddFundsModal = (props: {
             })}
           </h4>
         ) : (
-          <h4 className="font-bold mb-3">
+          <h4 className='font-bold mb-3'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
         )}
@@ -569,11 +569,11 @@ export const VestingContractAddFundsModal = (props: {
 
   const renderPanel2BusyContent = () => {
     return (
-      <div className="transaction-progress">
-        <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-        <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+      <div className='transaction-progress'>
+        <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+        <h4 className='font-bold mb-1'>{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
         {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-          <div className="indication">{t('transactions.status.instructions')}</div>
+          <div className='indication'>{t('transactions.status.instructions')}</div>
         )}
       </div>
     );
@@ -581,13 +581,13 @@ export const VestingContractAddFundsModal = (props: {
 
   const renderCtas = () => {
     return (
-      <div className="row two-col-ctas mt-3 transaction-progress p-0">
+      <div className='row two-col-ctas mt-3 transaction-progress p-0'>
         <div className={!isError(transactionStatus.currentOperation) ? 'col-6' : 'col-12'}>
           <Button
             block
-            type="text"
-            shape="round"
-            size="middle"
+            type='text'
+            shape='round'
+            size='middle'
             className={isBusy ? 'inactive' : ''}
             onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
           >
@@ -595,13 +595,13 @@ export const VestingContractAddFundsModal = (props: {
           </Button>
         </div>
         {!isError(transactionStatus.currentOperation) && (
-          <div className="col-6">
+          <div className='col-6'>
             <Button
               className={isBusy ? 'inactive' : ''}
               block
-              type="primary"
-              shape="round"
-              size="middle"
+              type='primary'
+              shape='round'
+              size='middle'
               disabled={!isTopupFormValid()}
               onClick={() => {
                 if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
@@ -621,8 +621,8 @@ export const VestingContractAddFundsModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{getModalTitle()}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{getModalTitle()}</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
@@ -631,7 +631,7 @@ export const VestingContractAddFundsModal = (props: {
       afterClose={onAfterClose}
       width={getModalAdaptiveWidth()}
     >
-      <div className="scrollable-content">
+      <div className='scrollable-content'>
         {/* Panel1 */}
         <div className={getPanel1Classes()}>
           {transactionStatus.currentOperation === TransactionStatus.Iddle && (
@@ -645,9 +645,9 @@ export const VestingContractAddFundsModal = (props: {
           )}
           {transactionStatus.currentOperation === TransactionStatus.TransactionFinished && (
             <>
-              <div className="transaction-progress">
-                <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                <h4 className="font-bold">{t('treasuries.add-funds.success-message')}</h4>
+              <div className='transaction-progress'>
+                <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+                <h4 className='font-bold'>{t('treasuries.add-funds.success-message')}</h4>
               </div>
             </>
           )}
@@ -672,14 +672,14 @@ export const VestingContractAddFundsModal = (props: {
 
             {showQrCode && vestingContract && (
               <>
-                <div className="qr-container bg-white">
+                <div className='qr-container bg-white'>
                   <QRCodeSVG value={vestingContract.id.toBase58()} size={200} />
                 </div>
               </>
             )}
 
             {vestingContract && (
-              <div className="flex-center mb-2">
+              <div className='flex-center mb-2'>
                 <AddressDisplay
                   address={vestingContract.id.toBase58()}
                   showFullAddress={true}
@@ -691,7 +691,7 @@ export const VestingContractAddFundsModal = (props: {
 
             {!showQrCode && (
               <div
-                className="simplelink underline"
+                className='simplelink underline'
                 onClick={() => {
                   setShowQrCode(true);
                 }}

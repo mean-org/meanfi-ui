@@ -1,13 +1,12 @@
-import { ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
-import { MoneyStreaming } from '@mean-dao/money-streaming';
-import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import type { MoneyStreaming } from '@mean-dao/money-streaming';
+import type { STREAM_STATE, StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import {
-  PaymentStreaming,
-  Stream,
-  STREAM_STATUS_CODE,
-  PaymentStreamingAccount,
   AccountType,
+  type PaymentStreaming,
+  type PaymentStreamingAccount,
+  STREAM_STATUS_CODE,
+  type Stream,
 } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Radio, Row } from 'antd';
@@ -18,10 +17,11 @@ import { useWallet } from 'contexts/wallet';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { consoleOut, percentage, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { CloseStreamParams } from 'models/streams';
-import { StreamTreasuryType } from 'models/treasuries';
+import type { CloseStreamParams } from 'models/streams';
+import type { StreamTreasuryType } from 'models/treasuries';
+import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const StreamCloseModal = (props: {
@@ -293,10 +293,10 @@ export const StreamCloseModal = (props: {
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={10} className="text-right pr-1">
+        <Col span={10} className='text-right pr-1'>
           {caption}
         </Col>
-        <Col span={14} className="text-left pl-1 fg-secondary-70">
+        <Col span={14} className='text-left pl-1 fg-secondary-70'>
           {value}
         </Col>
       </Row>
@@ -305,24 +305,24 @@ export const StreamCloseModal = (props: {
 
   const renderLoading = () => {
     return (
-      <div className="transaction-progress p-0">
-        <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
-        <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
+      <div className='transaction-progress p-0'>
+        <LoadingOutlined style={{ fontSize: 48 }} className='icon mt-0' spin />
+        <h4 className='operation'>{t('close-stream.loading-treasury-message')}</h4>
       </div>
     );
   };
 
   const renderCannotCloseStream = () => {
     return (
-      <div className="transaction-progress p-0">
+      <div className='transaction-progress p-0'>
         {theme === 'light' ? (
-          <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+          <WarningFilled style={{ fontSize: 48 }} className='icon mt-0 mb-3 fg-warning' />
         ) : (
-          <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+          <WarningOutlined style={{ fontSize: 48 }} className='icon mt-0 mb-3 fg-warning' />
         )}
-        <h4 className="operation">{t('close-stream.cant-close-message')}</h4>
-        <div className="mt-3">
-          <Button type="primary" shape="round" size="large" onClick={onCloseModal}>
+        <h4 className='operation'>{t('close-stream.cant-close-message')}</h4>
+        <div className='mt-3'>
+          <Button type='primary' shape='round' size='large' onClick={onCloseModal}>
             {t('general.cta-close')}
           </Button>
         </div>
@@ -332,22 +332,22 @@ export const StreamCloseModal = (props: {
 
   const renderCloseStream = () => {
     return (
-      <div className="transaction-progress p-0">
-        <div className="text-center">
+      <div className='transaction-progress p-0'>
+        <div className='text-center'>
           {theme === 'light' ? (
-            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+            <WarningFilled style={{ fontSize: 48 }} className='icon mt-0 fg-warning' />
           ) : (
-            <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+            <WarningOutlined style={{ fontSize: 48 }} className='icon mt-0 fg-warning' />
           )}
         </div>
-        <div className="mb-2 fg-warning operation">
+        <div className='mb-2 fg-warning operation'>
           <span>{content}</span>
         </div>
 
         {/* Info */}
         {localStreamDetail && selectedToken && (
           <>
-            <div className="p-2 mb-2">
+            <div className='p-2 mb-2'>
               {infoRow(
                 t('close-stream.return-vested-amount') + ':',
                 getAmountWithSymbol(
@@ -376,16 +376,16 @@ export const StreamCloseModal = (props: {
                   `${feeAmount ? '~' + getAmountWithSymbol(feeAmount, selectedToken.address) : '0'}`,
                 )}
             </div>
-            <div className="operation">{t('close-stream.context-treasurer-aditional-message')}</div>
+            <div className='operation'>{t('close-stream.context-treasurer-aditional-message')}</div>
           </>
         )}
 
         {canCloseTreasury && treasuryDetails && !treasuryDetails.autoClose && (
-          <div className="mt-3 flex-fixed-right">
-            <div className="form-label left m-0 p-0">
+          <div className='mt-3 flex-fixed-right'>
+            <div className='form-label left m-0 p-0'>
               {t('treasuries.treasury-streams.close-stream-also-closes-treasury-label')}
             </div>
-            <div className="right">
+            <div className='right'>
               <Radio.Group onChange={onCloseTreasuryOptionChanged} value={closeTreasuryOption}>
                 <Radio value={true}>{t('general.yes')}</Radio>
                 <Radio value={false}>{t('general.no')}</Radio>
@@ -396,25 +396,25 @@ export const StreamCloseModal = (props: {
 
         {/* Proposal title */}
         {isMultisigContext && (
-          <div className="mb-3 mt-3">
-            <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+          <div className='mb-3 mt-3'>
+            <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
             <InputMean
-              id="proposal-title-field"
-              name="Title"
-              className="w-100 general-text-input"
+              id='proposal-title-field'
+              name='Title'
+              className='w-100 general-text-input'
               onChange={onTitleInputValueChange}
-              placeholder="Add a proposal title (required)"
+              placeholder='Add a proposal title (required)'
               value={proposalTitle}
             />
           </div>
         )}
 
-        <div className="mt-3">
+        <div className='mt-3'>
           <Button
             block
-            type="primary"
-            shape="round"
-            size="large"
+            type='primary'
+            shape='round'
+            size='large'
             disabled={isMultisigContext && !isValidForm()}
             onClick={onAcceptModal}
           >
@@ -437,9 +437,9 @@ export const StreamCloseModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
+      className='mean-modal simple-modal'
       title={
-        <div className="modal-title">{isMultisigContext ? 'Propose close stream' : t('close-stream.modal-title')}</div>
+        <div className='modal-title'>{isMultisigContext ? 'Propose close stream' : t('close-stream.modal-title')}</div>
       }
       footer={null}
       open={isVisible}

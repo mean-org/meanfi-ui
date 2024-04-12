@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { Modal } from 'antd';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGES } from '../../constants';
 import './style.scss';
@@ -37,16 +37,16 @@ export const LanguageSelector = (props: { handleClose: any; handleOk: any; isVis
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('language-selector.modal-title')}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{t('language-selector.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={300}
     >
-      <div className="language-select">
-        <div className="item-list-body medium">
+      <div className='language-select'>
+        <div className='item-list-body medium'>
           {LANGUAGES &&
             LANGUAGES.map(item => {
               return (
@@ -55,12 +55,12 @@ export const LanguageSelector = (props: { handleClose: any; handleOk: any; isVis
                   className={item.code === language ? 'item-list-row selected' : 'item-list-row simplelink'}
                   onClick={() => changeLanguageByCode(item.code)}
                 >
-                  <div className="std-table-cell first-cell">
-                    <span className="flag-wrapper">
+                  <div className='std-table-cell first-cell'>
+                    <span className='flag-wrapper'>
                       <img src={item.flag} alt={getLanguageCode(item.code)} />
                     </span>
                   </div>
-                  <div className="std-table-cell responsive-cell">{item.name}</div>
+                  <div className='std-table-cell responsive-cell'>{item.name}</div>
                 </div>
               );
             })}

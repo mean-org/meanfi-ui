@@ -1,18 +1,18 @@
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import type { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
+import { Button, Modal, Spin } from 'antd';
 import React, { useCallback, useContext, useEffect } from 'react';
 import { useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatus } from '../../models/enums';
-import { getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
-import { isError } from '../../middleware/transactions';
-import { SOL_MINT } from '../../middleware/ids';
-import { getAmountWithSymbol, isValidNumber } from '../../middleware/utils';
-import { MultisigParticipants } from '../MultisigParticipants';
-import { MultisigParticipant, MultisigTransactionFees, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
+import { AppStateContext } from '../../contexts/appstate';
+import { SOL_MINT } from '../../middleware/ids';
+import { isError } from '../../middleware/transactions';
+import { getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
+import { getAmountWithSymbol, isValidNumber } from '../../middleware/utils';
+import { TransactionStatus } from '../../models/enums';
 import { InputMean } from '../InputMean';
+import { MultisigParticipants } from '../MultisigParticipants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -177,8 +177,8 @@ export const MultisigEditModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">Propose edit safe</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>Propose edit safe</div>}
       maskClosable={false}
       footer={null}
       open={props.isVisible}
@@ -191,30 +191,30 @@ export const MultisigEditModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Proposal title */}
-            <div className="mb-3">
-              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+            <div className='mb-3'>
+              <div className='form-label'>{t('multisig.proposal-modal.title')}</div>
               <InputMean
-                id="proposal-title-field"
-                name="Title"
-                className="w-100 general-text-input"
+                id='proposal-title-field'
+                name='Title'
+                className='w-100 general-text-input'
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title (required)"
+                placeholder='Add a proposal title (required)'
                 value={multisigTitle}
               />
             </div>
 
             {/* Multisig label */}
-            <div className="mb-3">
-              <div className="form-label">{t('multisig.create-multisig.multisig-label-input-label')}</div>
+            <div className='mb-3'>
+              <div className='form-label'>{t('multisig.create-multisig.multisig-label-input-label')}</div>
               <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
-                <div className="flex-fixed-right">
-                  <div className="left">
+                <div className='flex-fixed-right'>
+                  <div className='left'>
                     <input
-                      id="multisig-label-field"
-                      className="w-100 general-text-input"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      type="text"
+                      id='multisig-label-field'
+                      className='w-100 general-text-input'
+                      autoComplete='off'
+                      autoCorrect='off'
+                      type='text'
                       maxLength={32}
                       onChange={onLabelInputValueChange}
                       placeholder={t('multisig.create-multisig.multisig-label-placeholder')}
@@ -222,23 +222,23 @@ export const MultisigEditModal = (props: {
                     />
                   </div>
                 </div>
-                <div className="form-field-hint">I.e. "My company payroll", "Seed round vesting", etc.</div>
+                <div className='form-field-hint'>I.e. "My company payroll", "Seed round vesting", etc.</div>
               </div>
             </div>
 
             {/* Multisig threshold */}
-            <div className="mb-3">
-              <div className="form-label">{t('multisig.create-multisig.multisig-threshold-input-label')}</div>
+            <div className='mb-3'>
+              <div className='form-label'>{t('multisig.create-multisig.multisig-threshold-input-label')}</div>
               <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
-                <div className="flex-fixed-right">
-                  <div className="left">
+                <div className='flex-fixed-right'>
+                  <div className='left'>
                     <input
-                      id="multisig-threshold-field"
-                      className="w-100 general-text-input"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      type="text"
-                      pattern="^[0-9]*$"
+                      id='multisig-threshold-field'
+                      className='w-100 general-text-input'
+                      autoComplete='off'
+                      autoCorrect='off'
+                      type='text'
+                      pattern='^[0-9]*$'
                       onChange={onThresholdInputValueChange}
                       placeholder={t('multisig.create-multisig.multisig-threshold-placeholder')}
                       value={multisigThreshold}
@@ -246,11 +246,11 @@ export const MultisigEditModal = (props: {
                   </div>
                 </div>
                 {!multisigThreshold || +multisigThreshold < 1 ? (
-                  <span className="form-field-error">
+                  <span className='form-field-error'>
                     {t('multisig.create-multisig.multisig-threshold-input-empty')}
                   </span>
                 ) : multisigThreshold > MAX_MULTISIG_PARTICIPANTS ? (
-                  <span className="form-field-error">{t('multisig.create-multisig.multisig-threshold-input-max')}</span>
+                  <span className='form-field-error'>{t('multisig.create-multisig.multisig-threshold-input-max')}</span>
                 ) : null}
               </div>
             </div>
@@ -268,19 +268,19 @@ export const MultisigEditModal = (props: {
             />
 
             {isFormDirty() && props.multisigPendingTxsAmount > 0 && (
-              <div className="font-size-100 fg-orange-red pl-1">
+              <div className='font-size-100 fg-orange-red pl-1'>
                 {t('multisig.update-multisig.edit-not-allowed-message')}
               </div>
             )}
 
             {!isError(transactionStatus.currentOperation) && (
-              <div className="col-12 p-0 mt-3">
+              <div className='col-12 p-0 mt-3'>
                 <Button
                   className={`center-text-in-btn ${props.isBusy ? 'inactive' : ''}`}
                   block
-                  type="primary"
-                  shape="round"
-                  size="large"
+                  type='primary'
+                  shape='round'
+                  size='large'
                   disabled={!isFormValid()}
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
@@ -295,27 +295,27 @@ export const MultisigEditModal = (props: {
                   {props.isBusy
                     ? t('multisig.update-multisig.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? getTransactionStartButtonLabel()
-                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                    ? t('general.cta-finish')
-                    : t('general.refresh')}
+                      ? getTransactionStartButtonLabel()
+                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                        ? t('general.cta-finish')
+                        : t('general.refresh')}
                 </Button>
               </div>
             )}
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
-            <div className="transaction-progress">
-              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('multisig.update-multisig.success-message')}</h4>
+            <div className='transaction-progress'>
+              <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+              <h4 className='font-bold'>{t('multisig.update-multisig.success-message')}</h4>
             </div>
           </>
         ) : (
           <>
-            <div className="transaction-progress p-0">
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+            <div className='transaction-progress p-0'>
+              <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
+                <h4 className='mb-4'>
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(props.nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
@@ -327,18 +327,18 @@ export const MultisigEditModal = (props: {
                   })}
                 </h4>
               ) : (
-                <h4 className="font-bold mb-3">
+                <h4 className='font-bold mb-3'>
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
               {!props.isBusy && (
-                <div className="row two-col-ctas mt-3 transaction-progress p-2">
-                  <div className="col-12">
+                <div className='row two-col-ctas mt-3 transaction-progress p-2'>
+                  <div className='col-12'>
                     <Button
                       block
-                      type="text"
-                      shape="round"
-                      size="middle"
+                      type='text'
+                      shape='round'
+                      size='middle'
                       className={props.isBusy ? 'inactive' : ''}
                       onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
                     >
@@ -361,13 +361,13 @@ export const MultisigEditModal = (props: {
         }
       >
         {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress">
-            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-            <h4 className="font-bold mb-1">
+          <div className='transaction-progress'>
+            <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+            <h4 className='font-bold mb-1'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
             {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              <div className='indication'>{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}

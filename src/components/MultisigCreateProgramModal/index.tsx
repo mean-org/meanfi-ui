@@ -1,7 +1,7 @@
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { Button, Modal } from 'antd';
 import React, { useCallback } from 'react';
-import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { IconCopy } from '../../Icons';
 import { copyText } from '../../middleware/ui';
 import { openNotification } from '../Notifications';
@@ -47,8 +47,8 @@ export const MultisigCreateProgramModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.multisig-programs.modal-title')}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{t('multisig.multisig-programs.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={onAcceptModal}
@@ -56,27 +56,27 @@ export const MultisigCreateProgramModal = (props: {
       afterClose={onAfterClose}
       width={480}
     >
-      <div className="mb-3">
+      <div className='mb-3'>
         <h3>Adding a program to your Multisig</h3>
         <p>
           To use program upgrades for your on-chain program through the MeanFi Multisig you will need to set the upgrade
           authority of your program to this multisig account:
         </p>
-        <div className="well small mb-2">
-          <div className="flex-fixed-right">
-            <div className="left position-relative">
-              <span className="recipient-field-wrapper">
-                <span className="referral-link font-size-80 text-monospace">
+        <div className='well small mb-2'>
+          <div className='flex-fixed-right'>
+            <div className='left position-relative'>
+              <span className='recipient-field-wrapper'>
+                <span className='referral-link font-size-80 text-monospace'>
                   {props.selectedMultisig.authority.toBase58()}
                 </span>
               </span>
             </div>
-            <div className="right">
+            <div className='right'>
               <div
-                className="add-on simplelink"
+                className='add-on simplelink'
                 onClick={() => copyAddressToClipboard(props.selectedMultisig.authority.toBase58())}
               >
-                <IconCopy className="mean-svg-icons" />
+                <IconCopy className='mean-svg-icons' />
               </div>
             </div>
           </div>
@@ -84,11 +84,11 @@ export const MultisigCreateProgramModal = (props: {
         <p>
           You can use the Solana CLI to set a program's upgrade authority, to learn more about this,{' '}
           <a
-            className="simplelink underline"
-            href="https://docs.solana.com/cli/deploy-a-program#set-a-programs-upgrade-authority"
+            className='simplelink underline'
+            href='https://docs.solana.com/cli/deploy-a-program#set-a-programs-upgrade-authority'
             title="Set a program's upgrade authority"
-            target="_blank"
-            rel="noopener noreferrer"
+            target='_blank'
+            rel='noopener noreferrer'
           >
             click here
           </a>
@@ -99,8 +99,8 @@ export const MultisigCreateProgramModal = (props: {
         </p>
       </div>
 
-      <div className="transaction-progress">
-        <Button type="primary" shape="round" size="large" onClick={onCloseModal}>
+      <div className='transaction-progress'>
+        <Button type='primary' shape='round' size='large' onClick={onCloseModal}>
           {t('general.cta-close')}
         </Button>
       </div>

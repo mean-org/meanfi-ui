@@ -1,4 +1,4 @@
-import { Idl } from '@project-serum/anchor';
+import type { Idl } from '@project-serum/anchor';
 
 const idl: Idl = {
   version: '0.11.0',

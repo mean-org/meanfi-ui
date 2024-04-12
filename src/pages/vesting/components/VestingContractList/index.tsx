@@ -1,13 +1,14 @@
-import { PaymentStreaming, StreamTemplate, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import type { PaymentStreaming, PaymentStreamingAccount, StreamTemplate } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
+import { IconLoading, IconNoItems } from 'Icons';
 import { Progress } from 'antd';
 import { Identicon } from 'components/Identicon';
 import { FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { IconLoading, IconNoItems } from 'Icons';
 import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd } from 'middleware/ui';
 import { formatThousands, getSdkValue, makeDecimal } from 'middleware/utils';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const VestingContractList = (props: {
@@ -186,8 +187,8 @@ export const VestingContractList = (props: {
               onClick={onTreasuryClick}
               className={`transaction-list-row ${selectedAccount && selectedAccount.id === item.id ? 'selected' : ''}`}
             >
-              <div className="icon-cell">
-                <div className="token-icon">
+              <div className='icon-cell'>
+                <div className='token-icon'>
                   <>
                     {token && token.logoURI ? (
                       <img
@@ -210,15 +211,15 @@ export const VestingContractList = (props: {
                   </>
                 </div>
               </div>
-              <div className="description-cell">
-                <div className="title text-truncate">{item.name}</div>
-                <div className="subtitle text-truncate">
+              <div className='description-cell'>
+                <div className='title text-truncate'>{item.name}</div>
+                <div className='subtitle text-truncate'>
                   {item &&
                   vcTemplates &&
                   vcTemplates[item.id.toBase58()] &&
                   vcTemplates[item.id.toBase58()].startUtc &&
                   !loadingTemplates ? (
-                    <span className="mr-1">
+                    <span className='mr-1'>
                       {isStartDateFuture(vcTemplates[item.id.toBase58()].startUtc) ? (
                         `Contract starts on ${getReadableDate(vcTemplates[item.id.toBase58()].startUtc, true)}`
                       ) : (
@@ -229,21 +230,21 @@ export const VestingContractList = (props: {
                             vcCompleteness[item.id.toBase58()] === 0
                               ? 'normal'
                               : vcCompleteness[item.id.toBase58()] < 100
-                              ? 'active'
-                              : 'success'
+                                ? 'active'
+                                : 'success'
                           }
-                          size="small"
-                          type="line"
-                          className="vesting-list-progress-bar small"
+                          size='small'
+                          type='line'
+                          className='vesting-list-progress-bar small'
                           trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
                           style={{ width: 200 }}
                         />
                       )}
                     </span>
                   ) : (
-                    <span className="mr-1">
+                    <span className='mr-1'>
                       <IconLoading
-                        className="mean-svg-icons"
+                        className='mean-svg-icons'
                         style={{
                           height: 14,
                           width: 14,
@@ -255,18 +256,18 @@ export const VestingContractList = (props: {
                   )}
                 </div>
               </div>
-              <div className="rate-cell">
-                <div className="rate-amount">{formatThousands(+getSdkValue(item.totalStreams))}</div>
-                <div className="interval">{item.totalStreams === 1 ? 'stream' : 'streams'}</div>
+              <div className='rate-cell'>
+                <div className='rate-amount'>{formatThousands(+getSdkValue(item.totalStreams))}</div>
+                <div className='interval'>{item.totalStreams === 1 ? 'stream' : 'streams'}</div>
               </div>
             </div>
           );
         })
       ) : (
-        <div className="flex-column flex-center justify-content-center h-100">
-          <IconNoItems className="mean-svg-icons fg-secondary-50" style={{ width: 42, height: 42 }} />
-          <div className="font-size-120 font-bold fg-secondary-75 mt-2 mb-2">{t('vesting.no-contracts')}</div>
-          <div className="font-size-110 fg-secondary-50 mb-3">{t('vesting.user-instruction-headline')}</div>
+        <div className='flex-column flex-center justify-content-center h-100'>
+          <IconNoItems className='mean-svg-icons fg-secondary-50' style={{ width: 42, height: 42 }} />
+          <div className='font-size-120 font-bold fg-secondary-75 mt-2 mb-2'>{t('vesting.no-contracts')}</div>
+          <div className='font-size-110 fg-secondary-50 mb-3'>{t('vesting.user-instruction-headline')}</div>
         </div>
       )}
     </div>

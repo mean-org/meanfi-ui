@@ -1,5 +1,6 @@
-import { StreamTemplate, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import type { PaymentStreamingAccount, StreamTemplate } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
+import { IconLoading } from 'Icons';
 import { Progress } from 'antd';
 import BigNumber from 'bignumber.js';
 import { AddressDisplay } from 'components/AddressDisplay';
@@ -7,7 +8,6 @@ import { Identicon } from 'components/Identicon';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { IconLoading } from 'Icons';
 import {
   consoleOut,
   getIntervalFromSeconds,
@@ -19,10 +19,11 @@ import {
   percentualBn,
 } from 'middleware/ui';
 import { displayAmountWithSymbol, makeDecimal, shortenAddress } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { PaymentRateType } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { getCategoryLabelByValue, VestingFlowRateInfo } from 'models/vesting';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { type VestingFlowRateInfo, getCategoryLabelByValue } from 'models/vesting';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const VestingContractDetails = (props: {
@@ -68,7 +69,7 @@ export const VestingContractDetails = (props: {
   const getContractFinishDate = useCallback(() => {
     if (paymentStartDate && lockPeriodAmount && lockPeriodUnits) {
       // Total length of vesting period in seconds
-      const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
+      const lockPeriod = Number.parseFloat(lockPeriodAmount) * lockPeriodUnits;
       // Final date = Start date + lockPeriod
       const ts = new Date(paymentStartDate).getTime();
       const finishDate = new Date(lockPeriod * 1000 + ts);
@@ -124,7 +125,7 @@ export const VestingContractDetails = (props: {
       let vestedBn = new BigNumber(0);
       let streamableBn = new BigNumber(0);
       let releasedBn = new BigNumber(0);
-      const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
+      const lockPeriod = Number.parseFloat(lockPeriodAmount) * lockPeriodUnits;
       const lockPeriodBn = new BigNumber(lockPeriod);
       const elapsedSeconds = Math.round(Math.abs(getTimeEllapsed(paymentStartDate).total) / 1000);
       const elapsedSecondsBn = new BigNumber(elapsedSeconds);
@@ -146,7 +147,7 @@ export const VestingContractDetails = (props: {
           'lockPeriod (s):',
           `${lockPeriod} (${lockPeriodAmount} ${getLockPeriodOptionLabelByAmount(
             lockPeriodFrequency,
-            parseFloat(lockPeriodAmount),
+            Number.parseFloat(lockPeriodAmount),
             t,
           )})`,
           'darkcyan',
@@ -265,9 +266,9 @@ export const VestingContractDetails = (props: {
 
   const renderStreamingAccount = (item: PaymentStreamingAccount) => {
     return (
-      <div className="transaction-list-row h-auto no-pointer">
-        <div className="icon-cell">
-          <div className="token-icon">
+      <div className='transaction-list-row h-auto no-pointer'>
+        <div className='icon-cell'>
+          <div className='token-icon'>
             {selectedToken && selectedToken.logoURI ? (
               <img
                 alt={`${selectedToken.name}`}
@@ -281,9 +282,9 @@ export const VestingContractDetails = (props: {
             )}
           </div>
         </div>
-        <div className="description-cell">
+        <div className='description-cell'>
           {item.name ? (
-            <div className="title text-truncate">
+            <div className='title text-truncate'>
               {item.name}
               {vestingContract && vestingContract.subCategory ? (
                 <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
@@ -292,17 +293,17 @@ export const VestingContractDetails = (props: {
               ) : null}
             </div>
           ) : (
-            <div className="title text-truncate">{shortenAddress(item.id, 8)}</div>
+            <div className='title text-truncate'>{shortenAddress(item.id, 8)}</div>
           )}
-          <div className="subtitle">
+          <div className='subtitle'>
             {loadingVestingContractFlowRate ? (
-              <span className="mr-1">
-                <IconLoading className="mean-svg-icons" style={{ height: '15px', lineHeight: '15px' }} />
+              <span className='mr-1'>
+                <IconLoading className='mean-svg-icons' style={{ height: '15px', lineHeight: '15px' }} />
               </span>
             ) : vestingContractFlowRate && vestingContract && selectedToken ? (
               <>
                 {vestingContractFlowRate.amountBn.gtn(0) && (
-                  <span className="mr-1">
+                  <span className='mr-1'>
                     Sending{' '}
                     {displayAmountWithSymbol(
                       vestingContractFlowRate.amountBn,
@@ -319,8 +320,8 @@ export const VestingContractDetails = (props: {
             ) : null}
             <AddressDisplay
               address={item.id.toBase58()}
-              prefix="("
-              suffix=")"
+              prefix='('
+              suffix=')'
               maxChars={5}
               iconStyles={{ width: '15', height: '15' }}
               newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
@@ -334,18 +335,18 @@ export const VestingContractDetails = (props: {
   return (
     <>
       {vestingContract && (
-        <div className="details-panel-meta mb-2">
-          <div className="two-column-form-layout col60x40">
-            <div className="left mb-2">{renderStreamingAccount(vestingContract)}</div>
+        <div className='details-panel-meta mb-2'>
+          <div className='two-column-form-layout col60x40'>
+            <div className='left mb-2'>{renderStreamingAccount(vestingContract)}</div>
             <div className={`right mb-2 pr-2 font-size-100 line-height-120 ${isXsDevice ? 'text-left' : 'text-right'}`}>
               {getVestingDistributionStatus()}
               {vestingContract.totalStreams === 0 && isDateInTheFuture(paymentStartDate) && (
-                <div className="vested-amount">{`starts on ${getShortDate(paymentStartDate, false)}`}</div>
+                <div className='vested-amount'>{`starts on ${getShortDate(paymentStartDate, false)}`}</div>
               )}
               {vestingContractFlowRate && selectedToken && vestingContract.totalStreams > 0 && (
                 <>
                   {isDateInTheFuture(paymentStartDate) ? (
-                    <div className="vested-amount">
+                    <div className='vested-amount'>
                       {displayAmountWithSymbol(
                         vestingContractFlowRate.streamableAmountBn,
                         selectedToken.address,
@@ -356,7 +357,7 @@ export const VestingContractDetails = (props: {
                       to be vested
                     </div>
                   ) : (
-                    <div className="vested-amount">
+                    <div className='vested-amount'>
                       {displayAmountWithSymbol(
                         currentVestingAmount.toString(),
                         selectedToken.address,
@@ -370,7 +371,7 @@ export const VestingContractDetails = (props: {
                 </>
               )}
               {!isDateInTheFuture(paymentStartDate) && vestingContract.totalStreams > 0 && (
-                <div className="vesting-progress">
+                <div className='vesting-progress'>
                   <Progress
                     percent={completedVestingPercentage}
                     showInfo={false}
@@ -378,11 +379,11 @@ export const VestingContractDetails = (props: {
                       completedVestingPercentage === 0
                         ? 'normal'
                         : completedVestingPercentage === 100
-                        ? 'success'
-                        : 'active'
+                          ? 'success'
+                          : 'active'
                     }
-                    type="line"
-                    className="vesting-list-progress-bar medium"
+                    type='line'
+                    className='vesting-list-progress-bar medium'
                     trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
                     style={{ width: 85 }}
                   />

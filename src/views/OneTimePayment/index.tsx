@@ -1,17 +1,17 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import {
-  calculateFeesForAction,
-  PaymentStreaming,
   ACTION_CODES,
-  TransactionFees,
-  TransferTransactionAccounts,
-  ScheduleTransferTransactionAccounts,
   NATIVE_SOL_MINT,
+  PaymentStreaming,
+  type ScheduleTransferTransactionAccounts,
+  type TransactionFees,
+  type TransferTransactionAccounts,
+  calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Checkbox, DatePicker, Select } from 'antd';
+import { PublicKey, type Transaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
+import { Button, Checkbox, DatePicker, Select } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
 import {
@@ -26,12 +26,12 @@ import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection, useConnectionConfig } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
 import { customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent, SegmentStreamOTPTransferData } from 'middleware/segment-service';
+import { AppUsageEvent, type SegmentStreamOTPTransferData } from 'middleware/segment-service';
 import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import {
   addMinutes,
@@ -53,10 +53,10 @@ import {
   toTokenAmountBn,
   toUiAmount,
 } from 'middleware/utils';
-import { RecipientAddressInfo } from 'models/common-types';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { RecipientAddressInfo } from 'models/common-types';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { OtpTxParams } from 'models/transfers';
+import type { OtpTxParams } from 'models/transfers';
 import moment from 'moment';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -176,7 +176,7 @@ export const OneTimePayment = (props: {
     }
     const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
-    return parseFloat(fromCoinAmount) * price;
+    return Number.parseFloat(fromCoinAmount) * price;
   }, [fromCoinAmount, selectedToken, getTokenPriceByAddress]);
 
   // Setup event handler for Tx confirmed
@@ -206,7 +206,7 @@ export const OneTimePayment = (props: {
       return new BN(0);
     }
 
-    return parseFloat(fromCoinAmount) > 0 ? toTokenAmountBn(fromCoinAmount, selectedToken.decimals) : new BN(0);
+    return Number.parseFloat(fromCoinAmount) > 0 ? toTokenAmountBn(fromCoinAmount, selectedToken.decimals) : new BN(0);
   }, [fromCoinAmount, selectedToken]);
 
   /////////////////////
@@ -460,7 +460,7 @@ export const OneTimePayment = (props: {
       inputAmount.gtn(0) &&
       tokenBalanceBn.gtn(0) &&
       nativeBalance >= getMinSolBlanceRequired() &&
-      ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+      ((selectedToken.address === NATIVE_SOL.address && Number.parseFloat(fromCoinAmount) <= getMaxAmount()) ||
         (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
       ? true
       : false;
@@ -484,7 +484,7 @@ export const OneTimePayment = (props: {
     } else if (!fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()) {
       return t('transactions.validation.no-amount');
     } else if (
-      (isNative && parseFloat(fromCoinAmount) > getMaxAmount()) ||
+      (isNative && Number.parseFloat(fromCoinAmount) > getMaxAmount()) ||
       (!isNative && tokenBalanceBn.lt(inputAmount))
     ) {
       return t('transactions.validation.amount-high');
@@ -630,10 +630,10 @@ export const OneTimePayment = (props: {
       const segmentData: SegmentStreamOTPTransferData = {
         asset: selectedToken?.symbol,
         assetPrice: price,
-        amount: parseFloat(fromCoinAmount),
+        amount: Number.parseFloat(fromCoinAmount),
         beneficiary: data.beneficiary,
         startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT),
-        valueInUsd: price * parseFloat(fromCoinAmount),
+        valueInUsd: price * Number.parseFloat(fromCoinAmount),
       };
       consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFormButton, segmentData);
@@ -730,7 +730,7 @@ export const OneTimePayment = (props: {
                 txInfoFetchStatus: 'fetching',
                 loadingTitle: 'Confirming transaction',
                 loadingMessage: `Scheduled transfer for ${formatThousands(
-                  parseFloat(fromCoinAmount),
+                  Number.parseFloat(fromCoinAmount),
                   selectedToken.decimals,
                 )} ${selectedToken.symbol}`,
                 completedTitle: 'Transaction confirmed',
@@ -744,12 +744,13 @@ export const OneTimePayment = (props: {
                 finality: 'confirmed',
                 txInfoFetchStatus: 'fetching',
                 loadingTitle: 'Confirming transaction',
-                loadingMessage: `Sending ${formatThousands(parseFloat(fromCoinAmount), selectedToken.decimals)} ${
-                  selectedToken.symbol
-                }`,
+                loadingMessage: `Sending ${formatThousands(
+                  Number.parseFloat(fromCoinAmount),
+                  selectedToken.decimals,
+                )} ${selectedToken.symbol}`,
                 completedTitle: 'Transaction confirmed',
                 completedMessage: `Successfully sent ${formatThousands(
-                  parseFloat(fromCoinAmount),
+                  Number.parseFloat(fromCoinAmount),
                   selectedToken.decimals,
                 )} ${selectedToken.symbol}`,
               });
@@ -830,56 +831,56 @@ export const OneTimePayment = (props: {
   };
 
   return (
-    <div className="contract-wrapper">
+    <div className='contract-wrapper'>
       {/* Recipient */}
-      <div className="form-label">{t('transactions.recipient.label')}</div>
-      <div className="well">
-        <div className="flex-fixed-right">
-          <div className="left position-relative">
-            <span className="recipient-field-wrapper">
+      <div className='form-label'>{t('transactions.recipient.label')}</div>
+      <div className='well'>
+        <div className='flex-fixed-right'>
+          <div className='left position-relative'>
+            <span className='recipient-field-wrapper'>
               <input
-                id="payment-recipient-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
+                id='payment-recipient-field'
+                className='general-text-input'
+                autoComplete='on'
+                autoCorrect='off'
+                type='text'
                 onFocus={handleRecipientAddressFocusInOut}
                 onChange={handleRecipientAddressChange}
                 onBlur={handleRecipientAddressFocusInOut}
                 placeholder={t('transactions.recipient.placeholder')}
                 required={true}
-                spellCheck="false"
+                spellCheck='false'
                 value={recipientAddress}
               />
               <span
-                id="payment-recipient-static-field"
+                id='payment-recipient-static-field'
                 className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
               >
                 {recipientAddress || t('transactions.recipient.placeholder')}
               </span>
             </span>
           </div>
-          <div className="right">
+          <div className='right'>
             <span>&nbsp;</span>
           </div>
         </div>
         {recipientAddress && !isValidAddress(recipientAddress) && (
-          <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+          <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
         )}
         {isAddressOwnAccount() && (
-          <span className="form-field-error">{t('transactions.recipient.recipient-is-own-account')}</span>
+          <span className='form-field-error'>{t('transactions.recipient.recipient-is-own-account')}</span>
         )}
         {recipientAddress && !isRecipientAddressValid() && (
-          <span className="form-field-error">{getRecipientAddressValidation()}</span>
+          <span className='form-field-error'>{getRecipientAddressValidation()}</span>
         )}
       </div>
 
       {/* Send amount */}
-      <div className="form-label">{t('transactions.send-amount.label')}</div>
-      <div className="well">
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on simplelink">
+      <div className='form-label'>{t('transactions.send-amount.label')}</div>
+      <div className='well'>
+        <div className='flex-fixed-left'>
+          <div className='left'>
+            <span className='add-on simplelink'>
               {selectedToken && (
                 <TokenDisplay
                   onClick={() => onOpenTokenSelector()}
@@ -895,7 +896,7 @@ export const OneTimePayment = (props: {
               )}
               {selectedToken && tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
                 <div
-                  className="token-max simplelink"
+                  className='token-max simplelink'
                   onClick={() => {
                     console.log('decimals:', selectedToken.decimals);
                     if (selectedToken.address === NATIVE_SOL.address) {
@@ -911,29 +912,29 @@ export const OneTimePayment = (props: {
               ) : null}
             </span>
           </div>
-          <div className="right">
+          <div className='right'>
             <input
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
+              className='general-text-input text-right'
+              inputMode='decimal'
+              autoComplete='off'
+              autoCorrect='off'
+              type='text'
               onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
+              pattern='^[0-9]*[.,]?[0-9]*$'
+              placeholder='0.0'
               minLength={1}
               maxLength={79}
-              spellCheck="false"
+              spellCheck='false'
               value={fromCoinAmount}
             />
           </div>
         </div>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
+        <div className='flex-fixed-right'>
+          <div className='left inner-label'>
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span>{getDisplayAmount(tokenBalanceBn)}</span>
           </div>
-          <div className="right inner-label">
+          <div className='right inner-label'>
             <span
               className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
               onClick={() => refreshPrices()}
@@ -945,25 +946,25 @@ export const OneTimePayment = (props: {
         {selectedToken &&
           selectedToken.address === NATIVE_SOL.address &&
           (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
-            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+            <div className='form-field-error'>{t('transactions.validation.minimum-balance-required')}</div>
           )}
       </div>
 
       {/* Optional note */}
-      <div className="form-label">{t('transactions.memo.label')}</div>
-      <div className="well">
-        <div className="flex-fixed-right">
-          <div className="left">
+      <div className='form-label'>{t('transactions.memo.label')}</div>
+      <div className='well'>
+        <div className='flex-fixed-right'>
+          <div className='left'>
             <input
-              id="payment-memo-field"
-              className="w-100 general-text-input"
-              autoComplete="on"
-              autoCorrect="off"
-              type="text"
+              id='payment-memo-field'
+              className='w-100 general-text-input'
+              autoComplete='on'
+              autoCorrect='off'
+              type='text'
               maxLength={32}
               onChange={handleRecipientNoteChange}
               placeholder={t('transactions.memo.placeholder')}
-              spellCheck="false"
+              spellCheck='false'
               value={recipientNote}
             />
           </div>
@@ -971,20 +972,20 @@ export const OneTimePayment = (props: {
       </div>
 
       {/* Send date */}
-      <div className="form-label">{t('transactions.send-date.label')}</div>
-      <div className="well">
-        <div className="flex-fixed-right">
-          <div className="left static-data-field">
+      <div className='form-label'>{t('transactions.send-date.label')}</div>
+      <div className='well'>
+        <div className='flex-fixed-right'>
+          <div className='left static-data-field'>
             {isToday(paymentStartDate || '')
               ? `${paymentStartDate} (${t('common:general.now')})`
               : `${paymentStartDate}`}
           </div>
-          <div className="right">
-            <div className="add-on simplelink">
+          <div className='right'>
+            <div className='add-on simplelink'>
               <DatePicker
-                size="middle"
+                size='middle'
                 bordered={false}
-                className="addon-date-picker"
+                className='addon-date-picker'
                 aria-required={true}
                 allowClear={false}
                 disabledDate={disabledDate}
@@ -1000,8 +1001,8 @@ export const OneTimePayment = (props: {
 
       {isWhitelisted && (
         <>
-          <div className="form-label">Schedule transfer for: (For dev team only)</div>
-          <div className="well">
+          <div className='form-label'>Schedule transfer for: (For dev team only)</div>
+          <div className='well'>
             <Select
               value={fixedScheduleValue}
               bordered={false}
@@ -1015,13 +1016,13 @@ export const OneTimePayment = (props: {
               <Option value={20}>20 minutes from now</Option>
               <Option value={30}>30 minutes from now</Option>
             </Select>
-            <div className="form-field-hint">Selecting a value will override your date selection</div>
+            <div className='form-field-hint'>Selecting a value will override your date selection</div>
           </div>
         </>
       )}
 
       {/* Confirm recipient address is correct Checkbox */}
-      <div className="mb-2">
+      <div className='mb-2'>
         <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
           {t('transfers.verified-recipient-disclaimer')}
         </Checkbox>
@@ -1031,9 +1032,9 @@ export const OneTimePayment = (props: {
       <Button
         className={`main-cta ${isBusy ? 'inactive' : ''}`}
         block
-        type="primary"
-        shape="round"
-        size="large"
+        type='primary'
+        shape='round'
+        size='large'
         onClick={onStartTransaction}
         disabled={
           !connected ||
@@ -1045,7 +1046,7 @@ export const OneTimePayment = (props: {
         }
       >
         {isBusy && (
-          <span className="mr-1">
+          <span className='mr-1'>
             <LoadingOutlined style={{ fontSize: '16px' }} />
           </span>
         )}

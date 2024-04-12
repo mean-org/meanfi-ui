@@ -1,5 +1,5 @@
-import { TreasuryInfo } from '@mean-dao/money-streaming';
-import { PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import type { TreasuryInfo } from '@mean-dao/money-streaming';
+import type { PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 
 export const getStreamingAccountId = (account: TreasuryInfo | PaymentStreamingAccount) => {
   const v1 = account as TreasuryInfo;

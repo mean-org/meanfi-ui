@@ -1,5 +1,5 @@
-import { AccountTokenParsedInfo } from '.';
-import { UserTokenAccount } from './UserTokenAccount';
+import type { AccountTokenParsedInfo } from '.';
+import type { UserTokenAccount } from './UserTokenAccount';
 
 export interface UserTokensResponse {
   nativeBalance: number;

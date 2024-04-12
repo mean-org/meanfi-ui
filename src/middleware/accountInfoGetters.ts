@@ -1,4 +1,4 @@
-import { AccountInfo, ParsedAccountData, SystemProgram } from "@solana/web3.js";
+import { type AccountInfo, type ParsedAccountData, SystemProgram } from '@solana/web3.js';
 
 /**
  * Checks if the accountInfo provided by getParsedAccountInfo corresponds to a system owned account
@@ -6,8 +6,8 @@ import { AccountInfo, ParsedAccountData, SystemProgram } from "@solana/web3.js";
  * @returns true if the accountInfo indicates that the account belongs to the system program
  */
 export const isSystemOwnedAccount = (parsedAccountInfo: AccountInfo<Buffer | ParsedAccountData> | null) => {
-  return !!(parsedAccountInfo?.owner && parsedAccountInfo.owner.equals(SystemProgram.programId));
-}
+  return !!parsedAccountInfo?.owner?.equals(SystemProgram.programId);
+};
 
 /**
  * Checks if the accountInfo provided by getParsedAccountInfo corresponds to a token account
@@ -41,7 +41,7 @@ export const isTokenMint = (parsedAccountInfo: AccountInfo<ParsedAccountData> | 
  * @returns number of decimals or 0
  */
 export const getMintDecimals = (parsedAccountInfo: AccountInfo<ParsedAccountData> | null) => {
-  return parsedAccountInfo?.data && parsedAccountInfo.data.parsed ? parsedAccountInfo.data.parsed.info.decimals : 0;
+  return parsedAccountInfo?.data?.parsed ? parsedAccountInfo.data.parsed.info.decimals : 0;
 };
 
 /**
@@ -50,7 +50,7 @@ export const getMintDecimals = (parsedAccountInfo: AccountInfo<ParsedAccountData
  * @returns Mint address or undefined
  */
 export const getMintAddress = (parsedAccountInfo: AccountInfo<ParsedAccountData> | null) => {
-  return parsedAccountInfo?.data && parsedAccountInfo.data.parsed ? parsedAccountInfo.data.parsed.info.mint as string : undefined;
+  return parsedAccountInfo?.data?.parsed ? (parsedAccountInfo.data.parsed.info.mint as string) : undefined;
 };
 
 /**

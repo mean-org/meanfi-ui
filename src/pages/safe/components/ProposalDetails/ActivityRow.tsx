@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { MultisigTransactionActivityItem } from '@mean-dao/mean-multisig-sdk';
-import moment from 'moment';
-import ActivityIcon from './ActivityIcon';
-import { shortenAddress } from 'middleware/utils';
+import type { MultisigTransactionActivityItem } from '@mean-dao/mean-multisig-sdk';
+import { IconExternalLink } from 'Icons';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { IconExternalLink } from 'Icons';
+import { shortenAddress } from 'middleware/utils';
+import moment from 'moment';
+import ActivityIcon from './ActivityIcon';
 
 interface Props {
   activity: MultisigTransactionActivityItem;
@@ -17,13 +17,13 @@ const ActivityRow = ({ activity, onCopyAddress }: Props) => {
   const title = moment(activity.createdOn).format('LLL').toLocaleString();
 
   const resume = (
-    <div className="d-flex align-items-center activity-container">
-      <div className="d-flex align-items-center">
+    <div className='d-flex align-items-center activity-container'>
+      <div className='d-flex align-items-center'>
         <ActivityIcon activity={activity} /> {`Proposal ${activity.action} by ${activity.owner.name} `}
       </div>
       <div
         onClick={() => onCopyAddress(activity.address)}
-        className="simplelink underline-on-hover activity-address ml-1"
+        className='simplelink underline-on-hover activity-address ml-1'
       >
         ({shortenAddress(activity.address, 4)})
       </div>
@@ -35,18 +35,18 @@ const ActivityRow = ({ activity, onCopyAddress }: Props) => {
       key={`${activity.index + 1}`}
       className={`w-100 activities-list mr-1 pr-4 ${(activity.index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
     >
-      <div className="resume-item-container">
-        <div className="d-flex">
-          <span className="mr-1">{title}</span>
+      <div className='resume-item-container'>
+        <div className='d-flex'>
+          <span className='mr-1'>{title}</span>
           {resume}
         </div>
-        <span className="icon-button-container icon-stream-row">
+        <span className='icon-button-container icon-stream-row'>
           <a
-            target="_blank"
-            rel="noopener noreferrer"
+            target='_blank'
+            rel='noopener noreferrer'
             href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${activity.address}${getSolanaExplorerClusterParam()}`}
           >
-            <IconExternalLink className="mean-svg-icons external-icon ml-1" />
+            <IconExternalLink className='mean-svg-icons external-icon ml-1' />
           </a>
         </span>
       </div>

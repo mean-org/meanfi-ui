@@ -1,4 +1,4 @@
-import { UserTokenAccount } from './UserTokenAccount';
+import type { UserTokenAccount } from './UserTokenAccount';
 
 export interface TokenSelectorListWithBalances {
   balancesMap: any;

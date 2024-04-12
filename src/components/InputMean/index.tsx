@@ -40,12 +40,12 @@ export const InputMean = (props: {
   const renderValidity = () => {
     if (isTouched) {
       if (isValid) {
-        return <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green" />;
+        return <IconCheckCircle className='mean-svg-icons simplelink form-check-icon fg-green' />;
       } else {
-        return <IconWarningCover className="mean-svg-icons simplelink form-warning-icon fg-warning" />;
+        return <IconWarningCover className='mean-svg-icons simplelink form-warning-icon fg-warning' />;
       }
     } else if (isValid) {
-      return <IconCheckCircle className="mean-svg-icons simplelink form-check-icon fg-green" />;
+      return <IconCheckCircle className='mean-svg-icons simplelink form-check-icon fg-green' />;
     } else {
       return null;
     }
@@ -54,12 +54,12 @@ export const InputMean = (props: {
   return (
     <>
       <div className={`well ${className}`}>
-        <div className="flex-fixed-right">
-          <div className="left">
+        <div className='flex-fixed-right'>
+          <div className='left'>
             <input
               id={id}
               name={name}
-              className="w-100 general-text-input"
+              className='w-100 general-text-input'
               autoComplete={autoComplete || 'off'}
               autoCorrect={autoCorrect || 'off'}
               type={type || 'text'}
@@ -73,8 +73,8 @@ export const InputMean = (props: {
             />
           </div>
           {validationIcons && (
-            <div className="right">
-              <div className="add-on h-100">{renderValidity()}</div>
+            <div className='right'>
+              <div className='add-on h-100'>{renderValidity()}</div>
             </div>
           )}
         </div>

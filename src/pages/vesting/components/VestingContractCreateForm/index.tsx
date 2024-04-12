@@ -1,9 +1,11 @@
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { SubCategory, TransactionFees, AccountType } from '@mean-dao/payment-streaming';
-import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { AccountType, SubCategory, type TransactionFees } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
+import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { IconCaretDown } from 'Icons';
 import { Button, Checkbox, DatePicker, Drawer, Dropdown, Modal, Spin, TimePicker } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
 import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
 import { Identicon } from 'components/Identicon';
@@ -20,7 +22,6 @@ import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconCaretDown } from 'Icons';
 import { isError } from 'middleware/transactions';
 import {
   consoleOut,
@@ -42,17 +43,16 @@ import {
   toTokenAmountBn,
   toUiAmount,
 } from 'middleware/utils';
-import { PaymentRateType } from 'models/enums';
 import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { TreasuryTypeOption } from 'models/treasuries';
-import { VestingContractCategory, VestingContractCreateOptions, VESTING_CATEGORIES } from 'models/vesting';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import { PaymentRateType } from 'models/enums';
+import type { TreasuryTypeOption } from 'models/treasuries';
+import { VESTING_CATEGORIES, type VestingContractCategory, type VestingContractCreateOptions } from 'models/vesting';
 import moment from 'moment';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { PendingProposalsComponent } from '../PendingProposalsComponent';
-import { BN } from '@project-serum/anchor';
 
 const timeFormat = 'hh:mm A';
 
@@ -140,7 +140,9 @@ export const VestingContractCreateForm = (props: {
       return 0;
     }
 
-    return parseFloat(vestingLockFundingAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
+    return (
+      Number.parseFloat(vestingLockFundingAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol)
+    );
   }, [vestingLockFundingAmount, selectedToken, getTokenPriceByAddress]);
 
   const autoFocusInput = useCallback(() => {
@@ -373,9 +375,9 @@ export const VestingContractCreateForm = (props: {
       token: selectedToken as TokenInfo,
       amount: vestingLockFundingAmount,
       feePayedByTreasurer: isFeePaidByTreasurer,
-      duration: parseFloat(lockPeriodAmount),
+      duration: Number.parseFloat(lockPeriodAmount),
       durationUnit: getRateIntervalInSeconds(lockPeriodFrequency),
-      cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
+      cliffVestPercent: Number.parseFloat(cliffReleasePercentage) || 0,
       startDate: startUtc,
       multisig: isMultisigContext ? accountAddress : '',
       fundingAmount: toTokenAmount(vestingLockFundingAmount, (selectedToken as TokenInfo).decimals, true) as string,
@@ -391,7 +393,7 @@ export const VestingContractCreateForm = (props: {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
     for (const enumMember in value) {
-      const mappedValue = parseInt(enumMember, 10);
+      const mappedValue = Number.parseInt(enumMember, 10);
       if (!isNaN(mappedValue)) {
         const item = new PaymentRateTypeOption(index, mappedValue, getLockPeriodOptionLabel(mappedValue, t));
         options.push(item);
@@ -504,7 +506,7 @@ export const VestingContractCreateForm = (props: {
       maxAmount = new BigNumber(tokenBalanceBn.toString());
     }
 
-    const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+    const fa = toTokenAmountBn(Number.parseFloat(vestingLockFundingAmount), selectedToken.decimals);
     const fundingAmount = new BigNumber(fa.toString());
 
     return publicKey &&
@@ -519,7 +521,7 @@ export const VestingContractCreateForm = (props: {
   };
 
   const isStepTwoValid = (): boolean => {
-    return isStepOneValid() && lockPeriodAmount && parseFloat(lockPeriodAmount) > 0 && lockPeriodFrequency
+    return isStepOneValid() && lockPeriodAmount && Number.parseFloat(lockPeriodAmount) > 0 && lockPeriodFrequency
       ? true
       : false;
   };
@@ -557,7 +559,7 @@ export const VestingContractCreateForm = (props: {
     } else {
       maxAmount = new BigNumber(tokenBalanceBn.toString());
     }
-    const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+    const fa = toTokenAmountBn(Number.parseFloat(vestingLockFundingAmount), selectedToken.decimals);
     const fundingAmount = new BigNumber(fa.toString());
     return vestingLockFundingAmount && fundingAmount.gt(maxAmount) ? true : false;
   };
@@ -577,7 +579,7 @@ export const VestingContractCreateForm = (props: {
       maxAmount = new BigNumber(tokenBalanceBn.toString());
     }
 
-    const fa = toTokenAmountBn(parseFloat(vestingLockFundingAmount), selectedToken.decimals);
+    const fa = toTokenAmountBn(Number.parseFloat(vestingLockFundingAmount), selectedToken.decimals);
     const fundingAmount = new BigNumber(fa.toString());
 
     if (!publicKey) {
@@ -685,7 +687,7 @@ export const VestingContractCreateForm = (props: {
 
   const renderTokenList = () => {
     return filteredTokenList.map((t, index) => {
-      const onClick = function () {
+      const onClick = () => {
         tokenChanged(t);
         setSelectedToken(t);
 
@@ -731,20 +733,20 @@ export const VestingContractCreateForm = (props: {
 
   const renderTokenSelectorInner = () => {
     return (
-      <div className="token-selector-wrapper">
-        <div className="token-search-wrapper">
+      <div className='token-selector-wrapper'>
+        <div className='token-search-wrapper'>
           <TextInput
-            id="token-search-rp"
+            id='token-search-rp'
             value={tokenFilter}
             allowClear={true}
-            extraClass="mb-2"
+            extraClass='mb-2'
             onInputClear={onInputCleared}
             placeholder={t('token-selector.search-input-placeholder')}
             error={getSelectedTokenError()}
             onInputChange={onTokenSearchInputChange}
           />
         </div>
-        <div className="token-list">
+        <div className='token-list'>
           {renderTokenList()}
           {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
             <TokenListItem
@@ -817,8 +819,8 @@ export const VestingContractCreateForm = (props: {
 
   const renderDatePickerExtraPanel = () => {
     return (
-      <span className="flat-button tiny stroked primary" onClick={onResetDate}>
-        <span className="mx-1">Reset</span>
+      <span className='flat-button tiny stroked primary' onClick={onResetDate}>
+        <span className='mx-1'>Reset</span>
       </span>
     );
   };
@@ -827,15 +829,15 @@ export const VestingContractCreateForm = (props: {
     return (
       selectedMultisig && (
         <div className={`transaction-list-row w-100 no-pointer`}>
-          <div className="icon-cell">
+          <div className='icon-cell'>
             <Identicon address={selectedMultisig.id} style={{ width: '30', display: 'inline-flex' }} />
           </div>
-          <div className="description-cell">
-            <div className="title text-truncate">{selectedMultisig.label}</div>
-            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id, 8)}</div>
+          <div className='description-cell'>
+            <div className='title text-truncate'>{selectedMultisig.label}</div>
+            <div className='subtitle text-truncate'>{shortenAddress(selectedMultisig.id, 8)}</div>
           </div>
-          <div className="rate-cell">
-            <div className="rate-amount">
+          <div className='rate-cell'>
+            <div className='rate-amount'>
               {t('multisig.multisig-accounts.pending-transactions', {
                 txs: selectedMultisig.pendingTxsAmount,
               })}
@@ -850,21 +852,21 @@ export const VestingContractCreateForm = (props: {
     return (
       <div
         key={`${option.translationId}`}
-        className="item-card mb-0 selected"
+        className='item-card mb-0 selected'
         onClick={() => {
           if (!option.disabled) {
             handleVestingAccountTypeSelection(option);
           }
         }}
       >
-        <div className="checkmark">
+        <div className='checkmark'>
           <CheckOutlined />
         </div>
-        <div className="item-meta">
-          <div className="item-name">
+        <div className='item-meta'>
+          <div className='item-name'>
             {t(`vesting.create-account.vesting-account-type-options.${option.translationId}-name`)}
           </div>
-          <div className="item-description">
+          <div className='item-description'>
             {t(`vesting.create-account.vesting-account-type-options.${option.translationId}-description`)}
           </div>
         </div>
@@ -878,7 +880,7 @@ export const VestingContractCreateForm = (props: {
     }
     return (
       <PendingProposalsComponent
-        extraClasses="no-pointer justify-content-center shift-up-3 mb-2"
+        extraClasses='no-pointer justify-content-center shift-up-3 mb-2'
         pendingMultisigTxCount={pendingMultisigTxCount}
       />
     );
@@ -887,14 +889,14 @@ export const VestingContractCreateForm = (props: {
   const renderProposalTitleField = () => {
     if (isMultisigContext && selectedMultisig) {
       return (
-        <div className="mb-3 mt-3">
-          <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+        <div className='mb-3 mt-3'>
+          <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
           <InputMean
-            id="proposal-title-field"
-            name="Title"
-            className="w-100 general-text-input"
+            id='proposal-title-field'
+            name='Title'
+            className='w-100 general-text-input'
             onChange={onTitleInputValueChange}
-            placeholder="Title for the multisig proposal"
+            placeholder='Title for the multisig proposal'
             value={proposalTitle}
           />
         </div>
@@ -931,7 +933,7 @@ export const VestingContractCreateForm = (props: {
     if (!isMultisigContext && selectedToken && tokenBalance && canShowMaxCta()) {
       return (
         <div
-          className="token-max simplelink"
+          className='token-max simplelink'
           onClick={() => {
             if (selectedToken.address === NATIVE_SOL.address) {
               const amount = getMaxAmount();
@@ -955,37 +957,37 @@ export const VestingContractCreateForm = (props: {
           label={getTokenToVestFormFieldTitle()}
           tooltipText={t('vesting.create-account.vesting-contract-token-tooltip')}
         />
-        <div className="well">
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on simplelink">
+        <div className='well'>
+          <div className='flex-fixed-left'>
+            <div className='left'>
+              <span className='add-on simplelink'>
                 {renderTokenToVestSelectedItem()}
                 {renderTokenToVestMaxCta()}
               </span>
             </div>
-            <div className="right">
+            <div className='right'>
               {isMultisigContext ? (
                 <span>&nbsp;</span>
               ) : (
                 <input
-                  className="general-text-input text-right"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  type="text"
+                  className='general-text-input text-right'
+                  inputMode='decimal'
+                  autoComplete='off'
+                  autoCorrect='off'
+                  type='text'
                   onChange={onVestingLockFundingAmountChange}
-                  pattern="^[0-9]*[.,]?[0-9]*$"
-                  placeholder="0.0"
+                  pattern='^[0-9]*[.,]?[0-9]*$'
+                  placeholder='0.0'
                   minLength={1}
                   maxLength={79}
-                  spellCheck="false"
+                  spellCheck='false'
                   value={vestingLockFundingAmount}
                 />
               )}
             </div>
           </div>
-          <div className="flex-fixed-right">
-            <div className="left inner-label">
+          <div className='flex-fixed-right'>
+            <div className='left inner-label'>
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>
                 {`${
@@ -994,7 +996,7 @@ export const VestingContractCreateForm = (props: {
               </span>
             </div>
             {!isMultisigContext && (
-              <div className="right inner-label">
+              <div className='right inner-label'>
                 {publicKey ? (
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
@@ -1009,7 +1011,7 @@ export const VestingContractCreateForm = (props: {
             )}
           </div>
           {nativeBalance < getMinSolBlanceRequired() && (
-            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+            <div className='form-field-error'>{t('transactions.validation.minimum-balance-required')}</div>
           )}
         </div>
       </>
@@ -1019,20 +1021,20 @@ export const VestingContractCreateForm = (props: {
   const renderContractNameField = () => {
     return (
       <>
-        <div className="form-label">{t('vesting.create-account.vesting-contract-name-label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left">
+        <div className='form-label'>{t('vesting.create-account.vesting-contract-name-label')}</div>
+        <div className='well'>
+          <div className='flex-fixed-right'>
+            <div className='left'>
               <input
-                id="vesting-lock-name-input"
-                className="w-100 general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
+                id='vesting-lock-name-input'
+                className='w-100 general-text-input'
+                autoComplete='on'
+                autoCorrect='off'
+                type='text'
                 maxLength={32}
                 onChange={handleVestingLockNameChange}
-                placeholder="Name for this no-code vesting lock account"
-                spellCheck="false"
+                placeholder='Name for this no-code vesting lock account'
+                spellCheck='false'
                 value={vestingLockName}
               />
             </div>
@@ -1046,8 +1048,8 @@ export const VestingContractCreateForm = (props: {
     if (isMultisigContext && selectedMultisig) {
       return (
         <>
-          <div className="form-label">Multisig account</div>
-          <div className="well">{renderSelectedMultisig()}</div>
+          <div className='form-label'>Multisig account</div>
+          <div className='well'>{renderSelectedMultisig()}</div>
         </>
       );
     }
@@ -1058,21 +1060,21 @@ export const VestingContractCreateForm = (props: {
     return (
       <>
         <FormLabelWithIconInfo
-          label="Vesting category"
-          tooltipText="This vesting category helps identify the type of streams in this contract. Some examples are seed round, investor, marketing, token lock."
+          label='Vesting category'
+          tooltipText='This vesting category helps identify the type of streams in this contract. Some examples are seed round, investor, marketing, token lock.'
         />
-        <div className="well">
+        <div className='well'>
           <Dropdown menu={vestingCategoriesMenu()} trigger={['click']}>
-            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-              <div className="left">
+            <span className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
+              <div className='left'>
                 {vestingCategory ? (
                   <span>{vestingCategory.label}</span>
                 ) : (
-                  <span className="placeholder-text">Please select a vesting category</span>
+                  <span className='placeholder-text'>Please select a vesting category</span>
                 )}
               </div>
-              <div className="right">
-                <IconCaretDown className="mean-svg-icons" />
+              <div className='right'>
+                <IconCaretDown className='mean-svg-icons' />
               </div>
             </span>
           </Dropdown>
@@ -1084,21 +1086,21 @@ export const VestingContractCreateForm = (props: {
   const renderVestingPeriodFields = () => {
     return (
       <>
-        <div className="form-label">Vesting period</div>
-        <div className="two-column-layout">
-          <div className="left">
-            <div className="well">
-              <div className="flex-fixed-right">
-                <div className="left">
+        <div className='form-label'>Vesting period</div>
+        <div className='two-column-layout'>
+          <div className='left'>
+            <div className='well'>
+              <div className='flex-fixed-right'>
+                <div className='left'>
                   <input
-                    id="plock-period-field"
-                    className="w-100 general-text-input"
-                    autoComplete="on"
-                    autoCorrect="off"
-                    type="text"
+                    id='plock-period-field'
+                    className='w-100 general-text-input'
+                    autoComplete='on'
+                    autoCorrect='off'
+                    type='text'
                     onChange={handleLockPeriodAmountChange}
                     placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
-                    spellCheck="false"
+                    spellCheck='false'
                     min={1}
                     value={lockPeriodAmount}
                   />
@@ -1106,15 +1108,15 @@ export const VestingContractCreateForm = (props: {
               </div>
             </div>
           </div>
-          <div className="right">
-            <div className="well">
+          <div className='right'>
+            <div className='well'>
               <Dropdown menu={lockPeriodOptionsMenu()} trigger={['click']}>
-                <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                  <div className="left">
+                <span className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
+                  <div className='left'>
                     <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)} </span>
                   </div>
-                  <div className="right">
-                    <IconCaretDown className="mean-svg-icons" />
+                  <div className='right'>
+                    <IconCaretDown className='mean-svg-icons' />
                   </div>
                 </span>
               </Dropdown>
@@ -1129,24 +1131,24 @@ export const VestingContractCreateForm = (props: {
     return (
       <>
         <FormLabelWithIconInfo
-          label="Contract commencement date"
-          tooltipText="This the the contract start date and time and establishes when vesting will begin for all recipients. No additional streams can be created once the vesting contract has started."
+          label='Contract commencement date'
+          tooltipText='This the the contract start date and time and establishes when vesting will begin for all recipients. No additional streams can be created once the vesting contract has started.'
         />
-        <div className="two-column-layout">
-          <div className="left">
-            <div className="well">
-              <div className="flex-fixed-right">
-                <div className="left static-data-field">{paymentStartDate}</div>
-                <div className="right">
-                  <div className="add-on simplelink">
+        <div className='two-column-layout'>
+          <div className='left'>
+            <div className='well'>
+              <div className='flex-fixed-right'>
+                <div className='left static-data-field'>{paymentStartDate}</div>
+                <div className='right'>
+                  <div className='add-on simplelink'>
                     <DatePicker
-                      size="middle"
+                      size='middle'
                       bordered={false}
-                      className="addon-date-picker"
+                      className='addon-date-picker'
                       aria-required={true}
                       allowClear={false}
                       disabledDate={todayAndPriorDatesDisabled}
-                      placeholder="Pick a date"
+                      placeholder='Pick a date'
                       onChange={(value: any, date: string) => handleDateChange(date)}
                       value={moment(paymentStartDate, DATEPICKER_FORMAT) as any}
                       format={DATEPICKER_FORMAT}
@@ -1159,13 +1161,13 @@ export const VestingContractCreateForm = (props: {
               </div>
             </div>
           </div>
-          <div className="right">
-            <div className="well time-picker">
+          <div className='right'>
+            <div className='well time-picker'>
               <TimePicker
                 defaultValue={get30MinsAhead()}
                 bordered={false}
                 allowClear={false}
-                size="middle"
+                size='middle'
                 use12Hours
                 format={timeFormat}
                 onChange={onTimePickerChange}
@@ -1181,24 +1183,24 @@ export const VestingContractCreateForm = (props: {
     return (
       <>
         <FormLabelWithIconInfo
-          label="Cliff release (On commencement date)"
-          tooltipText="The percentage of allocated funds released to each recipient once the vesting contract starts."
+          label='Cliff release (On commencement date)'
+          tooltipText='The percentage of allocated funds released to each recipient once the vesting contract starts.'
         />
-        <div className="well">
-          <div className="flexible-right mb-1">
-            <div className="token-group">
+        <div className='well'>
+          <div className='flexible-right mb-1'>
+            <div className='token-group'>
               {percentages.map(percentage => (
-                <div key={`release-${percentage}`} className="mb-1 d-flex flex-column align-items-center">
-                  <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>
+                <div key={`release-${percentage}`} className='mb-1 d-flex flex-column align-items-center'>
+                  <div className='token-max simplelink active' onClick={() => onChangeValuePercentages(percentage)}>
                     {percentage}%
                   </div>
                 </div>
               ))}
             </div>
           </div>
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on simplelink">
+          <div className='flex-fixed-left'>
+            <div className='left'>
+              <span className='add-on simplelink'>
                 {selectedToken && (
                   <TokenDisplay
                     onClick={() => {}}
@@ -1209,22 +1211,22 @@ export const VestingContractCreateForm = (props: {
                 )}
               </span>
             </div>
-            <div className="right flex-row justify-content-end align-items-center">
+            <div className='right flex-row justify-content-end align-items-center'>
               <input
-                className="general-text-input text-right"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
+                className='general-text-input text-right'
+                inputMode='decimal'
+                autoComplete='off'
+                autoCorrect='off'
+                type='text'
                 onChange={handleCliffReleaseAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
+                pattern='^[0-9]*[.,]?[0-9]*$'
+                placeholder='0.0'
                 minLength={1}
                 maxLength={79}
-                spellCheck="false"
+                spellCheck='false'
                 value={cliffReleasePercentage}
               />
-              <span className="suffix">%</span>
+              <span className='suffix'>%</span>
             </div>
           </div>
         </div>
@@ -1238,13 +1240,13 @@ export const VestingContractCreateForm = (props: {
         {isMultisigContext ? renderPendingProposals() : null}
 
         <div className={getFormContainerClasses()}>
-          <WizardStepSelector step={currentStep} steps={2} extraClass="px-1 mb-2" onValueSelected={onStepperChange} />
+          <WizardStepSelector step={currentStep} steps={2} extraClass='px-1 mb-2' onValueSelected={onStepperChange} />
 
           <div className={getPanel1Classes()}>
-            <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
+            <h2 className='form-group-label'>{t('vesting.create-account.step-one-label')}</h2>
 
             {/* Treasury type */}
-            <div className="items-card-list click-disabled mt-2 mb-3">{renderTreasuryOption(treasuryOption)}</div>
+            <div className='items-card-list click-disabled mt-2 mb-3'>{renderTreasuryOption(treasuryOption)}</div>
 
             {/* Proposal title */}
             {renderProposalTitleField()}
@@ -1259,12 +1261,12 @@ export const VestingContractCreateForm = (props: {
             {renderMultisigAccount()}
 
             {/* CTA */}
-            <div className="cta-container">
+            <div className='cta-container'>
               <Button
-                type="primary"
-                shape="round"
-                size="large"
-                className="thin-stroke"
+                type='primary'
+                shape='round'
+                size='large'
+                className='thin-stroke'
                 disabled={!isStepOneValid()}
                 onClick={onContinueStepOneButtonClick}
               >
@@ -1274,7 +1276,7 @@ export const VestingContractCreateForm = (props: {
           </div>
 
           <div className={getPanel2Classes()}>
-            <h2 className="form-group-label">{t('vesting.create-account.step-two-label')}</h2>
+            <h2 className='form-group-label'>{t('vesting.create-account.step-two-label')}</h2>
 
             {/* Vesting category */}
             {renderVestingCategoryField()}
@@ -1289,7 +1291,7 @@ export const VestingContractCreateForm = (props: {
             {renderCliffReleaseField()}
 
             {/* Streaming fees will be paid from the vesting contract's funds */}
-            <div className="ml-1 mb-3">
+            <div className='ml-1 mb-3'>
               <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>
                 {t('vesting.create-account.fee-paid-by-treasury')}
               </Checkbox>
@@ -1298,22 +1300,22 @@ export const VestingContractCreateForm = (props: {
             {/* CTAs */}
             <div className={`two-column-form-layout${inModal || isXsDevice ? ' reverse' : ''}`}>
               <div className={`left ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}>
-                <Button block type="default" shape="round" size="large" className="thin-stroke" onClick={onBackClick}>
+                <Button block type='default' shape='round' size='large' className='thin-stroke' onClick={onBackClick}>
                   Back
                 </Button>
               </div>
               <div className={`right ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}>
                 <Button
                   block
-                  type="primary"
-                  shape="round"
-                  size="large"
-                  className="thin-stroke"
+                  type='primary'
+                  shape='round'
+                  size='large'
+                  className='thin-stroke'
                   disabled={isBusy || !isStepTwoValid()}
                   onClick={onAccountCreateClick}
                 >
                   {isBusy && (
-                    <span className="mr-1">
+                    <span className='mr-1'>
                       <LoadingOutlined style={{ fontSize: '16px' }} />
                     </span>
                   )}
@@ -1328,7 +1330,7 @@ export const VestingContractCreateForm = (props: {
       {inModal && (
         <Drawer
           title={t('token-selector.modal-title')}
-          placement="bottom"
+          placement='bottom'
           closable={true}
           onClose={onCloseTokenSelector}
           open={isTokenSelectorVisible}
@@ -1342,9 +1344,9 @@ export const VestingContractCreateForm = (props: {
       {/* Token selection modal */}
       {!inModal && isTokenSelectorModalVisible && (
         <Modal
-          className="mean-modal unpadded-content"
+          className='mean-modal unpadded-content'
           open={isTokenSelectorModalVisible}
-          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+          title={<div className='modal-title'>{t('token-selector.modal-title')}</div>}
           onCancel={onCloseTokenSelector}
           width={450}
           footer={null}

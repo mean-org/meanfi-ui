@@ -5,7 +5,7 @@ const TIMEOUT_TIME_MS = 3000;
 const onlinePollingInterval = 30000;
 
 const timeout = (time: number, promise: Promise<any>) => {
-  return new Promise(function (resolve, reject) {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
       reject(new Error('Request timed out.'));
     }, time);

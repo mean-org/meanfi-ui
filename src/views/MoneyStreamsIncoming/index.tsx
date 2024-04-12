@@ -5,32 +5,33 @@ import {
   LoadingOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { MSP_ACTIONS, StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
+import { MSP_ACTIONS, STREAM_STATE, type StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
-  calculateFeesForAction,
-  PaymentStreaming,
   ACTION_CODES,
-  Stream,
+  PaymentStreaming,
   STREAM_STATUS_CODE,
-  TransactionFees,
-  TransferStreamTransactionAccounts,
-  WithdrawFromStreamTransactionAccounts,
+  type Stream,
+  type TransactionFees,
+  type TransferStreamTransactionAccounts,
+  type WithdrawFromStreamTransactionAccounts,
+  calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
-import { BN } from '@project-serum/anchor';
-import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { Button, Dropdown, Modal, Space, Spin } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import type { BN } from '@project-serum/anchor';
+import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
-import getStreamWithdrawableAmount from 'components/common/getStreamWithdrawableAmount';
-import getV1Beneficiary from 'components/common/getV1Beneficiary';
-import getV2Beneficiary from 'components/common/getV2Beneficiary';
+import { IconEllipsisVertical } from 'Icons';
+import { Button, Dropdown, Modal, Space, Spin } from 'antd';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { MoneyStreamDetails } from 'components/MoneyStreamDetails';
 import { openNotification } from 'components/Notifications';
 import { StreamTransferOpenModal } from 'components/StreamTransferOpenModal';
 import { StreamWithdrawModal } from 'components/StreamWithdrawModal';
+import getStreamWithdrawableAmount from 'components/common/getStreamWithdrawableAmount';
+import getV1Beneficiary from 'components/common/getV1Beneficiary';
+import getV2Beneficiary from 'components/common/getV2Beneficiary';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
@@ -38,19 +39,18 @@ import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } fro
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
-import { IconEllipsisVertical } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { SOL_MINT } from 'middleware/ids';
 import {
   AppUsageEvent,
-  SegmentStreamTransferOwnershipData,
-  SegmentStreamWithdrawData,
+  type SegmentStreamTransferOwnershipData,
+  type SegmentStreamWithdrawData,
 } from 'middleware/segment-service';
 import {
-  composeTxWithPrioritizationFees,
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
+  composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
@@ -69,9 +69,9 @@ import {
   getTxIxResume,
   shortenAddress,
 } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { OperationType, TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { StreamWithdrawData } from 'models/streams';
+import type { StreamWithdrawData } from 'models/streams';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
@@ -339,7 +339,7 @@ export const MoneyStreamsIncomingView = (props: {
 
         const ixData = Buffer.from(transaction.instructions[0].data);
         const ixAccounts = transaction.instructions[0].keys;
-        const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+        const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
         const tx = await getProposalWithPrioritizationFees(
           {
@@ -618,7 +618,7 @@ export const MoneyStreamsIncomingView = (props: {
         const stream = new PublicKey(streamSelected.id as string);
 
         const beneficiary = new PublicKey((streamSelected as StreamInfo).beneficiaryAddress as string);
-        const amount = parseFloat(withdrawData.amount);
+        const amount = Number.parseFloat(withdrawData.amount);
         const price = workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0;
         const valueInUsd = price * amount;
 
@@ -639,7 +639,7 @@ export const MoneyStreamsIncomingView = (props: {
           feeAmount: withdrawData.fee,
           inputAmount: withdrawData.inputAmount,
           sentAmount: withdrawData.receiveAmount,
-          valueInUsd: parseFloat(valueInUsd.toFixed(2)),
+          valueInUsd: Number.parseFloat(valueInUsd.toFixed(2)),
         };
         consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
@@ -782,7 +782,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -846,7 +846,7 @@ export const MoneyStreamsIncomingView = (props: {
         feeAmount: withdrawData.fee,
         inputAmount: withdrawData.inputAmount,
         sentAmount: withdrawData.receiveAmount,
-        valueInUsd: parseFloat(valueInUsd.toFixed(2)),
+        valueInUsd: Number.parseFloat(valueInUsd.toFixed(2)),
       };
       consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
@@ -1182,7 +1182,7 @@ export const MoneyStreamsIncomingView = (props: {
 
     return (
       <>
-        <span className="info-data large mr-1">
+        <span className='info-data large mr-1'>
           {isNewStream()
             ? displayAmountWithSymbol(v2.withdrawableAmount, workingToken.address, workingToken.decimals, splTokenList)
             : getAmountWithSymbol(
@@ -1193,11 +1193,11 @@ export const MoneyStreamsIncomingView = (props: {
                 workingToken.decimals,
               )}
         </span>
-        <span className="info-icon">
+        <span className='info-icon'>
           {streamSelected && getStreamStatus(streamSelected) === 'running' ? (
-            <ArrowDownOutlined className="mean-svg-icons incoming bounce" />
+            <ArrowDownOutlined className='mean-svg-icons incoming bounce' />
           ) : (
-            <ArrowDownOutlined className="mean-svg-icons incoming" />
+            <ArrowDownOutlined className='mean-svg-icons incoming' />
           )}
         </span>
       </>
@@ -1218,7 +1218,7 @@ export const MoneyStreamsIncomingView = (props: {
       key: '01-transfer-ownership',
       label: (
         <div onClick={showTransferStreamModal}>
-          <span className="menu-item-text">Transfer ownership</span>
+          <span className='menu-item-text'>Transfer ownership</span>
         </div>
       ),
     });
@@ -1227,10 +1227,10 @@ export const MoneyStreamsIncomingView = (props: {
       label: (
         <a
           href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected?.id}${getSolanaExplorerClusterParam()}`}
-          target="_blank"
-          rel="noopener noreferrer"
+          target='_blank'
+          rel='noopener noreferrer'
         >
-          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
+          <span className='menu-item-text'>{t('account-area.explorer-link')}</span>
         </a>
       ),
     });
@@ -1245,13 +1245,13 @@ export const MoneyStreamsIncomingView = (props: {
     }
 
     return (
-      <div className="flex-fixed-right cta-row mb-2 pl-1">
-        <Space className="left" size="middle" wrap>
+      <div className='flex-fixed-right cta-row mb-2 pl-1'>
+        <Space className='left' size='middle' wrap>
           <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke btn-min-width"
+            type='default'
+            shape='round'
+            size='small'
+            className='thin-stroke btn-min-width'
             disabled={
               !canWithdraw(streamSelected) ||
               isScheduledOtp() ||
@@ -1261,16 +1261,16 @@ export const MoneyStreamsIncomingView = (props: {
             }
             onClick={showWithdrawModal}
           >
-            <div className="btn-content">Withdraw funds</div>
+            <div className='btn-content'>Withdraw funds</div>
           </Button>
         </Space>
-        <Dropdown menu={renderDropdownMenu()} placement="bottomRight" trigger={['click']}>
-          <span className="ellipsis-icon icon-button-container mr-1">
+        <Dropdown menu={renderDropdownMenu()} placement='bottomRight' trigger={['click']}>
+          <span className='ellipsis-icon icon-button-container mr-1'>
             <Button
-              type="default"
-              shape="circle"
-              size="middle"
-              icon={<IconEllipsisVertical className="mean-svg-icons" />}
+              type='default'
+              shape='circle'
+              size='middle'
+              icon={<IconEllipsisVertical className='mean-svg-icons' />}
               onClick={e => e.preventDefault()}
             />
           </span>
@@ -1283,8 +1283,8 @@ export const MoneyStreamsIncomingView = (props: {
     if (transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled) {
       return (
         <>
-          <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="mb-4">
+          <InfoCircleOutlined style={{ fontSize: 48 }} className='icon' />
+          <h4 className='mb-4'>
             Money Streams are getting a makeover, and we are making them more awesome! Stand by, you'll be able to
             withdraw shortly.
           </h4>
@@ -1294,8 +1294,8 @@ export const MoneyStreamsIncomingView = (props: {
     if (transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure) {
       return (
         <>
-          <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="mb-4">
+          <WarningOutlined style={{ fontSize: 48 }} className='icon' />
+          <h4 className='mb-4'>
             {t('transactions.status.tx-start-failure', {
               accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
               feeAmount: getAmountWithSymbol(
@@ -1310,8 +1310,8 @@ export const MoneyStreamsIncomingView = (props: {
 
     return (
       <>
-        <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-        <h4 className="font-bold mb-1 text-uppercase">
+        <WarningOutlined style={{ fontSize: 48 }} className='icon' />
+        <h4 className='font-bold mb-1 text-uppercase'>
           {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
         </h4>
       </>
@@ -1322,16 +1322,16 @@ export const MoneyStreamsIncomingView = (props: {
     if (isBusy) {
       return (
         <>
-          <Spin indicator={bigLoadingIcon} className="icon" />
-          <h4 className="font-bold mb-1">
+          <Spin indicator={bigLoadingIcon} className='icon' />
+          <h4 className='font-bold mb-1'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
-          <h5 className="operation">
+          <h5 className='operation'>
             {t('transactions.status.tx-withdraw-operation')} {withdrawFundsAmount ? withdrawFundsAmount.inputAmount : 0}{' '}
             {workingToken?.symbol}
           </h5>
           {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-            <div className="indication">{t('transactions.status.instructions')}</div>
+            <div className='indication'>{t('transactions.status.instructions')}</div>
           )}
         </>
       );
@@ -1339,12 +1339,12 @@ export const MoneyStreamsIncomingView = (props: {
     if (isSuccess()) {
       return (
         <>
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">
+          <CheckOutlined style={{ fontSize: 48 }} className='icon' />
+          <h4 className='font-bold mb-1 text-uppercase'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
-          <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
-          <Button block type="primary" shape="round" size="middle" onClick={onWithdrawFundsTransactionFinished}>
+          <p className='operation'>{t('transactions.status.tx-withdraw-operation-success')}</p>
+          <Button block type='primary' shape='round' size='middle' onClick={onWithdrawFundsTransactionFinished}>
             {t('general.cta-close')}
           </Button>
         </>
@@ -1354,7 +1354,7 @@ export const MoneyStreamsIncomingView = (props: {
       return (
         <>
           {renderWithdrawFundsTxExecModalError()}
-          <Button block type="primary" shape="round" size="middle" onClick={hideWithdrawFundsTransactionModal}>
+          <Button block type='primary' shape='round' size='middle' onClick={hideWithdrawFundsTransactionModal}>
             {t('general.cta-close')}
           </Button>
         </>
@@ -1363,8 +1363,8 @@ export const MoneyStreamsIncomingView = (props: {
 
     return (
       <>
-        <Spin indicator={bigLoadingIcon} className="icon" />
-        <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+        <Spin indicator={bigLoadingIcon} className='icon' />
+        <h4 className='font-bold mb-4 text-uppercase'>{t('transactions.status.tx-wait')}...</h4>
       </>
     );
   }, [
@@ -1384,17 +1384,17 @@ export const MoneyStreamsIncomingView = (props: {
     if (isBusy) {
       return (
         <>
-          <Spin indicator={bigLoadingIcon} className="icon" />
-          <h4 className="font-bold mb-1">
+          <Spin indicator={bigLoadingIcon} className='icon' />
+          <h4 className='font-bold mb-1'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
-          <h5 className="operation">
+          <h5 className='operation'>
             {t('transactions.status.tx-transfer-stream', {
               newAddress: shortenAddress(lastStreamTransferAddress, 8),
             })}
           </h5>
           {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-            <div className="indication">{t('transactions.status.instructions')}</div>
+            <div className='indication'>{t('transactions.status.instructions')}</div>
           )}
         </>
       );
@@ -1402,12 +1402,12 @@ export const MoneyStreamsIncomingView = (props: {
     if (isSuccess()) {
       return (
         <>
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">
+          <CheckOutlined style={{ fontSize: 48 }} className='icon' />
+          <h4 className='font-bold mb-1 text-uppercase'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
-          <p className="operation">{t('transactions.status.tx-transfer-stream-success')}</p>
-          <Button block type="primary" shape="round" size="middle" onClick={onTransferStreamTransactionFinished}>
+          <p className='operation'>{t('transactions.status.tx-transfer-stream-success')}</p>
+          <Button block type='primary' shape='round' size='middle' onClick={onTransferStreamTransactionFinished}>
             {t('general.cta-close')}
           </Button>
         </>
@@ -1416,9 +1416,9 @@ export const MoneyStreamsIncomingView = (props: {
     if (isError()) {
       return (
         <>
-          <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+          <WarningOutlined style={{ fontSize: 48 }} className='icon' />
           {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-            <h4 className="mb-4">
+            <h4 className='mb-4'>
               {t('transactions.status.tx-start-failure', {
                 accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                 feeAmount: getAmountWithSymbol(
@@ -1428,11 +1428,11 @@ export const MoneyStreamsIncomingView = (props: {
               })}
             </h4>
           ) : (
-            <h4 className="font-bold mb-1 text-uppercase">
+            <h4 className='font-bold mb-1 text-uppercase'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
           )}
-          <Button block type="primary" shape="round" size="middle" onClick={hideTransferStreamTransactionModal}>
+          <Button block type='primary' shape='round' size='middle' onClick={hideTransferStreamTransactionModal}>
             {t('general.cta-close')}
           </Button>
         </>
@@ -1441,8 +1441,8 @@ export const MoneyStreamsIncomingView = (props: {
 
     return (
       <>
-        <Spin indicator={bigLoadingIcon} className="icon" />
-        <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+        <Spin indicator={bigLoadingIcon} className='icon' />
+        <h4 className='font-bold mb-4 text-uppercase'>{t('transactions.status.tx-wait')}...</h4>
       </>
     );
   }, [
@@ -1495,7 +1495,7 @@ export const MoneyStreamsIncomingView = (props: {
 
       {/* Withdraw funds transaction execution modal */}
       <Modal
-        className="mean-modal no-full-screen"
+        className='mean-modal no-full-screen'
         maskClosable={false}
         afterClose={onAfterWithdrawFundsTransactionModalClosed}
         open={isWithdrawFundsTransactionModalVisible}
@@ -1504,12 +1504,12 @@ export const MoneyStreamsIncomingView = (props: {
         width={330}
         footer={null}
       >
-        <div className="transaction-progress">{renderWithdrawFundsTxExecModalContent()}</div>
+        <div className='transaction-progress'>{renderWithdrawFundsTxExecModalContent()}</div>
       </Modal>
 
       {/* Transfer stream transaction execution modal */}
       <Modal
-        className="mean-modal no-full-screen"
+        className='mean-modal no-full-screen'
         maskClosable={false}
         afterClose={onAfterTransferStreamTransactionModalClosed}
         open={isTransferStreamTransactionModalVisible}
@@ -1518,7 +1518,7 @@ export const MoneyStreamsIncomingView = (props: {
         width={330}
         footer={null}
       >
-        <div className="transaction-progress">{renderTransferStreamTxExecModalContent()}</div>
+        <div className='transaction-progress'>{renderTransferStreamTxExecModalContent()}</div>
       </Modal>
     </>
   );

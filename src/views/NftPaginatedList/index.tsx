@@ -1,11 +1,11 @@
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
-import { FindNftsByOwnerOutput, Metaplex } from '@metaplex-foundation/js';
-import { Connection } from '@solana/web3.js';
+import { type FindNftsByOwnerOutput, Metaplex } from '@metaplex-foundation/js';
+import type { Connection } from '@solana/web3.js';
+import { IconArrowBack, IconArrowForward, IconExternalLink, IconNoItems } from 'Icons';
 import { Button, Spin } from 'antd';
 import { fallbackImgSrc } from 'constants/common';
-import { IconArrowBack, IconArrowForward, IconExternalLink, IconNoItems } from 'Icons';
 import { openLinkInNewTab } from 'middleware/utils';
-import { MeanNft } from 'models/accounts/NftTypes';
+import type { MeanNft } from 'models/accounts/NftTypes';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -107,26 +107,26 @@ export const NftPaginatedList = (props: {
   const renderLoadingOrNoNftsMessage = () => {
     if (loadingTokenAccounts) {
       return (
-        <div className="flex flex-center">
+        <div className='flex flex-center'>
           <Spin indicator={loadIndicator} />
         </div>
       );
     } else if (tokensLoaded) {
       return (
-        <div className="flex-column flex-center justify-content-center h-100">
-          <IconNoItems className="mean-svg-icons fg-secondary-50" style={{ width: 50, height: 50 }} />
-          <div className="font-size-120 font-bold fg-secondary-75 mt-2 mb-2">No NFTs</div>
-          <div className="font-size-110 fg-secondary-50 mb-3">Get started with your first NFT</div>
-          <div className="text-center">
+        <div className='flex-column flex-center justify-content-center h-100'>
+          <IconNoItems className='mean-svg-icons fg-secondary-50' style={{ width: 50, height: 50 }} />
+          <div className='font-size-120 font-bold fg-secondary-75 mt-2 mb-2'>No NFTs</div>
+          <div className='font-size-110 fg-secondary-50 mb-3'>Get started with your first NFT</div>
+          <div className='text-center'>
             <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
+              type='default'
+              shape='round'
+              size='small'
+              className='thin-stroke'
               onClick={() => openLinkInNewTab('https://magiceden.io/')}
             >
-              <span className="mr-1">Browse Magic Eden</span>
-              <IconExternalLink className="mean-svg-icons fg-secondary-70" style={{ width: 22, height: 22 }} />
+              <span className='mr-1'>Browse Magic Eden</span>
+              <IconExternalLink className='mean-svg-icons fg-secondary-70' style={{ width: 22, height: 22 }} />
             </Button>
           </div>
         </div>
@@ -138,7 +138,7 @@ export const NftPaginatedList = (props: {
 
   if (!nftList || nftList.length === 0) {
     return (
-      <div key="asset-category-nft-items" className="asset-category flex-column h-75">
+      <div key='asset-category-nft-items' className='asset-category flex-column h-75'>
         {renderLoadingOrNoNftsMessage()}
       </div>
     );
@@ -146,16 +146,16 @@ export const NftPaginatedList = (props: {
 
   return (
     <>
-      <div key="asset-category-nft-items" className={`asset-category flex-column${loading ? ' h-75' : ''}`}>
+      <div key='asset-category-nft-items' className={`asset-category flex-column${loading ? ' h-75' : ''}`}>
         <Spin spinning={loading}>
           {currentView && (
-            <div className="nft-pagination">
+            <div className='nft-pagination'>
               <span
                 className={`flat-button tiny${currentPage === 1 ? ' disabled' : ''}`}
                 onClick={() => changeCurrentPage('prev')}
               >
-                <IconArrowBack className="mean-svg-icons" />
-                <span className="ml-1">Prev Page</span>
+                <IconArrowBack className='mean-svg-icons' />
+                <span className='ml-1'>Prev Page</span>
               </span>
               <span
                 className={`flat-button tiny${
@@ -163,25 +163,25 @@ export const NftPaginatedList = (props: {
                 }`}
                 onClick={() => changeCurrentPage('next')}
               >
-                <span className="mr-1">Next Page</span>
-                <IconArrowForward className="mean-svg-icons" />
+                <span className='mr-1'>Next Page</span>
+                <IconArrowForward className='mean-svg-icons' />
               </span>
             </div>
           )}
           {currentView && (
-            <div className="nft-grid">
+            <div className='nft-grid'>
               {currentView.map((nft, index) => {
                 const isSelected = selectedNft && selectedNft.address.equals(nft.address);
                 return (
                   <div key={`nft-${index}`} className={`nft-grid-item${isSelected ? ' selected' : ''}`}>
                     {isSelected ? (
-                      <span className="checkmark">
+                      <span className='checkmark'>
                         <CheckOutlined />
                       </span>
                     ) : null}
-                    <div className="nft-title text-shadow">{nft.name}</div>
+                    <div className='nft-title text-shadow'>{nft.name}</div>
                     <img
-                      className="nft-image"
+                      className='nft-image'
                       src={nft.json?.image || fallbackImgSrc}
                       onError={imageOnErrorHandler}
                       alt={nft.json?.name}

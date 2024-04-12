@@ -1,6 +1,6 @@
-import { ReactNode, useCallback, useEffect, useState } from 'react';
-import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
+import type { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 import { Button, Col, Modal, Row } from 'antd';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAmountWithSymbol } from '../../middleware/utils';
 
@@ -35,10 +35,10 @@ export const DdcaCloseModal = (props: {
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={12} className="text-right pr-1">
+        <Col span={12} className='text-right pr-1'>
           {caption}
         </Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">
+        <Col span={12} className='text-left pl-1 fg-secondary-70'>
           {value}
         </Col>
       </Row>
@@ -47,40 +47,40 @@ export const DdcaCloseModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('ddcas.close-ddca.modal-title')}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{t('ddcas.close-ddca.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={400}
     >
-      <div className="transaction-progress">
-        <h4 className="operation mb-2">{props.content}</h4>
+      <div className='transaction-progress'>
+        <h4 className='operation mb-2'>{props.content}</h4>
 
         {/* Info */}
         {props.ddcaDetails ? (
           <>
-            <div className="p-2">
+            <div className='p-2'>
               {infoRow(
                 'From amount left:',
                 getAmountWithSymbol(props.ddcaDetails.fromBalance, props.ddcaDetails.fromMint),
               )}
             </div>
-            <div className="p-2">
+            <div className='p-2'>
               {infoRow('Exchanged amount:', getAmountWithSymbol(props.ddcaDetails.toBalance, props.ddcaDetails.toMint))}
             </div>
           </>
         ) : null}
 
-        <div className="mt-3">
-          <Button className="mr-3" type="text" shape="round" size="large" onClick={props.handleClose}>
+        <div className='mt-3'>
+          <Button className='mr-3' type='text' shape='round' size='large' onClick={props.handleClose}>
             {t('ddcas.close-ddca.secondary-cta')}
           </Button>
           <Button
-            type="primary"
-            shape="round"
-            size="large"
+            type='primary'
+            shape='round'
+            size='large'
             // disabled={tokenBalance < (feeAmount || 0)}
             onClick={props.handleOk}
           >

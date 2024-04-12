@@ -1,5 +1,5 @@
-import { StreamInfo } from '@mean-dao/money-streaming';
-import { Stream } from '@mean-dao/payment-streaming';
+import type { StreamInfo } from '@mean-dao/money-streaming';
+import type { Stream } from '@mean-dao/payment-streaming';
 import { getReadableDate } from 'middleware/ui';
 import isStartDateFuture from './isStartDateFuture';
 

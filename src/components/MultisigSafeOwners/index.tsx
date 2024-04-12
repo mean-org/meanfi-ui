@@ -1,14 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { PlusOutlined } from '@ant-design/icons';
-import { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
+import type { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
+import { Tooltip } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
+import { isMobile } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { IconInfoCircle, IconTrash } from '../../Icons';
+import useWindowSize from '../../hooks/useWindowResize';
 import { isValidAddress, scrollToBottom } from '../../middleware/ui';
 import { InputMean } from '../InputMean';
-import { isMobile } from 'react-device-detect';
-import useWindowSize from '../../hooks/useWindowResize';
-import { IconInfoCircle, IconTrash } from '../../Icons';
 import './style.scss';
-import { Tooltip } from 'antd';
 
 export const MultisigSafeOwners = (props: {
   participants: MultisigParticipant[];
@@ -116,13 +116,13 @@ export const MultisigSafeOwners = (props: {
 
     if (checkIfDuplicateExists(ownersInputsObject)) {
       return (
-        <span className="fg-warning form-field-error pl-2">
+        <span className='fg-warning form-field-error pl-2'>
           {t('multisig.create-multisig.multisig-duplicate-participants')}
         </span>
       );
     } else if (ownersInputsObject.length === 10) {
       return (
-        <span className="fg-warning form-field-hint pl-1">
+        <span className='fg-warning form-field-hint pl-1'>
           {t('multisig.create-multisig.multisig-threshold-input-max-warn')}
         </span>
       );
@@ -134,18 +134,18 @@ export const MultisigSafeOwners = (props: {
   return (
     <div className={`multisig-safe-owners ${ownersInputsObject.length > 2 ? 'mb-1' : 'mb-3'}`}>
       <div className={`flex-fixed-right add-owners-row ${disabled ? 'click-disabled' : ''}`}>
-        <div className="left">
+        <div className='left'>
           {label ? (
-            <div className="form-label icon-label">
+            <div className='form-label icon-label'>
               {label}
-              <Tooltip placement="bottom" title="">
-                <span className="simplelink">
-                  <IconInfoCircle className="mean-svg-icons" />
+              <Tooltip placement='bottom' title=''>
+                <span className='simplelink'>
+                  <IconInfoCircle className='mean-svg-icons' />
                 </span>
               </Tooltip>
             </div>
           ) : (
-            <div className="form-label">&nbsp;</div>
+            <div className='form-label'>&nbsp;</div>
           )}
         </div>
         <div className={`right ${ownersInputsObject.length === 10 || !isOwnersListValid ? 'not-allowed-cursor' : ''}`}>
@@ -156,19 +156,19 @@ export const MultisigSafeOwners = (props: {
             onClick={() => addParticipant()}
           >
             <PlusOutlined />
-            <span className="ml-1">Add owner</span>
+            <span className='ml-1'>Add owner</span>
           </span>
         </div>
       </div>
 
       {!isXsDevice ? (
-        <div className="two-column-form-layout mb-0 mt-1">
-          <div className="form-label">Owner's name</div>
-          <div className="form-label">Owner's address</div>
+        <div className='two-column-form-layout mb-0 mt-1'>
+          <div className='form-label'>Owner's name</div>
+          <div className='form-label'>Owner's address</div>
         </div>
       ) : (
-        <div className="mb-0 mt-1">
-          <div className="form-label">Owner's name and address</div>
+        <div className='mb-0 mt-1'>
+          <div className='form-label'>Owner's name and address</div>
         </div>
       )}
       {ownersInputsObject && ownersInputsObject.length > 0 ? (
@@ -179,48 +179,48 @@ export const MultisigSafeOwners = (props: {
             const isAddressValid = isValidAddress(participant.address);
 
             return (
-              <div className="container-owner-item" key={index}>
+              <div className='container-owner-item' key={index}>
                 <div className={`two-column-layout w-100 mb-0 ${disabled ? 'disabled' : ''}`}>
-                  <div className="left">
+                  <div className='left'>
                     <InputMean
                       id={`participant-name-${index + 1}`}
-                      type="text"
+                      type='text'
                       value={participant.name}
                       onChange={(e: any) => {
                         const value = e.target.value;
                         setSingleItemName(value, index);
                       }}
-                      placeholder="Enter the name of the owner"
+                      placeholder='Enter the name of the owner'
                     />
                   </div>
-                  <div className="right">
+                  <div className='right'>
                     <InputMean
                       id={`participant-address-${index + 1}`}
                       name={participant.name}
-                      type="text"
+                      type='text'
                       value={participant.address}
                       maxLength={100}
                       onChange={(e: any) => {
                         const value = e.target.value;
                         setSingleItemAddress(value, index);
                       }}
-                      placeholder="Enter address of the owner"
+                      placeholder='Enter address of the owner'
                       validationIcons={true}
                       isValid={isAddressValid}
                       onBlur={blurHandler}
                     />
                     {isAddressValid ? (
                       isInputMultisigAddress(participant.address) && (
-                        <small className="fg-warning form-field-error ml-1">
+                        <small className='fg-warning form-field-error ml-1'>
                           {t('multisig.create-multisig.multisig-address-used-as-participant')}
                         </small>
                       )
                     ) : (
-                      <small className="fg-warning form-field-error ml-1">Please enter a valid Solana address</small>
+                      <small className='fg-warning form-field-error ml-1'>Please enter a valid Solana address</small>
                     )}
                   </div>
                 </div>
-                <div className="trash-icon" onClick={() => onRemoveSingleItem(index)}>
+                <div className='trash-icon' onClick={() => onRemoveSingleItem(index)}>
                   <IconTrash
                     className={`mean-svg-icons simplelink ${index === 0 ? 'not-allowed-cursor disabled' : ''}`}
                   />
@@ -231,7 +231,7 @@ export const MultisigSafeOwners = (props: {
           {renderMultisigThresholdMessage()}
         </div>
       ) : (
-        <div className="inner-label pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>
+        <div className='inner-label pl-1'>{t('multisig.create-multisig.multisig-no-participants')}</div>
       )}
     </div>
   );

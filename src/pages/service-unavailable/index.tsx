@@ -1,11 +1,11 @@
 import { Button } from 'antd';
+import useLocalStorage from 'hooks/useLocalStorage';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { CountdownTimer } from '../../components/CountdownTimer';
 import { IconDiscord, IconSolana } from '../../Icons';
+import { CountdownTimer } from '../../components/CountdownTimer';
 import { RELOAD_TIMER } from '../../services/connections-hq';
-import useLocalStorage from 'hooks/useLocalStorage';
 
 export const ServiceUnavailableView = () => {
   const { t } = useTranslation('common');
@@ -35,12 +35,12 @@ export const ServiceUnavailableView = () => {
 
   return (
     <>
-      <div className="loading-screen-container flex-center">
-        <div className="flex-column flex-center">
-          <img className="app-logo" src="/assets/mean-lettermark.svg" alt="Mean Finance" />
-          <h3 className="network-down-message">{t('error-screens.service-unavailable-message')}</h3>
-          <div className="text-center">
-            <Button type="primary" size="large" shape="round" disabled={reloadDisabled} onClick={() => reloadApp()}>
+      <div className='loading-screen-container flex-center'>
+        <div className='flex-column flex-center'>
+          <img className='app-logo' src='/assets/mean-lettermark.svg' alt='Mean Finance' />
+          <h3 className='network-down-message'>{t('error-screens.service-unavailable-message')}</h3>
+          <div className='text-center'>
+            <Button type='primary' size='large' shape='round' disabled={reloadDisabled} onClick={() => reloadApp()}>
               {reloadDisabled ? (
                 <>
                   {t('general.reload-cta-disabled')}
@@ -51,26 +51,26 @@ export const ServiceUnavailableView = () => {
               )}
             </Button>
           </div>
-          <div className="bottom-links">
-            <div className="link">
+          <div className='bottom-links'>
+            <div className='link'>
               <a
-                className="simplelink underline-on-hover"
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://status.solana.com/"
+                className='simplelink underline-on-hover'
+                target='_blank'
+                rel='noopener noreferrer'
+                href='https://status.solana.com/'
               >
-                <IconSolana className="mean-svg-icons" />
+                <IconSolana className='mean-svg-icons' />
                 <span>{t('error-screens.network-status')}</span>
               </a>
             </div>
-            <div className="link">
+            <div className='link'>
               <a
-                className="simplelink underline-on-hover"
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://discord.meanfi.com/"
+                className='simplelink underline-on-hover'
+                target='_blank'
+                rel='noopener noreferrer'
+                href='https://discord.meanfi.com/'
               >
-                <IconDiscord className="mean-svg-icons" />
+                <IconDiscord className='mean-svg-icons' />
                 <span>{t('error-screens.report-problem')}</span>
               </a>
             </div>

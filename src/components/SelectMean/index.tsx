@@ -19,7 +19,7 @@ export const SelectMean = (props: {
         <Select
           defaultValue={defaultValue}
           placeholder={placeholder}
-          placement="bottomRight"
+          placement='bottomRight'
           style={{
             width: '100%',
             height: '100%',

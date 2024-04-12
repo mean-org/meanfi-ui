@@ -1,6 +1,6 @@
 export interface ValidationStatus {
-  code: ValidationStatusCode
-  severity: 'info' | 'success' | 'warning' | 'error' | 'none'
+  code: ValidationStatusCode;
+  severity: 'info' | 'success' | 'warning' | 'error' | 'none';
 }
 
 export enum ValidationStatusCode {
@@ -12,5 +12,5 @@ export enum ValidationStatusCode {
   RECIPIENT_IS_TOKEN_MINT = 4,
   RECIPIENT_IS_SYSTEM_ACCOUNT = 5,
   RECIPIENT_IS_PROGRAM_ACCOUNT = 6,
-  RECIPIENT_NO_ACCOUNT_INFO = 7
+  RECIPIENT_NO_ACCOUNT_INFO = 7,
 }

@@ -1,10 +1,10 @@
-import { Cluster, Connection } from '@solana/web3.js';
+import { type Cluster, Connection } from '@solana/web3.js';
 import useLocalStorage from 'hooks/useLocalStorage';
 import { ChainID } from 'models/enums';
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, type ReactNode } from 'react';
 import { environment } from '../environments/environment';
 import { useLocalStorageState } from '../middleware/utils';
-import { DEFAULT_RPCS, RpcConfig, failsafeConnectionConfig } from '../services/connections-hq';
+import { DEFAULT_RPCS, type RpcConfig, failsafeConnectionConfig } from '../services/connections-hq';
 
 const DEFAULT = DEFAULT_RPCS[0].httpProvider;
 const DEFAULT_SLIPPAGE = 0.25;
@@ -28,7 +28,6 @@ export const getNetworkIdByEnvironment = (env: string) => {
       return ChainID.Devnet;
     case 'local-validator':
       return ChainID.LocalValidator;
-    case 'production':
     default:
       return ChainID.MainnetBeta;
   }
@@ -61,7 +60,11 @@ const ConnectionContext = React.createContext<ConnectionProviderConfig>({
   cluster: DEFAULT_RPCS[0].cluster,
 });
 
-export function ConnectionProvider({ children = undefined as any }) {
+interface Props {
+  children: ReactNode;
+}
+
+export function ConnectionProvider({ children }: Props) {
   const [cachedRpcJson] = useLocalStorageState('cachedRpc');
   const cachedRpc = cachedRpcJson as RpcConfig;
 
@@ -73,7 +76,7 @@ export function ConnectionProvider({ children = undefined as any }) {
     <ConnectionContext.Provider
       value={{
         endpoint: cachedRpc.httpProvider,
-        slippage: parseFloat(slippage),
+        slippage: Number.parseFloat(slippage),
         setSlippage: val => setSlippage(val.toString()),
         connection,
         cluster: cachedRpc.cluster,

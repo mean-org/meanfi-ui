@@ -1,39 +1,35 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "npm",
-			"script": "start:prod",
-			"problemMatcher": [],
-			"label": "npm: start:prod",
-			"detail": "REACT_APP_ENV=production npm start"
-		},
-		{
-			"type": "npm",
-			"script": "start:dev",
-			"problemMatcher": [],
-			"label": "npm: start:dev",
-			"detail": "REACT_APP_ENV=development npm start"
-		},
-		{
-			"type": "npm",
-			"script": "lint",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "npm: lint",
-			"detail": "eslint src --ext .js,.jsx,.ts,.tsx",
-			"isBackground": true
-		},
-		{
-			"type": "typescript",
-			"tsconfig": "tsconfig.json",
-			"option": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"group": "build",
-			"label": "tsc: watch - tsconfig.json"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "start:prod",
+      "problemMatcher": [],
+      "label": "npm: start:prod",
+      "detail": "REACT_APP_ENV=production npm start"
+    },
+    {
+      "type": "npm",
+      "script": "start:dev",
+      "problemMatcher": [],
+      "label": "npm: start:dev",
+      "detail": "REACT_APP_ENV=development npm start"
+    },
+    {
+      "type": "npm",
+      "script": "lint",
+      "problemMatcher": ["$tsc-watch"],
+      "label": "npm: lint",
+      "detail": "eslint src --ext .js,.jsx,.ts,.tsx",
+      "isBackground": true
+    },
+    {
+      "type": "typescript",
+      "tsconfig": "tsconfig.json",
+      "option": "watch",
+      "problemMatcher": ["$tsc-watch"],
+      "group": "build",
+      "label": "tsc: watch - tsconfig.json"
+    }
+  ]
 }

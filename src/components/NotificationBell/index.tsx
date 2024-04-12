@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
-import { useWallet } from '../../contexts/wallet';
 import { IconNotification } from '../../Icons';
+import { useWallet } from '../../contexts/wallet';
 import useWindowSize from '../../hooks/useWindowResize';
 
 export const NotificationBell = (props: { onOpenDrawer: any }) => {
@@ -15,13 +15,13 @@ export const NotificationBell = (props: { onOpenDrawer: any }) => {
     return (
       <>
         {!isLargeScreen() && (
-          <div className="events-drawer-trigger lower" onClick={props.onOpenDrawer}>
-            <IconNotification className="mean-svg-icons" />
+          <div className='events-drawer-trigger lower' onClick={props.onOpenDrawer}>
+            <IconNotification className='mean-svg-icons' />
           </div>
         )}
         {isLargeScreen() && (
-          <div className="events-drawer-trigger upper" onClick={props.onOpenDrawer}>
-            <IconNotification className="mean-svg-icons" />
+          <div className='events-drawer-trigger upper' onClick={props.onOpenDrawer}>
+            <IconNotification className='mean-svg-icons' />
           </div>
         )}
       </>

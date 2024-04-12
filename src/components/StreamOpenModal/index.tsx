@@ -1,6 +1,6 @@
+import { Button, Modal } from 'antd';
 import React from 'react';
 import { useState } from 'react';
-import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 export const StreamOpenModal = (props: { handleClose: any; handleOk: any; isVisible: boolean }) => {
@@ -20,44 +20,44 @@ export const StreamOpenModal = (props: { handleClose: any; handleOk: any; isVisi
 
   return (
     <Modal
-      className="mean-modal"
-      title={<div className="modal-title">{t('open-stream.modal-title')}</div>}
+      className='mean-modal'
+      title={<div className='modal-title'>{t('open-stream.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={onAcceptStreamId}
       onCancel={props.handleClose}
       width={480}
     >
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left">{t('open-stream.label-streamid-input')}</span>
-          <span className="field-label-right">&nbsp;</span>
+      <div className='transaction-field'>
+        <div className='transaction-field-row'>
+          <span className='field-label-left'>{t('open-stream.label-streamid-input')}</span>
+          <span className='field-label-right'>&nbsp;</span>
         </div>
-        <div className="transaction-field-row main-row">
-          <span className="input-left">
+        <div className='transaction-field-row main-row'>
+          <span className='input-left'>
             <input
-              id="stream-id-input"
-              className="w-100 general-text-input"
-              autoComplete="on"
-              autoCorrect="off"
-              type="text"
+              id='stream-id-input'
+              className='w-100 general-text-input'
+              autoComplete='on'
+              autoCorrect='off'
+              type='text'
               onChange={handleSreamIdChange}
               placeholder={t('open-stream.streamid-placeholder')}
               required={true}
               minLength={1}
               maxLength={79}
-              spellCheck="false"
+              spellCheck='false'
               value={streamId}
             />
           </span>
         </div>
       </div>
       <Button
-        className="main-cta center-text-in-btn"
+        className='main-cta center-text-in-btn'
         block
-        type="primary"
-        shape="round"
-        size="large"
+        type='primary'
+        shape='round'
+        size='large'
         disabled={!streamId}
         onClick={onAcceptStreamId}
       >

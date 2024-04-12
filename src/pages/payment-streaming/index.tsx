@@ -1,13 +1,13 @@
-import { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
-import { Stream, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
-import { PublicKey } from '@solana/web3.js';
-import { Button, notification } from 'antd';
+import type { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
+import type { PaymentStreamingAccount, Stream } from '@mean-dao/payment-streaming';
+import type { PublicKey } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
+import { Button, notification } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { MULTISIG_ROUTE_BASE_PATH } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { confirmationEvents, TxConfirmationInfo } from 'contexts/transaction-status';
+import { type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { AppUsageEvent } from 'middleware/segment-service';
@@ -144,12 +144,12 @@ const PaymentStreamingView = (props: {
           duration: 20,
           description: (
             <>
-              <div className="mb-2">The proposal's status can be reviewed in the Safe's proposal list.</div>
+              <div className='mb-2'>The proposal's status can be reviewed in the Safe's proposal list.</div>
               <Button
-                type="primary"
-                shape="round"
-                size="small"
-                className="extra-small d-flex align-items-center pb-1"
+                type='primary'
+                shape='round'
+                size='small'
+                className='extra-small d-flex align-items-center pb-1'
                 onClick={() => {
                   const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
                   navigate(url);
@@ -499,7 +499,7 @@ const PaymentStreamingView = (props: {
 
   return (
     <>
-      <div className="scroll-wrapper vertical-scroll">{renderPaymentStreamsContent()}</div>
+      <div className='scroll-wrapper vertical-scroll'>{renderPaymentStreamsContent()}</div>
     </>
   );
 };

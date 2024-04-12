@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import { TokenBalance } from '@solana/web3.js';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { getAmountFromLamports, getAmountWithSymbol, shortenAddress } from 'middleware/utils';
-import { UserTokenAccount } from 'models/accounts';
-import { NATIVE_SOL } from 'constants/tokens';
+import type { TokenBalance } from '@solana/web3.js';
 import { Tooltip } from 'antd';
-import { MappedTransaction } from 'middleware/history';
+import { NATIVE_SOL } from 'constants/tokens';
+import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import type { MappedTransaction } from 'middleware/history';
 import { getRelativeDate } from 'middleware/ui';
+import { getAmountFromLamports, getAmountWithSymbol, shortenAddress } from 'middleware/utils';
+import type { UserTokenAccount } from 'models/accounts';
+import React, { useEffect, useState } from 'react';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
 
 export const TransactionItemView = (props: {
@@ -88,9 +88,9 @@ export const TransactionItemView = (props: {
 
   const getTxIcon = () => {
     if (isOutboundTx) {
-      return <ArrowUpOutlined className="mean-svg-icons outgoing upright" />;
+      return <ArrowUpOutlined className='mean-svg-icons outgoing upright' />;
     } else {
-      return <ArrowDownOutlined className="mean-svg-icons incoming downright" />;
+      return <ArrowDownOutlined className='mean-svg-icons incoming downright' />;
     }
   };
 
@@ -130,14 +130,14 @@ export const TransactionItemView = (props: {
             postTokenBalance.uiTokenAmount.decimals,
           )
       : isNativeAccountSelected
-      ? getAmountWithSymbol(getAmountFromLamports(balanceChange), NATIVE_SOL.address, true)
-      : getAmountWithSymbol(
-          balanceChange,
-          props.selectedAsset.address,
-          true,
-          props.tokenAccounts,
-          props.selectedAsset.decimals || 0,
-        );
+        ? getAmountWithSymbol(getAmountFromLamports(balanceChange), NATIVE_SOL.address, true)
+        : getAmountWithSymbol(
+            balanceChange,
+            props.selectedAsset.address,
+            true,
+            props.tokenAccounts,
+            props.selectedAsset.decimals || 0,
+          );
 
     return displayAmount;
   };
@@ -164,20 +164,20 @@ export const TransactionItemView = (props: {
             postTokenBalance ? postTokenBalance.uiTokenAmount.decimals || NATIVE_SOL.decimals : NATIVE_SOL.decimals,
           )
       : isNativeAccountSelected
-      ? getAmountWithSymbol(
-          getAmountFromLamports(postBalance),
-          NATIVE_SOL.address,
-          true,
-          undefined,
-          NATIVE_SOL.decimals,
-        )
-      : getAmountWithSymbol(
-          balanceChange,
-          props.selectedAsset.address,
-          true,
-          props.tokenAccounts,
-          props.selectedAsset.decimals || 0,
-        );
+        ? getAmountWithSymbol(
+            getAmountFromLamports(postBalance),
+            NATIVE_SOL.address,
+            true,
+            undefined,
+            NATIVE_SOL.decimals,
+          )
+        : getAmountWithSymbol(
+            balanceChange,
+            props.selectedAsset.address,
+            true,
+            props.tokenAccounts,
+            props.selectedAsset.decimals || 0,
+          );
   };
 
   const getTransactionItem = () => {
@@ -187,36 +187,36 @@ export const TransactionItemView = (props: {
     return (
       <a
         key={signature}
-        target="_blank"
-        rel="noopener noreferrer"
+        target='_blank'
+        rel='noopener noreferrer'
         className={`item-list-row ${balanceChange === 0 ? 'dimmed' : ''}`}
         href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${signature}${getSolanaExplorerClusterParam()}`}
       >
-        <div className="std-table-cell first-cell">{getTxIcon()}</div>
-        <div className="std-table-cell responsive-cell">
-          <Tooltip placement="bottom" title={getTxDescription(false)}>
+        <div className='std-table-cell first-cell'>{getTxIcon()}</div>
+        <div className='std-table-cell responsive-cell'>
+          <Tooltip placement='bottom' title={getTxDescription(false)}>
             <span>{getTxDescription()}</span>
           </Tooltip>
         </div>
-        <div className="std-table-cell responsive-cell pr-2 text-right">
+        <div className='std-table-cell responsive-cell pr-2 text-right'>
           {balanceChange === 0 ? (
-            <Tooltip placement="bottom" title="No balance changes">
+            <Tooltip placement='bottom' title='No balance changes'>
               <span>{getDisplayAmount()}</span>
             </Tooltip>
           ) : (
             <span>{getDisplayAmount()}</span>
           )}
         </div>
-        <div className="std-table-cell responsive-cell pr-2 text-right">
+        <div className='std-table-cell responsive-cell pr-2 text-right'>
           {balanceChange === 0 ? (
-            <Tooltip placement="bottom" title="No balance changes">
+            <Tooltip placement='bottom' title='No balance changes'>
               <span>{getDisplayPostBalance()}</span>
             </Tooltip>
           ) : (
             <span>{getDisplayPostBalance()}</span>
           )}
         </div>
-        <div className="std-table-cell responsive-cell pl-2">
+        <div className='std-table-cell responsive-cell pl-2'>
           {blockTime ? <>{getRelativeDate(blockTime * 1000)}</> : <span>'unavailable'</span>}
         </div>
       </a>

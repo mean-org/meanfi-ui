@@ -1,12 +1,12 @@
 import type { TransferTransactionAccounts } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token, u64 } from '@solana/spl-token';
 import {
+  type Connection,
   Keypair,
+  type PublicKey,
   SystemProgram,
   Transaction,
-  type Connection,
-  type PublicKey,
   type TransactionInstruction,
 } from '@solana/web3.js';
 import { SOL_MINT } from './ids';

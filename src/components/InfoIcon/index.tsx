@@ -1,6 +1,6 @@
-import React from 'react';
 import { Button, Popover } from 'antd';
-import { TooltipPlacement } from 'antd/lib/tooltip';
+import type { TooltipPlacement } from 'antd/lib/tooltip';
+import type React from 'react';
 
 export const InfoIcon = (props: {
   children: React.ReactElement;
@@ -18,7 +18,7 @@ export const InfoIcon = (props: {
       placement={props.placement || 'top'}
       content={<div style={{ width: 320 }}>{props.content}</div>}
     >
-      <Button className={`info-icon-button ${props.className}`} type="default" shape="circle">
+      <Button className={`info-icon-button ${props.className}`} type='default' shape='circle'>
         {props.children}
       </Button>
     </Popover>

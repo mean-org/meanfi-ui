@@ -1,22 +1,22 @@
-import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
-import { Adapter, SignerWalletAdapter } from '@solana/wallet-adapter-base';
+import type { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
+import type { Adapter, SignerWalletAdapter } from '@solana/wallet-adapter-base';
 import {
-  AccountMeta,
+  type AccountMeta,
   ComputeBudgetProgram,
-  Connection,
-  Keypair,
-  ParsedTransactionMeta,
-  PublicKey,
-  Signer,
+  type Connection,
+  type Keypair,
+  type ParsedTransactionMeta,
+  type PublicKey,
+  type Signer,
   Transaction,
-  TransactionInstruction,
+  type TransactionInstruction,
   TransactionMessage,
   VersionedTransaction,
-  VersionedTransactionResponse,
+  type VersionedTransactionResponse,
 } from '@solana/web3.js';
 import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'constants/common';
 import { customLogger } from 'index';
-import { SendTxResult, SignTxResult } from 'models/CreateTxResult';
+import type { SendTxResult, SignTxResult } from 'models/CreateTxResult';
 import { TransactionStatus } from '../models/enums';
 import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { formatThousands, getAmountFromLamports, readLocalStorageKey, toBuffer } from './utils';
@@ -44,7 +44,10 @@ export const DEFAULT_BUDGET_CONFIG: ComputeBudgetConfig = {
 };
 
 export class TransactionWithSignature {
-  constructor(public signature: string, public confirmedTransaction: VersionedTransactionResponse) {}
+  constructor(
+    public signature: string,
+    public confirmedTransaction: VersionedTransactionResponse,
+  ) {}
 }
 
 /**

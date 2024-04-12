@@ -1,5 +1,5 @@
-import { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
-import { AccountContext, AssetGroups, KNOWN_APPS, UserTokenAccount } from 'models/accounts';
+import type { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
+import { type AccountContext, AssetGroups, KNOWN_APPS, type UserTokenAccount } from 'models/accounts';
 
 const isAssetNativeAccount = (assetId: string, selectedAccount: AccountContext) => {
   return assetId === selectedAccount.address ? true : false;

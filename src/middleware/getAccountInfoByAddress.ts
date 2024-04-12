@@ -1,4 +1,4 @@
-import { AccountInfo, Connection, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { type AccountInfo, type Connection, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { consoleOut, isValidAddress } from './ui';
 
 /**
@@ -9,13 +9,13 @@ import { consoleOut, isValidAddress } from './ui';
  */
 const getAccountInfoByAddress = async (connection: Connection, address: string | PublicKey) => {
   let accInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
-  let addressPk: PublicKey
+  let addressPk: PublicKey;
   if (typeof address === 'string' && isValidAddress(address)) {
-    addressPk = new PublicKey(address)
+    addressPk = new PublicKey(address);
   } else if (address instanceof PublicKey) {
-    addressPk = address
+    addressPk = address;
   } else {
-    return null
+    return null;
   }
 
   try {

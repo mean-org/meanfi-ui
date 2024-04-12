@@ -1,18 +1,18 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
+import { IconStats } from 'Icons';
 import { Col, Row } from 'antd';
 import { PreFooter } from 'components/PreFooter';
 import { MEAN_TOKEN } from 'constants/tokens';
 import { useConnection } from 'contexts/connection';
-import { IconStats } from 'Icons';
 import { appConfig } from 'index';
 import { getCoingeckoMarketChart, getMeanStats } from 'middleware/api';
-import { MeanFiStatsModel } from 'models/meanfi-stats';
+import { consoleOut } from 'middleware/ui';
+import type { MeanFiStatsModel } from 'models/meanfi-stats';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import './style.scss';
 import { TokenStats } from './TokenStats';
-import { consoleOut } from 'middleware/ui';
+import './style.scss';
 
 //const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
 
@@ -105,14 +105,14 @@ export const StatsView = () => {
 
   return (
     <>
-      <div className="container main-container">
-        <div className="interaction-area">
-          <div className="title-and-subtitle">
-            <div className="title">
-              <IconStats className="mean-svg-icons" />
+      <div className='container main-container'>
+        <div className='interaction-area'>
+          <div className='title-and-subtitle'>
+            <div className='title'>
+              <IconStats className='mean-svg-icons' />
               <div>{t('stats.title')}</div>
             </div>
-            <div className="subtitle">{t('stats.subtitle')}</div>
+            <div className='subtitle'>{t('stats.subtitle')}</div>
           </div>
 
           <TokenStats meanStats={meanfiStats} smeanSupply={sMeanTotalSupply} totalVolume24h={totalVolume24h} />
@@ -170,11 +170,11 @@ export const PromoSpace = () => {
   return (
     <>
       {randomPromoCards && (
-        <Row gutter={[8, 8]} className="mb-1 promo-space">
+        <Row gutter={[8, 8]} className='mb-1 promo-space'>
           {randomPromoCards.map((card: any, index: string) => (
             <Col xs={24} sm={12} md={8} lg={8} key={index}>
-              <a href={card.ctaUrl} target="_blank" rel="noreferrer" className="promo-space_link">
-                <img src={card.imgUrl} alt="" width="100%" height="150" />
+              <a href={card.ctaUrl} target='_blank' rel='noreferrer' className='promo-space_link'>
+                <img src={card.imgUrl} alt='' width='100%' height='150' />
               </a>
             </Col>
           ))}

@@ -1,8 +1,11 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import { Stream, StreamActivity, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
+import { STREAM_STATUS_CODE, type Stream, type StreamActivity } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
+import { IconExternalLink } from 'Icons';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { Identicon } from 'components/Identicon';
+import getStreamStartDate from 'components/common/getStreamStartDate';
 import {
   FALLBACK_COIN_IMAGE,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
@@ -11,7 +14,6 @@ import {
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
-import { IconExternalLink } from 'Icons';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import {
   getIntervalFromSeconds,
@@ -21,12 +23,11 @@ import {
   relativeTimeFromDates,
 } from 'middleware/ui';
 import { displayAmountWithSymbol, shortenAddress } from 'middleware/utils';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
-import { BN } from '@project-serum/anchor';
-import getStreamStartDate from 'components/common/getStreamStartDate';
 
 export type StreamDetailTab = 'details' | 'activity';
 
@@ -62,13 +63,13 @@ export const MoneyStreamDetails = (props: {
   const getStreamTypeIcon = useCallback(() => {
     if (isInboundStream) {
       return (
-        <span className="stream-type incoming">
+        <span className='stream-type incoming'>
           <ArrowDownOutlined />
         </span>
       );
     } else {
       return (
-        <span className="stream-type outgoing">
+        <span className='stream-type outgoing'>
           <ArrowUpOutlined />
         </span>
       );
@@ -268,15 +269,15 @@ export const MoneyStreamDetails = (props: {
     (item: StreamActivity) => {
       if (isInboundStream) {
         if (item.action === 'withdrew') {
-          return <ArrowUpOutlined className="mean-svg-icons outgoing" />;
+          return <ArrowUpOutlined className='mean-svg-icons outgoing' />;
         } else {
-          return <ArrowDownOutlined className="mean-svg-icons incoming" />;
+          return <ArrowDownOutlined className='mean-svg-icons incoming' />;
         }
       } else {
         if (item.action === 'withdrew') {
-          return <ArrowDownOutlined className="mean-svg-icons incoming" />;
+          return <ArrowDownOutlined className='mean-svg-icons incoming' />;
         } else {
-          return <ArrowUpOutlined className="mean-svg-icons outgoing" />;
+          return <ArrowUpOutlined className='mean-svg-icons outgoing' />;
         }
       }
     },
@@ -411,25 +412,25 @@ export const MoneyStreamDetails = (props: {
 
   const renderActivities = useCallback(() => {
     return (
-      <div className="stream-activity-list">
+      <div className='stream-activity-list'>
         <Spin spinning={loadingStreamActivity}>
           {streamActivity && streamActivity.length > 0 ? (
             streamActivity.map((item, index) => {
               return (
                 <a
                   key={`${index + 50}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transaction-list-row stripped-rows"
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='transaction-list-row stripped-rows'
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}
                 >
-                  <div className="icon-cell">{getActivityIcon(item)}</div>
-                  <div className="description-cell no-padding">
-                    <div className="title text-truncate">{getActivityAction(item)}</div>
-                    <div className="subtitle text-truncate">{shortenAddress(item.initializer)}</div>
+                  <div className='icon-cell'>{getActivityIcon(item)}</div>
+                  <div className='description-cell no-padding'>
+                    <div className='title text-truncate'>{getActivityAction(item)}</div>
+                    <div className='subtitle text-truncate'>{shortenAddress(item.initializer)}</div>
                   </div>
-                  <div className="rate-cell">
-                    <div className="rate-amount">
+                  <div className='rate-cell'>
+                    <div className='rate-amount'>
                       {selectedToken
                         ? displayAmountWithSymbol(
                             new BN(item.amount),
@@ -441,10 +442,10 @@ export const MoneyStreamDetails = (props: {
                           )
                         : '--'}
                     </div>
-                    <div className="interval">{getShortDate(item.utcDate, true)}</div>
+                    <div className='interval'>{getShortDate(item.utcDate, true)}</div>
                   </div>
-                  <div className="actions-cell">
-                    <IconExternalLink className="mean-svg-icons" style={{ width: '15', height: '15' }} />
+                  <div className='actions-cell'>
+                    <IconExternalLink className='mean-svg-icons' style={{ width: '15', height: '15' }} />
                   </div>
                 </a>
               );
@@ -462,10 +463,10 @@ export const MoneyStreamDetails = (props: {
           )}
         </Spin>
         {streamActivity.length > 0 && hasMoreStreamActivity && (
-          <div className="mt-1 text-center">
+          <div className='mt-1 text-center'>
             <span
               className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
-              role="link"
+              role='link'
               onClick={onLoadMoreActivities}
             >
               {t('general.cta-load-more')}
@@ -561,11 +562,11 @@ export const MoneyStreamDetails = (props: {
     return (
       <>
         {detailsData.map((detail: any, index: number) => (
-          <Row gutter={[8, 8]} key={index} className="pl-1 details-item">
-            <Col span={8} className="pr-1">
-              <span className="info-label">{detail.label}</span>
+          <Row gutter={[8, 8]} key={index} className='pl-1 details-item'>
+            <Col span={8} className='pr-1'>
+              <span className='info-label'>{detail.label}</span>
             </Col>
-            <Col span={16} className="pl-1">
+            <Col span={16} className='pl-1'>
               <span>{detail.value}</span>
             </Col>
           </Row>
@@ -587,7 +588,7 @@ export const MoneyStreamDetails = (props: {
       children: renderActivities(),
     });
 
-    return <Tabs items={items} activeKey={tabOption} onChange={onTabChanged} className="neutral" />;
+    return <Tabs items={items} activeKey={tabOption} onChange={onTabChanged} className='neutral' />;
   }, [onTabChanged, renderActivities, renderDetails, tabOption]);
 
   const renderStream = (item: Stream) => {
@@ -598,10 +599,10 @@ export const MoneyStreamDetails = (props: {
     const associatedToken = getStreamAssociatedMint(item);
 
     return (
-      <div className="transaction-list-row no-pointer">
-        <div className="icon-cell">
+      <div className='transaction-list-row no-pointer'>
+        <div className='icon-cell'>
           {getStreamTypeIcon()}
-          <div className="token-icon">
+          <div className='token-icon'>
             {selectedToken?.logoURI ? (
               <img
                 alt={`${selectedToken.name}`}
@@ -615,13 +616,13 @@ export const MoneyStreamDetails = (props: {
             )}
           </div>
         </div>
-        <div className="description-cell">
-          <div className="title text-truncate">{getStreamTitle(item)}</div>
-          <div className="subtitle text-truncate">{getStreamSubtitle(item)}</div>
+        <div className='description-cell'>
+          <div className='title text-truncate'>{getStreamTitle(item)}</div>
+          <div className='subtitle text-truncate'>{getStreamSubtitle(item)}</div>
         </div>
-        <div className="rate-cell">
-          <div className="rate-amount">{getStreamStatus(item)}</div>
-          <div className="interval">{getStreamStatusSubtitle(item)}</div>
+        <div className='rate-cell'>
+          <div className='rate-amount'>{getStreamStatus(item)}</div>
+          <div className='interval'>{getStreamStatusSubtitle(item)}</div>
         </div>
       </div>
     );
@@ -633,14 +634,14 @@ export const MoneyStreamDetails = (props: {
     }
 
     return (
-      <div className="details-panel-meta mt-2 mb-2">
-        <div className="info-label text-truncate line-height-110">
+      <div className='details-panel-meta mt-2 mb-2'>
+        <div className='info-label text-truncate line-height-110'>
           {isInboundStream
             ? t('streams.stream-detail.label-funds-available-to-withdraw')
             : t('streams.stream-detail.label-funds-left-in-account')}
         </div>
-        <div className="transaction-detail-row">
-          <span className="info-data line-height-110">
+        <div className='transaction-detail-row'>
+          <span className='info-data line-height-110'>
             {isInboundStream
               ? displayAmountWithSymbol(
                   item.withdrawableAmount,
@@ -662,7 +663,7 @@ export const MoneyStreamDetails = (props: {
 
   return (
     <>
-      <div className="stream-detail-component shift-up-2">
+      <div className='stream-detail-component shift-up-2'>
         {stream && renderStream(stream)}
 
         {stream && renderStreamBalance(stream)}

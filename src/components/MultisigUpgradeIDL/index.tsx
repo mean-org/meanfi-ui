@@ -1,17 +1,17 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import type { TransactionFees } from '@mean-dao/money-streaming';
+import { PublicKey } from '@solana/web3.js';
+import { Button, Modal, Spin } from 'antd';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatus } from '../../models/enums';
-import { getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
-import { isError } from '../../middleware/transactions';
-import { SOL_MINT } from '../../middleware/ids';
-import { TransactionFees } from '@mean-dao/money-streaming';
-import { getAmountWithSymbol } from '../../middleware/utils';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { PublicKey } from '@solana/web3.js';
+import { SOL_MINT } from '../../middleware/ids';
+import { isError } from '../../middleware/transactions';
+import { getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
+import { getAmountWithSymbol } from '../../middleware/utils';
+import { TransactionStatus } from '../../models/enums';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -120,8 +120,8 @@ export const MultisigUpgradeIDLModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">Upgrade IDL</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>Upgrade IDL</div>}
       footer={null}
       open={props.isVisible}
       onOk={onAcceptModal}
@@ -133,57 +133,57 @@ export const MultisigUpgradeIDLModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Program address */}
-            <div className="form-label">{t('multisig.upgrade-program.program-address-label')}</div>
+            <div className='form-label'>{t('multisig.upgrade-program.program-address-label')}</div>
             <div className={`well ${props.programId ? 'disabled' : ''}`}>
               <input
-                id="token-address-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
+                id='token-address-field'
+                className='general-text-input'
+                autoComplete='on'
+                autoCorrect='off'
+                type='text'
                 onChange={onProgramChange}
                 placeholder={t('multisig.upgrade-program.program-address-placeholder')}
                 required={true}
-                spellCheck="false"
+                spellCheck='false'
                 value={programId}
               />
               {programId && !isValidAddress(programId) && (
-                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
               )}
             </div>
             {/* IDL Buffer address */}
-            <div className="form-label">New IDL Buffer</div>
-            <div className="well">
+            <div className='form-label'>New IDL Buffer</div>
+            <div className='well'>
               <input
-                id="mint-to-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
+                id='mint-to-field'
+                className='general-text-input'
+                autoComplete='on'
+                autoCorrect='off'
+                type='text'
                 onChange={onBufferAccountChange}
                 placeholder={t('multisig.upgrade-program.buffer-account-placeholder')}
                 required={true}
-                spellCheck="false"
+                spellCheck='false'
                 value={idlBufferAddress}
               />
               {idlBufferAddress && !isValidAddress(idlBufferAddress) && (
-                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
               )}
             </div>
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
-            <div className="transaction-progress">
-              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">IDL upgraded successfully</h4>
+            <div className='transaction-progress'>
+              <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+              <h4 className='font-bold'>IDL upgraded successfully</h4>
             </div>
           </>
         ) : (
           <>
-            <div className="transaction-progress">
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+            <div className='transaction-progress'>
+              <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
+                <h4 className='mb-4'>
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(props.nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
@@ -193,7 +193,7 @@ export const MultisigUpgradeIDLModal = (props: {
                   })}
                 </h4>
               ) : (
-                <h4 className="font-bold mb-3">
+                <h4 className='font-bold mb-3'>
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
@@ -208,38 +208,38 @@ export const MultisigUpgradeIDLModal = (props: {
         }
       >
         {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress">
-            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-            <h4 className="font-bold mb-1">
+          <div className='transaction-progress'>
+            <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+            <h4 className='font-bold mb-1'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
             {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              <div className='indication'>{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}
       </div>
 
-      <div className="row two-col-ctas mt-3 transaction-progress p-0">
-        <div className="col-6">
+      <div className='row two-col-ctas mt-3 transaction-progress p-0'>
+        <div className='col-6'>
           <Button
             block
-            type="text"
-            shape="round"
-            size="middle"
+            type='text'
+            shape='round'
+            size='middle'
             className={props.isBusy ? 'inactive' : ''}
             onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
           >
             {isError(transactionStatus.currentOperation) ? t('general.retry') : t('general.cta-close')}
           </Button>
         </div>
-        <div className="col-6">
+        <div className='col-6'>
           <Button
             className={props.isBusy ? 'inactive' : ''}
             block
-            type="primary"
-            shape="round"
-            size="middle"
+            type='primary'
+            shape='round'
+            size='middle'
             disabled={!isValidForm()}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
@@ -254,10 +254,10 @@ export const MultisigUpgradeIDLModal = (props: {
             {props.isBusy
               ? t('multisig.upgrade-program.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-              ? 'Upgrade IDL'
-              : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-              ? t('general.cta-finish')
-              : t('general.refresh')}
+                ? 'Upgrade IDL'
+                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                  ? t('general.cta-finish')
+                  : t('general.refresh')}
           </Button>
         </div>
       </div>

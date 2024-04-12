@@ -1,5 +1,5 @@
 import { Card, Col } from 'antd';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 const CardWithHeader = (props: {
   xs: number;
@@ -15,10 +15,10 @@ const CardWithHeader = (props: {
   return (
     <Col xs={xs} sm={sm} md={md} lg={lg}>
       <Card className={`ant-card card ${className}`}>
-        <div className="ant-card-head">
-          <div className="ant-card-head-wrapper">{header}</div>
+        <div className='ant-card-head'>
+          <div className='ant-card-head-wrapper'>{header}</div>
         </div>
-        <div className="ant-card-body">{body}</div>
+        <div className='ant-card-body'>{body}</div>
       </Card>
     </Col>
   );

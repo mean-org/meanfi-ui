@@ -1,7 +1,7 @@
-import { AccountType, SubCategory, TimeUnit } from '@mean-dao/payment-streaming';
-import { BN } from '@project-serum/anchor';
-import { PublicKey } from '@solana/web3.js';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import { type AccountType, SubCategory, type TimeUnit } from '@mean-dao/payment-streaming';
+import type { BN } from '@project-serum/anchor';
+import type { PublicKey } from '@solana/web3.js';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 
 export type VestingFlowRateInfo = {
   amountBn: BN;

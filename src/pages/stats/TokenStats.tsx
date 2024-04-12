@@ -1,20 +1,20 @@
-import { useContext, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { IconLoading } from 'Icons';
 import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
-import './style.scss';
-import { data } from './data';
-import { consoleOut, copyText } from '../../middleware/ui';
-import { PriceGraph } from './PriceGraph';
-import CardStats from './components/CardStats';
-import { formatThousands, openLinkInNewTab } from '../../middleware/utils';
+import { MEANFI_DOCS_URL } from 'constants/common';
+import { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { InfoIcon } from '../../components/InfoIcon';
+import { openNotification } from '../../components/Notifications';
 import { MEAN_TOKEN } from '../../constants/tokens';
 import { AppStateContext } from '../../contexts/appstate';
-import { openNotification } from '../../components/Notifications';
-import { InfoIcon } from '../../components/InfoIcon';
-import { MEANFI_DOCS_URL } from 'constants/common';
-import { IconLoading } from 'Icons';
+import { consoleOut, copyText } from '../../middleware/ui';
+import { formatThousands, openLinkInNewTab } from '../../middleware/utils';
+import { PriceGraph } from './PriceGraph';
+import CardStats from './components/CardStats';
+import { data } from './data';
+import './style.scss';
 
 export const TokenStats = ({ meanStats, smeanSupply, totalVolume24h }: any) => {
   return (
@@ -53,23 +53,23 @@ export const FirstCardsLayout = () => {
         <span>
           <a
             href={`${MEANFI_DOCS_URL}mean/products/safety-and-security#audits`}
-            target="_blank"
-            title="CetriK"
-            rel="noreferrer"
-            className="audit-links"
+            target='_blank'
+            title='CetriK'
+            rel='noreferrer'
+            className='audit-links'
           >
-            <img src="https://www.certik.com/certik-logotype-h-w.svg" alt="CetriK" />
+            <img src='https://www.certik.com/certik-logotype-h-w.svg' alt='CetriK' />
           </a>
           <a
             href={`${MEANFI_DOCS_URL}mean/products/safety-and-security#audits`}
-            target="_blank"
-            title="Sec3"
-            rel="noreferrer"
-            className="audit-links"
+            target='_blank'
+            title='Sec3'
+            rel='noreferrer'
+            className='audit-links'
           >
             <img
-              src="https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg"
-              alt="Sec3"
+              src='https://uploads-ssl.webflow.com/6273ba6b55681ae927cb4388/629579f67991f16aefaea6b5_logo.svg'
+              alt='Sec3'
             />
           </a>
         </span>
@@ -90,10 +90,10 @@ export const FirstCardsLayout = () => {
   };
 
   const renderHeadSummary = (
-    <div className="ant-card-head-title">
+    <div className='ant-card-head-title'>
       <span>{t('stats.summary.summary-title')}</span>
       <Link to={'/exchange'}>
-        <button className="stats-buy-btn">
+        <button className='stats-buy-btn'>
           <span>{t('stats.buy-btn')}</span>
         </button>
       </Link>
@@ -103,18 +103,18 @@ export const FirstCardsLayout = () => {
   const renderBodySummary = (
     <>
       {summaries.map((summary, index) => (
-        <div className="summary-content" key={index}>
-          <span className="inner-label">{summary.label}</span>
-          <div className="summary-content_text">
-            <span className="ant-typography">{summary.value}</span>
+        <div className='summary-content' key={index}>
+          <span className='inner-label'>{summary.label}</span>
+          <div className='summary-content_text'>
+            <span className='ant-typography'>{summary.value}</span>
             {summary.tooltip && (
-              <span className="icon-button-container">
-                <Tooltip placement="bottom" title={t(summary.tooltip)}>
+              <span className='icon-button-container'>
+                <Tooltip placement='bottom' title={t(summary.tooltip)}>
                   <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={<CopyOutlined className="mean-svg-icons" />}
+                    type='default'
+                    shape='circle'
+                    size='middle'
+                    icon={<CopyOutlined className='mean-svg-icons' />}
                     onClick={onCopyText}
                     name={summary.value}
                   />
@@ -130,12 +130,12 @@ export const FirstCardsLayout = () => {
   const onCoingeckoMarketPrices = (priceData: any) => {
     if (priceData) {
       consoleOut('priceData:', priceData, 'blue');
-      setMeanPrice(parseFloat(priceData));
+      setMeanPrice(Number.parseFloat(priceData));
     }
   };
 
   const renderHeadPrice = (
-    <div className="ant-card-head-title">
+    <div className='ant-card-head-title'>
       <span>{t('stats.price.price-title')}</span>
       {meanPrice ? (
         <span>$ {formatThousands(meanPrice, 8)}</span>
@@ -169,7 +169,7 @@ export const FirstCardsLayout = () => {
           lg={12}
           header={card.header}
           body={card.body}
-          className="summary-card"
+          className='summary-card'
         />
       ))}
     </Row>
@@ -191,7 +191,7 @@ export const SecondCardsLayout = ({ meanStats, sMeanTotalSupply, totalVolume24h 
         meanStats.holders !== undefined ? (
           formatThousands(meanStats.holders)
         ) : (
-          <IconLoading className="mean-svg-icons" />
+          <IconLoading className='mean-svg-icons' />
         ),
       description: 'stats.market.token-holders',
     },
@@ -231,17 +231,17 @@ export const SecondCardsLayout = ({ meanStats, sMeanTotalSupply, totalVolume24h 
     <Row gutter={[8, 8]}>
       {cards.map((card, index) => (
         <Col xs={24} sm={12} md={8} lg={6} key={index}>
-          <Card className="ant-card card info-cards">
-            <div className="card-body">
-              <div className="card-content justify-content-start">
-                <span className="fg-secondary-50 align-middle">{t(card.label)}</span>
-                <span className="fg-secondary-50 font-size-70 align-middle">
-                  <InfoIcon content={<span>{t(card.description)}</span>} placement="top">
+          <Card className='ant-card card info-cards'>
+            <div className='card-body'>
+              <div className='card-content justify-content-start'>
+                <span className='fg-secondary-50 align-middle'>{t(card.label)}</span>
+                <span className='fg-secondary-50 font-size-70 align-middle'>
+                  <InfoIcon content={<span>{t(card.description)}</span>} placement='top'>
                     <InfoCircleOutlined />
                   </InfoIcon>
                 </span>
               </div>
-              <span className="card-info">{card.value}</span>
+              <span className='card-info'>{card.value}</span>
             </div>
           </Card>
         </Col>
@@ -255,36 +255,36 @@ export const ThirdCardsLayout = () => {
   const { t } = useTranslation('common');
 
   return (
-    <Row gutter={[8, 8]} className="slider-row">
-      <div className="row flex-nowrap slide horizontal-scroll">
+    <Row gutter={[8, 8]} className='slider-row'>
+      <div className='row flex-nowrap slide horizontal-scroll'>
         {data.pairs.map((pair, index) => (
           <Col xs={12} sm={8} md={6} lg={4} key={index}>
-            <Card className="ant-card card slide-card">
-              <div className="ant-card-body card-body slide-content">
-                <div className="slide-content_avatar">
-                  <div className="avatar-coin">
-                    <div className="avatar-coin__content row">
+            <Card className='ant-card card slide-card'>
+              <div className='ant-card-body card-body slide-content'>
+                <div className='slide-content_avatar'>
+                  <div className='avatar-coin'>
+                    <div className='avatar-coin__content row'>
                       <img src={pair.img1} alt={`${pair.base}/${pair.target}`} />
                     </div>
                   </div>
-                  <div className="avatar-coin">
-                    <div className="avatar-coin__content row">
+                  <div className='avatar-coin'>
+                    <div className='avatar-coin__content row'>
                       <img src={pair.img2} alt={`${pair.base}/${pair.target}`} />
                     </div>
                   </div>
                 </div>
-                <div className="slide-content_info">
-                  <span className="info-pair">
+                <div className='slide-content_info'>
+                  <span className='info-pair'>
                     {pair.base}/{pair.target}
                   </span>
-                  <span className="info-name mb-2">{pair.name}</span>
+                  <span className='info-name mb-2'>{pair.name}</span>
                   {/* <div className="info-liquidity mb-3">
                       <span>{t('stats.pairs.total-liquidity')}:</span>
                       <span>${formatThousands(pair.total_liquidity)}</span>
                   </div> */}
                 </div>
-                <div className="slide-content_buttons">
-                  <Button type="default" shape="round" size="small" onClick={() => openLinkInNewTab(pair.buy)}>
+                <div className='slide-content_buttons'>
+                  <Button type='default' shape='round' size='small' onClick={() => openLinkInNewTab(pair.buy)}>
                     {pair.type === 'DEX' ? t('stats.total-liquidity-btn') : t('stats.buy-btn')}
                   </Button>
                 </div>

@@ -1,7 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { MSP_ACTIONS, type TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import type { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -86,7 +86,7 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
   const getMaxPossibleAmount = () => {
     // const fee = wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, nativeBalance);
     const maxPossibleAmount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
-    const converted = parseFloat(maxPossibleAmount.toFixed(wSol?.decimals));
+    const converted = Number.parseFloat(maxPossibleAmount.toFixed(wSol?.decimals));
     return converted > 0 ? converted : nativeBalance;
   };
 
@@ -133,7 +133,7 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
-        const amount = parseFloat(wrapAmount as string);
+        const amount = Number.parseFloat(wrapAmount as string);
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
@@ -236,9 +236,11 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Wrap ${formatThousands(parseFloat(wrapAmount), wSol.decimals)} ${wSol.symbol}`,
+              loadingMessage: `Wrap ${formatThousands(Number.parseFloat(wrapAmount), wSol.decimals)} ${wSol.symbol}`,
               completedTitle: 'Transaction confirmed',
-              completedMessage: `Wrapped ${formatThousands(parseFloat(wrapAmount), wSol.decimals)} ${wSol.symbol}`,
+              completedMessage: `Wrapped ${formatThousands(Number.parseFloat(wrapAmount), wSol.decimals)} ${
+                wSol.symbol
+              }`,
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -301,9 +303,9 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
 
   const isValidInput = (): boolean => {
     return wrapAmount &&
-      parseFloat(wrapAmount) > 0 &&
-      parseFloat(wrapAmount) > MIN_SOL_BALANCE_REQUIRED &&
-      parseFloat(wrapAmount) <= getMaxPossibleAmount()
+      Number.parseFloat(wrapAmount) > 0 &&
+      Number.parseFloat(wrapAmount) > MIN_SOL_BALANCE_REQUIRED &&
+      Number.parseFloat(wrapAmount) <= getMaxPossibleAmount()
       ? true
       : false;
   };
@@ -313,8 +315,8 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
       nativeBalance > 0 &&
       nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
       wrapAmount &&
-      parseFloat(wrapAmount) > 0 &&
-      parseFloat(wrapAmount) <= getMaxPossibleAmount()
+      Number.parseFloat(wrapAmount) > 0 &&
+      Number.parseFloat(wrapAmount) <= getMaxPossibleAmount()
       ? true
       : false;
   };
@@ -323,23 +325,23 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
     return !publicKey
       ? t('transactions.validation.not-connected')
       : nativeBalance === 0
-      ? t('transactions.validation.no-balance')
-      : nativeBalance > 0 && nativeBalance < MIN_SOL_BALANCE_REQUIRED
-      ? t('transactions.validation.amount-low')
-      : !wrapAmount || parseFloat(wrapAmount) === 0
-      ? t('transactions.validation.no-amount')
-      : parseFloat(wrapAmount) > getMaxPossibleAmount()
-      ? t('transactions.validation.invalid-amount')
-      : t('faucet.wrap-sol-cta');
+        ? t('transactions.validation.no-balance')
+        : nativeBalance > 0 && nativeBalance < MIN_SOL_BALANCE_REQUIRED
+          ? t('transactions.validation.amount-low')
+          : !wrapAmount || Number.parseFloat(wrapAmount) === 0
+            ? t('transactions.validation.no-amount')
+            : Number.parseFloat(wrapAmount) > getMaxPossibleAmount()
+              ? t('transactions.validation.invalid-amount')
+              : t('faucet.wrap-sol-cta');
   };
 
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={12} className="text-right pr-1">
+        <Col span={12} className='text-right pr-1'>
           {caption}
         </Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">
+        <Col span={12} className='text-left pl-1 fg-secondary-70'>
           {value}
         </Col>
       </Row>
@@ -348,26 +350,26 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
 
   return (
     <Modal
-      className="mean-modal unpadded-content simple-modal"
-      title={<div className="modal-title">Wrap SOL</div>}
+      className='mean-modal unpadded-content simple-modal'
+      title={<div className='modal-title'>Wrap SOL</div>}
       footer={null}
       open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={400}
     >
-      <div className="px-4 pb-3">
+      <div className='px-4 pb-3'>
         {/* Wrap amount */}
-        <div className="form-label">Wrap amount</div>
-        <div className="well mb-1">
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on">
+        <div className='form-label'>Wrap amount</div>
+        <div className='well mb-1'>
+          <div className='flex-fixed-left'>
+            <div className='left'>
+              <span className='add-on'>
                 {wSol && (
                   <TokenDisplay
                     onClick={() => {}}
                     mintAddress={wSol.address}
-                    symbol="SOL"
+                    symbol='SOL'
                     name={wSol.name}
                     showName={false}
                     showCaretDown={false}
@@ -375,7 +377,7 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
                 )}
                 {nativeBalance > 0 && (
                   <div
-                    className="token-max simplelink"
+                    className='token-max simplelink'
                     onClick={() => {
                       setWrapAmount(getMaxPossibleAmount().toFixed(wSol?.decimals));
                     }}
@@ -385,45 +387,47 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
                 )}
               </span>
             </div>
-            <div className="right">
+            <div className='right'>
               <input
-                className="general-text-input text-right"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
+                className='general-text-input text-right'
+                inputMode='decimal'
+                autoComplete='off'
+                autoCorrect='off'
+                type='text'
                 onChange={handleAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
+                pattern='^[0-9]*[.,]?[0-9]*$'
+                placeholder='0.0'
                 minLength={1}
                 maxLength={79}
-                spellCheck="false"
+                spellCheck='false'
                 value={wrapAmount}
               />
             </div>
           </div>
-          <div className="flex-fixed-right">
-            <div className="left inner-label">
+          <div className='flex-fixed-right'>
+            <div className='left inner-label'>
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>{`${nativeBalance && wSol ? getAmountWithSymbol(nativeBalance, wSol.address, true) : '0'}`}</span>
             </div>
-            <div className="right inner-label">
+            <div className='right inner-label'>
               <span
                 className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                 onClick={() => refreshPrices()}
               >
                 ~
                 {wSol
-                  ? toUsCurrency((parseFloat(wrapAmount) || 0) * getTokenPriceByAddress(wSol.address, wSol.symbol))
+                  ? toUsCurrency(
+                      (Number.parseFloat(wrapAmount) || 0) * getTokenPriceByAddress(wSol.address, wSol.symbol),
+                    )
                   : '$0.00'}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="form-field-hint mb-2 pl-3">{t('wrap.hint-message')}</div>
+        <div className='form-field-hint mb-2 pl-3'>{t('wrap.hint-message')}</div>
 
-        <div className="mb-2">
+        <div className='mb-2'>
           {isValidInput() &&
             infoRow(
               t('faucet.wrapped-amount') + ':',
@@ -431,7 +435,9 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
                 wrapAmount
                   ? '~' +
                     getAmountWithSymbol(
-                      parseFloat(wrapAmount) >= (MIN_SOL_BALANCE_REQUIRED as number) ? parseFloat(wrapAmount) : 0,
+                      Number.parseFloat(wrapAmount) >= (MIN_SOL_BALANCE_REQUIRED as number)
+                        ? Number.parseFloat(wrapAmount)
+                        : 0,
                       WRAPPED_SOL_MINT_ADDRESS,
                       false,
                     )
@@ -443,14 +449,14 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
         <Button
           className={`main-cta ${isBusy ? 'inactive' : ''}`}
           block
-          type="primary"
-          shape="round"
-          size="large"
+          type='primary'
+          shape='round'
+          size='large'
           disabled={!isWrapValid()}
           onClick={onStartTransaction}
         >
           {isBusy && (
-            <span className="mr-1">
+            <span className='mr-1'>
               <LoadingOutlined style={{ fontSize: '16px' }} />
             </span>
           )}

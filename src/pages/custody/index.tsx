@@ -1,9 +1,9 @@
-import React from 'react';
 import { CustomerServiceOutlined, SafetyOutlined, TransactionOutlined } from '@ant-design/icons';
 import { Avatar, Button, Col, Row } from 'antd';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { PreFooter } from '../../components/PreFooter';
 import { MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL } from '../../constants';
-import { useTranslation } from 'react-i18next';
 
 export const CustodyView = () => {
   const { t } = useTranslation('common');
@@ -13,51 +13,51 @@ export const CustodyView = () => {
   };
 
   return (
-    <div className="solid-bg">
-      <section className="hero">
-        <h1 className="heading">{t('custody.heading')}</h1>
-        <p className="subheading">{t('custody.subheading')}</p>
-        <Button className="main-cta" type="primary" shape="round" size="large" onClick={() => onApplyToMeanfiCustody()}>
+    <div className='solid-bg'>
+      <section className='hero'>
+        <h1 className='heading'>{t('custody.heading')}</h1>
+        <p className='subheading'>{t('custody.subheading')}</p>
+        <Button className='main-cta' type='primary' shape='round' size='large' onClick={() => onApplyToMeanfiCustody()}>
           {t('custody.custody-button')}
         </Button>
       </section>
 
-      <section className="content">
-        <div className="container">
+      <section className='content'>
+        <div className='container'>
           <Row gutter={[24, 24]}>
             <Col xs={24} md={8}>
-              <div className="highlight-box text-center">
-                <div className="highlight-icon">
+              <div className='highlight-box text-center'>
+                <div className='highlight-icon'>
                   <Avatar size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }} icon={<SafetyOutlined />} />
                 </div>
-                <h2 className="highlight-title">{t('custody.first-container.title-one')}</h2>
-                <div className="text-container">
-                  <p className="highlight-text">{t('custody.first-container.text-one')}</p>
+                <h2 className='highlight-title'>{t('custody.first-container.title-one')}</h2>
+                <div className='text-container'>
+                  <p className='highlight-text'>{t('custody.first-container.text-one')}</p>
                 </div>
               </div>
             </Col>
             <Col xs={24} md={8}>
-              <div className="highlight-box text-center">
-                <div className="highlight-icon">
+              <div className='highlight-box text-center'>
+                <div className='highlight-icon'>
                   <Avatar size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }} icon={<TransactionOutlined />} />
                 </div>
-                <h2 className="highlight-title">{t('custody.first-container.title-two')}</h2>
-                <div className="text-container">
-                  <p className="highlight-text">{t('custody.first-container.text-two')}</p>
+                <h2 className='highlight-title'>{t('custody.first-container.title-two')}</h2>
+                <div className='text-container'>
+                  <p className='highlight-text'>{t('custody.first-container.text-two')}</p>
                 </div>
               </div>
             </Col>
             <Col xs={24} md={8}>
-              <div className="highlight-box text-center">
-                <div className="highlight-icon">
+              <div className='highlight-box text-center'>
+                <div className='highlight-icon'>
                   <Avatar
                     size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
                     icon={<CustomerServiceOutlined />}
                   />
                 </div>
-                <h2 className="highlight-title">{t('custody.first-container.title-three')}</h2>
-                <div className="text-container">
-                  <p className="highlight-text">{t('custody.first-container.text-three')}</p>
+                <h2 className='highlight-title'>{t('custody.first-container.title-three')}</h2>
+                <div className='text-container'>
+                  <p className='highlight-text'>{t('custody.first-container.text-three')}</p>
                 </div>
               </div>
             </Col>
@@ -65,28 +65,28 @@ export const CustodyView = () => {
         </div>
       </section>
 
-      <section className="content flex-center contrast-section min-section-height">
-        <div className="container">
-          <div className="highlight-box text-center">
-            <h2 className="highlight-title">{t('custody.second-container.title')}</h2>
-            <div className="text-container">
-              <p className="highlight-text">{t('custody.second-container.text')}</p>
+      <section className='content flex-center contrast-section min-section-height'>
+        <div className='container'>
+          <div className='highlight-box text-center'>
+            <h2 className='highlight-title'>{t('custody.second-container.title')}</h2>
+            <div className='text-container'>
+              <p className='highlight-text'>{t('custody.second-container.text')}</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="content flex-center min-section-height">
-        <div className="container">
-          <div className="highlight-box text-center">
-            <h2 className="highlight-title">{t('custody.third-container.title')}</h2>
-            <div className="text-container">
-              <p className="highlight-text">{t('custody.third-container.text')}</p>
+      <section className='content flex-center min-section-height'>
+        <div className='container'>
+          <div className='highlight-box text-center'>
+            <h2 className='highlight-title'>{t('custody.third-container.title')}</h2>
+            <div className='text-container'>
+              <p className='highlight-text'>{t('custody.third-container.text')}</p>
               <Button
-                className="main-cta"
-                type="primary"
-                shape="round"
-                size="large"
+                className='main-cta'
+                type='primary'
+                shape='round'
+                size='large'
                 onClick={() => onApplyToMeanfiCustody()}
               >
                 {t('custody.custody-button')}

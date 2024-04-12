@@ -1,32 +1,32 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { LoadingOutlined } from '@ant-design/icons';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { PaymentStreamingAccount, StreamTemplate, TransactionFees } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
+import { IconCaretDown } from 'Icons';
 import { Button, Checkbox, DatePicker, Dropdown, Modal, Spin, TimePicker } from 'antd';
-import { UserTokenAccount } from 'models/accounts';
-import { StreamTemplate, TransactionFees, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { useTranslation } from 'react-i18next';
-import { useWallet } from 'contexts/wallet';
-import { AppStateContext } from 'contexts/appstate';
-import { addDays, isValidInteger, isValidNumber, makeDecimal, shortenAddress } from 'middleware/utils';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
 import { Identicon } from 'components/Identicon';
+import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
-import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
+import { isError } from 'middleware/transactions';
 import {
   consoleOut,
   getLockPeriodOptionLabel,
   getPaymentIntervalFromSeconds,
   getRateIntervalInSeconds,
 } from 'middleware/ui';
+import { addDays, isValidInteger, isValidNumber, makeDecimal, shortenAddress } from 'middleware/utils';
 import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
+import type { UserTokenAccount } from 'models/accounts';
 import { PaymentRateType } from 'models/enums';
-import { IconCaretDown } from 'Icons';
+import type { VestingContractEditOptions } from 'models/vesting';
 import moment from 'moment';
-import { LoadingOutlined } from '@ant-design/icons';
-import { isError } from 'middleware/transactions';
-import { VestingContractEditOptions } from 'models/vesting';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
-import { InputMean } from 'components/InputMean';
-import { BN } from '@project-serum/anchor';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const timeFormat = 'hh:mm A';
 
@@ -120,9 +120,9 @@ export const VestingContractEditModal = (props: {
     const options: VestingContractEditOptions = {
       proposalTitle,
       feePayedByTreasurer: isFeePaidByTreasurer,
-      duration: parseFloat(lockPeriodAmount),
+      duration: Number.parseFloat(lockPeriodAmount),
       durationUnit: getRateIntervalInSeconds(lockPeriodFrequency),
-      cliffVestPercent: parseFloat(cliffReleasePercentage) || 0,
+      cliffVestPercent: Number.parseFloat(cliffReleasePercentage) || 0,
       startDate: startUtc,
       multisig: isMultisigContext ? accountAddress : '',
     };
@@ -147,7 +147,7 @@ export const VestingContractEditModal = (props: {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
     for (const enumMember in value) {
-      const mappedValue = parseInt(enumMember, 10);
+      const mappedValue = Number.parseInt(enumMember, 10);
       if (!isNaN(mappedValue)) {
         const item = new PaymentRateTypeOption(index, mappedValue, getLockPeriodOptionLabel(mappedValue, t));
         options.push(item);
@@ -218,21 +218,21 @@ export const VestingContractEditModal = (props: {
     return !publicKey
       ? t('transactions.validation.not-connected')
       : !proposalTitle && isMultisigContext
-      ? 'Add a proposal title'
-      : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
-      ? t('transactions.validation.amount-sol-low')
-      : !lockPeriodAmount
-      ? 'Set vesting period'
-      : !lockPeriodFrequency
-      ? 'Set vesting period'
-      : 'Update vesting contract';
+        ? 'Add a proposal title'
+        : !nativeBalance || nativeBalance < getMinSolBlanceRequired()
+          ? t('transactions.validation.amount-sol-low')
+          : !lockPeriodAmount
+            ? 'Set vesting period'
+            : !lockPeriodFrequency
+              ? 'Set vesting period'
+              : 'Update vesting contract';
   };
 
   const isFormValid = (): boolean => {
     return publicKey &&
       (proposalTitle || !isMultisigContext) &&
       lockPeriodAmount &&
-      parseFloat(lockPeriodAmount) > 0 &&
+      Number.parseFloat(lockPeriodAmount) > 0 &&
       lockPeriodFrequency
       ? true
       : false;
@@ -255,8 +255,8 @@ export const VestingContractEditModal = (props: {
 
   const renderDatePickerExtraPanel = () => {
     return (
-      <span className="flat-button tiny stroked primary" onClick={onResetDate}>
-        <span className="mx-1">Reset</span>
+      <span className='flat-button tiny stroked primary' onClick={onResetDate}>
+        <span className='mx-1'>Reset</span>
       </span>
     );
   };
@@ -265,15 +265,15 @@ export const VestingContractEditModal = (props: {
     return (
       selectedMultisig && (
         <div className={`transaction-list-row w-100 no-pointer`}>
-          <div className="icon-cell">
+          <div className='icon-cell'>
             <Identicon address={selectedMultisig.id} style={{ width: '30', display: 'inline-flex' }} />
           </div>
-          <div className="description-cell">
-            <div className="title text-truncate">{selectedMultisig.label}</div>
-            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id, 8)}</div>
+          <div className='description-cell'>
+            <div className='title text-truncate'>{selectedMultisig.label}</div>
+            <div className='subtitle text-truncate'>{shortenAddress(selectedMultisig.id, 8)}</div>
           </div>
-          <div className="rate-cell">
-            <div className="rate-amount">
+          <div className='rate-cell'>
+            <div className='rate-amount'>
               {t('multisig.multisig-accounts.pending-transactions', {
                 txs: selectedMultisig.pendingTxsAmount,
               })}
@@ -287,14 +287,14 @@ export const VestingContractEditModal = (props: {
   const renderProposalTitleField = () => {
     if (isMultisigContext && selectedMultisig) {
       return (
-        <div className="mb-3 mt-3">
-          <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+        <div className='mb-3 mt-3'>
+          <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
           <InputMean
-            id="proposal-title-field"
-            name="Title"
-            className="w-100 general-text-input"
+            id='proposal-title-field'
+            name='Title'
+            className='w-100 general-text-input'
             onChange={(e: any) => setProposalTitle(e.target.value)}
-            placeholder="Title for the multisig proposal"
+            placeholder='Title for the multisig proposal'
             value={proposalTitle}
           />
         </div>
@@ -305,8 +305,8 @@ export const VestingContractEditModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">Edit Vesting Contract</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>Edit Vesting Contract</div>}
       footer={null}
       open={isVisible}
       onCancel={handleClose}
@@ -320,27 +320,27 @@ export const VestingContractEditModal = (props: {
           {/* Multisig in context */}
           {isMultisigContext && selectedMultisig && (
             <>
-              <div className="form-label">Multisig account</div>
-              <div className="well">{renderSelectedMultisig()}</div>
+              <div className='form-label'>Multisig account</div>
+              <div className='well'>{renderSelectedMultisig()}</div>
             </>
           )}
 
           {/* Vesting period */}
-          <div className="form-label">Vesting period</div>
-          <div className="two-column-layout">
-            <div className="left">
-              <div className="well">
-                <div className="flex-fixed-right">
-                  <div className="left">
+          <div className='form-label'>Vesting period</div>
+          <div className='two-column-layout'>
+            <div className='left'>
+              <div className='well'>
+                <div className='flex-fixed-right'>
+                  <div className='left'>
                     <input
-                      id="plock-period-field"
-                      className="w-100 general-text-input"
-                      autoComplete="on"
-                      autoCorrect="off"
-                      type="text"
+                      id='plock-period-field'
+                      className='w-100 general-text-input'
+                      autoComplete='on'
+                      autoCorrect='off'
+                      type='text'
                       onChange={handleLockPeriodAmountChange}
                       placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
-                      spellCheck="false"
+                      spellCheck='false'
                       min={1}
                       value={lockPeriodAmount}
                     />
@@ -348,15 +348,15 @@ export const VestingContractEditModal = (props: {
                 </div>
               </div>
             </div>
-            <div className="right">
-              <div className="well">
+            <div className='right'>
+              <div className='well'>
                 <Dropdown menu={lockPeriodOptionsMenu()} trigger={['click']}>
-                  <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                    <div className="left">
+                  <span className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
+                    <div className='left'>
                       <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)} </span>
                     </div>
-                    <div className="right">
-                      <IconCaretDown className="mean-svg-icons" />
+                    <div className='right'>
+                      <IconCaretDown className='mean-svg-icons' />
                     </div>
                   </span>
                 </Dropdown>
@@ -366,26 +366,26 @@ export const VestingContractEditModal = (props: {
 
           {/* Contract commencement date */}
           <FormLabelWithIconInfo
-            label="Contract commencement date"
-            tooltipText="This the the contract start date and time and establishes when vesting will begin for all recipients. No additional streams can be created once the vesting contract has started."
+            label='Contract commencement date'
+            tooltipText='This the the contract start date and time and establishes when vesting will begin for all recipients. No additional streams can be created once the vesting contract has started.'
           />
-          <div className="two-column-layout">
-            <div className="left">
-              <div className="well">
-                <div className="flex-fixed-right">
-                  <div className="left static-data-field">{paymentStartDate}</div>
-                  <div className="right">
-                    <div className="add-on simplelink">
+          <div className='two-column-layout'>
+            <div className='left'>
+              <div className='well'>
+                <div className='flex-fixed-right'>
+                  <div className='left static-data-field'>{paymentStartDate}</div>
+                  <div className='right'>
+                    <div className='add-on simplelink'>
                       <>
                         {
                           <DatePicker
-                            size="middle"
+                            size='middle'
                             bordered={false}
-                            className="addon-date-picker"
+                            className='addon-date-picker'
                             aria-required={true}
                             allowClear={false}
                             disabledDate={todayAndPriorDatesDisabled}
-                            placeholder="Pick a date"
+                            placeholder='Pick a date'
                             onChange={(value: any, date: string) => handleDateChange(date)}
                             value={moment(paymentStartDate, DATEPICKER_FORMAT) as any}
                             format={DATEPICKER_FORMAT}
@@ -400,14 +400,14 @@ export const VestingContractEditModal = (props: {
                 </div>
               </div>
             </div>
-            <div className="right">
-              <div className="well time-picker">
+            <div className='right'>
+              <div className='well time-picker'>
                 {defaultTime && (
                   <TimePicker
                     defaultValue={defaultTime}
                     bordered={false}
                     allowClear={false}
-                    size="middle"
+                    size='middle'
                     use12Hours
                     format={timeFormat}
                     onChange={onTimePickerChange}
@@ -419,24 +419,24 @@ export const VestingContractEditModal = (props: {
 
           {/* Cliff release */}
           <FormLabelWithIconInfo
-            label="Cliff release (On commencement date)"
-            tooltipText="The percentage of allocated funds released to each recipient once the vesting contract starts."
+            label='Cliff release (On commencement date)'
+            tooltipText='The percentage of allocated funds released to each recipient once the vesting contract starts.'
           />
-          <div className="well">
-            <div className="flexible-right mb-1">
-              <div className="token-group">
+          <div className='well'>
+            <div className='flexible-right mb-1'>
+              <div className='token-group'>
                 {percentages.map((percentage, index) => (
-                  <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                    <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>
+                  <div key={index} className='mb-1 d-flex flex-column align-items-center'>
+                    <div className='token-max simplelink active' onClick={() => onChangeValuePercentages(percentage)}>
                       {percentage}%
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="flex-fixed-left">
-              <div className="left">
-                <span className="add-on simplelink">
+            <div className='flex-fixed-left'>
+              <div className='left'>
+                <span className='add-on simplelink'>
                   {selectedToken && (
                     <TokenDisplay
                       onClick={() => {}}
@@ -447,53 +447,53 @@ export const VestingContractEditModal = (props: {
                   )}
                 </span>
               </div>
-              <div className="right flex-row justify-content-end align-items-center">
+              <div className='right flex-row justify-content-end align-items-center'>
                 <input
-                  className="general-text-input text-right"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  type="text"
+                  className='general-text-input text-right'
+                  inputMode='decimal'
+                  autoComplete='off'
+                  autoCorrect='off'
+                  type='text'
                   onChange={handleCliffReleaseAmountChange}
-                  pattern="^[0-9]*[.,]?[0-9]*$"
-                  placeholder="0.0"
+                  pattern='^[0-9]*[.,]?[0-9]*$'
+                  placeholder='0.0'
                   minLength={1}
                   maxLength={79}
-                  spellCheck="false"
+                  spellCheck='false'
                   value={cliffReleasePercentage}
                 />
-                <span className="suffix">%</span>
+                <span className='suffix'>%</span>
               </div>
             </div>
           </div>
 
           {/* Streaming fees will be paid from the vesting contract's funds */}
-          <div className="ml-1 mb-3">
+          <div className='ml-1 mb-3'>
             <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>
               {t('vesting.create-account.fee-paid-by-treasury')}
             </Checkbox>
           </div>
 
           {/* CTA */}
-          <div className="cta-container">
+          <div className='cta-container'>
             <Button
-              type="primary"
-              shape="round"
-              size="large"
-              className="thin-stroke"
+              type='primary'
+              shape='round'
+              size='large'
+              className='thin-stroke'
               disabled={isBusy || !isFormValid()}
               onClick={onAcceptEditChanges}
             >
               {isBusy && (
-                <span className="mr-1">
+                <span className='mr-1'>
                   <LoadingOutlined style={{ fontSize: '16px' }} />
                 </span>
               )}
               {isBusy
                 ? 'Updating vesting contract'
                 : isError(transactionStatus.currentOperation)
-                ? t('general.retry')
-                : getFormButtonLabel()}
+                  ? t('general.retry')
+                  : getFormButtonLabel()}
             </Button>
           </div>
         </div>

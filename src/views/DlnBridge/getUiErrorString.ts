@@ -1,4 +1,4 @@
-import { DlnErrorResponse } from "./DlnBridgeProvider";
+import type { DlnErrorResponse } from './DlnBridgeProvider';
 
 const getUiErrorString = (errorResponse: DlnErrorResponse) => {
   let errorString = '';
@@ -29,11 +29,11 @@ const getUiErrorString = (errorResponse: DlnErrorResponse) => {
     case 'INTERNAL_SDK_ERROR':
     case 'INTERNAL_SERVER_ERROR':
     default:
-      errorString = 'There is not enough liquidity in the destination'
+      errorString = 'There is not enough liquidity in the destination';
       break;
   }
 
   return errorString;
-}
+};
 
 export default getUiErrorString;

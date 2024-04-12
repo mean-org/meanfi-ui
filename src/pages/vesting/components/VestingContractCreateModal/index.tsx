@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { TransactionFees } from '@mean-dao/payment-streaming';
 import { Modal } from 'antd';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { UserTokenAccount } from 'models/accounts';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { UserTokenAccount } from 'models/accounts';
+import React, { useEffect, useState } from 'react';
 import { VestingContractCreateForm } from '../VestingContractCreateForm';
-import { TransactionFees } from '@mean-dao/payment-streaming';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
 export const VestingContractCreateModal = (props: {
   accountAddress: string;
@@ -46,8 +46,8 @@ export const VestingContractCreateModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">Create Vesting Contract</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>Create Vesting Contract</div>}
       footer={null}
       open={isVisible}
       onCancel={handleClose}

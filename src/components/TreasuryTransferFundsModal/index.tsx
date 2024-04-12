@@ -1,7 +1,8 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
-import { PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
+import { AccountType, type PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { Identicon } from 'components/Identicon';
@@ -27,13 +28,13 @@ import {
   toTokenAmountBn,
   toUiAmount,
 } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { TreasuryWithdrawParams } from 'models/treasuries';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import type { TreasuryWithdrawParams } from 'models/treasuries';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
-import { BN } from '@project-serum/anchor';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -112,34 +113,34 @@ export const TreasuryTransferFundsModal = (props: {
     return !to
       ? 'Enter an address'
       : to && !isValidAddress(to)
-      ? 'Invalid address'
-      : !tokenAmount || +tokenAmount === 0
-      ? 'Enter amount'
-      : unallocatedBalance.isZero()
-      ? 'No balance'
-      : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance || new BN(0))
-      ? 'Amount exceeded'
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : t('treasuries.withdraw-funds.main-cta');
+        ? 'Invalid address'
+        : !tokenAmount || +tokenAmount === 0
+          ? 'Enter amount'
+          : unallocatedBalance.isZero()
+            ? 'No balance'
+            : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance || new BN(0))
+              ? 'Amount exceeded'
+              : !isVerifiedRecipient
+                ? t('transactions.validation.verified-recipient-unchecked')
+                : t('treasuries.withdraw-funds.main-cta');
   };
 
   const getTransactionStartButtonLabelMultisig = () => {
     return !proposalTitle
       ? 'Add a proposal title'
       : !to
-      ? 'Enter an address'
-      : to && !isValidAddress(to)
-      ? 'Invalid address'
-      : !tokenAmount || +tokenAmount === 0
-      ? 'Enter amount'
-      : unallocatedBalance.isZero()
-      ? 'No balance'
-      : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance || new BN(0))
-      ? 'Amount exceeded'
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : 'Sign proposal';
+        ? 'Enter an address'
+        : to && !isValidAddress(to)
+          ? 'Invalid address'
+          : !tokenAmount || +tokenAmount === 0
+            ? 'Enter amount'
+            : unallocatedBalance.isZero()
+              ? 'No balance'
+              : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance || new BN(0))
+                ? 'Amount exceeded'
+                : !isVerifiedRecipient
+                  ? t('transactions.validation.verified-recipient-unchecked')
+                  : 'Sign proposal';
   };
 
   useEffect(() => {
@@ -302,7 +303,7 @@ export const TreasuryTransferFundsModal = (props: {
       return 0;
     }
 
-    return parseFloat(topupAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
+    return Number.parseFloat(topupAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
   }, [topupAmount, selectedToken, getTokenPriceByAddress]);
 
   // Set treasury unalocated balance in BN
@@ -363,12 +364,12 @@ export const TreasuryTransferFundsModal = (props: {
             height={30}
             src={token.logoURI}
             onError={imageOnErrorHandler}
-            className="token-img"
+            className='token-img'
           />
         );
       } else {
         img = (
-          <Identicon address={associatedToken} style={{ width: '30', display: 'inline-flex' }} className="token-img" />
+          <Identicon address={associatedToken} style={{ width: '30', display: 'inline-flex' }} className='token-img' />
         );
       }
     } else {
@@ -376,40 +377,40 @@ export const TreasuryTransferFundsModal = (props: {
         <Identicon
           address={isNewTreasury ? v2.id.toString() : v1.id?.toString()}
           style={{ width: '30', display: 'inline-flex' }}
-          className="token-img"
+          className='token-img'
         />
       );
     }
 
     return (
-      <div className="transaction-list-row no-pointer">
-        <div className="icon-cell">
-          <div className="token-icon">{img}</div>
+      <div className='transaction-list-row no-pointer'>
+        <div className='icon-cell'>
+          <div className='token-icon'>{img}</div>
         </div>
-        <div className="description-cell">
+        <div className='description-cell'>
           {(isNewTreasury ? v2.name : v1.label) ? (
-            <div className="title text-truncate">
+            <div className='title text-truncate'>
               {isNewTreasury ? v2.name : v1.label}
               <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                 {treasuryType === AccountType.Open ? 'Open' : 'Locked'}
               </span>
             </div>
           ) : (
-            <div className="title text-truncate">{shortenAddress(item.id as string, 8)}</div>
+            <div className='title text-truncate'>{shortenAddress(item.id as string, 8)}</div>
           )}
           {isMultisigContext ? (
-            <div className="subtitle text-truncate">{t('treasuries.treasury-list.multisig-treasury-label')}</div>
+            <div className='subtitle text-truncate'>{t('treasuries.treasury-list.multisig-treasury-label')}</div>
           ) : null}
         </div>
-        <div className="rate-cell text-center">
+        <div className='rate-cell text-center'>
           {!isNewTreasury && v1.upgradeRequired ? (
             <span>&nbsp;</span>
           ) : (
             <>
-              <div className="rate-amount">
+              <div className='rate-amount'>
                 {formatThousands(isNewTreasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
               </div>
-              <div className="interval">streams</div>
+              <div className='interval'>streams</div>
             </>
           )}
         </div>
@@ -419,9 +420,9 @@ export const TreasuryTransferFundsModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
+      className='mean-modal simple-modal'
       title={
-        <div className="modal-title">
+        <div className='modal-title'>
           {isMultisigContext ? 'Propose withdrawal' : t('treasuries.withdraw-funds.modal-title')}
         </div>
       }
@@ -442,14 +443,14 @@ export const TreasuryTransferFundsModal = (props: {
           <>
             {/* Proposal title */}
             {isMultisigContext && (
-              <div className="mb-3">
-                <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+              <div className='mb-3'>
+                <div className='form-label'>{t('multisig.proposal-modal.title')}</div>
                 <InputMean
-                  id="proposal-title-field"
-                  name="Title"
-                  className="w-100 general-text-input"
+                  id='proposal-title-field'
+                  name='Title'
+                  className='w-100 general-text-input'
                   onChange={onTitleInputValueChange}
-                  placeholder="Add a proposal title (required)"
+                  placeholder='Add a proposal title (required)'
                   value={proposalTitle}
                 />
               </div>
@@ -457,42 +458,42 @@ export const TreasuryTransferFundsModal = (props: {
 
             {/* Transfer from */}
             {treasuryDetails && (
-              <div className="mb-3">
-                <div className="form-label">{t('treasuries.withdraw-funds.selected-treasury-label')}</div>
-                <div className="well">{renderTreasury(treasuryDetails)}</div>
+              <div className='mb-3'>
+                <div className='form-label'>{t('treasuries.withdraw-funds.selected-treasury-label')}</div>
+                <div className='well'>{renderTreasury(treasuryDetails)}</div>
               </div>
             )}
 
             {/* Transfer to */}
-            <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
-            <div className="well">
+            <div className='form-label'>{t('multisig.transfer-tokens.transfer-to-label')}</div>
+            <div className='well'>
               <input
-                id="mint-to-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
+                id='mint-to-field'
+                className='general-text-input'
+                autoComplete='on'
+                autoCorrect='off'
+                type='text'
                 onChange={onMintToAddressChange}
                 placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
                 required={true}
-                spellCheck="false"
+                spellCheck='false'
                 value={to}
               />
               {to && !isValidAddress(to) ? (
-                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
               ) : (
                 isInputMultisigAddress(to) && (
-                  <span className="form-field-error">{t('transactions.validation.invalid-account')}</span>
+                  <span className='form-field-error'>{t('transactions.validation.invalid-account')}</span>
                 )
               )}
             </div>
 
             {/* Top up amount */}
-            <div className="form-label">{t('streams.add-funds.amount-label')}</div>
-            <div className="well">
-              <div className="flex-fixed-left">
-                <div className="left">
-                  <span className="add-on">
+            <div className='form-label'>{t('streams.add-funds.amount-label')}</div>
+            <div className='well'>
+              <div className='flex-fixed-left'>
+                <div className='left'>
+                  <span className='add-on'>
                     {selectedToken && (
                       <TokenDisplay
                         onClick={() => {}}
@@ -505,7 +506,7 @@ export const TreasuryTransferFundsModal = (props: {
                       <>
                         {selectedToken && tokenBalance ? (
                           <div
-                            className="token-max simplelink"
+                            className='token-max simplelink'
                             onClick={() => {
                               setTopupAmount(tokenBalance.toFixed(selectedToken.decimals));
                               setTokenAmount(makeInteger(tokenBalance, selectedToken?.decimals || 9));
@@ -519,7 +520,7 @@ export const TreasuryTransferFundsModal = (props: {
                       <>
                         {selectedToken && unallocatedBalance ? (
                           <div
-                            className="token-max simplelink"
+                            className='token-max simplelink'
                             onClick={() => {
                               const decimals = selectedToken ? selectedToken.decimals : 6;
                               const maxAmount = getMaxAmount();
@@ -534,26 +535,26 @@ export const TreasuryTransferFundsModal = (props: {
                     )}
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <input
-                    id="topup-amount-field"
-                    className="general-text-input text-right"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    type="text"
+                    id='topup-amount-field'
+                    className='general-text-input text-right'
+                    inputMode='decimal'
+                    autoComplete='off'
+                    autoCorrect='off'
+                    type='text'
                     onChange={handleAmountChange}
-                    pattern="^[0-9]*[.,]?[0-9]*$"
-                    placeholder="0.0"
+                    pattern='^[0-9]*[.,]?[0-9]*$'
+                    placeholder='0.0'
                     minLength={1}
                     maxLength={79}
-                    spellCheck="false"
+                    spellCheck='false'
                     value={topupAmount}
                   />
                 </div>
               </div>
-              <div className="flex-fixed-right">
-                <div className="left inner-label">
+              <div className='flex-fixed-right'>
+                <div className='left inner-label'>
                   {!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose) ? (
                     <span>{t('add-funds.label-right')}:</span>
                   ) : (
@@ -584,7 +585,7 @@ export const TreasuryTransferFundsModal = (props: {
                     </>
                   )}
                 </div>
-                <div className="right inner-label">
+                <div className='right inner-label'>
                   {publicKey ? (
                     <span
                       className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
@@ -603,20 +604,20 @@ export const TreasuryTransferFundsModal = (props: {
             {isMultisigContext ? <p>{t('multisig.multisig-assets.explanatory-paragraph')}</p> : null}
 
             {/* confirm that the recipient address doesn't belong to an exchange */}
-            <div className="mt-2 mb-3 confirm-terms">
+            <div className='mt-2 mb-3 confirm-terms'>
               <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
                 {t('treasuries.withdraw-funds.verified-label')}
               </Checkbox>
             </div>
 
             {!isError(transactionStatus.currentOperation) && (
-              <div className="col-12 p-0 mt-3">
+              <div className='col-12 p-0 mt-3'>
                 <Button
                   className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
                   block
-                  type="primary"
-                  shape="round"
-                  size="large"
+                  type='primary'
+                  shape='round'
+                  size='large'
                   disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
@@ -631,33 +632,33 @@ export const TreasuryTransferFundsModal = (props: {
                   {isBusy
                     ? 'multisig.transfer-tokens.main-cta-busy'
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? isMultisigContext
-                      ? getTransactionStartButtonLabelMultisig()
-                      : getTransactionStartButtonLabel()
-                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                    ? t('general.cta-finish')
-                    : t('general.refresh')}
+                      ? isMultisigContext
+                        ? getTransactionStartButtonLabelMultisig()
+                        : getTransactionStartButtonLabel()
+                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                        ? t('general.cta-finish')
+                        : t('general.refresh')}
                 </Button>
               </div>
             )}
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
-          <div className="transaction-progress">
-            <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-            <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
+          <div className='transaction-progress'>
+            <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+            <h4 className='font-bold'>{t('multisig.transfer-tokens.success-message')}</h4>
           </div>
         ) : (
-          <div className="transaction-progress p-0">
-            <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+          <div className='transaction-progress p-0'>
+            <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
             {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-              <h4 className="mb-4">
+              <h4 className='mb-4'>
                 {t('transactions.status.tx-start-failure', {
                   accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                   feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
                 })}
               </h4>
             ) : (
-              <h4 className="font-bold mb-3">
+              <h4 className='font-bold mb-3'>
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
             )}
@@ -671,26 +672,26 @@ export const TreasuryTransferFundsModal = (props: {
         }
       >
         {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress">
-            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-            <h4 className="font-bold mb-1">
+          <div className='transaction-progress'>
+            <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+            <h4 className='font-bold mb-1'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
             {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              <div className='indication'>{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}
       </div>
 
       {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
-        <div className="row two-col-ctas mt-3 transaction-progress p-2">
-          <div className="col-12">
+        <div className='row two-col-ctas mt-3 transaction-progress p-2'>
+          <div className='col-12'>
             <Button
               block
-              type="text"
-              shape="round"
-              size="middle"
+              type='text'
+              shape='round'
+              size='middle'
               className={isBusy ? 'inactive' : ''}
               onClick={() =>
                 isError(transactionStatus.currentOperation) ? onAcceptWithdrawTreasuryFunds() : onCloseModal()

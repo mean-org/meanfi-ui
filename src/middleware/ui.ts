@@ -1,4 +1,5 @@
-import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { BN } from '@project-serum/anchor';
 import BigNumber from 'bignumber.js';
 import bs58 from 'bs58';
 import dateFormat from 'dateformat';
@@ -11,11 +12,10 @@ import {
   VERBOSE_DATE_FORMAT,
   VERBOSE_DATE_TIME_FORMAT,
 } from '../constants';
-import { TransactionStatusInfo } from '../contexts/appstate';
+import type { TransactionStatusInfo } from '../contexts/appstate';
 import { environment } from '../environments/environment';
-import { TimeData } from '../models/common-types';
+import type { TimeData } from '../models/common-types';
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from '../models/enums';
-import { BN } from '@project-serum/anchor';
 import detectNetworkByAddress from './detectNetworkByAddress';
 
 export const isDev = (): boolean => {
@@ -626,7 +626,7 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
     }
     // If more zeroes than the wanted amount
     if (trailingZeroes > zeroes) {
-      const plainNumber = parseFloat(numericString);
+      const plainNumber = Number.parseFloat(numericString);
       result = plainNumber.toString();
       // Add the needed amount of zeroes after parsing
       if (result.indexOf('.') === -1) {
@@ -641,7 +641,7 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
 };
 
 export const getFormattedNumberToLocale = (value: any, digits = 0) => {
-  const converted = parseFloat(value.toString());
+  const converted = Number.parseFloat(value.toString());
   const formatted = new Intl.NumberFormat('en-US', {
     minimumSignificantDigits: 1,
     minimumFractionDigits: digits,
@@ -654,7 +654,7 @@ export const toUsCurrency = (value: any) => {
   if (!value) {
     return '$0.00';
   }
-  const converted = parseFloat(value.toString());
+  const converted = Number.parseFloat(value.toString());
   const formatted = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -811,7 +811,7 @@ export const getPercentualTsBetweenTwoDates = (
 
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {
   let fee = 0;
-  const inputAmount = amount ? parseFloat(amount) : 0;
+  const inputAmount = amount ? Number.parseFloat(amount) : 0;
   if (fees?.mspPercentFee) {
     fee = percentage(fees.mspPercentFee, inputAmount);
   }
@@ -820,7 +820,7 @@ export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): numb
 
 export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
   let fee = 0;
-  const inputAmount = amount ? parseFloat(amount) : 0;
+  const inputAmount = amount ? Number.parseFloat(amount) : 0;
   if (fees) {
     if (fees.mspPercentFee) {
       fee = percentage(fees.mspPercentFee, inputAmount);

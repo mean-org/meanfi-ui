@@ -1,7 +1,10 @@
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { IconLoading, IconVerticalEllipsis } from 'Icons';
 import { Alert, Button, Col, Dropdown, Row, Space, Tabs, Tooltip } from 'antd';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
+import CopyMultisigIdModal from 'components/CopyMultisigIdModal';
 import { MultisigOwnersView } from 'components/MultisigOwnersView';
 import { RightInfoDetails } from 'components/RightInfoDetails';
 import { SolBalanceModal } from 'components/SolBalanceModal';
@@ -9,14 +12,11 @@ import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { IconLoading, IconVerticalEllipsis } from 'Icons';
 import { consoleOut, toUsCurrency } from 'middleware/ui';
 import { getAmountFromLamports, shortenAddress } from 'middleware/utils';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { useTranslation } from 'react-i18next';
-import CopyMultisigIdModal from 'components/CopyMultisigIdModal';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 export const SafeInfo = (props: {
   onEditMultisigClick?: any;
@@ -87,10 +87,10 @@ export const SafeInfo = (props: {
   }, [selectedMultisig]);
 
   const renderSafeName = (
-    <Row className="d-flex align-items-center">
+    <Row className='d-flex align-items-center'>
       {safeNameImg && safeNameImgAlt && (
-        <Tooltip placement="rightTop" title="Serum Multisig">
-          <img src={safeNameImg} alt={safeNameImgAlt} width={16} height={16} className="simplelink mr-1" />
+        <Tooltip placement='rightTop' title='Serum Multisig'>
+          <img src={safeNameImg} alt={safeNameImgAlt} width={16} height={16} className='simplelink mr-1' />
         </Tooltip>
       )}
       <div>{selectedLabelName}</div>
@@ -102,8 +102,8 @@ export const SafeInfo = (props: {
     <>
       <span>Security</span>
       <MultisigOwnersView
-        label="view"
-        className="ml-1"
+        label='view'
+        className='ml-1'
         participants={selectedMultisig ? selectedMultisig.owners : []}
       />
     </>
@@ -125,7 +125,7 @@ export const SafeInfo = (props: {
   const renderSafeBalance =
     totalSafeBalance === undefined ? (
       <>
-        <IconLoading className="mean-svg-icons" style={{ height: '15px', lineHeight: '15px' }} />
+        <IconLoading className='mean-svg-icons' style={{ height: '15px', lineHeight: '15px' }} />
       </>
     ) : totalSafeBalance === 0 ? (
       <>$0.00</>
@@ -186,12 +186,12 @@ export const SafeInfo = (props: {
       });
     }
 
-    return <Tabs items={items} activeKey={selectedTab} onChange={onTabChanged} className="neutral" />;
+    return <Tabs items={items} activeKey={selectedTab} onChange={onTabChanged} className='neutral' />;
   }, [onTabChanged, proposalsTabContent, selectedTab]);
 
   const renderTabset = () => {
     if (tabs && tabs.length > 0) {
-      return <Tabs items={tabs} activeKey={selectedTab} onChange={onTabChanged} className="neutral" />;
+      return <Tabs items={tabs} activeKey={selectedTab} onChange={onTabChanged} className='neutral' />;
     } else {
       return getSafeTabs();
     }
@@ -202,7 +202,7 @@ export const SafeInfo = (props: {
     items.push({
       key: 'cta-row-dropdown-item-01',
       label: (
-        <span className="menu-item-text" onClick={showCopyMultisigIdModal}>
+        <span className='menu-item-text' onClick={showCopyMultisigIdModal}>
           {t('multisig.copy-multisig-id.cta-label')}
         </span>
       ),
@@ -213,28 +213,28 @@ export const SafeInfo = (props: {
 
   const renderCtaRow = () => {
     return (
-      <div className="flex-fixed-right cta-row">
-        <Space className="left" size="middle" wrap>
-          <Button type="default" shape="round" size="small" className="thin-stroke" onClick={onNewProposalClicked}>
+      <div className='flex-fixed-right cta-row'>
+        <Space className='left' size='middle' wrap>
+          <Button type='default' shape='round' size='small' className='thin-stroke' onClick={onNewProposalClicked}>
             New proposal
           </Button>
           <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
+            type='default'
+            shape='round'
+            size='small'
+            className='thin-stroke'
             onClick={() => onEditMultisigClick()}
           >
             Edit safe
           </Button>
         </Space>
-        <Dropdown menu={getCtaRowMenuItems()} placement="bottomRight" trigger={['click']}>
-          <span className="icon-button-container">
+        <Dropdown menu={getCtaRowMenuItems()} placement='bottomRight' trigger={['click']}>
+          <span className='icon-button-container'>
             <Button
-              type="default"
-              shape="circle"
-              size="middle"
-              icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+              type='default'
+              shape='circle'
+              size='middle'
+              icon={<IconVerticalEllipsis className='mean-svg-icons' />}
               onClick={e => e.preventDefault()}
             />
           </span>
@@ -251,11 +251,11 @@ export const SafeInfo = (props: {
 
       {multisigSolBalance !== undefined &&
         (multisigSolBalance / LAMPORTS_PER_SOL <= MIN_SOL_BALANCE_REQUIRED ? (
-          <Row gutter={[8, 8]} className="mr-0 ml-0">
-            <Col span={24} className="alert-info-message pr-6 simplelink" onClick={showSolBalanceModal}>
+          <Row gutter={[8, 8]} className='mr-0 ml-0'>
+            <Col span={24} className='alert-info-message pr-6 simplelink' onClick={showSolBalanceModal}>
               <Alert
-                message="SOL account balance is very low in the safe. Click here to add more SOL."
-                type="info"
+                message='SOL account balance is very low in the safe. Click here to add more SOL.'
+                type='info'
                 showIcon
               />
             </Col>

@@ -5,7 +5,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { consoleOut, toUsCurrency } from 'middleware/ui';
 import { getAmountWithSymbol } from 'middleware/utils';
-import { UserTokenAccount } from 'models/accounts';
+import type { UserTokenAccount } from 'models/accounts';
 import { useContext, useEffect, useState } from 'react';
 
 const WalletAccountSummary = (props: { accountBalance?: number }) => {
@@ -47,14 +47,14 @@ const WalletAccountSummary = (props: { accountBalance?: number }) => {
   }, [selectedAccount.address, userTokensResponse]);
 
   return (
-    <div className="accounts-category-meta">
+    <div className='accounts-category-meta'>
       {selectedAsset ? (
         <>
-          <Row className="mb-2">
+          <Row className='mb-2'>
             <Col span={14}>
-              <div className="info-label">Account address</div>
-              <div className="transaction-detail-row">
-                <div className="info-data">
+              <div className='info-label'>Account address</div>
+              <div className='transaction-detail-row'>
+                <div className='info-data'>
                   <AddressDisplay
                     address={selectedAsset.publicAddress as string}
                     iconStyles={{ width: '16', height: '16' }}
@@ -66,18 +66,18 @@ const WalletAccountSummary = (props: { accountBalance?: number }) => {
               </div>
             </Col>
             <Col span={10}>
-              <div className="info-label">Total account value</div>
-              <div className="transaction-detail-row">
-                <span className="info-data">{renderNetworth()}</span>
+              <div className='info-label'>Total account value</div>
+              <div className='transaction-detail-row'>
+                <span className='info-data'>{renderNetworth()}</span>
               </div>
             </Col>
           </Row>
 
-          <Row className="mb-2">
+          <Row className='mb-2'>
             <Col span={14}>
-              <div className="info-label">Native balance</div>
-              <div className="transaction-detail-row">
-                <div className="info-data">
+              <div className='info-label'>Native balance</div>
+              <div className='transaction-detail-row'>
+                <div className='info-data'>
                   {getAmountWithSymbol(
                     selectedAsset.balance ?? 0,
                     selectedAsset.address,
@@ -89,9 +89,9 @@ const WalletAccountSummary = (props: { accountBalance?: number }) => {
               </div>
             </Col>
             <Col span={10}>
-              <div className="info-label">Asset value</div>
-              <div className="transaction-detail-row">
-                <span className="info-data">{renderBalance()}</span>
+              <div className='info-label'>Asset value</div>
+              <div className='transaction-detail-row'>
+                <span className='info-data'>{renderBalance()}</span>
               </div>
             </Col>
           </Row>

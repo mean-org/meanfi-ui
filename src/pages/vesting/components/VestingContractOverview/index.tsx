@@ -1,30 +1,30 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { StreamTemplate, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { useTranslation } from 'react-i18next';
+import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons';
+import type { PaymentStreamingAccount, StreamTemplate } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
+import { IconInfoCircle } from 'Icons';
+import { Alert, Progress } from 'antd';
+import BigNumber from 'bignumber.js';
+import { TokenIcon } from 'components/TokenIcon';
 import { AppStateContext } from 'contexts/appstate';
-import { TimeData } from 'models/common-types';
-import { PaymentRateType } from 'models/enums';
 import {
+  consoleOut,
   getLockPeriodOptionLabelByAmount,
   getPaymentIntervalFromSeconds,
   getReadableDate,
   getTimeEllapsed,
   getTimeRemaining,
   getlllDate,
-  relativeTimeFromDates,
-  consoleOut,
   percentageBn,
   percentualBn,
+  relativeTimeFromDates,
 } from 'middleware/ui';
 import { displayAmountWithSymbol, makeDecimal } from 'middleware/utils';
-import { Alert, Progress } from 'antd';
-import { TokenIcon } from 'components/TokenIcon';
-import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons';
-import { IconInfoCircle } from 'Icons';
-import { VestingFlowRateInfo } from 'models/vesting';
-import BigNumber from 'bignumber.js';
-import { BN } from '@project-serum/anchor';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TimeData } from 'models/common-types';
+import { PaymentRateType } from 'models/enums';
+import type { VestingFlowRateInfo } from 'models/vesting';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const VestingContractOverview = (props: {
   availableStreamingBalance: number | BN;
@@ -76,7 +76,7 @@ export const VestingContractOverview = (props: {
   const getContractFinishDate = useCallback(() => {
     if (paymentStartDate && lockPeriodAmount && lockPeriodUnits) {
       // Total length of vesting period in seconds
-      const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
+      const lockPeriod = Number.parseFloat(lockPeriodAmount) * lockPeriodUnits;
       // Final date = Start date + lockPeriod
       const ts = new Date(paymentStartDate).getTime();
       const finishDate = new Date(lockPeriod * 1000 + ts);
@@ -109,7 +109,7 @@ export const VestingContractOverview = (props: {
       let vestedBn = new BigNumber(0);
       let streamableBn = new BigNumber(0);
       let releasedBn = new BigNumber(0);
-      const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
+      const lockPeriod = Number.parseFloat(lockPeriodAmount) * lockPeriodUnits;
       const lockPeriodBn = new BigNumber(lockPeriod);
       const elapsedSeconds = Math.round(Math.abs(getTimeEllapsed(paymentStartDate).total) / 1000);
       const elapsedSecondsBn = new BigNumber(elapsedSeconds);
@@ -131,7 +131,7 @@ export const VestingContractOverview = (props: {
           'lockPeriod (s):',
           `${lockPeriod} (${lockPeriodAmount} ${getLockPeriodOptionLabelByAmount(
             lockPeriodFrequency,
-            parseFloat(lockPeriodAmount),
+            Number.parseFloat(lockPeriodAmount),
             t,
           )})`,
           'purple',
@@ -310,10 +310,10 @@ export const VestingContractOverview = (props: {
     return (
       <>
         {vestingContract.totalStreams > 0 && (
-          <div className="mt-3 pr-2">
-            <div className="flex-row align-items-center">
+          <div className='mt-3 pr-2'>
+            <div className='flex-row align-items-center'>
               <TokenIcon mintAddress={selectedToken.address} size={24} />
-              <span className="font-size-100 font-bold fg-secondary-75 pl-2">
+              <span className='font-size-100 font-bold fg-secondary-75 pl-2'>
                 {displayAmountWithSymbol(
                   currentVestingAmount.toString(),
                   selectedToken.address,
@@ -334,8 +334,8 @@ export const VestingContractOverview = (props: {
                 vested
               </span>
             </div>
-            <div className="flex-fixed-right">
-              <div className="left mr-1">
+            <div className='flex-fixed-right'>
+              <div className='left mr-1'>
                 <Progress
                   percent={completedVestingPercentage}
                   showInfo={false}
@@ -343,18 +343,18 @@ export const VestingContractOverview = (props: {
                     completedVestingPercentage === 0
                       ? 'normal'
                       : completedVestingPercentage === 100
-                      ? 'success'
-                      : 'active'
+                        ? 'success'
+                        : 'active'
                   }
-                  type="line"
-                  className="vesting-list-progress-bar large"
+                  type='line'
+                  className='vesting-list-progress-bar large'
                   trailColor={theme === 'light' ? '#f5f5f5' : '#303030'}
                   style={{ width: '100%' }}
                 />
               </div>
-              <div className="right progress-status-icon">
+              <div className='right progress-status-icon'>
                 {isContractFinished() ? (
-                  <span className="fg-green">
+                  <span className='fg-green'>
                     <CheckCircleFilled />
                   </span>
                 ) : (
@@ -400,37 +400,37 @@ export const VestingContractOverview = (props: {
   };
 
   return (
-    <div className="tab-inner-content-wrapper vertical-scroll">
+    <div className='tab-inner-content-wrapper vertical-scroll'>
       {vestingContract && (
-        <div className="details-panel-meta">
+        <div className='details-panel-meta'>
           {vestingContract.totalStreams === 0 && !isDateInTheFuture(paymentStartDate) && (
-            <div className="alert-info-message mb-2">
+            <div className='alert-info-message mb-2'>
               <Alert
-                message="This contract started without any streams and is unable to vest any tokens. Please claim any unallocated tokens and close it."
-                type="info"
+                message='This contract started without any streams and is unable to vest any tokens. Please claim any unallocated tokens and close it.'
+                type='info'
                 showIcon
                 closable
               />
             </div>
           )}
-          <div className="two-column-form-layout col70x30">
-            <div className="left mb-2">
-              <span className="font-bold font-size-100 fg-secondary-75">
+          <div className='two-column-form-layout col70x30'>
+            <div className='left mb-2'>
+              <span className='font-bold font-size-100 fg-secondary-75'>
                 {lockPeriodAmount}{' '}
-                {getLockPeriodOptionLabelByAmount(lockPeriodFrequency, parseFloat(lockPeriodAmount), t)} vesting
+                {getLockPeriodOptionLabelByAmount(lockPeriodFrequency, Number.parseFloat(lockPeriodAmount), t)} vesting
                 contract
               </span>
-              <div className="font-size-100 fg-secondary-50">
+              <div className='font-size-100 fg-secondary-50'>
                 {cliffReleasePercentage}% unlocked on commencement date
               </div>
-              <div className="font-size-100 fg-secondary-50">
+              <div className='font-size-100 fg-secondary-50'>
                 {100 - cliffReleasePercentage}% of allocated funds streamed over {lockPeriodAmount}{' '}
-                {getLockPeriodOptionLabelByAmount(lockPeriodFrequency, parseFloat(lockPeriodAmount), t)}
+                {getLockPeriodOptionLabelByAmount(lockPeriodFrequency, Number.parseFloat(lockPeriodAmount), t)}
               </div>
             </div>
             <div className={`right mb-2 pr-2 ${isXsDevice ? 'text-left' : 'text-right'}`}>
-              <div className="font-bold font-size-100 fg-secondary-75">Unallocated tokens</div>
-              <div className="font-size-100 fg-secondary-50">
+              <div className='font-bold font-size-100 fg-secondary-75'>Unallocated tokens</div>
+              <div className='font-size-100 fg-secondary-50'>
                 {selectedToken
                   ? displayAmountWithSymbol(
                       availableStreamingBalance,
@@ -445,43 +445,43 @@ export const VestingContractOverview = (props: {
             </div>
           </div>
 
-          <div className="two-column-form-layout col70x30">
-            <div className="left mb-2">
-              <span className="font-bold font-size-100 fg-secondary-75">
+          <div className='two-column-form-layout col70x30'>
+            <div className='left mb-2'>
+              <span className='font-bold font-size-100 fg-secondary-75'>
                 {`${
                   isDateInTheFuture(paymentStartDate) ? 'Contract starts on' : 'Contract started on'
                 } ${getReadableDate(paymentStartDate, true)}`}
               </span>
               {isContractFinished() ? (
-                <div className="font-size-100 fg-secondary-50 text-italic">
+                <div className='font-size-100 fg-secondary-50 text-italic'>
                   Vesting finished {getRelativeFinishDate()}
                 </div>
               ) : (
-                <div className="font-size-100 fg-secondary-50 text-italic">{startRemainingTime}</div>
+                <div className='font-size-100 fg-secondary-50 text-italic'>{startRemainingTime}</div>
               )}
             </div>
             <div className={`right mb-2 pr-2 ${isXsDevice ? 'text-left' : 'text-right'}`}>
-              <div className="font-bold font-size-100 fg-secondary-75">{getContractFinishDateLabel()}</div>
-              <div className="font-size-100 fg-secondary-50">{getlllDate(getContractFinishDate())}</div>
+              <div className='font-bold font-size-100 fg-secondary-75'>{getContractFinishDateLabel()}</div>
+              <div className='font-size-100 fg-secondary-50'>{getlllDate(getContractFinishDate())}</div>
             </div>
           </div>
 
           {renderVestedAmountChart()}
 
           {isContractRunning ? (
-            <div className="mt-3 pr-2">
-              <div className="flex-row align-items-center font-size-85 fg-secondary-50">
-                <IconInfoCircle className="mean-svg-icons" style={{ width: 18, height: 18, marginRight: 2 }} />
-                <span className="align-middle">
+            <div className='mt-3 pr-2'>
+              <div className='flex-row align-items-center font-size-85 fg-secondary-50'>
+                <IconInfoCircle className='mean-svg-icons' style={{ width: 18, height: 18, marginRight: 2 }} />
+                <span className='align-middle'>
                   As this contract has started vesting, no additional streams can be added.
                 </span>
               </div>
             </div>
           ) : isContractFinished() ? (
-            <div className="mt-3 pr-2">
-              <div className="flex-row align-items-center font-size-85 fg-secondary-50">
-                <IconInfoCircle className="mean-svg-icons" style={{ width: 18, height: 18, marginRight: 2 }} />
-                <span className="align-middle">
+            <div className='mt-3 pr-2'>
+              <div className='flex-row align-items-center font-size-85 fg-secondary-50'>
+                <IconInfoCircle className='mean-svg-icons' style={{ width: 18, height: 18, marginRight: 2 }} />
+                <span className='align-middle'>
                   As this contract has finished vesting, no additional streams can be added.
                 </span>
               </div>

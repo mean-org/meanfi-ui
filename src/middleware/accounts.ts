@@ -1,16 +1,23 @@
 import { Metaplex } from '@metaplex-foundation/js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { AccountInfo, Commitment, Connection, ParsedAccountData, PublicKey, TokenAmount } from '@solana/web3.js';
 import {
-  AccountsDictionary,
+  type AccountInfo,
+  type Commitment,
+  type Connection,
+  type ParsedAccountData,
+  PublicKey,
+  type TokenAmount,
+} from '@solana/web3.js';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenPrice } from 'models/TokenPrice';
+import type {
   AccountTokenParsedInfo,
+  AccountsDictionary,
   TokenAccountInfo,
   TokenSelectorListWithBalances,
   UserTokenAccount,
   UserTokensResponse,
 } from 'models/accounts';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { TokenPrice } from 'models/TokenPrice';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../constants';
 import { MEAN_TOKEN_LIST, NATIVE_SOL } from '../constants/tokens';
 import getPriceByAddressOrSymbol from './getPriceByAddressOrSymbol';
@@ -56,9 +63,9 @@ export async function getMultipleAccounts(
   );
 
   Object.keys(resArray)
-    .sort((a, b) => parseInt(a) - parseInt(b))
+    .sort((a, b) => Number.parseInt(a) - Number.parseInt(b))
     .forEach(itemIndex => {
-      const res = resArray[parseInt(itemIndex)];
+      const res = resArray[Number.parseInt(itemIndex)];
       for (const account of res) {
         accounts.push(account);
       }

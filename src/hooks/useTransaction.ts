@@ -1,5 +1,7 @@
-import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { openNotification } from 'components/Notifications';
+import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
@@ -7,7 +9,7 @@ import { useWallet } from 'contexts/wallet';
 import { appConfig, customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import {
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getProposalWithPrioritizationFees,
   sendTx,
@@ -15,15 +17,13 @@ import {
 } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import { getAmountWithSymbol, getUniversalTxIxResume } from 'middleware/utils';
-import { OperationType, TransactionStatus } from 'models/enums';
+import { type OperationType, TransactionStatus } from 'models/enums';
+import type { MultisigTxParams } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
-import { LooseObject } from 'types/LooseObject';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { useTranslation } from 'react-i18next';
-import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
-import { MultisigTxParams } from 'models/multisig';
-import useLocalStorage from './useLocalStorage';
 import { failsafeConnectionConfig } from 'services/connections-hq';
+import type { LooseObject } from 'types/LooseObject';
+import useLocalStorage from './useLocalStorage';
 
 type BaseArgs<T extends LooseObject | undefined> = {
   // name of the transaction, i.e. 'Edit Vesting Contract',
@@ -184,7 +184,7 @@ const useTransaction = () => {
         return null;
       }
 
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {

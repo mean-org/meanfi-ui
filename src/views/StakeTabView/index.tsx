@@ -1,18 +1,19 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { StakeQuote, StakingClient } from '@mean-dao/staking';
-import { Transaction } from '@solana/web3.js';
-import { Button, Col, Row } from 'antd';
+import type { StakeQuote, StakingClient } from '@mean-dao/staking';
+import type { Transaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
+import { Button, Col, Row } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
-import { AppUsageEvent, SegmentStakeMeanData } from 'middleware/segment-service';
+import { AppUsageEvent, type SegmentStakeMeanData } from 'middleware/segment-service';
+import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import {
   cutNumber,
@@ -22,14 +23,13 @@ import {
   getTxIxResume,
   isValidNumber,
 } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import useRealmsDeposit from './useRealmsDeposit';
 import './style.scss';
+import useRealmsDeposit from './useRealmsDeposit';
 import useUnstakeQuote from './useUnstakeQuote';
-import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 
 let inputDebounceTimeout: any;
 
@@ -141,14 +141,14 @@ export const StakeTabView = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-      ? `${t('staking.panel-right.tabset.stake.stake-button-busy')} ${selectedToken?.symbol}`
-      : !selectedToken || !meanBalance
-      ? t('transactions.validation.no-balance')
-      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
-      ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > meanBalance
-      ? t('transactions.validation.amount-high')
-      : `${t('staking.panel-right.tabset.stake.stake-button')} ${selectedToken?.symbol}`;
+        ? `${t('staking.panel-right.tabset.stake.stake-button-busy')} ${selectedToken?.symbol}`
+        : !selectedToken || !meanBalance
+          ? t('transactions.validation.no-balance')
+          : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !Number.parseFloat(fromCoinAmount)
+            ? t('transactions.validation.no-amount')
+            : Number.parseFloat(fromCoinAmount) > meanBalance
+              ? t('transactions.validation.amount-high')
+              : `${t('staking.panel-right.tabset.stake.stake-button')} ${selectedToken?.symbol}`;
   }, [fromCoinAmount, selectedToken, meanBalance, connected, isBusy, t]);
 
   const isStakingFormValid = (): boolean => {
@@ -157,8 +157,8 @@ export const StakeTabView = (props: {
       selectedToken &&
       meanBalance &&
       fromCoinAmount &&
-      parseFloat(fromCoinAmount) > 0 &&
-      parseFloat(fromCoinAmount) <= meanBalance
+      Number.parseFloat(fromCoinAmount) > 0 &&
+      Number.parseFloat(fromCoinAmount) <= meanBalance
     );
   };
 
@@ -207,7 +207,7 @@ export const StakeTabView = (props: {
           currentOperation: TransactionStatus.InitTransaction,
         });
 
-        const uiAmount = parseFloat(fromCoinAmount);
+        const uiAmount = Number.parseFloat(fromCoinAmount);
         consoleOut('uiAmount:', uiAmount, 'blue');
 
         // Log input data
@@ -308,12 +308,12 @@ export const StakeTabView = (props: {
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Staking ${formatThousands(parseFloat(fromCoinAmount), selectedToken.decimals)} ${
+              loadingMessage: `Staking ${formatThousands(Number.parseFloat(fromCoinAmount), selectedToken.decimals)} ${
                 selectedToken.symbol
               }`,
               completedTitle: 'Transaction confirmed',
               completedMessage: `Successfully staked ${formatThousands(
-                parseFloat(fromCoinAmount),
+                Number.parseFloat(fromCoinAmount),
                 selectedToken.decimals,
               )} ${selectedToken.symbol}`,
             });
@@ -447,16 +447,16 @@ export const StakeTabView = (props: {
       return;
     }
 
-    if (parseFloat(fromCoinAmount) > 0 && canFetchStakeQuote) {
+    if (Number.parseFloat(fromCoinAmount) > 0 && canFetchStakeQuote) {
       setFetchingStakeQuote(true);
       setCanFetchStakeQuote(false);
       stakeClient
-        .getStakeQuote(parseFloat(fromCoinAmount))
+        .getStakeQuote(Number.parseFloat(fromCoinAmount))
         .then((value: StakeQuote) => {
           consoleOut('stakeQuote:', value, 'blue');
           setStakeQuote(value.sMeanOutUiAmount);
           consoleOut(
-            `Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`,
+            `Quote for ${formatThousands(Number.parseFloat(fromCoinAmount), 6)} MEAN`,
             `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`,
             'blue',
           );
@@ -500,10 +500,10 @@ export const StakeTabView = (props: {
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={12} className="font-size-75 fg-secondary-60 text-right pr-1">
+        <Col span={12} className='font-size-75 fg-secondary-60 text-right pr-1'>
           {caption}
         </Col>
-        <Col span={12} className="font-size-75 fg-secondary-60 text-left">
+        <Col span={12} className='font-size-75 fg-secondary-60 text-left'>
           {value}
         </Col>
       </Row>
@@ -512,8 +512,8 @@ export const StakeTabView = (props: {
 
   return (
     <>
-      <div className="mb-2 px-1">
-        <span className="info-label">
+      <div className='mb-2 px-1'>
+        <span className='info-label'>
           {smeanBalance ? (
             <span>
               You have {formatThousands(smeanBalance, 6)} sMEAN staked
@@ -523,11 +523,11 @@ export const StakeTabView = (props: {
             t('staking.panel-right.tabset.unstake.notification-label-one-error')
           )}
         </span>
-        <span className="info-label d-block">
+        <span className='info-label d-block'>
           {realmsDepositAmount && (
             <>
               At this time, {formatThousands(realmsDepositAmount)} of your sMEAN are committed to{' '}
-              <a href="https://app.realms.today/dao/MEAN" target="_blank" rel="noopener noreferrer">
+              <a href='https://app.realms.today/dao/MEAN' target='_blank' rel='noopener noreferrer'>
                 Realms
               </a>{' '}
               for voting purposes. You can find them there and withdraw them at any point.
@@ -535,22 +535,22 @@ export const StakeTabView = (props: {
           )}
         </span>
       </div>
-      <div className="form-label">{t('staking.panel-right.tabset.stake.amount-label')}</div>
+      <div className='form-label'>{t('staking.panel-right.tabset.stake.amount-label')}</div>
       <div className={`well mb-1${isBusy ? ' disabled' : ''}`}>
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on">
+        <div className='flex-fixed-left'>
+          <div className='left'>
+            <span className='add-on'>
               {selectedToken && (
                 <TokenDisplay
                   onClick={() => {}}
                   mintAddress={selectedToken.address}
                   name={selectedToken.name}
-                  className="click-disabled"
+                  className='click-disabled'
                 />
               )}
               {selectedToken && meanBalance ? (
                 <div
-                  className="token-max simplelink"
+                  className='token-max simplelink'
                   onClick={() => {
                     const newAmount = meanBalance.toFixed(selectedToken?.decimals || 9);
                     setFromCoinAmount(newAmount);
@@ -563,32 +563,32 @@ export const StakeTabView = (props: {
               ) : null}
             </span>
           </div>
-          <div className="right">
+          <div className='right'>
             <input
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
+              className='general-text-input text-right'
+              inputMode='decimal'
+              autoComplete='off'
+              autoCorrect='off'
+              type='text'
               onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
+              pattern='^[0-9]*[.,]?[0-9]*$'
+              placeholder='0.0'
               minLength={1}
               maxLength={79}
-              spellCheck="false"
+              spellCheck='false'
               onPaste={pasteHandler}
               value={fromCoinAmount}
             />
           </div>
         </div>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
+        <div className='flex-fixed-right'>
+          <div className='left inner-label'>
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span>
               {`${meanBalance && selectedToken ? getAmountWithSymbol(meanBalance, selectedToken?.address, true) : '0'}`}
             </span>
           </div>
-          <div className="right inner-label">
+          <div className='right inner-label'>
             <span
               className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
               onClick={() => refreshPrices()}
@@ -596,7 +596,8 @@ export const StakeTabView = (props: {
               ~$
               {fromCoinAmount && selectedToken
                 ? formatAmount(
-                    parseFloat(fromCoinAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol),
+                    Number.parseFloat(fromCoinAmount) *
+                      getTokenPriceByAddress(selectedToken.address, selectedToken.symbol),
                     2,
                   )
                 : '0.00'}
@@ -605,14 +606,17 @@ export const StakeTabView = (props: {
         </div>
       </div>
 
-      <div className="p-2">
+      <div className='p-2'>
         {!fetchingStakeQuote &&
           fromCoinAmount &&
-          parseFloat(fromCoinAmount) > 0 &&
-          parseFloat(fromCoinAmount) <= meanBalance &&
+          Number.parseFloat(fromCoinAmount) > 0 &&
+          Number.parseFloat(fromCoinAmount) <= meanBalance &&
           stakeQuote > 0 &&
           infoRow(
-            `${formatThousands(parseFloat(fromCoinAmount), getMaxDecimalsForValue(parseFloat(fromCoinAmount)))} MEAN ≈`,
+            `${formatThousands(
+              Number.parseFloat(fromCoinAmount),
+              getMaxDecimalsForValue(Number.parseFloat(fromCoinAmount)),
+            )} MEAN ≈`,
             `${formatThousands(stakeQuote, getMaxDecimalsForValue(stakeQuote))} sMEAN`,
           )}
         {stakedMeanPrice > 0 && infoRow(`1 MEAN ≈`, `${cutNumber(stakedMeanPrice, 6)} sMEAN`)}
@@ -620,27 +624,27 @@ export const StakeTabView = (props: {
 
       {/* Action button */}
       <Button
-        className="main-cta mt-1"
+        className='main-cta mt-1'
         block
-        type="primary"
-        shape="round"
-        size="large"
+        type='primary'
+        shape='round'
+        size='large'
         onClick={onStartTransaction}
         disabled={isBusy || !isStakingFormValid()}
       >
         {isBusy && (
-          <span className="mr-1">
+          <span className='mr-1'>
             <LoadingOutlined style={{ fontSize: '16px' }} />
           </span>
         )}
         {getStakeButtonLabel()}
       </Button>
-      <div className="pt-2">
-        <span className="info-label d-block">
+      <div className='pt-2'>
+        <span className='info-label d-block'>
           sMEAN allows for the consistent earning of rewards, while also providing token holders with the ability to
           engage with governacne proposals, by giving voting rights in said proposals, helping shape the course of the
           Mean DAO. You can make use of this here:{' '}
-          <a href="https://app.realms.today/dao/MEAN" target="_blank" rel="noopener noreferrer">
+          <a href='https://app.realms.today/dao/MEAN' target='_blank' rel='noopener noreferrer'>
             https://app.realms.today/dao/MEAN
           </a>
         </span>

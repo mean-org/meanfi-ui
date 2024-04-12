@@ -1,15 +1,16 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import {
-  getFees,
-  MeanMultisig,
-  MultisigParticipant,
-  MultisigTransactionFees,
   MULTISIG_ACTIONS,
+  MeanMultisig,
+  type MultisigParticipant,
+  type MultisigTransactionFees,
+  getFees,
 } from '@mean-dao/mean-multisig-sdk';
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Col, Row, Slider, Tooltip } from 'antd';
-import { SliderMarks } from 'antd/lib/slider';
+import { LAMPORTS_PER_SOL, PublicKey, type Transaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
+import { IconHelpCircle, IconSafe } from 'Icons';
+import { Button, Col, Row, Slider, Tooltip } from 'antd';
+import type { SliderMarks } from 'antd/lib/slider';
 import { MultisigParticipants } from 'components/MultisigParticipants';
 import { openNotification } from 'components/Notifications';
 import { PreFooter } from 'components/PreFooter';
@@ -17,10 +18,9 @@ import { MAX_MULTISIG_PARTICIPANTS, MEAN_MULTISIG_ACCOUNT_LAMPORTS } from 'const
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection, useConnectionConfig } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconHelpCircle, IconSafe } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
@@ -28,12 +28,12 @@ import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isValidAddress } from 'middleware/ui';
 import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { CreateNewSafeParams, ZERO_FEES } from 'models/multisig';
+import { type CreateNewSafeParams, ZERO_FEES } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import './style.scss';
 import { failsafeConnectionConfig } from 'services/connections-hq';
+import './style.scss';
 
 const CreateSafeView = () => {
   const { t } = useTranslation('common');
@@ -501,7 +501,7 @@ const CreateSafeView = () => {
   ///////////////
 
   function sliderTooltipFormatter(value?: number) {
-    return <span className="font-size-75">{`${value} ${value === 1 ? 'Signer' : 'Signers'}`}</span>;
+    return <span className='font-size-75'>{`${value} ${value === 1 ? 'Signer' : 'Signers'}`}</span>;
   }
 
   const getMainCtaLabel = () => {
@@ -528,10 +528,10 @@ const CreateSafeView = () => {
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={14} className="text-right pr-1">
+        <Col span={14} className='text-right pr-1'>
           {caption}
         </Col>
-        <Col span={10} className="text-left fg-secondary-70">
+        <Col span={10} className='text-left fg-secondary-70'>
           {value}
         </Col>
       </Row>
@@ -540,22 +540,22 @@ const CreateSafeView = () => {
 
   const renderMultisigNameField = () => {
     return (
-      <div className="mb-3">
-        <div className="form-label icon-label">
+      <div className='mb-3'>
+        <div className='form-label icon-label'>
           {t('multisig.create-multisig.multisig-label-input-label')}
-          <Tooltip placement="bottom" title={`I.e. "My company payroll", "Seed round vesting", etc.`}>
+          <Tooltip placement='bottom' title={`I.e. "My company payroll", "Seed round vesting", etc.`}>
             <span>
-              <IconHelpCircle className="mean-svg-icons" />
+              <IconHelpCircle className='mean-svg-icons' />
             </span>
           </Tooltip>
         </div>
         <div className={`well ${isBusy ? 'disabled' : ''}`}>
           <input
-            id="multisig-label-field"
-            className="w-100 general-text-input"
-            autoComplete="off"
-            autoCorrect="off"
-            type="text"
+            id='multisig-label-field'
+            className='w-100 general-text-input'
+            autoComplete='off'
+            autoCorrect='off'
+            type='text'
             maxLength={32}
             onChange={onLabelInputValueChange}
             placeholder={t('multisig.create-multisig.multisig-label-placeholder')}
@@ -581,17 +581,17 @@ const CreateSafeView = () => {
             <div className={`form-label icon-label ${isXsDevice ? 'mb-3' : 'mt-2'}`}>
               {t('multisig.create-multisig.multisig-threshold-input-label')}
               <Tooltip
-                placement="bottom"
+                placement='bottom'
                 title={t('multisig.create-multisig.multisig-threshold-question-mark-tooltip')}
               >
                 <span>
-                  <IconHelpCircle className="mean-svg-icons" />
+                  <IconHelpCircle className='mean-svg-icons' />
                 </span>
               </Tooltip>
             </div>
           </div>
-          <div className="right">
-            <div className="slider-container">
+          <div className='right'>
+            <div className='slider-container'>
               <Slider
                 marks={marks}
                 min={rangeMin}
@@ -612,16 +612,16 @@ const CreateSafeView = () => {
 
   return (
     <>
-      <div className="container main-container">
-        <div className="interaction-area">
-          <div className="title-and-subtitle mb-2">
-            <div className="title">
-              <IconSafe className="mean-svg-icons" />
+      <div className='container main-container'>
+        <div className='interaction-area'>
+          <div className='title-and-subtitle mb-2'>
+            <div className='title'>
+              <IconSafe className='mean-svg-icons' />
               <div>{t('multisig.create-multisig.modal-title')}</div>
             </div>
           </div>
-          <div className="place-transaction-box container-max-width-720 flat mb-0">
-            <div className="elastic-form-container">
+          <div className='place-transaction-box container-max-width-720 flat mb-0'>
+            <div className='elastic-form-container'>
               {/* Multisig name */}
               {renderMultisigNameField()}
 
@@ -641,7 +641,7 @@ const CreateSafeView = () => {
 
               {/* Fee info */}
               {multisigTransactionFees.multisigFee ? (
-                <div className="p-2 mt-2 mb-2">
+                <div className='p-2 mt-2 mb-2'>
                   {infoRow(
                     t('multisig.create-multisig.fee-info-label') + ' ≈',
                     `${formatThousands(
@@ -655,22 +655,22 @@ const CreateSafeView = () => {
               {/* CTAs */}
               <div className={`two-column-form-layout${isXsDevice ? ' reverse' : ''}`}>
                 <div className={`left ${isXsDevice ? 'mb-3' : 'mb-0'}`}>
-                  <Button block type="default" shape="round" size="large" className="thin-stroke" onClick={onBackClick}>
+                  <Button block type='default' shape='round' size='large' className='thin-stroke' onClick={onBackClick}>
                     Cancel
                   </Button>
                 </div>
                 <div className={`right ${isXsDevice ? 'mb-3' : 'mb-0'}`}>
                   <Button
                     block
-                    type="primary"
-                    shape="round"
-                    size="large"
-                    className="thin-stroke"
+                    type='primary'
+                    shape='round'
+                    size='large'
+                    className='thin-stroke'
                     disabled={isBusy || !isFormValid()}
                     onClick={onAccountCreateClick}
                   >
                     {isBusy && (
-                      <span className="mr-1">
+                      <span className='mr-1'>
                         <LoadingOutlined style={{ fontSize: '16px' }} />
                       </span>
                     )}

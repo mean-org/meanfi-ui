@@ -1,13 +1,13 @@
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenPrice } from 'models/TokenPrice';
 import { appConfig } from '..';
-import { TokenPrice } from 'models/TokenPrice';
 import { readFromCache, removeFromCache, writeToCache } from '../cache/persistentCache';
-import { SimpleTokenInfo } from '../models/accounts';
-import { Allocation } from '../models/common-types';
-import { WhitelistClaimType } from '../models/enums';
-import { MeanFiStatsModel } from '../models/meanfi-stats';
-import { PriceGraphModel } from '../models/price-graph';
-import { getDefaultRpc, RpcConfig } from '../services/connections-hq';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { SimpleTokenInfo } from '../models/accounts';
+import type { Allocation } from '../models/common-types';
+import type { WhitelistClaimType } from '../models/enums';
+import type { MeanFiStatsModel } from '../models/meanfi-stats';
+import type { PriceGraphModel } from '../models/price-graph';
+import { type RpcConfig, getDefaultRpc } from '../services/connections-hq';
 
 // MeanFi requests
 export const meanFiHeaders = new Headers();

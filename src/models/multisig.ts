@@ -1,19 +1,19 @@
+import type { AppConfig, UiInstruction } from '@mean-dao/mean-multisig-apps';
+import type { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import { AnchorProvider, type BN, type Idl, Program, type SplToken, SplTokenCoder } from '@project-serum/anchor';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
-  AccountMeta,
-  Commitment,
-  Connection,
+  type AccountMeta,
+  type Commitment,
+  type Connection,
   Keypair,
   Message,
   PublicKey,
   Transaction,
-  TransactionInstruction,
+  type TransactionInstruction,
 } from '@solana/web3.js';
-import { AnchorProvider, BN, Idl, Program, SplToken, SplTokenCoder } from '@project-serum/anchor';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { AppConfig, UiInstruction } from '@mean-dao/mean-multisig-apps';
-import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
-import { OperationType } from './enums';
 import { getAmountFromLamports } from '../middleware/utils';
+import { OperationType } from './enums';
 
 export const CREDIX_PROGRAM_MAINNET = new PublicKey('CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX');
 export const CREDIX_PROGRAM_DEVNET = new PublicKey('crdszSnZQu7j36KfsMJ4VEmMUTJgrNYXwoPVHUANpAu');

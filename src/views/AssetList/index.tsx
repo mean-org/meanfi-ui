@@ -3,7 +3,7 @@ import { ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRE
 import { AppStateContext } from 'contexts/appstate';
 import { toUsCurrency } from 'middleware/ui';
 import { formatThousands } from 'middleware/utils';
-import { AccountsPageCategory, UserTokenAccount } from 'models/accounts';
+import type { AccountsPageCategory, UserTokenAccount } from 'models/accounts';
 import { useCallback, useContext } from 'react';
 
 export const AssetList = (props: {
@@ -83,8 +83,8 @@ export const AssetList = (props: {
         id={asset.publicAddress}
         className={`transaction-list-row ${getRowSelectionClass(asset)}`}
       >
-        <div className="icon-cell">
-          <div className="token-icon">
+        <div className='icon-cell'>
+          <div className='token-icon'>
             {asset.logoURI ? (
               <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
             ) : (
@@ -92,8 +92,8 @@ export const AssetList = (props: {
             )}
           </div>
         </div>
-        <div className="description-cell">
-          <div className="title">
+        <div className='description-cell'>
+          <div className='title'>
             {asset.symbol}
             {tokenPrice > 0 ? (
               <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
@@ -101,14 +101,14 @@ export const AssetList = (props: {
               </span>
             ) : null}
           </div>
-          <div className="subtitle text-truncate">
+          <div className='subtitle text-truncate'>
             {asset.address === WRAPPED_SOL_MINT_ADDRESS ? 'Wrapped SOL' : asset.name}
             {getNonAtaLabel(asset)}
           </div>
         </div>
-        <div className="rate-cell">
-          <div className="rate-amount">{getRateAmountDisplay(tokenPrice, asset)}</div>
-          <div className="interval">
+        <div className='rate-cell'>
+          <div className='rate-amount'>{getRateAmountDisplay(tokenPrice, asset)}</div>
+          <div className='interval'>
             {(asset.balance || 0) > 0 ? formatThousands(asset.balance ?? 0, asset.decimals, asset.decimals) : '0'}
           </div>
         </div>

@@ -1,13 +1,13 @@
-import { PaymentStreamingAccount, ActivityActionCode, AccountActivity } from '@mean-dao/payment-streaming';
+import { type AccountActivity, ActivityActionCode, type PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
+import { IconExternalLink } from 'Icons';
 import { Spin } from 'antd';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { IconExternalLink } from 'Icons';
 import { getShortDate } from 'middleware/ui';
 import { displayAmountWithSymbol, makeDecimal, shortenAddress } from 'middleware/utils';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -158,31 +158,31 @@ export const VestingContractActivity = (props: {
       return null;
     }
     return (
-      <div className="stream-activity-list">
+      <div className='stream-activity-list'>
         <Spin spinning={loadingStreamActivity}>
           {contractActivity && contractActivity.length > 0 ? (
             contractActivity.map((item, index) => {
               return (
                 <a
                   key={`${index + 50}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transaction-list-row stripped-rows"
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='transaction-list-row stripped-rows'
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}
                 >
                   {/* <div className="icon-cell">
                                         <IconLiveHelp className="mean-svg-icons" />
                                     </div> */}
-                  <div className="description-cell">
-                    <div className="title text-truncate">{getActivityDescription(item)}</div>
-                    <div className="subtitle text-truncate">{getActivitySubtitle(item)}</div>
+                  <div className='description-cell'>
+                    <div className='title text-truncate'>{getActivityDescription(item)}</div>
+                    <div className='subtitle text-truncate'>{getActivitySubtitle(item)}</div>
                   </div>
-                  <div className="rate-cell">
-                    <div className="rate-amount">{getActivityAssociatedToken(item)}</div>
-                    <div className="interval">{getShortDate(item.utcDate, true)}</div>
+                  <div className='rate-cell'>
+                    <div className='rate-amount'>{getActivityAssociatedToken(item)}</div>
+                    <div className='interval'>{getShortDate(item.utcDate, true)}</div>
                   </div>
-                  <div className="actions-cell">
-                    <IconExternalLink className="mean-svg-icons" style={{ width: '15', height: '15' }} />
+                  <div className='actions-cell'>
+                    <IconExternalLink className='mean-svg-icons' style={{ width: '15', height: '15' }} />
                   </div>
                 </a>
               );
@@ -200,10 +200,10 @@ export const VestingContractActivity = (props: {
           )}
         </Spin>
         {contractActivity.length > 0 && hasMoreStreamActivity && (
-          <div className="mt-1 text-center">
+          <div className='mt-1 text-center'>
             <span
               className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
-              role="link"
+              role='link'
               onClick={onLoadMoreActivities}
             >
               {t('general.cta-load-more')}
@@ -215,8 +215,8 @@ export const VestingContractActivity = (props: {
   };
 
   return (
-    <div className="tab-inner-content-wrapper vertical-scroll">
-      <div className="stream-detail-component">{renderActivities()}</div>
+    <div className='tab-inner-content-wrapper vertical-scroll'>
+      <div className='stream-detail-component'>{renderActivities()}</div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import { StreamInfo } from '@mean-dao/money-streaming';
-import { Stream } from '@mean-dao/payment-streaming';
+import type { StreamInfo } from '@mean-dao/money-streaming';
+import type { Stream } from '@mean-dao/payment-streaming';
 import { Button, Modal } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { InputMean } from 'components/InputMean';
@@ -85,22 +85,22 @@ export const StreamTransferOpenModal = (props: {
     return !address
       ? t('transfer-stream.streamid-empty')
       : !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address)
-      ? 'Invalid address'
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : t('transfer-stream.streamid-open-cta');
+        ? 'Invalid address'
+        : !isVerifiedRecipient
+          ? t('transactions.validation.verified-recipient-unchecked')
+          : t('transfer-stream.streamid-open-cta');
   };
 
   const getTransactionStartButtonLabelMultisig = () => {
     return !proposalTitle
       ? 'Add a proposal title'
       : !address
-      ? t('transfer-stream.streamid-empty')
-      : !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address)
-      ? 'Invalid address'
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : 'Sign proposal';
+        ? t('transfer-stream.streamid-empty')
+        : !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address)
+          ? 'Invalid address'
+          : !isVerifiedRecipient
+            ? t('transactions.validation.verified-recipient-unchecked')
+            : 'Sign proposal';
   };
 
   const onAcceptModal = () => {
@@ -123,9 +123,9 @@ export const StreamTransferOpenModal = (props: {
 
   return (
     <Modal
-      className="mean-modal"
+      className='mean-modal'
       title={
-        <div className="modal-title">
+        <div className='modal-title'>
           {isMultisigContext ? 'Propose transfer stream' : t('transfer-stream.modal-title')}
         </div>
       }
@@ -136,60 +136,60 @@ export const StreamTransferOpenModal = (props: {
     >
       {/* Proposal title */}
       {isMultisigContext && (
-        <div className="mb-3">
-          <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+        <div className='mb-3'>
+          <div className='form-label'>{t('multisig.proposal-modal.title')}</div>
           <InputMean
-            id="proposal-title-field"
-            name="Title"
-            className="w-100 general-text-input"
+            id='proposal-title-field'
+            name='Title'
+            className='w-100 general-text-input'
             onChange={onTitleInputValueChange}
-            placeholder="Add a proposal title (required)"
+            placeholder='Add a proposal title (required)'
             value={proposalTitle}
           />
         </div>
       )}
 
-      <div className="form-label">{t('transfer-stream.label-streamid-input')}</div>
-      <div className="well">
-        <div className="flex-fixed-right">
-          <div className="left position-relative">
-            <span className="recipient-field-wrapper">
+      <div className='form-label'>{t('transfer-stream.label-streamid-input')}</div>
+      <div className='well'>
+        <div className='flex-fixed-right'>
+          <div className='left position-relative'>
+            <span className='recipient-field-wrapper'>
               <input
-                id="stream-transfer-input"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
+                id='stream-transfer-input'
+                className='general-text-input'
+                autoComplete='on'
+                autoCorrect='off'
+                type='text'
                 onChange={handleAddressChange}
                 placeholder={t('transfer-stream.streamid-placeholder')}
                 required={true}
-                spellCheck="false"
+                spellCheck='false'
                 value={address}
               />
             </span>
           </div>
         </div>
         {address && !isValidAddress(address) ? (
-          <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+          <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
         ) : isAddressOwnAccount() ? (
-          <span className="form-field-error">{t('transfer-stream.destination-is-own-account')}</span>
+          <span className='form-field-error'>{t('transfer-stream.destination-is-own-account')}</span>
         ) : isAddressTreasurer(address) ? (
-          <span className="form-field-error">{t('transfer-stream.destination-address-is-sender')}</span>
+          <span className='form-field-error'>{t('transfer-stream.destination-address-is-sender')}</span>
         ) : null}
       </div>
 
-      <div className="ml-1 mb-3">
+      <div className='ml-1 mb-3'>
         <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
           {t('transfer-stream.streamid-checkbox')}
         </Checkbox>
       </div>
 
       <Button
-        className="main-cta"
+        className='main-cta'
         block
-        type="primary"
-        shape="round"
-        size="large"
+        type='primary'
+        shape='round'
+        size='large'
         disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
         onClick={onAcceptModal}
       >

@@ -1,4 +1,4 @@
-import { TokenInfo } from "models/SolanaTokenInfo";
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 
 export interface DlnSupportedChain {
   chainName: string;
@@ -17,7 +17,7 @@ export interface TokenMap {
   [key: string]: TokenInfo;
 }
 
-export type GetDlnChainTokenListResponse = { tokens: TokenMap }
+export type GetDlnChainTokenListResponse = { tokens: TokenMap };
 
 export interface SrcChainTokenIn {
   name: string;

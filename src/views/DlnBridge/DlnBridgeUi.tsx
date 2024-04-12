@@ -1,14 +1,21 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { FEE_PERCENT, SOLANA_CHAIN_ID, SUPPORTED_CHAINS, getChainById, useDlnBridge } from './DlnBridgeProvider';
-import TokenSelector from './TokenSelector';
+import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
+import { BN } from '@project-serum/anchor';
+import { PublicKey } from '@solana/web3.js';
+import { type FetchFeeDataResult, fetchFeeData } from '@wagmi/core';
 import { Button, Modal, Select, Tooltip } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { Identicon } from 'components/Identicon';
-import { consoleOut, isEvmValidAddress, isValidAddress, percentageBn, toUsCurrency } from 'middleware/ui';
-import './style.scss';
 import { TokenDisplay } from 'components/TokenDisplay';
+import { INPUT_DEBOUNCE_TIME, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
+import { AppStateContext } from 'contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
+import { useDebounce } from 'hooks/useDebounce';
+import useTransaction from 'hooks/useTransaction';
+import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
+import { consoleOut, isEvmValidAddress, isValidAddress, percentageBn, toUsCurrency } from 'middleware/ui';
 import {
   findATokenAddress,
   formatThousands,
@@ -17,20 +24,11 @@ import {
   toTokenAmount,
   toUiAmount,
 } from 'middleware/utils';
-import { INPUT_DEBOUNCE_TIME, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
-import { BN } from '@project-serum/anchor';
-import { PublicKey } from '@solana/web3.js';
-import { useWallet } from 'contexts/wallet';
-import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
-import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
-import { useDebounce } from 'hooks/useDebounce';
-import useTransaction from 'hooks/useTransaction';
-import { DlnOrderCreateTxResponse } from './dlnOrderTypes';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { OperationType } from 'models/enums';
-import createVersionedTxFromEncodedTx from './createVersionedTxFromEncodedTx';
-import { SwapCreateTxResponse } from './singleChainOrderTypes';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { ChainBlockExplorer } from 'viem/_types/types/chain';
 import {
   useAccount,
   useBalance,
@@ -39,13 +37,15 @@ import {
   useSendTransaction,
   useSwitchNetwork,
 } from 'wagmi';
-import { fetchFeeData, FetchFeeDataResult } from '@wagmi/core';
 import CustomConnectButton from './CustomConnectButton';
-import { TxConfirmationContext } from 'contexts/transaction-status';
+import { FEE_PERCENT, SOLANA_CHAIN_ID, SUPPORTED_CHAINS, getChainById, useDlnBridge } from './DlnBridgeProvider';
 import SwapRate from './SwapRate';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import TokenSelector from './TokenSelector';
+import createVersionedTxFromEncodedTx from './createVersionedTxFromEncodedTx';
+import type { DlnOrderCreateTxResponse } from './dlnOrderTypes';
 import getUiErrorString from './getUiErrorString';
-import { ChainBlockExplorer } from 'viem/_types/types/chain';
+import type { SwapCreateTxResponse } from './singleChainOrderTypes';
+import './style.scss';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
@@ -160,7 +160,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     const protocolFixFee = BigInt(isCrossChainSwap ? quote?.fixFee ?? 0 : 0);
     const opsExpenses = BigInt(isCrossChainSwap ? quote?.prependedOperatingExpenseCost ?? 0 : 0);
 
-    return parseFloat(toUiAmount(new BN((protocolFixFee + opsExpenses).toString()), srcChainTokenIn.decimals));
+    return Number.parseFloat(toUiAmount(new BN((protocolFixFee + opsExpenses).toString()), srcChainTokenIn.decimals));
   }, [isCrossChainSwap, quote?.fixFee, quote?.prependedOperatingExpenseCost, srcChainTokenIn]);
 
   const maxAmount = useMemo(() => {
@@ -210,14 +210,14 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
         return 0;
       } else {
         const calculatedMax = toUiAmount(max.toString(), srcChainTokenIn.decimals);
-        return parseFloat(calculatedMax);
+        return Number.parseFloat(calculatedMax);
       }
     } else {
       const deducted = tokenBalanceBn.sub(affiliateFeeBn);
       const calculatedMax = toUiAmount(deducted, srcChainTokenIn.decimals);
       consoleOut('affiliateFee:', toUiAmount(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
       consoleOut('max:', toUiAmount(deducted, srcChainTokenIn.decimals), 'cadetblue');
-      return parseFloat(calculatedMax);
+      return Number.parseFloat(calculatedMax);
     }
   }, [
     nativeBalance,
@@ -247,7 +247,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return 0;
     }
 
-    return parseFloat(amountIn) * getTokenPriceByAddress(srcChainTokenIn.address, srcChainTokenIn.symbol);
+    return Number.parseFloat(amountIn) * getTokenPriceByAddress(srcChainTokenIn.address, srcChainTokenIn.symbol);
   };
 
   const getOutputAmount = useCallback(() => {
@@ -266,7 +266,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     const uiAmount = getOutputAmount();
     const price = getTokenPriceByAddress('', dstChainTokenOut.symbol);
 
-    return parseFloat(uiAmount) * price;
+    return Number.parseFloat(uiAmount) * price;
   };
 
   const showTokenSelector = (tokenSet: ActionTarget) => {
@@ -345,8 +345,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     setDstChainTokenOutRecipient(trimmedValue);
   };
 
-  const inputAmount = parseFloat(amountIn);
-  const outputAmount = parseFloat(getOutputAmount());
+  const inputAmount = Number.parseFloat(amountIn);
+  const outputAmount = Number.parseFloat(getOutputAmount());
 
   const {
     config,
@@ -363,20 +363,20 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       !isSrcChainSolana && quote
         ? (quote as DlnOrderCreateTxResponse).tx.to
         : singlChainQuote
-        ? (singlChainQuote as SwapCreateTxResponse)?.tx?.data
-        : undefined,
+          ? (singlChainQuote as SwapCreateTxResponse)?.tx?.data
+          : undefined,
     value:
       !isSrcChainSolana && quote
         ? BigInt((quote as DlnOrderCreateTxResponse).tx?.value ?? 0)
         : singlChainQuote
-        ? BigInt((singlChainQuote as SwapCreateTxResponse)?.tx?.value ?? 0)
-        : undefined,
+          ? BigInt((singlChainQuote as SwapCreateTxResponse)?.tx?.value ?? 0)
+          : undefined,
     data:
       !isSrcChainSolana && quote
         ? `0x${(quote as DlnOrderCreateTxResponse).tx?.data?.slice(2)}`
         : singlChainQuote
-        ? `0x${(singlChainQuote as SwapCreateTxResponse)?.tx?.data?.slice(2)}`
-        : undefined,
+          ? `0x${(singlChainQuote as SwapCreateTxResponse)?.tx?.data?.slice(2)}`
+          : undefined,
   });
 
   const { isLoading: isExecutingTx, sendTransactionAsync } = useSendTransaction(config);
@@ -395,13 +395,18 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     const displayAmountIn = sameChainSwap
       ? `${
           singleChainSwapTxData && srcChainTokenIn
-            ? formatThousands(parseFloat(toUiAmount(singleChainSwapTxData.tokenIn.amount, srcChainTokenIn.decimals)), 4)
+            ? formatThousands(
+                Number.parseFloat(toUiAmount(singleChainSwapTxData.tokenIn.amount, srcChainTokenIn.decimals)),
+                4,
+              )
             : '0'
         } ${srcChainTokenIn?.symbol}`
       : `${
           dlnOrderTxData && srcChainTokenIn
             ? formatThousands(
-                parseFloat(toUiAmount(dlnOrderTxData.estimation.srcChainTokenIn.amount, srcChainTokenIn.decimals)),
+                Number.parseFloat(
+                  toUiAmount(dlnOrderTxData.estimation.srcChainTokenIn.amount, srcChainTokenIn.decimals),
+                ),
                 4,
               )
             : '0'
@@ -410,7 +415,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       ? `${
           singleChainSwapTxData && dstChainTokenOut
             ? formatThousands(
-                parseFloat(toUiAmount(singleChainSwapTxData.tokenOut.amount, dstChainTokenOut.decimals)),
+                Number.parseFloat(toUiAmount(singleChainSwapTxData.tokenOut.amount, dstChainTokenOut.decimals)),
                 4,
               )
             : '0'
@@ -418,7 +423,9 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       : `${
           dlnOrderTxData && dstChainTokenOut
             ? formatThousands(
-                parseFloat(toUiAmount(dlnOrderTxData.estimation.dstChainTokenOut.amount, dstChainTokenOut.decimals)),
+                Number.parseFloat(
+                  toUiAmount(dlnOrderTxData.estimation.dstChainTokenOut.amount, dstChainTokenOut.decimals),
+                ),
                 4,
               )
             : '0'
@@ -475,13 +482,18 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     const displayAmountIn = sameChainSwap
       ? `${
           singleChainSwapTxData && srcChainTokenIn
-            ? formatThousands(parseFloat(toUiAmount(singleChainSwapTxData.tokenIn.amount, srcChainTokenIn.decimals)), 4)
+            ? formatThousands(
+                Number.parseFloat(toUiAmount(singleChainSwapTxData.tokenIn.amount, srcChainTokenIn.decimals)),
+                4,
+              )
             : '0'
         } ${srcChainTokenIn?.symbol}`
       : `${
           dlnOrderTxData && srcChainTokenIn
             ? formatThousands(
-                parseFloat(toUiAmount(dlnOrderTxData.estimation.srcChainTokenIn.amount, srcChainTokenIn.decimals)),
+                Number.parseFloat(
+                  toUiAmount(dlnOrderTxData.estimation.srcChainTokenIn.amount, srcChainTokenIn.decimals),
+                ),
                 4,
               )
             : '0'
@@ -490,7 +502,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       ? `${
           singleChainSwapTxData && dstChainTokenOut
             ? formatThousands(
-                parseFloat(toUiAmount(singleChainSwapTxData.tokenOut.amount, dstChainTokenOut.decimals)),
+                Number.parseFloat(toUiAmount(singleChainSwapTxData.tokenOut.amount, dstChainTokenOut.decimals)),
                 4,
               )
             : '0'
@@ -498,7 +510,9 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       : `${
           dlnOrderTxData && dstChainTokenOut
             ? formatThousands(
-                parseFloat(toUiAmount(dlnOrderTxData.estimation.dstChainTokenOut.amount, dstChainTokenOut.decimals)),
+                Number.parseFloat(
+                  toUiAmount(dlnOrderTxData.estimation.dstChainTokenOut.amount, dstChainTokenOut.decimals),
+                ),
                 4,
               )
             : '0'
@@ -635,7 +649,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     } else if (tokenBalanceBn.lt(operatingExpensesBn.add(inputAmountBn))) {
       return srcChainTokenIn
         ? `Insufficient balance for this trade (min ${formatThousands(
-            parseFloat(toUiAmount(operatingExpensesBn.add(inputAmountBn), srcChainTokenIn.decimals)),
+            Number.parseFloat(toUiAmount(operatingExpensesBn.add(inputAmountBn), srcChainTokenIn.decimals)),
             5,
           )})`
         : 'Insufficient balance to cover fees';
@@ -799,19 +813,19 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
 
   return (
     <>
-      <div className="place-transaction-box debridge-wrapper">
-        <div className="debridge-container">
+      <div className='place-transaction-box debridge-wrapper'>
+        <div className='debridge-container'>
           <div className={getPanel1Classes()}>
             {/* Source chain, token & amount */}
-            <div className="flex-fixed-left mb-1 align-items-center">
-              <div className="left flex-row align-items-center gap-2">
-                <div className="form-label mb-0">From</div>
-                <div className="dropdown-trigger no-decoration">
+            <div className='flex-fixed-left mb-1 align-items-center'>
+              <div className='left flex-row align-items-center gap-2'>
+                <div className='form-label mb-0'>From</div>
+                <div className='dropdown-trigger no-decoration'>
                   <Select
                     className={`auto-height`}
                     value={sourceChain}
                     style={{ width: 'auto', maxWidth: 'none' }}
-                    popupClassName="chain-select-dropdown"
+                    popupClassName='chain-select-dropdown'
                     onChange={onSrcChainSelected}
                     bordered={false}
                     showArrow={false}
@@ -820,32 +834,32 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                   >
                     {SUPPORTED_CHAINS.map(item => (
                       <Option key={`source-${item.chainId}`} value={item.chainId}>
-                        <div className="transaction-list-row no-pointer">
-                          <div className="icon-cell">
+                        <div className='transaction-list-row no-pointer'>
+                          <div className='icon-cell'>
                             {item.chainIcon ? (
                               <img alt={`${item.chainName}`} width={18} height={18} src={item.chainIcon} />
                             ) : (
                               <Identicon address={item.chainName} style={{ width: '18', display: 'inline-flex' }} />
                             )}
                           </div>
-                          <div className="description-cell">{item.chainName}</div>
+                          <div className='description-cell'>{item.chainName}</div>
                         </div>
                       </Option>
                     ))}
                   </Select>
                 </div>
               </div>
-              <div className="right flex-row justify-content-end">
+              <div className='right flex-row justify-content-end'>
                 {!isSrcChainSolana && isAddressConnected ? <CustomConnectButton /> : null}
               </div>
             </div>
-            <div className="well mb-3">
-              <div className="flex-fixed-left">
-                <div className="left">
+            <div className='well mb-3'>
+              <div className='flex-fixed-left'>
+                <div className='left'>
                   <span className={`add-on ${isBusy || isFetchingQuote ? 'click-disabled' : 'simplelink'}`}>
                     {srcChainTokenIn ? (
                       <TokenDisplay
-                        iconSize="large"
+                        iconSize='large'
                         onClick={() => showTokenSelector('source')}
                         mintAddress={srcChainTokenIn.address}
                         name={srcChainTokenIn.name}
@@ -855,54 +869,54 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                     ) : null}
                     {/* MAX CTA */}
                     {srcChainTokenIn ? (
-                      <div className="token-max simplelink" onClick={getMaxAmountIn}>
+                      <div className='token-max simplelink' onClick={getMaxAmountIn}>
                         MAX
                       </div>
                     ) : null}
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <input
-                    className="general-text-input text-right"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    type="text"
+                    className='general-text-input text-right'
+                    inputMode='decimal'
+                    autoComplete='off'
+                    autoCorrect='off'
+                    type='text'
                     onChange={onAmountInChange}
-                    pattern="^[0-9]*[.,]?[0-9]*$"
-                    placeholder="0.0"
+                    pattern='^[0-9]*[.,]?[0-9]*$'
+                    placeholder='0.0'
                     minLength={1}
                     maxLength={79}
-                    spellCheck="false"
+                    spellCheck='false'
                     value={amountInput}
                   />
                 </div>
               </div>
-              <div className="flex-fixed-right">
-                <div className="left inner-label">
+              <div className='flex-fixed-right'>
+                <div className='left inner-label'>
                   <span>{t('transactions.send-amount.label-right')}:</span>
                   <span>
                     {`${
                       tokenBalanceBn && srcChainTokenIn
-                        ? formatThousands(parseFloat(toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals)), 5)
+                        ? formatThousands(Number.parseFloat(toUiAmount(tokenBalanceBn, srcChainTokenIn.decimals)), 5)
                         : '0'
                     }`}
                   </span>
                   {srcChainTokenIn && operatingExpensesBn.gt(new BN(0)) ? (
                     <Tooltip
-                      placement="bottom"
+                      placement='bottom'
                       title={`Included gas paid on top of the amount and covers takers' gas costs to fulfill your trade`}
                     >
                       <span>
                         {` (Gas: ${formatThousands(
-                          parseFloat(toUiAmount(operatingExpensesBn, srcChainTokenIn.decimals)),
+                          Number.parseFloat(toUiAmount(operatingExpensesBn, srcChainTokenIn.decimals)),
                           5,
                         )})`}
                       </span>
                     </Tooltip>
                   ) : null}
                 </div>
-                <div className="right inner-label">
+                <div className='right inner-label'>
                   {publicKey ? (
                     <span
                       className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
@@ -918,15 +932,15 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
             </div>
 
             {/* Destination chain, token & amount */}
-            <div className="flex-fixed-left mb-1 align-items-center">
-              <div className="left flex-row align-items-center gap-2">
-                <div className="form-label mb-0">To</div>
-                <div className="dropdown-trigger no-decoration">
+            <div className='flex-fixed-left mb-1 align-items-center'>
+              <div className='left flex-row align-items-center gap-2'>
+                <div className='form-label mb-0'>To</div>
+                <div className='dropdown-trigger no-decoration'>
                   <Select
                     className={`auto-height`}
                     value={destinationChain}
                     style={{ width: 'auto', maxWidth: 'none' }}
-                    popupClassName="chain-select-dropdown"
+                    popupClassName='chain-select-dropdown'
                     onChange={onDstChainSelected}
                     bordered={false}
                     showArrow={false}
@@ -935,15 +949,15 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                   >
                     {SUPPORTED_CHAINS.map(item => (
                       <Option key={`destination-${item.chainId}`} value={item.chainId}>
-                        <div className="transaction-list-row no-pointer">
-                          <div className="icon-cell">
+                        <div className='transaction-list-row no-pointer'>
+                          <div className='icon-cell'>
                             {item.chainIcon ? (
                               <img alt={`${item.chainName}`} width={18} height={18} src={item.chainIcon} />
                             ) : (
                               <Identicon address={item.chainName} style={{ width: '18', display: 'inline-flex' }} />
                             )}
                           </div>
-                          <div className="description-cell">{item.chainName}</div>
+                          <div className='description-cell'>{item.chainName}</div>
                         </div>
                       </Option>
                     ))}
@@ -951,13 +965,13 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                 </div>
               </div>
             </div>
-            <div className="well mb-3">
-              <div className="flex-fixed-left">
-                <div className="left">
+            <div className='well mb-3'>
+              <div className='flex-fixed-left'>
+                <div className='left'>
                   <span className={`add-on ${isBusy || isFetchingQuote ? 'click-disabled' : 'simplelink'}`}>
                     {dstChainTokenOut ? (
                       <TokenDisplay
-                        iconSize="large"
+                        iconSize='large'
                         onClick={() => showTokenSelector('destination')}
                         mintAddress={dstChainTokenOut.address}
                         name={dstChainTokenOut.name}
@@ -967,7 +981,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                     ) : null}
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <div
                     className={`static-data-field text-right ${
                       isFetchingQuote ? 'click-disabled fg-orange-red pulsate' : ''
@@ -977,16 +991,16 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                   </div>
                 </div>
               </div>
-              <div className="flex-fixed-right">
-                <div className="left inner-label">
+              <div className='flex-fixed-right'>
+                <div className='left inner-label'>
                   <span>Protocol fee:</span>
                   <span>{`${
                     quote && networkFeeToken
-                      ? formatThousands(parseFloat(toUiAmount(quote.fixFee, networkFeeToken.decimals)), 4)
+                      ? formatThousands(Number.parseFloat(toUiAmount(quote.fixFee, networkFeeToken.decimals)), 4)
                       : '0'
                   } ${networkFeeToken?.symbol}`}</span>
                 </div>
-                <div className="right inner-label">
+                <div className='right inner-label'>
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                     onClick={() => refreshPrices()}
@@ -998,25 +1012,25 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
             </div>
 
             {/* Recipient address */}
-            <div className="form-label">Recipient address{sameChainSwap ? ' (Same wallet)' : ''}</div>
-            <div className="well mb-3">
-              <div className="flex-fixed-right mb-1">
-                <div className="left position-relative">
-                  <span className="recipient-field-wrapper">
+            <div className='form-label'>Recipient address{sameChainSwap ? ' (Same wallet)' : ''}</div>
+            <div className='well mb-3'>
+              <div className='flex-fixed-right mb-1'>
+                <div className='left position-relative'>
+                  <span className='recipient-field-wrapper'>
                     <input
-                      id="payment-recipient-field"
-                      className="general-text-input"
-                      autoComplete="on"
-                      autoCorrect="off"
-                      type="text"
+                      id='payment-recipient-field'
+                      className='general-text-input'
+                      autoComplete='on'
+                      autoCorrect='off'
+                      type='text'
                       onChange={handleRecipientAddressChange}
                       placeholder={`Enter recipient's ${dstChainName} address`}
                       required={true}
-                      spellCheck="false"
+                      spellCheck='false'
                       value={dstChainTokenOutRecipient}
                     />
                     <span
-                      id="payment-recipient-static-field"
+                      id='payment-recipient-static-field'
                       className={`${
                         dstChainTokenOutRecipient ? 'overflow-ellipsis-middle no-tail' : 'placeholder-text'
                       }`}
@@ -1025,7 +1039,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                     </span>
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <span>&nbsp;</span>
                 </div>
               </div>
@@ -1037,14 +1051,14 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
               <Button
                 className={`main-cta ${isBusy ? 'inactive' : ''}`}
                 block
-                type="primary"
-                shape="round"
-                size="large"
+                type='primary'
+                shape='round'
+                size='large'
                 onClick={onStartTransaction}
                 disabled={isExecutingTx || isFetchingQuote || !isTransferValid}
               >
                 {isBusy && (
-                  <span className="mr-1">
+                  <span className='mr-1'>
                     <LoadingOutlined style={{ fontSize: '16px' }} />
                   </span>
                 )}
@@ -1056,30 +1070,30 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
           </div>
           <div className={getPanel2Classes()} style={{}}>
             {orderSubmittedContent ? (
-              <div className="order-submitted">
-                <h2 className="highlight-title">Order Submitted!</h2>
-                <CheckCircleFilled style={{ fontSize: 64 }} className="icon" />
-                <p className="font-size-120 text-center">
+              <div className='order-submitted'>
+                <h2 className='highlight-title'>Order Submitted!</h2>
+                <CheckCircleFilled style={{ fontSize: 64 }} className='icon' />
+                <p className='font-size-120 text-center'>
                   {orderSubmittedContent.message}
                   <br />
                   Check the transaction status on
                   {isSrcChainSolana ? (
                     <a
-                      className="secondary-link ml-1"
+                      className='secondary-link ml-1'
                       href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${
                         orderSubmittedContent.txHash
                       }${getSolanaExplorerClusterParam()}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      target='_blank'
+                      rel='noopener noreferrer'
                     >
                       solana.fm
                     </a>
                   ) : orderSubmittedContent.explorer ? (
                     <a
-                      className="secondary-link ml-1"
+                      className='secondary-link ml-1'
                       href={orderSubmittedContent.explorer.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      target='_blank'
+                      rel='noopener noreferrer'
                     >
                       {orderSubmittedContent.explorer.name}
                     </a>
@@ -1087,9 +1101,9 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                 </p>
                 <Button
                   block
-                  type="primary"
-                  shape="round"
-                  size="large"
+                  type='primary'
+                  shape='round'
+                  size='large'
                   onClick={() => {
                     setAmountInput('');
                     setUiStage('order-setup');
@@ -1100,11 +1114,11 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
               </div>
             ) : null}
             {orderFailedContent ? (
-              <div className="order-submitted">
-                <h2 className="highlight-title">Order Not Submitted!</h2>
-                <CloseCircleFilled style={{ fontSize: 64 }} className="icon" />
+              <div className='order-submitted'>
+                <h2 className='highlight-title'>Order Not Submitted!</h2>
+                <CloseCircleFilled style={{ fontSize: 64 }} className='icon' />
                 <p>Your order failed to submit. You can try a different amount and restart the transaction.</p>
-                <Button block type="primary" shape="round" size="large" onClick={() => setUiStage('order-setup')}>
+                <Button block type='primary' shape='round' size='large' onClick={() => setUiStage('order-setup')}>
                   Review Swap
                 </Button>
               </div>
@@ -1114,9 +1128,9 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
         {/* Token selection modal */}
         {isTokenSelectorModalVisible ? (
           <Modal
-            className="mean-modal unpadded-content"
+            className='mean-modal unpadded-content'
             open={isTokenSelectorModalVisible}
-            title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+            title={<div className='modal-title'>{t('token-selector.modal-title')}</div>}
             onCancel={closeTokenSelector}
             width={420}
             footer={null}
@@ -1144,10 +1158,10 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
 
       {/* Rate and refresh */}
       {uiStage === 'order-setup' ? (
-        <div className="debridge-wrapper">
-          <div className="flex-fixed-right">
+        <div className='debridge-wrapper'>
+          <div className='flex-fixed-right'>
             {/* Rate display */}
-            <div className="left text-center">
+            <div className='left text-center'>
               <SwapRate
                 swapRate={swapRate}
                 srcChainTokenIn={srcChainTokenIn}
@@ -1158,19 +1172,19 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
               />
             </div>
             {/* Refresh button */}
-            <div className="right flex justify-content-end">
+            <div className='right flex justify-content-end'>
               {isFetchingQuote || (srcChainTokenIn && dstChainTokenOut && dstChainTokenOutAmount) ? (
-                <span className="icon-button-container">
+                <span className='icon-button-container'>
                   {isFetchingQuote ? (
-                    <span className="icon-container">
+                    <span className='icon-container'>
                       <SyncOutlined spin />
                     </span>
                   ) : (
-                    <Tooltip placement="bottom" title="Refresh quote">
+                    <Tooltip placement='bottom' title='Refresh quote'>
                       <Button
-                        type="default"
-                        shape="circle"
-                        size="small"
+                        type='default'
+                        shape='circle'
+                        size='small'
                         icon={<ReloadOutlined />}
                         onClick={forceRefresh}
                       />

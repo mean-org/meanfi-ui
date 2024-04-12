@@ -1,4 +1,4 @@
-import { Language } from 'models/languages';
+import type { Language } from 'models/languages';
 
 // Intervals
 export const ONE_MINUTE_REFRESH_TIMEOUT = 60 * 1000;

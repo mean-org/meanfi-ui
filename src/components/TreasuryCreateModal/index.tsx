@@ -1,7 +1,7 @@
 import { CheckOutlined, CopyOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
-import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { type TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
+import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Button, Drawer, Modal, Spin } from 'antd';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
@@ -21,9 +21,9 @@ import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { consoleOut, copyText, getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
 import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { TreasuryCreateOptions, TreasuryTypeOption } from 'models/treasuries';
+import type { TreasuryCreateOptions, TreasuryTypeOption } from 'models/treasuries';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -284,15 +284,15 @@ export const TreasuryCreateModal = (props: {
     return (
       selectedMultisig && (
         <div className={`transaction-list-row w-100 no-pointer`}>
-          <div className="icon-cell">
+          <div className='icon-cell'>
             <Identicon address={selectedMultisig.id} style={{ width: '30', display: 'inline-flex' }} />
           </div>
-          <div className="description-cell">
-            <div className="title text-truncate">{selectedMultisig.label}</div>
-            <div className="subtitle text-truncate">{shortenAddress(selectedMultisig.id.toBase58(), 8)}</div>
+          <div className='description-cell'>
+            <div className='title text-truncate'>{selectedMultisig.label}</div>
+            <div className='subtitle text-truncate'>{shortenAddress(selectedMultisig.id.toBase58(), 8)}</div>
           </div>
-          <div className="rate-cell">
-            <div className="rate-amount">
+          <div className='rate-cell'>
+            <div className='rate-amount'>
               {t('multisig.multisig-accounts.pending-transactions', {
                 txs: selectedMultisig.pendingTxsAmount,
               })}
@@ -311,7 +311,7 @@ export const TreasuryCreateModal = (props: {
 
   const renderTokenList = () => {
     return filteredTokenList.map((t, index) => {
-      const onClick = function () {
+      const onClick = () => {
         setWorkingToken(t);
 
         consoleOut('token selected:', t, 'blue');
@@ -355,20 +355,20 @@ export const TreasuryCreateModal = (props: {
 
   const renderTokenSelectorInner = () => {
     return (
-      <div className="token-selector-wrapper">
-        <div className="token-search-wrapper">
+      <div className='token-selector-wrapper'>
+        <div className='token-search-wrapper'>
           <TextInput
-            id="token-search-streaming-account"
+            id='token-search-streaming-account'
             value={tokenFilter}
             allowClear={true}
-            extraClass="mb-2"
+            extraClass='mb-2'
             onInputClear={onInputCleared}
             placeholder={t('token-selector.search-input-placeholder')}
             error={getSelectedTokenError()}
             onInputChange={onTokenSearchInputChange}
           />
         </div>
-        <div className="token-list">
+        <div className='token-list'>
           {filteredTokenList.length > 0 && renderTokenList()}
           {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
             <TokenListItem
@@ -425,9 +425,9 @@ export const TreasuryCreateModal = (props: {
   return (
     <>
       <Modal
-        className="mean-modal simple-modal"
+        className='mean-modal simple-modal'
         title={
-          <div className="modal-title">
+          <div className='modal-title'>
             {isMultisigContext ? 'Propose streaming account' : t('treasuries.create-treasury.modal-title')}
           </div>
         }
@@ -444,31 +444,31 @@ export const TreasuryCreateModal = (props: {
             <>
               {/* Proposal title */}
               {isMultisigContext && (
-                <div className="mb-3">
-                  <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+                <div className='mb-3'>
+                  <div className='form-label'>{t('multisig.proposal-modal.title')}</div>
                   <InputMean
-                    id="proposal-title-field"
-                    name="Title"
-                    className="w-100 general-text-input"
+                    id='proposal-title-field'
+                    name='Title'
+                    className='w-100 general-text-input'
                     onChange={onTitleInputValueChange}
-                    placeholder="Add a proposal title (required)"
+                    placeholder='Add a proposal title (required)'
                     value={proposalTitle}
                   />
                 </div>
               )}
 
               {/* Treasury name */}
-              <div className="mb-3">
-                <div className="form-label">{t('treasuries.create-treasury.treasury-name-input-label')}</div>
+              <div className='mb-3'>
+                <div className='form-label'>{t('treasuries.create-treasury.treasury-name-input-label')}</div>
                 <div className={`well ${isBusy ? 'disabled' : ''}`}>
-                  <div className="flex-fixed-right">
-                    <div className="left">
+                  <div className='flex-fixed-right'>
+                    <div className='left'>
                       <input
-                        id="treasury-name-field"
-                        className="w-100 general-text-input"
-                        autoComplete="off"
-                        autoCorrect="off"
-                        type="text"
+                        id='treasury-name-field'
+                        className='w-100 general-text-input'
+                        autoComplete='off'
+                        autoCorrect='off'
+                        type='text'
                         maxLength={32}
                         onChange={onInputValueChange}
                         placeholder={t('treasuries.create-treasury.treasury-name-placeholder')}
@@ -476,15 +476,15 @@ export const TreasuryCreateModal = (props: {
                       />
                     </div>
                   </div>
-                  <div className="form-field-hint">I.e. "My company payroll", "Seed round vesting", etc.</div>
+                  <div className='form-field-hint'>I.e. "My company payroll", "Seed round vesting", etc.</div>
                 </div>
               </div>
 
-              <div className="form-label">{t('treasuries.create-treasury.treasury-token-label')}</div>
+              <div className='form-label'>{t('treasuries.create-treasury.treasury-token-label')}</div>
               <div className={`well ${isBusy ? 'disabled' : ''} pt-2 pb-2`}>
-                <div className="flex-fixed-left">
-                  <div className="left">
-                    <span className="add-on simplelink">
+                <div className='flex-fixed-left'>
+                  <div className='left'>
+                    <span className='add-on simplelink'>
                       {workingToken && (
                         <TokenDisplay
                           onClick={showTokenSelector}
@@ -501,7 +501,7 @@ export const TreasuryCreateModal = (props: {
               </div>
 
               {/* Treasury type selector */}
-              <div className="items-card-list vertical-scroll">
+              <div className='items-card-list vertical-scroll'>
                 {TREASURY_TYPE_OPTIONS.map(option => {
                   return (
                     <div
@@ -515,14 +515,14 @@ export const TreasuryCreateModal = (props: {
                         }
                       }}
                     >
-                      <div className="checkmark">
+                      <div className='checkmark'>
                         <CheckOutlined />
                       </div>
-                      <div className="item-meta">
-                        <div className="item-name">
+                      <div className='item-meta'>
+                        <div className='item-name'>
                           {t(`treasuries.create-treasury.treasury-type-options.${option.translationId}-name`)}
                         </div>
-                        <div className="item-description">
+                        <div className='item-description'>
                           {t(`treasuries.create-treasury.treasury-type-options.${option.translationId}-description`)}
                         </div>
                       </div>
@@ -533,26 +533,26 @@ export const TreasuryCreateModal = (props: {
 
               {enableMultisigTreasuryOption && multisigAccounts && multisigAccounts.length > 0 && (
                 <>
-                  <div className="mb-3">
-                    <div className="form-label">{t('treasuries.create-treasury.multisig-selector-label')}</div>
-                    <div className="well">{renderSelectedMultisig()}</div>
+                  <div className='mb-3'>
+                    <div className='form-label'>{t('treasuries.create-treasury.multisig-selector-label')}</div>
+                    <div className='well'>{renderSelectedMultisig()}</div>
                   </div>
                 </>
               )}
             </>
           ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
             <>
-              <div className="transaction-progress">
-                <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                <h4 className="font-bold">{t('treasuries.create-treasury.success-message')}</h4>
+              <div className='transaction-progress'>
+                <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+                <h4 className='font-bold'>{t('treasuries.create-treasury.success-message')}</h4>
               </div>
             </>
           ) : (
             <>
-              <div className="transaction-progress p-0">
-                <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              <div className='transaction-progress p-0'>
+                <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                  <h4 className="mb-4">
+                  <h4 className='mb-4'>
                     {!transactionStatus.customError ? (
                       t('transactions.status.tx-start-failure', {
                         accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
@@ -568,12 +568,12 @@ export const TreasuryCreateModal = (props: {
                         ) : null}
                         {transactionStatus.customError.data ? (
                           <>
-                            <span className="ml-1">[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
-                            <div className="icon-button-container">
+                            <span className='ml-1'>[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
+                            <div className='icon-button-container'>
                               <Button
-                                type="default"
-                                shape="circle"
-                                size="middle"
+                                type='default'
+                                shape='circle'
+                                size='middle'
                                 icon={<CopyOutlined />}
                                 onClick={() => copyAddressToClipboard(transactionStatus.customError.data)}
                               />
@@ -584,7 +584,7 @@ export const TreasuryCreateModal = (props: {
                     )}
                   </h4>
                 ) : (
-                  <h4 className="font-bold mb-3">
+                  <h4 className='font-bold mb-3'>
                     {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
                 )}
@@ -599,27 +599,27 @@ export const TreasuryCreateModal = (props: {
           }
         >
           {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-            <div className="transaction-progress">
-              <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-              <h4 className="font-bold mb-1">
+            <div className='transaction-progress'>
+              <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+              <h4 className='font-bold mb-1'>
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
+                <div className='indication'>{t('transactions.status.instructions')}</div>
               )}
             </div>
           )}
         </div>
 
         {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
-          <div className="row two-col-ctas mt-3 transaction-progress p-0">
+          <div className='row two-col-ctas mt-3 transaction-progress p-0'>
             {isError(transactionStatus.currentOperation) ? (
-              <div className="col-12">
+              <div className='col-12'>
                 <Button
                   block
-                  type="text"
-                  shape="round"
-                  size="large"
+                  type='text'
+                  shape='round'
+                  size='large'
                   className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
                   onClick={onAcceptModal}
                 >
@@ -627,13 +627,13 @@ export const TreasuryCreateModal = (props: {
                 </Button>
               </div>
             ) : (
-              <div className="col-12">
+              <div className='col-12'>
                 <Button
                   className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
                   block
-                  type="primary"
-                  shape="round"
-                  size="large"
+                  type='primary'
+                  shape='round'
+                  size='large'
                   disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
@@ -648,12 +648,12 @@ export const TreasuryCreateModal = (props: {
                   {isBusy
                     ? t('treasuries.create-treasury.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? isMultisigContext
-                      ? getTransactionStartButtonLabelMultisig()
-                      : getTransactionStartButtonLabel()
-                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                    ? t('general.cta-finish')
-                    : t('general.refresh')}
+                      ? isMultisigContext
+                        ? getTransactionStartButtonLabelMultisig()
+                        : getTransactionStartButtonLabel()
+                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                        ? t('general.cta-finish')
+                        : t('general.refresh')}
                 </Button>
               </div>
             )}
@@ -662,7 +662,7 @@ export const TreasuryCreateModal = (props: {
 
         <Drawer
           title={t('token-selector.modal-title')}
-          placement="bottom"
+          placement='bottom'
           closable={true}
           onClose={onCloseTokenSelector}
           open={isTokenSelectorVisible}

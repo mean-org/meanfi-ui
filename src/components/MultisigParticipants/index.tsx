@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
+import type { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
 import { ModalTemplate } from 'components/ModalTemplate';
 import { TextInput } from 'components/TextInput';
 import { isValidAddress, scrollToBottom } from 'middleware/ui';
@@ -77,25 +77,25 @@ export const MultisigParticipants = (props: {
   return (
     <>
       <div className={`flex-fixed-right mb-1${disabled ? ' click-disabled' : ''}`}>
-        <div className="left">
-          {label ? <div className="form-label">{label}</div> : <div className="form-label">&nbsp;</div>}
+        <div className='left'>
+          {label ? <div className='form-label'>{label}</div> : <div className='form-label'>&nbsp;</div>}
         </div>
-        <div className="right">
-          <span className="flat-button tiny" onClick={() => addParticipant()}>
+        <div className='right'>
+          <span className='flat-button tiny' onClick={() => addParticipant()}>
             <PlusOutlined />
-            <span className="ml-1 text-uppercase">{t('multisig.add-participant-cta')}</span>
+            <span className='ml-1 text-uppercase'>{t('multisig.add-participant-cta')}</span>
           </span>
         </div>
       </div>
       {participants && participants.length > 0 && (
-        <div id="multisig-participants-max-height">
+        <div id='multisig-participants-max-height'>
           {participants.map((participant: MultisigParticipant, index: number) => {
             return (
-              <div key={`participant-${index}`} className="two-column-layout address-fixed">
-                <div className="left">
+              <div key={`participant-${index}`} className='two-column-layout address-fixed'>
+                <div className='left'>
                   <TextInput
-                    placeholder="Enter signer name or description"
-                    extraClass="small"
+                    placeholder='Enter signer name or description'
+                    extraClass='small'
                     id={`participant-name-${index + 1}`}
                     value={participant.name}
                     allowClear={false}
@@ -106,10 +106,10 @@ export const MultisigParticipants = (props: {
                     }}
                   />
                 </div>
-                <div className="right">
+                <div className='right'>
                   <TextInput
-                    placeholder="Type or paste the address of multisig signer"
-                    extraClass="small"
+                    placeholder='Type or paste the address of multisig signer'
+                    extraClass='small'
                     id={`participant-address-${index + 1}`}
                     value={participant.address}
                     allowClear={participants.length > 1}

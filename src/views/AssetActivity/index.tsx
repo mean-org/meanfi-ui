@@ -1,9 +1,9 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Empty, Spin } from 'antd';
 import { TransactionItemView } from 'components/TransactionItemView';
-import { MappedTransaction } from 'middleware/history';
+import type { MappedTransaction } from 'middleware/history';
 import { getChange } from 'middleware/transactions';
-import { UserTokenAccount } from 'models/accounts';
+import type { UserTokenAccount } from 'models/accounts';
 import { FetchStatus } from 'models/transactions';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -90,19 +90,19 @@ export const AssetActivity = (props: {
 
   if (status === FetchStatus.FetchFailed && !hasItems) {
     return (
-      <div className="h-100 flex-center">
+      <div className='h-100 flex-center'>
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.loading-error')}</p>} />
       </div>
     );
   } else if (status === FetchStatus.Fetched && !hasItems) {
     return (
-      <div className="h-100 flex-center">
+      <div className='h-100 flex-center'>
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
       </div>
     );
   } else if (status === FetchStatus.Fetching && !hasItems) {
     return (
-      <div className="flex flex-center">
+      <div className='flex flex-center'>
         <Spin indicator={loadIndicator} />
       </div>
     );
@@ -116,21 +116,21 @@ export const AssetActivity = (props: {
           : 'vertical-scroll'
       }`}
     >
-      <div className="activity-list h-100">
-        {hasTransactions ? <div className="item-list-body compact">{renderTransactions()}</div> : null}
+      <div className='activity-list h-100'>
+        {hasTransactions ? <div className='item-list-body compact'>{renderTransactions()}</div> : null}
         {lastTxSignature && (
-          <div className="mt-1 text-center">
+          <div className='mt-1 text-center'>
             <span
               className={status === FetchStatus.Fetching ? 'no-pointer' : 'secondary-link underline-on-hover'}
-              role="link"
+              role='link'
               onClick={onLoadMore}
             >
               {status === FetchStatus.Fetching ? (
                 <>
-                  <span className="mr-1">
+                  <span className='mr-1'>
                     <LoadingOutlined style={{ fontSize: '16px' }} />
                   </span>
-                  <span className="no-pointer fg-orange-red pulsate-fast">{t('general.loading')}</span>
+                  <span className='no-pointer fg-orange-red pulsate-fast'>{t('general.loading')}</span>
                 </>
               ) : (
                 t('general.cta-load-more')

@@ -1,42 +1,51 @@
 import { ArrowLeftOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
-import { App, AppConfig, AppsProvider, Arg, NETWORK, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
+import {
+  type App,
+  type AppConfig,
+  AppsProvider,
+  type Arg,
+  NETWORK,
+  type UiElement,
+  type UiInstruction,
+} from '@mean-dao/mean-multisig-apps';
 
+import * as credixDevnet from '@mean-dao/mean-multisig-apps/lib/apps/credix-devnet/func';
 // Credix imports
 import * as credixMainnet from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
-import * as credixDevnet from '@mean-dao/mean-multisig-apps/lib/apps/credix-devnet/func';
 
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
-  getFees,
-  MeanMultisig,
-  MultisigTransactionFees,
   MULTISIG_ACTIONS,
+  MeanMultisig,
+  type MultisigTransactionFees,
+  getFees,
 } from '@mean-dao/mean-multisig-sdk';
-import { MoneyStreaming, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming';
+import { MoneyStreaming, STREAM_STATE, type StreamInfo, type TreasuryInfo } from '@mean-dao/money-streaming';
 import {
   Category,
   PaymentStreaming,
-  Stream,
+  type PaymentStreamingAccount,
   STREAM_STATUS_CODE,
-  TransactionFees,
-  PaymentStreamingAccount,
-  TransferTransactionAccounts,
+  type Stream,
+  type TransactionFees,
+  type TransferTransactionAccounts,
 } from '@mean-dao/payment-streaming';
-import { AnchorProvider, BN, Idl, Program } from '@project-serum/anchor';
-import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AnchorProvider, BN, type Idl, Program } from '@project-serum/anchor';
+import { TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 import {
-  Connection,
+  type Connection,
   LAMPORTS_PER_SOL,
   PublicKey,
-  Transaction,
-  TransactionInstruction,
-  VersionedTransaction,
+  type Transaction,
+  type TransactionInstruction,
+  type VersionedTransaction,
 } from '@solana/web3.js';
-import { Alert, Button, Col, Divider, Dropdown, Empty, Row, Segmented, Space, Spin, Tooltip } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
-import notification from 'antd/lib/notification';
-import { SegmentedLabeledOption } from 'antd/lib/segmented';
 import { segmentAnalytics } from 'App';
+import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'Icons';
+import { Alert, Button, Col, Divider, Dropdown, Empty, Row, Segmented, Space, Spin, Tooltip } from 'antd';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
+import notification from 'antd/lib/notification';
+import type { SegmentedLabeledOption } from 'antd/lib/segmented';
 import BigNumber from 'bignumber.js';
 import { AccountsCloseAssetModal } from 'components/AccountsCloseAssetModal';
 import { AccountsInitAtaModal } from 'components/AccountsInitAtaModal';
@@ -68,23 +77,25 @@ import {
 } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
+import { AppStateContext, type TransactionStatusInfo } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
 import useTransaction from 'hooks/useTransaction';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { resolveParsedAccountInfo } from 'middleware/accounts';
-import { createAddSafeAssetTx, CreateSafeAssetTxParams } from 'middleware/createAddSafeAssetTx';
+import { type CreateSafeAssetTxParams, createAddSafeAssetTx } from 'middleware/createAddSafeAssetTx';
+import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
+import createTokenTransferTx from 'middleware/createTokenTransferTx';
+import { createV0InitAtaAccountTx } from 'middleware/createV0InitAtaAccountTx';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
-import { fetchAccountHistory, MappedTransaction } from 'middleware/history';
+import { type MappedTransaction, fetchAccountHistory } from 'middleware/history';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import {
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getChange,
   getProposalWithPrioritizationFees,
@@ -101,38 +112,39 @@ import {
   shortenAddress,
   toUiAmount,
 } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import {
-  AccountTokenParsedInfo,
-  AssetCta,
+  type AccountTokenParsedInfo,
+  type AssetCta,
   AssetGroups,
-  KnownAppMetadata,
   KNOWN_APPS,
+  type KnownAppMetadata,
   MetaInfoCtaAction,
-  ProgramAccounts,
+  type ProgramAccounts,
   RegisteredAppPaths,
-  UserTokenAccount,
+  type UserTokenAccount,
 } from 'models/accounts';
-import { MeanNft } from 'models/accounts/NftTypes';
-import { MetaInfoCta } from 'models/common-types';
+import type { MeanNft } from 'models/accounts/NftTypes';
+import type { MetaInfoCta } from 'models/common-types';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import {
-  CreateNewProposalParams,
-  isCredixFinance,
+  type CreateNewProposalParams,
   NATIVE_LOADER,
-  parseSerializedTx,
-  SetAssetAuthPayload,
-  TransferTokensTxParams,
+  type SetAssetAuthPayload,
+  type TransferTokensTxParams,
   ZERO_FEES,
+  isCredixFinance,
+  parseSerializedTx,
 } from 'models/multisig';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { initialSummary, StreamsSummary } from 'models/streams';
+import { type StreamsSummary, initialSummary } from 'models/streams';
 import { FetchStatus } from 'models/transactions';
-import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from 'models/treasuries';
+import { INITIAL_TREASURIES_SUMMARY, type UserTreasuriesSummary } from 'models/treasuries';
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 import { AppsList, AssetActivity, NftDetails, NftPaginatedList, OtherAssetsList } from 'views';
 import AssetList from 'views/AssetList';
 import { getBuyOptionsCta } from './asset-ctas/buyOptionsCta';
@@ -147,10 +159,6 @@ import getNftMint from './getNftMint';
 import './style.scss';
 import useAccountPrograms from './useAccountPrograms';
 import useAppNavigation from './useAppNavigation';
-import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
-import createTokenTransferTx from 'middleware/createTokenTransferTx';
-import { createV0InitAtaAccountTx } from 'middleware/createV0InitAtaAccountTx';
-import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));
@@ -919,12 +927,12 @@ export const HomeView = () => {
           duration: 20,
           description: (
             <>
-              <div className="mb-2">The proposal's status can be reviewed in the Safe's proposal list.</div>
+              <div className='mb-2'>The proposal's status can be reviewed in the Safe's proposal list.</div>
               <Button
-                type="primary"
-                shape="round"
-                size="small"
-                className="extra-small d-flex align-items-center pb-1"
+                type='primary'
+                shape='round'
+                size='small'
+                className='extra-small d-flex align-items-center pb-1'
                 onClick={() => {
                   const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
                   navigate(url);
@@ -1282,7 +1290,7 @@ export const HomeView = () => {
           [],
         );
 
-        const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+        const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
         const tx = await getProposalWithPrioritizationFees(
           {
@@ -1500,7 +1508,7 @@ export const HomeView = () => {
           [],
         );
 
-        const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+        const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
         const tx = await getProposalWithPrioritizationFees(
           {
@@ -1916,7 +1924,7 @@ export const HomeView = () => {
           const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
           const decimals = token.decimals || 9;
           const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
-          const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+          const amountChange = Number.parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
           if (!isIncoming) {
             fundsLeftValue += amountChange;
@@ -1949,7 +1957,7 @@ export const HomeView = () => {
           const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
           const decimals = token.decimals || 9;
           const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
-          const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+          const amountChange = Number.parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
           if (isIncoming) {
             withdrawableValue += amountChange;
@@ -2247,7 +2255,7 @@ export const HomeView = () => {
           switch (data.instruction.name) {
             case 'depositFunds':
               operation = OperationType.CredixDepositFunds;
-              amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+              amountVal = Number.parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
               consoleOut('**** common inputs: ', {
                 investorPK: investorPK.toString(),
                 marketPlaceVal,
@@ -2258,7 +2266,7 @@ export const HomeView = () => {
 
             case 'createWithdrawRequest':
               operation = OperationType.CredixWithdrawFunds;
-              amountVal = parseFloat(
+              amountVal = Number.parseFloat(
                 data.instruction.uiElements.find((x: any) => x.name === 'baseWithdrawalAmount').value,
               );
               consoleOut('**** common inputs: ', {
@@ -2271,7 +2279,7 @@ export const HomeView = () => {
 
             case 'redeemWithdrawRequest':
               operation = OperationType.CredixRedeemWithdrawRequest;
-              amountVal = parseFloat(
+              amountVal = Number.parseFloat(
                 data.instruction.uiElements.find((x: any) => x.name === 'baseWithdrawalAmount').value,
               );
               consoleOut('**** common inputs: ', {
@@ -2284,7 +2292,7 @@ export const HomeView = () => {
 
             case 'depositTranche':
               operation = OperationType.CredixDepositTranche;
-              amountVal = parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+              amountVal = Number.parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
               consoleOut('**** common inputs: ', {
                 investorPK: investorPK.toString(),
                 marketPlaceVal,
@@ -2294,7 +2302,7 @@ export const HomeView = () => {
                 investorPK,
                 new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
                 amountVal,
-                parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
+                Number.parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
                 marketPlaceVal,
               );
               break;
@@ -2309,7 +2317,7 @@ export const HomeView = () => {
               proposalIx = await createCredixWithdrawTrancheIx(
                 investorPK,
                 new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
-                parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
+                Number.parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
                 marketPlaceVal,
               );
               break;
@@ -3264,8 +3272,8 @@ export const HomeView = () => {
         key: '01-create-asset',
         label: (
           <div onClick={onShowCreateAssetModal}>
-            <IconAdd className="mean-svg-icons" />
-            <span className="menu-item-text">Create an asset</span>
+            <IconAdd className='mean-svg-icons' />
+            <span className='menu-item-text'>Create an asset</span>
           </div>
         ),
       });
@@ -3274,8 +3282,8 @@ export const HomeView = () => {
       key: '02-suggest-asset',
       label: (
         <div onClick={showSuggestAssetModal}>
-          <IconLightBulb className="mean-svg-icons" />
-          <span className="menu-item-text">Suggest an asset</span>
+          <IconLightBulb className='mean-svg-icons' />
+          <span className='menu-item-text'>Suggest an asset</span>
         </div>
       ),
     });
@@ -3285,8 +3293,8 @@ export const HomeView = () => {
           key: '03-show-low-balances',
           label: (
             <div onClick={() => toggleHideLowBalances(false)}>
-              <IconEyeOn className="mean-svg-icons" />
-              <span className="menu-item-text">Show low balances</span>
+              <IconEyeOn className='mean-svg-icons' />
+              <span className='menu-item-text'>Show low balances</span>
             </div>
           ),
         });
@@ -3295,8 +3303,8 @@ export const HomeView = () => {
           key: '04-hide-low-balances',
           label: (
             <div onClick={() => toggleHideLowBalances(true)}>
-              <IconEyeOff className="mean-svg-icons" />
-              <span className="menu-item-text">Hide low balances</span>
+              <IconEyeOff className='mean-svg-icons' />
+              <span className='menu-item-text'>Hide low balances</span>
             </div>
           ),
         });
@@ -3345,15 +3353,15 @@ export const HomeView = () => {
   const renderSelectedAccountSummaryInner = () => {
     return (
       <>
-        <div className="left">
-          <div className="font-bold font-size-110 line-height-110">{selectedAccount.name}</div>
-          <div className="font-regular font-size-80 line-height-110 fg-secondary-50">
+        <div className='left'>
+          <div className='font-bold font-size-110 line-height-110'>{selectedAccount.name}</div>
+          <div className='font-regular font-size-80 line-height-110 fg-secondary-50'>
             {shortenAddress(selectedAccount.address, 8)}
           </div>
         </div>
-        <div className="font-bold font-size-110 right">
+        <div className='font-bold font-size-110 right'>
           {loadingStreams || !canShowStreamingAccountBalance ? (
-            <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+            <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
           ) : (
             renderNetworth()
           )}
@@ -3364,7 +3372,7 @@ export const HomeView = () => {
 
   const renderSelectedAccountSummary = (type: string) => {
     return (
-      <div className="networth-list-item-wrapper" key="account-summary-category">
+      <div className='networth-list-item-wrapper' key='account-summary-category'>
         <div
           onClick={() => {
             turnOnRightPanel();
@@ -3380,7 +3388,7 @@ export const HomeView = () => {
         >
           {renderSelectedAccountSummaryInner()}
         </div>
-        <Divider className="networth-separator" />
+        <Divider className='networth-separator' />
       </div>
     );
   };
@@ -3388,10 +3396,10 @@ export const HomeView = () => {
   const renderMoneyStreamsSummary = () => {
     const renderValues = () => {
       if (totalStreamsAmount === 0) {
-        return <div className="subtitle">{t('account-area.no-money-streams')}</div>;
+        return <div className='subtitle'>{t('account-area.no-money-streams')}</div>;
       } else {
         return (
-          <div className="subtitle">
+          <div className='subtitle'>
             {incomingAmount} {t('streams.stream-stats-incoming')}, {outgoingAmount} {t('streams.stream-stats-outgoing')}
           </div>
         );
@@ -3402,7 +3410,7 @@ export const HomeView = () => {
       <>
         {
           <div
-            key="streams-category"
+            key='streams-category'
             onClick={() => {
               setSelectedNft(undefined);
               navigateToStreaming();
@@ -3411,17 +3419,17 @@ export const HomeView = () => {
               selectedCategory === 'apps' && selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? 'selected' : ''
             }`}
           >
-            <div className="icon-cell">
+            <div className='icon-cell'>
               {loadingStreams ? (
-                <div className="token-icon animate-border-loading">
+                <div className='token-icon animate-border-loading'>
                   <div
-                    className="streams-count simplelink"
+                    className='streams-count simplelink'
                     onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
                     }}
                   >
-                    <span className="font-bold text-shadow">
+                    <span className='font-bold text-shadow'>
                       <SyncOutlined spin />
                     </span>
                   </div>
@@ -3429,44 +3437,44 @@ export const HomeView = () => {
               ) : (
                 <div className={totalStreamsAmount !== 0 ? 'token-icon animate-border' : 'token-icon'}>
                   <div
-                    className="streams-count simplelink"
+                    className='streams-count simplelink'
                     onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
                       refreshStreamList(false);
                     }}
                   >
-                    <span className="font-size-75 font-bold text-shadow">
+                    <span className='font-size-75 font-bold text-shadow'>
                       {kFormatter(totalStreamsAmount ?? 0, 1) || 0}
                     </span>
                   </div>
                 </div>
               )}
             </div>
-            <div className="description-cell">
-              <div className="title">{t('account-area.money-streams')}</div>
+            <div className='description-cell'>
+              <div className='title'>{t('account-area.money-streams')}</div>
               {loadingStreams ? (
-                <div className="subtitle">
-                  <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+                <div className='subtitle'>
+                  <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
                 </div>
               ) : (
                 renderValues()
               )}
             </div>
-            <div className="rate-cell">
+            <div className='rate-cell'>
               {loadingStreams || !canShowStreamingAccountBalance ? (
-                <div className="rate-amount">
-                  <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+                <div className='rate-amount'>
+                  <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
                 </div>
               ) : (
                 <>
                   {totalAccountBalance > 0 ? (
                     <>
-                      <div className="rate-amount">{toUsCurrency(totalAccountBalance)}</div>
-                      <div className="interval">{t('streams.streaming-balance')}</div>
+                      <div className='rate-amount'>{toUsCurrency(totalAccountBalance)}</div>
+                      <div className='interval'>{t('streams.streaming-balance')}</div>
                     </>
                   ) : (
-                    <span className="rate-amount">$0.00</span>
+                    <span className='rate-amount'>$0.00</span>
                   )}
                 </>
               )}
@@ -3480,13 +3488,13 @@ export const HomeView = () => {
   const renderLoadingOrNoTokensMessage = () => {
     if (loadingTokenAccounts) {
       return (
-        <div className="flex flex-center">
+        <div className='flex flex-center'>
           <Spin indicator={loadIndicator} />
         </div>
       );
     } else if (tokensLoaded) {
       return (
-        <div className="flex flex-center">
+        <div className='flex flex-center'>
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
         </div>
       );
@@ -3498,26 +3506,26 @@ export const HomeView = () => {
   const renderAssetsList = () => {
     return (
       <div
-        key="asset-category-token-items"
+        key='asset-category-token-items'
         className={`asset-category flex-column${!accountTokens || accountTokens.length === 0 ? ' h-75' : ''}`}
       >
         {accountTokens && accountTokens.length > 0 ? (
           <>
             {isInspectedAccountTheConnectedWallet() && wSolBalance > 0 && (
-              <div className="utility-box">
-                <div className="well mb-1">
-                  <div className="flex-fixed-right align-items-center">
-                    <div className="left">
+              <div className='utility-box'>
+                <div className='well mb-1'>
+                  <div className='flex-fixed-right align-items-center'>
+                    <div className='left'>
                       You have {formatThousands(wSolBalance, NATIVE_SOL.decimals, NATIVE_SOL.decimals)}{' '}
                       <strong>wrapped SOL</strong> in your wallet. Click to unwrap to native SOL.
                     </div>
-                    <div className="right">
+                    <div className='right'>
                       <Button
-                        type="primary"
-                        shape="round"
+                        type='primary'
+                        shape='round'
                         disabled={isUnwrapping}
                         onClick={onStartUnwrapTx}
-                        size="small"
+                        size='small'
                       >
                         {isUnwrapping ? 'Unwrapping SOL' : 'Unwrap SOL'}
                       </Button>
@@ -3655,7 +3663,7 @@ export const HomeView = () => {
       return {
         key: `${index + 44}-${item.uiComponentId}`,
         label: (
-          <span className="menu-item-text" onClick={item.callBack}>
+          <span className='menu-item-text' onClick={item.callBack}>
             {item.caption}
           </span>
         ),
@@ -3672,38 +3680,38 @@ export const HomeView = () => {
     const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'button');
 
     return (
-      <div className="flex-fixed-right cta-row">
-        <Space className="left" size="middle" wrap>
+      <div className='flex-fixed-right cta-row'>
+        <Space className='left' size='middle' wrap>
           {isMultisigContext ? (
             <>
               <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke asset-btn"
+                type='default'
+                shape='round'
+                size='small'
+                className='thin-stroke asset-btn'
                 onClick={showReceiveSplOrSolModal}
               >
-                <div className="btn-content">{t('multisig.multisig-assets.cta-deposit')}</div>
+                <div className='btn-content'>{t('multisig.multisig-assets.cta-deposit')}</div>
               </Button>
               <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke asset-btn"
+                type='default'
+                shape='round'
+                size='small'
+                className='thin-stroke asset-btn'
                 disabled={isAnyTxPendingConfirmation() || !isSendFundsValid()}
                 onClick={showTransferTokenModal}
               >
-                <div className="btn-content">{t('multisig.multisig-assets.cta-transfer')}</div>
+                <div className='btn-content'>{t('multisig.multisig-assets.cta-transfer')}</div>
               </Button>
               <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke asset-btn"
+                type='default'
+                shape='round'
+                size='small'
+                className='thin-stroke asset-btn'
                 disabled={isAnyTxPendingConfirmation() || !isTransferOwnershipValid()}
                 onClick={showTransferVaultAuthorityModal}
               >
-                <div className="btn-content">{t('multisig.multisig-assets.cta-change-multisig-authority')}</div>
+                <div className='btn-content'>{t('multisig.multisig-assets.cta-change-multisig-authority')}</div>
               </Button>
             </>
           ) : (
@@ -3711,12 +3719,12 @@ export const HomeView = () => {
               // Draw the Asset CTAs here
               if (item.tooltip) {
                 return (
-                  <Tooltip placement="bottom" title={item.tooltip} key={item.uiComponentId}>
+                  <Tooltip placement='bottom' title={item.tooltip} key={item.uiComponentId}>
                     <Button
-                      type="default"
-                      shape="round"
-                      size="small"
-                      className="thin-stroke"
+                      type='default'
+                      shape='round'
+                      size='small'
+                      className='thin-stroke'
                       disabled={item.disabled}
                       onClick={item.callBack}
                     >
@@ -3727,11 +3735,11 @@ export const HomeView = () => {
               } else {
                 return (
                   <Button
-                    type="default"
-                    shape="round"
-                    size="small"
+                    type='default'
+                    shape='round'
+                    size='small'
                     key={item.uiComponentId}
-                    className="thin-stroke"
+                    className='thin-stroke'
                     disabled={item.disabled}
                     onClick={item.callBack}
                   >
@@ -3742,13 +3750,13 @@ export const HomeView = () => {
             })
           )}
         </Space>
-        <Dropdown menu={renderUserAccountAssetMenu()} placement="bottomRight" trigger={['click']}>
-          <span className="icon-button-container">
+        <Dropdown menu={renderUserAccountAssetMenu()} placement='bottomRight' trigger={['click']}>
+          <span className='icon-button-container'>
             <Button
-              type="default"
-              shape="circle"
-              size="middle"
-              icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+              type='default'
+              shape='circle'
+              size='middle'
+              icon={<IconVerticalEllipsis className='mean-svg-icons' />}
               onClick={e => e.preventDefault()}
             />
           </span>
@@ -3772,13 +3780,13 @@ export const HomeView = () => {
     const tokenPrice = getTokenPriceByAddress(selectedAsset.address, selectedAsset.symbol);
 
     return (
-      <div className="accounts-category-meta">
-        <div className="mb-2">
+      <div className='accounts-category-meta'>
+        <div className='mb-2'>
           <Row>
             <Col span={14}>
-              <div className="info-label">Balance</div>
-              <div className="transaction-detail-row">
-                <div className="info-data">
+              <div className='info-label'>Balance</div>
+              <div className='transaction-detail-row'>
+                <div className='info-data'>
                   {getAmountWithSymbol(
                     selectedAsset.balance ?? 0,
                     selectedAsset.address,
@@ -3788,7 +3796,7 @@ export const HomeView = () => {
                   )}
                 </div>
               </div>
-              <div className="info-extra font-size-85">
+              <div className='info-extra font-size-85'>
                 <AddressDisplay
                   address={selectedAsset.publicAddress as string}
                   iconStyles={{ width: '16', height: '16' }}
@@ -3799,9 +3807,9 @@ export const HomeView = () => {
               </div>
             </Col>
             <Col span={10}>
-              <div className="info-label">Value</div>
-              <div className="transaction-detail-row">
-                <span className="info-data">{renderBalance()}</span>
+              <div className='info-label'>Value</div>
+              <div className='transaction-detail-row'>
+                <span className='info-data'>{renderBalance()}</span>
               </div>
             </Col>
           </Row>
@@ -3812,7 +3820,7 @@ export const HomeView = () => {
 
   const renderSpinner = () => {
     return (
-      <div className="h-100 flex-center">
+      <div className='h-100 flex-center'>
         <Spin spinning={true} />
       </div>
     );
@@ -3822,36 +3830,36 @@ export const HomeView = () => {
     <>
       {detailsPanelOpen && (
         <Button
-          id="back-button"
-          type="default"
-          shape="circle"
+          id='back-button'
+          type='default'
+          shape='circle'
           icon={<ArrowLeftOutlined />}
           onClick={onBackButtonClicked}
         />
       )}
 
-      <div className="container main-container accounts">
+      <div className='container main-container accounts'>
         {/* SEO tags overrides */}
         <Helmet>
           <title>Accounts - Mean Finance</title>
-          <link rel="canonical" href="/" />
-          <meta name="description" content="Accounts. Keep track of your assets and transactions" />
-          <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
-          <meta name="keywords" content="assets, transactions" />
+          <link rel='canonical' href='/' />
+          <meta name='description' content='Accounts. Keep track of your assets and transactions' />
+          <meta name='google-site-verification' content='u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8' />
+          <meta name='keywords' content='assets, transactions' />
         </Helmet>
         {/* This is a SEO mandatory h1 but it is not visible */}
-        <h1 className="mandatory-h1">Keep track of your assets and transactions</h1>
+        <h1 className='mandatory-h1'>Keep track of your assets and transactions</h1>
 
         {publicKey && (
-          <div className="interaction-area">
+          <div className='interaction-area'>
             {selectedAccount.address && (
               <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
                 {/* Left / top panel */}
-                <div className="meanfi-two-panel-left">
-                  <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
-                  <div id="streams-refresh-reset-cta" onClick={onRefreshStreamsReset}></div>
+                <div className='meanfi-two-panel-left'>
+                  <div id='streams-refresh-noreset-cta' onClick={onRefreshStreamsNoReset}></div>
+                  <div id='streams-refresh-reset-cta' onClick={onRefreshStreamsReset}></div>
 
-                  <div className="inner-container">
+                  <div className='inner-container'>
                     {/* Account summary (sticky) */}
                     {isMultisigContext
                       ? renderSelectedAccountSummary('super-safe')
@@ -3860,20 +3868,20 @@ export const HomeView = () => {
                     {/* Middle area (vertically flexible block of items) */}
                     <div className={`item-block${!isXsDevice ? ' vertical-scroll vertical-scroll-always' : ''}`}>
                       {/* Pinned Apps or Favorites */}
-                      <div key="payment-streams-summary" className="asset-category">
+                      <div key='payment-streams-summary' className='asset-category'>
                         {renderMoneyStreamsSummary()}
                       </div>
 
                       {/* Assets tabset */}
-                      <div key="asset-category-title" className="asset-category-title text-center pt-1 pb-1">
+                      <div key='asset-category-title' className='asset-category-title text-center pt-1 pb-1'>
                         <Segmented
-                          size="small"
+                          size='small'
                           defaultValue={AssetGroups.Tokens}
                           value={selectedAssetsGroup}
                           options={getAssetsGroupOptions()}
                           onChange={value => setSelectedAssetsGroup(value as AssetGroups)}
                         />
-                        <div className="asset-category-estimated">{renderEstimatedValueByCategory()}</div>
+                        <div className='asset-category-estimated'>{renderEstimatedValueByCategory()}</div>
                       </div>
 
                       {selectedAssetsGroup === AssetGroups.Tokens ? renderAssetsList() : null}
@@ -3886,38 +3894,38 @@ export const HomeView = () => {
                     </div>
 
                     {/* Bottom CTAs */}
-                    <div className="bottom-ctas">
-                      <div className="primary-action">
+                    <div className='bottom-ctas'>
+                      <div className='primary-action'>
                         {isMultisigContext ? (
                           <Button
                             block
-                            className="flex-center"
-                            type="primary"
-                            shape="round"
+                            className='flex-center'
+                            type='primary'
+                            shape='round'
                             onClick={onNewProposalClicked}
                           >
-                            <IconSafe className="mean-svg-icons" style={{ width: 24, height: 24 }} />
-                            <span className="ml-1">New proposal</span>
+                            <IconSafe className='mean-svg-icons' style={{ width: 24, height: 24 }} />
+                            <span className='ml-1'>New proposal</span>
                           </Button>
                         ) : (
-                          <Button block className="flex-center" type="primary" shape="round" onClick={showInitAtaModal}>
-                            <IconAdd className="mean-svg-icons" />
-                            <span className="ml-1">Add asset</span>
+                          <Button block className='flex-center' type='primary' shape='round' onClick={showInitAtaModal}>
+                            <IconAdd className='mean-svg-icons' />
+                            <span className='ml-1'>Add asset</span>
                           </Button>
                         )}
                       </div>
                       <Dropdown
-                        className="options-dropdown"
+                        className='options-dropdown'
                         menu={getLeftPanelOptions()}
-                        placement="bottomRight"
+                        placement='bottomRight'
                         trigger={['click']}
                       >
-                        <span className="icon-button-container">
+                        <span className='icon-button-container'>
                           <Button
-                            type="default"
-                            shape="circle"
-                            size="middle"
-                            icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+                            type='default'
+                            shape='circle'
+                            size='middle'
+                            icon={<IconVerticalEllipsis className='mean-svg-icons' />}
                             onClick={e => e.preventDefault()}
                           />
                         </span>
@@ -3927,24 +3935,24 @@ export const HomeView = () => {
                 </div>
 
                 {/* Right / down panel */}
-                <div className="meanfi-two-panel-right">
-                  <div className="meanfi-panel-heading">
-                    <span className="title">{t('assets.history-panel-title')}</span>
+                <div className='meanfi-two-panel-right'>
+                  <div className='meanfi-panel-heading'>
+                    <span className='title'>{t('assets.history-panel-title')}</span>
                   </div>
 
-                  <div className="inner-container">
+                  <div className='inner-container'>
                     {selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? (
                       <>
                         {/* Refresh cta */}
-                        <div className="float-top-right mr-1 mt-1">
-                          <span className="icon-button-container secondary-button">
-                            <Tooltip placement="bottom" title="Refresh payment streams">
+                        <div className='float-top-right mr-1 mt-1'>
+                          <span className='icon-button-container secondary-button'>
+                            <Tooltip placement='bottom' title='Refresh payment streams'>
                               <Button
-                                id="account-refresh-cta"
-                                type="default"
-                                shape="circle"
-                                size="middle"
-                                icon={<ReloadOutlined className="mean-svg-icons" />}
+                                id='account-refresh-cta'
+                                type='default'
+                                shape='circle'
+                                size='middle'
+                                icon={<ReloadOutlined className='mean-svg-icons' />}
                                 onClick={() => {
                                   reloadTokensAndActivity();
                                   onRefreshStreamsNoReset();
@@ -3993,7 +4001,7 @@ export const HomeView = () => {
                     ) : null}
 
                     {location.pathname.startsWith('/programs/') ? (
-                      <div className="safe-details-component scroll-wrapper vertical-scroll">
+                      <div className='safe-details-component scroll-wrapper vertical-scroll'>
                         {selectedProgram ? (
                           <Suspense fallback={renderSpinner()}>
                             <ProgramDetailsComponent programSelected={selectedProgram} />
@@ -4013,22 +4021,22 @@ export const HomeView = () => {
                     {location.pathname.startsWith('/assets') ? (
                       <>
                         {/* Refresh cta */}
-                        <div className="float-top-right mr-1 mt-1">
-                          <span className="icon-button-container secondary-button">
-                            <Tooltip placement="bottom" title="Refresh assets and activity">
+                        <div className='float-top-right mr-1 mt-1'>
+                          <span className='icon-button-container secondary-button'>
+                            <Tooltip placement='bottom' title='Refresh assets and activity'>
                               <Button
-                                id="account-refresh-cta"
-                                type="default"
-                                shape="circle"
-                                size="middle"
-                                icon={<ReloadOutlined className="mean-svg-icons" />}
+                                id='account-refresh-cta'
+                                type='default'
+                                shape='circle'
+                                size='middle'
+                                icon={<ReloadOutlined className='mean-svg-icons' />}
                                 onClick={reloadTokensAndActivity}
                               />
                             </Tooltip>
                           </span>
                         </div>
-                        <div className="flexible-column-bottom">
-                          <div className="top">
+                        <div className='flexible-column-bottom'>
+                          <div className='top'>
                             {renderUserAccountAssetMeta()}
                             {renderUserAccountAssetCtaRow()}
                           </div>
@@ -4045,8 +4053,8 @@ export const HomeView = () => {
                                   onClick={showSolBalanceModal}
                                 >
                                   <Alert
-                                    message="SOL account balance is very low in the safe. Click here to add more SOL."
-                                    type="info"
+                                    message='SOL account balance is very low in the safe. Click here to add more SOL.'
+                                    type='info'
                                     showIcon
                                   />
                                 </Col>
@@ -4055,20 +4063,20 @@ export const HomeView = () => {
                           <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
                             {/* Activity table heading */}
                             {hasItemsToRender() && (
-                              <div className="stats-row">
-                                <div className="item-list-header compact">
-                                  <div className="header-row">
-                                    <div className="std-table-cell first-cell">&nbsp;</div>
-                                    <div className="std-table-cell responsive-cell">
+                              <div className='stats-row'>
+                                <div className='item-list-header compact'>
+                                  <div className='header-row'>
+                                    <div className='std-table-cell first-cell'>&nbsp;</div>
+                                    <div className='std-table-cell responsive-cell'>
                                       {t('assets.history-table-activity')}
                                     </div>
-                                    <div className="std-table-cell responsive-cell pr-2 text-right">
+                                    <div className='std-table-cell responsive-cell pr-2 text-right'>
                                       {t('assets.history-table-amount')}
                                     </div>
-                                    <div className="std-table-cell responsive-cell pr-2 text-right">
+                                    <div className='std-table-cell responsive-cell pr-2 text-right'>
                                       {t('assets.history-table-postbalance')}
                                     </div>
-                                    <div className="std-table-cell responsive-cell pl-2">
+                                    <div className='std-table-cell responsive-cell pl-2'>
                                       {t('assets.history-table-date')}
                                     </div>
                                   </div>

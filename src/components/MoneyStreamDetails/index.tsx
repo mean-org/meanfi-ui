@@ -1,32 +1,39 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import {
-  StreamActivity as StreamActivityV1,
-  StreamInfo,
   STREAM_STATE,
-  TreasuryInfo,
+  type StreamActivity as StreamActivityV1,
+  type StreamInfo,
+  type TreasuryInfo,
   TreasuryType,
 } from '@mean-dao/money-streaming/lib/types';
 import {
   AccountType,
   PaymentStreaming,
-  PaymentStreamingAccount,
+  type PaymentStreamingAccount,
   STREAM_STATUS_CODE,
-  Stream,
-  StreamActivity,
+  type Stream,
+  type StreamActivity,
 } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
+import { IconArrowBack, IconExternalLink } from 'Icons';
 import { Col, Row, Spin, Tabs } from 'antd';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { Identicon } from 'components/Identicon';
 import { ResumeItem } from 'components/ResumeItem';
 import { RightInfoDetails } from 'components/RightInfoDetails';
+import getIsV2Stream from 'components/common/getIsV2Stream';
+import getIsV2Treasury from 'components/common/getIsV2Treasury';
+import getRateAmountBn from 'components/common/getRateAmountBn';
+import getStreamStartDate from 'components/common/getStreamStartDate';
+import getV1Beneficiary from 'components/common/getV1Beneficiary';
+import getV2Beneficiary from 'components/common/getV2Beneficiary';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconArrowBack, IconExternalLink } from 'Icons';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamStatusResume, getStreamTitle } from 'middleware/streams';
@@ -38,22 +45,15 @@ import {
   relativeTimeFromDates,
 } from 'middleware/ui';
 import { displayAmountWithSymbol, getAmountWithSymbol, shortenAddress } from 'middleware/utils';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { getCategoryLabelByValue } from 'models/vesting';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import Countdown from 'react-countdown';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import './style.scss';
-import { BN } from '@project-serum/anchor';
-import getV2Beneficiary from 'components/common/getV2Beneficiary';
-import getV1Beneficiary from 'components/common/getV1Beneficiary';
-import getIsV2Treasury from 'components/common/getIsV2Treasury';
-import getStreamStartDate from 'components/common/getStreamStartDate';
-import getIsV2Stream from 'components/common/getIsV2Stream';
-import getRateAmountBn from 'components/common/getRateAmountBn';
 import { getFallBackRpcEndpoint } from 'services/connections-hq';
+import './style.scss';
 
 export const MoneyStreamDetails = (props: {
   accountAddress: string;
@@ -298,15 +298,15 @@ export const MoneyStreamDetails = (props: {
   const getActivityIcon = (item: StreamActivityV1 | StreamActivity) => {
     if (isInboundStream(stream as StreamInfo)) {
       if (item.action === 'withdrew') {
-        return <ArrowUpOutlined className="mean-svg-icons outgoing" />;
+        return <ArrowUpOutlined className='mean-svg-icons outgoing' />;
       } else {
-        return <ArrowDownOutlined className="mean-svg-icons incoming" />;
+        return <ArrowDownOutlined className='mean-svg-icons incoming' />;
       }
     } else {
       if (item.action === 'withdrew') {
-        return <ArrowDownOutlined className="mean-svg-icons incoming" />;
+        return <ArrowDownOutlined className='mean-svg-icons incoming' />;
       } else {
-        return <ArrowUpOutlined className="mean-svg-icons outgoing" />;
+        return <ArrowUpOutlined className='mean-svg-icons outgoing' />;
       }
     }
   };
@@ -336,12 +336,12 @@ export const MoneyStreamDetails = (props: {
             height={30}
             src={selectedToken.logoURI}
             onError={imageOnErrorHandler}
-            className="token-img"
+            className='token-img'
           />
         );
       } else {
         return (
-          <Identicon address={associatedToken} style={{ width: '30', display: 'inline-flex' }} className="token-img" />
+          <Identicon address={associatedToken} style={{ width: '30', display: 'inline-flex' }} className='token-img' />
         );
       }
     },
@@ -453,28 +453,28 @@ export const MoneyStreamDetails = (props: {
 
   const renderActivities = () => {
     return (
-      <div className="stream-detail-component">
-        <div className="stream-activity-list">
+      <div className='stream-detail-component'>
+        <div className='stream-activity-list'>
           <Spin spinning={loadingStreamActivity}>
             {streamActivity && streamActivity.length > 0 ? (
               streamActivity.map((item, index) => {
                 return (
                   <a
                     key={`${index + 50}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="transaction-list-row"
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='transaction-list-row'
                     href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${
                       item.signature
                     }${getSolanaExplorerClusterParam()}`}
                   >
-                    <div className="icon-cell">{getActivityIcon(item)}</div>
-                    <div className="description-cell no-padding">
-                      <div className="title text-truncate">{getActivityAction(item)}</div>
-                      <div className="subtitle text-truncate">{shortenAddress(item.initializer)}</div>
+                    <div className='icon-cell'>{getActivityIcon(item)}</div>
+                    <div className='description-cell no-padding'>
+                      <div className='title text-truncate'>{getActivityAction(item)}</div>
+                      <div className='subtitle text-truncate'>{shortenAddress(item.initializer)}</div>
                     </div>
-                    <div className="rate-cell">
-                      <div className="rate-amount">
+                    <div className='rate-cell'>
+                      <div className='rate-amount'>
                         {selectedToken
                           ? displayAmountWithSymbol(
                               new BN(item.amount),
@@ -484,10 +484,10 @@ export const MoneyStreamDetails = (props: {
                             )
                           : '--'}
                       </div>
-                      <div className="interval">{getShortDate(item.utcDate, true)}</div>
+                      <div className='interval'>{getShortDate(item.utcDate, true)}</div>
                     </div>
-                    <div className="actions-cell">
-                      <IconExternalLink className="mean-svg-icons" style={{ width: '15', height: '15' }} />
+                    <div className='actions-cell'>
+                      <IconExternalLink className='mean-svg-icons' style={{ width: '15', height: '15' }} />
                     </div>
                   </a>
                 );
@@ -505,10 +505,10 @@ export const MoneyStreamDetails = (props: {
             )}
           </Spin>
           {streamActivity && streamActivity.length >= 5 && hasMoreStreamActivity && (
-            <div className="mt-1 text-center">
+            <div className='mt-1 text-center'>
               <span
                 className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
-                role="link"
+                role='link'
                 onClick={() => getActivityList(false)}
               >
                 {t('general.cta-load-more')}
@@ -758,7 +758,7 @@ export const MoneyStreamDetails = (props: {
       label: isStreamOutgoing && stream && getStreamStatus(stream) === 'running' && 'Funds will run out in:',
       value: isStreamOutgoing && stream && getStreamStatus(stream) === 'running' && (
         <Countdown
-          className="align-middle"
+          className='align-middle'
           date={
             isV2tream
               ? (stream as Stream).estimatedDepletionDate
@@ -780,8 +780,8 @@ export const MoneyStreamDetails = (props: {
           number={8}
           externalLink={true}
           isTx={false}
-          className="d-block text-truncate"
-          classNameContainer="mb-1 mr-2"
+          className='d-block text-truncate'
+          classNameContainer='mb-1 mr-2'
         />
       ) : (
         '--'
@@ -793,11 +793,11 @@ export const MoneyStreamDetails = (props: {
   const renderDetails = (
     <>
       {detailsData.map((detail: any, index: number) => (
-        <Row gutter={[8, 8]} key={index} className="pl-1 details-item mr-0 ml-0">
-          <Col span={8} className="pr-1">
-            <span className="info-label">{detail.label}</span>
+        <Row gutter={[8, 8]} key={index} className='pl-1 details-item mr-0 ml-0'>
+          <Col span={8} className='pr-1'>
+            <span className='info-label'>{detail.label}</span>
           </Col>
-          <Col span={16} className="pl-1">
+          <Col span={16} className='pl-1'>
             <span>{detail.value}</span>
           </Col>
         </Row>
@@ -820,7 +820,7 @@ export const MoneyStreamDetails = (props: {
   ];
 
   const renderTabset = () => {
-    return <Tabs items={tabs} activeKey={tabOption} onChange={navigateToTab} className="neutral" />;
+    return <Tabs items={tabs} activeKey={tabOption} onChange={navigateToTab} className='neutral' />;
   };
 
   const streamFlowDirection = isStreamIncoming ? 'incoming' : 'outgoing';
@@ -830,23 +830,23 @@ export const MoneyStreamDetails = (props: {
 
   return (
     <>
-      <div className="stream-fields-container">
+      <div className='stream-fields-container'>
         {/* Background animation */}
         {stream && getStreamStatus(stream) === 'running' ? (
-          <div className="stream-background">
+          <div className='stream-background'>
             {isInboundStream(stream) ? (
-              <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
+              <img className='inbound' src='/assets/incoming-crypto.svg' alt='' />
             ) : (
-              <img className="inbound" src="/assets/outgoing-crypto.svg" alt="" />
+              <img className='inbound' src='/assets/outgoing-crypto.svg' alt='' />
             )}
           </div>
         ) : null}
 
         {!isXsDevice && (
-          <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
-            <div onClick={hideDetailsHandler} className="back-button icon-button-container">
-              <IconArrowBack className="mean-svg-icons" />
-              <span className="ml-1">Back</span>
+          <Row gutter={[8, 8]} className='safe-details-resume mr-0 ml-0'>
+            <div onClick={hideDetailsHandler} className='back-button icon-button-container'>
+              <IconArrowBack className='mean-svg-icons' />
+              <span className='ml-1'>Back</span>
             </div>
           </Row>
         )}
@@ -862,14 +862,14 @@ export const MoneyStreamDetails = (props: {
             isDetailsPanel={true}
             isLink={false}
             isStream={true}
-            classNameRightContent="header-stream-details-row resume-right-content"
+            classNameRightContent='header-stream-details-row resume-right-content'
           />
         )}
 
         {infoData && (
           <RightInfoDetails
             infoData={infoData}
-            classNameInfoGroup="header-details-info-group"
+            classNameInfoGroup='header-details-info-group'
             xs={24}
             sm={24}
             md={24}

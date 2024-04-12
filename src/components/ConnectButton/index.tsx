@@ -1,8 +1,8 @@
-import React from 'react';
 import { Button } from 'antd';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useWallet } from '../../contexts/wallet';
 import { segmentAnalytics } from '../../App';
+import { useWallet } from '../../contexts/wallet';
 import { AppUsageEvent } from '../../middleware/segment-service';
 
 export const ConnectButton = () => {
@@ -17,7 +17,7 @@ export const ConnectButton = () => {
 
   if (!connected) {
     return (
-      <Button type="primary" shape="round" size="middle" onClick={onConnectButtonClick}>
+      <Button type='primary' shape='round' size='middle' onClick={onConnectButtonClick}>
         {t('account-area.connect-button')}
       </Button>
     );

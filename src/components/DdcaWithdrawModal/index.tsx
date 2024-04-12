@@ -1,4 +1,4 @@
-import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
+import type { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 import { Button, Col, Modal, Row } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -91,7 +91,7 @@ export const DdcaWithdrawModal = (props: {
 
   const getFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
-    const inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? Number.parseFloat(amount) : 0;
     if (fees) {
       if (fees.percentFee) {
         fee = inputAmount ? percentage(fees.percentFee, inputAmount) : 0;
@@ -107,8 +107,8 @@ export const DdcaWithdrawModal = (props: {
   const isValidInput = (): boolean => {
     return props.ddcaDetails &&
       withdrawAmountInput &&
-      parseFloat(withdrawAmountInput) <= parseFloat(getDisplayAmount(maxAmount)) &&
-      parseFloat(withdrawAmountInput) > (feeAmount as number)
+      Number.parseFloat(withdrawAmountInput) <= Number.parseFloat(getDisplayAmount(maxAmount)) &&
+      Number.parseFloat(withdrawAmountInput) > (feeAmount as number)
       ? true
       : false;
   };
@@ -128,10 +128,10 @@ export const DdcaWithdrawModal = (props: {
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={12} className="text-right pr-1">
+        <Col span={12} className='text-right pr-1'>
           {caption}
         </Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">
+        <Col span={12} className='text-left pl-1 fg-secondary-70'>
           {value}
         </Col>
       </Row>
@@ -140,80 +140,81 @@ export const DdcaWithdrawModal = (props: {
 
   return (
     <Modal
-      className="mean-modal"
-      title={<div className="modal-title">{t('withdraw-funds.modal-title')}</div>}
+      className='mean-modal'
+      title={<div className='modal-title'>{t('withdraw-funds.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={onAcceptWithdrawal}
       onCancel={onCloseModal}
       width={480}
     >
-      <div className="mb-3">
-        <div className="transaction-field disabled">
-          <div className="transaction-field-row">
-            <span className="field-label-left">{t('withdraw-funds.label-available-amount')}</span>
-            <span className="field-label-right">&nbsp;</span>
+      <div className='mb-3'>
+        <div className='transaction-field disabled'>
+          <div className='transaction-field-row'>
+            <span className='field-label-left'>{t('withdraw-funds.label-available-amount')}</span>
+            <span className='field-label-right'>&nbsp;</span>
           </div>
-          <div className="transaction-field-row main-row">
-            <span className="field-select-left">{props.ddcaDetails && getDisplayAmount(maxAmount, true)}</span>
+          <div className='transaction-field-row main-row'>
+            <span className='field-select-left'>{props.ddcaDetails && getDisplayAmount(maxAmount, true)}</span>
           </div>
         </div>
 
-        <div className="transaction-field mb-1">
-          <div className="transaction-field-row">
-            <span className="field-label-left">{t('withdraw-funds.label-input-amount')}</span>
-            <span className="field-label-right">{t('withdraw-funds.label-input-right')}</span>
+        <div className='transaction-field mb-1'>
+          <div className='transaction-field-row'>
+            <span className='field-label-left'>{t('withdraw-funds.label-input-amount')}</span>
+            <span className='field-label-right'>{t('withdraw-funds.label-input-right')}</span>
           </div>
-          <div className="transaction-field-row main-row">
-            <span className="input-left">
+          <div className='transaction-field-row main-row'>
+            <span className='input-left'>
               <input
-                className="general-text-input"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
+                className='general-text-input'
+                inputMode='decimal'
+                autoComplete='off'
+                autoCorrect='off'
+                type='text'
                 onChange={handleWithdrawAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
+                pattern='^[0-9]*[.,]?[0-9]*$'
+                placeholder='0.0'
                 minLength={1}
                 maxLength={79}
-                spellCheck="false"
+                spellCheck='false'
                 value={withdrawAmountInput}
               />
             </span>
-            <div className="addon-right">
-              <div className="token-group">
-                <div className="token-max simplelink" onClick={() => setPercentualValue(25)}>
+            <div className='addon-right'>
+              <div className='token-group'>
+                <div className='token-max simplelink' onClick={() => setPercentualValue(25)}>
                   25%
                 </div>
-                <div className="token-max simplelink" onClick={() => setPercentualValue(50)}>
+                <div className='token-max simplelink' onClick={() => setPercentualValue(50)}>
                   50%
                 </div>
-                <div className="token-max simplelink" onClick={() => setPercentualValue(75)}>
+                <div className='token-max simplelink' onClick={() => setPercentualValue(75)}>
                   75%
                 </div>
-                <div className="token-max simplelink" onClick={() => setPercentualValue(100)}>
+                <div className='token-max simplelink' onClick={() => setPercentualValue(100)}>
                   100%
                 </div>
               </div>
             </div>
           </div>
-          <div className="transaction-field-row">
-            <span className="field-label-left">
-              {props.ddcaDetails && parseFloat(withdrawAmountInput) > parseFloat(getDisplayAmount(maxAmount)) ? (
-                <span className="fg-red">{t('transactions.validation.amount-withdraw-high')}</span>
+          <div className='transaction-field-row'>
+            <span className='field-label-left'>
+              {props.ddcaDetails &&
+              Number.parseFloat(withdrawAmountInput) > Number.parseFloat(getDisplayAmount(maxAmount)) ? (
+                <span className='fg-red'>{t('transactions.validation.amount-withdraw-high')}</span>
               ) : (
                 <span>&nbsp;</span>
               )}
             </span>
-            <span className="field-label-right">&nbsp;</span>
+            <span className='field-label-right'>&nbsp;</span>
           </div>
         </div>
       </div>
 
       {/* Info */}
       {props.ddcaDetails && props.ddcaDetails.toMint && (
-        <div className="p-2 mb-2">
+        <div className='p-2 mb-2'>
           {isValidInput() &&
             infoRow(
               t('transactions.transaction-info.transaction-fee') + ':',
@@ -223,7 +224,7 @@ export const DdcaWithdrawModal = (props: {
             infoRow(
               t('transactions.transaction-info.you-receive') + ':',
               `~${getAmountWithSymbol(
-                parseFloat(withdrawAmountInput) - (feeAmount as number),
+                Number.parseFloat(withdrawAmountInput) - (feeAmount as number),
                 props.ddcaDetails.toMint as string,
               )}`,
             )}
@@ -231,11 +232,11 @@ export const DdcaWithdrawModal = (props: {
       )}
 
       <Button
-        className="main-cta"
+        className='main-cta'
         block
-        type="primary"
-        shape="round"
-        size="large"
+        type='primary'
+        shape='round'
+        size='large'
         disabled={!isValidInput()}
         onClick={onAcceptWithdrawal}
       >

@@ -1,31 +1,33 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
-  getFees,
-  MeanMultisig,
-  MultisigInfo,
-  MultisigTransactionFees,
   MULTISIG_ACTIONS,
+  MeanMultisig,
+  type MultisigInfo,
+  type MultisigTransactionFees,
+  getFees,
 } from '@mean-dao/mean-multisig-sdk';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { StreamInfo, STREAM_STATE, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming/lib/types';
+import { STREAM_STATE, type StreamInfo, type TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming/lib/types';
 import {
-  calculateFeesForAction,
-  PaymentStreaming,
   ACTION_CODES,
-  Stream,
-  STREAM_STATUS_CODE,
-  TransactionFees,
-  PaymentStreamingAccount,
-  AddFundsToAccountTransactionAccounts,
-  AllocateFundsToStreamTransactionAccounts,
-  CreateAccountTransactionAccounts,
   AccountType,
+  type AddFundsToAccountTransactionAccounts,
+  type AllocateFundsToStreamTransactionAccounts,
+  type CreateAccountTransactionAccounts,
   NATIVE_SOL_MINT,
+  PaymentStreaming,
+  type PaymentStreamingAccount,
+  STREAM_STATUS_CODE,
+  type Stream,
+  type TransactionFees,
+  calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
-import { LAMPORTS_PER_SOL, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { BN } from '@project-serum/anchor';
+import { LAMPORTS_PER_SOL, PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
+import { IconArrowForward, IconEllipsisVertical, IconLoading } from 'Icons';
 import { Button, Col, Dropdown, Row, Space, Spin, Tabs } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { Identicon } from 'components/Identicon';
@@ -41,12 +43,12 @@ import { TreasuryStreamCreateModal } from 'components/TreasuryStreamCreateModal'
 import { FALLBACK_COIN_IMAGE, MEANFI_DOCS_URL, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
+import { AppStateContext, type TransactionStatusInfo } from 'contexts/appstate';
 import { useConnection, useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconArrowForward, IconEllipsisVertical, IconLoading } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
@@ -56,7 +58,7 @@ import { getStreamingAccountOwner } from 'middleware/getStreamingAccountOwner';
 import { SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
 import {
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
@@ -76,23 +78,21 @@ import {
   toTokenAmountBn,
   toUiAmount,
 } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { RegisteredAppPaths } from 'models/accounts/AccountsPageUi';
-import { TreasuryTopupParams } from 'models/common-types';
+import type { TreasuryTopupParams } from 'models/common-types';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { ZERO_FEES } from 'models/multisig';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { StreamsSummary } from 'models/streams';
-import { TreasuryCreateOptions, UserTreasuriesSummary } from 'models/treasuries';
-import { AddFundsParams } from 'models/vesting';
+import type { StreamsSummary } from 'models/streams';
+import type { TreasuryCreateOptions, UserTreasuriesSummary } from 'models/treasuries';
+import type { AddFundsParams } from 'models/vesting';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Wave from 'react-wavify';
-import './style.scss';
-import { BN } from '@project-serum/anchor';
-import useLocalStorage from 'hooks/useLocalStorage';
 import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
+import './style.scss';
 
 export const MoneyStreamsInfoView = (props: {
   loadingStreams: boolean;
@@ -421,7 +421,7 @@ export const MoneyStreamsInfoView = (props: {
         const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
         const decimals = token.decimals || 9;
         const amount = new BigNumber(freshStream.withdrawableAmount.toString()).toNumber();
-        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+        const amountChange = Number.parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (isIncoming) {
           resume['totalNet'] += amountChange;
@@ -500,7 +500,7 @@ export const MoneyStreamsInfoView = (props: {
         const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
         const decimals = token.decimals || 9;
         const amount = new BigNumber(freshStream.fundsLeftInStream.toString()).toNumber();
-        const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
+        const amountChange = Number.parseFloat((amount / 10 ** decimals).toFixed(decimals)) * tokenPrice;
 
         if (!isIncoming) {
           resume['totalNet'] += amountChange;
@@ -640,7 +640,7 @@ export const MoneyStreamsInfoView = (props: {
 
         const treasury = new PublicKey(params.treasuryId);
         const associatedToken = new PublicKey(params.associatedToken);
-        const amount = parseFloat(params.amount);
+        const amount = Number.parseFloat(params.amount);
         const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
         const data = {
           contributor: publicKey.toBase58(), // contributor
@@ -819,7 +819,7 @@ export const MoneyStreamsInfoView = (props: {
 
       const ixData = Buffer.from(addFundsTx.instructions[0].data);
       const ixAccounts = addFundsTx.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -1172,7 +1172,7 @@ export const MoneyStreamsInfoView = (props: {
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -1900,7 +1900,7 @@ export const MoneyStreamsInfoView = (props: {
             number={8}
             externalLink={true}
             isTx={false}
-            classNameContainer="mb-1"
+            classNameContainer='mb-1'
           />
         ) : (
           <CopyExtLinkGroup
@@ -1908,12 +1908,12 @@ export const MoneyStreamsInfoView = (props: {
             number={4}
             externalLink={true}
             isTx={false}
-            classNameContainer="mb-1"
+            classNameContainer='mb-1'
           />
         )}
-        <div className="badge-container">
+        <div className='badge-container'>
           {listOfBadges.map((badge, index) => (
-            <span key={`${badge}+${index}`} className="badge darken small text-uppercase mr-1">
+            <span key={`${badge}+${index}`} className='badge darken small text-uppercase mr-1'>
               {badge}
             </span>
           ))}
@@ -1926,7 +1926,7 @@ export const MoneyStreamsInfoView = (props: {
   const renderBalance = (
     <>
       {loadingStreams || loadingTreasuries || !canDisplayTotalAccountBalance ? (
-        <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+        <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
       ) : (
         <>
           {totalAccountBalance && totalAccountBalance > 0 ? (
@@ -1937,9 +1937,9 @@ export const MoneyStreamsInfoView = (props: {
           {totalAccountBalance &&
             totalAccountBalance > 0 &&
             (withdrawalBalance > unallocatedBalance ? (
-              <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
+              <ArrowDownOutlined className='mean-svg-icons incoming bounce ml-1' />
             ) : (
-              <ArrowUpOutlined className="mean-svg-icons outgoing bounce ml-1" />
+              <ArrowUpOutlined className='mean-svg-icons outgoing bounce ml-1' />
             ))}
         </>
       )}
@@ -1949,9 +1949,9 @@ export const MoneyStreamsInfoView = (props: {
   const renderBalanceContracts = (
     <a
       href={`${MEANFI_DOCS_URL}products/developers/smart-contracts`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="simplelink underline-on-hover"
+      target='_blank'
+      rel='noopener noreferrer'
+      className='simplelink underline-on-hover'
     >
       Tracking 2 smart contracts
     </a>
@@ -1983,7 +1983,7 @@ export const MoneyStreamsInfoView = (props: {
     };
 
     const divider = getlength(totalAccountBalance);
-    const incomingDivider = parseFloat(`1${'0'.repeat(divider && divider >= 2 ? divider - 2 : 1)}`);
+    const incomingDivider = Number.parseFloat(`1${'0'.repeat(divider && divider >= 2 ? divider - 2 : 1)}`);
     const calculateScaleBalanceIncoming = withdrawalBalance / incomingDivider;
     const calculateScaleInHeightIncoming = (calculateScaleBalanceIncoming * 30) / 100;
 
@@ -2007,7 +2007,7 @@ export const MoneyStreamsInfoView = (props: {
 
     const divider = getlength(totalAccountBalance);
 
-    const outgoingDivider = parseFloat(`1${'0'.repeat(divider && divider >= 2 ? divider - 2 : 1)}`);
+    const outgoingDivider = Number.parseFloat(`1${'0'.repeat(divider && divider >= 2 ? divider - 2 : 1)}`);
     const calculateScaleBalanceOutgoing = unallocatedBalance / outgoingDivider;
     const calculateScaleInHeightOutgoing = (calculateScaleBalanceOutgoing * 30) / 100;
 
@@ -2121,73 +2121,73 @@ export const MoneyStreamsInfoView = (props: {
   };
 
   const renderSummary = (
-    <Row gutter={[8, 8]} className="ml-0 mr-0">
+    <Row gutter={[8, 8]} className='ml-0 mr-0'>
       <Col
         xs={11}
         sm={11}
         md={11}
         lg={11}
-        className="background-card simplelink bg-secondary-02 hover-list"
+        className='background-card simplelink bg-secondary-02 hover-list'
         onClick={goToIncomingTabHandler}
       >
         {/* Background animation */}
         {hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0
           ? !loadingTreasuries &&
             !loadingStreams && (
-              <div className="stream-background stream-background-incoming">
-                <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
+              <div className='stream-background stream-background-incoming'>
+                <img className='inbound' src='/assets/incoming-crypto.svg' alt='' />
               </div>
             )
           : null}
-        <div className="incoming-stream-amount">
-          <div className="incoming-stream-running mb-1">
-            <div className="d-flex align-items-center text-center">
+        <div className='incoming-stream-amount'>
+          <div className='incoming-stream-running mb-1'>
+            <div className='d-flex align-items-center text-center'>
               <h4>
                 {loadingTreasuries || loadingStreams ? (
-                  <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+                  <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
                 ) : (
                   formatThousands(incomingAmount as number)
                 )}
-                <span className="ml-1">Incoming streams</span>
+                <span className='ml-1'>Incoming streams</span>
               </h4>
-              <span className="info-icon">
+              <span className='info-icon'>
                 {hasIncomingStreamsRunning && hasIncomingStreamsRunning > 0 ? (
-                  <ArrowDownOutlined className="mean-svg-icons incoming bounce ml-1" />
+                  <ArrowDownOutlined className='mean-svg-icons incoming bounce ml-1' />
                 ) : (
-                  <ArrowDownOutlined className="mean-svg-icons incoming ml-1" />
+                  <ArrowDownOutlined className='mean-svg-icons incoming ml-1' />
                 )}
               </span>
             </div>
           </div>
-          <div className="incoming-stream-rates">
+          <div className='incoming-stream-rates'>
             {loadingTreasuries || loadingStreams ? (
-              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+              <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
             ) : (
-              <span className="incoming-amount">{renderIncomingRatePerSecond()}</span>
+              <span className='incoming-amount'>{renderIncomingRatePerSecond()}</span>
             )}
             {loadingTreasuries || loadingStreams ? (
-              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+              <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
             ) : (
-              <span className="incoming-amount">{renderIncomingRatePerDay()}</span>
+              <span className='incoming-amount'>{renderIncomingRatePerDay()}</span>
             )}
           </div>
         </div>
-        <div className="stream-balance">
-          <div className="info-label">Available to withdraw:</div>
-          <div className="info-value">
+        <div className='stream-balance'>
+          <div className='info-label'>Available to withdraw:</div>
+          <div className='info-value'>
             {loadingStreams || !canDisplayIncomingBalance ? (
-              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+              <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
             ) : (
               renderWithdrawalBalance()
             )}
           </div>
         </div>
         {!loadingTreasuries && !loadingStreams && (
-          <div className="wave-container wave wave-green">
+          <div className='wave-container wave wave-green'>
             <Wave
-              fill="url(#gradient1)"
+              fill='url(#gradient1)'
               paused={isPaused}
-              className="svg-container"
+              className='svg-container'
               style={{
                 height: `${withdrawalScale}vh`,
                 position: 'absolute',
@@ -2200,9 +2200,9 @@ export const MoneyStreamsInfoView = (props: {
               }}
             >
               <defs>
-                <linearGradient id="gradient1" gradientTransform="rotate(180)">
-                  <stop offset="10%" stopColor="#006820" />
-                  <stop offset="100%" stopColor="#181a2a" />
+                <linearGradient id='gradient1' gradientTransform='rotate(180)'>
+                  <stop offset='10%' stopColor='#006820' />
+                  <stop offset='100%' stopColor='#181a2a' />
                 </linearGradient>
               </defs>
             </Wave>
@@ -2214,67 +2214,67 @@ export const MoneyStreamsInfoView = (props: {
         sm={11}
         md={11}
         lg={11}
-        className="background-card simplelink bg-secondary-02 hover-list"
+        className='background-card simplelink bg-secondary-02 hover-list'
         onClick={goToOutgoingTabHandler}
       >
         {/* Background animation */}
         {hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0
           ? !loadingTreasuries &&
             !loadingStreams && (
-              <div className="stream-background stream-background-outgoing">
-                <img className="inbound" src="/assets/outgoing-crypto.svg" alt="" />
+              <div className='stream-background stream-background-outgoing'>
+                <img className='inbound' src='/assets/outgoing-crypto.svg' alt='' />
               </div>
             )
           : null}
-        <div className="outgoing-stream-amount">
-          <div className="outgoing-stream-running mb-1">
-            <div className="d-flex align-items-center text-center">
+        <div className='outgoing-stream-amount'>
+          <div className='outgoing-stream-running mb-1'>
+            <div className='d-flex align-items-center text-center'>
               <h4>
                 {loadingTreasuries || loadingStreams ? (
-                  <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+                  <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
                 ) : (
                   formatThousands(outgoingAmount as number)
                 )}
-                <span className="ml-1">Outgoing streams</span>
+                <span className='ml-1'>Outgoing streams</span>
               </h4>
-              <span className="info-icon">
+              <span className='info-icon'>
                 {hasOutgoingStreamsRunning && hasOutgoingStreamsRunning > 0 ? (
-                  <ArrowUpOutlined className="mean-svg-icons outgoing bounce ml-1" />
+                  <ArrowUpOutlined className='mean-svg-icons outgoing bounce ml-1' />
                 ) : (
-                  <ArrowUpOutlined className="mean-svg-icons outgoing ml-1" />
+                  <ArrowUpOutlined className='mean-svg-icons outgoing ml-1' />
                 )}
               </span>
             </div>
           </div>
-          <div className="outgoing-stream-rates">
+          <div className='outgoing-stream-rates'>
             {loadingTreasuries || loadingStreams ? (
-              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+              <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
             ) : (
-              <span className="outgoing-amount">{renderOutgoingRatePerSecond()}</span>
+              <span className='outgoing-amount'>{renderOutgoingRatePerSecond()}</span>
             )}
             {loadingTreasuries || loadingStreams ? (
-              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+              <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
             ) : (
-              <span className="outgoing-amount">{renderOutgoingRatePerDay()}</span>
+              <span className='outgoing-amount'>{renderOutgoingRatePerDay()}</span>
             )}
           </div>
         </div>
-        <div className="stream-balance">
-          <div className="info-label">Remaining balance:</div>
-          <div className="info-value">
+        <div className='stream-balance'>
+          <div className='info-label'>Remaining balance:</div>
+          <div className='info-value'>
             {loadingStreams || loadingTreasuries || !canDisplayOutgoingBalance ? (
-              <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+              <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
             ) : (
               renderUnallocatedBalance()
             )}
           </div>
         </div>
         {!loadingTreasuries && !loadingStreams && (
-          <div className="wave-container wave wave-red">
+          <div className='wave-container wave wave-red'>
             <Wave
-              fill="url(#gradient2)"
+              fill='url(#gradient2)'
               paused={isPaused}
-              className="svg-container"
+              className='svg-container'
               style={{
                 height: `${unallocatedScale}vh`,
                 position: 'absolute',
@@ -2287,9 +2287,9 @@ export const MoneyStreamsInfoView = (props: {
               }}
             >
               <defs>
-                <linearGradient id="gradient2" gradientTransform="rotate(180)">
-                  <stop offset="10%" stopColor="#b7001c" />
-                  <stop offset="100%" stopColor="#181a2a" />
+                <linearGradient id='gradient2' gradientTransform='rotate(180)'>
+                  <stop offset='10%' stopColor='#b7001c' />
+                  <stop offset='100%' stopColor='#181a2a' />
                 </linearGradient>
               </defs>
             </Wave>
@@ -2302,9 +2302,9 @@ export const MoneyStreamsInfoView = (props: {
   // Incoming streams list
   const renderListOfIncomingStreams = () => {
     if (loadingStreams) {
-      return <span className="pl-1">Loading incoming streams ...</span>;
+      return <span className='pl-1'>Loading incoming streams ...</span>;
     } else if (incomingStreamList === undefined || incomingStreamList.length === 0) {
-      return <span className="pl-1">You don't have any incoming streams</span>;
+      return <span className='pl-1'>You don't have any incoming streams</span>;
     }
 
     return incomingStreamList.map((stream, index) => {
@@ -2336,7 +2336,7 @@ export const MoneyStreamsInfoView = (props: {
               height={30}
               src={token.logoURI}
               onError={imageOnErrorHandler}
-              className="token-img"
+              className='token-img'
             />
           );
         } else {
@@ -2344,7 +2344,7 @@ export const MoneyStreamsInfoView = (props: {
             <Identicon
               address={associatedToken}
               style={{ width: '30', display: 'inline-flex' }}
-              className="token-img"
+              className='token-img'
             />
           );
         }
@@ -2353,7 +2353,7 @@ export const MoneyStreamsInfoView = (props: {
           <Identicon
             address={isNew ? v2.id.toBase58() : v1.id?.toString()}
             style={{ width: '30', display: 'inline-flex' }}
-            className="token-img"
+            className='token-img'
           />
         );
       }
@@ -2386,11 +2386,11 @@ export const MoneyStreamsInfoView = (props: {
             }
             status={status}
             hasRightIcon={true}
-            rightIcon={<IconArrowForward className="mean-svg-icons" />}
+            rightIcon={<IconArrowForward className='mean-svg-icons' />}
             isLink={true}
             isStream={true}
-            classNameRightContent="resume-stream-row"
-            classNameIcon="icon-stream-row"
+            classNameRightContent='resume-stream-row'
+            classNameIcon='icon-stream-row'
           />
         </div>
       );
@@ -2400,9 +2400,9 @@ export const MoneyStreamsInfoView = (props: {
   // Outgoing streams list
   const renderListOfOutgoingStreams = () => {
     if (loadingStreams) {
-      return <span className="pl-1">Loading outgoing streams ...</span>;
+      return <span className='pl-1'>Loading outgoing streams ...</span>;
     } else if (outgoingStreamList === undefined || outgoingStreamList.length === 0) {
-      return <span className="pl-1">You don't have any outgoing streams</span>;
+      return <span className='pl-1'>You don't have any outgoing streams</span>;
     }
 
     return outgoingStreamList.map((stream, index) => {
@@ -2434,7 +2434,7 @@ export const MoneyStreamsInfoView = (props: {
               height={30}
               src={token.logoURI}
               onError={imageOnErrorHandler}
-              className="token-img"
+              className='token-img'
             />
           );
         } else {
@@ -2442,7 +2442,7 @@ export const MoneyStreamsInfoView = (props: {
             <Identicon
               address={associatedToken}
               style={{ width: '30', display: 'inline-flex' }}
-              className="token-img"
+              className='token-img'
             />
           );
         }
@@ -2451,7 +2451,7 @@ export const MoneyStreamsInfoView = (props: {
           <Identicon
             address={isNew ? v2.id.toBase58() : v1.id?.toString()}
             style={{ width: '30', display: 'inline-flex' }}
-            className="token-img"
+            className='token-img'
           />
         );
       }
@@ -2474,11 +2474,11 @@ export const MoneyStreamsInfoView = (props: {
             resume={<StreamStatusSummary stream={stream} />}
             status={status}
             hasRightIcon={true}
-            rightIcon={<IconArrowForward className="mean-svg-icons" />}
+            rightIcon={<IconArrowForward className='mean-svg-icons' />}
             isLink={true}
             isStream={true}
-            classNameRightContent="resume-stream-row"
-            classNameIcon="icon-stream-row"
+            classNameRightContent='resume-stream-row'
+            classNameIcon='icon-stream-row'
           />
         </div>
       );
@@ -2488,9 +2488,9 @@ export const MoneyStreamsInfoView = (props: {
   // Streaming accounts list
   const renderListOfStreamingAccounts = () => {
     if (loadingStreams || loadingTreasuries) {
-      return <span className="pl-1">Loading streaming accounts ...</span>;
+      return <span className='pl-1'>Loading streaming accounts ...</span>;
     } else if (treasuryList === undefined || treasuryList.length === 0) {
-      return <span className="pl-1">You don't have any streaming accounts</span>;
+      return <span className='pl-1'>You don't have any streaming accounts</span>;
     }
 
     return treasuryList.map((streamingAccount, index) => {
@@ -2522,17 +2522,17 @@ export const MoneyStreamsInfoView = (props: {
           <ResumeItem
             title={title}
             extraTitle={badges}
-            classNameTitle="text-uppercase"
+            classNameTitle='text-uppercase'
             subtitle={subtitle}
             amount={amount}
             resume={resume}
-            className="simplelink"
+            className='simplelink'
             hasRightIcon={true}
-            rightIcon={<IconArrowForward className="mean-svg-icons" />}
+            rightIcon={<IconArrowForward className='mean-svg-icons' />}
             isLink={true}
             onClick={onSelectedStreamingAccount}
-            classNameRightContent="resume-streaming-row"
-            classNameIcon="icon-streaming-row"
+            classNameRightContent='resume-streaming-row'
+            classNameIcon='icon-streaming-row'
           />
         </div>
       );
@@ -2577,7 +2577,7 @@ export const MoneyStreamsInfoView = (props: {
   ];
 
   const renderTabset = () => {
-    return <Tabs items={tabs} activeKey={selectedTab} onChange={onTabChange} className="neutral" />;
+    return <Tabs items={tabs} activeKey={selectedTab} onChange={onTabChange} className='neutral' />;
   };
 
   const renderDropdownMenu = useCallback(() => {
@@ -2587,7 +2587,7 @@ export const MoneyStreamsInfoView = (props: {
         key: '01-create-stream',
         label: (
           <div onClick={showCreateStreamModal}>
-            <span className="menu-item-text">Create stream</span>
+            <span className='menu-item-text'>Create stream</span>
           </div>
         ),
       });
@@ -2596,7 +2596,7 @@ export const MoneyStreamsInfoView = (props: {
         key: '02-find-stream',
         label: (
           <div onClick={showOpenStreamModal}>
-            <span className="menu-item-text">Find stream</span>
+            <span className='menu-item-text'>Find stream</span>
           </div>
         ),
       });
@@ -2610,23 +2610,23 @@ export const MoneyStreamsInfoView = (props: {
       <Spin spinning={loadingStreams || loadingTreasuries}>
         <RightInfoDetails infoData={infoData} />
 
-        <div className="flex-fixed-right cta-row mb-2 pl-1">
-          <Space className="left" size="middle" wrap>
+        <div className='flex-fixed-right cta-row mb-2 pl-1'>
+          <Space className='left' size='middle' wrap>
             <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke btn-min-width"
+              type='default'
+              shape='round'
+              size='small'
+              className='thin-stroke btn-min-width'
               onClick={showCreateTreasuryModal}
             >
               Create account
             </Button>
             {!isMultisigContext && (
               <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke btn-min-width"
+                type='default'
+                shape='round'
+                size='small'
+                className='thin-stroke btn-min-width'
                 onClick={showCreateMoneyStreamModal}
               >
                 Create stream
@@ -2634,10 +2634,10 @@ export const MoneyStreamsInfoView = (props: {
             )}
             {isMultisigContext && (
               <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke btn-min-width"
+                type='default'
+                shape='round'
+                size='small'
+                className='thin-stroke btn-min-width'
                 onClick={showAddFundsModal}
               >
                 Fund account
@@ -2645,10 +2645,10 @@ export const MoneyStreamsInfoView = (props: {
             )}
             {!isXsDevice && isMultisigContext && (
               <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke btn-min-width"
+                type='default'
+                shape='round'
+                size='small'
+                className='thin-stroke btn-min-width'
                 onClick={showCreateStreamModal}
               >
                 Create stream
@@ -2656,10 +2656,10 @@ export const MoneyStreamsInfoView = (props: {
             )}
             {!isXsDevice && !isMultisigContext && (
               <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke btn-min-width"
+                type='default'
+                shape='round'
+                size='small'
+                className='thin-stroke btn-min-width'
                 onClick={showOpenStreamModal}
               >
                 Find stream
@@ -2668,17 +2668,17 @@ export const MoneyStreamsInfoView = (props: {
           </Space>
           {isXsDevice && (
             <Dropdown
-              className="options-dropdown"
+              className='options-dropdown'
               menu={renderDropdownMenu()}
-              placement="bottomRight"
+              placement='bottomRight'
               trigger={['click']}
             >
-              <span className="icon-button-container ml-1">
+              <span className='icon-button-container ml-1'>
                 <Button
-                  type="default"
-                  shape="circle"
-                  size="middle"
-                  icon={<IconEllipsisVertical className="mean-svg-icons" />}
+                  type='default'
+                  shape='circle'
+                  size='middle'
+                  icon={<IconEllipsisVertical className='mean-svg-icons' />}
                   onClick={e => e.preventDefault()}
                 />
               </span>
@@ -2691,7 +2691,7 @@ export const MoneyStreamsInfoView = (props: {
 
       {multisigClient && isCreateStreamModalVisible && (
         <TreasuryStreamCreateModal
-          associatedToken=""
+          associatedToken=''
           connection={connection}
           handleClose={closeCreateStreamModal}
           handleOk={closeCreateStreamModal}
@@ -2732,8 +2732,8 @@ export const MoneyStreamsInfoView = (props: {
       {isCreateMoneyStreamModalOpen && (
         <SendAssetModal
           selectedToken={undefined}
-          title="Create outgoing stream"
-          selected="recurring"
+          title='Create outgoing stream'
+          selected='recurring'
           isVisible={isCreateMoneyStreamModalOpen}
           handleClose={hideCreateMoneyStreamModal}
         />
@@ -2752,7 +2752,7 @@ export const MoneyStreamsInfoView = (props: {
           selectedMultisig={selectedMultisig ?? undefined}
           userBalances={userBalances}
           treasuryStreams={undefined}
-          associatedToken=""
+          associatedToken=''
           isBusy={isBusy}
         />
       )}

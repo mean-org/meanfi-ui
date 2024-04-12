@@ -1,5 +1,5 @@
-import { AuthorityType, Token } from '@solana/spl-token';
-import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { type AuthorityType, Token } from '@solana/spl-token';
+import type { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { composeV0TxWithPrioritizationFees, serializeTx } from './transactions';
 
 /**

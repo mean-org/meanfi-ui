@@ -32,20 +32,20 @@ export const ReceiveSplOrSolModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">Receive {tokenSymbol || 'Funds'}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>Receive {tokenSymbol || 'Funds'}</div>}
       footer={null}
       open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={360}
     >
-      <div className="buy-token-options">
-        <div className="text-center">
-          <h3 className="mb-3">Scan the QR code to receive funds</h3>
+      <div className='buy-token-options'>
+        <div className='text-center'>
+          <h3 className='mb-3'>Scan the QR code to receive funds</h3>
 
           {isWalletAddress() || overrideWithWallet ? (
-            <div className="qr-container bg-white">
+            <div className='qr-container bg-white'>
               <>
                 {!props.multisigAddress ? (
                   <QRCodeSVG value={publicKey?.toBase58() as string} size={200} />
@@ -55,13 +55,13 @@ export const ReceiveSplOrSolModal = (props: {
               </>
             </div>
           ) : (
-            <div className="qr-container bg-white">
+            <div className='qr-container bg-white'>
               <QRCodeSVG value={address} size={200} />
             </div>
           )}
 
           {isWalletAddress() || overrideWithWallet ? (
-            <div className="flex-center font-size-70 mb-2">
+            <div className='flex-center font-size-70 mb-2'>
               <>
                 {!props.multisigAddress ? (
                   <AddressDisplay
@@ -83,7 +83,7 @@ export const ReceiveSplOrSolModal = (props: {
               </>
             </div>
           ) : (
-            <div className="flex-center font-size-70 mb-2">
+            <div className='flex-center font-size-70 mb-2'>
               <AddressDisplay
                 address={address}
                 showFullAddress={true}
@@ -94,8 +94,8 @@ export const ReceiveSplOrSolModal = (props: {
           )}
 
           <>
-            <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
-            <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div>
+            <div className='font-light font-size-75 px-4'>{t('assets.no-balance.line4')}</div>
+            <div className='font-light font-size-75 px-4'>{t('assets.no-balance.line5')}</div>
           </>
 
           {/* {(isWalletAddress() || overrideWithWallet) ? (

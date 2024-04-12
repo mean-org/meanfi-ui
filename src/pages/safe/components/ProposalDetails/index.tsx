@@ -1,24 +1,16 @@
-import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
+import type { App, AppConfig } from '@mean-dao/mean-multisig-apps';
 import {
-  MeanMultisig,
-  MultisigParticipant,
-  MultisigTransaction,
-  MultisigTransactionActivityItem,
-  MultisigTransactionInstructionInfo,
+  type MeanMultisig,
+  type MultisigParticipant,
+  type MultisigTransaction,
+  type MultisigTransactionActivityItem,
+  type MultisigTransactionInstructionInfo,
   MultisigTransactionStatus,
   createAnchorProgram,
   parseMultisigProposalIx,
 } from '@mean-dao/mean-multisig-sdk';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, PublicKey, SystemProgram } from '@solana/web3.js';
-import { Button, Col, Row } from 'antd';
-import { openNotification } from 'components/Notifications';
-import { RejectCancelModal } from 'components/RejectCancelModal';
-import { ResumeItem } from 'components/ResumeItem';
-import { TabsMean } from 'components/TabsMean';
-import { AppStateContext } from 'contexts/appstate';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
+import { type Connection, PublicKey, SystemProgram } from '@solana/web3.js';
 import {
   IconApprove,
   IconArrowBack,
@@ -28,14 +20,22 @@ import {
   IconUser,
   IconUserClock,
 } from 'Icons';
+import { Button, Col, Row } from 'antd';
+import { openNotification } from 'components/Notifications';
+import { RejectCancelModal } from 'components/RejectCancelModal';
+import { ResumeItem } from 'components/ResumeItem';
+import { TabsMean } from 'components/TabsMean';
+import { AppStateContext } from 'contexts/appstate';
+import { TxConfirmationContext } from 'contexts/transaction-status';
+import { useWallet } from 'contexts/wallet';
 import { consoleOut, copyText } from 'middleware/ui';
 import { shortenAddress } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import ActivityRow from './ActivityRow';
 import { RenderInstructions } from './RenderInstructions';
 import './style.scss';
-import ActivityRow from './ActivityRow';
 
 export const ProposalDetailsView = (props: {
   appsProvider?: any;
@@ -312,10 +312,10 @@ export const ProposalDetailsView = (props: {
   // Display the activities in the "Activity" tab, on safe details page
   const renderActivities = () => {
     if (loadingActivity) {
-      return <span className="pl-1">Loading activities...</span>;
+      return <span className='pl-1'>Loading activities...</span>;
     }
     if (proposalActivity.length === 0) {
-      return <span className="pl-1">This proposal has no activities</span>;
+      return <span className='pl-1'>This proposal has no activities</span>;
     }
 
     return (
@@ -374,30 +374,30 @@ export const ProposalDetailsView = (props: {
   const renderProposedBy = () => {
     if (selectedProposal.status === MultisigTransactionStatus.Passed) {
       return (
-        <Col className="safe-details-left-container">
-          <IconUserClock className="user-image mean-svg-icons bg-yellow" />
-          <div className="proposal-resume-left-text">
-            <div className="info-label">Pending execution</div>
+        <Col className='safe-details-left-container'>
+          <IconUserClock className='user-image mean-svg-icons bg-yellow' />
+          <div className='proposal-resume-left-text'>
+            <div className='info-label'>Pending execution</div>
             <span>Proposed by {proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
           </div>
         </Col>
       );
     } else if (selectedProposal.status === MultisigTransactionStatus.Executed) {
       return (
-        <Col className="safe-details-left-container">
-          <IconLightning className="user-image mean-svg-icons bg-green" />
-          <div className="proposal-resume-left-text">
-            <div className="info-label">Proposed by</div>
+        <Col className='safe-details-left-container'>
+          <IconLightning className='user-image mean-svg-icons bg-green' />
+          <div className='proposal-resume-left-text'>
+            <div className='info-label'>Proposed by</div>
             <span>{proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
           </div>
         </Col>
       );
     } else {
       return (
-        <Col className="safe-details-left-container">
-          <IconUser className="user-image mean-svg-icons" />
-          <div className="proposal-resume-left-text">
-            <div className="info-label">Proposed by</div>
+        <Col className='safe-details-left-container'>
+          <IconUser className='user-image mean-svg-icons' />
+          <div className='proposal-resume-left-text'>
+            <div className='info-label'>Proposed by</div>
             <span>{proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
           </div>
         </Col>
@@ -407,11 +407,11 @@ export const ProposalDetailsView = (props: {
 
   return (
     <>
-      <div className="safe-details-container">
-        <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
-          <div onClick={hideProposalDetailsHandler} className="back-button icon-button-container">
-            <IconArrowBack className="mean-svg-icons" />
-            <span className="ml-1">Back</span>
+      <div className='safe-details-container'>
+        <Row gutter={[8, 8]} className='safe-details-resume mr-0 ml-0'>
+          <div onClick={hideProposalDetailsHandler} className='back-button icon-button-container'>
+            <IconArrowBack className='mean-svg-icons' />
+            <span className='ml-1'>Back</span>
           </div>
         </Row>
 
@@ -428,25 +428,25 @@ export const ProposalDetailsView = (props: {
           resume={resume}
           isDetailsPanel={true}
           isLink={false}
-          classNameRightContent="resume-right-content"
+          classNameRightContent='resume-right-content'
         />
         {selectedProposal.details.description && (
-          <Row className="safe-details-description pl-1">{selectedProposal.details.description}</Row>
+          <Row className='safe-details-description pl-1'>{selectedProposal.details.description}</Row>
         )}
 
-        <div className="safe-details-proposal">
-          <div className="safe-details-proposal-left">{renderProposedBy()}</div>
+        <div className='safe-details-proposal'>
+          <div className='safe-details-proposal-left'>{renderProposedBy()}</div>
           <div>
-            <div className="safe-details-right-container btn-group mr-1">
+            <div className='safe-details-right-container btn-group mr-1'>
               {(selectedProposal.status === MultisigTransactionStatus.Voided ||
                 selectedProposal.status === MultisigTransactionStatus.Failed ||
                 selectedProposal.status === MultisigTransactionStatus.Expired) &&
                 isProposer && (
                   <Button
-                    type="default"
-                    shape="round"
-                    size="small"
-                    className="thin-stroke d-flex justify-content-center align-items-center"
+                    type='default'
+                    shape='round'
+                    size='small'
+                    className='thin-stroke d-flex justify-content-center align-items-center'
                     disabled={
                       !!hasMultisigPendingProposal ||
                       isBusy ||
@@ -456,16 +456,16 @@ export const ProposalDetailsView = (props: {
                     }
                     onClick={() => setIsCancelRejectModalVisible(true)}
                   >
-                    <div className="btn-content">Cancel</div>
+                    <div className='btn-content'>Cancel</div>
                   </Button>
                 )}
               {selectedProposal.status === MultisigTransactionStatus.Active && (
                 <>
                   <Button
-                    type="default"
-                    shape="round"
-                    size="small"
-                    className="thin-stroke"
+                    type='default'
+                    shape='round'
+                    size='small'
+                    className='thin-stroke'
                     disabled={
                       selectedProposal.didSigned === true ||
                       !!hasMultisigPendingProposal ||
@@ -482,22 +482,22 @@ export const ProposalDetailsView = (props: {
                     }}
                   >
                     {selectedProposal.didSigned !== true ? (
-                      <div className="btn-content">
-                        <IconThumbsUp className="mean-svg-icons" />
+                      <div className='btn-content'>
+                        <IconThumbsUp className='mean-svg-icons' />
                         Approve
                       </div>
                     ) : (
-                      <div className="btn-content">
-                        <IconApprove className="mean-svg-icons" />
+                      <div className='btn-content'>
+                        <IconApprove className='mean-svg-icons' />
                         Approved
                       </div>
                     )}
                   </Button>
                   <Button
-                    type="default"
-                    shape="round"
-                    size="small"
-                    className="thin-stroke"
+                    type='default'
+                    shape='round'
+                    size='small'
+                    className='thin-stroke'
                     disabled={
                       selectedProposal.didSigned === false ||
                       !!hasMultisigPendingProposal ||
@@ -514,23 +514,23 @@ export const ProposalDetailsView = (props: {
                     }}
                   >
                     {selectedProposal.didSigned !== false ? (
-                      <div className="btn-content">
-                        <IconThumbsDown className="mean-svg-icons" />
+                      <div className='btn-content'>
+                        <IconThumbsDown className='mean-svg-icons' />
                         Reject
                       </div>
                     ) : (
-                      <div className="btn-content">
-                        <IconApprove className="mean-svg-icons" />
+                      <div className='btn-content'>
+                        <IconApprove className='mean-svg-icons' />
                         Rejected
                       </div>
                     )}
                   </Button>
                   {isProposer && (
                     <Button
-                      type="default"
-                      shape="round"
-                      size="small"
-                      className="thin-stroke d-flex justify-content-center align-items-center"
+                      type='default'
+                      shape='round'
+                      size='small'
+                      className='thin-stroke d-flex justify-content-center align-items-center'
                       disabled={
                         !!hasMultisigPendingProposal ||
                         isBusy ||
@@ -540,7 +540,7 @@ export const ProposalDetailsView = (props: {
                       }
                       onClick={() => setIsCancelRejectModalVisible(true)}
                     >
-                      <div className="btn-content">Cancel</div>
+                      <div className='btn-content'>Cancel</div>
                     </Button>
                   )}
                 </>
@@ -548,10 +548,10 @@ export const ProposalDetailsView = (props: {
               {selectedProposal.status === MultisigTransactionStatus.Passed && (
                 <>
                   <Button
-                    type="default"
-                    shape="round"
-                    size="small"
-                    className="thin-stroke d-flex justify-content-center align-items-center"
+                    type='default'
+                    shape='round'
+                    size='small'
+                    className='thin-stroke d-flex justify-content-center align-items-center'
                     disabled={
                       !!hasMultisigPendingProposal ||
                       isBusy ||
@@ -565,14 +565,14 @@ export const ProposalDetailsView = (props: {
                       onProposalExecute(selectedProposal);
                     }}
                   >
-                    <div className="btn-content">Execute</div>
+                    <div className='btn-content'>Execute</div>
                   </Button>
                   {isProposer && (
                     <Button
-                      type="default"
-                      shape="round"
-                      size="small"
-                      className="thin-stroke d-flex justify-content-center align-items-center"
+                      type='default'
+                      shape='round'
+                      size='small'
+                      className='thin-stroke d-flex justify-content-center align-items-center'
                       disabled={
                         !!hasMultisigPendingProposal ||
                         isBusy ||
@@ -582,7 +582,7 @@ export const ProposalDetailsView = (props: {
                       }
                       onClick={() => setIsCancelRejectModalVisible(true)}
                     >
-                      <div className="btn-content">Cancel</div>
+                      <div className='btn-content'>Cancel</div>
                     </Button>
                   )}
                 </>
@@ -591,7 +591,7 @@ export const ProposalDetailsView = (props: {
           </div>
         </div>
 
-        <TabsMean tabs={tabs} defaultTab="instruction" />
+        <TabsMean tabs={tabs} defaultTab='instruction' />
       </div>
 
       {isCancelRejectModalVisible && (

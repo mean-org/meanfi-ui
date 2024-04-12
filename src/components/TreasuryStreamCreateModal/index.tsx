@@ -1,17 +1,30 @@
 import { InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { TreasuryInfo } from '@mean-dao/money-streaming';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, type MeanMultisig, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { TreasuryInfo } from '@mean-dao/money-streaming';
 import {
-  Beneficiary,
-  PaymentStreaming,
-  TransactionFees,
-  PaymentStreamingAccount,
   AccountType,
-  CreateStreamTransactionAccounts,
+  type Beneficiary,
+  type CreateStreamTransactionAccounts,
+  PaymentStreaming,
+  type PaymentStreamingAccount,
+  type TransactionFees,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { Button, Checkbox, Col, DatePicker, Divider, Dropdown, MenuProps, Modal, Row, Select, Tooltip } from 'antd';
+import { type Connection, PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
+import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
+import {
+  Button,
+  Checkbox,
+  Col,
+  DatePicker,
+  Divider,
+  Dropdown,
+  type MenuProps,
+  Modal,
+  Row,
+  Select,
+  Tooltip,
+} from 'antd';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
 import { InputMean } from 'components/InputMean';
@@ -22,15 +35,14 @@ import { AppStateContext } from 'contexts/appstate';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
-import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import {
-  composeTxWithPrioritizationFees,
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
+  composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
@@ -61,10 +73,10 @@ import {
   toTokenAmountBn,
   toUiAmount,
 } from 'middleware/utils';
-import { OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { CreateStreamParams } from 'models/streams';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import { OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
+import type { CreateStreamParams } from 'models/streams';
 import moment from 'moment';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -251,7 +263,7 @@ export const TreasuryStreamCreateModal = (props: {
       }
       const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
-      return parseFloat(inputAmount) * price;
+      return Number.parseFloat(inputAmount) * price;
     },
     [getTokenPriceByAddress, selectedToken],
   );
@@ -296,7 +308,7 @@ export const TreasuryStreamCreateModal = (props: {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
     for (const enumMember in value) {
-      const mappedValue = parseInt(enumMember, 10);
+      const mappedValue = Number.parseInt(enumMember, 10);
       if (!isNaN(mappedValue)) {
         const item = new PaymentRateTypeOption(index, mappedValue, getPaymentRateOptionLabel(mappedValue, t));
         options.push(item);
@@ -310,7 +322,7 @@ export const TreasuryStreamCreateModal = (props: {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
     for (const enumMember in value) {
-      const mappedValue = parseInt(enumMember, 10);
+      const mappedValue = Number.parseInt(enumMember, 10);
       if (!isNaN(mappedValue)) {
         const item = new PaymentRateTypeOption(index, mappedValue, getLockPeriodOptionLabel(mappedValue, t));
         options.push(item);
@@ -321,7 +333,7 @@ export const TreasuryStreamCreateModal = (props: {
   };
 
   const getPaymentSettingsButtonLabel = (): string => {
-    const rateAmount = parseFloat(paymentRateAmount || '0');
+    const rateAmount = Number.parseFloat(paymentRateAmount || '0');
 
     if (workingTreasuryType === AccountType.Lock) {
       return !rateAmount ? 'Add funds to commit' : '';
@@ -347,7 +359,7 @@ export const TreasuryStreamCreateModal = (props: {
       return `No balance in account ${
         workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id) + ')' : ''
       }`;
-    } else if (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) {
+    } else if (!paymentRateAmount || Number.parseFloat(paymentRateAmount) === 0) {
       return t('transactions.validation.no-amount');
     } else if (!paymentStartDate) {
       return t('transactions.validation.no-valid-date');
@@ -375,9 +387,11 @@ export const TreasuryStreamCreateModal = (props: {
       return `No balance in account ${
         workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id) + ')' : ''
       }`;
-    } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
+    } else if (!fromCoinAmount || Number.parseFloat(fromCoinAmount) === 0) {
       return t('transactions.validation.no-amount');
-    } else if (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+    } else if (
+      Number.parseFloat(fromCoinAmount) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
+    ) {
       return 'Invalid amount';
     } else if (!paymentStartDate) {
       return t('transactions.validation.no-valid-date');
@@ -403,15 +417,17 @@ export const TreasuryStreamCreateModal = (props: {
       return `No balance in account ${
         workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id) + ')' : ''
       }`;
-    } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
+    } else if (!fromCoinAmount || Number.parseFloat(fromCoinAmount) === 0) {
       return t('transactions.validation.no-amount');
-    } else if (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+    } else if (
+      Number.parseFloat(fromCoinAmount) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
+    ) {
       return 'Invalid amount';
-    } else if (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) {
+    } else if (!lockPeriodAmount || Number.parseFloat(lockPeriodAmount) === 0) {
       return 'Lock period cannot be empty';
     } else if (
       cliffRelease &&
-      parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
+      Number.parseFloat(cliffRelease) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
     ) {
       return 'Invalid cliff amount';
     } else if (!paymentStartDate) {
@@ -477,15 +493,17 @@ export const TreasuryStreamCreateModal = (props: {
       return `No balance in account ${
         workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id) + ')' : ''
       }`;
-    } else if (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) {
+    } else if (!fromCoinAmount || Number.parseFloat(fromCoinAmount) === 0) {
       return t('transactions.validation.no-amount');
-    } else if (parseFloat(fromCoinAmount) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+    } else if (
+      Number.parseFloat(fromCoinAmount) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
+    ) {
       return 'Invalid amount';
-    } else if (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) {
+    } else if (!lockPeriodAmount || Number.parseFloat(lockPeriodAmount) === 0) {
       return 'Lock period cannot be empty';
     } else if (
       cliffRelease &&
-      parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
+      Number.parseFloat(cliffRelease) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
     ) {
       return 'Invalid cliff amount';
     } else if (!paymentStartDate) {
@@ -512,7 +530,7 @@ export const TreasuryStreamCreateModal = (props: {
           selectedToken.address,
           false,
           splTokenList,
-          friendlyDisplayDecimalPlaces(parseFloat(paymentRateAmount)) ?? selectedToken.decimals,
+          friendlyDisplayDecimalPlaces(Number.parseFloat(paymentRateAmount)) ?? selectedToken.decimals,
         )
       : '-';
     outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t);
@@ -949,7 +967,7 @@ export const TreasuryStreamCreateModal = (props: {
       if (cliffReleaseBn.gtn(0)) {
         toStream = toStream.sub(cliffReleaseBn);
       }
-      const lpa = parseFloat(lockPeriodAmount);
+      const lpa = Number.parseFloat(lockPeriodAmount);
       if (lpa) {
         ra = toStream.divn(lpa);
       }
@@ -1061,7 +1079,7 @@ export const TreasuryStreamCreateModal = (props: {
         true, // usePda
       );
 
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
@@ -1324,8 +1342,8 @@ export const TreasuryStreamCreateModal = (props: {
 
   const isRateAmountValid = (): boolean => {
     return !!(
-      (paymentRateAmount && parseFloat(paymentRateAmount) > 0) ||
-      (fromCoinAmount && parseFloat(fromCoinAmount) > 0)
+      (paymentRateAmount && Number.parseFloat(paymentRateAmount) > 0) ||
+      (fromCoinAmount && Number.parseFloat(fromCoinAmount) > 0)
     );
   };
 
@@ -1410,7 +1428,7 @@ export const TreasuryStreamCreateModal = (props: {
     const token = treasuryAssociatedToken ? getTokenByMintAddress(treasuryAssociatedToken) : undefined;
 
     return (
-      <div className="token-icon">
+      <div className='token-icon'>
         {treasuryAssociatedToken ? (
           <>
             {token?.logoURI ? (
@@ -1439,16 +1457,16 @@ export const TreasuryStreamCreateModal = (props: {
       <>
         {name ? (
           <>
-            <div className="title text-truncate">
+            <div className='title text-truncate'>
               {name}
               <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                 {treasuryType === AccountType.Open ? 'Open' : 'Locked'}
               </span>
             </div>
-            <div className="subtitle text-truncate">{shortenAddress(item.id, 8)}</div>
+            <div className='subtitle text-truncate'>{shortenAddress(item.id, 8)}</div>
           </>
         ) : (
-          <div className="title text-truncate">{shortenAddress(item.id, 8)}</div>
+          <div className='title text-truncate'>{shortenAddress(item.id, 8)}</div>
         )}
       </>
     );
@@ -1467,10 +1485,10 @@ export const TreasuryStreamCreateModal = (props: {
           <span>&nbsp;</span>
         ) : (
           <>
-            <div className="rate-amount">
+            <div className='rate-amount'>
               {formatThousands(isV2Treasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
             </div>
-            <div className="interval">streams</div>
+            <div className='interval'>streams</div>
           </>
         )}
       </>
@@ -1481,9 +1499,9 @@ export const TreasuryStreamCreateModal = (props: {
     return (
       <Option key={`${item.id}`} value={item.id.toString()}>
         <div className={`transaction-list-row no-pointer`}>
-          <div className="icon-cell">{getStreamingAccountIcon(item)}</div>
-          <div className="description-cell">{getStreamingAccountDescription(item)}</div>
-          <div className="rate-cell">{getStreamingAccountStreamCount(item)}</div>
+          <div className='icon-cell'>{getStreamingAccountIcon(item)}</div>
+          <div className='description-cell'>{getStreamingAccountDescription(item)}</div>
+          <div className='rate-cell'>{getStreamingAccountStreamCount(item)}</div>
         </div>
       </Option>
     );
@@ -1491,14 +1509,14 @@ export const TreasuryStreamCreateModal = (props: {
 
   return (
     <Modal
-      className="mean-modal treasury-stream-create-modal"
+      className='mean-modal treasury-stream-create-modal'
       title={
         workingTreasuryType === AccountType.Open ? (
-          <div className="modal-title">
+          <div className='modal-title'>
             {isMultisigContext ? 'Propose outgoing stream' : t('treasuries.treasury-streams.add-stream-modal-title')}
           </div>
         ) : (
-          <div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>
+          <div className='modal-title'>{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>
         )
       }
       maskClosable={false}
@@ -1509,9 +1527,9 @@ export const TreasuryStreamCreateModal = (props: {
       width={480}
     >
       {hasNoStreamingAccounts ? (
-        <div className="text-center px-4 py-4">
+        <div className='text-center px-4 py-4'>
           {theme === 'light' ? (
-            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+            <WarningFilled style={{ fontSize: 48 }} className='icon mt-0 mb-3 fg-warning' />
           ) : (
             <WarningOutlined style={{ fontSize: 48 }} className={`icon mt-0 mb-3 fg-warning`} />
           )}
@@ -1523,7 +1541,7 @@ export const TreasuryStreamCreateModal = (props: {
         </div>
       ) : (
         <>
-          <div className="scrollable-content">
+          <div className='scrollable-content'>
             <StepSelector
               step={currentStep}
               steps={workingTreasuryType === AccountType.Lock ? 3 : 2}
@@ -1532,21 +1550,21 @@ export const TreasuryStreamCreateModal = (props: {
 
             <div className={currentStep === 0 ? 'contract-wrapper panel1 show' : 'contract-wrapper panel1 hide'}>
               {workingTreasuryType === AccountType.Lock && (
-                <div className="mb-2 text-uppercase">
+                <div className='mb-2 text-uppercase'>
                   {t('treasuries.treasury-streams.add-stream-locked.panel1-name')}
                 </div>
               )}
 
               {/* Proposal title */}
               {isMultisigContext && (
-                <div className="mb-3">
-                  <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+                <div className='mb-3'>
+                  <div className='form-label'>{t('multisig.proposal-modal.title')}</div>
                   <InputMean
-                    id="proposal-title-field"
-                    name="Title"
-                    className="w-100 general-text-input"
+                    id='proposal-title-field'
+                    name='Title'
+                    className='w-100 general-text-input'
                     onChange={onTitleInputValueChange}
-                    placeholder="Add a proposal title (required)"
+                    placeholder='Add a proposal title (required)'
                     value={proposalTitle}
                   />
                 </div>
@@ -1555,26 +1573,26 @@ export const TreasuryStreamCreateModal = (props: {
               {!enableMultipleStreamsOption && (
                 <>
                   {isMultisigContext && selectedMultisig && !treasuryDetails && (
-                    <div className="mb-3">
-                      <div className="form-label icon-label">
+                    <div className='mb-3'>
+                      <div className='form-label icon-label'>
                         {t('treasuries.add-funds.select-streaming-account-label')}
                         <Tooltip
-                          placement="bottom"
-                          title="Every payment stream is set up and funded from a streaming account. Select the account you want for the stream to be created and funded from. If you do not have the streaming account set up yet, first create and fund the account before proceeding."
+                          placement='bottom'
+                          title='Every payment stream is set up and funded from a streaming account. Select the account you want for the stream to be created and funded from. If you do not have the streaming account set up yet, first create and fund the account before proceeding.'
                         >
                           <span>
-                            <IconHelpCircle className="mean-svg-icons" />
+                            <IconHelpCircle className='mean-svg-icons' />
                           </span>
                         </Tooltip>
                       </div>
                       <div className={`well ${isBusy ? 'disabled' : ''}`}>
-                        <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                        <div className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
                           {treasuryList && treasuryList.length > 0 && (
                             <Select
                               className={`auto-height`}
                               value={selectedStreamingAccountId}
                               style={{ width: '100%', maxWidth: 'none' }}
-                              popupClassName="stream-select-dropdown"
+                              popupClassName='stream-select-dropdown'
                               onChange={onStreamingAccountSelected}
                               bordered={false}
                               showArrow={false}
@@ -1590,20 +1608,20 @@ export const TreasuryStreamCreateModal = (props: {
                     </div>
                   )}
 
-                  <div className="form-label">{t('transactions.memo2.label')}</div>
-                  <div className="well">
-                    <div className="flex-fixed-right">
-                      <div className="left">
+                  <div className='form-label'>{t('transactions.memo2.label')}</div>
+                  <div className='well'>
+                    <div className='flex-fixed-right'>
+                      <div className='left'>
                         <input
-                          id="payment-memo-field"
-                          className="w-100 general-text-input"
-                          autoComplete="on"
-                          autoCorrect="off"
-                          type="text"
+                          id='payment-memo-field'
+                          className='w-100 general-text-input'
+                          autoComplete='on'
+                          autoCorrect='off'
+                          type='text'
                           maxLength={32}
                           onChange={handleRecipientNoteChange}
                           placeholder={t('transactions.memo2.placeholder')}
-                          spellCheck="false"
+                          spellCheck='false'
                           value={recipientNote}
                         />
                       </div>
@@ -1612,43 +1630,43 @@ export const TreasuryStreamCreateModal = (props: {
                 </>
               )}
 
-              <div className="form-label icon-label">
+              <div className='form-label icon-label'>
                 {!enableMultipleStreamsOption
                   ? t('transactions.recipient.label')
                   : t('treasuries.treasury-streams.multiple-address-list')}
                 {enableMultipleStreamsOption && (
                   <Tooltip
-                    placement="top"
+                    placement='top'
                     title={t('treasuries.treasury-streams.multiple-address-question-mark-tooltip')}
                   >
                     <span>
-                      <IconHelpCircle className="mean-svg-icons" />
+                      <IconHelpCircle className='mean-svg-icons' />
                     </span>
                   </Tooltip>
                 )}
               </div>
 
               {!enableMultipleStreamsOption ? (
-                <div className="well">
-                  <div className="flex-fixed-right">
-                    <div className="left position-relative">
-                      <span className="recipient-field-wrapper">
+                <div className='well'>
+                  <div className='flex-fixed-right'>
+                    <div className='left position-relative'>
+                      <span className='recipient-field-wrapper'>
                         <input
-                          id="payment-recipient-field"
-                          className="general-text-input"
-                          autoComplete="on"
-                          autoCorrect="off"
-                          type="text"
+                          id='payment-recipient-field'
+                          className='general-text-input'
+                          autoComplete='on'
+                          autoCorrect='off'
+                          type='text'
                           onFocus={handleRecipientAddressFocusInOut}
                           onChange={handleRecipientAddressChange}
                           onBlur={handleRecipientAddressFocusInOut}
                           placeholder={t('transactions.recipient.placeholder')}
                           required={true}
-                          spellCheck="false"
+                          spellCheck='false'
                           value={recipientAddress}
                         />
                         <span
-                          id="payment-recipient-static-field"
+                          id='payment-recipient-static-field'
                           className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
                         >
                           {recipientAddress ?? t('transactions.recipient.placeholder')}
@@ -1657,20 +1675,20 @@ export const TreasuryStreamCreateModal = (props: {
                     </div>
                   </div>
                   {recipientAddress && !isValidAddress(recipientAddress) && (
-                    <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                    <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
                   )}
                 </div>
               ) : (
-                <div className="well">
-                  <div className="flex-fixed-right">
-                    <div className="left position-relative">
-                      <span className="recipient-field-wrapper">
-                        <input type="file" accept=".csv" id="csvFile" onChange={selectCsvHandler} />
+                <div className='well'>
+                  <div className='flex-fixed-right'>
+                    <div className='left position-relative'>
+                      <span className='recipient-field-wrapper'>
+                        <input type='file' accept='.csv' id='csvFile' onChange={selectCsvHandler} />
                       </span>
                     </div>
                   </div>
                   {!validMultiRecipientsList && isCsvSelected && listValidAddresses.length === 0 && (
-                    <span className="form-field-error">
+                    <span className='form-field-error'>
                       {t('transactions.validation.multi-recipient-invalid-list')}
                     </span>
                   )}
@@ -1680,13 +1698,13 @@ export const TreasuryStreamCreateModal = (props: {
               {/* Payment rate */}
               {workingTreasuryType === AccountType.Open ? (
                 <>
-                  <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
-                  <div className="two-column-form-layout col60x40 mb-3">
-                    <div className="left">
-                      <div className="well mb-1">
-                        <div className="flex-fixed-left">
-                          <div className="left">
-                            <span className="add-on">
+                  <div className='form-label'>{t('transactions.rate-and-frequency.amount-label')}</div>
+                  <div className='two-column-form-layout col60x40 mb-3'>
+                    <div className='left'>
+                      <div className='well mb-1'>
+                        <div className='flex-fixed-left'>
+                          <div className='left'>
+                            <span className='add-on'>
                               {selectedToken && (
                                 <TokenDisplay
                                   onClick={() => {}}
@@ -1697,38 +1715,38 @@ export const TreasuryStreamCreateModal = (props: {
                               )}
                             </span>
                           </div>
-                          <div className="right">
+                          <div className='right'>
                             <input
-                              className="general-text-input text-right"
-                              inputMode="decimal"
-                              autoComplete="off"
-                              autoCorrect="off"
-                              type="text"
+                              className='general-text-input text-right'
+                              inputMode='decimal'
+                              autoComplete='off'
+                              autoCorrect='off'
+                              type='text'
                               onChange={handlePaymentRateAmountChange}
-                              pattern="^[0-9]*[.,]?[0-9]*$"
-                              placeholder="0.0"
+                              pattern='^[0-9]*[.,]?[0-9]*$'
+                              placeholder='0.0'
                               minLength={1}
                               maxLength={79}
-                              spellCheck="false"
+                              spellCheck='false'
                               value={paymentRateAmount}
                             />
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="right">
-                      <div className="well mb-0">
-                        <div className="flex-fixed-left">
-                          <div className="left">
+                    <div className='right'>
+                      <div className='well mb-0'>
+                        <div className='flex-fixed-left'>
+                          <div className='left'>
                             <Dropdown menu={paymentRateOptionsMenu()} trigger={['click']}>
-                              <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                                <div className="left">
-                                  <span className="capitalize-first-letter">
+                              <span className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
+                                <div className='left'>
+                                  <span className='capitalize-first-letter'>
                                     {getPaymentRateOptionLabel(paymentRateFrequency, t)}{' '}
                                   </span>
                                 </div>
-                                <div className="right">
-                                  <IconCaretDown className="mean-svg-icons" />
+                                <div className='right'>
+                                  <IconCaretDown className='mean-svg-icons' />
                                 </div>
                               </span>
                             </Dropdown>
@@ -1740,11 +1758,11 @@ export const TreasuryStreamCreateModal = (props: {
                 </>
               ) : (
                 <>
-                  <div className="form-label">TOTAL FUNDS TO COMMIT</div>
-                  <div className="well mb-1">
-                    <div className="flex-fixed-left">
-                      <div className="left">
-                        <span className="add-on">
+                  <div className='form-label'>TOTAL FUNDS TO COMMIT</div>
+                  <div className='well mb-1'>
+                    <div className='flex-fixed-left'>
+                      <div className='left'>
+                        <span className='add-on'>
                           {selectedToken && (
                             <TokenDisplay
                               onClick={() => {}}
@@ -1755,7 +1773,7 @@ export const TreasuryStreamCreateModal = (props: {
                           )}
                           {selectedToken && unallocatedBalance ? (
                             <div
-                              className="token-max simplelink"
+                              className='token-max simplelink'
                               onClick={() => {
                                 if (isFeePaidByTreasurer) {
                                   const maxAmount = getMaxAmount(true);
@@ -1775,25 +1793,25 @@ export const TreasuryStreamCreateModal = (props: {
                           ) : null}
                         </span>
                       </div>
-                      <div className="right">
+                      <div className='right'>
                         <input
-                          className="general-text-input text-right"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          autoCorrect="off"
-                          type="text"
+                          className='general-text-input text-right'
+                          inputMode='decimal'
+                          autoComplete='off'
+                          autoCorrect='off'
+                          type='text'
                           onChange={handleFromCoinAmountChange}
-                          pattern="^[0-9]*[.,]?[0-9]*$"
-                          placeholder="0.0"
+                          pattern='^[0-9]*[.,]?[0-9]*$'
+                          placeholder='0.0'
                           minLength={1}
                           maxLength={79}
-                          spellCheck="false"
+                          spellCheck='false'
                           value={fromCoinAmount}
                         />
                       </div>
                     </div>
-                    <div className="flex-fixed-right">
-                      <div className="left inner-label">
+                    <div className='flex-fixed-right'>
+                      <div className='left inner-label'>
                         <span>{t('transactions.send-amount.label-right')}:</span>
                         <span>
                           {unallocatedBalance && selectedToken
@@ -1807,7 +1825,7 @@ export const TreasuryStreamCreateModal = (props: {
                             : '0'}
                         </span>
                       </div>
-                      <div className="right inner-label">&nbsp;</div>
+                      <div className='right inner-label'>&nbsp;</div>
                     </div>
                   </div>
                 </>
@@ -1816,20 +1834,20 @@ export const TreasuryStreamCreateModal = (props: {
               {/* Send date */}
               {workingTreasuryType === AccountType.Open && (
                 <>
-                  <div className="form-label">{t('transactions.send-date.label')}</div>
-                  <div className="well">
-                    <div className="flex-fixed-right">
-                      <div className="left static-data-field">
+                  <div className='form-label'>{t('transactions.send-date.label')}</div>
+                  <div className='well'>
+                    <div className='flex-fixed-right'>
+                      <div className='left static-data-field'>
                         {isToday(paymentStartDate || '')
                           ? `${paymentStartDate} (${t('common:general.now')})`
                           : `${paymentStartDate}`}
                       </div>
-                      <div className="right">
-                        <div className="add-on simplelink">
+                      <div className='right'>
+                        <div className='add-on simplelink'>
                           <DatePicker
-                            size="middle"
+                            size='middle'
                             bordered={false}
-                            className="addon-date-picker"
+                            className='addon-date-picker'
                             aria-required={true}
                             allowClear={false}
                             disabledDate={disabledDate}
@@ -1853,21 +1871,21 @@ export const TreasuryStreamCreateModal = (props: {
                     <>
                       {recipientAddress && !enableMultipleStreamsOption && (
                         <>
-                          <div className="flex-fixed-right">
-                            <div className="left">
-                              <div className="form-label">{t('transactions.resume')}</div>
+                          <div className='flex-fixed-right'>
+                            <div className='left'>
+                              <div className='form-label'>{t('transactions.resume')}</div>
                             </div>
-                            <div className="right">
-                              <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                                <IconEdit className="mean-svg-icons" />
+                            <div className='right'>
+                              <span className='flat-button change-button' onClick={() => setCurrentStep(0)}>
+                                <IconEdit className='mean-svg-icons' />
                                 <span>{t('general.cta-change')}</span>
                               </span>
                             </div>
                           </div>
-                          <div className="well">
-                            <div className="three-col-flexible-middle">
-                              <div className="left flex-row">
-                                <div className="flex-center">
+                          <div className='well'>
+                            <div className='three-col-flexible-middle'>
+                              <div className='left flex-row'>
+                                <div className='flex-center'>
                                   <Identicon
                                     address={isValidAddress(recipientAddress) ? recipientAddress : SOL_MINT.toBase58()}
                                     style={{
@@ -1876,21 +1894,21 @@ export const TreasuryStreamCreateModal = (props: {
                                     }}
                                   />
                                 </div>
-                                <div className="flex-column pl-3">
-                                  <div className="address">
+                                <div className='flex-column pl-3'>
+                                  <div className='address'>
                                     {publicKey && isValidAddress(recipientAddress)
                                       ? shortenAddress(recipientAddress)
                                       : t('transactions.validation.no-recipient')}
                                   </div>
-                                  <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                                  <div className='inner-label mt-0'>{recipientNote || '-'}</div>
                                 </div>
                               </div>
-                              <div className="middle flex-center">
-                                <div className="vertical-bar"></div>
+                              <div className='middle flex-center'>
+                                <div className='vertical-bar'></div>
                               </div>
-                              <div className="right flex-column">
-                                <div className="rate">{getPaymentRateAmount()}</div>
-                                <div className="inner-label mt-0">{paymentStartDate}</div>
+                              <div className='right flex-column'>
+                                <div className='rate'>{getPaymentRateAmount()}</div>
+                                <div className='inner-label mt-0'>{paymentStartDate}</div>
                               </div>
                             </div>
                           </div>
@@ -1900,26 +1918,26 @@ export const TreasuryStreamCreateModal = (props: {
                       {csvArray && enableMultipleStreamsOption && validMultiRecipientsList && (
                         <>
                           {!isSelectedStreamingAccountMultisigTreasury && hasIsOwnWallet && (
-                            <span className="form-field-error text-uppercase">
+                            <span className='form-field-error text-uppercase'>
                               <p>{t('treasuries.treasury-streams.message-warning')}</p>
                             </span>
                           )}
-                          <div className="flex-fixed-right">
-                            <div className="left">
-                              <div className="form-label">{t('transactions.resume')}</div>
+                          <div className='flex-fixed-right'>
+                            <div className='left'>
+                              <div className='form-label'>{t('transactions.resume')}</div>
                             </div>
-                            <div className="right">
-                              <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                                <IconEdit className="mean-svg-icons" />
+                            <div className='right'>
+                              <span className='flat-button change-button' onClick={() => setCurrentStep(0)}>
+                                <IconEdit className='mean-svg-icons' />
                                 <span>{t('general.cta-change')}</span>
                               </span>
                             </div>
                           </div>
                           {listValidAddresses.map((csvItem: any, index: number) => (
-                            <div key={index} className="well">
-                              <div className="three-col-flexible-middle">
-                                <div className="left flex-row">
-                                  <div className="flex-center">
+                            <div key={index} className='well'>
+                              <div className='three-col-flexible-middle'>
+                                <div className='left flex-row'>
+                                  <div className='flex-center'>
                                     <Identicon
                                       address={isValidAddress(csvItem.address) ? csvItem.address : SOL_MINT.toBase58()}
                                       style={{
@@ -1928,21 +1946,21 @@ export const TreasuryStreamCreateModal = (props: {
                                       }}
                                     />
                                   </div>
-                                  <div className="flex-column pl-3">
-                                    <div className="address">
+                                  <div className='flex-column pl-3'>
+                                    <div className='address'>
                                       {publicKey && isValidAddress(csvItem.address)
                                         ? shortenAddress(csvItem.address)
                                         : t('transactions.validation.no-recipient')}
                                     </div>
-                                    <div className="inner-label mt-0">{csvItem.streamName.substring(0, 15) || '-'}</div>
+                                    <div className='inner-label mt-0'>{csvItem.streamName.substring(0, 15) || '-'}</div>
                                   </div>
                                 </div>
-                                <div className="middle flex-center">
-                                  <div className="vertical-bar"></div>
+                                <div className='middle flex-center'>
+                                  <div className='vertical-bar'></div>
                                 </div>
-                                <div className="right flex-column">
-                                  <div className="rate">{getPaymentRateAmount()}</div>
-                                  <div className="inner-label mt-0">{paymentStartDate}</div>
+                                <div className='right flex-column'>
+                                  <div className='rate'>{getPaymentRateAmount()}</div>
+                                  <div className='inner-label mt-0'>{paymentStartDate}</div>
                                 </div>
                               </div>
                             </div>
@@ -1952,7 +1970,7 @@ export const TreasuryStreamCreateModal = (props: {
                     </>
                   )}
 
-                  <div className="mb-3 text-center">
+                  <div className='mb-3 text-center'>
                     <div>
                       {t('treasuries.treasury-streams.minimum-allocation-advice', {
                         tokenSymbol: selectedToken?.symbol,
@@ -1962,9 +1980,9 @@ export const TreasuryStreamCreateModal = (props: {
                   </div>
 
                   {/* Amount to stream */}
-                  <div className="form-label">
-                    <span className="align-middle">{t('treasuries.treasury-streams.allocate-funds-label')}</span>
-                    <span className="align-middle">
+                  <div className='form-label'>
+                    <span className='align-middle'>{t('treasuries.treasury-streams.allocate-funds-label')}</span>
+                    <span className='align-middle'>
                       <InfoIcon
                         content={
                           <span>
@@ -1972,17 +1990,17 @@ export const TreasuryStreamCreateModal = (props: {
                             selected. You can add more funds at any time by topping up the stream.
                           </span>
                         }
-                        placement="top"
+                        placement='top'
                       >
                         <InfoCircleOutlined />
                       </InfoIcon>
                     </span>
                   </div>
 
-                  <div className="well">
-                    <div className="flex-fixed-left">
-                      <div className="left">
-                        <span className="add-on">
+                  <div className='well'>
+                    <div className='flex-fixed-left'>
+                      <div className='left'>
+                        <span className='add-on'>
                           {selectedToken && (
                             <TokenDisplay
                               onClick={() => {}}
@@ -1993,7 +2011,7 @@ export const TreasuryStreamCreateModal = (props: {
                           )}
                           {selectedToken && unallocatedBalance ? (
                             <div
-                              className="token-max simplelink"
+                              className='token-max simplelink'
                               onClick={() => {
                                 const maxAmount = getMaxAmount(isFeePaidByTreasurer);
                                 consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
@@ -2007,25 +2025,25 @@ export const TreasuryStreamCreateModal = (props: {
                           ) : null}
                         </span>
                       </div>
-                      <div className="right">
+                      <div className='right'>
                         <input
-                          className="general-text-input text-right"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          autoCorrect="off"
-                          type="text"
+                          className='general-text-input text-right'
+                          inputMode='decimal'
+                          autoComplete='off'
+                          autoCorrect='off'
+                          type='text'
                           onChange={handleFromCoinAmountChange}
-                          pattern="^[0-9]*[.,]?[0-9]*$"
-                          placeholder="0.0"
+                          pattern='^[0-9]*[.,]?[0-9]*$'
+                          placeholder='0.0'
                           minLength={1}
                           maxLength={79}
-                          spellCheck="false"
+                          spellCheck='false'
                           value={fromCoinAmount}
                         />
                       </div>
                     </div>
-                    <div className="flex-fixed-right">
-                      <div className="left inner-label">
+                    <div className='flex-fixed-right'>
+                      <div className='left inner-label'>
                         <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                         <span>
                           {unallocatedBalance && selectedToken
@@ -2033,7 +2051,7 @@ export const TreasuryStreamCreateModal = (props: {
                             : '0'}
                         </span>
                       </div>
-                      <div className="right inner-label">
+                      <div className='right inner-label'>
                         <span
                           className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                           onClick={() => refreshPrices()}
@@ -2044,13 +2062,13 @@ export const TreasuryStreamCreateModal = (props: {
                     </div>
                   </div>
 
-                  <div className="ml-1 mb-3">
+                  <div className='ml-1 mb-3'>
                     <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>
                       {t('treasuries.treasury-streams.fee-payed-by-treasurer')}
                     </Checkbox>
                   </div>
 
-                  <div className="ml-1">
+                  <div className='ml-1'>
                     <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
                       {t('transfers.verified-recipient-disclaimer')}
                     </Checkbox>
@@ -2058,18 +2076,18 @@ export const TreasuryStreamCreateModal = (props: {
                 </>
               ) : (
                 <>
-                  <div className="mb-2 text-uppercase">
+                  <div className='mb-2 text-uppercase'>
                     {t('treasuries.treasury-streams.add-stream-locked.panel2-name')}
                   </div>
 
                   {recipientNote && recipientAddress && fromCoinAmount && selectedToken && (
-                    <div className="flex-fixed-right">
-                      <div className="left">
-                        <div className="mb-3">
+                    <div className='flex-fixed-right'>
+                      <div className='left'>
+                        <div className='mb-3'>
                           {t('treasuries.treasury-streams.add-stream-locked.panel2-summary', {
                             recipientNote: recipientNote,
                             fromCoinAmount: formatThousands(
-                              parseFloat(fromCoinAmount),
+                              Number.parseFloat(fromCoinAmount),
                               friendlyDisplayDecimalPlaces(fromCoinAmount, selectedToken.decimals),
                             ),
                             selectedTokenName: selectedToken?.name,
@@ -2080,58 +2098,58 @@ export const TreasuryStreamCreateModal = (props: {
                     </div>
                   )}
 
-                  <div className="form-label">
+                  <div className='form-label'>
                     {t('treasuries.treasury-streams.add-stream-locked.panel2-lock-period-label')}
                   </div>
-                  <div className="d-flex">
-                    <div className="well w-25 mr-1">
-                      <div className="flex-fixed-right">
-                        <div className="left">
+                  <div className='d-flex'>
+                    <div className='well w-25 mr-1'>
+                      <div className='flex-fixed-right'>
+                        <div className='left'>
                           <input
-                            id="plock-period-field"
-                            className="w-100 general-text-input"
-                            autoComplete="on"
-                            autoCorrect="off"
-                            type="number"
+                            id='plock-period-field'
+                            className='w-100 general-text-input'
+                            autoComplete='on'
+                            autoCorrect='off'
+                            type='number'
                             onChange={handleLockPeriodAmountChange}
                             placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
-                            spellCheck="false"
+                            spellCheck='false'
                             min={0}
                             value={lockPeriodAmount}
                           />
                         </div>
                       </div>
                     </div>
-                    <div className="well w-75 ml-1">
+                    <div className='well w-75 ml-1'>
                       <Dropdown menu={lockPeriodOptionsMenu()} trigger={['click']}>
-                        <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                          <div className="left">
+                        <span className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
+                          <div className='left'>
                             <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)} </span>
                           </div>
-                          <div className="right">
-                            <IconCaretDown className="mean-svg-icons" />
+                          <div className='right'>
+                            <IconCaretDown className='mean-svg-icons' />
                           </div>
                         </span>
                       </Dropdown>
                     </div>
                   </div>
 
-                  <div className="form-label">
+                  <div className='form-label'>
                     {t('treasuries.treasury-streams.add-stream-locked.panel2-commencement-date-label')}
                   </div>
-                  <div className="well">
-                    <div className="flex-fixed-right">
-                      <div className="left static-data-field">
+                  <div className='well'>
+                    <div className='flex-fixed-right'>
+                      <div className='left static-data-field'>
                         {isToday(paymentStartDate || '')
                           ? `${paymentStartDate} (${t('common:general.now')})`
                           : `${paymentStartDate}`}
                       </div>
-                      <div className="right">
-                        <div className="add-on simplelink">
+                      <div className='right'>
+                        <div className='add-on simplelink'>
                           <DatePicker
-                            size="middle"
+                            size='middle'
                             bordered={false}
-                            className="addon-date-picker"
+                            className='addon-date-picker'
                             aria-required={true}
                             allowClear={false}
                             disabledDate={disabledDate}
@@ -2145,16 +2163,16 @@ export const TreasuryStreamCreateModal = (props: {
                     </div>
                   </div>
 
-                  <div className="form-label mt-2">
+                  <div className='form-label mt-2'>
                     {t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-label')}
                   </div>
-                  <div className="well">
-                    <div className="flexible-right mb-1">
-                      <div className="token-group">
+                  <div className='well'>
+                    <div className='flexible-right mb-1'>
+                      <div className='token-group'>
                         {percentages.map((percentage, index) => (
-                          <div key={index} className="mb-1 d-flex flex-column align-items-center">
+                          <div key={index} className='mb-1 d-flex flex-column align-items-center'>
                             <div
-                              className="token-max simplelink active"
+                              className='token-max simplelink active'
                               onClick={() => onChangeValuePercentages(percentage)}
                             >
                               {percentage}%
@@ -2163,9 +2181,9 @@ export const TreasuryStreamCreateModal = (props: {
                         ))}
                       </div>
                     </div>
-                    <div className="flex-fixed-left">
-                      <div className="left">
-                        <span className="add-on simplelink">
+                    <div className='flex-fixed-left'>
+                      <div className='left'>
+                        <span className='add-on simplelink'>
                           {selectedToken && (
                             <TokenDisplay
                               onClick={() => {}}
@@ -2175,30 +2193,30 @@ export const TreasuryStreamCreateModal = (props: {
                           )}
                         </span>
                       </div>
-                      <div className="right">
+                      <div className='right'>
                         <input
-                          className="general-text-input text-right"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          autoCorrect="off"
-                          type="text"
+                          className='general-text-input text-right'
+                          inputMode='decimal'
+                          autoComplete='off'
+                          autoCorrect='off'
+                          type='text'
                           onChange={handleCliffReleaseAmountChange}
-                          pattern="^[0-9]*[.,]?[0-9]*$"
-                          placeholder="0.0"
+                          pattern='^[0-9]*[.,]?[0-9]*$'
+                          placeholder='0.0'
                           minLength={1}
                           maxLength={79}
-                          spellCheck="false"
+                          spellCheck='false'
                           value={cliffRelease}
                         />
                       </div>
                     </div>
-                    <div className="flex-fixed-right">
-                      <div className="left inner-label">
+                    <div className='flex-fixed-right'>
+                      <div className='left inner-label'>
                         <span>
                           {t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-inner-label')}
                         </span>
                       </div>
-                      <div className="right inner-label">
+                      <div className='right inner-label'>
                         <span
                           className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                           onClick={() => refreshPrices()}
@@ -2215,26 +2233,26 @@ export const TreasuryStreamCreateModal = (props: {
             <div className={currentStep === 2 ? 'contract-wrapper panel3 show' : 'contract-wrapper panel3 hide'}>
               {workingTreasuryType === AccountType.Lock && (
                 <>
-                  <div className="flex-fixed-right">
-                    <div className="left">
-                      <div className="text-uppercase mb-2">{t('transactions.resume')}</div>
+                  <div className='flex-fixed-right'>
+                    <div className='left'>
+                      <div className='text-uppercase mb-2'>{t('transactions.resume')}</div>
                     </div>
-                    <div className="right">
-                      <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                        <IconEdit className="mean-svg-icons" />
+                    <div className='right'>
+                      <span className='flat-button change-button' onClick={() => setCurrentStep(0)}>
+                        <IconEdit className='mean-svg-icons' />
                         <span>{t('general.cta-change')}</span>
                       </span>
                     </div>
                   </div>
 
-                  <div className="mb-2">
+                  <div className='mb-2'>
                     {t('treasuries.treasury-streams.add-stream-locked.panel3-text-one')} {recipientNote ?? '--'}
                   </div>
 
-                  <Row className="mb-2">
+                  <Row className='mb-2'>
                     <Col span={24}>
                       <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}</strong>
-                      <span className="ml-1">
+                      <span className='ml-1'>
                         {fromCoinAmount && selectedToken
                           ? `${displayAmountWithSymbol(
                               tokenAmount,
@@ -2246,17 +2264,17 @@ export const TreasuryStreamCreateModal = (props: {
                           : '--'}
                       </span>
                     </Col>
-                    <Col span={24} className="text-truncate">
+                    <Col span={24} className='text-truncate'>
                       <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}</strong>
-                      <span className="ml-1">{recipientAddress ?? '--'}</span>
+                      <span className='ml-1'>{recipientAddress ?? '--'}</span>
                     </Col>
                     <Col span={24}>
                       <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}</strong>
-                      <span className="ml-1">{paymentStartDate}</span>
+                      <span className='ml-1'>{paymentStartDate}</span>
                     </Col>
                     <Col span={24}>
                       <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}</strong>
-                      <span className="ml-1">
+                      <span className='ml-1'>
                         {cliffRelease && selectedToken
                           ? `${displayAmountWithSymbol(
                               cliffReleaseBn,
@@ -2270,7 +2288,7 @@ export const TreasuryStreamCreateModal = (props: {
                     </Col>
                     <Col span={24}>
                       <strong>Amount to be streamed:</strong>
-                      <span className="ml-1">
+                      <span className='ml-1'>
                         {lockPeriodAmount && selectedToken
                           ? `${displayAmountWithSymbol(
                               amountToBeStreamedBn,
@@ -2284,22 +2302,22 @@ export const TreasuryStreamCreateModal = (props: {
                     </Col>
                     <Col span={24}>
                       <strong>Release rate:</strong>
-                      <span className="ml-1">{getReleaseRate()}</span>
+                      <span className='ml-1'>{getReleaseRate()}</span>
                     </Col>
                   </Row>
 
-                  <span className="warning-message icon-label mb-3">
-                    <IconWarning className="mean-svg-icons" />
+                  <span className='warning-message icon-label mb-3'>
+                    <IconWarning className='mean-svg-icons' />
                     {t('treasuries.treasury-streams.add-stream-locked.panel3-warning-message')}
                   </span>
 
-                  <div className="ml-1 mb-3">
+                  <div className='ml-1 mb-3'>
                     <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>
                       {t('treasuries.treasury-streams.fee-payed-by-treasurer')}
                     </Checkbox>
                   </div>
 
-                  <div className="ml-1">
+                  <div className='ml-1'>
                     <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
                       {t('transfers.verified-recipient-disclaimer')}
                     </Checkbox>
@@ -2313,11 +2331,11 @@ export const TreasuryStreamCreateModal = (props: {
 
           <div className={currentStep === 0 ? 'contract-wrapper panel1 show' : 'contract-wrapper panel1 hide'}>
             <Button
-              className="main-cta center-text-in-btn"
+              className='main-cta center-text-in-btn'
               block
-              type="primary"
-              shape="round"
-              size="large"
+              type='primary'
+              shape='round'
+              size='large'
               onClick={onContinueStepOneButtonClick}
               disabled={
                 workingTreasuryType === AccountType.Lock
@@ -2339,7 +2357,7 @@ export const TreasuryStreamCreateModal = (props: {
                     !paymentRateAmount ||
                     unallocatedBalance.isZero() ||
                     !paymentRateAmount ||
-                    parseFloat(paymentRateAmount) === 0 ||
+                    Number.parseFloat(paymentRateAmount) === 0 ||
                     !arePaymentSettingsValid()
               }
             >
@@ -2353,9 +2371,9 @@ export const TreasuryStreamCreateModal = (props: {
             <Button
               className={`main-cta center-text-in-btn ${isBusy ? 'inactive' : ''}`}
               block
-              type="primary"
-              shape="round"
-              size="large"
+              type='primary'
+              shape='round'
+              size='large'
               onClick={workingTreasuryType === AccountType.Lock ? onContinueStepTwoButtonClick : onStartTransaction}
               disabled={
                 workingTreasuryType === AccountType.Lock
@@ -2369,8 +2387,9 @@ export const TreasuryStreamCreateModal = (props: {
                     tokenAmount.isZero() ||
                     tokenAmount.gt(unallocatedBalance) ||
                     !lockPeriodAmount ||
-                    parseFloat(lockPeriodAmount) === 0 ||
-                    parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
+                    Number.parseFloat(lockPeriodAmount) === 0 ||
+                    Number.parseFloat(cliffRelease) >
+                      Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
                   : !publicKey ||
                     (isMultisigContext && !proposalTitle) ||
                     (!enableMultipleStreamsOption && !isMemoValid()) ||
@@ -2379,7 +2398,7 @@ export const TreasuryStreamCreateModal = (props: {
                     !paymentRateAmount ||
                     unallocatedBalance.isZero() ||
                     !paymentRateAmount ||
-                    parseFloat(paymentRateAmount) === 0 ||
+                    Number.parseFloat(paymentRateAmount) === 0 ||
                     !arePaymentSettingsValid() ||
                     !areSendAmountSettingsValid() ||
                     !isVerifiedRecipient ||
@@ -2387,7 +2406,7 @@ export const TreasuryStreamCreateModal = (props: {
               }
             >
               {workingTreasuryType === AccountType.Open && isBusy && (
-                <span className="mr-1">
+                <span className='mr-1'>
                   <LoadingOutlined style={{ fontSize: '16px' }} />
                 </span>
               )}
@@ -2400,11 +2419,11 @@ export const TreasuryStreamCreateModal = (props: {
 
           <div className={currentStep === 2 ? 'contract-wrapper panel3 show' : 'contract-wrapper panel3 hide'}>
             <Button
-              className="main-cta center-text-in-btn"
+              className='main-cta center-text-in-btn'
               block
-              type="primary"
-              shape="round"
-              size="large"
+              type='primary'
+              shape='round'
+              size='large'
               onClick={onStartTransaction}
               disabled={
                 !publicKey ||
@@ -2415,10 +2434,11 @@ export const TreasuryStreamCreateModal = (props: {
                 !selectedToken ||
                 unallocatedBalance.isZero() ||
                 !fromCoinAmount ||
-                parseFloat(fromCoinAmount) === 0 ||
+                Number.parseFloat(fromCoinAmount) === 0 ||
                 !lockPeriodAmount ||
-                parseFloat(lockPeriodAmount) === 0 ||
-                parseFloat(cliffRelease) > parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)) ||
+                Number.parseFloat(lockPeriodAmount) === 0 ||
+                Number.parseFloat(cliffRelease) >
+                  Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals)) ||
                 !arePaymentSettingsValid() ||
                 !areSendAmountSettingsValid() ||
                 !isVerifiedRecipient ||

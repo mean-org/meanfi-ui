@@ -1,11 +1,11 @@
-import { Popover } from 'antd';
 import { segmentAnalytics } from 'App';
+import { IconSafe } from 'Icons';
+import { Popover } from 'antd';
 import { AccountSelector } from 'components/AccountSelector';
 import { CREATE_SAFE_ROUTE_PATH } from 'constants/common';
 import { useWallet } from 'contexts/wallet';
 import { useWalletAccount } from 'contexts/walletAccount';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconSafe } from 'Icons';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { shortenAddress } from 'middleware/utils';
 import { useCallback, useState } from 'react';
@@ -38,10 +38,10 @@ export const AccountDetails = () => {
   const renderPersonalAccount = () => {
     return (
       <>
-        {provider && <img src={provider.icon} alt={provider.name} width="24" className="wallet-provider-icon" />}
-        <div className="account-descriptor">
-          <div className="account-name">Personal Account</div>
-          <div className="account-id">{shortenAddress(selectedAccount.address, 6)}</div>
+        {provider && <img src={provider.icon} alt={provider.name} width='24' className='wallet-provider-icon' />}
+        <div className='account-descriptor'>
+          <div className='account-name'>Personal Account</div>
+          <div className='account-id'>{shortenAddress(selectedAccount.address, 6)}</div>
         </div>
       </>
     );
@@ -50,10 +50,10 @@ export const AccountDetails = () => {
   const renderSupersafeAccount = () => {
     return (
       <>
-        <IconSafe className="mean-svg-icons wallet-provider-icon" style={{ width: 24, height: 24 }} />
-        <div className="account-descriptor">
-          <div className="account-name">{selectedAccount.name}</div>
-          <div className="account-id">{shortenAddress(selectedAccount.address, 6)}</div>
+        <IconSafe className='mean-svg-icons wallet-provider-icon' style={{ width: 24, height: 24 }} />
+        <div className='account-descriptor'>
+          <div className='account-name'>{selectedAccount.name}</div>
+          <div className='account-id'>{shortenAddress(selectedAccount.address, 6)}</div>
         </div>
       </>
     );
@@ -69,7 +69,7 @@ export const AccountDetails = () => {
 
   const bodyContent = (
     <>
-      <div className="account-selector-popover-content vertical-scroll">
+      <div className='account-selector-popover-content vertical-scroll'>
         <AccountSelector
           onAccountSelected={onCompleteAccountSelection}
           onCreateSafeClick={onCreateSafe}
@@ -90,11 +90,11 @@ export const AccountDetails = () => {
         content={bodyContent}
         open={popoverVisible}
         onOpenChange={handlePopoverVisibleChange}
-        className="account-selector-max-width"
-        trigger="click"
+        className='account-selector-max-width'
+        trigger='click'
       >
-        <div className="wallet-wrapper">
-          <span className="wallet-key">
+        <div className='wallet-wrapper'>
+          <span className='wallet-key'>
             {selectedAccount.isMultisig ? renderSupersafeAccount() : renderPersonalAccount()}
           </span>
         </div>

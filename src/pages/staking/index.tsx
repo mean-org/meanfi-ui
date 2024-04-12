@@ -1,5 +1,7 @@
-import { Env, StakePoolInfo, StakingClient, UnstakeQuote } from '@mean-dao/staking';
+import { type Env, type StakePoolInfo, StakingClient, type UnstakeQuote } from '@mean-dao/staking';
 import { PublicKey } from '@solana/web3.js';
+import { IconLoading } from 'Icons';
+import { IconHelpCircle } from 'Icons/IconHelpCircle';
 import { Col, Row } from 'antd';
 import { InfoIcon } from 'components/InfoIcon';
 import { ONE_MINUTE_REFRESH_TIMEOUT } from 'constants/common';
@@ -9,21 +11,19 @@ import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconLoading } from 'Icons';
-import { IconHelpCircle } from 'Icons/IconHelpCircle';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
 import { consoleOut, isProd } from 'middleware/ui';
 import { findATokenAddress, formatThousands, getAmountFromLamports } from 'middleware/utils';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 import { StakeTabView } from 'views/StakeTabView';
 import { UnstakeTabView } from 'views/UnstakeTabView';
 import './style.scss';
-import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 export type StakeOption = 'stake' | 'unstake' | undefined;
 
@@ -356,53 +356,53 @@ const StakingView = () => {
 
   return (
     <>
-      <div id="refresh-stake-pool-info" onClick={() => refreshStakePoolInfo(meanPrice)}></div>
+      <div id='refresh-stake-pool-info' onClick={() => refreshStakePoolInfo(meanPrice)}></div>
       {meanAddresses && (
-        <div className="scroll-wrapper vertical-scroll">
+        <div className='scroll-wrapper vertical-scroll'>
           {/* Staking paragraphs */}
           <h2>{t('staking.panel-right.title')}</h2>
           <p>{t('staking.panel-right.first-text')}</p>
-          <p className="pb-1">{t('staking.panel-right.second-text')}</p>
+          <p className='pb-1'>{t('staking.panel-right.second-text')}</p>
 
-          <div className="px-4 pb-4">
+          <div className='px-4 pb-4'>
             {/* Staking Stats */}
-            <div className="invest-fields-container pt-2">
-              <div className="mb-3">
+            <div className='invest-fields-container pt-2'>
+              <div className='mb-3'>
                 <Row>
                   <Col span={8}>
-                    <div className="info-label icon-label justify-content-center align-items-center">
+                    <div className='info-label icon-label justify-content-center align-items-center'>
                       <span>{t('staking.panel-right.stats.staking-apy')}</span>
-                      <InfoIcon content={t('staking.panel-right.stats.staking-apy-tooltip')} placement="top">
-                        <IconHelpCircle className="mean-svg-icons" />
+                      <InfoIcon content={t('staking.panel-right.stats.staking-apy-tooltip')} placement='top'>
+                        <IconHelpCircle className='mean-svg-icons' />
                       </InfoIcon>
                     </div>
-                    <div className="transaction-detail-row">
+                    <div className='transaction-detail-row'>
                       {refreshingStakePoolInfo || !stakePoolInfo || stakePoolInfo.apr === 0 ? (
-                        <IconLoading className="mean-svg-icons" />
+                        <IconLoading className='mean-svg-icons' />
                       ) : (
                         <span>{(stakePoolInfo.apr * 100).toFixed(2)}%</span>
                       )}
                     </div>
                   </Col>
                   <Col span={8}>
-                    <div className="info-label icon-label justify-content-center align-items-center">
+                    <div className='info-label icon-label justify-content-center align-items-center'>
                       {t('staking.panel-right.stats.total-value-locked')}
                     </div>
-                    <div className="transaction-detail-row">
+                    <div className='transaction-detail-row'>
                       {refreshingStakePoolInfo || !stakePoolInfo || stakePoolInfo.tvl === 0 ? (
-                        <IconLoading className="mean-svg-icons" />
+                        <IconLoading className='mean-svg-icons' />
                       ) : (
                         <span>${formatThousands(stakePoolInfo.tvl, 2)}</span>
                       )}
                     </div>
                   </Col>
                   <Col span={8}>
-                    <div className="info-label icon-label justify-content-center align-items-center">
+                    <div className='info-label icon-label justify-content-center align-items-center'>
                       {t('staking.panel-right.stats.total-mean-rewards')}
                     </div>
-                    <div className="transaction-detail-row">
+                    <div className='transaction-detail-row'>
                       {refreshingStakePoolInfo || !stakePoolInfo || stakePoolInfo.totalMeanAmount.uiAmount === 0 ? (
-                        <IconLoading className="mean-svg-icons" />
+                        <IconLoading className='mean-svg-icons' />
                       ) : (
                         <span>{formatThousands(stakePoolInfo.totalMeanAmount.uiAmount || 0, 0)}</span>
                       )}
@@ -412,9 +412,9 @@ const StakingView = () => {
               </div>
             </div>
 
-            <div className="flex flex-center">
-              <div className="place-transaction-box">
-                <div className="button-tabset-container">
+            <div className='flex flex-center'>
+              <div className='place-transaction-box'>
+                <div className='button-tabset-container'>
                   <div
                     className={`tab-button ${currentTab === 'stake' ? 'active' : ''}`}
                     onClick={() => onTabChange('stake')}

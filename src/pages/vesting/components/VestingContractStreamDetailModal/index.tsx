@@ -1,11 +1,16 @@
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import {
+  type PaymentStreaming,
+  STREAM_STATUS_CODE,
+  type Stream,
+  type StreamActivity,
+} from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Modal, Switch } from 'antd';
-import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppStateContext } from 'contexts/appstate';
 import { consoleOut } from 'middleware/ui';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
-import { PaymentStreaming, Stream, StreamActivity, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
 
 export const VestingContractStreamDetailModal = (props: {
   accountAddress: string;
@@ -46,8 +51,8 @@ export const VestingContractStreamDetailModal = (props: {
       const before = clearHistory
         ? ''
         : streamActivity && streamActivity.length > 0
-        ? streamActivity[streamActivity.length - 1].signature
-        : '';
+          ? streamActivity[streamActivity.length - 1].signature
+          : '';
       consoleOut('before:', before, 'crimson');
       msp
         .listStreamActivity(streamPublicKey, before, 5)
@@ -56,8 +61,8 @@ export const VestingContractStreamDetailModal = (props: {
           const activities = clearHistory
             ? []
             : streamActivity && streamActivity.length > 0
-            ? JSON.parse(JSON.stringify(streamActivity)) // Object.assign({}, streamActivity)
-            : [];
+              ? JSON.parse(JSON.stringify(streamActivity)) // Object.assign({}, streamActivity)
+              : [];
 
           if (value && value.length > 0) {
             activities.push(...value);
@@ -120,18 +125,18 @@ export const VestingContractStreamDetailModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">View vesting stream</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>View vesting stream</div>}
       footer={null}
       open={isVisible}
       onCancel={handleClose}
       width={480}
     >
       {isDebugging && isWhitelisted && (
-        <div className="flex-fixed-right shift-up-2 mb-3">
-          <div className="left">Show last read data</div>
-          <div className="right">
-            <Switch size="small" checked={isToggledShowLastReadData} onChange={onToggleShowLastReadData} />
+        <div className='flex-fixed-right shift-up-2 mb-3'>
+          <div className='left'>Show last read data</div>
+          <div className='right'>
+            <Switch size='small' checked={isToggledShowLastReadData} onChange={onToggleShowLastReadData} />
           </div>
         </div>
       )}

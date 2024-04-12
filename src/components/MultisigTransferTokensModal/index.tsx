@@ -1,37 +1,37 @@
-import React, { ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
-import './style.scss';
-import { Modal, Button, Spin, Drawer } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { AppStateContext } from 'contexts/appstate';
-import { TransactionStatus } from 'models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
-import { isError } from 'middleware/transactions';
-import { SOL_MINT } from 'middleware/ids';
-import { cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmount } from 'middleware/utils';
-import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import type { MultisigInfo, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
+import { type AccountInfo, LAMPORTS_PER_SOL, type ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { Button, Drawer, Modal, Spin } from 'antd';
+import ValidationStatusDisplay from 'components/ValidationStatusDisplay';
 import {
   INPUT_DEBOUNCE_TIME,
   MAX_TOKEN_LIST_ITEMS,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   MIN_SOL_BALANCE_REQUIRED,
 } from 'constants/common';
-import { UserTokenAccount } from 'models/accounts';
-import { InputMean } from '../InputMean';
-import { TokenDisplay } from '../TokenDisplay';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { NATIVE_SOL } from 'constants/tokens';
-import { TextInput } from '../TextInput';
-import { TokenListItem } from '../TokenListItem';
+import { AppStateContext } from 'contexts/appstate';
+import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
-import { MultisigInfo, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
-import { fetchAccountTokens } from 'middleware/accounts';
 import { useDebounce } from 'hooks/useDebounce';
 import useRecipientAddressValidation from 'hooks/useRecipientAddressValidation';
-import ValidationStatusDisplay from 'components/ValidationStatusDisplay';
-import { TransferTokensTxParams } from 'models/multisig';
+import { fetchAccountTokens } from 'middleware/accounts';
+import { SOL_MINT } from 'middleware/ids';
+import { isError } from 'middleware/transactions';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
+import { cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmount } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { UserTokenAccount } from 'models/accounts';
+import { TransactionStatus } from 'models/enums';
+import type { TransferTokensTxParams } from 'models/multisig';
+import React, { type ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { InputMean } from '../InputMean';
+import { TextInput } from '../TextInput';
+import { TokenDisplay } from '../TokenDisplay';
+import { TokenListItem } from '../TokenListItem';
+import './style.scss';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -153,7 +153,7 @@ export const MultisigTransferTokensModal = (props: {
     }
     const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
-    return parseFloat(amount) * price;
+    return Number.parseFloat(amount) * price;
   }, [amount, selectedToken, getTokenPriceByAddress]);
 
   const autoFocusInput = useCallback(() => {
@@ -420,7 +420,7 @@ export const MultisigTransferTokensModal = (props: {
       {filteredTokenList &&
         filteredTokenList.length > 0 &&
         filteredTokenList.map((t, index) => {
-          const onClick = function () {
+          const onClick = () => {
             setSelectedToken(t);
 
             consoleOut('token selected:', t.symbol, 'blue');
@@ -462,25 +462,25 @@ export const MultisigTransferTokensModal = (props: {
   };
 
   const renderTokenSelectorInner = (
-    <div className="token-selector-wrapper">
-      <div className="token-search-wrapper">
+    <div className='token-selector-wrapper'>
+      <div className='token-search-wrapper'>
         <TextInput
-          id="token-search-otp"
+          id='token-search-otp'
           value={tokenFilter}
           allowClear={true}
-          extraClass="mb-2"
+          extraClass='mb-2'
           onInputClear={onInputCleared}
           placeholder={t('token-selector.search-input-placeholder')}
           error={getTokenSelectorInputErrorMessage()}
           onInputChange={onTokenSearchInputChange}
         />
       </div>
-      <div className="token-list">
+      <div className='token-list'>
         {filteredTokenList.length > 0 && renderTokenList}
         {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
           <TokenListItem
             key={tokenFilter}
-            name="Unknown token"
+            name='Unknown token'
             mintAddress={tokenFilter}
             className={selectedToken && selectedToken.address === tokenFilter ? 'selected' : 'simplelink'}
             onClick={async () => {
@@ -545,35 +545,35 @@ export const MultisigTransferTokensModal = (props: {
   const getAlternateStateModalContent = () => {
     if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
       return (
-        <div className="transaction-progress">
-          <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-          <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
+        <div className='transaction-progress'>
+          <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+          <h4 className='font-bold'>{t('multisig.transfer-tokens.success-message')}</h4>
         </div>
       );
     }
     return (
-      <div className="transaction-progress p-0">
-        <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+      <div className='transaction-progress p-0'>
+        <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
         {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-          <h4 className="mb-4">
+          <h4 className='mb-4'>
             {t('transactions.status.tx-start-failure', {
               accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
               feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
             })}
           </h4>
         ) : (
-          <h4 className="font-bold mb-3">
+          <h4 className='font-bold mb-3'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
         )}
         {!isBusy ? (
-          <div className="row two-col-ctas mt-3 transaction-progress p-2">
-            <div className="col-12">
+          <div className='row two-col-ctas mt-3 transaction-progress p-2'>
+            <div className='col-12'>
               <Button
                 block
-                type="text"
-                shape="round"
-                size="middle"
+                type='text'
+                shape='round'
+                size='middle'
                 className={`center-text-in-btn thin-stroke ${isBusy ? 'inactive' : ''}`}
                 onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
               >
@@ -591,8 +591,8 @@ export const MultisigTransferTokensModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.transfer-tokens.modal-title')}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{t('multisig.transfer-tokens.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
@@ -604,28 +604,28 @@ export const MultisigTransferTokensModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Proposal title */}
-            <div className="mb-3">
-              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+            <div className='mb-3'>
+              <div className='form-label'>{t('multisig.proposal-modal.title')}</div>
               <InputMean
-                id="proposal-title-field"
-                name="Title"
-                className="w-100 general-text-input"
+                id='proposal-title-field'
+                name='Title'
+                className='w-100 general-text-input'
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title (required)"
+                placeholder='Add a proposal title (required)'
                 value={proposalTitle}
               />
             </div>
 
             {/* From */}
-            <div className="mb-3">
-              <div className="form-label">From</div>
+            <div className='mb-3'>
+              <div className='form-label'>From</div>
               <div className={`well ${(fromVault?.publicAddress as string) ? 'disabled' : ''}`}>
                 <input
-                  id="token-address-field"
-                  className="general-text-input"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  type="text"
+                  id='token-address-field'
+                  className='general-text-input'
+                  autoComplete='off'
+                  autoCorrect='off'
+                  type='text'
                   readOnly
                   value={fromAddress}
                 />
@@ -633,11 +633,11 @@ export const MultisigTransferTokensModal = (props: {
             </div>
 
             {/* Send amount */}
-            <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
-            <div className="well">
-              <div className="flex-fixed-left">
-                <div className="left">
-                  <span className="add-on simplelink">
+            <div className='form-label'>{t('multisig.transfer-tokens.transfer-amount-label')}</div>
+            <div className='well'>
+              <div className='flex-fixed-left'>
+                <div className='left'>
+                  <span className='add-on simplelink'>
                     {selectedToken && (
                       <TokenDisplay
                         onClick={() => showDrawer()}
@@ -649,7 +649,7 @@ export const MultisigTransferTokensModal = (props: {
                     )}
                     {selectedToken && fromVault ? (
                       <div
-                        className="token-max simplelink"
+                        className='token-max simplelink'
                         onClick={() => {
                           setAmount(cutNumber(fromVault.balance as number, selectedToken.decimals));
                         }}
@@ -659,26 +659,26 @@ export const MultisigTransferTokensModal = (props: {
                     ) : null}
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <input
-                    className="general-text-input text-right"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    type="text"
+                    className='general-text-input text-right'
+                    inputMode='decimal'
+                    autoComplete='off'
+                    autoCorrect='off'
+                    type='text'
                     onChange={onMintAmountChange}
-                    pattern="^[0-9]*[.,]?[0-9]*$"
-                    placeholder="0.0"
+                    pattern='^[0-9]*[.,]?[0-9]*$'
+                    placeholder='0.0'
                     minLength={1}
                     maxLength={79}
-                    spellCheck="false"
+                    spellCheck='false'
                     onPaste={pasteHandler}
                     value={amount}
                   />
                 </div>
               </div>
-              <div className="flex-fixed-right">
-                <div className="left inner-label">
+              <div className='flex-fixed-right'>
+                <div className='left inner-label'>
                   <span>{t('transactions.send-amount.label-right')}:</span>
                   <span>
                     {fromVault &&
@@ -691,7 +691,7 @@ export const MultisigTransferTokensModal = (props: {
                       )}
                   </span>
                 </div>
-                <div className="right inner-label">
+                <div className='right inner-label'>
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                     onClick={() => refreshPrices()}
@@ -703,27 +703,27 @@ export const MultisigTransferTokensModal = (props: {
               {selectedToken &&
                 selectedToken.address === NATIVE_SOL.address &&
                 (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
-                  <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+                  <div className='form-field-error'>{t('transactions.validation.minimum-balance-required')}</div>
                 )}
             </div>
 
             {/* Transfer to */}
-            <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
-            <div className="well">
+            <div className='form-label'>{t('multisig.transfer-tokens.transfer-to-label')}</div>
+            <div className='well'>
               <input
-                id="mint-to-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
+                id='mint-to-field'
+                className='general-text-input'
+                autoComplete='on'
+                autoCorrect='off'
+                type='text'
                 onChange={onTransferToAddressChange}
                 placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
                 required={true}
-                spellCheck="false"
+                spellCheck='false'
                 value={to}
               />
               {to && !isValidAddress(to) && (
-                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
               )}
             </div>
 
@@ -731,19 +731,19 @@ export const MultisigTransferTokensModal = (props: {
             <p>{t('multisig.multisig-assets.explanatory-paragraph')}</p>
 
             {validationStatus.severity === 'error' || validationStatus.severity === 'warning' ? (
-              <div className="mb-2">
+              <div className='mb-2'>
                 <ValidationStatusDisplay validationStatus={validationStatus} />
               </div>
             ) : null}
 
             {!isError(transactionStatus.currentOperation) && (
-              <div className="col-12 p-0 mt-3">
+              <div className='col-12 p-0 mt-3'>
                 <Button
                   className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
                   block
-                  type="primary"
-                  shape="round"
-                  size="large"
+                  type='primary'
+                  shape='round'
+                  size='large'
                   disabled={!isValidForm() || isTransferDisabled}
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
@@ -771,13 +771,13 @@ export const MultisigTransferTokensModal = (props: {
         }
       >
         {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress">
-            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-            <h4 className="font-bold mb-1">
+          <div className='transaction-progress'>
+            <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+            <h4 className='font-bold mb-1'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
             {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              <div className='indication'>{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}
@@ -786,7 +786,7 @@ export const MultisigTransferTokensModal = (props: {
       {isTokenSelectorVisible && (
         <Drawer
           title={t('token-selector.modal-title')}
-          placement="bottom"
+          placement='bottom'
           closable={true}
           onClose={onCloseTokenSelector}
           open={isTokenSelectorVisible}

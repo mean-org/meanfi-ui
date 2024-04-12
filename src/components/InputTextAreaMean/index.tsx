@@ -16,7 +16,7 @@ export const InputTextAreaMean = (props: {
       <div className={`well mb-0 ${className}`}>
         <textarea
           id={id}
-          className="w-100 general-text-input"
+          className='w-100 general-text-input'
           autoComplete={autoComplete || 'off'}
           rows={rows || 5}
           maxLength={maxLength}

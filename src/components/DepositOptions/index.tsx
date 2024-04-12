@@ -1,17 +1,17 @@
 import { ArrowLeftOutlined, LoadingOutlined } from '@ant-design/icons';
 import { initOnRamp } from '@coinbase/cbpay-js';
+import { IconCopy, IconInfoTriangle, IconSolana } from 'Icons';
 import { Button, Col, Modal, Row, Tooltip } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from 'constants/common';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
-import { IconCopy, IconInfoTriangle, IconSolana } from 'Icons';
 import { appConfig } from 'index';
 import { consoleOut, copyText } from 'middleware/ui';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LooseObject } from 'types/LooseObject';
+import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
 
 export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) => {
@@ -198,17 +198,17 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
 
   return (
     <Modal
-      className="mean-modal simple-modal multi-step"
+      className='mean-modal simple-modal multi-step'
       title={
         <>
           {isSharingAddress && (
-            <div className="back-button ant-modal-close">
-              <Tooltip placement="bottom" title={t('deposits.back-to-deposit-options')}>
-                <Button type="default" shape="circle" icon={<ArrowLeftOutlined />} onClick={closePanels} />
+            <div className='back-button ant-modal-close'>
+              <Tooltip placement='bottom' title={t('deposits.back-to-deposit-options')}>
+                <Button type='default' shape='circle' icon={<ArrowLeftOutlined />} onClick={closePanels} />
               </Tooltip>
             </div>
           )}
-          <div className="modal-title">{t('deposits.modal-title')}</div>
+          <div className='modal-title'>{t('deposits.modal-title')}</div>
         </>
       }
       footer={null}
@@ -218,45 +218,45 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
       afterClose={closePanels}
       width={450}
     >
-      <div className="deposit-selector">
-        <div className={isSharingAddress ? 'options-list hide' : 'options-list show'} id="options-list">
+      <div className='deposit-selector'>
+        <div className={isSharingAddress ? 'options-list hide' : 'options-list show'} id='options-list'>
           <p>{t('deposits.heading')}:</p>
-          {!connected && <p className="fg-error">{t('deposits.not-connected')}!</p>}
+          {!connected && <p className='fg-error'>{t('deposits.not-connected')}!</p>}
           <Row gutter={[24, 24]}>
             <Col span={24}>
               <Button
                 block
-                className="deposit-option"
-                type="ghost"
-                shape="round"
-                size="middle"
+                className='deposit-option'
+                type='ghost'
+                shape='round'
+                size='middle'
                 disabled={!connected}
                 onClick={enableAddressSharing}
               >
-                <IconSolana className="deposit-partner-icon" />
+                <IconSolana className='deposit-partner-icon' />
                 {t('deposits.send-from-wallet-cta-label')}
               </Button>
             </Col>
             <Col span={24}>
               <Button
                 block
-                className="deposit-option"
-                type="ghost"
-                shape="round"
-                size="middle"
-                id="cbpay-button-container"
+                className='deposit-option'
+                type='ghost'
+                shape='round'
+                size='middle'
+                id='cbpay-button-container'
                 disabled={!connected || !isCoinbasePayReady}
                 onClick={handleCoinbaseButtonClick}
               >
-                <Tooltip placement="bottom" title={t('deposits.coinbase-cta-warning')}>
-                  <div className="flex flex-row justify-content-space-between">
+                <Tooltip placement='bottom' title={t('deposits.coinbase-cta-warning')}>
+                  <div className='flex flex-row justify-content-space-between'>
                     <img
-                      src="/assets/deposit-partners/coinbase.svg"
-                      className="deposit-partner-icon"
+                      src='/assets/deposit-partners/coinbase.svg'
+                      className='deposit-partner-icon'
                       alt={t('deposits.coinbase-pay-cta-label')}
                     />
-                    <span className="option-text">{getCoinbaseButtonLabel()}</span>
-                    <div className="loading-container">
+                    <span className='option-text'>{getCoinbaseButtonLabel()}</span>
+                    <div className='loading-container'>
                       {connected && !isCoinbasePayReady ? <LoadingOutlined style={{ fontSize: '24px' }} /> : null}
                     </div>
                   </div>
@@ -266,21 +266,21 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
             <Col span={24}>
               <Button
                 block
-                className="deposit-option"
-                type="ghost"
-                shape="round"
-                size="middle"
+                className='deposit-option'
+                type='ghost'
+                shape='round'
+                size='middle'
                 onClick={handleTransak2ButtonClick}
               >
-                <Tooltip placement="bottom" title={t('deposits.transak-cta-warning')}>
-                  <div className="flex flex-row justify-content-space-between">
+                <Tooltip placement='bottom' title={t('deposits.transak-cta-warning')}>
+                  <div className='flex flex-row justify-content-space-between'>
                     <img
-                      src="/assets/deposit-partners/transak.png"
-                      className="deposit-partner-icon"
+                      src='/assets/deposit-partners/transak.png'
+                      className='deposit-partner-icon'
                       alt={t('deposits.transak-cta-label')}
                     />
-                    <span className="option-text">{t('deposits.transak-cta-label')}</span>
-                    <IconInfoTriangle className="mean-svg-icons warning" />
+                    <span className='option-text'>{t('deposits.transak-cta-label')}</span>
+                    <IconInfoTriangle className='mean-svg-icons warning' />
                   </div>
                 </Tooltip>
               </Button>
@@ -288,15 +288,15 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
             <Col span={24}>
               <Button
                 block
-                className="deposit-option"
-                type="ghost"
-                shape="round"
-                size="middle"
+                className='deposit-option'
+                type='ghost'
+                shape='round'
+                size='middle'
                 onClick={handleBridgeFromEthereumButtonClick}
               >
                 <img
-                  src="/assets/deposit-partners/eth.png"
-                  className="deposit-partner-icon"
+                  src='/assets/deposit-partners/eth.png'
+                  className='deposit-partner-icon'
                   alt={t('deposits.move-from-ethereum-cta-label')}
                 />
                 {t('deposits.move-from-ethereum-cta-label')}
@@ -305,15 +305,15 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
             <Col span={24}>
               <Button
                 block
-                className="deposit-option"
-                type="ghost"
-                shape="round"
-                size="middle"
+                className='deposit-option'
+                type='ghost'
+                shape='round'
+                size='middle'
                 onClick={handleBridgeFromPolygonButtonClick}
               >
                 <img
-                  src="/assets/deposit-partners/polygon.png"
-                  className="deposit-partner-icon"
+                  src='/assets/deposit-partners/polygon.png'
+                  className='deposit-partner-icon'
                   alt={t('deposits.move-from-polygon-cta-label')}
                 />
                 {t('deposits.move-from-polygon-cta-label')}
@@ -322,26 +322,26 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
           </Row>
         </div>
         <div className={isSharingAddress ? 'option-detail-panel p-5 show' : 'option-detail-panel hide'}>
-          <div className="text-center">
-            <h3 className="font-bold mb-3">{t('deposits.send-from-wallet-cta-label')}</h3>
-            <div className="qr-container bg-white">
+          <div className='text-center'>
+            <h3 className='font-bold mb-3'>{t('deposits.send-from-wallet-cta-label')}</h3>
+            <div className='qr-container bg-white'>
               {publicKey && <QRCodeSVG value={publicKey.toBase58()} size={200} />}
             </div>
-            <div className="transaction-field medium">
-              <div className="transaction-field-row main-row">
-                <span className="input-left recipient-field-wrapper">
+            <div className='transaction-field medium'>
+              <div className='transaction-field-row main-row'>
+                <span className='input-left recipient-field-wrapper'>
                   {publicKey && (
-                    <span id="address-static-field" className="overflow-ellipsis-middle">
+                    <span id='address-static-field' className='overflow-ellipsis-middle'>
                       {publicKey.toBase58()}
                     </span>
                   )}
                 </span>
-                <div className="addon-right simplelink" onClick={onCopyAddress}>
-                  <IconCopy className="mean-svg-icons link" />
+                <div className='addon-right simplelink' onClick={onCopyAddress}>
+                  <IconCopy className='mean-svg-icons link' />
                 </div>
               </div>
             </div>
-            <div className="font-light font-size-75 px-4">{t('deposits.address-share-disclaimer')}</div>
+            <div className='font-light font-size-75 px-4'>{t('deposits.address-share-disclaimer')}</div>
           </div>
         </div>
       </div>

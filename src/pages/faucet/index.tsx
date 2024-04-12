@@ -1,17 +1,17 @@
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Button } from 'antd';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { useConnection } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { Button } from 'antd';
-import { environment } from '../../environments/environment';
-import { getAmountFromLamports, getAmountWithSymbol } from '../../middleware/utils';
-import { useNativeAccount } from '../../contexts/accounts';
-import { AppStateContext } from '../../contexts/appstate';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../../components/Notifications';
+import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { useNativeAccount } from '../../contexts/accounts';
+import { AppStateContext } from '../../contexts/appstate';
+import { useConnection } from '../../contexts/connection';
+import { useWallet } from '../../contexts/wallet';
+import { environment } from '../../environments/environment';
+import { getAmountFromLamports, getAmountWithSymbol } from '../../middleware/utils';
 
 export const FaucetView = () => {
   const connection = useConnection();
@@ -83,25 +83,25 @@ export const FaucetView = () => {
 
   const connectedBlock = (
     <>
-      <div className="deposit-input-title" style={{ margin: 10 }}>
+      <div className='deposit-input-title' style={{ margin: 10 }}>
         <p>
           {t('faucet.current-sol-balance')}: {getAmountWithSymbol(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL
         </p>
-        {environment === 'local' && <p className="localdev-label">lamports: {account?.lamports || 0}</p>}
+        {environment === 'local' && <p className='localdev-label'>lamports: {account?.lamports || 0}</p>}
         <p>
           {t('faucet.funding-amount')}{' '}
           {getAmountWithSymbol(getFaucetAmount() / LAMPORTS_PER_SOL, WRAPPED_SOL_MINT_ADDRESS, true)} SOL
         </p>
       </div>
-      <Button type="primary" shape="round" size="large" onClick={airdrop}>
+      <Button type='primary' shape='round' size='large' onClick={airdrop}>
         {t('faucet.fund-cta')}
       </Button>
     </>
   );
 
   return (
-    <div className="container">
-      <div className="interaction-area">{publicKey ? connectedBlock : disconnectedBlock}</div>
+    <div className='container'>
+      <div className='interaction-area'>{publicKey ? connectedBlock : disconnectedBlock}</div>
     </div>
   );
 };
