@@ -2,12 +2,10 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { TokenPrice } from 'models/TokenPrice';
 import { appConfig } from '..';
 import { readFromCache, removeFromCache, writeToCache } from '../cache/persistentCache';
-import type { SimpleTokenInfo } from '../models/accounts';
-import type { Allocation } from '../models/common-types';
-import type { WhitelistClaimType } from '../models/enums';
+import type { SimpleTokenInfo, TokenAccountInfo, UserTokenAccount } from '../models/accounts';
 import type { MeanFiStatsModel } from '../models/meanfi-stats';
 import type { PriceGraphModel } from '../models/price-graph';
-import { type RpcConfig, getDefaultRpc } from '../services/connections-hq';
+import { getDefaultRpc } from '../services/connections-hq';
 
 // MeanFi requests
 export const meanFiHeaders = new Headers();
@@ -32,7 +30,7 @@ export const getSplTokens = async (chainId: number, honorCache = true): Promise<
   if (honorCache) {
     const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
     if (cachedTokens) {
-      return Promise.resolve(cachedTokens.data);
+      return Promise.resolve(cachedTokens.data as SimpleTokenInfo[]);
     }
   }
 
@@ -69,8 +67,8 @@ export const getPrices = async (honorCache = true): Promise<TokenPrice[]> => {
   if (honorCache) {
     const cachedPrices = readFromCache(cacheEntryKey);
     if (cachedPrices) {
-      console.log(`%cprices from cache:`, `color: purple`, cachedPrices.data);
-      return Promise.resolve(cachedPrices.data);
+      console.log('%cprices from cache:', 'color: purple', cachedPrices.data);
+      return Promise.resolve(cachedPrices.data as TokenPrice[]);
     }
   }
 
@@ -78,31 +76,33 @@ export const getPrices = async (honorCache = true): Promise<TokenPrice[]> => {
     .then(response => response.json())
     .then(response => {
       writeToCache(cacheEntryKey, response);
-      console.log(`%cprices from api:`, `color: purple`, response);
+      console.log('%cprices from api:', 'color: purple', response);
       return response;
     })
     .catch(err => {
       console.error(err);
       const cachedPrices = readFromCache(cacheEntryKey);
       if (cachedPrices) {
-        console.log(`%cprices from cache:`, `color: purple`, cachedPrices.data);
+        console.log('%cprices from cache:', 'color: purple', cachedPrices.data);
         return Promise.resolve(cachedPrices.data);
       }
       return [];
     });
 };
 
-export const getSolFlareTokenList = async (): Promise<any> => {
+export const getSolFlareTokenList = async (): Promise<UserTokenAccount[]> => {
   const path = 'https://cdn.jsdelivr.net/gh/solflare-wallet/token-list/solana-tokenlist.json';
+
   return fetch(path, {
     method: 'GET',
   })
     .then(response => response.json())
     .then(response => {
-      return response;
+      return response.tokens as UserTokenAccount[];
     })
     .catch(err => {
       console.error(err);
+      return [];
     });
 };
 
@@ -119,6 +119,7 @@ export const getJupiterTokenList = async (path: string): Promise<TokenInfo[]> =>
     });
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export const getRaydiumLiquidityPools = async (): Promise<any> => {
   const path = 'https://api.raydium.io/v2/sdk/liquidity/mainnet.json';
   return fetch(path, {
@@ -133,6 +134,7 @@ export const getRaydiumLiquidityPools = async (): Promise<any> => {
     });
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export const getRaydiumLpPairs = async (): Promise<any> => {
   const path = 'https://api.raydium.io/v2/main/pairs';
   return fetch(path, {
@@ -145,19 +147,6 @@ export const getRaydiumLpPairs = async (): Promise<any> => {
     .catch(err => {
       console.error(err);
     });
-};
-
-export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Promise<any> => {
-  try {
-    const response = await fetch(url, options);
-    if (response && response.status === 200) {
-      const data = (await response.json()) as RpcConfig;
-      return data;
-    }
-    return null;
-  } catch (error) {
-    return null;
-  }
 };
 
 // POST /meanfi-connected-accounts Creates a referral for a new address
@@ -184,76 +173,9 @@ export const reportConnectedAccount = async (address: string, refBy?: string): P
     });
 };
 
-// GET /whitelists/{address} - Gets whitelist allocation - Allocation
-export const getWhitelistAllocation = async (
-  address: string,
-  claimType: WhitelistClaimType,
-): Promise<Allocation | null> => {
-  const options: RequestInit = {
-    method: 'GET',
-    headers: meanFiHeaders,
-  };
-  const url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?claimType=${claimType}`;
-  try {
-    const response = await fetch(url, options);
-    if (response && response.status === 200) {
-      const data = await response.json();
-      return data.totalAllocation as Allocation;
-    }
-    return null;
-  } catch (error) {
-    return null;
-  }
-};
-
-export const sendSignClaimTxRequest = async (address: string, base64ClaimTx: string): Promise<any> => {
-  const options: RequestInit = {
-    method: 'POST',
-    headers: meanFiHeaders,
-    body: JSON.stringify({
-      claimType: 1,
-      base64ClaimTransaction: base64ClaimTx,
-    }),
-  };
-
-  const url = `${appConfig.getConfig().apiUrl}/whitelists/${address}`;
-
-  return fetch(url, options)
-    .then(async response => {
-      if (response.status !== 200) {
-        throw new Error(`Error: request response status: ${response.status}`);
-      }
-      const signedClaimTxResponse = (await response.json()) as any;
-      return signedClaimTxResponse;
-    })
-    .catch(error => {
-      throw error;
-    });
-};
-
-export const sendRecordClaimTxRequest = async (address: string, claimTxId: string): Promise<any> => {
-  const options: RequestInit = {
-    method: 'POST',
-    headers: meanFiHeaders,
-  };
-
-  const url = `${appConfig.getConfig().apiUrl}/airdrop-claim-tx/${address}?txId=${claimTxId}`;
-
-  fetch(url, options)
-    .then(response => {
-      if (response.status !== 200) {
-        throw new Error(`Error: request response status: ${response.status}`);
-      }
-      return response;
-    })
-    .catch(error => {
-      throw error;
-    });
-};
-
 export const getMeanStats = async (): Promise<MeanFiStatsModel | null> => {
   try {
-    const path = `https://raw.githubusercontent.com/mean-dao/MEAN-stats/main/mean-stats.json`;
+    const path = 'https://raw.githubusercontent.com/mean-dao/MEAN-stats/main/mean-stats.json';
     const res = await fetch(path, { method: 'GET' });
     // 400+ status codes are failed
     if (res.status >= 400) {

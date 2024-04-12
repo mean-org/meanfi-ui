@@ -48,6 +48,12 @@
     "defaultBranch": "main"
   },
   "files": {
-    "ignore": [".github/**/*", ".vscode/**/*", ".build/**/*", "ci/**/*"]
+    "ignore": [
+      ".github/**/*",
+      ".vscode/**/*",
+      "build/**/*",
+      "ci/**/*",
+      "public/**/*"
+    ]
   }
 }

@@ -60,10 +60,10 @@ export const AppContextMenu = () => {
   const [isLanguageModalVisible, setIsLanguageModalVisibility] = useState(false);
   const showLanguageModal = useCallback(() => setIsLanguageModalVisibility(true), []);
   const hideLanguageModal = useCallback(() => setIsLanguageModalVisibility(false), []);
-  const onAcceptLanguage = (e: any) => {
+  const onAcceptLanguage = (code: string) => {
     hideLanguageModal();
-    i18n.changeLanguage(e);
-    setLanguage(e);
+    i18n.changeLanguage(code);
+    setLanguage(code);
   };
 
   // Friend Referral modal
@@ -86,11 +86,11 @@ export const AppContextMenu = () => {
 
   const getLanguageFlag = () => {
     const lang = LANGUAGES.filter(l => l.code === language || l.locale === language);
-    if (lang && lang.length) {
+    if (lang?.length) {
       return <img src={lang[0].flag} alt={getLanguageCode(lang[0].code)} className='mean-svg-icons' />;
-    } else {
-      return <IconSettings className='mean-svg-icons' />;
     }
+
+    return <IconSettings className='mean-svg-icons' />;
   };
 
   const openFriendReferralModal = () => {
@@ -143,16 +143,17 @@ export const AppContextMenu = () => {
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     const items: ItemType[] = [];
     items.push({
       key: '01-theme',
       label: (
-        <div onClick={onSwitchTheme}>
+        <div onClick={onSwitchTheme} onKeyDown={onSwitchTheme}>
           <IconMoon className='mean-svg-icons' />
           <span className='menu-item-text'>
-            {t(`ui-menus.app-context-menu.switch-theme`)}{' '}
-            {theme === 'light' ? t(`ui-menus.app-context-menu.theme-dark`) : t(`ui-menus.app-context-menu.theme-light`)}
+            {t('ui-menus.app-context-menu.switch-theme')}{' '}
+            {theme === 'light' ? t('ui-menus.app-context-menu.theme-dark') : t('ui-menus.app-context-menu.theme-light')}
           </span>
         </div>
       ),
@@ -160,7 +161,7 @@ export const AppContextMenu = () => {
     items.push({
       key: '02-language',
       label: (
-        <div onClick={showLanguageModal}>
+        <div onClick={showLanguageModal} onKeyDown={showLanguageModal}>
           {getLanguageFlag()}
           <span className='menu-item-text'>
             {t('ui-menus.app-context-menu.switch-language')}: {t(`ui-language.${getLanguageCode(language)}`)}
@@ -172,7 +173,7 @@ export const AppContextMenu = () => {
     items.push({
       key: '03-referrals',
       label: (
-        <div onClick={() => openFriendReferralModal()}>
+        <div onKeyDown={() => openFriendReferralModal()} onClick={() => openFriendReferralModal()}>
           <IconShareBox className='mean-svg-icons' />
           <span className='menu-item-text'>{t('ui-menus.app-context-menu.refer-a-friend', { referrals: '' })}</span>
         </div>
@@ -191,7 +192,7 @@ export const AppContextMenu = () => {
     items.push({
       key: '05-diagnosis-info',
       label: (
-        <div onClick={showDiagnosisInfoModal}>
+        <div onKeyDown={showDiagnosisInfoModal} onClick={showDiagnosisInfoModal}>
           <IconPulse className='mean-svg-icons' />
           <span className='menu-item-text'>{t('account-area.diagnosis-info')}</span>
         </div>
@@ -273,7 +274,6 @@ export const AppContextMenu = () => {
     }
 
     setMenuItems(items);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme, language, isWhitelisted, t]);
 
   const items: MenuProps['items'] = menuItems || [];

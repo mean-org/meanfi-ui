@@ -768,7 +768,9 @@ export const ExchangeDcasView = () => {
 
   // Event handler for Tx confirmed
   const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       if (item.operationType === OperationType.DdcaClose) {
         consoleOut(
           `ExchangeDcasView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
@@ -787,7 +789,9 @@ export const ExchangeDcasView = () => {
 
   // Event handler for Tx confirmation error
   const onTxTimedout = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       consoleOut(
         `ExchangeDcasView -> onTxTimedout event handled for operation ${OperationType[item.operationType]}`,
         item,
@@ -873,6 +877,7 @@ export const ExchangeDcasView = () => {
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Stop event subscriptions -> ExchangeDcasView', '', 'brown');
@@ -882,7 +887,6 @@ export const ExchangeDcasView = () => {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ////////////////

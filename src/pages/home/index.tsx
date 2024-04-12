@@ -908,7 +908,9 @@ export const HomeView = () => {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       const turnOffLockWorkflow = () => {
         isWorkflowLocked = false;
       };
@@ -991,12 +993,14 @@ export const HomeView = () => {
         }
       }
     },
-    [logEventHandling, navigate, recordTxConfirmationSuccess, refreshMultisigs],
+    [logEventHandling, navigate, recordTxConfirmationSuccess, refreshMultisigs, accountRefresh],
   );
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       if (item) {
         consoleOut('onTxTimedout event executed:', item, 'crimson');
         recordTxConfirmationFailure(item);
@@ -1007,7 +1011,7 @@ export const HomeView = () => {
       }
       resetTransactionStatus();
     },
-    [recordTxConfirmationFailure, resetTransactionStatus],
+    [recordTxConfirmationFailure, resetTransactionStatus, accountRefresh],
   );
 
   // Filter only useful Txs for the SOL account and return count
@@ -2538,17 +2542,18 @@ export const HomeView = () => {
   }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
 
   // Load treasuries when account address changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (publicKey && selectedAccount.address) {
       consoleOut('Loading treasuries...', 'selectedAccount changed!', 'purple');
       refreshTreasuries(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, selectedAccount.address]);
 
   // PaymentStreamingAccount list refresh timeout
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    let timer: any;
+    let timer: NodeJS.Timeout;
 
     if (publicKey) {
       timer = setInterval(() => {
@@ -2558,7 +2563,7 @@ export const HomeView = () => {
     }
 
     return () => clearInterval(timer);
-  }, [publicKey, loadingTreasuries, refreshTreasuries]);
+  }, [publicKey]);
 
   // Detect XS screen
   useEffect(() => {
@@ -2570,6 +2575,7 @@ export const HomeView = () => {
   }, [width]);
 
   // Set an App based of current category and asset group
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (selectedCategory === 'apps' || selectedCategory === 'account-summary') {
       const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.slug}`));
@@ -2579,10 +2585,10 @@ export const HomeView = () => {
     } else {
       setSelectedApp(undefined);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, selectedCategory]);
 
   // Load streams on entering page
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!publicKey || !selectedAccount.address) {
       return;
@@ -2590,11 +2596,10 @@ export const HomeView = () => {
 
     consoleOut('Loading streams...', '', 'orange');
     refreshStreamList();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAccount.address, publicKey]);
 
   // Process userTokensResponse from AppState to get a renderable list of tokens
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (userTokensResponse) {
       consoleOut('Processing userTokensResponse:', userTokensResponse, 'blue');
@@ -2607,11 +2612,10 @@ export const HomeView = () => {
         selectAsset(userTokensResponse.selectedAsset);
       }
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userTokensResponse, setAccountTokens]);
 
   // Load asset transactions when signaled
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!connection || !publicKey || !selectedAsset || !shouldLoadTransactions || loadingTransactions) {
       return;
@@ -2661,12 +2665,10 @@ export const HomeView = () => {
         })
         .finally(() => setLoadingTransactions(false));
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     connection,
-    selectedAsset?.publicAddress,
+    selectedAsset,
     selectedAccount.address,
     lastTxSignature,
     solAccountItems,
@@ -2780,6 +2782,7 @@ export const HomeView = () => {
   }, [connection, isMultisigContext, location.pathname, programId, programs, publicKey]);
 
   // Preset token based on url param asset
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (asset && accountTokens && accountTokens.length > 0) {
       consoleOut('Presetting token based on url...', asset, 'crimson');
@@ -2803,10 +2806,10 @@ export const HomeView = () => {
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountTokens, location.pathname, asset, selectedAccount.address]);
 
   // Build CTAs
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!selectedAsset) {
       return;
@@ -2952,12 +2955,11 @@ export const HomeView = () => {
     actions.push(...closeAccountCta);
 
     setAssetCtas(actions);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isXsDevice,
     wSolBalance,
     selectedAsset,
+    isCustomAsset,
     isMultisigContext,
     isInspectedAccountTheConnectedWallet,
     isSelectedAssetNativeAccount,
@@ -3003,6 +3005,7 @@ export const HomeView = () => {
   }, [incomingAmount, outgoingAmount]);
 
   // Live data calculation
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!publicKey || !streamList || (!streamListv1 && !streamListv2)) {
       return;
@@ -3016,10 +3019,10 @@ export const HomeView = () => {
     return () => {
       clearTimeout(timeout);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, streamList, streamListv1, streamListv2]);
 
   // Get treasuries summary
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!publicKey || !treasuryList) {
       return;
@@ -3032,10 +3035,10 @@ export const HomeView = () => {
     return () => {
       clearTimeout(timeout);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, treasuryList]);
 
   // Having the treasuriesSummary and stream stats, lets publish combined stats
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     let totalStreamingAccounts = 0;
     if (streamingAccountsSummary) {
@@ -3047,8 +3050,6 @@ export const HomeView = () => {
       outgoingAmount,
     };
     setPaymentStreamingStats(paymentStreamingResume);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomingAmount, outgoingAmount, streamingAccountsSummary]);
 
   // Update total account balance
@@ -3067,6 +3068,7 @@ export const HomeView = () => {
   }, [loadingStreams, incomingStreamsSummary, outgoingStreamsSummary, streamingAccountsSummary]);
 
   // Live data calculation - NetWorth
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (tokensLoaded && accountTokens) {
       // Total USD value
@@ -3081,7 +3083,6 @@ export const HomeView = () => {
       const total = totalTokensValue + totalAccountBalance;
       setNetWorth(total);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountTokens, tokensLoaded, totalAccountBalance]);
 
   // Setup event listeners
@@ -3097,6 +3098,7 @@ export const HomeView = () => {
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Stop event subscriptions -> HomeView', '', 'brown');
@@ -3109,7 +3111,6 @@ export const HomeView = () => {
       setCanSubscribe(true);
       isWorkflowLocked = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   //////////////////

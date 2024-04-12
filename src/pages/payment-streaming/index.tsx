@@ -125,7 +125,9 @@ const PaymentStreamingView = (props: {
   }, []);
 
   const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       const turnOffLockWorkflow = () => {
         isWorkflowLocked = false;
       };
@@ -170,7 +172,7 @@ const PaymentStreamingView = (props: {
         }
 
         // Lock the workflow
-        if (item.extras && item.extras.multisigAuthority) {
+        if (item.extras?.multisigAuthority) {
           isWorkflowLocked = true;
         }
 
@@ -183,7 +185,7 @@ const PaymentStreamingView = (props: {
           case OperationType.TreasuryAddFunds:
           case OperationType.TreasuryWithdraw:
             logEventHandling(item);
-            if (item.extras && item.extras.multisigAuthority) {
+            if (item.extras?.multisigAuthority) {
               refreshMultisigs();
               notifyMultisigActionFollowup(item);
             } else {
@@ -193,7 +195,7 @@ const PaymentStreamingView = (props: {
           case OperationType.TreasuryCreate:
           case OperationType.StreamWithdraw:
             logEventHandling(item);
-            if (item.extras && item.extras.multisigAuthority) {
+            if (item.extras?.multisigAuthority) {
               refreshMultisigs();
               notifyMultisigActionFollowup(item);
             } else {
@@ -203,7 +205,7 @@ const PaymentStreamingView = (props: {
             break;
           case OperationType.StreamClose:
             logEventHandling(item);
-            if (item.extras && item.extras.multisigAuthority) {
+            if (item.extras?.multisigAuthority) {
               refreshMultisigs();
               notifyMultisigActionFollowup(item);
             }
@@ -217,7 +219,7 @@ const PaymentStreamingView = (props: {
             break;
           case OperationType.TreasuryClose:
             logEventHandling(item);
-            if (item.extras && item.extras.multisigAuthority) {
+            if (item.extras?.multisigAuthority) {
               refreshMultisigs();
               notifyMultisigActionFollowup(item);
             }
@@ -226,7 +228,7 @@ const PaymentStreamingView = (props: {
             break;
           case OperationType.StreamTransferBeneficiary:
             logEventHandling(item);
-            if (item.extras && item.extras.multisigAuthority) {
+            if (item.extras?.multisigAuthority) {
               refreshMultisigs();
               notifyMultisigActionFollowup(item);
             } else {
@@ -312,6 +314,7 @@ const PaymentStreamingView = (props: {
   }, [pathParamTreasuryId, publicKey, streamingItemId, treasuryList]);
 
   // Preset the selected stream from the list if provided in path param (streamId)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     const inPath = (item: Stream | StreamInfo, param: string) => {
       if (!item.id) {
@@ -320,9 +323,8 @@ const PaymentStreamingView = (props: {
       const isNew = item.version >= 2 ? true : false;
       if (isNew) {
         return (item as Stream).id.toBase58() === param;
-      } else {
-        return ((item as StreamInfo).id as string) === param;
       }
+      return ((item as StreamInfo).id as string) === param;
     };
 
     if (
@@ -338,7 +340,6 @@ const PaymentStreamingView = (props: {
         setActiveStream(item);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathParamStreamId, publicKey, streamDetail, streamList]);
 
   // Setup event listeners
@@ -353,6 +354,7 @@ const PaymentStreamingView = (props: {
   }, [canSubscribe, onTxConfirmed]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Unsubscribe from events -> PaymentStreamingView', '', 'brown');
@@ -363,7 +365,6 @@ const PaymentStreamingView = (props: {
       setCanSubscribe(true);
       isWorkflowLocked = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ////////////////////

@@ -3,8 +3,9 @@ import { BN } from '@project-serum/anchor';
 import BigNumber from 'bignumber.js';
 import bs58 from 'bs58';
 import dateFormat from 'dateformat';
+import type { TFunction } from 'i18next';
 import { customLogger } from 'index';
-import moment from 'moment';
+import moment, { type Moment } from 'moment';
 import {
   BIGNUMBER_FORMAT,
   SIMPLE_DATE_FORMAT,
@@ -38,6 +39,7 @@ export const isLocal = (): boolean => {
   return isLocalhost;
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export function consoleOut(msg: any, value?: any, color = 'black') {
   if (msg) {
     customLogger.print(msg, value, color);
@@ -55,30 +57,34 @@ export const friendlyDisplayDecimalPlaces = (amount: number | string, decimals?:
     const value = bigNumberAmount.div(baseConvert);
     if (value.isLessThan(10)) {
       return decimals || undefined;
-    } else if (value.isGreaterThanOrEqualTo(10) && value.isLessThan(1000)) {
-      return 4;
-    } else if (value.isGreaterThanOrEqualTo(1000) && value.isLessThan(100000)) {
-      return 3;
-    } else {
-      return 2;
     }
-  } else {
-    const value = Math.abs(amount);
-    if (value < 10) {
-      return decimals || undefined;
-    } else if (value >= 10 && value < 1000) {
+    if (value.isGreaterThanOrEqualTo(10) && value.isLessThan(1000)) {
       return 4;
-    } else if (value >= 1000 && value < 100000) {
-      return 3;
-    } else {
-      return 2;
     }
+    if (value.isGreaterThanOrEqualTo(1000) && value.isLessThan(100000)) {
+      return 3;
+    }
+
+    return 2;
   }
+
+  const value = Math.abs(amount);
+  if (value < 10) {
+    return decimals || undefined;
+  }
+  if (value >= 10 && value < 1000) {
+    return 4;
+  }
+  if (value >= 1000 && value < 100000) {
+    return 3;
+  }
+
+  return 2;
 };
 
 export const twoDigits = (num: number) => String(num).padStart(2, '0');
 
-export function isValidAddress(value: any): boolean {
+export function isValidAddress(value: unknown): boolean {
   if (typeof value === 'string') {
     try {
       // assume base 58 encoding by default
@@ -93,7 +99,7 @@ export function isValidAddress(value: any): boolean {
   return false;
 }
 
-export function isEvmValidAddress(value: any): boolean {
+export function isEvmValidAddress(value: unknown): boolean {
   if (typeof value === 'string') {
     const network = detectNetworkByAddress(value);
 
@@ -103,22 +109,21 @@ export function isEvmValidAddress(value: any): boolean {
   return false;
 }
 
-export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: boolean, trans: any): string {
-  let title: any;
+export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: boolean, trans: TFunction) {
   if (isBusy) {
-    title = trans('transactions.status.modal-title-executing-transaction');
-  } else {
-    if (status.lastOperation === TransactionStatus.Iddle && status.currentOperation === TransactionStatus.Iddle) {
-      title = null;
-    } else if (status.currentOperation === TransactionStatus.TransactionStartFailure) {
-      title = trans('transactions.status.modal-title-transaction-disabled');
-    } else if (status.lastOperation === TransactionStatus.TransactionFinished) {
-      title = trans('transactions.status.modal-title-transaction-completed');
-    } else {
-      title = null;
-    }
+    return trans('transactions.status.modal-title-executing-transaction');
   }
-  return title;
+  if (status.lastOperation === TransactionStatus.Iddle && status.currentOperation === TransactionStatus.Iddle) {
+    return null;
+  }
+  if (status.currentOperation === TransactionStatus.TransactionStartFailure) {
+    return trans('transactions.status.modal-title-transaction-disabled');
+  }
+  if (status.lastOperation === TransactionStatus.TransactionFinished) {
+    return trans('transactions.status.modal-title-transaction-completed');
+  }
+
+  return null;
 }
 
 export function getTransactionStatusForLogs(status: TransactionStatus): string {
@@ -164,6 +169,7 @@ export function getTransactionStatusForLogs(status: TransactionStatus): string {
   }
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export const copyText = (val: any): boolean => {
   if (!val) {
     return false;
@@ -173,6 +179,7 @@ export const copyText = (val: any): boolean => {
     .catch(() => false);
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export const copyToClipboard = async (val: any) => {
   if (!val) {
     return false;
@@ -194,6 +201,7 @@ export const copyToClipboard = async (val: any) => {
     await navigator.clipboard.writeText(text);
     console.log(`${text} copied!!`);
     return true;
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   } catch (error: any) {
     console.error(error.toString());
     return false;
@@ -219,9 +227,9 @@ export function msToTime(ms: number) {
   const hours = (ms / (1000 * 60 * 60)).toFixed(1);
   const days = (ms / (1000 * 60 * 60 * 24)).toFixed(1);
   if (+seconds < 60) return seconds + ' Sec';
-  else if (+minutes < 60) return minutes + ' Min';
-  else if (+hours < 24) return hours + ' Hrs';
-  else return days + ' Days';
+  if (+minutes < 60) return minutes + ' Min';
+  if (+hours < 24) return hours + ' Hrs';
+  return days + ' Days';
 }
 
 export function getTimeRemaining(endtime: string): TimeData {
@@ -256,7 +264,7 @@ export function getTimeEllapsed(initialTime: string): TimeData {
   };
 }
 
-export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: any): string => {
+export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: TFunction): string => {
   let result = '';
   switch (val) {
     case PaymentRateType.PerMinute:
@@ -283,7 +291,7 @@ export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: any): st
   return result;
 };
 
-export const getLockPeriodOptionLabel = (val: PaymentRateType, trans?: any): string => {
+export const getLockPeriodOptionLabel = (val: PaymentRateType, trans?: TFunction): string => {
   let result = '';
   switch (val) {
     case PaymentRateType.PerMinute:
@@ -310,7 +318,7 @@ export const getLockPeriodOptionLabel = (val: PaymentRateType, trans?: any): str
   return result;
 };
 
-export const getCoolOffPeriodOptionLabel = (val: PaymentRateType, trans?: any): string => {
+export const getCoolOffPeriodOptionLabel = (val: PaymentRateType, trans?: TFunction): string => {
   let result = '';
   switch (val) {
     case PaymentRateType.PerMinute:
@@ -331,7 +339,11 @@ export const getCoolOffPeriodOptionLabel = (val: PaymentRateType, trans?: any): 
   return result;
 };
 
-export const getLockPeriodOptionLabelByAmount = (val: PaymentRateType, periodAmount: number, trans?: any): string => {
+export const getLockPeriodOptionLabelByAmount = (
+  val: PaymentRateType,
+  periodAmount: number,
+  trans?: TFunction,
+): string => {
   let result = '';
   switch (val) {
     case PaymentRateType.PerMinute:
@@ -382,7 +394,7 @@ export const getLockPeriodOptionLabelByAmount = (val: PaymentRateType, periodAmo
   return result;
 };
 
-export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOption, trans?: any): string => {
+export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOption, trans?: TFunction): string => {
   let result = '';
   switch (val) {
     case TimesheetRequirementOption.NotRequired:
@@ -418,7 +430,6 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
     case PaymentRateType.PerYear:
       value = 31557000;
       break;
-    case PaymentRateType.PerMinute:
     default:
       break;
   }
@@ -444,7 +455,7 @@ export const getPaymentIntervalFromSeconds = (value: number): PaymentRateType =>
   }
 };
 
-export const getDurationUnitFromSeconds = (value: number, trans?: any): string => {
+export const getDurationUnitFromSeconds = (value: number, trans?: TFunction): string => {
   switch (value) {
     case 60:
       return trans ? trans('general.minute') : 'minute';
@@ -463,7 +474,10 @@ export const getDurationUnitFromSeconds = (value: number, trans?: any): string =
   }
 };
 
-export const getTransactionOperationDescription = (status: TransactionStatus | undefined, trans?: any): string => {
+export const getTransactionOperationDescription = (
+  status: TransactionStatus | undefined,
+  trans?: TFunction,
+): string => {
   switch (status) {
     case TransactionStatus.TransactionStart:
       return trans ? trans('transactions.status.tx-start') : 'Collecting data';
@@ -489,48 +503,42 @@ export const getTransactionOperationDescription = (status: TransactionStatus | u
       return '';
   }
 };
-export const getIntervalFromSeconds = (seconds: number, slash = false, trans?: any): string => {
+export const getIntervalFromSeconds = (seconds: number, slash = false, trans?: TFunction): string => {
   switch (seconds) {
     case 60:
       if (trans) {
         return slash
           ? ` / ${trans('general.minute')}`
           : trans('transactions.rate-and-frequency.payment-rates.per-minute');
-      } else {
-        return slash ? ' / minute' : 'per minute';
       }
+      return slash ? ' / minute' : 'per minute';
     case 3600:
       if (trans) {
         return slash ? ` / ${trans('general.hour')}` : trans('transactions.rate-and-frequency.payment-rates.per-hour');
-      } else {
-        return slash ? ' / hour' : 'per hour';
       }
+      return slash ? ' / hour' : 'per hour';
     case 86400:
       if (trans) {
         return slash ? ` / ${trans('general.day')}` : trans('transactions.rate-and-frequency.payment-rates.per-day');
-      } else {
-        return slash ? ' / day' : 'per day';
       }
+      return slash ? ' / day' : 'per day';
     case 604800:
       if (trans) {
         return slash ? ` / ${trans('general.week')}` : trans('transactions.rate-and-frequency.payment-rates.per-week');
-      } else {
-        return slash ? ' / week' : 'per week';
       }
+      return slash ? ' / week' : 'per week';
     case 2629750:
       if (trans) {
         return slash
           ? ` / ${trans('general.month')}`
           : trans('transactions.rate-and-frequency.payment-rates.per-month');
-      } else {
-        return slash ? ' / month' : 'per month';
       }
+      return slash ? ' / month' : 'per month';
     case 31557000:
       if (trans) {
         return slash ? ` / ${trans('general.year')}` : trans('transactions.rate-and-frequency.payment-rates.per-year');
-      } else {
-        return slash ? ' / year' : 'per year';
       }
+      return slash ? ' / year' : 'per year';
     default:
       return '';
   }
@@ -558,8 +566,8 @@ export const percentual = (partialValue: number, total: number): number => {
 };
 
 export const percentualBn = (partialValue: string | BN, total: string | BN, asNumber = false): number | BN => {
-  let partialBn;
-  let totalBn;
+  let partialBn: BigNumber;
+  let totalBn: BigNumber;
   if (!partialValue) {
     return asNumber ? new BN(partialValue).toNumber() : new BN(partialValue);
   }
@@ -593,7 +601,7 @@ export const percentageBn = (percent: number, total: string | BN, asNumber = fal
   if (!percent) {
     return asNumber ? 0 : new BN(0);
   }
-  let totalBn;
+  let totalBn: BigNumber;
   if (typeof total === 'string') {
     totalBn = new BigNumber(total);
   } else {
@@ -605,51 +613,7 @@ export const percentageBn = (percent: number, total: string | BN, asNumber = fal
   return new BN(totalBn.multipliedBy(percent).dividedToIntegerBy(100).toString());
 };
 
-export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
-  let result = '';
-  let trailingZeroes = 0;
-  const trailingChar = '0';
-  const numericString = original.toString();
-  const splitted = numericString.split('.');
-  const dec = splitted[1];
-  if (splitted.length === 1) {
-    result = original;
-  } else {
-    // Count zeroes from the end
-    if (dec && dec.length > zeroes) {
-      for (let i = numericString.length - 1; i >= 0; i--) {
-        if (numericString[i] !== '0') {
-          break;
-        }
-        trailingZeroes++;
-      }
-    }
-    // If more zeroes than the wanted amount
-    if (trailingZeroes > zeroes) {
-      const plainNumber = Number.parseFloat(numericString);
-      result = plainNumber.toString();
-      // Add the needed amount of zeroes after parsing
-      if (result.indexOf('.') === -1) {
-        result += '.' + trailingChar.repeat(zeroes);
-      }
-    } else {
-      result = original; // Otherwise return the numeric string intact
-    }
-  }
-
-  return result;
-};
-
-export const getFormattedNumberToLocale = (value: any, digits = 0) => {
-  const converted = Number.parseFloat(value.toString());
-  const formatted = new Intl.NumberFormat('en-US', {
-    minimumSignificantDigits: 1,
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(converted);
-  return formatted || '';
-};
-
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export const toUsCurrency = (value: any) => {
   if (!value) {
     return '$0.00';
@@ -672,9 +636,9 @@ export const getShortDate = (date: string, includeTime = false, isUtc = false): 
     const dateWithoutOffset = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
     const displayDate = dateWithoutOffset.toUTCString();
     return dateFormat(displayDate, includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT);
-  } else {
-    return dateFormat(localDate, includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT);
   }
+
+  return dateFormat(localDate, includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT);
 };
 
 export const getReadableDate = (date: string, includeTime = false, isUtc = false): string => {
@@ -684,11 +648,12 @@ export const getReadableDate = (date: string, includeTime = false, isUtc = false
 
   if (isUtc) {
     return dateFormat(date, includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT, true);
-  } else {
-    return dateFormat(new Date(date), includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT);
   }
+
+  return dateFormat(new Date(date), includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT);
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export const getlllDate = (date: any): string => {
   // Month name, day of month, year, time
   return moment(date).format('MMM D YYYY HH:mm');
@@ -703,19 +668,9 @@ export const getDayOfWeek = (date: Date, locale = 'en-US'): string => {
   return date.toLocaleDateString(locale, { weekday: 'long' });
 };
 
-export function disabledDate(current: any) {
+export function disabledDate(current: Moment) {
   // Can not select days before today and today
   return current && current < moment().subtract(1, 'days').endOf('day');
-}
-
-export function disabledBeforeTomorrowDate(current: any) {
-  // Can not select days before tomorrow
-  return current && current < moment().add(0, 'days').endOf('day');
-}
-
-export function disabledTime(current: any) {
-  // Can not select time before now
-  return current && current < moment().fromNow(true);
 }
 
 export const isToday = (someDate: string): boolean => {
@@ -809,6 +764,7 @@ export const getPercentualTsBetweenTwoDates = (
   return relative ? pctTs : start + pctTs;
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {
   let fee = 0;
   const inputAmount = amount ? Number.parseFloat(amount) : 0;
@@ -818,6 +774,7 @@ export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): numb
   return fee;
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
   let fee = 0;
   const inputAmount = amount ? Number.parseFloat(amount) : 0;
@@ -916,7 +873,7 @@ export function kFormatter(value: number, decimals = 0) {
     { v: 1e15, s: 'P' },
     { v: 1e18, s: 'E' },
   ];
-  let index;
+  let index: number;
   for (index = si.length - 1; index > 0; index--) {
     if (value >= si[index].v) {
       break;

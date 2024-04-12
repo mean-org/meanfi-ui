@@ -1459,8 +1459,11 @@ const SafeView = (props: {
   }, []);
 
   // Setup event handler for Tx confirmed
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       switch (item.operationType) {
         case OperationType.ApproveTransaction:
         case OperationType.RejectTransaction:
@@ -1486,13 +1489,14 @@ const SafeView = (props: {
           break;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       // If we have the item, record failure and remove it from the list
       if (item) {
         consoleOut('onTxTimedout event executed:', item, 'crimson');
@@ -1638,6 +1642,7 @@ const SafeView = (props: {
   ]);
 
   // Actually selects a multisig base on currently selected account
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (multisigAccounts && selectedAccount && selectedAccount.address && selectedAccount.isMultisig) {
       let item: MultisigInfo | undefined = undefined;
@@ -1658,7 +1663,6 @@ const SafeView = (props: {
     } else {
       setSelectedMultisig(undefined);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [multisigAccounts, selectedAccount]);
 
   // Process route params and set item (proposal) specified in the url by id
@@ -1714,6 +1718,7 @@ const SafeView = (props: {
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Stop event subscriptions -> SafeView', '', 'brown');
@@ -1724,7 +1729,6 @@ const SafeView = (props: {
       setCanSubscribe(true);
       proposalLoadStatusRegister.clear();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   //////////////

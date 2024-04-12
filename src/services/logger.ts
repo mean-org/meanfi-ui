@@ -10,6 +10,7 @@ export function objectToJson(obj: unknown): string {
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const Loggly = require('loggly-jslogger');
+
 export const logger = new Loggly.LogglyTracker();
 
 export class LoggerJsonData {

@@ -1,14 +1,18 @@
 import { rustEnum } from '@project-serum/borsh';
-/* eslint-disable @typescript-eslint/ban-types */
 import * as BufferLayout from 'buffer-layout';
 
 // Simplified since we only use the SetBuffer variant.
 export type IdlInstruction = Create | CreateBuffer | Write | SetBuffer | SetAuthority;
 
+// biome-ignore lint/complexity/noBannedTypes: Anonymous object
 type Create = {};
+// biome-ignore lint/complexity/noBannedTypes: Anonymous object
 type CreateBuffer = {};
+// biome-ignore lint/complexity/noBannedTypes: Anonymous object
 type Write = {};
+// biome-ignore lint/complexity/noBannedTypes: Anonymous object
 type SetBuffer = {};
+// biome-ignore lint/complexity/noBannedTypes: Anonymous object
 type SetAuthority = {};
 
 const IDL_INSTRUCTION_LAYOUT = rustEnum([

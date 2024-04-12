@@ -32,31 +32,33 @@ import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TokenListItem } from '../TokenListItem';
 import './style.scss';
+import type { LooseObject } from 'types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const MultisigTransferTokensModal = (props: {
+interface Props {
   assets: UserTokenAccount[];
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (params: TransferTokensTxParams) => void;
   isBusy: boolean;
   isVisible: boolean;
   nativeBalance: number;
   selectedMultisig: MultisigInfo | undefined;
   selectedVault: UserTokenAccount | undefined;
   transactionFees: MultisigTransactionFees;
-}) => {
-  const {
-    assets,
-    handleClose,
-    handleOk,
-    isBusy,
-    isVisible,
-    nativeBalance,
-    selectedMultisig,
-    selectedVault,
-    transactionFees,
-  } = props;
+}
+
+export const MultisigTransferTokensModal = ({
+  assets,
+  handleClose,
+  handleOk,
+  isBusy,
+  isVisible,
+  nativeBalance,
+  selectedMultisig,
+  selectedVault,
+  transactionFees,
+}: Props) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
@@ -78,7 +80,7 @@ export const MultisigTransferTokensModal = (props: {
   const [to, setTo] = useState('');
   const debouncedToAddress = useDebounce<string>(to, INPUT_DEBOUNCE_TIME);
   const [amount, setAmount] = useState('');
-  const [userBalances, setUserBalances] = useState<any>();
+  const [userBalances, setUserBalances] = useState<LooseObject>();
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenFilter, setTokenFilter] = useState('');
@@ -113,7 +115,7 @@ export const MultisigTransferTokensModal = (props: {
       }
 
       const timeout = setTimeout(() => {
-        const filter = (t: any) => {
+        const filter = (t: TokenInfo) => {
           return (
             t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
             t.name.toLowerCase().includes(searchString.toLowerCase()) ||
@@ -121,7 +123,7 @@ export const MultisigTransferTokensModal = (props: {
           );
         };
 
-        const showFromList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
+        const showFromList = !searchString ? selectedList : selectedList.filter(t => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -139,6 +141,7 @@ export const MultisigTransferTokensModal = (props: {
   }, [updateTokenListByFilter]);
 
   const onTokenSearchInputChange = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     (e: any) => {
       const newValue = e.target.value;
       setTokenFilter(newValue);
@@ -186,7 +189,7 @@ export const MultisigTransferTokensModal = (props: {
     }
 
     const timeout = setTimeout(() => {
-      const balancesMap: any = {};
+      const balancesMap: LooseObject = {};
       const pk = selectedMultisig ? selectedMultisig.authority : publicKey;
 
       fetchAccountTokens(connection, pk)
@@ -198,19 +201,20 @@ export const MultisigTransferTokensModal = (props: {
             intersectedList.push(splTokensCopy[0]);
             balancesMap[NATIVE_SOL.address] = nativeBalance;
             // Create a list containing tokens for the user owned token accounts
-            accTks.forEach(item => {
+            for (const item of accTks) {
               balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount ?? 0;
               const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
               const tokenFromSplTokensCopy = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
               if (tokenFromSplTokensCopy && !isTokenAccountInTheList) {
                 intersectedList.push(tokenFromSplTokensCopy);
               }
-            });
+            }
 
             intersectedList.sort((a, b) => {
               if ((balancesMap[a.address] ?? 0) < (balancesMap[b.address] ?? 0)) {
                 return 1;
-              } else if ((balancesMap[a.address] ?? 0) > (balancesMap[b.address] ?? 0)) {
+              }
+              if ((balancesMap[a.address] ?? 0) > (balancesMap[b.address] ?? 0)) {
                 return -1;
               }
               return 0;
@@ -266,7 +270,7 @@ export const MultisigTransferTokensModal = (props: {
 
   // Resolves fromVault
   useEffect(() => {
-    if (!isVisible || !connection || !publicKey || !assets) {
+    if (!isVisible || !assets) {
       return;
     }
 
@@ -278,7 +282,7 @@ export const MultisigTransferTokensModal = (props: {
     });
 
     return () => clearTimeout(timeout);
-  }, [connection, assets, isVisible, selectedVault, publicKey]);
+  }, [assets, isVisible, selectedVault]);
 
   useEffect(() => {
     // We need to debounce the recipient address input value to avoid numerous calls
@@ -289,10 +293,7 @@ export const MultisigTransferTokensModal = (props: {
       console.log('fromMint:', fromVault.address);
       validateAddress(debouncedToAddress, fromVault.address);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedToAddress, fromVault]);
-
-  useEffect(() => console.log('validationStatus:', validationStatus), [validationStatus]);
+  }, [debouncedToAddress, fromVault, validateAddress]);
 
   const onAcceptModal = () => {
     if (!fromVault) return;
@@ -313,6 +314,7 @@ export const MultisigTransferTokensModal = (props: {
     handleClose();
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const onTitleInputValueChange = (e: any) => {
     setProposalTitle(e.target.value);
   };
@@ -323,6 +325,7 @@ export const MultisigTransferTokensModal = (props: {
     setTo(trimmedValue);
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const onMintAmountChange = (e: any) => {
     let newValue = e.target.value;
 
@@ -366,19 +369,23 @@ export const MultisigTransferTokensModal = (props: {
   const getTransactionStartButtonLabel = () => {
     if (!proposalTitle) {
       return 'Add a proposal title';
-    } else if (+amount === 0) {
-      return 'Enter amount';
-    } else if (!fromVault || fromVault.balance === 0) {
-      return 'No balance';
-    } else if (isAmountTooHigh()) {
-      return 'Amount exceeded';
-    } else if (!to) {
-      return 'Enter an address';
-    } else if (!isValidAddress(to)) {
-      return 'Invalid address';
-    } else {
-      return 'Sign proposal';
     }
+    if (+amount === 0) {
+      return 'Enter amount';
+    }
+    if (!fromVault || fromVault.balance === 0) {
+      return 'No balance';
+    }
+    if (isAmountTooHigh()) {
+      return 'Amount exceeded';
+    }
+    if (!to) {
+      return 'Enter an address';
+    }
+    if (!isValidAddress(to)) {
+      return 'Invalid address';
+    }
+    return 'Sign proposal';
   };
 
   const refreshPage = () => {
@@ -387,6 +394,7 @@ export const MultisigTransferTokensModal = (props: {
   };
 
   // Handler paste clipboard data
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const pasteHandler = (e: any) => {
     const getClipBoardData = e.clipboardData.getData('Text');
     const replaceCommaToDot = getClipBoardData.replace(',', '');
@@ -406,7 +414,7 @@ export const MultisigTransferTokensModal = (props: {
     if (tokenFilter && !isValidAddress(tokenFilter)) {
       setTokenFilter('');
     }
-  }, [selectedToken, setSelectedToken, tokenFilter]);
+  }, [selectedToken, tokenFilter, hideDrawer]);
 
   const getTokenListItemClass = (t: TokenInfo, balance: number) => {
     if (!balance) {
@@ -442,9 +450,8 @@ export const MultisigTransferTokensModal = (props: {
                 balance={balance}
               />
             );
-          } else {
-            return null;
           }
+          return null;
         })}
     </>
   );
@@ -455,7 +462,8 @@ export const MultisigTransferTokensModal = (props: {
     }
     if (selectedToken.decimals === -1) {
       return 'Account not found';
-    } else if (selectedToken && selectedToken.decimals === -2) {
+    }
+    if (selectedToken && selectedToken.decimals === -2) {
       return 'Account is not a token mint';
     }
     return '';
@@ -495,13 +503,19 @@ export const MultisigTransferTokensModal = (props: {
               }
               if (accountInfo) {
                 if (
-                  (accountInfo as any).data['program'] &&
-                  (accountInfo as any).data['program'] === 'spl-token' &&
-                  (accountInfo as any).data['parsed'] &&
-                  (accountInfo as any).data['parsed']['type'] &&
-                  (accountInfo as any).data['parsed']['type'] === 'mint'
+                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                  (accountInfo as any).data.program &&
+                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                  (accountInfo as any).data.program === 'spl-token' &&
+                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                  (accountInfo as any).dataparsed &&
+                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                  (accountInfo as any).dataparsed.type &&
+                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                  (accountInfo as any).dataparsed.type === 'mint'
                 ) {
-                  decimals = (accountInfo as any).data['parsed']['info']['decimals'];
+                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                  decimals = (accountInfo as any).dataparsed.info.decimals;
                 } else {
                   decimals = -2;
                 }
@@ -514,7 +528,7 @@ export const MultisigTransferTokensModal = (props: {
                 symbol: `[${shortenAddress(address)}]`,
               };
               setSelectedToken(uknwnToken);
-              if (userBalances && userBalances[address]) {
+              if (userBalances?.[address]) {
                 setTokenBalance(userBalances[address]);
               }
               consoleOut('token selected:', uknwnToken, 'blue');
@@ -533,13 +547,14 @@ export const MultisigTransferTokensModal = (props: {
   const getCtaButtonLabel = () => {
     if (isBusy) {
       return t('multisig.transfer-tokens.main-cta-busy');
-    } else if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-      return getTransactionStartButtonLabel();
-    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-      return t('general.cta-finish');
-    } else {
-      return t('general.refresh');
     }
+    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+      return getTransactionStartButtonLabel();
+    }
+    if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+      return t('general.cta-finish');
+    }
+    return t('general.refresh');
   };
 
   const getAlternateStateModalContent = () => {
@@ -650,6 +665,7 @@ export const MultisigTransferTokensModal = (props: {
                     {selectedToken && fromVault ? (
                       <div
                         className='token-max simplelink'
+                        onKeyDown={() => {}}
                         onClick={() => {
                           setAmount(cutNumber(fromVault.balance as number, selectedToken.decimals));
                         }}
@@ -694,6 +710,7 @@ export const MultisigTransferTokensModal = (props: {
                 <div className='right inner-label'>
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onKeyDown={() => refreshPrices()}
                     onClick={() => refreshPrices()}
                   >
                     ~{amount ? toUsCurrency(getTokenPrice()) : '$0.00'}

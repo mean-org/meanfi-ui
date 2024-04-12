@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import type { Analytics } from '@segment/analytics-next';
 import { consoleOut } from './ui';
 
@@ -355,7 +354,7 @@ export class SegmentAnalyticsService {
   public set analytics(instance: Analytics | undefined) {
     if (instance) {
       this._analytics = instance;
-      console.log(`%cSegment analytics initialized!`, 'color:brown');
+      console.log('%cSegment analytics initialized!', 'color:brown');
     }
   }
 
@@ -400,6 +399,7 @@ export class SegmentAnalyticsService {
    * Every time the user navigates to a page
    */
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   public recordIdentity(userId: string, userInfo: any, callback?: any | undefined): void {
     if (this._analytics) {
       this._analytics.identify(userId, userInfo, callback);
@@ -431,6 +431,7 @@ export class SegmentAnalyticsService {
    * Every time the user performs an action that we want to track :D
    */
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   public recordEvent(event: AppUsageEvent | StatsTriggertEvent, data?: any, callback?: any | undefined): void {
     if (this._analytics) {
       if (event && !data && !callback) {

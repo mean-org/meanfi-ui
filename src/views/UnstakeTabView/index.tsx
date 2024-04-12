@@ -9,7 +9,12 @@ import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
-import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
+import {
+  Listener,
+  TxConfirmationContext,
+  type TxConfirmationInfo,
+  confirmationEvents,
+} from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
 import { AppUsageEvent, type SegmentUnstakeMeanData } from 'middleware/segment-service';
@@ -20,9 +25,10 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
 
-let inputDebounceTimeout: any;
+let inputDebounceTimeout: NodeJS.Timeout;
 
 export const UnstakeTabView = (props: {
   stakeClient: StakingClient;
@@ -89,8 +95,8 @@ export const UnstakeTabView = (props: {
     setCanFetchUnstakeQuote(true);
   };
 
-  const handleFromCoinAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleFromCoinAmountChange = (e: string) => {
+    let newValue = e;
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -102,7 +108,7 @@ export const UnstakeTabView = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -144,7 +150,7 @@ export const UnstakeTabView = (props: {
     );
   };
 
-  // Handler paste clipboard data
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const pasteHandler = useCallback((e: any) => {
     const getClipBoardData = e.clipboardData.getData('Text');
     const replaceCommaToDot = getClipBoardData.replace(',', '');
@@ -156,9 +162,9 @@ export const UnstakeTabView = (props: {
 
   const onStartTransaction = useCallback(async () => {
     let transaction: Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     resetTransactionStatus();
 
@@ -239,19 +245,19 @@ export const UnstakeTabView = (props: {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Unstake transaction failed', {
-          transcript: transactionLog,
-        });
-        segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('Unstake transaction failed', {
+        transcript: transactionLog,
+      });
+      segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
     if (wallet && publicKey && selectedToken) {
@@ -319,10 +325,10 @@ export const UnstakeTabView = (props: {
   ]);
 
   const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
-    let event: any;
     if (operation === OperationType.Unstake) {
-      event = success ? AppUsageEvent.UnstakeMeanCompleted : AppUsageEvent.UnstakeMeanFailed;
-      segmentAnalytics.recordEvent(event, { signature: signature });
+      segmentAnalytics.recordEvent(success ? AppUsageEvent.UnstakeMeanCompleted : AppUsageEvent.UnstakeMeanFailed, {
+        signature: signature,
+      });
     }
   }, []);
 
@@ -337,7 +343,9 @@ export const UnstakeTabView = (props: {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       const path = window.location.pathname;
       if (!path.startsWith(STAKING_ROUTE_BASE_PATH)) {
         return;
@@ -355,12 +363,14 @@ export const UnstakeTabView = (props: {
         reloadStakePools();
       }
     },
-    [refreshAccount, recordTxConfirmation],
+    [refreshAccount, recordTxConfirmation, reloadStakePools],
   );
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       if (item.operationType === OperationType.Unstake) {
         consoleOut('onTxTimedout event executed:', item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, false);
@@ -376,7 +386,7 @@ export const UnstakeTabView = (props: {
         });
       }
     },
-    [refreshAccount, recordTxConfirmation],
+    [refreshAccount, recordTxConfirmation, reloadStakePools],
   );
 
   const getMeanQuote = useCallback(
@@ -410,6 +420,7 @@ export const UnstakeTabView = (props: {
   }, [getTokenPriceByAddress, priceList, unstakedToken]);
 
   // Unstake quote - For full unstaked balance
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (selectedToken && selectedToken.symbol === 'sMEAN') {
       if (tokenBalance > 0) {
@@ -448,12 +459,13 @@ export const UnstakeTabView = (props: {
           );
           setSMeanToMeanRate(value.sMeanToMeanRateUiAmount);
         })
-        .catch((error: any) => {
+        .catch(error => {
           console.error(error);
         });
     }
   }, [fromCoinAmount, stakeClient, canFetchUnstakeQuote, selectedToken]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     const percentageFromCoinAmount =
       tokenBalance > 0
@@ -464,8 +476,6 @@ export const UnstakeTabView = (props: {
       setFromCoinAmount(percentageFromCoinAmount);
       setPercentageValue('');
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentageValue]);
 
   /**
@@ -493,6 +503,7 @@ export const UnstakeTabView = (props: {
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Stop event subscriptions -> UnstakeTabView', '', 'brown');
@@ -502,7 +513,6 @@ export const UnstakeTabView = (props: {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ///////////////
@@ -541,10 +551,11 @@ export const UnstakeTabView = (props: {
       <div className={`well${isBusy ? ' disabled' : ''}`}>
         <div className='flexible-right mb-1'>
           <div className='token-group'>
-            {percentages.map((percentage, index) => (
-              <div key={index} className='mb-1 d-flex flex-column align-items-center'>
+            {percentages.map(percentage => (
+              <div key={percentage} className='mb-1 d-flex flex-column align-items-center'>
                 <div
                   className={`token-max simplelink ${tokenBalance !== 0 ? 'active' : 'disabled'}`}
+                  onKeyDown={() => onChangeValue(percentage)}
                   onClick={() => onChangeValue(percentage)}
                 >
                   {percentage}%
@@ -573,7 +584,7 @@ export const UnstakeTabView = (props: {
               autoComplete='off'
               autoCorrect='off'
               type='text'
-              onChange={handleFromCoinAmountChange}
+              onChange={e => handleFromCoinAmountChange(e.target.value)}
               pattern='^[0-9]*[.,]?[0-9]*$'
               placeholder='0.0'
               minLength={1}
@@ -596,6 +607,7 @@ export const UnstakeTabView = (props: {
           <div className='right inner-label'>
             <span
               className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+              onKeyDown={() => refreshPrices()}
               onClick={() => refreshPrices()}
             >
               ~$
@@ -614,7 +626,7 @@ export const UnstakeTabView = (props: {
             `${formatThousands(Number.parseFloat(fromCoinAmount), 6)} sMEAN ≈`,
             `${formatThousands(unstakeMeanValue, 6)} MEAN`,
           )}
-        {sMeanToMeanRate > 0 && infoRow(`1 sMEAN ≈`, `${cutNumber(sMeanToMeanRate, 6)} MEAN`)}
+        {sMeanToMeanRate > 0 && infoRow('1 sMEAN ≈', `${cutNumber(sMeanToMeanRate, 6)} MEAN`)}
       </div>
 
       {/* Action button */}

@@ -82,8 +82,7 @@ export function useFetch<T = unknown>(options?: FetchOptions): State<T> {
     return () => {
       cancelRequest.current = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options?.url]);
+  }, [options?.url, options?.method, options?.params]);
 
   return state;
 }

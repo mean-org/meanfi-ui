@@ -70,6 +70,7 @@ export const AccountSelector = (props: {
   }, [publicKey, setNeedReloadMultisigAccounts]);
 
   // Process userTokensResponse from AppState to get a renderable list of tokens
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!publicKey) {
       return;
@@ -78,8 +79,6 @@ export const AccountSelector = (props: {
     if (accountTokens === undefined) {
       refreshAssetValues();
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountTokens, publicKey]);
 
   // Calculates total value of assets

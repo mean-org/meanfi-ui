@@ -405,7 +405,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       await delay(item.completedMessageTimeout ? item.completedMessageTimeout * 1000 : 5000);
       notification.open({
         type: 'info',
-        message: <span></span>,
+        message: <span>&nbsp;</span>,
         description: <span>{message1}</span>,
         key: notificationKey,
         duration: 8,
@@ -414,7 +414,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         onClose: () => {
           notification.open({
             type: 'info',
-            message: <span></span>,
+            message: <span>&nbsp;</span>,
             description: <span>{message2}</span>,
             key: notificationKey,
             duration: 8,
@@ -430,7 +430,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       const path = window.location.pathname;
       if (!path.startsWith(VESTING_ROUTE_BASE_PATH)) {
         return;
@@ -577,7 +579,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       const hardReloadContracts = () => {
         const contractsRefreshCta = document.getElementById('hard-refresh-contracts-cta');
         if (contractsRefreshCta) {
@@ -2879,8 +2883,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     return () => {
       clearTimeout(timeout);
     };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [priceList, priceList, connection, splTokenList, balancesSource, selectedAccount.address]);
 
   // Build CTAs
@@ -3168,7 +3170,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           setAssociatedTokenBalance(new BN(0));
         });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connection, publicKey, selectedVestingContract]);
 
   // Set a tab if none already set
@@ -3250,6 +3251,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   }, [paymentStreaming, publicKey, vestingContract, selectedVestingContract]);
 
   // Set a multisig based on address in context
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!isMultisigContext || !multisigAccounts || !selectedAccount.address) {
       return;
@@ -3264,11 +3266,10 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     } else {
       setSelectedMultisig(undefined);
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAccount.address, isMultisigContext, multisigAccounts]);
 
   // Get the Vesting contract activity while in "activity" tab
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (
       publicKey &&
@@ -3279,8 +3280,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     ) {
       getContractActivity(selectedVestingContract.id.toBase58());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, paymentStreaming, publicKey, selectedVestingContract]);
+  }, [activeTab, paymentStreaming, publicKey, selectedVestingContract, contractActivity.length]);
 
   // Get fees for multisig actions
   useEffect(() => {
@@ -3352,6 +3352,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   }, [connected, publicKey, previousWalletConnectState, clearFormValues, onTxConfirmed, onTxTimedout]);
 
   // Live data calculation
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!publicKey || !treasuryList) {
       return;
@@ -3387,7 +3388,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     return () => {
       clearTimeout(timeout);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, streamingAccountsSummary, treasuryList]);
 
   // Setup event listeners
@@ -3403,6 +3403,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Stop event subscriptions -> VestingView', '', 'brown');
@@ -3415,7 +3416,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       setSelectedToken(undefined);
       setCanDisplayMyTvl(false);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ////////////////////////////

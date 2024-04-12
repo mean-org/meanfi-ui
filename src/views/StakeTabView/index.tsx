@@ -31,11 +31,11 @@ import './style.scss';
 import useRealmsDeposit from './useRealmsDeposit';
 import useUnstakeQuote from './useUnstakeQuote';
 
-let inputDebounceTimeout: any;
+let inputDebounceTimeout: NodeJS.Timeout;
 
 export const StakeTabView = (props: {
   meanBalance: number;
-  onTxFinished: any;
+  onTxFinished: () => void;
   selectedToken: TokenInfo | undefined;
   smeanBalance: number;
   smeanDecimals: number;
@@ -107,6 +107,7 @@ export const StakeTabView = (props: {
     }, INPUT_DEBOUNCE_TIME);
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const handleFromCoinAmountChange = (e: any) => {
     let newValue = e.target.value;
 
@@ -163,6 +164,7 @@ export const StakeTabView = (props: {
   };
 
   // Handler paste clipboard data
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const pasteHandler = (e: any) => {
     const getClipBoardData = e.clipboardData.getData('Text');
     const replaceCommaToDot = getClipBoardData.replace(',', '');
@@ -175,17 +177,19 @@ export const StakeTabView = (props: {
   const getMaxDecimalsForValue = (value: number) => {
     if (value < 5) {
       return 6;
-    } else if (value >= 5 && value < 100) {
-      return 4;
-    } else {
-      return 2;
     }
+    if (value >= 5 && value < 100) {
+      return 4;
+    }
+
+    return 2;
   };
 
   const onStartTransaction = useCallback(async () => {
     let transaction: Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     let transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -269,19 +273,19 @@ export const StakeTabView = (props: {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Stake transaction failed', {
-          transcript: transactionLog,
-        });
-        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('Stake transaction failed', {
+        transcript: transactionLog,
+      });
+      segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
     if (wallet && publicKey && selectedToken) {
@@ -348,16 +352,18 @@ export const StakeTabView = (props: {
   ]);
 
   const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
-    let event: any;
     if (operation === OperationType.Stake) {
-      event = success ? AppUsageEvent.StakeMeanCompleted : AppUsageEvent.StakeMeanFailed;
-      segmentAnalytics.recordEvent(event, { signature: signature });
+      segmentAnalytics.recordEvent(success ? AppUsageEvent.StakeMeanCompleted : AppUsageEvent.StakeMeanFailed, {
+        signature: signature,
+      });
     }
   }, []);
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       const path = window.location.pathname;
       if (!path.startsWith(STAKING_ROUTE_BASE_PATH)) {
         return;
@@ -390,7 +396,9 @@ export const StakeTabView = (props: {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       const reloadStakePools = () => {
         const stakePoolsRefreshCta = document.getElementById('refresh-stake-pool-info');
         if (stakePoolsRefreshCta) {
@@ -424,6 +432,7 @@ export const StakeTabView = (props: {
   /////////////////////
 
   // Stake quote for 1 MEAN
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!stakeClient) {
       return;
@@ -434,9 +443,9 @@ export const StakeTabView = (props: {
       .then((value: StakeQuote) => {
         consoleOut('stakeQuote:', value, 'blue');
         setStakedMeanPrice(value.sMeanOutUiAmount);
-        consoleOut(`Quote for 1 MEAN:`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
+        consoleOut('Quote for 1 MEAN:', `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
       })
-      .catch((error: any) => {
+      .catch(error => {
         console.error(error);
       });
   }, [fromCoinAmount, stakeClient, canFetchStakeQuote]);
@@ -461,7 +470,7 @@ export const StakeTabView = (props: {
             'blue',
           );
         })
-        .catch((error: any) => {
+        .catch(error => {
           console.error(error);
         })
         .finally(() => setFetchingStakeQuote(false));
@@ -481,6 +490,7 @@ export const StakeTabView = (props: {
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Stop event subscriptions -> StakeTabView', '', 'brown');
@@ -490,7 +500,6 @@ export const StakeTabView = (props: {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ///////////////
@@ -551,6 +560,7 @@ export const StakeTabView = (props: {
               {selectedToken && meanBalance ? (
                 <div
                   className='token-max simplelink'
+                  onKeyDown={() => {}}
                   onClick={() => {
                     const newAmount = meanBalance.toFixed(selectedToken?.decimals || 9);
                     setFromCoinAmount(newAmount);
@@ -591,6 +601,7 @@ export const StakeTabView = (props: {
           <div className='right inner-label'>
             <span
               className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+              onKeyDown={() => refreshPrices()}
               onClick={() => refreshPrices()}
             >
               ~$
@@ -619,7 +630,7 @@ export const StakeTabView = (props: {
             )} MEAN ≈`,
             `${formatThousands(stakeQuote, getMaxDecimalsForValue(stakeQuote))} sMEAN`,
           )}
-        {stakedMeanPrice > 0 && infoRow(`1 MEAN ≈`, `${cutNumber(stakedMeanPrice, 6)} sMEAN`)}
+        {stakedMeanPrice > 0 && infoRow('1 MEAN ≈', `${cutNumber(stakedMeanPrice, 6)} sMEAN`)}
       </div>
 
       {/* Action button */}

@@ -256,6 +256,7 @@ export const TreasuryAddFundsModal = (props: {
   }, [isVisible, treasuryDetails, treasuryList, workingTreasuryDetails]);
 
   // Set token based on selected treasury details
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (hasNoStreamingAccounts || !workingAssociatedToken || !userBalances) {
       return;
@@ -264,14 +265,13 @@ export const TreasuryAddFundsModal = (props: {
     getTokenOrCustomToken(connection, workingAssociatedToken, getTokenByMintAddress).then(token => {
       consoleOut('PaymentStreamingAccount workingAssociatedToken:', token, 'blue');
       setSelectedToken(token);
-      consoleOut(`userBalances:`, userBalances, 'darkorange');
+      consoleOut('userBalances:', userBalances, 'darkorange');
       if (userBalances[workingAssociatedToken]) {
         setSelectedTokenBalance(userBalances[workingAssociatedToken]);
       } else {
         setSelectedTokenBalance(0);
       }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connection, userBalances, workingAssociatedToken, hasNoStreamingAccounts]);
 
   // Set available balance in BN either from user's wallet or from treasury if a stream is being funded

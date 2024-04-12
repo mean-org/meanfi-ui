@@ -11,6 +11,7 @@ import { SOL_MINT } from 'middleware/ids';
 import { ACCOUNT_LAYOUT } from 'middleware/layouts';
 import { consoleOut } from 'middleware/ui';
 import { getAmountFromLamports } from 'middleware/utils';
+import type { MultisigVault } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SafeInfo } from '../SafeInfo';
@@ -62,7 +63,7 @@ export const SafeMeanInfo = (props: {
         return [];
       }
 
-      const results = accountInfos.map((t: any) => {
+      const results = accountInfos.map(t => {
         const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
         tokenAccount.address = t.pubkey;
         return tokenAccount;
@@ -92,10 +93,11 @@ export const SafeMeanInfo = (props: {
       closeAuthority: undefined,
       address: selectedMultisig.id,
       decimals: 9,
-    } as any;
+    } as unknown as MultisigVault;
   }, [selectedMultisig, multisigSolBalance]);
 
   // Get Multisig Vaults
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!connection || !multisigClient || !address || !selectedMultisig || !loadingAssets) {
       return;
@@ -107,17 +109,21 @@ export const SafeMeanInfo = (props: {
 
         getMultisigVaults(connection, selectedMultisig.id)
           .then(result => {
-            const modifiedResults = new Array<any>();
-            modifiedResults.push(solToken);
-            result.forEach(item => {
+            const modifiedResults = new Array<MultisigVault>();
+            if (solToken) {
+              modifiedResults.push(solToken);
+            }
+            for (const item of result) {
               modifiedResults.push(item);
-            });
+            }
             setMultisigVaults(modifiedResults);
             consoleOut('Multisig assets', modifiedResults, 'blue');
           })
           .catch(err => {
             console.error(err);
-            setMultisigVaults([solToken]);
+            if (solToken) {
+              setMultisigVaults([solToken]);
+            }
           })
           .finally(() => setLoadingAssets(false));
       }
@@ -126,8 +132,6 @@ export const SafeMeanInfo = (props: {
     return () => {
       clearTimeout(timeout);
     };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, connection, loadingAssets, multisigClient, selectedMultisig]);
 
   // Keep account balance updated
@@ -140,6 +144,7 @@ export const SafeMeanInfo = (props: {
   }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
 
   // Get multisig SOL balance
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!connection || !address || !selectedMultisig) {
       return;
@@ -158,8 +163,6 @@ export const SafeMeanInfo = (props: {
     });
 
     return () => clearTimeout(timeout);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, connection, selectedMultisig]);
 
   useEffect(() => {

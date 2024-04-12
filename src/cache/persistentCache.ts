@@ -2,6 +2,7 @@ export const MAX_CACHE_TTL = 86400; // 1 Day
 
 export type CacheItem = {
   timestamp: number;
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   data: any;
 };
 
@@ -19,6 +20,7 @@ export const readFromCache = (key: string): CacheItem | null => {
   }
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export const writeToCache = (key: string, value: any) => {
   if (typeof window === 'undefined') {
     return;

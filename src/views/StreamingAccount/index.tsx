@@ -105,29 +105,30 @@ import { OperationType, TransactionStatus } from 'models/enums';
 import { ZERO_FEES } from 'models/multisig';
 import type { TreasuryWithdrawParams } from 'models/treasuries';
 import type { AddFundsParams } from 'models/vesting';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
+import type { LooseObject } from 'types/LooseObject';
 
-export const StreamingAccountView = (props: {
+interface StreamingAccountViewProps {
   multisigAccounts: MultisigInfo[] | undefined;
-  onSendFromStreamingAccountDetails?: any;
-  onSendFromStreamingAccountStreamInfo?: any;
+  onSendFromStreamingAccountDetails?: () => void;
+  onSendFromStreamingAccountStreamInfo?: (stream: Stream | StreamInfo) => void;
   selectedMultisig: MultisigInfo | undefined;
   streamingAccountSelected: PaymentStreamingAccount | TreasuryInfo | undefined;
   treasuryList: (PaymentStreamingAccount | TreasuryInfo)[] | undefined;
-}) => {
-  const {
-    multisigAccounts,
-    onSendFromStreamingAccountDetails,
-    onSendFromStreamingAccountStreamInfo,
-    selectedMultisig,
-    streamingAccountSelected,
-    treasuryList,
-  } = props;
+}
 
+export const StreamingAccountView = ({
+  multisigAccounts,
+  onSendFromStreamingAccountDetails,
+  onSendFromStreamingAccountStreamInfo,
+  selectedMultisig,
+  streamingAccountSelected,
+  treasuryList,
+}: StreamingAccountViewProps) => {
   const {
     splTokenList,
     selectedAccount,
@@ -156,7 +157,7 @@ export const StreamingAccountView = (props: {
   const [loadingStreamingAccountStreams, setLoadingStreamingAccountStreams] = useState(true);
   // Transactions
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [userBalances, setUserBalances] = useState<any>();
+  const [userBalances, setUserBalances] = useState<LooseObject>();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -223,12 +224,14 @@ export const StreamingAccountView = (props: {
     });
   }, [setTransactionStatus]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   const refreshUserBalances = useCallback(
     (source?: PublicKey) => {
       if (!connection || !publicKey || !splTokenList) {
         return;
       }
 
+      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
       const balancesMap: any = {};
       const pk = source ?? publicKey;
       consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
@@ -261,7 +264,6 @@ export const StreamingAccountView = (props: {
         })
         .finally(() => setUserBalances(balancesMap));
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [publicKey, connection],
   );
 
@@ -581,18 +583,18 @@ export const StreamingAccountView = (props: {
             default:
               return t('streams.status.status-running');
           }
-        } else {
-          switch (v2.statusCode) {
-            case STREAM_STATUS_CODE.Scheduled:
-              return t('streams.status.status-scheduled');
-            case STREAM_STATUS_CODE.Paused:
-              if (v2.isManuallyPaused) {
-                return t('streams.status.status-paused');
-              }
-              return t('streams.status.status-stopped');
-            default:
-              return t('streams.status.status-running');
-          }
+        }
+
+        switch (v2.statusCode) {
+          case STREAM_STATUS_CODE.Scheduled:
+            return t('streams.status.status-scheduled');
+          case STREAM_STATUS_CODE.Paused:
+            if (v2.isManuallyPaused) {
+              return t('streams.status.status-paused');
+            }
+            return t('streams.status.status-stopped');
+          default:
+            return t('streams.status.status-running');
         }
       }
     },
@@ -612,9 +614,9 @@ export const StreamingAccountView = (props: {
         const unallocated = getUnallocatedBalance(tsry);
         if (isNewTreasury) {
           return unallocated;
-        } else {
-          return makeInteger((tsry as TreasuryInfo).balance - (tsry as TreasuryInfo).allocationAssigned, decimals);
         }
+
+        return makeInteger((tsry as TreasuryInfo).balance - (tsry as TreasuryInfo).allocationAssigned, decimals);
       }
       return new BN(0);
     },
@@ -633,11 +635,11 @@ export const StreamingAccountView = (props: {
         if (paymentStreaming) {
           paymentStreaming
             .listStreams({ psAccount: treasuryPk })
-            .then((streams: any) => {
+            .then(streams => {
               consoleOut('treasuryStreams:', streams, 'blue');
               setStreamingAccountStreams(streams);
             })
-            .catch((err: any) => {
+            .catch(err => {
               console.error(err);
               setStreamingAccountStreams([]);
             })
@@ -648,11 +650,11 @@ export const StreamingAccountView = (props: {
       } else {
         if (ms) {
           ms.listStreams({ treasury: treasuryPk })
-            .then((streams: any) => {
+            .then(streams => {
               consoleOut('treasuryStreams:', streams, 'blue');
               setStreamingAccountStreams(streams);
             })
-            .catch((err: any) => {
+            .catch(err => {
               console.error(err);
               setStreamingAccountStreams([]);
             })
@@ -777,9 +779,10 @@ export const StreamingAccountView = (props: {
 
   const onExecuteAddFundsTransaction = async (params: TreasuryTopupParams) => {
     let transaction: VersionedTransaction | Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
     let multisigAuth = '';
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     let transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -863,7 +866,7 @@ export const StreamingAccountView = (props: {
             amount,
             1, // former AllocationType.Specific
           )
-          .then((value: any) => {
+          .then(value => {
             consoleOut('addFunds returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -876,7 +879,7 @@ export const StreamingAccountView = (props: {
             transaction = value;
             return true;
           })
-          .catch((error: any) => {
+          .catch(error => {
             console.error('addFunds error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -891,16 +894,16 @@ export const StreamingAccountView = (props: {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('PaymentStreamingAccount Add funds transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('PaymentStreamingAccount Add funds transaction failed', {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
     const addFunds = async (data: AddFundsParams) => {
@@ -1178,7 +1181,7 @@ export const StreamingAccountView = (props: {
               ? `Create proposal to fund streaming account with ${amountDisplay}`
               : `Fund streaming account with ${amountDisplay}`;
             const completed = multisigAuth
-              ? `Streaming account funding has been submitted for approval.`
+              ? 'Streaming account funding has been submitted for approval.'
               : `Streaming account funded with ${amountDisplay}`;
             enqueueTransactionConfirmation({
               signature,
@@ -1234,8 +1237,9 @@ export const StreamingAccountView = (props: {
 
   const onExecuteTreasuryTransferFundsTx = async (data: TreasuryWithdrawParams) => {
     let transaction: VersionedTransaction | Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     let transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -1551,8 +1555,9 @@ export const StreamingAccountView = (props: {
 
   const onExecuteCloseTreasuryTransaction = async (title: string) => {
     let transaction: VersionedTransaction | Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     let transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -1624,7 +1629,7 @@ export const StreamingAccountView = (props: {
             publicKey, // treasurer
             treasury, // treasury
           )
-          .then((value: any) => {
+          .then(value => {
             consoleOut('closeTreasury returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -1637,7 +1642,7 @@ export const StreamingAccountView = (props: {
             transaction = value;
             return true;
           })
-          .catch((error: any) => {
+          .catch(error => {
             console.error('closeTreasury error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1652,18 +1657,19 @@ export const StreamingAccountView = (props: {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Close PaymentStreamingAccount transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('Close PaymentStreamingAccount transaction failed', {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     const closeTreasury = async (data: any) => {
       if (!publicKey || !paymentStreaming) {
         return null;
@@ -1910,8 +1916,9 @@ export const StreamingAccountView = (props: {
 
   const onExecuteRefreshTreasuryBalance = useCallback(async () => {
     let transaction: VersionedTransaction | Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     let transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -1957,6 +1964,7 @@ export const StreamingAccountView = (props: {
       return tx;
     };
 
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     const refreshTreasuryData = async (data: any) => {
       if (!publicKey || !streamingAccountSelected || !paymentStreaming) {
         return null;
@@ -2162,7 +2170,7 @@ export const StreamingAccountView = (props: {
   //////////////
 
   const hideDetailsHandler = () => {
-    onSendFromStreamingAccountDetails();
+    onSendFromStreamingAccountDetails?.();
   };
 
   /////////////////////
@@ -2213,7 +2221,6 @@ export const StreamingAccountView = (props: {
           setAssociatedTokenBalance(new BN(0));
         });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connection, publicKey, streamingAccountSelected]);
 
   // Automatically update all token balances (in token list)
@@ -2270,9 +2277,10 @@ export const StreamingAccountView = (props: {
       const treasuryPk = new PublicKey(accountId);
       getStreamingAccountStreams(treasuryPk, isNewTreasury);
     }
-  }, [ms, publicKey, isNewTreasury, streamingAccountSelected, getStreamingAccountStreams, streamingItemId]);
+  }, [publicKey, isNewTreasury, streamingAccountSelected, getStreamingAccountStreams, streamingItemId]);
 
   // Get the Streeaming Account activity while in "activity" tab
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (
       publicKey &&
@@ -2283,7 +2291,6 @@ export const StreamingAccountView = (props: {
     ) {
       getStreamingAccountActivity(streamingAccountSelected.id.toString());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, paymentStreaming, publicKey, streamingAccountSelected]);
 
   // Get the effective balance of the treasury
@@ -2354,7 +2361,7 @@ export const StreamingAccountView = (props: {
         message += 'Streaming account created';
         break;
       case ActivityActionCode.StreamTemplateUpdated:
-        message += `Vesting contract modified`;
+        message += 'Vesting contract modified';
         break;
       case ActivityActionCode.FundsAddedToAccount:
         message += 'Deposit funds in the streaming account';
@@ -2396,7 +2403,7 @@ export const StreamingAccountView = (props: {
       items.push({
         key: '00-create-stream',
         label: (
-          <div onClick={showCreateStreamModal}>
+          <div onKeyDown={showCreateStreamModal} onClick={showCreateStreamModal}>
             <span className='menu-item-text'>Create stream</span>
           </div>
         ),
@@ -2409,7 +2416,7 @@ export const StreamingAccountView = (props: {
     items.push({
       key: '01-close-account',
       label: (
-        <div onClick={showCloseTreasuryModal}>
+        <div onKeyDown={showCloseTreasuryModal} onClick={showCloseTreasuryModal}>
           <span className='menu-item-text'>Close account</span>
         </div>
       ),
@@ -2422,7 +2429,7 @@ export const StreamingAccountView = (props: {
       items.push({
         key: '02-refresh-account',
         label: (
-          <div onClick={() => onExecuteRefreshTreasuryBalance()}>
+          <div onKeyDown={() => onExecuteRefreshTreasuryBalance()} onClick={() => onExecuteRefreshTreasuryBalance()}>
             <span className='menu-item-text'>Refresh account data</span>
           </div>
         ),
@@ -2432,7 +2439,7 @@ export const StreamingAccountView = (props: {
       items.push({
         key: '03-sol-balance',
         label: (
-          <div onClick={() => showSolBalanceModal()}>
+          <div onKeyDown={() => showSolBalanceModal()} onClick={() => showSolBalanceModal()}>
             <span className='menu-item-text'>SOL balance</span>
           </div>
         ),
@@ -2467,9 +2474,9 @@ export const StreamingAccountView = (props: {
         new Date(vA2.estimatedDepletionDate || (vA1.escrowEstimatedDepletionUtc as string) || '0').getTime() -
         new Date(vB2.estimatedDepletionDate || (vB1.escrowEstimatedDepletionUtc as string) || '0').getTime()
       );
-    } else {
-      return 0;
     }
+
+    return 0;
   };
 
   const renderStreamingAccountStreams = () => {
@@ -2490,7 +2497,7 @@ export const StreamingAccountView = (props: {
         {sortedStreamingAccountsStreamsList && sortedStreamingAccountsStreamsList.length > 0
           ? sortedStreamingAccountsStreamsList.map((stream, index) => {
               const onSelectStream = () => {
-                onSendFromStreamingAccountStreamInfo(stream);
+                onSendFromStreamingAccountStreamInfo?.(stream);
               };
 
               const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -2500,7 +2507,7 @@ export const StreamingAccountView = (props: {
 
               const streamToken = getStreamAssociatedMint(stream);
 
-              let img;
+              let img: ReactNode;
 
               if (selectedToken?.logoURI) {
                 img = (
@@ -2529,6 +2536,7 @@ export const StreamingAccountView = (props: {
               return (
                 <div
                   key={stream.id?.toString()}
+                  onKeyDown={onSelectStream}
                   onClick={onSelectStream}
                   className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
                 >
@@ -2563,6 +2571,7 @@ export const StreamingAccountView = (props: {
     return (
       <div
         key={item.signature}
+        onKeyDown={() => {}}
         onClick={() =>
           openLinkInNewTab(
             `${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`,
@@ -2593,9 +2602,9 @@ export const StreamingAccountView = (props: {
       }
       if (streamingAccountActivity !== undefined && streamingAccountActivity.length > 0) {
         return streamingAccountActivity.map((item, index) => renderActivityItem(item, index));
-      } else {
-        return <span className='pl-1'>This streaming account has no activity</span>;
       }
+
+      return <span className='pl-1'>This streaming account has no activity</span>;
     };
 
     return (
@@ -2606,6 +2615,7 @@ export const StreamingAccountView = (props: {
             <span
               className={loadingStreamingAccountActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
               role='link'
+              onKeyDown={() => {}}
               onClick={() => {
                 if (streamingAccountSelected) {
                   getStreamingAccountActivity(streamingAccountSelected.id.toString());
@@ -2686,7 +2696,11 @@ export const StreamingAccountView = (props: {
       <Spin spinning={loadingStreamingAccountStreams}>
         {!isXsDevice && (
           <Row gutter={[8, 8]} className='safe-details-resume mr-0 ml-0'>
-            <div onClick={hideDetailsHandler} className='back-button icon-button-container'>
+            <div
+              onKeyDown={hideDetailsHandler}
+              onClick={hideDetailsHandler}
+              className='back-button icon-button-container'
+            >
               <IconArrowBack className='mean-svg-icons' />
               <span className='ml-1'>Back</span>
             </div>
@@ -2771,7 +2785,11 @@ export const StreamingAccountView = (props: {
               message={
                 <>
                   <span>This streaming account received an incoming funds transfer.&nbsp;</span>
-                  <span className='simplelink underline' onClick={() => onExecuteRefreshTreasuryBalance()}>
+                  <span
+                    className='simplelink underline'
+                    onKeyDown={() => onExecuteRefreshTreasuryBalance()}
+                    onClick={() => onExecuteRefreshTreasuryBalance()}
+                  >
                     Refresh the account data
                   </span>
                   <span>&nbsp;to update the account balance.</span>
