@@ -1,7 +1,8 @@
 import { readFromCache, writeToCache } from 'cache/persistentCache';
 import type { LooseObject } from 'types/LooseObject';
 
-export const saveAppData = (lsKey: string, data: unknown, accountAddress: string) => {
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+export const saveAppData = (lsKey: string, data: any, accountAddress: string) => {
   const currentValue = readFromCache(lsKey);
   const keyValueData: LooseObject = {};
 

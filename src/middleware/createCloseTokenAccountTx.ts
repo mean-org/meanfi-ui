@@ -24,7 +24,8 @@ export async function hasTokenBalance(connection: Connection, tokenPubkey: Publi
     return null;
   }
 
-  const info = (accountInfo as any).data['parsed']['info'] as TokenAccountInfo;
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+  const info = (accountInfo as any).data.parsed.info as TokenAccountInfo;
 
   return info.mint !== NATIVE_SOL.address &&
     info.mint !== WRAPPED_SOL_MINT_ADDRESS &&
@@ -47,7 +48,8 @@ export async function createCloseTokenAccountTx(connection: Connection, tokenPub
     return null;
   }
 
-  const info = (accountInfo as any).data['parsed']['info'] as TokenAccountInfo;
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+  const info = (accountInfo as any).data.parsed.info as TokenAccountInfo;
   const hasBalance = await hasTokenBalance(connection, tokenPubkey);
 
   // If the account has balance, burn the tokens

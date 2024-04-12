@@ -2,7 +2,6 @@ import { Metaplex } from '@metaplex-foundation/js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   type AccountInfo,
-  type Commitment,
   type Connection,
   type ParsedAccountData,
   PublicKey,
@@ -12,7 +11,6 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { TokenPrice } from 'models/TokenPrice';
 import type {
   AccountTokenParsedInfo,
-  AccountsDictionary,
   TokenAccountInfo,
   TokenSelectorListWithBalances,
   UserTokenAccount,
@@ -25,62 +23,6 @@ import { consoleOut, isLocal } from './ui';
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from './utils';
 
 //** Account helpers
-
-export async function getMultipleAccounts(
-  connection: Connection,
-  publicKeys: PublicKey[],
-  commitment?: Commitment,
-): Promise<Array<null | AccountsDictionary>> {
-  const keys: PublicKey[][] = [];
-  let tempKeys: PublicKey[] = [];
-
-  publicKeys.forEach(k => {
-    if (tempKeys.length >= 100) {
-      keys.push(tempKeys);
-      tempKeys = [];
-    }
-    tempKeys.push(k);
-  });
-
-  if (tempKeys.length > 0) {
-    keys.push(tempKeys);
-  }
-
-  const accounts: Array<null | {
-    executable: any;
-    owner: PublicKey;
-    lamports: any;
-    data: Buffer;
-  }> = [];
-
-  const resArray: { [key: number]: any } = {};
-
-  await Promise.all(
-    keys.map(async (key, index) => {
-      const res = await connection.getMultipleAccountsInfo(key, commitment);
-      resArray[index] = res;
-    }),
-  );
-
-  Object.keys(resArray)
-    .sort((a, b) => Number.parseInt(a) - Number.parseInt(b))
-    .forEach(itemIndex => {
-      const res = resArray[Number.parseInt(itemIndex)];
-      for (const account of res) {
-        accounts.push(account);
-      }
-    });
-
-  return accounts.map((account, idx) => {
-    if (account === null) {
-      return null;
-    }
-    return {
-      publicKey: publicKeys[idx],
-      account,
-    };
-  });
-}
 
 export async function readAccountInfo(connection: Connection, address?: string) {
   if (!connection || !address) {
@@ -95,14 +37,15 @@ export async function readAccountInfo(connection: Connection, address?: string) 
     return null;
   }
   if (accInfo) {
-    if (!(accInfo as any).data['parsed']) {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    if (!(accInfo as any).data.parsed) {
       return accInfo as AccountInfo<Buffer>;
-    } else {
-      return accInfo as AccountInfo<ParsedAccountData>;
     }
-  } else {
-    return null;
+
+    return accInfo as AccountInfo<ParsedAccountData>;
   }
+
+  return null;
 }
 
 export async function resolveParsedAccountInfo(connection: Connection, address?: string) {
@@ -128,16 +71,15 @@ export const getTokenAccountBalanceByAddress = async (
 };
 
 export async function fetchAccountTokens(connection: Connection, pubkey: PublicKey) {
-  let data;
   try {
     const { value } = await connection.getParsedTokenAccountsByOwner(pubkey, {
       programId: TOKEN_PROGRAM_ID,
     });
-    data = value.map((accountInfo: any) => {
+
+    return value.map(accountInfo => {
       const parsedInfo = accountInfo.account.data.parsed.info as TokenAccountInfo;
       return { parsedInfo, pubkey: accountInfo.pubkey };
-    });
-    return data as AccountTokenParsedInfo[];
+    }) as AccountTokenParsedInfo[];
   } catch (error) {
     console.error(error);
   }
@@ -162,11 +104,12 @@ const sortTokenAccountsByUsdValue = (tokens: UserTokenAccount[]) => {
   const sortedList = [...tokens].sort((a, b) => {
     if ((a.valueInUsd || 0) > (b.valueInUsd || 0)) {
       return -1;
-    } else if ((a.valueInUsd || 0) < (b.valueInUsd || 0)) {
-      return 1;
-    } else {
-      return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
     }
+    if ((a.valueInUsd || 0) < (b.valueInUsd || 0)) {
+      return 1;
+    }
+
+    return (b.balance || 0) < (a.balance || 0) ? -1 : 1;
   });
   return sortedList;
 };
@@ -175,11 +118,12 @@ const sortTokenAccountsByBalance = (tokens: UserTokenAccount[]) => {
   const sortedList = [...tokens].sort((a, b) => {
     if ((b.balance ?? 0) < (a.balance ?? 0)) {
       return -1;
-    } else if ((b.balance ?? 0) > (a.balance ?? 0)) {
-      return 1;
-    } else {
-      return 0;
     }
+    if ((b.balance ?? 0) > (a.balance ?? 0)) {
+      return 1;
+    }
+
+    return 0;
   });
   return sortedList;
 };
@@ -213,21 +157,22 @@ const getGroupedTokenAccounts = (accTks: AccountTokenParsedInfo[], list: UserTok
   if (groupsWithDuplicates.size > 0) {
     consoleOut('This account owns duplicated tokens:', groupsWithDuplicates, 'blue');
     return groupsWithDuplicates;
-  } else {
-    return undefined;
   }
+
+  return undefined;
 };
 
 const getTokenListForOwnedTokenAccounts = (accTks: AccountTokenParsedInfo[], list: UserTokenAccount[]) => {
   const newTokenAccountList = new Array<UserTokenAccount>();
-  accTks.forEach(item => {
+  for (const item of accTks) {
     const tokenFromMeanTokenList = list.find(t => t.address === item.parsedInfo.mint);
     const isTokenAccountInNewList = newTokenAccountList.some(t => t.address === item.parsedInfo.mint);
     if (tokenFromMeanTokenList && !isTokenAccountInNewList) {
       tokenFromMeanTokenList.owner = item.parsedInfo.owner;
       newTokenAccountList.push(tokenFromMeanTokenList);
     }
-  });
+  }
+
   return newTokenAccountList;
 };
 
@@ -434,6 +379,7 @@ export const getTokensWithBalances = async (
   try {
     const accTks = await fetchAccountTokens(connection, pk);
     if (!accTks) {
+      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
       const emptyMap: any = {};
       for (const t of splTokenList) {
         emptyMap[t.address] = 0;
@@ -492,14 +438,16 @@ export const getTokensWithBalances = async (
     // Sort by token balance
     response.tokenList = finalList;
 
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     const balancesMap: any = {};
-    accTks.forEach(item => {
+    for (const item of accTks) {
       balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount ?? 0;
-    });
+    }
     balancesMap[NATIVE_SOL.address] = nativeBalance;
     response.balancesMap = balancesMap;
   } catch (error) {
     console.error(error);
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     const emptyMap: any = {};
     for (const t of splTokenList) {
       emptyMap[t.address] = 0;

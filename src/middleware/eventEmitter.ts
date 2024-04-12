@@ -3,8 +3,10 @@ import { EventEmitter as Emitter } from 'eventemitter3';
 export class CacheUpdateEvent {
   static type = 'CacheUpdate';
   id: string;
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   parser: any;
   isNew: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   constructor(id: string, isNew: boolean, parser: any) {
     this.id = id;
     this.parser = parser;
@@ -28,6 +30,7 @@ export class MarketUpdateEvent {
   }
 }
 
+// biome-ignore lint/complexity/noStaticOnlyClass: <explanation>
 export class CacheClearEvent {
   static type = 'CacheDelete';
 }
@@ -51,6 +54,7 @@ export class EventEmitter {
     this.emitter.emit(MarketUpdateEvent.type, new MarketUpdateEvent(ids));
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   raiseCacheUpdated(id: string, isNew: boolean, parser: any) {
     this.emitter.emit(CacheUpdateEvent.type, new CacheUpdateEvent(id, isNew, parser));
   }

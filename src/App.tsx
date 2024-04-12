@@ -32,7 +32,6 @@ import './App.scss';
 import { AccountsProvider } from './contexts/accounts';
 import AppStateProvider from './contexts/appstate';
 import { ConnectionProvider } from './contexts/connection';
-import { OnlineStatusProvider } from './contexts/online-status';
 import TxConfirmationProvider from './contexts/transaction-status';
 import { SegmentAnalyticsService } from './middleware/segment-service';
 import { isLocal } from './middleware/ui';
@@ -126,25 +125,23 @@ function App() {
   }
 
   return (
-    <OnlineStatusProvider>
-      <BrowserRouter basename={'/'}>
-        <ConnectionProvider>
-          <WalletProvider wallets={wallets} autoConnect>
-            <MeanFiWalletProvider>
-              <WalletAccountProvider>
-                <AccountsProvider>
-                  <TxConfirmationProvider>
-                    <AppStateProvider>
-                      <AppRoutes />
-                    </AppStateProvider>
-                  </TxConfirmationProvider>
-                </AccountsProvider>
-              </WalletAccountProvider>
-            </MeanFiWalletProvider>
-          </WalletProvider>
-        </ConnectionProvider>
-      </BrowserRouter>
-    </OnlineStatusProvider>
+    <BrowserRouter basename={'/'}>
+      <ConnectionProvider>
+        <WalletProvider wallets={wallets} autoConnect>
+          <MeanFiWalletProvider>
+            <WalletAccountProvider>
+              <AccountsProvider>
+                <TxConfirmationProvider>
+                  <AppStateProvider>
+                    <AppRoutes />
+                  </AppStateProvider>
+                </TxConfirmationProvider>
+              </AccountsProvider>
+            </WalletAccountProvider>
+          </MeanFiWalletProvider>
+        </WalletProvider>
+      </ConnectionProvider>
+    </BrowserRouter>
   );
 }
 

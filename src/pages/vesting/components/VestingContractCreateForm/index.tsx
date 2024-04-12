@@ -332,7 +332,6 @@ export const VestingContractCreateForm = (props: {
       setContractTime(undefined);
       setPaymentStartDate('');
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   ////////////////////////////////////

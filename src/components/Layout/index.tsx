@@ -15,7 +15,6 @@ import {
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection, useConnectionConfig } from 'contexts/connection';
-import useOnlineStatus from 'contexts/online-status';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
@@ -26,7 +25,7 @@ import { AppUsageEvent } from 'middleware/segment-service';
 import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
 import { isUnauthenticatedRoute } from 'middleware/utils';
 import type { AccountDetails } from 'models/accounts';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import {
   browserName,
   deviceType,
@@ -47,7 +46,11 @@ export const PERFORMANCE_SAMPLE_INTERVAL = 60 * 60 * 1000;
 
 const { Header, Content, Footer } = Layout;
 
-export const AppLayout = React.memo((props: any) => {
+interface LayoutProps {
+  children: ReactNode;
+}
+
+export const AppLayout = React.memo(({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const {
@@ -66,7 +69,6 @@ export const AppLayout = React.memo((props: any) => {
   const { confirmationHistory, clearConfirmationHistory } = useContext(TxConfirmationContext);
   const { t, i18n } = useTranslation('common');
   const { refreshAccount } = useAccountsContext();
-  const { isOnline, responseTime } = useOnlineStatus();
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { provider, connected, publicKey, disconnect } = useWallet();
@@ -110,7 +112,7 @@ export const AppLayout = React.memo((props: any) => {
       const averageTps = Math.round(tpsValues[0]);
       return averageTps;
     } catch (error) {
-      consoleOut(`getRecentPerformanceSamples`, '', 'darkred');
+      consoleOut('getRecentPerformanceSamples', '', 'darkred');
       return null;
     }
   }, [connection]);
@@ -118,13 +120,14 @@ export const AppLayout = React.memo((props: any) => {
   const getPlatform = useCallback((): string => {
     if (isDesktop) {
       return 'Desktop';
-    } else if (isTablet) {
-      return 'Tablet';
-    } else if (isMobile) {
-      return 'Mobile';
-    } else {
-      return 'Other';
     }
+    if (isTablet) {
+      return 'Tablet';
+    }
+    if (isMobile) {
+      return 'Mobile';
+    }
+    return 'Other';
   }, []);
 
   ////////////////
@@ -189,7 +192,7 @@ export const AppLayout = React.memo((props: any) => {
     }
     // Report page view in Segment
     segmentAnalytics.recordPageVisit(location.pathname);
-  }, [publicKey, location.pathname]);
+  }, [location.pathname]);
 
   // Show Avg TPS on the console
   useEffect(() => {
@@ -267,7 +270,6 @@ export const AppLayout = React.memo((props: any) => {
     }
   }, [
     theme,
-    location,
     language,
     publicKey,
     connected,
@@ -279,11 +281,9 @@ export const AppLayout = React.memo((props: any) => {
     clearConfirmationHistory,
     refreshTokenBalance,
     setReferralAddress,
-    setSelectedAsset,
     refreshAccount,
     setStreamList,
     getPlatform,
-    t,
   ]);
 
   // Get referral address from query string params and save it to localStorage
@@ -343,9 +343,7 @@ export const AppLayout = React.memo((props: any) => {
       const device = getPlatform();
       const dateTime = `Client time: ${now.toUTCString()}`;
       const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
-      const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${
-        tpsAvg || '-'
-      }, latency: ${responseTime}ms`;
+      const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${tpsAvg || '-'}`;
       const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
       const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, branch: ${
         gitInfo.branch || '-'
@@ -360,18 +358,7 @@ export const AppLayout = React.memo((props: any) => {
       setDiagnosisInfo(debugInfo);
       setNeedRefresh(false);
     }
-  }, [
-    tpsAvg,
-    isOnline,
-    provider,
-    publicKey,
-    needRefresh,
-    responseTime,
-    connectionConfig,
-    setDiagnosisInfo,
-    getPlatform,
-    t,
-  ]);
+  }, [tpsAvg, provider, publicKey, needRefresh, connectionConfig, setDiagnosisInfo, getPlatform]);
 
   ////////////////////
   // Event handlers //
@@ -451,7 +438,7 @@ export const AppLayout = React.memo((props: any) => {
               </div>
               <AppBar menuType='mobile' topNavVisible={false} onOpenDrawer={showDrawer} />
             </Header>
-            <Content>{props.children}</Content>
+            <Content>{children}</Content>
             <Footer>
               <FooterBar onOpenDrawer={showDrawer} />
             </Footer>
@@ -478,8 +465,8 @@ export const AppLayout = React.memo((props: any) => {
         </Drawer>
       </>
     );
-  } else {
-    // Render dark MEAN background
-    return <>{renderAccountSelector()}</>;
   }
+
+  // Render dark MEAN background
+  return <>{renderAccountSelector()}</>;
 });

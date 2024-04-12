@@ -103,7 +103,9 @@ const CreateSafeView = () => {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       if (item.operationType === OperationType.CreateMultisig) {
         consoleOut(
           `CreateSafeView -> onTxConfirmed event handled for operation ${OperationType[item.operationType]}`,
@@ -128,7 +130,9 @@ const CreateSafeView = () => {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       if (item.operationType === OperationType.CreateMultisig) {
         consoleOut(`onTxTimedout event handled for operation ${OperationType[item.operationType]}`, item, 'crimson');
         recordTxConfirmation(item.signature, item.operationType, false);
@@ -228,6 +232,7 @@ const CreateSafeView = () => {
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Stop event subscriptions -> CreateSafeView', '', 'brown');
@@ -237,7 +242,6 @@ const CreateSafeView = () => {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   //////////////

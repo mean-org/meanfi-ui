@@ -106,8 +106,12 @@ const PrioritizationFeesConfigPopover = () => {
       };
       setTransactionPriorityOptions(newOptions);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [popoverVisible]);
+  }, [
+    popoverVisible,
+    transactionPriorityOptions.priorityOption,
+    transactionPriorityOptions.cap,
+    setTransactionPriorityOptions,
+  ]);
 
   return (
     <Popover

@@ -123,9 +123,9 @@ const useTransaction = () => {
   }, [setTransactionStatus]);
 
   // reset transaction status when rendered first time(i.e modal)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     resetTransactionStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onExecute = async <T extends LooseObject | undefined>({

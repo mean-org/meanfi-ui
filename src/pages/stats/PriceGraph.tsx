@@ -13,6 +13,7 @@ import './style.scss';
 const dateFormat = 'MMM Do, YYYY';
 const buttons = ['24H', '7D', '30D'];
 
+// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
 export const PriceGraph = (props: { onPriceData: any }) => {
   const [activeBtn, setActiveBtn] = useState(buttons[2]);
   const emptyArr: PriceGraphModel[] = [];
@@ -21,12 +22,14 @@ export const PriceGraph = (props: { onPriceData: any }) => {
   const [priceShownOnTop, setPriceShownOnTop] = useState('');
   const { priceList } = useContext(AppStateContext);
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const onClickHandler = (event: any) => {
     if (event.target.innerHTML !== activeBtn) {
       setActiveBtn(event.target.innerHTML);
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     (async () => {
       let days = 30;
@@ -51,10 +54,10 @@ export const PriceGraph = (props: { onPriceData: any }) => {
         props.onPriceData(lastItem.priceData);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeBtn, priceList]);
+  }, [activeBtn]);
 
   /*********************** CUSTOM TOOLTIP *************************/
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const CustomToolTip = ({ active, payload, label }: any) => {
     const [dateOnTooltip, setDateOnTooltip] = useState('');
     const [priceOnTooltip, setPriceOnTooltip] = useState('');
@@ -101,7 +104,7 @@ export const PriceGraph = (props: { onPriceData: any }) => {
         <div className='price-items_right'>
           {buttons.map((btn, index) => (
             <Button
-              key={index}
+              key={btn}
               type='ghost'
               shape='round'
               size='small'
@@ -132,12 +135,10 @@ export const PriceGraph = (props: { onPriceData: any }) => {
             height={50}
             tickFormatter={date => {
               const d = new Date(date);
-
               if (activeBtn === '24H') {
                 return moment(d).format('hha');
-              } else {
-                return moment(d).format('MMM, DD');
               }
+              return moment(d).format('MMM, DD');
             }}
           />
           <YAxis

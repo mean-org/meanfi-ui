@@ -1,6 +1,6 @@
 import { ArrowRightOutlined, WarningFilled } from '@ant-design/icons';
 import { MeanMultisig, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { PaymentStreaming, type Stream } from '@mean-dao/payment-streaming';
+import { PaymentStreaming, type Stream, type StreamEventData } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
@@ -73,6 +73,7 @@ import { useTranslation } from 'react-i18next';
 import ReactJson from 'react-json-view';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { failsafeConnectionConfig } from 'services/connections-hq';
+import type { LooseObject } from 'types/LooseObject';
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
 import './style.scss';
 
@@ -99,7 +100,7 @@ export const PlaygroundView = () => {
     useContext(AppStateContext);
   const { account } = useNativeAccount();
   const { width } = useWindowSize();
-  const [userBalances, setUserBalances] = useState<any>();
+  const [userBalances, setUserBalances] = useState<LooseObject>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [currentTab, setCurrentTab] = useState<TabOption>(undefined);
@@ -111,7 +112,7 @@ export const PlaygroundView = () => {
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [streamId, setStreamId] = useState<string>('');
-  const [streamRawData, setStreamRawData] = useState();
+  const [streamRawData, setStreamRawData] = useState<StreamEventData>();
   const [streamParsedData, setStreamParsedData] = useState<Stream | undefined>(undefined);
   const [displayStreamData, setDisplayStreamData] = useState<boolean>(false);
   const [targetAddress, setTargetAddress] = useState<string>('');
@@ -163,7 +164,7 @@ export const PlaygroundView = () => {
 
       getStreamForDebug(streamPK, paymentStreaming).then(value => {
         consoleOut('raw stream data payload:', value, 'blue');
-        setStreamRawData(value);
+        setStreamRawData(value ?? undefined);
       });
 
       paymentStreaming.getStream(streamPK).then(value => {
@@ -191,15 +192,14 @@ export const PlaygroundView = () => {
   const getParsedAccountType = (acc: AccountInfo<ParsedAccountData>) => {
     if (acc.owner.equals(SYSTEM_PROGRAM_ID)) {
       return 'System Owned Account';
-    } else if (acc.executable) {
-      return 'Program';
-    } else {
-      if (acc.data.program === 'spl-token') {
-        return acc.data.parsed.type === 'mint' ? 'Token Mint' : 'Token Account';
-      } else {
-        return 'PDA (Program Derived Address) account';
-      }
     }
+    if (acc.executable) {
+      return 'Program';
+    }
+    if (acc.data.program === 'spl-token') {
+      return acc.data.parsed.type === 'mint' ? 'Token Mint' : 'Token Account';
+    }
+    return 'PDA (Program Derived Address) account';
   };
 
   const getAccountInfoByAddress = useCallback(
@@ -220,7 +220,8 @@ export const PlaygroundView = () => {
         console.error(error);
       }
       if (accInfo) {
-        if (!(accInfo as any).data['parsed']) {
+        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+        if (!(accInfo as any).data.parsed) {
           const info = Object.assign({}, accInfo, {
             owner: accInfo.owner.toString(),
           }) as AccountInfo<Buffer>;
@@ -274,6 +275,7 @@ export const PlaygroundView = () => {
     window.dispatchEvent(new Event('resize'));
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const handleRecipientAddressChange = (e: any) => {
     const inputValue = e.target.value as string;
     // Set the input value
@@ -281,6 +283,7 @@ export const PlaygroundView = () => {
     setTargetAddress(trimmedValue);
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const handleStreamIdChange = (e: any) => {
     const inputValue = e.target.value as string;
     // Set the input value
@@ -383,7 +386,7 @@ export const PlaygroundView = () => {
       }
 
       const timeout = setTimeout(() => {
-        const filter = (t: any) => {
+        const filter = (t: TokenInfo) => {
           return (
             t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
             t.name.toLowerCase().includes(searchString.toLowerCase()) ||
@@ -391,7 +394,7 @@ export const PlaygroundView = () => {
           );
         };
 
-        const showFromList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
+        const showFromList = !searchString ? selectedList : selectedList.filter(t => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -409,6 +412,7 @@ export const PlaygroundView = () => {
   }, [updateTokenListByFilter]);
 
   const onTokenSearchInputChange = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     (e: any) => {
       const newValue = e.target.value;
       setTokenFilter(newValue);
@@ -574,7 +578,7 @@ export const PlaygroundView = () => {
         return [];
       }
 
-      const results = accountInfos.map((t: any) => {
+      const results = accountInfos.map(t => {
         const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
         tokenAccount.address = t.pubkey;
         return tokenAccount;
@@ -661,7 +665,7 @@ export const PlaygroundView = () => {
         setSearchParams({ option: 'first-tab' }, { replace: true });
         break;
     }
-  }, [location.search, searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams]);
 
   //#region Token selector - data management
 
@@ -724,6 +728,7 @@ export const PlaygroundView = () => {
   }, [connection, selectedMultisig]);
 
   // Get Multisig assets
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!connection || !multisigClient || !selectedMultisig || !loadingAssets) {
       return;
@@ -732,11 +737,13 @@ export const PlaygroundView = () => {
     const timeout = setTimeout(() => {
       getMultisigAssets(connection, selectedMultisig.id)
         .then(result => {
-          const modifiedResults = new Array<any>();
-          modifiedResults.push(solToken);
-          result.forEach(item => {
+          const modifiedResults = new Array<MultisigAsset>();
+          if (solToken) {
+            modifiedResults.push(solToken);
+          }
+          for (const item of result) {
             modifiedResults.push(item);
-          });
+          }
           setMultisigAssets(modifiedResults);
           consoleOut('Multisig assets', modifiedResults, 'blue');
         })
@@ -750,9 +757,7 @@ export const PlaygroundView = () => {
     return () => {
       clearTimeout(timeout);
     };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connection, loadingAssets, multisigClient, selectedMultisig]);
+  }, [connection, loadingAssets, multisigClient, selectedMultisig, solToken]);
 
   // Show amount of assets
   useEffect(() => {
@@ -865,11 +870,11 @@ export const PlaygroundView = () => {
     if (parsedAccountInfo) {
       if (isTokenMint) {
         return parsedAccountInfo.data.parsed.info.decimals || 0;
-      } else if (isTokenAccount) {
-        return parsedAccountInfo.data.parsed.info.tokenAmount.decimals || 0;
-      } else {
-        return 0;
       }
+      if (isTokenAccount) {
+        return parsedAccountInfo.data.parsed.info.tokenAmount.decimals || 0;
+      }
+      return 0;
     }
     return 0;
   }, [parsedAccountInfo, isTokenMint, isTokenAccount]);
@@ -998,7 +1003,7 @@ export const PlaygroundView = () => {
         </div>
         <div className='right'>
           <Tooltip title='Pick one of my assets' trigger='hover'>
-            <span className='flat-button change-button' onClick={showTokenSelector}>
+            <span className='flat-button change-button' onKeyDown={showTokenSelector} onClick={showTokenSelector}>
               <IconCoin className='mean-svg-icons' />
             </span>
           </Tooltip>
@@ -1045,7 +1050,11 @@ export const PlaygroundView = () => {
           {isValidAddress(value) ? (
             <>
               {!isSystemAccount(value) ? (
-                <span className='flat-button tiny mr-1' onClick={() => onScanAddress(value)}>
+                <span
+                  className='flat-button tiny mr-1'
+                  onKeyDown={() => onScanAddress(value)}
+                  onClick={() => onScanAddress(value)}
+                >
                   <IconEyeOn className='mean-svg-icons m-0' />
                 </span>
               ) : null}
@@ -1071,6 +1080,7 @@ export const PlaygroundView = () => {
           <div className='right'>
             <span
               className={`simplelink ${streamParsedData ? 'underline-on-hover' : 'disabled'}`}
+              onKeyDown={() => showStreamDetailModal('treasurer')}
               onClick={() => showStreamDetailModal('treasurer')}
             >
               View as treasurer
@@ -1078,6 +1088,7 @@ export const PlaygroundView = () => {
             <span className='mx-2'>|</span>
             <span
               className={`simplelink ${streamParsedData ? 'underline-on-hover' : 'disabled'}`}
+              onKeyDown={() => showStreamDetailModal('beneficiary')}
               onClick={() => showStreamDetailModal('beneficiary')}
             >
               View as beneficiary
@@ -1258,9 +1269,9 @@ export const PlaygroundView = () => {
           {parsedAccountInfo && renderparsedAccountInfo()}
         </div>
       );
-    } else {
-      return null;
     }
+
+    return null;
   };
 
   const renderDemo2Tab = () => {
@@ -1275,12 +1286,12 @@ export const PlaygroundView = () => {
             {publicKey ? (
               <>
                 <Tooltip title='Inspect my wallet address' trigger='hover'>
-                  <span className='flat-button change-button' onClick={onScanMyAddress}>
+                  <span className='flat-button change-button' onKeyDown={onScanMyAddress} onClick={onScanMyAddress}>
                     <IconWallet className='mean-svg-icons' />
                   </span>
                 </Tooltip>
                 <Tooltip title='Pick one of my assets' trigger='hover'>
-                  <span className='flat-button change-button' onClick={showTokenSelector}>
+                  <span className='flat-button change-button' onKeyDown={showTokenSelector} onClick={showTokenSelector}>
                     <IconCoin className='mean-svg-icons' />
                   </span>
                 </Tooltip>
@@ -1713,13 +1724,21 @@ export const PlaygroundView = () => {
       <div className='tabset-heading'>Notify and navigate</div>
       <div className='text-left mb-3'>
         <Space wrap={true}>
-          <span className='flat-button stroked' onClick={() => sequentialMessagesAndNavigate()}>
+          <span
+            className='flat-button stroked'
+            onKeyDown={() => sequentialMessagesAndNavigate()}
+            onClick={() => sequentialMessagesAndNavigate()}
+          >
             <span>Sequential messages → Navigate</span>
           </span>
-          <span className='flat-button stroked' onClick={() => stackedMessagesAndNavigate()}>
+          <span
+            className='flat-button stroked'
+            onKeyDown={() => stackedMessagesAndNavigate()}
+            onClick={() => stackedMessagesAndNavigate()}
+          >
             <span>Stacked messages → Navigate</span>
           </span>
-          <span className='flat-button stroked' onClick={() => interestingCase()}>
+          <span className='flat-button stroked' onKeyDown={() => interestingCase()} onClick={() => interestingCase()}>
             <span>Without title</span>
           </span>
         </Space>
@@ -1728,7 +1747,11 @@ export const PlaygroundView = () => {
       <div className='tabset-heading'>Test Updatable Notifications</div>
       <div className='text-left mb-3'>
         <Space>
-          <span className='flat-button stroked' onClick={() => reuseNotification('pepito')}>
+          <span
+            className='flat-button stroked'
+            onKeyDown={() => reuseNotification('pepito')}
+            onClick={() => reuseNotification('pepito')}
+          >
             <span>See mission status</span>
           </span>
         </Space>
@@ -1737,19 +1760,39 @@ export const PlaygroundView = () => {
       <div className='tabset-heading'>Test Standalone Notifications</div>
       <div className='text-left mb-3'>
         <Space wrap={true}>
-          <span className='flat-button stroked' onClick={() => showNotificationByType('info')}>
+          <span
+            className='flat-button stroked'
+            onKeyDown={() => showNotificationByType('info')}
+            onClick={() => showNotificationByType('info')}
+          >
             <span>Info</span>
           </span>
-          <span className='flat-button stroked' onClick={() => showNotificationByType('success')}>
+          <span
+            className='flat-button stroked'
+            onKeyDown={() => showNotificationByType('success')}
+            onClick={() => showNotificationByType('success')}
+          >
             <span>Success</span>
           </span>
-          <span className='flat-button stroked' onClick={() => showNotificationByType('warning')}>
+          <span
+            className='flat-button stroked'
+            onKeyDown={() => showNotificationByType('warning')}
+            onClick={() => showNotificationByType('warning')}
+          >
             <span>Warning</span>
           </span>
-          <span className='flat-button stroked' onClick={() => showNotificationByType('error')}>
+          <span
+            className='flat-button stroked'
+            onKeyDown={() => showNotificationByType('error')}
+            onClick={() => showNotificationByType('error')}
+          >
             <span>Error</span>
           </span>
-          <span className='flat-button stroked' onClick={() => showNotificationByType('info', true)}>
+          <span
+            className='flat-button stroked'
+            onKeyDown={() => showNotificationByType('info', true)}
+            onClick={() => showNotificationByType('info', true)}
+          >
             <span>With CTA</span>
           </span>
         </Space>
@@ -1758,7 +1801,11 @@ export const PlaygroundView = () => {
       <div className='tabset-heading'>Notification with UI interaction</div>
       <div className='text-left mb-3'>
         <Space>
-          <span className='flat-button stroked' onClick={() => handleNotifWithUiInteraction()}>
+          <span
+            className='flat-button stroked'
+            onKeyDown={() => handleNotifWithUiInteraction()}
+            onClick={() => handleNotifWithUiInteraction()}
+          >
             <span>Show me</span>
           </span>
         </Space>
@@ -1790,30 +1837,35 @@ export const PlaygroundView = () => {
       <div className='button-tabset-container'>
         <div
           className={`tab-button ${currentTab === 'first-tab' ? 'active' : ''}`}
+          onKeyDown={() => navigateToTab('first-tab')}
           onClick={() => navigateToTab('first-tab')}
         >
           Demo 1
         </div>
         <div
           className={`tab-button ${currentTab === 'test-stream' ? 'active' : ''}`}
+          onKeyDown={() => navigateToTab('test-stream')}
           onClick={() => navigateToTab('test-stream')}
         >
           Test Stream
         </div>
         <div
           className={`tab-button ${currentTab === 'multisig-tab' ? 'active' : ''}`}
+          onKeyDown={() => navigateToTab('multisig-tab')}
           onClick={() => navigateToTab('multisig-tab')}
         >
           Multisig info
         </div>
         <div
           className={`tab-button ${currentTab === 'account-info' ? 'active' : ''}`}
+          onKeyDown={() => navigateToTab('account-info')}
           onClick={() => navigateToTab('account-info')}
         >
           Account info
         </div>
         <div
           className={`tab-button ${currentTab === 'misc-tab' ? 'active' : ''}`}
+          onKeyDown={() => navigateToTab('misc-tab')}
           onClick={() => navigateToTab('misc-tab')}
         >
           Misc
@@ -1856,9 +1908,9 @@ export const PlaygroundView = () => {
             showUsdValues={true}
           />
         );
-      } else {
-        return null;
       }
+
+      return null;
     });
   };
 
@@ -1866,7 +1918,8 @@ export const PlaygroundView = () => {
     if (tokenFilter && selectedToken) {
       if (selectedToken.decimals === -1) {
         return 'Account not found';
-      } else if (selectedToken.decimals === -2) {
+      }
+      if (selectedToken.decimals === -2) {
         return 'Account is not a token mint';
       }
     }
@@ -1912,13 +1965,19 @@ export const PlaygroundView = () => {
                 }
                 if (accountInfo) {
                   if (
-                    (accountInfo as any).data['program'] &&
-                    (accountInfo as any).data['program'] === 'spl-token' &&
-                    (accountInfo as any).data['parsed'] &&
-                    (accountInfo as any).data['parsed']['type'] &&
-                    (accountInfo as any).data['parsed']['type'] === 'mint'
+                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                    (accountInfo as any).data.program &&
+                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                    (accountInfo as any).data.program === 'spl-token' &&
+                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                    (accountInfo as any).data.parsed &&
+                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                    (accountInfo as any).data.parsed.type &&
+                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                    (accountInfo as any).data.parsed.type === 'mint'
                   ) {
-                    decimals = (accountInfo as any).data['parsed']['info']['decimals'];
+                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+                    decimals = (accountInfo as any).data.parsed.info.decimals;
                   } else {
                     decimals = -2;
                   }

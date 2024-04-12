@@ -201,7 +201,9 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       const turnOffLockWorkflow = () => {
         isWorkflowLocked = false;
       };
@@ -278,7 +280,9 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback(
-    (item: TxConfirmationInfo) => {
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    (param: any) => {
+      const item = param as TxConfirmationInfo;
       if (item) {
         consoleOut('onTxTimedout event executed:', item, 'crimson');
         recordTxConfirmation(item, false);
@@ -1153,6 +1157,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('Stop event subscriptions -> ProgramDetailsView', '', 'brown');
@@ -1162,7 +1167,6 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       consoleOut('Unsubscribed from event onTxTimedout!', '', 'brown');
       setCanSubscribe(true);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Tabs

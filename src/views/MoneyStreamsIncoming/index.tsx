@@ -1113,6 +1113,7 @@ export const MoneyStreamsIncomingView = (props: {
   /////////////////////
 
   // Refresh stream data
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!ms || !paymentStreaming || !streamSelected) {
       return;
@@ -1138,7 +1139,6 @@ export const MoneyStreamsIncomingView = (props: {
     return () => {
       clearTimeout(timeout);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ms, paymentStreaming, streamSelected]);
 
   // Keep account balance updated

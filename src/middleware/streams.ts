@@ -1,15 +1,12 @@
 import { STREAM_STATE, type StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
 import type { TFunction } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 import { getShortDate } from './ui';
 import { shortenAddress } from './utils';
 
-interface LooseObject {
-  [key: string]: any;
-}
-
 // Stream title
-export const getStreamTitle = (item: Stream | StreamInfo, trans?: any): string => {
+export const getStreamTitle = (item: Stream | StreamInfo, trans: TFunction): string => {
   let title = '';
   if (item) {
     const v1 = item as StreamInfo;
@@ -79,19 +76,19 @@ export const getStreamStatusResume = (item: Stream | StreamInfo, trans: TFunctio
       default:
         return trans('streams.status.streaming');
     }
-  } else {
-    switch (v2.statusCode) {
-      case STREAM_STATUS_CODE.Scheduled:
-        return `starts on ${getShortDate(v2.startUtc)}`;
-      case STREAM_STATUS_CODE.Paused:
-        if (v2.isManuallyPaused) {
-          return '';
-          // return `paused on ${getShortDate(v2.startUtc)}`;
-        }
-        return `out of funds on ${getShortDate(v2.estimatedDepletionDate)}`;
-      default:
-        return `streaming since ${getShortDate(v2.startUtc)}`;
-    }
+  }
+
+  switch (v2.statusCode) {
+    case STREAM_STATUS_CODE.Scheduled:
+      return `starts on ${getShortDate(v2.startUtc)}`;
+    case STREAM_STATUS_CODE.Paused:
+      if (v2.isManuallyPaused) {
+        return '';
+        // return `paused on ${getShortDate(v2.startUtc)}`;
+      }
+      return `out of funds on ${getShortDate(v2.estimatedDepletionDate)}`;
+    default:
+      return `streaming since ${getShortDate(v2.startUtc)}`;
   }
 };
 
