@@ -33,7 +33,6 @@ import {
   composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
   sendTx,
-  serializeTx,
   signTx,
 } from 'middleware/transactions';
 import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
