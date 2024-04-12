@@ -22,17 +22,16 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "types": [
-      "node"
-    ],
     "typeRoots": [
-      "./types",
-      "node_modules/@type"
+      "./types"
     ]
   },
   "include": [
     "./src/**/*",
     "./src/setupTests.ts"
+  ],
+  "exclude": [
+    "./ci/**/*"
   ],
   "$schema": "https://json.schemastore.org/tsconfig"
 }
