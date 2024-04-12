@@ -9,18 +9,15 @@ import {
   PublicKey,
   Signer,
   Transaction,
-  TransactionConfirmationStatus,
   TransactionInstruction,
   TransactionMessage,
-  TransactionSignature,
   VersionedTransaction,
   VersionedTransactionResponse,
 } from '@solana/web3.js';
 import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'constants/common';
 import { customLogger } from 'index';
-import { ConfirmTxResult, SendTxResult, SignTxResult } from 'models/CreateTxResult';
+import { SendTxResult, SignTxResult } from 'models/CreateTxResult';
 import { TransactionStatus } from '../models/enums';
-import { Confirmations, Timestamp } from '../models/transactions';
 import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { formatThousands, getAmountFromLamports, readLocalStorageKey, toBuffer } from './utils';
 
@@ -83,78 +80,6 @@ export async function getTransactions(
     }
   }
   return transactions;
-}
-
-export async function fetchTxStatus(
-  connection: Connection,
-  signature: string,
-  targetFinality: TransactionConfirmationStatus,
-) {
-  if (!connection) {
-    return;
-  }
-
-  const fetchStatus = async () => {
-    try {
-      const latestBlockHash = await connection.getLatestBlockhash('confirmed');
-      const result = await connection.confirmTransaction(
-        {
-          signature,
-          blockhash: latestBlockHash.blockhash,
-          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        },
-        targetFinality,
-      );
-      if (result && result.value && !result.value.err) {
-        return targetFinality;
-      }
-      return undefined;
-    } catch (error) {
-      console.error(error);
-      return undefined;
-    }
-  };
-
-  return fetchStatus();
-}
-
-export async function fetchTransactionStatus(connection: Connection, signature: TransactionSignature) {
-  let data;
-
-  return connection
-    .getSignatureStatus(signature, { searchTransactionHistory: true })
-    .then(async response => {
-      let info = null;
-      if (response !== null && response.value !== null) {
-        const value = response.value;
-        let confirmations: Confirmations;
-        if (typeof value.confirmations === 'number') {
-          confirmations = value.confirmations;
-        } else {
-          confirmations = 'max';
-        }
-        let blockTime = null;
-        try {
-          blockTime = await connection.getBlockTime(value.slot);
-        } catch (error) {
-          throw new Error(`${error}`);
-        }
-        const timestamp: Timestamp = blockTime !== null ? blockTime : 'unavailable';
-
-        info = {
-          slot: value.slot,
-          timestamp,
-          confirmations,
-          confirmationStatus: value.confirmationStatus,
-          err: value.err,
-        };
-      }
-      data = { signature, info };
-      return data;
-    })
-    .catch(error => {
-      throw error;
-    });
 }
 
 export const isSuccess = (operation: TransactionStatus | undefined): boolean => {
@@ -281,39 +206,6 @@ export const sendTx = async (title: string, connection: Connection, encodedTx: s
       log: txLog,
     };
   }
-};
-
-export const confirmTx = async (
-  title: string,
-  connection: Connection,
-  signature: string,
-  finality: TransactionConfirmationStatus = 'confirmed',
-): Promise<ConfirmTxResult> => {
-  const txLog: any[] = [];
-
-  try {
-    const confirmation = await fetchTxStatus(connection, signature, finality);
-    if (confirmation) {
-      return {
-        confirmed: true,
-        log: txLog,
-      };
-    }
-  } catch (error) {
-    console.error(error);
-  }
-
-  txLog.push({
-    action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-    result: signature,
-  });
-  customLogger.logError(`${title || 'Confirm'} transaction failed`, {
-    transcript: txLog,
-  });
-  return {
-    confirmed: false,
-    log: txLog,
-  };
 };
 
 export const serializeTx = (signed: Transaction | VersionedTransaction) => {
