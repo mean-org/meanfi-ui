@@ -1,7 +1,8 @@
-import React, { useContext } from 'react';
-import { Identicon } from '../Identicon';
-import { PublicKey } from '@solana/web3.js';
+import type { PublicKey } from '@solana/web3.js';
+import type React from 'react';
+import { useContext } from 'react';
 import { AppStateContext } from '../../contexts/appstate';
+import { Identicon } from '../Identicon';
 
 export const TokenIcon = (props: {
   mintAddress?: string | PublicKey;
@@ -23,7 +24,7 @@ export const TokenIcon = (props: {
   if (token && token.logoURI) {
     return (
       <img
-        alt="Token icon"
+        alt='Token icon'
         className={className}
         key={token.address}
         width={style?.width || defaultSize.toString()}

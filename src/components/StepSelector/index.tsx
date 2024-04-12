@@ -9,21 +9,21 @@ export const StepSelector = (props: { steps: number; step: number; onValueSelect
   };
 
   return (
-    <div className="stepper-wrapper">
-      <div className="flexible-left">
-        <div className="left">
-          <span className="stepper-label">
+    <div className='stepper-wrapper'>
+      <div className='flexible-left'>
+        <div className='left'>
+          <span className='stepper-label'>
             {t('general.stepper-label', {
               step: props.step + 1,
               steps: props.steps,
             })}
           </span>
         </div>
-        <div className="right align-items-center">
-          <span className="stepper-handles">
+        <div className='right align-items-center'>
+          <span className='stepper-handles'>
             {[...Array(props.steps)].map((step: any, index: number) => {
               return (
-                <div key={`${index + 1}`} className="handle-wrapper" onClick={() => onChangeValue(index)}>
+                <div key={`${index + 1}`} className='handle-wrapper' onClick={() => onChangeValue(index)}>
                   <span className={index === props.step ? 'step-handle active' : 'step-handle'}></span>
                 </div>
               );

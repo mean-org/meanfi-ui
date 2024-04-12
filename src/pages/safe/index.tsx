@@ -1,34 +1,35 @@
 import { ReloadOutlined } from '@ant-design/icons';
-import { App, AppsProvider } from '@mean-dao/mean-multisig-apps';
+import type { App, AppsProvider } from '@mean-dao/mean-multisig-apps';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
-  getFees,
-  MeanMultisig,
-  MultisigInfo,
-  MultisigParticipant,
-  MultisigTransaction,
-  MultisigTransactionFees,
   MULTISIG_ACTIONS,
+  MeanMultisig,
+  type MultisigInfo,
+  type MultisigParticipant,
+  type MultisigTransaction,
+  type MultisigTransactionFees,
+  getFees,
 } from '@mean-dao/mean-multisig-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
-import { ConfirmOptions, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { Button, Empty, Spin, Tooltip } from 'antd';
+import { type ConfirmOptions, PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
+import { Button, Empty, Spin, Tooltip } from 'antd';
 import { ErrorReportModal } from 'components/ErrorReportModal';
 import { MultisigEditModal } from 'components/MultisigEditModal';
 import { openNotification } from 'components/Notifications';
 import { MULTISIG_ROUTE_BASE_PATH } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext, TransactionStatusInfo } from 'contexts/appstate';
+import { AppStateContext, type TransactionStatusInfo } from 'contexts/appstate';
 import { useConnection, useConnectionConfig } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
 import { appConfig, customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import {
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
@@ -38,17 +39,16 @@ import {
 import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
 import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { MultisigProposalsWithAuthority, ZERO_FEES } from 'models/multisig';
+import { type MultisigProposalsWithAuthority, ZERO_FEES } from 'models/multisig';
 import SerumIDL from 'models/serum-multisig-idl';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 import { ProposalDetailsView } from './components/ProposalDetails';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { failsafeConnectionConfig } from 'services/connections-hq';
 
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -447,7 +447,7 @@ const SafeView = (props: {
           },
         ];
 
-        const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+        const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
         const tx = await getProposalWithPrioritizationFees(
           {
@@ -1823,35 +1823,35 @@ const SafeView = (props: {
 
   return (
     <>
-      <span id="multisig-refresh-cta" onClick={() => getMultisigList()}></span>
+      <span id='multisig-refresh-cta' onClick={() => getMultisigList()}></span>
       <span
-        id="refresh-selected-proposal-cta"
+        id='refresh-selected-proposal-cta'
         onClick={() => {
           onRefreshProposals();
           refreshSelectedProposal();
         }}
       ></span>
-      <div className="float-top-right mr-1 mt-1">
-        <span className="icon-button-container secondary-button">
-          <Tooltip placement="bottom" title="Refresh safe">
+      <div className='float-top-right mr-1 mt-1'>
+        <span className='icon-button-container secondary-button'>
+          <Tooltip placement='bottom' title='Refresh safe'>
             <Button
-              type="default"
-              shape="circle"
-              size="middle"
-              icon={<ReloadOutlined className="mean-svg-icons" />}
+              type='default'
+              shape='circle'
+              size='middle'
+              icon={<ReloadOutlined className='mean-svg-icons' />}
               onClick={() => refreshSafeDetails()}
             />
           </Tooltip>
         </span>
       </div>
 
-      <div className="safe-details-component scroll-wrapper vertical-scroll">
+      <div className='safe-details-component scroll-wrapper vertical-scroll'>
         {connected && multisigClient && selectedMultisig ? (
           <>
             <Spin spinning={loadingMultisigAccounts}>{renderRightPanelInner()}</Spin>
           </>
         ) : (
-          <div className="h-100 flex-center">
+          <div className='h-100 flex-center'>
             <Spin spinning={loadingMultisigAccounts}>
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={getErrorDescription()} />
             </Spin>

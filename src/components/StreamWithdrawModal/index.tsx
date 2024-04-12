@@ -1,6 +1,7 @@
 import { MoneyStreaming } from '@mean-dao/money-streaming';
-import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { PaymentStreaming, Stream, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
+import { STREAM_STATE, type StreamInfo, type TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { PaymentStreaming, STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
 import BigNumber from 'bignumber.js';
@@ -12,14 +13,13 @@ import { useWallet } from 'contexts/wallet';
 import { getStreamId } from 'middleware/getStreamId';
 import { consoleOut, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { StreamWithdrawData } from 'models/streams';
+import type { StreamWithdrawData } from 'models/streams';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { openNotification } from '../Notifications';
-import { BN } from '@project-serum/anchor';
 import { getFallBackRpcEndpoint } from 'services/connections-hq';
+import { openNotification } from '../Notifications';
 
 export const StreamWithdrawModal = (props: {
   handleClose: any;
@@ -63,7 +63,7 @@ export const StreamWithdrawModal = (props: {
           if (amount.gtn(0)) {
             const pctgTokens = percentageBn(fees.mspPercentFee, amount);
             const uiAmount = toUiAmount(pctgTokens, selectedToken.decimals);
-            fee = parseFloat(uiAmount);
+            fee = Number.parseFloat(uiAmount);
           }
         } else if (fees.mspFlatFee) {
           fee = fees.mspFlatFee;
@@ -228,9 +228,9 @@ export const StreamWithdrawModal = (props: {
       title: proposalTitle,
       token: selectedToken,
       amount: isMaxAmount ? `${maxAmountBn.toString()}` : `${withdrawAmountBn.toString()}`,
-      inputAmount: parseFloat(withdrawAmountInput),
+      inputAmount: Number.parseFloat(withdrawAmountInput),
       fee: feeAmount || 0,
-      receiveAmount: parseFloat(withdrawAmountInput) - (feeAmount as number),
+      receiveAmount: Number.parseFloat(withdrawAmountInput) - (feeAmount as number),
     };
     setWithdrawAmountInput('');
     setWithdrawAmountBn(new BN(0));
@@ -339,31 +339,31 @@ export const StreamWithdrawModal = (props: {
     return !withdrawAmountInput || withdrawAmountBn.isZero()
       ? 'Enter amount'
       : maxAmountBn.isZero()
-      ? 'No balance'
-      : withdrawAmountBn.gt(maxAmountBn)
-      ? 'Amount exceeded'
-      : t('transactions.validation.valid-start-withdrawal');
+        ? 'No balance'
+        : withdrawAmountBn.gt(maxAmountBn)
+          ? 'Amount exceeded'
+          : t('transactions.validation.valid-start-withdrawal');
   };
 
   const getTransactionStartButtonLabelMultisig = () => {
     return !proposalTitle
       ? 'Add a proposal title'
       : !withdrawAmountInput || withdrawAmountBn.isZero()
-      ? 'Enter amount'
-      : maxAmountBn.isZero()
-      ? 'No balance'
-      : withdrawAmountBn.gt(maxAmountBn)
-      ? 'Amount exceeded'
-      : 'Sign proposal';
+        ? 'Enter amount'
+        : maxAmountBn.isZero()
+          ? 'No balance'
+          : withdrawAmountBn.gt(maxAmountBn)
+            ? 'Amount exceeded'
+            : 'Sign proposal';
   };
 
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={12} className="text-right pr-1">
+        <Col span={12} className='text-right pr-1'>
           {caption}
         </Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">
+        <Col span={12} className='text-left pl-1 fg-secondary-70'>
           {value}
         </Col>
       </Row>
@@ -372,9 +372,9 @@ export const StreamWithdrawModal = (props: {
 
   return (
     <Modal
-      className="mean-modal"
+      className='mean-modal'
       title={
-        <div className="modal-title">
+        <div className='modal-title'>
           {isMultisigContext ? 'Propose withdraw funds' : t('withdraw-funds.modal-title')}
         </div>
       }
@@ -386,26 +386,26 @@ export const StreamWithdrawModal = (props: {
     >
       {/* Proposal title */}
       {isMultisigContext && (
-        <div className="mb-3">
-          <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+        <div className='mb-3'>
+          <div className='form-label'>{t('multisig.proposal-modal.title')}</div>
           <InputMean
-            id="proposal-title-field"
-            name="Title"
-            className="w-100 general-text-input"
+            id='proposal-title-field'
+            name='Title'
+            className='w-100 general-text-input'
             onChange={onTitleInputValueChange}
-            placeholder="Add a proposal title (required)"
+            placeholder='Add a proposal title (required)'
             value={proposalTitle}
           />
         </div>
       )}
 
-      <div className="well disabled">
-        <div className="flex-fixed-right">
-          <div className="left inner-label">{t('withdraw-funds.label-available-amount')}:</div>
-          <div className="right">&nbsp;</div>
+      <div className='well disabled'>
+        <div className='flex-fixed-right'>
+          <div className='left inner-label'>{t('withdraw-funds.label-available-amount')}:</div>
+          <div className='right'>&nbsp;</div>
         </div>
-        <div className="flex-fixed-right">
-          <div className="left static-data-field">
+        <div className='flex-fixed-right'>
+          <div className='left static-data-field'>
             {startUpData &&
               selectedToken &&
               getAmountWithSymbol(
@@ -416,59 +416,59 @@ export const StreamWithdrawModal = (props: {
                 selectedToken.decimals,
               )}
           </div>
-          <div className="right">&nbsp;</div>
+          <div className='right'>&nbsp;</div>
         </div>
       </div>
 
       <div className={`well ${loadingData ? 'disabled' : ''}`}>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">{t('withdraw-funds.label-input-amount')}</div>
-          <div className="right">
-            <div className="addon">
-              <div className="token-group">
-                <div className="token-max simplelink" onClick={() => setPercentualValue(25)}>
+        <div className='flex-fixed-right'>
+          <div className='left inner-label'>{t('withdraw-funds.label-input-amount')}</div>
+          <div className='right'>
+            <div className='addon'>
+              <div className='token-group'>
+                <div className='token-max simplelink' onClick={() => setPercentualValue(25)}>
                   25%
                 </div>
-                <div className="token-max simplelink" onClick={() => setPercentualValue(50)}>
+                <div className='token-max simplelink' onClick={() => setPercentualValue(50)}>
                   50%
                 </div>
-                <div className="token-max simplelink" onClick={() => setPercentualValue(75)}>
+                <div className='token-max simplelink' onClick={() => setPercentualValue(75)}>
                   75%
                 </div>
-                <div className="token-max simplelink" onClick={() => setPercentualValue(100)}>
+                <div className='token-max simplelink' onClick={() => setPercentualValue(100)}>
                   100%
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="flex-fixed-right">
-          <div className="left">
+        <div className='flex-fixed-right'>
+          <div className='left'>
             <input
-              className="general-text-input"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
+              className='general-text-input'
+              inputMode='decimal'
+              autoComplete='off'
+              autoCorrect='off'
+              type='text'
               onChange={handleWithdrawAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
+              pattern='^[0-9]*[.,]?[0-9]*$'
+              placeholder='0.0'
               minLength={1}
               maxLength={79}
-              spellCheck="false"
+              spellCheck='false'
               value={withdrawAmountInput}
             />
           </div>
-          <div className="right">&nbsp;</div>
+          <div className='right'>&nbsp;</div>
         </div>
         {withdrawAmountBn.gt(maxAmountBn) ? (
-          <span className="form-field-error">{t('transactions.validation.amount-withdraw-high')}</span>
+          <span className='form-field-error'>{t('transactions.validation.amount-withdraw-high')}</span>
         ) : null}
       </div>
 
       {/* Info */}
       {selectedToken && (
-        <div className="p-2 mb-2">
+        <div className='p-2 mb-2'>
           {(isValidForm() || isValidFormMultisig()) &&
             infoRow(
               t('transactions.transaction-info.transaction-fee') + ':',
@@ -477,17 +477,17 @@ export const StreamWithdrawModal = (props: {
           {(isValidForm() || isValidFormMultisig()) &&
             infoRow(
               t('transactions.transaction-info.you-receive') + ':',
-              `~${getDisplayAmount(parseFloat(withdrawAmountInput) - (feeAmount as number), true)}`,
+              `~${getDisplayAmount(Number.parseFloat(withdrawAmountInput) - (feeAmount as number), true)}`,
             )}
         </div>
       )}
 
       <Button
-        className="main-cta"
+        className='main-cta'
         block
-        type="primary"
-        shape="round"
-        size="large"
+        type='primary'
+        shape='round'
+        size='large'
         disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
         onClick={onAcceptWithdrawal}
       >

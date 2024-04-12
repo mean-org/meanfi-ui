@@ -1,9 +1,9 @@
-import { ReactNode, useContext } from 'react';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import { type ReactNode, useContext } from 'react';
 import { IconCaretDown } from '../../Icons';
+import { AppStateContext } from '../../contexts/appstate';
 import { shortenAddress } from '../../middleware/utils';
 import { Identicon } from '../Identicon';
-import { AppStateContext } from '../../contexts/appstate';
 
 interface TokenDisplayProps {
   fullTokenInfo?: TokenInfo | undefined;
@@ -40,7 +40,7 @@ export const TokenDisplay = ({
   const size = iconSize === 'large' ? 30 : iconSize === 'medium' ? 24 : 20;
 
   return (
-    <div className="d-flex flex-column">
+    <div className='d-flex flex-column'>
       <div title={mintAddress} key={mintAddress} className={`token-selector ${className || ''}`} onClick={onClick}>
         {mintAddress ? (
           <>
@@ -66,38 +66,38 @@ export const TokenDisplay = ({
               )}
             </div>
             {showName && (
-              <div className="token-name mr-1">
+              <div className='token-name mr-1'>
                 {fullTokenInfo ? fullTokenInfo.name : name ? `(${name})` : token ? `(${token.name})` : ''}
               </div>
             )}
             {fullTokenInfo ? (
-              <div className="token-symbol mr-1">{fullTokenInfo.symbol}</div>
+              <div className='token-symbol mr-1'>{fullTokenInfo.symbol}</div>
             ) : symbol ? (
-              <div className="token-symbol mr-1">{symbol}</div>
+              <div className='token-symbol mr-1'>{symbol}</div>
             ) : token && token.symbol ? (
-              <div className="token-symbol mr-1">{token.symbol}</div>
+              <div className='token-symbol mr-1'>{token.symbol}</div>
             ) : (
-              <div className="token-symbol mr-1">{shortenAddress(mintAddress)}</div>
+              <div className='token-symbol mr-1'>{shortenAddress(mintAddress)}</div>
             )}
             {showCaretDown && (
-              <span className="flex-center dropdown-arrow">
-                <IconCaretDown className="mean-svg-icons" />
+              <span className='flex-center dropdown-arrow'>
+                <IconCaretDown className='mean-svg-icons' />
               </span>
             )}
           </>
         ) : (
           <>
-            <span className="notoken-label">{noTokenLabel}</span>
+            <span className='notoken-label'>{noTokenLabel}</span>
             {showCaretDown && (
-              <span className="flex-center dropdown-arrow">
-                <IconCaretDown className="mean-svg-icons" />
+              <span className='flex-center dropdown-arrow'>
+                <IconCaretDown className='mean-svg-icons' />
               </span>
             )}
           </>
         )}
       </div>
       {nameInfoLabel && (
-        <span className="info-label ml-3 mb-0 pl-1">
+        <span className='info-label ml-3 mb-0 pl-1'>
           {fullTokenInfo ? fullTokenInfo.name : name ? `(${name})` : token ? `(${token.name})` : ''}
         </span>
       )}

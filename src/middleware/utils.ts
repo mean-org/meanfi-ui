@@ -1,6 +1,17 @@
-import { useCallback, useState } from 'react';
+import { BN } from '@project-serum/anchor';
 import { ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import {
+  type Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  type Transaction,
+  type VersionedTransaction,
+} from '@solana/web3.js';
+import { BigNumber } from 'bignumber.js';
+import { MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import { useCallback, useState } from 'react';
+import { isMobile } from 'react-device-detect';
 import {
   BIGNUMBER_FORMAT,
   CUSTOM_TOKEN_NAME,
@@ -8,16 +19,11 @@ import {
   UNAUTHENTICATED_ROUTES,
   WRAPPED_SOL_MINT_ADDRESS,
 } from '../constants';
-import { friendlyDisplayDecimalPlaces, isProd } from './ui';
-import { TOKEN_PROGRAM_ID } from './ids';
-import { MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
-import { isMobile } from 'react-device-detect';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { getNetworkIdByEnvironment } from '../contexts/connection';
 import { environment } from '../environments/environment';
-import { BigNumber } from 'bignumber.js';
 import { resolveParsedAccountInfo } from './accounts';
-import { BN } from '@project-serum/anchor';
+import { TOKEN_PROGRAM_ID } from './ids';
+import { friendlyDisplayDecimalPlaces, isProd } from './ui';
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -277,7 +283,7 @@ export const getAmountWithSymbol = (
       const decimals = token.decimals;
       const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
-      const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
+      const toLocale = formatThousands(Number.parseFloat(formatted2), decimals, decimals);
       if (onlyValue) {
         return toLocale;
       }
@@ -368,9 +374,9 @@ export const displayAmountWithSymbol = (
       const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
       const formatted2 = formatted.toFixed(token.decimals);
       const decimalPlaces = friendlyDecimals
-        ? friendlyDisplayDecimalPlaces(parseFloat(formatted2), decimals) ?? decimals
+        ? friendlyDisplayDecimalPlaces(Number.parseFloat(formatted2), decimals) ?? decimals
         : decimals;
-      const toLocale = formatThousands(parseFloat(formatted2), decimalPlaces, decimalPlaces);
+      const toLocale = formatThousands(Number.parseFloat(formatted2), decimalPlaces, decimalPlaces);
       return `${toLocale} ${token.symbol}`;
     } else if (address && !token) {
       const formatted = formatThousands(inputAmount, 5, 5);

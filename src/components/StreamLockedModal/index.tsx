@@ -1,16 +1,21 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Modal, Button } from 'antd';
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import { TreasuryInfo, StreamInfo } from '@mean-dao/money-streaming/lib/types';
-import { Stream, PaymentStreamingAccount, PaymentStreaming, AccountType } from '@mean-dao/payment-streaming';
-import { StreamTreasuryType } from 'models/treasuries';
+import type { MoneyStreaming } from '@mean-dao/money-streaming';
+import type { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import {
+  AccountType,
+  type PaymentStreaming,
+  type PaymentStreamingAccount,
+  type Stream,
+} from '@mean-dao/payment-streaming';
+import { PublicKey } from '@solana/web3.js';
+import { Button, Modal } from 'antd';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
-import { consoleOut } from 'middleware/ui';
-import { MoneyStreaming } from '@mean-dao/money-streaming';
-import { PublicKey } from '@solana/web3.js';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
+import { consoleOut } from 'middleware/ui';
+import type { StreamTreasuryType } from 'models/treasuries';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const StreamLockedModal = (props: {
   handleClose: any;
@@ -84,8 +89,8 @@ export const StreamLockedModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('streams.locked-stream-modal-title')}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{t('streams.locked-stream-modal-title')}</div>}
       footer={null}
       open={isVisible}
       onCancel={handleClose}
@@ -93,17 +98,17 @@ export const StreamLockedModal = (props: {
     >
       {loadingTreasuryDetails ? (
         // The loading part
-        <div className="transaction-progress">
-          <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
-          <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
+        <div className='transaction-progress'>
+          <LoadingOutlined style={{ fontSize: 48 }} className='icon mt-0' spin />
+          <h4 className='operation'>{t('close-stream.loading-treasury-message')}</h4>
         </div>
       ) : (
         // The user can't top-up the stream from a locked treasury
-        <div className="transaction-progress">
-          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-          <h4 className="operation">{t('streams.locked-stream-message')}</h4>
-          <div className="mt-3">
-            <Button type="primary" shape="round" size="large" onClick={handleClose}>
+        <div className='transaction-progress'>
+          <ExclamationCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+          <h4 className='operation'>{t('streams.locked-stream-message')}</h4>
+          <div className='mt-3'>
+            <Button type='primary' shape='round' size='large' onClick={handleClose}>
               {t('general.cta-close')}
             </Button>
           </div>

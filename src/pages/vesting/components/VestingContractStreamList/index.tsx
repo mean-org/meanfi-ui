@@ -1,33 +1,35 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, type MeanMultisig, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import {
-  calculateFeesForAction,
-  PaymentStreaming,
   ACTION_CODES,
-  Stream,
-  StreamTemplate,
-  STREAM_STATUS_CODE,
-  TransactionFees,
-  PaymentStreamingAccount,
   AccountType,
-  CloseStreamTransactionAccounts,
+  type CloseStreamTransactionAccounts,
+  type PaymentStreaming,
+  type PaymentStreamingAccount,
+  STREAM_STATUS_CODE,
+  type Stream,
+  type StreamTemplate,
+  type TransactionFees,
+  calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
-import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { Button, Dropdown, Modal, Spin } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { BN } from '@project-serum/anchor';
+import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
+import { IconVerticalEllipsis } from 'Icons';
+import { Button, Dropdown, Modal, Spin } from 'antd';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { openNotification } from 'components/Notifications';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
-import { IconVerticalEllipsis } from 'Icons';
+import useLocalStorage from 'hooks/useLocalStorage';
 import { appConfig, customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent, SegmentStreamCloseData } from 'middleware/segment-service';
+import { AppUsageEvent, type SegmentStreamCloseData } from 'middleware/segment-service';
 import {
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getProposalWithPrioritizationFees,
   isError,
@@ -47,15 +49,13 @@ import {
   toTimestamp,
 } from 'middleware/ui';
 import { displayAmountWithSymbol, getAmountWithSymbol, getTxIxResume, shortenAddress } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { OperationType, TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { VestingContractCloseStreamOptions } from 'models/vesting';
+import type { VestingContractCloseStreamOptions } from 'models/vesting';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StreamCloseModal } from '../StreamCloseModal';
 import { VestingContractStreamDetailModal } from '../VestingContractStreamDetailModal';
-import { BN } from '@project-serum/anchor';
-import useLocalStorage from 'hooks/useLocalStorage';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -135,7 +135,7 @@ export const VestingContractStreamList = (props: {
       // Start date timestamp
       const sdTimestamp = toTimestamp(paymentStartDate);
       // Total length of vesting period in seconds
-      const lockPeriod = parseFloat(lockPeriodAmount) * lockPeriodUnits;
+      const lockPeriod = Number.parseFloat(lockPeriodAmount) * lockPeriodUnits;
       // Final date = Start date + lockPeriod
       const finishDate = new Date((sdTimestamp + lockPeriod) * 1000);
       return finishDate;
@@ -493,7 +493,7 @@ export const VestingContractStreamList = (props: {
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -542,8 +542,8 @@ export const VestingContractStreamList = (props: {
       consoleOut('data:', data);
       const price = selectedToken ? getTokenPriceByAddress(selectedToken.address, selectedToken.symbol) : 0;
       const usdValue =
-        (parseFloat(closeStreamOptions.vestedReturns as string) +
-          parseFloat(closeStreamOptions.unvestedReturns as string)) *
+        (Number.parseFloat(closeStreamOptions.vestedReturns as string) +
+          Number.parseFloat(closeStreamOptions.unvestedReturns as string)) *
         price;
 
       // Report event to Segment analytics
@@ -786,7 +786,7 @@ export const VestingContractStreamList = (props: {
         key: '01-close-stream',
         label: (
           <div onClick={showCloseStreamModal}>
-            <span className="menu-item-text">{t('vesting.close-account.option-close-stream')}</span>
+            <span className='menu-item-text'>{t('vesting.close-account.option-close-stream')}</span>
           </div>
         ),
       });
@@ -795,7 +795,7 @@ export const VestingContractStreamList = (props: {
       key: '02-copy-streamid',
       label: (
         <div onClick={() => copyAddressToClipboard(item.id)}>
-          <span className="menu-item-text">{t('vesting.close-account.option-copy-stream-id')}</span>
+          <span className='menu-item-text'>{t('vesting.close-account.option-copy-stream-id')}</span>
         </div>
       ),
     });
@@ -810,7 +810,7 @@ export const VestingContractStreamList = (props: {
             showVestingContractStreamDetailModal();
           }}
         >
-          <span className="menu-item-text">{t('vesting.close-account.option-show-stream')}</span>
+          <span className='menu-item-text'>{t('vesting.close-account.option-show-stream')}</span>
         </div>
       ),
     });
@@ -820,10 +820,10 @@ export const VestingContractStreamList = (props: {
       label: (
         <a
           href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
-          target="_blank"
-          rel="noopener noreferrer"
+          target='_blank'
+          rel='noopener noreferrer'
         >
-          <span className="menu-item-text">{t('treasuries.treasury-streams.option-explorer-link')}</span>
+          <span className='menu-item-text'>{t('treasuries.treasury-streams.option-explorer-link')}</span>
         </a>
       ),
     });
@@ -841,12 +841,12 @@ export const VestingContractStreamList = (props: {
           }
         }}
       >
-        <span className="icon-button-container">
+        <span className='icon-button-container'>
           <Button
-            type="default"
-            shape="circle"
-            size="middle"
-            icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+            type='default'
+            shape='circle'
+            size='middle'
+            icon={<IconVerticalEllipsis className='mean-svg-icons' />}
             onClick={e => e.preventDefault()}
           />
         </span>
@@ -858,16 +858,16 @@ export const VestingContractStreamList = (props: {
     if (isSuccess(transactionStatus.currentOperation)) {
       return (
         <>
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">
+          <CheckOutlined style={{ fontSize: 48 }} className='icon' />
+          <h4 className='font-bold mb-1 text-uppercase'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
-          <p className="operation">{t('transactions.status.tx-generic-operation-success')}</p>
+          <p className='operation'>{t('transactions.status.tx-generic-operation-success')}</p>
           <Button
             block
-            type="primary"
-            shape="round"
-            size="middle"
+            type='primary'
+            shape='round'
+            size='middle'
             onClick={() =>
               ongoingOperation === OperationType.StreamClose
                 ? onCloseStreamTransactionFinished()
@@ -881,27 +881,27 @@ export const VestingContractStreamList = (props: {
     } else if (isError(transactionStatus.currentOperation)) {
       return (
         <>
-          <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
+          <InfoCircleOutlined style={{ fontSize: 48 }} className='icon' />
           {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-            <h4 className="mb-4">
+            <h4 className='mb-4'>
               {t('transactions.status.tx-start-failure', {
                 accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                 feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
               })}
             </h4>
           ) : (
-            <h4 className="font-bold mb-3">
+            <h4 className='font-bold mb-3'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
           )}
           {transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ? (
-            <div className="row two-col-ctas mt-3">
-              <div className="col-6">
+            <div className='row two-col-ctas mt-3'>
+              <div className='col-6'>
                 <Button
                   block
-                  type="text"
-                  shape="round"
-                  size="middle"
+                  type='text'
+                  shape='round'
+                  size='middle'
                   onClick={() =>
                     ongoingOperation === OperationType.StreamClose
                       ? onExecuteCloseStreamTransaction(retryOperationPayload)
@@ -911,14 +911,14 @@ export const VestingContractStreamList = (props: {
                   {t('general.retry')}
                 </Button>
               </div>
-              <div className="col-6">
-                <Button block type="primary" shape="round" size="middle" onClick={() => refreshPage()}>
+              <div className='col-6'>
+                <Button block type='primary' shape='round' size='middle' onClick={() => refreshPage()}>
                   {t('general.refresh')}
                 </Button>
               </div>
             </div>
           ) : (
-            <Button block type="primary" shape="round" size="middle" onClick={hideTransactionExecutionModal}>
+            <Button block type='primary' shape='round' size='middle' onClick={hideTransactionExecutionModal}>
               {t('general.cta-close')}
             </Button>
           )}
@@ -927,8 +927,8 @@ export const VestingContractStreamList = (props: {
     } else {
       return (
         <>
-          <Spin indicator={bigLoadingIcon} className="icon" />
-          <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+          <Spin indicator={bigLoadingIcon} className='icon' />
+          <h4 className='font-bold mb-4 text-uppercase'>{t('transactions.status.tx-wait')}...</h4>
         </>
       );
     }
@@ -936,7 +936,7 @@ export const VestingContractStreamList = (props: {
 
   return (
     <>
-      <div className="tab-inner-content-wrapper vesting-contract-streams vertical-scroll">
+      <div className='tab-inner-content-wrapper vesting-contract-streams vertical-scroll'>
         <Spin spinning={loadingTreasuryStreams}>
           {streamList && streamList.length > 0 ? (
             streamList.map((item, index) => {
@@ -953,21 +953,21 @@ export const VestingContractStreamList = (props: {
                   }`}
                 >
                   <div
-                    className="description-cell no-padding simplelink"
+                    className='description-cell no-padding simplelink'
                     onClick={() => {
                       sethHighlightedStream(item);
                       setHighLightableStreamId(item.id.toBase58());
                       showVestingContractStreamDetailModal();
                     }}
                   >
-                    <div className="title text-truncate">{getStreamTitle(item)}</div>
-                    <div className="subtitle text-truncate">{getStreamSubtitle(item)}</div>
+                    <div className='title text-truncate'>{getStreamTitle(item)}</div>
+                    <div className='subtitle text-truncate'>{getStreamSubtitle(item)}</div>
                   </div>
-                  <div className="rate-cell">
-                    <div className="rate-amount">{getStreamStatus(item)}</div>
-                    <div className="interval">{getStreamStatusSubtitle(item)}</div>
+                  <div className='rate-cell'>
+                    <div className='rate-amount'>{getStreamStatus(item)}</div>
+                    <div className='interval'>{getStreamStatusSubtitle(item)}</div>
                   </div>
-                  <div className="actions-cell">{renderStreamOptions(item)}</div>
+                  <div className='actions-cell'>{renderStreamOptions(item)}</div>
                 </div>
               );
             })
@@ -1012,7 +1012,7 @@ export const VestingContractStreamList = (props: {
 
       {/* Transaction execution modal */}
       <Modal
-        className="mean-modal no-full-screen"
+        className='mean-modal no-full-screen'
         maskClosable={false}
         open={isTransactionExecutionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
@@ -1020,15 +1020,15 @@ export const VestingContractStreamList = (props: {
         width={360}
         footer={null}
       >
-        <div className="transaction-progress">
+        <div className='transaction-progress'>
           {isBusy ? (
             <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">
+              <Spin indicator={bigLoadingIcon} className='icon' />
+              <h4 className='font-bold mb-1'>
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
+                <div className='indication'>{t('transactions.status.instructions')}</div>
               )}
             </>
           ) : (

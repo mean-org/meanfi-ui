@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { Analytics } from '@segment/analytics-next';
+import type { Analytics } from '@segment/analytics-next';
 import { consoleOut } from './ui';
 
 export enum AppUsageEvent {

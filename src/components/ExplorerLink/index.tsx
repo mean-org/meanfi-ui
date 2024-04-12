@@ -1,7 +1,7 @@
-import React from 'react';
+import type { PublicKey } from '@solana/web3.js';
 import { Typography } from 'antd';
+import type React from 'react';
 import { shortenAddress } from '../../middleware/utils';
-import { PublicKey } from '@solana/web3.js';
 
 export const ExplorerLink = (props: {
   address: string | PublicKey;
@@ -23,8 +23,8 @@ export const ExplorerLink = (props: {
   return (
     <a
       href={`https://explorer.solana.com/${type}/${address}`}
-      target="_blank"
-      rel="noreferrer"
+      target='_blank'
+      rel='noreferrer'
       title={address}
       style={props.style}
     >

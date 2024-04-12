@@ -1,9 +1,9 @@
-import React, { useContext } from 'react';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import { AppStateContext } from 'contexts/appstate';
 import { MULTISIG_ROUTE_BASE_PATH } from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export const PendingProposalsComponent = (props: {
   extraClasses?: string;
@@ -19,23 +19,23 @@ export const PendingProposalsComponent = (props: {
 
   return (
     <>
-      <div key="pending-proposals" className={`transaction-list-row${extraClasses ? ' ' + extraClasses : ''}`}>
+      <div key='pending-proposals' className={`transaction-list-row${extraClasses ? ' ' + extraClasses : ''}`}>
         <div
-          className="flex-row align-items-center fg-warning simplelink underline-on-hover"
+          className='flex-row align-items-center fg-warning simplelink underline-on-hover'
           onClick={() => {
             const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
             navigate(url);
           }}
         >
-          <div className="font-bold">There are pending proposals on this account</div>
-          <span className="icon-button-container ml-1">
-            <Tooltip placement="bottom" title="Go to safe account">
+          <div className='font-bold'>There are pending proposals on this account</div>
+          <span className='icon-button-container ml-1'>
+            <Tooltip placement='bottom' title='Go to safe account'>
               <Button
-                type="default"
-                shape="circle"
-                size="middle"
+                type='default'
+                shape='circle'
+                size='middle'
                 icon={<ArrowRightOutlined />}
-                className="fg-warning"
+                className='fg-warning'
               />
             </Tooltip>
           </span>

@@ -1,7 +1,7 @@
-import { Cluster, clusterApiUrl, ConnectionConfig } from '@solana/web3.js';
+import { type Cluster, type ConnectionConfig, clusterApiUrl } from '@solana/web3.js';
+import { TRANSACTION_STATUS_RETRY_TIMEOUT } from 'constants/common';
 import { environment } from '../environments/environment';
 import { ChainID } from '../models/enums';
-import { TRANSACTION_STATUS_RETRY_TIMEOUT } from 'constants/common';
 
 export interface RpcConfig {
   cluster: Cluster | 'local-validator';
@@ -68,7 +68,6 @@ export const getDefaultRpc = (): RpcConfig => {
     case 'development':
     case 'staging':
       return DEFAULT_RPCS[2];
-    case 'production':
     default:
       return DEFAULT_RPCS[0];
   }
@@ -97,9 +96,9 @@ export const getFallBackRpcEndpoint = () => {
 
   if (endpoint) {
     return { ...defaultEndpoint, httpProvider: endpoint } as RpcConfig;
-  } else {
-    return defaultEndpoint;
   }
+
+  return defaultEndpoint;
 };
 
 export const refreshCachedRpc = async () => {

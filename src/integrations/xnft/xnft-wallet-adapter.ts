@@ -1,10 +1,10 @@
 import type { SendTransactionOptions, WalletName } from '@solana/wallet-adapter-base';
 import {
-  scopePollingDetectionStrategy,
   BaseMessageSignerWalletAdapter,
   WalletReadyState,
+  scopePollingDetectionStrategy,
 } from '@solana/wallet-adapter-base';
-import { Connection, Transaction, TransactionSignature, VersionedTransaction } from '@solana/web3.js';
+import type { Connection, Transaction, TransactionSignature, VersionedTransaction } from '@solana/web3.js';
 
 // Check if wallet runs inside of extension, we pass query param to iframe there
 const isInXnftWalletParam = Object.fromEntries(new URLSearchParams(window.location.search)).isInXnftWallet === 'true';

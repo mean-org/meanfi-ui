@@ -1,4 +1,4 @@
-import { Stream } from '@mean-dao/payment-streaming';
+import type { Stream } from '@mean-dao/payment-streaming';
 
 const getV2Beneficiary = (stream: Stream) => {
   if (!stream.beneficiary) {

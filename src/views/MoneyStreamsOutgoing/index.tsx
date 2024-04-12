@@ -5,29 +5,30 @@ import {
   LoadingOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import { MSP_ACTIONS, STREAM_STATE, type StreamInfo, type TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
-  calculateFeesForAction,
-  PaymentStreaming,
   ACTION_CODES,
-  Stream,
-  STREAM_STATUS_CODE,
-  TransactionFees,
-  PaymentStreamingAccount,
   AccountType,
-  FundStreamTransactionAccounts,
-  AddFundsToAccountTransactionAccounts,
-  AllocateFundsToStreamTransactionAccounts,
-  PauseResumeStreamTransactionAccounts,
-  CloseStreamTransactionAccounts,
+  type AddFundsToAccountTransactionAccounts,
+  type AllocateFundsToStreamTransactionAccounts,
+  type CloseStreamTransactionAccounts,
+  type FundStreamTransactionAccounts,
+  type PauseResumeStreamTransactionAccounts,
+  PaymentStreaming,
+  type PaymentStreamingAccount,
+  STREAM_STATUS_CODE,
+  type Stream,
+  type TransactionFees,
+  calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
-import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { Button, Dropdown, Modal, Space, Spin } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
+import { IconEllipsisVertical } from 'Icons';
+import { Button, Dropdown, Modal, Space, Spin } from 'antd';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { MoneyStreamDetails } from 'components/MoneyStreamDetails';
 import { openNotification } from 'components/Notifications';
 import { StreamAddFundsModal } from 'components/StreamAddFundsModal';
@@ -41,17 +42,16 @@ import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } fro
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
-import { IconEllipsisVertical } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData } from 'middleware/segment-service';
+import { AppUsageEvent, type SegmentStreamAddFundsData, type SegmentStreamCloseData } from 'middleware/segment-service';
 import {
-  composeTxWithPrioritizationFees,
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
+  composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
@@ -71,11 +71,11 @@ import {
   shortenAddress,
   toUiAmount,
 } from 'middleware/utils';
-import { StreamTopupParams, StreamTopupTxCreateParams } from 'models/common-types';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { StreamTopupParams, StreamTopupTxCreateParams } from 'models/common-types';
 import { OperationType, TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { CloseStreamParams } from 'models/streams';
-import { CloseStreamTransactionParams, StreamTreasuryType } from 'models/treasuries';
+import type { CloseStreamParams } from 'models/streams';
+import type { CloseStreamTransactionParams, StreamTreasuryType } from 'models/treasuries';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
@@ -545,7 +545,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -648,7 +648,7 @@ export const MoneyStreamsOutgoingView = (props: {
         const stream = new PublicKey(streamSelected.id as string);
         const treasury = new PublicKey((streamSelected as StreamInfo).treasuryAddress as string);
         const contributorMint = getStreamAssociatedMint(streamSelected);
-        const amount = parseFloat(addFundsData.amount as string);
+        const amount = Number.parseFloat(addFundsData.amount as string);
         const price = workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0;
         setAddFundsPayload(addFundsData);
 
@@ -813,7 +813,7 @@ export const MoneyStreamsOutgoingView = (props: {
         asset: workingToken ? `${workingToken.symbol} [${workingToken.address}]` : associatedToken.toBase58(),
         assetPrice: price,
         amount: addFundsData.amount,
-        valueInUsd: price * parseFloat(addFundsData.amount as string),
+        valueInUsd: price * Number.parseFloat(addFundsData.amount as string),
       };
       consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
@@ -909,20 +909,20 @@ export const MoneyStreamsOutgoingView = (props: {
             const targetFundedSingleSigner = 'Stream funded with';
             const loadingMessage = multisigAuth
               ? `Create proposal to ${fundTargetMultisig} ${formatThousands(
-                  parseFloat(addFundsData.amount as string),
+                  Number.parseFloat(addFundsData.amount as string),
                   token.decimals,
                 )} ${token.symbol}`
               : `${fundTargetSingleSigner} ${formatThousands(
-                  parseFloat(addFundsData.amount as string),
+                  Number.parseFloat(addFundsData.amount as string),
                   token.decimals,
                 )} ${token.symbol}`;
             const completedMessage = multisigAuth
               ? `Proposal to ${fundTargetMultisig} ${formatThousands(
-                  parseFloat(addFundsData.amount as string),
+                  Number.parseFloat(addFundsData.amount as string),
                   token.decimals,
                 )} ${token.symbol} was submitted for Multisig approval.`
               : `${targetFundedSingleSigner} ${formatThousands(
-                  parseFloat(addFundsData.amount as string),
+                  Number.parseFloat(addFundsData.amount as string),
                   token.decimals,
                 )} ${token.symbol}`;
             enqueueTransactionConfirmation({
@@ -1128,7 +1128,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
         const ixData = Buffer.from(transaction.instructions[0].data);
         const ixAccounts = transaction.instructions[0].keys;
-        const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+        const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
         const tx = await getProposalWithPrioritizationFees(
           {
@@ -1569,7 +1569,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
         const ixData = Buffer.from(transaction.instructions[0].data);
         const ixAccounts = transaction.instructions[0].keys;
-        const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+        const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
         const tx = await getProposalWithPrioritizationFees(
           {
@@ -2049,7 +2049,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -2473,7 +2473,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
     return (
       <>
-        <span className="info-data large mr-1">
+        <span className='info-data large mr-1'>
           {getAmountWithSymbol(
             isNewStream() ? toUiAmount(v2.fundsLeftInStream, workingToken.decimals) : v1.escrowUnvestedAmount,
             workingToken.address,
@@ -2482,11 +2482,11 @@ export const MoneyStreamsOutgoingView = (props: {
             workingToken.decimals,
           )}
         </span>
-        <span className="info-icon">
+        <span className='info-icon'>
           {streamSelected && getStreamStatus(streamSelected) === 'running' ? (
-            <ArrowUpOutlined className="mean-svg-icons outgoing bounce" />
+            <ArrowUpOutlined className='mean-svg-icons outgoing bounce' />
           ) : (
-            <ArrowUpOutlined className="mean-svg-icons outgoing" />
+            <ArrowUpOutlined className='mean-svg-icons outgoing' />
           )}
         </span>
       </>
@@ -2511,7 +2511,7 @@ export const MoneyStreamsOutgoingView = (props: {
         key: '01-close-stream',
         label: (
           <div onClick={showCloseStreamModal}>
-            <span className="menu-item-text">Close stream</span>
+            <span className='menu-item-text'>Close stream</span>
           </div>
         ),
         disabled: isBusy || hasStreamPendingTx(),
@@ -2522,10 +2522,10 @@ export const MoneyStreamsOutgoingView = (props: {
       label: (
         <a
           href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamSelected?.id}${getSolanaExplorerClusterParam()}`}
-          target="_blank"
-          rel="noopener noreferrer"
+          target='_blank'
+          rel='noopener noreferrer'
         >
-          <span className="menu-item-text">{t('account-area.explorer-link')}</span>
+          <span className='menu-item-text'>{t('account-area.explorer-link')}</span>
         </a>
       ),
     });
@@ -2543,27 +2543,27 @@ export const MoneyStreamsOutgoingView = (props: {
     if (status === 'stopped-manually') {
       return (
         <Button
-          type="default"
-          shape="round"
-          size="small"
-          className="thin-stroke btn-min-width"
+          type='default'
+          shape='round'
+          size='small'
+          className='thin-stroke btn-min-width'
           disabled={isBusy || hasStreamPendingTx()}
           onClick={showResumeStreamModal}
         >
-          <div className="btn-content">Resume stream</div>
+          <div className='btn-content'>Resume stream</div>
         </Button>
       );
     } else if (status === 'running') {
       return (
         <Button
-          type="default"
-          shape="round"
-          size="small"
-          className="thin-stroke btn-min-width"
+          type='default'
+          shape='round'
+          size='small'
+          className='thin-stroke btn-min-width'
           disabled={isBusy || hasStreamPendingTx()}
           onClick={showPauseStreamModal}
         >
-          <div className="btn-content">Pause stream</div>
+          <div className='btn-content'>Pause stream</div>
         </Button>
       );
     }
@@ -2583,13 +2583,13 @@ export const MoneyStreamsOutgoingView = (props: {
   // Buttons
   const renderButtons = useCallback(() => {
     return (
-      <div className="flex-fixed-right cta-row mb-2 pl-1">
-        <Space className="left" size="middle" wrap>
+      <div className='flex-fixed-right cta-row mb-2 pl-1'>
+        <Space className='left' size='middle' wrap>
           <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke btn-min-width"
+            type='default'
+            shape='round'
+            size='small'
+            className='thin-stroke btn-min-width'
             disabled={
               isBusy ||
               !streamSelected ||
@@ -2601,17 +2601,17 @@ export const MoneyStreamsOutgoingView = (props: {
             }
             onClick={showAddFundsModal}
           >
-            <div className="btn-content">Add funds</div>
+            <div className='btn-content'>Add funds</div>
           </Button>
           {renderPauseOrResumeCtas()}
         </Space>
-        <Dropdown menu={renderDropdownMenu()} placement="bottomRight" trigger={['click']}>
-          <span className="ellipsis-icon icon-button-container mr-1">
+        <Dropdown menu={renderDropdownMenu()} placement='bottomRight' trigger={['click']}>
+          <span className='ellipsis-icon icon-button-container mr-1'>
             <Button
-              type="default"
-              shape="circle"
-              size="middle"
-              icon={<IconEllipsisVertical className="mean-svg-icons" />}
+              type='default'
+              shape='circle'
+              size='middle'
+              icon={<IconEllipsisVertical className='mean-svg-icons' />}
               onClick={e => e.preventDefault()}
             />
           </span>
@@ -2643,21 +2643,21 @@ export const MoneyStreamsOutgoingView = (props: {
     if (isBusy) {
       return (
         <>
-          <Spin indicator={bigLoadingIcon} className="icon" />
-          <h4 className="font-bold mb-1">
+          <Spin indicator={bigLoadingIcon} className='icon' />
+          <h4 className='font-bold mb-1'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
-          <h5 className="operation">
+          <h5 className='operation'>
             {t('transactions.status.tx-add-funds-operation')}{' '}
             {getAmountWithSymbol(
-              parseFloat(addFundsPayload ? (addFundsPayload.amount as string) : '0'),
+              Number.parseFloat(addFundsPayload ? (addFundsPayload.amount as string) : '0'),
               getStreamAssociatedMint(streamSelected),
               false,
               splTokenList,
             )}
           </h5>
           {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-            <div className="indication">{t('transactions.status.instructions')}</div>
+            <div className='indication'>{t('transactions.status.instructions')}</div>
           )}
         </>
       );
@@ -2665,12 +2665,12 @@ export const MoneyStreamsOutgoingView = (props: {
     if (isSuccess()) {
       return (
         <>
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">
+          <CheckOutlined style={{ fontSize: 48 }} className='icon' />
+          <h4 className='font-bold mb-1 text-uppercase'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
-          <p className="operation">{t('transactions.status.tx-add-funds-operation-success')}</p>
-          <Button block type="primary" shape="round" size="middle" onClick={onAddFundsTransactionFinished}>
+          <p className='operation'>{t('transactions.status.tx-add-funds-operation-success')}</p>
+          <Button block type='primary' shape='round' size='middle' onClick={onAddFundsTransactionFinished}>
             {t('general.cta-close')}
           </Button>
         </>
@@ -2679,9 +2679,9 @@ export const MoneyStreamsOutgoingView = (props: {
     if (isError()) {
       return (
         <>
-          <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+          <WarningOutlined style={{ fontSize: 48 }} className='icon' />
           {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-            <h4 className="mb-4">
+            <h4 className='mb-4'>
               {t('transactions.status.tx-start-failure', {
                 accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58(), false, splTokenList),
                 feeAmount: getAmountWithSymbol(
@@ -2693,11 +2693,11 @@ export const MoneyStreamsOutgoingView = (props: {
               })}
             </h4>
           ) : (
-            <h4 className="font-bold mb-1 text-uppercase">
+            <h4 className='font-bold mb-1 text-uppercase'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
           )}
-          <Button block type="primary" shape="round" size="middle" onClick={hideAddFundsTransactionModal}>
+          <Button block type='primary' shape='round' size='middle' onClick={hideAddFundsTransactionModal}>
             {t('general.cta-close')}
           </Button>
         </>
@@ -2706,8 +2706,8 @@ export const MoneyStreamsOutgoingView = (props: {
 
     return (
       <>
-        <Spin indicator={bigLoadingIcon} className="icon" />
-        <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+        <Spin indicator={bigLoadingIcon} className='icon' />
+        <h4 className='font-bold mb-4 text-uppercase'>{t('transactions.status.tx-wait')}...</h4>
       </>
     );
   }, [
@@ -2730,13 +2730,13 @@ export const MoneyStreamsOutgoingView = (props: {
     if (isBusy) {
       return (
         <>
-          <Spin indicator={bigLoadingIcon} className="icon" />
-          <h4 className="font-bold mb-1">
+          <Spin indicator={bigLoadingIcon} className='icon' />
+          <h4 className='font-bold mb-1'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
-          <h5 className="operation">{t('transactions.status.tx-close-operation')}</h5>
+          <h5 className='operation'>{t('transactions.status.tx-close-operation')}</h5>
           {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-            <div className="indication">{t('transactions.status.instructions')}</div>
+            <div className='indication'>{t('transactions.status.instructions')}</div>
           )}
         </>
       );
@@ -2744,12 +2744,12 @@ export const MoneyStreamsOutgoingView = (props: {
     if (isSuccess()) {
       return (
         <>
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">
+          <CheckOutlined style={{ fontSize: 48 }} className='icon' />
+          <h4 className='font-bold mb-1 text-uppercase'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
-          <p className="operation">{t('transactions.status.tx-close-operation-success')}</p>
-          <Button block type="primary" shape="round" size="middle" onClick={onCloseStreamTransactionFinished}>
+          <p className='operation'>{t('transactions.status.tx-close-operation-success')}</p>
+          <Button block type='primary' shape='round' size='middle' onClick={onCloseStreamTransactionFinished}>
             {t('general.cta-finish')}
           </Button>
         </>
@@ -2758,9 +2758,9 @@ export const MoneyStreamsOutgoingView = (props: {
     if (isError()) {
       return (
         <>
-          <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+          <WarningOutlined style={{ fontSize: 48 }} className='icon' />
           {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-            <h4 className="mb-4">
+            <h4 className='mb-4'>
               {t('transactions.status.tx-start-failure', {
                 accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                 feeAmount: getAmountWithSymbol(
@@ -2770,11 +2770,11 @@ export const MoneyStreamsOutgoingView = (props: {
               })}
             </h4>
           ) : (
-            <h4 className="font-bold mb-1 text-uppercase">
+            <h4 className='font-bold mb-1 text-uppercase'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
           )}
-          <Button block type="primary" shape="round" size="middle" onClick={hideCloseStreamTransactionModal}>
+          <Button block type='primary' shape='round' size='middle' onClick={hideCloseStreamTransactionModal}>
             {t('general.cta-close')}
           </Button>
         </>
@@ -2783,8 +2783,8 @@ export const MoneyStreamsOutgoingView = (props: {
 
     return (
       <>
-        <Spin indicator={bigLoadingIcon} className="icon" />
-        <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+        <Spin indicator={bigLoadingIcon} className='icon' />
+        <h4 className='font-bold mb-4 text-uppercase'>{t('transactions.status.tx-wait')}...</h4>
       </>
     );
   }, [
@@ -2804,12 +2804,12 @@ export const MoneyStreamsOutgoingView = (props: {
     if (isBusy) {
       return (
         <>
-          <Spin indicator={bigLoadingIcon} className="icon" />
-          <h4 className="font-bold mb-1">
+          <Spin indicator={bigLoadingIcon} className='icon' />
+          <h4 className='font-bold mb-1'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
           {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-            <div className="indication">{t('transactions.status.instructions')}</div>
+            <div className='indication'>{t('transactions.status.instructions')}</div>
           )}
         </>
       );
@@ -2817,12 +2817,12 @@ export const MoneyStreamsOutgoingView = (props: {
     if (isSuccess()) {
       return (
         <>
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">
+          <CheckOutlined style={{ fontSize: 48 }} className='icon' />
+          <h4 className='font-bold mb-1 text-uppercase'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
-          <p className="operation">{t('transactions.status.tx-generic-operation-success')}</p>
-          <Button block type="primary" shape="round" size="middle" onClick={onTransactionFinished}>
+          <p className='operation'>{t('transactions.status.tx-generic-operation-success')}</p>
+          <Button block type='primary' shape='round' size='middle' onClick={onTransactionFinished}>
             {t('general.cta-finish')}
           </Button>
         </>
@@ -2842,9 +2842,9 @@ export const MoneyStreamsOutgoingView = (props: {
 
       return (
         <>
-          <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
+          <InfoCircleOutlined style={{ fontSize: 48 }} className='icon' />
           {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-            <h4 className="mb-4">
+            <h4 className='mb-4'>
               {t('transactions.status.tx-start-failure', {
                 accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                 feeAmount: getAmountWithSymbol(
@@ -2854,25 +2854,25 @@ export const MoneyStreamsOutgoingView = (props: {
               })}
             </h4>
           ) : (
-            <h4 className="font-bold mb-3">
+            <h4 className='font-bold mb-3'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
           )}
           {transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ? (
-            <div className="row two-col-ctas mt-3">
-              <div className="col-6">
-                <Button block type="text" shape="round" size="middle" onClick={() => handler()}>
+            <div className='row two-col-ctas mt-3'>
+              <div className='col-6'>
+                <Button block type='text' shape='round' size='middle' onClick={() => handler()}>
                   {t('general.retry')}
                 </Button>
               </div>
-              <div className="col-6">
-                <Button block type="primary" shape="round" size="middle" onClick={() => refreshPage()}>
+              <div className='col-6'>
+                <Button block type='primary' shape='round' size='middle' onClick={() => refreshPage()}>
                   {t('general.refresh')}
                 </Button>
               </div>
             </div>
           ) : (
-            <Button block type="primary" shape="round" size="middle" onClick={hideTransactionExecutionModal}>
+            <Button block type='primary' shape='round' size='middle' onClick={hideTransactionExecutionModal}>
               {t('general.cta-close')}
             </Button>
           )}
@@ -2882,8 +2882,8 @@ export const MoneyStreamsOutgoingView = (props: {
 
     return (
       <>
-        <Spin indicator={bigLoadingIcon} className="icon" />
-        <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+        <Spin indicator={bigLoadingIcon} className='icon' />
+        <h4 className='font-bold mb-4 text-uppercase'>{t('transactions.status.tx-wait')}...</h4>
       </>
     );
   }, [
@@ -2973,7 +2973,7 @@ export const MoneyStreamsOutgoingView = (props: {
 
       {/* Add funds transaction execution modal */}
       <Modal
-        className="mean-modal no-full-screen"
+        className='mean-modal no-full-screen'
         maskClosable={false}
         afterClose={onAfterAddFundsTransactionModalClosed}
         open={isAddFundsTransactionModalVisible}
@@ -2982,12 +2982,12 @@ export const MoneyStreamsOutgoingView = (props: {
         width={330}
         footer={null}
       >
-        <div className="transaction-progress">{renderAddFundsModalContent()}</div>
+        <div className='transaction-progress'>{renderAddFundsModalContent()}</div>
       </Modal>
 
       {/* Close stream transaction execution modal */}
       <Modal
-        className="mean-modal no-full-screen"
+        className='mean-modal no-full-screen'
         maskClosable={false}
         afterClose={onCloseStreamTransactionFinished}
         open={isCloseStreamTransactionModalVisible}
@@ -2996,12 +2996,12 @@ export const MoneyStreamsOutgoingView = (props: {
         width={330}
         footer={null}
       >
-        <div className="transaction-progress">{renderCloseStreamTxExecModalContent()}</div>
+        <div className='transaction-progress'>{renderCloseStreamTxExecModalContent()}</div>
       </Modal>
 
       {/* Common transaction execution modal */}
       <Modal
-        className="mean-modal no-full-screen"
+        className='mean-modal no-full-screen'
         maskClosable={false}
         open={isTransactionExecutionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
@@ -3009,7 +3009,7 @@ export const MoneyStreamsOutgoingView = (props: {
         width={360}
         footer={null}
       >
-        <div className="transaction-progress">{renderCommonTxExecModalContent()}</div>
+        <div className='transaction-progress'>{renderCommonTxExecModalContent()}</div>
       </Modal>
     </>
   );

@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode, useCallback } from 'react';
+import { type CSSProperties, type ReactNode, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconExternalLink } from '../../Icons';
 import { copyText } from '../../middleware/ui';
@@ -60,7 +60,7 @@ export const AddressDisplay = (props: {
   }
 
   return (
-    <div className="address-display flex-fixed-left align-items-center">
+    <div className='address-display flex-fixed-left align-items-center'>
       <div
         onClick={() => copyAddressToClipboard(linkText || address)}
         className={`left ${className || 'simplelink underline-on-hover'}`}
@@ -71,9 +71,9 @@ export const AddressDisplay = (props: {
         {suffix}
       </div>
       {newTabLink && (
-        <div className="right" style={{ marginLeft: '4px' }}>
-          <a className="simplelink" target="_blank" rel="noopener noreferrer" href={newTabLink}>
-            {newTabIcon ? newTabIcon : <IconExternalLink className="mean-svg-icons" style={iconStyles} />}
+        <div className='right' style={{ marginLeft: '4px' }}>
+          <a className='simplelink' target='_blank' rel='noopener noreferrer' href={newTabLink}>
+            {newTabIcon ? newTabIcon : <IconExternalLink className='mean-svg-icons' style={iconStyles} />}
           </a>
         </div>
       )}

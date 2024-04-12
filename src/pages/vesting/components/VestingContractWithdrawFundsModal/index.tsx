@@ -1,7 +1,8 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { TransactionFees } from '@mean-dao/money-streaming';
-import { PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { TransactionFees } from '@mean-dao/money-streaming';
+import { AccountType, type PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { Identicon } from 'components/Identicon';
@@ -21,13 +22,13 @@ import {
   toTokenAmountBn,
   toUiAmount,
 } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { VestingContractWithdrawOptions } from 'models/vesting';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import type { VestingContractWithdrawOptions } from 'models/vesting';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
-import { BN } from '@project-serum/anchor';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -84,7 +85,7 @@ export const VestingContractWithdrawFundsModal = (props: {
       }
       const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
-      return parseFloat(inputAmount) * price;
+      return Number.parseFloat(inputAmount) * price;
     },
     [getTokenPriceByAddress, selectedToken],
   );
@@ -180,24 +181,24 @@ export const VestingContractWithdrawFundsModal = (props: {
     return !proposalTitle && isMultisigTreasury
       ? 'Add a proposal title'
       : !to || !isValidAddress(to)
-      ? 'Add destination account'
-      : !unallocatedBalance || unallocatedBalance.isZero()
-      ? 'No balance'
-      : !withdrawAmount || tokenAmount.isZero()
-      ? 'No amount'
-      : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance)
-      ? 'Amount exceeded'
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : nativeBalance < getMinBalanceRequired()
-      ? t('transactions.validation.insufficient-balance-needed', {
-          balance: formatThousands(getMinBalanceRequired(), 4),
-        })
-      : transactionStatus.currentOperation === TransactionStatus.Iddle
-      ? t('treasuries.withdraw-funds.main-cta')
-      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-      ? t('general.cta-finish')
-      : t('general.retry');
+        ? 'Add destination account'
+        : !unallocatedBalance || unallocatedBalance.isZero()
+          ? 'No balance'
+          : !withdrawAmount || tokenAmount.isZero()
+            ? 'No amount'
+            : tokenAmount && unallocatedBalance && tokenAmount.gt(unallocatedBalance)
+              ? 'Amount exceeded'
+              : !isVerifiedRecipient
+                ? t('transactions.validation.verified-recipient-unchecked')
+                : nativeBalance < getMinBalanceRequired()
+                  ? t('transactions.validation.insufficient-balance-needed', {
+                      balance: formatThousands(getMinBalanceRequired(), 4),
+                    })
+                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    ? t('treasuries.withdraw-funds.main-cta')
+                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                      ? t('general.cta-finish')
+                      : t('general.retry');
   };
 
   const isNewTreasury = useCallback(() => {
@@ -258,9 +259,9 @@ export const VestingContractWithdrawFundsModal = (props: {
     };
 
     return (
-      <div className="transaction-list-row no-pointer">
-        <div className="icon-cell">
-          <div className="token-icon">
+      <div className='transaction-list-row no-pointer'>
+        <div className='icon-cell'>
+          <div className='token-icon'>
             {token?.logoURI ? (
               <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
@@ -271,24 +272,24 @@ export const VestingContractWithdrawFundsModal = (props: {
             )}
           </div>
         </div>
-        <div className="description-cell">
+        <div className='description-cell'>
           {vestingContract.name ? (
-            <div className="title text-truncate">
+            <div className='title text-truncate'>
               {vestingContract.name}
               <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                 {vestingContract.accountType === AccountType.Open ? 'Open' : 'Locked'}
               </span>
             </div>
           ) : (
-            <div className="title text-truncate">{shortenAddress(vestingContract.id, 8)}</div>
+            <div className='title text-truncate'>{shortenAddress(vestingContract.id, 8)}</div>
           )}
           {isMultisigTreasury && (
-            <div className="subtitle text-truncate">{t('treasuries.treasury-list.multisig-treasury-label')}</div>
+            <div className='subtitle text-truncate'>{t('treasuries.treasury-list.multisig-treasury-label')}</div>
           )}
         </div>
-        <div className="rate-cell text-center">
-          <div className="rate-amount">{formatThousands(+getSdkValue(vestingContract.totalStreams))}</div>
-          <div className="interval">{vestingContract.totalStreams === 1 ? 'stream' : 'streams'}</div>
+        <div className='rate-cell text-center'>
+          <div className='rate-amount'>{formatThousands(+getSdkValue(vestingContract.totalStreams))}</div>
+          <div className='interval'>{vestingContract.totalStreams === 1 ? 'stream' : 'streams'}</div>
         </div>
       </div>
     );
@@ -296,8 +297,8 @@ export const VestingContractWithdrawFundsModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('vesting.withdraw-funds.modal-title')}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{t('vesting.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
@@ -315,54 +316,54 @@ export const VestingContractWithdrawFundsModal = (props: {
           <>
             {/* Proposal title */}
             {isMultisigTreasury && (
-              <div className="mb-3 mt-3">
-                <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+              <div className='mb-3 mt-3'>
+                <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
                 <InputMean
-                  id="proposal-title-field"
-                  name="Title"
+                  id='proposal-title-field'
+                  name='Title'
                   className={`w-100 general-text-input`}
                   onChange={(e: any) => {
                     setProposalTitle(e.target.value);
                   }}
-                  placeholder="Add a proposal title (required)"
+                  placeholder='Add a proposal title (required)'
                   value={proposalTitle}
                 />
               </div>
             )}
             {/* Transfer from */}
             {vestingContract && (
-              <div className="mb-3">
-                <div className="form-label">{t('vesting.withdraw-funds.from-vesting-contract')}</div>
-                <div className="well">{renderTreasury()}</div>
+              <div className='mb-3'>
+                <div className='form-label'>{t('vesting.withdraw-funds.from-vesting-contract')}</div>
+                <div className='well'>{renderTreasury()}</div>
               </div>
             )}
 
             {/* Transfer to */}
-            <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
-            <div className="well">
+            <div className='form-label'>{t('multisig.transfer-tokens.transfer-to-label')}</div>
+            <div className='well'>
               <input
-                id="mint-to-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
+                id='mint-to-field'
+                className='general-text-input'
+                autoComplete='on'
+                autoCorrect='off'
+                type='text'
                 onChange={onMintToAddressChange}
                 placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
                 required={true}
-                spellCheck="false"
+                spellCheck='false'
                 value={to}
               />
               {to && !isValidAddress(to) && (
-                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
               )}
             </div>
 
             {/* Withdraw amount */}
-            <div className="form-label">{t('streams.add-funds.amount-label')}</div>
-            <div className="well">
-              <div className="flex-fixed-left">
-                <div className="left">
-                  <span className="add-on">
+            <div className='form-label'>{t('streams.add-funds.amount-label')}</div>
+            <div className='well'>
+              <div className='flex-fixed-left'>
+                <div className='left'>
+                  <span className='add-on'>
                     {selectedToken && (
                       <TokenDisplay
                         onClick={() => {}}
@@ -373,7 +374,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                     )}
                     {selectedToken && unallocatedBalance && (
                       <div
-                        className="token-max simplelink"
+                        className='token-max simplelink'
                         onClick={() => {
                           setWithdrawAmount(toUiAmount(unallocatedBalance, selectedToken.decimals));
                           setTokenAmount(unallocatedBalance);
@@ -384,26 +385,26 @@ export const VestingContractWithdrawFundsModal = (props: {
                     )}
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <input
-                    id="topup-amount-field"
-                    className="general-text-input text-right"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    type="text"
+                    id='topup-amount-field'
+                    className='general-text-input text-right'
+                    inputMode='decimal'
+                    autoComplete='off'
+                    autoCorrect='off'
+                    type='text'
                     onChange={handleAmountChange}
-                    pattern="^[0-9]*[.,]?[0-9]*$"
-                    placeholder="0.0"
+                    pattern='^[0-9]*[.,]?[0-9]*$'
+                    placeholder='0.0'
                     minLength={1}
                     maxLength={79}
-                    spellCheck="false"
+                    spellCheck='false'
                     value={withdrawAmount}
                   />
                 </div>
               </div>
-              <div className="flex-fixed-right">
-                <div className="left inner-label">
+              <div className='flex-fixed-right'>
+                <div className='left inner-label'>
                   {!vestingContract || vestingContract?.autoClose ? (
                     <span>{t('add-funds.label-right')}:</span>
                   ) : (
@@ -434,7 +435,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                   )}
                 </div>
 
-                <div className="right inner-label">
+                <div className='right inner-label'>
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                     onClick={() => refreshPrices()}
@@ -449,29 +450,29 @@ export const VestingContractWithdrawFundsModal = (props: {
             {isMultisigTreasury && <p>{t('multisig.multisig-assets.explanatory-paragraph')}</p>}
 
             {/* confirm that the recipient address doesn't belong to an exchange */}
-            <div className="mt-2 mb-3 confirm-terms">
+            <div className='mt-2 mb-3 confirm-terms'>
               <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
                 {t('treasuries.withdraw-funds.verified-label')}
               </Checkbox>
             </div>
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
-          <div className="transaction-progress">
-            <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-            <h4 className="font-bold">{t('multisig.transfer-tokens.success-message')}</h4>
+          <div className='transaction-progress'>
+            <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+            <h4 className='font-bold'>{t('multisig.transfer-tokens.success-message')}</h4>
           </div>
         ) : (
-          <div className="transaction-progress p-0">
-            <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+          <div className='transaction-progress p-0'>
+            <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
             {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-              <h4 className="mb-4">
+              <h4 className='mb-4'>
                 {t('transactions.status.tx-start-failure', {
                   accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                   feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
                 })}
               </h4>
             ) : (
-              <h4 className="font-bold mb-3">
+              <h4 className='font-bold mb-3'>
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
             )}
@@ -485,24 +486,24 @@ export const VestingContractWithdrawFundsModal = (props: {
         }
       >
         {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress">
-            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-            <h4 className="font-bold mb-1">
+          <div className='transaction-progress'>
+            <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+            <h4 className='font-bold mb-1'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
             {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              <div className='indication'>{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}
       </div>
 
       {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
-        <div className="cta-container">
+        <div className='cta-container'>
           <Button
-            type="primary"
-            shape="round"
-            size="large"
+            type='primary'
+            shape='round'
+            size='large'
             disabled={isBusy || !isValidForm()}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {

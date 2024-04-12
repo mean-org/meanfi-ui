@@ -6,10 +6,10 @@ export const FormLabelWithIconInfo = (props: { label: string; tooltipText: any; 
 
   return (
     <>
-      <div className="form-label icon-label align-items-center">
+      <div className='form-label icon-label align-items-center'>
         <span>{label}</span>
         <InfoIcon content={tooltipText} placement={tooltipPlacement || 'top'}>
-          <IconHelpCircle className="mean-svg-icons" />
+          <IconHelpCircle className='mean-svg-icons' />
         </InfoIcon>
       </div>
     </>

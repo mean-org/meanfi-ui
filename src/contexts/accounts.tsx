@@ -1,9 +1,9 @@
-import { MintInfo, MintLayout, u64 } from '@solana/spl-token';
-import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
+import { type MintInfo, MintLayout, u64 } from '@solana/spl-token';
+import { type AccountInfo, type Connection, PublicKey } from '@solana/web3.js';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { HALF_MINUTE_REFRESH_TIMEOUT } from '../constants';
 import { EventEmitter } from '../middleware/eventEmitter';
-import { TokenAccount } from '../models/accounts';
+import type { TokenAccount } from '../models/accounts';
 import { useConnection } from './connection';
 import { useWallet } from './wallet';
 

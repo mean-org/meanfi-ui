@@ -1,7 +1,25 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 
-import { Modal, Button } from 'antd';
+import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import type { MoneyStreaming } from '@mean-dao/money-streaming';
+import type { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import {
+  AccountType,
+  type PaymentStreaming,
+  type PaymentStreamingAccount,
+  type Stream,
+} from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
+import { PublicKey } from '@solana/web3.js';
+import { Button, Modal } from 'antd';
+import { InputMean } from 'components/InputMean';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
+import { useConnection } from 'contexts/connection';
+import { useWallet } from 'contexts/wallet';
+import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
+import { SOL_MINT } from 'middleware/ids';
+import { consoleOut, toUsCurrency } from 'middleware/ui';
 import {
   cutNumber,
   displayAmountWithSymbol,
@@ -11,24 +29,11 @@ import {
   toTokenAmountBn,
   toUiAmount,
 } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { StreamTopupParams } from 'models/common-types';
+import type { StreamTreasuryType } from 'models/treasuries';
 import { useTranslation } from 'react-i18next';
-import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
-import { MoneyStreaming } from '@mean-dao/money-streaming';
-import { PaymentStreaming, Stream, PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
-import { StreamTreasuryType } from 'models/treasuries';
-import { useWallet } from 'contexts/wallet';
-import { useConnection } from 'contexts/connection';
-import { PublicKey } from '@solana/web3.js';
-import { consoleOut, toUsCurrency } from 'middleware/ui';
-import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { StreamTopupParams } from 'models/common-types';
-import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
-import { SOL_MINT } from 'middleware/ids';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { InputMean } from 'components/InputMean';
-import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { BN } from '@project-serum/anchor';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
@@ -194,7 +199,7 @@ export const StreamAddFundsModal = (props: {
       return 0;
     }
 
-    return parseFloat(topupAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
+    return Number.parseFloat(topupAmount) * getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
   }, [topupAmount, selectedToken, getTokenPriceByAddress]);
 
   const shouldFundFromTreasury = useCallback(() => {
@@ -455,16 +460,16 @@ export const StreamAddFundsModal = (props: {
   const renderProposalTitle = useCallback(() => {
     if (isMultisigContext) {
       return (
-        <div className="mb-3 mt-3">
-          <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+        <div className='mb-3 mt-3'>
+          <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
           <InputMean
-            id="proposal-title-field"
-            name="Title"
+            id='proposal-title-field'
+            name='Title'
             className={`w-100 general-text-input`}
             onChange={(e: any) => {
               setProposalTitle(e.target.value);
             }}
-            placeholder="Add a proposal title (required)"
+            placeholder='Add a proposal title (required)'
             value={proposalTitle}
           />
         </div>
@@ -481,7 +486,7 @@ export const StreamAddFundsModal = (props: {
         <>
           {selectedToken && selectFromTokenBalance() ? (
             <div
-              className="token-max simplelink"
+              className='token-max simplelink'
               onClick={() => {
                 setTopupAmount(cutNumber(selectFromTokenBalance(), selectedToken.decimals));
                 setTokenAmount(toTokenAmountBn(selectFromTokenBalance(), selectedToken.decimals));
@@ -497,7 +502,7 @@ export const StreamAddFundsModal = (props: {
         <>
           {selectedToken && unallocatedBalance ? (
             <div
-              className="token-max simplelink"
+              className='token-max simplelink'
               onClick={() => {
                 const decimals = getDecimals();
                 if (isfeePayedByTreasurerOn()) {
@@ -533,11 +538,11 @@ export const StreamAddFundsModal = (props: {
   const renderTopupAmount = useCallback(() => {
     return (
       <>
-        <div className="form-label">{t('streams.add-funds.amount-label')}</div>
-        <div className="well">
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on">
+        <div className='form-label'>{t('streams.add-funds.amount-label')}</div>
+        <div className='well'>
+          <div className='flex-fixed-left'>
+            <div className='left'>
+              <span className='add-on'>
                 {selectedToken && (
                   <TokenDisplay
                     onClick={() => {}}
@@ -550,26 +555,26 @@ export const StreamAddFundsModal = (props: {
                 {getMaxCta()}
               </span>
             </div>
-            <div className="right">
+            <div className='right'>
               <input
-                id="topup-amount-field"
-                className="general-text-input text-right"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
+                id='topup-amount-field'
+                className='general-text-input text-right'
+                inputMode='decimal'
+                autoComplete='off'
+                autoCorrect='off'
+                type='text'
                 onChange={handleAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
+                pattern='^[0-9]*[.,]?[0-9]*$'
+                placeholder='0.0'
                 minLength={1}
                 maxLength={79}
-                spellCheck="false"
+                spellCheck='false'
                 value={topupAmount}
               />
             </div>
           </div>
-          <div className="flex-fixed-right">
-            <div className="left inner-label">
+          <div className='flex-fixed-right'>
+            <div className='left inner-label'>
               {!treasuryDetails || treasuryDetails?.autoClose ? (
                 <span>{t('add-funds.label-right')}:</span>
               ) : (
@@ -598,7 +603,7 @@ export const StreamAddFundsModal = (props: {
                 </>
               )}
             </div>
-            <div className="right inner-label">
+            <div className='right inner-label'>
               {publicKey ? (
                 <>
                   <span
@@ -641,11 +646,11 @@ export const StreamAddFundsModal = (props: {
         {/* Top up amount */}
         {renderTopupAmount()}
         <Button
-          className="main-cta"
+          className='main-cta'
           block
-          type="primary"
-          shape="round"
-          size="large"
+          type='primary'
+          shape='round'
+          size='large'
           disabled={!isValidInput()}
           onClick={onAcceptTopup}
         >
@@ -665,19 +670,19 @@ export const StreamAddFundsModal = (props: {
   const renderStreamAddFundsModalContent = useCallback(() => {
     if (loadingTreasuryDetails) {
       return (
-        <div className="transaction-progress">
-          <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
-          <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
+        <div className='transaction-progress'>
+          <LoadingOutlined style={{ fontSize: 48 }} className='icon mt-0' spin />
+          <h4 className='operation'>{t('close-stream.loading-treasury-message')}</h4>
         </div>
       );
     } else if (streamTreasuryType === 'locked') {
       return (
         // The user can't top-up the stream
-        <div className="transaction-progress">
-          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-          <h4 className="operation">{t('close-stream.cant-topup-message')}</h4>
-          <div className="mt-3">
-            <Button type="primary" shape="round" size="large" onClick={handleClose}>
+        <div className='transaction-progress'>
+          <ExclamationCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+          <h4 className='operation'>{t('close-stream.cant-topup-message')}</h4>
+          <div className='mt-3'>
+            <Button type='primary' shape='round' size='large' onClick={handleClose}>
               {t('general.cta-close')}
             </Button>
           </div>
@@ -690,8 +695,8 @@ export const StreamAddFundsModal = (props: {
 
   return (
     <Modal
-      className="mean-modal"
-      title={<div className="modal-title">{t('streams.add-funds.modal-title')}</div>}
+      className='mean-modal'
+      title={<div className='modal-title'>{t('streams.add-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}

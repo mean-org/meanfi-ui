@@ -1,15 +1,15 @@
-import { useContext, useCallback, useEffect, useState, useMemo, ReactNode } from 'react';
-import { Modal, Button, Row, Col } from 'antd';
 import { WarningFilled, WarningOutlined } from '@ant-design/icons';
+import type { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import type { Stream } from '@mean-dao/payment-streaming';
+import { Button, Col, Modal, Row } from 'antd';
+import { InputMean } from 'components/InputMean';
+import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
+import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { percentage, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
+import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { Stream } from '@mean-dao/payment-streaming';
-import { AppStateContext } from 'contexts/appstate';
-import { InputMean } from 'components/InputMean';
-import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 
 export const StreamResumeModal = (props: {
   handleClose: any;
@@ -154,10 +154,10 @@ export const StreamResumeModal = (props: {
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={12} className="text-right pr-1">
+        <Col span={12} className='text-right pr-1'>
           {caption}
         </Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">
+        <Col span={12} className='text-left pl-1 fg-secondary-70'>
           {value}
         </Col>
       </Row>
@@ -166,9 +166,9 @@ export const StreamResumeModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
+      className='mean-modal simple-modal'
       title={
-        <div className="modal-title">
+        <div className='modal-title'>
           {isMultisigContext ? 'Propose resume stream' : t('streams.resume-stream-modal-title')}
         </div>
       }
@@ -177,23 +177,23 @@ export const StreamResumeModal = (props: {
       onCancel={onCloseModal}
       width={400}
     >
-      <div className="transaction-progress p-0">
+      <div className='transaction-progress p-0'>
         {/* <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" /> */}
-        <div className="text-center">
+        <div className='text-center'>
           {theme === 'light' ? (
-            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+            <WarningFilled style={{ fontSize: 48 }} className='icon mt-0 fg-warning' />
           ) : (
-            <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 fg-warning" />
+            <WarningOutlined style={{ fontSize: 48 }} className='icon mt-0 fg-warning' />
           )}
         </div>
-        <div className="mb-2 fg-warning">
+        <div className='mb-2 fg-warning'>
           <span>{props.content}</span>
         </div>
         {/* <h4>{props.content}</h4> */}
 
         {/* Info */}
         {props.streamDetail && getStreamAssociatedMint(props.streamDetail) && (
-          <div className="p-2 mb-2">
+          <div className='p-2 mb-2'>
             {infoRow(
               t('close-stream.return-vested-amount') + ':',
               getAmountWithSymbol(getWithdrawableAmount(), getStreamAssociatedMint(props.streamDetail) as string),
@@ -208,25 +208,25 @@ export const StreamResumeModal = (props: {
 
         {/* Proposal title */}
         {isMultisigContext && (
-          <div className="mb-3">
-            <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+          <div className='mb-3'>
+            <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
             <InputMean
-              id="proposal-title-field"
-              name="Title"
-              className="w-100 general-text-input"
+              id='proposal-title-field'
+              name='Title'
+              className='w-100 general-text-input'
               onChange={onTitleInputValueChange}
-              placeholder="Add a proposal title (required)"
+              placeholder='Add a proposal title (required)'
               value={proposalTitle}
             />
           </div>
         )}
 
-        <div className="mt-3">
+        <div className='mt-3'>
           <Button
             block
-            type="primary"
-            shape="round"
-            size="large"
+            type='primary'
+            shape='round'
+            size='large'
             disabled={isMultisigContext && !isValidForm()}
             onClick={() => onAcceptModal()}
           >

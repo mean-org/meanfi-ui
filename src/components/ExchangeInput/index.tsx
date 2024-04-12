@@ -1,11 +1,11 @@
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import React, { useContext } from 'react';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
-import { getAmountWithSymbol } from '../../middleware/utils';
 import { useWallet } from '../../contexts/wallet';
-import { TokenDisplay } from '../TokenDisplay';
 import { toUsCurrency } from '../../middleware/ui';
+import { getAmountWithSymbol } from '../../middleware/utils';
+import { TokenDisplay } from '../TokenDisplay';
 
 export const ExchangeInput = (props: {
   token: TokenInfo | undefined;
@@ -26,15 +26,15 @@ export const ExchangeInput = (props: {
   return (
     <div className={`well ${props.className || ''}`}>
       {/* Balance row */}
-      <div className="flex-fixed-right">
-        <div className="left inner-label">
+      <div className='flex-fixed-right'>
+        <div className='left inner-label'>
           <span>{t('transactions.send-amount.label-right')}:</span>
           {publicKey ? (
             <>
-              <span className="simplelink" onClick={props.onBalanceClick}>
+              <span className='simplelink' onClick={props.onBalanceClick}>
                 {`${
                   props.token && props.tokenBalance
-                    ? getAmountWithSymbol(parseFloat(props.tokenBalance), props.token.address, true)
+                    ? getAmountWithSymbol(Number.parseFloat(props.tokenBalance), props.token.address, true)
                     : '0'
                 }`}
               </span>
@@ -45,17 +45,19 @@ export const ExchangeInput = (props: {
                 >
                   {`(~${
                     props.token && props.tokenBalance
-                      ? toUsCurrency(parseFloat(props.tokenBalance) * getTokenPriceByAddress(props.token.address))
+                      ? toUsCurrency(
+                          Number.parseFloat(props.tokenBalance) * getTokenPriceByAddress(props.token.address),
+                        )
                       : '$0.00'
                   })`}
                 </span>
               )}
             </>
           ) : (
-            <span className="balance-amount">0</span>
+            <span className='balance-amount'>0</span>
           )}
         </div>
-        <div className="right inner-label">
+        <div className='right inner-label'>
           {publicKey ? (
             <span
               className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
@@ -63,7 +65,7 @@ export const ExchangeInput = (props: {
             >
               ~
               {props.token && props.tokenBalance
-                ? toUsCurrency(parseFloat(props.tokenBalance) * getTokenPriceByAddress(props.token.address))
+                ? toUsCurrency(Number.parseFloat(props.tokenBalance) * getTokenPriceByAddress(props.token.address))
                 : '$0.00'}
             </span>
           ) : (
@@ -72,8 +74,8 @@ export const ExchangeInput = (props: {
         </div>
       </div>
 
-      <div className="flex-fixed-left">
-        <div className="left">
+      <div className='flex-fixed-left'>
+        <div className='left'>
           <span className={`add-on ${!props.readonly ? 'simplelink' : ''}`}>
             <TokenDisplay
               onClick={() => {
@@ -90,25 +92,25 @@ export const ExchangeInput = (props: {
               showCaretDown={!props.readonly}
             />
             {publicKey && props.token && props.tokenBalance && props.onMaxAmount ? (
-              <div className="token-max simplelink" onClick={props.onMaxAmount}>
+              <div className='token-max simplelink' onClick={props.onMaxAmount}>
                 MAX
               </div>
             ) : null}
           </span>
         </div>
-        <div className="right">
+        <div className='right'>
           <input
-            className="general-text-input text-right"
-            inputMode="decimal"
-            autoComplete="off"
-            autoCorrect="off"
-            type="text"
+            className='general-text-input text-right'
+            inputMode='decimal'
+            autoComplete='off'
+            autoCorrect='off'
+            type='text'
             onChange={props.onInputChange}
-            pattern="^[0-9]*[.,]?[0-9]*$"
-            placeholder="0.0"
+            pattern='^[0-9]*[.,]?[0-9]*$'
+            placeholder='0.0'
             minLength={1}
             maxLength={79}
-            spellCheck="false"
+            spellCheck='false'
             readOnly={!!props.readonly}
             value={props.tokenAmount}
           />

@@ -1,5 +1,12 @@
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, Keypair, PublicKey, Signer, SystemProgram, TransactionInstruction } from '@solana/web3.js';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, AccountLayout, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import {
+  type Connection,
+  Keypair,
+  type PublicKey,
+  type Signer,
+  SystemProgram,
+  type TransactionInstruction,
+} from '@solana/web3.js';
 import { composeV0TxWithPrioritizationFees, serializeTx } from './transactions';
 
 export async function createV0InitAtaAccountTx(

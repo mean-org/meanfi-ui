@@ -2,18 +2,18 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { IconCross, IconGasStation } from 'Icons';
 import { Button, Popover, Segmented } from 'antd';
-import { SegmentedValue } from 'antd/lib/segmented';
+import type { SegmentedValue } from 'antd/lib/segmented';
+import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
 import {
   COMPUTE_UNIT_PRICE,
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
-  PriorityOption,
+  type PriorityOption,
 } from 'middleware/transactions';
-import { useTranslation } from 'react-i18next';
-import useLocalStorage from 'hooks/useLocalStorage';
 import { consoleOut } from 'middleware/ui';
 import { formatThousands } from 'middleware/utils';
+import { useTranslation } from 'react-i18next';
 
 interface PopoverContentProps {
   transactionPriorityOptions: ComputeBudgetConfig;
@@ -37,9 +37,9 @@ const PopoverContent = ({ transactionPriorityOptions, onOptionChanged }: Popover
   }, [transactionPriorityOptions.priorityOption, t]);
 
   return (
-    <div className="container-max-width-360">
+    <div className='container-max-width-360'>
       <p>{t('priority-fees.prioritization-overview')}</p>
-      <div className="inner-label">{t('priority-fees.selector-label')}</div>
+      <div className='inner-label'>{t('priority-fees.selector-label')}</div>
       <Segmented
         block
         options={[
@@ -50,7 +50,7 @@ const PopoverContent = ({ transactionPriorityOptions, onOptionChanged }: Popover
         value={transactionPriorityOptions.priorityOption}
         onChange={onOptionChanged}
       />
-      <p className="mt-3">{priorityDescription}</p>
+      <p className='mt-3'>{priorityDescription}</p>
     </div>
   );
 };
@@ -113,15 +113,15 @@ const PrioritizationFeesConfigPopover = () => {
     <Popover
       placement={isSmScreen() ? 'bottomRight' : 'bottom'}
       title={
-        <div className="flexible-left container-max-width-360">
-          <div className="left">{t('priority-fees.priority-settings-title')}</div>
-          <div className="right">
-            <span className="icon-button-container">
+        <div className='flexible-left container-max-width-360'>
+          <div className='left'>{t('priority-fees.priority-settings-title')}</div>
+          <div className='right'>
+            <span className='icon-button-container'>
               <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<IconCross className="mean-svg-icons" />}
+                type='default'
+                shape='circle'
+                size='middle'
+                icon={<IconCross className='mean-svg-icons' />}
                 onClick={() => handlePopoverVisibleChange(false)}
               />
             </span>
@@ -133,9 +133,9 @@ const PrioritizationFeesConfigPopover = () => {
       }
       open={popoverVisible}
       onOpenChange={handlePopoverVisibleChange}
-      trigger="click"
+      trigger='click'
     >
-      <Button shape="round" type="text" size="large" icon={<IconGasStation className="mean-svg-icons" />} />
+      <Button shape='round' type='text' size='large' icon={<IconGasStation className='mean-svg-icons' />} />
     </Popover>
   );
 };

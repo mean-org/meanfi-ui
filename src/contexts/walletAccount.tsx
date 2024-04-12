@@ -1,5 +1,5 @@
 import { useLocalStorageState } from 'middleware/utils';
-import { AccountContext } from 'models/accounts';
+import type { AccountContext } from 'models/accounts';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useWallet } from './wallet';
 

@@ -1,5 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons';
-import { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
+import type { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
 import { Button, Popover } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,12 +18,12 @@ export const MultisigOwnersView = (props: {
   };
 
   const titleContent = (
-    <div className="flexible-left">
-      <div className="left">{t('multisig.multisig-account-detail.multisig-owners')}</div>
-      <div className="right">
+    <div className='flexible-left'>
+      <div className='left'>{t('multisig.multisig-account-detail.multisig-owners')}</div>
+      <div className='right'>
         <Button
-          type="default"
-          shape="circle"
+          type='default'
+          shape='circle'
           icon={<CloseOutlined />}
           onClick={() => handlePopoverVisibleChange(false)}
         />
@@ -34,11 +34,11 @@ export const MultisigOwnersView = (props: {
   const bodyContent = (
     <>
       {props.participants && props.participants.length > 0 ? (
-        <div className="cebra-list">
+        <div className='cebra-list'>
           {props.participants.map((item, index) => {
             return (
-              <div key={`${index}`} className="cebra-list-item flex-fixed-right align-items-center">
-                <div className="left">{item.name || `Owner ${index + 1}`}</div>
+              <div key={`${index}`} className='cebra-list-item flex-fixed-right align-items-center'>
+                <div className='left'>{item.name || `Owner ${index + 1}`}</div>
                 <CopyExtLinkGroup
                   content={item.address}
                   number={6}
@@ -50,7 +50,7 @@ export const MultisigOwnersView = (props: {
           })}
         </div>
       ) : (
-        <div className="pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>
+        <div className='pl-1'>{t('multisig.create-multisig.multisig-no-participants')}</div>
       )}
     </>
   );
@@ -58,19 +58,19 @@ export const MultisigOwnersView = (props: {
   return (
     <>
       <Popover
-        placement="bottom"
+        placement='bottom'
         title={titleContent}
         content={bodyContent}
         open={popoverVisible}
         onOpenChange={handlePopoverVisibleChange}
-        trigger="click"
+        trigger='click'
       >
         {props.className ? (
           <span className={`${props.className}`}>
-            (<span className="simplelink underline-on-hover">{props.label}</span>)
+            (<span className='simplelink underline-on-hover'>{props.label}</span>)
           </span>
         ) : (
-          <span className="simplelink underline-on-hover">{props.label}</span>
+          <span className='simplelink underline-on-hover'>{props.label}</span>
         )}
       </Popover>
     </>

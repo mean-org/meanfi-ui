@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { AccountContext, AccountsPageCategory, AssetGroups, KNOWN_APPS, RegisteredAppPaths } from 'models/accounts';
-import { consoleOut } from 'middleware/ui';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { openNotification } from 'components/Notifications';
+import { consoleOut } from 'middleware/ui';
+import {
+  type AccountContext,
+  type AccountsPageCategory,
+  AssetGroups,
+  KNOWN_APPS,
+  RegisteredAppPaths,
+} from 'models/accounts';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 // Utils
 // ---------------------------------------------------------------------------

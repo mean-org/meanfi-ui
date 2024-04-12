@@ -1,4 +1,4 @@
-import { AccountInfo, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Drawer, Modal, Tabs } from 'antd';
 import { TextInput } from 'components/TextInput';
 import { TokenListItem } from 'components/TokenListItem';
@@ -12,8 +12,8 @@ import { environment } from 'environments/environment';
 import { getTokensWithBalances } from 'middleware/accounts';
 import { consoleOut, isValidAddress } from 'middleware/ui';
 import { getAmountFromLamports, shortenAddress } from 'middleware/utils';
-import { UserTokenAccount } from 'models/accounts';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { UserTokenAccount } from 'models/accounts';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OneTimePayment, RepeatingPayment } from 'views';
@@ -186,7 +186,7 @@ export const SendAssetModal = (props: {
 
   const renderTokenList = () => {
     return filteredTokenList.map((t, index) => {
-      const onClick = function () {
+      const onClick = () => {
         setToken(t);
 
         consoleOut('token selected:', t, 'blue');
@@ -230,20 +230,20 @@ export const SendAssetModal = (props: {
 
   const renderTokenSelectorInner = () => {
     return (
-      <div className="token-selector-wrapper">
-        <div className="token-search-wrapper">
+      <div className='token-selector-wrapper'>
+        <div className='token-search-wrapper'>
           <TextInput
-            id="token-search-rp"
+            id='token-search-rp'
             value={tokenFilter}
             allowClear={true}
-            extraClass="mb-2"
+            extraClass='mb-2'
             onInputClear={onInputCleared}
             placeholder={t('token-selector.search-input-placeholder')}
             error={getSelectedTokenError()}
             onInputChange={onTokenSearchInputChange}
           />
         </div>
-        <div className="token-list">
+        <div className='token-list'>
           {filteredTokenList.length > 0 && renderTokenList()}
           {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
             <TokenListItem
@@ -336,8 +336,8 @@ export const SendAssetModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{getModalTitle()}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{getModalTitle()}</div>}
       footer={null}
       open={isVisible}
       onOk={handleClose}
@@ -360,10 +360,10 @@ export const SendAssetModal = (props: {
           onOpenTokenSelector={showDrawer}
         />
       )}
-      {!selected && <Tabs items={tabs} className="shift-up-2" defaultActiveKey={selected} centered />}
+      {!selected && <Tabs items={tabs} className='shift-up-2' defaultActiveKey={selected} centered />}
       <Drawer
         title={t('token-selector.modal-title')}
-        placement="bottom"
+        placement='bottom'
         closable={true}
         onClose={onCloseTokenSelector}
         open={isTokenSelectorVisible}

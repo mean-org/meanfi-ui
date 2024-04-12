@@ -1,12 +1,12 @@
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, AccountLayout, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 import {
-  Connection,
+  type Connection,
   Keypair,
   LAMPORTS_PER_SOL,
-  PublicKey,
+  type PublicKey,
   SystemProgram,
-  TransactionInstruction,
-  VersionedTransaction,
+  type TransactionInstruction,
+  type VersionedTransaction,
 } from '@solana/web3.js';
 import { WRAPPED_SOL_MINT } from './ids';
 import { composeV0TxWithPrioritizationFees } from './transactions';

@@ -1,8 +1,15 @@
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, Keypair, PublicKey, Signer, SystemProgram, TransactionInstruction } from '@solana/web3.js';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, AccountLayout, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import {
+  type Connection,
+  Keypair,
+  PublicKey,
+  type Signer,
+  SystemProgram,
+  type TransactionInstruction,
+} from '@solana/web3.js';
 import { appConfig } from 'index';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
 
 export type CreateSafeAssetTxParams = {

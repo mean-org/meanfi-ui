@@ -1,7 +1,13 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { TransactionFees } from '@mean-dao/payment-streaming';
-import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { TransactionFees } from '@mean-dao/payment-streaming';
+import {
+  type AccountInfo,
+  type Connection,
+  LAMPORTS_PER_SOL,
+  type ParsedAccountData,
+  PublicKey,
+} from '@solana/web3.js';
 import { Button, Drawer, Modal } from 'antd';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
@@ -10,11 +16,11 @@ import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
-import { CreateSafeAssetTxParams } from 'middleware/createAddSafeAssetTx';
+import type { CreateSafeAssetTxParams } from 'middleware/createAddSafeAssetTx';
 import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
 import { getAmountFromLamports, shortenAddress } from 'middleware/utils';
-import { AccountTokenParsedInfo } from 'models/accounts';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { AccountTokenParsedInfo } from 'models/accounts';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput } from '../TextInput';
@@ -211,14 +217,14 @@ export const MultisigAddAssetModal = (props: {
     return !publicKey
       ? t('transactions.validation.not-connected')
       : nativeBalance === 0
-      ? t('transactions.validation.amount-sol-low')
-      : nativeBalance < feeAmount
-      ? t('transactions.validation.amount-sol-low')
-      : !selectedToken
-      ? 'No asset selected'
-      : isTokenAlreadyOwned() || selectedToken.decimals < 0
-      ? 'Invalid selection'
-      : t('multisig.create-asset.main-cta');
+        ? t('transactions.validation.amount-sol-low')
+        : nativeBalance < feeAmount
+          ? t('transactions.validation.amount-sol-low')
+          : !selectedToken
+            ? 'No asset selected'
+            : isTokenAlreadyOwned() || selectedToken.decimals < 0
+              ? 'Invalid selection'
+              : t('multisig.create-asset.main-cta');
   };
 
   const renderTokenList = (
@@ -229,7 +235,7 @@ export const MultisigAddAssetModal = (props: {
             return null;
           }
 
-          const onClick = function () {
+          const onClick = () => {
             setSelectedToken(t);
             consoleOut('token selected:', t.symbol, 'blue');
             onCloseTokenSelector();
@@ -255,13 +261,13 @@ export const MultisigAddAssetModal = (props: {
   );
 
   const renderTokenSelectorInner = (
-    <div className="token-selector-wrapper">
-      <div className="token-search-wrapper">
+    <div className='token-selector-wrapper'>
+      <div className='token-search-wrapper'>
         <TextInput
-          id="token-search-otp"
+          id='token-search-otp'
           value={tokenFilter}
           allowClear={true}
-          extraClass="mb-2"
+          extraClass='mb-2'
           onInputClear={onInputCleared}
           placeholder={t('token-selector.lookup-add-asset-input-placeholder')}
           onInputChange={onTokenSearchInputChange}
@@ -269,12 +275,12 @@ export const MultisigAddAssetModal = (props: {
             tokenFilter && selectedToken && selectedToken.decimals === -1
               ? 'Account not found'
               : tokenFilter && selectedToken && selectedToken.decimals === -2
-              ? 'Account is not a token mint'
-              : ''
+                ? 'Account is not a token mint'
+                : ''
           }
         />
       </div>
-      <div className="token-list">
+      <div className='token-list'>
         {filteredTokenList.length > 0 && renderTokenList}
         {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
           <TokenListItem
@@ -328,8 +334,8 @@ export const MultisigAddAssetModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal unpadded-content exchange-modal"
-      title={<div className="modal-title">Create a multisig asset</div>}
+      className='mean-modal simple-modal unpadded-content exchange-modal'
+      title={<div className='modal-title'>Create a multisig asset</div>}
       footer={null}
       maskClosable={false}
       open={isVisible}
@@ -337,13 +343,13 @@ export const MultisigAddAssetModal = (props: {
       onCancel={handleClose}
       width={370}
     >
-      <div className="px-4 pb-3">
+      <div className='px-4 pb-3'>
         {/* Asset picker */}
-        <div className="form-label">Select token</div>
+        <div className='form-label'>Select token</div>
         <div className={`well ${!selectedMultisig || isBusy ? 'disabled' : ''}`}>
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on simplelink">
+          <div className='flex-fixed-left'>
+            <div className='left'>
+              <span className='add-on simplelink'>
                 {selectedToken ? (
                   <TokenDisplay
                     onClick={showTokenSelector}
@@ -356,35 +362,35 @@ export const MultisigAddAssetModal = (props: {
                 ) : (
                   <TokenDisplay
                     onClick={showTokenSelector}
-                    mintAddress=""
+                    mintAddress=''
                     noTokenLabel={t('swap.token-select-destination')}
                     showCaretDown={true}
                   />
                 )}
               </span>
             </div>
-            <div className="right">&nbsp;</div>
+            <div className='right'>&nbsp;</div>
           </div>
           {isTokenAlreadyOwned() ? (
-            <span className="form-field-error">You already own this asset</span>
+            <span className='form-field-error'>You already own this asset</span>
           ) : selectedToken && selectedToken.decimals === -1 ? (
-            <span className="form-field-error">Account not found</span>
+            <span className='form-field-error'>Account not found</span>
           ) : selectedToken && selectedToken.decimals === -2 ? (
-            <span className="form-field-error">Account is not a token mint</span>
+            <span className='form-field-error'>Account is not a token mint</span>
           ) : null}
         </div>
 
         <Button
           className={`main-cta ${isBusy ? 'inactive' : ''}`}
           block
-          type="primary"
-          shape="round"
-          size="large"
+          type='primary'
+          shape='round'
+          size='large'
           disabled={!isOperationValid() || isBusy || !selectedMultisig}
           onClick={onAcceptModal}
         >
           {(isBusy || !selectedMultisig) && (
-            <span className="mr-1">
+            <span className='mr-1'>
               <LoadingOutlined style={{ fontSize: '16px' }} />
             </span>
           )}
@@ -393,8 +399,8 @@ export const MultisigAddAssetModal = (props: {
       </div>
 
       <Drawer
-        title="Select an asset"
-        placement="bottom"
+        title='Select an asset'
+        placement='bottom'
         closable={true}
         onClose={onCloseTokenSelector}
         open={isTokenSelectorVisible}

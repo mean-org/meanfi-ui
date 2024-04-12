@@ -27,8 +27,8 @@ export const MultisigMakeProgramImmutableModal = ({ handleClose, handleOk }: Pro
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">Make Program Immutable</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>Make Program Immutable</div>}
       footer={null}
       open={true}
       onOk={onAcceptModal}
@@ -36,31 +36,31 @@ export const MultisigMakeProgramImmutableModal = ({ handleClose, handleOk }: Pro
       width={480}
     >
       <div>
-        <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+        <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
         <InputMean
-          id="proposal-title-field"
-          name="Title"
+          id='proposal-title-field'
+          name='Title'
           className={`w-100 general-text-input`}
           onChange={(e: any) => {
             setProposalTitle(e.target.value);
           }}
-          placeholder="Add a proposal title (required)"
+          placeholder='Add a proposal title (required)'
           value={proposalTitle}
         />
       </div>
 
-      <div className="row two-col-ctas mt-3 transaction-progress p-0">
-        <div className="col-6">
-          <Button block type="text" shape="round" size="middle" onClick={() => handleClose()}>
+      <div className='row two-col-ctas mt-3 transaction-progress p-0'>
+        <div className='col-6'>
+          <Button block type='text' shape='round' size='middle' onClick={() => handleClose()}>
             {t('general.cta-close')}
           </Button>
         </div>
-        <div className="col-6">
+        <div className='col-6'>
           <Button
             block
-            type="primary"
-            shape="round"
-            size="middle"
+            type='primary'
+            shape='round'
+            size='middle'
             disabled={!isValidForm()}
             onClick={() => {
               onAcceptModal();

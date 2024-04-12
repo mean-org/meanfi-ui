@@ -1,6 +1,6 @@
-import { Button } from 'antd';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { IconCaretDown, IconWallet } from 'Icons';
+import { Button } from 'antd';
 
 const CustomConnectButton = () => {
   return (
@@ -21,27 +21,27 @@ const CustomConnectButton = () => {
             {(() => {
               if (!connected) {
                 return (
-                  <Button block type="primary" shape="round" size="large" onClick={openConnectModal}>
+                  <Button block type='primary' shape='round' size='large' onClick={openConnectModal}>
                     Connect Wallet
                   </Button>
                 );
               }
               if (chain.unsupported) {
                 return (
-                  <Button block type="primary" shape="round" size="large" onClick={openChainModal}>
+                  <Button block type='primary' shape='round' size='large' onClick={openChainModal}>
                     Wrong network
                   </Button>
                 );
               }
 
               return (
-                <button className="flat-button evm-connect-button" onClick={openAccountModal} type="button">
-                  <span className="account-name">{account.displayName}</span>
-                  <span className="account-balance">
+                <button className='flat-button evm-connect-button' onClick={openAccountModal} type='button'>
+                  <span className='account-name'>{account.displayName}</span>
+                  <span className='account-balance'>
                     {account.displayBalance ? ` (${account.displayBalance})` : ''}
                   </span>
-                  <IconCaretDown className="mean-svg-icons caret-down" />
-                  <IconWallet className="mean-svg-icons wallet-icon" />
+                  <IconCaretDown className='mean-svg-icons caret-down' />
+                  <IconWallet className='mean-svg-icons wallet-icon' />
                 </button>
               );
             })()}

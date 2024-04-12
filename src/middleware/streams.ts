@@ -1,6 +1,6 @@
-import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
-import { Stream, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
-import { TFunction } from 'react-i18next';
+import { STREAM_STATE, type StreamInfo } from '@mean-dao/money-streaming/lib/types';
+import { STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
+import type { TFunction } from 'react-i18next';
 import { getShortDate } from './ui';
 import { shortenAddress } from './utils';
 

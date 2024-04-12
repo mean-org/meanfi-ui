@@ -1,18 +1,18 @@
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig } from '@mean-dao/mean-multisig-sdk';
-import { TransactionFees } from '@mean-dao/payment-streaming';
+import type { TransactionFees } from '@mean-dao/payment-streaming';
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import {
-  ConfirmOptions,
+  type ConfirmOptions,
   LAMPORTS_PER_SOL,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
   Transaction,
-  TransactionInstructionCtorFields,
-  VersionedTransaction,
+  type TransactionInstructionCtorFields,
+  type VersionedTransaction,
 } from '@solana/web3.js';
-import { Button, Col, notification, Row, Tooltip } from 'antd';
 import { segmentAnalytics } from 'App';
+import { Button, Col, Row, Tooltip, notification } from 'antd';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { MultisigSetProgramAuthModal } from 'components/MultisigSetProgramAuthModal';
 import { MultisigUpgradeProgramModal } from 'components/MultisigUpgradeProgramModal';
@@ -23,14 +23,15 @@ import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection, useConnectionConfig } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
 import { appConfig, customLogger } from 'index';
 import { resolveParsedAccountInfo } from 'middleware/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import {
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getProposalWithPrioritizationFees,
   sendTx,
@@ -45,17 +46,16 @@ import {
   shortenAddress,
 } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { SetProgramAuthPayload } from 'models/multisig';
-import { ProgramUpgradeParams } from 'models/programs';
+import type { SetProgramAuthPayload } from 'models/multisig';
+import type { ProgramUpgradeParams } from 'models/programs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 import IdlTree from './IdlTree';
 import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutableModal';
-import './style.scss';
 import Transactions from './Transactions';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { failsafeConnectionConfig } from 'services/connections-hq';
+import './style.scss';
 
 let isWorkflowLocked = false;
 
@@ -220,12 +220,12 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           duration: 20,
           description: (
             <>
-              <div className="mb-2">The proposal's status can be reviewed in the Safe's proposal list.</div>
+              <div className='mb-2'>The proposal's status can be reviewed in the Safe's proposal list.</div>
               <Button
-                type="primary"
-                shape="round"
-                size="small"
-                className="extra-small d-flex align-items-center pb-1"
+                type='primary'
+                shape='round'
+                size='small'
+                className='extra-small d-flex align-items-center pb-1'
                 onClick={() => {
                   notification.close(myNotifyKey);
                   const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
@@ -402,7 +402,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           },
         ];
 
-        const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+        const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
         const tx = await getProposalWithPrioritizationFees(
           {
@@ -741,7 +741,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           });
         }
 
-        const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+        const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
         const tx = await getProposalWithPrioritizationFees(
           {
@@ -1181,35 +1181,35 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
   return (
     <>
-      <span id="multisig-refresh-cta" onClick={() => getMultisigList()}></span>
-      <div className="program-details-container">
-        <Row gutter={[8, 8]} className="safe-info-container mr-0 ml-0">
+      <span id='multisig-refresh-cta' onClick={() => getMultisigList()}></span>
+      <div className='program-details-container'>
+        <Row gutter={[8, 8]} className='safe-info-container mr-0 ml-0'>
           {infoProgramData.map(info => (
             <Col xs={12} sm={12} md={12} lg={12} key={info.name}>
-              <div className="info-safe-group">
-                <span className="info-label">{info.name}</span>
-                <span className="info-data">{info.value}</span>
+              <div className='info-safe-group'>
+                <span className='info-label'>{info.name}</span>
+                <span className='info-data'>{info.value}</span>
               </div>
             </Col>
           ))}
         </Row>
 
-        <Row gutter={[8, 8]} className="programs-btns safe-btns-container mt-2 mb-1 mr-0 ml-0">
-          <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
+        <Row gutter={[8, 8]} className='programs-btns safe-btns-container mt-2 mb-1 mr-0 ml-0'>
+          <Col xs={24} sm={24} md={24} lg={24} className='btn-group'>
             <Tooltip
               title={
                 upgradeAuthority ? 'Update the executable data of this program' : 'This program is non-upgradeable'
               }
             >
               <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke"
+                type='default'
+                shape='round'
+                size='small'
+                className='thin-stroke'
                 disabled={isTxInProgress() || !upgradeAuthority}
                 onClick={showUpgradeProgramModal}
               >
-                <div className="btn-content">Upgrade / Deployment</div>
+                <div className='btn-content'>Upgrade / Deployment</div>
               </Button>
             </Tooltip>
             <Tooltip
@@ -1218,14 +1218,14 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
               }
             >
               <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke"
+                type='default'
+                shape='round'
+                size='small'
+                className='thin-stroke'
                 disabled={isTxInProgress() || !upgradeAuthority}
                 onClick={showSetProgramAuthModal}
               >
-                <div className="btn-content">Set authority</div>
+                <div className='btn-content'>Set authority</div>
               </Button>
             </Tooltip>
             {programSelected && (
@@ -1233,10 +1233,10 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                 title={upgradeAuthority ? 'This makes the program non-upgradable' : 'This program is non-upgradeable'}
               >
                 <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke"
+                  type='default'
+                  shape='round'
+                  size='small'
+                  className='thin-stroke'
                   disabled={isTxInProgress() || !upgradeAuthority}
                   onClick={() => {
                     if (isMultisigContext) {
@@ -1248,14 +1248,14 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                     }
                   }}
                 >
-                  <div className="btn-content">Make immutable</div>
+                  <div className='btn-content'>Make immutable</div>
                 </Button>
               </Tooltip>
             )}
           </Col>
         </Row>
 
-        <TabsMean tabs={tabs} defaultTab="transactions" />
+        <TabsMean tabs={tabs} defaultTab='transactions' />
       </div>
 
       {isUpgradeProgramModalVisible && (

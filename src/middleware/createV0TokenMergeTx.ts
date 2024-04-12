@@ -1,6 +1,6 @@
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { AccountTokenParsedInfo } from 'models/accounts';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import type { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import type { AccountTokenParsedInfo } from 'models/accounts';
 import { composeV0TxWithPrioritizationFees, serializeTx } from './transactions';
 
 export async function createV0TokenMergeTx(

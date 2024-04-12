@@ -1,15 +1,15 @@
 import { TextInput } from 'components/TextInput';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { TokenListItem } from 'components/TokenListItem';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { UserTokenAccount } from 'models/accounts/UserTokenAccount';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { getTokensWithBalances } from 'middleware/accounts';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { consoleOut } from 'middleware/ui';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
-import { TokenListItem } from 'components/TokenListItem';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { UserTokenAccount } from 'models/accounts/UserTokenAccount';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface TokenSelectorProps {
   tokens: TokenInfo[] | undefined;
@@ -152,7 +152,7 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
 
   const renderTokenList = () => {
     return filteredTokenList.map((t, index) => {
-      const onClick = function () {
+      const onClick = () => {
         consoleOut('token selected:', t, 'blue');
         onTokenSelected(t);
         onCloseTokenSelector();
@@ -179,19 +179,19 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
   };
 
   return (
-    <div className="token-selector-wrapper">
-      <div className="token-search-wrapper">
+    <div className='token-selector-wrapper'>
+      <div className='token-search-wrapper'>
         <TextInput
-          id="token-search-rp"
+          id='token-search-rp'
           value={tokenFilter}
           allowClear={true}
-          extraClass="mb-2"
+          extraClass='mb-2'
           onInputClear={onInputCleared}
           placeholder={t('token-selector.search-input-placeholder')}
           onInputChange={onTokenSearchInputChange}
         />
       </div>
-      <div className="token-list">
+      <div className='token-list'>
         {filteredTokenList.length > 0 ? (
           renderTokenList()
         ) : (

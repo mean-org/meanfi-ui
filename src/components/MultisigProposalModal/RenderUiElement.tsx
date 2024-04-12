@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
+import type { App, UiElement } from '@mean-dao/mean-multisig-apps';
 import { Col, Radio, Row } from 'antd';
-import { App, UiElement } from '@mean-dao/mean-multisig-apps';
 import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
 import { InputMean } from 'components/InputMean';
 import { InputTextAreaMean } from 'components/InputTextAreaMean';
@@ -47,7 +47,7 @@ const RenderUiElement = ({
 
   const renderTextInput = useCallback(() => {
     return (
-      <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+      <Col xs={24} sm={24} md={24} lg={24} className='text-left pl-1'>
         <FormLabelWithIconInfo label={element.label} tooltipText={element.help} />
         <InputMean
           id={element.name}
@@ -70,15 +70,15 @@ const RenderUiElement = ({
 
   const renderNumberInput = useCallback(() => {
     return (
-      <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+      <Col xs={24} sm={24} md={24} lg={24} className='text-left pl-1'>
         <FormLabelWithIconInfo label={element.label} tooltipText={element.help} />
         <InputMean
           id={element.name}
-          type="number"
+          type='number'
           className={isBusy ? 'disabled' : ''}
           name={element.label}
           min={1}
-          pattern="^[0-9]*[.,]?[0-9]*$"
+          pattern='^[0-9]*[.,]?[0-9]*$'
           onChange={(e: any) => {
             console.log(e);
             if (selectedApp?.folder === 'credix') {
@@ -107,7 +107,7 @@ const RenderUiElement = ({
 
   const renderTextArea = useCallback(() => {
     return (
-      <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+      <Col xs={24} sm={24} md={24} lg={24} className='text-left pl-1'>
         <FormLabelWithIconInfo label={element.label} tooltipText={element.help} />
         {element.name === 'serializedTx' ? (
           <>
@@ -123,7 +123,7 @@ const RenderUiElement = ({
                 });
               }}
               onPaste={onPasteValue}
-              placeholder="Paste a serialized transaction in base64 string format (required)"
+              placeholder='Paste a serialized transaction in base64 string format (required)'
               value={inputState[element.name]}
             />
           </>
@@ -149,7 +149,7 @@ const RenderUiElement = ({
 
   const renderSelectOptions = useCallback(() => {
     return (
-      <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
+      <Col xs={24} sm={24} md={24} lg={24} className='text-left pr-1'>
         <FormLabelWithIconInfo label={element.label} tooltipText={element.help} />
         <SelectMean
           key={element.name}
@@ -171,12 +171,12 @@ const RenderUiElement = ({
   const renderRadioOptions = useCallback(() => {
     return (
       <>
-        <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+        <Col xs={24} sm={6} md={6} lg={6} className='text-right pr-1'>
           <FormLabelWithIconInfo label={element.label} tooltipText={element.help} />
         </Col>
-        <Col xs={24} sm={18} md={18} lg={18} className="pt-1">
+        <Col xs={24} sm={18} md={18} lg={18} className='pt-1'>
           <Radio.Group
-            className="ml-2"
+            className='ml-2'
             id={element.name}
             onChange={(e: any) => {
               onRadioOptionChange({
@@ -197,8 +197,8 @@ const RenderUiElement = ({
 
   const renderKnownValue = useCallback(() => {
     return (
-      <Row gutter={[8, 8]} className="mb-1">
-        <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
+      <Row gutter={[8, 8]} className='mb-1'>
+        <Col xs={24} sm={24} md={24} lg={24} className='text-right pr-1'>
           <FormLabelWithIconInfo label={element.label} tooltipText={element.help} />
           <code>{element.value}</code>
         </Col>
@@ -208,8 +208,8 @@ const RenderUiElement = ({
 
   const renderSlot = useCallback(() => {
     return (
-      <Row gutter={[8, 8]} className="mb-1">
-        <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
+      <Row gutter={[8, 8]} className='mb-1'>
+        <Col xs={24} sm={24} md={24} lg={24} className='text-right pr-1'>
           <FormLabelWithIconInfo label={element.label} tooltipText={element.help} />
           <code>{element.value}</code>
         </Col>
@@ -219,8 +219,8 @@ const RenderUiElement = ({
 
   const renderTxProposer = useCallback(() => {
     return (
-      <Row gutter={[8, 8]} className="mb-1">
-        <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
+      <Row gutter={[8, 8]} className='mb-1'>
+        <Col xs={24} sm={24} md={24} lg={24} className='text-right pr-1'>
           <FormLabelWithIconInfo label={element.label} tooltipText={element.help} />
           <code>{proposer}</code>
         </Col>
@@ -230,7 +230,7 @@ const RenderUiElement = ({
 
   const renderFrom = useCallback(() => {
     return (
-      <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+      <Col xs={24} sm={24} md={24} lg={24} className='text-left pl-1'>
         <FormLabelWithIconInfo label={element.label} tooltipText={element.help} />
         <InputMean
           id={element.name}
@@ -253,8 +253,8 @@ const RenderUiElement = ({
 
   const renderMultisigAnth = useCallback(() => {
     return (
-      <Row gutter={[8, 8]} className="mb-1">
-        <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
+      <Row gutter={[8, 8]} className='mb-1'>
+        <Col xs={24} sm={24} md={24} lg={24} className='text-right pr-1'>
           <FormLabelWithIconInfo label={element.label} tooltipText={element.help} />
           <code>{multisigAuthority}</code>
         </Col>
@@ -304,7 +304,7 @@ const RenderUiElement = ({
   ]);
 
   return (
-    <Row gutter={[8, 8]} className="mb-1">
+    <Row gutter={[8, 8]} className='mb-1'>
       {renderUiElements()}
     </Row>
   );

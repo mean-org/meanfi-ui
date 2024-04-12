@@ -1,12 +1,12 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { TransactionFees } from '@mean-dao/payment-streaming';
+import type { TransactionFees } from '@mean-dao/payment-streaming';
 import {
-  AccountInfo,
-  Connection,
+  type AccountInfo,
+  type Connection,
   LAMPORTS_PER_SOL,
-  ParsedAccountData,
+  type ParsedAccountData,
   PublicKey,
-  VersionedTransaction,
+  type VersionedTransaction,
 } from '@solana/web3.js';
 import { Button, Drawer, Modal } from 'antd';
 import { openNotification } from 'components/Notifications';
@@ -26,9 +26,9 @@ import { createV0InitAtaAccountTx } from 'middleware/createV0InitAtaAccountTx';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from 'middleware/ui';
 import { getAmountFromLamports, getVersionedTxIxResume, shortenAddress } from 'middleware/utils';
-import { AccountTokenParsedInfo } from 'models/accounts';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { AccountTokenParsedInfo } from 'models/accounts';
 import { OperationType, TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -359,14 +359,14 @@ export const AccountsInitAtaModal = (props: {
     return !publicKey
       ? t('transactions.validation.not-connected')
       : nativeBalance === 0
-      ? t('transactions.validation.amount-sol-low')
-      : nativeBalance < feeAmount
-      ? t('transactions.validation.amount-sol-low')
-      : !selectedToken
-      ? 'No token selected'
-      : isTokenAlreadyOwned() || selectedToken.decimals < 0
-      ? 'Invalid selection'
-      : 'Add asset';
+        ? t('transactions.validation.amount-sol-low')
+        : nativeBalance < feeAmount
+          ? t('transactions.validation.amount-sol-low')
+          : !selectedToken
+            ? 'No token selected'
+            : isTokenAlreadyOwned() || selectedToken.decimals < 0
+              ? 'Invalid selection'
+              : 'Add asset';
   };
 
   // Rendering
@@ -379,7 +379,7 @@ export const AccountsInitAtaModal = (props: {
             return null;
           }
 
-          const onClick = function () {
+          const onClick = () => {
             setSelectedToken(t);
             consoleOut('token selected:', t.symbol, 'blue');
             onCloseTokenSelector();
@@ -405,13 +405,13 @@ export const AccountsInitAtaModal = (props: {
   );
 
   const renderTokenSelectorInner = (
-    <div className="token-selector-wrapper">
-      <div className="token-search-wrapper">
+    <div className='token-selector-wrapper'>
+      <div className='token-search-wrapper'>
         <TextInput
-          id="token-search-otp"
+          id='token-search-otp'
           value={tokenFilter}
           allowClear={true}
-          extraClass="mb-2"
+          extraClass='mb-2'
           onInputClear={onInputCleared}
           placeholder={t('token-selector.lookup-add-asset-input-placeholder')}
           onInputChange={onTokenSearchInputChange}
@@ -419,12 +419,12 @@ export const AccountsInitAtaModal = (props: {
             tokenFilter && selectedToken && selectedToken.decimals === -1
               ? 'Account not found'
               : tokenFilter && selectedToken && selectedToken.decimals === -2
-              ? 'Account is not a token mint'
-              : ''
+                ? 'Account is not a token mint'
+                : ''
           }
         />
       </div>
-      <div className="token-list">
+      <div className='token-list'>
         {filteredTokenList.length > 0 && renderTokenList}
         {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
           <TokenListItem
@@ -478,16 +478,16 @@ export const AccountsInitAtaModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal unpadded-content exchange-modal"
-      title={<div className="modal-title">Add Asset</div>}
+      className='mean-modal simple-modal unpadded-content exchange-modal'
+      title={<div className='modal-title'>Add Asset</div>}
       footer={null}
       open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={370}
     >
-      <div className="px-4 pb-3">
-        <div className="mb-2 shift-up-1 text-center">
+      <div className='px-4 pb-3'>
+        <div className='mb-2 shift-up-1 text-center'>
           <p>
             Adding an asset will initialize the Associated Token Account. You can add a custom asset by entering its
             mint address.
@@ -496,11 +496,11 @@ export const AccountsInitAtaModal = (props: {
         </div>
 
         {/* Asset picker */}
-        <div className="form-label">Mint for your asset</div>
-        <div className="well">
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on simplelink">
+        <div className='form-label'>Mint for your asset</div>
+        <div className='well'>
+          <div className='flex-fixed-left'>
+            <div className='left'>
+              <span className='add-on simplelink'>
                 {selectedToken ? (
                   <TokenDisplay
                     onClick={showTokenSelector}
@@ -513,35 +513,35 @@ export const AccountsInitAtaModal = (props: {
                 ) : (
                   <TokenDisplay
                     onClick={showTokenSelector}
-                    mintAddress=""
+                    mintAddress=''
                     noTokenLabel={t('swap.token-select-destination')}
                     showCaretDown={true}
                   />
                 )}
               </span>
             </div>
-            <div className="right">&nbsp;</div>
+            <div className='right'>&nbsp;</div>
           </div>
           {isTokenAlreadyOwned() ? (
-            <span className="form-field-error">You already own this asset</span>
+            <span className='form-field-error'>You already own this asset</span>
           ) : selectedToken && selectedToken.decimals === -1 ? (
-            <span className="form-field-error">Account not found</span>
+            <span className='form-field-error'>Account not found</span>
           ) : selectedToken && selectedToken.decimals === -2 ? (
-            <span className="form-field-error">Account is not a token mint</span>
+            <span className='form-field-error'>Account is not a token mint</span>
           ) : null}
         </div>
 
         <Button
           className={`main-cta ${isBusy ? 'inactive' : ''}`}
           block
-          type="primary"
-          shape="round"
-          size="large"
+          type='primary'
+          shape='round'
+          size='large'
           disabled={!isOperationValid() || isBusy}
           onClick={onStartTransaction}
         >
           {isBusy && (
-            <span className="mr-1">
+            <span className='mr-1'>
               <LoadingOutlined style={{ fontSize: '16px' }} />
             </span>
           )}
@@ -551,7 +551,7 @@ export const AccountsInitAtaModal = (props: {
 
       <Drawer
         title={t('token-selector.modal-title')}
-        placement="bottom"
+        placement='bottom'
         closable={true}
         onClose={onCloseTokenSelector}
         open={isTokenSelectorVisible}

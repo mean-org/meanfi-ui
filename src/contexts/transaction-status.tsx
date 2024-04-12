@@ -1,4 +1,4 @@
-import { TransactionConfirmationStatus } from '@solana/web3.js';
+import type { TransactionConfirmationStatus } from '@solana/web3.js';
 import confirmOrRetryTx from 'middleware/txConfirmation';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,12 +22,13 @@ export interface TxConfirmationInfo {
   completedMessage: string;
   completedMessageTimeout?: number;
   timestamp?: number;
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   extras?: any;
   timestampCompleted?: number;
   explorerLink?: string;
 }
 
-type Listener = (value: any) => void;
+type Listener = (value: unknown) => void;
 
 type MapListener = Record<string, Listener[]>;
 
@@ -40,10 +41,12 @@ class EventEmitter {
     this.mapListener[eventName] = [...listeners, listener];
   }
 
-  public emit(eventName: string, value: any): void {
+  public emit(eventName: string, value: unknown): void {
     if (this.eventExists(eventName)) {
       const listeners = this.mapListener[eventName];
-      listeners.forEach(listener => listener(value));
+      for (const listener of listeners) {
+        listener(value);
+      }
     }
   }
 
@@ -146,12 +149,12 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
       duration: data.completedMessageTimeout || 5,
       description: (
         <>
-          <span className="mr-1">
+          <span className='mr-1'>
             {data.completedMessage ? data.completedMessage : OperationType[data.operationType]}
           </span>
           {data.explorerLink ? (
             <div>
-              <a className="secondary-link" href={data.explorerLink} target="_blank" rel="noopener noreferrer">
+              <a className='secondary-link' href={data.explorerLink} target='_blank' rel='noopener noreferrer'>
                 View on blockchain explorer&gt;
               </a>
             </div>
@@ -162,6 +165,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     rebuildHistoryFromCache();
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   const enqueueTransactionConfirmation = useCallback(
     async (data: TxConfirmationInfo) => {
       // Get Latest Blockhash
@@ -183,17 +187,17 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
         duration: 0,
         description: (
           <>
-            <span className="mr-1">
+            <span className='mr-1'>
               {data.loadingMessage
                 ? data.loadingMessage
                 : `${t('transactions.status.tx-confirmation-status-wait')} (${OperationType[data.operationType]})`}
             </span>
             <div>
               <a
-                className="secondary-link"
+                className='secondary-link'
                 href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                target='_blank'
+                rel='noopener noreferrer'
               >
                 {t('notifications.check-transaction-in-explorer')} &gt;
               </a>
@@ -218,15 +222,15 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
           duration: data.completedMessageTimeout || 5,
           description: (
             <>
-              <span className="mr-1">
+              <span className='mr-1'>
                 {data.completedMessage ? data.completedMessage : OperationType[data.operationType]}
               </span>
               <div>
                 <a
-                  className="secondary-link"
+                  className='secondary-link'
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target='_blank'
+                  rel='noopener noreferrer'
                 >
                   {t('notifications.check-transaction-in-explorer')} &gt;
                 </a>
@@ -253,17 +257,17 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
           duration: 5,
           description: (
             <>
-              <span className="mr-1">
+              <span className='mr-1'>
                 {data.loadingMessage
                   ? data.loadingMessage
                   : `${t('transactions.status.tx-confirmation-status-wait')} (${OperationType[data.operationType]})`}
               </span>
               <div>
                 <a
-                  className="secondary-link"
+                  className='secondary-link'
                   href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target='_blank'
+                  rel='noopener noreferrer'
                 >
                   {t('notifications.check-transaction-in-explorer')} &gt;
                 </a>
@@ -277,7 +281,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
         refreshAccount();
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [connection, t],
   );
 

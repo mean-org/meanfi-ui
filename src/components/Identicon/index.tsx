@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
 import Jazzicon from '@metamask/jazzicon';
+import type { PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
-import './style.scss';
-import { PublicKey } from '@solana/web3.js';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
 import { isValidAddress } from '../../middleware/ui';
+import './style.scss';
 
 export const Identicon = (props: { address?: string | PublicKey; style?: React.CSSProperties; className?: string }) => {
   const { style, className } = props;
@@ -15,13 +16,13 @@ export const Identicon = (props: { address?: string | PublicKey; style?: React.C
       ref.current.innerHTML = '';
       ref.current.className = className || '';
       ref.current.appendChild(
-        Jazzicon(style?.width || 16, parseInt(bs58.decode(address).toString('hex').slice(5, 15), 16)),
+        Jazzicon(style?.width || 16, Number.parseInt(bs58.decode(address).toString('hex').slice(5, 15), 16)),
       );
     }
   }, [address, style, className]);
 
   if (isValidAddress(address)) {
-    return <div className="identicon-wrapper" ref={ref as any} style={props.style} />;
+    return <div className='identicon-wrapper' ref={ref as any} style={props.style} />;
   }
   return null;
 };

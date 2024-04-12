@@ -1,7 +1,7 @@
 import { CloseOutlined } from '@ant-design/icons';
-import { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
-import { Button, Popover } from 'antd';
+import type { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
 import { IconDocument } from 'Icons';
+import { Button, Popover } from 'antd';
 import { shortenAddress } from 'middleware/utils';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,12 +15,12 @@ export const MultisigOwnersSigned = (props: { participants: MultisigParticipant[
   };
 
   const titleContent = (
-    <div className="flexible-left">
-      <div className="left">{t('Proposal approved by:')}</div>
-      <div className="right">
+    <div className='flexible-left'>
+      <div className='left'>{t('Proposal approved by:')}</div>
+      <div className='right'>
         <Button
-          type="default"
-          shape="circle"
+          type='default'
+          shape='circle'
           icon={<CloseOutlined />}
           onClick={() => handlePopoverVisibleChange(false)}
         />
@@ -31,18 +31,18 @@ export const MultisigOwnersSigned = (props: { participants: MultisigParticipant[
   const bodyContent = (
     <>
       {props.participants && props.participants.length > 0 ? (
-        <div className="cebra-list">
+        <div className='cebra-list'>
           {props.participants.map((item, index) => {
             return (
-              <div key={`${index}`} className="cebra-list-item flex-fixed-right align-items-center">
-                <div className="left">{item.name || `Owner ${index + 1}`}</div>
-                <div className="right text-monospace">{shortenAddress(item.address, 6)}</div>
+              <div key={`${index}`} className='cebra-list-item flex-fixed-right align-items-center'>
+                <div className='left'>{item.name || `Owner ${index + 1}`}</div>
+                <div className='right text-monospace'>{shortenAddress(item.address, 6)}</div>
               </div>
             );
           })}
         </div>
       ) : (
-        <div className="pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>
+        <div className='pl-1'>{t('multisig.create-multisig.multisig-no-participants')}</div>
       )}
     </>
   );
@@ -50,19 +50,19 @@ export const MultisigOwnersSigned = (props: { participants: MultisigParticipant[
   return (
     <>
       <Popover
-        placement="topRight"
+        placement='topRight'
         title={titleContent}
         content={bodyContent}
         open={popoverVisible}
         onOpenChange={handlePopoverVisibleChange}
-        trigger="click"
+        trigger='click'
       >
         {props.className ? (
           <span className={`${props.className}`}>
-            <IconDocument className="mean-svg-icons simplelink" />
+            <IconDocument className='mean-svg-icons simplelink' />
           </span>
         ) : (
-          <IconDocument className="mean-svg-icons simplelink" />
+          <IconDocument className='mean-svg-icons simplelink' />
         )}
       </Popover>
     </>

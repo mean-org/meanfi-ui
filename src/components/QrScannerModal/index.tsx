@@ -1,8 +1,8 @@
+import { Modal } from 'antd';
 import React from 'react';
 import { useContext, useEffect } from 'react';
-import { Modal } from 'antd';
-import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
+import { AppStateContext } from '../../contexts/appstate';
 
 export const QrScannerModal = (props: { handleClose: any; handleOk: any; isVisible: boolean }) => {
   const { recipientAddress, setRecipientAddress } = useContext(AppStateContext);
@@ -54,15 +54,15 @@ export const QrScannerModal = (props: { handleClose: any; handleOk: any; isVisib
 
   return (
     <Modal
-      className="mean-modal"
-      title={<div className="modal-title">{t('transactions.recipient.qr-scan-title')}</div>}
+      className='mean-modal'
+      title={<div className='modal-title'>{t('transactions.recipient.qr-scan-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={480}
     >
-      <div id="qr-reader"></div>
+      <div id='qr-reader'></div>
     </Modal>
   );
 };

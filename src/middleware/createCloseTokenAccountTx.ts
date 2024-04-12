@@ -1,8 +1,14 @@
-import { Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
-import { AccountInfo, Connection, ParsedAccountData, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { TOKEN_PROGRAM_ID, Token, u64 } from '@solana/spl-token';
+import {
+  type AccountInfo,
+  type Connection,
+  type ParsedAccountData,
+  PublicKey,
+  type TransactionInstruction,
+} from '@solana/web3.js';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { NATIVE_SOL } from 'constants/tokens';
-import { TokenAccountInfo } from 'models/accounts';
+import type { TokenAccountInfo } from 'models/accounts';
 import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
 
 export async function hasTokenBalance(connection: Connection, tokenPubkey: PublicKey) {

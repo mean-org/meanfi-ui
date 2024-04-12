@@ -1,14 +1,14 @@
-import moment from 'moment';
-import { Button } from 'antd';
 import { array, bool, str } from '@project-serum/borsh';
+import { Button } from 'antd';
+import moment from 'moment';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
-import './style.scss';
+import { AppStateContext } from 'contexts/appstate';
 import { MEAN_TOKEN } from '../../constants/tokens';
 import { getCoingeckoMarketChart } from '../../middleware/api';
-import { PriceGraphModel } from '../../models/price-graph';
-import { AppStateContext } from 'contexts/appstate';
+import type { PriceGraphModel } from '../../models/price-graph';
+import './style.scss';
 
 const dateFormat = 'MMM Do, YYYY';
 const buttons = ['24H', '7D', '30D'];
@@ -82,7 +82,7 @@ export const PriceGraph = (props: { onPriceData: any }) => {
 
     if (active) {
       return (
-        <div className="tooltip">
+        <div className='tooltip'>
           <h4>{dateOnTooltip}</h4>
           <p>${priceOnTooltip}</p>
         </div>
@@ -93,18 +93,18 @@ export const PriceGraph = (props: { onPriceData: any }) => {
 
   return (
     <>
-      <div className="price-items">
-        <div className="price-items_left">
-          <span className="price-items_price">$ {priceShownOnTop}</span>
-          <span className="price-items_date">{dateShownOnTop}</span>
+      <div className='price-items'>
+        <div className='price-items_left'>
+          <span className='price-items_price'>$ {priceShownOnTop}</span>
+          <span className='price-items_date'>{dateShownOnTop}</span>
         </div>
-        <div className="price-items_right">
+        <div className='price-items_right'>
           {buttons.map((btn, index) => (
             <Button
               key={index}
-              type="ghost"
-              shape="round"
-              size="small"
+              type='ghost'
+              shape='round'
+              size='small'
               onClick={onClickHandler}
               className={`thin-stroke ${activeBtn === btn ? 'active' : ''}`}
             >
@@ -114,17 +114,17 @@ export const PriceGraph = (props: { onPriceData: any }) => {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={215}>
+      <ResponsiveContainer width='100%' height={215}>
         <AreaChart data={priceChangeData}>
           <defs>
-            <linearGradient id="color" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#b8011b" stopOpacity={1} />
-              <stop offset="100%" stopColor="#b8011b" stopOpacity={0} />
+            <linearGradient id='color' x1='0' y1='0' x2='0' y2='1'>
+              <stop offset='0%' stopColor='#b8011b' stopOpacity={1} />
+              <stop offset='100%' stopColor='#b8011b' stopOpacity={0} />
             </linearGradient>
           </defs>
-          <Area dataKey="priceData" fill="url(#color)" stroke="#ff0017" />
+          <Area dataKey='priceData' fill='url(#color)' stroke='#ff0017' />
           <XAxis
-            dataKey="dateData"
+            dataKey='dateData'
             axisLine={false}
             tickLine={true}
             tickMargin={25}
@@ -141,7 +141,7 @@ export const PriceGraph = (props: { onPriceData: any }) => {
             }}
           />
           <YAxis
-            dataKey="priceData"
+            dataKey='priceData'
             axisLine={false}
             tickLine={false}
             domain={['auto', 'auto']}

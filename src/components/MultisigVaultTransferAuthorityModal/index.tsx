@@ -1,20 +1,21 @@
-import React, { useContext, useState } from 'react';
-import { Modal, Button, Spin, AutoComplete, Checkbox } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
-import { isError } from '../../middleware/transactions';
-import { SOL_MINT } from '../../middleware/ids';
-import { TransactionFees } from '@mean-dao/money-streaming';
-import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
-import { Identicon } from '../Identicon';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { TransactionFees } from '@mean-dao/money-streaming';
+import { AutoComplete, Button, Checkbox, Modal, Spin } from 'antd';
+import type { SetAssetAuthPayload } from 'models/multisig';
+import type React from 'react';
+import { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { UserTokenAccount } from '../../models/accounts';
+import { AppStateContext } from '../../contexts/appstate';
+import { SOL_MINT } from '../../middleware/ids';
+import { isError } from '../../middleware/transactions';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../middleware/ui';
+import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
+import type { UserTokenAccount } from '../../models/accounts';
+import { TransactionStatus } from '../../models/enums';
+import { Identicon } from '../Identicon';
 import { InputMean } from '../InputMean';
-import { SetAssetAuthPayload } from 'models/multisig';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -84,12 +85,12 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     return !proposalTitle
       ? 'Add a proposal title'
       : !selectedAuthority
-      ? 'Enter an authority address'
-      : selectedAuthority && !isValidAddress(selectedAuthority)
-      ? 'Invalid address'
-      : !destinationAddressDisclaimerAccepted
-      ? 'Accept disclaimer'
-      : 'Sign proposal';
+        ? 'Enter an authority address'
+        : selectedAuthority && !isValidAddress(selectedAuthority)
+          ? 'Invalid address'
+          : !destinationAddressDisclaimerAccepted
+            ? 'Accept disclaimer'
+            : 'Sign proposal';
   };
 
   const refreshPage = () => {
@@ -113,9 +114,9 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     };
 
     return (
-      <div className="transaction-list-row no-pointer">
-        <div className="icon-cell">
-          <div className="token-icon">
+      <div className='transaction-list-row no-pointer'>
+        <div className='icon-cell'>
+          <div className='token-icon'>
             {token && token.logoURI ? (
               <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
@@ -132,14 +133,14 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             )}
           </div>
         </div>
-        <div className="description-cell">
-          <div className="title text-truncate">
+        <div className='description-cell'>
+          <div className='title text-truncate'>
             {token ? token.symbol : `${CUSTOM_TOKEN_NAME} [${shortenAddress(item.address, 6)}]`}
           </div>
-          <div className="subtitle text-truncate">{shortenAddress(item.publicAddress, 8)}</div>
+          <div className='subtitle text-truncate'>{shortenAddress(item.publicAddress, 8)}</div>
         </div>
-        <div className="rate-cell">
-          <div className="rate-amount">
+        <div className='rate-cell'>
+          <div className='rate-amount'>
             {getAmountWithSymbol(item.balance || 0, token ? (token.address as string) : '', true)}
           </div>
         </div>
@@ -152,19 +153,19 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     value: item.authority.toBase58(),
     label: (
       <div className={`transaction-list-row`}>
-        <div className="icon-cell">
+        <div className='icon-cell'>
           <Identicon address={item.id} style={{ width: '30', display: 'inline-flex' }} />
         </div>
-        <div className="description-cell">
+        <div className='description-cell'>
           {item.label ? (
-            <div className="title text-truncate">{item.label}</div>
+            <div className='title text-truncate'>{item.label}</div>
           ) : (
-            <div className="title text-truncate">{shortenAddress(item.authority.toBase58(), 8)}</div>
+            <div className='title text-truncate'>{shortenAddress(item.authority.toBase58(), 8)}</div>
           )}
-          {<div className="subtitle text-truncate">{shortenAddress(item.authority.toBase58(), 8)}</div>}
+          {<div className='subtitle text-truncate'>{shortenAddress(item.authority.toBase58(), 8)}</div>}
         </div>
-        <div className="rate-cell">
-          <div className="rate-amount">
+        <div className='rate-cell'>
+          <div className='rate-amount'>
             {t('multisig.multisig-accounts.pending-transactions', {
               txs: item.pendingTxsAmount,
             })}
@@ -187,8 +188,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.transfer-authority.modal-title')}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{t('multisig.transfer-authority.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       open={props.isVisible}
@@ -201,34 +202,34 @@ export const MultisigVaultTransferAuthorityModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Proposal title */}
-            <div className="mb-3">
-              <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+            <div className='mb-3'>
+              <div className='form-label'>{t('multisig.proposal-modal.title')}</div>
               <InputMean
-                id="proposal-title-field"
-                name="Title"
-                className="w-100 general-text-input"
+                id='proposal-title-field'
+                name='Title'
+                className='w-100 general-text-input'
                 onChange={onTitleInputValueChange}
-                placeholder="Add a proposal title (required)"
+                placeholder='Add a proposal title (required)'
                 value={proposalTitle}
               />
             </div>
 
             {props.selectedVault && (
-              <div className="mb-3">
-                <div className="form-label">{t('multisig.transfer-authority.selected-asset-label')}</div>
-                <div className="well">{renderVault(props.selectedVault)}</div>
+              <div className='mb-3'>
+                <div className='form-label'>{t('multisig.transfer-authority.selected-asset-label')}</div>
+                <div className='well'>{renderVault(props.selectedVault)}</div>
               </div>
             )}
 
-            <div className="mb-3">
-              <div className="form-label">{t('multisig.transfer-authority.multisig-selector-label')}</div>
-              <div className="well">
-                <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                  <div className="left mr-0">
+            <div className='mb-3'>
+              <div className='form-label'>{t('multisig.transfer-authority.multisig-selector-label')}</div>
+              <div className='well'>
+                <div className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
+                  <div className='left mr-0'>
                     <AutoComplete
                       bordered={false}
                       style={{ width: '100%' }}
-                      popupClassName="stream-select-dropdown"
+                      popupClassName='stream-select-dropdown'
                       options={renderMultisigSelectOptions()}
                       placeholder={t('multisig.transfer-authority.multisig-selector-placeholder')}
                       onChange={(inputValue, option) => {
@@ -248,16 +249,16 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                   </div>
                 </div>
                 {props.selectedMultisig && selectedAuthority === props.selectedMultisig.authority.toBase58() ? (
-                  <span className="form-field-error">
+                  <span className='form-field-error'>
                     {t('multisig.transfer-authority.multisig-already-owns-the-asset')}
                   </span>
                 ) : selectedAuthority && !isValidAddress(selectedAuthority) ? (
-                  <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                  <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
                 ) : null}
               </div>
             </div>
 
-            <div className="mb-3 ml-1">
+            <div className='mb-3 ml-1'>
               <Checkbox
                 checked={destinationAddressDisclaimerAccepted}
                 onChange={onDestinationAddressDisclaimerAcceptanceChange}
@@ -267,13 +268,13 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             </div>
 
             {!isError(transactionStatus.currentOperation) && (
-              <div className="col-12 p-0 mt-3">
+              <div className='col-12 p-0 mt-3'>
                 <Button
                   className={`center-text-in-btn ${props.isBusy ? 'inactive' : ''}`}
                   block
-                  type="primary"
-                  shape="round"
-                  size="large"
+                  type='primary'
+                  shape='round'
+                  size='large'
                   disabled={!isValidForm() || !destinationAddressDisclaimerAccepted}
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
@@ -288,27 +289,27 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                   {props.isBusy
                     ? t('multisig.transfer-authority.main-cta-busy')
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? getTransactionStartButtonLabel()
-                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                    ? t('general.cta-finish')
-                    : t('general.refresh')}
+                      ? getTransactionStartButtonLabel()
+                      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                        ? t('general.cta-finish')
+                        : t('general.refresh')}
                 </Button>
               </div>
             )}
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
-            <div className="transaction-progress">
-              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('multisig.transfer-authority.success-message')}</h4>
+            <div className='transaction-progress'>
+              <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+              <h4 className='font-bold'>{t('multisig.transfer-authority.success-message')}</h4>
             </div>
           </>
         ) : (
           <>
-            <div className="transaction-progress p-0">
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+            <div className='transaction-progress p-0'>
+              <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
+                <h4 className='mb-4'>
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(props.nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
@@ -318,18 +319,18 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                   })}
                 </h4>
               ) : (
-                <h4 className="font-bold mb-3">
+                <h4 className='font-bold mb-3'>
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
               {!props.isBusy && (
-                <div className="row two-col-ctas mt-3 transaction-progress p-2">
-                  <div className="col-12">
+                <div className='row two-col-ctas mt-3 transaction-progress p-2'>
+                  <div className='col-12'>
                     <Button
                       block
-                      type="text"
-                      shape="round"
-                      size="middle"
+                      type='text'
+                      shape='round'
+                      size='middle'
                       className={`center-text-in-btn thin-stroke ${props.isBusy ? 'inactive' : ''}`}
                       onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
                     >
@@ -352,13 +353,13 @@ export const MultisigVaultTransferAuthorityModal = (props: {
         }
       >
         {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress">
-            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-            <h4 className="font-bold mb-1">
+          <div className='transaction-progress'>
+            <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+            <h4 className='font-bold mb-1'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
             {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              <div className='indication'>{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}

@@ -1,16 +1,16 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 
 const YoutubeEmbed = (props: { embedId: string }) => (
-  <div className="video-responsive">
+  <div className='video-responsive'>
     <iframe
-      width="853"
-      height="480"
+      width='853'
+      height='480'
       src={`https://www.youtube.com/embed/${props.embedId}`}
-      frameBorder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      frameBorder='0'
+      allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
       allowFullScreen
-      title="Embedded youtube"
+      title='Embedded youtube'
     />
   </div>
 );

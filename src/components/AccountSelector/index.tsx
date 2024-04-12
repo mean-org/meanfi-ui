@@ -1,16 +1,16 @@
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { Button, Dropdown, MenuProps, Spin, Tooltip } from 'antd';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { IconCheck, IconCopy, IconLoading, IconVerticalEllipsis } from 'Icons';
+import { Button, Dropdown, type MenuProps, Spin, Tooltip } from 'antd';
 import { Identicon } from 'components/Identicon';
 import { openNotification } from 'components/Notifications';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { useWalletAccount } from 'contexts/walletAccount';
-import { IconCheck, IconCopy, IconLoading, IconVerticalEllipsis } from 'Icons';
 import { isInXnftWallet } from 'integrations/xnft/xnft-wallet-adapter';
 import { SYSTEM_PROGRAM_ID } from 'middleware/ids';
 import { consoleOut, copyText, kFormatter, toUsCurrency } from 'middleware/ui';
 import { shortenAddress } from 'middleware/utils';
-import { AccountContext, UserTokenAccount } from 'models/accounts';
+import type { AccountContext, UserTokenAccount } from 'models/accounts';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
@@ -159,19 +159,19 @@ export const AccountSelector = (props: {
 
   const renderPendingTxCount = (item: MultisigInfo) => {
     if (!item || !item.pendingTxsAmount) {
-      return <span className="dimmed">0 queued</span>;
+      return <span className='dimmed'>0 queued</span>;
     }
 
-    return <span className="dimmed">{kFormatter(item.pendingTxsAmount)} queued</span>;
+    return <span className='dimmed'>{kFormatter(item.pendingTxsAmount)} queued</span>;
   };
 
   const renderMultisigIcon = (item: MultisigInfo) => {
     if (item.version === 0) {
       return (
-        <Tooltip placement="rightTop" title="Serum Multisig">
+        <Tooltip placement='rightTop' title='Serum Multisig'>
           <img
-            src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png"
-            alt="Serum"
+            src='https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png'
+            alt='Serum'
             width={30}
             height={30}
           />
@@ -179,10 +179,10 @@ export const AccountSelector = (props: {
       );
     } else if (item.version === 2) {
       return (
-        <Tooltip placement="rightTop" title="Meanfi Multisig">
+        <Tooltip placement='rightTop' title='Meanfi Multisig'>
           <img
-            src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg"
-            alt="Meanfi Multisig"
+            src='https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg'
+            alt='Meanfi Multisig'
             width={30}
             height={30}
           />
@@ -204,20 +204,20 @@ export const AccountSelector = (props: {
               refreshAssetValues();
             }}
           >
-            <span className="menu-item-text">Refresh balances</span>
+            <span className='menu-item-text'>Refresh balances</span>
           </div>
         ),
       },
     ];
 
     return (
-      <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
-        <span className="icon-button-container">
+      <Dropdown menu={{ items }} placement='bottomRight' trigger={['click']}>
+        <span className='icon-button-container'>
           <Button
-            type="default"
-            shape="circle"
-            size="middle"
-            icon={<IconVerticalEllipsis className="mean-svg-icons fg-secondary-50" />}
+            type='default'
+            shape='circle'
+            size='middle'
+            icon={<IconVerticalEllipsis className='mean-svg-icons fg-secondary-50' />}
             onClick={() => {}}
           />
         </span>
@@ -236,20 +236,20 @@ export const AccountSelector = (props: {
               refreshPendingTxs();
             }}
           >
-            <span className="menu-item-text">Refresh pending Txs</span>
+            <span className='menu-item-text'>Refresh pending Txs</span>
           </div>
         ),
       },
     ];
 
     return (
-      <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
-        <span className="icon-button-container">
+      <Dropdown menu={{ items }} placement='bottomRight' trigger={['click']}>
+        <span className='icon-button-container'>
           <Button
-            type="default"
-            shape="circle"
-            size="middle"
-            icon={<IconVerticalEllipsis className="mean-svg-icons fg-secondary-50" />}
+            type='default'
+            shape='circle'
+            size='middle'
+            icon={<IconVerticalEllipsis className='mean-svg-icons fg-secondary-50' />}
             onClick={() => {}}
           />
         </span>
@@ -258,57 +258,57 @@ export const AccountSelector = (props: {
   };
 
   return (
-    <div className="account-selector">
-      <div className="account-group-heading">
-        <div className="flex-fixed-right">
-          <div className="left flex-row align-items-center">
-            <span className="text-uppercase">Wallets</span>
+    <div className='account-selector'>
+      <div className='account-group-heading'>
+        <div className='flex-fixed-right'>
+          <div className='left flex-row align-items-center'>
+            <span className='text-uppercase'>Wallets</span>
           </div>
           {!isInXnftWallet() && !isFullWorkflowEnabled && (
-            <div className="right">
-              <span className="secondary-link underlined" onClick={onDisconnectWallet}>
+            <div className='right'>
+              <span className='secondary-link underlined' onClick={onDisconnectWallet}>
                 Disconnect
               </span>
             </div>
           )}
         </div>
       </div>
-      <div className="accounts-list">
+      <div className='accounts-list'>
         <div
           className={`transaction-list-row${
             publicKey && selectedAccount.address === publicKey.toBase58() ? ' selected' : ''
           }`}
         >
-          <div className="check-cell" onClick={onNativeAccountSelected}>
+          <div className='check-cell' onClick={onNativeAccountSelected}>
             {publicKey && selectedAccount.address === publicKey.toBase58() ? (
-              <IconCheck className="mean-svg-icons" />
+              <IconCheck className='mean-svg-icons' />
             ) : (
               <span>&nbsp;</span>
             )}
           </div>
-          <div className="icon-cell" onClick={onNativeAccountSelected}>
+          <div className='icon-cell' onClick={onNativeAccountSelected}>
             <span>
-              {provider && <img src={provider.icon} alt={provider.name} width="30" className="wallet-provider-icon" />}
+              {provider && <img src={provider.icon} alt={provider.name} width='30' className='wallet-provider-icon' />}
             </span>
           </div>
-          <div className="description-cell" onClick={onNativeAccountSelected}>
-            <div className="title">
-              <span className="chunk1">Personal account</span>
-              <span className="chunk2">({publicKey ? shortenAddress(publicKey, 6) : '--'})</span>
+          <div className='description-cell' onClick={onNativeAccountSelected}>
+            <div className='title'>
+              <span className='chunk1'>Personal account</span>
+              <span className='chunk2'>({publicKey ? shortenAddress(publicKey, 6) : '--'})</span>
             </div>
-            <div className="subtitle">
+            <div className='subtitle'>
               {loadingPrices || loadingTokenAccounts ? (
-                <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+                <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
               ) : (
                 renderAssetsValue()
               )}
             </div>
           </div>
-          <div className="rate-cell">
+          <div className='rate-cell'>
             {publicKey ? (
-              <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+              <Tooltip placement='bottom' title={t('assets.account-address-copy-cta')}>
                 <span
-                  className="icon-button-container simplelink"
+                  className='icon-button-container simplelink'
                   onClick={e => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -316,10 +316,10 @@ export const AccountSelector = (props: {
                   }}
                 >
                   <Button
-                    type="default"
-                    shape="circle"
-                    size="small"
-                    icon={<IconCopy className="mean-svg-icons fg-secondary-50" />}
+                    type='default'
+                    shape='circle'
+                    size='small'
+                    icon={<IconCopy className='mean-svg-icons fg-secondary-50' />}
                     onClick={() => {}}
                   />
                 </span>
@@ -329,19 +329,19 @@ export const AccountSelector = (props: {
           </div>
         </div>
       </div>
-      <div className="account-group-heading">
-        <div className="flex-fixed-right">
-          <div className="left flex-row align-items-center">
-            <span className="text-uppercase">Super Safes</span>
+      <div className='account-group-heading'>
+        <div className='flex-fixed-right'>
+          <div className='left flex-row align-items-center'>
+            <span className='text-uppercase'>Super Safes</span>
           </div>
-          <div className="right">
-            <span className="secondary-link underlined" onClick={onCreateSafe}>
+          <div className='right'>
+            <span className='secondary-link underlined' onClick={onCreateSafe}>
               Create new safe
             </span>
           </div>
         </div>
       </div>
-      <div className="accounts-list">
+      <div className='accounts-list'>
         <Spin spinning={loadingMultisigAccounts}>
           {multisigAccounts && multisigAccounts.length > 0 ? (
             multisigAccounts.map((item, index) => {
@@ -352,36 +352,36 @@ export const AccountSelector = (props: {
                     selectedAccount.address === item.authority.toBase58() ? ' selected' : ''
                   }`}
                 >
-                  <div className="check-cell" onClick={() => onMultisigAccountSelected(item)}>
+                  <div className='check-cell' onClick={() => onMultisigAccountSelected(item)}>
                     {selectedAccount.address === item.authority.toBase58() ? (
-                      <IconCheck className="mean-svg-icons" />
+                      <IconCheck className='mean-svg-icons' />
                     ) : (
                       <span>&nbsp;</span>
                     )}
                   </div>
-                  <div className="icon-cell" onClick={() => onMultisigAccountSelected(item)}>
+                  <div className='icon-cell' onClick={() => onMultisigAccountSelected(item)}>
                     {renderMultisigIcon(item)}
                     {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
-                      <span className="status warning bottom-right"></span>
+                      <span className='status warning bottom-right'></span>
                     ) : null}
                   </div>
-                  <div className="description-cell" onClick={() => onMultisigAccountSelected(item)}>
-                    <div className="title">
-                      <span className="chunk1">{item.label}</span>
-                      <span className="chunk2">({shortenAddress(item.authority, 4)})</span>
+                  <div className='description-cell' onClick={() => onMultisigAccountSelected(item)}>
+                    <div className='title'>
+                      <span className='chunk1'>{item.label}</span>
+                      <span className='chunk2'>({shortenAddress(item.authority, 4)})</span>
                     </div>
-                    <div className="subtitle">
+                    <div className='subtitle'>
                       {loadingMultisigTxPendingCount ? (
-                        <IconLoading className="mean-svg-icons" style={{ height: '15px', lineHeight: '15px' }} />
+                        <IconLoading className='mean-svg-icons' style={{ height: '15px', lineHeight: '15px' }} />
                       ) : (
                         renderPendingTxCount(item)
                       )}
                     </div>
                   </div>
-                  <div className="rate-cell">
-                    <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+                  <div className='rate-cell'>
+                    <Tooltip placement='bottom' title={t('assets.account-address-copy-cta')}>
                       <span
-                        className="icon-button-container simplelink"
+                        className='icon-button-container simplelink'
                         onClick={e => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -389,10 +389,10 @@ export const AccountSelector = (props: {
                         }}
                       >
                         <Button
-                          type="default"
-                          shape="circle"
-                          size="small"
-                          icon={<IconCopy className="mean-svg-icons fg-secondary-50" />}
+                          type='default'
+                          shape='circle'
+                          size='small'
+                          icon={<IconCopy className='mean-svg-icons fg-secondary-50' />}
                           onClick={() => {}}
                         />
                       </span>

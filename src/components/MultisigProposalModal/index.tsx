@@ -1,6 +1,8 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
-import { PublicKey, TransactionInstruction } from '@solana/web3.js';
+import type { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
+import { BN } from '@project-serum/anchor';
+import { PublicKey, type TransactionInstruction } from '@solana/web3.js';
+import { IconExternalLink } from 'Icons';
 import { Alert, Button, Col, Divider, Modal, Row, Spin } from 'antd';
 import { InputMean } from 'components/InputMean';
 import { InputTextAreaMean } from 'components/InputTextAreaMean';
@@ -11,24 +13,22 @@ import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VESTING_ROUTE_BASE_PATH } from 'co
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
-import { IconExternalLink } from 'Icons';
 import { isError } from 'middleware/transactions';
 import { consoleOut, copyText, getTransactionOperationDescription } from 'middleware/ui';
 import { RegisteredAppPaths } from 'models/accounts';
 import { TransactionStatus } from 'models/enums';
 import {
-  CreateNewProposalParams,
+  type CreateNewProposalParams,
+  NATIVE_LOADER,
   getMultisigInstructionSummary,
   isCredixFinance,
-  NATIVE_LOADER,
   parseSerializedTx,
 } from 'models/multisig';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import './style.scss';
-import { BN } from '@project-serum/anchor';
 import RenderUiElement from './RenderUiElement';
+import './style.scss';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -140,7 +140,7 @@ export const MultisigProposalModal = (props: {
                   dataElement.dataValue = new BN(state[uiElem.name]);
                 }
               } else if (dataElement.dataType === 'u8') {
-                dataElement.dataValue = parseInt(state[uiElem.name]);
+                dataElement.dataValue = Number.parseInt(state[uiElem.name]);
               } else if (dataElement.dataType === 'string') {
                 dataElement.dataValue = state[uiElem.name];
               }
@@ -340,7 +340,7 @@ export const MultisigProposalModal = (props: {
               }
             };
             return (
-              <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={`app-${app.folder}-${app.id}`}>
+              <Col xs={8} sm={6} md={6} lg={6} className='select-app' key={`app-${app.folder}-${app.id}`}>
                 <div
                   className={`select-app-item simplelink ${
                     selectedApp && selectedApp.name === app.name ? 'selected-app' : 'no-selected-app'
@@ -348,7 +348,7 @@ export const MultisigProposalModal = (props: {
                   onClick={onSelectApp}
                 >
                   {renderAppLogo()}
-                  <span className="info-label">{app.name}</span>
+                  <span className='info-label'>{app.name}</span>
                 </div>
               </Col>
             );
@@ -395,13 +395,13 @@ export const MultisigProposalModal = (props: {
   const renderIdleState = useCallback(() => {
     return (
       <>
-        <div className="scrollable-content">
+        <div className='scrollable-content'>
           <StepSelector step={currentStep} steps={3} onValueSelected={onStepperChange} />
 
           <div className={currentStep === 0 ? 'contract-wrapper panel1 show' : 'contract-wrapper panel1 hide'}>
             <>
-              <h3 className="left-title">Select app</h3>
-              <Row gutter={[8, 8]} className="step-one-select-app">
+              <h3 className='left-title'>Select app</h3>
+              <Row gutter={[8, 8]} className='step-one-select-app'>
                 {renderSolanaApps()}
               </Row>
             </>
@@ -409,10 +409,10 @@ export const MultisigProposalModal = (props: {
 
           <div className={currentStep === 1 ? 'contract-wrapper panel2 show' : 'contract-wrapper panel2 hide'}>
             <>
-              <h3 className="left-title">Proposal setup</h3>
-              <div className="step-two-select-app">
+              <h3 className='left-title'>Proposal setup</h3>
+              <div className='step-two-select-app'>
                 <Row gutter={[8, 8]}>
-                  <Col span={24} className="step-two-selected-app">
+                  <Col span={24} className='step-two-selected-app'>
                     {selectedApp &&
                       (!selectedApp.logoUri ? (
                         // !selectedApp.logoUri || selectedApp.id === SystemProgram.programId.toBase58() ? (
@@ -424,19 +424,19 @@ export const MultisigProposalModal = (props: {
                           alt={selectedApp.name}
                         />
                       ) : (
-                        <img className="mr-1" src={selectedApp.logoUri} alt={selectedApp.name} width={40} height={40} />
+                        <img className='mr-1' src={selectedApp.logoUri} alt={selectedApp.name} width={40} height={40} />
                       ))}
-                    <div className="selected-app">
-                      <div className="info-label">Selected App</div>
+                    <div className='selected-app'>
+                      <div className='info-label'>Selected App</div>
                       <span>{selectedApp?.name}</span>
                     </div>
                   </Col>
 
                   {selectedApp && isCredixFinance(selectedApp.id) ? (
-                    <Col span={24} className="alert-info-message mb-1">
+                    <Col span={24} className='alert-info-message mb-1'>
                       <Alert
-                        message="This multisig authority needs to have credix and civic pass accounts activated."
-                        type="info"
+                        message='This multisig authority needs to have credix and civic pass accounts activated.'
+                        type='info'
                         showIcon
                         closable
                       />
@@ -445,14 +445,14 @@ export const MultisigProposalModal = (props: {
 
                   {/* Proposal title */}
                   <Col xs={24} sm={24} md={16} lg={16}>
-                    <div className="mb-2">
-                      <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+                    <div className='mb-2'>
+                      <div className='form-label'>{t('multisig.proposal-modal.title')}</div>
                       <InputMean
-                        id="proposal-title-field"
-                        name="Title"
+                        id='proposal-title-field'
+                        name='Title'
                         className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                         onChange={onProposalTitleValueChange}
-                        placeholder="Add a title (required)"
+                        placeholder='Add a title (required)'
                         value={proposalTitleValue}
                       />
                     </div>
@@ -460,8 +460,8 @@ export const MultisigProposalModal = (props: {
 
                   {/* Expiry date */}
                   <Col xs={24} sm={24} md={8} lg={8}>
-                    <div className="mb-2">
-                      <div className="form-label">Expires in</div>
+                    <div className='mb-2'>
+                      <div className='form-label'>Expires in</div>
                       <SelectMean
                         className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                         onChange={onProposalExpiresValueChange}
@@ -486,17 +486,17 @@ export const MultisigProposalModal = (props: {
                 {/* Proposal description */}
                 <Row gutter={[8, 8]}>
                   <Col xs={24} sm={24} md={24} lg={24}>
-                    <div className="mb-1">
-                      <div className="form-label">{t('multisig.proposal-modal.description')}</div>
+                    <div className='mb-1'>
+                      <div className='form-label'>{t('multisig.proposal-modal.description')}</div>
                       <InputTextAreaMean
-                        id="proposal-description-field"
+                        id='proposal-description-field'
                         maxLength={256}
                         className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                         onChange={onProposalDescriptionValueChange}
-                        placeholder="Add a description (optional)"
+                        placeholder='Add a description (optional)'
                         value={proposalDescriptionValue}
                       />
-                      <div className="form-field-hint pr-3 text-right">
+                      <div className='form-field-hint pr-3 text-right'>
                         {t('multisig.proposal-modal.hint-message', {
                           lettersLeft: lettersLeft,
                         })}
@@ -505,17 +505,17 @@ export const MultisigProposalModal = (props: {
                   </Col>
                 </Row>
 
-                <div className="step-two-select-instruction">
-                  <Row gutter={[8, 8]} className="mb-1">
+                <div className='step-two-select-instruction'>
+                  <Row gutter={[8, 8]} className='mb-1'>
                     {selectedApp && selectedApp.folder !== 'custom' && (
                       <>
                         {/* Instruction */}
-                        <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
-                          <div className="form-label">Instruction:</div>
+                        <Col xs={24} sm={24} md={24} lg={24} className='text-left pr-1'>
+                          <div className='form-label'>Instruction:</div>
                           <SelectMean
                             className={isBusy ? 'disabled' : ''}
                             onChange={onProposalInstructionValueChange}
-                            placeholder="Select an instruction"
+                            placeholder='Select an instruction'
                             values={
                               selectedAppConfig
                                 ? selectedAppConfig.ui.map((ix: any) => {
@@ -574,16 +574,16 @@ export const MultisigProposalModal = (props: {
 
           <div className={currentStep === 2 ? 'contract-wrapper panel3 show' : 'contract-wrapper panel3 hide'}>
             <>
-              <h3 className="left-title">Review proposal</h3>
-              <div className="step-three-select-app">
+              <h3 className='left-title'>Review proposal</h3>
+              <div className='step-three-select-app'>
                 {/* Title */}
-                <Row className="mb-1">
+                <Row className='mb-1'>
                   {proposalTitleValue && (
                     <>
-                      <Col span={8} className="text-right pr-1">
-                        <span className="info-label">{t('multisig.proposal-modal.title-label')}:</span>
+                      <Col span={8} className='text-right pr-1'>
+                        <span className='info-label'>{t('multisig.proposal-modal.title-label')}:</span>
                       </Col>
-                      <Col span={16} className="text-left pl-1">
+                      <Col span={16} className='text-left pl-1'>
                         <span>{proposalTitleValue}</span>
                       </Col>
                     </>
@@ -591,23 +591,23 @@ export const MultisigProposalModal = (props: {
                 </Row>
 
                 {/* Expiry date */}
-                <Row className="mb-1">
-                  <Col span={8} className="text-right pr-1">
-                    <span className="info-label">{t('multisig.proposal-modal.expires-label')}:</span>
+                <Row className='mb-1'>
+                  <Col span={8} className='text-right pr-1'>
+                    <span className='info-label'>{t('multisig.proposal-modal.expires-label')}:</span>
                   </Col>
-                  <Col span={16} className="text-left pl-1">
+                  <Col span={16} className='text-left pl-1'>
                     <span>{proposalExpiresValue.label}</span>
                   </Col>
                 </Row>
 
                 {/* Description */}
-                <Row className="mb-1">
+                <Row className='mb-1'>
                   {proposalDescriptionValue && (
                     <>
-                      <Col span={8} className="text-right pr-1">
-                        <span className="info-label">Description:</span>
+                      <Col span={8} className='text-right pr-1'>
+                        <span className='info-label'>Description:</span>
                       </Col>
-                      <Col span={16} className="text-left pl-1">
+                      <Col span={16} className='text-left pl-1'>
                         <span>{proposalDescriptionValue}</span>
                       </Col>
                     </>
@@ -615,13 +615,13 @@ export const MultisigProposalModal = (props: {
                 </Row>
 
                 {/* Instruction */}
-                <Row className="mb-1">
+                <Row className='mb-1'>
                   {selectedUiIx && (
                     <>
-                      <Col span={8} className="text-right pr-1">
-                        <span className="info-label">Instruction:</span>
+                      <Col span={8} className='text-right pr-1'>
+                        <span className='info-label'>Instruction:</span>
                       </Col>
-                      <Col span={16} className="text-left pl-1">
+                      <Col span={16} className='text-left pl-1'>
                         <span>{selectedUiIx.label}</span>
                       </Col>
                     </>
@@ -634,38 +634,38 @@ export const MultisigProposalModal = (props: {
                     {isSerializedTxValid &&
                       Object.keys(inputState).map((key, index) => (
                         <>
-                          <div className="info-label text-center mt-2">
+                          <div className='info-label text-center mt-2'>
                             {selectedAppConfig?.ui.map((ix: any, idx: number) =>
                               ix.uiElements.map((element: any, idx2: number) => (
                                 <span key={`instruction-${idx}-${idx2}`}>{element.label}</span>
                               )),
                             )}
                           </div>
-                          <div className="well mb-1 proposal-summary-container vertical-scroll">
-                            <div className="mb-1">
+                          <div className='well mb-1 proposal-summary-container vertical-scroll'>
+                            <div className='mb-1'>
                               <span>{t('multisig.proposal-modal.instruction-program')}:</span>
                               <br />
                               <div>
                                 <span
                                   onClick={() => copyAddressToClipboard(deserializedTx?.programId)}
-                                  className="info-data simplelink underline-on-hover"
+                                  className='info-data simplelink underline-on-hover'
                                   style={{ cursor: 'pointer' }}
                                 >
                                   {deserializedTx?.programId}
                                 </span>
                                 <a
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                  target='_blank'
+                                  rel='noopener noreferrer'
                                   href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
                                     deserializedTx?.programId
                                   }${getSolanaExplorerClusterParam()}`}
                                 >
-                                  <IconExternalLink className="mean-svg-icons external-icon" />
+                                  <IconExternalLink className='mean-svg-icons external-icon' />
                                 </a>
                               </div>
                             </div>
                             {deserializedTx?.accounts.map((account: any) => (
-                              <div className="mb-1" key={`account-${account.index}`}>
+                              <div className='mb-1' key={`account-${account.index}`}>
                                 <span>
                                   {t('multisig.proposal-modal.instruction-account')} {account.index + 1}:
                                 </span>
@@ -673,31 +673,31 @@ export const MultisigProposalModal = (props: {
                                 <div>
                                   <span
                                     onClick={() => copyAddressToClipboard(account.value)}
-                                    className="info-data simplelink underline-on-hover"
+                                    className='info-data simplelink underline-on-hover'
                                     style={{ cursor: 'pointer' }}
                                   >
                                     {account.value}
                                   </span>
                                   <a
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                    target='_blank'
+                                    rel='noopener noreferrer'
                                     href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
                                       account.value
                                     }${getSolanaExplorerClusterParam()}`}
                                   >
-                                    <IconExternalLink className="mean-svg-icons external-icon" />
+                                    <IconExternalLink className='mean-svg-icons external-icon' />
                                   </a>
                                 </div>
                               </div>
                             ))}
-                            <div className="mb-1">
+                            <div className='mb-1'>
                               <span>{t('multisig.proposal-modal.instruction-data')}:</span>
                               <br />
                               {deserializedTx?.data.map((data: any, idx3: number) => (
                                 <span
                                   key={`txdata-item-${idx3}`}
                                   onClick={() => copyAddressToClipboard(data.value)}
-                                  className="info-data simplelink underline-on-hover"
+                                  className='info-data simplelink underline-on-hover'
                                   style={{ cursor: 'pointer' }}
                                 >
                                   {data.value}
@@ -720,15 +720,15 @@ export const MultisigProposalModal = (props: {
                       }
                     };
                     return (
-                      <Row className="mb-1" key={`uielement-${index}`}>
+                      <Row className='mb-1' key={`uielement-${index}`}>
                         {key && (
                           <>
-                            <Col span={8} className="text-right pr-1">
-                              <span className="info-label">
+                            <Col span={8} className='text-right pr-1'>
+                              <span className='info-label'>
                                 {selectedUiIx?.uiElements.filter((e: any) => e.name === key)[0].label}:
                               </span>
                             </Col>
-                            <Col span={16} className="text-left pl-1">
+                            <Col span={16} className='text-left pl-1'>
                               <span>{getYesOrNo()}</span>
                             </Col>
                           </>
@@ -746,23 +746,23 @@ export const MultisigProposalModal = (props: {
 
         <div className={currentStep === 0 ? 'contract-wrapper panel1 show' : 'contract-wrapper panel1 hide'}>
           <Row>
-            <Col span={12} className="d-flex justify-content-center">
+            <Col span={12} className='d-flex justify-content-center'>
               <Button
-                type="ghost"
-                size="middle"
-                className="thin-stroke col-6"
+                type='ghost'
+                size='middle'
+                className='thin-stroke col-6'
                 onClick={onCloseModal}
                 disabled={!publicKey}
               >
                 Cancel
               </Button>
             </Col>
-            <Col span={12} className="d-flex justify-content-center">
+            <Col span={12} className='d-flex justify-content-center'>
               <Button
-                type="primary"
-                shape="round"
-                size="middle"
-                className="col-6"
+                type='primary'
+                shape='round'
+                size='middle'
+                className='col-6'
                 onClick={onContinueStepOneButtonClick}
                 disabled={!publicKey || !selectedApp}
               >
@@ -774,23 +774,23 @@ export const MultisigProposalModal = (props: {
 
         <div className={currentStep === 1 ? 'contract-wrapper panel2 show' : 'contract-wrapper panel2 hide'}>
           <Row>
-            <Col span={12} className="d-flex justify-content-center">
+            <Col span={12} className='d-flex justify-content-center'>
               <Button
-                type="ghost"
-                size="middle"
-                className="thin-stroke col-6"
+                type='ghost'
+                size='middle'
+                className='thin-stroke col-6'
                 onClick={() => onStepperChange(0)}
                 disabled={!publicKey}
               >
                 Back
               </Button>
             </Col>
-            <Col span={12} className="d-flex justify-content-center">
+            <Col span={12} className='d-flex justify-content-center'>
               <Button
-                type="primary"
-                shape="round"
-                size="middle"
-                className="col-6"
+                type='primary'
+                shape='round'
+                size='middle'
+                className='col-6'
                 onClick={onContinueStepTwoButtonClick}
                 disabled={
                   !publicKey ||
@@ -809,23 +809,23 @@ export const MultisigProposalModal = (props: {
 
         <div className={currentStep === 2 ? 'contract-wrapper panel3 show' : 'contract-wrapper panel3 hide'}>
           <Row>
-            <Col span={12} className="d-flex justify-content-center">
+            <Col span={12} className='d-flex justify-content-center'>
               <Button
-                type="ghost"
-                size="middle"
-                className="thin-stroke col-6"
+                type='ghost'
+                size='middle'
+                className='thin-stroke col-6'
                 onClick={() => onStepperChange(1)}
                 disabled={!publicKey}
               >
                 Back
               </Button>
             </Col>
-            <Col span={12} className="d-flex justify-content-center">
+            <Col span={12} className='d-flex justify-content-center'>
               <Button
-                type="primary"
-                shape="round"
-                size="middle"
-                className="col-6"
+                type='primary'
+                shape='round'
+                size='middle'
+                className='col-6'
                 onClick={() => onAcceptModal()}
                 disabled={
                   !publicKey ||
@@ -883,16 +883,16 @@ export const MultisigProposalModal = (props: {
 
   const renderFinishedState = useCallback(() => {
     return (
-      <div className="transaction-progress p-2">
-        <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-        <h4 className="font-bold">{t('multisig.update-multisig.success-message')}</h4>
-        <div className="row two-col-ctas mt-3 transaction-progress p-2">
-          <div className="col-12">
+      <div className='transaction-progress p-2'>
+        <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+        <h4 className='font-bold'>{t('multisig.update-multisig.success-message')}</h4>
+        <div className='row two-col-ctas mt-3 transaction-progress p-2'>
+          <div className='col-12'>
             <Button
               block
-              type="text"
-              shape="round"
-              size="middle"
+              type='text'
+              shape='round'
+              size='middle'
               className={isBusy ? 'inactive' : ''}
               onClick={() => onCloseModal()}
             >
@@ -906,23 +906,23 @@ export const MultisigProposalModal = (props: {
 
   const renderFailureState = useCallback(() => {
     return (
-      <div className="transaction-progress p-2">
-        <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-1" />
+      <div className='transaction-progress p-2'>
+        <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-1' />
         {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-          <h4 className="mb-4">{transactionStatus.customError}</h4>
+          <h4 className='mb-4'>{transactionStatus.customError}</h4>
         ) : (
-          <h4 className="font-bold mb-3">
+          <h4 className='font-bold mb-3'>
             {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
           </h4>
         )}
         {!isBusy && (
-          <div className="row two-col-ctas mt-3 transaction-progress p-2">
-            <div className="col-12">
+          <div className='row two-col-ctas mt-3 transaction-progress p-2'>
+            <div className='col-12'>
               <Button
                 block
-                type="text"
-                shape="round"
-                size="middle"
+                type='text'
+                shape='round'
+                size='middle'
                 className={isBusy ? 'inactive' : ''}
                 onClick={() =>
                   isError(transactionStatus.currentOperation) &&
@@ -955,8 +955,8 @@ export const MultisigProposalModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal multisig-proposal-modal"
-      title={<div className="modal-title">New proposal</div>}
+      className='mean-modal simple-modal multisig-proposal-modal'
+      title={<div className='modal-title'>New proposal</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
@@ -973,11 +973,11 @@ export const MultisigProposalModal = (props: {
         }
       >
         {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress p-4">
-            <Spin indicator={bigLoadingIcon} className="icon mb-1 mt-1" />
-            <h4 className="font-bold">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+          <div className='transaction-progress p-4'>
+            <Spin indicator={bigLoadingIcon} className='icon mb-1 mt-1' />
+            <h4 className='font-bold'>{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
             {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              <div className='indication'>{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}

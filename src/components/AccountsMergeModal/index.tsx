@@ -1,5 +1,5 @@
 import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
-import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
+import { type Connection, PublicKey, type VersionedTransaction } from '@solana/web3.js';
 import { Button, Modal, Spin } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -16,7 +16,7 @@ import {
   getTransactionStatusForLogs,
 } from 'middleware/ui';
 import { formatThousands, getVersionedTxIxResume, shortenAddress } from 'middleware/utils';
-import { AccountTokenParsedInfo, UserTokenAccount } from 'models/accounts';
+import type { AccountTokenParsedInfo, UserTokenAccount } from 'models/accounts';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -195,8 +195,8 @@ export const AccountsMergeModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('assets.merge-accounts-link')}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{t('assets.merge-accounts-link')}</div>}
       footer={null}
       open={isVisible}
       onCancel={handleClose}
@@ -205,22 +205,22 @@ export const AccountsMergeModal = (props: {
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle && (
           <>
-            <div className="transaction-progress">
-              <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">Token accounts that will be merged</h4>
+            <div className='transaction-progress'>
+              <WarningOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+              <h4 className='font-bold'>Token accounts that will be merged</h4>
             </div>
             {/* List of token accounts that will be merged */}
             {tokenGroup && tokenGroup.length > 0 && (
-              <div className="well merged-token-list">
+              <div className='well merged-token-list'>
                 {tokenGroup.map((item: AccountTokenParsedInfo, index: number) => {
                   if (index > 3) {
                     return null;
                   }
                   const token = accountTokens.find(t => t.publicAddress === item.pubkey.toBase58());
                   return (
-                    <div key={`${index}`} className="flex-fixed-right align-items-center merged-token-item">
-                      <div className="left flex-column">
-                        <span className="add-on">
+                    <div key={`${index}`} className='flex-fixed-right align-items-center merged-token-item'>
+                      <div className='left flex-column'>
+                        <span className='add-on'>
                           {token && (
                             <TokenDisplay
                               onClick={() => {}}
@@ -231,9 +231,9 @@ export const AccountsMergeModal = (props: {
                             />
                           )}
                         </span>
-                        <div className="public-address">{shortenAddress(item.pubkey, 10)}</div>
+                        <div className='public-address'>{shortenAddress(item.pubkey, 10)}</div>
                       </div>
-                      <div className="right">
+                      <div className='right'>
                         {formatThousands(
                           item.parsedInfo.tokenAmount.uiAmount || 0,
                           friendlyDisplayDecimalPlaces(
@@ -247,7 +247,7 @@ export const AccountsMergeModal = (props: {
                 })}
               </div>
             )}
-            <div className="text-center">
+            <div className='text-center'>
               <p>
                 <strong>WARNING</strong>: This action may break apps that depend on your existing token accounts.
               </p>
@@ -265,19 +265,19 @@ export const AccountsMergeModal = (props: {
           </>
         )}
         {transactionStatus.currentOperation === TransactionStatus.TransactionFinished && (
-          <div className="transaction-progress">
-            <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-            <h4 className="font-bold">
+          <div className='transaction-progress'>
+            <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+            <h4 className='font-bold'>
               Your tokens have been merged into the <strong>Associated Token Account</strong>!
             </h4>
           </div>
         )}
         {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
           transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
-            <div className="transaction-progress">
-              <CloseCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">Merge token accounts failed</h4>
-              <div className="operation">
+            <div className='transaction-progress'>
+              <CloseCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+              <h4 className='font-bold'>Merge token accounts failed</h4>
+              <div className='operation'>
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </div>
             </div>
@@ -290,10 +290,10 @@ export const AccountsMergeModal = (props: {
         }
       >
         {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress">
-            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-            <h4 className="font-bold">Merging token accounts...</h4>
-            <div className="operation">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</div>
+          <div className='transaction-progress'>
+            <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+            <h4 className='font-bold'>Merging token accounts...</h4>
+            <div className='operation'>{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</div>
           </div>
         )}
       </div>
@@ -301,9 +301,9 @@ export const AccountsMergeModal = (props: {
       <Button
         className={`main-cta mt-3 ${isBusy ? 'inactive' : ''}`}
         block
-        type="primary"
-        shape="round"
-        size="large"
+        type='primary'
+        shape='round'
+        size='large'
         onClick={() => {
           if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
             onFinishedMergeAccountsTx();

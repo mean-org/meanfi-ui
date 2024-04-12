@@ -1,4 +1,4 @@
-import { Transaction, VersionedTransaction } from '@solana/web3.js';
+import type { Transaction, VersionedTransaction } from '@solana/web3.js';
 
 export interface CreateTxResult {
   transaction: Transaction | VersionedTransaction | null;

@@ -1,26 +1,32 @@
+import type { DdcaAccount } from '@mean-dao/ddca';
 import {
   MeanMultisig,
-  MultisigInfo,
-  MultisigTransaction,
+  type MultisigInfo,
+  type MultisigTransaction,
   MultisigTransactionStatus,
 } from '@mean-dao/mean-multisig-sdk';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { StreamActivity as StreamActivityV1, StreamInfo } from '@mean-dao/money-streaming/lib/types';
-import { PaymentStreaming, Stream, StreamActivity } from '@mean-dao/payment-streaming';
-import { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
+import type { StreamActivity as StreamActivityV1, StreamInfo } from '@mean-dao/money-streaming/lib/types';
+import { PaymentStreaming, type Stream, type StreamActivity } from '@mean-dao/payment-streaming';
+import type { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
+import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { isCacheItemExpired } from 'cache/persistentCache';
 import { openNotification } from 'components/Notifications';
 import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
 import { TREASURY_TYPE_OPTIONS } from 'constants/treasury-type-options';
+import useLocalStorage from 'hooks/useLocalStorage';
 import { appConfig, customLogger } from 'index';
 import { getAccountNFTs, getUserAccountTokens } from 'middleware/accounts';
-import { getPrices, getSolanaTokenListKeyNameByCluster, getSolFlareTokenList, getSplTokens } from 'middleware/api';
-import { MappedTransaction } from 'middleware/history';
+import { getPrices, getSolFlareTokenList, getSolanaTokenListKeyNameByCluster, getSplTokens } from 'middleware/api';
+import getPriceByAddressOrSymbol from 'middleware/getPriceByAddressOrSymbol';
+import type { MappedTransaction } from 'middleware/history';
 import { PerformanceCounter } from 'middleware/perf-counter';
 import { consoleOut, isProd, msToTime } from 'middleware/ui';
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from 'middleware/utils';
-import {
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenPrice } from 'models/TokenPrice';
+import type {
   AccountContext,
   AccountDetails,
   AccountTokenParsedInfo,
@@ -29,14 +35,13 @@ import {
   UserTokensResponse,
 } from 'models/accounts';
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from 'models/enums';
-import { MultisigVault } from 'models/multisig';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { initialStats, initialSummary, PaymentStreamingStats, StreamsSummary } from 'models/streams';
-import { TokenPrice } from 'models/TokenPrice';
-import { TreasuryTypeOption } from 'models/treasuries';
+import type { MultisigVault } from 'models/multisig';
+import { type PaymentStreamingStats, type StreamsSummary, initialStats, initialSummary } from 'models/streams';
+import type { TreasuryTypeOption } from 'models/treasuries';
 import moment from 'moment';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 import {
   DAO_CORE_TEAM_WHITELIST,
   FIVETY_SECONDS_REFRESH_TIMEOUT,
@@ -53,11 +58,6 @@ import { useNativeAccount } from './accounts';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from './connection';
 import { useWallet } from './wallet';
 import { emptyAccount, useWalletAccount } from './walletAccount';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { BN } from '@project-serum/anchor';
-import getPriceByAddressOrSymbol from 'middleware/getPriceByAddressOrSymbol';
-import { DdcaAccount } from '@mean-dao/ddca';
-import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 const pricesPerformanceCounter = new PerformanceCounter();
 const tokenListPerformanceCounter = new PerformanceCounter();

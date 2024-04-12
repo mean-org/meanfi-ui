@@ -61,21 +61,21 @@ const MeanDaoStats = () => {
   }, 0);
 
   const renderHeaderTreasury = (
-    <div className="ant-card-head-title">
+    <div className='ant-card-head-title'>
       <span>Treasury Balance</span>
       <span>$ {formatThousands(totalTreasuryValue)}</span>
     </div>
   );
 
   const renderBodyTreasury = (
-    <div className="item-container">
+    <div className='item-container'>
       {items.map((item, index) => (
-        <div key={index} className="item-inner">
-          <div className="item-header">
-            <img src={item.symbol} alt={item.name} className="avatar-coin" />
+        <div key={index} className='item-inner'>
+          <div className='item-header'>
+            <img src={item.symbol} alt={item.name} className='avatar-coin' />
             <h3>{item.name}</h3>
           </div>
-          <div className="item-content">
+          <div className='item-content'>
             <span>
               {formatThousands(item.amount)} {item.token}
             </span>
@@ -87,14 +87,14 @@ const MeanDaoStats = () => {
   );
 
   const renderHeaderEmissions = (
-    <div className="ant-card-head-title">
+    <div className='ant-card-head-title'>
       <span>Total MEAN Emissions</span>
     </div>
   );
 
   const renderBodyEmissions = (
-    <div className="item-container">
-      <table className="btable-table w-100">
+    <div className='item-container'>
+      <table className='btable-table w-100'>
         <thead>
           <tr>
             <th>Slot</th>
@@ -112,12 +112,12 @@ const MeanDaoStats = () => {
                 <span>{transaction.token}</span>
               </td>
               <td>
-                <span className="icon-button-container">
+                <span className='icon-button-container'>
                   <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={<CopyOutlined className="mean-svg-icons" />}
+                    type='default'
+                    shape='circle'
+                    size='middle'
+                    icon={<CopyOutlined className='mean-svg-icons' />}
                   />
                   {transaction.signature}
                 </span>

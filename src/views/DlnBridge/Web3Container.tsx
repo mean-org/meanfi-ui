@@ -1,17 +1,17 @@
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 
-import { configureChains, createConfig, WagmiConfig } from 'wagmi';
-// import { alchemyProvider } from "wagmi/providers/alchemy";
-import { publicProvider } from 'wagmi/providers/public';
 import {
   RainbowKitProvider,
-  lightTheme,
-  darkTheme,
   cssStringFromTheme,
+  darkTheme,
   getDefaultWallets,
+  lightTheme,
 } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
 import { mainnet, polygon } from 'viem/chains';
+import { WagmiConfig, configureChains, createConfig } from 'wagmi';
+// import { alchemyProvider } from "wagmi/providers/alchemy";
+import { publicProvider } from 'wagmi/providers/public';
 
 const { chains, publicClient } = configureChains(
   [mainnet, polygon],
@@ -38,7 +38,7 @@ type Props = {
 export function Web3Container({ children }: Props): ReactElement {
   return (
     <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider chains={chains} theme={null} modalSize="compact" showRecentTransactions={true}>
+      <RainbowKitProvider chains={chains} theme={null} modalSize='compact' showRecentTransactions={true}>
         <style
           dangerouslySetInnerHTML={{
             __html: `

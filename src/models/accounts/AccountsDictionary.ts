@@ -1,4 +1,4 @@
-import { AccountInfo, PublicKey } from '@solana/web3.js';
+import type { AccountInfo, PublicKey } from '@solana/web3.js';
 
 export type AccountsDictionary = {
   publicKey: PublicKey;

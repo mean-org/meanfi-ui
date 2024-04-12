@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { TransactionFees } from '@mean-dao/payment-streaming';
-import { Connection, PublicKey } from '@solana/web3.js';
+import type { TransactionFees } from '@mean-dao/payment-streaming';
+import { type Connection, PublicKey } from '@solana/web3.js';
 import { Button, Checkbox, Modal } from 'antd';
 import { InputMean } from 'components/InputMean';
 import { TokenListItem } from 'components/TokenListItem';
@@ -11,7 +11,7 @@ import { useWallet } from 'contexts/wallet';
 import useTransaction from 'hooks/useTransaction';
 import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
 import { getAmountFromLamports } from 'middleware/utils';
-import { UserTokenAccount } from 'models/accounts';
+import type { UserTokenAccount } from 'models/accounts';
 import { OperationType } from 'models/enums';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -186,25 +186,25 @@ export const AccountsCloseAssetModal = (props: {
   // Rendering
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">Close Token Account</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>Close Token Account</div>}
       footer={null}
       open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
       width={370}
     >
-      <div className="shift-up-1">
-        <div className="mb-2 text-center">{renderMessages()}</div>
+      <div className='shift-up-1'>
+        <div className='mb-2 text-center'>{renderMessages()}</div>
 
-        <div className="form-label">Token account to close</div>
-        <div className="well-group token-list mb-3">
+        <div className='form-label'>Token account to close</div>
+        <div className='well-group token-list mb-3'>
           <TokenListItem
             key={asset.address}
             name={asset.name}
             mintAddress={asset.address}
             token={asset}
-            className="click-disabled"
+            className='click-disabled'
             onClick={() => {
               // Nothing
             }}
@@ -214,7 +214,7 @@ export const AccountsCloseAssetModal = (props: {
 
         {asset.balance && asset.balance > 0 && asset.name !== 'Wrapped SOL' ? (
           <>
-            <div className="mb-2 text-center">
+            <div className='mb-2 text-center'>
               <p>
                 Enter <strong>YES</strong> to confirm you wish to close the account and burn the remaining tokens. This
                 can not be undone so be sure you wish to proceed.
@@ -222,16 +222,16 @@ export const AccountsCloseAssetModal = (props: {
             </div>
 
             <InputMean
-              id="confirm-close-account-input"
+              id='confirm-close-account-input'
               maxLength={3}
-              placeholder="Type YES to confirm"
+              placeholder='Type YES to confirm'
               onChange={onYesInputValueChange}
               value={enterYesWord}
             />
           </>
         ) : null}
 
-        <div className="mb-3">
+        <div className='mb-3'>
           <Checkbox checked={isDisclaimerAccepted} onChange={onIsVerifiedRecipientChange}>
             I agree to remove this asset from my wallet
           </Checkbox>
@@ -240,9 +240,9 @@ export const AccountsCloseAssetModal = (props: {
         <Button
           className={`main-cta ${isBusy ? 'inactive' : ''}`}
           block
-          type="primary"
-          shape="round"
-          size="large"
+          type='primary'
+          shape='round'
+          size='large'
           disabled={
             (asset.balance && asset.balance > 0 && asset.name !== 'Wrapped SOL'
               ? !isOperationValidIfWrapSol()
@@ -251,7 +251,7 @@ export const AccountsCloseAssetModal = (props: {
           onClick={onStartTransaction}
         >
           {isBusy && (
-            <span className="mr-1">
+            <span className='mr-1'>
               <LoadingOutlined style={{ fontSize: '16px' }} />
             </span>
           )}

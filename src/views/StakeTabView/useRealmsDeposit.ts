@@ -1,5 +1,5 @@
-import { getGovernanceAccounts, pubkeyFilter, TokenOwnerRecord } from '@solana/spl-governance';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { TokenOwnerRecord, getGovernanceAccounts, pubkeyFilter } from '@solana/spl-governance';
+import { type Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { useEffect, useState } from 'react';
 

@@ -1,6 +1,7 @@
 import { WarningFilled } from '@ant-design/icons';
-import { DepositRecord, DepositsInfo, StakingClient } from '@mean-dao/staking';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { type DepositRecord, type DepositsInfo, StakingClient } from '@mean-dao/staking';
+import { PublicKey, type Transaction } from '@solana/web3.js';
+import { IconStats } from 'Icons';
 import { Button, Spin } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { PreFooter } from 'components/PreFooter';
@@ -8,9 +9,8 @@ import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByCluster, useConnection } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext } from 'contexts/transaction-status';
+import { TxConfirmationContext, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
-import { IconStats } from 'Icons';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from 'middleware/ui';
@@ -21,13 +21,13 @@ import {
   getTxIxResume,
   isValidNumber,
 } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 import { appConfig, customLogger } from '../..';
 import './style.scss';
-import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
@@ -139,7 +139,7 @@ export const StakingRewardsView = () => {
   }, [connection, meanStakingVault]);
 
   const getTotalMeanAdded = useCallback(() => {
-    const apg = parseFloat(aprPercentGoal) || 0;
+    const apg = Number.parseFloat(aprPercentGoal) || 0;
     const result = apg ? (meanStakingVaultBalance * (apg / 100)) / 365 : 0;
     return result;
   }, [aprPercentGoal, meanStakingVaultBalance]);
@@ -319,7 +319,7 @@ export const StakingRewardsView = () => {
           currentOperation: TransactionStatus.InitTransaction,
         });
 
-        const depositPercentage = parseFloat(aprPercentGoal) / 100;
+        const depositPercentage = Number.parseFloat(aprPercentGoal) / 100;
         consoleOut('depositPercentage:', depositPercentage, 'blue');
 
         // Log input data
@@ -459,8 +459,8 @@ export const StakingRewardsView = () => {
     return aprPercentGoal &&
       nativeBalance &&
       meanBalance &&
-      parseFloat(aprPercentGoal) >= 0.01 &&
-      parseFloat(aprPercentGoal) <= 100 &&
+      Number.parseFloat(aprPercentGoal) >= 0.01 &&
+      Number.parseFloat(aprPercentGoal) <= 100 &&
       meanBalance >= getTotalMeanAdded()
       ? true
       : false;
@@ -477,24 +477,24 @@ export const StakingRewardsView = () => {
 
   const renderDepositHistory = (
     <>
-      <div className="container-max-width-720 my-3">
-        <div className="item-list-header compact dark">
-          <div className="header-row">
-            <div className="std-table-cell responsive-cell px-2 text-left">Date</div>
-            <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">
+      <div className='container-max-width-720 my-3'>
+        <div className='item-list-header compact dark'>
+          <div className='header-row'>
+            <div className='std-table-cell responsive-cell px-2 text-left'>Date</div>
+            <div className='std-table-cell responsive-cell px-3 text-right border-left border-right'>
               <span>
                 Total Staked +<br />
                 Rewards before
               </span>
             </div>
-            <div className="std-table-cell responsive-cell px-3 text-right border-right">
+            <div className='std-table-cell responsive-cell px-3 text-right border-right'>
               <span>
                 Deposited
                 <br />
                 Percentage
               </span>
             </div>
-            <div className="std-table-cell responsive-cell px-3 text-right">
+            <div className='std-table-cell responsive-cell px-3 text-right'>
               <span>
                 Deposited
                 <br />
@@ -504,25 +504,25 @@ export const StakingRewardsView = () => {
           </div>
         </div>
 
-        <div className="transaction-list-data-wrapper vertical-scroll">
+        <div className='transaction-list-data-wrapper vertical-scroll'>
           <Spin spinning={refreshingDepositsInfo}>
-            <div className="activity-list h-100">
-              <div className="item-list-body compact dark">
+            <div className='activity-list h-100'>
+              <div className='item-list-body compact dark'>
                 {depositsInfo &&
                   depositsInfo.depositRecords &&
                   depositsInfo.depositRecords.length > 0 &&
                   depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
-                    <div key={`${index}`} className="item-list-row">
-                      <div className="std-table-cell responsive-cell px-2 text-left">
-                        <span className="capitalize-first-letter">{getRelativeDate(item.depositedUtc)}</span>
+                    <div key={`${index}`} className='item-list-row'>
+                      <div className='std-table-cell responsive-cell px-2 text-left'>
+                        <span className='capitalize-first-letter'>{getRelativeDate(item.depositedUtc)}</span>
                       </div>
-                      <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">
+                      <div className='std-table-cell responsive-cell px-3 text-right border-left border-right'>
                         {formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN
                       </div>
-                      <div className="std-table-cell responsive-cell px-3 text-right border-right">
+                      <div className='std-table-cell responsive-cell px-3 text-right border-right'>
                         {item.depositedPercentage * 100}%
                       </div>
-                      <div className="std-table-cell responsive-cell px-3 text-right">
+                      <div className='std-table-cell responsive-cell px-3 text-right'>
                         {formatThousands(item.depositedUiAmount)} MEAN
                       </div>
                     </div>
@@ -537,26 +537,26 @@ export const StakingRewardsView = () => {
 
   const renderStakingRewardsVaultBalance = (
     <>
-      <div className="well disabled">
-        <div className="flex-fixed-right">
-          <div className="left inner-label">Total MEAN in Vault</div>
-          <div className="right">&nbsp;</div>
+      <div className='well disabled'>
+        <div className='flex-fixed-right'>
+          <div className='left inner-label'>Total MEAN in Vault</div>
+          <div className='right'>&nbsp;</div>
         </div>
-        <div className="flex-fixed-right">
-          <div className="left static-data-field">
+        <div className='flex-fixed-right'>
+          <div className='left static-data-field'>
             {formatThousands(meanStakingVaultBalance, meanToken?.decimals || 9)}
           </div>
-          <div className="right">&nbsp;</div>
+          <div className='right'>&nbsp;</div>
         </div>
       </div>
     </>
   );
 
   const renderPercentGoalValidationErrors = () => {
-    if (!aprPercentGoal || parseFloat(aprPercentGoal) < 0.01 || parseFloat(aprPercentGoal) > 100) {
-      return <span className="form-field-error">Valid values: from 0.01 to 100</span>;
+    if (!aprPercentGoal || Number.parseFloat(aprPercentGoal) < 0.01 || Number.parseFloat(aprPercentGoal) > 100) {
+      return <span className='form-field-error'>Valid values: from 0.01 to 100</span>;
     } else if (meanStakingVaultBalance && meanBalance !== undefined && meanBalance < getTotalMeanAdded()) {
-      return <span className="form-field-error">Insufficient balance for APR Percent Goal</span>;
+      return <span className='form-field-error'>Insufficient balance for APR Percent Goal</span>;
     } else {
       return null;
     }
@@ -565,30 +565,30 @@ export const StakingRewardsView = () => {
   const renderAddFundsToStakingRewardsVault = (
     <>
       <div className={`well ${isBusy ? 'disabled' : ''}`}>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">Enter APR Percent Goal</div>
-          <div className="right">&nbsp;</div>
+        <div className='flex-fixed-right'>
+          <div className='left inner-label'>Enter APR Percent Goal</div>
+          <div className='right'>&nbsp;</div>
         </div>
-        <div className="flex-fixed-right">
-          <div className="left">
+        <div className='flex-fixed-right'>
+          <div className='left'>
             <input
-              className="general-text-input"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
+              className='general-text-input'
+              inputMode='decimal'
+              autoComplete='off'
+              autoCorrect='off'
+              type='text'
               onChange={handleAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.01"
+              pattern='^[0-9]*[.,]?[0-9]*$'
+              placeholder='0.01'
               minLength={1}
               maxLength={5}
               min={0.01}
               max={100}
-              spellCheck="false"
+              spellCheck='false'
               value={aprPercentGoal}
             />
           </div>
-          <div className="right">&nbsp;</div>
+          <div className='right'>&nbsp;</div>
         </div>
         {renderPercentGoalValidationErrors()}
       </div>
@@ -597,16 +597,16 @@ export const StakingRewardsView = () => {
 
   const renderTotalMeanAdded = (
     <>
-      <div className="well disabled">
-        <div className="flex-fixed-right">
-          <div className="left inner-label">Total MEAN to be added</div>
-          <div className="right">&nbsp;</div>
+      <div className='well disabled'>
+        <div className='flex-fixed-right'>
+          <div className='left inner-label'>Total MEAN to be added</div>
+          <div className='right'>&nbsp;</div>
         </div>
-        <div className="flex-fixed-right">
-          <div className="left static-data-field">{formatThousands(getTotalMeanAdded(), meanToken?.decimals || 9)}</div>
-          <div className="right">&nbsp;</div>
+        <div className='flex-fixed-right'>
+          <div className='left static-data-field'>{formatThousands(getTotalMeanAdded(), meanToken?.decimals || 9)}</div>
+          <div className='right'>&nbsp;</div>
         </div>
-        <span className="form-field-hint">
+        <span className='form-field-hint'>
           User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 9) : '0'}
         </span>
       </div>
@@ -616,17 +616,17 @@ export const StakingRewardsView = () => {
   if (!publicKey || !userHasAccess) {
     return (
       <>
-        <div className="container main-container">
-          <div className="interaction-area">
-            <div className="title-and-subtitle w-75 h-100">
-              <div className="title">
-                <IconStats className="mean-svg-icons" />
+        <div className='container main-container'>
+          <div className='interaction-area'>
+            <div className='title-and-subtitle w-75 h-100'>
+              <div className='title'>
+                <IconStats className='mean-svg-icons' />
                 <div>{t('staking.title')}</div>
               </div>
-              <div className="subtitle text-center">Staking Rewards &amp; History</div>
-              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
-                <div className="text-center mb-2">
-                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
+              <div className='subtitle text-center'>Staking Rewards &amp; History</div>
+              <div className='w-50 h-100 p-5 text-center flex-column flex-center'>
+                <div className='text-center mb-2'>
+                  <WarningFilled style={{ fontSize: 48 }} className='icon fg-warning' />
                 </div>
                 {!publicKey ? (
                   <h3>Please connect your wallet to setup rewards</h3>
@@ -646,35 +646,35 @@ export const StakingRewardsView = () => {
 
   return (
     <>
-      <div className="container main-container">
-        <div className="interaction-area">
-          <div className="title-and-subtitle">
-            <div className="title">
-              <IconStats className="mean-svg-icons" />
+      <div className='container main-container'>
+        <div className='interaction-area'>
+          <div className='title-and-subtitle'>
+            <div className='title'>
+              <IconStats className='mean-svg-icons' />
               <div>{t('staking.title')}</div>
             </div>
-            <div className="subtitle text-center">Staking Rewards &amp; History</div>
+            <div className='subtitle text-center'>Staking Rewards &amp; History</div>
           </div>
-          <div className="place-transaction-box mb-3">
+          <div className='place-transaction-box mb-3'>
             {renderStakingRewardsVaultBalance}
             {renderAddFundsToStakingRewardsVault}
             {renderTotalMeanAdded}
             <Button
-              className="main-cta"
+              className='main-cta'
               block
-              type="primary"
-              shape="round"
-              size="large"
+              type='primary'
+              shape='round'
+              size='large'
               disabled={!isValidInput() || isBusy || !canDepositRewards}
               onClick={onStartDepositTx}
             >
               {isBusy ? 'Funding Vault' : 'Fund Vault'}
             </Button>
           </div>
-          <div className="title-and-subtitle">
-            <div className="subtitle text-center">Deposit history</div>
+          <div className='title-and-subtitle'>
+            <div className='subtitle text-center'>Deposit history</div>
           </div>
-          <div className="mb-3">{renderDepositHistory}</div>
+          <div className='mb-3'>{renderDepositHistory}</div>
         </div>
       </div>
       <PreFooter />

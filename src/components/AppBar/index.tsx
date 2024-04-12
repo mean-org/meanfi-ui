@@ -1,24 +1,24 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 
-import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { Menu } from 'antd';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 
 import { AccountDetails } from 'components/AccountDetails';
 import { AppContextMenu } from 'components/AppContextMenu';
 import { ConnectButton } from 'components/ConnectButton';
 import { DepositOptions } from 'components/DepositOptions';
 import { NotificationBell } from 'components/NotificationBell';
+import PrioritizationFeesConfigPopover from 'components/PrioritizationFeesConfigPopover';
+import { MEAN_DAO_DOCS_URL } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
+import type { CustomCSSProps } from 'middleware/css-custom-props';
 import { isProd } from 'middleware/ui';
-import { RoutingInfo } from 'models/common-types';
+import type { RoutingInfo } from 'models/common-types';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
-import { CustomCSSProps } from 'middleware/css-custom-props';
-import { MEAN_DAO_DOCS_URL } from 'constants/common';
-import PrioritizationFeesConfigPopover from 'components/PrioritizationFeesConfigPopover';
 
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {
@@ -145,57 +145,57 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
     const items: ItemType[] = [];
     items.push({
       key: 'accounts',
-      label: <Link to="/">{t('ui-menus.main-menu.accounts')}</Link>,
+      label: <Link to='/'>{t('ui-menus.main-menu.accounts')}</Link>,
     });
     items.push({
       key: 'exchange',
-      label: <Link to="/exchange">{t('ui-menus.main-menu.exchange')}</Link>,
+      label: <Link to='/exchange'>{t('ui-menus.main-menu.exchange')}</Link>,
     });
     items.push({
       key: 'staking',
-      label: <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>,
+      label: <Link to='/staking'>{t('ui-menus.main-menu.staking')}</Link>,
     });
     items.push({
       key: 'docs',
       label: (
-        <Link to={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
+        <Link to={MEAN_DAO_DOCS_URL} target='_blank' rel='noopener noreferrer'>
           {t('ui-menus.app-context-menu.how-to-use')}
         </Link>
       ),
     });
-    return <Menu selectedKeys={selectedItems} mode="horizontal" items={items} />;
+    return <Menu selectedKeys={selectedItems} mode='horizontal' items={items} />;
   };
 
   if (menuType === 'desktop') {
     return (
       <>
-        <div className="App-Bar-left">{topNavVisible ? mainNav() : <span>&nbsp;</span>}</div>
-        <div className="App-Bar-right">
+        <div className='App-Bar-left'>{topNavVisible ? mainNav() : <span>&nbsp;</span>}</div>
+        <div className='App-Bar-right'>
           {!isProd() && (
-            <div className="cluster-indicator">
+            <div className='cluster-indicator'>
               <ThunderboltOutlined />
-              <span className="network-name">{connectionConfig.cluster}</span>
+              <span className='network-name'>{connectionConfig.cluster}</span>
             </div>
           )}
-          <div className="navbar-utilities">
+          <div className='navbar-utilities'>
             <PrioritizationFeesConfigPopover />
             <NotificationBell onOpenDrawer={onOpenDrawer} />
           </div>
           {connected ? (
-            <div className="connection-and-account-bar">
+            <div className='connection-and-account-bar'>
               <AccountDetails />
             </div>
           ) : (
             <ConnectButton />
           )}
-          <div className="app-context-menu">
+          <div className='app-context-menu'>
             <AppContextMenu />
           </div>
         </div>
         {isDepositOptionsModalVisible ? (
           <DepositOptions
             isVisible={isDepositOptionsModalVisible}
-            key="deposit-modal2"
+            key='deposit-modal2'
             handleClose={hideDepositOptionsModal}
           />
         ) : null}
@@ -204,41 +204,41 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
   } else {
     return (
       <>
-        <div className="mobile-menu">
-          <input type="checkbox" id="overlay-input" />
-          <label htmlFor="overlay-input" id="overlay-button">
+        <div className='mobile-menu'>
+          <input type='checkbox' id='overlay-input' />
+          <label htmlFor='overlay-input' id='overlay-button'>
             <span></span>
           </label>
-          <div id="overlay">
-            <div className="h-100 w-100 flex-column flex-center vertical-scroll">
+          <div id='overlay'>
+            <div className='h-100 w-100 flex-column flex-center vertical-scroll'>
               <ul onClick={dismissMenu}>
                 <li
-                  key="accounts"
+                  key='accounts'
                   className={selectedItems.includes('accounts') ? 'mobile-menu-item active' : 'mobile-menu-item'}
                   style={{ '--animation-order': 1 } as CustomCSSProps}
                 >
-                  <Link to="/">{t('ui-menus.main-menu.accounts')}</Link>
+                  <Link to='/'>{t('ui-menus.main-menu.accounts')}</Link>
                 </li>
                 <li
-                  key="exchange"
+                  key='exchange'
                   className={selectedItems.includes('exchange') ? 'mobile-menu-item active' : 'mobile-menu-item'}
                   style={{ '--animation-order': 2 } as CustomCSSProps}
                 >
-                  <Link to="/exchange">{t('ui-menus.main-menu.exchange')}</Link>
+                  <Link to='/exchange'>{t('ui-menus.main-menu.exchange')}</Link>
                 </li>
                 <li
-                  key="staking"
+                  key='staking'
                   className={selectedItems.includes('staking') ? 'mobile-menu-item active' : 'mobile-menu-item'}
                   style={{ '--animation-order': 3 } as CustomCSSProps}
                 >
-                  <Link to="/staking">{t('ui-menus.main-menu.staking')}</Link>
+                  <Link to='/staking'>{t('ui-menus.main-menu.staking')}</Link>
                 </li>
                 <li
-                  key="docs"
+                  key='docs'
                   className={selectedItems.includes('docs') ? 'mobile-menu-item active' : 'mobile-menu-item'}
                   style={{ '--animation-order': 4 } as CustomCSSProps}
                 >
-                  <Link to={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
+                  <Link to={MEAN_DAO_DOCS_URL} target='_blank' rel='noopener noreferrer'>
                     {t('ui-menus.app-context-menu.how-to-use')}
                   </Link>
                 </li>
@@ -247,7 +247,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
           </div>
           <DepositOptions
             isVisible={isDepositOptionsModalVisible && menuType !== 'desktop'}
-            key="deposit-modal2"
+            key='deposit-modal2'
             handleClose={hideDepositOptionsModal}
           />
         </div>

@@ -1,6 +1,6 @@
-import { BN } from '@project-serum/anchor';
-import { MetaInfoCtaAction } from './accounts';
-import { StreamTreasuryType } from './treasuries';
+import type { BN } from '@project-serum/anchor';
+import type { MetaInfoCtaAction } from './accounts';
+import type { StreamTreasuryType } from './treasuries';
 
 export interface RoutingInfo {
   key: string;

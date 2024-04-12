@@ -1,4 +1,4 @@
-import { TokenAmount } from '@solana/web3.js';
+import type { TokenAmount } from '@solana/web3.js';
 
 export type TokenAccountInfo = {
   mint: string;

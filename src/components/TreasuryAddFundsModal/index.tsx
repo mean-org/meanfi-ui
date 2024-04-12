@@ -1,7 +1,9 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
-import { Stream, PaymentStreamingAccount, AccountType } from '@mean-dao/payment-streaming';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import { AccountType, type PaymentStreamingAccount, type Stream } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
+import { IconHelpCircle } from 'Icons';
 import { Button, Modal, Select, Spin, Tooltip } from 'antd';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { Identicon } from 'components/Identicon';
@@ -16,10 +18,9 @@ import { NATIVE_SOL } from 'constants/tokens';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
-import { IconHelpCircle } from 'Icons';
+import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { SOL_MINT } from 'middleware/ids';
 import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
 import {
@@ -32,14 +33,14 @@ import {
   toTokenAmount,
   toUiAmount,
 } from 'middleware/utils';
-import { TreasuryTopupParams } from 'models/common-types';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TreasuryTopupParams } from 'models/common-types';
 import { TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { QRCodeSVG } from 'qrcode.react';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from '../TokenDisplay';
-import { BN } from '@project-serum/anchor';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -135,7 +136,7 @@ export const TreasuryAddFundsModal = (props: {
 
     const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
-    return parseFloat(topupAmount) * price;
+    return Number.parseFloat(topupAmount) * price;
   }, [getTokenPriceByAddress, selectedToken, topupAmount]);
 
   const isfeePayedByTreasurerOn = useCallback(() => {
@@ -499,7 +500,7 @@ export const TreasuryAddFundsModal = (props: {
     const token = getTokenByMintAddress(tokenAddress);
 
     return (
-      <div className="token-icon">
+      <div className='token-icon'>
         {tokenAddress ? (
           <>
             {token?.logoURI ? (
@@ -531,16 +532,16 @@ export const TreasuryAddFundsModal = (props: {
       <>
         {name ? (
           <>
-            <div className="title text-truncate">
+            <div className='title text-truncate'>
               {name}
               <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                 {treasuryType === AccountType.Open ? 'Open' : 'Locked'}
               </span>
             </div>
-            <div className="subtitle text-truncate">{shortenAddress(item.id, 8)}</div>
+            <div className='subtitle text-truncate'>{shortenAddress(item.id, 8)}</div>
           </>
         ) : (
-          <div className="title text-truncate">{shortenAddress(item.id, 8)}</div>
+          <div className='title text-truncate'>{shortenAddress(item.id, 8)}</div>
         )}
       </>
     );
@@ -559,10 +560,10 @@ export const TreasuryAddFundsModal = (props: {
           <span>&nbsp;</span>
         ) : (
           <>
-            <div className="rate-amount">
+            <div className='rate-amount'>
               {formatThousands(isV2Treasury ? +getSdkValue(v2.totalStreams) : +getSdkValue(v1.streamsAmount))}
             </div>
-            <div className="interval">streams</div>
+            <div className='interval'>streams</div>
           </>
         )}
       </>
@@ -574,9 +575,9 @@ export const TreasuryAddFundsModal = (props: {
     return (
       <Option key={`${item.id}`} value={accountId}>
         <div className={`transaction-list-row no-pointer`}>
-          <div className="icon-cell">{getStreamingAccountIcon(item)}</div>
-          <div className="description-cell">{getStreamingAccountDescription(item)}</div>
-          <div className="rate-cell">{getStreamingAccountStreamCount(item)}</div>
+          <div className='icon-cell'>{getStreamingAccountIcon(item)}</div>
+          <div className='description-cell'>{getStreamingAccountDescription(item)}</div>
+          <div className='rate-cell'>{getStreamingAccountStreamCount(item)}</div>
         </div>
       </Option>
     );
@@ -584,9 +585,9 @@ export const TreasuryAddFundsModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
+      className='mean-modal simple-modal'
       title={
-        <div className="modal-title">
+        <div className='modal-title'>
           {highLightableStreamId
             ? t('treasuries.add-funds.modal-title-fund-stream')
             : t('treasuries.add-funds.modal-title')}
@@ -600,9 +601,9 @@ export const TreasuryAddFundsModal = (props: {
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
     >
       {hasNoStreamingAccounts && !treasuryDetails ? (
-        <div className="text-center px-4 py-4">
+        <div className='text-center px-4 py-4'>
           {theme === 'light' ? (
-            <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+            <WarningFilled style={{ fontSize: 48 }} className='icon mt-0 mb-3 fg-warning' />
           ) : (
             <WarningOutlined style={{ fontSize: 48 }} className={`icon mt-0 mb-3 fg-warning`} />
           )}
@@ -619,40 +620,40 @@ export const TreasuryAddFundsModal = (props: {
               <>
                 {/* Proposal title */}
                 {isMultisigContext && selectedMultisig && (
-                  <div className="mb-3 mt-3">
-                    <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+                  <div className='mb-3 mt-3'>
+                    <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
                     <InputMean
-                      id="proposal-title-field"
-                      name="Title"
+                      id='proposal-title-field'
+                      name='Title'
                       className={`w-100 general-text-input${!fundFromSafeOption ? ' disabled' : ''}`}
                       onChange={onTitleInputValueChange}
-                      placeholder="Add a proposal title (required)"
+                      placeholder='Add a proposal title (required)'
                       value={proposalTitle}
                     />
                   </div>
                 )}
 
                 {isMultisigContext && selectedMultisig && !treasuryDetails && (
-                  <div className="mb-3">
-                    <div className="form-label icon-label">
+                  <div className='mb-3'>
+                    <div className='form-label icon-label'>
                       {t('treasuries.add-funds.select-streaming-account-label')}
                       <Tooltip
-                        placement="bottom"
-                        title="Every payment stream is funded from a streaming account. Select the account to fund below."
+                        placement='bottom'
+                        title='Every payment stream is funded from a streaming account. Select the account to fund below.'
                       >
                         <span>
-                          <IconHelpCircle className="mean-svg-icons" />
+                          <IconHelpCircle className='mean-svg-icons' />
                         </span>
                       </Tooltip>
                     </div>
                     <div className={`well ${isBusy ? 'disabled' : ''}`}>
-                      <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                      <div className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
                         {treasuryList && treasuryList.length > 0 && (
                           <Select
                             className={`auto-height`}
                             value={selectedStreamingAccountId}
                             style={{ width: '100%', maxWidth: 'none' }}
-                            popupClassName="stream-select-dropdown"
+                            popupClassName='stream-select-dropdown'
                             onChange={onStreamingAccountSelected}
                             bordered={false}
                             showArrow={false}
@@ -665,26 +666,26 @@ export const TreasuryAddFundsModal = (props: {
                         )}
                       </div>
                       {selectedStreamingAccountId && !isValidAddress(selectedStreamingAccountId) && (
-                        <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                        <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
                       )}
                     </div>
                   </div>
                 )}
 
                 {/* Top up amount */}
-                <div className="mb-3">
+                <div className='mb-3'>
                   {highLightableStreamId ? (
                     <>
                       <p>{t('treasuries.add-funds.allocation-heading')}</p>
-                      <div className="form-label">{t('treasuries.add-funds.allocation-amount-label')}</div>
+                      <div className='form-label'>{t('treasuries.add-funds.allocation-amount-label')}</div>
                     </>
                   ) : (
-                    <div className="form-label">{t('treasuries.add-funds.label')}</div>
+                    <div className='form-label'>{t('treasuries.add-funds.label')}</div>
                   )}
                   <div className={`well ${isBusy ? 'disabled' : ''}`}>
-                    <div className="flex-fixed-left">
-                      <div className="left">
-                        <span className="add-on">
+                    <div className='flex-fixed-left'>
+                      <div className='left'>
+                        <span className='add-on'>
                           {selectedToken && (
                             <TokenDisplay
                               onClick={() => {}}
@@ -695,8 +696,8 @@ export const TreasuryAddFundsModal = (props: {
                           )}
                           {selectedToken && availableBalance.gtn(0) ? (
                             <div
-                              id="treasury-add-funds-max"
-                              className="token-max simplelink"
+                              id='treasury-add-funds-max'
+                              className='token-max simplelink'
                               onClick={() => {
                                 const decimals = selectedToken ? selectedToken.decimals : 6;
                                 if (isfeePayedByTreasurerOn()) {
@@ -718,26 +719,26 @@ export const TreasuryAddFundsModal = (props: {
                           ) : null}
                         </span>
                       </div>
-                      <div className="right">
+                      <div className='right'>
                         <input
-                          id="topup-amount-field"
-                          className="general-text-input text-right"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          autoCorrect="off"
-                          type="text"
+                          id='topup-amount-field'
+                          className='general-text-input text-right'
+                          inputMode='decimal'
+                          autoComplete='off'
+                          autoCorrect='off'
+                          type='text'
                           onChange={handleAmountChange}
-                          pattern="^[0-9]*[.,]?[0-9]*$"
-                          placeholder="0.0"
+                          pattern='^[0-9]*[.,]?[0-9]*$'
+                          placeholder='0.0'
                           minLength={1}
                           maxLength={79}
-                          spellCheck="false"
+                          spellCheck='false'
                           value={topupAmount}
                         />
                       </div>
                     </div>
-                    <div className="flex-fixed-right">
-                      <div className="left inner-label">
+                    <div className='flex-fixed-right'>
+                      <div className='left inner-label'>
                         {!highLightableStreamId ? (
                           <span>{t('add-funds.label-right')}:</span>
                         ) : (
@@ -756,7 +757,7 @@ export const TreasuryAddFundsModal = (props: {
                           }`}
                         </span>
                       </div>
-                      <div className="right inner-label">
+                      <div className='right inner-label'>
                         {publicKey ? (
                           <span
                             className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
@@ -773,17 +774,17 @@ export const TreasuryAddFundsModal = (props: {
                 </div>
               </>
             ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
-              <div className="transaction-progress">
-                <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                <h4 className="font-bold">{t('treasuries.add-funds.success-message')}</h4>
+              <div className='transaction-progress'>
+                <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+                <h4 className='font-bold'>{t('treasuries.add-funds.success-message')}</h4>
               </div>
             ) : (
-              <div className="transaction-progress p-0">
-                <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              <div className='transaction-progress p-0'>
+                <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                  <h4 className="mb-4">{transactionStatus.customError}</h4>
+                  <h4 className='mb-4'>{transactionStatus.customError}</h4>
                 ) : (
-                  <h4 className="font-bold mb-3">
+                  <h4 className='font-bold mb-3'>
                     {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
                 )}
@@ -792,25 +793,25 @@ export const TreasuryAddFundsModal = (props: {
           </div>
 
           <div className={isBusy ? 'panel2 show' : 'panel2 hide'}>
-            <div className="transaction-progress">
-              <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-              <h4 className="font-bold mb-1">
+            <div className='transaction-progress'>
+              <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+              <h4 className='font-bold mb-1'>
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
+                <div className='indication'>{t('transactions.status.instructions')}</div>
               )}
             </div>
           </div>
 
           {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
-            <div className="mt-3 transaction-progress p-0">
+            <div className='mt-3 transaction-progress p-0'>
               <Button
                 className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
                 block
-                type="primary"
-                shape="round"
-                size="large"
+                type='primary'
+                shape='round'
+                size='large'
                 disabled={!isStreamingAccountSelected() || !isTopupFormValid()}
                 onClick={onAcceptModal}
               >
@@ -827,13 +828,13 @@ export const TreasuryAddFundsModal = (props: {
                 <p>You can also fund this streaming account by sending {selectedToken?.symbol} tokens to:</p>
 
                 {showQrCode && workingTreasuryDetails && (
-                  <div className="qr-container bg-white">
+                  <div className='qr-container bg-white'>
                     <QRCodeSVG value={workingTreasuryDetails.id.toString()} size={200} />
                   </div>
                 )}
 
                 {workingTreasuryDetails && (
-                  <div className="flex-center mb-2">
+                  <div className='flex-center mb-2'>
                     <AddressDisplay
                       address={workingTreasuryDetails.id.toString()}
                       showFullAddress={true}
@@ -845,7 +846,7 @@ export const TreasuryAddFundsModal = (props: {
 
                 {!showQrCode && (
                   <div
-                    className="simplelink underline"
+                    className='simplelink underline'
                     onClick={() => {
                       setShowQrCode(true);
                     }}

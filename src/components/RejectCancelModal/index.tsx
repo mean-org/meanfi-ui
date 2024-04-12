@@ -26,8 +26,8 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
 
   return (
     <Modal
-      className="mean-modal simple-modal reject-cancel-modal"
-      title={<div className="modal-title">Cancel proposal</div>}
+      className='mean-modal simple-modal reject-cancel-modal'
+      title={<div className='modal-title'>Cancel proposal</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
@@ -38,22 +38,22 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
       <div className={!props.isBusy ? 'panel1 show' : 'panel1 hide'}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
-            <div className="mb-3 text-center">
-              <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-3 mb-3" />
+            <div className='mb-3 text-center'>
+              <ExclamationCircleOutlined style={{ fontSize: 48 }} className='icon mt-3 mb-3' />
               <div>
                 This proposal will be removed from the Multisig list of proposals. If you wish to re-submit the same
                 proposal then you will need to start over again. Confirm you wish to cancel.
               </div>
             </div>
 
-            <Row className="mt-3 mb-1">
-              <Col span={12} className="d-flex justify-content-center">
-                <Button type="ghost" size="middle" className="thin-stroke col-6" onClick={onCloseModal}>
+            <Row className='mt-3 mb-1'>
+              <Col span={12} className='d-flex justify-content-center'>
+                <Button type='ghost' size='middle' className='thin-stroke col-6' onClick={onCloseModal}>
                   Cancel
                 </Button>
               </Col>
-              <Col span={12} className="d-flex justify-content-center">
-                <Button type="primary" shape="round" size="middle" className="col-6" onClick={onAcceptModal}>
+              <Col span={12} className='d-flex justify-content-center'>
+                <Button type='primary' shape='round' size='middle' className='col-6' onClick={onAcceptModal}>
                   Confirm
                 </Button>
               </Col>
@@ -61,10 +61,10 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
           </>
         ) : (
           <>
-            <div className="transaction-progress p-2">
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-1" />
+            <div className='transaction-progress p-2'>
+              <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-1' />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
+                <h4 className='mb-4'>
                   {/* {t('transactions.status.tx-start-failure', {
                     accountBalance: getAmountWithSymbol(
                       props.nativeBalance,
@@ -77,18 +77,18 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
                   } */}
                 </h4>
               ) : (
-                <h4 className="font-bold mb-3">
+                <h4 className='font-bold mb-3'>
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
               {!isBusy && (
-                <div className="row two-col-ctas mt-3 transaction-progress p-2">
-                  <div className="col-12">
+                <div className='row two-col-ctas mt-3 transaction-progress p-2'>
+                  <div className='col-12'>
                     <Button
                       block
-                      type="text"
-                      shape="round"
-                      size="middle"
+                      type='text'
+                      shape='round'
+                      size='middle'
                       className={isBusy ? 'inactive' : ''}
                       onClick={() =>
                         isError(transactionStatus.currentOperation) &&
@@ -116,11 +116,11 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
         }
       >
         {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress p-4 mb-2">
-            <Spin indicator={bigLoadingIcon} className="icon mb-4 mt-1" />
-            <h4 className="font-bold">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+          <div className='transaction-progress p-4 mb-2'>
+            <Spin indicator={bigLoadingIcon} className='icon mb-4 mt-1' />
+            <h4 className='font-bold'>{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
             {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              <div className='indication'>{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}

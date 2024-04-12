@@ -1,14 +1,14 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-import { environment } from '../environments/environment';
-import { osName, isBrowser, browserName, browserVersion } from 'react-device-detect';
-import { isLocal } from '../middleware/ui';
+import { browserName, browserVersion, isBrowser, osName } from 'react-device-detect';
 import { appConfig } from '..';
 import { WALLET_PROVIDERS } from '../contexts/wallet';
+import { environment } from '../environments/environment';
+import { isLocal } from '../middleware/ui';
 
-export function objectToJson(obj: any): string {
+export function objectToJson(obj: unknown): string {
   return JSON.stringify(obj, null, 2);
 }
 
+/* eslint-disable @typescript-eslint/no-var-requires */
 const Loggly = require('loggly-jslogger');
 export const logger = new Loggly.LogglyTracker();
 
@@ -23,6 +23,7 @@ export class LoggerJsonData {
   Browser?: string;
   Message!: string;
   WalletAdapter?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   Data?: any;
   Elapsed?: number;
   timestamp!: string;
@@ -49,7 +50,7 @@ export class CustomLoggerService {
       subdomain: 'intelerit.com',
       useDomainProxy: false,
     });
-    console.log(`%cLogger initialized!`, 'color:brown');
+    console.log('%cLogger initialized!', 'color:brown');
   }
 
   public set canLogToConsole(setting: boolean) {
@@ -60,17 +61,17 @@ export class CustomLoggerService {
     return this._canLogToConsole;
   }
 
-  public async logInfo(message: string, data?: any) {
+  public async logInfo(message: string, data?: unknown) {
     const infoData = this.getLoggerJsonData(message, LogLevel.Info, data);
     logger.push(infoData);
   }
 
-  public async logWarning(message: string, data?: any) {
+  public async logWarning(message: string, data?: unknown) {
     const warningData = this.getLoggerJsonData(message, LogLevel.Warn, data);
     logger.push(warningData);
   }
 
-  public async logError(message: string, data?: any) {
+  public async logError(message: string, data?: unknown) {
     const errorData = this.getLoggerJsonData(message, LogLevel.Error, data);
     if (isLocal()) {
       this.print('Loggly logger not available for localhost', 'print then', 'orange');
@@ -80,6 +81,7 @@ export class CustomLoggerService {
     logger.push(errorData);
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   public print(msg: any, value?: any, color = 'black') {
     if (this._canLogToConsole || isLocal()) {
       if (msg) {
@@ -107,6 +109,7 @@ export class CustomLoggerService {
     return `${browserName} ${browserVersion}`;
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   private getLoggerJsonData(message: string, level: LogLevel, data?: any): LoggerJsonData {
     const logBody: LoggerJsonData = {
       Application: this.applicationName,

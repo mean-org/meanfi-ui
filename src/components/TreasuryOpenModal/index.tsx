@@ -75,57 +75,57 @@ export const TreasuryOpenModal = (props: { handleClose: any; handleOk: any; isVi
 
   return (
     <Modal
-      className="mean-modal"
-      title={<div className="modal-title">{t('treasuries.open-treasury.modal-title')}</div>}
+      className='mean-modal'
+      title={<div className='modal-title'>{t('treasuries.open-treasury.modal-title')}</div>}
       footer={null}
       open={props.isVisible}
       onOk={onAcceptTreasuryId}
       onCancel={props.handleClose}
       width={480}
     >
-      <div className="form-label">{t('treasuries.open-treasury.treasuryid-input-label')}</div>
-      <div className="well">
-        <div className="flex-fixed-right">
-          <div className="left position-relative">
-            <span className="recipient-field-wrapper">
+      <div className='form-label'>{t('treasuries.open-treasury.treasuryid-input-label')}</div>
+      <div className='well'>
+        <div className='flex-fixed-right'>
+          <div className='left position-relative'>
+            <span className='recipient-field-wrapper'>
               <input
-                id="payment-recipient-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
+                id='payment-recipient-field'
+                className='general-text-input'
+                autoComplete='on'
+                autoCorrect='off'
+                type='text'
                 onFocus={onTreasuryIdFocusInOut}
                 onChange={onTreasuryIdChange}
                 onBlur={onTreasuryIdFocusInOut}
                 placeholder={t('treasuries.open-treasury.treasuryid-placeholder')}
                 required={true}
-                spellCheck="false"
+                spellCheck='false'
                 value={treasuryId}
               />
               <span
-                id="payment-recipient-static-field"
+                id='payment-recipient-static-field'
                 className={`${treasuryId ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
               >
                 {treasuryId || t('treasuries.open-treasury.treasuryid-placeholder')}
               </span>
             </span>
           </div>
-          <div className="right">&nbsp;</div>
+          <div className='right'>&nbsp;</div>
         </div>
         {treasuryId && !isValidAddress(treasuryId) && (
-          <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+          <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
         )}
         {isAddressOwnAccount() && (
-          <span className="form-field-error">{t('transactions.validation.cannot-use-own-account-as-treasury')}</span>
+          <span className='form-field-error'>{t('transactions.validation.cannot-use-own-account-as-treasury')}</span>
         )}
       </div>
 
       <Button
-        className="main-cta"
+        className='main-cta'
         block
-        type="primary"
-        shape="round"
-        size="large"
+        type='primary'
+        shape='round'
+        size='large'
         disabled={!treasuryId || !isValidAddress(treasuryId) || isAddressOwnAccount()}
         onClick={onAcceptTreasuryId}
       >

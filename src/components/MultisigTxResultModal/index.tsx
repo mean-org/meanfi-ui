@@ -1,5 +1,5 @@
 import { CopyOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import type { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { Button, Modal, Spin } from 'antd';
 import { AppStateContext } from 'contexts/appstate';
 import { consoleOut, copyText, getTransactionOperationDescription } from 'middleware/ui';
@@ -49,8 +49,8 @@ export const MultisigTxResultModal = (props: {
   return (
     <>
       <Modal
-        className="mean-modal simple-modal"
-        title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
+        className='mean-modal simple-modal'
+        title={<div className='modal-title'>{t('multisig.multisig-transactions.modal-title')}</div>}
         maskClosable={false}
         open={isVisible}
         closable={true}
@@ -60,9 +60,9 @@ export const MultisigTxResultModal = (props: {
         footer={null}
       >
         <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-          <div className="transaction-progress p-0">
-            <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-            <h4 className="mb-0">
+          <div className='transaction-progress p-0'>
+            <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+            <h4 className='mb-0'>
               {!transactionStatus.customError ? (
                 getTransactionOperationDescription(transactionStatus.currentOperation, t)
               ) : (
@@ -70,12 +70,12 @@ export const MultisigTxResultModal = (props: {
                   <span>{transactionStatus.customError.message}</span>
                   {transactionStatus.customError.data && (
                     <>
-                      <span className="ml-1">[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
-                      <div className="icon-button-container">
+                      <span className='ml-1'>[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
+                      <div className='icon-button-container'>
                         <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
+                          type='default'
+                          shape='circle'
+                          size='middle'
                           icon={<CopyOutlined />}
                           onClick={() => copyAddressToClipboard(transactionStatus.customError.data)}
                         />
@@ -91,13 +91,13 @@ export const MultisigTxResultModal = (props: {
         {/* A Cross-fading panel shown when busy */}
         <div className={isBusy ? 'panel2 show' : 'panel2 hide'}>
           {transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-            <div className="transaction-progress p-1">
-              <Spin indicator={bigLoadingIcon} className="icon mt-2 mb-4" />
-              <h4 className="font-bold mb-1">
+            <div className='transaction-progress p-1'>
+              <Spin indicator={bigLoadingIcon} className='icon mt-2 mb-4' />
+              <h4 className='font-bold mb-1'>
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
+                <div className='indication'>{t('transactions.status.instructions')}</div>
               )}
             </div>
           )}

@@ -1,18 +1,4 @@
 import { SettingOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps, Modal } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
-import { LanguageSelector } from 'components/LanguageSelector';
-import { openNotification } from 'components/Notifications';
-import { ReferFriendModal } from 'components/ReferFriendModal';
-import {
-  LANGUAGES,
-  MEANFI_SUPPORT_URL,
-  MEAN_DAO_DOCS_URL,
-  MEAN_DAO_GITHUB_ORG_URL,
-  MEAN_FINANCE_DISCORD_URL,
-} from 'constants/common';
-import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
 import {
   IconBookOpen,
   IconChat,
@@ -25,6 +11,20 @@ import {
   IconShareBox,
   IconStats,
 } from 'Icons';
+import { Button, Dropdown, type MenuProps, Modal } from 'antd';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { LanguageSelector } from 'components/LanguageSelector';
+import { openNotification } from 'components/Notifications';
+import { ReferFriendModal } from 'components/ReferFriendModal';
+import {
+  LANGUAGES,
+  MEANFI_SUPPORT_URL,
+  MEAN_DAO_DOCS_URL,
+  MEAN_DAO_GITHUB_ORG_URL,
+  MEAN_FINANCE_DISCORD_URL,
+} from 'constants/common';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
 import { copyText, isProd } from 'middleware/ui';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -87,9 +87,9 @@ export const AppContextMenu = () => {
   const getLanguageFlag = () => {
     const lang = LANGUAGES.filter(l => l.code === language || l.locale === language);
     if (lang && lang.length) {
-      return <img src={lang[0].flag} alt={getLanguageCode(lang[0].code)} className="mean-svg-icons" />;
+      return <img src={lang[0].flag} alt={getLanguageCode(lang[0].code)} className='mean-svg-icons' />;
     } else {
-      return <IconSettings className="mean-svg-icons" />;
+      return <IconSettings className='mean-svg-icons' />;
     }
   };
 
@@ -111,11 +111,11 @@ export const AppContextMenu = () => {
     <div>
       {diagnosisInfo && (
         <>
-          {diagnosisInfo.dateTime && <div className="diagnosis-info-item">{diagnosisInfo.dateTime}</div>}
-          {diagnosisInfo.clientInfo && <div className="diagnosis-info-item">{diagnosisInfo.clientInfo}</div>}
-          {diagnosisInfo.networkInfo && <div className="diagnosis-info-item">{diagnosisInfo.networkInfo}</div>}
-          {diagnosisInfo.accountInfo && <div className="diagnosis-info-item">{diagnosisInfo.accountInfo}</div>}
-          {diagnosisInfo.appBuildInfo && <div className="diagnosis-info-item">{diagnosisInfo.appBuildInfo}</div>}
+          {diagnosisInfo.dateTime && <div className='diagnosis-info-item'>{diagnosisInfo.dateTime}</div>}
+          {diagnosisInfo.clientInfo && <div className='diagnosis-info-item'>{diagnosisInfo.clientInfo}</div>}
+          {diagnosisInfo.networkInfo && <div className='diagnosis-info-item'>{diagnosisInfo.networkInfo}</div>}
+          {diagnosisInfo.accountInfo && <div className='diagnosis-info-item'>{diagnosisInfo.accountInfo}</div>}
+          {diagnosisInfo.appBuildInfo && <div className='diagnosis-info-item'>{diagnosisInfo.appBuildInfo}</div>}
         </>
       )}
     </div>
@@ -149,8 +149,8 @@ export const AppContextMenu = () => {
       key: '01-theme',
       label: (
         <div onClick={onSwitchTheme}>
-          <IconMoon className="mean-svg-icons" />
-          <span className="menu-item-text">
+          <IconMoon className='mean-svg-icons' />
+          <span className='menu-item-text'>
             {t(`ui-menus.app-context-menu.switch-theme`)}{' '}
             {theme === 'light' ? t(`ui-menus.app-context-menu.theme-dark`) : t(`ui-menus.app-context-menu.theme-light`)}
           </span>
@@ -162,7 +162,7 @@ export const AppContextMenu = () => {
       label: (
         <div onClick={showLanguageModal}>
           {getLanguageFlag()}
-          <span className="menu-item-text">
+          <span className='menu-item-text'>
             {t('ui-menus.app-context-menu.switch-language')}: {t(`ui-language.${getLanguageCode(language)}`)}
           </span>
         </div>
@@ -173,8 +173,8 @@ export const AppContextMenu = () => {
       key: '03-referrals',
       label: (
         <div onClick={() => openFriendReferralModal()}>
-          <IconShareBox className="mean-svg-icons" />
-          <span className="menu-item-text">{t('ui-menus.app-context-menu.refer-a-friend', { referrals: '' })}</span>
+          <IconShareBox className='mean-svg-icons' />
+          <span className='menu-item-text'>{t('ui-menus.app-context-menu.refer-a-friend', { referrals: '' })}</span>
         </div>
       ),
     });
@@ -182,9 +182,9 @@ export const AppContextMenu = () => {
     items.push({
       key: '04-stats',
       label: (
-        <Link to="/stats">
-          <IconStats className="mean-svg-icons" />
-          <span className="menu-item-text">{t('ui-menus.main-menu.stats')}</span>
+        <Link to='/stats'>
+          <IconStats className='mean-svg-icons' />
+          <span className='menu-item-text'>{t('ui-menus.main-menu.stats')}</span>
         </Link>
       ),
     });
@@ -192,44 +192,44 @@ export const AppContextMenu = () => {
       key: '05-diagnosis-info',
       label: (
         <div onClick={showDiagnosisInfoModal}>
-          <IconPulse className="mean-svg-icons" />
-          <span className="menu-item-text">{t('account-area.diagnosis-info')}</span>
+          <IconPulse className='mean-svg-icons' />
+          <span className='menu-item-text'>{t('account-area.diagnosis-info')}</span>
         </div>
       ),
     });
     items.push({
       key: '06-docs',
       label: (
-        <a href={MEAN_DAO_DOCS_URL} target="_blank" rel="noopener noreferrer">
-          <IconBookOpen className="mean-svg-icons" />
-          <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
+        <a href={MEAN_DAO_DOCS_URL} target='_blank' rel='noopener noreferrer'>
+          <IconBookOpen className='mean-svg-icons' />
+          <span className='menu-item-text'>{t('ui-menus.app-context-menu.how-to-use')}</span>
         </a>
       ),
     });
     items.push({
       key: '07-code',
       label: (
-        <a href={MEAN_DAO_GITHUB_ORG_URL} target="_blank" rel="noopener noreferrer">
-          <IconCodeBlock className="mean-svg-icons" />
-          <span className="menu-item-text">{t('ui-menus.app-context-menu.code')}</span>
+        <a href={MEAN_DAO_GITHUB_ORG_URL} target='_blank' rel='noopener noreferrer'>
+          <IconCodeBlock className='mean-svg-icons' />
+          <span className='menu-item-text'>{t('ui-menus.app-context-menu.code')}</span>
         </a>
       ),
     });
     items.push({
       key: '08-discord',
       label: (
-        <a href={MEAN_FINANCE_DISCORD_URL} target="_blank" rel="noopener noreferrer">
-          <IconChat className="mean-svg-icons" />
-          <span className="menu-item-text">{t('ui-menus.app-context-menu.discord')}</span>
+        <a href={MEAN_FINANCE_DISCORD_URL} target='_blank' rel='noopener noreferrer'>
+          <IconChat className='mean-svg-icons' />
+          <span className='menu-item-text'>{t('ui-menus.app-context-menu.discord')}</span>
         </a>
       ),
     });
     items.push({
       key: '09-help',
       label: (
-        <a href={MEANFI_SUPPORT_URL} target="_blank" rel="noopener noreferrer">
-          <IconLiveHelp className="mean-svg-icons" />
-          <span className="menu-item-text">{t('ui-menus.app-context-menu.help-support')}</span>
+        <a href={MEANFI_SUPPORT_URL} target='_blank' rel='noopener noreferrer'>
+          <IconLiveHelp className='mean-svg-icons' />
+          <span className='menu-item-text'>{t('ui-menus.app-context-menu.help-support')}</span>
         </a>
       ),
     });
@@ -239,8 +239,8 @@ export const AppContextMenu = () => {
         key: '/exchange-dcas',
         label: (
           <div>
-            <IconCodeBlock className="mean-svg-icons" />
-            <Link className="fg-inherit" to="/exchange-dcas">
+            <IconCodeBlock className='mean-svg-icons' />
+            <Link className='fg-inherit' to='/exchange-dcas'>
               Legacy DDCA
             </Link>
           </div>
@@ -252,8 +252,8 @@ export const AppContextMenu = () => {
         key: '/staking-rewards',
         label: (
           <div>
-            <IconCodeBlock className="mean-svg-icons" />
-            <Link className="fg-inherit" to="/staking-rewards">
+            <IconCodeBlock className='mean-svg-icons' />
+            <Link className='fg-inherit' to='/staking-rewards'>
               Staking rewards
             </Link>
           </div>
@@ -263,8 +263,8 @@ export const AppContextMenu = () => {
         key: '/playground',
         label: (
           <div>
-            <IconCodeBlock className="mean-svg-icons" />
-            <Link className="fg-inherit" to="/playground">
+            <IconCodeBlock className='mean-svg-icons' />
+            <Link className='fg-inherit' to='/playground'>
               Playground
             </Link>
           </div>
@@ -280,12 +280,12 @@ export const AppContextMenu = () => {
 
   return (
     <>
-      <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={{ items }} placement='bottomRight' trigger={['click']}>
         <Button
-          shape="round"
-          type="text"
-          size="large"
-          className="settings-button"
+          shape='round'
+          type='text'
+          size='large'
+          className='settings-button'
           onClick={e => e.preventDefault()}
           icon={<SettingOutlined />}
         />
@@ -297,27 +297,27 @@ export const AppContextMenu = () => {
       />
       <ReferFriendModal isVisible={isFriendReferralModalVisible} handleClose={hideFriendReferralModal} />
       <Modal
-        className="mean-modal simple-modal"
+        className='mean-modal simple-modal'
         open={isDiagnosisInfoModalVisible}
-        title={<div className="modal-title">{t('account-area.diagnosis-info')}</div>}
+        title={<div className='modal-title'>{t('account-area.diagnosis-info')}</div>}
         onCancel={closeDiagnosisInfoModal}
         width={450}
         footer={null}
       >
-        <div className="px-4 pb-4">
+        <div className='px-4 pb-4'>
           {diagnosisInfo && (
             <>
-              <div className="mb-3">{renderDebugInfo}</div>
-              <div className="flex-center">
+              <div className='mb-3'>{renderDebugInfo}</div>
+              <div className='flex-center'>
                 <Button
-                  type="default"
-                  shape="round"
-                  size="middle"
-                  className="thin-stroke"
+                  type='default'
+                  shape='round'
+                  size='middle'
+                  className='thin-stroke'
                   onClick={onCopyDiagnosisInfo}
                 >
-                  <IconCopy className="mean-svg-icons" />
-                  <span className="icon-button-text">{t('general.cta-copy')}</span>
+                  <IconCopy className='mean-svg-icons' />
+                  <span className='icon-button-text'>{t('general.cta-copy')}</span>
                 </Button>
               </div>
             </>

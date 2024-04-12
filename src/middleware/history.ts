@@ -1,9 +1,9 @@
-import {
-  PublicKey,
+import type {
   ConfirmedSignatureInfo,
-  TransactionSignature,
   Connection,
   ParsedTransactionWithMeta,
+  PublicKey,
+  TransactionSignature,
 } from '@solana/web3.js';
 import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'constants/common';
 

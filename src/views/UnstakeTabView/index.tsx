@@ -1,23 +1,23 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { StakingClient, UnstakeQuote } from '@mean-dao/staking';
-import { Transaction } from '@solana/web3.js';
-import { Button, Col, Row } from 'antd';
+import type { StakingClient, UnstakeQuote } from '@mean-dao/staking';
+import type { Transaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
+import { Button, Col, Row } from 'antd';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { customLogger } from 'index';
-import { AppUsageEvent, SegmentUnstakeMeanData } from 'middleware/segment-service';
+import { AppUsageEvent, type SegmentUnstakeMeanData } from 'middleware/segment-service';
 import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import { cutNumber, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
@@ -126,18 +126,22 @@ export const UnstakeTabView = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-      ? `${t('staking.panel-right.tabset.unstake.unstake-button-busy')} ${selectedToken?.symbol}`
-      : !selectedToken || !tokenBalance
-      ? `${t('staking.panel-right.tabset.unstake.unstake-button-unavailable')} ${selectedToken?.symbol}`
-      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
-      ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > tokenBalance
-      ? t('transactions.validation.amount-high')
-      : `${t('staking.panel-right.tabset.unstake.unstake-button-available')} ${selectedToken?.symbol}`;
+        ? `${t('staking.panel-right.tabset.unstake.unstake-button-busy')} ${selectedToken?.symbol}`
+        : !selectedToken || !tokenBalance
+          ? `${t('staking.panel-right.tabset.unstake.unstake-button-unavailable')} ${selectedToken?.symbol}`
+          : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !Number.parseFloat(fromCoinAmount)
+            ? t('transactions.validation.no-amount')
+            : Number.parseFloat(fromCoinAmount) > tokenBalance
+              ? t('transactions.validation.amount-high')
+              : `${t('staking.panel-right.tabset.unstake.unstake-button-available')} ${selectedToken?.symbol}`;
   }, [fromCoinAmount, selectedToken, tokenBalance, connected, isBusy, t]);
 
   const isUnstakingFormValid = (): boolean => {
-    return !!(fromCoinAmount && parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= tokenBalance);
+    return !!(
+      fromCoinAmount &&
+      Number.parseFloat(fromCoinAmount) > 0 &&
+      Number.parseFloat(fromCoinAmount) <= tokenBalance
+    );
   };
 
   // Handler paste clipboard data
@@ -175,7 +179,7 @@ export const UnstakeTabView = (props: {
           currentOperation: TransactionStatus.InitTransaction,
         });
 
-        const uiAmount = parseFloat(fromCoinAmount);
+        const uiAmount = Number.parseFloat(fromCoinAmount);
         consoleOut('uiAmount:', uiAmount, 'blue');
 
         // Log input data
@@ -274,12 +278,13 @@ export const UnstakeTabView = (props: {
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Unstaking ${formatThousands(parseFloat(fromCoinAmount), selectedToken.decimals)} ${
-                selectedToken.symbol
-              }`,
+              loadingMessage: `Unstaking ${formatThousands(
+                Number.parseFloat(fromCoinAmount),
+                selectedToken.decimals,
+              )} ${selectedToken.symbol}`,
               completedTitle: 'Transaction confirmed',
               completedMessage: `Successfully unstaked ${formatThousands(
-                parseFloat(fromCoinAmount),
+                Number.parseFloat(fromCoinAmount),
                 selectedToken.decimals,
               )} ${selectedToken.symbol}`,
             });
@@ -428,16 +433,16 @@ export const UnstakeTabView = (props: {
       return;
     }
 
-    if (parseFloat(fromCoinAmount) > 0 && canFetchUnstakeQuote) {
+    if (Number.parseFloat(fromCoinAmount) > 0 && canFetchUnstakeQuote) {
       setCanFetchUnstakeQuote(false);
 
       stakeClient
-        .getUnstakeQuote(parseFloat(fromCoinAmount))
+        .getUnstakeQuote(Number.parseFloat(fromCoinAmount))
         .then((value: UnstakeQuote) => {
           consoleOut('unStakeQuote:', value, 'blue');
           setUnstakeMeanValue(value.meanOutUiAmount);
           consoleOut(
-            `Quote for ${formatThousands(parseFloat(fromCoinAmount), selectedToken?.decimals)} sMEAN`,
+            `Quote for ${formatThousands(Number.parseFloat(fromCoinAmount), selectedToken?.decimals)} sMEAN`,
             `${formatThousands(value.meanOutUiAmount, selectedToken?.decimals)} MEAN`,
             'blue',
           );
@@ -452,7 +457,7 @@ export const UnstakeTabView = (props: {
   useEffect(() => {
     const percentageFromCoinAmount =
       tokenBalance > 0
-        ? `${((tokenBalance * parseFloat(percentageValue)) / 100).toFixed(selectedToken?.decimals ?? 9)}`
+        ? `${((tokenBalance * Number.parseFloat(percentageValue)) / 100).toFixed(selectedToken?.decimals ?? 9)}`
         : '';
 
     if (percentageValue) {
@@ -468,8 +473,8 @@ export const UnstakeTabView = (props: {
    * So we calculate the USD Amount relative to the input sMEAN: sMEAN x sMeanToMeanRateUiAmount x MEAN_current_price
    */
   const getUsdAmountForSmeanInput = useCallback(() => {
-    if (fromCoinAmount && parseFloat(fromCoinAmount) > 0 && sMeanToMeanRate && meanPrice) {
-      const usdAmount = parseFloat(fromCoinAmount) * sMeanToMeanRate * meanPrice;
+    if (fromCoinAmount && Number.parseFloat(fromCoinAmount) > 0 && sMeanToMeanRate && meanPrice) {
+      const usdAmount = Number.parseFloat(fromCoinAmount) * sMeanToMeanRate * meanPrice;
       return usdAmount;
     }
     return 0;
@@ -507,10 +512,10 @@ export const UnstakeTabView = (props: {
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
-        <Col span={12} className="font-size-75 fg-secondary-60 text-right pr-1">
+        <Col span={12} className='font-size-75 fg-secondary-60 text-right pr-1'>
           {caption}
         </Col>
-        <Col span={12} className="font-size-75 fg-secondary-60 text-left">
+        <Col span={12} className='font-size-75 fg-secondary-60 text-left'>
           {value}
         </Col>
       </Row>
@@ -519,8 +524,8 @@ export const UnstakeTabView = (props: {
 
   return (
     <>
-      <div className="mb-2 px-1">
-        <span className="info-label">
+      <div className='mb-2 px-1'>
+        <span className='info-label'>
           {tokenBalance ? (
             <span>
               You have {formatThousands(tokenBalance, 6)} sMEAN staked
@@ -532,12 +537,12 @@ export const UnstakeTabView = (props: {
           )}
         </span>
       </div>
-      <div className="form-label mt-2">{t('staking.panel-right.tabset.unstake.amount-label')}</div>
+      <div className='form-label mt-2'>{t('staking.panel-right.tabset.unstake.amount-label')}</div>
       <div className={`well${isBusy ? ' disabled' : ''}`}>
-        <div className="flexible-right mb-1">
-          <div className="token-group">
+        <div className='flexible-right mb-1'>
+          <div className='token-group'>
             {percentages.map((percentage, index) => (
-              <div key={index} className="mb-1 d-flex flex-column align-items-center">
+              <div key={index} className='mb-1 d-flex flex-column align-items-center'>
                 <div
                   className={`token-max simplelink ${tokenBalance !== 0 ? 'active' : 'disabled'}`}
                   onClick={() => onChangeValue(percentage)}
@@ -548,39 +553,39 @@ export const UnstakeTabView = (props: {
             ))}
           </div>
         </div>
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on">
+        <div className='flex-fixed-left'>
+          <div className='left'>
+            <span className='add-on'>
               {selectedToken && (
                 <TokenDisplay
                   onClick={() => {}}
                   mintAddress={selectedToken.address}
                   name={selectedToken.name}
-                  className="click-disabled"
+                  className='click-disabled'
                 />
               )}
             </span>
           </div>
-          <div className="right">
+          <div className='right'>
             <input
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
+              className='general-text-input text-right'
+              inputMode='decimal'
+              autoComplete='off'
+              autoCorrect='off'
+              type='text'
               onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
+              pattern='^[0-9]*[.,]?[0-9]*$'
+              placeholder='0.0'
               minLength={1}
               maxLength={79}
-              spellCheck="false"
+              spellCheck='false'
               onPaste={pasteHandler}
               value={fromCoinAmount}
             />
           </div>
         </div>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
+        <div className='flex-fixed-right'>
+          <div className='left inner-label'>
             <span>{t('staking.panel-right.tabset.unstake.send-amount.label-right')}:</span>
             <span>
               {`${
@@ -588,7 +593,7 @@ export const UnstakeTabView = (props: {
               }`}
             </span>
           </div>
-          <div className="right inner-label">
+          <div className='right inner-label'>
             <span
               className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
               onClick={() => refreshPrices()}
@@ -600,13 +605,13 @@ export const UnstakeTabView = (props: {
         </div>
       </div>
 
-      <div className="p-2">
+      <div className='p-2'>
         {fromCoinAmount &&
-          parseFloat(fromCoinAmount) > 0 &&
-          parseFloat(fromCoinAmount) <= tokenBalance &&
+          Number.parseFloat(fromCoinAmount) > 0 &&
+          Number.parseFloat(fromCoinAmount) <= tokenBalance &&
           unstakeMeanValue > 0 &&
           infoRow(
-            `${formatThousands(parseFloat(fromCoinAmount), 6)} sMEAN ≈`,
+            `${formatThousands(Number.parseFloat(fromCoinAmount), 6)} sMEAN ≈`,
             `${formatThousands(unstakeMeanValue, 6)} MEAN`,
           )}
         {sMeanToMeanRate > 0 && infoRow(`1 sMEAN ≈`, `${cutNumber(sMeanToMeanRate, 6)} MEAN`)}
@@ -614,16 +619,16 @@ export const UnstakeTabView = (props: {
 
       {/* Action button */}
       <Button
-        className="main-cta mt-2"
+        className='main-cta mt-2'
         block
-        type="primary"
-        shape="round"
-        size="large"
+        type='primary'
+        shape='round'
+        size='large'
         onClick={onStartTransaction}
         disabled={isBusy || !isUnstakingFormValid()}
       >
         {isBusy && (
-          <span className="mr-1">
+          <span className='mr-1'>
             <LoadingOutlined style={{ fontSize: '16px' }} />
           </span>
         )}

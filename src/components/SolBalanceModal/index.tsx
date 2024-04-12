@@ -1,10 +1,10 @@
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Modal } from 'antd';
 import { QRCodeSVG } from 'qrcode.react';
-import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
-import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 import { IconLoading } from '../../Icons';
+import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { NATIVE_SOL } from '../../constants/tokens';
+import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 import {
   displayAmountWithSymbol,
   getAmountFromLamports,
@@ -30,30 +30,30 @@ export const SolBalanceModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal unpadded-content"
-      title={<div className="modal-title">SOL Balance</div>}
+      className='mean-modal simple-modal unpadded-content'
+      title={<div className='modal-title'>SOL Balance</div>}
       footer={null}
       open={isVisible}
       onOk={handleClose}
       onCancel={handleClose}
       width={360}
     >
-      <div className="buy-token-options">
-        <div className="text-center">
+      <div className='buy-token-options'>
+        <div className='text-center'>
           {/* Balance title */}
           {isStreamingAccount ? (
-            <p className="mb-0">Your SOL streaming account balance:</p>
+            <p className='mb-0'>Your SOL streaming account balance:</p>
           ) : (
-            <p className="mb-0">Balance of SOL in safe:</p>
+            <p className='mb-0'>Balance of SOL in safe:</p>
           )}
           {/* Balance value */}
-          <p className="mb-2">
+          <p className='mb-2'>
             {isStreamingAccount ? (
               <>
                 {treasuryBalance !== undefined ? (
                   <>{getAmountWithSymbol(treasuryBalance, NATIVE_SOL.address, false)}</>
                 ) : (
-                  <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+                  <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
                 )}
               </>
             ) : (
@@ -67,7 +67,7 @@ export const SolBalanceModal = (props: {
                     )}
                   </>
                 ) : (
-                  <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+                  <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
                 )}
               </>
             )}
@@ -76,8 +76,9 @@ export const SolBalanceModal = (props: {
           {isStreamingAccount && (
             <p>
               {selectedMultisig &&
-              parseFloat(toUiAmount(selectedMultisig.balance, NATIVE_SOL.decimals)) < MIN_SOL_BALANCE_REQUIRED ? (
-                <span className="form-field-error">
+              Number.parseFloat(toUiAmount(selectedMultisig.balance, NATIVE_SOL.decimals)) <
+                MIN_SOL_BALANCE_REQUIRED ? (
+                <span className='form-field-error'>
                   You are running low on SOL needed <br />
                   to pay for transaction fees.
                 </span>
@@ -91,11 +92,11 @@ export const SolBalanceModal = (props: {
             <p>Scan the QR code to send SOL to this safe</p>
           )}
 
-          <div className="qr-container bg-white">
+          <div className='qr-container bg-white'>
             <QRCodeSVG value={isStreamingAccount ? address : (multisigAddress as string)} size={200} />
           </div>
 
-          <div className="flex-center mb-1">
+          <div className='flex-center mb-1'>
             <AddressDisplay
               address={isStreamingAccount ? address : (multisigAddress as string)}
               maxChars={12}
@@ -107,9 +108,9 @@ export const SolBalanceModal = (props: {
           </div>
 
           {!isStreamingAccount ? (
-            <p className="px-5">This address can only be used to receive SOL for this safe</p>
+            <p className='px-5'>This address can only be used to receive SOL for this safe</p>
           ) : (
-            <p className="px-5">
+            <p className='px-5'>
               This address can only be used to receive SOL to pay for the transaction fees for this streaming account
             </p>
           )}

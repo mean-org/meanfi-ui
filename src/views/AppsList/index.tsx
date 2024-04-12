@@ -1,9 +1,9 @@
-import { readFromCache } from 'cache/persistentCache';
-import { AppStateContext } from 'contexts/appstate';
 import { IconMoneyTransfer, IconNoItems, IconSafe, IconStats } from 'Icons';
 import { IconPaymentStreaming } from 'Icons/IconPaymentStreaming';
+import { readFromCache } from 'cache/persistentCache';
+import { AppStateContext } from 'contexts/appstate';
 import { toUsCurrency } from 'middleware/ui';
-import { KnownAppMetadata, KNOWN_APPS, RegisteredAppPaths } from 'models/accounts';
+import { KNOWN_APPS, type KnownAppMetadata, RegisteredAppPaths } from 'models/accounts';
 import { useCallback, useContext } from 'react';
 import './style.scss';
 
@@ -55,7 +55,7 @@ export const AppsList = (props: {
         break;
     }
 
-    return <div className="circle-flex-center bg-whitesmoke">{appIcon}</div>;
+    return <div className='circle-flex-center bg-whitesmoke'>{appIcon}</div>;
   };
 
   const getSelectedClass = (app: KnownAppMetadata) => {
@@ -105,7 +105,7 @@ export const AppsList = (props: {
 
   return (
     <>
-      <div key="asset-category-apps-items" className="asset-category flex-column apps-list">
+      <div key='asset-category-apps-items' className='asset-category flex-column apps-list'>
         {KNOWN_APPS.map(app => {
           if (!app.visible) {
             return null;
@@ -117,16 +117,16 @@ export const AppsList = (props: {
               id={app.slug}
               className={`transaction-list-row ${getSelectedClass(app)}`}
             >
-              <div className="icon-cell">
-                <div className="token-icon">{getAppIcon(app)}</div>
+              <div className='icon-cell'>
+                <div className='token-icon'>{getAppIcon(app)}</div>
               </div>
-              <div className="description-cell">
-                <div className="title">{app.title}</div>
-                <div className="subtitle text-truncate">{getAppSubtitle(app)}</div>
+              <div className='description-cell'>
+                <div className='title'>{app.title}</div>
+                <div className='subtitle text-truncate'>{getAppSubtitle(app)}</div>
               </div>
-              <div className="rate-cell">
-                <div className="rate-amount">{getCachedTvlByApp(app.slug)}</div>
-                <div className="interval">TVL</div>
+              <div className='rate-cell'>
+                <div className='rate-amount'>{getCachedTvlByApp(app.slug)}</div>
+                <div className='interval'>TVL</div>
               </div>
             </div>
           );

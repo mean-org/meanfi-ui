@@ -1,4 +1,4 @@
-import { StreamInfo } from '@mean-dao/money-streaming';
+import type { StreamInfo } from '@mean-dao/money-streaming';
 
 const getV1Beneficiary = (stream: StreamInfo) => {
   if (!stream.beneficiaryAddress) {

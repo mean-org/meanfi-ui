@@ -1,16 +1,18 @@
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
-  calculateFeesForAction,
-  PaymentStreaming,
   ACTION_CODES,
-  TransactionFees,
-  StreamPaymentTransactionAccounts,
   NATIVE_SOL_MINT,
+  PaymentStreaming,
+  type StreamPaymentTransactionAccounts,
+  type TransactionFees,
+  calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
-import { PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Checkbox, DatePicker, Dropdown } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { BN } from '@project-serum/anchor';
+import { PublicKey, type Transaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
+import { IconCaretDown, IconEdit } from 'Icons';
+import { Button, Checkbox, DatePicker, Dropdown } from 'antd';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
 import { openNotification } from 'components/Notifications';
@@ -21,13 +23,12 @@ import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconCaretDown, IconEdit } from 'Icons';
 import { SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent, SegmentStreamRPTransferData } from 'middleware/segment-service';
+import { AppUsageEvent, type SegmentStreamRPTransferData } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
@@ -53,15 +54,14 @@ import {
   toTokenAmountBn,
   toUiAmount,
 } from 'middleware/utils';
-import { RecipientAddressInfo } from 'models/common-types';
-import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { RecipientAddressInfo } from 'models/common-types';
+import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import moment from 'moment';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { customLogger } from '../..';
-import { BN } from '@project-serum/anchor';
 
 export const RepeatingPayment = (props: {
   onOpenTokenSelector: any;
@@ -294,7 +294,7 @@ export const RepeatingPayment = (props: {
     }
     const price = getTokenPriceByAddress(selectedToken.address, selectedToken.symbol);
 
-    return parseFloat(fromCoinAmount) * price;
+    return Number.parseFloat(fromCoinAmount) * price;
   }, [fromCoinAmount, selectedToken, getTokenPriceByAddress]);
 
   const getPaymentRateAmount = useCallback(() => {
@@ -320,7 +320,7 @@ export const RepeatingPayment = (props: {
       return new BN(0);
     }
 
-    return parseFloat(fromCoinAmount) > 0 ? toTokenAmountBn(fromCoinAmount, selectedToken.decimals) : new BN(0);
+    return Number.parseFloat(fromCoinAmount) > 0 ? toTokenAmountBn(fromCoinAmount, selectedToken.decimals) : new BN(0);
   }, [fromCoinAmount, selectedToken]);
 
   /////////////////////
@@ -526,7 +526,7 @@ export const RepeatingPayment = (props: {
       inputAmount.gtn(0) &&
       tokenBalanceBn.gtn(0) &&
       nativeBalance >= getMinSolBlanceRequired() &&
-      ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+      ((selectedToken.address === NATIVE_SOL.address && Number.parseFloat(fromCoinAmount) <= getMaxAmount()) ||
         (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
       ? true
       : false;
@@ -541,7 +541,7 @@ export const RepeatingPayment = (props: {
     if (!paymentStartDate) {
       return false;
     }
-    const rateAmount = parseFloat(paymentRateAmount || '0');
+    const rateAmount = Number.parseFloat(paymentRateAmount || '0');
     if (!rateAmount) {
       result = false;
     }
@@ -551,7 +551,7 @@ export const RepeatingPayment = (props: {
 
   // Ui helpers
   const getPaymentSettingsButtonLabel = (): string => {
-    const rateAmount = parseFloat(paymentRateAmount || '0');
+    const rateAmount = Number.parseFloat(paymentRateAmount || '0');
     if (!rateAmount) {
       return t('transactions.validation.no-payment-rate');
     } else if (tokenBalanceBn.ltn(rateAmount)) {
@@ -594,7 +594,7 @@ export const RepeatingPayment = (props: {
     } else if (!fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()) {
       return t('transactions.validation.no-amount');
     } else if (
-      (isNative && parseFloat(fromCoinAmount) > getMaxAmount()) ||
+      (isNative && Number.parseFloat(fromCoinAmount) > getMaxAmount()) ||
       (!isNative && tokenBalanceBn.lt(inputAmount))
     ) {
       return t('transactions.validation.amount-high');
@@ -619,7 +619,7 @@ export const RepeatingPayment = (props: {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
     for (const enumMember in value) {
-      const mappedValue = parseInt(enumMember, 10);
+      const mappedValue = Number.parseInt(enumMember, 10);
       if (!isNaN(mappedValue)) {
         const item = new PaymentRateTypeOption(index, mappedValue, getPaymentRateOptionLabel(mappedValue, t));
         options.push(item);
@@ -699,13 +699,13 @@ export const RepeatingPayment = (props: {
         const segmentData: SegmentStreamRPTransferData = {
           asset: selectedToken?.symbol,
           assetPrice: price,
-          allocation: parseFloat(fromCoinAmount),
+          allocation: Number.parseFloat(fromCoinAmount),
           beneficiary: data.beneficiary,
           startUtc: dateFormat(data.startUtc, SIMPLE_DATE_TIME_FORMAT),
-          rateAmount: parseFloat(paymentRateAmount),
+          rateAmount: Number.parseFloat(paymentRateAmount),
           interval: getPaymentRateOptionLabel(paymentRateFrequency),
           feePayedByTreasurer: data.feePayedByTreasurer,
-          valueInUsd: price * parseFloat(fromCoinAmount),
+          valueInUsd: price * Number.parseFloat(fromCoinAmount),
         };
         consoleOut('segment data:', segmentData, 'blue');
         segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFormButton, segmentData);
@@ -905,20 +905,20 @@ export const RepeatingPayment = (props: {
 
       <div className={currentStep === 0 ? 'contract-wrapper panel1 show' : 'contract-wrapper panel1 hide'}>
         {/* Memo */}
-        <div className="form-label">{t('transactions.memo2.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left">
+        <div className='form-label'>{t('transactions.memo2.label')}</div>
+        <div className='well'>
+          <div className='flex-fixed-right'>
+            <div className='left'>
               <input
-                id="payment-memo-field"
-                className="w-100 general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
+                id='payment-memo-field'
+                className='w-100 general-text-input'
+                autoComplete='on'
+                autoCorrect='off'
+                type='text'
                 maxLength={32}
                 onChange={handleRecipientNoteChange}
                 placeholder={t('transactions.memo2.placeholder')}
-                spellCheck="false"
+                spellCheck='false'
                 value={recipientNote}
               />
             </div>
@@ -926,57 +926,57 @@ export const RepeatingPayment = (props: {
         </div>
 
         {/* Recipient */}
-        <div className="form-label">{t('transactions.recipient.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left position-relative">
-              <span className="recipient-field-wrapper">
+        <div className='form-label'>{t('transactions.recipient.label')}</div>
+        <div className='well'>
+          <div className='flex-fixed-right'>
+            <div className='left position-relative'>
+              <span className='recipient-field-wrapper'>
                 <input
-                  id="payment-recipient-field"
-                  className="general-text-input"
-                  autoComplete="on"
-                  autoCorrect="off"
-                  type="text"
+                  id='payment-recipient-field'
+                  className='general-text-input'
+                  autoComplete='on'
+                  autoCorrect='off'
+                  type='text'
                   onFocus={handleRecipientAddressFocusInOut}
                   onChange={handleRecipientAddressChange}
                   onBlur={handleRecipientAddressFocusInOut}
                   placeholder={t('transactions.recipient.placeholder')}
                   required={true}
-                  spellCheck="false"
+                  spellCheck='false'
                   value={recipientAddress}
                 />
                 <span
-                  id="payment-recipient-static-field"
+                  id='payment-recipient-static-field'
                   className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
                 >
                   {recipientAddress || t('transactions.recipient.placeholder')}
                 </span>
               </span>
             </div>
-            <div className="right">
+            <div className='right'>
               <span>&nbsp;</span>
             </div>
           </div>
           {recipientAddress && !isValidAddress(recipientAddress) && (
-            <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+            <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
           )}
           {isAddressOwnAccount() && (
-            <span className="form-field-error">{t('transactions.recipient.recipient-is-own-account')}</span>
+            <span className='form-field-error'>{t('transactions.recipient.recipient-is-own-account')}</span>
           )}
           {recipientAddress && !isRecipientAddressValid() && (
-            <span className="form-field-error">{getRecipientAddressValidation()}</span>
+            <span className='form-field-error'>{getRecipientAddressValidation()}</span>
           )}
         </div>
 
         {/* Payment rate */}
-        <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
+        <div className='form-label'>{t('transactions.rate-and-frequency.amount-label')}</div>
 
-        <div className="two-column-form-layout col60x40 mb-3">
-          <div className="left">
-            <div className="well mb-1">
-              <div className="flex-fixed-left">
-                <div className="left">
-                  <span className="add-on simplelink">
+        <div className='two-column-form-layout col60x40 mb-3'>
+          <div className='left'>
+            <div className='well mb-1'>
+              <div className='flex-fixed-left'>
+                <div className='left'>
+                  <span className='add-on simplelink'>
                     {selectedToken && (
                       <TokenDisplay
                         onClick={() => onOpenTokenSelector()}
@@ -988,38 +988,38 @@ export const RepeatingPayment = (props: {
                     )}
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <input
-                    className="general-text-input text-right"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    type="text"
+                    className='general-text-input text-right'
+                    inputMode='decimal'
+                    autoComplete='off'
+                    autoCorrect='off'
+                    type='text'
                     onChange={handlePaymentRateAmountChange}
-                    pattern="^[0-9]*[.,]?[0-9]*$"
-                    placeholder="0.0"
+                    pattern='^[0-9]*[.,]?[0-9]*$'
+                    placeholder='0.0'
                     minLength={1}
                     maxLength={79}
-                    spellCheck="false"
+                    spellCheck='false'
                     value={paymentRateAmount}
                   />
                 </div>
               </div>
             </div>
           </div>
-          <div className="right">
-            <div className="well mb-0">
-              <div className="flex-fixed-left">
-                <div className="left">
+          <div className='right'>
+            <div className='well mb-0'>
+              <div className='flex-fixed-left'>
+                <div className='left'>
                   <Dropdown menu={paymentRateOptionsMenu()} trigger={['click']}>
-                    <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                      <div className="left">
-                        <span className="capitalize-first-letter">
+                    <span className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
+                      <div className='left'>
+                        <span className='capitalize-first-letter'>
                           {getPaymentRateOptionLabel(paymentRateFrequency, t)}{' '}
                         </span>
                       </div>
-                      <div className="right">
-                        <IconCaretDown className="mean-svg-icons" />
+                      <div className='right'>
+                        <IconCaretDown className='mean-svg-icons' />
                       </div>
                     </span>
                   </Dropdown>
@@ -1030,20 +1030,20 @@ export const RepeatingPayment = (props: {
         </div>
 
         {/* Send date */}
-        <div className="form-label">{t('transactions.send-date.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left static-data-field">
+        <div className='form-label'>{t('transactions.send-date.label')}</div>
+        <div className='well'>
+          <div className='flex-fixed-right'>
+            <div className='left static-data-field'>
               {isToday(paymentStartDate || '')
                 ? `${paymentStartDate} (${t('common:general.now')})`
                 : `${paymentStartDate}`}
             </div>
-            <div className="right">
-              <div className="add-on simplelink">
+            <div className='right'>
+              <div className='add-on simplelink'>
                 <DatePicker
-                  size="middle"
+                  size='middle'
                   bordered={false}
-                  className="addon-date-picker"
+                  className='addon-date-picker'
                   aria-required={true}
                   allowClear={false}
                   disabledDate={disabledDate}
@@ -1059,11 +1059,11 @@ export const RepeatingPayment = (props: {
 
         {/* Continue button */}
         <Button
-          className="main-cta"
+          className='main-cta'
           block
-          type="primary"
-          shape="round"
-          size="large"
+          type='primary'
+          shape='round'
+          size='large'
           onClick={onContinueButtonClick}
           disabled={
             !connected ||
@@ -1081,50 +1081,50 @@ export const RepeatingPayment = (props: {
         {/* Summary */}
         {publicKey && recipientAddress && (
           <>
-            <div className="flex-fixed-right">
-              <div className="left">
-                <div className="form-label">{t('transactions.resume')}</div>
+            <div className='flex-fixed-right'>
+              <div className='left'>
+                <div className='form-label'>{t('transactions.resume')}</div>
               </div>
-              <div className="right">
-                <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                  <IconEdit className="mean-svg-icons" />
+              <div className='right'>
+                <span className='flat-button change-button' onClick={() => setCurrentStep(0)}>
+                  <IconEdit className='mean-svg-icons' />
                   <span>{t('general.cta-change')}</span>
                 </span>
               </div>
             </div>
-            <div className="well">
-              <div className="three-col-flexible-middle">
-                <div className="left flex-row">
-                  <div className="flex-center">
+            <div className='well'>
+              <div className='three-col-flexible-middle'>
+                <div className='left flex-row'>
+                  <div className='flex-center'>
                     <Identicon
                       address={isValidAddress(recipientAddress) ? recipientAddress : SOL_MINT.toBase58()}
                       style={{ width: '30', display: 'inline-flex' }}
                     />
                   </div>
-                  <div className="flex-column pl-3">
-                    <div className="address">
+                  <div className='flex-column pl-3'>
+                    <div className='address'>
                       {publicKey && isValidAddress(recipientAddress)
                         ? shortenAddress(recipientAddress)
                         : t('transactions.validation.no-recipient')}
                     </div>
-                    <div className="inner-label text-truncate" style={{ maxWidth: '75%' }}>
+                    <div className='inner-label text-truncate' style={{ maxWidth: '75%' }}>
                       {recipientNote || '-'}
                     </div>
                   </div>
                 </div>
-                <div className="middle flex-center">
-                  <div className="vertical-bar"></div>
+                <div className='middle flex-center'>
+                  <div className='vertical-bar'></div>
                 </div>
-                <div className="right flex-column">
-                  <div className="rate">{getPaymentRateAmount()}</div>
-                  <div className="inner-label text-truncate">{paymentStartDate}</div>
+                <div className='right flex-column'>
+                  <div className='rate'>{getPaymentRateAmount()}</div>
+                  <div className='inner-label text-truncate'>{paymentStartDate}</div>
                 </div>
               </div>
             </div>
           </>
         )}
 
-        <div className="mb-3 text-center">
+        <div className='mb-3 text-center'>
           <div>
             {t('transactions.transaction-info.add-funds-repeating-payment-advice', {
               tokenSymbol: selectedToken?.symbol,
@@ -1134,9 +1134,9 @@ export const RepeatingPayment = (props: {
         </div>
 
         {/* Amount to stream */}
-        <div className="form-label">
-          <span className="align-middle">{t('transactions.send-amount.label-amount')}</span>
-          <span className="align-middle">
+        <div className='form-label'>
+          <span className='align-middle'>{t('transactions.send-amount.label-amount')}</span>
+          <span className='align-middle'>
             <InfoIcon
               content={
                 <span>
@@ -1144,16 +1144,16 @@ export const RepeatingPayment = (props: {
                   You can add more funds at any time by topping up the stream.
                 </span>
               }
-              placement="top"
+              placement='top'
             >
               <InfoCircleOutlined />
             </InfoIcon>
           </span>
         </div>
-        <div className="well">
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on">
+        <div className='well'>
+          <div className='flex-fixed-left'>
+            <div className='left'>
+              <span className='add-on'>
                 {selectedToken && (
                   <TokenDisplay
                     onClick={() => {}}
@@ -1165,7 +1165,7 @@ export const RepeatingPayment = (props: {
                 )}
                 {selectedToken && tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
                   <div
-                    className="token-max simplelink"
+                    className='token-max simplelink'
                     onClick={() => {
                       if (selectedToken.address === NATIVE_SOL.address) {
                         const amount = nativeBalance - getMinSolBlanceRequired();
@@ -1180,29 +1180,29 @@ export const RepeatingPayment = (props: {
                 ) : null}
               </span>
             </div>
-            <div className="right">
+            <div className='right'>
               <input
-                className="general-text-input text-right"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
+                className='general-text-input text-right'
+                inputMode='decimal'
+                autoComplete='off'
+                autoCorrect='off'
+                type='text'
                 onChange={handleFromCoinAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
+                pattern='^[0-9]*[.,]?[0-9]*$'
+                placeholder='0.0'
                 minLength={1}
                 maxLength={79}
-                spellCheck="false"
+                spellCheck='false'
                 value={fromCoinAmount}
               />
             </div>
           </div>
-          <div className="flex-fixed-right">
-            <div className="left inner-label">
+          <div className='flex-fixed-right'>
+            <div className='left inner-label'>
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>{getDisplayAmount(tokenBalanceBn)}</span>
             </div>
-            <div className="right inner-label">
+            <div className='right inner-label'>
               <span
                 className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
                 onClick={() => refreshPrices()}
@@ -1214,12 +1214,12 @@ export const RepeatingPayment = (props: {
           {selectedToken &&
             selectedToken.address === NATIVE_SOL.address &&
             (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
-              <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+              <div className='form-field-error'>{t('transactions.validation.minimum-balance-required')}</div>
             )}
         </div>
 
         {/* Confirm recipient address is correct Checkbox */}
-        <div className="mb-2">
+        <div className='mb-2'>
           <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
             {t('transfers.verified-recipient-disclaimer')}
           </Checkbox>
@@ -1229,9 +1229,9 @@ export const RepeatingPayment = (props: {
         <Button
           className={`main-cta ${isBusy ? 'inactive' : ''}`}
           block
-          type="primary"
-          shape="round"
-          size="large"
+          type='primary'
+          shape='round'
+          size='large'
           onClick={onStartTransaction}
           disabled={
             !connected ||
@@ -1244,7 +1244,7 @@ export const RepeatingPayment = (props: {
           }
         >
           {isBusy && (
-            <span className="mr-1">
+            <span className='mr-1'>
               <LoadingOutlined style={{ fontSize: '16px' }} />
             </span>
           )}

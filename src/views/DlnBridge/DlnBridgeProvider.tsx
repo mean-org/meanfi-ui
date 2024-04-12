@@ -1,17 +1,17 @@
-import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { toTokenAmount } from 'middleware/utils';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { fetchInstance } from 'views/DlnBridge/fetchInstance';
 import { useFetch } from 'views/DlnBridge/useFetch';
-import {
+import type {
   DlnOrderCreateTxResponse,
   DlnOrderQuoteResponse,
   FeeRecipient,
   GetDlnChainTokenListResponse,
   GetDlnSupportedChainsResponse,
 } from './dlnOrderTypes';
-import { SwapCreateTxResponse, SwapEstimationResponse } from './singleChainOrderTypes';
+import type { SwapCreateTxResponse, SwapEstimationResponse } from './singleChainOrderTypes';
 
 export const SOLANA_CHAIN_ID = 7565164;
 export const FEE_PERCENT = 0.25;
@@ -232,6 +232,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
   }, []);
 
   // Takes care of running the DlnOrderQuote or DlnOrderTransaction accordingly
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Dependencies managed manually
   useEffect(() => {
     // Nothing to do here for single chain swap
     if (sourceChain === destinationChain) return;
@@ -326,13 +327,13 @@ const DlnBridgeProvider = ({ children }: Props) => {
     amountIn,
     destinationChain,
     dstChainTokenOut?.address,
-    dstChainTokenOut?.decimals,
     sourceChain,
     srcChainTokenIn?.address,
     srcChainTokenIn?.decimals,
   ]);
 
   // Takes care of running the SingleChainEstimate or SingleChainTransaction accordingly
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Dependencies managed manually
   useEffect(() => {
     // Nothing to do here for cross chain transfer order
     if (sourceChain !== destinationChain) return;
@@ -423,7 +424,6 @@ const DlnBridgeProvider = ({ children }: Props) => {
     srcChainTokenIn?.decimals,
     dstChainTokenOutRecipient,
     dstChainTokenOut?.address,
-    dstChainTokenOut?.decimals,
     forceRenderRef,
   ]);
 
@@ -456,7 +456,7 @@ const DlnBridgeProvider = ({ children }: Props) => {
         setAmountIn,
         flipNetworks,
         forceRefresh,
-      } as Value),
+      }) as Value,
     [
       suppChains,
       sourceChain,

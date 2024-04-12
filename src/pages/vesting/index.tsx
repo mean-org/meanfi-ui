@@ -1,36 +1,38 @@
 import { ReloadOutlined } from '@ant-design/icons';
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
-  getFees,
-  MeanMultisig,
-  MultisigTransactionFees,
   MULTISIG_ACTIONS,
+  MeanMultisig,
+  type MultisigTransactionFees,
+  getFees,
 } from '@mean-dao/mean-multisig-sdk';
 import {
-  calculateFeesForAction,
-  Category,
-  PaymentStreaming,
   ACTION_CODES,
-  Stream,
-  StreamTemplate,
-  TransactionFees,
-  PaymentStreamingAccount,
+  type AccountActivity,
   AccountType,
-  AccountActivity,
-  CreateVestingAccountTransactionAccounts,
-  CloseAccountTransactionAccounts,
-  AddFundsToAccountTransactionAccounts,
-  AllocateFundsToStreamTransactionAccounts,
-  CreateVestingStreamTransactionAccounts,
-  WithdrawFromAccountTransactionAccounts,
-  RefreshAccountDataTransactionAccounts,
-  UpdateVestingTemplateTransactionAccounts,
+  type AddFundsToAccountTransactionAccounts,
+  type AllocateFundsToStreamTransactionAccounts,
+  Category,
+  type CloseAccountTransactionAccounts,
+  type CreateVestingAccountTransactionAccounts,
+  type CreateVestingStreamTransactionAccounts,
   NATIVE_SOL_MINT,
+  PaymentStreaming,
+  type PaymentStreamingAccount,
+  type RefreshAccountDataTransactionAccounts,
+  type Stream,
+  type StreamTemplate,
+  type TransactionFees,
+  type UpdateVestingTemplateTransactionAccounts,
+  type WithdrawFromAccountTransactionAccounts,
+  calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
-import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { Alert, Button, Dropdown, notification, Space, Tabs, Tooltip } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { BN } from '@project-serum/anchor';
+import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
+import { IconArrowBack, IconLoading, IconVerticalEllipsis } from 'Icons';
+import { Alert, Button, Dropdown, Space, Tabs, Tooltip, notification } from 'antd';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { AppSocialLinks } from 'components/AppSocialLinks';
@@ -49,26 +51,26 @@ import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import useLocalStorage from 'hooks/useLocalStorage';
 import useTransaction from 'hooks/useTransaction';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconArrowBack, IconLoading, IconVerticalEllipsis } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { getTokenAccountBalanceByAddress, getTokensWithBalances } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
 import { SOL_MINT } from 'middleware/ids';
 import {
   AppUsageEvent,
-  SegmentRefreshAccountBalanceData,
-  SegmentStreamAddFundsData,
-  SegmentStreamCreateData,
-  SegmentVestingContractCloseData,
-  SegmentVestingContractCreateData,
-  SegmentVestingContractWithdrawData,
+  type SegmentRefreshAccountBalanceData,
+  type SegmentStreamAddFundsData,
+  type SegmentStreamCreateData,
+  type SegmentVestingContractCloseData,
+  type SegmentVestingContractCreateData,
+  type SegmentVestingContractWithdrawData,
 } from 'middleware/segment-service';
 import {
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
@@ -94,30 +96,32 @@ import {
   getTxIxResume,
   toUiAmount,
 } from 'middleware/utils';
-import { MetaInfoCtaAction, SocialMediaEntry } from 'models/accounts/AccountsPageUi';
-import { MetaInfoCta } from 'models/common-types';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import { MetaInfoCtaAction, type SocialMediaEntry } from 'models/accounts/AccountsPageUi';
+import type { MetaInfoCta } from 'models/common-types';
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import { ZERO_FEES } from 'models/multisig';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { TreasuryWithdrawParams, UserTreasuriesSummary } from 'models/treasuries';
+import type { TreasuryWithdrawParams, UserTreasuriesSummary } from 'models/treasuries';
 import {
-  AddFundsParams,
-  CreateVestingStreamParams,
-  CreateVestingTreasuryParams,
+  type AddFundsParams,
+  type CreateVestingStreamParams,
+  type CreateVestingTreasuryParams,
+  type VestingContractCreateOptions,
+  type VestingContractEditOptions,
+  type VestingContractEditParams,
+  type VestingContractStreamCreateOptions,
+  type VestingContractTopupParams,
+  type VestingContractWithdrawOptions,
+  type VestingFlowRateInfo,
   getCategoryLabelByValue,
-  VestingContractCreateOptions,
-  VestingContractEditOptions,
-  VestingContractEditParams,
-  VestingContractStreamCreateOptions,
-  VestingContractTopupParams,
-  VestingContractWithdrawOptions,
-  VestingFlowRateInfo,
   vestingFlowRatesCache,
 } from 'models/vesting';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { failsafeConnectionConfig } from 'services/connections-hq';
+import { objectToJson } from 'services/logger';
 import { VestingContractActivity } from './components/VestingContractActivity';
 import { VestingContractAddFundsModal } from './components/VestingContractAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';
@@ -131,10 +135,6 @@ import { VestingContractSolBalanceModal } from './components/VestingContractSolB
 import { VestingContractStreamList } from './components/VestingContractStreamList';
 import { VestingContractWithdrawFundsModal } from './components/VestingContractWithdrawFundsModal';
 import './style.scss';
-import { objectToJson } from 'services/logger';
-import { BN } from '@project-serum/anchor';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { failsafeConnectionConfig } from 'services/connections-hq';
 
 export type VestingAccountDetailTab = 'overview' | 'streams' | 'activity' | undefined;
 let isWorkflowLocked = false;
@@ -373,10 +373,10 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const openFinalNotification = () => {
         const btn = (
           <Button
-            type="primary"
-            size="small"
-            shape="round"
-            className="extra-small"
+            type='primary'
+            size='small'
+            shape='round'
+            className='extra-small'
             onClick={() => {
               notification.close(notificationKey);
               isWorkflowLocked = false;
@@ -391,7 +391,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           type: 'info',
           message: <span></span>,
           description: (
-            <div className="mb-1">The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
+            <div className='mb-1'>The proposal's status can be reviewed in the Multsig Safe's proposal list.</div>
           ),
           btn,
           key: notificationKey,
@@ -995,7 +995,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
         const ixData = Buffer.from(createVestingContractTx.transaction.instructions[0].data);
         const ixAccounts = createVestingContractTx.transaction.instructions[0].keys;
-        const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+        const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
         const titleProposal = createOptions.vestingContractTitle;
 
         const tx = await getProposalWithPrioritizationFees(
@@ -1072,8 +1072,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         const segmentData: SegmentVestingContractCreateData = {
           asset: associatedToken.address,
           assetPrice: price,
-          valueInUsd: parseFloat(createOptions.amount) * price,
-          fundingAmount: parseFloat(createOptions.amount),
+          valueInUsd: Number.parseFloat(createOptions.amount) * price,
+          fundingAmount: Number.parseFloat(createOptions.amount),
           contractName: createOptions.vestingContractName,
           subCategory: getCategoryLabelByValue(createOptions.vestingCategory),
           cliffVestPercent: createOptions.cliffVestPercent,
@@ -1187,7 +1187,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
               signature = sent.signature;
               consoleOut('Send Tx to confirmation queue:', signature);
               const extraAmountMessage = createOptions.amount
-                ? ` with ${formatThousands(parseFloat(createOptions.amount), createOptions.token.decimals)} ${
+                ? ` with ${formatThousands(Number.parseFloat(createOptions.amount), createOptions.token.decimals)} ${
                     createOptions.token.symbol
                   }`
                 : '';
@@ -1343,7 +1343,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -1660,7 +1660,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       consoleOut('Returned multisig Tx:', addFundsTx, 'blue');
       const ixData = Buffer.from(addFundsTx.instructions[0].data);
       const ixAccounts = addFundsTx.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -1730,8 +1730,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         treasury: data.treasury,
         asset: `${token.symbol} [${token.address}]`,
         assetPrice: price,
-        amount: parseFloat(params.amount),
-        valueInUsd: price * parseFloat(params.amount),
+        amount: Number.parseFloat(params.amount),
+        valueInUsd: price * Number.parseFloat(params.amount),
       };
       consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
@@ -1838,20 +1838,20 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             const targetFundedSingleSigner = params.streamId ? 'Stream funded with' : 'Vesting contract funded with';
             const loadingMessage = multisigAuthority
               ? `Create proposal to ${fundTargetMultisig} ${formatThousands(
-                  parseFloat(params.amount),
+                  Number.parseFloat(params.amount),
                   params.associatedToken?.decimals,
                 )} ${params.associatedToken?.symbol}`
               : `${fundTargetSingleSigner} ${formatThousands(
-                  parseFloat(params.amount),
+                  Number.parseFloat(params.amount),
                   params.associatedToken?.decimals,
                 )} ${params.associatedToken?.symbol}`;
             const completedMessage = multisigAuthority
               ? `Proposal to ${fundTargetMultisig} ${formatThousands(
-                  parseFloat(params.amount),
+                  Number.parseFloat(params.amount),
                   params.associatedToken?.decimals,
                 )} ${params.associatedToken?.symbol} was submitted for Multisig approval.`
               : `${targetFundedSingleSigner} ${formatThousands(
-                  parseFloat(params.amount),
+                  Number.parseFloat(params.amount),
                   params.associatedToken?.decimals,
                 )} ${params.associatedToken?.symbol}`;
             enqueueTransactionConfirmation({
@@ -1986,7 +1986,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -2277,7 +2277,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       const proposalTitle = data.proposalTitle;
 
       const tx = await getProposalWithPrioritizationFees(
@@ -2350,8 +2350,8 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         assetPrice: price,
         vestingContract: selectedVestingContract.id.toBase58(),
         destination: params.destinationAccount,
-        amount: parseFloat(params.amount),
-        valueInUsd: parseFloat(params.amount) * price,
+        amount: Number.parseFloat(params.amount),
+        valueInUsd: Number.parseFloat(params.amount) * price,
       };
       consoleOut('segment data:', segmentData, 'blue');
       segmentAnalytics.recordEvent(AppUsageEvent.VestingContractWithdrawFundsFormButton, segmentData);
@@ -2450,11 +2450,11 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             signature = sent.signature;
             consoleOut('Send Tx to confirmation queue:', signature);
             const completedMessage = params.multisig
-              ? `Withdrawal of ${formatThousands(parseFloat(params.amount), params.associatedToken?.decimals)} ${
+              ? `Withdrawal of ${formatThousands(Number.parseFloat(params.amount), params.associatedToken?.decimals)} ${
                   params.associatedToken?.symbol
                 } from vesting contract ${selectedVestingContract.name} has been proposed`
               : `Successful withdrawal of ${formatThousands(
-                  parseFloat(params.amount),
+                  Number.parseFloat(params.amount),
                   params.associatedToken?.decimals,
                 )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name}`;
             enqueueTransactionConfirmation({
@@ -2464,7 +2464,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
               loadingMessage: `${params.multisig ? 'Proposal to withdraw' : 'Withdraw'} ${formatThousands(
-                parseFloat(params.amount),
+                Number.parseFloat(params.amount),
                 params.associatedToken?.decimals,
               )} ${params.associatedToken?.symbol} from vesting contract ${selectedVestingContract.name}`,
               completedTitle: 'Transaction confirmed',
@@ -3470,9 +3470,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const renderBalanceContracts = (
     <a
       href={`${MEANFI_DOCS_URL}products/developers/smart-contracts`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="simplelink underline-on-hover"
+      target='_blank'
+      rel='noopener noreferrer'
+      className='simplelink underline-on-hover'
     >
       Tracking 1 smart contract
     </a>
@@ -3484,7 +3484,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       <AddressDisplay
         address={programAddress}
         maxChars={isLgDevice ? 12 : 6}
-        linkText="Token Vesting"
+        linkText='Token Vesting'
         iconStyles={{ width: '15', height: '15' }}
         newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${programAddress}${getSolanaExplorerClusterParam()}`}
       />
@@ -3495,7 +3495,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     return (
       <>
         {loadingStreams || loadingTreasuries || !canDisplayMyTvl ? (
-          <IconLoading className="mean-svg-icons" style={{ height: '12px', lineHeight: '12px' }} />
+          <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
         ) : (
           <>
             {unallocatedBalance && unallocatedBalance > 0 ? (
@@ -3511,22 +3511,22 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const renderVestingProtocolHeader = () => {
     return (
-      <div className="two-column-layout mb-2 right-info-container">
-        <div className="left right-info-group">
-          <span className="info-label">Protocol</span>
-          <span className="info-value">{renderProtocol()}</span>
-          <div className="info-content">
+      <div className='two-column-layout mb-2 right-info-container'>
+        <div className='left right-info-group'>
+          <span className='info-label'>Protocol</span>
+          <span className='info-value'>{renderProtocol()}</span>
+          <div className='info-content'>
             {listOfBadges.map((badge, index) => (
-              <span key={`${badge}+${index}`} className="badge darken medium mr-1">
+              <span key={`${badge}+${index}`} className='badge darken medium mr-1'>
                 {badge}
               </span>
             ))}
           </div>
         </div>
-        <div className="right right-info-group">
-          <span className="info-label">Balance (My TVL)</span>
-          <span className="info-value">{renderBalance()}</span>
-          <span className="info-content">{renderBalanceContracts}</span>
+        <div className='right right-info-group'>
+          <span className='info-label'>Balance (My TVL)</span>
+          <span className='info-value'>{renderBalance()}</span>
+          <span className='info-content'>{renderBalanceContracts}</span>
         </div>
       </div>
     );
@@ -3534,14 +3534,14 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const renderFeatureCtaRow = () => {
     return (
-      <div className="flex-fixed-right cta-row mb-2 pl-1">
-        <Space className="left" size="middle" wrap>
+      <div className='flex-fixed-right cta-row mb-2 pl-1'>
+        <Space className='left' size='middle' wrap>
           <Button
-            type="default"
-            shape="round"
-            size="small"
-            key="button-item-01"
-            className="thin-stroke"
+            type='default'
+            shape='round'
+            size='small'
+            key='button-item-01'
+            className='thin-stroke'
             disabled={isBusy}
             onClick={showVestingContractCreateModal}
           >
@@ -3554,7 +3554,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const renderFeatureSummary = () => {
     return (
-      <div className="tab-inner-content-wrapper vertical-scroll">
+      <div className='tab-inner-content-wrapper vertical-scroll'>
         <p>
           Token vesting allows teams and companies to release locked tokens over time according to a pre-determined
           contract release rate. Locked vesting contracts are perfect for investors and token locks as they can not be
@@ -3564,7 +3564,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
           Investors and recipients of the token vesting contracts will be able to redeem their tokens using MeanFi's
           Payment Streaming App under their accounts.
         </p>
-        <div className="mb-1">Links and Socials</div>
+        <div className='mb-1'>Links and Socials</div>
         <AppSocialLinks appSocialLinks={appSocialLinks} />
       </div>
     );
@@ -3572,7 +3572,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const renderListOfContracts = () => {
     return (
-      <div className="tab-inner-content-wrapper vertical-scroll">
+      <div className='tab-inner-content-wrapper vertical-scroll'>
         <VestingContractList
           msp={paymentStreaming}
           streamingAccounts={treasuryList}
@@ -3605,7 +3605,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         items={tabs}
         activeKey={mainFeatureTab}
         onChange={onMainFeatureTabChange}
-        className="neutral stretch-content"
+        className='neutral stretch-content'
       />
     );
   };
@@ -3620,7 +3620,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       return {
         key: `${index + 44}-${item.uiComponentId}`,
         label: (
-          <span className="menu-item-text" onClick={item.callBack}>
+          <span className='menu-item-text' onClick={item.callBack}>
             {item.caption}
           </span>
         ),
@@ -3634,19 +3634,19 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'button');
 
     return (
-      <div className="flex-fixed-right cta-row mb-2 pl-1">
-        <Space className="left" size="middle" wrap>
+      <div className='flex-fixed-right cta-row mb-2 pl-1'>
+        <Space className='left' size='middle' wrap>
           {items &&
             items.length > 0 &&
             items.map((item: MetaInfoCta, index: number) => {
               if (item.tooltip) {
                 return (
-                  <Tooltip placement="bottom" title={item.tooltip} key={`${index + 11}-${item.uiComponentId}`}>
+                  <Tooltip placement='bottom' title={item.tooltip} key={`${index + 11}-${item.uiComponentId}`}>
                     <Button
-                      type="default"
-                      shape="round"
-                      size="small"
-                      className="thin-stroke"
+                      type='default'
+                      shape='round'
+                      size='small'
+                      className='thin-stroke'
                       disabled={item.disabled}
                       onClick={item.callBack}
                     >
@@ -3657,11 +3657,11 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
               } else {
                 return (
                   <Button
-                    type="default"
-                    shape="round"
-                    size="small"
+                    type='default'
+                    shape='round'
+                    size='small'
                     key={`${index + 22}-${item.uiComponentId}`}
-                    className="thin-stroke"
+                    className='thin-stroke'
                     disabled={item.disabled}
                     onClick={item.callBack}
                   >
@@ -3671,13 +3671,13 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
               }
             })}
         </Space>
-        <Dropdown menu={renderVestingContractDetailMenuItems()} placement="bottomRight" trigger={['click']}>
-          <span className="icon-button-container">
+        <Dropdown menu={renderVestingContractDetailMenuItems()} placement='bottomRight' trigger={['click']}>
+          <span className='icon-button-container'>
             <Button
-              type="default"
-              shape="circle"
-              size="middle"
-              icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+              type='default'
+              shape='circle'
+              size='middle'
+              icon={<IconVerticalEllipsis className='mean-svg-icons' />}
               onClick={e => e.preventDefault()}
             />
           </span>
@@ -3748,7 +3748,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         items={items}
         activeKey={activeTab}
         onChange={onVestingContractDetailTabChange}
-        className="neutral stretch-content"
+        className='neutral stretch-content'
       />
     );
   }, [
@@ -3783,19 +3783,19 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   const renderRefreshCta = useCallback(() => {
     return (
-      <div className="float-top-right mr-1 mt-1">
-        <span className="icon-button-container secondary-button">
-          <Tooltip placement="bottom" title={t('vesting.refresh-tooltip')}>
+      <div className='float-top-right mr-1 mt-1'>
+        <span className='icon-button-container secondary-button'>
+          <Tooltip placement='bottom' title={t('vesting.refresh-tooltip')}>
             <Button
-              type="default"
-              shape="circle"
-              size="small"
+              type='default'
+              shape='circle'
+              size='small'
               icon={<ReloadOutlined />}
               onClick={() => reloadVestingContracts(true)}
             />
           </Tooltip>
-          <div id="hard-refresh-contracts-cta" onClick={() => refreshVestingContracts(true)}></div>
-          <div id="soft-refresh-contracts-cta" onClick={() => refreshVestingContracts(false)}></div>
+          <div id='hard-refresh-contracts-cta' onClick={() => refreshVestingContracts(true)}></div>
+          <div id='soft-refresh-contracts-cta' onClick={() => refreshVestingContracts(false)}></div>
         </span>
       </div>
     );
@@ -3811,12 +3811,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
       {/* Vesting contract details */}
       {detailsPanelOpen ? (
-        <div className="flexible-column-bottom">
-          <div className="top">
-            <div className="mb-2">
-              <div onClick={navigateToContracts} className="back-button icon-button-container">
-                <IconArrowBack className="mean-svg-icons" />
-                <span className="ml-1">See all contracts</span>
+        <div className='flexible-column-bottom'>
+          <div className='top'>
+            <div className='mb-2'>
+              <div onClick={navigateToContracts} className='back-button icon-button-container'>
+                <IconArrowBack className='mean-svg-icons' />
+                <span className='ml-1'>See all contracts</span>
               </div>
             </div>
             <VestingContractDetails
@@ -3832,32 +3832,32 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
             {/* Alert to offer refresh vesting contract */}
             {selectedVestingContract && hasBalanceChanged() && (
-              <div className="alert-info-message mb-2">
+              <div className='alert-info-message mb-2'>
                 <Alert
                   message={
                     <>
                       <span>This vesting contract received an incoming funds transfer.&nbsp;</span>
-                      <span className="simplelink underline" onClick={() => onExecuteRefreshVestingContractBalance()}>
+                      <span className='simplelink underline' onClick={() => onExecuteRefreshVestingContractBalance()}>
                         Refresh the account data
                       </span>
                       <span>&nbsp;to update the account balance.</span>
                     </>
                   }
-                  type="info"
+                  type='info'
                   showIcon
                 />
               </div>
             )}
           </div>
-          <div className="bottom">{renderVestingContractDetailTabset()}</div>
+          <div className='bottom'>{renderVestingContractDetailTabset()}</div>
         </div>
       ) : (
-        <div className="flexible-column-bottom">
-          <div className="top">
+        <div className='flexible-column-bottom'>
+          <div className='top'>
             {renderVestingProtocolHeader()}
             {renderFeatureCtaRow()}
           </div>
-          <div className="bottom">{renderFeatureTabset()}</div>
+          <div className='bottom'>{renderFeatureTabset()}</div>
         </div>
       )}
 

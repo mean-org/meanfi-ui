@@ -1,5 +1,5 @@
-import { StreamInfo } from '@mean-dao/money-streaming';
-import { Stream, STREAM_STATUS_CODE } from '@mean-dao/payment-streaming';
+import type { StreamInfo } from '@mean-dao/money-streaming';
+import { STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
 import { getStreamStatusResume } from 'middleware/streams';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -33,11 +33,11 @@ export const StreamStatusSummary = (props: { stream: Stream | StreamInfo }) => {
         minutes === 0 &&
         seconds <= 60
       ) {
-        return <span className="fg-warning">less than a minute left</span>;
+        return <span className='fg-warning'>less than a minute left</span>;
       } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours === 0 && minutes <= 60) {
-        return <span className="fg-warning">{`only ${minutes} ${minutes > 1 ? 'minutes' : 'minute'} left`}</span>;
+        return <span className='fg-warning'>{`only ${minutes} ${minutes > 1 ? 'minutes' : 'minute'} left`}</span>;
       } else if (years === 0 && months === 0 && weeks === 0 && days === 0 && hours <= 24) {
-        return <span className="fg-warning">{`only ${hours} ${hours > 1 ? 'hours' : 'hour'} left`}</span>;
+        return <span className='fg-warning'>{`only ${hours} ${hours > 1 ? 'hours' : 'hour'} left`}</span>;
       } else if (years === 0 && months === 0 && weeks === 0 && days > 1 && days <= 7) {
         return <span>{`${days} ${days > 1 ? 'days' : 'day'} left`}</span>;
       } else if (years === 0 && months === 0 && days > 7 && days <= 30) {

@@ -1,10 +1,27 @@
 import { ArrowRightOutlined, WarningFilled } from '@ant-design/icons';
-import { MeanMultisig, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { PaymentStreaming, Stream } from '@mean-dao/payment-streaming';
+import { MeanMultisig, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { PaymentStreaming, type Stream } from '@mean-dao/payment-streaming';
+import { BN } from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
+import {
+  type AccountInfo,
+  type Connection,
+  LAMPORTS_PER_SOL,
+  type ParsedAccountData,
+  PublicKey,
+} from '@solana/web3.js';
+import {
+  IconCodeBlock,
+  IconCoin,
+  IconCopy,
+  IconExternalLink,
+  IconEyeOn,
+  IconLoading,
+  IconTrash,
+  IconWallet,
+} from 'Icons';
 import { Button, Divider, Modal, Space, Tooltip } from 'antd';
-import notification, { IconType } from 'antd/lib/notification';
+import notification, { type IconType } from 'antd/lib/notification';
 import BigNumber from 'bignumber.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
@@ -20,19 +37,11 @@ import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
+import { useWalletAccount } from 'contexts/walletAccount';
 import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
-import {
-  IconCodeBlock,
-  IconCoin,
-  IconCopy,
-  IconExternalLink,
-  IconEyeOn,
-  IconLoading,
-  IconTrash,
-  IconWallet,
-} from 'Icons';
 import { appConfig } from 'index';
+import { isSystemOwnedAccount } from 'middleware/accountInfoGetters';
 import { getTokensWithBalances } from 'middleware/accounts';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { SOL_MINT, SYSTEM_PROGRAM_ID } from 'middleware/ids';
@@ -56,19 +65,16 @@ import {
   shortenAddress,
   toUiAmount,
 } from 'middleware/utils';
-import { MultisigAsset, NATIVE_LOADER } from 'models/multisig';
-import { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { AccountContext } from 'models/accounts/AccountContext';
+import { type MultisigAsset, NATIVE_LOADER } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactJson from 'react-json-view';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { failsafeConnectionConfig } from 'services/connections-hq';
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
 import './style.scss';
-import { BN } from '@project-serum/anchor';
-import { useWalletAccount } from 'contexts/walletAccount';
-import { AccountContext } from 'models/accounts/AccountContext';
-import { isSystemOwnedAccount } from 'middleware/accountInfoGetters';
-import { failsafeConnectionConfig } from 'services/connections-hq';
 
 type TabOption = 'first-tab' | 'test-stream' | 'account-info' | 'multisig-tab' | 'misc-tab' | undefined;
 type StreamViewerOption = 'treasurer' | 'beneficiary';
@@ -518,12 +524,12 @@ export const PlaygroundView = () => {
       duration: 0,
       description: (
         <>
-          <div className="mb-1">This notification is meant to have an additional CTA to perform another action!</div>
+          <div className='mb-1'>This notification is meant to have an additional CTA to perform another action!</div>
           <Button
-            type="primary"
-            size="small"
-            shape="round"
-            className="extra-small"
+            type='primary'
+            size='small'
+            shape='round'
+            className='extra-small'
             onClick={() => {
               const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
               navigate(url);
@@ -929,18 +935,18 @@ export const PlaygroundView = () => {
   const renderTable = () => {
     return CRYPTO_VALUES.map((value: number) => {
       return (
-        <div className="item-list-row" key={`value-${value}`}>
-          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
+        <div className='item-list-row' key={`value-${value}`}>
+          <div className='std-table-cell responsive-cell text-monospace text-right px-1'>
             {selectedToken ? `${formatThousands(value, selectedToken.decimals)} ${selectedToken.symbol}` : ''}
           </div>
-          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
+          <div className='std-table-cell responsive-cell text-monospace text-right px-1'>
             {selectedToken
               ? `${formatThousands(value, friendlyDisplayDecimalPlaces(value, selectedToken.decimals))} ${
                   selectedToken.symbol
                 }`
               : ''}
           </div>
-          <div className="std-table-cell responsive-cell text-monospace text-right px-1">
+          <div className='std-table-cell responsive-cell text-monospace text-right px-1'>
             {selectedToken
               ? getAmountWithSymbol(value, selectedToken.address, false, splTokenList, selectedToken.decimals)
               : ''}
@@ -953,27 +959,27 @@ export const PlaygroundView = () => {
   const renderKformatters = () => {
     return NUMBER_OF_ITEMS.map((value: number) => {
       return (
-        <div className="item-list-row" key={`value-${value}`}>
-          <div className="std-table-cell responsive-cell text-monospace">
-            <span className="font-size-75 font-bold text-shadow">{formatThousands(value) || 0}</span>
+        <div className='item-list-row' key={`value-${value}`}>
+          <div className='std-table-cell responsive-cell text-monospace'>
+            <span className='font-size-75 font-bold text-shadow'>{formatThousands(value) || 0}</span>
           </div>
-          <div className="std-table-cell responsive-cell text-monospace">
-            <div className="table-cell-flex-content">
-              <div className="icon-cell">
-                <div className="token-icon">
-                  <div className="streams-count">
-                    <span className="font-size-75 font-bold text-shadow">{formatAmount(value, 0, true) || 0}</span>
+          <div className='std-table-cell responsive-cell text-monospace'>
+            <div className='table-cell-flex-content'>
+              <div className='icon-cell'>
+                <div className='token-icon'>
+                  <div className='streams-count'>
+                    <span className='font-size-75 font-bold text-shadow'>{formatAmount(value, 0, true) || 0}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="std-table-cell responsive-cell text-monospace">
-            <div className="table-cell-flex-content">
-              <div className="icon-cell">
-                <div className="token-icon">
-                  <div className="streams-count">
-                    <span className="font-size-75 font-bold text-shadow">{kFormatter(value, 1) || 0}</span>
+          <div className='std-table-cell responsive-cell text-monospace'>
+            <div className='table-cell-flex-content'>
+              <div className='icon-cell'>
+                <div className='token-icon'>
+                  <div className='streams-count'>
+                    <span className='font-size-75 font-bold text-shadow'>{kFormatter(value, 1) || 0}</span>
                   </div>
                 </div>
               </div>
@@ -986,27 +992,27 @@ export const PlaygroundView = () => {
 
   const renderDemoNumberFormatting = (
     <>
-      <div className="flex-fixed-right">
-        <div className="left">
-          <div className="tabset-heading">Number Formatting</div>
+      <div className='flex-fixed-right'>
+        <div className='left'>
+          <div className='tabset-heading'>Number Formatting</div>
         </div>
-        <div className="right">
-          <Tooltip title="Pick one of my assets" trigger="hover">
-            <span className="flat-button change-button" onClick={showTokenSelector}>
-              <IconCoin className="mean-svg-icons" />
+        <div className='right'>
+          <Tooltip title='Pick one of my assets' trigger='hover'>
+            <span className='flat-button change-button' onClick={showTokenSelector}>
+              <IconCoin className='mean-svg-icons' />
             </span>
           </Tooltip>
         </div>
       </div>
-      <div className="item-list-header">
-        <div className="header-row">
-          <div className="std-table-cell responsive-cell text-right px-1">Format 1</div>
-          <div className="std-table-cell responsive-cell text-right px-1">Format 2</div>
-          <div className="std-table-cell responsive-cell text-right px-1">Format 3</div>
+      <div className='item-list-header'>
+        <div className='header-row'>
+          <div className='std-table-cell responsive-cell text-right px-1'>Format 1</div>
+          <div className='std-table-cell responsive-cell text-right px-1'>Format 2</div>
+          <div className='std-table-cell responsive-cell text-right px-1'>Format 3</div>
         </div>
       </div>
-      <div className="item-list-body">{renderTable()}</div>
-      <div className="mb-2">
+      <div className='item-list-body'>{renderTable()}</div>
+      <div className='mb-2'>
         Format 1:&nbsp;<code>formatThousands</code>
         <br />
         Format 2:&nbsp;
@@ -1017,30 +1023,30 @@ export const PlaygroundView = () => {
 
       <Divider />
 
-      <div className="tabset-heading">Short Number Formatting</div>
-      <div className="item-list-header">
-        <div className="header-row">
-          <div className="std-table-cell responsive-cell">raw value</div>
-          <div className="std-table-cell responsive-cell">formatAmount Fn</div>
-          <div className="std-table-cell responsive-cell">kFormatter</div>
+      <div className='tabset-heading'>Short Number Formatting</div>
+      <div className='item-list-header'>
+        <div className='header-row'>
+          <div className='std-table-cell responsive-cell'>raw value</div>
+          <div className='std-table-cell responsive-cell'>formatAmount Fn</div>
+          <div className='std-table-cell responsive-cell'>kFormatter</div>
         </div>
       </div>
-      <div className="item-list-body">{renderKformatters()}</div>
+      <div className='item-list-body'>{renderKformatters()}</div>
     </>
   );
 
   const infoRow = (caption: string, value: string) => {
     return (
-      <div className="flex-fixed-right">
-        <div className="left">
-          <span className="font-size-75">{caption}</span>
+      <div className='flex-fixed-right'>
+        <div className='left'>
+          <span className='font-size-75'>{caption}</span>
         </div>
-        <div className="right flex-row align-items-center">
+        <div className='right flex-row align-items-center'>
           {isValidAddress(value) ? (
             <>
               {!isSystemAccount(value) ? (
-                <span className="flat-button tiny mr-1" onClick={() => onScanAddress(value)}>
-                  <IconEyeOn className="mean-svg-icons m-0" />
+                <span className='flat-button tiny mr-1' onClick={() => onScanAddress(value)}>
+                  <IconEyeOn className='mean-svg-icons m-0' />
                 </span>
               ) : null}
               <code>
@@ -1058,18 +1064,18 @@ export const PlaygroundView = () => {
   const renderTestStream = () => {
     return (
       <>
-        <div className="flex-fixed-right mt-4">
-          <div className="left">
-            <div className="form-label">Inspect stream</div>
+        <div className='flex-fixed-right mt-4'>
+          <div className='left'>
+            <div className='form-label'>Inspect stream</div>
           </div>
-          <div className="right">
+          <div className='right'>
             <span
               className={`simplelink ${streamParsedData ? 'underline-on-hover' : 'disabled'}`}
               onClick={() => showStreamDetailModal('treasurer')}
             >
               View as treasurer
             </span>
-            <span className="mx-2">|</span>
+            <span className='mx-2'>|</span>
             <span
               className={`simplelink ${streamParsedData ? 'underline-on-hover' : 'disabled'}`}
               onClick={() => showStreamDetailModal('beneficiary')}
@@ -1079,52 +1085,52 @@ export const PlaygroundView = () => {
           </div>
         </div>
 
-        <div className="two-column-form-layout col70x30">
-          <div className="left">
-            <div className="well">
-              <div className="flex-fixed-right">
-                <div className="left position-relative">
-                  <span className="recipient-field-wrapper">
+        <div className='two-column-form-layout col70x30'>
+          <div className='left'>
+            <div className='well'>
+              <div className='flex-fixed-right'>
+                <div className='left position-relative'>
+                  <span className='recipient-field-wrapper'>
                     <input
-                      id="stream-id-for-playground"
-                      className="general-text-input"
-                      autoComplete="on"
-                      autoCorrect="off"
-                      type="text"
+                      id='stream-id-for-playground'
+                      className='general-text-input'
+                      autoComplete='on'
+                      autoCorrect='off'
+                      type='text'
                       onChange={handleStreamIdChange}
-                      placeholder="Introduce stream id (required)"
+                      placeholder='Introduce stream id (required)'
                       required={true}
-                      spellCheck="false"
+                      spellCheck='false'
                       value={streamId}
                     />
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <span>&nbsp;</span>
                 </div>
               </div>
-              {streamId && !isValidAddress(streamId) && <span className="form-field-error">Not a valid stream id</span>}
+              {streamId && !isValidAddress(streamId) && <span className='form-field-error'>Not a valid stream id</span>}
               {streamId && accountNotFound && (
-                <span className="form-field-error">Account info is not available for this stream id</span>
+                <span className='form-field-error'>Account info is not available for this stream id</span>
               )}
             </div>
           </div>
-          <div className="right">
-            <div className="flex-fixed-right">
-              <div className="left">
+          <div className='right'>
+            <div className='flex-fixed-right'>
+              <div className='left'>
                 <Button
                   block
-                  type="primary"
-                  shape="round"
-                  size="large"
+                  type='primary'
+                  shape='round'
+                  size='large'
                   disabled={!streamId || !isValidAddress(streamId)}
                   onClick={() => fetchStreamData(streamId)}
                 >
                   Get info
                 </Button>
               </div>
-              <div className="right">
-                <Button type="default" shape="round" size="large" disabled={streamId === ''} onClick={onClearStreamId}>
+              <div className='right'>
+                <Button type='default' shape='round' size='large' disabled={streamId === ''} onClick={onClearStreamId}>
                   Clear
                 </Button>
               </div>
@@ -1133,17 +1139,17 @@ export const PlaygroundView = () => {
         </div>
 
         {streamId && isValidAddress(streamId) && displayStreamData && (
-          <div className="mb-3">
-            <div className="two-column-layout">
-              <div className="left">
-                <div className="form-label">On-chain stream account data</div>
-                <div className="well mb-1 panel-max-height vertical-scroll">
+          <div className='mb-3'>
+            <div className='two-column-layout'>
+              <div className='left'>
+                <div className='form-label'>On-chain stream account data</div>
+                <div className='well mb-1 panel-max-height vertical-scroll'>
                   {streamRawData ? <ReactJson src={streamRawData} theme={'ocean'} collapsed={1} /> : '--'}
                 </div>
               </div>
-              <div className="right">
-                <div className="form-label">MSP SDK parsed stream data</div>
-                <div className="well mb-1 panel-max-height vertical-scroll">
+              <div className='right'>
+                <div className='form-label'>MSP SDK parsed stream data</div>
+                <div className='well mb-1 panel-max-height vertical-scroll'>
                   {streamParsedData ? <ReactJson src={streamParsedData} theme={'ocean'} collapsed={1} /> : '--'}
                 </div>
               </div>
@@ -1228,11 +1234,11 @@ export const PlaygroundView = () => {
         {isTokenAccount && infoRow('Owner:', parsedAccountInfo.data.parsed.info.owner)}
         {targetAddress && (isTokenAccount || isTokenMint) && (
           <>
-            <Divider orientation="left" className="mt-1 mb-1">
+            <Divider orientation='left' className='mt-1 mb-1'>
               Preview
             </Divider>
             <TokenDisplay
-              className="px-2 pb-2"
+              className='px-2 pb-2'
               mintAddress={isTokenMint ? targetAddress : parsedAccountInfo.data.parsed.info.mint}
               onClick={undefined}
               showName={true}
@@ -1247,7 +1253,7 @@ export const PlaygroundView = () => {
   const renderAccountInfoResults = () => {
     if (targetAddress && (accountInfo || parsedAccountInfo)) {
       return (
-        <div className="well-group text-monospace mb-3">
+        <div className='well-group text-monospace mb-3'>
           {accountInfo && renderAccountInfo()}
           {parsedAccountInfo && renderparsedAccountInfo()}
         </div>
@@ -1260,22 +1266,22 @@ export const PlaygroundView = () => {
   const renderDemo2Tab = () => {
     return (
       <>
-        <div className="tabset-heading">Get account info</div>
-        <div className="flex-fixed-right">
-          <div className="left">
-            <div className="form-label">Inspect account</div>
+        <div className='tabset-heading'>Get account info</div>
+        <div className='flex-fixed-right'>
+          <div className='left'>
+            <div className='form-label'>Inspect account</div>
           </div>
-          <div className="right">
+          <div className='right'>
             {publicKey ? (
               <>
-                <Tooltip title="Inspect my wallet address" trigger="hover">
-                  <span className="flat-button change-button" onClick={onScanMyAddress}>
-                    <IconWallet className="mean-svg-icons" />
+                <Tooltip title='Inspect my wallet address' trigger='hover'>
+                  <span className='flat-button change-button' onClick={onScanMyAddress}>
+                    <IconWallet className='mean-svg-icons' />
                   </span>
                 </Tooltip>
-                <Tooltip title="Pick one of my assets" trigger="hover">
-                  <span className="flat-button change-button" onClick={showTokenSelector}>
-                    <IconCoin className="mean-svg-icons" />
+                <Tooltip title='Pick one of my assets' trigger='hover'>
+                  <span className='flat-button change-button' onClick={showTokenSelector}>
+                    <IconCoin className='mean-svg-icons' />
                   </span>
                 </Tooltip>
               </>
@@ -1285,53 +1291,53 @@ export const PlaygroundView = () => {
           </div>
         </div>
 
-        <div className="two-column-form-layout col70x30 mb-2">
-          <div className="left">
-            <div className="well">
-              <div className="flex-fixed-right">
-                <div className="left position-relative">
-                  <span className="recipient-field-wrapper">
+        <div className='two-column-form-layout col70x30 mb-2'>
+          <div className='left'>
+            <div className='well'>
+              <div className='flex-fixed-right'>
+                <div className='left position-relative'>
+                  <span className='recipient-field-wrapper'>
                     <input
-                      id="payment-recipient-field"
-                      className="general-text-input"
-                      autoComplete="on"
-                      autoCorrect="off"
-                      type="text"
+                      id='payment-recipient-field'
+                      className='general-text-input'
+                      autoComplete='on'
+                      autoCorrect='off'
+                      type='text'
                       onFocus={handleRecipientAddressFocusInOut}
                       onChange={handleRecipientAddressChange}
                       onBlur={handleRecipientAddressFocusInOut}
                       placeholder={t('transactions.recipient.placeholder')}
                       required={true}
-                      spellCheck="false"
+                      spellCheck='false'
                       value={targetAddress}
                     />
                     <span
-                      id="payment-recipient-static-field"
+                      id='payment-recipient-static-field'
                       className={`${targetAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
                     >
                       {targetAddress || t('transactions.recipient.placeholder')}
                     </span>
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <span>&nbsp;</span>
                 </div>
               </div>
               {targetAddress && !isValidAddress(targetAddress) && (
-                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
               )}
-              {targetAddress && accountNotFound && <span className="form-field-error">{accountNotFound}</span>}
+              {targetAddress && accountNotFound && <span className='form-field-error'>{accountNotFound}</span>}
             </div>
           </div>
-          <div className="right">
-            <div className="flex-fixed-right">
-              <div className="left">
-                <Button block type="primary" shape="round" size="large" onClick={() => getAccountInfoByAddress()}>
+          <div className='right'>
+            <div className='flex-fixed-right'>
+              <div className='left'>
+                <Button block type='primary' shape='round' size='large' onClick={() => getAccountInfoByAddress()}>
                   Get Account Info
                 </Button>
               </div>
-              <div className="right">
-                <Button type="default" shape="round" size="large" onClick={onClearResults}>
+              <div className='right'>
+                <Button type='default' shape='round' size='large' onClick={onClearResults}>
                   Clear
                 </Button>
               </div>
@@ -1342,19 +1348,19 @@ export const PlaygroundView = () => {
         {renderAccountInfoResults()}
         <Divider />
 
-        <div className="tabset-heading">User impersonation</div>
+        <div className='tabset-heading'>User impersonation</div>
         {publicKey ? (
-          <Space size="middle" direction="vertical" wrap={true}>
+          <Space size='middle' direction='vertical' wrap={true}>
             {isImpersonating ? (
-              <Button type="default" shape="round" size="large" onClick={stopImpersonation}>
+              <Button type='default' shape='round' size='large' onClick={stopImpersonation}>
                 Stop impersonation
               </Button>
             ) : null}
             {!isImpersonating ? (
               <Button
-                type="default"
-                shape="round"
-                size="large"
+                type='default'
+                shape='round'
+                size='large'
                 onClick={startImpersonation}
                 disabled={!targetAddress || !accountInfo || !isSystemOwnedAccount(accountInfo)}
               >
@@ -1387,8 +1393,8 @@ export const PlaygroundView = () => {
       <>
         <span>Security</span>
         <MultisigOwnersView
-          label="view"
-          className="ml-1"
+          label='view'
+          className='ml-1'
           participants={selectedMultisig ? selectedMultisig.owners : []}
         />
       </>
@@ -1398,7 +1404,7 @@ export const PlaygroundView = () => {
   const renderSafeBalance = useCallback(() => {
     return totalSafeBalance === undefined ? (
       <>
-        <IconLoading className="mean-svg-icons" style={{ height: '15px', lineHeight: '15px' }} />
+        <IconLoading className='mean-svg-icons' style={{ height: '15px', lineHeight: '15px' }} />
       </>
     ) : (
       toUsCurrency(totalSafeBalance)
@@ -1451,64 +1457,64 @@ export const PlaygroundView = () => {
   const renderMultisigTab = () => {
     return (
       <>
-        <div className="tabset-heading">Get multisig info</div>
+        <div className='tabset-heading'>Get multisig info</div>
 
-        <div className="flex-fixed-right">
-          <div className="left">
-            <div className="form-label">Inspect account</div>
+        <div className='flex-fixed-right'>
+          <div className='left'>
+            <div className='form-label'>Inspect account</div>
           </div>
-          <div className="right">&nbsp;</div>
+          <div className='right'>&nbsp;</div>
         </div>
 
-        <div className="two-column-form-layout col70x30 mb-2">
-          <div className="left">
-            <div className="well">
-              <div className="flex-fixed-right">
-                <div className="left position-relative">
-                  <span className="recipient-field-wrapper">
+        <div className='two-column-form-layout col70x30 mb-2'>
+          <div className='left'>
+            <div className='well'>
+              <div className='flex-fixed-right'>
+                <div className='left position-relative'>
+                  <span className='recipient-field-wrapper'>
                     <input
-                      id="payment-recipient-field"
-                      className="general-text-input"
-                      autoComplete="on"
-                      autoCorrect="off"
-                      type="text"
+                      id='payment-recipient-field'
+                      className='general-text-input'
+                      autoComplete='on'
+                      autoCorrect='off'
+                      type='text'
                       onFocus={handleRecipientAddressFocusInOut}
                       onChange={handleRecipientAddressChange}
                       onBlur={handleRecipientAddressFocusInOut}
                       placeholder={t('transactions.recipient.placeholder')}
                       required={true}
-                      spellCheck="false"
+                      spellCheck='false'
                       value={targetAddress}
                     />
                     <span
-                      id="payment-recipient-static-field"
+                      id='payment-recipient-static-field'
                       className={`${targetAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}
                     >
                       {targetAddress || t('transactions.recipient.placeholder')}
                     </span>
                   </span>
                 </div>
-                <div className="right">
+                <div className='right'>
                   <span>&nbsp;</span>
                 </div>
               </div>
               {targetAddress && !isValidAddress(targetAddress) && (
-                <span className="form-field-error">{t('transactions.validation.address-validation')}</span>
+                <span className='form-field-error'>{t('transactions.validation.address-validation')}</span>
               )}
               {targetAddress && selectedMultisig === undefined && (
-                <span className="form-field-error">{accountNotFound}</span>
+                <span className='form-field-error'>{accountNotFound}</span>
               )}
             </div>
           </div>
-          <div className="right">
-            <div className="flex-fixed-right">
-              <div className="left">
-                <Button block type="primary" shape="round" size="large" onClick={() => getMultisigInfo(targetAddress)}>
+          <div className='right'>
+            <div className='flex-fixed-right'>
+              <div className='left'>
+                <Button block type='primary' shape='round' size='large' onClick={() => getMultisigInfo(targetAddress)}>
                   Get multisig
                 </Button>
               </div>
-              <div className="right">
-                <Button type="default" shape="round" size="large" onClick={onClearResults}>
+              <div className='right'>
+                <Button type='default' shape='round' size='large' onClick={onClearResults}>
                   Clear
                 </Button>
               </div>
@@ -1516,16 +1522,16 @@ export const PlaygroundView = () => {
           </div>
         </div>
 
-        <div className="mb-3">
+        <div className='mb-3'>
           {targetAddress && selectedMultisig && (
             <>
-              <div className="well-group text-monospace flex-row two-column-form-layout flex-wrap">
+              <div className='well-group text-monospace flex-row two-column-form-layout flex-wrap'>
                 {infoSafeData.map((info, index: number) => {
                   const isEven = index % 2 === 0;
                   return (
                     <div key={`${info.name}`} className={isEven ? 'left' : 'right'}>
-                      <div className="info-label">{info.name}</div>
-                      <div className="info-value mb-2 line-height-100">{info.value}</div>
+                      <div className='info-label'>{info.name}</div>
+                      <div className='info-value mb-2 line-height-100'>{info.value}</div>
                     </div>
                   );
                 })}
@@ -1540,16 +1546,16 @@ export const PlaygroundView = () => {
   const renderRouteLink = (title: string, linkAddress: string) => {
     return (
       <>
-        <div className="well small mb-2">
-          <div className="flex-fixed-right">
-            <div className="left position-relative">
-              <span className="recipient-field-wrapper">
-                <span className="referral-link font-size-75 text-monospace">{linkAddress}</span>
+        <div className='well small mb-2'>
+          <div className='flex-fixed-right'>
+            <div className='left position-relative'>
+              <span className='recipient-field-wrapper'>
+                <span className='referral-link font-size-75 text-monospace'>{linkAddress}</span>
               </span>
             </div>
-            <div className="right">
+            <div className='right'>
               <Link to={linkAddress} title={title}>
-                <div className="add-on simplelink">
+                <div className='add-on simplelink'>
                   <ArrowRightOutlined />
                 </div>
               </Link>
@@ -1583,10 +1589,10 @@ export const PlaygroundView = () => {
     const onNotifySuperSafeCreated = () => {
       const btn = (
         <Button
-          type="primary"
-          size="small"
-          shape="round"
-          className="extra-small"
+          type='primary'
+          size='small'
+          shape='round'
+          className='extra-small'
           onClick={() => {
             showcaseNewAccount();
             notification.close(notificationKey);
@@ -1598,7 +1604,7 @@ export const PlaygroundView = () => {
       notification.open({
         type: 'success',
         message: 'SuperSafe account created',
-        description: <div className="mb-1">Your SuperSafe account was successfully created.</div>,
+        description: <div className='mb-1'>Your SuperSafe account was successfully created.</div>,
         btn,
         key: notificationKey,
         duration: null,
@@ -1612,9 +1618,9 @@ export const PlaygroundView = () => {
 
   const renderRoutingDemo = (
     <>
-      <div className="tabset-heading">Test routing</div>
-      <div className="text-left mb-3">
-        <div className="form-label">Go to my connected account</div>
+      <div className='tabset-heading'>Test routing</div>
+      <div className='text-left mb-3'>
+        <div className='form-label'>Go to my connected account</div>
         {renderRouteLink('With no params', '/')}
       </div>
     </>
@@ -1622,137 +1628,137 @@ export const PlaygroundView = () => {
 
   const renderMiscTab = (
     <>
-      <div className="tabset-heading">Miscelaneous features</div>
+      <div className='tabset-heading'>Miscelaneous features</div>
 
       <h3>Primary, Secondary and Terciary buttons</h3>
-      <div className="mb-2">
-        <div className="mb-1">
-          <Space wrap={true} size="middle">
-            <Button type="primary" shape="round" size="small" className="extra-small">
+      <div className='mb-2'>
+        <div className='mb-1'>
+          <Space wrap={true} size='middle'>
+            <Button type='primary' shape='round' size='small' className='extra-small'>
               Primary
             </Button>
-            <Button type="default" shape="round" size="small" className="extra-small">
+            <Button type='default' shape='round' size='small' className='extra-small'>
               Default
             </Button>
-            <Button type="ghost" shape="round" size="small" className="extra-small">
+            <Button type='ghost' shape='round' size='small' className='extra-small'>
               Ghost
             </Button>
           </Space>
         </div>
-        <div className="mb-1">
-          <Space wrap={true} size="middle">
-            <Button type="primary" shape="round" size="middle" className="thin-stroke">
+        <div className='mb-1'>
+          <Space wrap={true} size='middle'>
+            <Button type='primary' shape='round' size='middle' className='thin-stroke'>
               Primary
             </Button>
-            <Button type="default" shape="round" size="middle" className="thin-stroke">
+            <Button type='default' shape='round' size='middle' className='thin-stroke'>
               Default
             </Button>
-            <Button type="ghost" shape="round" size="middle" className="thin-stroke">
+            <Button type='ghost' shape='round' size='middle' className='thin-stroke'>
               Ghost
             </Button>
           </Space>
         </div>
       </div>
       <h3>Primary, Secondary and Terciary buttons disabled</h3>
-      <div className="mb-2">
-        <Space wrap={true} size="middle">
-          <Button type="primary" shape="round" size="small" className="thin-stroke" disabled={true}>
+      <div className='mb-2'>
+        <Space wrap={true} size='middle'>
+          <Button type='primary' shape='round' size='small' className='thin-stroke' disabled={true}>
             Primary disabled
           </Button>
-          <Button type="default" shape="round" size="small" className="thin-stroke" disabled={true}>
+          <Button type='default' shape='round' size='small' className='thin-stroke' disabled={true}>
             Default disabled
           </Button>
-          <Button type="ghost" shape="round" size="small" className="thin-stroke" disabled={true}>
+          <Button type='ghost' shape='round' size='small' className='thin-stroke' disabled={true}>
             Ghost disabled
           </Button>
         </Space>
       </div>
 
       <h3>Flat buttons</h3>
-      <div className="mb-2">
-        <Space wrap={true} size="middle">
-          <span className="flat-button tiny">
-            <IconCopy className="mean-svg-icons" />
-            <span className="ml-1">copy item</span>
+      <div className='mb-2'>
+        <Space wrap={true} size='middle'>
+          <span className='flat-button tiny'>
+            <IconCopy className='mean-svg-icons' />
+            <span className='ml-1'>copy item</span>
           </span>
-          <span className="flat-button tiny">
-            <IconTrash className="mean-svg-icons" />
-            <span className="ml-1">delete item</span>
+          <span className='flat-button tiny'>
+            <IconTrash className='mean-svg-icons' />
+            <span className='ml-1'>delete item</span>
           </span>
-          <span className="flat-button tiny">
-            <IconExternalLink className="mean-svg-icons" />
-            <span className="ml-1">view on blockchain</span>
+          <span className='flat-button tiny'>
+            <IconExternalLink className='mean-svg-icons' />
+            <span className='ml-1'>view on blockchain</span>
           </span>
         </Space>
       </div>
 
       <h3>Flat stroked buttons</h3>
-      <div className="mb-2">
-        <Space wrap={true} size="middle">
-          <span className="flat-button tiny stroked">
-            <IconCopy className="mean-svg-icons" />
-            <span className="mx-1">copy item</span>
+      <div className='mb-2'>
+        <Space wrap={true} size='middle'>
+          <span className='flat-button tiny stroked'>
+            <IconCopy className='mean-svg-icons' />
+            <span className='mx-1'>copy item</span>
           </span>
-          <span className="flat-button tiny stroked">
-            <IconTrash className="mean-svg-icons" />
-            <span className="mx-1">delete item</span>
+          <span className='flat-button tiny stroked'>
+            <IconTrash className='mean-svg-icons' />
+            <span className='mx-1'>delete item</span>
           </span>
-          <span className="flat-button tiny stroked">
-            <IconExternalLink className="mean-svg-icons" />
-            <span className="mx-1">view on blockchain</span>
+          <span className='flat-button tiny stroked'>
+            <IconExternalLink className='mean-svg-icons' />
+            <span className='mx-1'>view on blockchain</span>
           </span>
         </Space>
       </div>
 
-      <div className="tabset-heading">Notify and navigate</div>
-      <div className="text-left mb-3">
+      <div className='tabset-heading'>Notify and navigate</div>
+      <div className='text-left mb-3'>
         <Space wrap={true}>
-          <span className="flat-button stroked" onClick={() => sequentialMessagesAndNavigate()}>
+          <span className='flat-button stroked' onClick={() => sequentialMessagesAndNavigate()}>
             <span>Sequential messages → Navigate</span>
           </span>
-          <span className="flat-button stroked" onClick={() => stackedMessagesAndNavigate()}>
+          <span className='flat-button stroked' onClick={() => stackedMessagesAndNavigate()}>
             <span>Stacked messages → Navigate</span>
           </span>
-          <span className="flat-button stroked" onClick={() => interestingCase()}>
+          <span className='flat-button stroked' onClick={() => interestingCase()}>
             <span>Without title</span>
           </span>
         </Space>
       </div>
 
-      <div className="tabset-heading">Test Updatable Notifications</div>
-      <div className="text-left mb-3">
+      <div className='tabset-heading'>Test Updatable Notifications</div>
+      <div className='text-left mb-3'>
         <Space>
-          <span className="flat-button stroked" onClick={() => reuseNotification('pepito')}>
+          <span className='flat-button stroked' onClick={() => reuseNotification('pepito')}>
             <span>See mission status</span>
           </span>
         </Space>
       </div>
 
-      <div className="tabset-heading">Test Standalone Notifications</div>
-      <div className="text-left mb-3">
+      <div className='tabset-heading'>Test Standalone Notifications</div>
+      <div className='text-left mb-3'>
         <Space wrap={true}>
-          <span className="flat-button stroked" onClick={() => showNotificationByType('info')}>
+          <span className='flat-button stroked' onClick={() => showNotificationByType('info')}>
             <span>Info</span>
           </span>
-          <span className="flat-button stroked" onClick={() => showNotificationByType('success')}>
+          <span className='flat-button stroked' onClick={() => showNotificationByType('success')}>
             <span>Success</span>
           </span>
-          <span className="flat-button stroked" onClick={() => showNotificationByType('warning')}>
+          <span className='flat-button stroked' onClick={() => showNotificationByType('warning')}>
             <span>Warning</span>
           </span>
-          <span className="flat-button stroked" onClick={() => showNotificationByType('error')}>
+          <span className='flat-button stroked' onClick={() => showNotificationByType('error')}>
             <span>Error</span>
           </span>
-          <span className="flat-button stroked" onClick={() => showNotificationByType('info', true)}>
+          <span className='flat-button stroked' onClick={() => showNotificationByType('info', true)}>
             <span>With CTA</span>
           </span>
         </Space>
       </div>
 
-      <div className="tabset-heading">Notification with UI interaction</div>
-      <div className="text-left mb-3">
+      <div className='tabset-heading'>Notification with UI interaction</div>
+      <div className='text-left mb-3'>
         <Space>
-          <span className="flat-button stroked" onClick={() => handleNotifWithUiInteraction()}>
+          <span className='flat-button stroked' onClick={() => handleNotifWithUiInteraction()}>
             <span>Show me</span>
           </span>
         </Space>
@@ -1781,7 +1787,7 @@ export const PlaygroundView = () => {
 
   const renderTabset = (
     <>
-      <div className="button-tabset-container">
+      <div className='button-tabset-container'>
         <div
           className={`tab-button ${currentTab === 'first-tab' ? 'active' : ''}`}
           onClick={() => navigateToTab('first-tab')}
@@ -1825,7 +1831,7 @@ export const PlaygroundView = () => {
 
   const renderTokenList = () => {
     return filteredTokenList.map((t, index) => {
-      const onClick = function () {
+      const onClick = () => {
         setSelectedToken(t);
 
         setTimeout(() => {
@@ -1873,20 +1879,20 @@ export const PlaygroundView = () => {
 
   const renderTokenSelectorInner = () => {
     return (
-      <div className="token-selector-wrapper">
-        <div className="token-search-wrapper">
+      <div className='token-selector-wrapper'>
+        <div className='token-search-wrapper'>
           <TextInput
-            id="token-search-rp"
+            id='token-search-rp'
             value={tokenFilter}
             allowClear={true}
-            extraClass="mb-2"
+            extraClass='mb-2'
             onInputClear={onInputCleared}
             placeholder={t('token-selector.search-input-placeholder')}
             error={getSelectedTokenError()}
             onInputChange={onTokenSearchInputChange}
           />
         </div>
-        <div className="token-list">
+        <div className='token-list'>
           {filteredTokenList.length > 0 && renderTokenList()}
           {tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0 && (
             <TokenListItem
@@ -1943,16 +1949,16 @@ export const PlaygroundView = () => {
   if (!publicKey || !isWhitelisted) {
     return (
       <>
-        <div className="container main-container">
-          <div className="interaction-area">
-            <div className="title-and-subtitle w-75 h-100">
-              <div className="title">
-                <IconCodeBlock className="mean-svg-icons" />
+        <div className='container main-container'>
+          <div className='interaction-area'>
+            <div className='title-and-subtitle w-75 h-100'>
+              <div className='title'>
+                <IconCodeBlock className='mean-svg-icons' />
                 <div>Diagnostics playground</div>
               </div>
-              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
-                <div className="text-center mb-2">
-                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
+              <div className='w-50 h-100 p-5 text-center flex-column flex-center'>
+                <div className='text-center mb-2'>
+                  <WarningFilled style={{ fontSize: 48 }} className='icon fg-warning' />
                 </div>
                 {!publicKey ? (
                   <h3>Please connect your wallet to access this page</h3>
@@ -1973,8 +1979,8 @@ export const PlaygroundView = () => {
   return (
     <>
       <section>
-        <div className="container mt-4 flex-column flex-center">
-          <div className="boxed-area">
+        <div className='container mt-4 flex-column flex-center'>
+          <div className='boxed-area'>
             {renderTabset}
             {/* <span className="secondary-link" onClick={getTopJupiterTokensByVolume}>Read list of top Jupiter tokens in volume over 1,000 USD</span> */}
           </div>
@@ -1998,9 +2004,9 @@ export const PlaygroundView = () => {
       {/* Token selection modal */}
       {isTokenSelectorModalVisible && (
         <Modal
-          className="mean-modal unpadded-content"
+          className='mean-modal unpadded-content'
           open={isTokenSelectorModalVisible}
-          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+          title={<div className='modal-title'>{t('token-selector.modal-title')}</div>}
           onCancel={onCloseTokenSelector}
           width={450}
           footer={null}

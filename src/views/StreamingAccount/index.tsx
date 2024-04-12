@@ -1,37 +1,37 @@
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
-  getFees,
-  MeanMultisig,
-  MultisigInfo,
-  MultisigTransactionFees,
   MULTISIG_ACTIONS,
+  MeanMultisig,
+  type MultisigInfo,
+  type MultisigTransactionFees,
+  getFees,
 } from '@mean-dao/mean-multisig-sdk';
 import {
-  calculateActionFees,
   Constants,
-  MoneyStreaming,
   MSP_ACTIONS,
+  MoneyStreaming,
+  calculateActionFees,
   refreshTreasuryBalanceInstruction,
 } from '@mean-dao/money-streaming';
-import { StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import { STREAM_STATE, type StreamInfo, type TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import {
-  calculateFeesForAction,
-  PaymentStreaming,
   ACTION_CODES,
-  Stream,
-  STREAM_STATUS_CODE,
-  TransactionFees,
-  PaymentStreamingAccount,
+  type AccountActivity,
   AccountType,
-  AccountActivity,
   ActivityActionCode,
-  AddFundsToAccountTransactionAccounts,
-  AllocateFundsToStreamTransactionAccounts,
-  WithdrawFromAccountTransactionAccounts,
-  CloseAccountTransactionAccounts,
-  RefreshAccountDataTransactionAccounts,
-  NATIVE_SOL_MINT,
+  type AddFundsToAccountTransactionAccounts,
+  type AllocateFundsToStreamTransactionAccounts,
+  type CloseAccountTransactionAccounts,
   FEE_ACCOUNT,
+  NATIVE_SOL_MINT,
+  PaymentStreaming,
+  type PaymentStreamingAccount,
+  type RefreshAccountDataTransactionAccounts,
+  STREAM_STATUS_CODE,
+  type Stream,
+  type TransactionFees,
+  type WithdrawFromAccountTransactionAccounts,
+  calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -39,11 +39,12 @@ import {
   LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
-  TransactionInstruction,
-  VersionedTransaction,
+  type TransactionInstruction,
+  type VersionedTransaction,
 } from '@solana/web3.js';
+import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from 'Icons';
 import { Alert, Button, Dropdown, Row, Space, Spin, Tabs } from 'antd';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { Identicon } from 'components/Identicon';
 import { openNotification } from 'components/Notifications';
@@ -68,7 +69,6 @@ import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from 'Icons';
 import { appConfig, customLogger } from 'index';
 import { fetchAccountTokens, getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
@@ -78,9 +78,9 @@ import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import { getStreamTitle } from 'middleware/streams';
 import {
-  composeTxWithPrioritizationFees,
-  ComputeBudgetConfig,
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
+  composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
@@ -99,12 +99,12 @@ import {
   shortenAddress,
   toTokenAmountBn,
 } from 'middleware/utils';
-import { TreasuryTopupParams } from 'models/common-types';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TreasuryTopupParams } from 'models/common-types';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { ZERO_FEES } from 'models/multisig';
-import { TokenInfo } from 'models/SolanaTokenInfo';
-import { TreasuryWithdrawParams } from 'models/treasuries';
-import { AddFundsParams } from 'models/vesting';
+import type { TreasuryWithdrawParams } from 'models/treasuries';
+import type { AddFundsParams } from 'models/vesting';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
@@ -798,7 +798,7 @@ export const StreamingAccountView = (props: {
 
         const treasury = new PublicKey(streamingAccountSelected.id);
         const associatedToken = new PublicKey(params.associatedToken);
-        const amount = parseFloat(params.amount);
+        const amount = Number.parseFloat(params.amount);
         const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
         const data = {
           contributor: publicKey.toBase58(), // contributor
@@ -985,7 +985,7 @@ export const StreamingAccountView = (props: {
 
       const ixData = Buffer.from(addFundsTx.instructions[0].data);
       const ixAccounts = addFundsTx.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -1288,7 +1288,7 @@ export const StreamingAccountView = (props: {
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -1464,12 +1464,12 @@ export const StreamingAccountView = (props: {
               finality: 'confirmed',
               txInfoFetchStatus: 'fetching',
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Withdraw ${formatThousands(parseFloat(data.amount), selectedToken.decimals)} ${
+              loadingMessage: `Withdraw ${formatThousands(Number.parseFloat(data.amount), selectedToken.decimals)} ${
                 selectedToken.symbol
               }`,
               completedTitle: 'Transaction confirmed',
               completedMessage: `Successfully withdrawn ${formatThousands(
-                parseFloat(data.amount),
+                Number.parseFloat(data.amount),
                 selectedToken.decimals,
               )} ${selectedToken.symbol}`,
               extras: {
@@ -1706,7 +1706,7 @@ export const StreamingAccountView = (props: {
 
       const ixData = Buffer.from(transaction.instructions[0].data);
       const ixAccounts = transaction.instructions[0].keys;
-      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+      const expirationTime = Number.parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await getProposalWithPrioritizationFees(
         {
@@ -2397,7 +2397,7 @@ export const StreamingAccountView = (props: {
         key: '00-create-stream',
         label: (
           <div onClick={showCreateStreamModal}>
-            <span className="menu-item-text">Create stream</span>
+            <span className='menu-item-text'>Create stream</span>
           </div>
         ),
         disabled:
@@ -2410,7 +2410,7 @@ export const StreamingAccountView = (props: {
       key: '01-close-account',
       label: (
         <div onClick={showCloseTreasuryModal}>
-          <span className="menu-item-text">Close account</span>
+          <span className='menu-item-text'>Close account</span>
         </div>
       ),
       disabled:
@@ -2423,7 +2423,7 @@ export const StreamingAccountView = (props: {
         key: '02-refresh-account',
         label: (
           <div onClick={() => onExecuteRefreshTreasuryBalance()}>
-            <span className="menu-item-text">Refresh account data</span>
+            <span className='menu-item-text'>Refresh account data</span>
           </div>
         ),
       });
@@ -2433,7 +2433,7 @@ export const StreamingAccountView = (props: {
         key: '03-sol-balance',
         label: (
           <div onClick={() => showSolBalanceModal()}>
-            <span className="menu-item-text">SOL balance</span>
+            <span className='menu-item-text'>SOL balance</span>
           </div>
         ),
         disabled: !isTreasurer(),
@@ -2480,9 +2480,9 @@ export const StreamingAccountView = (props: {
         loadingStreamingAccountStreams &&
         (!sortedStreamingAccountsStreamsList || sortedStreamingAccountsStreamsList.length === 0)
       ) {
-        return <span className="pl-1">Loading streams ...</span>;
+        return <span className='pl-1'>Loading streams ...</span>;
       }
-      return <span className="pl-1">This streaming account has no streams</span>;
+      return <span className='pl-1'>This streaming account has no streams</span>;
     };
 
     return (
@@ -2510,7 +2510,7 @@ export const StreamingAccountView = (props: {
                     height={30}
                     src={selectedToken.logoURI}
                     onError={imageOnErrorHandler}
-                    className="token-img"
+                    className='token-img'
                   />
                 );
               } else {
@@ -2518,7 +2518,7 @@ export const StreamingAccountView = (props: {
                   <Identicon
                     address={streamToken}
                     style={{ width: '30', display: 'inline-flex' }}
-                    className="token-img"
+                    className='token-img'
                   />
                 );
               }
@@ -2540,11 +2540,11 @@ export const StreamingAccountView = (props: {
                     resume={<StreamStatusSummary stream={stream} />}
                     status={getStreamStatusLabel(stream)}
                     hasRightIcon={true}
-                    rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                    rightIcon={<IconArrowForward className='mean-svg-icons' />}
                     isLink={true}
                     isStream={true}
-                    classNameRightContent="resume-stream-row"
-                    classNameIcon="icon-stream-row"
+                    classNameRightContent='resume-stream-row'
+                    classNameIcon='icon-stream-row'
                   />
                 </div>
               );
@@ -2577,10 +2577,10 @@ export const StreamingAccountView = (props: {
           amount={amount}
           resume={resume}
           hasRightIcon={true}
-          rightIcon={<IconExternalLink className="mean-svg-icons external-icon" />}
+          rightIcon={<IconExternalLink className='mean-svg-icons external-icon' />}
           isLink={false}
-          classNameRightContent="resume-activity-row"
-          classNameIcon="icon-stream-row"
+          classNameRightContent='resume-activity-row'
+          classNameIcon='icon-stream-row'
         />
       </div>
     );
@@ -2589,12 +2589,12 @@ export const StreamingAccountView = (props: {
   const renderStreamingAccountActivity = () => {
     const renderList = () => {
       if (loadingStreamingAccountActivity) {
-        return <span className="pl-1">Loading streaming account activity ...</span>;
+        return <span className='pl-1'>Loading streaming account activity ...</span>;
       }
       if (streamingAccountActivity !== undefined && streamingAccountActivity.length > 0) {
         return streamingAccountActivity.map((item, index) => renderActivityItem(item, index));
       } else {
-        return <span className="pl-1">This streaming account has no activity</span>;
+        return <span className='pl-1'>This streaming account has no activity</span>;
       }
     };
 
@@ -2602,10 +2602,10 @@ export const StreamingAccountView = (props: {
       <>
         {renderList()}
         {streamingAccountActivity && streamingAccountActivity.length >= 5 && hasMoreStreamingAccountActivity && (
-          <div className="mt-1 text-center">
+          <div className='mt-1 text-center'>
             <span
               className={loadingStreamingAccountActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
-              role="link"
+              role='link'
               onClick={() => {
                 if (streamingAccountSelected) {
                   getStreamingAccountActivity(streamingAccountSelected.id.toString());
@@ -2642,7 +2642,7 @@ export const StreamingAccountView = (props: {
 
   const renderTabset = () => {
     const option = getQueryTabOption() ?? 'streams';
-    return <Tabs items={tabs} activeKey={option} onChange={navigateToTab} className="neutral" />;
+    return <Tabs items={tabs} activeKey={option} onChange={navigateToTab} className='neutral' />;
   };
 
   const getStreamingAccountTitle = () => {
@@ -2685,10 +2685,10 @@ export const StreamingAccountView = (props: {
     <>
       <Spin spinning={loadingStreamingAccountStreams}>
         {!isXsDevice && (
-          <Row gutter={[8, 8]} className="safe-details-resume mr-0 ml-0">
-            <div onClick={hideDetailsHandler} className="back-button icon-button-container">
-              <IconArrowBack className="mean-svg-icons" />
-              <span className="ml-1">Back</span>
+          <Row gutter={[8, 8]} className='safe-details-resume mr-0 ml-0'>
+            <div onClick={hideDetailsHandler} className='back-button icon-button-container'>
+              <IconArrowBack className='mean-svg-icons' />
+              <span className='ml-1'>Back</span>
             </div>
           </Row>
         )}
@@ -2703,28 +2703,28 @@ export const StreamingAccountView = (props: {
             isDetailsPanel={true}
             isLink={false}
             isStreamingAccount={true}
-            classNameRightContent="header-streaming-details-row resume-right-content"
+            classNameRightContent='header-streaming-details-row resume-right-content'
           />
         )}
 
         {/* CTAs row */}
-        <div className="flex-fixed-right cta-row mt-2 mb-2">
-          <Space className="left" size="middle" wrap>
+        <div className='flex-fixed-right cta-row mt-2 mb-2'>
+          <Space className='left' size='middle' wrap>
             <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke btn-min-width"
+              type='default'
+              shape='round'
+              size='small'
+              className='thin-stroke btn-min-width'
               disabled={hasStreamingAccountPendingTx(OperationType.TreasuryAddFunds)}
               onClick={showAddFundsModal}
             >
-              <div className="btn-content">Add funds</div>
+              <div className='btn-content'>Add funds</div>
             </Button>
             <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke btn-min-width"
+              type='default'
+              shape='round'
+              size='small'
+              className='thin-stroke btn-min-width'
               disabled={
                 !streamingAccountSelected ||
                 hasStreamingAccountPendingTx() ||
@@ -2732,14 +2732,14 @@ export const StreamingAccountView = (props: {
               }
               onClick={showTransferFundsModal}
             >
-              <div className="btn-content">Withdraw funds</div>
+              <div className='btn-content'>Withdraw funds</div>
             </Button>
             {!isXsDevice && (
               <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke btn-min-width"
+                type='default'
+                shape='round'
+                size='small'
+                className='thin-stroke btn-min-width'
                 disabled={
                   hasStreamingAccountPendingTx() ||
                   !streamingAccountSelected ||
@@ -2747,17 +2747,17 @@ export const StreamingAccountView = (props: {
                 }
                 onClick={showCreateStreamModal}
               >
-                <div className="btn-content">Create stream</div>
+                <div className='btn-content'>Create stream</div>
               </Button>
             )}
           </Space>
-          <Dropdown menu={renderDropdownMenu()} placement="bottomRight" trigger={['click']}>
-            <span className="ellipsis-icon icon-button-container mr-1">
+          <Dropdown menu={renderDropdownMenu()} placement='bottomRight' trigger={['click']}>
+            <span className='ellipsis-icon icon-button-container mr-1'>
               <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<IconEllipsisVertical className="mean-svg-icons" />}
+                type='default'
+                shape='circle'
+                size='middle'
+                icon={<IconEllipsisVertical className='mean-svg-icons' />}
                 onClick={e => e.preventDefault()}
               />
             </span>
@@ -2766,18 +2766,18 @@ export const StreamingAccountView = (props: {
 
         {/* Alert to offer refresh treasury */}
         {streamingAccountSelected && hasBalanceChanged() && (
-          <div className="alert-info-message mb-2 mr-2 pr-2">
+          <div className='alert-info-message mb-2 mr-2 pr-2'>
             <Alert
               message={
                 <>
                   <span>This streaming account received an incoming funds transfer.&nbsp;</span>
-                  <span className="simplelink underline" onClick={() => onExecuteRefreshTreasuryBalance()}>
+                  <span className='simplelink underline' onClick={() => onExecuteRefreshTreasuryBalance()}>
                     Refresh the account data
                   </span>
                   <span>&nbsp;to update the account balance.</span>
                 </>
               }
-              type="info"
+              type='info'
               showIcon
             />
           </div>

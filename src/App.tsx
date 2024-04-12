@@ -1,24 +1,6 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
+import { SentreWalletAdapter } from '@sentre/connector';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { Layout } from 'antd';
-import { MeanFiWalletProvider } from 'contexts/wallet';
-import { WalletAccountProvider } from 'contexts/walletAccount';
-import { environment } from 'environments/environment';
-import { useEffect, useMemo, useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
-import { PageLoadingView } from 'views';
-import { appConfig } from '.';
-import './App.scss';
-import { AccountsProvider } from './contexts/accounts';
-import AppStateProvider from './contexts/appstate';
-import { ConnectionProvider } from './contexts/connection';
-import { OnlineStatusProvider } from './contexts/online-status';
-import TxConfirmationProvider from './contexts/transaction-status';
-import { SegmentAnalyticsService } from './middleware/segment-service';
-import { isLocal } from './middleware/ui';
-import { AppRoutes } from './routes';
-import { refreshCachedRpc } from './services/connections-hq';
-import { sentreAppId } from 'constants/common';
 import { WalletProvider } from '@solana/wallet-adapter-react';
 import {
   BitKeepWalletAdapter,
@@ -34,10 +16,28 @@ import {
   SolongWalletAdapter,
   TrustWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
-import { SentreWalletAdapter } from '@sentre/connector';
-import { XnftWalletAdapter } from 'integrations/xnft/xnft-wallet-adapter';
-import { isDesktop } from 'react-device-detect';
+import { Layout } from 'antd';
+import { sentreAppId } from 'constants/common';
+import { MeanFiWalletProvider } from 'contexts/wallet';
+import { WalletAccountProvider } from 'contexts/walletAccount';
+import { environment } from 'environments/environment';
 import useLocalStorage from 'hooks/useLocalStorage';
+import { XnftWalletAdapter } from 'integrations/xnft/xnft-wallet-adapter';
+import { useEffect, useMemo, useState } from 'react';
+import { isDesktop } from 'react-device-detect';
+import { BrowserRouter } from 'react-router-dom';
+import { PageLoadingView } from 'views';
+import { appConfig } from '.';
+import './App.scss';
+import { AccountsProvider } from './contexts/accounts';
+import AppStateProvider from './contexts/appstate';
+import { ConnectionProvider } from './contexts/connection';
+import { OnlineStatusProvider } from './contexts/online-status';
+import TxConfirmationProvider from './contexts/transaction-status';
+import { SegmentAnalyticsService } from './middleware/segment-service';
+import { isLocal } from './middleware/ui';
+import { AppRoutes } from './routes';
+import { refreshCachedRpc } from './services/connections-hq';
 
 const { Content } = Layout;
 export const segmentAnalytics = new SegmentAnalyticsService();
@@ -114,7 +114,7 @@ function App() {
   const loader = (
     <>
       <Layout>
-        <Content className="flex-center">
+        <Content className='flex-center'>
           <PageLoadingView addWrapper={false} />
         </Content>
       </Layout>
@@ -123,29 +123,29 @@ function App() {
 
   if (loadingStatus === 'loading') {
     return loader;
-  } else {
-    return (
-      <OnlineStatusProvider>
-        <BrowserRouter basename={'/'}>
-          <ConnectionProvider>
-            <WalletProvider wallets={wallets} autoConnect>
-              <MeanFiWalletProvider>
-                <WalletAccountProvider>
-                  <AccountsProvider>
-                    <TxConfirmationProvider>
-                      <AppStateProvider>
-                        <AppRoutes />
-                      </AppStateProvider>
-                    </TxConfirmationProvider>
-                  </AccountsProvider>
-                </WalletAccountProvider>
-              </MeanFiWalletProvider>
-            </WalletProvider>
-          </ConnectionProvider>
-        </BrowserRouter>
-      </OnlineStatusProvider>
-    );
   }
+
+  return (
+    <OnlineStatusProvider>
+      <BrowserRouter basename={'/'}>
+        <ConnectionProvider>
+          <WalletProvider wallets={wallets} autoConnect>
+            <MeanFiWalletProvider>
+              <WalletAccountProvider>
+                <AccountsProvider>
+                  <TxConfirmationProvider>
+                    <AppStateProvider>
+                      <AppRoutes />
+                    </AppStateProvider>
+                  </TxConfirmationProvider>
+                </AccountsProvider>
+              </WalletAccountProvider>
+            </MeanFiWalletProvider>
+          </WalletProvider>
+        </ConnectionProvider>
+      </BrowserRouter>
+    </OnlineStatusProvider>
+  );
 }
 
 export default App;

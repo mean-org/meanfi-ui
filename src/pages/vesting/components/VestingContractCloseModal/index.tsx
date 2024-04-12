@@ -1,7 +1,7 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from '@ant-design/icons';
-import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { PaymentStreamingAccount } from '@mean-dao/payment-streaming';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import type { PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
 import { InputMean } from 'components/InputMean';
@@ -11,8 +11,8 @@ import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
 import { getTransactionOperationDescription } from 'middleware/ui';
 import { displayAmountWithSymbol, getAmountWithSymbol } from 'middleware/utils';
+import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { TransactionStatus } from 'models/enums';
-import { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -121,26 +121,26 @@ export const VestingContractCloseModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('vesting.close-account.modal-title')}</div>}
+      className='mean-modal simple-modal'
+      title={<div className='modal-title'>{t('vesting.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       open={isVisible}
       onCancel={handleClose}
       width={360}
     >
-      <div className="scrollable-content">
+      <div className='scrollable-content'>
         <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
           {transactionStatus.currentOperation === TransactionStatus.Iddle && (
             <>
-              <div className="text-center">
+              <div className='text-center'>
                 {theme === 'light' ? (
-                  <WarningFilled style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+                  <WarningFilled style={{ fontSize: 48 }} className='icon mt-0 mb-3 fg-warning' />
                 ) : (
-                  <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3 fg-warning" />
+                  <WarningOutlined style={{ fontSize: 48 }} className='icon mt-0 mb-3 fg-warning' />
                 )}
-                {!canClose() && <h2 className="mb-3 fg-warning">{t('vesting.close-account.cannot-close-warn')}</h2>}
-                <div className="mb-2">
+                {!canClose() && <h2 className='mb-3 fg-warning'>{t('vesting.close-account.cannot-close-warn')}</h2>}
+                <div className='mb-2'>
                   {canClose() ? (
                     <span>{t('vesting.close-account.can-close-explanation')}</span>
                   ) : (
@@ -155,9 +155,9 @@ export const VestingContractCloseModal = (props: {
                 </div>
                 {canClose() && vestingContract && selectedToken && (
                   <>
-                    <div className="text-center">{t('vesting.close-account.funds-left-in-contract')}</div>
-                    <div className="mt-2 two-column-layout px-5">
-                      <div className="left text-right font-extrabold">
+                    <div className='text-center'>{t('vesting.close-account.funds-left-in-contract')}</div>
+                    <div className='mt-2 two-column-layout px-5'>
+                      <div className='left text-right font-extrabold'>
                         {displayAmountWithSymbol(
                           getAvailableStreamingBalance(vestingContract),
                           selectedToken.address,
@@ -165,7 +165,7 @@ export const VestingContractCloseModal = (props: {
                           splTokenList,
                         )}
                       </div>
-                      <div className="right text-left font-extrabold">
+                      <div className='right text-left font-extrabold'>
                         {getAmountWithSymbol(treasuryBalance, WRAPPED_SOL_MINT_ADDRESS)}
                       </div>
                     </div>
@@ -175,14 +175,14 @@ export const VestingContractCloseModal = (props: {
 
               {/* Proposal title */}
               {canClose() && selectedMultisig && (
-                <div className="mb-3 mt-3">
-                  <div className="form-label text-left">{t('multisig.proposal-modal.title')}</div>
+                <div className='mb-3 mt-3'>
+                  <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
                   <InputMean
-                    id="proposal-title-field"
-                    name="Title"
-                    className="w-100 general-text-input"
+                    id='proposal-title-field'
+                    name='Title'
+                    className='w-100 general-text-input'
                     onChange={onTitleInputValueChange}
-                    placeholder="Title for the multisig proposal"
+                    placeholder='Title for the multisig proposal'
                     value={proposalTitle}
                   />
                 </div>
@@ -191,19 +191,19 @@ export const VestingContractCloseModal = (props: {
           )}
           {transactionStatus.currentOperation === TransactionStatus.TransactionFinished && (
             <>
-              <div className="transaction-progress">
-                <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                <h4 className="font-bold">{t('treasuries.create-treasury.success-message')}</h4>
+              <div className='transaction-progress'>
+                <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+                <h4 className='font-bold'>{t('treasuries.create-treasury.success-message')}</h4>
               </div>
             </>
           )}
           {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
             transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
               <>
-                <div className="transaction-progress p-0">
-                  <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                <div className='transaction-progress p-0'>
+                  <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
                   {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                    <h4 className="mb-4">
+                    <h4 className='mb-4'>
                       {t('transactions.status.tx-start-failure', {
                         accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                         feeAmount: getAmountWithSymbol(
@@ -213,7 +213,7 @@ export const VestingContractCloseModal = (props: {
                       })}
                     </h4>
                   ) : (
-                    <h4 className="font-bold mb-3">
+                    <h4 className='font-bold mb-3'>
                       {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                     </h4>
                   )}
@@ -228,30 +228,30 @@ export const VestingContractCloseModal = (props: {
           }
         >
           {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-            <div className="transaction-progress">
-              <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-              <h4 className="font-bold mb-1">
+            <div className='transaction-progress'>
+              <Spin indicator={bigLoadingIcon} className='icon mt-0' />
+              <h4 className='font-bold mb-1'>
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
+                <div className='indication'>{t('transactions.status.instructions')}</div>
               )}
             </div>
           )}
         </div>
 
         {canClose() && (
-          <div className="mb-2">
+          <div className='mb-2'>
             <Button
               block
-              type="primary"
-              shape="round"
-              size="large"
+              type='primary'
+              shape='round'
+              size='large'
               disabled={isBusy || !isValidForm()}
               onClick={onAcceptModal}
             >
               {isBusy && (
-                <span className="mr-1">
+                <span className='mr-1'>
                   <LoadingOutlined style={{ fontSize: '16px' }} />
                 </span>
               )}

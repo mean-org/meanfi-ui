@@ -1,4 +1,4 @@
-import { TokenPrice } from "models/TokenPrice";
+import type { TokenPrice } from 'models/TokenPrice';
 
 /**
  * Gets the price of a token given its mint address if the price is available or the first match by symbol.
@@ -21,4 +21,4 @@ const getPriceByAddressOrSymbol = (prices: TokenPrice[] | null, address: string,
   return item ? item.price ?? 0 : 0;
 };
 
-export default getPriceByAddressOrSymbol
+export default getPriceByAddressOrSymbol;

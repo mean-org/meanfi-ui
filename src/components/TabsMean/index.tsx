@@ -1,8 +1,8 @@
 import { useCallback, useContext, useEffect } from 'react';
-import './style.scss';
+import { useSearchParams } from 'react-router-dom';
 import { AppStateContext } from '../../contexts/appstate';
 import { tabNameFormat } from '../../middleware/utils';
-import { useSearchParams } from 'react-router-dom';
+import './style.scss';
 
 export const TabsMean = (props: {
   containerClassName?: string;
@@ -87,7 +87,7 @@ export const TabsMean = (props: {
   return (
     <div className={`tabs-container ${containerClassName}`}>
       <div className={headerClassName}>
-        <ul className="tabs ant-menu-overflow ant-menu-horizontal">
+        <ul className='tabs ant-menu-overflow ant-menu-horizontal'>
           {tabs.map((tab: any) => {
             const onSelectTab = () => {
               setActiveTab(tabNameFormat(tab.id));
@@ -103,7 +103,7 @@ export const TabsMean = (props: {
                 tabIndex={0}
                 onClick={onSelectTab}
               >
-                <span className="ant-menu-title-content">{tab.name}</span>
+                <span className='ant-menu-title-content'>{tab.name}</span>
               </li>
             );
           })}

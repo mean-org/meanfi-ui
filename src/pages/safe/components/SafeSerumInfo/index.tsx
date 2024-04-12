@@ -1,12 +1,12 @@
-import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
-import { Idl, Program } from '@project-serum/anchor';
-import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
+import type { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import type { Idl, Program } from '@project-serum/anchor';
+import type { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
+import { IconArrowForward } from 'Icons';
 import { Button, Col, Row } from 'antd';
 import { ResumeItem } from 'components/ResumeItem';
-import { IconArrowForward } from 'Icons';
 import { BPF_LOADER_UPGRADEABLE_PID } from 'middleware/ids';
 import { consoleOut } from 'middleware/ui';
-import { ProgramAccounts } from 'models/accounts';
+import type { ProgramAccounts } from 'models/accounts';
 import { useCallback, useEffect, useState } from 'react';
 import { SafeInfo } from '../SafeInfo';
 
@@ -58,7 +58,7 @@ export const SafeSerumInfoView = (props: {
                 executedOn={executedOnDate}
                 approved={approvedSigners}
                 status={tx.status}
-                rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                rightIcon={<IconArrowForward className='mean-svg-icons' />}
                 isLink={true}
               />
             </div>
@@ -167,15 +167,15 @@ export const SafeSerumInfoView = (props: {
               onClick={onSelectProgram}
               className={`d-flex w-100 align-items-center simplelink ${program.id % 2 === 0 ? '' : 'bg-secondary-02'}`}
             >
-              <Row className="list-item hover-list">
+              <Row className='list-item hover-list'>
                 <Col>{program.name}</Col>
                 {!isProposalDetails && (
-                  <span className="icon-button-container">
+                  <span className='icon-button-container'>
                     <Button
-                      type="default"
-                      shape="circle"
-                      size="middle"
-                      icon={<IconArrowForward className="mean-svg-icons" />}
+                      type='default'
+                      shape='circle'
+                      size='middle'
+                      icon={<IconArrowForward className='mean-svg-icons' />}
                     />
                   </span>
                 )}

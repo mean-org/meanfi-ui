@@ -1,31 +1,31 @@
-import React, { useCallback, useContext } from 'react';
 import { CheckOutlined, CopyOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useWallet } from '../../contexts/wallet';
-import { AppStateContext } from '../../contexts/appstate';
-import { useTranslation } from 'react-i18next';
-import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
-import './style.scss';
-import { Button, Col, Divider, Modal, Row, Spin } from 'antd';
-import { copyText, getTransactionOperationDescription, getReadableDate } from '../../middleware/ui';
-import { OperationType, TransactionStatus } from '../../models/enums';
-import { SOL_MINT } from '../../middleware/ids';
 import {
-  MultisigInfo,
-  MultisigParticipant,
-  MultisigTransaction,
+  type MultisigInfo,
+  type MultisigParticipant,
+  type MultisigTransaction,
   MultisigTransactionStatus,
 } from '@mean-dao/mean-multisig-sdk';
+import { Button, Col, Divider, Modal, Row, Spin } from 'antd';
+import React, { useCallback, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
+import { AppStateContext } from '../../contexts/appstate';
+import { useWallet } from '../../contexts/wallet';
+import { SOL_MINT } from '../../middleware/ids';
+import { copyText, getReadableDate, getTransactionOperationDescription } from '../../middleware/ui';
+import { getAmountWithSymbol, shortenAddress } from '../../middleware/utils';
+import { OperationType, TransactionStatus } from '../../models/enums';
+import './style.scss';
 
 import Countdown from 'react-countdown';
 
+import { IconExternalLink } from '../../Icons';
 // MULTISIG
 import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
-import { isError } from '../../middleware/transactions';
-import { getOperationName } from '../../middleware/multisig-helpers';
 import { openNotification } from '../../components/Notifications';
-import { IconExternalLink } from '../../Icons';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
+import { getOperationName } from '../../middleware/multisig-helpers';
+import { isError } from '../../middleware/transactions';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -253,26 +253,26 @@ export const ProposalSummaryModal = (props: {
     const busyLabel = isTxPendingExecution()
       ? 'Executing transaction'
       : isTxPendingApproval()
-      ? 'Approving transaction'
-      : isTxVoided()
-      ? 'Cancelling Transaction'
-      : '';
+        ? 'Approving transaction'
+        : isTxVoided()
+          ? 'Cancelling Transaction'
+          : '';
 
     const iddleLabel = isTxPendingExecution()
       ? 'Execute transaction'
       : isTxPendingApproval()
-      ? 'Approve transaction'
-      : isTxVoided()
-      ? 'Cancel Transaction'
-      : '';
+        ? 'Approve transaction'
+        : isTxVoided()
+          ? 'Cancel Transaction'
+          : '';
 
     return isBusy
       ? busyLabel
       : transactionStatus.currentOperation === TransactionStatus.Iddle
-      ? iddleLabel
-      : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-      ? t('general.cta-finish')
-      : t('general.refresh');
+        ? iddleLabel
+        : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+          ? t('general.cta-finish')
+          : t('general.refresh');
   }, [isBusy, transactionStatus.currentOperation, isTxPendingExecution, isTxPendingApproval, isTxVoided, t]);
 
   const refreshPage = useCallback(() => {
@@ -307,23 +307,23 @@ export const ProposalSummaryModal = (props: {
     return (
       <>
         {(isTxPendingApproval() || isTxPendingExecution()) && (
-          <div className="inner-container">
+          <div className='inner-container'>
             {/* Top badge */}
-            <div className="float-right-badge">
-              <span className="badge darken small text-uppercase mr-1">Active</span>
+            <div className='float-right-badge'>
+              <span className='badge darken small text-uppercase mr-1'>Active</span>
             </div>
           </div>
         )}
         {highlightedMultisigTx && multisigTransactionSummary && (
           <>
             {/* Title */}
-            <Row className="mb-1">
+            <Row className='mb-1'>
               {multisigTransactionSummary.title && (
                 <>
-                  <Col span={8} className="text-right pr-1">
-                    <span className="info-label">{t('multisig.proposal-modal.title-label')}:</span>
+                  <Col span={8} className='text-right pr-1'>
+                    <span className='info-label'>{t('multisig.proposal-modal.title-label')}:</span>
                   </Col>
-                  <Col span={16} className="text-left pl-1">
+                  <Col span={16} className='text-left pl-1'>
                     <span>{multisigTransactionSummary.title}</span>
                   </Col>
                 </>
@@ -331,16 +331,16 @@ export const ProposalSummaryModal = (props: {
             </Row>
             {/* Expiry date */}
             {!highlightedMultisigTx.executedOn && (
-              <Row className="mb-1">
-                <Col span={8} className="text-right pr-1">
-                  <span className="info-label">{t('multisig.proposal-modal.expires-label')}:</span>
+              <Row className='mb-1'>
+                <Col span={8} className='text-right pr-1'>
+                  <span className='info-label'>{t('multisig.proposal-modal.expires-label')}:</span>
                 </Col>
-                <Col span={16} className="text-left pl-1">
+                <Col span={16} className='text-left pl-1'>
                   {multisigTransactionSummary.expirationDate ? (
                     <>
                       {isTxPendingApproval() || isTxPendingExecution() ? (
                         <Countdown
-                          className="align-middle"
+                          className='align-middle'
                           date={multisigTransactionSummary.expirationDate}
                           renderer={renderer}
                         />
@@ -355,11 +355,11 @@ export const ProposalSummaryModal = (props: {
               </Row>
             )}
             {/* Proposer */}
-            <Row className="mb-1">
-              <Col span={8} className="text-right pr-1">
-                <span className="info-label">{t('multisig.multisig-transactions.proposed-by')}</span>
+            <Row className='mb-1'>
+              <Col span={8} className='text-right pr-1'>
+                <span className='info-label'>{t('multisig.multisig-transactions.proposed-by')}</span>
               </Col>
-              <Col span={16} className="text-left pl-1">
+              <Col span={16} className='text-left pl-1'>
                 <span>
                   {initiator ? initiator.name : '--'} (
                   {shortenAddress(multisigTransactionSummary.proposer as string, 4)})
@@ -367,27 +367,27 @@ export const ProposalSummaryModal = (props: {
               </Col>
             </Row>
             {/* Submitted on */}
-            <Row className="mb-1">
-              <Col span={8} className="text-right pr-1">
-                <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span>
+            <Row className='mb-1'>
+              <Col span={8} className='text-right pr-1'>
+                <span className='info-label'>{t('multisig.multisig-transactions.submitted-on')}</span>
               </Col>
-              <Col span={16} className="text-left pl-1">
+              <Col span={16} className='text-left pl-1'>
                 <span>{getReadableDate(multisigTransactionSummary.createdOn, true)}</span>
               </Col>
             </Row>
             {/* Status */}
-            <Row className="mb-1">
-              <Col span={8} className="text-right pr-1">
-                <span className="info-label">{t('multisig.multisig-transactions.column-pending-signatures')}:</span>
+            <Row className='mb-1'>
+              <Col span={8} className='text-right pr-1'>
+                <span className='info-label'>{t('multisig.multisig-transactions.column-pending-signatures')}:</span>
               </Col>
-              <Col span={16} className="text-left pl-1 mb-1 d-flex align-items-start justify-content-start">
+              <Col span={16} className='text-left pl-1 mb-1 d-flex align-items-start justify-content-start'>
                 <span>
                   {getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-signed')},{' '}
                   {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}{' '}
                   {t('multisig.multisig-transactions.tx-pending')}
                 </span>
                 <MultisigOwnersSigned
-                  className="ml-1"
+                  className='ml-1'
                   participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []}
                 />
               </Col>
@@ -397,11 +397,11 @@ export const ProposalSummaryModal = (props: {
         <Row>
           <Col span={24}>
             {isTxPendingExecution() ? (
-              <div className="text-center proposal-resume">
+              <div className='text-center proposal-resume'>
                 {t('multisig.multisig-transactions.proposal-ready-to-be-executed')}
               </div>
             ) : isTxPendingApproval() ? (
-              <div className="text-center proposal-resume">
+              <div className='text-center proposal-resume'>
                 {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx) > 1
                   ? t('multisig.multisig-transactions.missing-signatures', {
                       missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx),
@@ -411,57 +411,57 @@ export const ProposalSummaryModal = (props: {
                     })}
               </div>
             ) : isTxVoided() ? (
-              <div className="text-center proposal-resume">
+              <div className='text-center proposal-resume'>
                 {t('multisig.multisig-transactions.tx-operation-voided')}
               </div>
             ) : isTxExpired() ? (
-              <div className="text-center proposal-resume">
+              <div className='text-center proposal-resume'>
                 {t('multisig.multisig-transactions.tx-operation-expired')}
               </div>
             ) : (
-              <div className="text-center proposal-resume">
+              <div className='text-center proposal-resume'>
                 {t('multisig.multisig-transactions.proposal-completed')}
               </div>
             )}
           </Col>
         </Row>
 
-        <Divider className="mt-1" />
+        <Divider className='mt-1' />
 
-        <Row className="mb-1">
-          <Col span={12} className="text-right pr-1">
-            <div className="text-uppercase">{t('multisig.proposal-modal.instruction')}:</div>
+        <Row className='mb-1'>
+          <Col span={12} className='text-right pr-1'>
+            <div className='text-uppercase'>{t('multisig.proposal-modal.instruction')}:</div>
           </Col>
-          <Col span={12} className="text-left pl-1">
+          <Col span={12} className='text-left pl-1'>
             <div>{getOperationName(highlightedMultisigTx.operation)}</div>
           </Col>
         </Row>
 
-        <div className="well mb-1 proposal-summary-container vertical-scroll">
-          <div className="mb-1">
+        <div className='well mb-1 proposal-summary-container vertical-scroll'>
+          <div className='mb-1'>
             <span>{t('multisig.proposal-modal.instruction-program')}:</span>
             <br />
             <div>
               <span
                 onClick={() => copyAddressToClipboard(multisigTransactionSummary?.instruction.programId)}
-                className="info-data simplelink underline-on-hover"
+                className='info-data simplelink underline-on-hover'
                 style={{ cursor: 'pointer' }}
               >
                 {multisigTransactionSummary?.instruction.programId}
               </span>
               <a
-                target="_blank"
-                rel="noopener noreferrer"
+                target='_blank'
+                rel='noopener noreferrer'
                 href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
                   multisigTransactionSummary?.instruction.programId
                 }${getSolanaExplorerClusterParam()}`}
               >
-                <IconExternalLink className="mean-svg-icons external-icon" />
+                <IconExternalLink className='mean-svg-icons external-icon' />
               </a>
             </div>
           </div>
           {multisigTransactionSummary?.instruction.accounts.map((account: any) => (
-            <div className="mb-1" key={account.index}>
+            <div className='mb-1' key={account.index}>
               <span>
                 {t('multisig.proposal-modal.instruction-account')} {account.index + 1}:
               </span>
@@ -469,29 +469,29 @@ export const ProposalSummaryModal = (props: {
               <div>
                 <span
                   onClick={() => copyAddressToClipboard(account.address)}
-                  className="info-data simplelink underline-on-hover"
+                  className='info-data simplelink underline-on-hover'
                   style={{ cursor: 'pointer' }}
                 >
                   {account.address}
                 </span>
                 <a
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target='_blank'
+                  rel='noopener noreferrer'
                   href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.address}${getSolanaExplorerClusterParam()}`}
                 >
-                  <IconExternalLink className="mean-svg-icons external-icon" />
+                  <IconExternalLink className='mean-svg-icons external-icon' />
                 </a>
               </div>
             </div>
           ))}
-          <div className="mb-1">
+          <div className='mb-1'>
             <span>{t('multisig.proposal-modal.instruction-data')}:</span>
             <br />
             {multisigTransactionSummary?.instruction.data.map((data: any) => (
               <span
                 key={data.value}
                 onClick={() => copyAddressToClipboard(data.value)}
-                className="info-data simplelink underline-on-hover"
+                className='info-data simplelink underline-on-hover'
                 style={{ cursor: 'pointer' }}
               >
                 {data.value}
@@ -505,8 +505,8 @@ export const ProposalSummaryModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal proposal-summary-modal"
-      title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
+      className='mean-modal simple-modal proposal-summary-modal'
+      title={<div className='modal-title'>{t('multisig.multisig-transactions.modal-title')}</div>}
       maskClosable={false}
       open={isVisible}
       closable={true}
@@ -522,22 +522,22 @@ export const ProposalSummaryModal = (props: {
             {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
             {isTxPendingExecution() ? (
               <>
-                <Divider className="mt-0" />
+                <Divider className='mt-0' />
                 {renderGeneralSummaryModal}
               </>
             ) : isTxPendingApproval() ? (
               <>
-                <Divider className="mt-0" />
+                <Divider className='mt-0' />
                 {renderGeneralSummaryModal}
               </>
             ) : isTxVoided() ? (
               <>
-                <Divider className="mt-0" />
+                <Divider className='mt-0' />
                 {renderGeneralSummaryModal}
               </>
             ) : (
               <>
-                <Divider className="mt-0" />
+                <Divider className='mt-0' />
                 {!isTxVoided() && !isTxFailed() && renderGeneralSummaryModal}
               </>
             )}
@@ -545,9 +545,9 @@ export const ProposalSummaryModal = (props: {
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
             {/* When succeeded - BEWARE OF THE SUCCESS MESSAGE */}
-            <div className="transaction-progress">
-              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">
+            <div className='transaction-progress'>
+              <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+              <h4 className='font-bold'>
                 {t('multisig.multisig-transactions.tx-operation-success', {
                   operation: getOperationName(highlightedMultisigTx.operation),
                 })}
@@ -563,12 +563,12 @@ export const ProposalSummaryModal = (props: {
           </>
         ) : (
           <>
-            <div className="transaction-progress p-0">
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-2" />
+            <div className='transaction-progress p-0'>
+              <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-2' />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <>
                   {/* Pre Tx execution failures here */}
-                  <h4 className="mb-4">
+                  <h4 className='mb-4'>
                     {t('transactions.status.tx-start-failure', {
                       accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                       feeAmount: getAmountWithSymbol(minRequiredBalance, SOL_MINT.toBase58()),
@@ -578,23 +578,23 @@ export const ProposalSummaryModal = (props: {
               ) : (
                 <>
                   {/* All other error conditions then - A getter could offer a basic explanation of what happened */}
-                  <h4 className="font-bold mb-1 mt-2">
+                  <h4 className='font-bold mb-1 mt-2'>
                     {t('multisig.multisig-transactions.tx-operation-failure', {
                       operation: getOperationName(highlightedMultisigTx.operation),
                     })}
                   </h4>
-                  <h4 className="mb-0">
+                  <h4 className='mb-0'>
                     {!transactionStatus.customError ? (
                       getTransactionOperationDescription(transactionStatus.currentOperation, t)
                     ) : (
                       <>
                         <span>{transactionStatus.customError.message}</span>
-                        <span className="ml-1">[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
-                        <div className="icon-button-container">
+                        <span className='ml-1'>[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
+                        <div className='icon-button-container'>
                           <Button
-                            type="default"
-                            shape="circle"
-                            size="middle"
+                            type='default'
+                            shape='circle'
+                            size='middle'
                             icon={<CopyOutlined />}
                             onClick={() => copyAddressToClipboard(transactionStatus.customError.data)}
                           />
@@ -612,13 +612,13 @@ export const ProposalSummaryModal = (props: {
       {/* A Cross-fading panel shown when busy */}
       <div className={isBusy ? 'panel2 show' : 'panel2 hide'}>
         {transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress p-1">
-            <Spin indicator={bigLoadingIcon} className="icon mt-2 mb-4" />
-            <h4 className="font-bold mb-1">
+          <div className='transaction-progress p-1'>
+            <Spin indicator={bigLoadingIcon} className='icon mt-2 mb-4' />
+            <h4 className='font-bold mb-1'>
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
             {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              <div className='indication'>{t('transactions.status.instructions')}</div>
             )}
           </div>
         )}
@@ -628,7 +628,7 @@ export const ProposalSummaryModal = (props: {
       {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
         <>
           <Divider plain />
-          <div className="row two-col-ctas transaction-progress p-0 no-margin-right-left">
+          <div className='row two-col-ctas transaction-progress p-0 no-margin-right-left'>
             <div
               className={
                 (canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) &&
@@ -639,9 +639,9 @@ export const ProposalSummaryModal = (props: {
             >
               <Button
                 block
-                type="text"
-                shape="round"
-                size="middle"
+                type='text'
+                shape='round'
+                size='middle'
                 className={isBusy ? 'inactive' : ''}
                 onClick={() =>
                   isError(transactionStatus.currentOperation) &&
@@ -658,13 +658,13 @@ export const ProposalSummaryModal = (props: {
             </div>
             {(canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) &&
               !isError(transactionStatus.currentOperation) && (
-                <div className="col-6 no-padding-right">
+                <div className='col-6 no-padding-right'>
                   <Button
                     className={isBusy ? 'inactive' : ''}
                     block
-                    type="primary"
-                    shape="round"
-                    size="middle"
+                    type='primary'
+                    shape='round'
+                    size='middle'
                     onClick={() => {
                       if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                         onAcceptModal();

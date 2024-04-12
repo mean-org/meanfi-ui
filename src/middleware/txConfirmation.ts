@@ -1,4 +1,4 @@
-import { Commitment, Connection } from '@solana/web3.js';
+import type { Commitment, Connection } from '@solana/web3.js';
 import { delay } from './ui';
 
 const isBlockhashExpired = async (connection: Connection, lastValidBlockHeight: number) => {
