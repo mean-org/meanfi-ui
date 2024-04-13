@@ -407,13 +407,13 @@ export const MoneyStreamDetails = (props: {
     }
   }, [activityLoaded, getActivityList, stream, tabOption]);
 
-  // Component unmount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     return () => {
       consoleOut('clearing selected stream data...', '', 'blue');
       setStreamDetail(undefined);
     };
-  }, [setStreamDetail]);
+  }, []);
 
   const getRelativeDate = (utcDate: string) => {
     const reference = new Date(utcDate);
@@ -791,7 +791,7 @@ export const MoneyStreamDetails = (props: {
     <>
       {/* biome-ignore lint/suspicious/noExplicitAny: <explanation> */}
       {detailsData.map((detail: any, index: number) => (
-        <Row gutter={[8, 8]} key={`${detail.label}`} className='pl-1 details-item mr-0 ml-0'>
+        <Row gutter={[8, 8]} key={`${index + 100}`} className='pl-1 details-item mr-0 ml-0'>
           <Col span={8} className='pr-1'>
             <span className='info-label'>{detail.label}</span>
           </Col>
