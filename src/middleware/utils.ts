@@ -128,7 +128,7 @@ const abbreviateNumber = (number: number, precision: number) => {
   let scaled = number;
   const suffix = SI_SYMBOL[tier];
   if (tier !== 0) {
-    const scale = Math.pow(10, tier * 3);
+    const scale = 10 ** (tier * 3);
     scaled = number / scale;
   }
 
@@ -139,9 +139,9 @@ export const formatAmount = (val: number, precision = 6, abbr = false) => {
   if (val) {
     if (abbr) {
       return abbreviateNumber(val, precision);
-    } else {
-      return val.toFixed(precision);
     }
+
+    return val.toFixed(precision);
   }
   return '0';
 };
@@ -190,7 +190,7 @@ export function isValidNumber(str: string | null | undefined): boolean {
   const value = +str;
 
   // isNaN(+str) returns true if NaN, otherwise false
-  if (isNaN(value)) {
+  if (Number.isNaN(value)) {
     return false;
   }
 
@@ -288,37 +288,38 @@ export const getAmountWithSymbol = (
         return toLocale;
       }
       return `${toLocale} ${token.symbol}`;
-    } else if (address && !token) {
+    }
+    if (address && !token) {
       const formatted = formatThousands(inputAmount, 5, 5);
       return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
     }
+
     return `${formatThousands(inputAmount, 5, 5)}`;
-  } else {
-    let inputAmount = '';
-    const decimals = token ? token.decimals : 9;
-    BigNumber.config({
-      CRYPTO: true,
-      FORMAT: BIGNUMBER_FORMAT,
-      DECIMAL_PLACES: 20,
-    });
-    const bigNumberAmount =
-      typeof amount === 'string' ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
-    const decimalPlaces = friendlyDecimals
-      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) ?? decimals
-      : decimals;
-    if (friendlyDecimals) {
-      BigNumber.set({
-        DECIMAL_PLACES: decimalPlaces,
-        ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN,
-      });
-    }
-    inputAmount = bigNumberAmount.toFormat(decimalPlaces);
-    if (token) {
-      return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
-    } else {
-      return onlyValue ? inputAmount : `${inputAmount} [${shortenAddress(address, 4)}]`;
-    }
   }
+
+  let inputAmount = '';
+  const decimals = token ? token.decimals : 9;
+  BigNumber.config({
+    CRYPTO: true,
+    FORMAT: BIGNUMBER_FORMAT,
+    DECIMAL_PLACES: 20,
+  });
+  const bigNumberAmount = typeof amount === 'string' ? new BigNumber(amount) : new BigNumber((amount as BN).toString());
+  const decimalPlaces = friendlyDecimals
+    ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) ?? decimals
+    : decimals;
+  if (friendlyDecimals) {
+    BigNumber.set({
+      DECIMAL_PLACES: decimalPlaces,
+      ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN,
+    });
+  }
+  inputAmount = bigNumberAmount.toFormat(decimalPlaces);
+  if (token) {
+    return onlyValue ? inputAmount : `${inputAmount} ${token.symbol}`;
+  }
+
+  return onlyValue ? inputAmount : `${inputAmount} [${shortenAddress(address, 4)}]`;
 };
 
 /**
@@ -378,38 +379,40 @@ export const displayAmountWithSymbol = (
         : decimals;
       const toLocale = formatThousands(Number.parseFloat(formatted2), decimalPlaces, decimalPlaces);
       return `${toLocale} ${token.symbol}`;
-    } else if (address && !token) {
+    }
+    if (address && !token) {
       const formatted = formatThousands(inputAmount, 5, 5);
       return `${formatted} [${shortenAddress(address, 4)}]`;
     }
+
     return `${formatThousands(inputAmount, 5, 5)}`;
-  } else {
-    let inputAmount = '';
-    const decimals = token ? token.decimals : 9;
-    BigNumber.config({
-      CRYPTO: true,
-      FORMAT: BIGNUMBER_FORMAT,
-      DECIMAL_PLACES: 20,
-    });
-    const baseConvert = new BigNumber(10 ** decimals);
-    const bigNumberAmount = typeof amount === 'string' ? new BigNumber(amount) : new BigNumber(amount.toString());
-    const value = bigNumberAmount.div(baseConvert);
-    const decimalPlaces = friendlyDecimals
-      ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) ?? decimals
-      : decimals;
-    if (friendlyDecimals) {
-      BigNumber.set({
-        DECIMAL_PLACES: decimalPlaces,
-        ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN,
-      });
-    }
-    inputAmount = value.toFormat(decimalPlaces);
-    if (token) {
-      return showSymbol ? `${inputAmount} ${token.symbol}` : inputAmount;
-    } else {
-      return showSymbol ? `${inputAmount} [${shortenAddress(address, 4)}]` : inputAmount;
-    }
   }
+
+  let inputAmount = '';
+  const decimals = token ? token.decimals : 9;
+  BigNumber.config({
+    CRYPTO: true,
+    FORMAT: BIGNUMBER_FORMAT,
+    DECIMAL_PLACES: 20,
+  });
+  const baseConvert = new BigNumber(10 ** decimals);
+  const bigNumberAmount = typeof amount === 'string' ? new BigNumber(amount) : new BigNumber(amount.toString());
+  const value = bigNumberAmount.div(baseConvert);
+  const decimalPlaces = friendlyDecimals
+    ? friendlyDisplayDecimalPlaces(bigNumberAmount.toString(), decimals) ?? decimals
+    : decimals;
+  if (friendlyDecimals) {
+    BigNumber.set({
+      DECIMAL_PLACES: decimalPlaces,
+      ROUNDING_MODE: BigNumber.ROUND_HALF_DOWN,
+    });
+  }
+  inputAmount = value.toFormat(decimalPlaces);
+  if (token) {
+    return showSymbol ? `${inputAmount} ${token.symbol}` : inputAmount;
+  }
+
+  return showSymbol ? `${inputAmount} [${shortenAddress(address, 4)}]` : inputAmount;
 };
 
 export function isVersionedTransaction(
@@ -424,34 +427,42 @@ export function getTxIxResume(tx: Transaction | VersionedTransaction) {
   if ('message' in tx) {
     const txV0 = tx as VersionedTransaction;
     ixCount = txV0.message.compiledInstructions.length;
-    txV0.message.compiledInstructions.forEach(t => {
-      const programId = (tx as VersionedTransaction).message.staticAccountKeys[t.programIdIndex].toBase58();
-      if (!programIds.includes(programId)) {
-        programIds.push(programId);
+    if (ixCount) {
+      for (const item of txV0.message.compiledInstructions) {
+        const programId = (tx as VersionedTransaction).message.staticAccountKeys[item.programIdIndex].toBase58();
+        if (!programIds.includes(programId)) {
+          programIds.push(programId);
+        }
       }
-    });
+    }
   } else {
     const txLegacy = tx as Transaction;
     ixCount = txLegacy.instructions.length;
-    txLegacy.instructions.forEach(t => {
-      const programId = t.programId.toBase58();
-      if (!programIds.includes(programId)) {
-        programIds.push(programId);
+    if (ixCount) {
+      for (const item of txLegacy.instructions) {
+        const programId = item.programId.toBase58();
+        if (!programIds.includes(programId)) {
+          programIds.push(programId);
+        }
       }
-    });
+    }
   }
   return { numIxs: ixCount, programIds: programIds };
 }
 
 export function getVersionedTxIxResume(tx: VersionedTransaction) {
   const programIds: string[] = [];
-  tx.message.compiledInstructions.forEach(t => {
-    const programId = tx.message.staticAccountKeys[t.programIdIndex].toBase58();
-    if (!programIds.includes(programId)) {
-      programIds.push(programId);
+  const numIxs = tx.message.compiledInstructions.length;
+  if (numIxs) {
+    for (const item of tx.message.compiledInstructions) {
+      const programId = tx.message.staticAccountKeys[item.programIdIndex].toBase58();
+      if (!programIds.includes(programId)) {
+        programIds.push(programId);
+      }
     }
-  });
-  return { numIxs: tx.message.compiledInstructions.length, programIds: programIds };
+  }
+
+  return { numIxs, programIds: programIds };
 }
 
 export function getUniversalTxIxResume(tx: VersionedTransaction | Transaction) {
@@ -489,13 +500,15 @@ export const toUiAmount = (amount: number | string | BN, decimals: number) => {
   if (typeof amount === 'number') {
     const value = amount / 10 ** decimals;
     return value.toFixed(decimals);
-  } else if (typeof amount === 'string') {
+  }
+  if (typeof amount === 'string') {
     const bigNumberAmount = new BigNumber(amount);
     result = bigNumberAmount.dividedBy(baseConvert);
   } else {
     const bigNumberAmount = new BigNumber(amount.toString());
     result = bigNumberAmount.dividedBy(baseConvert);
   }
+
   return result.toFixed(decimals);
 };
 
@@ -506,17 +519,24 @@ export const toUiAmountBn = (amount: number | BN, decimals: number, asBn = false
   if (typeof amount === 'number') {
     const value = amount / 10 ** decimals;
     return asBn ? new BN(value) : value.toFixed(decimals);
-  } else {
-    const baseConvert = new BigNumber(10 ** decimals);
-    const bigNumberAmount = new BigNumber(amount.toString());
-    const value = bigNumberAmount.dividedBy(baseConvert);
-    return asBn ? new BN(value.toString()) : value.toFixed(decimals);
   }
+
+  const baseConvert = new BigNumber(10 ** decimals);
+  const bigNumberAmount = new BigNumber(amount.toString());
+  const value = bigNumberAmount.dividedBy(baseConvert);
+
+  return asBn ? new BN(value.toString()) : value.toFixed(decimals);
 };
 
 export const toTokenAmount = (amount: number | string, decimals: number, asString = false) => {
-  if (!amount || !decimals) {
+  if (!amount) {
     return asString ? '0' : new BigNumber(0);
+  }
+
+  if (!decimals) {
+    const result = new BigNumber(amount);
+
+    return asString ? result.toString() : result;
   }
 
   const multiplier = new BigNumber(10 ** decimals);
@@ -542,12 +562,15 @@ export const toTokenAmountBn = (amount: number | string | BN, decimals: number) 
 
 export function cutNumber(amount: number, decimals: number) {
   const str = `${amount}`;
+  if (!decimals) {
+    return str;
+  }
 
   return str.slice(0, str.indexOf('.') + decimals + 1);
 }
 
 export const makeDecimal = (bn: BN, decimals: number): number => {
-  return bn.toNumber() / Math.pow(10, decimals);
+  return bn.toNumber() / 10 ** decimals;
 };
 
 export const makeInteger = (amount: number, decimals: number): BN => {
@@ -580,32 +603,12 @@ export function slugify(text: string): string {
     .replace(/ +/g, '-');
 }
 
-/**
- * Flatten a multidimensional object
- *
- * For example:
- *   flattenObject{ a: 1, b: { c: 2 } }
- * Returns:
- *   { a: 1, c: 2}
- */
-export const flattenObject = (obj: any) => {
-  const flattened: any = {};
-
-  Object.keys(obj).forEach(key => {
-    const value = obj[key];
-
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      Object.assign(flattened, flattenObject(value));
-    } else {
-      flattened[key] = value;
-    }
-  });
-
-  return flattened;
-};
-
-export const getTokenOrCustomToken = async (connection: Connection, address: string, tokenFilterCallback: any) => {
-  const token = tokenFilterCallback(address) as TokenInfo | undefined;
+export const getTokenOrCustomToken = async (
+  connection: Connection,
+  address: string,
+  tokenFilterCallback: (address: string) => TokenInfo | undefined,
+) => {
+  const token = tokenFilterCallback(address);
 
   const unkToken = {
     address: address,
@@ -615,27 +618,26 @@ export const getTokenOrCustomToken = async (connection: Connection, address: str
     symbol: `[${shortenAddress(address)}]`,
   };
 
-  if (token) {
-    return token;
-  } else {
-    try {
-      const tokeninfo = await resolveParsedAccountInfo(connection, address);
-      const decimals = tokeninfo.data.parsed.info.decimals as number;
-      unkToken.decimals = decimals || 0;
-      return unkToken as TokenInfo;
-    } catch (error) {
-      console.error('Could not get token info:', error);
-      return unkToken as TokenInfo;
-    }
+  if (token) return token;
+
+  try {
+    const tokeninfo = await resolveParsedAccountInfo(connection, address);
+    const decimals = tokeninfo.data.parsed.info.decimals as number;
+    unkToken.decimals = decimals || 0;
+    return unkToken as TokenInfo;
+  } catch (error) {
+    console.error('Could not get token info:', error);
+    return unkToken as TokenInfo;
   }
 };
 
 export const toBuffer = (arr: Buffer | Uint8Array | Array<number>): Buffer => {
   if (Buffer.isBuffer(arr)) {
     return arr;
-  } else if (arr instanceof Uint8Array) {
-    return Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength);
-  } else {
-    return Buffer.from(arr);
   }
+  if (arr instanceof Uint8Array) {
+    return Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength);
+  }
+
+  return Buffer.from(arr);
 };

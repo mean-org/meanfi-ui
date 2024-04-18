@@ -284,6 +284,7 @@ export const MultisigTransferTokensModal = ({
     return () => clearTimeout(timeout);
   }, [assets, isVisible, selectedVault]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     // We need to debounce the recipient address input value to avoid numerous calls
     // Triggers when "debouncedToAddress" changes
@@ -293,7 +294,7 @@ export const MultisigTransferTokensModal = ({
       console.log('fromMint:', fromVault.address);
       validateAddress(debouncedToAddress, fromVault.address);
     }
-  }, [debouncedToAddress, fromVault, validateAddress]);
+  }, [debouncedToAddress, fromVault]);
 
   const onAcceptModal = () => {
     if (!fromVault) return;
@@ -667,6 +668,7 @@ export const MultisigTransferTokensModal = ({
                         className='token-max simplelink'
                         onKeyDown={() => {}}
                         onClick={() => {
+                          consoleOut('setAmount:', fromVault.balance, 'blue');
                           setAmount(cutNumber(fromVault.balance as number, selectedToken.decimals));
                         }}
                       >

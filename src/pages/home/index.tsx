@@ -159,6 +159,8 @@ import getNftMint from './getNftMint';
 import './style.scss';
 import useAccountPrograms from './useAccountPrograms';
 import useAppNavigation from './useAppNavigation';
+import type { LooseObject } from 'types/LooseObject';
+import { getStreamCategory } from 'middleware/streams';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));
@@ -345,9 +347,9 @@ export const HomeView = () => {
       if (confirmationHistory && confirmationHistory.length > 0) {
         if (operation !== undefined) {
           return confirmationHistory.some(h => h.operationType === operation && h.txInfoFetchStatus === 'fetching');
-        } else {
-          return confirmationHistory.some(h => h.txInfoFetchStatus === 'fetching');
         }
+
+        return confirmationHistory.some(h => h.txInfoFetchStatus === 'fetching');
       }
       return false;
     },
@@ -597,6 +599,7 @@ export const HomeView = () => {
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     (address: any) => {
       if (!address) {
         return;
@@ -729,7 +732,7 @@ export const HomeView = () => {
       const isAccountNative = isSelectedAssetNativeAccount(asset);
       let url = '';
       if (isAccountNative) {
-        url = `/assets`;
+        url = '/assets';
       } else {
         url = `/assets/${asset.publicAddress}`;
       }
@@ -816,7 +819,7 @@ export const HomeView = () => {
   }, []);
 
   const recordTxConfirmationSuccess = useCallback((item: TxConfirmationInfo) => {
-    let event: any = undefined;
+    let event: AppUsageEvent | undefined = undefined;
 
     switch (item.operationType) {
       case OperationType.Wrap:
@@ -858,7 +861,7 @@ export const HomeView = () => {
   }, []);
 
   const recordTxConfirmationFailure = useCallback((item: TxConfirmationInfo) => {
-    let event: any = undefined;
+    let event: AppUsageEvent | undefined = undefined;
 
     switch (item.operationType) {
       case OperationType.Wrap:
@@ -1115,9 +1118,9 @@ export const HomeView = () => {
 
           if (isMultisigContext) {
             return createAddSafeAssetTx(connection, publicKey, selectedMultisig, data, createAta);
-          } else {
-            return createV0InitAtaAccountTx(connection, new PublicKey(data.token.address), publicKey, createAta);
           }
+
+          return createV0InitAtaAccountTx(connection, new PublicKey(data.token.address), publicKey, createAta);
         },
       });
       closeCreateAssetModal(true);
@@ -1273,8 +1276,9 @@ export const HomeView = () => {
   const onExecuteTransferOwnershipTx = useCallback(
     async (data: SetAssetAuthPayload) => {
       let transaction: VersionedTransaction | Transaction | null = null;
-      let signature: any;
+      let signature: string;
       let encodedTx: string;
+      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
       let transactionLog: any[] = [];
 
       resetTransactionStatus();
@@ -1476,22 +1480,26 @@ export const HomeView = () => {
     setIsDeleteVaultModalVisible(true);
   }, []);
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const onAcceptDeleteVault = (data: any) => {
     consoleOut('deleteVault data:', data, 'blue');
     onExecuteCloseAssetTx(data);
   };
 
   const onExecuteCloseAssetTx = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     async (data: any) => {
       let transaction: VersionedTransaction | Transaction | null = null;
-      let signature: any;
+      let signature: string;
       let encodedTx: string;
       let multisigAuth = '';
+      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
       let transactionLog: any[] = [];
 
       resetTransactionStatus();
       setIsBusy(true);
 
+      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
       const closeAssetTx = async (inputAsset: UserTokenAccount, data: any) => {
         if (!publicKey || !inputAsset || !selectedMultisig || !multisigClient || !inputAsset.publicAddress) {
           console.error('I do not have anything, review');
@@ -1825,9 +1833,9 @@ export const HomeView = () => {
         : ((treasury as TreasuryInfo).associatedTokenAddress as string);
 
       if (treasuryType === 0) {
-        resume['openAmount'] += 1;
+        resume.openAmount += 1;
       } else {
-        resume['lockedAmount'] += 1;
+        resume.lockedAmount += 1;
       }
 
       let amountChange = 0;
@@ -1840,10 +1848,10 @@ export const HomeView = () => {
         amountChange = amount * tokenPrice;
       }
 
-      resume['totalNet'] += amountChange;
+      resume.totalNet += amountChange;
     }
 
-    resume['totalAmount'] += treasuryList.length;
+    resume.totalAmount += treasuryList.length;
 
     // Update state
     setStreamingAccountsSummary(resume);
@@ -1991,12 +1999,12 @@ export const HomeView = () => {
     const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 ?? [], treasurer);
 
     const vested = await getV1VestedValue(updatedStreamsv1, treasurer);
-    resume['totalNet'] = vested;
-    resume['totalAmount'] = updatedStreamsv1.length;
+    resume.totalNet = vested;
+    resume.totalAmount = updatedStreamsv1.length;
 
     const withdrawableValue = await getV2WithdrawableValue(updatedStreamsv2, treasurer);
-    resume['totalNet'] += withdrawableValue;
-    resume['totalAmount'] += updatedStreamsv2.length;
+    resume.totalNet += withdrawableValue;
+    resume.totalAmount += updatedStreamsv2.length;
 
     // Update state
     setIncomingStreamsSummary(resume);
@@ -2029,12 +2037,12 @@ export const HomeView = () => {
     const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 ?? [], treasurer);
 
     const unvested = await getV1UnvestedValue(updatedStreamsv1, treasurer);
-    resume['totalNet'] = unvested;
-    resume['totalAmount'] = updatedStreamsv1.length;
+    resume.totalNet = unvested;
+    resume.totalAmount = updatedStreamsv1.length;
 
     const fundsLeft = await getV2FundsLeftValue(updatedStreamsv2, treasurer);
-    resume['totalNet'] += fundsLeft;
-    resume['totalAmount'] += updatedStreamsv2.length;
+    resume.totalNet += fundsLeft;
+    resume.totalAmount += updatedStreamsv2.length;
 
     // Update state
     setOutgoingStreamsSummary(resume);
@@ -2083,7 +2091,9 @@ export const HomeView = () => {
         const opts = AnchorProvider.defaultOptions();
         const anchorWallet = {
           publicKey: publicKey,
+          // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
           signAllTransactions: async (txs: any) => txs,
+          // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
           signTransaction: async (tx: any) => tx,
         };
 
@@ -2098,13 +2108,16 @@ export const HomeView = () => {
       const accElements = uiInstruction.uiElements.filter(
         (elem: UiElement) => elem.dataElement && 'isSigner' in elem.dataElement,
       );
-      const accounts: any = {};
-      accElements.sort((a: any, b: any) => {
-        return a.index - b.index;
+      const accounts: LooseObject = {};
+      accElements.sort((a: UiElement, b: UiElement) => {
+        return (a.dataElement?.index ?? 0) > (b.dataElement?.index ?? 0)
+          ? 1
+          : (a.dataElement?.index ?? 0) < (b.dataElement?.index ?? 0)
+            ? -1
+            : 0;
       });
       for (const accItem of accElements) {
-        const accElement = accItem.dataElement as any;
-        accounts[accItem.name] = accElement.dataValue;
+        accounts[accItem.name] = accItem.dataElement?.dataValue;
       }
       // ARGS
       const argElements = uiInstruction.uiElements.filter(
@@ -2114,6 +2127,7 @@ export const HomeView = () => {
         const argElement = elem.dataElement as Arg;
         return argElement.dataValue;
       });
+      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
       args.sort((a: any, b: any) => {
         return a.index - b.index;
       });
@@ -2126,32 +2140,28 @@ export const HomeView = () => {
     [connection, publicKey],
   );
 
-  const getCredixProgram = useCallback(async (connection: Connection, investor: PublicKey) => {
-    let program;
+  const getCredixProgram = useCallback((connection: Connection) => {
     if (isDev()) {
-      program = credixDevnet.createProgram(connection, 'confirmed');
-    } else {
-      program = credixMainnet.createProgram(connection, 'confirmed');
+      return credixDevnet.createProgram(connection, 'confirmed');
     }
-    consoleOut('getCredixProgram => investor:', investor.toBase58());
-    consoleOut('getCredixProgram => programId:', program.programId.toBase58());
-    return program;
+
+    return credixMainnet.createProgram(connection, 'confirmed');
   }, []);
 
   const createCredixDepositIx = useCallback(
-    async (investor: PublicKey, amount: number, marketplace: string) => {
-      if (!connection) {
+    async (investor: PublicKey | undefined, amount: number, marketplace: string) => {
+      if (!connection || !investor) {
         return null;
       }
 
       try {
-        const program = await getCredixProgram(connection, investor);
+        const program = getCredixProgram(connection);
 
         if (isDev()) {
           return credixDevnet.getDepositIx(program, investor, amount, marketplace);
-        } else {
-          return credixMainnet.getDepositIx(program, investor, amount, marketplace);
         }
+
+        return credixMainnet.getDepositIx(program, investor, amount, marketplace);
       } catch (error) {
         console.error(error);
 
@@ -2162,66 +2172,72 @@ export const HomeView = () => {
   );
 
   const createCredixDepositTrancheIx = useCallback(
-    async (investor: PublicKey, deal: PublicKey, amount: number, trancheIndex: number, marketplace: string) => {
-      if (!connection) {
+    async (
+      investor: PublicKey | undefined,
+      deal: PublicKey | undefined,
+      amount: number,
+      trancheIndex: number,
+      marketplace: string,
+    ) => {
+      if (!connection || !investor || !deal || trancheIndex < 0) {
         return null;
       }
 
-      const program = await getCredixProgram(connection, investor);
+      const program = getCredixProgram(connection);
 
       if (isDev()) {
         return credixDevnet.getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
-      } else {
-        return credixMainnet.getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
       }
+
+      return credixMainnet.getTrancheDepositIx(program, investor, deal, amount, trancheIndex, marketplace);
     },
     [connection, getCredixProgram],
   );
 
   const createCredixWithdrawIx = useCallback(
-    async (investor: PublicKey, amount: number, marketplace: string) => {
-      if (!connection) {
+    async (investor: PublicKey | undefined, amount: number, marketplace: string) => {
+      if (!connection || !investor) {
         return null;
       }
 
-      const program = await getCredixProgram(connection, investor);
+      const program = getCredixProgram(connection);
       if (isDev()) {
         return credixDevnet.getCreateWithdrawRequestIx(program, investor, amount, marketplace);
-      } else {
-        return credixMainnet.getCreateWithdrawRequestIx(program, investor, amount, marketplace);
       }
+
+      return credixMainnet.getCreateWithdrawRequestIx(program, investor, amount, marketplace);
     },
     [connection, getCredixProgram],
   );
 
   const createCredixRedeemRequestIx = useCallback(
-    async (investor: PublicKey, amount: number, marketplace: string) => {
-      if (!connection) {
+    async (investor: PublicKey | undefined, amount: number, marketplace: string) => {
+      if (!connection || !investor) {
         return null;
       }
 
-      const program = await getCredixProgram(connection, investor);
+      const program = getCredixProgram(connection);
       if (isDev()) {
         return credixDevnet.getRedeemWithdrawRequestIx(program, investor, amount, marketplace);
-      } else {
-        return credixMainnet.getRedeemWithdrawRequestIx(program, investor, amount, marketplace);
       }
+
+      return credixMainnet.getRedeemWithdrawRequestIx(program, investor, amount, marketplace);
     },
     [connection, getCredixProgram],
   );
 
   const createCredixWithdrawTrancheIx = useCallback(
-    async (investor: PublicKey, deal: PublicKey, trancheIndex: number, marketplace: string) => {
-      if (!connection) {
+    async (investor: PublicKey | undefined, deal: PublicKey | undefined, trancheIndex: number, marketplace: string) => {
+      if (!connection || !investor || !deal || trancheIndex < 0) {
         return null;
       }
 
-      const program = await getCredixProgram(connection, investor);
+      const program = getCredixProgram(connection);
       if (isDev()) {
         return credixDevnet.getTrancheWithdrawIx(program, investor, deal, trancheIndex, marketplace);
-      } else {
-        return credixMainnet.getTrancheWithdrawIx(program, investor, deal, trancheIndex, marketplace);
       }
+
+      return credixMainnet.getTrancheWithdrawIx(program, investor, deal, trancheIndex, marketplace);
     },
     [connection, getCredixProgram],
   );
@@ -2229,14 +2245,15 @@ export const HomeView = () => {
   const onExecuteCreateTransactionProposal = useCallback(
     async (params: CreateNewProposalParams) => {
       let transaction: Transaction | null = null;
-      let signature: any;
+      let signature: string;
       let encodedTx: string;
+      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
       let transactionLog: any[] = [];
 
       resetTransactionStatus();
       setIsBusy(true);
 
-      const createTransactionProposal = async (data: any) => {
+      const createTransactionProposal = async (data: CreateNewProposalParams) => {
         if (!publicKey || !selectedMultisig || !multisigClient) {
           throw new Error('No selected multisig');
         }
@@ -2247,84 +2264,97 @@ export const HomeView = () => {
         if (data.appId === NATIVE_LOADER.toBase58()) {
           const tx = await parseSerializedTx(connection, data.instruction.uiElements[0].value);
           if (!tx) {
-            return null;
+            throw new Error('Could not parse custom transaction');
           }
           operation = OperationType.Custom;
           proposalIx = tx.instructions[0];
         } else if (isCredixFinance(data.appId)) {
-          const investorPK = new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'investor').value);
-          const marketPlaceVal = String(data.instruction.uiElements.find((x: any) => x.name === 'marketName').value);
+          const investor = data.instruction.uiElements.find(x => x.name === 'investor');
+          const investorPK = investor ? new PublicKey(investor.value) : undefined;
+          const marketName = data.instruction.uiElements.find(x => x.name === 'marketName');
+          const marketPlaceVal = marketName ? String(marketName.value) : '';
           let amountVal = 0;
           consoleOut('instruction name:', data.instruction.name, 'orange');
           switch (data.instruction.name) {
-            case 'depositFunds':
+            case 'depositFunds': {
               operation = OperationType.CredixDepositFunds;
-              amountVal = Number.parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+              const amountInput = data.instruction.uiElements.find(x => x.name === 'amount');
+              amountVal = Number.parseFloat(amountInput?.value ?? 0);
               consoleOut('**** common inputs: ', {
-                investorPK: investorPK.toString(),
+                investorPK: investorPK?.toString(),
                 marketPlaceVal,
                 amountVal,
               });
               proposalIx = await createCredixDepositIx(investorPK, amountVal, marketPlaceVal);
               break;
+            }
 
-            case 'createWithdrawRequest':
+            case 'createWithdrawRequest': {
               operation = OperationType.CredixWithdrawFunds;
-              amountVal = Number.parseFloat(
-                data.instruction.uiElements.find((x: any) => x.name === 'baseWithdrawalAmount').value,
-              );
+              const amountInput = data.instruction.uiElements.find(x => x.name === 'baseWithdrawalAmount');
+              amountVal = Number.parseFloat(amountInput?.value ?? 0);
               consoleOut('**** common inputs: ', {
-                investorPK: investorPK.toString(),
+                investorPK: investorPK?.toString(),
                 marketPlaceVal,
                 amountVal,
               });
               proposalIx = await createCredixWithdrawIx(investorPK, amountVal, marketPlaceVal);
               break;
+            }
 
-            case 'redeemWithdrawRequest':
+            case 'redeemWithdrawRequest': {
               operation = OperationType.CredixRedeemWithdrawRequest;
-              amountVal = Number.parseFloat(
-                data.instruction.uiElements.find((x: any) => x.name === 'baseWithdrawalAmount').value,
-              );
+              const amountInput = data.instruction.uiElements.find(x => x.name === 'baseWithdrawalAmount');
+              amountVal = Number.parseFloat(amountInput?.value ?? 0);
               consoleOut('**** common inputs: ', {
-                investorPK: investorPK.toString(),
+                investorPK: investorPK?.toString(),
                 marketPlaceVal,
                 amountVal,
               });
               proposalIx = await createCredixRedeemRequestIx(investorPK, amountVal, marketPlaceVal);
               break;
+            }
 
-            case 'depositTranche':
+            case 'depositTranche': {
               operation = OperationType.CredixDepositTranche;
-              amountVal = Number.parseFloat(data.instruction.uiElements.find((x: any) => x.name === 'amount').value);
+              const amountInput = data.instruction.uiElements.find(x => x.name === 'amount');
+              amountVal = Number.parseFloat(amountInput?.value ?? 0);
               consoleOut('**** common inputs: ', {
-                investorPK: investorPK.toString(),
+                investorPK: investorPK?.toString(),
                 marketPlaceVal,
                 amountVal,
               });
+              const deal = data.instruction.uiElements.find(x => x.name === 'deal');
+              const dealPK = deal ? new PublicKey(deal.value) : undefined;
+              const trancheIndex = data.instruction.uiElements.find(x => x.name === 'trancheIndex');
               proposalIx = await createCredixDepositTrancheIx(
                 investorPK,
-                new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
+                dealPK,
                 amountVal,
-                Number.parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
+                Number.parseInt(trancheIndex?.value ?? -1),
                 marketPlaceVal,
               );
               break;
+            }
 
-            case 'withdrawTranche':
+            case 'withdrawTranche': {
               operation = OperationType.CredixWithdrawTranche;
               consoleOut('**** common inputs: ', {
-                investorPK: investorPK.toString(),
+                investorPK: investorPK?.toString(),
                 marketPlaceVal,
                 amountVal,
               });
+              const deal = data.instruction.uiElements.find(x => x.name === 'deal');
+              const dealPK = deal ? new PublicKey(deal.value) : undefined;
+              const trancheIndex = data.instruction.uiElements.find(x => x.name === 'trancheIndex');
               proposalIx = await createCredixWithdrawTrancheIx(
                 investorPK,
-                new PublicKey(data.instruction.uiElements.find((x: any) => x.name === 'deal').value),
-                Number.parseInt(data.instruction.uiElements.find((x: any) => x.name === 'trancheIndex').value),
+                dealPK,
+                Number.parseInt(trancheIndex?.value ?? -1),
                 marketPlaceVal,
               );
               break;
+            }
           }
         } else {
           proposalIx = await createProposalIx(new PublicKey(data.appId), data.config, data.instruction);
@@ -2354,7 +2384,11 @@ export const HomeView = () => {
           proposalIx.data,
         );
 
-        return tx?.transaction ?? null;
+        if (!tx?.transaction) {
+          throw new Error('Could not create proposal. multisigClient.buildCreateProposalTransaction returned null');
+        }
+
+        return tx.transaction;
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -2423,7 +2457,7 @@ export const HomeView = () => {
         }
 
         const result = await createTransactionProposal(params)
-          .then((value: any) => {
+          .then(value => {
             consoleOut('createTransactionProposal returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -2436,7 +2470,7 @@ export const HomeView = () => {
             transaction = value;
             return true;
           })
-          .catch((error: any) => {
+          .catch(error => {
             console.error('createTransactionProposal error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2721,7 +2755,6 @@ export const HomeView = () => {
       case 'testnet':
         network = NETWORK.Testnet;
         break;
-      case 'devnet':
       default:
         network = NETWORK.Devnet;
         break;
@@ -2779,7 +2812,7 @@ export const HomeView = () => {
         setSelectedProgram(undefined);
       }
     }
-  }, [connection, isMultisigContext, location.pathname, programId, programs, publicKey]);
+  }, [connection, programId, programs, publicKey]);
 
   // Preset token based on url param asset
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
@@ -2977,7 +3010,7 @@ export const HomeView = () => {
 
     setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)));
 
-    const onlyOuts = streamList.filter(item => !isInboundStream(item) && (item as any).category === 0);
+    const onlyOuts = streamList.filter(item => !isInboundStream(item) && getStreamCategory(item) === Category.default);
     setOutgoingStreamList(onlyOuts);
   }, [publicKey, streamList, connection, isInboundStream]);
 
@@ -3134,7 +3167,7 @@ export const HomeView = () => {
     if (!wSol?.publicAddress) {
       openNotification({
         title: 'Cannot unwrap SOL',
-        description: `Wrapped SOL token account not found for the currently connected wallet account`,
+        description: 'Wrapped SOL token account not found for the currently connected wallet account',
         type: 'info',
       });
       return;
@@ -3191,14 +3224,16 @@ export const HomeView = () => {
     }
     if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/incoming/${streamingItemId}`) {
       return `/${RegisteredAppPaths.PaymentStreaming}/incoming`;
-    } else if (location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}/outgoing`)) {
-      return `/${RegisteredAppPaths.PaymentStreaming}/outgoing`;
-    } else if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingItemId}`) {
-      return `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
-    } else {
-      turnOffRightPanel();
-      return '';
     }
+    if (location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}/outgoing`)) {
+      return `/${RegisteredAppPaths.PaymentStreaming}/outgoing`;
+    }
+    if (location.pathname === `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${streamingItemId}`) {
+      return `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`;
+    }
+
+    turnOffRightPanel();
+    return '';
   };
 
   const onBackButtonClicked = () => {
@@ -3207,16 +3242,17 @@ export const HomeView = () => {
     if (location.pathname === '/my-account') {
       turnOffRightPanel();
       return;
-    } else if (location.pathname.indexOf('/assets') !== -1) {
+    }
+    if (location.pathname.indexOf('/assets') !== -1) {
       turnOffRightPanel();
       if (selectedAsset) {
         url = getAssetPath(selectedAsset);
       } else {
-        url = `/assets`;
+        url = '/assets';
       }
     } else if (location.pathname.indexOf('/super-safe') !== -1) {
       turnOffRightPanel();
-      url = `/super-safe?v=proposals`;
+      url = '/super-safe?v=proposals';
     } else if (location.pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)) {
       url = getReturnPathForStreaming();
     } else {
@@ -3239,9 +3275,9 @@ export const HomeView = () => {
 
       if (!isSol && (selectedAsset.balance as number) === 0) {
         return true;
-      } else {
-        return false;
       }
+
+      return false;
     }
     return false;
   };
@@ -3249,9 +3285,9 @@ export const HomeView = () => {
   const isSendFundsValid = () => {
     if (selectedAsset && (selectedAsset.balance as number) > 0) {
       return true;
-    } else {
-      return false;
     }
+
+    return false;
   };
 
   const isTransferOwnershipValid = () => {
@@ -3260,9 +3296,9 @@ export const HomeView = () => {
 
       if (!isSol) {
         return true;
-      } else {
-        return false;
       }
+
+      return false;
     }
   };
 
@@ -3272,7 +3308,7 @@ export const HomeView = () => {
       items.push({
         key: '01-create-asset',
         label: (
-          <div onClick={onShowCreateAssetModal}>
+          <div onKeyDown={() => {}} onClick={onShowCreateAssetModal}>
             <IconAdd className='mean-svg-icons' />
             <span className='menu-item-text'>Create an asset</span>
           </div>
@@ -3282,7 +3318,7 @@ export const HomeView = () => {
     items.push({
       key: '02-suggest-asset',
       label: (
-        <div onClick={showSuggestAssetModal}>
+        <div onKeyDown={() => {}} onClick={showSuggestAssetModal}>
           <IconLightBulb className='mean-svg-icons' />
           <span className='menu-item-text'>Suggest an asset</span>
         </div>
@@ -3293,7 +3329,7 @@ export const HomeView = () => {
         items.push({
           key: '03-show-low-balances',
           label: (
-            <div onClick={() => toggleHideLowBalances(false)}>
+            <div onKeyDown={() => {}} onClick={() => toggleHideLowBalances(false)}>
               <IconEyeOn className='mean-svg-icons' />
               <span className='menu-item-text'>Show low balances</span>
             </div>
@@ -3303,7 +3339,7 @@ export const HomeView = () => {
         items.push({
           key: '04-hide-low-balances',
           label: (
-            <div onClick={() => toggleHideLowBalances(true)}>
+            <div onKeyDown={() => {}} onClick={() => toggleHideLowBalances(true)}>
               <IconEyeOff className='mean-svg-icons' />
               <span className='menu-item-text'>Hide low balances</span>
             </div>
@@ -3346,9 +3382,9 @@ export const HomeView = () => {
   const renderNetworth = () => {
     if (netWorth) {
       return toUsCurrency(netWorth);
-    } else {
-      return '$0.00';
     }
+
+    return '$0.00';
   };
 
   const renderSelectedAccountSummaryInner = () => {
@@ -3375,6 +3411,7 @@ export const HomeView = () => {
     return (
       <div className='networth-list-item-wrapper' key='account-summary-category'>
         <div
+          onKeyDown={() => {}}
           onClick={() => {
             turnOnRightPanel();
             setSelectedNft(undefined);
@@ -3398,13 +3435,13 @@ export const HomeView = () => {
     const renderValues = () => {
       if (totalStreamsAmount === 0) {
         return <div className='subtitle'>{t('account-area.no-money-streams')}</div>;
-      } else {
-        return (
-          <div className='subtitle'>
-            {incomingAmount} {t('streams.stream-stats-incoming')}, {outgoingAmount} {t('streams.stream-stats-outgoing')}
-          </div>
-        );
       }
+
+      return (
+        <div className='subtitle'>
+          {incomingAmount} {t('streams.stream-stats-incoming')}, {outgoingAmount} {t('streams.stream-stats-outgoing')}
+        </div>
+      );
     };
 
     return (
@@ -3412,6 +3449,7 @@ export const HomeView = () => {
         {
           <div
             key='streams-category'
+            onKeyDown={() => {}}
             onClick={() => {
               setSelectedNft(undefined);
               navigateToStreaming();
@@ -3425,6 +3463,7 @@ export const HomeView = () => {
                 <div className='token-icon animate-border-loading'>
                   <div
                     className='streams-count simplelink'
+                    onKeyDown={() => {}}
                     onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -3439,6 +3478,7 @@ export const HomeView = () => {
                 <div className={totalStreamsAmount !== 0 ? 'token-icon animate-border' : 'token-icon'}>
                   <div
                     className='streams-count simplelink'
+                    onKeyDown={() => {}}
                     onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -3493,15 +3533,16 @@ export const HomeView = () => {
           <Spin indicator={loadIndicator} />
         </div>
       );
-    } else if (tokensLoaded) {
+    }
+    if (tokensLoaded) {
       return (
         <div className='flex flex-center'>
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
         </div>
       );
-    } else {
-      return null;
     }
+
+    return null;
   };
 
   const renderAssetsList = () => {
@@ -3664,7 +3705,7 @@ export const HomeView = () => {
       return {
         key: `${index + 44}-${item.uiComponentId}`,
         label: (
-          <span className='menu-item-text' onClick={item.callBack}>
+          <span className='menu-item-text' onKeyDown={() => {}} onClick={item.callBack}>
             {item.caption}
           </span>
         ),
@@ -3733,21 +3774,21 @@ export const HomeView = () => {
                     </Button>
                   </Tooltip>
                 );
-              } else {
-                return (
-                  <Button
-                    type='default'
-                    shape='round'
-                    size='small'
-                    key={item.uiComponentId}
-                    className='thin-stroke'
-                    disabled={item.disabled}
-                    onClick={item.callBack}
-                  >
-                    <span>{item.caption}</span>
-                  </Button>
-                );
               }
+
+              return (
+                <Button
+                  type='default'
+                  shape='round'
+                  size='small'
+                  key={item.uiComponentId}
+                  className='thin-stroke'
+                  disabled={item.disabled}
+                  onClick={item.callBack}
+                >
+                  <span>{item.caption}</span>
+                </Button>
+              );
             })
           )}
         </Space>
@@ -3774,9 +3815,9 @@ export const HomeView = () => {
     const renderBalance = () => {
       if (tokenPrice > 0) {
         return selectedAsset.balance ? toUsCurrency((selectedAsset.balance || 0) * tokenPrice) : '$0.00';
-      } else {
-        return '$0.00';
       }
+
+      return '$0.00';
     };
     const tokenPrice = getTokenPriceByAddress(selectedAsset.address, selectedAsset.symbol);
 
@@ -3857,8 +3898,8 @@ export const HomeView = () => {
               <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
                 {/* Left / top panel */}
                 <div className='meanfi-two-panel-left'>
-                  <div id='streams-refresh-noreset-cta' onClick={onRefreshStreamsNoReset}></div>
-                  <div id='streams-refresh-reset-cta' onClick={onRefreshStreamsReset}></div>
+                  <div id='streams-refresh-noreset-cta' onKeyDown={() => {}} onClick={onRefreshStreamsNoReset} />
+                  <div id='streams-refresh-reset-cta' onKeyDown={() => {}} onClick={onRefreshStreamsReset} />
 
                   <div className='inner-container'>
                     {/* Account summary (sticky) */}
