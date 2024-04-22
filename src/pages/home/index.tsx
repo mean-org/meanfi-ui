@@ -94,6 +94,7 @@ import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { type MappedTransaction, fetchAccountHistory } from 'middleware/history';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
+import { getStreamCategory } from 'middleware/streams';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -145,6 +146,7 @@ import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
+import type { LooseObject } from 'types/LooseObject';
 import { AppsList, AssetActivity, NftDetails, NftPaginatedList, OtherAssetsList } from 'views';
 import AssetList from 'views/AssetList';
 import { getBuyOptionsCta } from './asset-ctas/buyOptionsCta';
@@ -159,8 +161,6 @@ import getNftMint from './getNftMint';
 import './style.scss';
 import useAccountPrograms from './useAccountPrograms';
 import useAppNavigation from './useAppNavigation';
-import type { LooseObject } from 'types/LooseObject';
-import { getStreamCategory } from 'middleware/streams';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));

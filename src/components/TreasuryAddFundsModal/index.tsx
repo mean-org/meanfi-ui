@@ -40,8 +40,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TokenDisplay } from '../TokenDisplay';
 import type { LooseObject } from 'types/LooseObject';
+import { TokenDisplay } from '../TokenDisplay';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
