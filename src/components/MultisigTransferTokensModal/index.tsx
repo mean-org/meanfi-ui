@@ -27,12 +27,12 @@ import { TransactionStatus } from 'models/enums';
 import type { TransferTokensTxParams } from 'models/multisig';
 import React, { type ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 import { InputMean } from '../InputMean';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TokenListItem } from '../TokenListItem';
 import './style.scss';
-import type { LooseObject } from 'types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

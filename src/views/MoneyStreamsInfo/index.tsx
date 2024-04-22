@@ -14,6 +14,7 @@ import {
   AccountType,
   type AddFundsToAccountTransactionAccounts,
   type AllocateFundsToStreamTransactionAccounts,
+  Category,
   type CreateAccountTransactionAccounts,
   NATIVE_SOL_MINT,
   PaymentStreaming,
@@ -22,7 +23,6 @@ import {
   type Stream,
   type TransactionFees,
   calculateFeesForAction,
-  Category,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { LAMPORTS_PER_SOL, PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
