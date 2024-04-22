@@ -18,7 +18,6 @@ const createTokenTransferTx = async (
   amount: string | number, // Allow both types for compatibility
 ): Promise<Transaction> => {
   const ixs: TransactionInstruction[] = [];
-  const amountBN = new BN(amount);
   const txFeePayer = feePayer || sender;
 
   if (mint.equals(SOL_MINT)) {
@@ -26,7 +25,7 @@ const createTokenTransferTx = async (
       SystemProgram.transfer({
         fromPubkey: sender,
         toPubkey: beneficiary,
-        lamports: BigInt(amountBN.toString()),
+        lamports: BigInt(amount),
       }),
     );
   } else {
@@ -80,14 +79,7 @@ const createTokenTransferTx = async (
     }
 
     ixs.push(
-      Token.createTransferInstruction(
-        TOKEN_PROGRAM_ID,
-        senderToken,
-        beneficiaryToken,
-        sender,
-        [],
-        new u64(amountBN.toString()),
-      ),
+      Token.createTransferInstruction(TOKEN_PROGRAM_ID, senderToken, beneficiaryToken, sender, [], new u64(amount)),
     );
   }
 

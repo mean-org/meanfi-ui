@@ -22,6 +22,7 @@ import {
   type Stream,
   type TransactionFees,
   calculateFeesForAction,
+  Category,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { LAMPORTS_PER_SOL, PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
@@ -56,7 +57,7 @@ import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamingAccountOwner } from 'middleware/getStreamingAccountOwner';
 import { SOL_MINT } from 'middleware/ids';
-import { getStreamTitle } from 'middleware/streams';
+import { getStreamCategory, getStreamTitle } from 'middleware/streams';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -1638,7 +1639,7 @@ export const MoneyStreamsInfoView = (props: {
     setIncomingStreamList(sortedIncomingStreamsList);
 
     // Sort the list of outgoinng streams by estimated depletion date
-    const onlyOuts = streamList.filter(item => !isInboundStream(item) && (item as any).category === 0);
+    const onlyOuts = streamList.filter(item => !isInboundStream(item) && getStreamCategory(item) === Category.default);
     const sortedOutgoingStreamsList = [...onlyOuts].sort((a, b) => sortStreamsByEstimatedDepletionDate(a, b));
 
     consoleOut('outgoing streams:', sortedOutgoingStreamsList, 'crimson');

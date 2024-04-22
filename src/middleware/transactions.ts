@@ -115,6 +115,7 @@ export const signTx = async (
   publicKey: PublicKey,
   transaction: Transaction | VersionedTransaction | null,
 ): Promise<SignTxResult> => {
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const txLog: any[] = [];
 
   if (wallet && publicKey && transaction) {
@@ -132,7 +133,7 @@ export const signTx = async (
           log: txLog,
         };
       })
-      .catch((error: any) => {
+      .catch(error => {
         console.error('Signing transaction failed', error);
         txLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
@@ -148,23 +149,24 @@ export const signTx = async (
           error,
         };
       });
-  } else {
-    txLog.push({
-      action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-      result: 'Cannot start transaction or Wallet not found!',
-    });
-    customLogger.logError(`${title || 'Sign'} transaction failed`, {
-      transcript: txLog,
-    });
-    return {
-      encodedTransaction: null,
-      signedTransaction: null,
-      log: txLog,
-    };
   }
+
+  txLog.push({
+    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+    result: 'Cannot start transaction or Wallet not found!',
+  });
+  customLogger.logError(`${title || 'Sign'} transaction failed`, {
+    transcript: txLog,
+  });
+  return {
+    encodedTransaction: null,
+    signedTransaction: null,
+    log: txLog,
+  };
 };
 
 export const sendTx = async (title: string, connection: Connection, encodedTx: string): Promise<SendTxResult> => {
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const txLog: any[] = [];
 
   if (connection && encodedTx) {
@@ -196,19 +198,19 @@ export const sendTx = async (title: string, connection: Connection, encodedTx: s
           error,
         };
       });
-  } else {
-    txLog.push({
-      action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-      result: 'Cannot start transaction or Wallet not found!',
-    });
-    customLogger.logError(`${title || 'Sign'} transaction failed`, {
-      transcript: txLog,
-    });
-    return {
-      signature: null,
-      log: txLog,
-    };
   }
+
+  txLog.push({
+    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+    result: 'Cannot start transaction or Wallet not found!',
+  });
+  customLogger.logError(`${title || 'Sign'} transaction failed`, {
+    transcript: txLog,
+  });
+  return {
+    signature: null,
+    log: txLog,
+  };
 };
 
 export const serializeTx = (signed: Transaction | VersionedTransaction) => {
@@ -258,11 +260,11 @@ const getTxSize = (tx: Transaction, feePayer: PublicKey): number => {
   const accounts = new Set<string>(feePayerPk);
 
   const ixsSize = tx.instructions.reduce((acc, ix) => {
-    ix.keys.forEach(({ pubkey, isSigner }) => {
-      const pk = pubkey.toBase58();
-      if (isSigner) signers.add(pk);
+    for (const item of ix.keys) {
+      const pk = item.pubkey.toBase58();
+      if (item.isSigner) signers.add(pk);
       accounts.add(pk);
-    });
+    }
 
     accounts.add(ix.programId.toBase58());
 
@@ -443,7 +445,9 @@ export const composeV0TxWithPrioritizationFees = async (
   }).compileToV0Message();
   const transaction = new VersionedTransaction(messageV0);
   if (additionalAccounts?.length) {
-    additionalAccounts.forEach(a => transaction.addSignature(a.publicKey, a.secretKey));
+    for (const item of additionalAccounts) {
+      transaction.addSignature(item.publicKey, item.secretKey);
+    }
   }
 
   // Get compute budget
@@ -460,7 +464,9 @@ export const composeV0TxWithPrioritizationFees = async (
     }).compileToV0Message();
     const newTx = new VersionedTransaction(newTxMessage);
     if (additionalAccounts?.length) {
-      additionalAccounts.forEach(a => newTx.addSignature(a.publicKey, a.secretKey));
+      for (const item of additionalAccounts) {
+        newTx.addSignature(item.publicKey, item.secretKey);
+      }
     }
 
     return newTx;

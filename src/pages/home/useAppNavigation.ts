@@ -61,19 +61,23 @@ const useAppNavigation = ({ asset, selectedAccount }: Args) => {
     // The category is inferred from the route path
     if (pathname.startsWith('/programs/')) {
       return 'other-assets';
-    } else if (isAccountSummary) {
+    }
+    if (isAccountSummary) {
       // 1.- If the route starts with my-account or super-safe, set category to "account-summary"
       consoleOut('Setting category:', 'account-summary', 'crimson');
       return 'account-summary';
-    } else if (pathname.startsWith('/assets')) {
+    }
+    if (pathname.startsWith('/assets')) {
       // 2.- If the route starts with assets, set category to "assets"
       consoleOut('Setting category:', 'assets', 'crimson');
       return 'assets';
-    } else if (pathname.startsWith('/nfts')) {
+    }
+    if (pathname.startsWith('/nfts')) {
       // 3.- If the route starts with nfts, set category to "nfts"
       consoleOut('Setting category:', 'nfts', 'crimson');
       return 'nfts';
-    } else if (isKnownApp && !isAccountSummary) {
+    }
+    if (isKnownApp && !isAccountSummary) {
       consoleOut('Setting category:', 'apps', 'crimson');
       return 'apps';
     }
@@ -91,7 +95,7 @@ const useAppNavigation = ({ asset, selectedAccount }: Args) => {
     }
     if (isAccountSummary) return;
     setDetailsPanelOpen(true);
-  }, [pathname, setDetailsPanelOpen, isAccountSummary]);
+  }, [pathname, isAccountSummary]);
 
   const turnOffRightPanel = () => {
     setDetailsPanelOpen(false);
@@ -129,7 +133,8 @@ const useAppNavigation = ({ asset, selectedAccount }: Args) => {
     if (!selectedAccount.isMultisig && pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)) {
       openNotification({
         title: 'Access forbidden',
-        description: `You are trying to access the SuperSafe App from your personal account. To use the SuperSafe feature please connect with a signer account and try again.`,
+        description:
+          'You are trying to access the SuperSafe App from your personal account. To use the SuperSafe feature please connect with a signer account and try again.',
         type: 'warning',
       });
       navigate('/my-account');
@@ -137,7 +142,7 @@ const useAppNavigation = ({ asset, selectedAccount }: Args) => {
     }
 
     // if opening personal account from safe go to safe
-    if (selectedAccount.isMultisig && pathname.startsWith(`/my-account`)) {
+    if (selectedAccount.isMultisig && pathname.startsWith('/my-account')) {
       navigate(`/${RegisteredAppPaths.SuperSafe}?v=proposals`);
       return;
     }
