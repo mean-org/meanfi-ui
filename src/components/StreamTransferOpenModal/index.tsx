@@ -1,7 +1,7 @@
 import type { StreamInfo } from '@mean-dao/money-streaming';
 import type { Stream } from '@mean-dao/payment-streaming';
 import { Button, Modal } from 'antd';
-import Checkbox from 'antd/lib/checkbox/Checkbox';
+import Checkbox, { type CheckboxChangeEvent } from 'antd/lib/checkbox/Checkbox';
 import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
@@ -9,9 +9,14 @@ import { isValidAddress } from 'middleware/ui';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+type StreamTransferPayload = {
+  title: string;
+  address: string;
+};
+
 export const StreamTransferOpenModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (params: StreamTransferPayload) => void;
   isVisible: boolean;
   streamDetail: Stream | StreamInfo | undefined;
 }) => {
@@ -46,12 +51,12 @@ export const StreamTransferOpenModal = (props: {
     [streamDetail],
   );
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
-  const handleAddressChange = (e: any) => {
-    setAddress(e.target.value);
+  const handleAddressChange = (value: string) => {
+    setAddress(value);
   };
 
   const isAddressOwnAccount = (): boolean => {
@@ -104,10 +109,11 @@ export const StreamTransferOpenModal = (props: {
   };
 
   const onAcceptModal = () => {
-    handleOk({
+    const params: StreamTransferPayload = {
       title: proposalTitle,
       address: address,
-    });
+    };
+    handleOk(params);
   };
 
   const onCloseModal = () => {
@@ -117,7 +123,7 @@ export const StreamTransferOpenModal = (props: {
     handleClose();
   };
 
-  const onIsVerifiedRecipientChange = (e: any) => {
+  const onIsVerifiedRecipientChange = (e: CheckboxChangeEvent) => {
     setIsVerifiedRecipient(e.target.checked);
   };
 
@@ -160,7 +166,7 @@ export const StreamTransferOpenModal = (props: {
                 autoComplete='on'
                 autoCorrect='off'
                 type='text'
-                onChange={handleAddressChange}
+                onChange={e => handleAddressChange(e.target.value)}
                 placeholder={t('transfer-stream.streamid-placeholder')}
                 required={true}
                 spellCheck='false'

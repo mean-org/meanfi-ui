@@ -1,4 +1,4 @@
-import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
+import { PublicKey, type AccountInfo, type ParsedAccountData } from '@solana/web3.js';
 import { Drawer, Modal, Tabs } from 'antd';
 import { TextInput } from 'components/TextInput';
 import { TokenListItem } from 'components/TokenListItem';
@@ -9,6 +9,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
+import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 import { getTokensWithBalances } from 'middleware/accounts';
 import { consoleOut, isValidAddress } from 'middleware/ui';
 import { getAmountFromLamports, shortenAddress } from 'middleware/utils';
@@ -16,18 +17,20 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { UserTokenAccount } from 'models/accounts';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 import { OneTimePayment, RepeatingPayment } from 'views';
 
 type TransfersTabOption = 'one-time' | 'recurring';
 
-export const SendAssetModal = (props: {
-  handleClose: any;
+interface Props {
   isVisible: boolean;
   selected?: TransfersTabOption;
   selectedToken: UserTokenAccount | undefined;
   title?: string;
-}) => {
-  const { selected, isVisible, handleClose, selectedToken, title } = props;
+  handleClose: () => void;
+}
+
+export const SendAssetModal = ({ selected, isVisible, handleClose, selectedToken, title }: Props) => {
   const { priceList, splTokenList } = useContext(AppStateContext);
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
@@ -35,7 +38,7 @@ export const SendAssetModal = (props: {
   const { t } = useTranslation('common');
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [userBalances, setUserBalances] = useState<any>();
+  const [userBalances, setUserBalances] = useState<LooseObject>();
   const [token, setToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenFilter, setTokenFilter] = useState('');
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
@@ -56,12 +59,8 @@ export const SendAssetModal = (props: {
     autoFocusInput();
   };
 
-  const hideDrawer = () => {
-    setIsTokenSelectorVisible(false);
-  };
-
   const onCloseTokenSelector = useCallback(() => {
-    hideDrawer();
+    setIsTokenSelectorVisible(false);
     // Reset token on errors (decimals: -1 or -2)
     if (selectedToken && selectedToken.decimals < 0) {
       setToken(undefined);
@@ -79,7 +78,7 @@ export const SendAssetModal = (props: {
       }
 
       const timeout = setTimeout(() => {
-        const filter = (t: any) => {
+        const filter = (t: TokenInfo) => {
           return (
             t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
             t.name.toLowerCase().includes(searchString.toLowerCase()) ||
@@ -88,7 +87,7 @@ export const SendAssetModal = (props: {
         };
 
         const preFilterSol = selectedList.filter(t => t.address !== NATIVE_SOL.address);
-        const showFromList = !searchString ? preFilterSol : preFilterSol.filter((t: any) => filter(t));
+        const showFromList = !searchString ? preFilterSol : preFilterSol.filter(t => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -106,8 +105,8 @@ export const SendAssetModal = (props: {
   }, [updateTokenListByFilter]);
 
   const onTokenSearchInputChange = useCallback(
-    (e: any) => {
-      const newValue = e.target.value;
+    (value: string) => {
+      const newValue = value.trim();
       setTokenFilter(newValue);
       updateTokenListByFilter(newValue);
     },
@@ -167,7 +166,7 @@ export const SendAssetModal = (props: {
 
   // Reset results when the filter is cleared
   useEffect(() => {
-    if (splTokenList && splTokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+    if (splTokenList?.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
     }
   }, [splTokenList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
@@ -207,9 +206,9 @@ export const SendAssetModal = (props: {
             showUsdValues={true}
           />
         );
-      } else {
-        return null;
       }
+
+      return null;
     });
   };
 
@@ -217,10 +216,12 @@ export const SendAssetModal = (props: {
     if (tokenFilter && selectedToken) {
       if (selectedToken.decimals === -1) {
         return 'Account not found';
-      } else if (selectedToken.decimals === -2) {
+      }
+      if (selectedToken.decimals === -2) {
         return 'Account is not a token mint';
       }
     }
+
     return undefined;
   };
 
@@ -261,19 +262,7 @@ export const SendAssetModal = (props: {
                 } catch (error) {
                   console.error(error);
                 }
-                if (accountInfo) {
-                  if (
-                    (accountInfo as any).data['program'] &&
-                    (accountInfo as any).data['program'] === 'spl-token' &&
-                    (accountInfo as any).data['parsed'] &&
-                    (accountInfo as any).data['parsed']['type'] &&
-                    (accountInfo as any).data['parsed']['type'] === 'mint'
-                  ) {
-                    decimals = (accountInfo as any).data['parsed']['info']['decimals'];
-                  } else {
-                    decimals = -2;
-                  }
-                }
+                decimals = getDecimalsFromAccountInfo(accountInfo, -1);
                 const unknownToken: TokenInfo = {
                   address,
                   name: CUSTOM_TOKEN_NAME,
@@ -303,7 +292,7 @@ export const SendAssetModal = (props: {
       label: t('swap.tabset.one-time'),
       children: (
         <OneTimePayment
-          transferCompleted={props.handleClose}
+          transferCompleted={handleClose}
           selectedToken={token}
           userBalances={userBalances}
           onOpenTokenSelector={showDrawer}
@@ -315,7 +304,7 @@ export const SendAssetModal = (props: {
       label: t('swap.tabset.recurring'),
       children: (
         <RepeatingPayment
-          transferCompleted={props.handleClose}
+          transferCompleted={handleClose}
           selectedToken={token}
           userBalances={userBalances}
           onOpenTokenSelector={showDrawer}
@@ -327,11 +316,12 @@ export const SendAssetModal = (props: {
   const getModalTitle = () => {
     if (title) {
       return title;
-    } else if (selected === 'recurring') {
-      return t('transfers.create-money-stream-modal-title');
-    } else {
-      return t('transfers.send-asset-modal-title');
     }
+    if (selected === 'recurring') {
+      return t('transfers.create-money-stream-modal-title');
+    }
+
+    return t('transfers.send-asset-modal-title');
   };
 
   return (
@@ -346,7 +336,7 @@ export const SendAssetModal = (props: {
     >
       {selected === 'recurring' && (
         <RepeatingPayment
-          transferCompleted={props.handleClose}
+          transferCompleted={handleClose}
           selectedToken={token}
           userBalances={userBalances}
           onOpenTokenSelector={showDrawer}
@@ -354,7 +344,7 @@ export const SendAssetModal = (props: {
       )}
       {selected === 'one-time' && (
         <OneTimePayment
-          transferCompleted={props.handleClose}
+          transferCompleted={handleClose}
           selectedToken={token}
           userBalances={userBalances}
           onOpenTokenSelector={showDrawer}

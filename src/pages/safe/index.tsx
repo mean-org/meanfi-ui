@@ -39,7 +39,7 @@ import {
 import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
 import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { type MultisigProposalsWithAuthority, ZERO_FEES } from 'models/multisig';
+import { type EditMultisigParams, type MultisigProposalsWithAuthority, ZERO_FEES } from 'models/multisig';
 import SerumIDL from 'models/serum-multisig-idl';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
@@ -401,17 +401,18 @@ const SafeView = (props: {
   }, [multisigClient, resetTransactionStatus]);
 
   const onExecuteEditMultisigTx = useCallback(
-    async (data: any) => {
+    async (data: EditMultisigParams) => {
       let transaction: VersionedTransaction | Transaction | null = null;
-      let signature: any;
+      let signature: string;
       let encodedTx: string;
+      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
       let transactionLog: any[] = [];
 
       resetTransactionStatus();
       setTransactionCancelled(false);
       setIsBusy(true);
 
-      const editMultisig = async (data: any) => {
+      const editMultisig = async (data: EditMultisigParams) => {
         if (!selectedMultisig || !multisigClient || !publicKey) {
           throw new Error('No selected multisig');
         }
@@ -560,16 +561,16 @@ const SafeView = (props: {
               });
               return false;
             });
-        } else {
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-            result: 'Cannot start transaction! Wallet not found!',
-          });
-          customLogger.logError('Edit multisig transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
         }
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!',
+        });
+        customLogger.logError('Edit multisig transaction failed', {
+          transcript: transactionLog,
+        });
+        return false;
       };
 
       if (wallet && publicKey && selectedMultisig) {
@@ -637,7 +638,7 @@ const SafeView = (props: {
     ],
   );
 
-  const onAcceptEditMultisig = (data: any) => {
+  const onAcceptEditMultisig = (data: EditMultisigParams) => {
     consoleOut('multisig:', data, 'blue');
     onExecuteEditMultisigTx(data);
   };
@@ -1870,7 +1871,7 @@ const SafeView = (props: {
           transactionFees={transactionFees}
           handleOk={onAcceptEditMultisig}
           multisigName={selectedMultisig.label}
-          multisigThreshold={selectedMultisig.threshold}
+          inputMultisigThreshold={selectedMultisig.threshold}
           multisigParticipants={selectedMultisig.owners}
           multisigAccounts={multisigAccounts}
           multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}

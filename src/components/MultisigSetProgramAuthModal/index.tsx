@@ -19,8 +19,8 @@ import { useTranslation } from 'react-i18next';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 interface Props {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (params: SetProgramAuthPayload) => void;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
@@ -108,15 +108,13 @@ export const MultisigSetProgramAuthModal = ({
     });
   };
 
-  const onProgramChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
+  const onProgramChange = (value: string) => {
+    const trimmedValue = value.trim();
     setProgramId(trimmedValue);
   };
 
-  const onNewAuthChanged = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
+  const onNewAuthChanged = (value: string) => {
+    const trimmedValue = value.trim();
     setNewAuthAddress(trimmedValue);
   };
 
@@ -172,9 +170,9 @@ export const MultisigSetProgramAuthModal = ({
                 <InputMean
                   id='proposal-title-field'
                   name='Title'
-                  className={`w-100 general-text-input`}
-                  onChange={(e: any) => {
-                    setProposalTitle(e.target.value);
+                  className={'w-100 general-text-input'}
+                  onChange={value => {
+                    setProposalTitle(value);
                   }}
                   placeholder='Add a proposal title (required)'
                   value={proposalTitle}
@@ -190,7 +188,7 @@ export const MultisigSetProgramAuthModal = ({
                 autoComplete='on'
                 autoCorrect='off'
                 type='text'
-                onChange={onProgramChange}
+                onChange={e => onProgramChange(e.target.value)}
                 placeholder={t('multisig.upgrade-program.program-address-placeholder')}
                 required={true}
                 spellCheck='false'
@@ -209,7 +207,7 @@ export const MultisigSetProgramAuthModal = ({
                 autoComplete='on'
                 autoCorrect='off'
                 type='text'
-                onChange={onNewAuthChanged}
+                onChange={e => onNewAuthChanged(e.target.value)}
                 placeholder={t('multisig.set-program-authority.new-authority-input-placeholder')}
                 required={true}
                 spellCheck='false'

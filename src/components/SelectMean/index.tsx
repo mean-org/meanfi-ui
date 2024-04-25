@@ -1,16 +1,17 @@
 import { Select } from 'antd';
+import type { SelectOption } from 'models/common-types';
 
-export const SelectMean = (props: {
+interface Props {
+  onChange?: (value: string) => void;
   className?: string;
   defaultValue?: string;
   placeholder?: string;
-  onChange?: any;
-  value?: any;
-  values?: any;
+  value?: string | SelectOption;
+  values?: SelectOption[];
   labelInValue?: boolean;
-}) => {
-  const { className, placeholder, defaultValue, onChange, value, values, labelInValue } = props;
+}
 
+export const SelectMean = ({ onChange, className, placeholder, defaultValue, value, values, labelInValue }: Props) => {
   const { Option } = Select;
 
   return (
@@ -28,11 +29,11 @@ export const SelectMean = (props: {
             alignItems: 'center',
           }}
           bordered={false}
-          value={value}
+          value={typeof value === 'string' ? value : value?.value}
           labelInValue={labelInValue}
           onChange={onChange}
         >
-          {values.map((item: any) => (
+          {values?.map(item => (
             <Option
               value={typeof item === 'string' ? item : item.value}
               key={typeof item === 'string' ? item : item.key}

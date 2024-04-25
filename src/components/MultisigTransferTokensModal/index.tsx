@@ -33,6 +33,7 @@ import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TokenListItem } from '../TokenListItem';
 import './style.scss';
+import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -141,9 +142,8 @@ export const MultisigTransferTokensModal = ({
   }, [updateTokenListByFilter]);
 
   const onTokenSearchInputChange = useCallback(
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    (e: any) => {
-      const newValue = e.target.value;
+    (value: string) => {
+      const newValue = value.trim();
       setTokenFilter(newValue);
       updateTokenListByFilter(newValue);
     },
@@ -315,9 +315,8 @@ export const MultisigTransferTokensModal = ({
     handleClose();
   };
 
-  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   const onTransferToAddressChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -502,25 +501,7 @@ export const MultisigTransferTokensModal = ({
               } catch (error) {
                 console.error(error);
               }
-              if (accountInfo) {
-                if (
-                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                  (accountInfo as any).data.program &&
-                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                  (accountInfo as any).data.program === 'spl-token' &&
-                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                  (accountInfo as any).dataparsed &&
-                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                  (accountInfo as any).dataparsed.type &&
-                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                  (accountInfo as any).dataparsed.type === 'mint'
-                ) {
-                  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                  decimals = (accountInfo as any).dataparsed.info.decimals;
-                } else {
-                  decimals = -2;
-                }
-              }
+              decimals = getDecimalsFromAccountInfo(accountInfo, -1);
               const uknwnToken: TokenInfo = {
                 address,
                 name: 'Unknown token',

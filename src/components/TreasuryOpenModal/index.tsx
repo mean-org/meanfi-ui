@@ -4,7 +4,13 @@ import { isValidAddress } from 'middleware/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const TreasuryOpenModal = (props: { handleClose: any; handleOk: any; isVisible: boolean }) => {
+interface Props {
+  handleClose: () => void;
+  handleOk: (value: string) => void;
+  isVisible: boolean;
+}
+
+export const TreasuryOpenModal = ({ isVisible, handleOk, handleClose }: Props) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const [treasuryId, setTreasuryId] = useState('');
@@ -18,15 +24,14 @@ export const TreasuryOpenModal = (props: { handleClose: any; handleOk: any; isVi
   };
 
   const onAcceptTreasuryId = () => {
-    props.handleOk(treasuryId);
+    handleOk(treasuryId);
     setTimeout(() => {
       setTreasuryId('');
     }, 50);
   };
 
-  const onTreasuryIdChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
+  const onTreasuryIdChange = (value: string) => {
+    const trimmedValue = value.trim();
     setTreasuryId(trimmedValue);
   };
 
@@ -66,11 +71,12 @@ export const TreasuryOpenModal = (props: { handleClose: any; handleOk: any; isVi
   const getMainCtaLabel = () => {
     if (!treasuryId) {
       return t('treasuries.open-treasury.treasuryid-input-empty');
-    } else if (!isValidAddress(treasuryId)) {
-      return t('transactions.validation.invalid-solana-address');
-    } else {
-      return t('treasuries.open-treasury.main-cta');
     }
+    if (!isValidAddress(treasuryId)) {
+      return t('transactions.validation.invalid-solana-address');
+    }
+
+    return t('treasuries.open-treasury.main-cta');
   };
 
   return (
@@ -78,9 +84,9 @@ export const TreasuryOpenModal = (props: { handleClose: any; handleOk: any; isVi
       className='mean-modal'
       title={<div className='modal-title'>{t('treasuries.open-treasury.modal-title')}</div>}
       footer={null}
-      open={props.isVisible}
+      open={isVisible}
       onOk={onAcceptTreasuryId}
-      onCancel={props.handleClose}
+      onCancel={handleClose}
       width={480}
     >
       <div className='form-label'>{t('treasuries.open-treasury.treasuryid-input-label')}</div>
@@ -95,7 +101,7 @@ export const TreasuryOpenModal = (props: { handleClose: any; handleOk: any; isVi
                 autoCorrect='off'
                 type='text'
                 onFocus={onTreasuryIdFocusInOut}
-                onChange={onTreasuryIdChange}
+                onChange={e => onTreasuryIdChange(e.target.value)}
                 onBlur={onTreasuryIdFocusInOut}
                 placeholder={t('treasuries.open-treasury.treasuryid-placeholder')}
                 required={true}

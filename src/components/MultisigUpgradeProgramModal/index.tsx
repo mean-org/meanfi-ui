@@ -19,8 +19,8 @@ import { useTranslation } from 'react-i18next';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 interface Props {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (params: ProgramUpgradeParams) => void;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
@@ -112,9 +112,8 @@ export const MultisigUpgradeProgramModal = ({
     });
   };
 
-  const onBufferAccountChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
+  const onBufferAccountChange = (value: string) => {
+    const trimmedValue = value.trim();
     setBufferAddress(trimmedValue);
   };
 
@@ -168,9 +167,9 @@ export const MultisigUpgradeProgramModal = ({
                 <InputMean
                   id='proposal-title-field'
                   name='Title'
-                  className={`w-100 general-text-input`}
-                  onChange={(e: any) => {
-                    setProposalTitle(e.target.value);
+                  className={'w-100 general-text-input'}
+                  onChange={value => {
+                    setProposalTitle(value);
                   }}
                   placeholder='Add a proposal title (required)'
                   value={proposalTitle}
@@ -199,7 +198,7 @@ export const MultisigUpgradeProgramModal = ({
                 autoComplete='on'
                 autoCorrect='off'
                 type='text'
-                onChange={onBufferAccountChange}
+                onChange={e => onBufferAccountChange(e.target.value)}
                 placeholder={t('multisig.upgrade-program.buffer-account-placeholder')}
                 required={true}
                 spellCheck='false'

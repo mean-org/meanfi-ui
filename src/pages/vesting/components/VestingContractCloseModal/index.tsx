@@ -19,8 +19,8 @@ import { useTranslation } from 'react-i18next';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const VestingContractCloseModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (title: string) => void;
   isBusy: boolean;
   isVisible: boolean;
   nativeBalance: number;
@@ -94,8 +94,7 @@ export const VestingContractCloseModal = (props: {
     handleOk(proposalTitle || '');
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    const value = e.target.value;
+  const onTitleInputValueChange = (value: string) => {
     setProposalTitle(value);
   };
 
@@ -106,17 +105,18 @@ export const VestingContractCloseModal = (props: {
   const getTransactionStartButtonLabel = () => {
     if (isBusy) {
       return t('vesting.close-account.close-cta-busy');
-    } else if (isError(transactionStatus.currentOperation)) {
+    }
+    if (isError(transactionStatus.currentOperation)) {
       return t('general.retry');
-    } else if (selectedMultisig) {
+    }
+    if (selectedMultisig) {
       if (!proposalTitle) {
         return 'Add a proposal title';
-      } else {
-        return 'Sign proposal';
       }
-    } else {
-      return t('vesting.close-account.close-cta');
+      return 'Sign proposal';
     }
+
+    return t('vesting.close-account.close-cta');
   };
 
   return (

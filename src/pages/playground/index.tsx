@@ -41,7 +41,7 @@ import { useWalletAccount } from 'contexts/walletAccount';
 import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
 import { appConfig } from 'index';
-import { isSystemOwnedAccount } from 'middleware/accountInfoGetters';
+import { getDecimalsFromAccountInfo, isSystemOwnedAccount } from 'middleware/accountInfoGetters';
 import { getTokensWithBalances } from 'middleware/accounts';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { SOL_MINT, SYSTEM_PROGRAM_ID } from 'middleware/ids';
@@ -412,9 +412,8 @@ export const PlaygroundView = () => {
   }, [updateTokenListByFilter]);
 
   const onTokenSearchInputChange = useCallback(
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    (e: any) => {
-      const newValue = e.target.value;
+    (value: string) => {
+      const newValue = value.trim();
       setTokenFilter(newValue);
       updateTokenListByFilter(newValue);
     },
@@ -1963,25 +1962,7 @@ export const PlaygroundView = () => {
                 } catch (error) {
                   console.error(error);
                 }
-                if (accountInfo) {
-                  if (
-                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                    (accountInfo as any).data.program &&
-                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                    (accountInfo as any).data.program === 'spl-token' &&
-                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                    (accountInfo as any).data.parsed &&
-                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                    (accountInfo as any).data.parsed.type &&
-                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                    (accountInfo as any).data.parsed.type === 'mint'
-                  ) {
-                    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-                    decimals = (accountInfo as any).data.parsed.info.decimals;
-                  } else {
-                    decimals = -2;
-                  }
-                }
+                decimals = getDecimalsFromAccountInfo(accountInfo, -1);
                 const unknownToken: TokenInfo = {
                   address,
                   name: CUSTOM_TOKEN_NAME,

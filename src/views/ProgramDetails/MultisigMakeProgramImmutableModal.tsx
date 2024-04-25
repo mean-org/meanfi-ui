@@ -40,10 +40,8 @@ export const MultisigMakeProgramImmutableModal = ({ handleClose, handleOk }: Pro
         <InputMean
           id='proposal-title-field'
           name='Title'
-          className={`w-100 general-text-input`}
-          onChange={(e: any) => {
-            setProposalTitle(e.target.value);
-          }}
+          className={'w-100 general-text-input'}
+          onChange={value => setProposalTitle(value)}
           placeholder='Add a proposal title (required)'
           value={proposalTitle}
         />

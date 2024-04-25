@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import RenderUiElement from './RenderUiElement';
 import './style.scss';
+import { SelectOption } from 'models/common-types';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -214,17 +215,17 @@ export const MultisigProposalModal = (props: {
     return !publicKey ? t('transactions.validation.not-connected') : t('Create');
   }, [publicKey, t]);
 
-  const onProposalTitleValueChange = (e: any) => {
-    setProposalTitleValue(e.target.value);
+  const onProposalTitleValueChange = (value: string) => {
+    setProposalTitleValue(value);
   };
 
-  const onProposalExpiresValueChange = (value: any) => {
+  const onProposalExpiresValueChange = (value: string) => {
     setProposalExpiresValue(value);
   };
 
-  const onProposalDescriptionValueChange = (e: any) => {
-    setProposalDescriptionValue(e.target.value);
-    setCountWords(e.target.value.length);
+  const onProposalDescriptionValueChange = (value: string | undefined) => {
+    setProposalDescriptionValue(value ?? '');
+    setCountWords(value?.length ?? 0);
   };
 
   const onProposalInstructionValueChange = useCallback(
@@ -465,12 +466,12 @@ export const MultisigProposalModal = (props: {
                       <SelectMean
                         className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                         onChange={onProposalExpiresValueChange}
-                        values={expires.map((e: any) => {
+                        values={expires.map(e => {
                           return {
-                            key: e.value,
+                            key: `${e.value}`,
                             label: e.label,
-                            value: e.value,
-                          };
+                            value: `${e.value}`,
+                          } as SelectOption;
                         })}
                         labelInValue={true}
                         value={{
@@ -492,7 +493,7 @@ export const MultisigProposalModal = (props: {
                         id='proposal-description-field'
                         maxLength={256}
                         className={`mb-0 ${isBusy ? 'disabled' : ''}`}
-                        onChange={onProposalDescriptionValueChange}
+                        onChange={e => onProposalDescriptionValueChange(e?.target.value)}
                         placeholder='Add a description (optional)'
                         value={proposalDescriptionValue}
                       />
@@ -518,21 +519,25 @@ export const MultisigProposalModal = (props: {
                             placeholder='Select an instruction'
                             values={
                               selectedAppConfig
-                                ? selectedAppConfig.ui.map((ix: any) => {
+                                ? selectedAppConfig.ui.map(ix => {
                                     return {
                                       key: ix.id,
                                       label: ix.label,
                                       value: ix.id,
-                                    };
+                                    } as SelectOption;
                                   })
                                 : []
                             }
                             labelInValue={true}
-                            value={{
-                              key: selectedUiIx?.id,
-                              value: selectedUiIx?.id,
-                              label: selectedUiIx?.label,
-                            }}
+                            value={
+                              selectedUiIx
+                                ? {
+                                    key: selectedUiIx.id,
+                                    value: selectedUiIx.id,
+                                    label: selectedUiIx.label,
+                                  }
+                                : undefined
+                            }
                           />
                         </Col>
                       </>

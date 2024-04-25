@@ -4,6 +4,7 @@ import type { PaymentStreamingAccount, StreamTemplate, TransactionFees } from '@
 import { BN } from '@project-serum/anchor';
 import { IconCaretDown } from 'Icons';
 import { Button, Checkbox, DatePicker, Dropdown, Modal, Spin, TimePicker } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
 import { Identicon } from 'components/Identicon';
@@ -25,20 +26,20 @@ import type { UserTokenAccount } from 'models/accounts';
 import { PaymentRateType } from 'models/enums';
 import type { VestingContractEditOptions } from 'models/vesting';
 import moment from 'moment';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const timeFormat = 'hh:mm A';
 
 export const VestingContractEditModal = (props: {
   accountAddress: string;
-  handleClose: any;
+  handleClose: () => void;
   isBusy: boolean;
   isMultisigContext: boolean;
   isVisible: boolean;
   loadingMultisigAccounts: boolean;
   nativeBalance: number;
-  onTransactionStarted: any;
+  onTransactionStarted: (options: VestingContractEditOptions) => void;
   selectedMultisig: MultisigInfo | undefined;
   selectedToken: UserTokenAccount | undefined;
   streamTemplate: StreamTemplate | undefined;
@@ -107,7 +108,6 @@ export const VestingContractEditModal = (props: {
   // Events, actions and Validation //
   ////////////////////////////////////
 
-  // TODO: Modify payload as needed
   const onAcceptEditChanges = () => {
     const parsedDate = Date.parse(paymentStartDate);
     const startUtc = new Date(parsedDate);
@@ -129,8 +129,8 @@ export const VestingContractEditModal = (props: {
     onTransactionStarted(options);
   };
 
-  const handleLockPeriodAmountChange = (e: any) => {
-    const newValue = e.target.value;
+  const handleLockPeriodAmountChange = (value: string) => {
+    const newValue = value.trim();
 
     if (isValidInteger(newValue)) {
       setLockPeriodAmount(newValue);
@@ -143,12 +143,12 @@ export const VestingContractEditModal = (props: {
     setLockPeriodFrequency(val);
   };
 
-  const getLockPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
+  const getLockPeriodOptionsFromEnum = (): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
-    for (const enumMember in value) {
+    for (const enumMember in PaymentRateType) {
       const mappedValue = Number.parseInt(enumMember, 10);
-      if (!isNaN(mappedValue)) {
+      if (!Number.isNaN(mappedValue)) {
         const item = new PaymentRateTypeOption(index, mappedValue, getLockPeriodOptionLabel(mappedValue, t));
         options.push(item);
       }
@@ -161,8 +161,8 @@ export const VestingContractEditModal = (props: {
     setPaymentStartDate(date);
   };
 
-  const handleCliffReleaseAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleCliffReleaseAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -174,7 +174,7 @@ export const VestingContractEditModal = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -188,7 +188,7 @@ export const VestingContractEditModal = (props: {
     }
   };
 
-  const todayAndPriorDatesDisabled = (current: any) => {
+  const todayAndPriorDatesDisabled = (current: moment.Moment) => {
     // Can not select neither today nor days before today
     return current && current < moment().add(1, 'days').endOf('day');
   };
@@ -209,7 +209,7 @@ export const VestingContractEditModal = (props: {
     }
   };
 
-  const onFeePayedByTreasurerChange = (e: any) => {
+  const onFeePayedByTreasurerChange = (e: CheckboxChangeEvent) => {
     consoleOut('onFeePayedByTreasurerChange:', e.target.checked, 'blue');
     setIsFeePaidByTreasurer(e.target.checked);
   };
@@ -243,10 +243,14 @@ export const VestingContractEditModal = (props: {
   ///////////////
 
   const lockPeriodOptionsMenu = () => {
-    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+    const items: ItemType[] = getLockPeriodOptionsFromEnum().map((item, index) => {
       return {
         key: `option-${index}`,
-        label: <span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>,
+        label: (
+          <span onKeyDown={() => {}} onClick={() => handleLockPeriodOptionChange(item.value)}>
+            {item.text}
+          </span>
+        ),
       };
     });
 
@@ -255,7 +259,7 @@ export const VestingContractEditModal = (props: {
 
   const renderDatePickerExtraPanel = () => {
     return (
-      <span className='flat-button tiny stroked primary' onClick={onResetDate}>
+      <span className='flat-button tiny stroked primary' onKeyDown={() => {}} onClick={onResetDate}>
         <span className='mx-1'>Reset</span>
       </span>
     );
@@ -264,7 +268,7 @@ export const VestingContractEditModal = (props: {
   const renderSelectedMultisig = () => {
     return (
       selectedMultisig && (
-        <div className={`transaction-list-row w-100 no-pointer`}>
+        <div className={'transaction-list-row w-100 no-pointer'}>
           <div className='icon-cell'>
             <Identicon address={selectedMultisig.id} style={{ width: '30', display: 'inline-flex' }} />
           </div>
@@ -293,7 +297,7 @@ export const VestingContractEditModal = (props: {
             id='proposal-title-field'
             name='Title'
             className='w-100 general-text-input'
-            onChange={(e: any) => setProposalTitle(e.target.value)}
+            onChange={value => setProposalTitle(value)}
             placeholder='Title for the multisig proposal'
             value={proposalTitle}
           />
@@ -313,7 +317,7 @@ export const VestingContractEditModal = (props: {
       width={480}
     >
       <Spin spinning={loadingMultisigAccounts}>
-        <div className={`scrollable-content`}>
+        <div className={'scrollable-content'}>
           {/* Proposal title */}
           {renderProposalTitleField()}
 
@@ -338,7 +342,7 @@ export const VestingContractEditModal = (props: {
                       autoComplete='on'
                       autoCorrect='off'
                       type='text'
-                      onChange={handleLockPeriodAmountChange}
+                      onChange={e => handleLockPeriodAmountChange(e.target.value)}
                       placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
                       spellCheck='false'
                       min={1}
@@ -386,8 +390,8 @@ export const VestingContractEditModal = (props: {
                             allowClear={false}
                             disabledDate={todayAndPriorDatesDisabled}
                             placeholder='Pick a date'
-                            onChange={(value: any, date: string) => handleDateChange(date)}
-                            value={moment(paymentStartDate, DATEPICKER_FORMAT) as any}
+                            onChange={(value: moment.Moment | null, date: string) => handleDateChange(date)}
+                            value={moment(paymentStartDate, DATEPICKER_FORMAT)}
                             format={DATEPICKER_FORMAT}
                             showNow={false}
                             showToday={false}
@@ -425,9 +429,13 @@ export const VestingContractEditModal = (props: {
           <div className='well'>
             <div className='flexible-right mb-1'>
               <div className='token-group'>
-                {percentages.map((percentage, index) => (
-                  <div key={index} className='mb-1 d-flex flex-column align-items-center'>
-                    <div className='token-max simplelink active' onClick={() => onChangeValuePercentages(percentage)}>
+                {percentages.map(percentage => (
+                  <div key={percentage} className='mb-1 d-flex flex-column align-items-center'>
+                    <div
+                      className='token-max simplelink active'
+                      onKeyDown={() => {}}
+                      onClick={() => onChangeValuePercentages(percentage)}
+                    >
                       {percentage}%
                     </div>
                   </div>
@@ -454,7 +462,7 @@ export const VestingContractEditModal = (props: {
                   autoComplete='off'
                   autoCorrect='off'
                   type='text'
-                  onChange={handleCliffReleaseAmountChange}
+                  onChange={e => handleCliffReleaseAmountChange(e.target.value)}
                   pattern='^[0-9]*[.,]?[0-9]*$'
                   placeholder='0.0'
                   minLength={1}

@@ -6,14 +6,21 @@ import { isValidAddress, scrollToBottom } from 'middleware/ui';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const MultisigParticipants = (props: {
+interface Props {
   participants: MultisigParticipant[];
-  onParticipantsChanged: any;
+  onParticipantsChanged: (items: MultisigParticipant[]) => void;
   label: string;
   disabled?: boolean;
   multisigAddresses: string[];
-}) => {
-  const { participants, onParticipantsChanged, label, disabled, multisigAddresses } = props;
+}
+
+export const MultisigParticipants = ({
+  participants,
+  onParticipantsChanged,
+  label,
+  disabled,
+  multisigAddresses,
+}: Props) => {
   const { t } = useTranslation('common');
   // Max signers info modal
   const [isMaxSignersInfoModalVisible, setIsMaxSignersInfoModalVisibility] = useState(false);
@@ -81,7 +88,7 @@ export const MultisigParticipants = (props: {
           {label ? <div className='form-label'>{label}</div> : <div className='form-label'>&nbsp;</div>}
         </div>
         <div className='right'>
-          <span className='flat-button tiny' onClick={() => addParticipant()}>
+          <span className='flat-button tiny' onKeyDown={() => {}} onClick={() => addParticipant()}>
             <PlusOutlined />
             <span className='ml-1 text-uppercase'>{t('multisig.add-participant-cta')}</span>
           </span>
@@ -91,7 +98,7 @@ export const MultisigParticipants = (props: {
         <div id='multisig-participants-max-height'>
           {participants.map((participant: MultisigParticipant, index: number) => {
             return (
-              <div key={`participant-${index}`} className='two-column-layout address-fixed'>
+              <div key={participant.address} className='two-column-layout address-fixed'>
                 <div className='left'>
                   <TextInput
                     placeholder='Enter signer name or description'
@@ -100,8 +107,8 @@ export const MultisigParticipants = (props: {
                     value={participant.name}
                     allowClear={false}
                     maxLength={32}
-                    onInputChange={(e: any) => {
-                      const value = e.target.value;
+                    onInputChange={e => {
+                      const value = e.trim();
                       setSingleItemName(value, index);
                     }}
                   />
@@ -122,8 +129,8 @@ export const MultisigParticipants = (props: {
                         : t('transactions.validation.valid-address-required')
                     }
                     onInputClear={() => onRemoveSingleItem(index)}
-                    onInputChange={(e: any) => {
-                      const value = e.target.value;
+                    onInputChange={e => {
+                      const value = e.trim();
                       setSingleItemAddress(value, index);
                     }}
                   />

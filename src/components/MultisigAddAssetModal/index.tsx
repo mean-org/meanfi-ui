@@ -26,11 +26,12 @@ import { useTranslation } from 'react-i18next';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TokenListItem } from '../TokenListItem';
+import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 
 export const MultisigAddAssetModal = (props: {
   connection: Connection;
-  handleOk: any;
-  handleClose: any;
+  handleOk: (params: CreateSafeAssetTxParams) => void;
+  handleClose: () => void;
   isVisible: boolean;
   ownedTokenAccounts: AccountTokenParsedInfo[] | undefined;
   isBusy: boolean;
@@ -66,7 +67,7 @@ export const MultisigAddAssetModal = (props: {
       }
 
       const timeout = setTimeout(() => {
-        const filter = (t: any) => {
+        const filter = (t: TokenInfo) => {
           return (
             t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
             t.name.toLowerCase().includes(searchString.toLowerCase()) ||
@@ -75,7 +76,7 @@ export const MultisigAddAssetModal = (props: {
         };
 
         const preFilterSol = selectedList.filter(t => t.address !== NATIVE_SOL.address);
-        const showFromList = !searchString ? preFilterSol : preFilterSol.filter((t: any) => filter(t));
+        const showFromList = !searchString ? preFilterSol : preFilterSol.filter(t => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -99,19 +100,19 @@ export const MultisigAddAssetModal = (props: {
 
       // Add all other items but excluding those in meanTokensCopy (only in mainnet)
       if (isProd()) {
-        splTokenList.forEach(item => {
+        for (const item of splTokenList) {
           if (!meanTokensCopy.some(t => t.address === item.address)) {
             meanTokensCopy.push(item);
           }
-        });
+        }
       }
 
       // Build a token list excluding already owned token accounts
-      meanTokensCopy.forEach(item => {
+      for (const item of meanTokensCopy) {
         if (!ownedTokenAccounts.some(t => t.parsedInfo.mint === item.address)) {
           finalList.push(item);
         }
-      });
+      }
 
       setSelectedList(finalList);
       consoleOut('token list:', finalList, 'blue');
@@ -178,8 +179,8 @@ export const MultisigAddAssetModal = (props: {
   }, [updateTokenListByFilter]);
 
   const onTokenSearchInputChange = useCallback(
-    (e: any) => {
-      const newValue = e.target.value;
+    (value: string) => {
+      const newValue = value.trim();
       setTokenFilter(newValue);
       updateTokenListByFilter(newValue);
     },
@@ -253,9 +254,9 @@ export const MultisigAddAssetModal = (props: {
                 balance={0}
               />
             );
-          } else {
-            return null;
           }
+
+          return null;
         })}
     </>
   );
@@ -298,19 +299,7 @@ export const MultisigAddAssetModal = (props: {
               } catch (error) {
                 console.error(error);
               }
-              if (accountInfo) {
-                if (
-                  (accountInfo as any).data['program'] &&
-                  (accountInfo as any).data['program'] === 'spl-token' &&
-                  (accountInfo as any).data['parsed'] &&
-                  (accountInfo as any).data['parsed']['type'] &&
-                  (accountInfo as any).data['parsed']['type'] === 'mint'
-                ) {
-                  decimals = (accountInfo as any).data['parsed']['info']['decimals'];
-                } else {
-                  decimals = -2;
-                }
-              }
+              decimals = getDecimalsFromAccountInfo(accountInfo, -1);
               const uknwnToken: TokenInfo = {
                 address,
                 name: CUSTOM_TOKEN_NAME,
@@ -339,7 +328,7 @@ export const MultisigAddAssetModal = (props: {
       footer={null}
       maskClosable={false}
       open={isVisible}
-      onOk={handleOk}
+      onOk={onAcceptModal}
       onCancel={handleClose}
       width={370}
     >

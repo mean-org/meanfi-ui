@@ -26,12 +26,13 @@ import type { VestingContractTopupParams } from 'models/vesting';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const VestingContractAddFundsModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (params: VestingContractTopupParams) => void;
   isBusy: boolean;
   isVisible: boolean;
   minRequiredBalance: number;
@@ -41,7 +42,7 @@ export const VestingContractAddFundsModal = (props: {
   streamTemplate: StreamTemplate | undefined;
   transactionFees: TransactionFees;
   treasuryStreams: Stream[];
-  userBalances: any;
+  userBalances: LooseObject;
   vestingContract: PaymentStreamingAccount | undefined;
   withdrawTransactionFees: TransactionFees;
 }) => {
@@ -75,7 +76,7 @@ export const VestingContractAddFundsModal = (props: {
   const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [availableBalance, setAvailableBalance] = useState(new BN(0));
-  const [tokenAmount, setTokenAmount] = useState<any>(0);
+  const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
   const [showQrCode, setShowQrCode] = useState(false);
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
@@ -110,7 +111,8 @@ export const VestingContractAddFundsModal = (props: {
 
       if (id) {
         return treasuryStreams.find(ts => ts.id.toBase58() === id);
-      } else if (highLightableStreamId) {
+      }
+      if (highLightableStreamId) {
         return treasuryStreams.find(ts => ts.id.toBase58() === highLightableStreamId);
       }
 
@@ -129,7 +131,7 @@ export const VestingContractAddFundsModal = (props: {
     (preSetting = false) => {
       if (withdrawTransactionFees && highLightableStreamId) {
         const stream = getSelectedStream();
-        if (stream && ((stream as any).feePayedByTreasurer || preSetting)) {
+        if (stream && (stream.tokenFeePayedFromAccount || preSetting)) {
           const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
           const feeNumerator = withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
           const feeDenaminator = 1000000;
@@ -157,9 +159,9 @@ export const VestingContractAddFundsModal = (props: {
     if (fundFromSafeOption) {
       const fromUserBalances = userBalances ? userBalances[NATIVE_SOL.address] || 0 : 0;
       return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? fromUserBalances : tokenBalance;
-    } else {
-      return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? nativeBalance : tokenBalance;
     }
+
+    return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? nativeBalance : tokenBalance;
   }, [fundFromSafeOption, nativeBalance, selectedToken, tokenBalance, userBalances]);
 
   /////////////////////
@@ -288,8 +290,8 @@ export const VestingContractAddFundsModal = (props: {
     window.location.reload();
   };
 
-  const handleAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -301,14 +303,14 @@ export const VestingContractAddFundsModal = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
 
     if (newValue === null || newValue === undefined || newValue === '') {
       setTopupAmount('');
-      setTokenAmount(0);
+      setTokenAmount(new BN(0));
     } else if (newValue === '.') {
       setTopupAmount('.');
     } else if (isValidNumber(newValue)) {
@@ -317,8 +319,8 @@ export const VestingContractAddFundsModal = (props: {
     }
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   //////////////////
@@ -358,21 +360,27 @@ export const VestingContractAddFundsModal = (props: {
   const getTransactionStartButtonLabel = () => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (isProposalTitleRequired()) {
-      return 'Add a proposal title';
-    } else if (isTokenBalanceEmpty()) {
-      return t('transactions.validation.no-balance');
-    } else if (!tokenAmount || tokenAmount.isZero()) {
-      return t('transactions.validation.no-amount');
-    } else if (tokenAmount.gt(getMaxAmount())) {
-      return t('transactions.validation.amount-high');
-    } else if (nativeBalance <= MIN_SOL_BALANCE_REQUIRED) {
-      return t('transactions.validation.amount-sol-low');
-    } else if (highLightableStreamId) {
-      return t('treasuries.add-funds.main-cta-fund-stream');
-    } else {
-      return t('treasuries.add-funds.main-cta');
     }
+    if (isProposalTitleRequired()) {
+      return 'Add a proposal title';
+    }
+    if (isTokenBalanceEmpty()) {
+      return t('transactions.validation.no-balance');
+    }
+    if (!tokenAmount || tokenAmount.isZero()) {
+      return t('transactions.validation.no-amount');
+    }
+    if (tokenAmount.gt(getMaxAmount())) {
+      return t('transactions.validation.amount-high');
+    }
+    if (nativeBalance <= MIN_SOL_BALANCE_REQUIRED) {
+      return t('transactions.validation.amount-sol-low');
+    }
+    if (highLightableStreamId) {
+      return t('treasuries.add-funds.main-cta-fund-stream');
+    }
+
+    return t('treasuries.add-funds.main-cta');
   };
 
   const getMainCtaLabel = () => {
@@ -380,11 +388,11 @@ export const VestingContractAddFundsModal = (props: {
       return highLightableStreamId
         ? t('treasuries.add-funds.main-cta-fund-stream-busy')
         : t('treasuries.add-funds.main-cta-busy');
-    } else {
-      return transactionStatus.currentOperation === TransactionStatus.Iddle
-        ? getTransactionStartButtonLabel()
-        : t('general.refresh');
     }
+
+    return transactionStatus.currentOperation === TransactionStatus.Iddle
+      ? getTransactionStartButtonLabel()
+      : t('general.refresh');
   };
 
   const getModalTitle = () => {
@@ -411,18 +419,11 @@ export const VestingContractAddFundsModal = (props: {
       setTopupAmount(cutNumber(maxSolAmount, decimals));
       setTokenAmount(new BN(maxSolAmount));
     } else {
-      if (isFeePaidByTreasurer) {
-        const maxAmount = getMaxAmount(true);
-        consoleOut('PaymentStreamingAccount pays for fees...', '', 'blue');
-        consoleOut('Settings maxAmount to:', maxAmount, 'blue');
-        setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
-        setTokenAmount(new BN(maxAmount));
-      } else {
-        const maxAmount = getMaxAmount();
-        consoleOut('Settings maxAmount to:', maxAmount.toString(), 'blue');
-        setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
-        setTokenAmount(new BN(maxAmount));
-      }
+      const maxAmount = getMaxAmount(isFeePaidByTreasurer);
+      consoleOut('PaymentStreamingAccount pays for fees...', '', 'blue');
+      consoleOut('Settings maxAmount to:', maxAmount, 'blue');
+      setTopupAmount(toUiAmount(new BN(maxAmount), decimals));
+      setTokenAmount(new BN(maxAmount));
     }
   };
 
@@ -453,9 +454,9 @@ export const VestingContractAddFundsModal = (props: {
           />
         </div>
       );
-    } else {
-      return null;
     }
+
+    return null;
   };
 
   const renderTopupAmount = () => {
@@ -483,7 +484,12 @@ export const VestingContractAddFundsModal = (props: {
                       fullTokenInfo={selectedToken}
                     />
                     {availableBalance ? (
-                      <div id='treasury-add-funds-max' className='token-max simplelink' onClick={handleMaxClick}>
+                      <div
+                        id='treasury-add-funds-max'
+                        className='token-max simplelink'
+                        onKeyDown={() => {}}
+                        onClick={handleMaxClick}
+                      >
                         MAX
                       </div>
                     ) : null}
@@ -497,7 +503,7 @@ export const VestingContractAddFundsModal = (props: {
                     autoComplete='off'
                     autoCorrect='off'
                     type='text'
-                    onChange={handleAmountChange}
+                    onChange={e => handleAmountChange(e.target.value)}
                     pattern='^[0-9]*[.,]?[0-9]*$'
                     placeholder='0.0'
                     minLength={1}
@@ -531,6 +537,7 @@ export const VestingContractAddFundsModal = (props: {
                 <div className='right inner-label'>
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onKeyDown={() => {}}
                     onClick={() => refreshPrices()}
                   >
                     ~{topupAmount ? toUsCurrency(getTokenPrice(topupAmount)) : '$0.00'}
@@ -652,22 +659,22 @@ export const VestingContractAddFundsModal = (props: {
             </>
           )}
           {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
-            transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
-              <>{renderPanel1ProgressContent()}</>
-            )}
+          transactionStatus.currentOperation !== TransactionStatus.TransactionFinished
+            ? renderPanel1ProgressContent()
+            : null}
         </div>
 
         {/* Panel2 */}
         <div className={getPanel2Classes()}>
-          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && <>{renderPanel2BusyContent()}</>}
+          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? renderPanel2BusyContent() : null}
         </div>
 
         {/* CTAs */}
-        {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && <>{renderCtas()}</>}
+        {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) ? renderCtas() : null}
 
         {/* Funding options */}
         {!isBusy && !highLightableStreamId && transactionStatus.currentOperation === TransactionStatus.Iddle && (
-          <div className={`buy-token-options text-center mt-4 mb-2`}>
+          <div className={'buy-token-options text-center mt-4 mb-2'}>
             <p>You can also fund this contract by sending {selectedToken?.symbol} tokens to:</p>
 
             {showQrCode && vestingContract && (
@@ -692,6 +699,7 @@ export const VestingContractAddFundsModal = (props: {
             {!showQrCode && (
               <div
                 className='simplelink underline'
+                onKeyDown={() => {}}
                 onClick={() => {
                   setShowQrCode(true);
                 }}

@@ -8,12 +8,12 @@ import { useWallet } from 'contexts/wallet';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { percentage, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
-import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const StreamResumeModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (title: string) => void;
   tokenBalance: number;
   content: ReactNode;
   isVisible: boolean;
@@ -27,7 +27,7 @@ export const StreamResumeModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!publicKey && selectedAccount.isMultisig;
   }, [publicKey, selectedAccount]);
 
   const amITreasurer = useCallback((): boolean => {
@@ -49,10 +49,10 @@ export const StreamResumeModal = (props: {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
       if (v1.version < 2) {
-        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
-      } else {
-        return v2.beneficiary.equals(publicKey) ? true : false;
+        return v1.beneficiaryAddress === publicKey.toBase58();
       }
+
+      return v2.beneficiary.equals(publicKey);
     }
     return false;
   }, [publicKey, props.streamDetail]);
@@ -97,9 +97,9 @@ export const StreamResumeModal = (props: {
 
       if (props.streamDetail.version < 2) {
         return v1.escrowVestedAmount;
-      } else {
-        return toUiAmount(v2.withdrawableAmount, token?.decimals || 9);
       }
+
+      return toUiAmount(v2.withdrawableAmount, token?.decimals ?? 9);
     }
     return 0;
   }, [publicKey, props.streamDetail, getTokenByMintAddress]);
@@ -114,9 +114,9 @@ export const StreamResumeModal = (props: {
 
       if (props.streamDetail.version < 2) {
         return v1.escrowUnvestedAmount;
-      } else {
-        return toUiAmount(v2.fundsLeftInStream, token?.decimals || 9);
       }
+
+      return toUiAmount(v2.fundsLeftInStream, token?.decimals ?? 9);
     }
     return 0;
   }, [publicKey, props.streamDetail, getTokenByMintAddress]);
@@ -147,8 +147,8 @@ export const StreamResumeModal = (props: {
     props.handleClose();
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   const infoRow = (caption: string, value: string) => {

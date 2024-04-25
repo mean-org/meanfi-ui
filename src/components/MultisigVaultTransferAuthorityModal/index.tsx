@@ -2,6 +2,7 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import type { TransactionFees } from '@mean-dao/money-streaming';
 import { AutoComplete, Button, Checkbox, Modal, Spin } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import type { SetAssetAuthPayload } from 'models/multisig';
 import type React from 'react';
 import { useContext, useState } from 'react';
@@ -20,9 +21,9 @@ import { InputMean } from '../InputMean';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigVaultTransferAuthorityModal = (props: {
-  handleClose: any;
-  handleOk: any;
-  handleAfterClose: any;
+  handleClose: () => void;
+  handleOk: (params: SetAssetAuthPayload) => void;
+  handleAfterClose: () => void;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
@@ -67,8 +68,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     });
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   const isValidForm = (): boolean => {
@@ -98,9 +99,9 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     window.location.reload();
   };
 
-  const onMultisigSelected = (e: any) => {
-    consoleOut('selectedAuthority:', e, 'blue');
-    setSelectedAuthority(e);
+  const onMultisigSelected = (value: string) => {
+    consoleOut('selectedAuthority:', value, 'blue');
+    setSelectedAuthority(value);
   };
 
   const renderVault = (item: UserTokenAccount) => {
@@ -117,7 +118,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
       <div className='transaction-list-row no-pointer'>
         <div className='icon-cell'>
           <div className='token-icon'>
-            {token && token.logoURI ? (
+            {token?.logoURI ? (
               <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
               <Identicon
@@ -152,7 +153,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     key: item.authority.toBase58(),
     value: item.authority.toBase58(),
     label: (
-      <div className={`transaction-list-row`}>
+      <div className={'transaction-list-row'}>
         <div className='icon-cell'>
           <Identicon address={item.id} style={{ width: '30', display: 'inline-flex' }} />
         </div>
@@ -182,7 +183,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     return options;
   };
 
-  const onDestinationAddressDisclaimerAcceptanceChange = (e: any) => {
+  const onDestinationAddressDisclaimerAcceptanceChange = (e: CheckboxChangeEvent) => {
     setDestinationAddressDisclaimerAccepted(e.target.checked);
   };
 
