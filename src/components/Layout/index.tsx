@@ -338,12 +338,12 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
 
   // Update diagnosis info
   useEffect(() => {
-    if (connectionConfig.endpoint && needRefresh) {
+    if (needRefresh) {
       const now = new Date();
       const device = getPlatform();
       const dateTime = `Client time: ${now.toUTCString()}`;
       const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
-      const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${tpsAvg || '-'}`;
+      const networkInfo = `Cluster: ${connectionConfig.cluster} | TPS: ${tpsAvg || '-'}`;
       const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
       const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, branch: ${
         gitInfo.branch || '-'
