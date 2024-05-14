@@ -57,7 +57,7 @@ export const AccountsCloseAssetModal = (props: {
   // Events and actions
 
   const onIsVerifiedRecipientChange = (e: CheckboxChangeEvent) => {
-    setIsDisclaimerAccepted(e.target.value);
+    setIsDisclaimerAccepted(e.target.checked);
   };
 
   const onYesInputValueChange = (value: string) => {
