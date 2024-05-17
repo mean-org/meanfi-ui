@@ -10,6 +10,11 @@ export interface RoutingInfo {
   parent?: string;
 }
 
+export interface LabelOption {
+  label: string;
+  value: number;
+}
+
 export interface SelectOption {
   key: string;
   value: string;

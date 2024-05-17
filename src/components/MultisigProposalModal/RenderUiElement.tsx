@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import type { App, UiElement } from '@mean-dao/mean-multisig-apps';
 import { Col, Radio, Row } from 'antd';
@@ -16,7 +16,7 @@ interface Props {
   selectedApp: App | undefined;
   serializedTx: any;
   selectOptionState: any;
-  multisigAuthority: string;
+  multisigAuthority: string | undefined;
   onSelectOptionChange: (e: { key: any; value: any }) => void;
   onRadioOptionChange: (e: { id: any; value: any }) => void;
   onChangeCredixValue: (value: any) => void;
@@ -249,7 +249,9 @@ const RenderUiElement = ({
     );
   }, [element.help, element.label, element.name, inputState, isBusy, onInputChange]);
 
-  const renderMultisigAnth = useCallback(() => {
+  const renderMultisigAuth = useCallback(() => {
+    if (!multisigAuthority) return null;
+
     return (
       <Row gutter={[8, 8]} className='mb-1'>
         <Col xs={24} sm={24} md={24} lg={24} className='text-right pr-1'>
@@ -292,7 +294,7 @@ const RenderUiElement = ({
       return renderFrom();
     }
     if (element.type === 'multisig') {
-      return renderMultisigAnth();
+      return renderMultisigAuth();
     }
 
     return null;
@@ -301,7 +303,7 @@ const RenderUiElement = ({
     isNumberInput,
     renderFrom,
     renderKnownValue,
-    renderMultisigAnth,
+    renderMultisigAuth,
     renderNumberInput,
     renderRadioOptions,
     renderSelectOptions,
@@ -310,6 +312,8 @@ const RenderUiElement = ({
     renderTextInput,
     renderTxProposer,
   ]);
+
+  useEffect(() => console.log('inputState:', inputState), [inputState]);
 
   return (
     <Row gutter={[8, 8]} className='mb-1'>

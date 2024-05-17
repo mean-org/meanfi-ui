@@ -29,11 +29,13 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import RenderUiElement from './RenderUiElement';
 import './style.scss';
-import { SelectOption } from 'models/common-types';
+import type { LabelOption, SelectOption } from 'models/common-types';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { LooseObject } from 'types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-const expires: { label: string; value: number }[] = [
+const expires: LabelOption[] = [
   { label: 'No expiry', value: 0 },
   { label: '24 hours', value: 86_400 },
   { label: '48 hours', value: 172_800 },
@@ -42,14 +44,14 @@ const expires: { label: string; value: number }[] = [
 ];
 
 export const MultisigProposalModal = (props: {
-  handleClose: any;
+  handleClose: () => void;
   isVisible: boolean;
   isBusy: boolean;
   proposer: string;
   appsProvider: AppsProvider | undefined;
   solanaApps: App[];
-  handleOk: any;
-  selectedMultisig?: any;
+  handleOk: (options: CreateNewProposalParams) => void;
+  selectedMultisig?: MultisigInfo;
 }) => {
   const navigate = useNavigate();
   const { publicKey } = useWallet();
@@ -61,7 +63,7 @@ export const MultisigProposalModal = (props: {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [proposalTitleValue, setProposalTitleValue] = useState('');
-  const [proposalExpiresValue, setProposalExpiresValue] = useState<any>(expires[0]);
+  const [proposalExpiresValue, setProposalExpiresValue] = useState<LabelOption>(expires[0]);
 
   const [proposalDescriptionValue, setProposalDescriptionValue] = useState('');
   const [countWords, setCountWords] = useState(0);
@@ -71,10 +73,11 @@ export const MultisigProposalModal = (props: {
   const [selectedAppConfig, setSelectedAppConfig] = useState<AppConfig>();
   const [selectedUiIx, setSelectedUiIx] = useState<UiInstruction | undefined>();
   const [credixValue, setCredixValue] = useState<number | undefined>();
-  const [inputState, setInputState] = useState<any>({});
+  const [inputState, setInputState] = useState<LooseObject>({});
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     (address: any) => {
       if (copyText(address.toString())) {
         openNotification({
@@ -113,11 +116,12 @@ export const MultisigProposalModal = (props: {
   };
 
   const updateSelectedIx = useCallback(
-    (state: any) => {
+    (state: LooseObject) => {
       if (!selectedMultisig || !selectedApp || !selectedUiIx) {
         return;
       }
 
+      consoleOut('state:', state, 'blue');
       const currentUiIx = Object.assign({}, selectedUiIx);
 
       for (const uiElem of currentUiIx.uiElements) {
@@ -127,26 +131,25 @@ export const MultisigProposalModal = (props: {
           } else if (typeof uiElem.type === 'object' && 'from' in uiElem.type && state[uiElem.name]) {
             uiElem.value = state[uiElem.name];
           } else {
-            if (!state[uiElem.name]) {
+            if (!state[uiElem.name] || !uiElem.dataElement) {
               continue;
             }
             uiElem.value = state[uiElem.name];
-            const dataElement = uiElem.dataElement as any;
-            if (dataElement?.dataType) {
-              if (dataElement.dataType === 'u64') {
+            if ('dataType' in uiElem.dataElement) {
+              if (uiElem.dataElement.dataType === 'u64') {
                 if (uiElem.type === 'datePicker') {
                   const date = new Date(state[uiElem.name]);
-                  dataElement.dataValue = new BN(date.getTime() / 1_000);
+                  uiElem.dataElement.dataValue = new BN(date.getTime() / 1_000);
                 } else {
-                  dataElement.dataValue = new BN(state[uiElem.name]);
+                  uiElem.dataElement.dataValue = new BN(state[uiElem.name]);
                 }
-              } else if (dataElement.dataType === 'u8') {
-                dataElement.dataValue = Number.parseInt(state[uiElem.name]);
-              } else if (dataElement.dataType === 'string') {
-                dataElement.dataValue = state[uiElem.name];
+              } else if (uiElem.dataElement.dataType === 'u8') {
+                uiElem.dataElement.dataValue = Number.parseInt(state[uiElem.name]);
+              } else if (uiElem.dataElement.dataType === 'string') {
+                uiElem.dataElement.dataValue = state[uiElem.name];
               }
-            } else if (dataElement && !dataElement.dataType) {
-              dataElement.dataValue = new PublicKey(state[uiElem.name]);
+            } else {
+              uiElem.dataElement.dataValue = state[uiElem.name]; // new PublicKey(state[uiElem.name]);
             }
           }
         }
@@ -158,7 +161,7 @@ export const MultisigProposalModal = (props: {
   );
 
   const onAcceptModal = useCallback(() => {
-    if (!selectedApp || !selectedAppConfig || !selectedUiIx) {
+    if (!selectedApp || !selectedMultisig || !selectedAppConfig || !selectedUiIx) {
       return;
     }
     updateSelectedIx(inputState);
@@ -180,7 +183,7 @@ export const MultisigProposalModal = (props: {
     proposalTitleValue,
     selectedApp,
     selectedAppConfig,
-    selectedMultisig.id,
+    selectedMultisig,
     selectedUiIx,
     updateSelectedIx,
   ]);
@@ -220,7 +223,10 @@ export const MultisigProposalModal = (props: {
   };
 
   const onProposalExpiresValueChange = (value: string) => {
-    setProposalExpiresValue(value);
+    const expireOption = expires.find(v => v.value === +value);
+    if (expireOption) {
+      setProposalExpiresValue(expireOption);
+    }
   };
 
   const onProposalDescriptionValueChange = (value: string | undefined) => {
@@ -229,23 +235,26 @@ export const MultisigProposalModal = (props: {
   };
 
   const onProposalInstructionValueChange = useCallback(
-    (value: any) => {
-      if (!value) {
+    (value: string) => {
+      if (!value || !selectedAppConfig) {
         return;
       }
 
-      const uiIx = selectedAppConfig?.ui.length
-        ? selectedAppConfig.ui.filter((ix: any) => ix.id === value.key)[0]
-        : undefined;
+      if (!selectedAppConfig.ui.length) {
+        return;
+      }
+      setInputState({});
+
+      const uiIx = selectedAppConfig.ui.filter(ix => ix.id === value)[0];
 
       console.log('uiIx', uiIx);
       setSelectedUiIx(uiIx);
     },
-    [selectedAppConfig?.ui],
+    [selectedAppConfig],
   );
 
   const handleChangeInput = useCallback(
-    (e: any) => {
+    (e: LooseObject) => {
       setInputState({
         ...inputState,
         [e.id]: e.value,
@@ -255,7 +264,7 @@ export const MultisigProposalModal = (props: {
   );
 
   const handleChangeYesOrNot = useCallback(
-    (e: any) => {
+    (e: LooseObject) => {
       setInputState({
         ...inputState,
         [e.id]: e.value,
@@ -264,10 +273,10 @@ export const MultisigProposalModal = (props: {
     [inputState],
   );
 
-  const [selectOptionState, setSelectOptionState] = useState<any>({});
+  const [selectOptionState, setSelectOptionState] = useState<LooseObject>({});
 
   const handleChangeOption = useCallback(
-    (e: any) => {
+    (e: LooseObject) => {
       setSelectOptionState({ [e.key]: e.value });
       setInputState({
         ...inputState,
@@ -284,11 +293,11 @@ export const MultisigProposalModal = (props: {
 
     appsProvider
       .getAppConfig(selectedApp.id, selectedApp.uiUrl, selectedApp.defUrl)
-      .then((config: any) => {
+      .then(config => {
         console.log('selected app config', config);
-        setSelectedAppConfig(config);
+        setSelectedAppConfig(config ?? undefined);
       })
-      .catch((err: any) => {
+      .catch(err => {
         consoleOut('Error: ', err, 'red');
       });
   }, [appsProvider, selectedApp]);
@@ -326,7 +335,8 @@ export const MultisigProposalModal = (props: {
             const renderAppLogo = () => {
               if (app.id === NATIVE_LOADER.toBase58()) {
                 return <img src={app.logoUri} width={65} height={65} alt={app.name} />;
-              } else if (app.folder === 'credix' && theme === 'light') {
+              }
+              if (app.folder === 'credix' && theme === 'light') {
                 return (
                   <img
                     src={app.logoUri}
@@ -336,9 +346,9 @@ export const MultisigProposalModal = (props: {
                     style={{ background: 'grey', borderRadius: '0.75em' }}
                   />
                 );
-              } else {
-                return <img src={app.logoUri} width={65} height={65} alt={app.name} />;
               }
+
+              return <img src={app.logoUri} width={65} height={65} alt={app.name} />;
             };
             return (
               <Col xs={8} sm={6} md={6} lg={6} className='select-app' key={`app-${app.folder}-${app.id}`}>
@@ -346,6 +356,7 @@ export const MultisigProposalModal = (props: {
                   className={`select-app-item simplelink ${
                     selectedApp && selectedApp.name === app.name ? 'selected-app' : 'no-selected-app'
                   }`}
+                  onKeyDown={() => {}}
                   onClick={onSelectApp}
                 >
                   {renderAppLogo()}
@@ -360,9 +371,11 @@ export const MultisigProposalModal = (props: {
 
   const [isSerializedTxValid, setIsSerializedTxValid] = useState<boolean>();
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const [serializedTx, setSerializedTx] = useState<any>();
 
   // Handler paste clipboard serialized transaction
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const pasteHandler = (e: any) => {
     const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
     const getInputData = e.clipboardData.getData('Text');
@@ -373,6 +386,7 @@ export const MultisigProposalModal = (props: {
   };
 
   // Deserialize transaction
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const [deserializedTx, setDeserializedTx] = useState<any>();
 
   useEffect(() => {
@@ -473,11 +487,10 @@ export const MultisigProposalModal = (props: {
                             value: `${e.value}`,
                           } as SelectOption;
                         })}
-                        labelInValue={true}
                         value={{
-                          key: proposalExpiresValue.value,
-                          value: proposalExpiresValue.value,
-                          label: proposalExpiresValue.label,
+                          key: `${proposalExpiresValue.value}`,
+                          value: `${proposalExpiresValue.value}`,
+                          label: `${proposalExpiresValue.label}`,
                         }}
                       />
                     </div>
@@ -528,7 +541,6 @@ export const MultisigProposalModal = (props: {
                                   })
                                 : []
                             }
-                            labelInValue={true}
                             value={
                               selectedUiIx
                                 ? {
@@ -560,7 +572,7 @@ export const MultisigProposalModal = (props: {
                                 selectedApp={selectedApp}
                                 serializedTx={serializedTx}
                                 selectOptionState={selectOptionState}
-                                multisigAuthority={selectedMultisig.authority.toBase58()}
+                                multisigAuthority={selectedMultisig?.authority.toBase58()}
                                 onSelectOptionChange={value => handleChangeOption(value)}
                                 onRadioOptionChange={value => handleChangeYesOrNot(value)}
                                 onChangeCredixValue={value => setCredixValue(value)}
@@ -640,9 +652,9 @@ export const MultisigProposalModal = (props: {
                       Object.keys(inputState).map((key, index) => (
                         <>
                           <div className='info-label text-center mt-2'>
-                            {selectedAppConfig?.ui.map((ix: any, idx: number) =>
-                              ix.uiElements.map((element: any, idx2: number) => (
-                                <span key={`instruction-${idx}-${idx2}`}>{element.label}</span>
+                            {selectedAppConfig?.ui.map((ix: UiInstruction, idx: number) =>
+                              ix.uiElements.map((element: UiElement, idx2: number) => (
+                                <span key={`instruction-${idx}-${element.dataElement?.index}`}>{element.label}</span>
                               )),
                             )}
                           </div>
@@ -652,6 +664,7 @@ export const MultisigProposalModal = (props: {
                               <br />
                               <div>
                                 <span
+                                  onKeyDown={() => {}}
                                   onClick={() => copyAddressToClipboard(deserializedTx?.programId)}
                                   className='info-data simplelink underline-on-hover'
                                   style={{ cursor: 'pointer' }}
@@ -669,6 +682,7 @@ export const MultisigProposalModal = (props: {
                                 </a>
                               </div>
                             </div>
+                            {/* biome-ignore lint/suspicious/noExplicitAny: Anything can go here */}
                             {deserializedTx?.accounts.map((account: any) => (
                               <div className='mb-1' key={`account-${account.index}`}>
                                 <span>
@@ -677,6 +691,7 @@ export const MultisigProposalModal = (props: {
                                 <br />
                                 <div>
                                   <span
+                                    onKeyDown={() => {}}
                                     onClick={() => copyAddressToClipboard(account.value)}
                                     className='info-data simplelink underline-on-hover'
                                     style={{ cursor: 'pointer' }}
@@ -698,9 +713,11 @@ export const MultisigProposalModal = (props: {
                             <div className='mb-1'>
                               <span>{t('multisig.proposal-modal.instruction-data')}:</span>
                               <br />
+                              {/* biome-ignore lint/suspicious/noExplicitAny: Anything can go here */}
                               {deserializedTx?.data.map((data: any, idx3: number) => (
                                 <span
                                   key={`txdata-item-${idx3}`}
+                                  onKeyDown={() => {}}
                                   onClick={() => copyAddressToClipboard(data.value)}
                                   className='info-data simplelink underline-on-hover'
                                   style={{ cursor: 'pointer' }}
@@ -718,11 +735,11 @@ export const MultisigProposalModal = (props: {
                     const getYesOrNo = () => {
                       if (inputState[key] === true) {
                         return 'Yes';
-                      } else if (inputState[key] === false) {
-                        return 'No';
-                      } else {
-                        return inputState[key];
                       }
+                      if (inputState[key] === false) {
+                        return 'No';
+                      }
+                      return inputState[key];
                     };
                     return (
                       <Row className='mb-1' key={`uielement-${index}`}>
@@ -730,7 +747,7 @@ export const MultisigProposalModal = (props: {
                           <>
                             <Col span={8} className='text-right pr-1'>
                               <span className='info-label'>
-                                {selectedUiIx?.uiElements.filter((e: any) => e.name === key)[0].label}:
+                                {selectedUiIx?.uiElements.filter(e => e.name === key)[0].label}:
                               </span>
                             </Col>
                             <Col span={16} className='text-left pl-1'>
@@ -850,39 +867,46 @@ export const MultisigProposalModal = (props: {
       </>
     );
   }, [
-    copyAddressToClipboard,
+    isBusy,
+    proposer,
+    publicKey,
+    inputState,
+    lettersLeft,
     credixValue,
     currentStep,
-    deserializedTx?.accounts,
+    selectedApp,
+    selectedUiIx,
+    serializedTx,
+    selectOptionState,
+    selectedAppConfig,
+    proposalTitleValue,
+    isSerializedTxValid,
     deserializedTx?.data,
+    proposalDescriptionValue,
+    deserializedTx?.accounts,
     deserializedTx?.programId,
+    proposalExpiresValue.label,
+    proposalExpiresValue.value,
+    selectedMultisig?.authority,
     getStepOneContinueButtonLabel,
     getStepTwoContinueButtonLabel,
     getTransactionStartButtonLabel,
-    handleChangeInput,
-    handleChangeOption,
-    handleChangeYesOrNot,
-    inputState,
-    isBusy,
-    isSerializedTxValid,
-    lettersLeft,
-    onAcceptModal,
-    onCloseModal,
-    onContinueStepOneButtonClick,
     onProposalInstructionValueChange,
-    proposalDescriptionValue,
-    proposalExpiresValue.label,
-    proposalExpiresValue.value,
-    proposalTitleValue,
-    proposer,
-    publicKey,
+    onProposalDescriptionValueChange,
+    onContinueStepOneButtonClick,
+    onContinueStepOneButtonClick,
+    onContinueStepTwoButtonClick,
+    onProposalExpiresValueChange,
+    onProposalTitleValueChange,
+    copyAddressToClipboard,
+    handleChangeYesOrNot,
+    handleChangeOption,
+    handleChangeInput,
     renderSolanaApps,
-    selectOptionState,
-    selectedApp,
-    selectedAppConfig,
-    selectedMultisig.authority,
-    selectedUiIx,
-    serializedTx,
+    onStepperChange,
+    onAcceptModal,
+    pasteHandler,
+    onCloseModal,
     t,
   ]);
 
@@ -951,11 +975,12 @@ export const MultisigProposalModal = (props: {
   const renderNewProposalModalContent = useCallback(() => {
     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
       return renderIdleState();
-    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-      return renderFinishedState();
-    } else {
-      return renderFailureState();
     }
+    if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+      return renderFinishedState();
+    }
+
+    return renderFailureState();
   }, [renderFailureState, renderFinishedState, renderIdleState, transactionStatus.currentOperation]);
 
   return (
