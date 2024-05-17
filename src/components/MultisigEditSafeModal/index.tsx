@@ -13,12 +13,13 @@ import { getAmountWithSymbol } from '../../middleware/utils';
 import { TransactionStatus } from '../../models/enums';
 import { InputMean } from '../InputMean';
 import { MultisigSafeOwners } from '../MultisigSafeOwners';
+import type { EditMultisigParams } from 'models/multisig';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigEditSafeModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (options: EditMultisigParams) => void;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
@@ -84,12 +85,13 @@ export const MultisigEditSafeModal = (props: {
   }, [multisigLabel, multisigThreshold, props.multisigName, props.multisigThreshold, hasOwnersChanges]);
 
   const onAcceptModal = () => {
-    props.handleOk({
+    const options: EditMultisigParams = {
       title: multisigTitle,
       label: multisigLabel,
       threshold: multisigThreshold,
       owners: multisigOwners,
-    });
+    };
+    props.handleOk(options);
   };
 
   const onCloseModal = () => {
@@ -115,12 +117,12 @@ export const MultisigEditSafeModal = (props: {
     window.location.reload();
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setMultisigTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setMultisigTitle(value);
   };
 
-  const onLabelInputValueChange = (e: any) => {
-    setMultisigLabel(e.target.value);
+  const onLabelInputValueChange = (value: string) => {
+    setMultisigLabel(value);
   };
 
   const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
@@ -191,7 +193,7 @@ export const MultisigEditSafeModal = (props: {
                       autoCorrect='off'
                       type='text'
                       maxLength={32}
-                      onChange={onLabelInputValueChange}
+                      onChange={e => onLabelInputValueChange(e.target.value)}
                       placeholder={t('multisig.create-multisig.multisig-label-placeholder')}
                       value={multisigLabel}
                     />
@@ -223,7 +225,7 @@ export const MultisigEditSafeModal = (props: {
             <div className='required-signatures-box mb-3'>
               <div className='info-label'>A proposal will pass with:</div>
               <div className='required-signatures-icons'>
-                {multisigOwners.map((icon, index) => {
+                {multisigOwners.map((item, index) => {
                   const onSelectIcon = () => {
                     setMultisigThreshold(index + 1);
                   };
@@ -233,7 +235,8 @@ export const MultisigEditSafeModal = (props: {
                       className={`icon-container simplelink ${
                         multisigThreshold >= index + 1 ? 'bg-green' : 'bg-gray-light'
                       }`}
-                      key={index}
+                      key={item.address}
+                      onKeyDown={() => {}}
                       onClick={onSelectIcon}
                     >
                       {multisigThreshold >= index + 1 ? (

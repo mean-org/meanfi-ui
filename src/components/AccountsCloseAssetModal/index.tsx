@@ -1,7 +1,8 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import type { TransactionFees } from '@mean-dao/payment-streaming';
-import { type Connection, PublicKey } from '@solana/web3.js';
+import { PublicKey, type Connection } from '@solana/web3.js';
 import { Button, Checkbox, Modal } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { InputMean } from 'components/InputMean';
 import { TokenListItem } from 'components/TokenListItem';
 import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
@@ -18,8 +19,8 @@ import { useTranslation } from 'react-i18next';
 
 export const AccountsCloseAssetModal = (props: {
   connection: Connection;
-  handleOk: any;
-  handleClose: any;
+  handleOk: () => void;
+  handleClose: () => void;
   isVisible: boolean;
   asset: UserTokenAccount;
 }) => {
@@ -55,12 +56,12 @@ export const AccountsCloseAssetModal = (props: {
 
   // Events and actions
 
-  const onIsVerifiedRecipientChange = (e: any) => {
+  const onIsVerifiedRecipientChange = (e: CheckboxChangeEvent) => {
     setIsDisclaimerAccepted(e.target.checked);
   };
 
-  const onYesInputValueChange = (e: any) => {
-    setEnterYesWord(e.target.value);
+  const onYesInputValueChange = (value: string) => {
+    setEnterYesWord(value);
   };
 
   const { onExecute } = useTransaction();
@@ -118,31 +119,38 @@ export const AccountsCloseAssetModal = (props: {
   const getCtaLabelIfWrapSol = () => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (nativeBalance < feeAmount) {
-      return t('transactions.validation.amount-sol-low');
-    } else if (!asset) {
-      return 'No token selected';
-    } else if (!isEnterYesWordValid()) {
-      return 'Confirm account closure';
-    } else if (!isDisclaimerAccepted) {
-      return 'Accept disclaimer';
-    } else {
-      return 'Close account';
     }
+    if (nativeBalance < feeAmount) {
+      return t('transactions.validation.amount-sol-low');
+    }
+    if (!asset) {
+      return 'No token selected';
+    }
+    if (!isEnterYesWordValid()) {
+      return 'Confirm account closure';
+    }
+    if (!isDisclaimerAccepted) {
+      return 'Accept disclaimer';
+    }
+
+    return 'Close account';
   };
 
   const getCtaLabel = () => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (nativeBalance < feeAmount) {
-      return t('transactions.validation.amount-sol-low');
-    } else if (!asset) {
-      return 'No token selected';
-    } else if (!isDisclaimerAccepted) {
-      return 'Accept disclaimer';
-    } else {
-      return 'Close account';
     }
+    if (nativeBalance < feeAmount) {
+      return t('transactions.validation.amount-sol-low');
+    }
+    if (!asset) {
+      return 'No token selected';
+    }
+    if (!isDisclaimerAccepted) {
+      return 'Accept disclaimer';
+    }
+
+    return 'Close account';
   };
 
   const renderMessages = () => {
@@ -153,20 +161,19 @@ export const AccountsCloseAssetModal = (props: {
           account will be closed.
         </p>
       );
-    } else if (asset.address !== WRAPPED_SOL_MINT_ADDRESS && asset.balance) {
+    }
+    if (asset.address !== WRAPPED_SOL_MINT_ADDRESS && asset.balance) {
       return (
         <p>
           Your token account has funds, therefore it will be sent to the trash and the funds will be lost unless you
           transfer the funds to another account.
         </p>
       );
-    } else {
-      return (
-        <p>
-          Your token account is empty so it can be closed. Click Close account to remove the asset from your wallet.
-        </p>
-      );
     }
+
+    return (
+      <p>Your token account is empty so it can be closed. Click Close account to remove the asset from your wallet.</p>
+    );
   };
 
   const renderMainCtaLabel = () => {
@@ -176,11 +183,12 @@ export const AccountsCloseAssetModal = (props: {
 
     if (isBusy) {
       return 'Closing account';
-    } else if (isWrappedSol()) {
-      return getCtaLabelIfWrapSol();
-    } else {
-      return getCtaLabel();
     }
+    if (isWrappedSol()) {
+      return getCtaLabelIfWrapSol();
+    }
+
+    return getCtaLabel();
   };
 
   // Rendering

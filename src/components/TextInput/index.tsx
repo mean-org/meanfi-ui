@@ -7,12 +7,12 @@ export const TextInput = (props: {
   value: string;
   extraClass?: string;
   placeholder: string;
-  onInputChange: any;
+  onInputChange: (value: string) => void;
   allowClear?: boolean;
   alwaysShowClear?: boolean;
   error?: string;
   maxLength?: number;
-  onInputClear?: any;
+  onInputClear?: () => void;
 }) => {
   const {
     id,
@@ -42,7 +42,7 @@ export const TextInput = (props: {
               autoCorrect='off'
               type='text'
               maxLength={maxLength}
-              onChange={onInputChange}
+              onChange={e => onInputChange(e.target.value)}
               placeholder={placeholder}
               spellCheck='false'
               value={value}
@@ -50,7 +50,7 @@ export const TextInput = (props: {
           </div>
           {(alwaysShowClear || (allowClear && value)) && (
             <div className='rigth'>
-              <div className='add-on h-100 simplelink' onClick={onInputClear}>
+              <div className='add-on h-100 simplelink' onKeyDown={() => {}} onClick={() => onInputClear?.()}>
                 <CloseCircleOutlined />
               </div>
             </div>

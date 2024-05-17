@@ -2,15 +2,22 @@ import type { BN } from '@project-serum/anchor';
 import type { MetaInfoCtaAction } from './accounts';
 import type { StreamTreasuryType } from './treasuries';
 
+declare type FnHandler = (arguments: unknown) => void;
+
 export interface RoutingInfo {
   key: string;
   path?: string;
   parent?: string;
 }
 
-export interface SelectOption {
-  key: number;
+export interface LabelOption {
+  label: string;
   value: number;
+}
+
+export interface SelectOption {
+  key: string;
+  value: string;
   label: string;
   visible?: boolean;
 }
@@ -66,7 +73,7 @@ export interface MetaInfoCta {
   uiComponentType: 'button' | 'menuitem';
   uiComponentId: string;
   tooltip: string;
-  callBack?: any;
+  callBack?: FnHandler;
 }
 
 export type TimeData = {
@@ -81,4 +88,9 @@ export type RecipientAddressInfo = {
   type: string;
   mint: string;
   owner: string;
+};
+
+export type StreamRecipient = {
+  streamName: string;
+  address: string;
 };

@@ -78,3 +78,17 @@ export const isProgramDataAccount = (parsedAccountInfo: AccountInfo<ParsedAccoun
     parsedAccountInfo.data.parsed.type === 'programData'
   );
 };
+
+export const getDecimalsFromAccountInfo = (
+  parsedAccountInfo: AccountInfo<Buffer | ParsedAccountData> | null,
+  defaultValue = 0,
+) => {
+  if (!parsedAccountInfo || !parsedAccountInfo.data) return defaultValue;
+  const accInfo = parsedAccountInfo.data as ParsedAccountData;
+
+  if ('parsed' in accInfo && accInfo.program === 'spl-token' && accInfo.parsed.type === 'mint') {
+    return accInfo.parsed.info?.decimals ?? 0;
+  }
+
+  return -2;
+};

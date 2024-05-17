@@ -16,6 +16,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
+import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 import { getTokensWithBalances } from 'middleware/accounts';
 import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
@@ -26,29 +27,31 @@ import { TransactionStatus } from 'models/enums';
 import type { TreasuryCreateOptions, TreasuryTypeOption } from 'models/treasuries';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const TreasuryCreateModal = (props: {
-  handleClose: any;
-  handleOk: any;
+interface Props {
+  handleOk: (options: TreasuryCreateOptions) => void;
+  handleClose: () => void;
   isBusy: boolean;
   isVisible: boolean;
   multisigAccounts?: MultisigInfo[];
   nativeBalance: number;
   selectedMultisig: MultisigInfo | undefined;
   transactionFees: TransactionFees;
-}) => {
-  const {
-    handleClose,
-    handleOk,
-    isBusy,
-    isVisible,
-    multisigAccounts,
-    nativeBalance,
-    selectedMultisig,
-    transactionFees,
-  } = props;
+}
+
+export const TreasuryCreateModal = ({
+  handleClose,
+  handleOk,
+  isBusy,
+  isVisible,
+  multisigAccounts,
+  nativeBalance,
+  selectedMultisig,
+  transactionFees,
+}: Props) => {
   const { t } = useTranslation('common');
   const { tokenList, splTokenList, selectedAccount, transactionStatus, setTransactionStatus, priceList } =
     useContext(AppStateContext);
@@ -62,7 +65,7 @@ export const TreasuryCreateModal = (props: {
   const [tokenFilter, setTokenFilter] = useState('');
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
-  const [userBalances, setUserBalances] = useState<any>();
+  const [userBalances, setUserBalances] = useState<LooseObject>();
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
 
   const isMultisigContext = useMemo(() => {
@@ -83,6 +86,7 @@ export const TreasuryCreateModal = (props: {
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     (address: any) => {
       if (copyText(address.toString())) {
         openNotification({
@@ -119,7 +123,7 @@ export const TreasuryCreateModal = (props: {
       }
 
       const timeout = setTimeout(() => {
-        const filter = (t: any) => {
+        const filter = (t: TokenInfo) => {
           return (
             t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
             t.name.toLowerCase().includes(searchString.toLowerCase()) ||
@@ -128,7 +132,7 @@ export const TreasuryCreateModal = (props: {
         };
 
         const preFilterSol = selectedList.filter(t => t.address !== NATIVE_SOL.address);
-        const showFromList = !searchString ? preFilterSol : preFilterSol.filter((t: any) => filter(t));
+        const showFromList = !searchString ? preFilterSol : preFilterSol.filter(t => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -146,8 +150,8 @@ export const TreasuryCreateModal = (props: {
   }, [updateTokenListByFilter]);
 
   const onTokenSearchInputChange = useCallback(
-    (e: any) => {
-      const newValue = e.target.value;
+    (value: string) => {
+      const newValue = value.trim();
       setTokenFilter(newValue);
       updateTokenListByFilter(newValue);
     },
@@ -208,7 +212,7 @@ export const TreasuryCreateModal = (props: {
 
   // Reset results when the filter is cleared
   useEffect(() => {
-    if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+    if (tokenList?.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
     }
   }, [tokenList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
@@ -261,19 +265,20 @@ export const TreasuryCreateModal = (props: {
   const getTransactionStartButtonLabelMultisig = () => {
     if (!proposalTitle) {
       return 'Add a proposal title';
-    } else if (!treasuryName) {
-      return 'Add an account name';
-    } else {
-      return 'Sign proposal';
     }
+    if (!treasuryName) {
+      return 'Add an account name';
+    }
+
+    return 'Sign proposal';
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
-  const onInputValueChange = (e: any) => {
-    setTreasuryName(e.target.value);
+  const onInputValueChange = (value: string) => {
+    setTreasuryName(value);
   };
 
   const handleSelection = (option: TreasuryTypeOption) => {
@@ -283,7 +288,7 @@ export const TreasuryCreateModal = (props: {
   const renderSelectedMultisig = () => {
     return (
       selectedMultisig && (
-        <div className={`transaction-list-row w-100 no-pointer`}>
+        <div className={'transaction-list-row w-100 no-pointer'}>
           <div className='icon-cell'>
             <Identicon address={selectedMultisig.id} style={{ width: '30', display: 'inline-flex' }} />
           </div>
@@ -332,9 +337,9 @@ export const TreasuryCreateModal = (props: {
             showUsdValues={true}
           />
         );
-      } else {
-        return null;
       }
+
+      return null;
     });
   };
 
@@ -342,10 +347,12 @@ export const TreasuryCreateModal = (props: {
     if (tokenFilter && workingToken) {
       if (workingToken.decimals === -1) {
         return 'Account not found';
-      } else if (workingToken.decimals === -2) {
+      }
+      if (workingToken.decimals === -2) {
         return 'Account is not a token mint';
       }
     }
+
     return undefined;
   };
 
@@ -386,19 +393,7 @@ export const TreasuryCreateModal = (props: {
                 } catch (error) {
                   console.error(error);
                 }
-                if (accountInfo) {
-                  if (
-                    (accountInfo as any).data['program'] &&
-                    (accountInfo as any).data['program'] === 'spl-token' &&
-                    (accountInfo as any).data['parsed'] &&
-                    (accountInfo as any).data['parsed']['type'] &&
-                    (accountInfo as any).data['parsed']['type'] === 'mint'
-                  ) {
-                    decimals = (accountInfo as any).data['parsed']['info']['decimals'];
-                  } else {
-                    decimals = -2;
-                  }
-                }
+                decimals = getDecimalsFromAccountInfo(accountInfo, -1);
                 const unknownToken: TokenInfo = {
                   address,
                   name: CUSTOM_TOKEN_NAME,
@@ -470,7 +465,7 @@ export const TreasuryCreateModal = (props: {
                         autoCorrect='off'
                         type='text'
                         maxLength={32}
-                        onChange={onInputValueChange}
+                        onChange={e => onInputValueChange(e.target.value)}
                         placeholder={t('treasuries.create-treasury.treasury-name-placeholder')}
                         value={treasuryName}
                       />
@@ -509,6 +504,7 @@ export const TreasuryCreateModal = (props: {
                       className={`item-card ${
                         option.type === treasuryOption?.type ? 'selected' : option.disabled ? 'disabled' : ''
                       }`}
+                      onKeyDown={() => {}}
                       onClick={() => {
                         if (!option.disabled) {
                           handleSelection(option);

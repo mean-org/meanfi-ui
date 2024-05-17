@@ -1,6 +1,9 @@
+import type { FocusEvent } from 'react';
 import { IconCheckCircle, IconWarningCover } from '../../Icons';
 
-export const InputMean = (props: {
+interface Props {
+  onChange: (value: string) => void;
+  onBlur?: (e: FocusEvent<HTMLInputElement>) => void;
   id: string;
   name?: string;
   className?: string;
@@ -9,46 +12,45 @@ export const InputMean = (props: {
   type?: string;
   maxLength?: number;
   placeholder?: string;
-  onChange?: any;
-  value?: any;
+  value?: string | number;
   pattern?: string;
   min?: number;
   validationIcons?: boolean;
   isValid?: boolean;
   isTouched?: boolean;
-  onBlur?: any;
-}) => {
-  const {
-    id,
-    name,
-    className,
-    autoComplete,
-    autoCorrect,
-    type,
-    maxLength,
-    placeholder,
-    onChange,
-    value,
-    pattern,
-    min,
-    validationIcons,
-    isTouched,
-    isValid,
-    onBlur,
-  } = props;
+}
 
+export const InputMean = ({
+  id,
+  name,
+  className,
+  autoComplete,
+  autoCorrect,
+  type,
+  maxLength,
+  placeholder,
+  onChange,
+  value,
+  pattern,
+  min,
+  validationIcons,
+  isTouched,
+  isValid,
+  onBlur,
+}: Props) => {
   const renderValidity = () => {
     if (isTouched) {
       if (isValid) {
         return <IconCheckCircle className='mean-svg-icons simplelink form-check-icon fg-green' />;
-      } else {
-        return <IconWarningCover className='mean-svg-icons simplelink form-warning-icon fg-warning' />;
       }
-    } else if (isValid) {
-      return <IconCheckCircle className='mean-svg-icons simplelink form-check-icon fg-green' />;
-    } else {
-      return null;
+
+      return <IconWarningCover className='mean-svg-icons simplelink form-warning-icon fg-warning' />;
     }
+    if (isValid) {
+      return <IconCheckCircle className='mean-svg-icons simplelink form-check-icon fg-green' />;
+    }
+
+    return null;
   };
 
   return (
@@ -64,7 +66,7 @@ export const InputMean = (props: {
               autoCorrect={autoCorrect || 'off'}
               type={type || 'text'}
               maxLength={maxLength || 32}
-              onChange={onChange}
+              onChange={e => onChange(e.target.value)}
               placeholder={placeholder}
               value={value}
               pattern={pattern}

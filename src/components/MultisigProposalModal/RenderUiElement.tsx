@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import type { App, UiElement } from '@mean-dao/mean-multisig-apps';
 import { Col, Radio, Row } from 'antd';
@@ -16,7 +16,7 @@ interface Props {
   selectedApp: App | undefined;
   serializedTx: any;
   selectOptionState: any;
-  multisigAuthority: string;
+  multisigAuthority: string | undefined;
   onSelectOptionChange: (e: { key: any; value: any }) => void;
   onRadioOptionChange: (e: { id: any; value: any }) => void;
   onChangeCredixValue: (value: any) => void;
@@ -54,11 +54,10 @@ const RenderUiElement = ({
           maxLength={64}
           className={isBusy ? 'disabled' : ''}
           name={element.label}
-          onChange={(e: any) => {
-            console.log(e);
+          onChange={value => {
             onInputChange({
               id: element.name,
-              value: e.target.value,
+              value,
             });
           }}
           placeholder={element.help}
@@ -79,14 +78,13 @@ const RenderUiElement = ({
           name={element.label}
           min={1}
           pattern='^[0-9]*[.,]?[0-9]*$'
-          onChange={(e: any) => {
-            console.log(e);
+          onChange={value => {
             if (selectedApp?.folder === 'credix') {
-              onChangeCredixValue(e.target.value);
+              onChangeCredixValue(value);
             }
             onInputChange({
               id: element.name,
-              value: e.target.value,
+              value,
             });
           }}
           placeholder={element.help}
@@ -115,7 +113,7 @@ const RenderUiElement = ({
               id={element.name}
               rows={30}
               className={`well mb-1 proposal-summary-container vertical-scroll paste-input ${isBusy ? 'disabled' : ''}`}
-              onChange={(e: any) => {
+              onChange={e => {
                 console.log(e);
                 onInputChange({
                   id: element.name,
@@ -132,11 +130,11 @@ const RenderUiElement = ({
             id={element.name}
             className={isBusy ? 'disabled' : ''}
             maxLength={256}
-            onChange={(e: any) => {
+            onChange={e => {
               console.log(e);
               onInputChange({
                 id: element.name,
-                value: e.target.value,
+                value: e?.target.value,
               });
             }}
             placeholder={element.help}
@@ -154,13 +152,14 @@ const RenderUiElement = ({
         <SelectMean
           key={element.name}
           className={isBusy ? 'disabled' : ''}
-          onChange={(value: any) => {
+          onChange={value => {
             onSelectOptionChange({
               key: element.name,
-              value: value,
+              value,
             });
           }}
           placeholder={element.help}
+          // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
           values={element.value.map((elem: any) => elem.value)}
           value={selectOptionState[element.name]}
         />
@@ -178,7 +177,7 @@ const RenderUiElement = ({
           <Radio.Group
             className='ml-2'
             id={element.name}
-            onChange={(e: any) => {
+            onChange={e => {
               onRadioOptionChange({
                 id: element.name,
                 value: e.target.value,
@@ -237,11 +236,10 @@ const RenderUiElement = ({
           maxLength={64}
           className={isBusy ? 'disabled' : ''}
           name={element.label}
-          onChange={(e: any) => {
-            console.log(e);
+          onChange={value => {
             onInputChange({
               id: element.name,
-              value: e.target.value,
+              value,
             });
           }}
           placeholder={element.help}
@@ -251,7 +249,9 @@ const RenderUiElement = ({
     );
   }, [element.help, element.label, element.name, inputState, isBusy, onInputChange]);
 
-  const renderMultisigAnth = useCallback(() => {
+  const renderMultisigAuth = useCallback(() => {
+    if (!multisigAuthority) return null;
+
     return (
       <Row gutter={[8, 8]} className='mb-1'>
         <Col xs={24} sm={24} md={24} lg={24} className='text-right pr-1'>
@@ -265,35 +265,45 @@ const RenderUiElement = ({
   const renderUiElements = useCallback(() => {
     if (element.type === 'inputText') {
       return renderTextInput();
-    } else if (isNumberInput()) {
+    }
+    if (isNumberInput()) {
       return renderNumberInput();
-    } else if (element.type === 'inputTextArea') {
+    }
+    if (element.type === 'inputTextArea') {
       return renderTextArea();
-    } else if (element.type === 'option') {
+    }
+    if (element.type === 'option') {
       return renderSelectOptions();
-    } else if (element.type === 'yesOrNo') {
+    }
+    if (element.type === 'yesOrNo') {
       return renderRadioOptions();
-    } else if (element.type === 'knownValue') {
+    }
+    if (element.type === 'knownValue') {
       return renderKnownValue();
-    } else if (element.type === 'slot') {
+    }
+    if (element.type === 'slot') {
       return renderSlot();
-    } else if (element.type === 'txProposer') {
+    }
+    if (element.type === 'txProposer') {
       return renderTxProposer();
-    } else if (element.type === 'treasuryAccount') {
-      return null;
-    } else if (typeof element.type === 'object' && 'from' in element.type) {
-      return renderFrom();
-    } else if (element.type === 'multisig') {
-      return renderMultisigAnth();
-    } else {
+    }
+    if (element.type === 'treasuryAccount') {
       return null;
     }
+    if (typeof element.type === 'object' && 'from' in element.type) {
+      return renderFrom();
+    }
+    if (element.type === 'multisig') {
+      return renderMultisigAuth();
+    }
+
+    return null;
   }, [
     element.type,
     isNumberInput,
     renderFrom,
     renderKnownValue,
-    renderMultisigAnth,
+    renderMultisigAuth,
     renderNumberInput,
     renderRadioOptions,
     renderSelectOptions,
@@ -302,6 +312,8 @@ const RenderUiElement = ({
     renderTextInput,
     renderTxProposer,
   ]);
+
+  useEffect(() => console.log('inputState:', inputState), [inputState]);
 
   return (
     <Row gutter={[8, 8]} className='mb-1'>

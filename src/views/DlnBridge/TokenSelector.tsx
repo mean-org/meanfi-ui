@@ -10,6 +10,7 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { UserTokenAccount } from 'models/accounts/UserTokenAccount';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 
 interface TokenSelectorProps {
   tokens: TokenInfo[] | undefined;
@@ -26,7 +27,7 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
   const { connected, publicKey } = useWallet();
 
   const [tokenFilter, setTokenFilter] = useState('');
-  const [userBalances, setUserBalances] = useState<any>();
+  const [userBalances, setUserBalances] = useState<LooseObject>();
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
 
@@ -40,13 +41,13 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
       }
 
       const timeout = setTimeout(() => {
-        const filter = (t: any) => {
+        const filter = (t: TokenInfo) => {
           return t.name.toLowerCase().includes(searchString.toLowerCase());
           // t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
           // t.address.toLowerCase().includes(searchString.toLowerCase())
         };
 
-        const filteredList = !searchString ? selectedList : selectedList.filter((t: any) => filter(t));
+        const filteredList = !searchString ? selectedList : selectedList.filter(t => filter(t));
 
         setFilteredTokenList(filteredList);
       });
@@ -86,8 +87,8 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
   }, [updateTokenListByFilter]);
 
   const onTokenSearchInputChange = useCallback(
-    (e: any) => {
-      const input = e.target.value;
+    (value: string) => {
+      const input = value.trim();
       if (input) {
         setTokenFilter(input);
         updateTokenListByFilter(input);
@@ -172,9 +173,9 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
             showUsdValues={true}
           />
         );
-      } else {
-        return null;
       }
+
+      return null;
     });
   };
 

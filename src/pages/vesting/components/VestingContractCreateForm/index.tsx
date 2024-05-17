@@ -5,6 +5,7 @@ import { BN } from '@project-serum/anchor';
 import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { IconCaretDown } from 'Icons';
 import { Button, Checkbox, DatePicker, Drawer, Dropdown, Modal, Spin, TimePicker } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import BigNumber from 'bignumber.js';
 import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
@@ -22,6 +23,7 @@ import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
+import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 import { isError } from 'middleware/transactions';
 import {
   consoleOut,
@@ -52,6 +54,7 @@ import moment from 'moment';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 import { PendingProposalsComponent } from '../PendingProposalsComponent';
 
 const timeFormat = 'hh:mm A';
@@ -63,13 +66,13 @@ export const VestingContractCreateForm = (props: {
   isMultisigContext: boolean;
   loadingMultisigAccounts: boolean;
   nativeBalance: number;
-  onStartTransaction: any;
+  tokenChanged: (t: TokenInfo) => void;
+  onStartTransaction: (options: VestingContractCreateOptions) => void;
   selectedList: TokenInfo[];
   selectedMultisig: MultisigInfo | undefined;
   token: TokenInfo | undefined;
-  tokenChanged: any;
   transactionFees: TransactionFees;
-  userBalances: any;
+  userBalances: LooseObject;
 }) => {
   const {
     accountAddress,
@@ -178,7 +181,7 @@ export const VestingContractCreateForm = (props: {
       }
 
       const timeout = setTimeout(() => {
-        const filter = (t: any) => {
+        const filter = (t: TokenInfo) => {
           return (
             t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
             t.name.toLowerCase().includes(searchString.toLowerCase()) ||
@@ -187,7 +190,7 @@ export const VestingContractCreateForm = (props: {
         };
 
         const preFilterSol = selectedList.filter(t => t.address !== NATIVE_SOL.address);
-        const showFromList = !searchString ? preFilterSol : preFilterSol.filter((t: any) => filter(t));
+        const showFromList = !searchString ? preFilterSol : preFilterSol.filter(t => filter(t));
 
         setFilteredTokenList(showFromList);
       });
@@ -205,15 +208,15 @@ export const VestingContractCreateForm = (props: {
   }, [updateTokenListByFilter]);
 
   const onTokenSearchInputChange = useCallback(
-    (e: any) => {
-      const newValue = e.target.value;
+    (value: string) => {
+      const newValue = value.trim();
       setTokenFilter(newValue);
       updateTokenListByFilter(newValue);
     },
     [updateTokenListByFilter],
   );
 
-  const onFeePayedByTreasurerChange = (e: any) => {
+  const onFeePayedByTreasurerChange = (e: CheckboxChangeEvent) => {
     consoleOut('onFeePayedByTreasurerChange:', e.target.checked, 'blue');
     setIsFeePaidByTreasurer(e.target.checked);
   };
@@ -221,9 +224,9 @@ export const VestingContractCreateForm = (props: {
   const get30MinsAhead = useCallback(() => {
     if (!isProd() && isWhitelisted) {
       return moment().add(30, 'm');
-    } else {
-      return moment();
     }
+
+    return moment();
   }, [isWhitelisted]);
 
   const getOneDayAhead = useCallback(() => {
@@ -236,7 +239,7 @@ export const VestingContractCreateForm = (props: {
       const date = addDays(new Date(), 1).toLocaleDateString('en-US');
       setPaymentStartDate(date);
     }
-  }, [get30MinsAhead, isWhitelisted, setPaymentStartDate]);
+  }, [get30MinsAhead, isWhitelisted]);
 
   /////////////////////
   // Data management //
@@ -248,7 +251,7 @@ export const VestingContractCreateForm = (props: {
       const today = new Date().toLocaleDateString('en-US');
       setPaymentStartDate(today);
     }
-  }, [paymentStartDate, setPaymentStartDate]);
+  }, [paymentStartDate]);
 
   // Set an initial time for creating a contract
   useEffect(() => {
@@ -262,7 +265,7 @@ export const VestingContractCreateForm = (props: {
     if (token) {
       setSelectedToken(token);
     }
-  }, [token, inModal]);
+  }, [token]);
 
   // Keep token balance updated
   useEffect(() => {
@@ -384,16 +387,16 @@ export const VestingContractCreateForm = (props: {
     onStartTransaction(options);
   };
 
-  const handleVestingLockNameChange = (e: any) => {
-    setVestingLockName(e.target.value);
+  const handleVestingLockNameChange = (value: string) => {
+    setVestingLockName(value);
   };
 
-  const getLockPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
+  const getLockPeriodOptionsFromEnum = (): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
-    for (const enumMember in value) {
+    for (const enumMember in PaymentRateType) {
       const mappedValue = Number.parseInt(enumMember, 10);
-      if (!isNaN(mappedValue)) {
+      if (!Number.isNaN(mappedValue)) {
         const item = new PaymentRateTypeOption(index, mappedValue, getLockPeriodOptionLabel(mappedValue, t));
         options.push(item);
       }
@@ -402,8 +405,8 @@ export const VestingContractCreateForm = (props: {
     return options;
   };
 
-  const handleLockPeriodAmountChange = (e: any) => {
-    const newValue = e.target.value;
+  const handleLockPeriodAmountChange = (value: string) => {
+    const newValue = value.trim();
 
     if (isValidInteger(newValue)) {
       setLockPeriodAmount(newValue);
@@ -416,8 +419,8 @@ export const VestingContractCreateForm = (props: {
     setLockPeriodFrequency(val);
   };
 
-  const onVestingLockFundingAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const onVestingLockFundingAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -429,7 +432,7 @@ export const VestingContractCreateForm = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -459,8 +462,8 @@ export const VestingContractCreateForm = (props: {
     setPaymentStartDate(date);
   };
 
-  const handleCliffReleaseAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleCliffReleaseAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -472,7 +475,7 @@ export const VestingContractCreateForm = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -583,19 +586,24 @@ export const VestingContractCreateForm = (props: {
 
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (isProposalTitleRequiredAndMissing()) {
-      return 'Add a proposal title';
-    } else if (!vestingLockName) {
-      return 'Add contract name';
-    } else if (isSolLow()) {
-      return t('transactions.validation.amount-sol-low');
-    } else if (!selectedToken) {
-      return 'No token selected';
-    } else if (vestingLockFundingAmount && fundingAmount.gt(maxAmount)) {
-      return t('transactions.validation.amount-high');
-    } else {
-      return t('transactions.validation.valid-continue');
     }
+    if (isProposalTitleRequiredAndMissing()) {
+      return 'Add a proposal title';
+    }
+    if (!vestingLockName) {
+      return 'Add contract name';
+    }
+    if (isSolLow()) {
+      return t('transactions.validation.amount-sol-low');
+    }
+    if (!selectedToken) {
+      return 'No token selected';
+    }
+    if (vestingLockFundingAmount && fundingAmount.gt(maxAmount)) {
+      return t('transactions.validation.amount-high');
+    }
+
+    return t('transactions.validation.valid-continue');
   };
 
   const getStepTwoButtonLabel = () => {
@@ -605,36 +613,44 @@ export const VestingContractCreateForm = (props: {
 
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (isProposalTitleRequiredAndMissing()) {
-      return 'Add a proposal title';
-    } else if (!vestingLockName) {
-      return 'Add contract name';
-    } else if (isSolLow()) {
-      return t('transactions.validation.amount-sol-low');
-    } else if (!selectedToken) {
-      return 'No token selected';
-    } else if (isFundingAmountHigh()) {
-      return t('transactions.validation.amount-high');
-    } else if (!lockPeriodAmount) {
-      return 'Set vesting period';
-    } else if (!lockPeriodFrequency) {
-      return 'Set vesting period';
-    } else {
-      return t('transactions.validation.valid-continue');
     }
+    if (isProposalTitleRequiredAndMissing()) {
+      return 'Add a proposal title';
+    }
+    if (!vestingLockName) {
+      return 'Add contract name';
+    }
+    if (isSolLow()) {
+      return t('transactions.validation.amount-sol-low');
+    }
+    if (!selectedToken) {
+      return 'No token selected';
+    }
+    if (isFundingAmountHigh()) {
+      return t('transactions.validation.amount-high');
+    }
+    if (!lockPeriodAmount) {
+      return 'Set vesting period';
+    }
+    if (!lockPeriodFrequency) {
+      return 'Set vesting period';
+    }
+
+    return t('transactions.validation.valid-continue');
   };
 
   const getMainCtaLabel = () => {
     if (isBusy) {
       return t('vesting.create-account.create-cta-busy');
-    } else if (isError(transactionStatus.currentOperation)) {
-      return t('general.retry');
-    } else {
-      return getStepTwoButtonLabel();
     }
+    if (isError(transactionStatus.currentOperation)) {
+      return t('general.retry');
+    }
+
+    return getStepTwoButtonLabel();
   };
 
-  const todayAndPriorDatesDisabled = (current: any) => {
+  const todayAndPriorDatesDisabled = (current: moment.Moment) => {
     // Can not select neither today nor days before today
     return current && current < moment().startOf('day');
   };
@@ -644,8 +660,8 @@ export const VestingContractCreateForm = (props: {
     setPaymentStartDate(date);
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   ///////////////
@@ -653,10 +669,14 @@ export const VestingContractCreateForm = (props: {
   ///////////////
 
   const lockPeriodOptionsMenu = () => {
-    const items: ItemType[] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+    const items: ItemType[] = getLockPeriodOptionsFromEnum().map((item, index) => {
       return {
         key: `option-${index}`,
-        label: <span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>,
+        label: (
+          <span onKeyDown={() => {}} onClick={() => handleLockPeriodOptionChange(item.value)}>
+            {item.text}
+          </span>
+        ),
       };
     });
 
@@ -667,7 +687,11 @@ export const VestingContractCreateForm = (props: {
     const items: ItemType[] = VESTING_CATEGORIES.map((item, index) => {
       return {
         key: `${slugify(item.label)}-${item.value}`,
-        label: <span onClick={() => setVestingCategory(item)}>{item.label}</span>,
+        label: (
+          <span onKeyDown={() => {}} onClick={() => setVestingCategory(item)}>
+            {item.label}
+          </span>
+        ),
       };
     });
 
@@ -709,9 +733,9 @@ export const VestingContractCreateForm = (props: {
             showUsdValues={true}
           />
         );
-      } else {
-        return null;
       }
+
+      return null;
     });
   };
 
@@ -719,7 +743,8 @@ export const VestingContractCreateForm = (props: {
     if (tokenFilter && selectedToken) {
       if (selectedToken.decimals === -1) {
         return 'Account not found';
-      } else if (selectedToken.decimals === -2) {
+      }
+      if (selectedToken.decimals === -2) {
         return 'Account is not a token mint';
       }
     }
@@ -763,19 +788,7 @@ export const VestingContractCreateForm = (props: {
                 } catch (error) {
                   console.error(error);
                 }
-                if (accountInfo) {
-                  if (
-                    (accountInfo as any).data['program'] &&
-                    (accountInfo as any).data['program'] === 'spl-token' &&
-                    (accountInfo as any).data['parsed'] &&
-                    (accountInfo as any).data['parsed']['type'] &&
-                    (accountInfo as any).data['parsed']['type'] === 'mint'
-                  ) {
-                    decimals = (accountInfo as any).data['parsed']['info']['decimals'];
-                  } else {
-                    decimals = -2;
-                  }
-                }
+                decimals = getDecimalsFromAccountInfo(accountInfo, -1);
                 const unknownToken: TokenInfo = {
                   address,
                   name: CUSTOM_TOKEN_NAME,
@@ -785,7 +798,7 @@ export const VestingContractCreateForm = (props: {
                 };
                 tokenChanged(unknownToken);
                 setSelectedToken(unknownToken);
-                if (userBalances && userBalances[address]) {
+                if (userBalances?.[address]) {
                   setSelectedTokenBalance(userBalances[address]);
                 }
                 consoleOut('token selected:', unknownToken, 'blue');
@@ -818,7 +831,7 @@ export const VestingContractCreateForm = (props: {
 
   const renderDatePickerExtraPanel = () => {
     return (
-      <span className='flat-button tiny stroked primary' onClick={onResetDate}>
+      <span className='flat-button tiny stroked primary' onKeyDown={() => {}} onClick={onResetDate}>
         <span className='mx-1'>Reset</span>
       </span>
     );
@@ -827,7 +840,7 @@ export const VestingContractCreateForm = (props: {
   const renderSelectedMultisig = () => {
     return (
       selectedMultisig && (
-        <div className={`transaction-list-row w-100 no-pointer`}>
+        <div className={'transaction-list-row w-100 no-pointer'}>
           <div className='icon-cell'>
             <Identicon address={selectedMultisig.id} style={{ width: '30', display: 'inline-flex' }} />
           </div>
@@ -852,6 +865,7 @@ export const VestingContractCreateForm = (props: {
       <div
         key={`${option.translationId}`}
         className='item-card mb-0 selected'
+        onKeyDown={() => {}}
         onClick={() => {
           if (!option.disabled) {
             handleVestingAccountTypeSelection(option);
@@ -907,9 +921,9 @@ export const VestingContractCreateForm = (props: {
   const getTokenToVestFormFieldTitle = () => {
     if (isMultisigContext) {
       return t('vesting.create-account.multisig-vesting-contract-token-label');
-    } else {
-      return t('vesting.create-account.vesting-contract-token-label');
     }
+
+    return t('vesting.create-account.vesting-contract-token-label');
   };
 
   const renderTokenToVestSelectedItem = () => {
@@ -933,6 +947,7 @@ export const VestingContractCreateForm = (props: {
       return (
         <div
           className='token-max simplelink'
+          onKeyDown={() => {}}
           onClick={() => {
             if (selectedToken.address === NATIVE_SOL.address) {
               const amount = getMaxAmount();
@@ -974,7 +989,7 @@ export const VestingContractCreateForm = (props: {
                   autoComplete='off'
                   autoCorrect='off'
                   type='text'
-                  onChange={onVestingLockFundingAmountChange}
+                  onChange={e => onVestingLockFundingAmountChange(e.target.value)}
                   pattern='^[0-9]*[.,]?[0-9]*$'
                   placeholder='0.0'
                   minLength={1}
@@ -999,6 +1014,7 @@ export const VestingContractCreateForm = (props: {
                 {publicKey ? (
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onKeyDown={() => {}}
                     onClick={() => refreshPrices()}
                   >
                     ~{vestingLockFundingAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
@@ -1031,7 +1047,7 @@ export const VestingContractCreateForm = (props: {
                 autoCorrect='off'
                 type='text'
                 maxLength={32}
-                onChange={handleVestingLockNameChange}
+                onChange={e => handleVestingLockNameChange(e.target.value)}
                 placeholder='Name for this no-code vesting lock account'
                 spellCheck='false'
                 value={vestingLockName}
@@ -1097,7 +1113,7 @@ export const VestingContractCreateForm = (props: {
                     autoComplete='on'
                     autoCorrect='off'
                     type='text'
-                    onChange={handleLockPeriodAmountChange}
+                    onChange={e => handleLockPeriodAmountChange(e.target.value)}
                     placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
                     spellCheck='false'
                     min={1}
@@ -1148,8 +1164,8 @@ export const VestingContractCreateForm = (props: {
                       allowClear={false}
                       disabledDate={todayAndPriorDatesDisabled}
                       placeholder='Pick a date'
-                      onChange={(value: any, date: string) => handleDateChange(date)}
-                      value={moment(paymentStartDate, DATEPICKER_FORMAT) as any}
+                      onChange={(value: moment.Moment | null, date: string) => handleDateChange(date)}
+                      value={moment(paymentStartDate, DATEPICKER_FORMAT)}
                       format={DATEPICKER_FORMAT}
                       showNow={true}
                       showToday={false}
@@ -1190,7 +1206,11 @@ export const VestingContractCreateForm = (props: {
             <div className='token-group'>
               {percentages.map(percentage => (
                 <div key={`release-${percentage}`} className='mb-1 d-flex flex-column align-items-center'>
-                  <div className='token-max simplelink active' onClick={() => onChangeValuePercentages(percentage)}>
+                  <div
+                    className='token-max simplelink active'
+                    onKeyDown={() => {}}
+                    onClick={() => onChangeValuePercentages(percentage)}
+                  >
                     {percentage}%
                   </div>
                 </div>
@@ -1217,7 +1237,7 @@ export const VestingContractCreateForm = (props: {
                 autoComplete='off'
                 autoCorrect='off'
                 type='text'
-                onChange={handleCliffReleaseAmountChange}
+                onChange={e => handleCliffReleaseAmountChange(e.target.value)}
                 pattern='^[0-9]*[.,]?[0-9]*$'
                 placeholder='0.0'
                 minLength={1}

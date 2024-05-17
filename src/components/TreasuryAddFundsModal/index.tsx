@@ -437,9 +437,8 @@ export const TreasuryAddFundsModal = ({
     return !!(publicKey && isValidInput());
   };
 
-  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   const isProposalTitleRequired = () => {

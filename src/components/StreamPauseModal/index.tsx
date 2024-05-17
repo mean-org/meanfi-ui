@@ -12,8 +12,8 @@ import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState }
 import { useTranslation } from 'react-i18next';
 
 export const StreamPauseModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (title: string) => void;
   tokenBalance: number;
   content: ReactNode;
   isVisible: boolean;
@@ -49,10 +49,10 @@ export const StreamPauseModal = (props: {
       const v1 = props.streamDetail as StreamInfo;
       const v2 = props.streamDetail as Stream;
       if (v1.version < 2) {
-        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
-      } else {
-        return v2.beneficiary.equals(publicKey) ? true : false;
+        return v1.beneficiaryAddress === publicKey.toBase58();
       }
+
+      return v2.beneficiary.equals(publicKey);
     }
     return false;
   }, [publicKey, props.streamDetail]);
@@ -95,9 +95,9 @@ export const StreamPauseModal = (props: {
       const token = getTokenByMintAddress(associatedToken);
       if (props.streamDetail.version < 2) {
         return v1.escrowVestedAmount;
-      } else {
-        return toUiAmount(v2.withdrawableAmount, token?.decimals || 9);
       }
+
+      return toUiAmount(v2.withdrawableAmount, token?.decimals ?? 9);
     }
     return 0;
   }, [publicKey, props.streamDetail, getTokenByMintAddress]);
@@ -112,9 +112,9 @@ export const StreamPauseModal = (props: {
 
       if (props.streamDetail.version < 2) {
         return v1.escrowUnvestedAmount;
-      } else {
-        return toUiAmount(v2.fundsLeftInStream, token?.decimals || 9);
       }
+
+      return toUiAmount(v2.fundsLeftInStream, token?.decimals ?? 9);
     }
     return 0;
   }, [publicKey, props.streamDetail, getTokenByMintAddress]);
@@ -143,8 +143,8 @@ export const StreamPauseModal = (props: {
     props.handleClose();
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   const infoRow = (caption: string, value: string) => {

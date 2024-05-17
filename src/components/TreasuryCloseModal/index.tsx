@@ -15,14 +15,14 @@ import { isError } from 'middleware/transactions';
 import { getTransactionOperationDescription } from 'middleware/ui';
 import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
-import { type ReactNode, type SyntheticEvent, useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const TreasuryCloseModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (title: string) => void;
   tokenBalance: number;
   nativeBalance: number;
   content: ReactNode;
@@ -60,7 +60,7 @@ export const TreasuryCloseModal = (props: {
       <div className='token-icon'>
         {treasuryAssociatedToken ? (
           <>
-            {token && token.logoURI ? (
+            {token?.logoURI ? (
               <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
               <Identicon address={treasuryAssociatedToken} style={{ width: '20', display: 'inline-flex' }} />
@@ -108,17 +108,19 @@ export const TreasuryCloseModal = (props: {
   const getTransactionStartButtonLabel = () => {
     if (props.isBusy) {
       return t('treasuries.close-account.cta-close-busy');
-    } else if (isError(transactionStatus.currentOperation)) {
+    }
+    if (isError(transactionStatus.currentOperation)) {
       return t('general.retry');
-    } else if (isMultisigContext) {
+    }
+    if (isMultisigContext) {
       if (!proposalTitle) {
         return 'Add a proposal title';
-      } else {
-        return 'Sign proposal';
       }
-    } else {
-      return t('treasuries.close-account.cta-close');
+
+      return 'Sign proposal';
     }
+
+    return t('treasuries.close-account.cta-close');
   };
 
   const getRetryCloseButtonLabel = () => {
@@ -127,9 +129,9 @@ export const TreasuryCloseModal = (props: {
       transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure
     ) {
       return t('general.retry');
-    } else {
-      return t('general.cta-close');
     }
+
+    return t('general.cta-close');
   };
 
   const onAcceptModal = () => {
@@ -143,8 +145,8 @@ export const TreasuryCloseModal = (props: {
     props.handleClose();
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   function onRetryCloseClick() {

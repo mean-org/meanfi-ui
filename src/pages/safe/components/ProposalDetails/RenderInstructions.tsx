@@ -1,3 +1,4 @@
+import type { InstructionDataInfo, OwnerMeta } from '@mean-dao/mean-multisig-sdk';
 import { BN } from '@project-serum/anchor';
 import { type Connection, PublicKey } from '@solana/web3.js';
 import { IconExternalLink } from 'Icons';
@@ -10,7 +11,7 @@ import { appConfig } from 'index';
 import { consoleOut, copyText, getDurationUnitFromSeconds } from 'middleware/ui';
 import { displayAmountWithSymbol, formatThousands, getTokenOrCustomToken, makeDecimal } from 'middleware/utils';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo } from 'models/multisig';
+import type { InstructionAccountInfo, MultisigTransactionInstructionInfo } from 'models/multisig';
 import moment from 'moment';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,8 +29,8 @@ export const RenderInstructions = (props: {
 
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
-  // Copy address to clipboard
   const copyAddressToClipboard = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     (address: any) => {
       if (copyText(address.toString())) {
         openNotification({
@@ -49,9 +50,9 @@ export const RenderInstructions = (props: {
   const getTokenAmountValue = (item: InstructionDataInfo) => {
     switch (item.label) {
       case 'CliffVestPercent':
-        return `${makeDecimal(new BN(item.value), 4)}%`;
+        return `${makeDecimal(new BN(item.value as string), 4)}%`;
       case 'RateIntervalInSeconds':
-        return `${formatThousands(item.value)}s (${getDurationUnitFromSeconds(+item.value)})`;
+        return `${formatThousands(+item.value)}s (${getDurationUnitFromSeconds(+item.value)})`;
       case 'StartUtc':
         return moment(+item.value).format('LLL').toLocaleString();
       case 'Amount':
@@ -59,7 +60,7 @@ export const RenderInstructions = (props: {
       case 'AllocationAssignedUnits':
         return proposalIxAssociatedToken
           ? displayAmountWithSymbol(
-              item.value,
+              item.value as string,
               proposalIxAssociatedToken.address,
               proposalIxAssociatedToken.decimals,
               splTokenList,
@@ -96,6 +97,7 @@ export const RenderInstructions = (props: {
             </Col>
             <Col xs={17} sm={17} md={19} lg={19} className='pl-1 pr-3'>
               <span
+                onKeyDown={() => {}}
                 onClick={() => copyAddressToClipboard(proposalIxInfo.programId)}
                 className='d-block info-data simplelink underline-on-hover text-truncate'
                 style={{ cursor: 'pointer' }}
@@ -118,9 +120,9 @@ export const RenderInstructions = (props: {
             </Col>
           </Row>
 
-          {proposalIxInfo.accounts.map((account: InstructionAccountInfo, index: number) => {
+          {proposalIxInfo.accounts.map(account => {
             return (
-              <Row gutter={[8, 8]} className='mb-2' key={`item-${index}`}>
+              <Row gutter={[8, 8]} className='mb-2' key={`item-${account.index}-${account.label}`}>
                 <Col xs={6} sm={6} md={4} lg={4} className='pr-1'>
                   <span className='info-label'>
                     {account.label || t('multisig.proposal-modal.instruction-account')}
@@ -128,6 +130,7 @@ export const RenderInstructions = (props: {
                 </Col>
                 <Col xs={17} sm={17} md={19} lg={19} className='pl-1 pr-3'>
                   <span
+                    onKeyDown={() => {}}
                     onClick={() => copyAddressToClipboard(account.value)}
                     className='d-block info-data simplelink underline-on-hover text-truncate'
                     style={{ cursor: 'pointer' }}
@@ -149,9 +152,9 @@ export const RenderInstructions = (props: {
           })}
 
           {proposalIxInfo.programId === multisigAddressPK.toBase58()
-            ? proposalIxInfo.data.map((item: InstructionDataInfo, index: number) => {
+            ? proposalIxInfo.data.map(item => {
                 return (
-                  <Row gutter={[8, 8]} className='mb-2' key={`more-items-${index}`}>
+                  <Row gutter={[8, 8]} className='mb-2' key={`more-items-${item.index}`}>
                     {item.label && (
                       <Col xs={6} sm={6} md={4} lg={4} className='pr-1 text-truncate'>
                         <Tooltip placement='right' title={item.label || ''}>
@@ -163,9 +166,9 @@ export const RenderInstructions = (props: {
                     )}
                     {item.label === 'Owners' ? (
                       <>
-                        {item.value.map((owner: any, idx: number) => {
+                        {(item.value as OwnerMeta[]).map(owner => {
                           return (
-                            <Row key={`owners-${idx}`} className='pr-1'>
+                            <Row key={`owners-${owner.label}`} className='pr-1'>
                               <Col xs={6} sm={6} md={4} lg={4} className='pl-1 pr-1 text-truncate'>
                                 <Tooltip placement='right' title={owner.label || ''}>
                                   <span className='info-label'>
@@ -175,6 +178,7 @@ export const RenderInstructions = (props: {
                               </Col>
                               <Col xs={17} sm={17} md={19} lg={19} className='pl-1 pr-3'>
                                 <span
+                                  onKeyDown={() => {}}
                                   onClick={() => copyAddressToClipboard(owner.data)}
                                   className='d-block info-data simplelink underline-on-hover text-truncate'
                                   style={{ cursor: 'pointer' }}
@@ -209,11 +213,11 @@ export const RenderInstructions = (props: {
                   </Row>
                 );
               })
-            : proposalIxInfo.data.map((item: InstructionDataInfo, index: number) => {
+            : proposalIxInfo.data.map(item => {
                 return (
                   item.label &&
                   item.value && (
-                    <Row gutter={[8, 8]} className='mb-2' key={`data-${index}`}>
+                    <Row gutter={[8, 8]} className='mb-2' key={`data-${item.index}`}>
                       <Col xs={6} sm={6} md={4} lg={4} className='pr-1 text-truncate'>
                         <Tooltip placement='right' title={item.label || ''}>
                           <span className='info-label'>

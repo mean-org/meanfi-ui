@@ -1,14 +1,14 @@
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
   AccountType,
+  STREAM_STATUS_CODE,
   type PaymentStreaming,
   type PaymentStreamingAccount,
-  STREAM_STATUS_CODE,
   type Stream,
   type TransactionFees,
 } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
-import { Button, Col, Modal, Radio, Row } from 'antd';
+import { Button, Col, Modal, Radio, Row, type RadioChangeEvent } from 'antd';
 import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
@@ -18,14 +18,14 @@ import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { StreamTreasuryType } from 'models/treasuries';
 import type { VestingContractCloseStreamOptions } from 'models/vesting';
-import { type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;
   content: ReactNode;
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (options: VestingContractCloseStreamOptions) => void;
   hasContractFinished: boolean;
   isVisible: boolean;
   mspClient: PaymentStreaming | undefined;
@@ -76,13 +76,11 @@ export const StreamCloseModal = (props: {
           const type = details.accountType;
           if (type === AccountType.Lock) {
             return 'locked';
-          } else {
-            return 'open';
           }
-        } else {
-          setTreasuryDetails(undefined);
-          return 'unknown';
+          return 'open';
         }
+        setTreasuryDetails(undefined);
+        return 'unknown';
       } catch (error) {
         console.error(error);
         return 'unknown';
@@ -194,7 +192,7 @@ export const StreamCloseModal = (props: {
     handleOk(options);
   };
 
-  const onCloseTreasuryOptionChanged = (e: any) => {
+  const onCloseTreasuryOptionChanged = (e: RadioChangeEvent) => {
     setCloseTreasuryOption(e.target.value);
   };
 
@@ -225,98 +223,98 @@ export const StreamCloseModal = (props: {
           </div>
         </div>
       );
-    } else {
-      // Validation
-      const isValidForm = (): boolean => {
-        return !!proposalTitle || !isMultisigTreasury;
-      };
-
-      const getButtonLabel = () => {
-        return !proposalTitle && isMultisigTreasury ? 'Add a proposal title' : t('close-stream.primary-cta');
-      };
-
-      return (
-        // The normal stuff
-        <div className='transaction-progress p-0'>
-          <ExclamationCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
-          <h4 className='operation'>{content}</h4>
-
-          {/* Info */}
-          {localStreamDetail && selectedToken && (
-            <>
-              <div className='p-2 mb-2'>
-                {hasContractFinished &&
-                  infoRow(
-                    t('close-stream.return-vested-amount') + ':',
-                    getAmountWithSymbol(
-                      getWithdrawableAmount(),
-                      selectedToken.address,
-                      false,
-                      splTokenList,
-                      selectedToken.decimals,
-                    ),
-                  )}
-                {amITreasurer() &&
-                  infoRow(
-                    t('close-stream.return-unvested-amount') + ':',
-                    getAmountWithSymbol(
-                      getUnvested(),
-                      selectedToken.address,
-                      false,
-                      splTokenList,
-                      selectedToken.decimals,
-                    ),
-                  )}
-                {amIBeneficiary() &&
-                  localStreamDetail.withdrawableAmount.gtn(0) &&
-                  infoRow(
-                    t('transactions.transaction-info.transaction-fee') + ':',
-                    `${feeAmount ? '~' + getAmountWithSymbol(feeAmount, selectedToken.address) : '0'}`,
-                  )}
-              </div>
-            </>
-          )}
-          {/* Proposal title */}
-          {isMultisigTreasury && (
-            <div className='mb-3'>
-              <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
-              <InputMean
-                id='proposal-title-field'
-                name='Title'
-                className={`w-100 general-text-input`}
-                onChange={(e: any) => {
-                  setProposalTitle(e.target.value);
-                }}
-                placeholder='Add a proposal title (required)'
-                value={proposalTitle}
-              />
-            </div>
-          )}
-          {canCloseTreasury && treasuryDetails && !treasuryDetails.autoClose && (
-            <div className='mt-3 flex-fixed-right'>
-              <div className='form-label left m-0 p-0'>
-                {t('vesting.close-account.close-stream-also-closes-account-label')}
-              </div>
-              <div className='right'>
-                <Radio.Group onChange={onCloseTreasuryOptionChanged} value={closeTreasuryOption}>
-                  <Radio value={true}>{t('general.yes')}</Radio>
-                  <Radio value={false}>{t('general.no')}</Radio>
-                </Radio.Group>
-              </div>
-            </div>
-          )}
-
-          <div className='mt-3'>
-            <Button className='mr-3' type='text' shape='round' size='large' onClick={handleClose}>
-              {t('close-stream.secondary-cta')}
-            </Button>
-            <Button type='primary' shape='round' size='large' onClick={onAcceptModal} disabled={!isValidForm()}>
-              {getButtonLabel()}
-            </Button>
-          </div>
-        </div>
-      );
     }
+
+    // Validation
+    const isValidForm = (): boolean => {
+      return !!proposalTitle || !isMultisigTreasury;
+    };
+
+    const getButtonLabel = () => {
+      return !proposalTitle && isMultisigTreasury ? 'Add a proposal title' : t('close-stream.primary-cta');
+    };
+
+    return (
+      // The normal stuff
+      <div className='transaction-progress p-0'>
+        <ExclamationCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+        <h4 className='operation'>{content}</h4>
+
+        {/* Info */}
+        {localStreamDetail && selectedToken && (
+          <>
+            <div className='p-2 mb-2'>
+              {hasContractFinished &&
+                infoRow(
+                  t('close-stream.return-vested-amount') + ':',
+                  getAmountWithSymbol(
+                    getWithdrawableAmount(),
+                    selectedToken.address,
+                    false,
+                    splTokenList,
+                    selectedToken.decimals,
+                  ),
+                )}
+              {amITreasurer() &&
+                infoRow(
+                  t('close-stream.return-unvested-amount') + ':',
+                  getAmountWithSymbol(
+                    getUnvested(),
+                    selectedToken.address,
+                    false,
+                    splTokenList,
+                    selectedToken.decimals,
+                  ),
+                )}
+              {amIBeneficiary() &&
+                localStreamDetail.withdrawableAmount.gtn(0) &&
+                infoRow(
+                  t('transactions.transaction-info.transaction-fee') + ':',
+                  `${feeAmount ? '~' + getAmountWithSymbol(feeAmount, selectedToken.address) : '0'}`,
+                )}
+            </div>
+          </>
+        )}
+        {/* Proposal title */}
+        {isMultisigTreasury ? (
+          <div className='mb-3'>
+            <div className='form-label text-left'>{t('multisig.proposal-modal.title')}</div>
+            <InputMean
+              id='proposal-title-field'
+              name='Title'
+              className={'w-100 general-text-input'}
+              onChange={value => {
+                setProposalTitle(value);
+              }}
+              placeholder='Add a proposal title (required)'
+              value={proposalTitle}
+            />
+          </div>
+        ) : null}
+        {canCloseTreasury && treasuryDetails && !treasuryDetails.autoClose && (
+          <div className='mt-3 flex-fixed-right'>
+            <div className='form-label left m-0 p-0'>
+              {t('vesting.close-account.close-stream-also-closes-account-label')}
+            </div>
+            <div className='right'>
+              <Radio.Group onChange={onCloseTreasuryOptionChanged} value={closeTreasuryOption}>
+                <Radio value={true}>{t('general.yes')}</Radio>
+                <Radio value={false}>{t('general.no')}</Radio>
+              </Radio.Group>
+            </div>
+          </div>
+        )}
+
+        <div className='mt-3'>
+          <Button className='mr-3' type='text' shape='round' size='large' onClick={handleClose}>
+            {t('close-stream.secondary-cta')}
+          </Button>
+          <Button type='primary' shape='round' size='large' onClick={onAcceptModal} disabled={!isValidForm()}>
+            {getButtonLabel()}
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -325,7 +323,7 @@ export const StreamCloseModal = (props: {
       title={<div className='modal-title'>{t('close-stream.modal-title')}</div>}
       footer={null}
       open={isVisible}
-      onOk={handleOk}
+      onOk={onAcceptModal}
       onCancel={handleClose}
       width={400}
     >

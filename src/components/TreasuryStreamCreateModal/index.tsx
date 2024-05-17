@@ -3,14 +3,14 @@ import { DEFAULT_EXPIRATION_TIME_SECONDS, type MeanMultisig, type MultisigInfo }
 import type { TreasuryInfo } from '@mean-dao/money-streaming';
 import {
   AccountType,
+  PaymentStreaming,
   type Beneficiary,
   type CreateStreamTransactionAccounts,
-  PaymentStreaming,
   type PaymentStreamingAccount,
   type TransactionFees,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { type Connection, PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
+import { PublicKey, type Connection, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
 import {
   Button,
@@ -19,12 +19,13 @@ import {
   DatePicker,
   Divider,
   Dropdown,
-  type MenuProps,
   Modal,
   Row,
   Select,
   Tooltip,
+  type MenuProps,
 } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
 import { InputMean } from 'components/InputMean';
@@ -40,12 +41,12 @@ import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import {
-  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
+  type ComputeBudgetConfig,
 } from 'middleware/transactions';
 import {
   consoleOut,
@@ -75,20 +76,22 @@ import {
 } from 'middleware/utils';
 import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { StreamRecipient } from 'models/common-types';
 import { OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import type { CreateStreamParams } from 'models/streams';
 import moment from 'moment';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 
 const { Option } = Select;
 type TreasuryValues = PaymentStreamingAccount | TreasuryInfo | undefined;
 
-export const TreasuryStreamCreateModal = (props: {
+interface CreateStreamProps {
   associatedToken: string;
   connection: Connection;
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: () => void;
   isVisible: boolean;
   minRequiredBalance: number;
   selectedMultisig: MultisigInfo | undefined;
@@ -97,24 +100,25 @@ export const TreasuryStreamCreateModal = (props: {
   transactionFees: TransactionFees;
   treasuryList: (TreasuryInfo | PaymentStreamingAccount)[] | undefined;
   treasuryDetails: TreasuryValues;
-  userBalances: any;
+  userBalances: LooseObject | undefined;
   withdrawTransactionFees: TransactionFees;
-}) => {
-  const {
-    connection,
-    handleClose,
-    handleOk,
-    isVisible,
-    minRequiredBalance,
-    selectedMultisig,
-    multisigClient,
-    nativeBalance,
-    transactionFees,
-    treasuryList,
-    treasuryDetails,
-    userBalances,
-    withdrawTransactionFees,
-  } = props;
+}
+
+export const TreasuryStreamCreateModal = ({
+  connection,
+  handleClose,
+  handleOk,
+  isVisible,
+  minRequiredBalance,
+  selectedMultisig,
+  multisigClient,
+  nativeBalance,
+  transactionFees,
+  treasuryList,
+  treasuryDetails,
+  userBalances,
+  withdrawTransactionFees,
+}: CreateStreamProps) => {
   const { t } = useTranslation('common');
   const { wallet, publicKey } = useWallet();
   const {
@@ -154,12 +158,12 @@ export const TreasuryStreamCreateModal = (props: {
   const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
-  const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
+  const [maxAllocatableAmount, setMaxAllocatableAmount] = useState(new BN(0));
   const [enableMultipleStreamsOption] = useState(false);
   const today = new Date().toLocaleDateString('en-US');
-  const [csvFile, setCsvFile] = useState<any>();
-  const [csvArray, setCsvArray] = useState<any>([]);
-  const [listValidAddresses, setListValidAddresses] = useState([]);
+  const [csvFile, setCsvFile] = useState<string | ArrayBuffer | null>(null);
+  const [csvArray, setCsvArray] = useState<StreamRecipient[]>([]);
+  const [listValidAddresses, setListValidAddresses] = useState<StreamRecipient[]>([]);
   const [hasIsOwnWallet, setHasIsOwnWallet] = useState<boolean>(false);
   const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
   const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
@@ -220,6 +224,7 @@ export const TreasuryStreamCreateModal = (props: {
         const maxAmount = goodStreamMaxAllocation;
 
         if (isWhitelisted) {
+          // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
           const debugTable: any[] = [];
           debugTable.push({
             unallocatedBalance: unallocatedBalance.toString(),
@@ -304,12 +309,12 @@ export const TreasuryStreamCreateModal = (props: {
     )} ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`;
   }, [lockPeriodFrequency, paymentRateAmountBn, selectedToken, splTokenList, t]);
 
-  const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
+  const getOptionsFromEnum = (): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
-    for (const enumMember in value) {
+    for (const enumMember in PaymentRateType) {
       const mappedValue = Number.parseInt(enumMember, 10);
-      if (!isNaN(mappedValue)) {
+      if (!Number.isNaN(mappedValue)) {
         const item = new PaymentRateTypeOption(index, mappedValue, getPaymentRateOptionLabel(mappedValue, t));
         options.push(item);
       }
@@ -318,12 +323,12 @@ export const TreasuryStreamCreateModal = (props: {
     return options;
   };
 
-  const getLockPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
+  const getLockPeriodOptionsFromEnum = (): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
-    for (const enumMember in value) {
+    for (const enumMember in PaymentRateType) {
       const mappedValue = Number.parseInt(enumMember, 10);
-      if (!isNaN(mappedValue)) {
+      if (!Number.isNaN(mappedValue)) {
         const item = new PaymentRateTypeOption(index, mappedValue, getLockPeriodOptionLabel(mappedValue, t));
         options.push(item);
       }
@@ -337,190 +342,241 @@ export const TreasuryStreamCreateModal = (props: {
 
     if (workingTreasuryType === AccountType.Lock) {
       return !rateAmount ? 'Add funds to commit' : '';
-    } else {
-      return !rateAmount ? t('transactions.validation.no-payment-rate') : '';
     }
+
+    return !rateAmount ? t('transactions.validation.no-payment-rate') : '';
   };
 
   const getStepOneContinueButtonLabel = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (isMultisigContext && !proposalTitle) {
+    }
+    if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
-    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+    }
+    if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
-    } else if (!enableMultipleStreamsOption && !recipientNote) {
+    }
+    if (!enableMultipleStreamsOption && !recipientNote) {
       return 'Set stream name';
-    } else if (!enableMultipleStreamsOption && !recipientAddress) {
+    }
+    if (!enableMultipleStreamsOption && !recipientAddress) {
       return t('transactions.validation.select-recipient');
-    } else if (enableMultipleStreamsOption && !validMultiRecipientsList) {
+    }
+    if (enableMultipleStreamsOption && !validMultiRecipientsList) {
       return t('transactions.validation.select-address-list');
-    } else if (!selectedToken || unallocatedBalance.isZero()) {
+    }
+    if (!selectedToken || unallocatedBalance.isZero()) {
       return `No balance in account ${
         workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id) + ')' : ''
       }`;
-    } else if (!paymentRateAmount || Number.parseFloat(paymentRateAmount) === 0) {
-      return t('transactions.validation.no-amount');
-    } else if (!paymentStartDate) {
-      return t('transactions.validation.no-valid-date');
-    } else if (!arePaymentSettingsValid()) {
-      return getPaymentSettingsButtonLabel();
-    } else {
-      return t('transactions.validation.valid-continue');
     }
+    if (!paymentRateAmount || Number.parseFloat(paymentRateAmount) === 0) {
+      return t('transactions.validation.no-amount');
+    }
+    if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    }
+    if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    }
+
+    return t('transactions.validation.valid-continue');
   };
 
   const getStepOneContinueButtonLabelInLocked = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (isMultisigContext && !proposalTitle) {
+    }
+    if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
-    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+    }
+    if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
-    } else if (!enableMultipleStreamsOption && !recipientNote) {
+    }
+    if (!enableMultipleStreamsOption && !recipientNote) {
       return 'Set stream name';
-    } else if (!enableMultipleStreamsOption && !recipientAddress) {
+    }
+    if (!enableMultipleStreamsOption && !recipientAddress) {
       return t('transactions.validation.select-recipient');
-    } else if (enableMultipleStreamsOption && !validMultiRecipientsList) {
+    }
+    if (enableMultipleStreamsOption && !validMultiRecipientsList) {
       return t('transactions.validation.select-address-list');
-    } else if (!selectedToken || unallocatedBalance.isZero()) {
+    }
+    if (!selectedToken || unallocatedBalance.isZero()) {
       return `No balance in account ${
         workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id) + ')' : ''
       }`;
-    } else if (!fromCoinAmount || Number.parseFloat(fromCoinAmount) === 0) {
-      return t('transactions.validation.no-amount');
-    } else if (
-      Number.parseFloat(fromCoinAmount) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
-    ) {
-      return 'Invalid amount';
-    } else if (!paymentStartDate) {
-      return t('transactions.validation.no-valid-date');
-    } else if (!arePaymentSettingsValid()) {
-      return getPaymentSettingsButtonLabel();
-    } else {
-      return t('transactions.validation.valid-continue');
     }
+    if (!fromCoinAmount || Number.parseFloat(fromCoinAmount) === 0) {
+      return t('transactions.validation.no-amount');
+    }
+    if (Number.parseFloat(fromCoinAmount) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
+      return 'Invalid amount';
+    }
+    if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    }
+    if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    }
+
+    return t('transactions.validation.valid-continue');
   };
 
   const getStepTwoContinueButtonLabel = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (isMultisigContext && !proposalTitle) {
+    }
+    if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
-    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+    }
+    if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
-    } else if (!recipientNote) {
+    }
+    if (!recipientNote) {
       return 'Set stream name';
-    } else if (!recipientAddress) {
+    }
+    if (!recipientAddress) {
       return t('transactions.validation.select-recipient');
-    } else if (!selectedToken || unallocatedBalance.isZero()) {
+    }
+    if (!selectedToken || unallocatedBalance.isZero()) {
       return `No balance in account ${
         workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id) + ')' : ''
       }`;
-    } else if (!fromCoinAmount || Number.parseFloat(fromCoinAmount) === 0) {
+    }
+    if (!fromCoinAmount || Number.parseFloat(fromCoinAmount) === 0) {
       return t('transactions.validation.no-amount');
-    } else if (
-      Number.parseFloat(fromCoinAmount) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
-    ) {
+    }
+    if (Number.parseFloat(fromCoinAmount) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
       return 'Invalid amount';
-    } else if (!lockPeriodAmount || Number.parseFloat(lockPeriodAmount) === 0) {
+    }
+    if (!lockPeriodAmount || Number.parseFloat(lockPeriodAmount) === 0) {
       return 'Lock period cannot be empty';
-    } else if (
+    }
+    if (
       cliffRelease &&
       Number.parseFloat(cliffRelease) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
     ) {
       return 'Invalid cliff amount';
-    } else if (!paymentStartDate) {
-      return t('transactions.validation.no-valid-date');
-    } else if (!areSendAmountSettingsValid()) {
-      return getPaymentSettingsButtonLabel();
-    } else {
-      return t('transactions.validation.valid-continue');
     }
+    if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    }
+    if (!areSendAmountSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    }
+
+    return t('transactions.validation.valid-continue');
   };
 
   const getTransactionStartButtonLabel = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (isMultisigContext && !proposalTitle) {
+    }
+    if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
-    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+    }
+    if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
-    } else if (!enableMultipleStreamsOption && !recipientNote) {
+    }
+    if (!enableMultipleStreamsOption && !recipientNote) {
       return 'Set stream name';
-    } else if (!enableMultipleStreamsOption && !recipientAddress) {
+    }
+    if (!enableMultipleStreamsOption && !recipientAddress) {
       return t('transactions.validation.select-recipient');
-    } else if (enableMultipleStreamsOption && !validMultiRecipientsList) {
+    }
+    if (enableMultipleStreamsOption && !validMultiRecipientsList) {
       return t('transactions.validation.select-address-list');
-    } else if (!selectedToken || unallocatedBalance.isZero()) {
+    }
+    if (!selectedToken || unallocatedBalance.isZero()) {
       return t('transactions.validation.no-balance');
-    } else if (!tokenAmount || tokenAmount.isZero()) {
+    }
+    if (!tokenAmount || tokenAmount.isZero()) {
       return t('transactions.validation.no-amount');
-    } else if (
+    }
+    if (
       (isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
       (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))
     ) {
       return t('transactions.validation.amount-high');
-    } else if (!paymentStartDate) {
+    }
+    if (!paymentStartDate) {
       return t('transactions.validation.no-valid-date');
-    } else if (!arePaymentSettingsValid()) {
+    }
+    if (!arePaymentSettingsValid()) {
       return getPaymentSettingsButtonLabel();
-    } else if (!isVerifiedRecipient) {
+    }
+    if (!isVerifiedRecipient) {
       return t('transactions.validation.verified-recipient-unchecked');
-    } else if (nativeBalance < getMinBalanceRequired()) {
+    }
+    if (nativeBalance < getMinBalanceRequired()) {
       return t('transactions.validation.insufficient-balance-needed', {
         balance: formatThousands(getMinBalanceRequired(), 4),
       });
-    } else if (isMultisigContext) {
-      return 'Submit proposal';
-    } else {
-      return t('transactions.validation.valid-approve');
     }
+    if (isMultisigContext) {
+      return 'Submit proposal';
+    }
+
+    return t('transactions.validation.valid-approve');
   };
 
   const getTransactionStartButtonLabelInLocked = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (isMultisigContext && !proposalTitle) {
+    }
+    if (isMultisigContext && !proposalTitle) {
       return 'Add a proposal title';
-    } else if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
+    }
+    if (!enableMultipleStreamsOption && !isStreamingAccountSelected()) {
       return 'Select streaming account';
-    } else if (!recipientNote) {
+    }
+    if (!recipientNote) {
       return 'Set stream name';
-    } else if (!recipientAddress) {
+    }
+    if (!recipientAddress) {
       return t('transactions.validation.select-recipient');
-    } else if (!selectedToken || unallocatedBalance.isZero()) {
+    }
+    if (!selectedToken || unallocatedBalance.isZero()) {
       return `No balance in account ${
         workingTreasuryDetails ? '(' + shortenAddress(workingTreasuryDetails.id) + ')' : ''
       }`;
-    } else if (!fromCoinAmount || Number.parseFloat(fromCoinAmount) === 0) {
+    }
+    if (!fromCoinAmount || Number.parseFloat(fromCoinAmount) === 0) {
       return t('transactions.validation.no-amount');
-    } else if (
-      Number.parseFloat(fromCoinAmount) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
-    ) {
+    }
+    if (Number.parseFloat(fromCoinAmount) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))) {
       return 'Invalid amount';
-    } else if (!lockPeriodAmount || Number.parseFloat(lockPeriodAmount) === 0) {
+    }
+    if (!lockPeriodAmount || Number.parseFloat(lockPeriodAmount) === 0) {
       return 'Lock period cannot be empty';
-    } else if (
+    }
+    if (
       cliffRelease &&
       Number.parseFloat(cliffRelease) > Number.parseFloat(toUiAmount(unallocatedBalance, selectedToken.decimals))
     ) {
       return 'Invalid cliff amount';
-    } else if (!paymentStartDate) {
+    }
+    if (!paymentStartDate) {
       return t('transactions.validation.no-valid-date');
-    } else if (!arePaymentSettingsValid()) {
+    }
+    if (!arePaymentSettingsValid()) {
       return getPaymentSettingsButtonLabel();
-    } else if (!isVerifiedRecipient) {
+    }
+    if (!isVerifiedRecipient) {
       return t('transactions.validation.verified-recipient-unchecked');
-    } else if (nativeBalance < getMinBalanceRequired()) {
+    }
+    if (nativeBalance < getMinBalanceRequired()) {
       return t('transactions.validation.insufficient-balance-needed', {
         balance: formatThousands(getMinBalanceRequired(), 4),
       });
-    } else if (isMultisigContext) {
-      return 'Submit proposal';
-    } else {
-      return t('transactions.validation.valid-approve');
     }
+    if (isMultisigContext) {
+      return 'Submit proposal';
+    }
+
+    return t('transactions.validation.valid-approve');
   };
 
   const getPaymentRateAmount = useCallback(() => {
@@ -580,7 +636,7 @@ export const TreasuryStreamCreateModal = (props: {
       consoleOut('PaymentStreamingAccount associated token:', token, 'blue');
       setSelectedToken(token);
     });
-  }, [connection, getTokenByMintAddress, hasNoStreamingAccounts, userBalances, workingTreasuryDetails]);
+  }, [connection, getTokenByMintAddress, hasNoStreamingAccounts, workingTreasuryDetails]);
 
   // Set treasury unalocated balance in BN
   useEffect(() => {
@@ -592,8 +648,8 @@ export const TreasuryStreamCreateModal = (props: {
     const getUnallocatedBalance = (details: PaymentStreamingAccount | TreasuryInfo) => {
       const isNew = !!(details && details.version >= 2);
       let result = new BN(0);
-      let balance;
-      let allocationAssigned;
+      let balance: BN;
+      let allocationAssigned: BN;
 
       if (!isNew) {
         balance = toTokenAmountBn(details.balance, selectedToken.decimals);
@@ -616,7 +672,7 @@ export const TreasuryStreamCreateModal = (props: {
 
   // Set max amount allocatable to a stream in BN the first time
   useEffect(() => {
-    if (workingTreasuryDetails && withdrawTransactionFees && !isFeePaidByTreasurer) {
+    if (isVisible && workingTreasuryDetails && withdrawTransactionFees && !isFeePaidByTreasurer) {
       getMaxAmount();
     }
   }, [isVisible, isFeePaidByTreasurer, workingTreasuryDetails, withdrawTransactionFees, getMaxAmount]);
@@ -667,14 +723,12 @@ export const TreasuryStreamCreateModal = (props: {
     setCurrentStep(2); // Go to step 3
   };
 
-  const handleRecipientNoteChange = (e: any) => {
-    setRecipientNote(e.target.value);
+  const handleRecipientNoteChange = (value: string) => {
+    setRecipientNote(value);
   };
 
-  const handleRecipientAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    // Set the input value
-    const trimmedValue = inputValue.trim();
+  const handleRecipientAddressChange = (value: string) => {
+    const trimmedValue = value.trim();
     setRecipientAddress(trimmedValue);
   };
 
@@ -684,8 +738,8 @@ export const TreasuryStreamCreateModal = (props: {
     }, 10);
   };
 
-  const handlePaymentRateAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handlePaymentRateAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -697,7 +751,7 @@ export const TreasuryStreamCreateModal = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -715,8 +769,8 @@ export const TreasuryStreamCreateModal = (props: {
     setPaymentRateFrequency(val);
   };
 
-  const handleLockPeriodAmountChange = (e: any) => {
-    let periodAmountValue = e.target.value;
+  const handleLockPeriodAmountChange = (value: string) => {
+    let periodAmountValue = value.trim();
 
     if (periodAmountValue.length > 2) {
       periodAmountValue = periodAmountValue.substr(0, 2);
@@ -730,8 +784,8 @@ export const TreasuryStreamCreateModal = (props: {
     setLockPeriodFrequency(val);
   };
 
-  const handleFromCoinAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleFromCoinAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -743,7 +797,7 @@ export const TreasuryStreamCreateModal = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -759,8 +813,8 @@ export const TreasuryStreamCreateModal = (props: {
     }
   };
 
-  const handleCliffReleaseAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleCliffReleaseAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -772,7 +826,7 @@ export const TreasuryStreamCreateModal = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -792,7 +846,7 @@ export const TreasuryStreamCreateModal = (props: {
     setPaymentStartDate(date);
   };
 
-  const onFeePayedByTreasurerChange = (e: any) => {
+  const onFeePayedByTreasurerChange = (e: CheckboxChangeEvent) => {
     consoleOut('onFeePayedByTreasurerChange:', e.target.checked, 'blue');
 
     if (e.target.checked && selectedToken && tokenAmount) {
@@ -808,7 +862,7 @@ export const TreasuryStreamCreateModal = (props: {
     setIsFeePaidByTreasurer(e.target.checked);
   };
 
-  const onIsVerifiedRecipientChange = (e: any) => {
+  const onIsVerifiedRecipientChange = (e: CheckboxChangeEvent) => {
     setIsVerifiedRecipient(e.target.checked);
   };
 
@@ -854,18 +908,20 @@ export const TreasuryStreamCreateModal = (props: {
     [selectedToken, tokenAmount],
   );
 
-  const selectCsvHandler = (e: any) => {
+  const selectCsvHandler = (files: FileList | null) => {
+    if (!files) return;
+
     const reader = new FileReader();
 
     setHasIsOwnWallet(false);
 
-    reader.onloadend = (e: any) => {
-      if (e.target.readyState === FileReader.DONE) {
-        setCsvFile(e.target.result);
+    reader.onloadend = fr => {
+      if (fr.target?.readyState === FileReader.DONE) {
+        setCsvFile(fr.target.result);
       }
     };
 
-    reader.readAsText(e.target.files[0]);
+    reader.readAsText(files[0]);
   };
 
   const getMinBalanceRequired = useCallback(() => {
@@ -889,8 +945,8 @@ export const TreasuryStreamCreateModal = (props: {
       return;
     }
 
-    const splittedData = csvFile.split('\n');
-    const dataFormatted: any[] = [];
+    const splittedData = (csvFile as string).split('\n');
+    const dataFormatted: StreamRecipient[] = [];
 
     const timeout = setTimeout(() => {
       for (const line of splittedData) {
@@ -923,10 +979,10 @@ export const TreasuryStreamCreateModal = (props: {
     }
 
     const timeout = setTimeout(() => {
-      const validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
+      const validAddresses = csvArray.filter(csvItem => isValidAddress(csvItem.address));
 
       const validAddressesSingleSigner = validAddresses.filter(
-        (csvItem: any) => csvItem.address !== `${publicKey.toBase58()}`,
+        csvItem => csvItem.address !== `${publicKey.toBase58()}`,
       );
 
       if (!isSelectedStreamingAccountMultisigTreasury) {
@@ -942,7 +998,7 @@ export const TreasuryStreamCreateModal = (props: {
     return () => {
       clearTimeout(timeout);
     };
-  }, [wallet, csvArray, publicKey, isSelectedStreamingAccountMultisigTreasury]);
+  }, [csvArray, publicKey, isSelectedStreamingAccountMultisigTreasury]);
 
   // Recipient list - Set valid flag
   useEffect(() => {
@@ -953,7 +1009,7 @@ export const TreasuryStreamCreateModal = (props: {
         setValidMultiRecipientsList(false);
       }
     }
-  }, [isCsvSelected, csvFile, listValidAddresses, csvArray]);
+  }, [isCsvSelected, listValidAddresses]);
 
   // Set payment rate amount
   useEffect(() => {
@@ -1011,9 +1067,10 @@ export const TreasuryStreamCreateModal = (props: {
 
   const onStartTransaction = async () => {
     let transaction: VersionedTransaction | Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
     let multisigAuth = '';
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     let transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -1221,7 +1278,7 @@ export const TreasuryStreamCreateModal = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-              result: `Could not create transaction`,
+              result: 'Could not create transaction',
             });
             customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
             return false;
@@ -1359,15 +1416,16 @@ export const TreasuryStreamCreateModal = (props: {
     return isRateAmountValid();
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
+  // TODO: Verify and validate at runtime
   const onStreamingAccountSelected = useCallback(
-    (e: any) => {
+    (e: string) => {
       consoleOut('Selected streaming account:', e, 'blue');
-      setSelectedStreamingAccountId(e.id.toBase58());
-      const item = treasuryList?.find(t => t.id === e);
+      setSelectedStreamingAccountId(e);
+      const item = treasuryList?.find(t => t.id.toString() === e);
       consoleOut('item:', item, 'blue');
       if (item) {
         setWorkingTreasuryDetails(item);
@@ -1385,9 +1443,9 @@ export const TreasuryStreamCreateModal = (props: {
   const isDestinationAddressValid = () => {
     if (!enableMultipleStreamsOption) {
       return isValidAddress(recipientAddress);
-    } else {
-      return validMultiRecipientsList;
     }
+
+    return validMultiRecipientsList;
   };
 
   ///////////////
@@ -1400,20 +1458,28 @@ export const TreasuryStreamCreateModal = (props: {
   };
 
   const paymentRateOptionsMenu = () => {
-    const items: MenuProps['items'] = getOptionsFromEnum(PaymentRateType).map((item, index) => {
+    const items: MenuProps['items'] = getOptionsFromEnum().map((item, index) => {
       return {
         key: `option-${index}`,
-        label: <span onClick={() => handlePaymentRateOptionChange(item.value)}>{item.text}</span>,
+        label: (
+          <span onKeyDown={() => {}} onClick={() => handlePaymentRateOptionChange(item.value)}>
+            {item.text}
+          </span>
+        ),
       };
     });
     return { items };
   };
 
   const lockPeriodOptionsMenu = () => {
-    const items: MenuProps['items'] = getLockPeriodOptionsFromEnum(PaymentRateType).map((item, index) => {
+    const items: MenuProps['items'] = getLockPeriodOptionsFromEnum().map((item, index) => {
       return {
         key: `option-${index}`,
-        label: <span onClick={() => handleLockPeriodOptionChange(item.value)}>{item.text}</span>,
+        label: (
+          <span onKeyDown={() => {}} onClick={() => handleLockPeriodOptionChange(item.value)}>
+            {item.text}
+          </span>
+        ),
       };
     });
 
@@ -1498,7 +1564,7 @@ export const TreasuryStreamCreateModal = (props: {
   const renderStreamingAccountItem = (item: PaymentStreamingAccount | TreasuryInfo) => {
     return (
       <Option key={`${item.id}`} value={item.id.toString()}>
-        <div className={`transaction-list-row no-pointer`}>
+        <div className={'transaction-list-row no-pointer'}>
           <div className='icon-cell'>{getStreamingAccountIcon(item)}</div>
           <div className='description-cell'>{getStreamingAccountDescription(item)}</div>
           <div className='rate-cell'>{getStreamingAccountStreamCount(item)}</div>
@@ -1531,9 +1597,9 @@ export const TreasuryStreamCreateModal = (props: {
           {theme === 'light' ? (
             <WarningFilled style={{ fontSize: 48 }} className='icon mt-0 mb-3 fg-warning' />
           ) : (
-            <WarningOutlined style={{ fontSize: 48 }} className={`icon mt-0 mb-3 fg-warning`} />
+            <WarningOutlined style={{ fontSize: 48 }} className={'icon mt-0 mb-3 fg-warning'} />
           )}
-          <h2 className={`mb-3 fg-warning`}>No streaming accounts</h2>
+          <h2 className={'mb-3 fg-warning'}>No streaming accounts</h2>
           <p>
             Your super safe needs a streaming account to set up and fund payment streams. To get started, create and
             fund a streaming account and then you can proceed with creating a payment stream.
@@ -1589,7 +1655,7 @@ export const TreasuryStreamCreateModal = (props: {
                         <div className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
                           {treasuryList && treasuryList.length > 0 && (
                             <Select
-                              className={`auto-height`}
+                              className={'auto-height'}
                               value={selectedStreamingAccountId}
                               style={{ width: '100%', maxWidth: 'none' }}
                               popupClassName='stream-select-dropdown'
@@ -1619,7 +1685,7 @@ export const TreasuryStreamCreateModal = (props: {
                           autoCorrect='off'
                           type='text'
                           maxLength={32}
-                          onChange={handleRecipientNoteChange}
+                          onChange={e => handleRecipientNoteChange(e.target.value)}
                           placeholder={t('transactions.memo2.placeholder')}
                           spellCheck='false'
                           value={recipientNote}
@@ -1658,7 +1724,7 @@ export const TreasuryStreamCreateModal = (props: {
                           autoCorrect='off'
                           type='text'
                           onFocus={handleRecipientAddressFocusInOut}
-                          onChange={handleRecipientAddressChange}
+                          onChange={e => handleRecipientAddressChange(e.target.value)}
                           onBlur={handleRecipientAddressFocusInOut}
                           placeholder={t('transactions.recipient.placeholder')}
                           required={true}
@@ -1683,7 +1749,12 @@ export const TreasuryStreamCreateModal = (props: {
                   <div className='flex-fixed-right'>
                     <div className='left position-relative'>
                       <span className='recipient-field-wrapper'>
-                        <input type='file' accept='.csv' id='csvFile' onChange={selectCsvHandler} />
+                        <input
+                          type='file'
+                          accept='.csv'
+                          id='csvFile'
+                          onChange={e => selectCsvHandler(e.target.files)}
+                        />
                       </span>
                     </div>
                   </div>
@@ -1722,7 +1793,7 @@ export const TreasuryStreamCreateModal = (props: {
                               autoComplete='off'
                               autoCorrect='off'
                               type='text'
-                              onChange={handlePaymentRateAmountChange}
+                              onChange={e => handlePaymentRateAmountChange(e.target.value)}
                               pattern='^[0-9]*[.,]?[0-9]*$'
                               placeholder='0.0'
                               minLength={1}
@@ -1774,18 +1845,13 @@ export const TreasuryStreamCreateModal = (props: {
                           {selectedToken && unallocatedBalance ? (
                             <div
                               className='token-max simplelink'
+                              onKeyDown={() => {}}
                               onClick={() => {
-                                if (isFeePaidByTreasurer) {
-                                  const maxAmount = getMaxAmount(true);
-                                  consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
-                                  consoleOut('maxAmount:', maxAmount.toString(), 'blue');
-                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
-                                  setTokenAmount(new BN(maxAmount));
-                                } else {
-                                  const maxAmount = getMaxAmount();
-                                  setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
-                                  setTokenAmount(new BN(maxAmount));
-                                }
+                                const maxAmount = getMaxAmount(isFeePaidByTreasurer);
+                                consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
+                                consoleOut('maxAmount:', maxAmount.toString(), 'blue');
+                                setFromCoinAmount(toUiAmount(new BN(maxAmount), selectedToken.decimals));
+                                setTokenAmount(new BN(maxAmount));
                               }}
                             >
                               MAX
@@ -1800,7 +1866,7 @@ export const TreasuryStreamCreateModal = (props: {
                           autoComplete='off'
                           autoCorrect='off'
                           type='text'
-                          onChange={handleFromCoinAmountChange}
+                          onChange={e => handleFromCoinAmountChange(e.target.value)}
                           pattern='^[0-9]*[.,]?[0-9]*$'
                           placeholder='0.0'
                           minLength={1}
@@ -1852,7 +1918,7 @@ export const TreasuryStreamCreateModal = (props: {
                             allowClear={false}
                             disabledDate={disabledDate}
                             placeholder={t('transactions.send-date.placeholder')}
-                            onChange={(value: any, date: string) => handleDateChange(date)}
+                            onChange={(value, date) => handleDateChange(date)}
                             defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
                             format={DATEPICKER_FORMAT}
                           />
@@ -1876,7 +1942,11 @@ export const TreasuryStreamCreateModal = (props: {
                               <div className='form-label'>{t('transactions.resume')}</div>
                             </div>
                             <div className='right'>
-                              <span className='flat-button change-button' onClick={() => setCurrentStep(0)}>
+                              <span
+                                className='flat-button change-button'
+                                onKeyDown={() => {}}
+                                onClick={() => setCurrentStep(0)}
+                              >
                                 <IconEdit className='mean-svg-icons' />
                                 <span>{t('general.cta-change')}</span>
                               </span>
@@ -1904,7 +1974,7 @@ export const TreasuryStreamCreateModal = (props: {
                                 </div>
                               </div>
                               <div className='middle flex-center'>
-                                <div className='vertical-bar'></div>
+                                <div className='vertical-bar' />
                               </div>
                               <div className='right flex-column'>
                                 <div className='rate'>{getPaymentRateAmount()}</div>
@@ -1927,14 +1997,18 @@ export const TreasuryStreamCreateModal = (props: {
                               <div className='form-label'>{t('transactions.resume')}</div>
                             </div>
                             <div className='right'>
-                              <span className='flat-button change-button' onClick={() => setCurrentStep(0)}>
+                              <span
+                                className='flat-button change-button'
+                                onKeyDown={() => {}}
+                                onClick={() => setCurrentStep(0)}
+                              >
                                 <IconEdit className='mean-svg-icons' />
                                 <span>{t('general.cta-change')}</span>
                               </span>
                             </div>
                           </div>
-                          {listValidAddresses.map((csvItem: any, index: number) => (
-                            <div key={index} className='well'>
+                          {listValidAddresses.map(csvItem => (
+                            <div key={csvItem.address} className='well'>
                               <div className='three-col-flexible-middle'>
                                 <div className='left flex-row'>
                                   <div className='flex-center'>
@@ -1956,7 +2030,7 @@ export const TreasuryStreamCreateModal = (props: {
                                   </div>
                                 </div>
                                 <div className='middle flex-center'>
-                                  <div className='vertical-bar'></div>
+                                  <div className='vertical-bar' />
                                 </div>
                                 <div className='right flex-column'>
                                   <div className='rate'>{getPaymentRateAmount()}</div>
@@ -2012,6 +2086,7 @@ export const TreasuryStreamCreateModal = (props: {
                           {selectedToken && unallocatedBalance ? (
                             <div
                               className='token-max simplelink'
+                              onKeyDown={() => {}}
                               onClick={() => {
                                 const maxAmount = getMaxAmount(isFeePaidByTreasurer);
                                 consoleOut('tokenAmount:', tokenAmount.toString(), 'blue');
@@ -2032,7 +2107,7 @@ export const TreasuryStreamCreateModal = (props: {
                           autoComplete='off'
                           autoCorrect='off'
                           type='text'
-                          onChange={handleFromCoinAmountChange}
+                          onChange={e => handleFromCoinAmountChange(e.target.value)}
                           pattern='^[0-9]*[.,]?[0-9]*$'
                           placeholder='0.0'
                           minLength={1}
@@ -2054,6 +2129,7 @@ export const TreasuryStreamCreateModal = (props: {
                       <div className='right inner-label'>
                         <span
                           className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                          onKeyDown={() => {}}
                           onClick={() => refreshPrices()}
                         >
                           ~{fromCoinAmount ? toUsCurrency(getTokenPrice(fromCoinAmount)) : '$0.00'}
@@ -2111,7 +2187,7 @@ export const TreasuryStreamCreateModal = (props: {
                             autoComplete='on'
                             autoCorrect='off'
                             type='number'
-                            onChange={handleLockPeriodAmountChange}
+                            onChange={e => handleLockPeriodAmountChange(e.target.value)}
                             placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
                             spellCheck='false'
                             min={0}
@@ -2154,7 +2230,7 @@ export const TreasuryStreamCreateModal = (props: {
                             allowClear={false}
                             disabledDate={disabledDate}
                             placeholder={t('transactions.send-date.placeholder')}
-                            onChange={(value: any, date: string) => handleDateChange(date)}
+                            onChange={(value, date) => handleDateChange(date)}
                             defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
                             format={DATEPICKER_FORMAT}
                           />
@@ -2169,10 +2245,11 @@ export const TreasuryStreamCreateModal = (props: {
                   <div className='well'>
                     <div className='flexible-right mb-1'>
                       <div className='token-group'>
-                        {percentages.map((percentage, index) => (
-                          <div key={index} className='mb-1 d-flex flex-column align-items-center'>
+                        {percentages.map(percentage => (
+                          <div key={percentage} className='mb-1 d-flex flex-column align-items-center'>
                             <div
                               className='token-max simplelink active'
+                              onKeyDown={() => {}}
                               onClick={() => onChangeValuePercentages(percentage)}
                             >
                               {percentage}%
@@ -2200,7 +2277,7 @@ export const TreasuryStreamCreateModal = (props: {
                           autoComplete='off'
                           autoCorrect='off'
                           type='text'
-                          onChange={handleCliffReleaseAmountChange}
+                          onChange={e => handleCliffReleaseAmountChange(e.target.value)}
                           pattern='^[0-9]*[.,]?[0-9]*$'
                           placeholder='0.0'
                           minLength={1}
@@ -2219,6 +2296,7 @@ export const TreasuryStreamCreateModal = (props: {
                       <div className='right inner-label'>
                         <span
                           className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                          onKeyDown={() => {}}
                           onClick={() => refreshPrices()}
                         >
                           ~{cliffRelease ? toUsCurrency(getTokenPrice(cliffRelease)) : '$0.00'}
@@ -2238,7 +2316,11 @@ export const TreasuryStreamCreateModal = (props: {
                       <div className='text-uppercase mb-2'>{t('transactions.resume')}</div>
                     </div>
                     <div className='right'>
-                      <span className='flat-button change-button' onClick={() => setCurrentStep(0)}>
+                      <span
+                        className='flat-button change-button'
+                        onKeyDown={() => {}}
+                        onClick={() => setCurrentStep(0)}
+                      >
                         <IconEdit className='mean-svg-icons' />
                         <span>{t('general.cta-change')}</span>
                       </span>

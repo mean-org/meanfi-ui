@@ -4,7 +4,7 @@ import type { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
 import { AccountType, type PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
-import Checkbox from 'antd/lib/checkbox/Checkbox';
+import Checkbox, { type CheckboxChangeEvent } from 'antd/lib/checkbox/Checkbox';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -32,15 +32,15 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { TransactionStatus } from 'models/enums';
 import type { TreasuryWithdrawParams } from 'models/treasuries';
 import type React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const TreasuryTransferFundsModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (params: TreasuryWithdrawParams) => void;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
@@ -171,18 +171,17 @@ export const TreasuryTransferFundsModal = (props: {
     });
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
-  const onMintToAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
+  const onMintToAddressChange = (value: string) => {
+    const trimmedValue = value.trim();
     setTo(trimmedValue);
   };
 
-  const handleAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -194,7 +193,7 @@ export const TreasuryTransferFundsModal = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -215,7 +214,7 @@ export const TreasuryTransferFundsModal = (props: {
     window.location.reload();
   };
 
-  const onIsVerifiedRecipientChange = (e: any) => {
+  const onIsVerifiedRecipientChange = (e: CheckboxChangeEvent) => {
     setIsVerifiedRecipient(e.target.checked);
   };
 
@@ -278,6 +277,7 @@ export const TreasuryTransferFundsModal = (props: {
       const maxAmount = goodStreamMaxAllocation;
 
       if (isWhitelisted) {
+        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
         const debugTable: any[] = [];
         debugTable.push({
           unallocatedBalance: unallocatedBalance.toString(),
@@ -353,7 +353,7 @@ export const TreasuryTransferFundsModal = (props: {
       event.currentTarget.className = 'error';
     };
 
-    let img;
+    let img: ReactNode;
 
     if (associatedToken) {
       if (token?.logoURI) {
@@ -473,7 +473,7 @@ export const TreasuryTransferFundsModal = (props: {
                 autoComplete='on'
                 autoCorrect='off'
                 type='text'
-                onChange={onMintToAddressChange}
+                onChange={e => onMintToAddressChange(e.target.value)}
                 placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
                 required={true}
                 spellCheck='false'
@@ -507,6 +507,7 @@ export const TreasuryTransferFundsModal = (props: {
                         {selectedToken && tokenBalance ? (
                           <div
                             className='token-max simplelink'
+                            onKeyDown={() => {}}
                             onClick={() => {
                               setTopupAmount(tokenBalance.toFixed(selectedToken.decimals));
                               setTokenAmount(makeInteger(tokenBalance, selectedToken?.decimals || 9));
@@ -521,6 +522,7 @@ export const TreasuryTransferFundsModal = (props: {
                         {selectedToken && unallocatedBalance ? (
                           <div
                             className='token-max simplelink'
+                            onKeyDown={() => {}}
                             onClick={() => {
                               const decimals = selectedToken ? selectedToken.decimals : 6;
                               const maxAmount = getMaxAmount();
@@ -543,7 +545,7 @@ export const TreasuryTransferFundsModal = (props: {
                     autoComplete='off'
                     autoCorrect='off'
                     type='text'
-                    onChange={handleAmountChange}
+                    onChange={e => handleAmountChange(e.target.value)}
                     pattern='^[0-9]*[.,]?[0-9]*$'
                     placeholder='0.0'
                     minLength={1}
@@ -555,12 +557,12 @@ export const TreasuryTransferFundsModal = (props: {
               </div>
               <div className='flex-fixed-right'>
                 <div className='left inner-label'>
-                  {!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose) ? (
+                  {!treasuryDetails || treasuryDetails?.autoClose ? (
                     <span>{t('add-funds.label-right')}:</span>
                   ) : (
                     <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                   )}
-                  {treasuryDetails && treasuryDetails.autoClose ? (
+                  {treasuryDetails?.autoClose ? (
                     <span>
                       {`${
                         tokenBalance && selectedToken
@@ -589,6 +591,7 @@ export const TreasuryTransferFundsModal = (props: {
                   {publicKey ? (
                     <span
                       className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                      onKeyDown={() => {}}
                       onClick={() => refreshPrices()}
                     >
                       ~{topupAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}

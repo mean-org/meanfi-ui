@@ -22,8 +22,8 @@ import { getFallBackRpcEndpoint } from 'services/connections-hq';
 import { openNotification } from '../Notifications';
 
 export const StreamWithdrawModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (params: StreamWithdrawData) => void;
   isVisible: boolean;
   selectedToken: TokenInfo | undefined;
   startUpData: Stream | StreamInfo | undefined;
@@ -196,17 +196,7 @@ export const StreamWithdrawModal = (props: {
         setMaxAmountBn(max);
       }
     }
-  }, [
-    wallet,
-    publicKey,
-    startUpData,
-    selectedToken,
-    paymentStreaming,
-    streamProgramAddress,
-    streamV2ProgramAddress,
-    isV2Stream,
-    t,
-  ]);
+  }, [wallet, publicKey, startUpData, selectedToken, paymentStreaming, streamProgramAddress, isV2Stream, t]);
 
   useEffect(() => {
     if (!feeAmount && transactionFees) {
@@ -255,8 +245,8 @@ export const StreamWithdrawModal = (props: {
     });
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   const setValue = (value: string) => {
@@ -283,8 +273,8 @@ export const StreamWithdrawModal = (props: {
     setFeeAmount(fee);
   };
 
-  const handleWithdrawAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleWithdrawAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -296,7 +286,7 @@ export const StreamWithdrawModal = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -426,16 +416,16 @@ export const StreamWithdrawModal = (props: {
           <div className='right'>
             <div className='addon'>
               <div className='token-group'>
-                <div className='token-max simplelink' onClick={() => setPercentualValue(25)}>
+                <div className='token-max simplelink' onKeyDown={() => {}} onClick={() => setPercentualValue(25)}>
                   25%
                 </div>
-                <div className='token-max simplelink' onClick={() => setPercentualValue(50)}>
+                <div className='token-max simplelink' onKeyDown={() => {}} onClick={() => setPercentualValue(50)}>
                   50%
                 </div>
-                <div className='token-max simplelink' onClick={() => setPercentualValue(75)}>
+                <div className='token-max simplelink' onKeyDown={() => {}} onClick={() => setPercentualValue(75)}>
                   75%
                 </div>
-                <div className='token-max simplelink' onClick={() => setPercentualValue(100)}>
+                <div className='token-max simplelink' onKeyDown={() => {}} onClick={() => setPercentualValue(100)}>
                   100%
                 </div>
               </div>
@@ -450,7 +440,7 @@ export const StreamWithdrawModal = (props: {
               autoComplete='off'
               autoCorrect='off'
               type='text'
-              onChange={handleWithdrawAmountChange}
+              onChange={e => handleWithdrawAmountChange(e.target.value)}
               pattern='^[0-9]*[.,]?[0-9]*$'
               placeholder='0.0'
               minLength={1}

@@ -2942,6 +2942,9 @@ export const HomeView = () => {
         tooltip: '',
         callBack: () => copyAddressToClipboard(selectedAsset.address),
       });
+    }
+
+    if (selectedAsset.address !== NATIVE_SOL.address && selectedAsset.isAta) {
       actions.push({
         caption: 'Create non-ATA',
         action: MetaInfoCtaAction.CreateNonAta,

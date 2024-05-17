@@ -2,7 +2,7 @@ import { browserName, browserVersion, isBrowser, osName } from 'react-device-det
 import { appConfig } from '..';
 import { WALLET_PROVIDERS } from '../contexts/wallet';
 import { environment } from '../environments/environment';
-import { isLocal } from '../middleware/ui';
+import { isLocal, isProd } from '../middleware/ui';
 
 export function objectToJson(obj: unknown): string {
   return JSON.stringify(obj, null, 2);
@@ -73,12 +73,12 @@ export class CustomLoggerService {
 
   public async logError(message: string, data?: unknown) {
     const errorData = this.getLoggerJsonData(message, LogLevel.Error, data);
-    if (isLocal()) {
-      this.print('Loggly logger not available for localhost', 'print then', 'orange');
-      this.print('loggerJsonData:', errorData, 'blue');
-      return;
+    if (isProd()) {
+      logger.push(errorData);
+    } else {
+      this.print('Loggly logger not available for non-production environment', 'print then', 'orange');
     }
-    logger.push(errorData);
+    this.print('loggerJsonData:', errorData, 'blue');
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: Anything can go here

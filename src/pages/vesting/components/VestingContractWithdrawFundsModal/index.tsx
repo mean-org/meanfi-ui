@@ -4,7 +4,7 @@ import type { TransactionFees } from '@mean-dao/money-streaming';
 import { AccountType, type PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
-import Checkbox from 'antd/lib/checkbox/Checkbox';
+import Checkbox, { type CheckboxChangeEvent } from 'antd/lib/checkbox/Checkbox';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -33,8 +33,8 @@ import './style.scss';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const VestingContractWithdrawFundsModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (options: VestingContractWithdrawOptions) => void;
   isBusy: boolean;
   isMultisigTreasury: boolean;
   isVisible: boolean;
@@ -121,14 +121,13 @@ export const VestingContractWithdrawFundsModal = (props: {
     });
   };
 
-  const onMintToAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
+  const onMintToAddressChange = (value: string) => {
+    const trimmedValue = value.trim();
     setTo(trimmedValue);
   };
 
-  const handleAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -140,7 +139,7 @@ export const VestingContractWithdrawFundsModal = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -156,7 +155,7 @@ export const VestingContractWithdrawFundsModal = (props: {
     }
   };
 
-  const onIsVerifiedRecipientChange = (e: any) => {
+  const onIsVerifiedRecipientChange = (e: CheckboxChangeEvent) => {
     setIsVerifiedRecipient(e.target.checked);
   };
 
@@ -246,7 +245,7 @@ export const VestingContractWithdrawFundsModal = (props: {
       consoleOut('unallocatedBalance:', unallocated.toString(), 'blue');
       setUnallocatedBalance(unallocated);
     }
-  }, [isVisible, vestingContract, selectedToken?.decimals, isNewTreasury]);
+  }, [isVisible, vestingContract]);
 
   const renderTreasury = () => {
     if (!vestingContract) {
@@ -321,10 +320,8 @@ export const VestingContractWithdrawFundsModal = (props: {
                 <InputMean
                   id='proposal-title-field'
                   name='Title'
-                  className={`w-100 general-text-input`}
-                  onChange={(e: any) => {
-                    setProposalTitle(e.target.value);
-                  }}
+                  className={'w-100 general-text-input'}
+                  onChange={value => setProposalTitle(value)}
                   placeholder='Add a proposal title (required)'
                   value={proposalTitle}
                 />
@@ -347,7 +344,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                 autoComplete='on'
                 autoCorrect='off'
                 type='text'
-                onChange={onMintToAddressChange}
+                onChange={e => onMintToAddressChange(e.target.value)}
                 placeholder={t('multisig.transfer-tokens.transfer-to-placeholder')}
                 required={true}
                 spellCheck='false'
@@ -375,6 +372,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                     {selectedToken && unallocatedBalance && (
                       <div
                         className='token-max simplelink'
+                        onKeyDown={() => {}}
                         onClick={() => {
                           setWithdrawAmount(toUiAmount(unallocatedBalance, selectedToken.decimals));
                           setTokenAmount(unallocatedBalance);
@@ -393,7 +391,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                     autoComplete='off'
                     autoCorrect='off'
                     type='text'
-                    onChange={handleAmountChange}
+                    onChange={e => handleAmountChange(e.target.value)}
                     pattern='^[0-9]*[.,]?[0-9]*$'
                     placeholder='0.0'
                     minLength={1}
@@ -438,6 +436,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                 <div className='right inner-label'>
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onKeyDown={() => {}}
                     onClick={() => refreshPrices()}
                   >
                     ~{withdrawAmount ? toUsCurrency(getTokenPrice(withdrawAmount)) : '$0.00'}

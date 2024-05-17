@@ -9,6 +9,7 @@ import {
 import { BN } from '@project-serum/anchor';
 import { IconEdit, IconWarning } from 'Icons';
 import { Button, Checkbox, Col, Modal, Row } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { InfoIcon } from 'components/InfoIcon';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -43,8 +44,8 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const VestingContractCreateStreamModal = (props: {
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (options: VestingContractStreamCreateOptions) => void;
   isBusy: boolean;
   isMultisigTreasury: boolean;
   isVisible: boolean;
@@ -137,6 +138,7 @@ export const VestingContractCreateStreamModal = (props: {
         const maxAmount = goodStreamMaxAllocation;
 
         if (isWhitelisted) {
+          // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
           const debugTable: any[] = [];
           debugTable.push({
             unallocatedBalance: unallocatedBalance.toString(),
@@ -255,7 +257,7 @@ export const VestingContractCreateStreamModal = (props: {
       const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
       setLockPeriodFrequency(periodFrequency);
     }
-  }, [isVisible, currentStep, streamTemplate, vestingContract]);
+  }, [isVisible, streamTemplate, vestingContract]);
 
   // Set Cliff release
   useEffect(() => {
@@ -294,7 +296,7 @@ export const VestingContractCreateStreamModal = (props: {
       setPaymentRateAmountBn(ra);
       setPaymentRateAmount(ra.toString());
     }
-  }, [cliffReleasePercentage, fromCoinAmount, lockPeriodAmount, selectedToken, tokenAmount]);
+  }, [cliffReleasePercentage, lockPeriodAmount, selectedToken, tokenAmount]);
 
   // Set the amount to be streamed
   useEffect(() => {
@@ -312,7 +314,7 @@ export const VestingContractCreateStreamModal = (props: {
       }
       setAmountToBeStreamedBn(toStream);
     }
-  }, [cliffReleasePercentage, fromCoinAmount, selectedToken, tokenAmount]);
+  }, [cliffReleasePercentage, selectedToken, tokenAmount]);
 
   // Window resize listener
   useEffect(() => {
@@ -438,15 +440,15 @@ export const VestingContractCreateStreamModal = (props: {
     setCurrentStep(0);
   };
 
-  const handleVestingStreamNameChange = (e: any) => {
-    setVestingStreamName(e.target.value);
+  const handleVestingStreamNameChange = (value: string) => {
+    setVestingStreamName(value);
   };
 
-  const handleFromCoinAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleFromCoinAmountChange = (value: string) => {
+    let newValue = value.trim();
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
-    const splitted = newValue.toString().split('.');
+    const splitted = newValue.split('.');
     const left = splitted[0];
 
     if (decimals && splitted[1]) {
@@ -455,7 +457,7 @@ export const VestingContractCreateStreamModal = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -471,11 +473,9 @@ export const VestingContractCreateStreamModal = (props: {
     }
   };
 
-  const handleRecipientAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    // Set the input value
-    const trimmedValue = inputValue.trim();
-    setRecipientAddress(trimmedValue);
+  const handleRecipientAddressChange = (value: string) => {
+    const inputValue = value.trim();
+    setRecipientAddress(inputValue);
   };
 
   const handleRecipientAddressFocusInOut = () => {
@@ -484,7 +484,7 @@ export const VestingContractCreateStreamModal = (props: {
     }, 10);
   };
 
-  const onIsVerifiedRecipientChange = (e: any) => {
+  const onIsVerifiedRecipientChange = (e: CheckboxChangeEvent) => {
     setIsVerifiedRecipient(e.target.checked);
   };
 
@@ -516,49 +516,58 @@ export const VestingContractCreateStreamModal = (props: {
 
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (isMultisigTreasury && selectedMultisig && !proposalTitle) {
+    }
+    if (isMultisigTreasury && selectedMultisig && !proposalTitle) {
       return 'Add a proposal title';
-    } else if (!vestingStreamName) {
+    }
+    if (!vestingStreamName) {
       return t('vesting.create-stream.stream-name-empty');
-    } else if (!recipientAddress || !isValidAddress(recipientAddress)) {
+    }
+    if (!recipientAddress || !isValidAddress(recipientAddress)) {
       return t('vesting.create-stream.beneficiary-address-missing');
-    } else if (!selectedToken || unallocatedBalance.isZero()) {
+    }
+    if (!selectedToken || unallocatedBalance.isZero()) {
       return t('transactions.validation.no-balance');
-    } else if (!tokenAmount || tokenAmount.isZero()) {
+    }
+    if (!tokenAmount || tokenAmount.isZero()) {
       return t('transactions.validation.no-amount');
-    } else if ((isFeePaidByTreasurer && tokenAmount.gt(mAa)) || (!isFeePaidByTreasurer && tokenAmount.gt(ub))) {
+    }
+    if ((isFeePaidByTreasurer && tokenAmount.gt(mAa)) || (!isFeePaidByTreasurer && tokenAmount.gt(ub))) {
       return t('transactions.validation.amount-high');
-    } else if (nativeBalance < getMinBalanceRequired()) {
+    }
+    if (nativeBalance < getMinBalanceRequired()) {
       return t('transactions.validation.insufficient-balance-needed', {
         balance: formatThousands(getMinBalanceRequired(), 4),
       });
-    } else {
-      return t('vesting.create-stream.step-one-validation-pass');
     }
+
+    return t('vesting.create-stream.step-one-validation-pass');
   };
 
   const getStepTwoButtonLabel = (): string => {
     if (!isStepOneValid()) {
       return getStepOneButtonLabel();
-    } else if (!isVerifiedRecipient) {
-      return t('transactions.validation.verified-recipient-unchecked');
-    } else {
-      return t('vesting.create-stream.create-cta');
     }
+    if (!isVerifiedRecipient) {
+      return t('transactions.validation.verified-recipient-unchecked');
+    }
+
+    return t('vesting.create-stream.create-cta');
   };
 
   const getMainCtaLabel = () => {
     if (isBusy) {
       return t('vesting.create-stream.create-cta-busy');
-    } else if (isError(transactionStatus.currentOperation)) {
-      return t('general.retry');
-    } else {
-      return getStepTwoButtonLabel();
     }
+    if (isError(transactionStatus.currentOperation)) {
+      return t('general.retry');
+    }
+
+    return getStepTwoButtonLabel();
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   ///////////////
@@ -623,7 +632,7 @@ export const VestingContractCreateStreamModal = (props: {
                   autoCorrect='off'
                   type='text'
                   maxLength={32}
-                  onChange={handleVestingStreamNameChange}
+                  onChange={e => handleVestingStreamNameChange(e.target.value)}
                   placeholder={t('vesting.create-stream.vesting-stream-name-placeholder')}
                   spellCheck='false'
                   value={vestingStreamName}
@@ -645,7 +654,7 @@ export const VestingContractCreateStreamModal = (props: {
                     autoCorrect='off'
                     type='text'
                     onFocus={handleRecipientAddressFocusInOut}
-                    onChange={handleRecipientAddressChange}
+                    onChange={e => handleRecipientAddressChange(e.target.value)}
                     onBlur={handleRecipientAddressFocusInOut}
                     placeholder={t('vesting.create-stream.beneficiary-address-placeholder')}
                     required={true}
@@ -689,7 +698,7 @@ export const VestingContractCreateStreamModal = (props: {
                     />
                   )}
                   {selectedToken && unallocatedBalance ? (
-                    <div className='token-max simplelink' onClick={setMaxValue}>
+                    <div className='token-max simplelink' onKeyDown={() => {}} onClick={setMaxValue}>
                       MAX
                     </div>
                   ) : null}
@@ -702,7 +711,7 @@ export const VestingContractCreateStreamModal = (props: {
                   autoComplete='off'
                   autoCorrect='off'
                   type='text'
-                  onChange={handleFromCoinAmountChange}
+                  onChange={e => handleFromCoinAmountChange(e.target.value)}
                   pattern='^[0-9]*[.,]?[0-9]*$'
                   placeholder='0.0'
                   minLength={1}
@@ -725,6 +734,7 @@ export const VestingContractCreateStreamModal = (props: {
                 {publicKey ? (
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onKeyDown={() => {}}
                     onClick={() => refreshPrices()}
                   >
                     ~{fromCoinAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
@@ -759,7 +769,7 @@ export const VestingContractCreateStreamModal = (props: {
               <h2 className='form-group-label'>{t('vesting.create-stream.step-two-label')}</h2>
             </div>
             <div className='right'>
-              <span className='flat-button change-button' onClick={() => setCurrentStep(0)}>
+              <span className='flat-button change-button' onKeyDown={() => {}} onClick={() => setCurrentStep(0)}>
                 <IconEdit className='mean-svg-icons' />
                 <span>{t('general.cta-change')}</span>
               </span>

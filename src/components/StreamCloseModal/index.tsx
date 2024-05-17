@@ -9,7 +9,7 @@ import {
   type Stream,
 } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
-import { Button, Col, Modal, Radio, Row } from 'antd';
+import { Button, Col, Modal, Radio, type RadioChangeEvent, Row } from 'antd';
 import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
@@ -27,8 +27,8 @@ import { useTranslation } from 'react-i18next';
 export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;
   content: ReactNode;
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (params: CloseStreamParams) => void;
   isVisible: boolean;
   mspClient: MoneyStreaming | PaymentStreaming | undefined;
   selectedToken: TokenInfo | undefined;
@@ -84,13 +84,11 @@ export const StreamCloseModal = (props: {
           const type = getStreamingAccountType(details);
           if (type === AccountType.Lock) {
             return 'locked';
-          } else {
-            return 'open';
           }
-        } else {
-          setTreasuryDetails(undefined);
-          return 'unknown';
+          return 'open';
         }
+        setTreasuryDetails(undefined);
+        return 'unknown';
       } catch (error) {
         console.error(error);
         return 'unknown';
@@ -176,10 +174,10 @@ export const StreamCloseModal = (props: {
       const v1 = localStreamDetail as StreamInfo;
       const v2 = localStreamDetail as Stream;
       if (localStreamDetail.version < 2) {
-        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
-      } else {
-        return v2.beneficiary.equals(publicKey) ? true : false;
+        return v1.beneficiaryAddress === publicKey.toBase58();
       }
+
+      return v2.beneficiary.equals(publicKey);
     }
     return false;
   }, [publicKey, localStreamDetail]);
@@ -219,9 +217,9 @@ export const StreamCloseModal = (props: {
 
       if (localStreamDetail.version < 2) {
         return v1.escrowVestedAmount;
-      } else {
-        return +toUiAmount(v2.withdrawableAmount, selectedToken?.decimals || 9);
       }
+
+      return +toUiAmount(v2.withdrawableAmount, selectedToken?.decimals ?? 9);
     }
     return 0;
   }, [publicKey, selectedToken, localStreamDetail]);
@@ -233,9 +231,9 @@ export const StreamCloseModal = (props: {
 
       if (localStreamDetail.version < 2) {
         return v1.escrowUnvestedAmount;
-      } else {
-        return +toUiAmount(v2.fundsLeftInStream, selectedToken?.decimals || 9);
       }
+
+      return +toUiAmount(v2.fundsLeftInStream, selectedToken?.decimals ?? 9);
     }
     return 0;
   }, [publicKey, selectedToken, localStreamDetail]);
@@ -282,11 +280,11 @@ export const StreamCloseModal = (props: {
     });
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
-  const onCloseTreasuryOptionChanged = (e: any) => {
+  const onCloseTreasuryOptionChanged = (e: RadioChangeEvent) => {
     setCloseTreasuryOption(e.target.value);
   };
 
@@ -428,11 +426,12 @@ export const StreamCloseModal = (props: {
   const renderContent = () => {
     if (loadingTreasuryDetails) {
       return renderLoading();
-    } else if (streamTreasuryType === 'locked' && streamState !== STREAM_STATUS_CODE.Paused) {
-      return renderCannotCloseStream();
-    } else {
-      return renderCloseStream();
     }
+    if (streamTreasuryType === 'locked' && streamState !== STREAM_STATUS_CODE.Paused) {
+      return renderCannotCloseStream();
+    }
+
+    return renderCloseStream();
   };
 
   return (

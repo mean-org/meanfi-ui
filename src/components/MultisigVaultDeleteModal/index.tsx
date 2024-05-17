@@ -16,11 +16,14 @@ import { Identicon } from '../Identicon';
 import { InputMean } from '../InputMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+type DeteleVaultPayload = {
+  title: string;
+};
 
 export const MultisigVaultDeleteModal = (props: {
-  handleOk: any;
-  handleClose: any;
-  handleAfterClose: any;
+  handleOk: (payload: DeteleVaultPayload) => void;
+  handleClose: () => void;
+  handleAfterClose: () => void;
   isVisible: boolean;
   isBusy: boolean;
   selectedVault: UserTokenAccount | undefined;
@@ -56,8 +59,8 @@ export const MultisigVaultDeleteModal = (props: {
     });
   };
 
-  const onTitleInputValueChange = (e: any) => {
-    setProposalTitle(e.target.value);
+  const onTitleInputValueChange = (value: string) => {
+    setProposalTitle(value);
   };
 
   const refreshPage = () => {
@@ -88,7 +91,7 @@ export const MultisigVaultDeleteModal = (props: {
       <div className='transaction-list-row no-pointer'>
         <div className='icon-cell'>
           <div className='token-icon'>
-            {token && token.logoURI ? (
+            {token?.logoURI ? (
               <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
               <Identicon

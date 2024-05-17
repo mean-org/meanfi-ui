@@ -1,5 +1,5 @@
 import type { AppConfig, UiInstruction } from '@mean-dao/mean-multisig-apps';
-import type { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import type { InstructionDataInfo, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { AnchorProvider, type BN, type Idl, Program, type SplToken, SplTokenCoder } from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
@@ -94,12 +94,6 @@ export type InstructionAccountInfo = {
   value: string;
 };
 
-export type InstructionDataInfo = {
-  index: number;
-  label: string;
-  value: any;
-};
-
 export type MintTokensInfo = {
   tokenAddress: string;
   mintTo: string;
@@ -124,27 +118,18 @@ export type MultisigAsset = {
 
 export type MultisigVault = {
   address: PublicKey;
-  amount: any;
+  amount: number;
   closeAuthority: PublicKey;
   closeAuthorityOption: number;
   decimals: number;
   delegate: PublicKey;
   delegateOption: number;
-  delegatedAmount: any;
-  isNative: any;
+  delegatedAmount: number;
+  isNative: boolean;
   isNativeOption: number;
   mint: PublicKey;
   owner: PublicKey;
   state: number;
-};
-
-export type MultisigMint = {
-  address: PublicKey;
-  isInitialized: boolean;
-  decimals: number;
-  supply: any;
-  mintAuthority: PublicKey;
-  freezeAuthority: PublicKey;
 };
 
 export type MultisigParticipant = {
@@ -196,6 +181,13 @@ export type MultisigTransactionFees = {
   rentExempt: number;
   multisigFee: number;
 };
+
+export interface EditMultisigParams {
+  title: string;
+  label: string;
+  threshold: number;
+  owners: MultisigParticipant[];
+}
 
 export interface CreateNewProposalParams {
   appId: string;
@@ -249,6 +241,7 @@ export const getFees = async (program: Program<Idl>, action: MULTISIG_ACTIONS): 
 };
 
 export const getIxNameFromMultisigTransaction = (transaction: MultisigTransaction, programIdl?: Idl) => {
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   let ix: any;
 
   if (!programIdl) {
@@ -355,7 +348,7 @@ export const createAnchorProgram = (
   programId: PublicKey,
   programIdl: Idl,
   commitment: Commitment = 'confirmed',
-): Program<any> => {
+) => {
   const opts = {
     skipPreflight: false,
     commitment: commitment || 'confirmed',
@@ -366,7 +359,9 @@ export const createAnchorProgram = (
   const readOnlyWallet = Keypair.generate();
   const anchorWallet = {
     publicKey: new PublicKey(readOnlyWallet.publicKey),
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     signAllTransactions: async (txs: any) => txs,
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     signTransaction: async (tx: any) => tx,
   };
 
@@ -391,7 +386,7 @@ export const sentenceCase = (field: string): string => {
 export const parseSerializedTx = async (connection: Connection, base64Str: string): Promise<Transaction | null> => {
   try {
     if (!connection || !base64Str) {
-      throw Error(`Parse Serialized Transaction: Invalid parameters.`);
+      throw Error('Parse Serialized Transaction: Invalid parameters.');
     }
 
     const base64StrRegx = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
@@ -416,7 +411,7 @@ export const parseSerializedTx = async (connection: Connection, base64Str: strin
     }
 
     return tx;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(`Parse Serialized Transaction: ${err}`);
     return null;
   }
@@ -458,7 +453,7 @@ export const getMultisigInstructionSummary = (
     } as MultisigTransactionInstructionInfo;
 
     return ixInfo;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(`Multisig Instruction Summary: ${err}`);
     return null;
   }

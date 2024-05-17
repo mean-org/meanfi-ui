@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import type { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
 import { Tooltip } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type FocusEvent } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { IconInfoCircle, IconTrash } from '../../Icons';
@@ -12,7 +12,7 @@ import './style.scss';
 
 export const MultisigSafeOwners = (props: {
   participants: MultisigParticipant[];
-  onParticipantsChanged: any;
+  onParticipantsChanged: (items: MultisigParticipant[]) => void;
   label: string;
   disabled?: boolean;
   multisigAddresses: string[];
@@ -97,13 +97,13 @@ export const MultisigSafeOwners = (props: {
     setOwnersInputsObject(ownersArray);
   }, [participants]);
 
-  const blurHandler = (e: any) => {
-    const newOwnersInputArray = ownersInputsObject.map((obj: any) => {
-      if (obj.name === e.target.name) {
-        return { ...obj, isTouched: true };
+  const blurHandler = (e: FocusEvent<HTMLInputElement>) => {
+    const newOwnersInputArray = ownersInputsObject.map(item => {
+      if (item.name === e.target.name) {
+        return { ...item, isTouched: true };
       }
 
-      return obj;
+      return item;
     });
 
     setOwnersInputsObject(newOwnersInputArray);
@@ -120,15 +120,16 @@ export const MultisigSafeOwners = (props: {
           {t('multisig.create-multisig.multisig-duplicate-participants')}
         </span>
       );
-    } else if (ownersInputsObject.length === 10) {
+    }
+    if (ownersInputsObject.length === 10) {
       return (
         <span className='fg-warning form-field-hint pl-1'>
           {t('multisig.create-multisig.multisig-threshold-input-max-warn')}
         </span>
       );
-    } else {
-      return null;
     }
+
+    return null;
   };
 
   return (
@@ -153,6 +154,7 @@ export const MultisigSafeOwners = (props: {
             className={`flat-button change-button ${
               ownersInputsObject.length === 10 || !isOwnersListValid ? 'disabled' : ''
             }`}
+            onKeyDown={() => {}}
             onClick={() => addParticipant()}
           >
             <PlusOutlined />
@@ -179,17 +181,14 @@ export const MultisigSafeOwners = (props: {
             const isAddressValid = isValidAddress(participant.address);
 
             return (
-              <div className='container-owner-item' key={index}>
+              <div className='container-owner-item' key={participant.address}>
                 <div className={`two-column-layout w-100 mb-0 ${disabled ? 'disabled' : ''}`}>
                   <div className='left'>
                     <InputMean
                       id={`participant-name-${index + 1}`}
                       type='text'
                       value={participant.name}
-                      onChange={(e: any) => {
-                        const value = e.target.value;
-                        setSingleItemName(value, index);
-                      }}
+                      onChange={value => setSingleItemName(value, index)}
                       placeholder='Enter the name of the owner'
                     />
                   </div>
@@ -200,10 +199,7 @@ export const MultisigSafeOwners = (props: {
                       type='text'
                       value={participant.address}
                       maxLength={100}
-                      onChange={(e: any) => {
-                        const value = e.target.value;
-                        setSingleItemAddress(value, index);
-                      }}
+                      onChange={value => setSingleItemAddress(value, index)}
                       placeholder='Enter address of the owner'
                       validationIcons={true}
                       isValid={isAddressValid}
@@ -220,7 +216,7 @@ export const MultisigSafeOwners = (props: {
                     )}
                   </div>
                 </div>
-                <div className='trash-icon' onClick={() => onRemoveSingleItem(index)}>
+                <div className='trash-icon' onKeyDown={() => {}} onClick={() => onRemoveSingleItem(index)}>
                   <IconTrash
                     className={`mean-svg-icons simplelink ${index === 0 ? 'not-allowed-cursor disabled' : ''}`}
                   />
