@@ -59,8 +59,8 @@ export const ProposalSummaryModal = (props: {
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -268,7 +268,7 @@ export const ProposalSummaryModal = (props: {
 
     return isBusy
       ? busyLabel
-      : transactionStatus.currentOperation === TransactionStatus.Iddle
+      : transactionStatus.currentOperation === TransactionStatus.Idle
         ? iddleLabel
         : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
           ? t('general.cta-finish')
@@ -512,12 +512,12 @@ export const ProposalSummaryModal = (props: {
       closable={true}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 400 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 400 : 480}
       footer={null}
     >
       {/* A Cross-fading panel shown when NOT busy */}
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
             {isTxPendingExecution() ? (
@@ -611,7 +611,7 @@ export const ProposalSummaryModal = (props: {
 
       {/* A Cross-fading panel shown when busy */}
       <div className={isBusy ? 'panel2 show' : 'panel2 hide'}>
-        {transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress p-1'>
             <Spin indicator={bigLoadingIcon} className='icon mt-2 mb-4' />
             <h4 className='font-bold mb-1'>
@@ -625,7 +625,7 @@ export const ProposalSummaryModal = (props: {
       </div>
 
       {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
-      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) && (
         <>
           <Divider plain />
           <div className='row two-col-ctas transaction-progress p-0 no-margin-right-left'>
@@ -666,7 +666,7 @@ export const ProposalSummaryModal = (props: {
                     shape='round'
                     size='middle'
                     onClick={() => {
-                      if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                      if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                         onAcceptModal();
                       } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                         onCloseModal();

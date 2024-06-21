@@ -128,8 +128,8 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   const resetTransactionStatus = useCallback(() => {
     setIsBusy(false);
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 

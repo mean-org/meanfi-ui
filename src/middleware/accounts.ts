@@ -220,7 +220,7 @@ export const getUserAccountTokens = async (
     wSolBalance: 0,
     accountTokens: [],
     selectedAsset: undefined,
-    userTokenAccouns: undefined,
+    userTokenAccounts: undefined,
     tokenAccountGroups: undefined,
   };
 
@@ -258,7 +258,7 @@ export const getUserAccountTokens = async (
       return response;
     }
 
-    response.userTokenAccouns = accTks;
+    response.userTokenAccounts = accTks;
     response.tokenAccountGroups = getGroupedTokenAccounts(accTks, splTokenList);
 
     const intersectedList = getTokenListForOwnedTokenAccounts(accTks, splTokenList);

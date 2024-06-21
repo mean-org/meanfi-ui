@@ -110,8 +110,8 @@ export const MultisigCreateAssetModal = (props: {
     }, 50);
 
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -177,7 +177,7 @@ export const MultisigCreateAssetModal = (props: {
   const getMainCtaLabel = () => {
     if (isBusy) {
       return t('multisig.create-asset.main-cta-busy');
-    } else if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+    } else if (transactionStatus.currentOperation === TransactionStatus.Idle) {
       return getTransactionStartButtonLabel();
     } else {
       return t('general.refresh');
@@ -194,11 +194,11 @@ export const MultisigCreateAssetModal = (props: {
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       {/* sdsssd */}
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle && (
+        {transactionStatus.currentOperation === TransactionStatus.Idle && (
           <>
             {/* Token mint */}
             <div className='mb-3'>
@@ -277,7 +277,7 @@ export const MultisigCreateAssetModal = (props: {
             </div>
           </>
         )}
-        {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
+        {transactionStatus.currentOperation !== TransactionStatus.Idle &&
           transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
             <>
               <div className='transaction-progress p-0'>
@@ -304,10 +304,10 @@ export const MultisigCreateAssetModal = (props: {
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -350,7 +350,7 @@ export const MultisigCreateAssetModal = (props: {
                 size='middle'
                 disabled={!isCreateVaultFormValid()}
                 onClick={() => {
-                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                  if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                     onAcceptModal();
                   } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                     onCloseModal();

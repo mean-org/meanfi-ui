@@ -107,8 +107,8 @@ export const MultisigUpgradeProgramModal = ({
     }, 50);
 
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -139,7 +139,7 @@ export const MultisigUpgradeProgramModal = ({
         ? 'Add a proposal title'
         : !bufferAddress
           ? 'Add a buffer address'
-          : transactionStatus.currentOperation === TransactionStatus.Iddle
+          : transactionStatus.currentOperation === TransactionStatus.Idle
             ? t('multisig.upgrade-program.main-cta')
             : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
               ? t('general.cta-finish')
@@ -155,10 +155,10 @@ export const MultisigUpgradeProgramModal = ({
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Proposal title */}
             {isMultisigTreasury && (
@@ -242,10 +242,10 @@ export const MultisigUpgradeProgramModal = ({
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -280,7 +280,7 @@ export const MultisigUpgradeProgramModal = ({
             size='middle'
             disabled={!isValidForm()}
             onClick={() => {
-              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+              if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                 onAcceptModal();
               } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                 onCloseModal();

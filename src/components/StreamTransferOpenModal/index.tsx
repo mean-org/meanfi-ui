@@ -9,7 +9,7 @@ import { isValidAddress } from 'middleware/ui';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-type StreamTransferPayload = {
+export type StreamTransferPayload = {
   title: string;
   address: string;
 };

@@ -238,8 +238,8 @@ export const TreasuryCreateModal = ({
       setTreasuryName('');
     }, 50);
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -432,10 +432,10 @@ export const TreasuryCreateModal = ({
         onOk={onAcceptModal}
         onCancel={onCloseModal}
         afterClose={onAfterClose}
-        width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+        width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
       >
         <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-          {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+          {transactionStatus.currentOperation === TransactionStatus.Idle ? (
             <>
               {/* Proposal title */}
               {isMultisigContext && (
@@ -591,10 +591,10 @@ export const TreasuryCreateModal = ({
 
         <div
           className={
-            isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+            isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
           }
         >
-          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
             <div className='transaction-progress'>
               <Spin indicator={bigLoadingIcon} className='icon mt-0' />
               <h4 className='font-bold mb-1'>
@@ -607,7 +607,7 @@ export const TreasuryCreateModal = ({
           )}
         </div>
 
-        {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+        {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) && (
           <div className='row two-col-ctas mt-3 transaction-progress p-0'>
             {isError(transactionStatus.currentOperation) ? (
               <div className='col-12'>
@@ -632,7 +632,7 @@ export const TreasuryCreateModal = ({
                   size='large'
                   disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                       onAcceptModal();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
@@ -643,7 +643,7 @@ export const TreasuryCreateModal = ({
                 >
                   {isBusy
                     ? t('treasuries.create-treasury.main-cta-busy')
-                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    : transactionStatus.currentOperation === TransactionStatus.Idle
                       ? isMultisigContext
                         ? getTransactionStartButtonLabelMultisig()
                         : getTransactionStartButtonLabel()

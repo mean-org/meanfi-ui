@@ -83,8 +83,8 @@ const CreateSafeView = () => {
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -520,7 +520,7 @@ const CreateSafeView = () => {
     // Tx status related labels
     if (isBusy) {
       return t('multisig.create-multisig.main-cta-busy');
-    } else if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+    } else if (transactionStatus.currentOperation === TransactionStatus.Idle) {
       return t('multisig.create-multisig.main-cta');
     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
       return t('general.cta-finish');

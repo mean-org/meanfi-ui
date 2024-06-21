@@ -90,7 +90,7 @@ export const MultisigTxResultModal = (props: {
 
         {/* A Cross-fading panel shown when busy */}
         <div className={isBusy ? 'panel2 show' : 'panel2 hide'}>
-          {transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+          {transactionStatus.currentOperation !== TransactionStatus.Idle && (
             <div className='transaction-progress p-1'>
               <Spin indicator={bigLoadingIcon} className='icon mt-2 mb-4' />
               <h4 className='font-bold mb-1'>

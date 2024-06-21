@@ -4,7 +4,7 @@ import type { Language } from 'models/languages';
 export const ONE_MINUTE_REFRESH_TIMEOUT = 60 * 1000;
 export const HALF_MINUTE_REFRESH_TIMEOUT = 30 * 1000;
 export const FORTY_SECONDS_REFRESH_TIMEOUT = 40 * 1000;
-export const FIVETY_SECONDS_REFRESH_TIMEOUT = 50 * 1000;
+export const FIFTY_SECONDS_REFRESH_TIMEOUT = 50 * 1000;
 export const SEVENTY_SECONDS_REFRESH_TIMEOUT = 70 * 1000;
 export const THREE_MINUTES_REFRESH_TIMEOUT = 3 * 60 * 1000;
 export const FIVE_MINUTES_REFRESH_TIMEOUT = 5 * 60 * 1000;

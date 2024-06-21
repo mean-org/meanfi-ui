@@ -131,7 +131,7 @@ export const VestingContractCloseModal = (props: {
     >
       <div className='scrollable-content'>
         <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-          {transactionStatus.currentOperation === TransactionStatus.Iddle && (
+          {transactionStatus.currentOperation === TransactionStatus.Idle && (
             <>
               <div className='text-center'>
                 {theme === 'light' ? (
@@ -197,7 +197,7 @@ export const VestingContractCloseModal = (props: {
               </div>
             </>
           )}
-          {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
+          {transactionStatus.currentOperation !== TransactionStatus.Idle &&
             transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
               <>
                 <div className='transaction-progress p-0'>
@@ -224,10 +224,10 @@ export const VestingContractCloseModal = (props: {
 
         <div
           className={
-            isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+            isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
           }
         >
-          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
             <div className='transaction-progress'>
               <Spin indicator={bigLoadingIcon} className='icon mt-0' />
               <h4 className='font-bold mb-1'>

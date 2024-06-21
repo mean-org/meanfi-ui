@@ -184,7 +184,7 @@ export const AccountsMergeModal = (props: {
   const getMainCtaLabel = () => {
     if (isBusy) {
       return 'Merging accounts';
-    } else if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+    } else if (transactionStatus.currentOperation === TransactionStatus.Idle) {
       return 'Start merge';
     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
       return 'Completed';
@@ -203,7 +203,7 @@ export const AccountsMergeModal = (props: {
       width={400}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle && (
+        {transactionStatus.currentOperation === TransactionStatus.Idle && (
           <>
             <div className='transaction-progress'>
               <WarningOutlined style={{ fontSize: 48 }} className='icon mt-0' />
@@ -272,7 +272,7 @@ export const AccountsMergeModal = (props: {
             </h4>
           </div>
         )}
-        {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
+        {transactionStatus.currentOperation !== TransactionStatus.Idle &&
           transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
             <div className='transaction-progress'>
               <CloseCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
@@ -286,10 +286,10 @@ export const AccountsMergeModal = (props: {
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold'>Merging token accounts...</h4>

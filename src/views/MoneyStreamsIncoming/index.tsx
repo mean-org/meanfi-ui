@@ -27,7 +27,7 @@ import { Button, Dropdown, Modal, Space, Spin } from 'antd';
 import type { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { MoneyStreamDetails } from 'components/MoneyStreamDetails';
 import { openNotification } from 'components/Notifications';
-import { StreamTransferOpenModal } from 'components/StreamTransferOpenModal';
+import { StreamTransferOpenModal, type StreamTransferPayload } from 'components/StreamTransferOpenModal';
 import { StreamWithdrawModal } from 'components/StreamWithdrawModal';
 import getStreamWithdrawableAmount from 'components/common/getStreamWithdrawableAmount';
 import getV1Beneficiary from 'components/common/getV1Beneficiary';
@@ -71,7 +71,7 @@ import {
 } from 'middleware/utils';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { OperationType, TransactionStatus } from 'models/enums';
-import type { StreamWithdrawData } from 'models/streams';
+import type { StreamWithdrawData, WithdrawFromStreamParams } from 'models/streams';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
@@ -81,7 +81,7 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const MoneyStreamsIncomingView = (props: {
   loadingStreams: boolean;
   multisigAccounts: MultisigInfo[] | undefined;
-  onSendFromIncomingStreamDetails?: any;
+  onSendFromIncomingStreamDetails?: () => void;
   streamSelected?: Stream | StreamInfo;
 }) => {
   const { loadingStreams, multisigAccounts, onSendFromIncomingStreamDetails, streamSelected } = props;
@@ -160,16 +160,16 @@ export const MoneyStreamsIncomingView = (props: {
   const getStreamId = useCallback((stream: Stream | StreamInfo) => {
     if (stream.version >= 2) {
       return (stream as Stream).id;
-    } else {
-      return new PublicKey((stream as StreamInfo).id as string);
     }
+
+    return new PublicKey((stream as StreamInfo).id as string);
   }, []);
 
   const isIncomingMultisigStream = useCallback(
     (stream?: Stream | StreamInfo) => {
-      const streamInfo: any = stream ?? streamSelected;
+      const streamInfo = stream ?? streamSelected;
 
-      if (!streamInfo || streamInfo.version < 2 || !streamInfo.beneficiary || !publicKey) {
+      if (!streamInfo || streamInfo.version < 2 || !(streamInfo as Stream).beneficiary || !publicKey) {
         return false;
       }
 
@@ -190,8 +190,8 @@ export const MoneyStreamsIncomingView = (props: {
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -263,7 +263,7 @@ export const MoneyStreamsIncomingView = (props: {
   const showTransferStreamTransactionModal = useCallback(() => setTransferStreamTransactionModalVisibility(true), []);
   const hideTransferStreamTransactionModal = useCallback(() => setTransferStreamTransactionModalVisibility(false), []);
 
-  const onAcceptTransferStream = (dataStream: any) => {
+  const onAcceptTransferStream = (dataStream: StreamTransferPayload) => {
     closeTransferStreamModal();
     consoleOut('New beneficiary address:', dataStream.address);
     setLastStreamTransferAddress(dataStream.address);
@@ -287,18 +287,19 @@ export const MoneyStreamsIncomingView = (props: {
   };
 
   const onExecuteTransferStreamTransaction = useCallback(
-    async (dataStream: any) => {
+    async (dataStream: StreamTransferPayload) => {
       let transaction: VersionedTransaction | Transaction | null = null;
-      let signature: any;
+      let signature: string;
       let encodedTx: string;
       let multisigAuth = '';
+      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
       let transactionLog: any[] = [];
 
       resetTransactionStatus();
       setTransactionCancelled(false);
       setIsBusy(true);
 
-      const transferOwnership = async (dataStream: any) => {
+      const transferOwnership = async (dataStream: StreamTransferPayload) => {
         if (!paymentStreaming || !publicKey || !streamSelected) {
           return null;
         }
@@ -598,9 +599,10 @@ export const MoneyStreamsIncomingView = (props: {
 
   const onExecuteWithdrawFundsTransaction = async (withdrawData: StreamWithdrawData) => {
     let transaction: VersionedTransaction | Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
     let multisigAuth = '';
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     let transactionLog: any[] = [];
 
     resetTransactionStatus();
@@ -723,22 +725,23 @@ export const MoneyStreamsIncomingView = (props: {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Withdraw transaction failed', {
-          transcript: transactionLog,
-        });
-        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('Withdraw transaction failed', {
+        transcript: transactionLog,
+      });
+      segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
+        transcript: transactionLog,
+      });
+
+      return false;
     };
 
-    const withdrawFunds = async (data: any) => {
+    const withdrawFunds = async (data: WithdrawFromStreamParams) => {
       if (!paymentStreaming || !publicKey) {
         return null;
       }
@@ -830,7 +833,7 @@ export const MoneyStreamsIncomingView = (props: {
       const price = workingToken ? getTokenPriceByAddress(workingToken.address, workingToken.symbol) : 0;
       const valueInUsd = price * withdrawData.inputAmount;
 
-      const data = {
+      const data: WithdrawFromStreamParams = {
         stream: stream.toBase58(),
         beneficiary: beneficiary.toBase58(),
         amount: amount,
@@ -1007,7 +1010,7 @@ export const MoneyStreamsIncomingView = (props: {
   }, [hideWithdrawFundsTransactionModal, refreshTokenBalance, setSuccessStatus]);
 
   const hideDetailsHandler = () => {
-    onSendFromIncomingStreamDetails();
+    onSendFromIncomingStreamDetails?.();
   };
 
   const getStreamStatus = useCallback(
@@ -1023,18 +1026,18 @@ export const MoneyStreamsIncomingView = (props: {
           default:
             return 'running';
         }
-      } else {
-        switch (v2.statusCode) {
-          case STREAM_STATUS_CODE.Scheduled:
-            return 'scheduled';
-          case STREAM_STATUS_CODE.Paused:
-            if (v2.isManuallyPaused) {
-              return 'stopped-manually';
-            }
-            return 'stopped';
-          default:
-            return 'running';
-        }
+      }
+
+      switch (v2.statusCode) {
+        case STREAM_STATUS_CODE.Scheduled:
+          return 'scheduled';
+        case STREAM_STATUS_CODE.Paused:
+          if (v2.isManuallyPaused) {
+            return 'stopped-manually';
+          }
+          return 'stopped';
+        default:
+          return 'running';
       }
     },
     [],
@@ -1217,7 +1220,7 @@ export const MoneyStreamsIncomingView = (props: {
     items.push({
       key: '01-transfer-ownership',
       label: (
-        <div onClick={showTransferStreamModal}>
+        <div onClick={showTransferStreamModal} onKeyDown={() => {}}>
           <span className='menu-item-text'>Transfer ownership</span>
         </div>
       ),
@@ -1488,7 +1491,7 @@ export const MoneyStreamsIncomingView = (props: {
         <StreamTransferOpenModal
           isVisible={isTransferStreamModalVisible}
           streamDetail={streamSelected}
-          handleOk={(dataStream: any) => onAcceptTransferStream(dataStream)}
+          handleOk={onAcceptTransferStream}
           handleClose={closeTransferStreamModal}
         />
       )}

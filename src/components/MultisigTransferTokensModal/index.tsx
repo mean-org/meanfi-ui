@@ -530,7 +530,7 @@ export const MultisigTransferTokensModal = ({
     if (isBusy) {
       return t('multisig.transfer-tokens.main-cta-busy');
     }
-    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
       return getTransactionStartButtonLabel();
     }
     if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
@@ -595,10 +595,10 @@ export const MultisigTransferTokensModal = ({
       open={isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Proposal title */}
             <div className='mb-3'>
@@ -746,7 +746,7 @@ export const MultisigTransferTokensModal = ({
                   size='large'
                   disabled={!isValidForm() || isTransferDisabled}
                   onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                       onAcceptModal();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
@@ -767,10 +767,10 @@ export const MultisigTransferTokensModal = ({
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>

@@ -11,7 +11,6 @@ import { PaymentStreaming, type Stream, type StreamActivity } from '@mean-dao/pa
 import type { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
-import Item from 'antd/lib/list/Item';
 import { isCacheItemExpired } from 'cache/persistentCache';
 import { openNotification } from 'components/Notifications';
 import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
@@ -45,7 +44,7 @@ import { useTranslation } from 'react-i18next';
 import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 import {
   DAO_CORE_TEAM_WHITELIST,
-  FIVETY_SECONDS_REFRESH_TIMEOUT,
+  FIFTY_SECONDS_REFRESH_TIMEOUT,
   FIVE_MINUTES_REFRESH_TIMEOUT,
   FORTY_SECONDS_REFRESH_TIMEOUT,
   ONE_MINUTE_REFRESH_TIMEOUT,
@@ -275,8 +274,8 @@ const contextDefaultValues: AppStateConfig = {
   isVerifiedRecipient: false,
   isAllocationReserved: false,
   transactionStatus: {
-    lastOperation: TransactionStatus.Iddle,
-    currentOperation: TransactionStatus.Iddle,
+    lastOperation: TransactionStatus.Idle,
+    currentOperation: TransactionStatus.Idle,
   },
   previousWalletConnectState: false,
   loadingStreams: false,
@@ -574,7 +573,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       return FORTY_SECONDS_REFRESH_TIMEOUT * 2;
     }
     if (streamList.length > 25 && streamList.length <= 60) {
-      return FIVETY_SECONDS_REFRESH_TIMEOUT * 2;
+      return FIFTY_SECONDS_REFRESH_TIMEOUT * 2;
     }
     if (streamList.length > 60 && streamList.length <= 100) {
       return SEVENTY_SECONDS_REFRESH_TIMEOUT * 2;
@@ -1409,7 +1408,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         if (response) {
           setUserTokensResponse(response);
           setAccountTokens(response.accountTokens);
-          updateTokenAccounts(response.userTokenAccouns);
+          updateTokenAccounts(response.userTokenAccounts);
         } else {
           setUserTokensResponse(null);
           setAccountTokens([]);

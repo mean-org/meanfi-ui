@@ -209,7 +209,7 @@ export const TreasuryCloseModal = (props: {
   };
 
   const getNonBusyOptions = () => {
-    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
       return (
         <>
           <div className='mb-3 text-center'>
@@ -263,7 +263,7 @@ export const TreasuryCloseModal = (props: {
 
   const renderConditionalContent = () => {
     switch (transactionStatus.currentOperation) {
-      case TransactionStatus.Iddle:
+      case TransactionStatus.Idle:
         return getNonBusyOptions();
       case TransactionStatus.TransactionFinished:
         return (
@@ -314,10 +314,10 @@ export const TreasuryCloseModal = (props: {
 
       <div
         className={
-          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -330,7 +330,7 @@ export const TreasuryCloseModal = (props: {
         )}
       </div>
 
-      {!(props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+      {!(props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) && (
         <div className='row two-col-ctas mt-3 transaction-progress p-2'>
           <div className='col-12'>
             <Button

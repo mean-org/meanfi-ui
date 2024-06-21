@@ -386,8 +386,8 @@ export const HomeView = () => {
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -2640,7 +2640,7 @@ export const HomeView = () => {
       setMultisigSolBalance(userTokensResponse.nativeBalance);
       setWsolBalance(userTokensResponse.wSolBalance);
       setAccountTokens(userTokensResponse.accountTokens);
-      setUserOwnedTokenAccounts(userTokensResponse.userTokenAccouns);
+      setUserOwnedTokenAccounts(userTokensResponse.userTokenAccounts);
       setTokenAccountGroups(userTokensResponse.tokenAccountGroups);
       if (userTokensResponse.selectedAsset) {
         selectAsset(userTokensResponse.selectedAsset);

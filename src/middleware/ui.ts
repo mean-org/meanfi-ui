@@ -113,7 +113,7 @@ export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: 
   if (isBusy) {
     return trans('transactions.status.modal-title-executing-transaction');
   }
-  if (status.lastOperation === TransactionStatus.Iddle && status.currentOperation === TransactionStatus.Iddle) {
+  if (status.lastOperation === TransactionStatus.Idle && status.currentOperation === TransactionStatus.Idle) {
     return null;
   }
   if (status.currentOperation === TransactionStatus.TransactionStartFailure) {

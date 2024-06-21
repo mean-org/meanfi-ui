@@ -6,6 +6,6 @@ export interface UserTokensResponse {
   wSolBalance: number;
   accountTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
-  userTokenAccouns: AccountTokenParsedInfo[] | undefined;
+  userTokenAccounts: AccountTokenParsedInfo[] | undefined;
   tokenAccountGroups: Map<string, AccountTokenParsedInfo[]> | undefined;
 }

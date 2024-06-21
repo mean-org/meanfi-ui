@@ -127,8 +127,8 @@ export const ExchangeDcasView = () => {
 
   const resetTransactionStatus = () => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 

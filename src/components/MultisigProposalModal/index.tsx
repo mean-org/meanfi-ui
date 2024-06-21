@@ -196,8 +196,8 @@ export const MultisigProposalModal = (props: {
       setProposalDescriptionValue('');
     });
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -973,7 +973,7 @@ export const MultisigProposalModal = (props: {
   }, [isBusy, onAcceptModal, onCloseModal, t, transactionStatus.currentOperation, transactionStatus.customError]);
 
   const renderNewProposalModalContent = useCallback(() => {
-    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
       return renderIdleState();
     }
     if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
@@ -991,7 +991,7 @@ export const MultisigProposalModal = (props: {
       footer={null}
       open={isVisible}
       onCancel={onCloseModal}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <Divider plain />
 
@@ -999,10 +999,10 @@ export const MultisigProposalModal = (props: {
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress p-4'>
             <Spin indicator={bigLoadingIcon} className='icon mb-1 mt-1' />
             <h4 className='font-bold'>{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>

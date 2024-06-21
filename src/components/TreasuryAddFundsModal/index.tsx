@@ -487,7 +487,7 @@ export const TreasuryAddFundsModal = ({
         : t('treasuries.add-funds.main-cta-busy');
     }
 
-    return transactionStatus.currentOperation === TransactionStatus.Iddle
+    return transactionStatus.currentOperation === TransactionStatus.Idle
       ? getTransactionStartButtonLabel()
       : t('general.cta-try-again');
   };
@@ -608,7 +608,7 @@ export const TreasuryAddFundsModal = ({
       open={isVisible}
       onOk={onAcceptModal}
       onCancel={handleClose}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       {hasNoStreamingAccounts && !treasuryDetails ? (
         <div className='text-center px-4 py-4'>
@@ -626,7 +626,7 @@ export const TreasuryAddFundsModal = ({
       ) : (
         <>
           <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-            {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+            {transactionStatus.currentOperation === TransactionStatus.Idle ? (
               <>
                 {/* Proposal title */}
                 {isMultisigContext && selectedMultisig && (
@@ -816,7 +816,7 @@ export const TreasuryAddFundsModal = ({
             </div>
           </div>
 
-          {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+          {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) && (
             <div className='mt-3 transaction-progress p-0'>
               <Button
                 className={`center-text-in-btn ${isBusy ? 'inactive' : ''}`}
@@ -835,7 +835,7 @@ export const TreasuryAddFundsModal = ({
           {!isBusy &&
             !highLightableStreamId &&
             workingTreasuryDetails &&
-            transactionStatus.currentOperation === TransactionStatus.Iddle && (
+            transactionStatus.currentOperation === TransactionStatus.Idle && (
               <div className='text-center mt-4 mb-2'>
                 <p>You can also fund this streaming account by sending {selectedToken?.symbol} tokens to:</p>
 

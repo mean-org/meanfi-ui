@@ -166,8 +166,8 @@ export const TreasuryTransferFundsModal = (props: {
       setIsVerifiedRecipient(false);
     });
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -436,10 +436,10 @@ export const TreasuryTransferFundsModal = (props: {
         setTokenAmount(new BN(0));
         setIsVerifiedRecipient(false);
       }}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Proposal title */}
             {isMultisigContext && (
@@ -623,7 +623,7 @@ export const TreasuryTransferFundsModal = (props: {
                   size='large'
                   disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                       onAcceptWithdrawTreasuryFunds();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
@@ -634,7 +634,7 @@ export const TreasuryTransferFundsModal = (props: {
                 >
                   {isBusy
                     ? 'multisig.transfer-tokens.main-cta-busy'
-                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    : transactionStatus.currentOperation === TransactionStatus.Idle
                       ? isMultisigContext
                         ? getTransactionStartButtonLabelMultisig()
                         : getTransactionStartButtonLabel()
@@ -671,10 +671,10 @@ export const TreasuryTransferFundsModal = (props: {
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -687,7 +687,7 @@ export const TreasuryTransferFundsModal = (props: {
         )}
       </div>
 
-      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) && (
         <div className='row two-col-ctas mt-3 transaction-progress p-2'>
           <div className='col-12'>
             <Button

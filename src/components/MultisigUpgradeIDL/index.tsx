@@ -85,8 +85,8 @@ export const MultisigUpgradeIDLModal = (props: {
     }, 50);
 
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -127,10 +127,10 @@ export const MultisigUpgradeIDLModal = (props: {
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!props.isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Program address */}
             <div className='form-label'>{t('multisig.upgrade-program.program-address-label')}</div>
@@ -204,10 +204,10 @@ export const MultisigUpgradeIDLModal = (props: {
 
       <div
         className={
-          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -242,7 +242,7 @@ export const MultisigUpgradeIDLModal = (props: {
             size='middle'
             disabled={!isValidForm()}
             onClick={() => {
-              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+              if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                 onAcceptModal();
               } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                 onCloseModal();
@@ -253,7 +253,7 @@ export const MultisigUpgradeIDLModal = (props: {
           >
             {props.isBusy
               ? t('multisig.upgrade-program.main-cta-busy')
-              : transactionStatus.currentOperation === TransactionStatus.Iddle
+              : transactionStatus.currentOperation === TransactionStatus.Idle
                 ? 'Upgrade IDL'
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')

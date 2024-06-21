@@ -34,7 +34,7 @@ export enum TimesheetRequirementOption {
 }
 
 export enum TransactionStatus {
-  Iddle = 0,
+  Idle = 0,
   WalletNotFound = 1,
   TransactionStart = 2,
   TransactionStarted = 3,

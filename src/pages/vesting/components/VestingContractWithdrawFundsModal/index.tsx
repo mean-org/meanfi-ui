@@ -116,8 +116,8 @@ export const VestingContractWithdrawFundsModal = (props: {
       setIsVerifiedRecipient(false);
     });
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -193,7 +193,7 @@ export const VestingContractWithdrawFundsModal = (props: {
                   ? t('transactions.validation.insufficient-balance-needed', {
                       balance: formatThousands(getMinBalanceRequired(), 4),
                     })
-                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                  : transactionStatus.currentOperation === TransactionStatus.Idle
                     ? t('treasuries.withdraw-funds.main-cta')
                     : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                       ? t('general.cta-finish')
@@ -308,10 +308,10 @@ export const VestingContractWithdrawFundsModal = (props: {
         setTokenAmount(new BN(0));
         setIsVerifiedRecipient(false);
       }}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Proposal title */}
             {isMultisigTreasury && (
@@ -481,10 +481,10 @@ export const VestingContractWithdrawFundsModal = (props: {
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -497,7 +497,7 @@ export const VestingContractWithdrawFundsModal = (props: {
         )}
       </div>
 
-      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) && (
         <div className='cta-container'>
           <Button
             type='primary'
@@ -505,7 +505,7 @@ export const VestingContractWithdrawFundsModal = (props: {
             size='large'
             disabled={isBusy || !isValidForm()}
             onClick={() => {
-              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+              if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                 onAcceptWithdrawTreasuryFunds();
               } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                 onCloseModal();
