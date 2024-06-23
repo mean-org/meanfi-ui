@@ -16,6 +16,7 @@ import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
 import { useDebounce } from 'hooks/useDebounce';
 import useRecipientAddressValidation from 'hooks/useRecipientAddressValidation';
+import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
@@ -33,7 +34,6 @@ import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TokenListItem } from '../TokenListItem';
 import './style.scss';
-import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

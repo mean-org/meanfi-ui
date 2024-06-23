@@ -7,8 +7,8 @@ import { getAmountWithSymbol, getTokenDecimals, getTokenSymbol, isValidNumber } 
 
 export const DdcaWithdrawModal = (props: {
   ddcaDetails: DdcaDetails | undefined;
-  handleClose: any;
-  handleOk: any;
+  handleClose: () => void;
+  handleOk: (amount: string) => void;
   isVisible: boolean;
   transactionFees: TransactionFees;
 }) => {
@@ -32,7 +32,7 @@ export const DdcaWithdrawModal = (props: {
   const onAcceptWithdrawal = () => {
     const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(+withdrawAmountInput) ? true : false;
     setWithdrawAmountInput('');
-    props.handleOk(isMaxAmount ? maxAmount : withdrawAmountInput);
+    props.handleOk(isMaxAmount ? `${maxAmount}` : withdrawAmountInput);
   };
 
   const onCloseModal = () => {
@@ -49,11 +49,11 @@ export const DdcaWithdrawModal = (props: {
     let fee = 0;
     if (props.ddcaDetails) {
       if (value === 100) {
-        fee = getFeeAmount(props.transactionFees, maxAmount);
+        fee = getFeeAmount(props.transactionFees, `${maxAmount}`);
         newValue = getDisplayAmount(maxAmount);
       } else {
         const partialAmount = percentage(value, maxAmount);
-        fee = getFeeAmount(props.transactionFees, partialAmount);
+        fee = getFeeAmount(props.transactionFees, `${partialAmount}`);
         newValue = getDisplayAmount(partialAmount);
       }
     }
@@ -61,8 +61,8 @@ export const DdcaWithdrawModal = (props: {
     setFeeAmount(fee);
   };
 
-  const handleWithdrawAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleWithdrawAmountChange = (value: string) => {
+    let newValue = value;
 
     const decimals = props.ddcaDetails ? getTokenDecimals(props.ddcaDetails.toMint as string) : 0;
     const splitted = newValue.toString().split('.');
@@ -74,7 +74,7 @@ export const DdcaWithdrawModal = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -89,7 +89,7 @@ export const DdcaWithdrawModal = (props: {
     }
   };
 
-  const getFeeAmount = (fees: TransactionFees, amount?: any): number => {
+  const getFeeAmount = (fees: TransactionFees, amount?: string): number => {
     let fee = 0;
     const inputAmount = amount ? Number.parseFloat(amount) : 0;
     if (fees) {
@@ -114,7 +114,7 @@ export const DdcaWithdrawModal = (props: {
   };
 
   const getDisplayAmount = (amount: number, addSymbol = false): string => {
-    if (props && props.ddcaDetails) {
+    if (props?.ddcaDetails) {
       const bareAmount = amount.toFixed(getTokenDecimals(props.ddcaDetails.toMint as string));
       if (addSymbol) {
         return bareAmount + ' ' + getTokenSymbol(props.ddcaDetails.toMint as string);
@@ -172,7 +172,7 @@ export const DdcaWithdrawModal = (props: {
                 autoComplete='off'
                 autoCorrect='off'
                 type='text'
-                onChange={handleWithdrawAmountChange}
+                onChange={e => handleWithdrawAmountChange(e.target.value)}
                 pattern='^[0-9]*[.,]?[0-9]*$'
                 placeholder='0.0'
                 minLength={1}
@@ -183,16 +183,16 @@ export const DdcaWithdrawModal = (props: {
             </span>
             <div className='addon-right'>
               <div className='token-group'>
-                <div className='token-max simplelink' onClick={() => setPercentualValue(25)}>
+                <div className='token-max simplelink' onKeyDown={() => {}} onClick={() => setPercentualValue(25)}>
                   25%
                 </div>
-                <div className='token-max simplelink' onClick={() => setPercentualValue(50)}>
+                <div className='token-max simplelink' onKeyDown={() => {}} onClick={() => setPercentualValue(50)}>
                   50%
                 </div>
-                <div className='token-max simplelink' onClick={() => setPercentualValue(75)}>
+                <div className='token-max simplelink' onKeyDown={() => {}} onClick={() => setPercentualValue(75)}>
                   75%
                 </div>
-                <div className='token-max simplelink' onClick={() => setPercentualValue(100)}>
+                <div className='token-max simplelink' onKeyDown={() => {}} onClick={() => setPercentualValue(100)}>
                   100%
                 </div>
               </div>
@@ -213,7 +213,7 @@ export const DdcaWithdrawModal = (props: {
       </div>
 
       {/* Info */}
-      {props.ddcaDetails && props.ddcaDetails.toMint && (
+      {props.ddcaDetails?.toMint ? (
         <div className='p-2 mb-2'>
           {isValidInput() &&
             infoRow(
@@ -229,7 +229,7 @@ export const DdcaWithdrawModal = (props: {
               )}`,
             )}
         </div>
-      )}
+      ) : null}
 
       <Button
         className='main-cta'

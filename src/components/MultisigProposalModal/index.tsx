@@ -1,5 +1,6 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { BN } from '@project-serum/anchor';
 import { PublicKey, type TransactionInstruction } from '@solana/web3.js';
 import { IconExternalLink } from 'Icons';
@@ -16,6 +17,7 @@ import { useWallet } from 'contexts/wallet';
 import { isError } from 'middleware/transactions';
 import { consoleOut, copyText, getTransactionOperationDescription } from 'middleware/ui';
 import { RegisteredAppPaths } from 'models/accounts';
+import type { LabelOption, SelectOption } from 'models/common-types';
 import { TransactionStatus } from 'models/enums';
 import {
   type CreateNewProposalParams,
@@ -27,11 +29,9 @@ import {
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import type { LooseObject } from 'types/LooseObject';
 import RenderUiElement from './RenderUiElement';
 import './style.scss';
-import type { LabelOption, SelectOption } from 'models/common-types';
-import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import type { LooseObject } from 'types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

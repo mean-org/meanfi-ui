@@ -8,7 +8,7 @@ import { useWallet } from 'contexts/wallet';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { percentage, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
-import { useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const StreamResumeModal = (props: {

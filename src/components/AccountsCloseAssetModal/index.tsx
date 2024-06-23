@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import type { TransactionFees } from '@mean-dao/payment-streaming';
-import { PublicKey, type Connection } from '@solana/web3.js';
+import { type Connection, PublicKey } from '@solana/web3.js';
 import { Button, Checkbox, Modal } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { InputMean } from 'components/InputMean';

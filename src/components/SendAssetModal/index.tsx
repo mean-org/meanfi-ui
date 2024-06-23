@@ -1,4 +1,4 @@
-import { PublicKey, type AccountInfo, type ParsedAccountData } from '@solana/web3.js';
+import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Drawer, Modal, Tabs } from 'antd';
 import { TextInput } from 'components/TextInput';
 import { TokenListItem } from 'components/TokenListItem';

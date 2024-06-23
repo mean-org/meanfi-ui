@@ -3,14 +3,14 @@ import { DEFAULT_EXPIRATION_TIME_SECONDS, type MeanMultisig, type MultisigInfo }
 import type { TreasuryInfo } from '@mean-dao/money-streaming';
 import {
   AccountType,
-  PaymentStreaming,
   type Beneficiary,
   type CreateStreamTransactionAccounts,
+  PaymentStreaming,
   type PaymentStreamingAccount,
   type TransactionFees,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { PublicKey, type Connection, type Transaction, type VersionedTransaction } from '@solana/web3.js';
+import { type Connection, PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
 import {
   Button,
@@ -19,11 +19,11 @@ import {
   DatePicker,
   Divider,
   Dropdown,
+  type MenuProps,
   Modal,
   Row,
   Select,
   Tooltip,
-  type MenuProps,
 } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { Identicon } from 'components/Identicon';
@@ -41,12 +41,12 @@ import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
 import {
+  type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   composeTxWithPrioritizationFees,
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
-  type ComputeBudgetConfig,
 } from 'middleware/transactions';
 import {
   consoleOut,

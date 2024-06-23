@@ -16,6 +16,7 @@ import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
+import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 import type { CreateSafeAssetTxParams } from 'middleware/createAddSafeAssetTx';
 import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
 import { getAmountFromLamports, shortenAddress } from 'middleware/utils';
@@ -26,7 +27,6 @@ import { useTranslation } from 'react-i18next';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TokenListItem } from '../TokenListItem';
-import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 
 export const MultisigAddAssetModal = (props: {
   connection: Connection;

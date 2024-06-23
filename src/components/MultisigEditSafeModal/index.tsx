@@ -1,6 +1,7 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { Button, Modal, Spin, Tooltip } from 'antd';
+import type { EditMultisigParams } from 'models/multisig';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconInfoCircle, IconKey, IconLock } from '../../Icons';
@@ -13,7 +14,6 @@ import { getAmountWithSymbol } from '../../middleware/utils';
 import { TransactionStatus } from '../../models/enums';
 import { InputMean } from '../InputMean';
 import { MultisigSafeOwners } from '../MultisigSafeOwners';
-import type { EditMultisigParams } from 'models/multisig';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

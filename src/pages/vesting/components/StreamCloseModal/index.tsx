@@ -1,14 +1,14 @@
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
   AccountType,
-  STREAM_STATUS_CODE,
   type PaymentStreaming,
   type PaymentStreamingAccount,
+  STREAM_STATUS_CODE,
   type Stream,
   type TransactionFees,
 } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
-import { Button, Col, Modal, Radio, Row, type RadioChangeEvent } from 'antd';
+import { Button, Col, Modal, Radio, type RadioChangeEvent, Row } from 'antd';
 import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
@@ -18,7 +18,7 @@ import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { StreamTreasuryType } from 'models/treasuries';
 import type { VestingContractCloseStreamOptions } from 'models/vesting';
-import { useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const StreamCloseModal = (props: {
