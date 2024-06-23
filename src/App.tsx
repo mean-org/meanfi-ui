@@ -1,9 +1,9 @@
+import '@rainbow-me/rainbowkit/styles.css';
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { SentreWalletAdapter } from '@sentre/connector';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { WalletProvider } from '@solana/wallet-adapter-react';
 import {
-  BitKeepWalletAdapter,
   BraveWalletAdapter,
   Coin98WalletAdapter,
   CoinbaseWalletAdapter,
@@ -16,6 +16,7 @@ import {
   SolongWalletAdapter,
   TrustWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from 'antd';
 import { sentreAppId } from 'constants/common';
 import { MeanFiWalletProvider } from 'contexts/wallet';
@@ -88,6 +89,8 @@ function App() {
     return () => {};
   }, []);
 
+  const queryClient = new QueryClient();
+
   const network = environment === 'production' ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet;
 
   const wallets = useMemo(
@@ -96,7 +99,6 @@ function App() {
       new BraveWalletAdapter(),
       new ExodusWalletAdapter(),
       new SolflareWalletAdapter({ network }),
-      new BitKeepWalletAdapter(),
       new CoinbaseWalletAdapter(),
       new SlopeWalletAdapter(),
       new Coin98WalletAdapter(),
@@ -110,37 +112,35 @@ function App() {
     [network],
   );
 
-  const loader = (
-    <>
+  if (loadingStatus === 'loading') {
+    return (
       <Layout>
         <Content className='flex-center'>
           <PageLoadingView addWrapper={false} />
         </Content>
       </Layout>
-    </>
-  );
-
-  if (loadingStatus === 'loading') {
-    return loader;
+    );
   }
 
   return (
     <BrowserRouter basename={'/'}>
-      <ConnectionProvider>
-        <WalletProvider wallets={wallets} autoConnect>
-          <MeanFiWalletProvider>
-            <WalletAccountProvider>
-              <AccountsProvider>
-                <TxConfirmationProvider>
-                  <AppStateProvider>
-                    <AppRoutes />
-                  </AppStateProvider>
-                </TxConfirmationProvider>
-              </AccountsProvider>
-            </WalletAccountProvider>
-          </MeanFiWalletProvider>
-        </WalletProvider>
-      </ConnectionProvider>
+      <QueryClientProvider client={queryClient}>
+        <ConnectionProvider>
+          <WalletProvider wallets={wallets} autoConnect>
+            <MeanFiWalletProvider>
+              <WalletAccountProvider>
+                <AccountsProvider>
+                  <TxConfirmationProvider>
+                    <AppStateProvider>
+                      <AppRoutes />
+                    </AppStateProvider>
+                  </TxConfirmationProvider>
+                </AccountsProvider>
+              </WalletAccountProvider>
+            </MeanFiWalletProvider>
+          </WalletProvider>
+        </ConnectionProvider>
+      </QueryClientProvider>
     </BrowserRouter>
   );
 }

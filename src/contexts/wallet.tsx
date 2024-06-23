@@ -9,8 +9,6 @@ import {
 } from '@solana/wallet-adapter-base';
 import { useWallet as useBaseWallet } from '@solana/wallet-adapter-react';
 import {
-  BitKeepWalletAdapter,
-  BitKeepWalletName,
   BraveWalletAdapter,
   BraveWalletName,
   Coin98WalletAdapter,
@@ -115,18 +113,6 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideIfUnavailable: false,
   },
   // These ones go into the [more] CTA
-  {
-    name: BitKeepWalletName,
-    url: '',
-    icon: '',
-    adapter: BitKeepWalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: false,
-    hideOnMobile: false,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: false,
-  },
   {
     name: CoinbaseWalletName,
     url: '',
@@ -263,9 +249,6 @@ const getIsProviderInstalled = (provider: WalletProviderEntry): boolean => {
       case SolflareWalletName:
         // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
         return !!(window as any).solflare?.isSolflare || !!(window as any).SolflareApp;
-      case BitKeepWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).bitkeep?.solana;
       case CoinbaseWalletName:
         // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
         return !!(window as any).coinbaseSolana;

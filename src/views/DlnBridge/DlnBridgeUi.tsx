@@ -1,7 +1,8 @@
 import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
-import { type FetchFeeDataResult, fetchFeeData } from '@wagmi/core';
+// wagmi & viem
+import { estimateFeesPerGas } from '@wagmi/core';
 import { Button, Modal, Select, Tooltip } from 'antd';
 import { Identicon } from 'components/Identicon';
 import { TokenDisplay } from 'components/TokenDisplay';
@@ -28,14 +29,14 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { OperationType } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ChainBlockExplorer } from 'viem/_types/types/chain';
 import {
+  type UseEstimateGasParameters,
   useAccount,
   useBalance,
-  useNetwork,
-  usePrepareSendTransaction,
+  useEstimateGas,
+  useReadContract,
   useSendTransaction,
-  useSwitchNetwork,
+  useSwitchChain,
 } from 'wagmi';
 import CustomConnectButton from './CustomConnectButton';
 import { FEE_PERCENT, SOLANA_CHAIN_ID, SUPPORTED_CHAINS, getChainById, useDlnBridge } from './DlnBridgeProvider';
@@ -46,11 +47,41 @@ import type { DlnOrderCreateTxResponse } from './dlnOrderTypes';
 import getUiErrorString from './getUiErrorString';
 import type { SwapCreateTxResponse } from './singleChainOrderTypes';
 import './style.scss';
+import { wagmiConfig } from './wagmiConfig';
 
 const { Option } = Select;
 type ActionTarget = 'source' | 'destination';
 type UiStage = 'order-setup' | 'order-submitted';
 const QUOTE_REFRESH_TIMEOUT = 29000;
+export const abi = [
+  {
+    type: 'function',
+    name: 'balanceOf',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
+    type: 'function',
+    name: 'totalSupply',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: 'supply', type: 'uint256' }],
+  },
+] as const;
+
+type EstimatedFeeDataResult = {
+  gasPrice?: undefined;
+  maxFeePerBlobGas?: undefined;
+  maxFeePerGas: bigint;
+  maxPriorityFeePerGas: bigint;
+  formatted: {
+    gasPrice?: undefined;
+    maxFeePerBlobGas?: undefined;
+    maxFeePerGas: string;
+    maxPriorityFeePerGas: string;
+  };
+};
 
 interface DlnBridgeUiProps {
   fromAssetSymbol?: string;
@@ -67,7 +98,10 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   const [orderSubmittedContent, setOrderSubmittedContent] = useState<{
     message: string;
     txHash: string;
-    explorer?: ChainBlockExplorer;
+    explorer?: {
+      name: string;
+      url: string;
+    };
   }>();
   const [orderFailedContent, setOrderFailedContent] = useState('');
   const [isBusy, setIsBusy] = useState(false);
@@ -79,7 +113,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   const [swapRate, setSwapRate] = useState(false);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [selectedTokenSet, setSelectedTokenSet] = useState<ActionTarget>('source');
-  const [chainFeeData, setChainFeeData] = useState<FetchFeeDataResult>();
+  const [chainFeeData, setChainFeeData] = useState<EstimatedFeeDataResult>();
 
   const {
     sourceChain,
@@ -107,8 +141,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     resetQuote,
   } = useDlnBridge();
 
-  const { address } = useAccount();
-  const { chain } = useNetwork();
+  const { address, chain } = useAccount();
 
   const isAddressConnected = !!address;
   const isSrcChainSolana = sourceChain === SOLANA_CHAIN_ID;
@@ -126,16 +159,30 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   }, [srcChainData?.networkFeeToken, srcTokens]);
   const dstChainName = useMemo(() => getChainById(destinationChain)?.chainName ?? 'Unknown', [destinationChain]);
 
-  const { switchNetwork } = useSwitchNetwork();
+  const { switchChain } = useSwitchChain();
 
   const inputAmountBn = useMemo(() => new BN(srcChainTokenInAmount ?? 0), [srcChainTokenInAmount]);
 
+  const evmToken =
+    srcChainTokenIn?.address === srcChainData?.networkFeeToken ? undefined : srcChainTokenIn?.address.slice(2);
   const balance = useBalance({
-    enabled: sourceChain !== SOLANA_CHAIN_ID && srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID,
+    query: {
+      enabled: sourceChain !== SOLANA_CHAIN_ID && srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID,
+    },
     address,
     chainId: sourceChain,
     token:
       srcChainTokenIn?.address === srcChainData?.networkFeeToken ? undefined : `0x${srcChainTokenIn?.address.slice(2)}`,
+  });
+
+  const { data: evmTokenBalance } = useReadContract({
+    abi,
+    address: `0x${evmToken}`,
+    functionName: 'balanceOf',
+    account: address,
+    query: {
+      enabled: sourceChain !== SOLANA_CHAIN_ID && srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID,
+    },
   });
 
   const operatingExpensesBn = useMemo(() => {
@@ -144,6 +191,10 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     return new BN(opsExpenses.toString());
   }, [isCrossChainSwap, quote?.prependedOperatingExpenseCost]);
 
+  useEffect(() => {
+    console.log('evmTokenBalance:', evmTokenBalance);
+  }, [evmTokenBalance]);
+
   // Get EVM fee data
   useEffect(() => {
     if (sourceChain === SOLANA_CHAIN_ID) {
@@ -151,7 +202,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       return;
     }
 
-    fetchFeeData().then(value => setChainFeeData(value));
+    estimateFeesPerGas(wagmiConfig).then(value => setChainFeeData(value));
   }, [sourceChain]);
 
   const minBalanceRequired = useMemo(() => {
@@ -208,17 +259,17 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
 
       if (max <= 0) {
         return 0;
-      } else {
-        const calculatedMax = toUiAmount(max.toString(), srcChainTokenIn.decimals);
-        return Number.parseFloat(calculatedMax);
       }
-    } else {
-      const deducted = tokenBalanceBn.sub(affiliateFeeBn);
-      const calculatedMax = toUiAmount(deducted, srcChainTokenIn.decimals);
-      consoleOut('affiliateFee:', toUiAmount(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
-      consoleOut('max:', toUiAmount(deducted, srcChainTokenIn.decimals), 'cadetblue');
+
+      const calculatedMax = toUiAmount(max.toString(), srcChainTokenIn.decimals);
       return Number.parseFloat(calculatedMax);
     }
+
+    const deducted = tokenBalanceBn.sub(affiliateFeeBn);
+    const calculatedMax = toUiAmount(deducted, srcChainTokenIn.decimals);
+    consoleOut('affiliateFee:', toUiAmount(affiliateFeeBn, srcChainTokenIn.decimals), 'cadetblue');
+    consoleOut('max:', toUiAmount(deducted, srcChainTokenIn.decimals), 'cadetblue');
+    return Number.parseFloat(calculatedMax);
   }, [
     nativeBalance,
     chainFeeData?.maxFeePerGas,
@@ -276,7 +327,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
 
   const closeTokenSelector = () => setTokenSelectorModalVisibility(false);
 
-  const onSrcChainSelected = (e: any) => {
+  const onSrcChainSelected = (e: number) => {
     consoleOut('Selected chain:', e, 'cadetblue');
     setSourceChain(e);
     resetQuote();
@@ -289,7 +340,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     }
   };
 
-  const onDstChainSelected = (e: any) => {
+  const onDstChainSelected = (e: number) => {
     consoleOut('Selected chain:', e, 'cadetblue');
     setDestinationChain(e);
     resetQuote();
@@ -311,8 +362,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     }
   };
 
-  const onAmountInChange = (e: any) => {
-    let newValue = e.target.value;
+  const onAmountInChange = (e: string) => {
+    let newValue = e;
 
     const decimals = srcChainTokenIn?.decimals ?? 0;
     const splitted = newValue.toString().split('.');
@@ -324,7 +375,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -338,8 +389,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     }
   };
 
-  const handleRecipientAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
+  const handleRecipientAddressChange = (e: string) => {
+    const inputValue = e;
     // Set the input value
     const trimmedValue = inputValue.trim();
     setDstChainTokenOutRecipient(trimmedValue);
@@ -347,24 +398,16 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
 
   const inputAmount = Number.parseFloat(amountIn);
   const outputAmount = Number.parseFloat(getOutputAmount());
+  const to = !isSrcChainSolana
+    ? quote
+      ? (quote as DlnOrderCreateTxResponse).tx.to
+      : singlChainQuote
+        ? (singlChainQuote as SwapCreateTxResponse)?.tx?.data
+        : undefined
+    : undefined;
 
-  const {
-    config,
-    isError: isErrorPreparingTx,
-    error: preparedTxError,
-  } = usePrepareSendTransaction({
-    enabled:
-      !isSrcChainSolana &&
-      !!(
-        (quote && (quote as DlnOrderCreateTxResponse).tx.data) ||
-        (singlChainQuote && (singlChainQuote as SwapCreateTxResponse)?.tx?.data)
-      ),
-    to:
-      !isSrcChainSolana && quote
-        ? (quote as DlnOrderCreateTxResponse).tx.to
-        : singlChainQuote
-          ? (singlChainQuote as SwapCreateTxResponse)?.tx?.data
-          : undefined,
+  const config: UseEstimateGasParameters = {
+    to: `0x${to}`,
     value:
       !isSrcChainSolana && quote
         ? BigInt((quote as DlnOrderCreateTxResponse).tx?.value ?? 0)
@@ -377,9 +420,26 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
         : singlChainQuote
           ? `0x${(singlChainQuote as SwapCreateTxResponse)?.tx?.data?.slice(2)}`
           : undefined,
+  };
+
+  const {
+    data,
+    isError: isErrorPreparingTx,
+    error: preparedTxError,
+  } = useEstimateGas({
+    ...config,
+    query: {
+      enabled:
+        !isSrcChainSolana &&
+        !!(
+          to ||
+          (quote && (quote as DlnOrderCreateTxResponse).tx.data) ||
+          (singlChainQuote && (singlChainQuote as SwapCreateTxResponse)?.tx?.data)
+        ),
+    },
   });
 
-  const { isLoading: isExecutingTx, sendTransactionAsync } = useSendTransaction(config);
+  const { isPending: isExecutingTx, sendTransactionAsync } = useSendTransaction();
 
   const evmSwapTx = async () => {
     if (!isAddressConnected) return;
@@ -437,16 +497,19 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
 
     if (sendTransactionAsync) {
       try {
-        const result = await sendTransactionAsync();
-        if (result.hash) {
+        const txHash = await sendTransactionAsync({
+          gas: data,
+          ...config,
+        });
+        if (txHash) {
           const explorerName = chain?.blockExplorers?.default.name;
-          const explorerLink = `${chain?.blockExplorers?.default.url}/tx/${result.hash}`;
+          const explorerLink = `${chain?.blockExplorers?.default.url}/tx/${txHash}`;
           addTransactionNotification({
             completedTitle: sameChainSwap ? 'Swap transaction' : 'Cross-chain trade',
             completedMessage: orderSubmittedMessage,
             finality: 'processed',
             operationType: OperationType.Swap,
-            signature: result.hash as string,
+            signature: txHash as string,
             txInfoFetchStatus: 'fetched',
             explorerLink,
           });
@@ -454,7 +517,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
           setUiStage('order-submitted');
           setOrderSubmittedContent({
             message: orderSubmittedMessage,
-            txHash: result.hash,
+            txHash: txHash,
             explorer: {
               name: explorerName ?? 'Mainnet Explorer',
               url: explorerLink,
@@ -579,11 +642,11 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
     if (preparedTxError) {
       errorString = preparedTxError.toString();
       if (errorString.indexOf('EstimateGasExecutionError') !== -1) {
-        return `Insufficient funds to send the transaction`;
+        return 'Insufficient funds to send the transaction';
       }
     }
 
-    return `Error preparing the Tx`;
+    return 'Error preparing the Tx';
   }, [preparedTxError]);
 
   const isRecipientValid =
@@ -596,27 +659,36 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   const isTransferValid = useMemo(() => {
     if (isSrcChainSolana && !publicKey) {
       return false;
-    } else if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
+    }
+    if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
       return false;
-    } else if (inputAmountBn.isZero()) {
+    }
+    if (inputAmountBn.isZero()) {
       return false;
-    } else if (tokenBalanceBn.isZero() || tokenBalanceBn.lt(inputAmountBn)) {
+    }
+    if (tokenBalanceBn.isZero() || tokenBalanceBn.lt(inputAmountBn)) {
       return false;
-    } else if (tokenBalanceBn.lt(operatingExpensesBn.add(inputAmountBn))) {
+    }
+    if (tokenBalanceBn.lt(operatingExpensesBn.add(inputAmountBn))) {
       return false;
-    } else if (lastQuoteError) {
+    }
+    if (lastQuoteError) {
       return false;
-    } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
+    }
+    if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
       return false;
-    } else if (!isRecipientValid) {
+    }
+    if (!isRecipientValid) {
       return false;
-    } else if (isErrorPreparingTx) {
+    }
+    if (isErrorPreparingTx) {
       return false;
-    } else if (sourceChain === destinationChain) {
-      return true;
-    } else {
+    }
+    if (sourceChain === destinationChain) {
       return true;
     }
+
+    return true;
   }, [
     inputAmountBn,
     tokenBalanceBn,
@@ -636,36 +708,47 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   const transactionStartButtonLabel = useMemo(() => {
     if (isFetchingQuote) {
       return isBuildingTx ? 'Refreshing order' : 'Refreshing quote';
-    } else if (isSrcChainSolana && !publicKey) {
+    }
+    if (isSrcChainSolana && !publicKey) {
       return 'Connect wallet';
-    } else if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
+    }
+    if (destinationChain === sourceChain && srcChainTokenIn?.address === dstChainTokenOut?.address) {
       return 'Tokens should be different';
-    } else if (inputAmountBn.isZero()) {
+    }
+    if (inputAmountBn.isZero()) {
       return 'No amount';
-    } else if (tokenBalanceBn.isZero()) {
+    }
+    if (tokenBalanceBn.isZero()) {
       return 'No balance';
-    } else if (tokenBalanceBn.lt(inputAmountBn)) {
+    }
+    if (tokenBalanceBn.lt(inputAmountBn)) {
       return srcChainTokenIn ? `Amount exceeds your ${srcChainTokenIn.symbol} balance` : 'Amount exceeds your balance';
-    } else if (tokenBalanceBn.lt(operatingExpensesBn.add(inputAmountBn))) {
+    }
+    if (tokenBalanceBn.lt(operatingExpensesBn.add(inputAmountBn))) {
       return srcChainTokenIn
         ? `Insufficient balance for this trade (min ${formatThousands(
             Number.parseFloat(toUiAmount(operatingExpensesBn.add(inputAmountBn), srcChainTokenIn.decimals)),
             5,
           )})`
         : 'Insufficient balance to cover fees';
-    } else if (lastQuoteError) {
-      return getUiErrorString(lastQuoteError);
-    } else if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
-      return `Missing recipient's ${dstChainName} address`;
-    } else if (!isRecipientValid) {
-      return 'Recipient address is not valid';
-    } else if (isErrorPreparingTx) {
-      return getTxPreparationErrorMessage();
-    } else if (sourceChain === destinationChain) {
-      return 'Confirm transfer';
-    } else {
-      return 'Create trade';
     }
+    if (lastQuoteError) {
+      return getUiErrorString(lastQuoteError);
+    }
+    if (destinationChain !== sourceChain && !dstChainTokenOutRecipient) {
+      return `Missing recipient's ${dstChainName} address`;
+    }
+    if (!isRecipientValid) {
+      return 'Recipient address is not valid';
+    }
+    if (isErrorPreparingTx) {
+      return getTxPreparationErrorMessage();
+    }
+    if (sourceChain === destinationChain) {
+      return 'Confirm transfer';
+    }
+
+    return 'Create trade';
   }, [
     isBuildingTx,
     dstChainName,
@@ -689,9 +772,9 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   // Set EVM chain on the connected adapter when source chain is changed
   useEffect(() => {
     if (isAddressConnected && sourceChain !== SOLANA_CHAIN_ID) {
-      switchNetwork?.(sourceChain);
+      switchChain?.({ chainId: sourceChain });
     }
-  }, [isAddressConnected, sourceChain, switchNetwork]);
+  }, [isAddressConnected, sourceChain, switchChain]);
 
   // Establish sender address.
   useEffect(() => {
@@ -743,7 +826,6 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
       // Update for EVM
       if (srcChainTokenIn?.chainId !== SOLANA_CHAIN_ID && balance.data) {
         consoleOut('srcToken balance:', balance.data.value.toString(), 'cadetblue');
-        consoleOut('srcToken formatted balance:', balance.data.formatted, 'cadetblue');
         setTokenBalanceBn(new BN(balance.data.value.toString()));
       } else {
         setTokenBalanceBn(new BN(0));
@@ -776,7 +858,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
 
   // Refresh routes every 29 seconds
   useEffect(() => {
-    let timer: any;
+    let timer: NodeJS.Timeout;
     if (!sourceChain || !destinationChain) return;
 
     if (inputAmountBn.gt(new BN(0)) && srcChainTokenIn?.address && dstChainTokenOut?.address) {
@@ -822,7 +904,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                 <div className='form-label mb-0'>From</div>
                 <div className='dropdown-trigger no-decoration'>
                   <Select
-                    className={`auto-height`}
+                    className='auto-height'
                     value={sourceChain}
                     style={{ width: 'auto', maxWidth: 'none' }}
                     popupClassName='chain-select-dropdown'
@@ -869,7 +951,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                     ) : null}
                     {/* MAX CTA */}
                     {srcChainTokenIn ? (
-                      <div className='token-max simplelink' onClick={getMaxAmountIn}>
+                      <div className='token-max simplelink' onKeyDown={() => {}} onClick={getMaxAmountIn}>
                         MAX
                       </div>
                     ) : null}
@@ -882,7 +964,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                     autoComplete='off'
                     autoCorrect='off'
                     type='text'
-                    onChange={onAmountInChange}
+                    onChange={e => onAmountInChange(e.target.value)}
                     pattern='^[0-9]*[.,]?[0-9]*$'
                     placeholder='0.0'
                     minLength={1}
@@ -920,6 +1002,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                   {publicKey ? (
                     <span
                       className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                      onKeyDown={() => {}}
                       onClick={() => refreshPrices()}
                     >
                       ~{amountIn ? toUsCurrency(getSrcTokenPrice()) : '$0.00'}
@@ -937,7 +1020,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                 <div className='form-label mb-0'>To</div>
                 <div className='dropdown-trigger no-decoration'>
                   <Select
-                    className={`auto-height`}
+                    className='auto-height'
                     value={destinationChain}
                     style={{ width: 'auto', maxWidth: 'none' }}
                     popupClassName='chain-select-dropdown'
@@ -1003,6 +1086,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                 <div className='right inner-label'>
                   <span
                     className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                    onKeyDown={() => {}}
                     onClick={() => refreshPrices()}
                   >
                     ~{outputAmount ? toUsCurrency(getDstTokenPrice()) : '$0.00'}
@@ -1023,7 +1107,7 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                       autoComplete='on'
                       autoCorrect='off'
                       type='text'
-                      onChange={handleRecipientAddressChange}
+                      onChange={e => handleRecipientAddressChange(e.target.value)}
                       placeholder={`Enter recipient's ${dstChainName} address`}
                       required={true}
                       spellCheck='false'

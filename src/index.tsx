@@ -1,7 +1,6 @@
 import App from 'App';
 import { AppConfigService } from 'environments/environment';
 import i18next from 'i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 import 'index.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -29,7 +28,8 @@ console.log('%cEnvironment:', 'color:brown', process.env.REACT_APP_ENV ?? proces
 console.log('%cProgramId:', 'color:brown', appConfig.getConfig().streamProgramAddress);
 export const customLogger = new CustomLoggerService();
 
-i18next.use(LanguageDetector).init({
+i18next.init({
+  lng: 'en',
   fallbackLng: 'en',
   interpolation: { escapeValue: false }, // React already does escaping
   resources: {
