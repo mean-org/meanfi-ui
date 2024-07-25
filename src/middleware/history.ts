@@ -5,7 +5,7 @@ import type {
   PublicKey,
   TransactionSignature,
 } from '@solana/web3.js';
-import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'constants/common';
+import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'app-constants/common';
 
 const MAX_TRANSACTION_BATCH_SIZE = 4;
 

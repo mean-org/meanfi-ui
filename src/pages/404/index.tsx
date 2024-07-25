@@ -1,5 +1,4 @@
 import { Button } from 'antd';
-import React from 'react';
 import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -23,6 +22,8 @@ export const NotFoundView = () => {
       <div className='container main-container'>
         <div className='not-found-container'>
           <svg
+            role='img'
+            aria-label='Not found image'
             version='1.1'
             xmlns='http://www.w3.org/2000/svg'
             x='0px'
@@ -59,7 +60,7 @@ export const NotFoundView = () => {
               </g>
               <g id='XMLID_6_'>
                 <g id='XMLID_18_'>
-                  <circle className='circle' cx='100' cy='41' r='1'></circle>
+                  <circle className='circle' cx='100' cy='41' r='1' />
                 </g>
               </g>
               <defs>

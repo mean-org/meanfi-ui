@@ -1,13 +1,13 @@
 import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { IconLoading } from 'Icons';
 import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
-import { MEANFI_DOCS_URL } from 'constants/common';
+import { MEANFI_DOCS_URL } from 'app-constants/common';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { MEAN_TOKEN } from '../../app-constants/tokens';
 import { InfoIcon } from '../../components/InfoIcon';
 import { openNotification } from '../../components/Notifications';
-import { MEAN_TOKEN } from '../../constants/tokens';
 import { AppStateContext } from '../../contexts/appstate';
 import { consoleOut, copyText } from '../../middleware/ui';
 import { formatThousands, openLinkInNewTab } from '../../middleware/utils';
@@ -16,12 +16,19 @@ import CardStats from './components/CardStats';
 import { data } from './data';
 import './style.scss';
 
-export const TokenStats = ({ meanStats, smeanSupply, totalVolume24h }: any) => {
+interface TokenStatsProps {
+  // biome-ignore lint/suspicious/noExplicitAny: Cannot know for sure the type of the object
+  meanStats: any;
+  sMeanTotalSupply: number;
+  totalVolume24h: number;
+}
+
+export const TokenStats = ({ meanStats, sMeanTotalSupply, totalVolume24h }: TokenStatsProps) => {
   return (
     <>
       <FirstCardsLayout />
       <Divider />
-      <SecondCardsLayout meanStats={meanStats} sMeanTotalSupply={smeanSupply} totalVolume24h={totalVolume24h} />
+      <SecondCardsLayout meanStats={meanStats} sMeanTotalSupply={sMeanTotalSupply} totalVolume24h={totalVolume24h} />
       <Divider />
       <ThirdCardsLayout />
     </>
@@ -80,7 +87,8 @@ export const FirstCardsLayout = () => {
   const { getTokenPriceByAddress } = useContext(AppStateContext);
 
   // Returns an information or error notification each time the copy icon is clicked
-  const onCopyText = (event: any) => {
+  // biome-ignore lint/suspicious/noExplicitAny: Practically anything can be copied
+    const onCopyText = (event: any) => {
     if (event.currentTarget.name && copyText(event.currentTarget.name)) {
       openNotification({
         description: t('notifications.account-address-copied-message'),
@@ -93,7 +101,7 @@ export const FirstCardsLayout = () => {
     <div className='ant-card-head-title'>
       <span>{t('stats.summary.summary-title')}</span>
       <Link to={'/exchange'}>
-        <button className='stats-buy-btn'>
+        <button type='button' className='stats-buy-btn'>
           <span>{t('stats.buy-btn')}</span>
         </button>
       </Link>
@@ -127,7 +135,7 @@ export const FirstCardsLayout = () => {
     </>
   );
 
-  const onCoingeckoMarketPrices = (priceData: any) => {
+  const onCoingeckoMarketPrices = (priceData: string) => {
     if (priceData) {
       consoleOut('priceData:', priceData, 'blue');
       setMeanPrice(Number.parseFloat(priceData));
@@ -145,7 +153,7 @@ export const FirstCardsLayout = () => {
     </div>
   );
 
-  const renderBodyPrice = <PriceGraph onPriceData={(priceData: any) => onCoingeckoMarketPrices(priceData)} />;
+  const renderBodyPrice = <PriceGraph onPriceData={(priceData: string) => onCoingeckoMarketPrices(priceData)} />;
 
   const cards = [
     {
@@ -177,7 +185,7 @@ export const FirstCardsLayout = () => {
 };
 
 /*********************** SECOND TYPE OF CARDS *************************/
-export const SecondCardsLayout = ({ meanStats, sMeanTotalSupply, totalVolume24h }: any) => {
+export const SecondCardsLayout = ({ meanStats, sMeanTotalSupply, totalVolume24h }: TokenStatsProps) => {
   const { t } = useTranslation('common');
   const cards = [
     {

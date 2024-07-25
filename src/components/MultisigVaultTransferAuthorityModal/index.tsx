@@ -7,7 +7,7 @@ import type { SetAssetAuthPayload } from 'models/multisig';
 import type React from 'react';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../app-constants';
 import { AppStateContext } from '../../contexts/appstate';
 import { SOL_MINT } from '../../middleware/ids';
 import { isError } from '../../middleware/transactions';
@@ -73,13 +73,13 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   };
 
   const isValidForm = (): boolean => {
-    return proposalTitle &&
+    return !!(
+      proposalTitle &&
       selectedAuthority &&
       isValidAddress(selectedAuthority) &&
       (!props.selectedMultisig ||
         (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
-      ? true
-      : false;
+    );
   };
 
   const getTransactionStartButtonLabel = () => {
@@ -177,7 +177,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   });
 
   const renderMultisigSelectOptions = () => {
-    const options = props.multisigAccounts.map((multisig: MultisigInfo, index: number) => {
+    const options = props.multisigAccounts.map(multisig => {
       return renderMultisigSelectItem(multisig);
     });
     return options;
@@ -228,17 +228,17 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                 <div className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
                   <div className='left mr-0'>
                     <AutoComplete
-                      bordered={false}
+                      variant='borderless'
                       style={{ width: '100%' }}
                       popupClassName='stream-select-dropdown'
                       options={renderMultisigSelectOptions()}
                       placeholder={t('multisig.transfer-authority.multisig-selector-placeholder')}
-                      onChange={(inputValue, option) => {
+                      onChange={inputValue => {
                         setSelectedAuthority(inputValue);
                       }}
                       filterOption={(inputValue, option) => {
                         const originalItem = props.multisigAccounts.find(i => {
-                          return option && i.authority.toBase58() === option.key ? true : false;
+                          return !!(option && i.authority.toBase58() === option.key);
                         });
                         return (
                           (option && option.value.indexOf(inputValue) !== -1) ||

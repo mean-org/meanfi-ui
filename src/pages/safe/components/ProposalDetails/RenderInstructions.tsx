@@ -3,16 +3,16 @@ import { BN } from '@project-serum/anchor';
 import { type Connection, PublicKey } from '@solana/web3.js';
 import { IconExternalLink } from 'Icons';
 import { Col, Row, Tooltip } from 'antd';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
 import { openNotification } from 'components/Notifications';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { appConfig } from 'index';
+import dayjs from 'dayjs';
+import { appConfig } from 'main';
 import { consoleOut, copyText, getDurationUnitFromSeconds } from 'middleware/ui';
 import { displayAmountWithSymbol, formatThousands, getTokenOrCustomToken, makeDecimal } from 'middleware/utils';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { InstructionAccountInfo, MultisigTransactionInstructionInfo } from 'models/multisig';
-import moment from 'moment';
+import type { MultisigTransactionInstructionInfo } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -54,7 +54,7 @@ export const RenderInstructions = (props: {
       case 'RateIntervalInSeconds':
         return `${formatThousands(+item.value)}s (${getDurationUnitFromSeconds(+item.value)})`;
       case 'StartUtc':
-        return moment(+item.value).format('LLL').toLocaleString();
+        return dayjs(+item.value).format('LLL').toLocaleString();
       case 'Amount':
       case 'RateAmountUnits':
       case 'AllocationAssignedUnits':
@@ -65,9 +65,9 @@ export const RenderInstructions = (props: {
               proposalIxAssociatedToken.decimals,
               splTokenList,
             )
-          : item.value;
+          : `${item.value}`;
       default:
-        return item.value;
+        return `${item.value}`;
     }
   };
 
@@ -205,7 +205,7 @@ export const RenderInstructions = (props: {
                       <>
                         <Col xs={17} sm={17} md={19} lg={19} className='pl-1 pr-3' key='loquejea'>
                           <span className='d-block info-data text-truncate' style={{ cursor: 'pointer' }}>
-                            {item.value}
+                            {`${item.value}`}
                           </span>
                         </Col>
                       </>

@@ -1,17 +1,18 @@
 import { CheckOutlined, CopyOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { type TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
+import type { TransactionFees } from '@mean-dao/money-streaming';
+import { AccountType } from '@mean-dao/payment-streaming';
 import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Button, Drawer, Modal, Spin } from 'antd';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
+import { TREASURY_TYPE_OPTIONS } from 'app-constants/treasury-type-options';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
 import { openNotification } from 'components/Notifications';
 import { TextInput } from 'components/TextInput';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { TokenListItem } from 'components/TokenListItem';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
-import { TREASURY_TYPE_OPTIONS } from 'constants/treasury-type-options';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -69,7 +70,7 @@ export const TreasuryCreateModal = ({
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig );
   }, [publicKey, selectedAccount]);
 
   const autoFocusInput = useCallback(() => {
@@ -220,9 +221,9 @@ export const TreasuryCreateModal = ({
   const onAcceptModal = () => {
     const options: TreasuryCreateOptions = {
       treasuryTitle: proposalTitle,
-      treasuryName: treasuryName,
+      treasuryName,
       token: workingToken as TokenInfo,
-      treasuryType: treasuryOption ? treasuryOption.type : TreasuryType.Open,
+      treasuryType: treasuryOption ? treasuryOption.type : AccountType.Open,
       multisigId: enableMultisigTreasuryOption && localSelectedMultisig ? localSelectedMultisig.id.toBase58() : '',
     };
     handleOk(options);
@@ -249,13 +250,11 @@ export const TreasuryCreateModal = ({
   };
 
   // Validation
-  const isValidForm = (): boolean => {
-    return treasuryName ? true : false;
-  };
+  const isValidForm = (): boolean => !!treasuryName;
 
   // Validation if multisig
   const isValidFormMultisig = (): boolean => {
-    return treasuryName && proposalTitle ? true : false;
+    return !!(treasuryName && proposalTitle );
   };
 
   const getTransactionStartButtonLabel = () => {
@@ -663,7 +662,6 @@ export const TreasuryCreateModal = ({
           onClose={onCloseTokenSelector}
           open={isTokenSelectorVisible}
           getContainer={false}
-          style={{ position: 'absolute' }}
         >
           {renderTokenSelectorInner()}
         </Drawer>

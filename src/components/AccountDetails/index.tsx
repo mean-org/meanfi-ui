@@ -1,8 +1,8 @@
 import { segmentAnalytics } from 'App';
 import { IconSafe } from 'Icons';
 import { Popover } from 'antd';
+import { CREATE_SAFE_ROUTE_PATH } from 'app-constants/common';
 import { AccountSelector } from 'components/AccountSelector';
-import { CREATE_SAFE_ROUTE_PATH } from 'constants/common';
 import { useWallet } from 'contexts/wallet';
 import { useWalletAccount } from 'contexts/walletAccount';
 import useWindowSize from 'hooks/useWindowResize';
@@ -30,10 +30,10 @@ export const AccountDetails = () => {
   }, [navigate]);
 
   const onDisconnectWallet = useCallback(() => {
-    // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
+    navigate('/');
     disconnect();
-  }, [disconnect]);
+  }, [disconnect, navigate]);
 
   const renderPersonalAccount = () => {
     return (
@@ -60,7 +60,7 @@ export const AccountDetails = () => {
   };
 
   const isSmScreen = (): boolean => {
-    return width < 768 ? true : false;
+    return width < 768;
   };
 
   const handlePopoverVisibleChange = (visibleChange: boolean) => {

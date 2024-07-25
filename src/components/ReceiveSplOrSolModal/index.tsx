@@ -1,5 +1,5 @@
 import { Modal } from 'antd';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { QRCodeSVG } from 'qrcode.react';

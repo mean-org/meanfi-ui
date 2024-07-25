@@ -1,6 +1,5 @@
 import { CheckCircleOutlined, ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import React from 'react';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../app-constants';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 import type { TxConfirmationInfo } from '../../contexts/transaction-status';
 import { getRelativeDate } from '../../middleware/ui';
@@ -26,7 +25,7 @@ export const TransactionConfirmationHistory = (props: { confirmationHistory: TxC
     <>
       <div className='events-heading'>Transaction Confirmation History</div>
       <div className='event-cards'>
-        {confirmationHistory.map((item: TxConfirmationInfo, index: number) => {
+        {confirmationHistory.map(item => {
           return (
             <div key={item.signature} className='event-card'>
               <div className='flex-fixed-left'>

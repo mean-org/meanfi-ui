@@ -170,7 +170,7 @@
   "deposits": {
     "address-share-disclaimer": "Este endereço só pode ser usado para receber tokens SOL e SPL em Solana.",
     "back-to-deposit-options": "Voltar para as opções de depósito",
-    "heading": "Deposite do seu Cartão, Conta Bancária ou de outro Blockchain diretamente em sua Carteira Solana.\n Selecione uma das opções abaixo",
+    "heading": "Deposite do seu Cartão, Conta Bancária ou de outro Blockchain diretamente em sua Carteira Solana.",
     "modal-title": "Opções de depósito",
     "move-from-ethereum-cta-label": "Mover ativos do Ethereum",
     "move-from-polygon-cta-label": "Mover ativos do Polígono",

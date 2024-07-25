@@ -60,7 +60,7 @@ export const StreamCloseModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const getTreasuryTypeByTreasuryId = useCallback(
@@ -72,12 +72,11 @@ export const StreamCloseModal = (props: {
       const treasuryPk = new PublicKey(treasuryId);
 
       try {
-        let details: PaymentStreamingAccount | TreasuryInfo | undefined = undefined;
-        if (streamVersion < 2) {
-          details = await (mspClient as MoneyStreaming).getTreasury(treasuryPk);
-        } else {
-          details = await (mspClient as PaymentStreaming).getAccount(treasuryPk);
-        }
+        let details: PaymentStreamingAccount | TreasuryInfo | null = null;
+        details =
+          streamVersion < 2
+            ? await (mspClient as MoneyStreaming).getTreasury(treasuryPk)
+            : await (mspClient as PaymentStreaming).getAccount(treasuryPk);
         if (details) {
           setTreasuryDetails(details);
           consoleOut('treasuryDetails:', details, 'blue');
@@ -134,7 +133,7 @@ export const StreamCloseModal = (props: {
     if (!canCloseTreasury && treasuryDetails) {
       const v1 = treasuryDetails as TreasuryInfo;
       const v2 = treasuryDetails as PaymentStreamingAccount;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      const isNewTreasury = !!(v2.version && v2.version >= 2);
       if (isNewTreasury) {
         if (v2.totalStreams > 1) {
           setCloseTreasuryOption(false);
@@ -246,11 +245,11 @@ export const StreamCloseModal = (props: {
   }, [feeAmount, transactionFees, getFeeAmount]);
 
   const isValidForm = (): boolean => {
-    return proposalTitle ? true : false;
+    return !!proposalTitle;
   };
 
   const getTransactionStartButtonLabel = () => {
-    return !proposalTitle ? 'Add a proposal title' : 'Sign proposal';
+    return proposalTitle ? 'Sign proposal' : 'Add a proposal title';
   };
 
   const onAcceptModal = () => {

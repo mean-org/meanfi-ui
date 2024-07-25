@@ -1,15 +1,15 @@
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { IconLoading, IconVerticalEllipsis } from 'Icons';
-import { Alert, Button, Col, Dropdown, Row, Space, Tabs, Tooltip } from 'antd';
-import type { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { Alert, Button, Col, Dropdown, Row, Space, Tabs, type TabsProps, Tooltip } from 'antd';
+import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+import { MIN_SOL_BALANCE_REQUIRED } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import CopyMultisigIdModal from 'components/CopyMultisigIdModal';
 import { MultisigOwnersView } from 'components/MultisigOwnersView';
 import { RightInfoDetails } from 'components/RightInfoDetails';
 import { SolBalanceModal } from 'components/SolBalanceModal';
-import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { consoleOut, toUsCurrency } from 'middleware/ui';
@@ -19,15 +19,19 @@ import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 export const SafeInfo = (props: {
-  onEditMultisigClick?: any;
-  onNewProposalClicked?: any;
-  proposalsTabContent?: any;
+  onEditMultisigClick?: () => void;
+  onNewProposalClicked?: () => void;
+  proposalsTabContent?: {
+    id: string;
+    name: string;
+    render: JSX.Element;
+  };
   totalSafeBalance?: number;
   safeNameImg?: string;
   safeNameImgAlt?: string;
   selectedMultisig?: MultisigInfo;
-  selectedTab?: any;
-  tabs?: Array<any>;
+  selectedTab?: string;
+  tabs?: TabsProps['items'];
 }) => {
   const {
     onEditMultisigClick,
@@ -171,7 +175,7 @@ export const SafeInfo = (props: {
   );
 
   const getSafeTabs = useCallback(() => {
-    const items = [];
+    const items: TabsProps['items'] = [];
     if (proposalsTabContent) {
       items.push({
         key: proposalsTabContent.id,
@@ -192,17 +196,17 @@ export const SafeInfo = (props: {
   const renderTabset = () => {
     if (tabs && tabs.length > 0) {
       return <Tabs items={tabs} activeKey={selectedTab} onChange={onTabChanged} className='neutral' />;
-    } else {
-      return getSafeTabs();
     }
+
+    return getSafeTabs();
   };
 
   const getCtaRowMenuItems = () => {
-    const items: ItemType[] = [];
+    const items: ItemType<MenuItemType>[] = [];
     items.push({
       key: 'cta-row-dropdown-item-01',
       label: (
-        <span className='menu-item-text' onClick={showCopyMultisigIdModal}>
+        <span className='menu-item-text' onClick={showCopyMultisigIdModal} onKeyDown={() => {}}>
           {t('multisig.copy-multisig-id.cta-label')}
         </span>
       ),
@@ -213,18 +217,12 @@ export const SafeInfo = (props: {
 
   const renderCtaRow = () => {
     return (
-      <div className='flex-fixed-right cta-row'>
+      <div className='flex-fixed-right cta-row mb-3'>
         <Space className='left' size='middle' wrap>
-          <Button type='default' shape='round' size='small' className='thin-stroke' onClick={onNewProposalClicked}>
+          <Button type='primary' shape='round' size='small' className='thin-stroke' onClick={onNewProposalClicked}>
             New proposal
           </Button>
-          <Button
-            type='default'
-            shape='round'
-            size='small'
-            className='thin-stroke'
-            onClick={() => onEditMultisigClick()}
-          >
+          <Button type='primary' shape='round' size='small' className='thin-stroke' onClick={onEditMultisigClick}>
             Edit safe
           </Button>
         </Space>

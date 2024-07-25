@@ -2,15 +2,15 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import type { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { BN } from '@project-serum/anchor';
-import { PublicKey, type TransactionInstruction } from '@solana/web3.js';
+import type { TransactionInstruction } from '@solana/web3.js';
 import { IconExternalLink } from 'Icons';
 import { Alert, Button, Col, Divider, Modal, Row, Spin } from 'antd';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VESTING_ROUTE_BASE_PATH } from 'app-constants/common';
 import { InputMean } from 'components/InputMean';
 import { InputTextAreaMean } from 'components/InputTextAreaMean';
 import { openNotification } from 'components/Notifications';
 import { SelectMean } from 'components/SelectMean';
 import { StepSelector } from 'components/StepSelector';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VESTING_ROUTE_BASE_PATH } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -26,7 +26,7 @@ import {
   isCredixFinance,
   parseSerializedTx,
 } from 'models/multisig';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { Fragment, useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { LooseObject } from 'types/LooseObject';
@@ -94,9 +94,9 @@ export const MultisigProposalModal = (props: {
     [t],
   );
 
-  const onStepperChange = (value: number) => {
+  const onStepperChange = useCallback((value: number) => {
     setCurrentStep(value);
-  };
+  }, []);
 
   const onContinueStepOneButtonClick = useCallback(() => {
     if (selectedApp?.name === 'Payment Streaming') {
@@ -111,9 +111,9 @@ export const MultisigProposalModal = (props: {
     }
   }, [handleClose, navigate, selectedApp?.name]);
 
-  const onContinueStepTwoButtonClick = () => {
+  const onContinueStepTwoButtonClick = useCallback(() => {
     setCurrentStep(2); // Go to step 3
-  };
+  }, []);
 
   const updateSelectedIx = useCallback(
     (state: LooseObject) => {
@@ -218,21 +218,21 @@ export const MultisigProposalModal = (props: {
     return !publicKey ? t('transactions.validation.not-connected') : t('Create');
   }, [publicKey, t]);
 
-  const onProposalTitleValueChange = (value: string) => {
+  const onProposalTitleValueChange = useCallback((value: string) => {
     setProposalTitleValue(value);
-  };
+  }, []);
 
-  const onProposalExpiresValueChange = (value: string) => {
+  const onProposalExpiresValueChange = useCallback((value: string) => {
     const expireOption = expires.find(v => v.value === +value);
     if (expireOption) {
       setProposalExpiresValue(expireOption);
     }
-  };
+  }, []);
 
-  const onProposalDescriptionValueChange = (value: string | undefined) => {
+  const onProposalDescriptionValueChange = useCallback((value: string | undefined) => {
     setProposalDescriptionValue(value ?? '');
     setCountWords(value?.length ?? 0);
-  };
+  }, []);
 
   const onProposalInstructionValueChange = useCallback(
     (value: string) => {
@@ -376,14 +376,14 @@ export const MultisigProposalModal = (props: {
 
   // Handler paste clipboard serialized transaction
   // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-  const pasteHandler = (e: any) => {
+  const pasteHandler = useCallback((e: any) => {
     const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
     const getInputData = e.clipboardData.getData('Text');
     const isValid = base64regex.test(getInputData);
     const serializedValidation = isValid ? getInputData : 'Invalid serialized transaction';
     setIsSerializedTxValid(isValid);
     setSerializedTx(serializedValidation);
-  };
+  }, []);
 
   // Deserialize transaction
   // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
@@ -649,84 +649,86 @@ export const MultisigProposalModal = (props: {
                 {selectedApp && selectedApp.id === NATIVE_LOADER.toBase58() ? (
                   <>
                     {isSerializedTxValid &&
-                      Object.keys(inputState).map((key, index) => (
+                      Object.keys(inputState).map(key => (
                         <>
-                          <div className='info-label text-center mt-2'>
-                            {selectedAppConfig?.ui.map((ix: UiInstruction, idx: number) =>
-                              ix.uiElements.map((element: UiElement, idx2: number) => (
-                                <span key={`instruction-${idx}-${element.dataElement?.index}`}>{element.label}</span>
-                              )),
-                            )}
-                          </div>
-                          <div className='well mb-1 proposal-summary-container vertical-scroll'>
-                            <div className='mb-1'>
-                              <span>{t('multisig.proposal-modal.instruction-program')}:</span>
-                              <br />
-                              <div>
-                                <span
-                                  onKeyDown={() => {}}
-                                  onClick={() => copyAddressToClipboard(deserializedTx?.programId)}
-                                  className='info-data simplelink underline-on-hover'
-                                  style={{ cursor: 'pointer' }}
-                                >
-                                  {deserializedTx?.programId}
-                                </span>
-                                <a
-                                  target='_blank'
-                                  rel='noopener noreferrer'
-                                  href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-                                    deserializedTx?.programId
-                                  }${getSolanaExplorerClusterParam()}`}
-                                >
-                                  <IconExternalLink className='mean-svg-icons external-icon' />
-                                </a>
-                              </div>
+                          <Fragment key={key}>
+                            <div className='info-label text-center mt-2'>
+                              {selectedAppConfig?.ui.map((ix: UiInstruction, idx: number) =>
+                                ix.uiElements.map(element => (
+                                  <span key={`instruction-${idx}-${element.dataElement?.index}`}>{element.label}</span>
+                                )),
+                              )}
                             </div>
-                            {/* biome-ignore lint/suspicious/noExplicitAny: Anything can go here */}
-                            {deserializedTx?.accounts.map((account: any) => (
-                              <div className='mb-1' key={`account-${account.index}`}>
-                                <span>
-                                  {t('multisig.proposal-modal.instruction-account')} {account.index + 1}:
-                                </span>
+                            <div className='well mb-1 proposal-summary-container vertical-scroll'>
+                              <div className='mb-1'>
+                                <span>{t('multisig.proposal-modal.instruction-program')}:</span>
                                 <br />
                                 <div>
                                   <span
                                     onKeyDown={() => {}}
-                                    onClick={() => copyAddressToClipboard(account.value)}
+                                    onClick={() => copyAddressToClipboard(deserializedTx?.programId)}
                                     className='info-data simplelink underline-on-hover'
                                     style={{ cursor: 'pointer' }}
                                   >
-                                    {account.value}
+                                    {deserializedTx?.programId}
                                   </span>
                                   <a
                                     target='_blank'
                                     rel='noopener noreferrer'
                                     href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-                                      account.value
+                                      deserializedTx?.programId
                                     }${getSolanaExplorerClusterParam()}`}
                                   >
                                     <IconExternalLink className='mean-svg-icons external-icon' />
                                   </a>
                                 </div>
                               </div>
-                            ))}
-                            <div className='mb-1'>
-                              <span>{t('multisig.proposal-modal.instruction-data')}:</span>
-                              <br />
                               {/* biome-ignore lint/suspicious/noExplicitAny: Anything can go here */}
-                              {deserializedTx?.data.map((data: any, idx3: number) => (
-                                <span
-                                  key={`txdata-item-${idx3}`}
-                                  onKeyDown={() => {}}
-                                  onClick={() => copyAddressToClipboard(data.value)}
-                                  className='info-data simplelink underline-on-hover'
-                                  style={{ cursor: 'pointer' }}
-                                >
-                                  {data.value}
-                                </span>
+                              {deserializedTx?.accounts.map((account: any) => (
+                                <div className='mb-1' key={`account-${account.index}`}>
+                                  <span>
+                                    {t('multisig.proposal-modal.instruction-account')} {account.index + 1}:
+                                  </span>
+                                  <br />
+                                  <div>
+                                    <span
+                                      onKeyDown={() => {}}
+                                      onClick={() => copyAddressToClipboard(account.value)}
+                                      className='info-data simplelink underline-on-hover'
+                                      style={{ cursor: 'pointer' }}
+                                    >
+                                      {account.value}
+                                    </span>
+                                    <a
+                                      target='_blank'
+                                      rel='noopener noreferrer'
+                                      href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
+                                        account.value
+                                      }${getSolanaExplorerClusterParam()}`}
+                                    >
+                                      <IconExternalLink className='mean-svg-icons external-icon' />
+                                    </a>
+                                  </div>
+                                </div>
                               ))}
+                              <div className='mb-1'>
+                                <span>{t('multisig.proposal-modal.instruction-data')}:</span>
+                                <br />
+                                {/* biome-ignore lint/suspicious/noExplicitAny: Anything can go here */}
+                                {deserializedTx?.data.map((data: any, idx3: number) => (
+                                  <span
+                                    key={`txdata-item-${idx3}`}
+                                    onKeyDown={() => {}}
+                                    onClick={() => copyAddressToClipboard(data.value)}
+                                    className='info-data simplelink underline-on-hover'
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    {data.value}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          </Fragment>
                         </>
                       ))}
                   </>
@@ -770,7 +772,7 @@ export const MultisigProposalModal = (props: {
           <Row>
             <Col span={12} className='d-flex justify-content-center'>
               <Button
-                type='ghost'
+                type='default'
                 size='middle'
                 className='thin-stroke col-6'
                 onClick={onCloseModal}
@@ -798,7 +800,7 @@ export const MultisigProposalModal = (props: {
           <Row>
             <Col span={12} className='d-flex justify-content-center'>
               <Button
-                type='ghost'
+                type='default'
                 size='middle'
                 className='thin-stroke col-6'
                 onClick={() => onStepperChange(0)}
@@ -833,7 +835,7 @@ export const MultisigProposalModal = (props: {
           <Row>
             <Col span={12} className='d-flex justify-content-center'>
               <Button
-                type='ghost'
+                type='default'
                 size='middle'
                 className='thin-stroke col-6'
                 onClick={() => onStepperChange(1)}
@@ -893,7 +895,6 @@ export const MultisigProposalModal = (props: {
     getTransactionStartButtonLabel,
     onProposalInstructionValueChange,
     onProposalDescriptionValueChange,
-    onContinueStepOneButtonClick,
     onContinueStepOneButtonClick,
     onContinueStepTwoButtonClick,
     onProposalExpiresValueChange,

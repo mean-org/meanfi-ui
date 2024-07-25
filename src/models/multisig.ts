@@ -205,6 +205,10 @@ export interface CreateNewSafeParams {
   owners: MultisigParticipant[];
 }
 
+export interface CreateMultisigTxParams extends CreateNewSafeParams {
+  wallet: string;
+}
+
 export const getFees = async (program: Program<Idl>, action: MULTISIG_ACTIONS): Promise<MultisigTransactionFees> => {
   const txFees: MultisigTransactionFees = {
     networkFee: 0.0,

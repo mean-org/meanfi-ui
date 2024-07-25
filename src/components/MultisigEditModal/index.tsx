@@ -4,7 +4,7 @@ import { Button, Modal, Spin } from 'antd';
 import type { EditMultisigParams } from 'models/multisig';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
+import { MAX_MULTISIG_PARTICIPANTS } from '../../app-constants';
 import { AppStateContext } from '../../contexts/appstate';
 import { SOL_MINT } from '../../middleware/ids';
 import { isError } from '../../middleware/transactions';

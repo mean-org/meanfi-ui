@@ -1,5 +1,6 @@
 import { Modal } from 'antd';
-import React, { useEffect, useState } from 'react';
+import { appConfig } from 'main';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FacebookShareButton,
@@ -8,14 +9,13 @@ import {
   TwitterShareButton,
   WhatsappShareButton,
 } from 'react-share';
-import { appConfig } from '../..';
 import { IconCopy, IconFacebook, IconLinkedin, IconTelegram, IconTwitter, IconWhatsapp } from '../../Icons';
 import { useWallet } from '../../contexts/wallet';
 import { copyText } from '../../middleware/ui';
 import { openNotification } from '../Notifications';
 import './style.scss';
 
-export const ReferFriendModal = (props: { handleClose: any; isVisible: boolean }) => {
+export const ReferFriendModal = (props: { handleClose: () => void; isVisible: boolean }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const [referralLink, setReferralLink] = useState('');
@@ -63,7 +63,7 @@ export const ReferFriendModal = (props: { handleClose: any; isVisible: boolean }
               </span>
             </div>
             <div className='right'>
-              <div className='add-on simplelink' onClick={onCopyReferralLink}>
+              <div className='add-on simplelink' onKeyDown={() => {}} onClick={onCopyReferralLink}>
                 <IconCopy className='mean-svg-icons' />
               </div>
             </div>
@@ -71,7 +71,7 @@ export const ReferFriendModal = (props: { handleClose: any; isVisible: boolean }
         </div>
         <div className='flex-row align-items-center'>
           <span className='ml-2'>{t('referrals.share-to')}</span>
-          <FacebookShareButton url={referralLink} quote={t('referrals.modal-title')} className='share-button'>
+          <FacebookShareButton url={referralLink} title={t('referrals.modal-title')} className='share-button'>
             <IconFacebook className='mean-svg-icons' />
           </FacebookShareButton>
           <TwitterShareButton url={referralLink} title={t('referrals.modal-title')} className='share-button'>

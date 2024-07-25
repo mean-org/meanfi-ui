@@ -1,5 +1,6 @@
+import { LogglyTracker } from 'loggly-jslogger';
+import { appConfig } from 'main';
 import { browserName, browserVersion, isBrowser, osName } from 'react-device-detect';
-import { appConfig } from '..';
 import { WALLET_PROVIDERS } from '../contexts/wallet';
 import { environment } from '../environments/environment';
 import { isLocal, isProd } from '../middleware/ui';
@@ -8,15 +9,13 @@ export function objectToJson(obj: unknown): string {
   return JSON.stringify(obj, null, 2);
 }
 
-const Loggly = require('loggly-jslogger');
-
-export const logger = new Loggly.LogglyTracker();
+export const logger = new LogglyTracker();
 
 export class LoggerJsonData {
   Application!: string;
   Environment!: string;
   Level!: LogLevel;
-  osName!: string;
+  osName?: string;
   MachineName!: string;
   Architecture?: string;
   Process?: string;
@@ -64,11 +63,13 @@ export class CustomLoggerService {
   public async logInfo(message: string, data?: unknown) {
     const infoData = this.getLoggerJsonData(message, LogLevel.Info, data);
     logger.push(infoData);
+    this.print('loggerJsonData:', infoData, 'blue');
   }
 
   public async logWarning(message: string, data?: unknown) {
     const warningData = this.getLoggerJsonData(message, LogLevel.Warn, data);
     logger.push(warningData);
+    this.print('loggerJsonData:', warningData, 'blue');
   }
 
   public async logError(message: string, data?: unknown) {

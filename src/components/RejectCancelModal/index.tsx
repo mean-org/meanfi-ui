@@ -48,7 +48,7 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
 
             <Row className='mt-3 mb-1'>
               <Col span={12} className='d-flex justify-content-center'>
-                <Button type='ghost' size='middle' className='thin-stroke col-6' onClick={onCloseModal}>
+                <Button type='default' size='middle' className='thin-stroke col-6' onClick={onCloseModal}>
                   Cancel
                 </Button>
               </Col>

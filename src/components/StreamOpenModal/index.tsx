@@ -1,18 +1,23 @@
 import { Button, Modal } from 'antd';
-import React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const StreamOpenModal = (props: { handleClose: any; handleOk: any; isVisible: boolean }) => {
+interface StreamOpenModalProps {
+  handleClose: () => void;
+  handleOk: (streamId: string) => void;
+  isVisible: boolean;
+}
+
+export const StreamOpenModal = ({ handleClose, handleOk, isVisible }: StreamOpenModalProps) => {
   const [streamId, setStreamId] = useState('');
   const { t } = useTranslation('common');
 
-  const handleSreamIdChange = (e: any) => {
-    setStreamId(e.target.value);
+  const handleSreamIdChange = (value: string) => {
+    setStreamId(value);
   };
 
   const onAcceptStreamId = () => {
-    props.handleOk(streamId);
+    handleOk(streamId);
     setTimeout(() => {
       setStreamId('');
     }, 50);
@@ -23,9 +28,9 @@ export const StreamOpenModal = (props: { handleClose: any; handleOk: any; isVisi
       className='mean-modal'
       title={<div className='modal-title'>{t('open-stream.modal-title')}</div>}
       footer={null}
-      open={props.isVisible}
+      open={isVisible}
       onOk={onAcceptStreamId}
-      onCancel={props.handleClose}
+      onCancel={handleClose}
       width={480}
     >
       <div className='transaction-field'>
@@ -41,7 +46,7 @@ export const StreamOpenModal = (props: { handleClose: any; handleOk: any; isVisi
               autoComplete='on'
               autoCorrect='off'
               type='text'
-              onChange={handleSreamIdChange}
+              onChange={e => handleSreamIdChange(e.target.value)}
               placeholder={t('open-stream.streamid-placeholder')}
               required={true}
               minLength={1}

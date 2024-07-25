@@ -3,14 +3,14 @@ import { STREAM_STATUS_CODE, type Stream, type StreamActivity } from '@mean-dao/
 import { BN } from '@project-serum/anchor';
 import { IconExternalLink } from 'Icons';
 import { Col, Row, Spin, Tabs } from 'antd';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { Identicon } from 'components/Identicon';
-import getStreamStartDate from 'components/common/getStreamStartDate';
 import {
   FALLBACK_COIN_IMAGE,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-} from 'constants/common';
+} from 'app-constants/common';
+import { AddressDisplay } from 'components/AddressDisplay';
+import { Identicon } from 'components/Identicon';
+import getStreamStartDate from 'components/common/getStreamStartDate';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -27,6 +27,7 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
 
 export type StreamDetailTab = 'details' | 'activity';
@@ -36,7 +37,7 @@ export const MoneyStreamDetails = (props: {
   highlightedStream: Stream | undefined;
   isInboundStream: boolean;
   loadingStreamActivity: boolean;
-  onLoadMoreActivities: any;
+  onLoadMoreActivities: () => void;
   selectedToken: TokenInfo | undefined;
   stream: Stream | undefined;
   streamActivity: StreamActivity[];
@@ -67,13 +68,13 @@ export const MoneyStreamDetails = (props: {
           <ArrowDownOutlined />
         </span>
       );
-    } else {
-      return (
-        <span className='stream-type outgoing'>
-          <ArrowUpOutlined />
-        </span>
-      );
     }
+
+    return (
+      <span className='stream-type outgoing'>
+        <ArrowUpOutlined />
+      </span>
+    );
   }, [isInboundStream]);
 
   const getStreamTitle = (item: Stream): string => {
@@ -255,10 +256,10 @@ export const MoneyStreamDetails = (props: {
   // Rendering //
   ///////////////
 
-  const getRelativeDate = (utcDate: string) => {
+  const getRelativeDate = useCallback((utcDate: string) => {
     const reference = new Date(utcDate);
     return relativeTimeFromDates(reference);
-  };
+  }, []);
 
   const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -270,16 +271,16 @@ export const MoneyStreamDetails = (props: {
       if (isInboundStream) {
         if (item.action === 'withdrew') {
           return <ArrowUpOutlined className='mean-svg-icons outgoing' />;
-        } else {
-          return <ArrowDownOutlined className='mean-svg-icons incoming' />;
         }
-      } else {
-        if (item.action === 'withdrew') {
-          return <ArrowDownOutlined className='mean-svg-icons incoming' />;
-        } else {
-          return <ArrowUpOutlined className='mean-svg-icons outgoing' />;
-        }
+
+        return <ArrowDownOutlined className='mean-svg-icons incoming' />;
       }
+
+      if (item.action === 'withdrew') {
+        return <ArrowDownOutlined className='mean-svg-icons incoming' />;
+      }
+
+      return <ArrowUpOutlined className='mean-svg-icons outgoing' />;
     },
     [isInboundStream],
   );
@@ -467,6 +468,7 @@ export const MoneyStreamDetails = (props: {
             <span
               className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
               role='link'
+              onKeyDown={() => {}}
               onClick={onLoadMoreActivities}
             >
               {t('general.cta-load-more')}
@@ -553,6 +555,7 @@ export const MoneyStreamDetails = (props: {
       renderCliffVestAmount,
       renderReceivingFrom,
       renderPaymentRate,
+      getRelativeDate,
       renderSendingTo,
       renderStreamId,
     ],
@@ -561,7 +564,7 @@ export const MoneyStreamDetails = (props: {
   const renderDetails = useCallback(() => {
     return (
       <>
-        {detailsData.map((detail: any, index: number) => (
+        {detailsData.map((detail: LooseObject, index: number) => (
           <Row gutter={[8, 8]} key={index} className='pl-1 details-item'>
             <Col span={8} className='pr-1'>
               <span className='info-label'>{detail.label}</span>

@@ -5,13 +5,11 @@ import {
   LoadingOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { MSP_ACTIONS, STREAM_STATE, type StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import {
   ACTION_CODES,
-  PaymentStreaming,
   STREAM_STATUS_CODE,
   type Stream,
   type TransactionFees,
@@ -24,7 +22,8 @@ import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/
 import { segmentAnalytics } from 'App';
 import { IconEllipsisVertical } from 'Icons';
 import { Button, Dropdown, Modal, Space, Spin } from 'antd';
-import type { ItemType } from 'antd/lib/menu/hooks/useItems';
+import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
 import { MoneyStreamDetails } from 'components/MoneyStreamDetails';
 import { openNotification } from 'components/Notifications';
 import { StreamTransferOpenModal, type StreamTransferPayload } from 'components/StreamTransferOpenModal';
@@ -32,14 +31,13 @@ import { StreamWithdrawModal } from 'components/StreamWithdrawModal';
 import getStreamWithdrawableAmount from 'components/common/getStreamWithdrawableAmount';
 import getV1Beneficiary from 'components/common/getV1Beneficiary';
 import getV2Beneficiary from 'components/common/getV2Beneficiary';
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
-import { appConfig, customLogger } from 'index';
+import { customLogger } from 'main';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { SOL_MINT } from 'middleware/ids';
 import {
@@ -47,6 +45,7 @@ import {
   type SegmentStreamTransferOwnershipData,
   type SegmentStreamWithdrawData,
 } from 'middleware/segment-service';
+import { getStreamStatus } from 'middleware/streamHelpers';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -72,9 +71,11 @@ import {
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { OperationType, TransactionStatus } from 'models/enums';
 import type { StreamWithdrawData, WithdrawFromStreamParams } from 'models/streams';
+import useMultisigClient from 'query-hooks/multisigClient';
+import useStreamingClient from 'query-hooks/streamingClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
+import type { LooseObject } from 'types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -90,7 +91,6 @@ export const MoneyStreamsIncomingView = (props: {
     splTokenList,
     selectedAccount,
     transactionStatus,
-    streamProgramAddress,
     getTokenPriceByAddress,
     getTokenByMintAddress,
     setTransactionStatus,
@@ -99,7 +99,6 @@ export const MoneyStreamsIncomingView = (props: {
   } = useContext(AppStateContext);
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const connection = useConnection();
-  const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
@@ -118,28 +117,10 @@ export const MoneyStreamsIncomingView = (props: {
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+  const { multisigClient } = useMultisigClient();
 
-  // Use a fallback RPC for Money Streaming Program (v1) instance
-  const ms = useMemo(
-    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
-    [streamProgramAddress],
-  );
-
-  // Create and cache Payment Streaming instance
-  const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, mspV2AddressPK, connection.commitment);
-  }, [connection, mspV2AddressPK]);
-
-  // Create and cache Multisig client instance
-  const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !connectionConfig.endpoint) {
-      return null;
-    }
-
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
-  }, [connectionConfig.endpoint, publicKey, connection, multisigAddressPK]);
+  const { tokenStreamingV1, tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
+  const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);
 
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);
@@ -292,15 +273,14 @@ export const MoneyStreamsIncomingView = (props: {
       let signature: string;
       let encodedTx: string;
       let multisigAuth = '';
-      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-      let transactionLog: any[] = [];
+      let transactionLog: LooseObject[] = [];
 
       resetTransactionStatus();
       setTransactionCancelled(false);
       setIsBusy(true);
 
       const transferOwnership = async (dataStream: StreamTransferPayload) => {
-        if (!paymentStreaming || !publicKey || !streamSelected) {
+        if (!tokenStreamingV2 || !publicKey || !streamSelected) {
           return null;
         }
 
@@ -312,7 +292,7 @@ export const MoneyStreamsIncomingView = (props: {
             newBeneficiary: new PublicKey(dataStream.address), // newBeneficiary
             stream: getStreamId(streamSelected), // stream
           };
-          const { transaction } = await paymentStreaming.buildTransferStreamTransaction(accounts);
+          const { transaction } = await tokenStreamingV2.buildTransferStreamTransaction(accounts);
 
           return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
         }
@@ -336,7 +316,7 @@ export const MoneyStreamsIncomingView = (props: {
           newBeneficiary: new PublicKey(dataStream.address), // newBeneficiary
           stream: getStreamId(streamSelected), // stream
         };
-        const { transaction } = await paymentStreaming.buildTransferStreamTransaction(accounts);
+        const { transaction } = await tokenStreamingV2.buildTransferStreamTransaction(accounts);
 
         const ixData = Buffer.from(transaction.instructions[0].data);
         const ixAccounts = transaction.instructions[0].keys;
@@ -363,7 +343,7 @@ export const MoneyStreamsIncomingView = (props: {
       };
 
       const createTx = async (): Promise<boolean> => {
-        if (!publicKey || !streamSelected || !paymentStreaming) {
+        if (!publicKey || !streamSelected || !tokenStreamingV2) {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
             result: 'Cannot start transaction! Wallet not found!',
@@ -532,7 +512,7 @@ export const MoneyStreamsIncomingView = (props: {
       streamSelected,
       multisigClient,
       mspV2AddressPK,
-      paymentStreaming,
+      tokenStreamingV2,
       multisigAccounts,
       isMultisigContext,
       transactionCancelled,
@@ -602,8 +582,7 @@ export const MoneyStreamsIncomingView = (props: {
     let signature: string;
     let encodedTx: string;
     let multisigAuth = '';
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     resetTransactionStatus();
     setWithdrawFundsAmount(withdrawData);
@@ -687,7 +666,7 @@ export const MoneyStreamsIncomingView = (props: {
 
         consoleOut('Starting withdraw using PaymentStreaming V1...', '', 'blue');
         // Create a transaction
-        return await ms
+        return await tokenStreamingV1
           .withdraw(
             // title,
             beneficiary,
@@ -742,7 +721,7 @@ export const MoneyStreamsIncomingView = (props: {
     };
 
     const withdrawFunds = async (data: WithdrawFromStreamParams) => {
-      if (!paymentStreaming || !publicKey) {
+      if (!tokenStreamingV2 || !publicKey) {
         return null;
       }
 
@@ -751,7 +730,7 @@ export const MoneyStreamsIncomingView = (props: {
           feePayer: publicKey, // payer
           stream: new PublicKey(data.stream), // stream
         };
-        const { transaction } = await paymentStreaming.buildWithdrawFromStreamTransaction(
+        const { transaction } = await tokenStreamingV2.buildWithdrawFromStreamTransaction(
           accounts, // accounts
           data.amount, // amount
           false,
@@ -777,7 +756,7 @@ export const MoneyStreamsIncomingView = (props: {
         feePayer: multisig.authority, // payer
         stream: new PublicKey(data.stream), // stream
       };
-      const { transaction } = await paymentStreaming.buildWithdrawFromStreamTransaction(
+      const { transaction } = await tokenStreamingV2.buildWithdrawFromStreamTransaction(
         accounts, // accounts
         data.amount, // amount
         false,
@@ -808,7 +787,7 @@ export const MoneyStreamsIncomingView = (props: {
     };
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (!publicKey || !streamSelected || !paymentStreaming || !workingToken) {
+      if (!publicKey || !streamSelected || !tokenStreamingV2 || !workingToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!',
@@ -1013,36 +992,6 @@ export const MoneyStreamsIncomingView = (props: {
     onSendFromIncomingStreamDetails?.();
   };
 
-  const getStreamStatus = useCallback(
-    (item: Stream | StreamInfo): 'scheduled' | 'stopped' | 'stopped-manually' | 'running' => {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-      if (v1.version < 2) {
-        switch (v1.state) {
-          case STREAM_STATE.Schedule:
-            return 'scheduled';
-          case STREAM_STATE.Paused:
-            return 'stopped';
-          default:
-            return 'running';
-        }
-      }
-
-      switch (v2.statusCode) {
-        case STREAM_STATUS_CODE.Scheduled:
-          return 'scheduled';
-        case STREAM_STATUS_CODE.Paused:
-          if (v2.isManuallyPaused) {
-            return 'stopped-manually';
-          }
-          return 'stopped';
-        default:
-          return 'running';
-      }
-    },
-    [],
-  );
-
   // confirmationHistory
   const hasStreamPendingTx = useCallback(
     (type?: OperationType) => {
@@ -1118,7 +1067,7 @@ export const MoneyStreamsIncomingView = (props: {
   // Refresh stream data
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (!ms || !paymentStreaming || !streamSelected) {
+    if (!tokenStreamingV1 || !tokenStreamingV2 || !streamSelected) {
       return;
     }
 
@@ -1128,12 +1077,12 @@ export const MoneyStreamsIncomingView = (props: {
       const isV2 = streamSelected.version >= 2;
       if (isV2) {
         if (v2.statusCode === STREAM_STATUS_CODE.Running) {
-          paymentStreaming.refreshStream(streamSelected as Stream).then(detail => {
+          tokenStreamingV2.refreshStream(streamSelected as Stream).then(detail => {
             setStreamDetail(detail as Stream);
           });
         }
       } else if (v1.state === STREAM_STATE.Running) {
-        ms.refreshStream(streamSelected as StreamInfo).then(detail => {
+        tokenStreamingV1.refreshStream(streamSelected as StreamInfo).then(detail => {
           setStreamDetail(detail);
         });
       }
@@ -1142,7 +1091,7 @@ export const MoneyStreamsIncomingView = (props: {
     return () => {
       clearTimeout(timeout);
     };
-  }, [ms, paymentStreaming, streamSelected]);
+  }, [tokenStreamingV1, tokenStreamingV2, streamSelected]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -1205,7 +1154,7 @@ export const MoneyStreamsIncomingView = (props: {
         </span>
       </>
     );
-  }, [getStreamStatus, isNewStream, splTokenList, streamSelected, workingToken]);
+  }, [isNewStream, splTokenList, streamSelected, workingToken]);
 
   // Info Data
   const infoData = [
@@ -1216,7 +1165,7 @@ export const MoneyStreamsIncomingView = (props: {
   ];
 
   const renderDropdownMenu = useCallback(() => {
-    const items: ItemType[] = [];
+    const items: ItemType<MenuItemType>[] = [];
     items.push({
       key: '01-transfer-ownership',
       label: (
@@ -1251,7 +1200,7 @@ export const MoneyStreamsIncomingView = (props: {
       <div className='flex-fixed-right cta-row mb-2 pl-1'>
         <Space className='left' size='middle' wrap>
           <Button
-            type='default'
+            type='primary'
             shape='round'
             size='small'
             className='thin-stroke btn-min-width'

@@ -1,7 +1,5 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import { MoneyStreaming } from '@mean-dao/money-streaming';
 import {
-  STREAM_STATE,
   type StreamActivity as StreamActivityV1,
   type StreamInfo,
   type TreasuryInfo,
@@ -9,9 +7,7 @@ import {
 } from '@mean-dao/money-streaming/lib/types';
 import {
   AccountType,
-  PaymentStreaming,
   type PaymentStreamingAccount,
-  STREAM_STATUS_CODE,
   type Stream,
   type StreamActivity,
 } from '@mean-dao/payment-streaming';
@@ -19,7 +15,9 @@ import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { IconArrowBack, IconExternalLink } from 'Icons';
 import { Col, Row, Spin, Tabs } from 'antd';
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'app-constants/common';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
+import type { CountdownRendererParams } from 'components/CountdownTimer/CountdownRenderer';
 import { Identicon } from 'components/Identicon';
 import { ResumeItem } from 'components/ResumeItem';
 import { RightInfoDetails } from 'components/RightInfoDetails';
@@ -29,13 +27,13 @@ import getRateAmountBn from 'components/common/getRateAmountBn';
 import getStreamStartDate from 'components/common/getStreamStartDate';
 import getV1Beneficiary from 'components/common/getV1Beneficiary';
 import getV2Beneficiary from 'components/common/getV2Beneficiary';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
+import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
+import { getStreamStatus, getStreamStatusLabel } from 'middleware/streamHelpers';
 import { getStreamStatusResume, getStreamTitle } from 'middleware/streams';
 import {
   consoleOut,
@@ -47,12 +45,13 @@ import {
 import { displayAmountWithSymbol, getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { getCategoryLabelByValue } from 'models/vesting';
+import useStreamingClient from 'query-hooks/streamingClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import Countdown from 'react-countdown';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { getFallBackRpcEndpoint } from 'services/connections-hq';
+import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
 
 export const MoneyStreamDetails = (props: {
@@ -81,14 +80,10 @@ export const MoneyStreamDetails = (props: {
   const {
     splTokenList,
     streamActivity,
-    streamProgramAddress,
     hasMoreStreamActivity,
     loadingStreamActivity,
-    streamV2ProgramAddress,
     getStreamActivity,
-    setStreamDetail,
   } = useContext(AppStateContext);
-  const connection = useConnection();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { publicKey } = useWallet();
@@ -97,15 +92,7 @@ export const MoneyStreamDetails = (props: {
   const [activityLoaded, setActivityLoaded] = useState(false);
   const [treasuryDetails, setTreasuryDetails] = useState<PaymentStreamingAccount | TreasuryInfo | undefined>(undefined);
 
-  // Use a fallback RPC for Money Streaming Program (v1) instance
-  const ms = useMemo(
-    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
-    [streamProgramAddress],
-  );
-
-  const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
-  }, [connection, streamV2ProgramAddress]);
+  const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
 
   const isV2tream = useMemo(() => getIsV2Stream(stream), [stream]);
 
@@ -154,16 +141,8 @@ export const MoneyStreamDetails = (props: {
     }
 
     const rateAmount = getRateAmountBn(stream, selectedToken);
-    const value = displayAmountWithSymbol(
-      rateAmount,
-      selectedToken.address,
-      selectedToken.decimals,
-      splTokenList,
-      true,
-      true,
-    );
 
-    return value;
+    return displayAmountWithSymbol(rateAmount, selectedToken.address, selectedToken.decimals, splTokenList, true, true);
   }, [selectedToken, splTokenList, stream]);
 
   const getDepositAmountDisplay = useCallback((): string => {
@@ -201,81 +180,19 @@ export const MoneyStreamDetails = (props: {
   }, [isV2tream, selectedToken, splTokenList, stream]);
 
   const getStreamSubtitle = useCallback(() => {
-    let subtitle = '';
-
     if (stream && selectedToken) {
       const rate = +stream.rateAmount.toString();
       let rateAmount = rate > 0 ? getRateAmountDisplay() : getDepositAmountDisplay();
 
       if (rate > 0) {
-        rateAmount += ' ' + getIntervalFromSeconds(stream.rateIntervalInSeconds, true, t);
+        rateAmount += ` ${getIntervalFromSeconds(stream.rateIntervalInSeconds, true, t)}`;
       }
 
-      subtitle = rateAmount;
+      return rateAmount;
     }
 
-    return subtitle;
+    return '';
   }, [getDepositAmountDisplay, getRateAmountDisplay, selectedToken, stream, t]);
-
-  const getStreamStatus = useCallback(
-    (item: Stream | StreamInfo): 'scheduled' | 'stopped' | 'stopped-manually' | 'running' => {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-      if (isV2tream) {
-        switch (v2.statusCode) {
-          case STREAM_STATUS_CODE.Scheduled:
-            return 'scheduled';
-          case STREAM_STATUS_CODE.Paused:
-            if (v2.isManuallyPaused) {
-              return 'stopped-manually';
-            }
-            return 'stopped';
-          default:
-            return 'running';
-        }
-      }
-      switch (v1.state) {
-        case STREAM_STATE.Schedule:
-          return 'scheduled';
-        case STREAM_STATE.Paused:
-          return 'stopped';
-        default:
-          return 'running';
-      }
-    },
-    [isV2tream],
-  );
-
-  const getStreamStatusLabel = useCallback(
-    (item: Stream | StreamInfo) => {
-      if (item) {
-        const v1 = item as StreamInfo;
-        const v2 = item as Stream;
-        if (isV2tream) {
-          switch (v2.statusCode) {
-            case STREAM_STATUS_CODE.Scheduled:
-              return t('streams.status.status-scheduled');
-            case STREAM_STATUS_CODE.Paused:
-              if (v2.isManuallyPaused) {
-                return t('streams.status.status-paused');
-              }
-              return t('streams.status.status-stopped');
-            default:
-              return t('streams.status.status-running');
-          }
-        }
-        switch (v1.state) {
-          case STREAM_STATE.Schedule:
-            return t('streams.status.status-scheduled');
-          case STREAM_STATE.Paused:
-            return t('streams.status.status-stopped');
-          default:
-            return t('streams.status.status-running');
-        }
-      }
-    },
-    [isV2tream, t],
-  );
 
   const isInboundStream = useCallback(
     (item: Stream | StreamInfo): boolean => {
@@ -283,11 +200,7 @@ export const MoneyStreamDetails = (props: {
         const v1 = item as StreamInfo;
         const v2 = item as Stream;
         let beneficiary = '';
-        if (isV2tream) {
-          beneficiary = getV2Beneficiary(v2);
-        } else {
-          beneficiary = getV1Beneficiary(v1);
-        }
+        beneficiary = isV2tream ? getV2Beneficiary(v2) : getV1Beneficiary(v1);
 
         return beneficiary === accountAddress;
       }
@@ -310,11 +223,9 @@ export const MoneyStreamDetails = (props: {
   };
 
   const getActivityAction = (item: StreamActivityV1 | StreamActivity): string => {
-    const actionText =
-      item.action === 'deposited'
-        ? t('streams.stream-activity.action-deposit')
-        : t('streams.stream-activity.action-withdraw');
-    return actionText;
+    return item.action === 'deposited'
+      ? t('streams.stream-activity.action-deposit')
+      : t('streams.stream-activity.action-withdraw');
   };
 
   const getStreamIcon = useCallback(
@@ -346,7 +257,7 @@ export const MoneyStreamDetails = (props: {
   );
 
   useEffect(() => {
-    if (!publicKey || !treasuryId || !ms || !paymentStreaming || !treasuryDetails) {
+    if (!publicKey || !treasuryId || !tokenStreamingV1 || !tokenStreamingV2 || !treasuryDetails) {
       return;
     }
 
@@ -357,7 +268,7 @@ export const MoneyStreamDetails = (props: {
     consoleOut('treasuryId:', treasuryId, 'blue');
     const treasueyPk = new PublicKey(treasuryId);
     if (isV2tream) {
-      paymentStreaming
+      tokenStreamingV2
         .getAccount(treasueyPk)
         .then(details => {
           if (details) {
@@ -371,7 +282,8 @@ export const MoneyStreamDetails = (props: {
           setTreasuryDetails(undefined);
         });
     } else {
-      ms.getTreasury(treasueyPk)
+      tokenStreamingV1
+        .getTreasury(treasueyPk)
         .then(details => {
           if (details) {
             setTreasuryDetails(details);
@@ -384,7 +296,7 @@ export const MoneyStreamDetails = (props: {
           setTreasuryDetails(undefined);
         });
     }
-  }, [isV2tream, ms, paymentStreaming, publicKey, treasuryDetails, treasuryId]);
+  }, [isV2tream, tokenStreamingV1, tokenStreamingV2, publicKey, treasuryDetails, treasuryId]);
 
   // Detect XS screen
   useEffect(() => {
@@ -407,13 +319,12 @@ export const MoneyStreamDetails = (props: {
     }
   }, [activityLoaded, getActivityList, stream, tabOption]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
-  useEffect(() => {
-    return () => {
-      consoleOut('clearing selected stream data...', '', 'blue');
-      setStreamDetail(undefined);
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     consoleOut('clearing selected stream data...', '', 'blue');
+  //     setStreamDetail(undefined);
+  //   };
+  // }, []);
 
   const getRelativeDate = (utcDate: string) => {
     const reference = new Date(utcDate);
@@ -493,9 +404,7 @@ export const MoneyStreamDetails = (props: {
                 {loadingStreamActivity ? (
                   <p>{t('streams.stream-activity.loading-activity')}</p>
                 ) : (
-                  <>
-                    <p>{t('streams.stream-activity.no-activity')}</p>
-                  </>
+                  <p>{t('streams.stream-activity.no-activity')}</p>
                 )}
               </>
             )}
@@ -557,10 +466,10 @@ export const MoneyStreamDetails = (props: {
     }
 
     const rateAmount = getRateAmountBn(stream, selectedToken);
-    let rate = !isOtp() ? getRateAmountDisplay() : getDepositAmountDisplay();
+    let rate = isOtp() ? getDepositAmountDisplay() : getRateAmountDisplay();
 
     if (rateAmount.gtn(0)) {
-      rate += ' ' + getIntervalFromSeconds(stream.rateIntervalInSeconds, false, t);
+      rate += ` ${getIntervalFromSeconds(stream.rateIntervalInSeconds, false, t)}`;
     }
 
     return rate;
@@ -574,24 +483,20 @@ export const MoneyStreamDetails = (props: {
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
 
-    return (
-      <>
-        {isV2tream
-          ? displayAmountWithSymbol(
-              v2.remainingAllocationAmount,
-              selectedToken.address,
-              selectedToken.decimals,
-              splTokenList,
-            )
-          : getAmountWithSymbol(
-              v1.allocationReserved || v1.allocationLeft,
-              selectedToken.address,
-              false,
-              splTokenList,
-              selectedToken.decimals,
-            )}
-      </>
-    );
+    return isV2tream
+      ? displayAmountWithSymbol(
+          v2.remainingAllocationAmount,
+          selectedToken.address,
+          selectedToken.decimals,
+          splTokenList,
+        )
+      : getAmountWithSymbol(
+          v1.allocationReserved || v1.allocationLeft,
+          selectedToken.address,
+          false,
+          splTokenList,
+          selectedToken.decimals,
+        );
   };
 
   const renderFundsLeftInAccount = () => {
@@ -602,19 +507,15 @@ export const MoneyStreamDetails = (props: {
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
 
-    return (
-      <>
-        {isV2tream
-          ? displayAmountWithSymbol(v2.fundsLeftInStream, selectedToken.address, selectedToken.decimals, splTokenList)
-          : getAmountWithSymbol(
-              v1.escrowUnvestedAmount,
-              selectedToken.address,
-              false,
-              splTokenList,
-              selectedToken.decimals,
-            )}
-      </>
-    );
+    return isV2tream
+      ? displayAmountWithSymbol(v2.fundsLeftInStream, selectedToken.address, selectedToken.decimals, splTokenList)
+      : getAmountWithSymbol(
+          v1.escrowUnvestedAmount,
+          selectedToken.address,
+          false,
+          splTokenList,
+          selectedToken.decimals,
+        );
   };
 
   const renderFundsSendToRecipient = () => {
@@ -625,24 +526,15 @@ export const MoneyStreamDetails = (props: {
     const v1 = stream as StreamInfo;
     const v2 = stream as Stream;
 
-    return (
-      <>
-        {isV2tream
-          ? displayAmountWithSymbol(
-              v2.fundsSentToBeneficiary,
-              selectedToken.address,
-              selectedToken.decimals,
-              splTokenList,
-            )
-          : getAmountWithSymbol(
-              v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount,
-              selectedToken.address,
-              false,
-              splTokenList,
-              selectedToken.decimals,
-            )}
-      </>
-    );
+    return isV2tream
+      ? displayAmountWithSymbol(v2.fundsSentToBeneficiary, selectedToken.address, selectedToken.decimals, splTokenList)
+      : getAmountWithSymbol(
+          v1.allocationAssigned - v1.allocationLeft + v1.escrowVestedAmount,
+          selectedToken.address,
+          false,
+          splTokenList,
+          selectedToken.decimals,
+        );
   };
 
   const renderDepletionDate = () => {
@@ -683,32 +575,26 @@ export const MoneyStreamDetails = (props: {
 
     const subCategory = isV2Treasury && v2.subCategory ? getCategoryLabelByValue(v2.subCategory) : '';
 
-    let badges: string[] = [];
     if (type) {
-      if (category && subCategory) {
-        badges = [type, subCategory];
-      } else {
-        badges = [type];
-      }
+      return category && subCategory ? [type, subCategory] : [type];
     }
 
-    return badges;
+    return [];
   };
 
   // Random component
   const Completionist = () => <span>--</span>;
 
   // Renderer callback with condition
-  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-  const renderer = ({ years, days, hours, minutes, seconds, completed }: any) => {
+  const renderer = ({ years, days, hours, minutes, completed }: CountdownRendererParams) => {
     if (completed) {
       // Render a completed state
       return <Completionist />;
     }
 
     // Render a countdown
-    const whenYearsPlusOne = years > 1 ? `${years} years` : `${years} year`;
-    const showYears = years > 0 ? whenYearsPlusOne : '';
+    const whenYearsPlusOne = !years ? undefined : years && years > 1 ? `${years} years` : `${years} year`;
+    const showYears = whenYearsPlusOne ?? '';
     const whenDaysPlusOne = days > 1 ? `${days} days` : `${days} day`;
     const showDays = days > 0 ? whenDaysPlusOne : '';
     const whenHoursPlusOne = hours > 1 ? `${hours} hours` : `${hours} hour`;
@@ -787,21 +673,16 @@ export const MoneyStreamDetails = (props: {
   ];
 
   // Render details
-  const renderDetails = (
-    <>
-      {/* biome-ignore lint/suspicious/noExplicitAny: <explanation> */}
-      {detailsData.map((detail: any, index: number) => (
-        <Row gutter={[8, 8]} key={`${index + 100}`} className='pl-1 details-item mr-0 ml-0'>
-          <Col span={8} className='pr-1'>
-            <span className='info-label'>{detail.label}</span>
-          </Col>
-          <Col span={16} className='pl-1'>
-            <span>{detail.value}</span>
-          </Col>
-        </Row>
-      ))}
-    </>
-  );
+  const renderDetails = detailsData.map((detail: LooseObject, index: number) => (
+    <Row gutter={[8, 8]} key={`${index + 100}`} className='pl-1 details-item mr-0 ml-0'>
+      <Col span={8} className='pr-1'>
+        <span className='info-label'>{detail.label}</span>
+      </Col>
+      <Col span={16} className='pl-1'>
+        <span>{detail.value}</span>
+      </Col>
+    </Row>
+  ));
 
   // Tabs
   const tabs = [
@@ -827,62 +708,60 @@ export const MoneyStreamDetails = (props: {
   const resume = stream ? getStreamStatusResume(stream, t) : '--';
 
   return (
-    <>
-      <div className='stream-fields-container'>
-        {/* Background animation */}
-        {stream && getStreamStatus(stream) === 'running' ? (
-          <div className='stream-background'>
-            {isInboundStream(stream) ? (
-              <img className='inbound' src='/assets/incoming-crypto.svg' alt='' />
-            ) : (
-              <img className='inbound' src='/assets/outgoing-crypto.svg' alt='' />
-            )}
+    <div className='stream-fields-container'>
+      {/* Background animation */}
+      {stream && getStreamStatus(stream) === 'running' ? (
+        <div className='stream-background'>
+          {isInboundStream(stream) ? (
+            <img className='inbound' src='/assets/incoming-crypto.svg' alt='' />
+          ) : (
+            <img className='inbound' src='/assets/outgoing-crypto.svg' alt='' />
+          )}
+        </div>
+      ) : null}
+
+      {!isXsDevice && (
+        <Row gutter={[8, 8]} className='safe-details-resume mr-0 ml-0'>
+          <div
+            onKeyDown={hideDetailsHandler}
+            onClick={hideDetailsHandler}
+            className='back-button icon-button-container'
+          >
+            <IconArrowBack className='mean-svg-icons' />
+            <span className='ml-1'>Back</span>
           </div>
-        ) : null}
+        </Row>
+      )}
 
-        {!isXsDevice && (
-          <Row gutter={[8, 8]} className='safe-details-resume mr-0 ml-0'>
-            <div
-              onKeyDown={hideDetailsHandler}
-              onClick={hideDetailsHandler}
-              className='back-button icon-button-container'
-            >
-              <IconArrowBack className='mean-svg-icons' />
-              <span className='ml-1'>Back</span>
-            </div>
-          </Row>
-        )}
+      {stream && (
+        <ResumeItem
+          img={getStreamIcon(stream)}
+          title={title}
+          extraTitle={getBadgesList()}
+          status={t(getStreamStatusLabel(stream))}
+          subtitle={subtitle}
+          resume={resume}
+          isDetailsPanel={true}
+          isLink={false}
+          isStream={true}
+          classNameRightContent='header-stream-details-row resume-right-content'
+        />
+      )}
 
-        {stream && (
-          <ResumeItem
-            img={getStreamIcon(stream)}
-            title={title}
-            extraTitle={getBadgesList()}
-            status={getStreamStatusLabel(stream)}
-            subtitle={subtitle}
-            resume={resume}
-            isDetailsPanel={true}
-            isLink={false}
-            isStream={true}
-            classNameRightContent='header-stream-details-row resume-right-content'
-          />
-        )}
+      {infoData && (
+        <RightInfoDetails
+          infoData={infoData}
+          classNameInfoGroup='header-details-info-group'
+          xs={24}
+          sm={24}
+          md={24}
+          lg={24}
+        />
+      )}
 
-        {infoData && (
-          <RightInfoDetails
-            infoData={infoData}
-            classNameInfoGroup='header-details-info-group'
-            xs={24}
-            sm={24}
-            md={24}
-            lg={24}
-          />
-        )}
+      {buttons}
 
-        {buttons}
-
-        {tabs && renderTabset()}
-      </div>
-    </>
+      {tabs && renderTabset()}
+    </div>
   );
 };

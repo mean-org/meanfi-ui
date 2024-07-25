@@ -1,45 +1,44 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import {
   MULTISIG_ACTIONS,
-  MeanMultisig,
   type MultisigParticipant,
   type MultisigTransactionFees,
-  getFees,
+  getFees
 } from '@mean-dao/mean-multisig-sdk';
-import { LAMPORTS_PER_SOL, PublicKey, type Transaction } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, type Transaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
 import { IconHelpCircle, IconSafe } from 'Icons';
 import { Button, Col, Row, Slider, Tooltip } from 'antd';
 import type { SliderMarks } from 'antd/lib/slider';
+import { MAX_MULTISIG_PARTICIPANTS, MEAN_MULTISIG_ACCOUNT_LAMPORTS } from 'app-constants/common';
 import { MultisigParticipants } from 'components/MultisigParticipants';
 import { openNotification } from 'components/Notifications';
 import { PreFooter } from 'components/PreFooter';
-import { MAX_MULTISIG_PARTICIPANTS, MEAN_MULTISIG_ACCOUNT_LAMPORTS } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnection, useConnectionConfig } from 'contexts/connection';
+import { useConnection } from 'contexts/connection';
 import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
-import { appConfig, customLogger } from 'index';
+import { customLogger } from 'main';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isValidAddress } from 'middleware/ui';
 import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { type CreateNewSafeParams, ZERO_FEES } from 'models/multisig';
+import { type CreateMultisigTxParams, type CreateNewSafeParams, ZERO_FEES } from 'models/multisig';
+import useMultisigClient from 'query-hooks/multisigClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { failsafeConnectionConfig } from 'services/connections-hq';
+import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
 
 const CreateSafeView = () => {
   const { t } = useTranslation('common');
   const { wallet, publicKey } = useWallet();
   const connection = useConnection();
-  const connectionConfig = useConnectionConfig();
   const account = useAccountsContext();
   const navigate = useNavigate();
   const { multisigAccounts, transactionStatus, setTransactionStatus, refreshMultisigs } = useContext(AppStateContext);
@@ -64,17 +63,10 @@ const CreateSafeView = () => {
   //  Init code  //
   /////////////////
 
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-
-  const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !connectionConfig.endpoint) {
-      return null;
-    }
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
-  }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
+  const { multisigClient } = useMultisigClient();
 
   const nativeBalance = useMemo(() => {
-    return account && account.nativeAccount ? getAmountFromLamports(account.nativeAccount.lamports) : 0;
+    return account?.nativeAccount ? getAmountFromLamports(account.nativeAccount.lamports) : 0;
   }, [account]);
 
   ///////////////
@@ -89,9 +81,8 @@ const CreateSafeView = () => {
   }, [setTransactionStatus]);
 
   const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
-    let event: any;
     if (operation === OperationType.CreateMultisig) {
-      event = success ? AppUsageEvent.CreateSuperSafeAccountCompleted : AppUsageEvent.CreateSuperSafeAccountFailed;
+      const event = success ? AppUsageEvent.CreateSuperSafeAccountCompleted : AppUsageEvent.CreateSuperSafeAccountFailed;
       segmentAnalytics.recordEvent(event, { signature: signature });
     }
   }, []);
@@ -169,7 +160,7 @@ const CreateSafeView = () => {
       setMultisigThreshold(1);
       const items: MultisigParticipant[] = [];
       items.push({
-        name: `Signer 1`,
+        name: 'Signer 1',
         address: publicKey.toBase58(),
       });
       setMultisigOwners(items);
@@ -268,32 +259,33 @@ const CreateSafeView = () => {
 
   const onExecuteCreateMultisigTx = async (data: CreateNewSafeParams) => {
     let transaction: Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createMultisig = async (createParams: any) => {
+    const createMultisig = async (createParams: CreateMultisigTxParams) => {
       if (!multisigClient || !publicKey) {
         return;
       }
 
-      const owners = createParams.owners.map((p: MultisigParticipant) => {
-        return {
-          address: new PublicKey(p.address),
-          name: p.name,
-        };
-      });
+      // TODO: Very suspicious. Lets check "Create Multisig" functionality
+      // const owners = createParams.owners.map((p: MultisigParticipant) => {
+      //   return {
+      //     address: new PublicKey(p.address),
+      //     name: p.name,
+      //   };
+      // });
 
       const tx = await multisigClient.buildCreateFundedMultisigTransaction(
         publicKey,
         MEAN_MULTISIG_ACCOUNT_LAMPORTS,
         createParams.label,
         createParams.threshold,
-        owners,
+        createParams.owners,
       );
 
       return tx?.transaction ?? null;
@@ -391,16 +383,16 @@ const CreateSafeView = () => {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Create multisig transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('Create multisig transaction failed', {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
     if (wallet && publicKey && data) {
@@ -462,8 +454,8 @@ const CreateSafeView = () => {
     }
   };
 
-  const onLabelInputValueChange = (e: any) => {
-    setMultisigLabel(e.target.value);
+  const onLabelInputValueChange = (value: string) => {
+    setMultisigLabel(value);
   };
 
   const onMultisigOwnersChanged = (signers: MultisigParticipant[]) => {
@@ -512,21 +504,24 @@ const CreateSafeView = () => {
     // Validation related labels
     if (nativeBalance < minRequiredBalance) {
       return t('transactions.validation.amount-sol-low');
-    } else if (!isOwnersListValid()) {
+    }
+    if (!isOwnersListValid()) {
       return 'Validate addresses';
-    } else if (!noDuplicateExists(multisigOwners)) {
+    }
+    if (!noDuplicateExists(multisigOwners)) {
       return 'Duplicate signers found';
     }
-    // Tx status related labels
     if (isBusy) {
       return t('multisig.create-multisig.main-cta-busy');
-    } else if (transactionStatus.currentOperation === TransactionStatus.Idle) {
-      return t('multisig.create-multisig.main-cta');
-    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-      return t('general.cta-finish');
-    } else {
-      return t('general.retry');
     }
+    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
+      return t('multisig.create-multisig.main-cta');
+    }
+    if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+      return t('general.cta-finish');
+    }
+
+    return t('general.retry');
   };
 
   const infoRow = (caption: string, value: string) => {
@@ -561,7 +556,7 @@ const CreateSafeView = () => {
             autoCorrect='off'
             type='text'
             maxLength={32}
-            onChange={onLabelInputValueChange}
+            onChange={e => onLabelInputValueChange(e.target.value)}
             placeholder={t('multisig.create-multisig.multisig-label-placeholder')}
             value={multisigLabel}
           />

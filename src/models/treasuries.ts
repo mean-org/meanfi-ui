@@ -1,9 +1,9 @@
-import type { TreasuryType } from '@mean-dao/money-streaming/lib/types';
+import type { AccountType } from '@mean-dao/payment-streaming';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 
 export interface TreasuryTypeOption {
   name: string;
-  type: TreasuryType;
+  type: AccountType;
   translationId: string;
   disabled: boolean;
 }
@@ -13,7 +13,7 @@ export type StreamTreasuryType = 'open' | 'locked' | 'unknown';
 export interface TreasuryCreateOptions {
   treasuryTitle: string;
   treasuryName: string;
-  treasuryType: TreasuryType;
+  treasuryType: AccountType;
   multisigId: string;
   token: TokenInfo;
 }

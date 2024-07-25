@@ -3,15 +3,15 @@ import type { StakeQuote, StakingClient } from '@mean-dao/staking';
 import type { Transaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
 import { Button, Col, Row } from 'antd';
+import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'app-constants/common';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
-import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
-import { customLogger } from 'index';
+import { customLogger } from 'main';
 import { AppUsageEvent, type SegmentStakeMeanData } from 'middleware/segment-service';
 import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
@@ -27,6 +27,7 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
 import useRealmsDeposit from './useRealmsDeposit';
 import useUnstakeQuote from './useUnstakeQuote';
@@ -189,8 +190,7 @@ export const StakeTabView = (props: {
     let transaction: Transaction | null = null;
     let signature: string;
     let encodedTx: string;
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     resetTransactionStatus();
 

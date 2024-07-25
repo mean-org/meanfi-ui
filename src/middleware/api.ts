@@ -1,8 +1,8 @@
+import { appConfig } from 'main';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { TokenPrice } from 'models/TokenPrice';
-import { appConfig } from '..';
 import { readFromCache, removeFromCache, writeToCache } from '../cache/persistentCache';
-import type { SimpleTokenInfo, TokenAccountInfo, UserTokenAccount } from '../models/accounts';
+import type { SimpleTokenInfo, UserTokenAccount } from '../models/accounts';
 import type { MeanFiStatsModel } from '../models/meanfi-stats';
 import type { PriceGraphModel } from '../models/price-graph';
 import { getDefaultRpc } from '../services/connections-hq';

@@ -2,7 +2,7 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import type { TransactionFees } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Modal, Spin } from 'antd';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
 import { useConnection } from '../../contexts/connection';
@@ -15,15 +15,31 @@ import { TransactionStatus } from '../../models/enums';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const MultisigUpgradeIDLModal = (props: {
-  handleClose: any;
-  handleOk: any;
+interface MultisigUpgradeIDLParams {
+  programAddress: string;
+  programIDLAddress: string;
+  idlBufferAddress: string;
+}
+
+interface MultisigUpgradeIDLModalProps {
+  handleClose: () => void;
+  handleOk: (params: MultisigUpgradeIDLParams) => void;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-  programId?: string;
-}) => {
+  inputProgramId?: string;
+}
+
+export const MultisigUpgradeIDLModal = ({
+  handleClose,
+  handleOk,
+  isVisible,
+  isBusy,
+  nativeBalance,
+  transactionFees,
+  inputProgramId,
+}: MultisigUpgradeIDLModalProps) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
@@ -35,12 +51,12 @@ export const MultisigUpgradeIDLModal = (props: {
 
   // Get propgram ID from inpus
   useEffect(() => {
-    if (props.isVisible && props.programId) {
-      if (isValidAddress(props.programId)) {
-        setProgramId(props.programId);
+    if (isVisible && inputProgramId) {
+      if (isValidAddress(inputProgramId)) {
+        setProgramId(inputProgramId);
       }
     }
-  }, [props.programId, props.isVisible]);
+  }, [inputProgramId, isVisible]);
 
   const idlAddress = useCallback(async (programId: PublicKey) => {
     const [base] = PublicKey.findProgramAddressSync([], programId);
@@ -49,7 +65,7 @@ export const MultisigUpgradeIDLModal = (props: {
 
   // Resolves programIDLAddress
   useEffect(() => {
-    if (!props.isVisible || !connection || !publicKey || !programId || !isValidAddress(programId)) {
+    if (!isVisible || !connection || !publicKey || !programId || !isValidAddress(programId)) {
       return;
     }
 
@@ -63,18 +79,20 @@ export const MultisigUpgradeIDLModal = (props: {
     return () => {
       clearTimeout(timeout);
     };
-  }, [connection, programId, props.isVisible, publicKey, idlAddress]);
+  }, [connection, programId, isVisible, publicKey, idlAddress]);
 
   const onAcceptModal = () => {
-    props.handleOk({
+    const params: MultisigUpgradeIDLParams = {
       programAddress: programId,
       programIDLAddress: programIDLAddress,
       idlBufferAddress: idlBufferAddress,
-    });
+    };
+
+    handleOk(params);
   };
 
   const onCloseModal = () => {
-    props.handleClose();
+    handleClose();
   };
 
   const onAfterClose = () => {
@@ -90,31 +108,31 @@ export const MultisigUpgradeIDLModal = (props: {
     });
   };
 
-  const onProgramChange = (e: any) => {
-    const inputValue = e.target.value as string;
+  const onProgramChange = (e: string) => {
+    const inputValue = e;
     const trimmedValue = inputValue.trim();
     setProgramId(trimmedValue);
   };
 
-  const onBufferAccountChange = (e: any) => {
-    const inputValue = e.target.value as string;
+  const onBufferAccountChange = (e: string) => {
+    const inputValue = e;
     const trimmedValue = inputValue.trim();
     setIDLBufferAddress(trimmedValue);
   };
 
   const isValidForm = (): boolean => {
-    return programId &&
+    return !!(
+      programId &&
       idlBufferAddress &&
       programIDLAddress &&
       isValidAddress(programId) &&
       isValidAddress(idlBufferAddress) &&
       isValidAddress(programIDLAddress)
-      ? true
-      : false;
+    );
   };
 
   const refreshPage = () => {
-    props.handleClose();
+    handleClose();
     window.location.reload();
   };
 
@@ -123,25 +141,25 @@ export const MultisigUpgradeIDLModal = (props: {
       className='mean-modal simple-modal'
       title={<div className='modal-title'>Upgrade IDL</div>}
       footer={null}
-      open={props.isVisible}
+      open={isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
-      <div className={!props.isBusy ? 'panel1 show' : 'panel1 hide'}>
+      <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
         {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Program address */}
             <div className='form-label'>{t('multisig.upgrade-program.program-address-label')}</div>
-            <div className={`well ${props.programId ? 'disabled' : ''}`}>
+            <div className={`well ${inputProgramId ? 'disabled' : ''}`}>
               <input
                 id='token-address-field'
                 className='general-text-input'
                 autoComplete='on'
                 autoCorrect='off'
                 type='text'
-                onChange={onProgramChange}
+                onChange={e => onProgramChange(e.target.value)}
                 placeholder={t('multisig.upgrade-program.program-address-placeholder')}
                 required={true}
                 spellCheck='false'
@@ -160,7 +178,7 @@ export const MultisigUpgradeIDLModal = (props: {
                 autoComplete='on'
                 autoCorrect='off'
                 type='text'
-                onChange={onBufferAccountChange}
+                onChange={e => onBufferAccountChange(e.target.value)}
                 placeholder={t('multisig.upgrade-program.buffer-account-placeholder')}
                 required={true}
                 spellCheck='false'
@@ -185,9 +203,9 @@ export const MultisigUpgradeIDLModal = (props: {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className='mb-4'>
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: getAmountWithSymbol(props.nativeBalance, SOL_MINT.toBase58()),
+                    accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
                     feeAmount: getAmountWithSymbol(
-                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                      transactionFees.blockchainFee + transactionFees.mspFlatFee,
                       SOL_MINT.toBase58(),
                     ),
                   })}
@@ -204,10 +222,10 @@ export const MultisigUpgradeIDLModal = (props: {
 
       <div
         className={
-          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -227,7 +245,7 @@ export const MultisigUpgradeIDLModal = (props: {
             type='text'
             shape='round'
             size='middle'
-            className={props.isBusy ? 'inactive' : ''}
+            className={isBusy ? 'inactive' : ''}
             onClick={() => (isError(transactionStatus.currentOperation) ? onAcceptModal() : onCloseModal())}
           >
             {isError(transactionStatus.currentOperation) ? t('general.retry') : t('general.cta-close')}
@@ -235,7 +253,7 @@ export const MultisigUpgradeIDLModal = (props: {
         </div>
         <div className='col-6'>
           <Button
-            className={props.isBusy ? 'inactive' : ''}
+            className={isBusy ? 'inactive' : ''}
             block
             type='primary'
             shape='round'
@@ -251,7 +269,7 @@ export const MultisigUpgradeIDLModal = (props: {
               }
             }}
           >
-            {props.isBusy
+            {isBusy
               ? t('multisig.upgrade-program.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Idle
                 ? 'Upgrade IDL'

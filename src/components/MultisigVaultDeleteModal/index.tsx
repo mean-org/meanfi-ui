@@ -5,7 +5,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../app-constants';
 import { AppStateContext } from '../../contexts/appstate';
 import { isError } from '../../middleware/transactions';
 import { consoleOut, getTransactionOperationDescription } from '../../middleware/ui';
@@ -69,7 +69,7 @@ export const MultisigVaultDeleteModal = (props: {
   };
 
   const isValidForm = (): boolean => {
-    return proposalTitle && props.selectedVault && (props.selectedVault.balance as number) === 0 ? true : false;
+    return !!(proposalTitle && props.selectedVault && (props.selectedVault.balance as number) === 0 );
   };
 
   const getTransactionStartButtonLabel = () => {

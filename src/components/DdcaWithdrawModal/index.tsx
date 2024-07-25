@@ -5,39 +5,47 @@ import { useTranslation } from 'react-i18next';
 import { percentage } from '../../middleware/ui';
 import { getAmountWithSymbol, getTokenDecimals, getTokenSymbol, isValidNumber } from '../../middleware/utils';
 
-export const DdcaWithdrawModal = (props: {
+interface DdcaWithdrawModalProps {
   ddcaDetails: DdcaDetails | undefined;
   handleClose: () => void;
   handleOk: (amount: string) => void;
   isVisible: boolean;
   transactionFees: TransactionFees;
-}) => {
+}
+
+export const DdcaWithdrawModal = ({
+  ddcaDetails,
+  handleClose,
+  handleOk,
+  isVisible,
+  transactionFees,
+}: DdcaWithdrawModalProps) => {
   const { t } = useTranslation('common');
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>('');
   const [maxAmount, setMaxAmount] = useState<number>(0);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
 
   useEffect(() => {
-    if (props.ddcaDetails) {
-      setMaxAmount(props.ddcaDetails.toBalance);
+    if (ddcaDetails) {
+      setMaxAmount(ddcaDetails.toBalance);
     }
-  }, [props]);
+  }, [ddcaDetails]);
 
   useEffect(() => {
-    if (!feeAmount && props.transactionFees) {
-      setFeeAmount(getFeeAmount(props.transactionFees));
+    if (!feeAmount && transactionFees) {
+      setFeeAmount(getFeeAmount(transactionFees));
     }
-  }, [feeAmount, props.transactionFees]);
+  }, [feeAmount, transactionFees]);
 
   const onAcceptWithdrawal = () => {
-    const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(+withdrawAmountInput) ? true : false;
+    const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(+withdrawAmountInput);
     setWithdrawAmountInput('');
-    props.handleOk(isMaxAmount ? `${maxAmount}` : withdrawAmountInput);
+    handleOk(isMaxAmount ? `${maxAmount}` : withdrawAmountInput);
   };
 
   const onCloseModal = () => {
     setWithdrawAmountInput('');
-    props.handleClose();
+    handleClose();
   };
 
   const setValue = (value: string) => {
@@ -47,13 +55,13 @@ export const DdcaWithdrawModal = (props: {
   const setPercentualValue = (value: number) => {
     let newValue = '';
     let fee = 0;
-    if (props.ddcaDetails) {
+    if (ddcaDetails) {
       if (value === 100) {
-        fee = getFeeAmount(props.transactionFees, `${maxAmount}`);
+        fee = getFeeAmount(transactionFees, `${maxAmount}`);
         newValue = getDisplayAmount(maxAmount);
       } else {
         const partialAmount = percentage(value, maxAmount);
-        fee = getFeeAmount(props.transactionFees, `${partialAmount}`);
+        fee = getFeeAmount(transactionFees, `${partialAmount}`);
         newValue = getDisplayAmount(partialAmount);
       }
     }
@@ -64,7 +72,7 @@ export const DdcaWithdrawModal = (props: {
   const handleWithdrawAmountChange = (value: string) => {
     let newValue = value;
 
-    const decimals = props.ddcaDetails ? getTokenDecimals(props.ddcaDetails.toMint as string) : 0;
+    const decimals = ddcaDetails ? getTokenDecimals(ddcaDetails.toMint as string) : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
 
@@ -85,7 +93,7 @@ export const DdcaWithdrawModal = (props: {
       setValue('.');
     } else if (isValidNumber(newValue)) {
       setValue(newValue);
-      setFeeAmount(getFeeAmount(props.transactionFees, newValue));
+      setFeeAmount(getFeeAmount(transactionFees, newValue));
     }
   };
 
@@ -105,19 +113,19 @@ export const DdcaWithdrawModal = (props: {
   // Validation
 
   const isValidInput = (): boolean => {
-    return props.ddcaDetails &&
+    return !!(
+      ddcaDetails &&
       withdrawAmountInput &&
       Number.parseFloat(withdrawAmountInput) <= Number.parseFloat(getDisplayAmount(maxAmount)) &&
       Number.parseFloat(withdrawAmountInput) > (feeAmount as number)
-      ? true
-      : false;
+    );
   };
 
   const getDisplayAmount = (amount: number, addSymbol = false): string => {
-    if (props?.ddcaDetails) {
-      const bareAmount = amount.toFixed(getTokenDecimals(props.ddcaDetails.toMint as string));
+    if (ddcaDetails) {
+      const bareAmount = amount.toFixed(getTokenDecimals(ddcaDetails.toMint as string));
       if (addSymbol) {
-        return bareAmount + ' ' + getTokenSymbol(props.ddcaDetails.toMint as string);
+        return bareAmount + ' ' + getTokenSymbol(ddcaDetails.toMint as string);
       }
       return bareAmount;
     }
@@ -143,7 +151,7 @@ export const DdcaWithdrawModal = (props: {
       className='mean-modal'
       title={<div className='modal-title'>{t('withdraw-funds.modal-title')}</div>}
       footer={null}
-      open={props.isVisible}
+      open={isVisible}
       onOk={onAcceptWithdrawal}
       onCancel={onCloseModal}
       width={480}
@@ -155,7 +163,7 @@ export const DdcaWithdrawModal = (props: {
             <span className='field-label-right'>&nbsp;</span>
           </div>
           <div className='transaction-field-row main-row'>
-            <span className='field-select-left'>{props.ddcaDetails && getDisplayAmount(maxAmount, true)}</span>
+            <span className='field-select-left'>{ddcaDetails && getDisplayAmount(maxAmount, true)}</span>
           </div>
         </div>
 
@@ -200,7 +208,7 @@ export const DdcaWithdrawModal = (props: {
           </div>
           <div className='transaction-field-row'>
             <span className='field-label-left'>
-              {props.ddcaDetails &&
+              {ddcaDetails &&
               Number.parseFloat(withdrawAmountInput) > Number.parseFloat(getDisplayAmount(maxAmount)) ? (
                 <span className='fg-red'>{t('transactions.validation.amount-withdraw-high')}</span>
               ) : (
@@ -213,19 +221,19 @@ export const DdcaWithdrawModal = (props: {
       </div>
 
       {/* Info */}
-      {props.ddcaDetails?.toMint ? (
+      {ddcaDetails?.toMint ? (
         <div className='p-2 mb-2'>
           {isValidInput() &&
             infoRow(
               t('transactions.transaction-info.transaction-fee') + ':',
-              `~${getAmountWithSymbol(feeAmount as number, props.ddcaDetails.toMint as string)}`,
+              `~${getAmountWithSymbol(feeAmount as number, ddcaDetails.toMint as string)}`,
             )}
           {isValidInput() &&
             infoRow(
               t('transactions.transaction-info.you-receive') + ':',
               `~${getAmountWithSymbol(
                 Number.parseFloat(withdrawAmountInput) - (feeAmount as number),
-                props.ddcaDetails.toMint as string,
+                ddcaDetails.toMint as string,
               )}`,
             )}
         </div>

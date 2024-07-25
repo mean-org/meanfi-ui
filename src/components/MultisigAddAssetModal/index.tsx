@@ -9,8 +9,8 @@ import {
   PublicKey,
 } from '@solana/web3.js';
 import { Button, Drawer, Modal } from 'antd';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
@@ -203,15 +203,15 @@ export const MultisigAddAssetModal = (props: {
   // Validation
 
   const isOperationValid = (): boolean => {
-    return publicKey &&
+    return !!(
+      publicKey &&
       selectedMultisig &&
       nativeBalance &&
       nativeBalance > feeAmount &&
       selectedToken &&
       selectedToken.decimals >= 0 &&
       !isTokenAlreadyOwned()
-      ? true
-      : false;
+    );
   };
 
   const getCtaLabel = () => {
@@ -345,7 +345,7 @@ export const MultisigAddAssetModal = (props: {
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showCaretDown={true}
-                    showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                    showName={selectedToken.name === CUSTOM_TOKEN_NAME}
                     fullTokenInfo={selectedToken}
                   />
                 ) : (
@@ -394,7 +394,6 @@ export const MultisigAddAssetModal = (props: {
         onClose={onCloseTokenSelector}
         open={isTokenSelectorVisible}
         getContainer={false}
-        style={{ position: 'absolute' }}
       >
         {renderTokenSelectorInner}
       </Drawer>

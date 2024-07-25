@@ -5,10 +5,10 @@ import { AccountType, type PaymentStreamingAccount } from '@mean-dao/payment-str
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox, { type CheckboxChangeEvent } from 'antd/lib/checkbox/Checkbox';
+import { FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
-import { FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { SOL_MINT } from 'middleware/ids';
@@ -162,7 +162,7 @@ export const VestingContractWithdrawFundsModal = (props: {
   // Validation
   const isValidForm = (): boolean => {
     const br = getMinBalanceRequired();
-    return publicKey &&
+    return !!(publicKey &&
       to &&
       (proposalTitle || !isMultisigTreasury) &&
       isValidAddress(to) &&
@@ -171,9 +171,7 @@ export const VestingContractWithdrawFundsModal = (props: {
       tokenAmount &&
       tokenAmount.gtn(0) &&
       unallocatedBalance.gte(tokenAmount) &&
-      nativeBalance >= br
-      ? true
-      : false;
+      nativeBalance >= br);
   };
 
   const getButtonLabel = () => {
@@ -199,14 +197,6 @@ export const VestingContractWithdrawFundsModal = (props: {
                       ? t('general.cta-finish')
                       : t('general.retry');
   };
-
-  const isNewTreasury = useCallback(() => {
-    if (vestingContract) {
-      return vestingContract.version >= 2;
-    }
-
-    return false;
-  }, [vestingContract]);
 
   const getMinBalanceRequired = useCallback(() => {
     if (!transactionFees) {

@@ -16,8 +16,8 @@ import type {
   UserTokenAccount,
   UserTokensResponse,
 } from 'models/accounts';
-import { WRAPPED_SOL_MINT_ADDRESS } from '../constants';
-import { MEAN_TOKEN_LIST, NATIVE_SOL } from '../constants/tokens';
+import { WRAPPED_SOL_MINT_ADDRESS } from '../app-constants';
+import { MEAN_TOKEN_LIST, NATIVE_SOL } from '../app-constants/tokens';
 import getPriceByAddressOrSymbol from './getPriceByAddressOrSymbol';
 import { consoleOut, isLocal } from './ui';
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from './utils';
@@ -248,9 +248,9 @@ export const getUserAccountTokens = async (
   try {
     const accTks = await fetchAccountTokens(connection, pk);
     if (!accTks) {
-      splTokensCopy.forEach((item, index) => {
+      for (const item of splTokensCopy) {
         item.valueInUsd = 0;
-      });
+      }
       response.wSolBalance = 0;
       response.accountTokens = splTokensCopy;
       response.selectedAsset = splTokensCopy[0];
@@ -465,8 +465,8 @@ export const getAccountNFTs = async (connection: Connection, accountAddress: str
   const metaplex = new Metaplex(connection);
 
   consoleOut('reading NFTs for:', accountAddress, 'blue');
-  const myNfts = await metaplex.nfts().findAllByOwner({
-    owner: owner,
+
+  return await metaplex.nfts().findAllByOwner({
+    owner,
   });
-  return myNfts;
 };

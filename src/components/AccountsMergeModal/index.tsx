@@ -6,7 +6,7 @@ import { TokenDisplay } from 'components/TokenDisplay';
 import { AppStateContext } from 'contexts/appstate';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
-import { customLogger } from 'index';
+import { customLogger } from 'main';
 import { createV0TokenMergeTx } from 'middleware/createV0TokenMergeTx';
 import { sendTx, signTx } from 'middleware/transactions';
 import {
@@ -20,19 +20,29 @@ import type { AccountTokenParsedInfo, UserTokenAccount } from 'models/accounts';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const AccountsMergeModal = (props: {
-  connection: Connection;
-  handleClose: any;
-  handleOk: any;
-  isVisible: boolean;
-  tokenMint: string;
-  tokenGroup: AccountTokenParsedInfo[] | undefined;
+interface AccountsMergeModalProps {
   accountTokens: UserTokenAccount[];
-}) => {
-  const { connection, handleClose, handleOk, isVisible, tokenMint, tokenGroup, accountTokens } = props;
+  connection: Connection;
+  handleClose: () => void;
+  handleOk: () => void;
+  isVisible: boolean;
+  tokenGroup: AccountTokenParsedInfo[] | undefined;
+  tokenMint: string;
+}
+
+export const AccountsMergeModal = ({
+  accountTokens,
+  connection,
+  handleClose,
+  handleOk,
+  isVisible,
+  tokenGroup,
+  tokenMint,
+}: AccountsMergeModalProps) => {
   const { t } = useTranslation('common');
   const { publicKey, wallet } = useWallet();
   const { transactionStatus, setTransactionStatus } = useContext(AppStateContext);
@@ -47,9 +57,9 @@ export const AccountsMergeModal = (props: {
 
   const onExecuteMergeAccountsTx = async () => {
     let transaction: VersionedTransaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -114,16 +124,16 @@ export const AccountsMergeModal = (props: {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Token accounts merge transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('Token accounts merge transaction failed', {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
     if (wallet && publicKey) {
@@ -184,13 +194,15 @@ export const AccountsMergeModal = (props: {
   const getMainCtaLabel = () => {
     if (isBusy) {
       return 'Merging accounts';
-    } else if (transactionStatus.currentOperation === TransactionStatus.Idle) {
-      return 'Start merge';
-    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-      return 'Completed';
-    } else {
-      return 'Try again';
     }
+    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
+      return 'Start merge';
+    }
+    if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+      return 'Completed';
+    }
+
+    return 'Try again';
   };
 
   return (
@@ -258,7 +270,7 @@ export const AccountsMergeModal = (props: {
                 </p>
               )}
               <p>
-                Merging your {tokenGroup && tokenGroup[0].description} token accounts will send funds to the{' '}
+                Merging your {tokenGroup?.[0].description} token accounts will send funds to the{' '}
                 <strong>Associated Token Account</strong>.
               </p>
             </div>

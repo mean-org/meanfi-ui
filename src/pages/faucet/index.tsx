@@ -1,11 +1,10 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Button } from 'antd';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
-import React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { WRAPPED_SOL_MINT_ADDRESS } from '../../app-constants';
 import { openNotification } from '../../components/Notifications';
-import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { useNativeAccount } from '../../contexts/accounts';
 import { AppStateContext } from '../../contexts/appstate';
 import { useConnection } from '../../contexts/connection';
@@ -44,9 +43,9 @@ export const FaucetView = () => {
     }
   }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
 
-  const getFaucetAmount = (): number => {
+  const getFaucetAmount = useCallback((): number => {
     return 1 * LAMPORTS_PER_SOL;
-  };
+  }, []);
 
   const airdrop = useCallback(() => {
     if (!publicKey) {
@@ -77,7 +76,7 @@ export const FaucetView = () => {
         type: 'error',
       });
     }
-  }, [publicKey, connection, t]);
+  }, [publicKey, connection, getFaucetAmount, t]);
 
   const disconnectedBlock = <p>{t('general.not-connected')}.</p>;
 

@@ -1,6 +1,6 @@
 import { ArrowRightOutlined, WarningFilled } from '@ant-design/icons';
-import { MeanMultisig, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { PaymentStreaming, type Stream, type StreamEventData } from '@mean-dao/payment-streaming';
+import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { Stream, StreamEventData } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
@@ -21,7 +21,10 @@ import {
   IconWallet,
 } from 'Icons';
 import { Button, Divider, Modal, Space, Tooltip } from 'antd';
-import notification, { type IconType } from 'antd/lib/notification';
+import notification from 'antd/lib/notification';
+import type { IconType } from 'antd/lib/notification/interface';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS, MULTISIG_ROUTE_BASE_PATH } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import BigNumber from 'bignumber.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
@@ -31,16 +34,13 @@ import { PreFooter } from 'components/PreFooter';
 import { TextInput } from 'components/TextInput';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { TokenListItem } from 'components/TokenListItem';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS, MULTISIG_ROUTE_BASE_PATH } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { getNetworkIdByEnvironment, useConnection, useConnectionConfig } from 'contexts/connection';
+import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { useWalletAccount } from 'contexts/walletAccount';
 import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
-import { appConfig } from 'index';
 import { getDecimalsFromAccountInfo, isSystemOwnedAccount } from 'middleware/accountInfoGetters';
 import { getTokensWithBalances } from 'middleware/accounts';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
@@ -68,11 +68,12 @@ import {
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { AccountContext } from 'models/accounts/AccountContext';
 import { type MultisigAsset, NATIVE_LOADER } from 'models/multisig';
+import useMultisigClient from 'query-hooks/multisigClient';
+import useStreamingClient from 'query-hooks/streamingClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactJson from 'react-json-view';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { failsafeConnectionConfig } from 'services/connections-hq';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { LooseObject } from 'types/LooseObject';
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
 import './style.scss';
@@ -89,12 +90,10 @@ const NUMBER_OF_ITEMS: number[] = [0, 1, 99, 157, 679, 1000, 1300, 1550, 99600, 
 
 export const PlaygroundView = () => {
   const { t } = useTranslation('common');
-  const location = useLocation();
   const navigate = useNavigate();
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
   const { selectedAccount, setSelectedAccount } = useWalletAccount();
-  const connectionConfig = useConnectionConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const { priceList, splTokenList, isWhitelisted, getTokenPriceByAddress, getTokenByMintAddress } =
     useContext(AppStateContext);
@@ -126,23 +125,9 @@ export const PlaygroundView = () => {
   const [totalSafeBalance, setTotalSafeBalance] = useState<number | undefined>(undefined);
   const [streamViewerAddress, setStreamViewerAddress] = useState('');
 
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-  const streamV2ProgramAddressFromConfig = useMemo(
-    () => new PublicKey(appConfig.getConfig().streamV2ProgramAddress),
-    [],
-  );
+  const { multisigClient, multisigProgramAddressPK } = useMultisigClient();
 
-  const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, streamV2ProgramAddressFromConfig, connection.commitment);
-  }, [connection, streamV2ProgramAddressFromConfig]);
-
-  const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !connectionConfig.endpoint) {
-      return null;
-    }
-
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
-  }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
+  const { tokenStreamingV2 } = useStreamingClient();
 
   const isSystemAccount = useCallback((account: string) => {
     const native = NATIVE_LOADER.toBase58();
@@ -156,18 +141,18 @@ export const PlaygroundView = () => {
 
   const fetchStreamData = useCallback(
     (id: string) => {
-      if (!id || !isValidAddress(id) || !paymentStreaming) {
+      if (!id || !isValidAddress(id) || !tokenStreamingV2) {
         return;
       }
 
       const streamPK = new PublicKey(id);
 
-      getStreamForDebug(streamPK, paymentStreaming).then(value => {
+      getStreamForDebug(streamPK, tokenStreamingV2).then(value => {
         consoleOut('raw stream data payload:', value, 'blue');
         setStreamRawData(value ?? undefined);
       });
 
-      paymentStreaming.getStream(streamPK).then(value => {
+      tokenStreamingV2.getStream(streamPK).then(value => {
         if (value) {
           consoleOut('parsed stream data payload:', value, 'blue');
           setStreamParsedData(value);
@@ -179,7 +164,7 @@ export const PlaygroundView = () => {
 
       setDisplayStreamData(true);
     },
-    [paymentStreaming],
+    [tokenStreamingV2],
   );
 
   const navigateToTab = useCallback(
@@ -567,7 +552,7 @@ export const PlaygroundView = () => {
 
   const getMultisigAssets = useCallback(
     async (connection: Connection, multisig: PublicKey) => {
-      const [multisigSigner] = PublicKey.findProgramAddressSync([multisig.toBuffer()], multisigAddressPK);
+      const [multisigSigner] = PublicKey.findProgramAddressSync([multisig.toBuffer()], multisigProgramAddressPK);
 
       const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
         filters: [{ memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, { dataSize: ACCOUNT_LAYOUT.span }],
@@ -585,7 +570,7 @@ export const PlaygroundView = () => {
 
       return results;
     },
-    [multisigAddressPK],
+    [multisigProgramAddressPK],
   );
 
   const solToken = useMemo(() => {
@@ -1140,7 +1125,7 @@ export const PlaygroundView = () => {
                 </Button>
               </div>
               <div className='right'>
-                <Button type='default' shape='round' size='large' disabled={streamId === ''} onClick={onClearStreamId}>
+                <Button type='primary' shape='round' size='large' className='thin-stroke' disabled={streamId === ''} onClick={onClearStreamId}>
                   Clear
                 </Button>
               </div>
@@ -1347,7 +1332,7 @@ export const PlaygroundView = () => {
                 </Button>
               </div>
               <div className='right'>
-                <Button type='default' shape='round' size='large' onClick={onClearResults}>
+                <Button type='primary' shape='round' size='large' className='thin-stroke' onClick={onClearResults}>
                   Clear
                 </Button>
               </div>
@@ -1362,7 +1347,7 @@ export const PlaygroundView = () => {
         {publicKey ? (
           <Space size='middle' direction='vertical' wrap={true}>
             {isImpersonating ? (
-              <Button type='default' shape='round' size='large' onClick={stopImpersonation}>
+              <Button type='primary' shape='round' size='large' className='thin-stroke' onClick={stopImpersonation}>
                 Stop impersonation
               </Button>
             ) : null}
@@ -1524,7 +1509,7 @@ export const PlaygroundView = () => {
                 </Button>
               </div>
               <div className='right'>
-                <Button type='default' shape='round' size='large' onClick={onClearResults}>
+                <Button type='primary' shape='round' size='large' className='thin-stroke' onClick={onClearResults}>
                   Clear
                 </Button>
               </div>
@@ -1605,7 +1590,7 @@ export const PlaygroundView = () => {
           className='extra-small'
           onClick={() => {
             showcaseNewAccount();
-            notification.close(notificationKey);
+            notification.destroy(notificationKey);
           }}
         >
           Show accounts
@@ -1619,7 +1604,7 @@ export const PlaygroundView = () => {
         key: notificationKey,
         duration: null,
         placement: 'topRight',
-        top: 110,
+        style: { top: 110 }
       });
     };
 
@@ -1640,48 +1625,76 @@ export const PlaygroundView = () => {
     <>
       <div className='tabset-heading'>Miscelaneous features</div>
 
-      <h3>Primary, Secondary and Terciary buttons</h3>
+      <h3>Theme buttons</h3>
       <div className='mb-2'>
+        <h4>Extra small Primary, Secondary and Default buttons</h4>
         <div className='mb-1'>
           <Space wrap={true} size='middle'>
             <Button type='primary' shape='round' size='small' className='extra-small'>
               Primary
             </Button>
+            <Button type='primary' shape='round' size='small' className='extra-small thin-stroke'>
+              Secondary
+            </Button>
             <Button type='default' shape='round' size='small' className='extra-small'>
               Default
             </Button>
-            <Button type='ghost' shape='round' size='small' className='extra-small'>
-              Ghost
+            <Button type='primary' shape='round' size='small' disabled={true} className='extra-small'>
+              Disabled
             </Button>
           </Space>
         </div>
+        <h4>Small Primary, Secondary and Default buttons</h4>
         <div className='mb-1'>
           <Space wrap={true} size='middle'>
-            <Button type='primary' shape='round' size='middle' className='thin-stroke'>
+            <Button type='primary' shape='round' size='small'>
               Primary
             </Button>
-            <Button type='default' shape='round' size='middle' className='thin-stroke'>
+            <Button type='primary' shape='round' size='small' className='thin-stroke'>
+              Secondary
+            </Button>
+            <Button type='default' shape='round' size='small'>
               Default
             </Button>
-            <Button type='ghost' shape='round' size='middle' className='thin-stroke'>
-              Ghost
+            <Button type='primary' shape='round' size='small' disabled={true}>
+              Disabled
             </Button>
           </Space>
         </div>
-      </div>
-      <h3>Primary, Secondary and Terciary buttons disabled</h3>
-      <div className='mb-2'>
-        <Space wrap={true} size='middle'>
-          <Button type='primary' shape='round' size='small' className='thin-stroke' disabled={true}>
-            Primary disabled
-          </Button>
-          <Button type='default' shape='round' size='small' className='thin-stroke' disabled={true}>
-            Default disabled
-          </Button>
-          <Button type='ghost' shape='round' size='small' className='thin-stroke' disabled={true}>
-            Ghost disabled
-          </Button>
-        </Space>
+        <h4>Medium Primary, Secondary and Default buttons</h4>
+        <div className='mb-1'>
+          <Space wrap={true} size='middle'>
+            <Button type='primary' shape='round' size='middle'>
+              Primary
+            </Button>
+            <Button type='primary' shape='round' size='middle' className='thin-stroke'>
+              Secondary
+            </Button>
+            <Button type='default' shape='round' size='middle'>
+              Default
+            </Button>
+            <Button type='primary' shape='round' size='middle' disabled={true}>
+              Disabled
+            </Button>
+          </Space>
+        </div>
+        <h4>Large Primary, Secondary and Default buttons</h4>
+        <div className='mb-1'>
+          <Space wrap={true} size='middle'>
+            <Button type='primary' shape='round' size='large'>
+              Primary
+            </Button>
+            <Button type='primary' shape='round' size='large' className='thin-stroke'>
+              Secondary
+            </Button>
+            <Button type='default' shape='round' size='large'>
+              Default
+            </Button>
+            <Button type='primary' shape='round' size='large' disabled={true}>
+              Disabled
+            </Button>
+          </Space>
+        </div>
       </div>
 
       <h3>Flat buttons</h3>
@@ -2035,7 +2048,7 @@ export const PlaygroundView = () => {
           handleClose={closeStreamDetailModal}
           highlightedStream={streamParsedData}
           isVisible={isStreamDetailModalVisible}
-          msp={paymentStreaming}
+          msp={tokenStreamingV2}
           selectedToken={selectedToken}
           isDebugging={true}
         />

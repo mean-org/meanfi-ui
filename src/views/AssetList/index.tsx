@@ -1,19 +1,26 @@
+import { ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
 import { Identicon } from 'components/Identicon';
-import { ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { toUsCurrency } from 'middleware/ui';
 import { formatThousands } from 'middleware/utils';
 import type { AccountsPageCategory, UserTokenAccount } from 'models/accounts';
 import { useCallback, useContext } from 'react';
 
-export const AssetList = (props: {
+interface AssetListProps {
   accountTokens: UserTokenAccount[];
   hideLowBalances: boolean;
-  onTokenAccountClick: any;
+  onTokenAccountClick: (value: UserTokenAccount) => void;
   selectedAsset: UserTokenAccount | undefined;
   selectedCategory: AccountsPageCategory;
-}) => {
-  const { accountTokens, hideLowBalances, onTokenAccountClick, selectedAsset, selectedCategory } = props;
+}
+
+export const AssetList = ({
+  accountTokens,
+  hideLowBalances,
+  onTokenAccountClick,
+  selectedAsset,
+  selectedCategory,
+}: AssetListProps) => {
   const { theme, selectedAccount, getTokenPriceByAddress } = useContext(AppStateContext);
 
   const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -80,6 +87,7 @@ export const AssetList = (props: {
       <div
         key={`${asset.publicAddress}`}
         onClick={() => onTokenAccountClick(asset)}
+        onKeyDown={() => {}}
         id={asset.publicAddress}
         className={`transaction-list-row ${getRowSelectionClass(asset)}`}
       >

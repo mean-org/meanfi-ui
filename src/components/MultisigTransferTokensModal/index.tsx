@@ -2,14 +2,14 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import type { MultisigInfo, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { type AccountInfo, LAMPORTS_PER_SOL, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Button, Drawer, Modal, Spin } from 'antd';
-import ValidationStatusDisplay from 'components/ValidationStatusDisplay';
 import {
   INPUT_DEBOUNCE_TIME,
   MAX_TOKEN_LIST_ITEMS,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   MIN_SOL_BALANCE_REQUIRED,
-} from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
+} from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
+import ValidationStatusDisplay from 'components/ValidationStatusDisplay';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -26,7 +26,7 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { UserTokenAccount } from 'models/accounts';
 import { TransactionStatus } from 'models/enums';
 import type { TransferTokensTxParams } from 'models/multisig';
-import React, { type ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
+import { type ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LooseObject } from 'types/LooseObject';
 import { InputMean } from '../InputMean';
@@ -173,9 +173,9 @@ export const MultisigTransferTokensModal = ({
     autoFocusInput();
   };
 
-  const hideDrawer = () => {
+  const hideDrawer = useCallback(() => {
     setIsTokenSelectorVisible(false);
-  };
+  }, []);
 
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
@@ -791,7 +791,6 @@ export const MultisigTransferTokensModal = ({
           onClose={onCloseTokenSelector}
           open={isTokenSelectorVisible}
           getContainer={false}
-          style={{ position: 'absolute' }}
         >
           {renderTokenSelectorInner}
         </Drawer>

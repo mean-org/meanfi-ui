@@ -1,33 +1,37 @@
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
-import { type FindNftsByOwnerOutput, Metaplex } from '@metaplex-foundation/js';
-import type { Connection } from '@solana/web3.js';
+import type { FindNftsByOwnerOutput, JsonMetadata, Metadata } from '@metaplex-foundation/js';
+import { PublicKey } from '@solana/web3.js';
 import { IconArrowBack, IconArrowForward, IconExternalLink, IconNoItems } from 'Icons';
 import { Button, Spin } from 'antd';
-import { fallbackImgSrc } from 'constants/common';
+import { fallbackImgSrc } from 'app-constants/common';
 import { openLinkInNewTab } from 'middleware/utils';
 import type { MeanNft } from 'models/accounts/NftTypes';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const pageSize = 4;
 
-export const NftPaginatedList = (props: {
-  connection: Connection;
+interface Props {
   loadingTokenAccounts: boolean;
   nftList: FindNftsByOwnerOutput | undefined;
-  onNftItemClick?: any;
+  onNftItemClick?: (item: MeanNft) => void;
   presetNftMint: string | undefined;
   selectedNft: MeanNft | undefined;
   tokensLoaded: boolean;
-}) => {
-  const { connection, loadingTokenAccounts, nftList, onNftItemClick, presetNftMint, selectedNft, tokensLoaded } = props;
+}
 
+export const NftPaginatedList = ({
+  loadingTokenAccounts,
+  nftList,
+  onNftItemClick,
+  presetNftMint,
+  selectedNft,
+  tokensLoaded,
+}: Props) => {
   const [loading, setLoading] = useState(false);
   const [shouldPresetItem, setShouldPresetItem] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number | undefined>(undefined);
   const [currentView, setCurrentView] = useState<MeanNft[] | null>(null);
-
-  const mx = useMemo(() => new Metaplex(connection), [connection]);
 
   const loadData = useCallback(
     async (startIndex: number, endIndex: number) => {
@@ -37,15 +41,30 @@ export const NftPaginatedList = (props: {
 
       const nftsToLoad = nftList.filter((_, index) => index >= startIndex && index < endIndex);
 
-      const promises = nftsToLoad.map((metadata: any) => mx.nfts().load({ metadata }));
-      return Promise.all(promises);
+      return await Promise.all(
+        nftsToLoad.map(async (nft) => {
+          const fetchResult = await fetch(nft.uri);
+          const metadata = await fetchResult.json() as JsonMetadata;
+          const serialized = JSON.stringify(nft);
+          const refueled = JSON.parse(serialized);
+          refueled.json = metadata;
+          refueled.address = new PublicKey((nft as Metadata).address);
+          refueled.mint = new PublicKey((nft as Metadata).mintAddress);
+          refueled.mintAddress = new PublicKey((nft as Metadata).mintAddress);
+          refueled.updateAuthorityAddress = new PublicKey((nft as Metadata).updateAuthorityAddress);
+          refueled.creators = nft.creators
+
+          return refueled as MeanNft;
+        })
+      );
     },
-    [mx, nftList],
+    [nftList],
   );
 
-  const calculatePageNumber = (pageSize: number, itemIndex: number) => {
-    return Math.ceil(++itemIndex / pageSize);
-  };
+  const calculatePageNumber = useCallback((pageSize: number, itemIndex: number) => {
+    const nextIndex = itemIndex + 1;
+    return Math.ceil(nextIndex / pageSize);
+  }, []);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
@@ -62,10 +81,11 @@ export const NftPaginatedList = (props: {
         setShouldPresetItem(false);
         const item = nfts ? nfts.find(i => i.address.toBase58() === presetNftMint) : undefined;
         if (item) {
-          onNftItemClick(item);
+          onNftItemClick?.(item);
         }
       }
       setCurrentView(nfts);
+      console.log('nfts:', nfts);
       setLoading(false);
     };
 
@@ -146,55 +166,56 @@ export const NftPaginatedList = (props: {
   }
 
   return (
-    <>
-      <div key='asset-category-nft-items' className={`asset-category flex-column${loading ? ' h-75' : ''}`}>
-        <Spin spinning={loading}>
-          {currentView && (
-            <div className='nft-pagination'>
-              <span
-                className={`flat-button tiny${currentPage === 1 ? ' disabled' : ''}`}
-                onClick={() => changeCurrentPage('prev')}
-              >
-                <IconArrowBack className='mean-svg-icons' />
-                <span className='ml-1'>Prev Page</span>
-              </span>
-              <span
-                className={`flat-button tiny${
-                  nftList && nftList.length / pageSize <= (currentPage || 1) ? ' disabled' : ''
-                }`}
-                onClick={() => changeCurrentPage('next')}
-              >
-                <span className='mr-1'>Next Page</span>
-                <IconArrowForward className='mean-svg-icons' />
-              </span>
-            </div>
-          )}
-          {currentView && (
-            <div className='nft-grid'>
-              {currentView.map((nft, index) => {
-                const isSelected = selectedNft && selectedNft.address.equals(nft.address);
-                return (
-                  <div key={`nft-${index}`} className={`nft-grid-item${isSelected ? ' selected' : ''}`}>
-                    {isSelected ? (
-                      <span className='checkmark'>
-                        <CheckOutlined />
-                      </span>
-                    ) : null}
-                    <div className='nft-title text-shadow'>{nft.name}</div>
-                    <img
-                      className='nft-image'
-                      src={nft.json?.image || fallbackImgSrc}
-                      onError={imageOnErrorHandler}
-                      alt={nft.json?.name}
-                      onClick={() => onNftItemClick(nft)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Spin>
-      </div>
-    </>
+    <div key='asset-category-nft-items' className={`asset-category flex-column${loading ? ' h-75' : ''}`}>
+      <Spin spinning={loading}>
+        {currentView ? (
+          <div className='nft-pagination'>
+            <span
+              className={`flat-button tiny${currentPage === 1 ? ' disabled' : ''}`}
+              onKeyDown={() => changeCurrentPage('prev')}
+              onClick={() => changeCurrentPage('prev')}
+            >
+              <IconArrowBack className='mean-svg-icons' />
+              <span className='ml-1'>Prev Page</span>
+            </span>
+            <span
+              className={`flat-button tiny${
+                nftList && nftList.length / pageSize <= (currentPage || 1) ? ' disabled' : ''
+              }`}
+              onKeyDown={() => changeCurrentPage('next')}
+              onClick={() => changeCurrentPage('next')}
+            >
+              <span className='mr-1'>Next Page</span>
+              <IconArrowForward className='mean-svg-icons' />
+            </span>
+          </div>
+        ) : null}
+        {currentView && (
+          <div className='nft-grid'>
+            {currentView.map((nft, index) => {
+              const isSelected = selectedNft?.address.equals(nft.address);
+              return (
+                <div key={`nft-${index}`} className={`nft-grid-item${isSelected ? ' selected' : ''}`}>
+                  {isSelected ? (
+                    <span className='checkmark'>
+                      <CheckOutlined />
+                    </span>
+                  ) : null}
+                  <div className='nft-title text-shadow'>{nft.name}</div>
+                  <img
+                    className='nft-image'
+                    src={nft.json?.image || fallbackImgSrc}
+                    onError={imageOnErrorHandler}
+                    alt={nft.json?.name}
+                    onKeyDown={() => {}}
+                    onClick={() => onNftItemClick?.(nft)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Spin>
+    </div>
   );
 };

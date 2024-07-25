@@ -1,11 +1,9 @@
-import React from 'react';
-
 import type { MultisigTransactionActivityItem } from '@mean-dao/mean-multisig-sdk';
 import { IconExternalLink } from 'Icons';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'app-constants/common';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import dayjs from 'dayjs';
 import { shortenAddress } from 'middleware/utils';
-import moment from 'moment';
 import ActivityIcon from './ActivityIcon';
 
 interface Props {
@@ -14,7 +12,7 @@ interface Props {
 }
 
 const ActivityRow = ({ activity, onCopyAddress }: Props) => {
-  const title = moment(activity.createdOn).format('LLL').toLocaleString();
+  const title = dayjs(activity.createdOn).format('LLL').toLocaleString();
 
   const resume = (
     <div className='d-flex align-items-center activity-container'>
@@ -23,6 +21,7 @@ const ActivityRow = ({ activity, onCopyAddress }: Props) => {
       </div>
       <div
         onClick={() => onCopyAddress(activity.address)}
+        onKeyDown={() => {}}
         className='simplelink underline-on-hover activity-address ml-1'
       >
         ({shortenAddress(activity.address, 4)})

@@ -1,8 +1,8 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Image, Space, Tabs, Tooltip } from 'antd';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, fallbackImgSrc } from 'app-constants/common';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { InfoIcon } from 'components/InfoIcon';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, fallbackImgSrc } from 'constants/common';
 import { useMintInfo } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
@@ -71,13 +71,11 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
       'Creator(s) split the Seller Fee when this NFT is sold. The owner receives the remaining proceeds.';
 
     return (
-      <>
-        <Tooltip title={hasPrimarySaleHappened ? secondaryMarketTooltip : primaryMarketTooltip}>
-          <span className='badge medium font-bold text-uppercase fg-white bg-purple'>
-            {hasPrimarySaleHappened ? 'Secondary Market' : 'Primary Market'}
-          </span>
-        </Tooltip>
-      </>
+      <Tooltip title={hasPrimarySaleHappened ? secondaryMarketTooltip : primaryMarketTooltip}>
+        <span className='badge medium font-bold text-uppercase fg-white bg-purple'>
+          {hasPrimarySaleHappened ? 'Secondary Market' : 'Primary Market'}
+        </span>
+      </Tooltip>
     );
   };
 
@@ -162,7 +160,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
           <AddressDisplay
             address={selectedNft.address.toBase58()}
             maxChars={shouldShortedAddresses ? 12 : undefined}
-            showFullAddress={shouldShortedAddresses ? false : true}
+            showFullAddress={shouldShortedAddresses}
             iconStyles={{ width: '15', height: '15' }}
             newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.address.toBase58()}${getSolanaExplorerClusterParam()}`}
           />,
@@ -178,7 +176,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
               <AddressDisplay
                 address={selectedNft.mint.mintAuthorityAddress.toBase58()}
                 maxChars={shouldShortedAddresses ? 12 : undefined}
-                showFullAddress={shouldShortedAddresses ? false : true}
+                showFullAddress={shouldShortedAddresses}
                 iconStyles={{ width: '15', height: '15' }}
                 newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.mint.mintAuthorityAddress.toBase58()}${getSolanaExplorerClusterParam()}`}
               />,
@@ -198,7 +196,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
               <AddressDisplay
                 address={selectedNft.updateAuthorityAddress.toBase58()}
                 maxChars={shouldShortedAddresses ? 12 : undefined}
-                showFullAddress={shouldShortedAddresses ? false : true}
+                showFullAddress={shouldShortedAddresses}
                 iconStyles={{ width: '15', height: '15' }}
                 newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.updateAuthorityAddress.toBase58()}${getSolanaExplorerClusterParam()}`}
               />,
@@ -215,7 +213,7 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
               <AddressDisplay
                 address={selectedAccount.address}
                 maxChars={shouldShortedAddresses ? 12 : undefined}
-                showFullAddress={shouldShortedAddresses ? false : true}
+                showFullAddress={shouldShortedAddresses}
                 iconStyles={{ width: '15', height: '15' }}
                 newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
                   selectedAccount.address

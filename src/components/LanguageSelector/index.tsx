@@ -1,7 +1,7 @@
 import { Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LANGUAGES } from '../../constants';
+import { LANGUAGES } from '../../app-constants';
 import './style.scss';
 
 interface Props {

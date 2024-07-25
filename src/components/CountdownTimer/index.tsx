@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+// biome-ignore lint/suspicious/noExplicitAny:
 export const CountdownTimer = (props: { val: number; onFinished?: any }) => {
   const { t } = useTranslation('common');
   const [timeLeft, setTimeLeft] = useState<number | null>(props.val);

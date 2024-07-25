@@ -2,7 +2,7 @@ import { type AccountActivity, ActivityActionCode, type PaymentStreamingAccount 
 import { BN } from '@project-serum/anchor';
 import { IconExternalLink } from 'Icons';
 import { Spin } from 'antd';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'app-constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { getShortDate } from 'middleware/ui';

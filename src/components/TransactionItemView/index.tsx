@@ -1,14 +1,14 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import type { TokenBalance } from '@solana/web3.js';
 import { Tooltip } from 'antd';
-import { NATIVE_SOL } from 'constants/tokens';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import type { MappedTransaction } from 'middleware/history';
 import { getRelativeDate } from 'middleware/ui';
 import { getAmountFromLamports, getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import type { UserTokenAccount } from 'models/accounts';
-import React, { useEffect, useState } from 'react';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
+import { useEffect, useState } from 'react';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../app-constants';
 
 export const TransactionItemView = (props: {
   accountAddress: string;
@@ -27,7 +27,7 @@ export const TransactionItemView = (props: {
   useEffect(() => {
     if (props.transaction) {
       const meta =
-        props.transaction.parsedTransaction && props.transaction.parsedTransaction.meta
+        props.transaction.parsedTransaction?.meta
           ? props.transaction.parsedTransaction.meta
           : null;
 
@@ -42,7 +42,7 @@ export const TransactionItemView = (props: {
       const accounts = props.transaction.parsedTransaction.transaction.message.accountKeys;
 
       // Are we scanning a user token account or the user wallet?
-      const isNativeAccountSelected = props.accountAddress === props.selectedAsset?.publicAddress ? true : false;
+      const isNativeAccountSelected = props.accountAddress  === props.selectedAsset?.publicAddress;
       setIsNativeAccountSelected(isNativeAccountSelected);
 
       if (isNativeAccountSelected) {
@@ -59,12 +59,12 @@ export const TransactionItemView = (props: {
           return;
         }
         const preTokenBalanceAmount =
-          meta.preTokenBalances && meta.preTokenBalances.length
+          meta.preTokenBalances?.length
             ? meta.preTokenBalances.find(tk => tk.accountIndex === selectedTokenAccountIndex)?.uiTokenAmount
                 ?.uiAmount || 0
             : 0;
         const postTokenBalance =
-          meta.postTokenBalances && meta.postTokenBalances.length
+          meta.postTokenBalances?.length
             ? meta.postTokenBalances.find(tk => tk.accountIndex === selectedTokenAccountIndex)
             : null;
         balanceChange = (postTokenBalance?.uiTokenAmount.uiAmount || 0) - preTokenBalanceAmount;
@@ -89,9 +89,9 @@ export const TransactionItemView = (props: {
   const getTxIcon = () => {
     if (isOutboundTx) {
       return <ArrowUpOutlined className='mean-svg-icons outgoing upright' />;
-    } else {
-      return <ArrowDownOutlined className='mean-svg-icons incoming downright' />;
     }
+
+    return <ArrowDownOutlined className='mean-svg-icons incoming downright' />;
   };
 
   const getTxDescription = (shorten = true): string => {
@@ -106,12 +106,12 @@ export const TransactionItemView = (props: {
 
     if (isOutboundTx) {
       return shorten ? shortenAddress(receiver, 6) : receiver;
-    } else {
-      if (sender === faucetAddress) {
-        return 'Account airdrop';
-      }
-      return shorten ? shortenAddress(sender, 6) : sender;
     }
+
+    if (sender === faucetAddress) {
+      return 'Account airdrop';
+    }
+    return shorten ? shortenAddress(sender, 6) : sender;
   };
 
   const getDisplayAmount = (): string => {

@@ -11,7 +11,7 @@ export const TokenListItem = (props: {
   icon?: ReactNode;
   className?: string;
   balance: number;
-  onClick: any;
+  onClick: () => void;
   token?: TokenInfo;
   showUsdValues?: boolean;
   showZeroBalances?: boolean;
@@ -63,6 +63,7 @@ export const TokenListItem = (props: {
       title={mintAddress}
       key={mintAddress}
       className={`token-selector token-item ${className ?? ''}`}
+      onKeyDown={() => {}}
       onClick={props.onClick}
     >
       <div className='token-icon'>

@@ -2,10 +2,10 @@ import type { PaymentStreamingAccount, StreamTemplate } from '@mean-dao/payment-
 import { BN } from '@project-serum/anchor';
 import { IconLoading } from 'Icons';
 import { Progress } from 'antd';
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
 import BigNumber from 'bignumber.js';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { Identicon } from 'components/Identicon';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import {
@@ -223,7 +223,8 @@ export const VestingContractDetails = (props: {
         setCurrentVestingAmount(vestedAmountBn);
         setCompletedVestingPercentage(0);
         return;
-      } else if (isContractFinished()) {
+      }
+      if (isContractFinished()) {
         const streamableAmountBn = vestingContractFlowRate.streamableAmountBn.toString();
         setCurrentVestingAmount(new BigNumber(streamableAmountBn.toString()));
         setCompletedVestingPercentage(100);
@@ -249,12 +250,10 @@ export const VestingContractDetails = (props: {
       setCompletedVestingPercentage(0);
     }
   }, [
-    today,
     vestingContract,
     paymentStartDate,
     vestingContractFlowRate,
     getCurrentVestedAmount,
-    getContractFinishDate,
     isContractFinished,
     isDateInTheFuture,
   ]);
@@ -269,7 +268,7 @@ export const VestingContractDetails = (props: {
       <div className='transaction-list-row h-auto no-pointer'>
         <div className='icon-cell'>
           <div className='token-icon'>
-            {selectedToken && selectedToken.logoURI ? (
+            {selectedToken?.logoURI ? (
               <img
                 alt={`${selectedToken.name}`}
                 width={44}
@@ -286,7 +285,7 @@ export const VestingContractDetails = (props: {
           {item.name ? (
             <div className='title text-truncate'>
               {item.name}
-              {vestingContract && vestingContract.subCategory ? (
+              {vestingContract?.subCategory ? (
                 <span className={`badge medium ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                   {getCategoryLabelByValue(vestingContract.subCategory)}
                 </span>

@@ -1,30 +1,30 @@
 import { segmentAnalytics } from 'App';
 import { Drawer, Empty, Layout } from 'antd';
-import { AccountSelectorModal } from 'components/AccountSelectorModal';
-import { AppBar } from 'components/AppBar';
-import { FooterBar } from 'components/FooterBar';
-import { openNotification } from 'components/Notifications';
-import { TransactionConfirmationHistory } from 'components/TransactionConfirmationHistory';
 import {
   CREATE_SAFE_ROUTE_PATH,
   GOOGLE_ANALYTICS_PROD_TAG_ID,
   LANGUAGES,
   PERFORMANCE_THRESHOLD,
   SOLANA_STATUS_PAGE,
-} from 'constants/common';
+} from 'app-constants/common';
+import { AccountSelectorModal } from 'components/AccountSelectorModal';
+import { AppBar } from 'components/AppBar';
+import { FooterBar } from 'components/FooterBar';
+import { openNotification } from 'components/Notifications';
+import { TransactionConfirmationHistory } from 'components/TransactionConfirmationHistory';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnection, useConnectionConfig } from 'contexts/connection';
+import { useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
 import useLocalStorage from 'hooks/useLocalStorage';
-import { gitInfo } from 'index';
 import { reportConnectedAccount } from 'middleware/api';
 import { AppUsageEvent } from 'middleware/segment-service';
 import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
 import { isUnauthenticatedRoute } from 'middleware/utils';
-import type { AccountDetails } from 'models/accounts';
+import type { RuntimeAppDetails } from 'models/accounts';
+import useGetPerformanceSamples from 'query-hooks/performanceSamples';
 import React, { type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import {
   browserName,
@@ -40,7 +40,6 @@ import ReactGA from 'react-ga';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './style.scss';
-import './xnft.scss';
 
 export const PERFORMANCE_SAMPLE_INTERVAL = 60 * 60 * 1000;
 
@@ -55,21 +54,17 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const {
     theme,
-    tpsAvg,
     previousWalletConnectState,
     setPreviousWalletConnectState,
     setNeedReloadMultisigAccounts,
     refreshTokenBalance,
     setDiagnosisInfo,
-    setSelectedAsset,
-    setStreamList,
-    setTpsAvg,
     selectedAccount,
   } = useContext(AppStateContext);
+  const { tpsAvg } = useGetPerformanceSamples();
   const { confirmationHistory, clearConfirmationHistory } = useContext(TxConfirmationContext);
   const { t, i18n } = useTranslation('common');
   const { refreshAccount } = useAccountsContext();
-  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { provider, connected, publicKey, disconnect } = useWallet();
   const [gaInitialized, setGaInitialized] = useState(false);
@@ -81,41 +76,6 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
   ///////////////
   // Callbacks //
   ///////////////
-
-  // Fetch performance data (TPS)
-  const getPerformanceSamples = useCallback(async () => {
-    if (!connection) {
-      return null;
-    }
-
-    const round = (series: number[]) => {
-      return series.map(n => Math.round(n));
-    };
-
-    try {
-      const samples = await connection.getRecentPerformanceSamples(60);
-
-      if (samples.length < 1) {
-        // no samples to work with (node has no history).
-        return null; // we will allow for a timeout instead of throwing an error
-      }
-
-      let tpsValues = samples
-        .filter(sample => {
-          return sample.numTransactions !== 0;
-        })
-        .map(sample => {
-          return sample.numTransactions / sample.samplePeriodSecs;
-        });
-
-      tpsValues = round(tpsValues);
-      const averageTps = Math.round(tpsValues[0]);
-      return averageTps;
-    } catch (error) {
-      consoleOut('getRecentPerformanceSamples', '', 'darkred');
-      return null;
-    }
-  }, [connection]);
 
   const getPlatform = useCallback((): string => {
     if (isDesktop) {
@@ -141,36 +101,6 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
       window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh);
     };
   });
-
-  // Get Performance Samples on a timeout
-  useEffect(() => {
-    // Hoping this to happens once
-    if (tpsAvg === undefined && needRefresh) {
-      setTimeout(() => {
-        setTpsAvg(null);
-        setNeedRefresh(false);
-      });
-      getPerformanceSamples().then(value => {
-        if (value) {
-          setTpsAvg(value);
-        }
-      });
-    }
-
-    // Set to run every 30 sec
-    const performanceInterval = setInterval(() => {
-      getPerformanceSamples().then(value => {
-        if (value) {
-          setNeedRefresh(true);
-          setTpsAvg(value);
-        }
-      });
-    }, PERFORMANCE_SAMPLE_INTERVAL);
-
-    return () => {
-      clearInterval(performanceInterval);
-    };
-  }, [tpsAvg, needRefresh, getPerformanceSamples, setTpsAvg]);
 
   // Init Google Analytics
   useEffect(() => {
@@ -224,8 +154,8 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
             platform: getPlatform(),
             browser: browserName,
             walletProvider: provider?.name || 'Other',
-            theme: theme,
-            language: language,
+            theme,
+            language,
           });
 
           setNeedRefresh(true);
@@ -234,13 +164,13 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
           // Only record if referral address is valid and different from wallet address
           if (referralAddress && isValidAddress(referralAddress) && referralAddress !== walletAddress) {
             reportConnectedAccount(walletAddress, referralAddress)
-              .then(result => {
+              .then(() => {
                 setReferralAddress('');
               })
               .catch(error => console.error(error));
           } else {
             reportConnectedAccount(walletAddress)
-              .then(result => consoleOut('reportConnectedAccount hit'))
+              .then(() => consoleOut('reportConnectedAccount hit'))
               .catch(error => console.error(error));
           }
         }
@@ -249,7 +179,6 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
       } else if (previousWalletConnectState && !connected) {
         setPreviousWalletConnectState(false);
         setNeedRefresh(true);
-        setStreamList([]);
         clearConfirmationHistory();
         refreshTokenBalance();
         // Send identity to Segment if no wallew connection
@@ -282,7 +211,6 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
     refreshTokenBalance,
     setReferralAddress,
     refreshAccount,
-    setStreamList,
     getPlatform,
   ]);
 
@@ -307,15 +235,15 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
         }
       }, 1000);
       navigate('/');
-    } else {
-      consoleOut('Invalid address', '', 'red');
-      openNotification({
-        title: t('notifications.error-title'),
-        description: t('referrals.address-invalid'),
-        type: 'error',
-      });
-      navigate('/');
+      return;
     }
+    consoleOut('Invalid address', '', 'red');
+    openNotification({
+      title: t('notifications.error-title'),
+      description: t('referrals.address-invalid'),
+      type: 'error',
+    });
+    navigate('/');
   }, [location, publicKey, setReferralAddress, navigate, t]);
 
   useEffect(() => {
@@ -338,27 +266,26 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
 
   // Update diagnosis info
   useEffect(() => {
-    if (needRefresh) {
-      const now = new Date();
-      const device = getPlatform();
-      const dateTime = `Client time: ${now.toUTCString()}`;
-      const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
-      const networkInfo = `Cluster: ${connectionConfig.cluster} | TPS: ${tpsAvg || '-'}`;
-      const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
-      const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, branch: ${
-        gitInfo.branch || '-'
-      }, build: [${gitInfo.commit.shortHash}] on ${gitInfo.commit.date}`;
-      const debugInfo: AccountDetails = {
-        dateTime,
-        clientInfo,
-        networkInfo,
-        accountInfo,
-        appBuildInfo,
-      };
-      setDiagnosisInfo(debugInfo);
-      setNeedRefresh(false);
+    if (!needRefresh) {
+      return;
     }
-  }, [tpsAvg, provider, publicKey, needRefresh, connectionConfig, setDiagnosisInfo, getPlatform]);
+
+    setNeedRefresh(false);
+    const now = new Date();
+    const device = getPlatform();
+    const dateTime = `Client time: ${now.toUTCString()}`;
+    const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
+    const networkInfo = `Cluster: ${connectionConfig.cluster}`;
+    // const networkInfo = `Cluster: ${connectionConfig.cluster} | TPS: ${tpsAvg || '-'}`;
+    const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
+    const debugInfo: RuntimeAppDetails = {
+      dateTime,
+      clientInfo,
+      networkInfo,
+      accountInfo,
+    };
+    setDiagnosisInfo(debugInfo);
+  }, [provider, publicKey, needRefresh, connectionConfig, setDiagnosisInfo, getPlatform]);
 
   ////////////////////
   // Event handlers //
@@ -409,7 +336,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
         {renderAccountSelector()}
         <div className='App'>
           <Layout>
-            {isProd() && tpsAvg !== undefined && tpsAvg !== null && tpsAvg < PERFORMANCE_THRESHOLD && (
+            {isProd() && tpsAvg && tpsAvg < PERFORMANCE_THRESHOLD ? (
               <div id='performance-warning-bar'>
                 <div className='sitemessage'>
                   <a
@@ -422,7 +349,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
                   </a>
                 </div>
               </div>
-            )}
+            ) : null}
             <Header className='App-Bar'>
               <div className='app-bar-inner'>
                 <Link to='/' className='flex-center'>
@@ -433,7 +360,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
                 <AppBar
                   menuType='desktop'
                   onOpenDrawer={showDrawer}
-                  topNavVisible={location.pathname === '/ido' || location.pathname === '/ido-live' ? false : true}
+                  topNavVisible={!(location.pathname === '/ido' || location.pathname === '/ido-live')}
                 />
               </div>
               <AppBar menuType='mobile' topNavVisible={false} onOpenDrawer={showDrawer} />

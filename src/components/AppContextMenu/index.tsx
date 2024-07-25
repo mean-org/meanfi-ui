@@ -12,17 +12,17 @@ import {
   IconStats,
 } from 'Icons';
 import { Button, Dropdown, type MenuProps, Modal } from 'antd';
-import type { ItemType } from 'antd/lib/menu/hooks/useItems';
-import { LanguageSelector } from 'components/LanguageSelector';
-import { openNotification } from 'components/Notifications';
-import { ReferFriendModal } from 'components/ReferFriendModal';
+import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 import {
   LANGUAGES,
   MEANFI_SUPPORT_URL,
   MEAN_DAO_DOCS_URL,
   MEAN_DAO_GITHUB_ORG_URL,
   MEAN_FINANCE_DISCORD_URL,
-} from 'constants/common';
+} from 'app-constants/common';
+import { LanguageSelector } from 'components/LanguageSelector';
+import { openNotification } from 'components/Notifications';
+import { ReferFriendModal } from 'components/ReferFriendModal';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { copyText, isProd } from 'middleware/ui';
@@ -37,7 +37,7 @@ export const AppContextMenu = () => {
   const { t, i18n } = useTranslation('common');
   const [selectedLanguage] = useState<string>(i18n.language);
   const [language, setLanguage] = useState<string>('');
-  const [menuItems, setMenuItems] = useState<ItemType[] | undefined>(undefined);
+  const [menuItems, setMenuItems] = useState<ItemType<MenuItemType>[] | undefined>(undefined);
 
   useEffect(() => {
     if (!language) {
@@ -145,7 +145,7 @@ export const AppContextMenu = () => {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    const items: ItemType[] = [];
+    const items: ItemType<MenuItemType>[] = [];
     items.push({
       key: '01-theme',
       label: (

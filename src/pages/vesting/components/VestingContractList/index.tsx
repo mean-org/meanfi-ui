@@ -1,124 +1,76 @@
-import type { PaymentStreaming, PaymentStreamingAccount, StreamTemplate } from '@mean-dao/payment-streaming';
-import { BN } from '@project-serum/anchor';
+import type { PaymentStreamingAccount, StreamTemplate } from '@mean-dao/payment-streaming';
+import { PublicKey } from '@solana/web3.js';
 import { IconLoading, IconNoItems } from 'Icons';
 import { Progress } from 'antd';
+import { FALLBACK_COIN_IMAGE } from 'app-constants/common';
+import BN from 'bn.js';
 import { Identicon } from 'components/Identicon';
-import { FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { delay, getReadableDate, getTodayPercentualBetweenTwoDates, isProd } from 'middleware/ui';
+import { useWalletAccount } from 'contexts/walletAccount';
+import { getReadableDate, getTodayPercentualBetweenTwoDates } from 'middleware/ui';
 import { formatThousands, getSdkValue, makeDecimal } from 'middleware/utils';
+import useStreamingClient from 'query-hooks/streamingClient';
+import { useGetVestingContracts } from 'query-hooks/vestingContract';
+import { useGetStreamTemplates } from 'query-hooks/vestingContractTemplates';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LooseObject } from 'types/LooseObject';
 
-export const VestingContractList = (props: {
-  loadingVestingAccounts: boolean;
-  msp: PaymentStreaming | undefined;
-  onAccountSelected: any;
-  selectedAccount: PaymentStreamingAccount | undefined;
-  streamingAccounts: PaymentStreamingAccount[] | undefined;
-}) => {
-  const { loadingVestingAccounts, msp, onAccountSelected, selectedAccount, streamingAccounts } = props;
-  const { t } = useTranslation('common');
-  const { theme, getTokenByMintAddress } = useContext(AppStateContext);
-  const [today, setToday] = useState(new Date());
-  const [vcTemplates, setVcTemplates] = useState<any>({});
-  const [vcCompleteness, setVcCompleteness] = useState<any>({});
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
+interface VestingContractListProps {
+  onAccountSelected: (item: PaymentStreamingAccount) => void;
+  selectedVestingContract: PaymentStreamingAccount | undefined;
+}
 
-  const isStartDateFuture = useCallback(
-    (date: string): boolean => {
-      const now = today.toUTCString();
-      const nowUtc = new Date(now);
-      const comparedDate = new Date(date);
-      if (comparedDate > nowUtc) {
-        return true;
-      }
-      return false;
-    },
-    [today],
-  );
+export const VestingContractList = ({ onAccountSelected, selectedVestingContract }: VestingContractListProps) => {
+  const { t } = useTranslation('common');
+  const { selectedAccount } = useWalletAccount();
+  const { theme, getTokenByMintAddress } = useContext(AppStateContext);
+  const [vcCompleteness, setVcCompleteness] = useState<LooseObject>({});
+  const { tokenStreamingV2 } = useStreamingClient();
+  const { vestingContracts, loadingVestingContracts } = useGetVestingContracts({
+    srcAccountPk: new PublicKey(selectedAccount.address),
+    tokenStreamingV2,
+  });
+
+  const isStartDateFuture = useCallback((date: string): boolean => {
+    const now = new Date().toUTCString();
+    const nowUtc = new Date(now);
+    const comparedDate = new Date(date);
+    if (comparedDate > nowUtc) {
+      return true;
+    }
+    return false;
+  }, []);
 
   const getContractFinishDate = useCallback((templateValues: StreamTemplate) => {
     // Total length of vesting period in seconds
     const lockPeriod = templateValues.rateIntervalInSeconds * templateValues.durationNumberOfUnits;
     // Final date = Start date + lockPeriod
     const ts = new Date(templateValues.startUtc).getTime();
-    const finishDate = new Date(lockPeriod * 1000 + ts);
-    return finishDate;
+    return new Date(lockPeriod * 1000 + ts);
   }, []);
 
-  // Set template data map
-  useEffect(() => {
-    if (!msp || loadingVestingAccounts || !streamingAccounts || loadingTemplates) {
-      return;
-    }
-
-    setLoadingTemplates(true);
-
-    (async () => {
-      if (streamingAccounts) {
-        const compiledTemplates: LooseObject = {};
-        // consoleOut('loading of streamTemplates: ', 'STARTS', 'darkred');
-        for (const contract of streamingAccounts) {
-          if (loadingVestingAccounts) {
-            break;
-          }
-          // Delay before each call to avoid too many requests (devnet ONLY)
-          if (!isProd()) {
-            if (streamingAccounts.length < 20) {
-              await delay(150);
-            } else if (streamingAccounts.length < 40) {
-              await delay(200);
-            } else if (streamingAccounts.length < 60) {
-              await delay(250);
-            } else if (streamingAccounts.length < 80) {
-              await delay(300);
-            } else if (streamingAccounts.length < 100) {
-              await delay(350);
-            } else {
-              await delay(380);
-            }
-          }
-          try {
-            const templateData = await msp.getStreamTemplate(contract.id);
-            compiledTemplates[contract.id.toBase58()] = templateData;
-          } catch (error) {
-            console.error('Error fetching template data:', error);
-          }
-        }
-        setVcTemplates(compiledTemplates);
-      }
-      setLoadingTemplates(false);
-    })();
-  }, [msp, streamingAccounts, loadingTemplates, loadingVestingAccounts]);
-
-  // Create a tick every second
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setToday(new Date());
-    }, 1000);
-
-    return () => {
-      clearTimeout(timeout);
-    };
+  const { vcTemplates, loadingTemplates } = useGetStreamTemplates({
+    srcAccountPk: selectedAccount ? new PublicKey(selectedAccount.address) : undefined,
+    vestingContracts,
+    tokenStreamingV2,
   });
 
   // Set chart completed percentages
   useEffect(() => {
-    if (loadingVestingAccounts || loadingTemplates || !streamingAccounts || !vcTemplates) {
+    if (loadingVestingContracts || loadingTemplates || !vestingContracts || !vcTemplates) {
       return;
     }
 
-    const completedPercentages: any = {};
-    for (const contract of streamingAccounts) {
+    const completedPercentages: LooseObject = {};
+    for (const contract of vestingContracts) {
       let streamTemplate: StreamTemplate | undefined = undefined;
       let startDate: string | undefined = undefined;
 
       // get the contract template from the map if the item exists
       const id = contract.id.toBase58();
-      if (vcTemplates && vcTemplates[id] && vcTemplates[id].startUtc) {
+      if (vcTemplates?.[id]?.startUtc) {
         streamTemplate = vcTemplates[id];
         // Set a start date for the contract
         const localDate = new Date(vcTemplates[id].startUtc);
@@ -155,8 +107,8 @@ export const VestingContractList = (props: {
     getContractFinishDate,
     isStartDateFuture,
     loadingTemplates,
-    loadingVestingAccounts,
-    streamingAccounts,
+    loadingVestingContracts,
+    vestingContracts,
     vcTemplates,
   ]);
 
@@ -168,11 +120,11 @@ export const VestingContractList = (props: {
   return (
     <div
       className={`vesting-contract-list ${
-        !loadingVestingAccounts && (!streamingAccounts || streamingAccounts.length === 0) ? 'h-75' : ''
+        !loadingVestingContracts && (!vestingContracts || vestingContracts.length === 0) ? 'h-75' : ''
       }`}
     >
-      {streamingAccounts && streamingAccounts.length > 0 ? (
-        streamingAccounts.map((item, index) => {
+      {vestingContracts && vestingContracts.length > 0 ? (
+        vestingContracts.map((item, index) => {
           const associatedToken = item.mint.toBase58();
           const token = associatedToken ? getTokenByMintAddress(associatedToken as string) : undefined;
           const onTreasuryClick = () => {
@@ -181,13 +133,14 @@ export const VestingContractList = (props: {
           return (
             <div
               key={`${index + 50}`}
+              onKeyDown={() => {}}
               onClick={onTreasuryClick}
-              className={`transaction-list-row ${selectedAccount && selectedAccount.id === item.id ? 'selected' : ''}`}
+              className={`transaction-list-row ${selectedVestingContract && selectedVestingContract.id === item.id ? 'selected' : ''}`}
             >
               <div className='icon-cell'>
                 <div className='token-icon'>
                   <>
-                    {token && token.logoURI ? (
+                    {token?.logoURI ? (
                       <img
                         alt={`${token.name}`}
                         width={30}

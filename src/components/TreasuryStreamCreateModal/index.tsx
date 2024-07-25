@@ -5,7 +5,6 @@ import {
   AccountType,
   type Beneficiary,
   type CreateStreamTransactionAccounts,
-  PaymentStreaming,
   type PaymentStreamingAccount,
   type TransactionFees,
 } from '@mean-dao/payment-streaming';
@@ -17,6 +16,7 @@ import {
   Checkbox,
   Col,
   DatePicker,
+  type DatePickerProps,
   Divider,
   Dropdown,
   type MenuProps,
@@ -26,17 +26,18 @@ import {
   Tooltip,
 } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'app-constants/common';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
 import { InputMean } from 'components/InputMean';
 import { StepSelector } from 'components/StepSelector';
 import { TokenDisplay } from 'components/TokenDisplay';
-import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import dayjs from 'dayjs';
 import useLocalStorage from 'hooks/useLocalStorage';
-import { appConfig, customLogger } from 'index';
+import { appConfig, customLogger } from 'main';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
@@ -50,7 +51,6 @@ import {
 } from 'middleware/transactions';
 import {
   consoleOut,
-  disabledDate,
   friendlyDisplayDecimalPlaces,
   getIntervalFromSeconds,
   getLockPeriodOptionLabel,
@@ -61,6 +61,7 @@ import {
   isValidAddress,
   stringNumberFormat,
   toUsCurrency,
+  todayAndPriorDatesDisabled,
 } from 'middleware/ui';
 import {
   displayAmountWithSymbol,
@@ -79,7 +80,7 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { StreamRecipient } from 'models/common-types';
 import { OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
 import type { CreateStreamParams } from 'models/streams';
-import moment from 'moment';
+import useStreamingClient from 'query-hooks/streamingClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LooseObject } from 'types/LooseObject';
@@ -100,7 +101,6 @@ interface CreateStreamProps {
   transactionFees: TransactionFees;
   treasuryList: (TreasuryInfo | PaymentStreamingAccount)[] | undefined;
   treasuryDetails: TreasuryValues;
-  userBalances: LooseObject | undefined;
   withdrawTransactionFees: TransactionFees;
 }
 
@@ -116,7 +116,6 @@ export const TreasuryStreamCreateModal = ({
   transactionFees,
   treasuryList,
   treasuryDetails,
-  userBalances,
   withdrawTransactionFees,
 }: CreateStreamProps) => {
   const { t } = useTranslation('common');
@@ -183,15 +182,14 @@ export const TreasuryStreamCreateModal = ({
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-  const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, mspV2AddressPK, connection.commitment);
-  }, [connection, mspV2AddressPK]);
 
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
+
+  const { tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
+  const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -1052,13 +1050,15 @@ export const TreasuryStreamCreateModal = ({
       return;
     }
 
-    if (tokenAmount.gtn(0)) {
-      let toStream = tokenAmount;
-      if (cliffReleaseBn.gtn(0)) {
-        toStream = toStream.sub(cliffReleaseBn);
-      }
-      setAmountToBeStreamedBn(toStream);
+    if (!tokenAmount.gtn(0)) {
+      return;
     }
+
+    let toStream = tokenAmount;
+    if (cliffReleaseBn.gtn(0)) {
+      toStream = toStream.sub(cliffReleaseBn);
+    }
+    setAmountToBeStreamedBn(toStream);
   }, [cliffReleaseBn, selectedToken, tokenAmount]);
 
   ////////////////////////
@@ -1070,8 +1070,7 @@ export const TreasuryStreamCreateModal = ({
     let signature: string;
     let encodedTx: string;
     let multisigAuth = '';
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -1093,7 +1092,7 @@ export const TreasuryStreamCreateModal = ({
           psAccount: new PublicKey(data.treasury), // treasury
           owner: new PublicKey(data.treasurer), // owner
         };
-        const { transaction } = await paymentStreaming.buildCreateStreamTransaction(
+        const { transaction } = await tokenStreamingV2.buildCreateStreamTransaction(
           accounts, // accounts
           streamName, // streamName
           data.rateAmount, // rateAmount
@@ -1123,7 +1122,7 @@ export const TreasuryStreamCreateModal = ({
         psAccount: new PublicKey(data.treasury), // treasury
         owner: multisigSigner, // owner
       };
-      const { transaction } = await paymentStreaming.buildCreateStreamTransaction(
+      const { transaction } = await tokenStreamingV2.buildCreateStreamTransaction(
         accounts, // accounts
         streamName, // streamName
         data.rateAmount, // rateAmount
@@ -1224,11 +1223,11 @@ export const TreasuryStreamCreateModal = ({
         beneficiary, // beneficiaries
         associatedToken: assocToken.toBase58(), // associatedToken
         allocationAssigned: amount, // allocationAssigned
-        rateAmount: rateAmount, // rateAmount
+        rateAmount, // rateAmount
         rateIntervalInSeconds: isLockedTreasury
           ? getRateIntervalInSeconds(lockPeriodFrequency) // rateIntervalInSeconds
           : getRateIntervalInSeconds(paymentRateFrequency),
-        startUtc: startUtc, // startUtc
+        startUtc, // startUtc
         cliffVestAmount: cliffAmount, // cliffVestAmount
         cliffVestPercent: 0, // cliffVestPercent
         tokenFeePayedFromAccount: isFeePaidByTreasurer, // feePayedByTreasurer
@@ -1269,45 +1268,43 @@ export const TreasuryStreamCreateModal = ({
         return false;
       }
 
-      const result = await createStream(data)
-        .then(value => {
-          if (!value) {
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-              result: 'Could not create transaction',
-            });
-            customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('createStreams error:', error);
+      return await createStream(data)
+      .then(value => {
+        if (!value) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure,
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`,
+            result: 'Could not create transaction',
           });
           customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
           return false;
+        }
+        setTransactionStatus({
+          lastOperation: TransactionStatus.InitTransactionSuccess,
+          currentOperation: TransactionStatus.SignTransaction,
         });
-
-      return result;
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+        });
+        transaction = value;
+        return true;
+      })
+      .catch(error => {
+        console.error('createStreams error:', error);
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.InitTransactionFailure,
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+          result: `${error}`,
+        });
+        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        return false;
+      });
     };
 
     if (wallet && selectedToken && publicKey) {
@@ -1416,11 +1413,14 @@ export const TreasuryStreamCreateModal = ({
     return isRateAmountValid();
   };
 
+  const onDateChange: DatePickerProps['onChange'] = (_date, dateString) => {
+    handleDateChange(dateString as string);
+  };
+
   const onTitleInputValueChange = (value: string) => {
     setProposalTitle(value);
   };
 
-  // TODO: Verify and validate at runtime
   const onStreamingAccountSelected = useCallback(
     (e: string) => {
       consoleOut('Selected streaming account:', e, 'blue');
@@ -1660,8 +1660,8 @@ export const TreasuryStreamCreateModal = ({
                               style={{ width: '100%', maxWidth: 'none' }}
                               popupClassName='stream-select-dropdown'
                               onChange={onStreamingAccountSelected}
-                              bordered={false}
-                              showArrow={false}
+                              variant='borderless'
+                              suffixIcon={null}
                               dropdownRender={menu => <div>{menu}</div>}
                             >
                               {treasuryList.map(option => {
@@ -1912,14 +1912,15 @@ export const TreasuryStreamCreateModal = ({
                         <div className='add-on simplelink'>
                           <DatePicker
                             size='middle'
-                            bordered={false}
+                            variant='borderless'
                             className='addon-date-picker'
                             aria-required={true}
                             allowClear={false}
-                            disabledDate={disabledDate}
+                            showNow={false}
+                            disabledDate={todayAndPriorDatesDisabled}
                             placeholder={t('transactions.send-date.placeholder')}
-                            onChange={(value, date) => handleDateChange(date)}
-                            defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
+                            onChange={onDateChange}
+                            defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
                             format={DATEPICKER_FORMAT}
                           />
                         </div>
@@ -2224,14 +2225,15 @@ export const TreasuryStreamCreateModal = ({
                         <div className='add-on simplelink'>
                           <DatePicker
                             size='middle'
-                            bordered={false}
+                            variant='borderless'
                             className='addon-date-picker'
                             aria-required={true}
                             allowClear={false}
-                            disabledDate={disabledDate}
+                            showNow={false}
+                            disabledDate={todayAndPriorDatesDisabled}
                             placeholder={t('transactions.send-date.placeholder')}
-                            onChange={(value, date) => handleDateChange(date)}
-                            defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
+                            onChange={onDateChange}
+                            defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
                             format={DATEPICKER_FORMAT}
                           />
                         </div>

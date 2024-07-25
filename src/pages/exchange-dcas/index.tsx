@@ -19,18 +19,18 @@ import {
 import { LAMPORTS_PER_SOL, PublicKey, type Transaction } from '@solana/web3.js';
 import { IconClock, IconExchange, IconExternalLink } from 'Icons';
 import { Button, Col, Empty, Modal, Row, Spin, Tooltip } from 'antd';
-import { DdcaCloseModal } from 'components/DdcaCloseModal';
-import { DdcaWithdrawModal } from 'components/DdcaWithdrawModal';
-import { Identicon } from 'components/Identicon';
-import { openNotification } from 'components/Notifications';
-import { PreFooter } from 'components/PreFooter';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   VERBOSE_DATE_FORMAT,
   VERBOSE_DATE_TIME_FORMAT,
-} from 'constants/common';
-import { MEAN_TOKEN_LIST } from 'constants/tokens';
+} from 'app-constants/common';
+import { MEAN_TOKEN_LIST } from 'app-constants/tokens';
+import { DdcaCloseModal } from 'components/DdcaCloseModal';
+import { DdcaWithdrawModal } from 'components/DdcaWithdrawModal';
+import { Identicon } from 'components/Identicon';
+import { openNotification } from 'components/Notifications';
+import { PreFooter } from 'components/PreFooter';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
@@ -38,7 +38,7 @@ import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } fr
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
 import useWindowSize from 'hooks/useWindowResize';
-import { customLogger } from 'index';
+import { customLogger } from 'main';
 import { SOL_MINT } from 'middleware/ids';
 import { composeTxWithPrioritizationFees, sendTx, serializeTx, signTx } from 'middleware/transactions';
 import {
@@ -55,6 +55,7 @@ import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -92,10 +93,10 @@ export const ExchangeDcasView = () => {
   // Set and cache the DDCA client
   const ddcaClient = useMemo(() => {
     if (connection && wallet && publicKey && connectionConfig.endpoint) {
-      return new DdcaClient(connectionConfig.endpoint, wallet, { commitment: 'confirmed' }, isLocal() ? true : false);
-    } else {
-      return undefined;
+      return new DdcaClient(connectionConfig.endpoint, wallet, { commitment: 'confirmed' }, !!isLocal());
     }
+
+    return undefined;
   }, [connection, connectionConfig.endpoint, publicKey, wallet]);
 
   // Keep track of current balance
@@ -137,13 +138,13 @@ export const ExchangeDcasView = () => {
   };
 
   const isError = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+    return !!(
+      transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
       transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
       transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
       transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
       transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-      ? true
-      : false;
+    );
   };
 
   //////////////////////
@@ -188,9 +189,9 @@ export const ExchangeDcasView = () => {
   // Execute close
   const onExecuteCloseDdcaTransaction = async () => {
     let transaction: Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -290,16 +291,16 @@ export const ExchangeDcasView = () => {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Close DDCA transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('Close DDCA transaction failed', {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
     const updateCloseDdcaTx = async (signed: Transaction): Promise<boolean> => {
@@ -381,7 +382,7 @@ export const ExchangeDcasView = () => {
               loadingTitle: 'Confirming transaction',
               loadingMessage: 'Close DDCA',
               completedTitle: 'Transaction confirmed',
-              completedMessage: `DDCA has been closed!`,
+              completedMessage: 'DDCA has been closed!',
               completedMessageTimeout: 6,
             });
             setTransactionStatus({
@@ -434,7 +435,7 @@ export const ExchangeDcasView = () => {
     });
   }, [getTransactionFees]);
   const hideWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
-  const onAcceptWithdraw = (amount: any) => {
+  const onAcceptWithdraw = (amount: string) => {
     hideWithdrawModal();
     consoleOut('Withdraw amount:', Number.parseFloat(amount));
     onExecuteWithdrawTransaction(amount);
@@ -463,9 +464,9 @@ export const ExchangeDcasView = () => {
   // Execute withdraw
   const onExecuteWithdrawTransaction = async (withdrawAmount: string) => {
     let transaction: Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -579,16 +580,16 @@ export const ExchangeDcasView = () => {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('DDCA withdraw transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('DDCA withdraw transaction failed', {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
     if (wallet && publicKey) {
@@ -617,7 +618,7 @@ export const ExchangeDcasView = () => {
               loadingTitle: 'Confirming transaction',
               loadingMessage: 'Withdraw DDCA funds',
               completedTitle: 'Transaction confirmed',
-              completedMessage: `DDCA funds successfully withdrawn`,
+              completedMessage: 'DDCA funds successfully withdrawn',
               completedMessageTimeout: 6,
             });
             setTransactionStatus({
@@ -711,7 +712,7 @@ export const ExchangeDcasView = () => {
       setDetailsPanelOpen(true);
       reloadDdcaDetail(item.ddcaAccountAddress);
     },
-    [reloadDdcaDetail, setDetailsPanelOpen],
+    [reloadDdcaDetail],
   );
 
   // Gets the recurring buys on demmand
@@ -862,7 +863,7 @@ export const ExchangeDcasView = () => {
     if (isSmallUpScreen && width < 576) {
       setIsSmallUpScreen(false);
     }
-  }, [width, isSmallUpScreen, detailsPanelOpen]);
+  }, [width, isSmallUpScreen]);
 
   // Setup event listeners
   useEffect(() => {
@@ -893,6 +894,7 @@ export const ExchangeDcasView = () => {
   //   Events   //
   ////////////////
 
+  // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const onCopyRecurringBuyAddress = (data: any) => {
     if (copyText(data.toString())) {
       openNotification({
@@ -947,14 +949,14 @@ export const ExchangeDcasView = () => {
       <>
         <div className='overlapped-tokens'>
           <div className='token-icon from'>
-            {fromToken && fromToken.logoURI ? (
+            {fromToken?.logoURI ? (
               <img alt={`${fromToken.name}`} width={30} height={30} src={fromToken.logoURI} />
             ) : (
               <Identicon address={item.fromMint} style={{ width: '30', display: 'inline-flex' }} />
             )}
           </div>
           <div className='token-icon to'>
-            {toToken && toToken.logoURI ? (
+            {toToken?.logoURI ? (
               <img alt={`${toToken.name}`} width={30} height={30} src={toToken.logoURI} />
             ) : (
               <Identicon address={item.toMint} style={{ width: '30', display: 'inline-flex' }} />
@@ -1237,10 +1239,10 @@ export const ExchangeDcasView = () => {
                   </div>
                 </div>
                 <div className='item-list-body compact'>
-                  {activity.map((item, index) => {
+                  {activity.map(item => {
                     return (
                       <a
-                        key={`${index}`}
+                        key={`${item.dateUtc}`}
                         className='item-list-row'
                         target='_blank'
                         rel='noopener noreferrer'
@@ -1266,7 +1268,11 @@ export const ExchangeDcasView = () => {
       </div>
       {selectedDdca && (
         <div className='stream-share-ctas'>
-          <span className='copy-cta' onClick={() => onCopyRecurringBuyAddress(selectedDdca.ddcaAccountAddress)}>
+          <span
+            className='copy-cta'
+            onKeyDown={() => {}}
+            onClick={() => onCopyRecurringBuyAddress(selectedDdca.ddcaAccountAddress)}
+          >
             {selectedDdca.ddcaAccountAddress}
           </span>
           <a
@@ -1295,6 +1301,7 @@ export const ExchangeDcasView = () => {
           return (
             <div
               key={`${index + 50}`}
+              onKeyDown={() => {}}
               onClick={onBuyClick}
               className={`transaction-list-row ${
                 ddcaDetails && ddcaDetails.ddcaAccountAddress === item.ddcaAccountAddress ? 'selected' : ''
@@ -1334,7 +1341,8 @@ export const ExchangeDcasView = () => {
           )}
         </>
       );
-    } else if (isSuccess()) {
+    }
+    if (isSuccess()) {
       return (
         <>
           <CheckOutlined style={{ fontSize: 48 }} className='icon' />
@@ -1347,7 +1355,8 @@ export const ExchangeDcasView = () => {
           </Button>
         </>
       );
-    } else if (isError()) {
+    }
+    if (isError()) {
       return (
         <>
           <WarningOutlined style={{ fontSize: 48 }} className='icon' />
@@ -1368,14 +1377,14 @@ export const ExchangeDcasView = () => {
           </Button>
         </>
       );
-    } else {
-      return (
-        <>
-          <Spin indicator={bigLoadingIcon} className='icon' />
-          <h4 className='font-bold mb-4 text-uppercase'>{t('transactions.status.tx-wait')}...</h4>
-        </>
-      );
     }
+
+    return (
+      <>
+        <Spin indicator={bigLoadingIcon} className='icon' />
+        <h4 className='font-bold mb-4 text-uppercase'>{t('transactions.status.tx-wait')}...</h4>
+      </>
+    );
   };
 
   const getWithdrawFundsTxModalContent = () => {
@@ -1395,7 +1404,8 @@ export const ExchangeDcasView = () => {
           )}
         </>
       );
-    } else if (isSuccess()) {
+    }
+    if (isSuccess()) {
       return (
         <>
           <CheckOutlined style={{ fontSize: 48 }} className='icon' />
@@ -1408,7 +1418,8 @@ export const ExchangeDcasView = () => {
           </Button>
         </>
       );
-    } else if (isError()) {
+    }
+    if (isError()) {
       return (
         <>
           <WarningOutlined style={{ fontSize: 48 }} className='icon' />
@@ -1429,14 +1440,14 @@ export const ExchangeDcasView = () => {
           </Button>
         </>
       );
-    } else {
-      return (
-        <>
-          <Spin indicator={bigLoadingIcon} className='icon' />
-          <h4 className='font-bold mb-4 text-uppercase'>{t('transactions.status.tx-wait')}...</h4>
-        </>
-      );
     }
+
+    return (
+      <>
+        <Spin indicator={bigLoadingIcon} className='icon' />
+        <h4 className='font-bold mb-4 text-uppercase'>{t('transactions.status.tx-wait')}...</h4>
+      </>
+    );
   };
 
   return (
@@ -1460,6 +1471,7 @@ export const ExchangeDcasView = () => {
                 <Tooltip placement='bottom' title={t('ddcas.refresh-ddcas')}>
                   <div
                     className={`user-address ${loadingRecurringBuys ? 'click-disabled' : 'simplelink'}`}
+                    onKeyDown={() => {}}
                     onClick={() => reloadRecurringBuys()}
                   >
                     <Spin size='small' />

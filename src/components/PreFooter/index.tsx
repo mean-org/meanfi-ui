@@ -1,11 +1,10 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   MEAN_DAO_DOCS_URL,
   MEAN_DAO_MEDIUM_BLOG_URL,
   MEAN_FINANCE_DISCORD_URL,
   MEAN_FINANCE_TWITTER_URL,
-} from '../../constants';
+} from '../../app-constants';
 
 export const PreFooter = () => {
   const { t } = useTranslation('common');

@@ -5,7 +5,7 @@ import type { MappedTransaction } from 'middleware/history';
 import { getChange } from 'middleware/transactions';
 import type { UserTokenAccount } from 'models/accounts';
 import { FetchStatus } from 'models/transactions';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -19,7 +19,7 @@ export const AssetActivity = (props: {
   selectedAsset: UserTokenAccount | undefined;
   status: FetchStatus;
   transactions: MappedTransaction[] | undefined;
-  onLoadMore: any;
+  onLoadMore: () => void;
 }) => {
   const {
     accountTokens,
@@ -36,7 +36,7 @@ export const AssetActivity = (props: {
   const { t } = useTranslation('common');
 
   const hasTransactions = useMemo(() => {
-    return transactions && transactions.length > 0 ? true : false;
+    return !!(transactions && transactions.length > 0 );
   }, [transactions]);
 
   const renderTransactions = () => {
@@ -44,7 +44,7 @@ export const AssetActivity = (props: {
       if (isAssetNativeAccount) {
         // Render only txs that have SOL changes
         const filtered = transactions.filter(tx => {
-          const meta = tx.parsedTransaction && tx.parsedTransaction.meta ? tx.parsedTransaction.meta : null;
+          const meta = tx.parsedTransaction?.meta ? tx.parsedTransaction.meta : null;
           if (!meta || meta.err !== null) {
             return false;
           }
@@ -55,7 +55,7 @@ export const AssetActivity = (props: {
           }
           // Get amount change for each tx
           const change = getChange(accIdx, meta);
-          return isAssetNativeAccount && change !== 0 ? true : false;
+          return !!(isAssetNativeAccount && change !== 0 );
         });
         return filtered?.map((trans: MappedTransaction) => {
           return (
@@ -68,24 +68,24 @@ export const AssetActivity = (props: {
             />
           );
         });
-      } else {
-        // Render the transactions collection
-        return transactions.map((trans: MappedTransaction) => {
-          if (trans.parsedTransaction && trans.parsedTransaction.meta && trans.parsedTransaction.meta.err === null) {
-            return (
-              <TransactionItemView
-                key={`${trans.signature}`}
-                transaction={trans}
-                selectedAsset={selectedAsset as UserTokenAccount}
-                accountAddress={selectedAccountAddress}
-                tokenAccounts={accountTokens}
-              />
-            );
-          }
-          return null;
-        });
       }
-    } else return null;
+
+      // Render the transactions collection
+      return transactions.map((trans: MappedTransaction) => {
+        if (trans.parsedTransaction?.meta && trans.parsedTransaction.meta.err === null) {
+          return (
+            <TransactionItemView
+              key={`${trans.signature}`}
+              transaction={trans}
+              selectedAsset={selectedAsset as UserTokenAccount}
+              accountAddress={selectedAccountAddress}
+              tokenAccounts={accountTokens}
+            />
+          );
+        }
+        return null;
+      });
+    }
   };
 
   if (status === FetchStatus.FetchFailed && !hasItems) {
@@ -94,13 +94,15 @@ export const AssetActivity = (props: {
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.loading-error')}</p>} />
       </div>
     );
-  } else if (status === FetchStatus.Fetched && !hasItems) {
+  }
+  if (status === FetchStatus.Fetched && !hasItems) {
     return (
       <div className='h-100 flex-center'>
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
       </div>
     );
-  } else if (status === FetchStatus.Fetching && !hasItems) {
+  }
+  if (status === FetchStatus.Fetching && !hasItems) {
     return (
       <div className='flex flex-center'>
         <Spin indicator={loadIndicator} />
@@ -124,6 +126,7 @@ export const AssetActivity = (props: {
               className={status === FetchStatus.Fetching ? 'no-pointer' : 'secondary-link underline-on-hover'}
               role='link'
               onClick={onLoadMore}
+              onKeyDown={() => {}}
             >
               {status === FetchStatus.Fetching ? (
                 <>

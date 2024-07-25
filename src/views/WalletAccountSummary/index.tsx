@@ -1,6 +1,6 @@
 import { Col, Row } from 'antd';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
 import { AddressDisplay } from 'components/AddressDisplay';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { consoleOut, toUsCurrency } from 'middleware/ui';

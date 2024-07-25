@@ -1,8 +1,8 @@
-import type { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import type { MultisigInfo, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import type { Idl, Program } from '@project-serum/anchor';
 import type { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { IconArrowForward } from 'Icons';
-import { Button, Col, Row } from 'antd';
+import { Button, Col, Row, type TabsProps } from 'antd';
 import { ResumeItem } from 'components/ResumeItem';
 import { BPF_LOADER_UPGRADEABLE_PID } from 'middleware/ids';
 import { consoleOut } from 'middleware/ui';
@@ -15,11 +15,11 @@ export const SafeSerumInfoView = (props: {
   isProposalDetails: boolean;
   multisigClient: Program<Idl>;
   multisigTxs: MultisigTransaction[];
-  onDataToProgramView: any;
-  onDataToSafeView: any;
-  onEditMultisigClick: any;
-  onNewProposalClicked?: any;
-  selectedMultisig?: any;
+  onDataToProgramView: (program: ProgramAccounts) => void;
+  onDataToSafeView: (proposal: MultisigTransaction) => void;
+  onEditMultisigClick: () => void;
+  onNewProposalClicked?: () => void;
+  selectedMultisig?: MultisigInfo;
 }) => {
   const { connection, isProposalDetails, multisigTxs, onEditMultisigClick, onNewProposalClicked, selectedMultisig } =
     props;
@@ -39,8 +39,7 @@ export const SafeSerumInfoView = (props: {
           };
 
           const title = tx.details.title ? tx.details.title : 'Unknown proposal';
-
-          const approvedSigners = tx.signers.filter((s: any) => s === true).length;
+          const approvedSigners = tx.signers.filter(s => s === true).length;
           const expirationDate = tx.details.expirationDate ? tx.details.expirationDate.toDateString() : '';
           const executedOnDate = tx.executedOn ? tx.executedOn.toDateString() : '';
 
@@ -48,6 +47,7 @@ export const SafeSerumInfoView = (props: {
             <div
               key={tx.id.toBase58()}
               onClick={onSelectProposal}
+              onKeyDown={() => {}}
               className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
             >
               <ResumeItem
@@ -156,19 +156,21 @@ export const SafeSerumInfoView = (props: {
     <>
       {programs &&
         programs.length > 0 &&
-        programs.map((program: any) => {
+        programs.map((program, index) => {
           const onSelectProgram = () => {
             props.onDataToProgramView(program);
           };
+          const programAccId = program.pubkey.toBase58();
 
           return (
             <div
-              key={program.id}
+              key={programAccId}
               onClick={onSelectProgram}
-              className={`d-flex w-100 align-items-center simplelink ${program.id % 2 === 0 ? '' : 'bg-secondary-02'}`}
+              onKeyDown={() => {}}
+              className={`d-flex w-100 align-items-center simplelink ${index % 2 === 0 ? '' : 'bg-secondary-02'}`}
             >
               <Row className='list-item hover-list'>
-                <Col>{program.name}</Col>
+                <Col>{programAccId}</Col>
                 {!isProposalDetails && (
                   <span className='icon-button-container'>
                     <Button
@@ -187,7 +189,7 @@ export const SafeSerumInfoView = (props: {
   );
 
   // Tabs
-  const tabs = [
+  const tabs: TabsProps['items'] = [
     {
       key: 'serum01',
       label: 'Proposals',

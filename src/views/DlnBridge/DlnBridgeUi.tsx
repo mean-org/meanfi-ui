@@ -4,10 +4,10 @@ import { PublicKey } from '@solana/web3.js';
 // wagmi & viem
 import { estimateFeesPerGas } from '@wagmi/core';
 import { Button, Modal, Select, Tooltip } from 'antd';
+import { INPUT_DEBOUNCE_TIME, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import { Identicon } from 'components/Identicon';
 import { TokenDisplay } from 'components/TokenDisplay';
-import { INPUT_DEBOUNCE_TIME, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
@@ -909,8 +909,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                     style={{ width: 'auto', maxWidth: 'none' }}
                     popupClassName='chain-select-dropdown'
                     onChange={onSrcChainSelected}
-                    bordered={false}
-                    showArrow={false}
+                    variant='borderless'
+                    suffixIcon={null}
                     disabled={isBusy || isFetchingQuote}
                     dropdownRender={menu => <div>{menu}</div>}
                   >
@@ -1025,8 +1025,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
                     style={{ width: 'auto', maxWidth: 'none' }}
                     popupClassName='chain-select-dropdown'
                     onChange={onDstChainSelected}
-                    bordered={false}
-                    showArrow={false}
+                    variant='borderless'
+                    suffixIcon={null}
                     disabled={isBusy || isFetchingQuote}
                     dropdownRender={menu => <div>{menu}</div>}
                   >

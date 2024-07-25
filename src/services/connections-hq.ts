@@ -1,7 +1,8 @@
 import { type Cluster, type ConnectionConfig, clusterApiUrl } from '@solana/web3.js';
-import { TRANSACTION_STATUS_RETRY_TIMEOUT } from 'constants/common';
-import { environment } from '../environments/environment';
-import { ChainID } from '../models/enums';
+import { TRANSACTION_STATUS_RETRY_TIMEOUT } from 'app-constants/common';
+import { environment } from 'environments/environment';
+import getRuntimeEnv from 'environments/getRuntimeEnv';
+import { ChainID } from 'models/enums';
 
 export interface RpcConfig {
   cluster: Cluster | 'local-validator';
@@ -11,9 +12,9 @@ export interface RpcConfig {
   network?: string;
 }
 
-const ironForgeApiUrl = process.env.REACT_APP_IRONFORGE_API_URL ?? '';
-const ironForgeApiKey = process.env.REACT_APP_IRONFORGE_API_KEY ?? '';
-const ironForgeApiAccessToken = process.env.REACT_APP_IRONFORGE_API_ACCESS_TOKEN ?? '';
+const ironForgeApiUrl = getRuntimeEnv().VITE_IRONFORGE_API_URL ?? '';
+const ironForgeApiKey = getRuntimeEnv().VITE_IRONFORGE_API_KEY ?? '';
+const ironForgeApiAccessToken = getRuntimeEnv().VITE_IRONFORGE_API_ACCESS_TOKEN ?? '';
 
 export const failsafeConnectionConfig: ConnectionConfig = {
   commitment: 'confirmed',
@@ -23,11 +24,6 @@ export const failsafeConnectionConfig: ConnectionConfig = {
     'x-ironforge-auth-token': ironForgeApiAccessToken,
   },
 };
-
-export const RETRY_TIMER = 10;
-export const NUM_RETRIES = 3;
-export const RELOAD_TIMER = 60;
-export const GET_RPC_API_ENDPOINT = '/meanfi-rpcs';
 
 export const DEFAULT_RPCS: RpcConfig[] = [
   {
@@ -86,28 +82,7 @@ export const getIronforgeEnvironment = () => {
   }
 };
 
-export const getFallBackRpcEndpoint = () => {
-  const defaultEndpoint = getDefaultRpc();
-
-  const endpoint =
-    environment === 'production'
-      ? process.env.REACT_APP_FALLBACK_MAINNET_RPC_URL ?? ''
-      : process.env.REACT_APP_FALLBACK_DEVNET_RPC_URL ?? '';
-
-  if (endpoint) {
-    return { ...defaultEndpoint, httpProvider: endpoint } as RpcConfig;
-  }
-
-  return defaultEndpoint;
-};
-
 export const refreshCachedRpc = async () => {
-  // NOTE: To avoid going through Ironforge for debugging purposes
-  // Uncomment next two lines and comment the rest in the method.
-
-  // const forcedRpc = getFallBackRpcEndpoint();
-  // window.localStorage.setItem('cachedRpc', JSON.stringify(forcedRpc));
-
   const ironforgeEnvironment = getIronforgeEnvironment();
   const newRpc = getDefaultRpc();
   if (ironforgeEnvironment && ironForgeApiUrl) {

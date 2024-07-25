@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconExternalLink } from '../../Icons';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../app-constants';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 import { copyText } from '../../middleware/ui';
 import { shortenAddress } from '../../middleware/utils';

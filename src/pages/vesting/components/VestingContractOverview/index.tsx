@@ -23,7 +23,7 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { TimeData } from 'models/common-types';
 import { PaymentRateType } from 'models/enums';
 import type { VestingFlowRateInfo } from 'models/vesting';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const VestingContractOverview = (props: {
@@ -249,7 +249,9 @@ export const VestingContractOverview = (props: {
         setCurrentVestingAmount(vestedAmountBn);
         setCompletedVestingPercentage(0);
         return;
-      } else if (isContractFinished()) {
+      }
+      
+      if (isContractFinished()) {
         const streamableAmountBn = vestingContractFlowRate.streamableAmountBn.toString();
         setCurrentVestingAmount(new BigNumber(streamableAmountBn.toString()));
         setCompletedVestingPercentage(100);
@@ -275,12 +277,10 @@ export const VestingContractOverview = (props: {
       setCompletedVestingPercentage(0);
     }
   }, [
-    today,
     vestingContract,
     paymentStartDate,
     vestingContractFlowRate,
     getCurrentVestedAmount,
-    getContractFinishDate,
     isContractFinished,
     isDateInTheFuture,
   ]);
@@ -394,9 +394,9 @@ export const VestingContractOverview = (props: {
     }
     if (isDateInTheFuture(finishDate.toUTCString())) {
       return 'Contract ends on';
-    } else {
-      return 'Contract ended on';
     }
+
+    return 'Contract ended on';
   };
 
   return (

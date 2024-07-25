@@ -14,11 +14,11 @@ import { useWallet } from 'contexts/wallet';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { consoleOut } from 'middleware/ui';
 import type { StreamTreasuryType } from 'models/treasuries';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const StreamLockedModal = (props: {
-  handleClose: any;
+  handleClose: () => void;
   isVisible: boolean;
   streamDetail: Stream | StreamInfo | undefined;
   mspClient: MoneyStreaming | PaymentStreaming | undefined;
@@ -39,22 +39,21 @@ export const StreamLockedModal = (props: {
       const treasuryPk = new PublicKey(treasuryId);
 
       try {
-        let details: PaymentStreamingAccount | TreasuryInfo | undefined = undefined;
-        if (streamVersion < 2) {
-          details = await (mspClient as MoneyStreaming).getTreasury(treasuryPk);
-        } else {
-          details = await (mspClient as PaymentStreaming).getAccount(treasuryPk);
-        }
+        let details: PaymentStreamingAccount | TreasuryInfo | null = null;
+        details =
+          streamVersion < 2
+            ? await (mspClient as MoneyStreaming).getTreasury(treasuryPk)
+            : await (mspClient as PaymentStreaming).getAccount(treasuryPk);
         if (details) {
           const type = getStreamingAccountType(details);
           if (type === AccountType.Lock) {
             return 'locked';
-          } else {
-            return 'open';
           }
-        } else {
-          return 'unknown';
+
+          return 'open';
         }
+
+        return 'unknown';
       } catch (error) {
         console.error(error);
         return 'unknown';

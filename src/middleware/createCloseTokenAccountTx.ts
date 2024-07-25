@@ -6,8 +6,8 @@ import {
   PublicKey,
   type TransactionInstruction,
 } from '@solana/web3.js';
-import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import type { TokenAccountInfo } from 'models/accounts';
 import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
 

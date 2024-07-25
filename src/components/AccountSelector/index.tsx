@@ -6,7 +6,6 @@ import { openNotification } from 'components/Notifications';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { useWalletAccount } from 'contexts/walletAccount';
-import { isInXnftWallet } from 'integrations/xnft/xnft-wallet-adapter';
 import { SYSTEM_PROGRAM_ID } from 'middleware/ids';
 import { consoleOut, copyText, kFormatter, toUsCurrency } from 'middleware/ui';
 import { shortenAddress } from 'middleware/utils';
@@ -84,9 +83,9 @@ export const AccountSelector = (props: {
   useEffect(() => {
     if (tokensLoaded && accountTokens) {
       let sumMeanTokens = 0;
-      accountTokens.forEach((asset: UserTokenAccount, index: number) => {
+      for (const asset of accountTokens) {
         sumMeanTokens += asset.valueInUsd || 0;
-      });
+      }
       setTotalTokenAccountsValue(sumMeanTokens);
     }
   }, [accountTokens, tokensLoaded]);
@@ -271,7 +270,7 @@ export const AccountSelector = (props: {
           <div className='left flex-row align-items-center'>
             <span className='text-uppercase'>Wallets</span>
           </div>
-          {!isInXnftWallet() && !isFullWorkflowEnabled && (
+          {!isFullWorkflowEnabled && (
             <div className='right'>
               <span className='secondary-link underlined' onKeyDown={onDisconnectWallet} onClick={onDisconnectWallet}>
                 Disconnect
@@ -352,7 +351,7 @@ export const AccountSelector = (props: {
       <div className='accounts-list'>
         <Spin spinning={loadingMultisigAccounts}>
           {multisigAccounts && multisigAccounts.length > 0 ? (
-            multisigAccounts.map((item, index) => {
+            multisigAccounts.map(item => {
               return (
                 <div
                   key={item.authority.toBase58()}

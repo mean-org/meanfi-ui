@@ -5,16 +5,16 @@ import { AccountType, type PaymentStreamingAccount, type Stream } from '@mean-da
 import { BN } from '@project-serum/anchor';
 import { IconHelpCircle } from 'Icons';
 import { Button, Modal, Select, Spin, Tooltip } from 'antd';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { Identicon } from 'components/Identicon';
-import { InputMean } from 'components/InputMean';
 import {
   FALLBACK_COIN_IMAGE,
   MIN_SOL_BALANCE_REQUIRED,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   WRAPPED_SOL_MINT_ADDRESS,
-} from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
+} from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
+import { AddressDisplay } from 'components/AddressDisplay';
+import { Identicon } from 'components/Identicon';
+import { InputMean } from 'components/InputMean';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -665,8 +665,8 @@ export const TreasuryAddFundsModal = ({
                             style={{ width: '100%', maxWidth: 'none' }}
                             popupClassName='stream-select-dropdown'
                             onChange={onStreamingAccountSelected}
-                            bordered={false}
-                            showArrow={false}
+                            variant='borderless'
+                            suffixIcon={null}
                             dropdownRender={menu => <div>{menu}</div>}
                           >
                             {treasuryList.map(option => {

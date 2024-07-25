@@ -1,11 +1,14 @@
 import { Modal } from 'antd';
-import { HELLO_NEXT_BOARD_URL } from 'constants/common';
-import React from 'react';
+import { HELLO_NEXT_BOARD_URL } from 'app-constants/common';
 import { IconLightBulb } from '../../Icons';
 
-export const AccountsSuggestAssetModal = (props: { handleOk: any; handleClose: any; isVisible: boolean }) => {
-  const { isVisible, handleClose, handleOk } = props;
+interface IProps {
+  handleOk: () => void;
+  handleClose: () => void;
+  isVisible: boolean;
+}
 
+export const AccountsSuggestAssetModal = ({ isVisible, handleClose, handleOk }: IProps) => {
   // Callback methods
 
   // Effects
@@ -27,7 +30,7 @@ export const AccountsSuggestAssetModal = (props: { handleOk: any; handleClose: a
       open={isVisible}
       onOk={handleOk}
       onCancel={handleClose}
-      width={320}
+      width={360}
     >
       <div className='mb-2 shift-up-1 text-center'>
         <p>
@@ -41,7 +44,7 @@ export const AccountsSuggestAssetModal = (props: { handleOk: any; handleClose: a
             title='Suggest an Asset'
             target='_blank'
             rel='noopener noreferrer'
-            onClick={() => handleClose()}
+            onClick={handleClose}
           >
             Click on this link
           </a>

@@ -1,46 +1,46 @@
 import type { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
 import type { PaymentStreamingAccount, Stream } from '@mean-dao/payment-streaming';
-import type { PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
 import { Button, notification } from 'antd';
+import { MULTISIG_ROUTE_BASE_PATH } from 'app-constants/common';
 import { openNotification } from 'components/Notifications';
-import { MULTISIG_ROUTE_BASE_PATH } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
+import { useWalletAccount } from 'contexts/walletAccount';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { AppUsageEvent } from 'middleware/segment-service';
+import { getStreamId } from 'middleware/streamHelpers';
 import { consoleOut } from 'middleware/ui';
 import { RegisteredAppPaths } from 'models/accounts';
 import { EventType, OperationType } from 'models/enums';
+import { useGetStreamList } from 'query-hooks/streamList';
+import useStreamingClient from 'query-hooks/streamingClient';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { MoneyStreamsIncomingView, MoneyStreamsInfoView, MoneyStreamsOutgoingView, StreamingAccountView } from 'views';
+import { MoneyStreamsIncomingView } from 'views/MoneyStreamsIncoming';
+import { MoneyStreamsInfoView } from 'views/MoneyStreamsInfo';
+import { MoneyStreamsOutgoingView } from 'views/MoneyStreamsOutgoing';
+import { StreamingAccountView } from 'views/StreamingAccount';
 
 let isWorkflowLocked = false;
 
-const PaymentStreamingView = (props: {
+interface PaymentStreamingViewProps {
   treasuryList: (TreasuryInfo | PaymentStreamingAccount)[];
   loadingTreasuries: boolean;
-  onBackButtonClicked?: any;
-}) => {
-  const { treasuryList, loadingTreasuries, onBackButtonClicked } = props;
+  onBackButtonClicked?: () => void;
+}
+
+const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonClicked }: PaymentStreamingViewProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { streamingTab, streamingItemId } = useParams();
-  const {
-    streamList,
-    streamDetail,
-    loadingStreams,
-    selectedMultisig,
-    multisigAccounts,
-    refreshMultisigs,
-    setPreviousRoute,
-    setActiveStream,
-    setStreamDetail,
-  } = useContext(AppStateContext);
+  const { streamDetail, selectedMultisig, multisigAccounts, refreshMultisigs, setPreviousRoute, setStreamDetail } =
+    useContext(AppStateContext);
   const { publicKey } = useWallet();
+  const { selectedAccount } = useWalletAccount();
   const { refreshAccount } = useAccountsContext();
   // Local state
   const [pathParamStreamId, setPathParamStreamId] = useState('');
@@ -49,6 +49,13 @@ const PaymentStreamingView = (props: {
   // Streaming account
   const [treasuryDetail, setTreasuryDetail] = useState<PaymentStreamingAccount | TreasuryInfo | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
+
+  const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
+  const { streamList, isFetching: loadingStreams } = useGetStreamList({
+    srcAccountPk: new PublicKey(selectedAccount.address),
+    tokenStreamingV1,
+    tokenStreamingV2,
+  });
 
   ///////////////
   // Callbacks //
@@ -61,7 +68,7 @@ const PaymentStreamingView = (props: {
   }, []);
 
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
-    let event: any = undefined;
+    let event: AppUsageEvent | undefined = undefined;
 
     if (item) {
       switch (item.operationType) {
@@ -155,7 +162,7 @@ const PaymentStreamingView = (props: {
                 onClick={() => {
                   const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
                   navigate(url);
-                  notification.close(myNotifyKey);
+                  notification.destroy(myNotifyKey);
                 }}
               >
                 Review proposal
@@ -213,7 +220,7 @@ const PaymentStreamingView = (props: {
               console.log('generating backButtonClick()...');
               backButtonClick();
               console.log('calling onBackButtonClicked()...');
-              onBackButtonClicked();
+              onBackButtonClicked?.();
               hardReloadStreams();
             }, 20);
             break;
@@ -296,19 +303,21 @@ const PaymentStreamingView = (props: {
     // if (autoOpenDetailsPanel) {
     //   setDetailsPanelOpen(true);
     // }
-  }, [publicKey, streamingTab, streamingItemId, location.pathname]);
+  }, [publicKey, streamingTab, streamingItemId]);
 
   // Preset the selected streaming account from the list if provided in path param (streamingItemId)
   useEffect(() => {
-    if (!publicKey || !treasuryList || treasuryList.length === 0) {
+    if (!publicKey || !treasuryList || treasuryList.length === 0 || !pathParamTreasuryId) {
       setTreasuryDetail(undefined);
     }
 
-    if (pathParamTreasuryId && streamingItemId && pathParamTreasuryId === streamingItemId) {
+    if (pathParamTreasuryId === streamingItemId) {
       const item = treasuryList.find(s => getStreamingAccountId(s) === pathParamTreasuryId);
-      consoleOut('treasuryDetail:', item, 'darkgreen');
       if (item) {
+        consoleOut('treasuryDetail:', item, 'darkgreen');
         setTreasuryDetail(item);
+      } else {
+        goToPaymentStreamingSummary();
       }
     }
   }, [pathParamTreasuryId, publicKey, streamingItemId, treasuryList]);
@@ -316,31 +325,17 @@ const PaymentStreamingView = (props: {
   // Preset the selected stream from the list if provided in path param (streamId)
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    const inPath = (item: Stream | StreamInfo, param: string) => {
-      if (!item.id) {
-        return false;
-      }
-      const isNew = item.version >= 2 ? true : false;
-      if (isNew) {
-        return (item as Stream).id.toBase58() === param;
-      }
-      return ((item as StreamInfo).id as string) === param;
-    };
-
-    if (
-      publicKey &&
-      streamList &&
-      streamList.length > 0 &&
-      pathParamStreamId &&
-      (!streamDetail || !inPath(streamDetail, pathParamStreamId))
-    ) {
-      const item = streamList.find(s => s.id && (s.id as PublicKey).toString() === pathParamStreamId);
-      if (item) {
-        setStreamDetail(item);
-        setActiveStream(item);
-      }
+    if (!publicKey || !streamList || streamList.length === 0 || !pathParamStreamId) {
+      return;
     }
-  }, [pathParamStreamId, publicKey, streamDetail, streamList]);
+
+    const item = streamList.find(s => pathParamStreamId === getStreamId(s));
+    if (item) {
+      setStreamDetail(item);
+    } else {
+      goToPaymentStreamingSummary();
+    }
+  }, [pathParamStreamId, publicKey, streamList]);
 
   // Setup event listeners
   useEffect(() => {
@@ -399,6 +394,11 @@ const PaymentStreamingView = (props: {
     }
   };
 
+  const goToPaymentStreamingSummary = () => {
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
+    navigate(url);
+  };
+
   const goToStreamIncomingDetailsHandler = (stream: Stream | StreamInfo) => {
     const id = stream.version >= 2 ? (stream as Stream).id.toBase58() : ((stream as StreamInfo).id as string);
     const url = `/${RegisteredAppPaths.PaymentStreaming}/incoming/${id}`;
@@ -414,11 +414,12 @@ const PaymentStreamingView = (props: {
   const goToStreamingAccountDetailsHandler = (
     streamingTreasury: PaymentStreamingAccount | TreasuryInfo | undefined,
   ) => {
-    if (streamingTreasury) {
-      const accountId = getStreamingAccountId(streamingTreasury);
-      const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${accountId}`;
-      navigate(url);
+    if (!streamingTreasury) {
+      return;
     }
+    const accountId = getStreamingAccountId(streamingTreasury);
+    const url = `/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts/${accountId}`;
+    navigate(url);
   };
 
   const goToListOfIncomingStreams = () => {
@@ -458,7 +459,8 @@ const PaymentStreamingView = (props: {
           treasuryList={treasuryList}
         />
       );
-    } else if (pathParamStreamId && pathParamStreamingTab === 'incoming') {
+    }
+    if (pathParamStreamId && pathParamStreamingTab === 'incoming') {
       return (
         <MoneyStreamsIncomingView
           loadingStreams={loadingStreams}
@@ -467,7 +469,8 @@ const PaymentStreamingView = (props: {
           onSendFromIncomingStreamDetails={goToListOfIncomingStreams}
         />
       );
-    } else if (pathParamStreamId && pathParamStreamingTab === 'outgoing') {
+    }
+    if (pathParamStreamId && pathParamStreamingTab === 'outgoing') {
       return (
         <MoneyStreamsOutgoingView
           loadingStreams={loadingStreams}
@@ -477,7 +480,8 @@ const PaymentStreamingView = (props: {
           onSendFromOutgoingStreamDetails={onBackButtonClicked}
         />
       );
-    } else if (
+    }
+    if (
       streamingItemId &&
       pathParamStreamingTab === 'streaming-accounts' &&
       treasuryDetail &&
@@ -493,16 +497,12 @@ const PaymentStreamingView = (props: {
           onSendFromStreamingAccountStreamInfo={goToStreamingAccountStreamDetailsHandler}
         />
       );
-    } else {
-      return null;
     }
+
+    return null;
   };
 
-  return (
-    <>
-      <div className='scroll-wrapper vertical-scroll'>{renderPaymentStreamsContent()}</div>
-    </>
-  );
+  return <div className='scroll-wrapper vertical-scroll'>{renderPaymentStreamsContent()}</div>;
 };
 
 export default PaymentStreamingView;

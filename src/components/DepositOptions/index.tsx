@@ -2,11 +2,11 @@ import { ArrowLeftOutlined, LoadingOutlined } from '@ant-design/icons';
 import { initOnRamp } from '@coinbase/cbpay-js';
 import { IconCopy, IconInfoTriangle, IconSolana } from 'Icons';
 import { Button, Col, Modal, Row, Tooltip } from 'antd';
+import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from 'app-constants/common';
 import { openNotification } from 'components/Notifications';
-import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from 'constants/common';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
-import { appConfig } from 'index';
+import { appConfig } from 'main';
 import { consoleOut, copyText } from 'middleware/ui';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useMemo, useState } from 'react';
@@ -14,9 +14,12 @@ import { useTranslation } from 'react-i18next';
 import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
 
-export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) => {
-  const { handleClose, isVisible } = props;
+interface DepositOptionsProps {
+  handleClose: () => void;
+  isVisible: boolean;
+}
 
+export const DepositOptions = ({ handleClose, isVisible }: DepositOptionsProps) => {
   const { t } = useTranslation('common');
   const { publicKey, connected } = useWallet();
   const [isCoinbasePayReady, setIsCoinbasePayReady] = useState(false);
@@ -114,11 +117,12 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
   const getCoinbaseButtonLabel = () => {
     if (!connected) {
       return t('deposits.coinbase-pay-cta-label');
-    } else if (!isCoinbasePayReady) {
-      return 'Initializing Coinbase Pay';
-    } else {
-      return t('deposits.coinbase-pay-cta-label');
     }
+    if (!isCoinbasePayReady) {
+      return 'Initializing Coinbase Pay';
+    }
+
+    return t('deposits.coinbase-pay-cta-label');
   };
 
   //#endregion
@@ -150,15 +154,15 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
         },
         onSuccess: () => {
           // handle navigation when user successfully completes the flow
-          consoleOut(`Processing onSuccess!`);
+          consoleOut('Processing onSuccess!');
         },
         onExit: () => {
           // handle navigation from dismiss / exit events due to errors
-          consoleOut(`Processing onExit!`);
+          consoleOut('Processing onExit!');
         },
         onEvent: event => {
           // event stream
-          consoleOut(`Processing onEvent ->`, event);
+          consoleOut('Processing onEvent ->', event);
         },
         experienceLoggedIn: 'embedded',
         experienceLoggedOut: 'popup',
@@ -220,14 +224,14 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
     >
       <div className='deposit-selector'>
         <div className={isSharingAddress ? 'options-list hide' : 'options-list show'} id='options-list'>
-          <p>{t('deposits.heading')}:</p>
+          <p>{t('deposits.heading')}</p>
           {!connected && <p className='fg-error'>{t('deposits.not-connected')}!</p>}
           <Row gutter={[24, 24]}>
             <Col span={24}>
               <Button
                 block
                 className='deposit-option'
-                type='ghost'
+                type='default'
                 shape='round'
                 size='middle'
                 disabled={!connected}
@@ -241,7 +245,7 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
               <Button
                 block
                 className='deposit-option'
-                type='ghost'
+                type='default'
                 shape='round'
                 size='middle'
                 id='cbpay-button-container'
@@ -267,7 +271,7 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
               <Button
                 block
                 className='deposit-option'
-                type='ghost'
+                type='default'
                 shape='round'
                 size='middle'
                 onClick={handleTransak2ButtonClick}
@@ -289,7 +293,7 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
               <Button
                 block
                 className='deposit-option'
-                type='ghost'
+                type='default'
                 shape='round'
                 size='middle'
                 onClick={handleBridgeFromEthereumButtonClick}
@@ -306,7 +310,7 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
               <Button
                 block
                 className='deposit-option'
-                type='ghost'
+                type='default'
                 shape='round'
                 size='middle'
                 onClick={handleBridgeFromPolygonButtonClick}
@@ -336,7 +340,7 @@ export const DepositOptions = (props: { handleClose: any; isVisible: boolean }) 
                     </span>
                   )}
                 </span>
-                <div className='addon-right simplelink' onClick={onCopyAddress}>
+                <div className='addon-right simplelink' onKeyDown={() => {}} onClick={onCopyAddress}>
                   <IconCopy className='mean-svg-icons link' />
                 </div>
               </div>

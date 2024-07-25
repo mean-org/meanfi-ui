@@ -4,15 +4,15 @@ import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import type { PaymentStreamingAccount, Stream, StreamTemplate } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { InputMean } from 'components/InputMean';
-import { TokenDisplay } from 'components/TokenDisplay';
 import {
   MIN_SOL_BALANCE_REQUIRED,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   WRAPPED_SOL_MINT_ADDRESS,
-} from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
+} from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
+import { AddressDisplay } from 'components/AddressDisplay';
+import { InputMean } from 'components/InputMean';
+import { TokenDisplay } from 'components/TokenDisplay';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -260,7 +260,7 @@ export const VestingContractAddFundsModal = (props: {
     }
     const params: VestingContractTopupParams = {
       amount: topupAmount,
-      tokenAmount: tokenAmount,
+      tokenAmount,
       associatedToken: selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? NATIVE_SOL : selectedToken,
       streamId: highLightableStreamId ?? '',
       contributor: fundFromSafeOption && selectedMultisig ? selectedMultisig.authority.toBase58() : '',
