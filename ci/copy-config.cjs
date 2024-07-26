@@ -16,7 +16,7 @@ if (fs.existsSync(buildOutputPath + 'robots.txt')) {
 
 console.log('Copying file:', 'web.config');
 
-fs.copySync('./ci/web.config', buildOutputPath + 'web.config');
+fs.copySync('./ci/src-web.config', buildOutputPath + 'web.config');
 
 console.log('Copying file:', 'robots.txt');
 
