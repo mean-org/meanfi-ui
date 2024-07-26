@@ -11,6 +11,9 @@ export default defineConfig({
     port: 8080,
   },
   plugins: [react(), nodePolyfills()],
+  build: {
+    outDir: 'build',
+  },
   resolve: {
     alias: {
       '@': '/src',
