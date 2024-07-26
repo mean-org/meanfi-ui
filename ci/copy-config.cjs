@@ -1,6 +1,6 @@
 const fs = require('fs-extra');
 
-const buildOutputPath = './dist/';
+const buildOutputPath = './build/';
 const buildEnvironment = process.env.NODE_ENV;
 
 console.log('Running post-build script...\n');
