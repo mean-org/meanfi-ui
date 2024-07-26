@@ -43,18 +43,22 @@ export const NftPaginatedList = ({
 
       return await Promise.all(
         nftsToLoad.map(async (nft) => {
-          const fetchResult = await fetch(nft.uri);
-          const metadata = await fetchResult.json() as JsonMetadata;
-          const serialized = JSON.stringify(nft);
-          const refueled = JSON.parse(serialized);
-          refueled.json = metadata;
-          refueled.address = new PublicKey((nft as Metadata).address);
-          refueled.mint = new PublicKey((nft as Metadata).mintAddress);
-          refueled.mintAddress = new PublicKey((nft as Metadata).mintAddress);
-          refueled.updateAuthorityAddress = new PublicKey((nft as Metadata).updateAuthorityAddress);
-          refueled.creators = nft.creators
-
-          return refueled as MeanNft;
+          try {
+            const fetchResult = await fetch(nft.uri);
+            const metadata = await fetchResult.json() as JsonMetadata;
+            const serialized = JSON.stringify(nft);
+            const refueled = JSON.parse(serialized);
+            refueled.json = metadata;
+            refueled.address = new PublicKey((nft as Metadata).address);
+            refueled.mint = new PublicKey((nft as Metadata).mintAddress);
+            refueled.mintAddress = new PublicKey((nft as Metadata).mintAddress);
+            refueled.updateAuthorityAddress = new PublicKey((nft as Metadata).updateAuthorityAddress);
+            refueled.creators = nft.creators
+            return refueled as MeanNft;
+          } catch (error) {
+            console.error('Error fetching NFT metadata:', error);
+            return nft as MeanNft;
+          }
         })
       );
     },

@@ -520,7 +520,7 @@ export const HomeView = () => {
   }, [selectedAsset]);
 
   const goToExchangeWithPresetAsset = useCallback(() => {
-    const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
+    const queryParams = selectedAsset ? `?from=${selectedAsset.symbol}` : '';
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
     } else {
