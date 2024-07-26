@@ -38,7 +38,7 @@ jobs:
 
       # Build react app
       - name: Generate build for ${{ env.APP_ENV }}
-        run: npm run build:s3
+        run: yarn run build:s3:dev
         env:
           VITE_ENV: ${{ env.APP_ENV }}
           VITE_IRONFORGE_API_URL: ${{ env.IRONFORGE_API_URL }}

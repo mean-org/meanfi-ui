@@ -28,7 +28,9 @@
     "postbuild": "node ci/copy-config.cjs",
     "format": "npx @biomejs/biome format ./ --write",
     "lint": "npx @biomejs/biome lint ./ --write",
-    "build:s3": "NODE_OPTIONS=\"--max_old_space_size=4096\" yarn run build",
+    "build:s3:dev": "NODE_OPTIONS=\"--max_old_space_size=4096\" yarn run build:dev",
+    "build:s3:staging": "NODE_OPTIONS=\"--max_old_space_size=4096\" yarn run build:staging",
+    "build:s3:prod": "NODE_OPTIONS=\"--max_old_space_size=4096\" yarn run build:prod",
     "preview": "vite preview"
   },
   "dependencies": {
