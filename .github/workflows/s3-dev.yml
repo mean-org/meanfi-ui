@@ -45,10 +45,6 @@ jobs:
           VITE_IRONFORGE_API_KEY: ${{ env.IRONFORGE_API_KEY }}
           VITE_IRONFORGE_API_ACCESS_TOKEN: ${{ env.IRONFORGE_API_ACCESS_TOKEN }}
 
-      # Copy the appropiate robots.txt
-      - name: Copy robots.txt
-        run: cp ci/${{ env.ROBOTS_TXT_FILE_NAME }} build/robots.txt
-
       # Share artifact inside workflow
       - name: Share artifact inside workflow
         uses: actions/upload-artifact@v3
