@@ -1,7 +1,7 @@
 import { Modal } from 'antd';
 import { QRCodeSVG } from 'qrcode.react';
 import { useTranslation } from 'react-i18next';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../app-constants';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 import { AddressDisplay } from '../AddressDisplay';
 

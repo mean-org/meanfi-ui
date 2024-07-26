@@ -17,8 +17,6 @@ env:
   DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID_STAGE }}
   AWS_S3_SKIP_FOLDERS: 5 # keep only last 5 deploys
   IRONFORGE_API_URL: ${{ vars.IRONFORGE_API_URL }}
-  FALLBACK_DEVNET_RPC_URL: ${{ vars.FALLBACK_DEVNET_RPC_URL }}
-  FALLBACK_MAINNET_RPC_URL: ${{ vars.FALLBACK_MAINNET_RPC_URL }}
   IRONFORGE_API_KEY: ${{ secrets.IRONFORGE_API_KEY }}
   IRONFORGE_API_ACCESS_TOKEN: ${{ secrets.IRONFORGE_API_ACCESS_TOKEN }}
 
@@ -48,12 +46,10 @@ jobs:
       - name: Generate build for ${{ env.APP_ENV }}
         run: yarn run build:s3
         env:
-          REACT_APP_ENV: ${{ env.APP_ENV }}
-          REACT_APP_IRONFORGE_API_URL: ${{ env.IRONFORGE_API_URL }}
-          REACT_APP_FALLBACK_DEVNET_RPC_URL: ${{ env.FALLBACK_DEVNET_RPC_URL }}
-          REACT_APP_FALLBACK_MAINNET_RPC_URL: ${{ env.FALLBACK_MAINNET_RPC_URL }}
-          REACT_APP_IRONFORGE_API_KEY: ${{ env.IRONFORGE_API_KEY }}
-          REACT_APP_IRONFORGE_API_ACCESS_TOKEN: ${{ env.IRONFORGE_API_ACCESS_TOKEN }}
+          VITE_ENV: ${{ env.APP_ENV }}
+          VITE_IRONFORGE_API_URL: ${{ env.IRONFORGE_API_URL }}
+          VITE_IRONFORGE_API_KEY: ${{ env.IRONFORGE_API_KEY }}
+          VITE_IRONFORGE_API_ACCESS_TOKEN: ${{ env.IRONFORGE_API_ACCESS_TOKEN }}
 
       # Copy the appropiate robots.txt
       - name: Copy robots.txt

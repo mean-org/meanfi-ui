@@ -43,6 +43,12 @@ export interface StreamWithdrawData {
   receiveAmount: number;
 }
 
+export interface WithdrawFromStreamParams {
+  stream: string;
+  beneficiary: string;
+  amount: string;
+}
+
 export interface CreateStreamParams {
   proposalTitle?: string;
   payer: string;

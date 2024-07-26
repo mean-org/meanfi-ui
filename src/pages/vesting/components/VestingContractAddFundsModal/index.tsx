@@ -4,15 +4,15 @@ import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import type { PaymentStreamingAccount, Stream, StreamTemplate } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { InputMean } from 'components/InputMean';
-import { TokenDisplay } from 'components/TokenDisplay';
 import {
   MIN_SOL_BALANCE_REQUIRED,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   WRAPPED_SOL_MINT_ADDRESS,
-} from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
+} from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
+import { AddressDisplay } from 'components/AddressDisplay';
+import { InputMean } from 'components/InputMean';
+import { TokenDisplay } from 'components/TokenDisplay';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -260,7 +260,7 @@ export const VestingContractAddFundsModal = (props: {
     }
     const params: VestingContractTopupParams = {
       amount: topupAmount,
-      tokenAmount: tokenAmount,
+      tokenAmount,
       associatedToken: selectedToken.address === WRAPPED_SOL_MINT_ADDRESS ? NATIVE_SOL : selectedToken,
       streamId: highLightableStreamId ?? '',
       contributor: fundFromSafeOption && selectedMultisig ? selectedMultisig.authority.toBase58() : '',
@@ -280,8 +280,8 @@ export const VestingContractAddFundsModal = (props: {
       setTokenAmount(new BN(0));
     }, 50);
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -390,7 +390,7 @@ export const VestingContractAddFundsModal = (props: {
         : t('treasuries.add-funds.main-cta-busy');
     }
 
-    return transactionStatus.currentOperation === TransactionStatus.Iddle
+    return transactionStatus.currentOperation === TransactionStatus.Idle
       ? getTransactionStartButtonLabel()
       : t('general.refresh');
   };
@@ -402,7 +402,7 @@ export const VestingContractAddFundsModal = (props: {
   };
 
   const getModalAdaptiveWidth = () => {
-    return isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480;
+    return isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480;
   };
 
   const handleMaxClick = () => {
@@ -432,7 +432,7 @@ export const VestingContractAddFundsModal = (props: {
   };
 
   const getPanel2Classes = () => {
-    return isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide';
+    return isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide';
   };
 
   ///////////////
@@ -611,7 +611,7 @@ export const VestingContractAddFundsModal = (props: {
               size='middle'
               disabled={!isTopupFormValid()}
               onClick={() => {
-                if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                   onAcceptModal();
                 } else {
                   refreshPage();
@@ -641,7 +641,7 @@ export const VestingContractAddFundsModal = (props: {
       <div className='scrollable-content'>
         {/* Panel1 */}
         <div className={getPanel1Classes()}>
-          {transactionStatus.currentOperation === TransactionStatus.Iddle && (
+          {transactionStatus.currentOperation === TransactionStatus.Idle && (
             <>
               {/* Proposal title */}
               {renderProposalTitle()}
@@ -658,7 +658,7 @@ export const VestingContractAddFundsModal = (props: {
               </div>
             </>
           )}
-          {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
+          {transactionStatus.currentOperation !== TransactionStatus.Idle &&
           transactionStatus.currentOperation !== TransactionStatus.TransactionFinished
             ? renderPanel1ProgressContent()
             : null}
@@ -666,14 +666,14 @@ export const VestingContractAddFundsModal = (props: {
 
         {/* Panel2 */}
         <div className={getPanel2Classes()}>
-          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? renderPanel2BusyContent() : null}
+          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? renderPanel2BusyContent() : null}
         </div>
 
         {/* CTAs */}
-        {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) ? renderCtas() : null}
+        {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) ? renderCtas() : null}
 
         {/* Funding options */}
-        {!isBusy && !highLightableStreamId && transactionStatus.currentOperation === TransactionStatus.Iddle && (
+        {!isBusy && !highLightableStreamId && transactionStatus.currentOperation === TransactionStatus.Idle && (
           <div className={'buy-token-options text-center mt-4 mb-2'}>
             <p>You can also fund this contract by sending {selectedToken?.symbol} tokens to:</p>
 

@@ -1,30 +1,38 @@
 import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { BN } from '@project-serum/anchor';
+import type { DatePicker, GetProps } from 'antd';
 import BigNumber from 'bignumber.js';
 import bs58 from 'bs58';
 import dateFormat from 'dateformat';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime'
+import getRuntimeEnv from 'environments/getRuntimeEnv';
 import type { TFunction } from 'i18next';
-import { customLogger } from 'index';
-import moment, { type Moment } from 'moment';
+import { customLogger } from 'main';
 import {
   BIGNUMBER_FORMAT,
   SIMPLE_DATE_FORMAT,
   SIMPLE_DATE_TIME_FORMAT,
   VERBOSE_DATE_FORMAT,
   VERBOSE_DATE_TIME_FORMAT,
-} from '../constants';
+} from '../app-constants';
 import type { TransactionStatusInfo } from '../contexts/appstate';
-import { environment } from '../environments/environment';
 import type { TimeData } from '../models/common-types';
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from '../models/enums';
 import detectNetworkByAddress from './detectNetworkByAddress';
 
+dayjs.extend(relativeTime);
+
+type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
+
 export const isDev = (): boolean => {
-  return environment === 'development';
+  const env = getRuntimeEnv().MODE;
+  return env === 'development';
 };
 
 export const isProd = (): boolean => {
-  return environment === 'production';
+  const env = getRuntimeEnv().MODE;
+  return env === 'production';
 };
 
 const isLocalhost = Boolean(
@@ -84,6 +92,10 @@ export const friendlyDisplayDecimalPlaces = (amount: number | string, decimals?:
 
 export const twoDigits = (num: number) => String(num).padStart(2, '0');
 
+export const getNumberCharLength = (number: number) => {
+  return Math.round(number).toString().length;
+};
+
 export function isValidAddress(value: unknown): boolean {
   if (typeof value === 'string') {
     try {
@@ -113,7 +125,7 @@ export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: 
   if (isBusy) {
     return trans('transactions.status.modal-title-executing-transaction');
   }
-  if (status.lastOperation === TransactionStatus.Iddle && status.currentOperation === TransactionStatus.Iddle) {
+  if (status.lastOperation === TransactionStatus.Idle && status.currentOperation === TransactionStatus.Idle) {
     return null;
   }
   if (status.currentOperation === TransactionStatus.TransactionStartFailure) {
@@ -653,25 +665,23 @@ export const getReadableDate = (date: string, includeTime = false, isUtc = false
   return dateFormat(new Date(date), includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT);
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-export const getlllDate = (date: any): string => {
-  // Month name, day of month, year, time
-  return moment(date).format('MMM D YYYY HH:mm');
-};
+export const getlllDate = (date: Date | null | undefined): string => {
+  if (!date) {
+    return '-';
+  }
 
-export const getOrdinalDay = (date: Date): string => {
-  const dayOfMonth = date.getDate();
-  return moment.localeData().ordinal(dayOfMonth);
+  // 'lll' => Aug 16, 2018 8:02 PM
+  return dayjs(date).format('lll');
 };
 
 export const getDayOfWeek = (date: Date, locale = 'en-US'): string => {
   return date.toLocaleDateString(locale, { weekday: 'long' });
 };
 
-export function disabledDate(current: Moment) {
+export const todayAndPriorDatesDisabled: RangePickerProps['disabledDate'] = (current) => {
   // Can not select days before today and today
-  return current && current < moment().subtract(1, 'days').endOf('day');
-}
+  return current && current < dayjs().endOf('day');
+};
 
 export const isToday = (someDate: string): boolean => {
   if (!someDate) {
@@ -714,23 +724,8 @@ export function displayTimestamp(unixTimestamp: number, shortTimeZoneName = fals
   return `${dateString} at ${timeString}`;
 }
 
-/**
- * Should I use this format?
- * console.log(moment().endOf('day').fromNow());                // in 9 hours
- * console.log(moment("2020-04-04 11:45:26.123").fromNow());    // 6 minutes ago
- * console.log(moment().startOf('hour').fromNow());             // an hour ago
- * console.log(moment().startOf('day').fromNow());              // 15 hours ago
- * console.log(moment("20111031", "YYYYMMDD").fromNow());       // 10 years ago
- */
-
-export const getTimeFromNow = (date: string, withoutSuffix = false): string => {
-  const parsedDate = Date.parse(date);
-  return moment(parsedDate).fromNow(withoutSuffix);
-};
-
 export const getTimeToNow = (date: string): string => {
-  const parsedDate = Date.parse(date);
-  return moment(parsedDate).toNow(true);
+  return dayjs(date).toNow();
 };
 
 export function addMinutes(date: Date, minutes: number) {
@@ -836,7 +831,7 @@ export const getRelativeDate = (timestamp: number) => {
   return relativeTimeFromDates(reference);
 };
 
-export function stringNumberFormat(value: string, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',') {
+export function stringNumberFormat(value: string, dec = 0) {
   if (!value) {
     return '0';
   }

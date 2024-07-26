@@ -3,7 +3,7 @@ import type { TransactionFees } from '@mean-dao/payment-streaming';
 import { Modal } from 'antd';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { UserTokenAccount } from 'models/accounts';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { VestingContractCreateForm } from '../VestingContractCreateForm';
 
 export const VestingContractCreateModal = (props: {

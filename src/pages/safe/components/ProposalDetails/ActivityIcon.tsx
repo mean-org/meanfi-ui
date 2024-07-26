@@ -1,6 +1,5 @@
 import type { MultisigTransactionActivityItem } from '@mean-dao/mean-multisig-sdk';
 import { IconApprove, IconCreated, IconCross, IconMinus } from 'Icons';
-import React from 'react';
 
 interface Props {
   activity: MultisigTransactionActivityItem;

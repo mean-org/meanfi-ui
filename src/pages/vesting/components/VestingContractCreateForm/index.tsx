@@ -4,9 +4,23 @@ import { AccountType, SubCategory, type TransactionFees } from '@mean-dao/paymen
 import { BN } from '@project-serum/anchor';
 import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { IconCaretDown } from 'Icons';
-import { Button, Checkbox, DatePicker, Drawer, Dropdown, Modal, Spin, TimePicker } from 'antd';
+import {
+  Button,
+  Checkbox,
+  DatePicker,
+  type DatePickerProps,
+  Drawer,
+  Dropdown,
+  Modal,
+  Spin,
+  TimePicker,
+  type TimePickerProps,
+} from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import type { ItemType } from 'antd/lib/menu/hooks/useItems';
+import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
+import { VESTING_ACCOUNT_TYPE_OPTIONS } from 'app-constants/treasury-type-options';
 import BigNumber from 'bignumber.js';
 import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
 import { Identicon } from 'components/Identicon';
@@ -15,12 +29,10 @@ import { TextInput } from 'components/TextInput';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { TokenListItem } from 'components/TokenListItem';
 import { WizardStepSelector } from 'components/WizardStepSelector';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
-import { VESTING_ACCOUNT_TYPE_OPTIONS } from 'constants/treasury-type-options';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
+import dayjs from 'dayjs';
 import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
 import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
@@ -32,6 +44,7 @@ import {
   isProd,
   isValidAddress,
   toUsCurrency,
+  todayAndPriorDatesDisabled,
 } from 'middleware/ui';
 import {
   addDays,
@@ -50,7 +63,6 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { PaymentRateType } from 'models/enums';
 import type { TreasuryTypeOption } from 'models/treasuries';
 import { VESTING_CATEGORIES, type VestingContractCategory, type VestingContractCreateOptions } from 'models/vesting';
-import moment from 'moment';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
@@ -223,10 +235,10 @@ export const VestingContractCreateForm = (props: {
 
   const get30MinsAhead = useCallback(() => {
     if (!isProd() && isWhitelisted) {
-      return moment().add(30, 'm');
+      return dayjs().add(30, 'minute');
     }
 
-    return moment();
+    return dayjs();
   }, [isWhitelisted]);
 
   const getOneDayAhead = useCallback(() => {
@@ -234,7 +246,7 @@ export const VestingContractCreateForm = (props: {
       const time = get30MinsAhead().format(timeFormat);
       setContractTime(time);
     } else {
-      const time = moment().format(timeFormat);
+      const time = dayjs().format(timeFormat);
       setContractTime(time);
       const date = addDays(new Date(), 1).toLocaleDateString('en-US');
       setPaymentStartDate(date);
@@ -363,11 +375,10 @@ export const VestingContractCreateForm = (props: {
   const onAccountCreateClick = () => {
     const parsedDate = Date.parse(paymentStartDate as string);
     const startUtc = new Date(parsedDate);
-    const shortTime = moment(contractTime, timeFormat).format('HH:mm');
-    const to24hTime = moment(shortTime, 'HH:mm');
-    startUtc.setHours(to24hTime.hours());
-    startUtc.setMinutes(to24hTime.minutes());
-    startUtc.setSeconds(to24hTime.seconds());
+    const to24hTime = dayjs(contractTime, 'HH:mm');
+    startUtc.setHours(to24hTime.hour());
+    startUtc.setMinutes(to24hTime.minute());
+    startUtc.setSeconds(to24hTime.second());
     consoleOut('start date in UTC:', startUtc, 'darkorange');
     const options: VestingContractCreateOptions = {
       vestingContractTitle: proposalTitle,
@@ -511,40 +522,41 @@ export const VestingContractCreateForm = (props: {
     const fa = toTokenAmountBn(Number.parseFloat(vestingLockFundingAmount), selectedToken.decimals);
     const fundingAmount = new BigNumber(fa.toString());
 
-    return publicKey &&
+    return !!(
+      publicKey &&
       ((!proposalTitle && !isMultisigContext) || (proposalTitle && isMultisigContext)) &&
       vestingLockName &&
       selectedToken &&
       nativeBalance > 0 &&
       nativeBalance >= getMinSolBlanceRequired() &&
       (!vestingLockFundingAmount || fundingAmount.lte(maxAmount))
-      ? true
-      : false;
+    );
   };
 
   const isStepTwoValid = (): boolean => {
-    return isStepOneValid() && lockPeriodAmount && Number.parseFloat(lockPeriodAmount) > 0 && lockPeriodFrequency
-      ? true
-      : false;
+    return !!(isStepOneValid() && lockPeriodAmount && Number.parseFloat(lockPeriodAmount) > 0 && lockPeriodFrequency);
   };
 
   const onChangeValuePercentages = (value: number) => {
     setCliffReleasePercentage(`${value}`);
   };
 
-  const onTimePickerChange = (time: moment.Moment | null, timeString: string) => {
-    if (time) {
-      const shortTime = time.format(timeFormat);
-      setContractTime(shortTime);
+  const onTimePickerChange: TimePickerProps['onChange'] = (_date, dateString) => {
+    if (dateString) {
+      setContractTime(dateString as string);
     }
   };
 
+  const onDateChange: DatePickerProps['onChange'] = (_date, dateString) => {
+    handleDateChange(dateString as string);
+  };
+
   const isProposalTitleRequiredAndMissing = () => {
-    return selectedMultisig && !proposalTitle ? true : false;
+    return !!(selectedMultisig && !proposalTitle);
   };
 
   const isSolLow = () => {
-    return !nativeBalance || nativeBalance < getMinSolBlanceRequired() ? true : false;
+    return !!(!nativeBalance || nativeBalance < getMinSolBlanceRequired());
   };
 
   const isFundingAmountHigh = () => {
@@ -563,7 +575,7 @@ export const VestingContractCreateForm = (props: {
     }
     const fa = toTokenAmountBn(Number.parseFloat(vestingLockFundingAmount), selectedToken.decimals);
     const fundingAmount = new BigNumber(fa.toString());
-    return vestingLockFundingAmount && fundingAmount.gt(maxAmount) ? true : false;
+    return !!(vestingLockFundingAmount && fundingAmount.gt(maxAmount));
   };
 
   const getStepOneButtonLabel = () => {
@@ -650,16 +662,6 @@ export const VestingContractCreateForm = (props: {
     return getStepTwoButtonLabel();
   };
 
-  const todayAndPriorDatesDisabled = (current: moment.Moment) => {
-    // Can not select neither today nor days before today
-    return current && current < moment().startOf('day');
-  };
-
-  const onResetDate = () => {
-    const date = new Date().toLocaleDateString('en-US');
-    setPaymentStartDate(date);
-  };
-
   const onTitleInputValueChange = (value: string) => {
     setProposalTitle(value);
   };
@@ -669,7 +671,7 @@ export const VestingContractCreateForm = (props: {
   ///////////////
 
   const lockPeriodOptionsMenu = () => {
-    const items: ItemType[] = getLockPeriodOptionsFromEnum().map((item, index) => {
+    const items: ItemType<MenuItemType>[] = getLockPeriodOptionsFromEnum().map((item, index) => {
       return {
         key: `option-${index}`,
         label: (
@@ -684,7 +686,7 @@ export const VestingContractCreateForm = (props: {
   };
 
   const vestingCategoriesMenu = () => {
-    const items: ItemType[] = VESTING_CATEGORIES.map((item, index) => {
+    const items: ItemType<MenuItemType>[] = VESTING_CATEGORIES.map(item => {
       return {
         key: `${slugify(item.label)}-${item.value}`,
         label: (
@@ -827,14 +829,6 @@ export const VestingContractCreateForm = (props: {
 
   const getPanel2Classes = () => {
     return `panel2 ${currentStep === 1 ? 'show' : 'hide'}`;
-  };
-
-  const renderDatePickerExtraPanel = () => {
-    return (
-      <span className='flat-button tiny stroked primary' onKeyDown={() => {}} onClick={onResetDate}>
-        <span className='mx-1'>Reset</span>
-      </span>
-    );
   };
 
   const renderSelectedMultisig = () => {
@@ -1158,18 +1152,16 @@ export const VestingContractCreateForm = (props: {
                   <div className='add-on simplelink'>
                     <DatePicker
                       size='middle'
-                      bordered={false}
+                      variant='borderless'
                       className='addon-date-picker'
                       aria-required={true}
                       allowClear={false}
-                      disabledDate={todayAndPriorDatesDisabled}
                       placeholder='Pick a date'
-                      onChange={(value: moment.Moment | null, date: string) => handleDateChange(date)}
-                      value={moment(paymentStartDate, DATEPICKER_FORMAT)}
+                      disabledDate={todayAndPriorDatesDisabled}
+                      onChange={onDateChange}
+                      defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
                       format={DATEPICKER_FORMAT}
-                      showNow={true}
-                      showToday={false}
-                      renderExtraFooter={renderDatePickerExtraPanel}
+                      showNow={false}
                     />
                   </div>
                 </div>
@@ -1180,7 +1172,7 @@ export const VestingContractCreateForm = (props: {
             <div className='well time-picker'>
               <TimePicker
                 defaultValue={get30MinsAhead()}
-                bordered={false}
+                variant='borderless'
                 allowClear={false}
                 size='middle'
                 use12Hours
@@ -1354,7 +1346,6 @@ export const VestingContractCreateForm = (props: {
           onClose={onCloseTokenSelector}
           open={isTokenSelectorVisible}
           getContainer={false}
-          style={{ position: 'absolute' }}
         >
           {renderTokenSelectorInner()}
         </Drawer>

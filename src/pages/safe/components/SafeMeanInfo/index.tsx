@@ -1,4 +1,4 @@
-import type { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
+import type { MeanMultisig, MultisigInfo, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { BN } from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { type Connection, PublicKey } from '@solana/web3.js';
@@ -6,11 +6,12 @@ import { IconArrowForward } from 'Icons';
 import { ResumeItem } from 'components/ResumeItem';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { appConfig } from 'index';
+import { appConfig } from 'main';
 import { SOL_MINT } from 'middleware/ids';
 import { ACCOUNT_LAYOUT } from 'middleware/layouts';
 import { consoleOut } from 'middleware/ui';
 import { getAmountFromLamports } from 'middleware/utils';
+import type { ProgramAccounts } from 'models/accounts';
 import type { MultisigVault } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -20,13 +21,13 @@ export const SafeMeanInfo = (props: {
   connection: Connection;
   loadingProposals: boolean;
   multisigClient: MeanMultisig | undefined;
-  onDataToProgramView: any;
-  onDataToSafeView: any;
-  onEditMultisigClick: any;
-  onNewProposalClicked?: any;
+  onDataToProgramView: (program: ProgramAccounts) => void;
+  onDataToSafeView: (proposal: MultisigTransaction) => void;
+  onEditMultisigClick: () => void;
+  onNewProposalClicked?: () => void;
   safeBalanceInUsd: number | undefined;
-  selectedMultisig?: any;
-  selectedTab?: any;
+  selectedMultisig?: MultisigInfo;
+  selectedTab?: string;
 }) => {
   const {
     connection,
@@ -199,14 +200,15 @@ export const SafeMeanInfo = (props: {
             };
             const title = proposal.details.title ? proposal.details.title : 'Unknown proposal';
             // Number of participants who have already approved the Tx
-            const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
-            const rejectedSigners = proposal.signers.filter((s: any) => s === false).length;
+            const approvedSigners = proposal.signers.filter(s => s === true).length;
+            const rejectedSigners = proposal.signers.filter(s => s === false).length;
             const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate : '';
             const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : '';
             return (
               <div
                 key={proposal.id.toBase58()}
                 onClick={onSelectProposal}
+                onKeyDown={() => {}}
                 className={`w-100 simplelink hover-list ${(index + 1) % 2 === 0 ? '' : 'bg-secondary-02'}`}
               >
                 <ResumeItem
@@ -216,7 +218,7 @@ export const SafeMeanInfo = (props: {
                   executedOn={executedOnDate}
                   approved={approvedSigners}
                   rejected={rejectedSigners}
-                  userSigned={proposal.didSigned}
+                  userSigned={proposal.didSigned ?? false}
                   status={proposal.status}
                   hasRightIcon={true}
                   rightIcon={<IconArrowForward className='mean-svg-icons' />}

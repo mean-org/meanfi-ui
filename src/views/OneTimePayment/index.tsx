@@ -2,18 +2,16 @@ import { LoadingOutlined } from '@ant-design/icons';
 import {
   ACTION_CODES,
   NATIVE_SOL_MINT,
-  PaymentStreaming,
   type ScheduleTransferTransactionAccounts,
   type TransactionFees,
   type TransferTransactionAccounts,
   calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { PublicKey, type Transaction } from '@solana/web3.js';
+import { type AccountInfo, type ParsedAccountData, PublicKey, type Transaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
-import { Button, Checkbox, DatePicker, Select } from 'antd';
-import { openNotification } from 'components/Notifications';
-import { TokenDisplay } from 'components/TokenDisplay';
+import { Button, Checkbox, DatePicker, type DatePickerProps, Select } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import {
   CUSTOM_TOKEN_NAME,
   DATEPICKER_FORMAT,
@@ -21,25 +19,28 @@ import {
   NO_FEES,
   SIMPLE_DATE_TIME_FORMAT,
   WRAPPED_SOL_MINT_ADDRESS,
-} from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
+} from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
+import { openNotification } from 'components/Notifications';
+import { TokenDisplay } from 'components/TokenDisplay';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection, useConnectionConfig } from 'contexts/connection';
-import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
+import { TxConfirmationContext, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
-import { customLogger } from 'index';
+import dayjs from 'dayjs';
+import { customLogger } from 'main';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, type SegmentStreamOTPTransferData } from 'middleware/segment-service';
 import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import {
   addMinutes,
   consoleOut,
-  disabledDate,
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
+  todayAndPriorDatesDisabled,
 } from 'middleware/ui';
 import {
   cutNumber,
@@ -57,19 +58,26 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { RecipientAddressInfo } from 'models/common-types';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import type { OtpTxParams } from 'models/transfers';
-import moment from 'moment';
+import useStreamingClient from 'query-hooks/streamingClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 
 const { Option } = Select;
 
-export const OneTimePayment = (props: {
-  onOpenTokenSelector: any;
+interface OneTimePaymentProps {
+  onOpenTokenSelector: () => void;
   selectedToken?: TokenInfo;
-  transferCompleted?: any;
-  userBalances: any;
-}) => {
-  const { onOpenTokenSelector, selectedToken, transferCompleted, userBalances } = props;
+  transferCompleted?: () => void;
+  userBalances: LooseObject;
+}
+
+export const OneTimePayment = ({
+  onOpenTokenSelector,
+  selectedToken,
+  transferCompleted,
+  userBalances,
+}: OneTimePaymentProps) => {
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
@@ -83,7 +91,6 @@ export const OneTimePayment = (props: {
     fromCoinAmount,
     transactionStatus,
     isVerifiedRecipient,
-    streamV2ProgramAddress,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
     setTransactionStatus,
@@ -113,10 +120,7 @@ export const OneTimePayment = (props: {
   });
   const [otpFees, setOtpFees] = useState<TransactionFees>(NO_FEES);
 
-  // Create and cache Payment Streaming instance
-  const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
-  }, [connection, streamV2ProgramAddress]);
+  const { tokenStreamingV2 } = useStreamingClient();
 
   const isNative = useMemo(() => {
     return !!(selectedToken && selectedToken.address === NATIVE_SOL.address);
@@ -165,8 +169,8 @@ export const OneTimePayment = (props: {
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -181,10 +185,9 @@ export const OneTimePayment = (props: {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
+    // biome-ignore lint/suspicious/noExplicitAny: event can be any type
     (param: any) => {
-      const item = param as TxConfirmationInfo;
-      consoleOut('onTxConfirmed event executed:', item, 'crimson');
+      consoleOut('onTxConfirmed event executed:', param, 'crimson');
       setIsBusy(false);
       resetTransactionStatus();
       resetContractValues();
@@ -195,14 +198,10 @@ export const OneTimePayment = (props: {
   );
 
   // Setup event handler for Tx confirmation error
-  const onTxTimedout = useCallback(
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    (param: any) => {
-      setIsBusy(false);
-      resetTransactionStatus();
-    },
-    [resetTransactionStatus],
-  );
+  const onTxTimedout = useCallback(() => {
+    setIsBusy(false);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
 
   const getInputAmountBn = useCallback(() => {
     if (!selectedToken || !fromCoinAmount) {
@@ -280,23 +279,24 @@ export const OneTimePayment = (props: {
       let owner = '';
       getInfo(recipientAddress).then(info => {
         if (info) {
+          const asParsedAccountInfo = info as AccountInfo<ParsedAccountData>;
           if (
-            (info as any).data['program'] &&
-            (info as any).data['program'] === 'spl-token' &&
-            (info as any).data['parsed'] &&
-            (info as any).data['parsed']['type']
+            asParsedAccountInfo.data.program &&
+            asParsedAccountInfo.data.program === 'spl-token' &&
+            asParsedAccountInfo.data.parsed &&
+            asParsedAccountInfo.data.parsed.type
           ) {
-            type = (info as any).data['parsed']['type'];
+            type = asParsedAccountInfo.data.parsed.type;
           }
           if (
-            (info as any).data['program'] &&
-            (info as any).data['program'] === 'spl-token' &&
-            (info as any).data['parsed'] &&
-            (info as any).data['parsed']['type'] &&
-            (info as any).data['parsed']['type'] === 'account'
+            asParsedAccountInfo.data.program &&
+            asParsedAccountInfo.data.program === 'spl-token' &&
+            asParsedAccountInfo.data.parsed &&
+            asParsedAccountInfo.data.parsed.type &&
+            asParsedAccountInfo.data.parsed.type === 'account'
           ) {
-            mint = (info as any).data['parsed']['info']['mint'];
-            owner = (info as any).data['parsed']['info']['owner'];
+            mint = asParsedAccountInfo.data.parsed.info.mint;
+            owner = asParsedAccountInfo.data.parsed.info.owner;
           }
         }
         setRecipientAddressInfo({
@@ -363,8 +363,8 @@ export const OneTimePayment = (props: {
   //  Events and validation  //
   /////////////////////////////
 
-  const handleFromCoinAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleFromCoinAmountChange = (e: string) => {
+    let newValue = e;
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -376,7 +376,7 @@ export const OneTimePayment = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -398,14 +398,12 @@ export const OneTimePayment = (props: {
     window.dispatchEvent(new Event('resize'));
   };
 
-  const handleRecipientNoteChange = (e: any) => {
-    setRecipientNote(e.target.value);
+  const handleRecipientNoteChange = (value: string) => {
+    setRecipientNote(value);
   };
 
-  const handleRecipientAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    // Set the input value
-    const trimmedValue = inputValue.trim();
+  const handleRecipientAddressChange = (value: string) => {
+    const trimmedValue = value.trim();
     setRecipientAddress(trimmedValue);
   };
 
@@ -418,7 +416,8 @@ export const OneTimePayment = (props: {
   const getRecipientAddressValidation = () => {
     if (recipientAddressInfo.type === 'mint') {
       return 'Recipient cannot be a mint address';
-    } else if (
+    }
+    if (
       recipientAddressInfo.type === 'account' &&
       recipientAddressInfo.mint &&
       recipientAddressInfo.mint === selectedToken?.address &&
@@ -426,6 +425,7 @@ export const OneTimePayment = (props: {
     ) {
       return 'Recipient cannot be the selected token mint';
     }
+
     return '';
   };
 
@@ -459,14 +459,12 @@ export const OneTimePayment = (props: {
 
     const inputAmount = getInputAmountBn();
 
-    return connected &&
+    return !!(connected &&
       inputAmount.gtn(0) &&
       tokenBalanceBn.gtn(0) &&
       nativeBalance >= getMinSolBlanceRequired() &&
       ((selectedToken.address === NATIVE_SOL.address && Number.parseFloat(fromCoinAmount) <= getMaxAmount()) ||
-        (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
-      ? true
-      : false;
+        (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount))));
   };
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -478,59 +476,68 @@ export const OneTimePayment = (props: {
     const inputAmount = getInputAmountBn();
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (!recipientAddress || isAddressOwnAccount()) {
+    }
+    if (!recipientAddress || isAddressOwnAccount()) {
       return t('transactions.validation.select-recipient');
-    } else if (!isRecipientAddressValid() || !isValidAddress(recipientAddress)) {
+    }
+    if (!isRecipientAddressValid() || !isValidAddress(recipientAddress)) {
       return 'Invalid recipient address';
-    } else if (!selectedToken || tokenBalanceBn.isZero()) {
+    }
+    if (!selectedToken || tokenBalanceBn.isZero()) {
       return t('transactions.validation.no-balance');
-    } else if (!fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()) {
+    }
+    if (!fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()) {
       return t('transactions.validation.no-amount');
-    } else if (
+    }
+    if (
       (isNative && Number.parseFloat(fromCoinAmount) > getMaxAmount()) ||
       (!isNative && tokenBalanceBn.lt(inputAmount))
     ) {
       return t('transactions.validation.amount-high');
-    } else if (!paymentStartDate) {
+    }
+    if (!paymentStartDate) {
       return t('transactions.validation.no-valid-date');
-    } else if (!recipientNote) {
+    }
+    if (!recipientNote) {
       return t('transactions.validation.memo-empty');
-    } else if (!isVerifiedRecipient) {
+    }
+    if (!isVerifiedRecipient) {
       return t('transactions.validation.verified-recipient-unchecked');
-    } else if (nativeBalance < getMinSolBlanceRequired()) {
+    }
+    if (nativeBalance < getMinSolBlanceRequired()) {
       return t('transactions.validation.insufficient-balance-needed', {
         balance: formatThousands(getFeeAmount(), 4),
       });
-    } else {
-      return t('transactions.validation.valid-approve');
     }
+
+    return t('transactions.validation.valid-approve');
   };
 
   const getMainCtaLabel = () => {
     if (isBusy) {
       if (isScheduledPayment()) {
         return t('streams.create-new-stream-cta-busy');
-      } else {
-        return t('transactions.status.cta-start-transfer-busy');
       }
-    } else {
-      return getTransactionStartButtonLabel();
+
+      return t('transactions.status.cta-start-transfer-busy');
     }
+
+    return getTransactionStartButtonLabel();
   };
 
   // Main action
 
   const onStartTransaction = useCallback(async () => {
     let transaction: Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
 
     const otpTx = async (data: OtpTxParams) => {
-      if (!endpoint || !streamV2ProgramAddress || !publicKey) {
+      if (!endpoint || !publicKey) {
         return null;
       }
 
@@ -541,7 +548,7 @@ export const OneTimePayment = (props: {
           beneficiary: new PublicKey(data.beneficiary), // beneficiary
           mint: new PublicKey(data.associatedToken), // mint
         };
-        const { transaction } = await paymentStreaming.buildTransferTransaction(
+        const { transaction } = await tokenStreamingV2.buildTransferTransaction(
           accounts, // accounts
           data.amount, // amount
         );
@@ -555,16 +562,10 @@ export const OneTimePayment = (props: {
         owner: new PublicKey(data.wallet), // owner
         mint: new PublicKey(data.associatedToken), // mint
       };
-      const { transaction } = await paymentStreaming.buildScheduleTransferTransaction(
+      const { transaction } = await tokenStreamingV2.buildScheduleTransferTransaction(
         accounts, // accounts
         data.amount, // amount
       );
-
-      // TODO: Fix Error: failed to send transaction: Transaction signature verification failure
-      // The following attempt to patch the Tx with priority fees would throw error due to
-      // additional signatures other than the payer
-
-      // return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
 
       return transaction;
     };
@@ -737,7 +738,7 @@ export const OneTimePayment = (props: {
                   selectedToken.decimals,
                 )} ${selectedToken.symbol}`,
                 completedTitle: 'Transaction confirmed',
-                completedMessage: `Transfer successfully Scheduled!`,
+                completedMessage: 'Transfer successfully Scheduled!',
                 extras: 'scheduled',
               });
             } else {
@@ -766,7 +767,7 @@ export const OneTimePayment = (props: {
             resetTransactionStatus();
             resetContractValues();
             setIsVerifiedRecipient(false);
-            transferCompleted();
+            transferCompleted?.();
           } else {
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -805,13 +806,12 @@ export const OneTimePayment = (props: {
     isWhitelisted,
     nativeBalance,
     fromCoinAmount,
-    paymentStreaming,
+    tokenStreamingV2,
     paymentStartDate,
     recipientAddress,
     fixedScheduleValue,
     transactionCancelled,
     isTestingScheduledOtp,
-    streamV2ProgramAddress,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
     resetTransactionStatus,
@@ -825,11 +825,15 @@ export const OneTimePayment = (props: {
     t,
   ]);
 
-  const onIsVerifiedRecipientChange = (e: any) => {
+  const onDateChange: DatePickerProps['onChange'] = (_date, dateString) => {
+    handleDateChange(dateString as string);
+  };
+
+  const onIsVerifiedRecipientChange = (e: CheckboxChangeEvent) => {
     setIsVerifiedRecipient(e.target.checked);
   };
 
-  const onFixedScheduleValueChange = (value: any) => {
+  const onFixedScheduleValueChange = (value: number) => {
     setFixedScheduleValue(value);
   };
 
@@ -848,7 +852,7 @@ export const OneTimePayment = (props: {
                 autoCorrect='off'
                 type='text'
                 onFocus={handleRecipientAddressFocusInOut}
-                onChange={handleRecipientAddressChange}
+                onChange={e => handleRecipientAddressChange(e.target.value)}
                 onBlur={handleRecipientAddressFocusInOut}
                 placeholder={t('transactions.recipient.placeholder')}
                 required={true}
@@ -886,13 +890,12 @@ export const OneTimePayment = (props: {
             <span className='add-on simplelink'>
               {selectedToken && (
                 <TokenDisplay
-                  onClick={() => onOpenTokenSelector()}
+                  onClick={onOpenTokenSelector}
                   mintAddress={selectedToken.address}
                   showCaretDown={true}
                   showName={
-                    selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
-                      ? true
-                      : false
+                    !!(
+                    selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS)
                   }
                   fullTokenInfo={selectedToken}
                 />
@@ -900,6 +903,7 @@ export const OneTimePayment = (props: {
               {selectedToken && tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
                 <div
                   className='token-max simplelink'
+                  onKeyDown={() => {}}
                   onClick={() => {
                     console.log('decimals:', selectedToken.decimals);
                     if (selectedToken.address === NATIVE_SOL.address) {
@@ -922,7 +926,7 @@ export const OneTimePayment = (props: {
               autoComplete='off'
               autoCorrect='off'
               type='text'
-              onChange={handleFromCoinAmountChange}
+              onChange={e => handleFromCoinAmountChange(e.target.value)}
               pattern='^[0-9]*[.,]?[0-9]*$'
               placeholder='0.0'
               minLength={1}
@@ -940,6 +944,7 @@ export const OneTimePayment = (props: {
           <div className='right inner-label'>
             <span
               className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+              onKeyDown={() => {}}
               onClick={() => refreshPrices()}
             >
               ~${fromCoinAmount ? formatAmount(getTokenPrice(), 2) : '0.00'}
@@ -965,7 +970,7 @@ export const OneTimePayment = (props: {
               autoCorrect='off'
               type='text'
               maxLength={32}
-              onChange={handleRecipientNoteChange}
+              onChange={e => handleRecipientNoteChange(e.target.value)}
               placeholder={t('transactions.memo.placeholder')}
               spellCheck='false'
               value={recipientNote}
@@ -987,14 +992,15 @@ export const OneTimePayment = (props: {
             <div className='add-on simplelink'>
               <DatePicker
                 size='middle'
-                bordered={false}
+                variant='borderless'
                 className='addon-date-picker'
                 aria-required={true}
                 allowClear={false}
-                disabledDate={disabledDate}
+                showNow={false}
+                disabledDate={todayAndPriorDatesDisabled}
                 placeholder={t('transactions.send-date.placeholder')}
-                onChange={(value, date) => handleDateChange(date)}
-                defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
+                onChange={onDateChange}
+                defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
                 format={DATEPICKER_FORMAT}
               />
             </div>
@@ -1008,8 +1014,8 @@ export const OneTimePayment = (props: {
           <div className='well'>
             <Select
               value={fixedScheduleValue}
-              bordered={false}
-              onChange={onFixedScheduleValueChange}
+              variant='borderless'
+              onChange={value => onFixedScheduleValueChange(value)}
               style={{ width: '100%' }}
             >
               <Option value={0}>No fixed scheduling</Option>

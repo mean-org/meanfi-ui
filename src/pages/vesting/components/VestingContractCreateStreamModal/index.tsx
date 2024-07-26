@@ -10,11 +10,11 @@ import { BN } from '@project-serum/anchor';
 import { IconEdit, IconWarning } from 'Icons';
 import { Button, Checkbox, Col, Modal, Row } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import { MIN_SOL_BALANCE_REQUIRED } from 'app-constants/common';
 import { InfoIcon } from 'components/InfoIcon';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { WizardStepSelector } from 'components/WizardStepSelector';
-import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { isError } from 'middleware/transactions';
@@ -360,7 +360,7 @@ export const VestingContractCreateStreamModal = (props: {
     setTokenAmount(new BN(maxAmount));
   }, [getMaxAmount, selectedToken, setFromCoinAmount, isFeePaidByTreasurer, tokenAmount]);
 
-  const getStreamTxConfirmDescription = (multisig: string) => {
+  const getStreamTxConfirmDescription = () => {
     if (!selectedToken) {
       return '';
     }
@@ -417,7 +417,7 @@ export const VestingContractCreateStreamModal = (props: {
       rateAmount: Number.parseFloat(paymentRateAmount),
       streamName: vestingStreamName,
       tokenAmount: tokenAmount,
-      txConfirmDescription: getStreamTxConfirmDescription(multisig),
+      txConfirmDescription: getStreamTxConfirmDescription(),
       txConfirmedDescription: getStreamTxConfirmedDescription(multisig),
       proposalTitle: proposalTitle || '',
     };
@@ -491,7 +491,8 @@ export const VestingContractCreateStreamModal = (props: {
   const isStepOneValid = (): boolean => {
     const mAa = new BN(maxAllocatableAmount || 0);
     const ub = new BN(unallocatedBalance || 0);
-    return publicKey &&
+    return !!(
+      publicKey &&
       ((isMultisigTreasury && selectedMultisig && proposalTitle) || (!isMultisigTreasury && !proposalTitle)) &&
       selectedToken &&
       vestingStreamName &&
@@ -502,8 +503,7 @@ export const VestingContractCreateStreamModal = (props: {
       tokenAmount &&
       tokenAmount.gtn(0) &&
       ((isFeePaidByTreasurer && tokenAmount.lte(mAa)) || (!isFeePaidByTreasurer && tokenAmount.lte(ub)))
-      ? true
-      : false;
+    );
   };
 
   const isStepTwoValid = (): boolean => {

@@ -1,9 +1,9 @@
 import type { TransactionConfirmationStatus } from '@solana/web3.js';
 import confirmOrRetryTx from 'middleware/txConfirmation';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../app-constants';
 import { openNotification } from '../components/Notifications';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../constants';
 import { consoleOut } from '../middleware/ui';
 import { EventType, OperationType } from '../models/enums';
 import { useAccountsContext } from './accounts';
@@ -119,7 +119,11 @@ const defaultCtxValues: TxConfirmationProviderValues = {
 
 export const TxConfirmationContext = React.createContext<TxConfirmationProviderValues>(defaultCtxValues);
 
-const TxConfirmationProvider: React.FC = ({ children }) => {
+interface ProviderProps {
+  children: ReactNode;
+}
+
+const TxConfirmationProvider = ({ children }: ProviderProps) => {
   const connection = useConnection();
   const { refreshAccount } = useAccountsContext();
   const { t } = useTranslation('common');

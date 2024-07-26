@@ -5,7 +5,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../app-constants';
 import { AppStateContext } from '../../contexts/appstate';
 import { isError } from '../../middleware/transactions';
 import { consoleOut, getTransactionOperationDescription } from '../../middleware/ui';
@@ -54,8 +54,8 @@ export const MultisigVaultDeleteModal = (props: {
     });
 
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -69,7 +69,7 @@ export const MultisigVaultDeleteModal = (props: {
   };
 
   const isValidForm = (): boolean => {
-    return proposalTitle && props.selectedVault && (props.selectedVault.balance as number) === 0 ? true : false;
+    return !!(proposalTitle && props.selectedVault && (props.selectedVault.balance as number) === 0 );
   };
 
   const getTransactionStartButtonLabel = () => {
@@ -132,10 +132,10 @@ export const MultisigVaultDeleteModal = (props: {
       onOk={onAcceptDeleteVault}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!props.isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Warning icon and message */}
             <div className='text-center'>
@@ -187,7 +187,7 @@ export const MultisigVaultDeleteModal = (props: {
                   size='large'
                   disabled={!isValidForm()}
                   onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                       onAcceptDeleteVault();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
@@ -198,7 +198,7 @@ export const MultisigVaultDeleteModal = (props: {
                 >
                   {props.isBusy
                     ? t('multisig.transfer-tokens.main-cta-busy')
-                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    : transactionStatus.currentOperation === TransactionStatus.Idle
                       ? getTransactionStartButtonLabel()
                       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                         ? t('general.cta-finish')
@@ -250,10 +250,10 @@ export const MultisigVaultDeleteModal = (props: {
 
       <div
         className={
-          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0 mb-2' />
             <h4 className='font-bold mb-1'>

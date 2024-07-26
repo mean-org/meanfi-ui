@@ -1,34 +1,31 @@
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Button, Modal } from 'antd';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconCopy } from '../../Icons';
 import { copyText } from '../../middleware/ui';
 import { openNotification } from '../Notifications';
 
-export const MultisigCreateProgramModal = (props: {
-  handleClose: any;
-  handleOk: any;
-  handleAfterClose: any;
+interface Props {
+  handleClose: () => void;
+  handleOk: () => void;
+  handleAfterClose: () => void;
   isVisible: boolean;
   selectedMultisig: MultisigInfo;
-}) => {
+}
+
+export const MultisigCreateProgramModal = ({
+  handleClose,
+  handleOk,
+  handleAfterClose,
+  isVisible,
+  selectedMultisig,
+}: Props) => {
   const { t } = useTranslation('common');
-
-  const onAcceptModal = () => {
-    props.handleOk();
-  };
-
-  const onCloseModal = () => {
-    props.handleClose();
-  };
-
-  const onAfterClose = () => {
-    props.handleAfterClose();
-  };
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: It can be anything
     (address: any) => {
       if (copyText(address.toString())) {
         openNotification({
@@ -50,10 +47,10 @@ export const MultisigCreateProgramModal = (props: {
       className='mean-modal simple-modal'
       title={<div className='modal-title'>{t('multisig.multisig-programs.modal-title')}</div>}
       footer={null}
-      open={props.isVisible}
-      onOk={onAcceptModal}
-      onCancel={onCloseModal}
-      afterClose={onAfterClose}
+      open={isVisible}
+      onOk={handleOk}
+      onCancel={handleClose}
+      afterClose={handleAfterClose}
       width={480}
     >
       <div className='mb-3'>
@@ -67,14 +64,15 @@ export const MultisigCreateProgramModal = (props: {
             <div className='left position-relative'>
               <span className='recipient-field-wrapper'>
                 <span className='referral-link font-size-80 text-monospace'>
-                  {props.selectedMultisig.authority.toBase58()}
+                  {selectedMultisig.authority.toBase58()}
                 </span>
               </span>
             </div>
             <div className='right'>
               <div
                 className='add-on simplelink'
-                onClick={() => copyAddressToClipboard(props.selectedMultisig.authority.toBase58())}
+                onKeyDown={() => {}}
+                onClick={() => copyAddressToClipboard(selectedMultisig.authority.toBase58())}
               >
                 <IconCopy className='mean-svg-icons' />
               </div>
@@ -100,7 +98,7 @@ export const MultisigCreateProgramModal = (props: {
       </div>
 
       <div className='transaction-progress'>
-        <Button type='primary' shape='round' size='large' onClick={onCloseModal}>
+        <Button type='primary' shape='round' size='large' onClick={handleClose}>
           {t('general.cta-close')}
         </Button>
       </div>

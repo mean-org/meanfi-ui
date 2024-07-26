@@ -3,33 +3,34 @@ import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import type { PaymentStreamingAccount, StreamTemplate, TransactionFees } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { IconCaretDown } from 'Icons';
-import { Button, Checkbox, DatePicker, Dropdown, Modal, Spin, TimePicker } from 'antd';
+import { Button, Checkbox, DatePicker, type DatePickerProps, Dropdown, Modal, Spin, TimePicker, type TimePickerProps } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import type { ItemType } from 'antd/lib/menu/hooks/useItems';
+import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from 'app-constants/common';
 import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
-import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
+import dayjs from 'dayjs';
 import { isError } from 'middleware/transactions';
 import {
   consoleOut,
   getLockPeriodOptionLabel,
   getPaymentIntervalFromSeconds,
   getRateIntervalInSeconds,
+  todayAndPriorDatesDisabled,
 } from 'middleware/ui';
-import { addDays, isValidInteger, isValidNumber, makeDecimal, shortenAddress } from 'middleware/utils';
+import { isValidInteger, isValidNumber, makeDecimal, shortenAddress } from 'middleware/utils';
 import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
 import type { UserTokenAccount } from 'models/accounts';
 import { PaymentRateType } from 'models/enums';
 import type { VestingContractEditOptions } from 'models/vesting';
-import moment from 'moment';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const timeFormat = 'hh:mm A';
+const timeFormat = 'h:mm a';
 
 export const VestingContractEditModal = (props: {
   accountAddress: string;
@@ -68,7 +69,7 @@ export const VestingContractEditModal = (props: {
   const [cliffReleasePercentage, setCliffReleasePercentage] = useState<string>('');
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
   const [contractTime, setContractTime] = useState<string | undefined>(undefined);
-  const [defaultTime, setDefaultTime] = useState<moment.Moment>();
+  const [defaultTime, setDefaultTime] = useState<dayjs.Dayjs>();
   const [paymentStartDate, setPaymentStartDate] = useState<string>('');
   const [lockPeriodAmount, setLockPeriodAmount] = useState<string>('');
   const [lockPeriodFrequency, setLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
@@ -80,20 +81,22 @@ export const VestingContractEditModal = (props: {
 
   // Set template data
   useEffect(() => {
-    if (isVisible && vestingContract && streamTemplate) {
-      const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
-      setCliffReleasePercentage(cliffPercent.toString());
-      const contractStartDate = new Date(streamTemplate.startUtc);
-      const localUsDate = contractStartDate.toLocaleDateString('en-US');
-      setPaymentStartDate(localUsDate);
-      setLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
-      const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
-      setLockPeriodFrequency(periodFrequency);
-      const momentTime = moment(contractStartDate);
-      setDefaultTime(momentTime);
-      const time = momentTime.format(timeFormat);
-      setContractTime(time);
+    if (!(isVisible && vestingContract && streamTemplate)) {
+      return;
     }
+
+    const cliffPercent = makeDecimal(new BN(streamTemplate.cliffVestPercent), 4);
+    setCliffReleasePercentage(cliffPercent.toString());
+    const contractStartDate = new Date(streamTemplate.startUtc);
+    const localUsDate = contractStartDate.toLocaleDateString('en-US');
+    setPaymentStartDate(localUsDate);
+    setLockPeriodAmount(streamTemplate.durationNumberOfUnits.toString());
+    const periodFrequency = getPaymentIntervalFromSeconds(streamTemplate.rateIntervalInSeconds);
+    setLockPeriodFrequency(periodFrequency);
+    const dayJsTime = dayjs(contractStartDate);
+    setDefaultTime(dayJsTime);
+    const time = dayJsTime.format(timeFormat);
+    setContractTime(time);
   }, [isVisible, streamTemplate, vestingContract]);
 
   const getFeeAmount = useCallback(() => {
@@ -111,11 +114,10 @@ export const VestingContractEditModal = (props: {
   const onAcceptEditChanges = () => {
     const parsedDate = Date.parse(paymentStartDate);
     const startUtc = new Date(parsedDate);
-    const shortTime = moment(contractTime, timeFormat).format('HH:mm');
-    const to24hTime = moment(shortTime, 'HH:mm');
-    startUtc.setHours(to24hTime.hours());
-    startUtc.setMinutes(to24hTime.minutes());
-    startUtc.setSeconds(to24hTime.seconds());
+    const to24hTime = dayjs(contractTime, 'HH:mm');
+    startUtc.setHours(to24hTime.hour());
+    startUtc.setMinutes(to24hTime.minute());
+    startUtc.setSeconds(to24hTime.second());
     consoleOut('start date in UTC:', startUtc, 'darkorange');
     const options: VestingContractEditOptions = {
       proposalTitle,
@@ -188,25 +190,18 @@ export const VestingContractEditModal = (props: {
     }
   };
 
-  const todayAndPriorDatesDisabled = (current: moment.Moment) => {
-    // Can not select neither today nor days before today
-    return current && current < moment().add(1, 'days').endOf('day');
-  };
-
-  const onResetDate = () => {
-    const date = addDays(new Date(), 1).toLocaleDateString('en-US');
-    setPaymentStartDate(date);
-  };
-
   const onChangeValuePercentages = (value: number) => {
     setCliffReleasePercentage(`${value}`);
   };
 
-  const onTimePickerChange = (time: moment.Moment | null, timeString: string) => {
-    if (time) {
-      const shortTime = time.format(timeFormat);
-      setContractTime(shortTime);
+  const onTimePickerChange: TimePickerProps['onChange'] = (_date, dateString) => {
+    if (dateString) {
+      setContractTime(dateString as string);
     }
+  };
+
+  const onDateChange: DatePickerProps['onChange'] = (_date, dateString) => {
+    handleDateChange(dateString as string);
   };
 
   const onFeePayedByTreasurerChange = (e: CheckboxChangeEvent) => {
@@ -229,13 +224,11 @@ export const VestingContractEditModal = (props: {
   };
 
   const isFormValid = (): boolean => {
-    return publicKey &&
+    return !!(publicKey &&
       (proposalTitle || !isMultisigContext) &&
       lockPeriodAmount &&
       Number.parseFloat(lockPeriodAmount) > 0 &&
-      lockPeriodFrequency
-      ? true
-      : false;
+      lockPeriodFrequency);
   };
 
   ///////////////
@@ -243,7 +236,7 @@ export const VestingContractEditModal = (props: {
   ///////////////
 
   const lockPeriodOptionsMenu = () => {
-    const items: ItemType[] = getLockPeriodOptionsFromEnum().map((item, index) => {
+    const items: ItemType<MenuItemType>[] = getLockPeriodOptionsFromEnum().map((item, index) => {
       return {
         key: `option-${index}`,
         label: (
@@ -255,14 +248,6 @@ export const VestingContractEditModal = (props: {
     });
 
     return { items };
-  };
-
-  const renderDatePickerExtraPanel = () => {
-    return (
-      <span className='flat-button tiny stroked primary' onKeyDown={() => {}} onClick={onResetDate}>
-        <span className='mx-1'>Reset</span>
-      </span>
-    );
   };
 
   const renderSelectedMultisig = () => {
@@ -384,18 +369,16 @@ export const VestingContractEditModal = (props: {
                         {
                           <DatePicker
                             size='middle'
-                            bordered={false}
+                            variant='borderless'
                             className='addon-date-picker'
                             aria-required={true}
                             allowClear={false}
                             disabledDate={todayAndPriorDatesDisabled}
                             placeholder='Pick a date'
-                            onChange={(value: moment.Moment | null, date: string) => handleDateChange(date)}
-                            value={moment(paymentStartDate, DATEPICKER_FORMAT)}
-                            format={DATEPICKER_FORMAT}
                             showNow={false}
-                            showToday={false}
-                            renderExtraFooter={renderDatePickerExtraPanel}
+                            onChange={onDateChange}
+                            defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
+                            format={DATEPICKER_FORMAT}
                           />
                         }
                       </>
@@ -406,17 +389,15 @@ export const VestingContractEditModal = (props: {
             </div>
             <div className='right'>
               <div className='well time-picker'>
-                {defaultTime && (
-                  <TimePicker
-                    defaultValue={defaultTime}
-                    bordered={false}
-                    allowClear={false}
-                    size='middle'
-                    use12Hours
-                    format={timeFormat}
-                    onChange={onTimePickerChange}
-                  />
-                )}
+                <TimePicker
+                  defaultValue={defaultTime}
+                  variant='borderless'
+                  allowClear={false}
+                  size='middle'
+                  use12Hours
+                  format={timeFormat}
+                  onChange={onTimePickerChange}
+                />
               </div>
             </div>
           </div>

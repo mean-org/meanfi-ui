@@ -1,24 +1,22 @@
-import { MoneyStreaming } from '@mean-dao/money-streaming';
-import { STREAM_STATE, type StreamInfo, type TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { PaymentStreaming, STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
+import { type MoneyStreaming, STREAM_STATE, type StreamInfo, type TransactionFees } from '@mean-dao/money-streaming';
+import { type PaymentStreaming, STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
+import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
 import BigNumber from 'bignumber.js';
 import { InputMean } from 'components/InputMean';
-import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
-import { getStreamId } from 'middleware/getStreamId';
+import { getStreamId } from 'middleware/streamHelpers';
 import { consoleOut, percentageBn } from 'middleware/ui';
 import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from 'middleware/utils';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { TransactionStatus } from 'models/enums';
 import type { StreamWithdrawData } from 'models/streams';
+import useStreamingClient from 'query-hooks/streamingClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getFallBackRpcEndpoint } from 'services/connections-hq';
 import { openNotification } from '../Notifications';
 
 export const StreamWithdrawModal = (props: {
@@ -31,10 +29,8 @@ export const StreamWithdrawModal = (props: {
 }) => {
   const { handleClose, handleOk, isVisible, selectedToken, startUpData, transactionFees } = props;
   const { t } = useTranslation('common');
-  const connection = useConnection();
   const { wallet, publicKey } = useWallet();
-  const { splTokenList, selectedAccount, streamProgramAddress, streamV2ProgramAddress, setTransactionStatus } =
-    useContext(AppStateContext);
+  const { splTokenList, selectedAccount, setTransactionStatus } = useContext(AppStateContext);
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>('');
   const [withdrawAmountBn, setWithdrawAmountBn] = useState(new BN(0));
   const [maxAmountBn, setMaxAmountBn] = useState(new BN(0));
@@ -44,12 +40,10 @@ export const StreamWithdrawModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
-  const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
-  }, [connection, streamV2ProgramAddress]);
+  const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
 
   const getFeeAmount = useCallback(
     (fees: TransactionFees, amount = new BN(0)): number => {
@@ -130,11 +124,9 @@ export const StreamWithdrawModal = (props: {
       const streamPublicKey = new PublicKey(streamId);
       try {
         let detail: Stream | StreamInfo | null = null;
-        if (isV2Stream) {
-          detail = await (client as PaymentStreaming).getStream(streamPublicKey);
-        } else {
-          detail = await (client as MoneyStreaming).getStream(streamPublicKey);
-        }
+        detail = isV2Stream
+          ? await (client as PaymentStreaming).getStream(streamPublicKey)
+          : await (client as MoneyStreaming).getStream(streamPublicKey);
         if (detail) {
           consoleOut('Withdraw stream detail:', detail, 'blue');
           const v1 = detail as StreamInfo;
@@ -180,7 +172,7 @@ export const StreamWithdrawModal = (props: {
       if (v2.statusCode === STREAM_STATUS_CODE.Running) {
         setMaxAmountBn(max);
         setLoadingData(true);
-        getStreamDetails(true, streamId, paymentStreaming);
+        getStreamDetails(true, streamId, tokenStreamingV2);
       } else {
         setMaxAmountBn(max);
         setFeePayedByTreasurer(v2.tokenFeePayedFromAccount);
@@ -190,13 +182,12 @@ export const StreamWithdrawModal = (props: {
       if (v1.state === STREAM_STATE.Running) {
         setMaxAmountBn(max);
         setLoadingData(true);
-        const ms = new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed');
-        getStreamDetails(false, streamId, ms);
+        getStreamDetails(false, streamId, tokenStreamingV1);
       } else {
         setMaxAmountBn(max);
       }
     }
-  }, [wallet, publicKey, startUpData, selectedToken, paymentStreaming, streamProgramAddress, isV2Stream, t]);
+  }, [wallet, publicKey, startUpData, selectedToken, tokenStreamingV2, tokenStreamingV1, isV2Stream, t]);
 
   useEffect(() => {
     if (!feeAmount && transactionFees) {
@@ -240,8 +231,8 @@ export const StreamWithdrawModal = (props: {
     }, 50);
 
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -306,23 +297,23 @@ export const StreamWithdrawModal = (props: {
 
   // Validation
   const isValidForm = (): boolean => {
-    return startUpData &&
-      withdrawAmountInput &&
-      withdrawAmountBn.lte(maxAmountBn) &&
-      withdrawAmountBn.gtn(feeAmount || 0)
-      ? true
-      : false;
-  };
-
-  // Validation if multisig
-  const isValidFormMultisig = (): boolean => {
-    return proposalTitle &&
+    return !!(
       startUpData &&
       withdrawAmountInput &&
       withdrawAmountBn.lte(maxAmountBn) &&
       withdrawAmountBn.gtn(feeAmount || 0)
-      ? true
-      : false;
+    );
+  };
+
+  // Validation if multisig
+  const isValidFormMultisig = (): boolean => {
+    return !!(
+      proposalTitle &&
+      startUpData &&
+      withdrawAmountInput &&
+      withdrawAmountBn.lte(maxAmountBn) &&
+      withdrawAmountBn.gtn(feeAmount || 0)
+    );
   };
 
   const getTransactionStartButtonLabel = () => {

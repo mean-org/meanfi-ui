@@ -7,18 +7,19 @@ import {
   type Transaction,
   type VersionedTransaction,
 } from '@solana/web3.js';
+import { MEAN_TOKEN_LIST, NATIVE_SOL } from 'app-constants/tokens';
 import { BigNumber } from 'bignumber.js';
-import { MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useState } from 'react';
 import { isMobile } from 'react-device-detect';
+import type { LooseObject } from 'types/LooseObject';
 import {
   BIGNUMBER_FORMAT,
   CUSTOM_TOKEN_NAME,
   INTEGER_INPUT_AMOUNT_PATTERN,
   UNAUTHENTICATED_ROUTES,
   WRAPPED_SOL_MINT_ADDRESS,
-} from '../constants';
+} from '../app-constants';
 import { getNetworkIdByEnvironment } from '../contexts/connection';
 import { environment } from '../environments/environment';
 import { resolveParsedAccountInfo } from './accounts';
@@ -55,7 +56,7 @@ export function useLocalStorageState(key: string, defaultState?: string) {
   });
 
   const setLocalStorageState = useCallback(
-    newState => {
+    (newState: LooseObject) => {
       const changed = state !== newState;
       if (!changed) {
         return;

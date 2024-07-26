@@ -1,5 +1,4 @@
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import { SentreWalletAdapter, SentreWalletName } from '@sentre/connector';
 import {
   type Adapter,
   type MessageSignerWalletAdapterProps,
@@ -9,42 +8,34 @@ import {
 } from '@solana/wallet-adapter-base';
 import { useWallet as useBaseWallet } from '@solana/wallet-adapter-react';
 import {
-  BitKeepWalletAdapter,
-  BitKeepWalletName,
-  BraveWalletAdapter,
-  BraveWalletName,
   Coin98WalletAdapter,
   Coin98WalletName,
   CoinbaseWalletAdapter,
   CoinbaseWalletName,
-  ExodusWalletAdapter,
-  ExodusWalletName,
   LedgerWalletAdapter,
   LedgerWalletName,
   MathWalletAdapter,
   MathWalletName,
   PhantomWalletAdapter,
   PhantomWalletName,
-  SlopeWalletAdapter,
-  SlopeWalletName,
   SolflareWalletAdapter,
   SolflareWalletName,
   SolongWalletAdapter,
   SolongWalletName,
+  TorusWalletAdapter,
+  TorusWalletName,
   TrustWalletAdapter,
   TrustWalletName,
 } from '@solana/wallet-adapter-wallets';
+import { segmentAnalytics } from 'App';
 import { Button, Modal } from 'antd';
 import { openNotification } from 'components/Notifications';
-import { sentreAppId } from 'constants/common';
+import { AppUsageEvent } from 'middleware/segment-service';
 import React, { useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { isDesktop, isSafari } from 'react-device-detect';
+import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getDefaultRpc } from 'services/connections-hq';
-import { segmentAnalytics } from '../App';
-import { XnftWalletAdapter, XnftWalletName, isInXnftWallet } from '../integrations/xnft/xnft-wallet-adapter';
-import { AppUsageEvent } from '../middleware/segment-service';
 import { consoleOut, isProd } from '../middleware/ui';
 import { isUnauthenticatedRoute, useLocalStorageState } from '../middleware/utils';
 
@@ -79,48 +70,11 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideIfUnavailable: false,
   },
   {
-    name: BraveWalletName,
-    url: '',
-    icon: '',
-    adapter: BraveWalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: false,
-    hideOnMobile: false,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: true,
-  },
-  {
-    name: ExodusWalletName,
-    url: '',
-    icon: '',
-    adapter: ExodusWalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: false,
-    hideOnMobile: true,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: false,
-  },
-  {
     name: SolflareWalletName,
     url: '',
     icon: '',
     adapter: SolflareWalletAdapter,
     adapterParams: { network: getDefaultRpc().cluster },
-    hideOnDesktop: isDesktop && !isSafari ? false : true,
-    hideOnMobile: false,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: false,
-  },
-  // These ones go into the [more] CTA
-  {
-    name: BitKeepWalletName,
-    url: '',
-    icon: '',
-    adapter: BitKeepWalletAdapter,
-    adapterParams: undefined,
     hideOnDesktop: false,
     hideOnMobile: false,
     isWebWallet: false,
@@ -140,42 +94,6 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideIfUnavailable: false,
   },
   {
-    name: SlopeWalletName,
-    url: '',
-    icon: '',
-    adapter: SlopeWalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: false,
-    hideOnMobile: false,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: true,
-  },
-  {
-    name: Coin98WalletName,
-    url: '',
-    icon: '',
-    adapter: Coin98WalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: false,
-    hideOnMobile: false,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: true,
-  },
-  {
-    name: SolongWalletName,
-    url: '',
-    icon: '',
-    adapter: SolongWalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: false,
-    hideOnMobile: true,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: true,
-  },
-  {
     name: TrustWalletName,
     url: '',
     icon: '',
@@ -187,12 +105,13 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     underDevelopment: false,
     hideIfUnavailable: false,
   },
+  // These ones go into the [more] CTA
   {
-    name: SentreWalletName,
+    name: TorusWalletName,
     url: '',
     icon: '',
-    adapter: SentreWalletAdapter,
-    adapterParams: { appId: sentreAppId },
+    adapter: TorusWalletAdapter,
+    adapterParams: undefined,
     hideOnDesktop: false,
     hideOnMobile: false,
     isWebWallet: false,
@@ -209,6 +128,30 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
+    hideIfUnavailable: false,
+  },
+  {
+    name: Coin98WalletName,
+    url: '',
+    icon: '',
+    adapter: Coin98WalletAdapter,
+    adapterParams: undefined,
+    hideOnDesktop: false,
+    hideOnMobile: false,
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: false,
+  },
+  {
+    name: SolongWalletName,
+    url: '',
+    icon: '',
+    adapter: SolongWalletAdapter,
+    adapterParams: undefined,
+    hideOnDesktop: false,
+    hideOnMobile: true,
+    isWebWallet: false,
+    underDevelopment: false,
     hideIfUnavailable: true,
   },
   {
@@ -223,62 +166,31 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     underDevelopment: false,
     hideIfUnavailable: true,
   },
-  {
-    name: XnftWalletName,
-    url: '',
-    icon: '',
-    adapter: XnftWalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: false,
-    hideOnMobile: false,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: true,
-  },
 ];
 
 const getIsProviderInstalled = (provider: WalletProviderEntry): boolean => {
+  // biome-ignore lint/suspicious/noExplicitAny: The window object to be interrogated
+  const windowObject = window as any;
   if (provider) {
     switch (provider.name) {
-      case SentreWalletName:
-        return true;
       case PhantomWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).solana?.isPhantom;
-      case ExodusWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).exodus?.solana;
-      case SlopeWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return typeof (window as any).Slope === 'function' || (window as any).slopeApp ? true : false;
-      case SolongWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).solong;
-      case MathWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).solana?.isMathWallet;
-      case Coin98WalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).coin98?.sol;
+        return !!windowObject.phantom?.solana?.isPhantom || !!windowObject.solana?.isPhantom;
       case SolflareWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).solflare?.isSolflare || !!(window as any).SolflareApp;
-      case BitKeepWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).bitkeep?.solana;
+        return !!windowObject.solflare?.isSolflare || !!windowObject.SolflareApp;
       case CoinbaseWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).coinbaseSolana;
+        return !!windowObject.coinbaseSolana;
       case TrustWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).trustwallet?.isTrustWallet || !!(window as any).trustwallet?.solana?.isTrust;
+        return !!windowObject.trustwallet?.isTrustWallet || !!windowObject.trustwallet?.solana?.isTrust;
+      case TorusWalletName:
+        return !!windowObject.torus;
+      case SolongWalletName:
+        return !!windowObject.solong;
+      case MathWalletName:
+        return !!windowObject.solana?.isMathWallet;
+      case Coin98WalletName:
+        return !!windowObject.coin98?.sol;
       case LedgerWalletName:
         return true;
-      case BraveWalletName:
-        // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        return !!(window as any).braveSolana?.isBraveWallet;
-      case XnftWalletName:
-        return isInXnftWallet();
       default:
         return false;
     }
@@ -353,15 +265,14 @@ export function MeanFiWalletProvider({ children }: Props) {
   const close = useCallback(() => {
     setIsModalVisible(false);
   }, []);
-  const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
+  const [walletListExpanded, setWalletListExpanded] = useState(false);
 
   const resetWalletProvider = useCallback(() => {
     setWalletName(null);
   }, [setWalletName]);
 
   const provider = useMemo(() => {
-    const item = WALLET_PROVIDERS.find(({ name }) => name === walletName);
-    return item;
+    return WALLET_PROVIDERS.find(({ name }) => name === walletName);
   }, [walletName]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
@@ -373,11 +284,7 @@ export function MeanFiWalletProvider({ children }: Props) {
         WALLET_PROVIDERS[itemIndex].icon = item.adapter.icon;
       }
     }
-    if (isInXnftWallet() && (!wallet || wallet.adapter.name !== XnftWalletName)) {
-      document.body.classList.add('in-xnft-wallet');
-      setWalletName(XnftWalletName);
-      select(XnftWalletName);
-    } else if (walletName) {
+    if (walletName) {
       consoleOut('walletName:', walletName, 'blue');
       const wa = wallets.find(w => w.adapter.name === walletName);
       const walletEntry = WALLET_PROVIDERS.filter(w => !isProviderHidden(w, { isDesktop })).find(
@@ -387,9 +294,9 @@ export function MeanFiWalletProvider({ children }: Props) {
       if (!(wa && walletEntry)) {
         setWalletName(null);
       }
-    } else {
-      setWalletName(null);
+      return;
     }
+    setWalletName(null);
   }, [walletName, wallets, wallet]);
 
   function setupOnConnectEvent(adapter: Adapter) {
@@ -408,27 +315,31 @@ export function MeanFiWalletProvider({ children }: Props) {
 
   function setupOnDisconnectEvent(adapter: Adapter, readyState: WalletReadyState) {
     adapter.on('disconnect', () => {
-      if (isDisconnecting) {
-        isDisconnecting = false;
-        consoleOut('Wallet disconnect event fired:', '', 'blue');
-        setConnected(false);
-        if (readyState !== WalletReadyState.Installed) return;
-        resetWalletProvider();
-        navigate('/');
+      if (!isDisconnecting) {
+        return;
       }
+
+      isDisconnecting = false;
+      consoleOut('Wallet disconnect event fired:', '', 'blue');
+      setConnected(false);
+      if (readyState !== WalletReadyState.Installed) return;
+      resetWalletProvider();
+      navigate('/');
     });
   }
 
   function setupOnErrorEvent(adapter: Adapter) {
-    adapter.on('error', errorEvent => {
+    adapter.on('error', _errorEvent => {
       consoleOut('Wallet error event fired:', '', 'blue');
 
-      if (adapter.connecting) {
-        setConnected(false);
-        adapter.removeAllListeners();
-        resetWalletProvider();
-        selectWalletProvider();
+      if (!adapter.connecting) {
+        return;
       }
+
+      setConnected(false);
+      adapter.removeAllListeners();
+      resetWalletProvider();
+      selectWalletProvider();
     });
   }
 
@@ -530,16 +441,16 @@ export function MeanFiWalletProvider({ children }: Props) {
             <h2>{t('wallet-selector.connect-to-begin')}</h2>
           </div>
           <div className={`wallet-providers ${walletListExpanded ? 'expanded' : ''}`}>
-            {WALLET_PROVIDERS.map((item, index) => {
+            {WALLET_PROVIDERS.map(item => {
               const isInstalled = getIsProviderInstalled(item);
               // Skip items that won't show up
               if (isProviderHidden(item, { isDesktop })) {
                 return null;
               }
 
-              const onClick = () => {
+              const onClick = async () => {
                 if (wallet) {
-                  disconnect();
+                  await disconnect();
                 }
 
                 // Record user event in Segment Analytics
@@ -568,10 +479,10 @@ export function MeanFiWalletProvider({ children }: Props) {
                   size='large'
                   className='wallet-provider thin-stroke'
                   shape='round'
-                  type='ghost'
+                  type='default'
                   onClick={onClick}
                   key={item.name}
-                  icon={<img alt={`${item.name}`} width={20} height={20} src={item.icon} style={{ marginRight: 8 }} />}
+                  icon={<img alt={item.name} width={20} height={20} src={item.icon} style={{ marginRight: 8 }} />}
                 >
                   <span className='align-middle'>{item.name}</span>
                 </Button>
@@ -582,9 +493,9 @@ export function MeanFiWalletProvider({ children }: Props) {
             <Button
               block
               size='large'
-              className='wallet-providers-more-options thin-stroke'
+              className='wallet-providers-more-options wallet-provider thin-stroke'
               shape='round'
-              type='ghost'
+              type='default'
               onClick={() => setWalletListExpanded(state => !state)}
               icon={walletListExpanded ? <UpOutlined /> : <DownOutlined />}
               key='more-options'

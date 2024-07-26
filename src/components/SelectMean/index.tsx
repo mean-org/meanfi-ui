@@ -28,7 +28,8 @@ export const SelectMean = ({ onChange, className, placeholder, defaultValue, val
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
-          bordered={false}
+          variant='borderless'
+          suffixIcon={null}
           value={typeof value === 'string' ? value : value?.value}
           labelInValue={labelInValue}
           onChange={onChange}

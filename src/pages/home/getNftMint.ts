@@ -1,4 +1,4 @@
-import type { FindNftsByOwnerOutput, Metadata } from '@metaplex-foundation/js';
+import type { FindNftsByOwnerOutput, Metadata, Nft, Sft } from '@metaplex-foundation/js';
 import type { UserTokenAccount } from 'models/accounts';
 
 /**
@@ -13,16 +13,18 @@ function getNftMint(
   accountTokens: UserTokenAccount[],
   accountNfts: FindNftsByOwnerOutput | undefined,
 ): string | undefined {
-  const nftMint = accountNfts ? accountNfts.find((n: any) => n.mintAddress.toBase58() === assetId) : undefined;
+  const mintMatch = accountNfts
+    ? accountNfts.find((n: Metadata | Nft | Sft) => 'mintAddress' in n && n.mintAddress.toBase58() === assetId)
+    : undefined;
 
-  if (nftMint) {
-    return (nftMint as Metadata).mintAddress.toBase58();
+  if (mintMatch) {
+    return (mintMatch as Metadata).mintAddress.toBase58();
   }
 
   const ata = accountTokens.find(ta => ta.publicAddress === assetId);
   if (ata) {
     const nftMintFromTokenAccount = accountNfts
-      ? accountNfts.find((n: any) => n.mintAddress.toBase58() === ata.address)
+      ? accountNfts.find((n: Metadata | Nft | Sft) => 'mintAddress' in n && n.mintAddress.toBase58() === ata.address)
       : undefined;
     if (nftMintFromTokenAccount) {
       return (nftMintFromTokenAccount as Metadata).mintAddress.toBase58();

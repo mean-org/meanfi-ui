@@ -36,7 +36,7 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
       width={380}
     >
       <div className={!props.isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             <div className='mb-3 text-center'>
               <ExclamationCircleOutlined style={{ fontSize: 48 }} className='icon mt-3 mb-3' />
@@ -48,7 +48,7 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
 
             <Row className='mt-3 mb-1'>
               <Col span={12} className='d-flex justify-content-center'>
-                <Button type='ghost' size='middle' className='thin-stroke col-6' onClick={onCloseModal}>
+                <Button type='default' size='middle' className='thin-stroke col-6' onClick={onCloseModal}>
                   Cancel
                 </Button>
               </Col>
@@ -112,10 +112,10 @@ export const RejectCancelModal = (props: { handleClose: any; handleOk: any; isVi
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress p-4 mb-2'>
             <Spin indicator={bigLoadingIcon} className='icon mb-4 mt-1' />
             <h4 className='font-bold'>{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>

@@ -1,11 +1,9 @@
 import { array, bool, str } from '@project-serum/borsh';
 import { Button } from 'antd';
-import moment from 'moment';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import dayjs from 'dayjs';
+import { useCallback, useEffect, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-
-import { AppStateContext } from 'contexts/appstate';
-import { MEAN_TOKEN } from '../../constants/tokens';
+import { MEAN_TOKEN } from '../../app-constants/tokens';
 import { getCoingeckoMarketChart } from '../../middleware/api';
 import type { PriceGraphModel } from '../../models/price-graph';
 import './style.scss';
@@ -20,7 +18,6 @@ export const PriceGraph = (props: { onPriceData: any }) => {
   const [priceChangeData, setPriceData] = useState(emptyArr);
   const [dateShownOnTop, setDateShownOnTop] = useState('');
   const [priceShownOnTop, setPriceShownOnTop] = useState('');
-  const { priceList } = useContext(AppStateContext);
 
   // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const onClickHandler = (event: any) => {
@@ -49,7 +46,7 @@ export const PriceGraph = (props: { onPriceData: any }) => {
       if (marketPriceData && marketPriceData.length > 0) {
         setPriceData(marketPriceData);
         const lastItem = marketPriceData[marketPriceData.length - 1];
-        setDateShownOnTop(moment(lastItem.dateData).format(dateFormat));
+        setDateShownOnTop(dayjs(lastItem.dateData).format(dateFormat));
         setPriceShownOnTop(lastItem.priceData);
         props.onPriceData(lastItem.priceData);
       }
@@ -64,7 +61,7 @@ export const PriceGraph = (props: { onPriceData: any }) => {
 
     useEffect(() => {
       if (active && payload && payload.length > 0) {
-        setDateOnTooltip(moment(new Date(label)).format(dateFormat));
+        setDateOnTooltip(dayjs(new Date(label)).format(dateFormat));
         setPriceOnTooltip(payload[0].payload.priceData);
       }
     }, [active, label, payload]);
@@ -102,10 +99,10 @@ export const PriceGraph = (props: { onPriceData: any }) => {
           <span className='price-items_date'>{dateShownOnTop}</span>
         </div>
         <div className='price-items_right'>
-          {buttons.map((btn, index) => (
+          {buttons.map(btn => (
             <Button
               key={btn}
-              type='ghost'
+              type='default'
               shape='round'
               size='small'
               onClick={onClickHandler}
@@ -136,9 +133,9 @@ export const PriceGraph = (props: { onPriceData: any }) => {
             tickFormatter={date => {
               const d = new Date(date);
               if (activeBtn === '24H') {
-                return moment(d).format('hha');
+                return dayjs(d).format('hha');
               }
-              return moment(d).format('MMM, DD');
+              return dayjs(d).format('MMM, DD');
             }}
           />
           <YAxis

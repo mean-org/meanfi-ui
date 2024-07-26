@@ -1,9 +1,12 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
-import React from 'react';
+import { Button, type ButtonProps } from 'antd';
 
-export const BackButton = (props: { handleClose: any }) => {
+interface IProps {
+  handleClose: ButtonProps['onClick'];
+}
+
+export const BackButton = ({ handleClose }: IProps) => {
   return (
-    <Button id='back-button' type='default' shape='circle' icon={<ArrowLeftOutlined />} onClick={props.handleClose} />
+    <Button id='back-button' type='default' shape='circle' icon={<ArrowLeftOutlined />} onClick={handleClose} />
   );
 };

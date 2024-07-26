@@ -170,7 +170,7 @@
   "deposits": {
     "address-share-disclaimer": "Bu adres yalnızca SOL ve SPL tokenlarını yatırmak için kullanılabilir.",
     "back-to-deposit-options": "Yatırma seçeneklerine geri dön",
-    "heading": "",
+    "heading": "Kartınızdan, Banka Hesabınızdan veya başka bir Blockchain'den doğrudan Solana Cüzdanınıza para yatırın.",
     "modal-title": "Yatırma Seçenekleri",
     "move-from-ethereum-cta-label": "Ethereum'dan varlık aktarın",
     "move-from-polygon-cta-label": "Polygon'dan varlık aktarın",

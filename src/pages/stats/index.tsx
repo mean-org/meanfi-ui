@@ -1,17 +1,18 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { PublicKey } from '@solana/web3.js';
+import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { IconStats } from 'Icons';
 import { Col, Row } from 'antd';
+import { MEAN_TOKEN } from 'app-constants/tokens';
 import { PreFooter } from 'components/PreFooter';
-import { MEAN_TOKEN } from 'constants/tokens';
 import { useConnection } from 'contexts/connection';
-import { appConfig } from 'index';
+import { appConfig } from 'main';
 import { getCoingeckoMarketChart, getMeanStats } from 'middleware/api';
 import { consoleOut } from 'middleware/ui';
 import type { MeanFiStatsModel } from 'models/meanfi-stats';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TokenStats } from './TokenStats';
+import type { PromoCards } from './types';
 import './style.scss';
 
 //const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
@@ -60,7 +61,7 @@ export const StatsView = () => {
           },
         ],
       });
-      const results = accountInfos.filter((i: any) => i.account.data.parsed.info.tokenAmount.uiAmount > 0);
+      const results = accountInfos.filter(i => (i.account as AccountInfo<ParsedAccountData>).data.parsed.info.tokenAmount.uiAmount > 0);
       return results.length;
     };
 
@@ -93,7 +94,7 @@ export const StatsView = () => {
     (async () => {
       const tokenAccount = new PublicKey(meanStakingVault);
       const tokenAmount = await connection.getTokenAccountBalance(tokenAccount);
-      if (tokenAmount && tokenAmount.value) {
+      if (tokenAmount?.value) {
         setSMeanTotalSupply(tokenAmount.value.uiAmount || 0);
       }
     })();
@@ -115,7 +116,7 @@ export const StatsView = () => {
             <div className='subtitle'>{t('stats.subtitle')}</div>
           </div>
 
-          <TokenStats meanStats={meanfiStats} smeanSupply={sMeanTotalSupply} totalVolume24h={totalVolume24h} />
+          <TokenStats meanStats={meanfiStats} sMeanTotalSupply={sMeanTotalSupply ?? 0} totalVolume24h={totalVolume24h} />
         </div>
       </div>
       <PreFooter />
@@ -125,7 +126,7 @@ export const StatsView = () => {
 
 /*********************** PROMO SPACE *************************/
 export const PromoSpace = () => {
-  const promoCards = [
+  const promoCards: PromoCards[] = [
     {
       imgUrl: 'https://cdn.pixabay.com/photo/2018/01/16/01/02/cryptocurrency-3085139_1280.jpg',
       ctaUrl: 'https://cdn.pixabay.com/photo/2018/01/16/01/02/cryptocurrency-3085139_1280.jpg',
@@ -149,10 +150,10 @@ export const PromoSpace = () => {
   ];
 
   // Use the function to shuffle the array of promos and get a random result each time
-  const shuffle = (array: any) => {
-    let currentIndex = array.length,
-      temporaryValue,
-      randomIndex;
+  const shuffle = (array: PromoCards[]) => {
+    let currentIndex = array.length;
+    let temporaryValue: PromoCards;
+    let randomIndex = 0;
 
     while (currentIndex !== 0) {
       randomIndex = Math.floor(Math.random() * currentIndex);
@@ -171,7 +172,7 @@ export const PromoSpace = () => {
     <>
       {randomPromoCards && (
         <Row gutter={[8, 8]} className='mb-1 promo-space'>
-          {randomPromoCards.map((card: any, index: string) => (
+          {randomPromoCards.map((card, index) => (
             <Col xs={24} sm={12} md={8} lg={8} key={index}>
               <a href={card.ctaUrl} target='_blank' rel='noreferrer' className='promo-space_link'>
                 <img src={card.imgUrl} alt='' width='100%' height='150' />

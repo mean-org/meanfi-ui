@@ -1,37 +1,30 @@
 import type { DdcaAccount } from '@mean-dao/ddca';
-import {
-  MeanMultisig,
-  type MultisigInfo,
-  type MultisigTransaction,
-  MultisigTransactionStatus,
-} from '@mean-dao/mean-multisig-sdk';
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
+import { type MultisigInfo, type MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import type { StreamActivity as StreamActivityV1, StreamInfo } from '@mean-dao/money-streaming/lib/types';
-import { PaymentStreaming, type Stream, type StreamActivity } from '@mean-dao/payment-streaming';
+import type { Stream, StreamActivity } from '@mean-dao/payment-streaming';
 import type { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
-import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
-import Item from 'antd/lib/list/Item';
-import { isCacheItemExpired } from 'cache/persistentCache';
+import {
+  DAO_CORE_TEAM_WHITELIST,
+  TRANSACTIONS_PER_PAGE
+} from 'app-constants/common';
+import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from 'app-constants/tokens';
+import { TREASURY_TYPE_OPTIONS } from 'app-constants/treasury-type-options';
 import { openNotification } from 'components/Notifications';
-import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from 'constants/tokens';
-import { TREASURY_TYPE_OPTIONS } from 'constants/treasury-type-options';
+import dayjs from 'dayjs';
 import useLocalStorage from 'hooks/useLocalStorage';
-import { appConfig, customLogger } from 'index';
+import { customLogger } from 'main';
 import { getAccountNFTs, getUserAccountTokens } from 'middleware/accounts';
-import { getPrices, getSolFlareTokenList, getSolanaTokenListKeyNameByCluster, getSplTokens } from 'middleware/api';
 import getPriceByAddressOrSymbol from 'middleware/getPriceByAddressOrSymbol';
 import type { MappedTransaction } from 'middleware/history';
-import { PerformanceCounter } from 'middleware/perf-counter';
-import { consoleOut, isProd, msToTime } from 'middleware/ui';
+import { consoleOut, isProd } from 'middleware/ui';
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from 'middleware/utils';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { TokenPrice } from 'models/TokenPrice';
 import type {
   AccountContext,
-  AccountDetails,
   AccountTokenParsedInfo,
-  ProgramAccounts,
+  RuntimeAppDetails,
   UserTokenAccount,
   UserTokensResponse,
 } from 'models/accounts';
@@ -39,33 +32,17 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from '
 import type { MultisigVault } from 'models/multisig';
 import { type PaymentStreamingStats, type StreamsSummary, initialStats, initialSummary } from 'models/streams';
 import type { TreasuryTypeOption } from 'models/treasuries';
-import moment from 'moment';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import useMultisigClient from 'query-hooks/multisigClient';
+import useStreamingClient from 'query-hooks/streamingClient';
+import useGetTokenList from 'query-hooks/tokenList';
+import useGetAssetPrices from 'query-hooks/tokenPrices/useGetAssetPrices';
+import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
-import {
-  DAO_CORE_TEAM_WHITELIST,
-  FIVETY_SECONDS_REFRESH_TIMEOUT,
-  FIVE_MINUTES_REFRESH_TIMEOUT,
-  FORTY_SECONDS_REFRESH_TIMEOUT,
-  ONE_MINUTE_REFRESH_TIMEOUT,
-  PERFORMANCE_THRESHOLD,
-  SEVENTY_SECONDS_REFRESH_TIMEOUT,
-  THIRTY_MINUTES_REFRESH_TIMEOUT,
-  TRANSACTIONS_PER_PAGE,
-  WRAPPED_SOL_MINT_ADDRESS,
-} from '../constants';
 import { useNativeAccount } from './accounts';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from './connection';
 import { useWallet } from './wallet';
 import { emptyAccount, useWalletAccount } from './walletAccount';
 
-const pricesPerformanceCounter = new PerformanceCounter();
-const tokenListPerformanceCounter = new PerformanceCounter();
-const listStreamsV1PerformanceCounter = new PerformanceCounter();
-const listStreamsV2PerformanceCounter = new PerformanceCounter();
-
-export type TpsAverageValues = number | null | undefined;
 export type StreamValues = Stream | StreamInfo | undefined;
 
 export interface TransactionStatusInfo {
@@ -80,8 +57,6 @@ interface AppStateConfig {
   selectedAccount: AccountContext;
   // General
   theme: string | undefined;
-  tpsAvg: TpsAverageValues;
-  refreshInterval: number;
   isWhitelisted: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
@@ -110,24 +85,17 @@ interface AppStateConfig {
   isAllocationReserved: boolean;
   transactionStatus: TransactionStatusInfo;
   previousWalletConnectState: boolean;
-  loadingStreams: boolean;
-  streamListv1: StreamInfo[] | undefined;
-  streamListv2: Stream[] | undefined;
-  streamList: Array<Stream | StreamInfo> | undefined;
-  programs: ProgramAccounts[] | undefined;
   multisigTxs: MultisigTransaction[] | undefined;
   selectedStream: StreamValues;
   streamDetail: StreamValues;
   activeStream: StreamInfo | Stream | undefined;
   deletedStreams: string[];
   highLightableStreamId: string | undefined;
-  streamProgramAddress: string;
-  streamV2ProgramAddress: string;
   loadingStreamActivity: boolean;
   streamActivity: StreamActivityV1[] | StreamActivity[] | undefined;
   hasMoreStreamActivity: boolean;
   customStreamDocked: boolean;
-  diagnosisInfo: AccountDetails | undefined;
+  diagnosisInfo: RuntimeAppDetails | undefined;
   // Accounts page
   shouldLoadTokens: boolean;
   loadingTokenAccounts: boolean;
@@ -166,7 +134,6 @@ interface AppStateConfig {
   getAssetsByAccount: (address: string) => Promise<UserTokensResponse | null> | null;
   // General
   setTheme: (name: string) => void;
-  setTpsAvg: (value: TpsAverageValues) => void;
   showDepositOptionsModal: () => void;
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
@@ -180,8 +147,6 @@ interface AppStateConfig {
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
   resetStreamsState: () => void;
-  clearStreams: () => void;
-  refreshStreamList: (reset?: boolean, userAddress?: PublicKey) => void;
   setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
@@ -200,9 +165,6 @@ interface AppStateConfig {
   setIsAllocationReserved: (state: boolean) => void;
   setTransactionStatus: (status: TransactionStatusInfo) => void;
   setPreviousWalletConnectState: (state: boolean) => void;
-  setLoadingStreams: (state: boolean) => void;
-  setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
-  setPrograms: (list: Array<ProgramAccounts> | undefined) => void;
   setMultisigTxs: (list: Array<MultisigTransaction> | undefined) => void;
   setSelectedStream: (stream: StreamValues) => void;
   setActiveStream: (stream: StreamValues) => void;
@@ -212,7 +174,7 @@ interface AppStateConfig {
   openStreamById: (streamId: string, dock: boolean) => void;
   getStreamActivity: (streamId: string, version: number, clearHistory?: boolean) => void;
   setCustomStreamDocked: (state: boolean) => void;
-  setDiagnosisInfo: (info: AccountDetails | undefined) => void;
+  setDiagnosisInfo: (info: RuntimeAppDetails | undefined) => void;
   // Accounts page
   setShouldLoadTokens: (state: boolean) => void;
   appendHistoryItems: (transactionsChunk: MappedTransaction[] | undefined, addItems?: boolean) => void;
@@ -246,8 +208,6 @@ const contextDefaultValues: AppStateConfig = {
   selectedAccount: emptyAccount,
   // General
   theme: undefined,
-  tpsAvg: undefined, // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
-  refreshInterval: ONE_MINUTE_REFRESH_TIMEOUT,
   isWhitelisted: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
@@ -275,23 +235,16 @@ const contextDefaultValues: AppStateConfig = {
   isVerifiedRecipient: false,
   isAllocationReserved: false,
   transactionStatus: {
-    lastOperation: TransactionStatus.Iddle,
-    currentOperation: TransactionStatus.Iddle,
+    lastOperation: TransactionStatus.Idle,
+    currentOperation: TransactionStatus.Idle,
   },
   previousWalletConnectState: false,
-  loadingStreams: false,
-  streamListv1: undefined,
-  streamListv2: undefined,
-  streamList: undefined,
-  programs: undefined,
   multisigTxs: undefined,
   selectedStream: undefined,
   streamDetail: undefined,
   activeStream: undefined,
   deletedStreams: [],
   highLightableStreamId: undefined,
-  streamProgramAddress: '',
-  streamV2ProgramAddress: '',
   loadingStreamActivity: false,
   streamActivity: undefined,
   hasMoreStreamActivity: true,
@@ -335,7 +288,6 @@ const contextDefaultValues: AppStateConfig = {
   getAssetsByAccount: () => null,
   // General
   setTheme: () => {},
-  setTpsAvg: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
   setTreasuryOption: () => {},
@@ -350,8 +302,6 @@ const contextDefaultValues: AppStateConfig = {
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
   resetStreamsState: () => {},
-  clearStreams: () => {},
-  refreshStreamList: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
   setPaymentStartDate: () => {},
@@ -369,9 +319,6 @@ const contextDefaultValues: AppStateConfig = {
   setIsAllocationReserved: () => {},
   setTransactionStatus: () => {},
   setPreviousWalletConnectState: () => {},
-  setLoadingStreams: () => {},
-  setStreamList: () => {},
-  setPrograms: () => {},
   setMultisigTxs: () => {},
   setSelectedStream: () => {},
   setActiveStream: () => {},
@@ -412,7 +359,11 @@ const contextDefaultValues: AppStateConfig = {
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
 
-const AppStateProvider: React.FC = ({ children }) => {
+interface ProviderProps {
+  children: ReactNode;
+}
+
+const AppStateProvider = ({ children }: ProviderProps) => {
   const { t } = useTranslation('common');
   // Parent contexts
   const connection = useConnection();
@@ -423,10 +374,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Account selection
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const today = new Date().toLocaleDateString('en-US');
-  const tomorrow = moment().add(1, 'days').format('L');
-  const timeDate = moment().format('hh:mm A');
+  const tomorrow = dayjs().add(1, 'day').format('L');
+  const timeDate = dayjs().format('hh:mm A');
   const [theme, updateTheme] = useLocalStorage('theme', 'dark');
-  const [tpsAvg, setTpsAvg] = useState<TpsAverageValues>(contextDefaultValues.tpsAvg);
   const [treasuryOption, updateTreasuryOption] = useState<TreasuryTypeOption | undefined>(
     contextDefaultValues.treasuryOption,
   );
@@ -453,18 +403,13 @@ const AppStateProvider: React.FC = ({ children }) => {
   );
   const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(connected);
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
-  const [loadingStreams, updateLoadingStreams] = useState(false);
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
   const [streamActivity, setStreamActivity] = useState<StreamActivityV1[] | StreamActivity[] | undefined>(undefined);
   const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(
     contextDefaultValues.hasMoreStreamActivity,
   );
   const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
-  const [diagnosisInfo, setDiagnosisInfo] = useState<AccountDetails | undefined>(contextDefaultValues.diagnosisInfo);
-  const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
-  const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
-  const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
-  const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>();
+  const [diagnosisInfo, setDiagnosisInfo] = useState<RuntimeAppDetails | undefined>(contextDefaultValues.diagnosisInfo);
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[] | undefined>();
   const [selectedStream, updateSelectedStream] = useState<StreamValues>();
   const [streamDetail, updateStreamDetail] = useState<StreamValues>();
@@ -489,8 +434,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     contextDefaultValues.totalSafeBalance,
   );
   const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
-  const [priceList, setPriceList] = useState<TokenPrice[] | null>(null);
-  const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
   const [stakedAmount, updateStakedAmount] = useState<string>(contextDefaultValues.stakedAmount);
@@ -511,7 +454,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   );
   const [accountNfts, setAccountNfts] = useState<FindNftsByOwnerOutput | undefined>(contextDefaultValues.accountNfts);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
-  const [meanTokenList, setMeanTokenlist] = useState<UserTokenAccount[] | undefined>(undefined);
   const [tokensLoaded, setTokensLoaded] = useState(contextDefaultValues.tokensLoaded);
   const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
   const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(contextDefaultValues.loadingTokenAccounts);
@@ -524,68 +466,12 @@ const AppStateProvider: React.FC = ({ children }) => {
     contextDefaultValues.tokenAccounts,
   );
 
-  const isDowngradedPerformance = useMemo(() => {
-    return !!(isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD));
-  }, [tpsAvg]);
-
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-  const streamProgramAddress = useMemo(() => appConfig.getConfig().streamProgramAddress, []);
-  const streamV2ProgramAddress = useMemo(() => appConfig.getConfig().streamV2ProgramAddress, []);
-
-  // Use a fallback RPC for Money Streaming Program (v1) instance
-  const ms = useMemo(
-    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
-    [streamProgramAddress],
-  );
-
-  const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
-  }, [connection, streamV2ProgramAddress]);
-
-  const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !connectionConfig.endpoint) {
-      return null;
-    }
-
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
-  }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
-
   const setTheme = useCallback(
     (name: string) => {
       updateTheme(name);
     },
     [updateTheme],
   );
-
-  /**
-   * Auto reload timeout breakdown
-   *
-   * #s <= 5 30s * 2
-   * #s > 5 & <= 25 40s * 2
-   * #s > 25 & <= 60 50s * 2
-   * #s > 60 & <= 100 70s * 2
-   * #s > 100 5min is ok
-   */
-  const refreshInterval = useMemo(() => {
-    if (!streamList || streamList.length <= 5) {
-      return ONE_MINUTE_REFRESH_TIMEOUT;
-    }
-    if (streamList.length > 5 && streamList.length <= 25) {
-      return FORTY_SECONDS_REFRESH_TIMEOUT * 2;
-    }
-    if (streamList.length > 25 && streamList.length <= 60) {
-      return FIVETY_SECONDS_REFRESH_TIMEOUT * 2;
-    }
-    if (streamList.length > 60 && streamList.length <= 100) {
-      return SEVENTY_SECONDS_REFRESH_TIMEOUT * 2;
-    }
-
-    return FIVE_MINUTES_REFRESH_TIMEOUT;
-  }, [streamList]);
-
-  const setShouldLoadTokens = (state: boolean) => {
-    updateShouldLoadTokens(state);
-  };
 
   // Set theme option to html tag
   useEffect(() => {
@@ -598,6 +484,15 @@ const AppStateProvider: React.FC = ({ children }) => {
     applyTheme(theme);
     return () => {};
   }, [theme, updateTheme]);
+
+  const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
+  const { multisigClient } = useMultisigClient();
+  const { tokenList: meanTokenList } = useGetTokenList();
+  const { prices: priceList, loadingPrices, refetchPrices } = useGetAssetPrices();
+
+  const setShouldLoadTokens = (state: boolean) => {
+    updateShouldLoadTokens(state);
+  };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
@@ -625,10 +520,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     consoleOut('isWhitelisted:', isWhitelisted, 'blue');
   }, [isWhitelisted]);
-
-  const setLoadingStreams = (state: boolean) => {
-    updateLoadingStreams(state);
-  };
 
   const setTreasuryOption = (option: TreasuryTypeOption | undefined) => {
     updateTreasuryOption(option);
@@ -666,9 +557,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateLockPeriodAmount(data);
   };
 
-  const setActiveTab = (data: string) => {
+  const setActiveTab = useCallback((data: string) => {
     updateActiveTab(data);
-  };
+  }, []);
 
   const setSelectedTab = (data: string) => {
     updateSelectedTab(data);
@@ -724,14 +615,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     setIsAllocationReserved(false);
   }, [timeDate, today, tomorrow]);
 
-  const clearStreams = () => {
-    setStreamList([]);
-    setStreamListv2([]);
-    setStreamListv1([]);
-  };
-
   const resetStreamsState = useCallback(() => {
-    setStreamList([]);
     setStreamActivity(undefined);
     setStreamDetail(undefined);
     setActiveStream(undefined);
@@ -770,14 +654,13 @@ const AppStateProvider: React.FC = ({ children }) => {
       try {
         const streamPublicKey = new PublicKey(streamId);
         try {
-          if (paymentStreaming && publicKey) {
-            const detail = await paymentStreaming.getStream(streamPublicKey);
+          if (tokenStreamingV2 && publicKey) {
+            const detail = await tokenStreamingV2.getStream(streamPublicKey);
             consoleOut('customStream', detail);
             if (detail) {
               setStreamDetail(detail);
               setActiveStream(detail);
               if (dock) {
-                setStreamList([detail]);
                 setCustomStreamDocked(true);
                 openNotification({
                   description: t('notifications.success-loading-stream-message', {
@@ -822,12 +705,12 @@ const AppStateProvider: React.FC = ({ children }) => {
         });
       }
     },
-    [paymentStreaming, publicKey, t],
+    [tokenStreamingV2, publicKey, t],
   );
 
   const getStreamActivity = useCallback(
     (streamId: string, version: number, clearHistory = false) => {
-      if (!connected || !streamId || !ms || !paymentStreaming) {
+      if (!connected || !streamId || !tokenStreamingV1 || !tokenStreamingV2) {
         return [];
       }
 
@@ -843,7 +726,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         }
 
         if (version < 2) {
-          ms.listStreamActivity(streamPublicKey)
+          tokenStreamingV1
+            .listStreamActivity(streamPublicKey)
             .then(value => {
               consoleOut('activity:', value);
               setStreamActivity(value);
@@ -861,7 +745,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             streamActivity && streamActivity.length > 0 ? streamActivity[streamActivity.length - 1].signature : '';
           const before = clearHistory ? '' : signature;
           consoleOut('before:', before, 'crimson');
-          paymentStreaming
+          tokenStreamingV2
             .listStreamActivity(streamPublicKey, before, 5)
             .then((value: StreamActivity[]) => {
               consoleOut('activity:', value);
@@ -885,7 +769,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         }
       }
     },
-    [ms, paymentStreaming, connected, streamActivity, loadingStreamActivity],
+    [tokenStreamingV1, tokenStreamingV2, connected, streamActivity, loadingStreamActivity],
   );
 
   const setSelectedStream = useCallback(
@@ -893,7 +777,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       updateSelectedStream(stream);
       if (stream) {
         // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-        const mspInstance: any = stream.version < 2 ? ms : paymentStreaming;
+        const mspInstance: any = stream.version < 2 ? tokenStreamingV1 : tokenStreamingV2;
         mspInstance
           .getStream(new PublicKey(stream.id as string))
           .then((detail: Stream | StreamInfo) => {
@@ -909,12 +793,12 @@ const AppStateProvider: React.FC = ({ children }) => {
           });
       }
     },
-    [ms, paymentStreaming],
+    [tokenStreamingV1, tokenStreamingV2],
   );
 
-  const setStreamDetail = (stream: StreamValues) => {
+  const setStreamDetail = useCallback((stream: StreamValues) => {
     updateStreamDetail(stream);
-  };
+  }, []);
 
   const setDeletedStream = (id: string) => {
     setDeletedStreams(oldArray => [...oldArray, id]);
@@ -978,73 +862,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     [priceList],
   );
 
-  const mapPrices = useCallback((prices: TokenPrice[]) => {
-    if (prices && prices.length > 0) {
-      const solIndex = prices.findIndex(p => p.symbol === 'SOL');
-      const listCopy = JSON.parse(JSON.stringify(prices)) as TokenPrice[];
-      if (solIndex !== -1) {
-        listCopy[solIndex].address = NATIVE_SOL.address;
-      }
-      const sol = listCopy.find(p => p.symbol === 'SOL');
-      if (sol) {
-        listCopy.push({
-          symbol: 'wSOL',
-          address: WRAPPED_SOL_MINT_ADDRESS,
-          price: sol.price,
-        });
-        listCopy.push({
-          symbol: 'WSOL',
-          address: WRAPPED_SOL_MINT_ADDRESS,
-          price: sol.price,
-        });
-      }
-      setPriceList(listCopy);
-      consoleOut('Price items:', prices.length, 'blue');
-    } else {
-      consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');
-    }
-  }, []);
-
-  // Fetch coin prices
-  const getCoinPrices = useCallback(
-    async (fromCache = true) => {
-      try {
-        setLoadingPrices(true);
-        pricesPerformanceCounter.start();
-        const isExpired = isCacheItemExpired('token-prices', THIRTY_MINUTES_REFRESH_TIMEOUT);
-        const honorCache = !!(fromCache && !isExpired);
-        const newPrices = await getPrices(honorCache);
-        pricesPerformanceCounter.stop();
-        consoleOut(`Fetched price list in ${pricesPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
-        mapPrices(newPrices);
-      } catch (error) {
-        updateEffectiveRate(0);
-        consoleOut('New prices API error:', error, 'red');
-      } finally {
-        setLoadingPrices(false);
-      }
-    },
-    [mapPrices],
-  );
-
   const refreshPrices = useCallback(() => {
-    getCoinPrices(false);
-  }, [getCoinPrices]);
-
-  // Effect to load coin prices
-  useEffect(() => {
-    const coinTimer = window.setInterval(() => {
-      consoleOut(`Refreshing prices past ${THIRTY_MINUTES_REFRESH_TIMEOUT / 60 / 1000}min...`);
-      getCoinPrices();
-    }, THIRTY_MINUTES_REFRESH_TIMEOUT);
-
-    // Return callback to run on unmount.
-    return () => {
-      if (coinTimer) {
-        window.clearInterval(coinTimer);
-      }
-    };
-  }, [getCoinPrices]);
+    refetchPrices();
+  }, [refetchPrices]);
 
   // Update token price while list of prices change
   useEffect(() => {
@@ -1054,129 +874,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }, [getTokenPriceByAddress, priceList, selectedToken]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
-  const refreshStreamList = useCallback(
-    (reset = false) => {
-      if (loadingStreams || customStreamDocked || !ms || !paymentStreaming) {
-        return;
-      }
-
-      if (!publicKey) {
-        return;
-      }
-
-      const userPk = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
-      consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
-
-      if (paymentStreaming) {
-        updateLoadingStreams(true);
-
-        const streamAccumulator: (StreamInfo | Stream)[] = [];
-        let rawStreamsv1: StreamInfo[] = [];
-        let rawStreamsv2: Stream[] = [];
-
-        // Reset all counters
-        listStreamsV1PerformanceCounter.reset();
-        listStreamsV2PerformanceCounter.reset();
-        listStreamsV2PerformanceCounter.start();
-
-        paymentStreaming
-          .listStreams({ psAccountOwner: userPk, beneficiary: userPk })
-          .then(streamsv2 => {
-            consoleOut('streamsv2 from AppSate:', streamsv2, 'blue');
-            listStreamsV2PerformanceCounter.stop();
-            streamAccumulator.push(...streamsv2);
-            rawStreamsv2 = streamsv2;
-            rawStreamsv2.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime)) ? 1 : -1));
-            listStreamsV1PerformanceCounter.start();
-            ms.listStreams({ treasurer: userPk, beneficiary: userPk })
-              .then(async streamsv1 => {
-                listStreamsV1PerformanceCounter.stop();
-                consoleOut(
-                  `listStreams performance counter: ${tokenListPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                  '',
-                  'crimson',
-                );
-                streamAccumulator.push(...streamsv1);
-                rawStreamsv1 = streamsv1;
-                rawStreamsv1.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime)) ? 1 : -1));
-                streamAccumulator.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime)) ? 1 : -1));
-                // Start debugging block
-                if (!isProd()) {
-                  const debugTable: unknown[] = [];
-                  for (const item of streamAccumulator) {
-                    debugTable.push({
-                      version: item.version,
-                      name: item.version < 2 ? (item as StreamInfo).streamName : (item as Stream).name.trim(),
-                      streamId: shortenAddress(`${item.id}`, 8),
-                    });
-                  }
-                  console.table(debugTable);
-                }
-                // End of debugging block
-                setStreamList(streamAccumulator);
-                setStreamListv2(rawStreamsv2);
-                setStreamListv1(rawStreamsv1);
-                consoleOut('Streams from AppSate:', streamAccumulator, 'blue');
-                if (streamDetail) {
-                  const streamId =
-                    streamDetail.version < 2
-                      ? ((streamDetail as StreamInfo).id as string)
-                      : (streamDetail as Stream).id.toBase58();
-                  const item = streamAccumulator.find(s => {
-                    const id = s.version < 2 ? ((s as StreamInfo).id as string) : (s as Stream).id.toBase58();
-                    return id === streamId;
-                  });
-                  if (item) {
-                    setStreamDetail(item);
-                  }
-                }
-                setDeletedStreams([]);
-              })
-              .catch(err => {
-                console.error(err);
-              })
-              .finally(() => {
-                updateLoadingStreams(false);
-              });
-          })
-          .catch(err => {
-            console.error(err);
-          });
-      }
-    },
-    [ms, paymentStreaming, publicKey, streamDetail, selectedAccount.address, loadingStreams, customStreamDocked],
-  );
-
-  /**
-   * Streams refresh timeout
-   *
-   * If TPS values are critical we should NOT schedule at all
-   * and resume when TPS goes up again.
-   */
-  useEffect(() => {
-    if (!publicKey) {
-      return;
-    }
-
-    let timer: NodeJS.Timeout;
-
-    if (selectedAccount.address && !customStreamDocked && !isDowngradedPerformance) {
-      timer = setInterval(() => {
-        consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
-        refreshStreamList();
-      }, FIVE_MINUTES_REFRESH_TIMEOUT);
-    }
-
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [publicKey, customStreamDocked, selectedAccount.address, isDowngradedPerformance, refreshStreamList]);
-
   const refreshTokenBalance = useCallback(async () => {
-    if (!connection || !publicKey || !tokenList || !tokenAccounts || !tokenAccounts.length) {
+    if (!connection || !publicKey || !tokenAccounts || !tokenAccounts.length) {
       return;
     }
 
@@ -1206,7 +905,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     const selectedTokenAddress = findATokenAddress(userPk, new PublicKey(selectedToken.address));
     balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
     updateTokenBalance(balance);
-  }, [connection, publicKey, tokenList, tokenAccounts, selectedToken?.address, selectedAccount.address]);
+  }, [connection, publicKey, tokenAccounts, selectedToken?.address, selectedAccount.address]);
 
   // Effect to refresh token balance if needed
   useEffect(() => {
@@ -1260,73 +959,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const setSelectedAsset = (asset: UserTokenAccount | undefined) => {
     updateSelectedAsset(asset);
   };
-
-  // Fetch token list
-  const getTokenList = useCallback(async () => {
-    try {
-      tokenListPerformanceCounter.start();
-      const targetChain = getNetworkIdByCluster(connectionConfig.cluster);
-      const cacheEntryKey = getSolanaTokenListKeyNameByCluster(targetChain);
-      const honorCache = !isCacheItemExpired(cacheEntryKey);
-      const tokenList = await getSplTokens(targetChain, honorCache);
-      tokenListPerformanceCounter.stop();
-      consoleOut(`Fetched token list in ${tokenListPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
-      if (tokenList && tokenList.length > 0) {
-        const newTokenList: TokenInfo[] = [];
-        const newPriceList: TokenPrice[] = [];
-        for (const token of tokenList) {
-          const item: TokenInfo = {
-            address: token.mint,
-            name: token.name,
-            chainId: targetChain,
-            decimals: token.decimals,
-            symbol: token.symbol,
-            logoURI: token.mint === NATIVE_SOL.address ? NATIVE_SOL.logoURI : token.image,
-            extensions: undefined,
-            tags: [],
-          };
-          newTokenList.push(item);
-          if (token.priceUsd) {
-            const priceItem: TokenPrice = {
-              address: token.mint,
-              symbol: token.symbol,
-              price: token.priceUsd,
-            };
-            newPriceList.push(priceItem);
-          }
-        }
-        const filtered = newTokenList.filter(t => t.decimals !== null);
-        consoleOut('API token list items:', filtered.length, 'blue');
-        setMeanTokenlist(filtered);
-        if (newPriceList.length > 0) {
-          mapPrices(newPriceList);
-        } else {
-          getCoinPrices();
-        }
-      } else {
-        consoleOut('Trying Solflare Unified Token List...', '', 'blue');
-        const tokens = await getSolFlareTokenList();
-        if (tokens.length > 0) {
-          const withDecimals = tokens.filter(t => t.decimals && t.decimals > 0);
-          consoleOut('Solflare utl:', withDecimals.length, 'blue');
-          setMeanTokenlist(withDecimals);
-          getCoinPrices();
-        }
-      }
-    } catch (error) {
-      consoleOut('Token list API error:', error, 'red');
-    } finally {
-      tokenListPerformanceCounter.reset();
-    }
-  }, [connectionConfig.cluster, getCoinPrices, mapPrices]);
-
-  // Only get the token list once per page reload
-  useEffect(() => {
-    if (meanTokenList === undefined) {
-      consoleOut('Fetching the new token list...', '', 'blue');
-      getTokenList();
-    }
-  }, [getTokenList, meanTokenList]);
 
   // Load the supported tokens
   useEffect(() => {
@@ -1409,7 +1041,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         if (response) {
           setUserTokensResponse(response);
           setAccountTokens(response.accountTokens);
-          updateTokenAccounts(response.userTokenAccouns);
+          updateTokenAccounts(response.userTokenAccounts);
         } else {
           setUserTokensResponse(null);
           setAccountTokens([]);
@@ -1582,14 +1214,16 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [recurringBuys, updateRecurringBuys] = useState<DdcaAccount[]>([]);
   const [loadingRecurringBuys, updateLoadingRecurringBuys] = useState(false);
 
-  const setLoadingRecurringBuys = (value: boolean) => {
+  const setLoadingRecurringBuys = useCallback((value: boolean) => {
     updateLoadingRecurringBuys(value);
-  };
+  }, []);
 
   const setRecurringBuys = (recurringBuys: DdcaAccount[]) => {
     updateRecurringBuys(recurringBuys);
   };
 
+  // TODO: Remove this after fixing dependencies
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const values = useMemo(() => {
     return {
       accountNfts,
@@ -1615,7 +1249,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       loadingPrices,
       loadingRecurringBuys,
       loadingStreamActivity,
-      loadingStreams,
       loadingTokenAccounts,
       lockPeriodAmount,
       lockPeriodFrequency,
@@ -1632,13 +1265,11 @@ const AppStateProvider: React.FC = ({ children }) => {
       previousRoute,
       previousWalletConnectState,
       priceList,
-      programs,
       proposalEndDate,
       proposalEndTime,
       recipientAddress,
       recipientNote,
       recurringBuys,
-      refreshInterval,
       selectedAccount,
       selectedAsset,
       selectedMultisig,
@@ -1651,12 +1282,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       stakingMultiplier,
       streamActivity,
       streamDetail,
-      streamList,
-      streamListv1,
-      streamListv2,
-      streamProgramAddress,
       streamsSummary,
-      streamV2ProgramAddress,
       theme,
       timeSheetRequirement,
       tokenAccounts,
@@ -1664,7 +1290,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       tokenList,
       tokensLoaded,
       totalSafeBalance,
-      tpsAvg,
       transactions,
       transactionStatus,
       treasuryOption,
@@ -1672,7 +1297,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       unstakeStartDate,
       userTokensResponse,
       appendHistoryItems,
-      clearStreams,
       getAssetsByAccount,
       getStreamActivity,
       getTokenByMintAddress,
@@ -1681,7 +1305,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       openStreamById,
       refreshMultisigs,
       refreshPrices,
-      refreshStreamList,
       refreshTokenBalance,
       resetContractValues,
       resetStreamsState,
@@ -1699,7 +1322,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       setIsVerifiedRecipient,
       setLastStreamsSummary,
       setLoadingRecurringBuys,
-      setLoadingStreams,
       setLockPeriodAmount,
       setLockPeriodFrequency,
       setMultisigAccounts,
@@ -1714,7 +1336,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       setPendingMultisigTxCount,
       setPreviousRoute,
       setPreviousWalletConnectState,
-      setPrograms,
       setProposalEndDate,
       setProposalEndTime,
       setRecipientAddress,
@@ -1730,12 +1351,10 @@ const AppStateProvider: React.FC = ({ children }) => {
       setStakedAmount,
       setStakingMultiplier,
       setStreamDetail,
-      setStreamList,
       setStreamsSummary,
       setTheme,
       setTimeSheetRequirement,
       setTotalSafeBalance,
-      setTpsAvg,
       setTransactionStatus,
       setTreasuryOption,
       setUnstakedAmount,
@@ -1766,7 +1385,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     loadingPrices,
     loadingRecurringBuys,
     loadingStreamActivity,
-    loadingStreams,
     loadingTokenAccounts,
     lockPeriodAmount,
     lockPeriodFrequency,
@@ -1783,13 +1401,11 @@ const AppStateProvider: React.FC = ({ children }) => {
     previousRoute,
     previousWalletConnectState,
     priceList,
-    programs,
     proposalEndDate,
     proposalEndTime,
     recipientAddress,
     recipientNote,
     recurringBuys,
-    refreshInterval,
     selectedAccount,
     selectedAsset,
     selectedMultisig,
@@ -1802,12 +1418,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     stakingMultiplier,
     streamActivity,
     streamDetail,
-    streamList,
-    streamListv1,
-    streamListv2,
-    streamProgramAddress,
     streamsSummary,
-    streamV2ProgramAddress,
     theme,
     timeSheetRequirement,
     tokenAccounts,
@@ -1815,7 +1426,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     tokenList,
     tokensLoaded,
     totalSafeBalance,
-    tpsAvg,
     transactions,
     transactionStatus,
     treasuryOption,
@@ -1823,7 +1433,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     unstakeStartDate,
     userTokensResponse,
     appendHistoryItems,
-    clearStreams,
     getAssetsByAccount,
     getStreamActivity,
     getTokenByMintAddress,
@@ -1832,46 +1441,45 @@ const AppStateProvider: React.FC = ({ children }) => {
     openStreamById,
     refreshMultisigs,
     refreshPrices,
-    refreshStreamList,
     refreshTokenBalance,
     resetContractValues,
     resetStreamsState,
     setActiveTab,
-    setCoolOffPeriodFrequency,
-    setDeletedStream,
-    setEffectiveRate,
-    setFromCoinAmount,
-    setLoadingRecurringBuys,
-    setLoadingStreams,
-    setLockPeriodAmount,
-    setLockPeriodFrequency,
-    setMultisigSolBalance,
-    setPaymentRateAmount,
-    setPaymentRateFrequency,
-    setPaymentStartDate,
-    setPreviousWalletConnectState,
-    setProposalEndDate,
-    setProposalEndTime,
-    setRecipientAddress,
-    setRecipientNote,
-    setRecurringBuys,
-    setSelectedAsset,
-    setSelectedStream,
-    setSelectedTab,
-    setSelectedToken,
-    setSelectedTokenBalance,
-    setShouldLoadTokens,
-    setStakedAmount,
-    setStakingMultiplier,
-    setStreamDetail,
     setTheme,
-    setTimeSheetRequirement,
-    setTotalSafeBalance,
-    setTransactionStatus,
-    setTreasuryOption,
-    setUnstakedAmount,
-    setUnstakeStartDate,
+    setSelectedStream,
     showDepositOptionsModal,
+    setPreviousWalletConnectState,
+    // TODO: Conver all these into useCallbacks
+    // setCoolOffPeriodFrequency,
+    // setDeletedStream,
+    // setEffectiveRate,
+    // setFromCoinAmount,
+    setLoadingRecurringBuys,
+    // setLockPeriodAmount,
+    // setLockPeriodFrequency,
+    // setMultisigSolBalance,
+    // setPaymentRateAmount,
+    // setPaymentRateFrequency,
+    // setPaymentStartDate,
+    // setProposalEndDate,
+    // setProposalEndTime,
+    // setRecipientAddress,
+    // setRecipientNote,
+    // setRecurringBuys,
+    // setSelectedAsset,
+    // setSelectedTab,
+    // setSelectedToken,
+    // setSelectedTokenBalance,
+    // setShouldLoadTokens,
+    // setStakedAmount,
+    // setStakingMultiplier,
+    setStreamDetail,
+    // setTimeSheetRequirement,
+    // setTotalSafeBalance,
+    // setTransactionStatus,
+    // setTreasuryOption,
+    // setUnstakedAmount,
+    // setUnstakeStartDate,
   ]);
 
   return <AppStateContext.Provider value={values}>{children}</AppStateContext.Provider>;

@@ -1,8 +1,8 @@
 import type { ParsedTransactionWithMeta } from '@solana/web3.js';
 import { Col, Row } from 'antd';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
+import dayjs from 'dayjs';
 import { formatThousands } from 'middleware/utils';
-import moment from 'moment';
 import './style.scss';
 
 interface Props {
@@ -48,7 +48,7 @@ const ProgaramDetailsTransactions = ({ loadingTxs, programTransactions }: Props)
                 />
               </Col>
               <Col span={5} className='std-table-cell pr-1'>
-                {moment.unix(tx.blockTime as number).fromNow()}
+                {dayjs.unix(tx.blockTime as number).fromNow()}
               </Col>
             </Row>
           ))

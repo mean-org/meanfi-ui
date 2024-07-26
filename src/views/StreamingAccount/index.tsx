@@ -1,7 +1,6 @@
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   MULTISIG_ACTIONS,
-  MeanMultisig,
   type MultisigInfo,
   type MultisigTransactionFees,
   getFees,
@@ -9,11 +8,10 @@ import {
 import {
   Constants,
   MSP_ACTIONS,
-  MoneyStreaming,
   calculateActionFees,
   refreshTreasuryBalanceInstruction,
 } from '@mean-dao/money-streaming';
-import { STREAM_STATE, type StreamInfo, type TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import type { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import {
   ACTION_CODES,
   type AccountActivity,
@@ -24,10 +22,8 @@ import {
   type CloseAccountTransactionAccounts,
   FEE_ACCOUNT,
   NATIVE_SOL_MINT,
-  PaymentStreaming,
   type PaymentStreamingAccount,
   type RefreshAccountDataTransactionAccounts,
-  STREAM_STATUS_CODE,
   type Stream,
   type TransactionFees,
   type WithdrawFromAccountTransactionAccounts,
@@ -44,7 +40,15 @@ import {
 } from '@solana/web3.js';
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from 'Icons';
 import { Alert, Button, Dropdown, Row, Space, Spin, Tabs } from 'antd';
-import type { ItemType } from 'antd/lib/menu/hooks/useItems';
+import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+import {
+  FALLBACK_COIN_IMAGE,
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  NO_FEES,
+  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+  WRAPPED_SOL_MINT_ADDRESS,
+} from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { Identicon } from 'components/Identicon';
 import { openNotification } from 'components/Notifications';
@@ -55,27 +59,20 @@ import { TreasuryAddFundsModal } from 'components/TreasuryAddFundsModal';
 import { TreasuryCloseModal } from 'components/TreasuryCloseModal';
 import { TreasuryStreamCreateModal } from 'components/TreasuryStreamCreateModal';
 import { TreasuryTransferFundsModal } from 'components/TreasuryTransferFundsModal';
-import {
-  FALLBACK_COIN_IMAGE,
-  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-  NO_FEES,
-  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-  WRAPPED_SOL_MINT_ADDRESS,
-} from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
 import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
+import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
 import useWindowSize from 'hooks/useWindowResize';
-import { appConfig, customLogger } from 'index';
+import { customLogger } from 'main';
 import { fetchAccountTokens, getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
 import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
 import { SOL_MINT } from 'middleware/ids';
+import { getStreamStatusLabel } from 'middleware/streamHelpers';
 import { getStreamTitle } from 'middleware/streams';
 import {
   type ComputeBudgetConfig,
@@ -105,11 +102,12 @@ import { OperationType, TransactionStatus } from 'models/enums';
 import { ZERO_FEES } from 'models/multisig';
 import type { TreasuryWithdrawParams } from 'models/treasuries';
 import type { AddFundsParams } from 'models/vesting';
+import useMultisigClient from 'query-hooks/multisigClient';
+import useStreamingClient from 'query-hooks/streamingClient';
 import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 import type { LooseObject } from 'types/LooseObject';
 
 interface StreamingAccountViewProps {
@@ -133,7 +131,6 @@ export const StreamingAccountView = ({
     splTokenList,
     selectedAccount,
     transactionStatus,
-    streamProgramAddress,
     setHighLightableStreamId,
     getTokenByMintAddress,
     setTransactionStatus,
@@ -143,7 +140,6 @@ export const StreamingAccountView = ({
 
   const { publicKey, connected, wallet } = useWallet();
   const connection = useConnection();
-  const connectionConfig = useConnectionConfig();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
@@ -179,27 +175,9 @@ export const StreamingAccountView = ({
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const mspV2AddressPK = useMemo(() => new PublicKey(appConfig.getConfig().streamV2ProgramAddress), []);
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-
-  const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !connectionConfig.endpoint) {
-      return null;
-    }
-
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
-  }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
-
-  // Use a fallback RPC for Money Streaming Program (v1) instance
-  const ms = useMemo(
-    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
-    [streamProgramAddress],
-  );
-
-  // Create and cache Payment Streaming instance
-  const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, mspV2AddressPK, connection.commitment);
-  }, [connection, mspV2AddressPK]);
+  const { tokenStreamingV1, tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
+  const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);
+  const { multisigClient } = useMultisigClient();
 
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);
@@ -219,8 +197,8 @@ export const StreamingAccountView = ({
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -231,8 +209,7 @@ export const StreamingAccountView = ({
         return;
       }
 
-      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-      const balancesMap: any = {};
+      const balancesMap: LooseObject = {};
       const pk = source ?? publicKey;
       consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
 
@@ -361,7 +338,7 @@ export const StreamingAccountView = ({
 
   const getStreamingAccountActivity = useCallback(
     (streamingAccountSelectedId: string, clearHistory = false) => {
-      if (!streamingAccountSelectedId || !paymentStreaming || loadingStreamingAccountActivity) {
+      if (!streamingAccountSelectedId || !tokenStreamingV2 || loadingStreamingAccountActivity) {
         return;
       }
 
@@ -372,7 +349,7 @@ export const StreamingAccountView = ({
 
       const before = getSearchSignatureMarker(clearHistory);
       consoleOut('before:', before, 'crimson');
-      paymentStreaming
+      tokenStreamingV2
         .listAccountActivity(streamingAccountPublicKey, before, 5)
         .then(value => {
           consoleOut('Streaming Account activity:', value);
@@ -393,7 +370,7 @@ export const StreamingAccountView = ({
         })
         .finally(() => setLoadingStreamingAccountActivity(false));
     },
-    [getActivitiesCopy, getSearchSignatureMarker, loadingStreamingAccountActivity, paymentStreaming],
+    [getActivitiesCopy, getSearchSignatureMarker, loadingStreamingAccountActivity, tokenStreamingV2],
   );
 
   const getStreamingAccountName = useCallback(() => {
@@ -569,38 +546,6 @@ export const StreamingAccountView = ({
     [getRateAmountDisplay, getDepositAmountDisplay, t],
   );
 
-  const getStreamStatusLabel = useCallback(
-    (item: Stream | StreamInfo) => {
-      if (item) {
-        const v1 = item as StreamInfo;
-        const v2 = item as Stream;
-        if (v1.version < 2) {
-          switch (v1.state) {
-            case STREAM_STATE.Schedule:
-              return t('streams.status.status-scheduled');
-            case STREAM_STATE.Paused:
-              return t('streams.status.status-stopped');
-            default:
-              return t('streams.status.status-running');
-          }
-        }
-
-        switch (v2.statusCode) {
-          case STREAM_STATUS_CODE.Scheduled:
-            return t('streams.status.status-scheduled');
-          case STREAM_STATUS_CODE.Paused:
-            if (v2.isManuallyPaused) {
-              return t('streams.status.status-paused');
-            }
-            return t('streams.status.status-stopped');
-          default:
-            return t('streams.status.status-running');
-        }
-      }
-    },
-    [t],
-  );
-
   const getTreasuryUnallocatedBalance = useCallback(
     (tsry: PaymentStreamingAccount | TreasuryInfo, assToken: TokenInfo | undefined) => {
       const getUnallocatedBalance = (details: PaymentStreamingAccount | TreasuryInfo) => {
@@ -625,15 +570,15 @@ export const StreamingAccountView = ({
 
   const getStreamingAccountStreams = useCallback(
     (treasuryPk: PublicKey, isNewAccount: boolean) => {
-      if (!publicKey || !ms) {
+      if (!publicKey || !tokenStreamingV1) {
         return;
       }
 
       consoleOut('Executing getStreamingAccountStreams...', '', 'blue');
 
       if (isNewAccount) {
-        if (paymentStreaming) {
-          paymentStreaming
+        if (tokenStreamingV2) {
+          tokenStreamingV2
             .listStreams({ psAccount: treasuryPk })
             .then(streams => {
               consoleOut('treasuryStreams:', streams, 'blue');
@@ -648,8 +593,8 @@ export const StreamingAccountView = ({
             });
         }
       } else {
-        if (ms) {
-          ms.listStreams({ treasury: treasuryPk })
+        if (tokenStreamingV1) {
+          tokenStreamingV1.listStreams({ treasury: treasuryPk })
             .then(streams => {
               consoleOut('treasuryStreams:', streams, 'blue');
               setStreamingAccountStreams(streams);
@@ -664,7 +609,7 @@ export const StreamingAccountView = ({
         }
       }
     },
-    [ms, paymentStreaming, publicKey],
+    [tokenStreamingV1, tokenStreamingV2, publicKey],
   );
 
   ////////////////
@@ -782,8 +727,7 @@ export const StreamingAccountView = ({
     let signature: string;
     let encodedTx: string;
     let multisigAuth = '';
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
@@ -857,7 +801,7 @@ export const StreamingAccountView = ({
 
         consoleOut('Starting Add Funds using MSP V1...', '', 'blue');
         // Create a transaction
-        return await ms
+        return await tokenStreamingV1
           .addFunds(
             publicKey,
             treasury,
@@ -907,7 +851,7 @@ export const StreamingAccountView = ({
     };
 
     const addFunds = async (data: AddFundsParams) => {
-      if (!publicKey || !paymentStreaming) {
+      if (!publicKey || !tokenStreamingV2) {
         return null;
       }
 
@@ -920,7 +864,7 @@ export const StreamingAccountView = ({
             psAccount: new PublicKey(data.treasury), // psAccount
             psAccountMint: new PublicKey(data.associatedToken), // psAccountMint
           };
-          const { transaction } = await paymentStreaming.buildAddFundsToAccountTransaction(
+          const { transaction } = await tokenStreamingV2.buildAddFundsToAccountTransaction(
             accounts, // accounts
             data.amount, // amount
           );
@@ -935,7 +879,7 @@ export const StreamingAccountView = ({
           owner: new PublicKey(data.contributor), // owner
           stream: new PublicKey(data.stream), // stream
         };
-        const { transaction } = await paymentStreaming.buildAllocateFundsToStreamTransaction(
+        const { transaction } = await tokenStreamingV2.buildAllocateFundsToStreamTransaction(
           accounts, // accounts
           data.amount, // amount
         );
@@ -965,7 +909,7 @@ export const StreamingAccountView = ({
           owner: new PublicKey(multisig.authority), // owner
           stream: new PublicKey(data.stream), // stream
         };
-        const { transaction } = await paymentStreaming.buildAllocateFundsToStreamTransaction(
+        const { transaction } = await tokenStreamingV2.buildAllocateFundsToStreamTransaction(
           accounts, // accounts
           data.amount, // amount
         );
@@ -979,7 +923,7 @@ export const StreamingAccountView = ({
           psAccount: new PublicKey(data.treasury), // psAccount
           psAccountMint: new PublicKey(data.associatedToken), // psAccountMint
         };
-        const { transaction } = await paymentStreaming.buildAddFundsToAccountTransaction(
+        const { transaction } = await tokenStreamingV2.buildAddFundsToAccountTransaction(
           accounts, // accounts
           data.amount, // amount
         );
@@ -1011,7 +955,7 @@ export const StreamingAccountView = ({
     };
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (!publicKey || !streamingAccountSelected || !params || !params.associatedToken || !paymentStreaming) {
+      if (!publicKey || !streamingAccountSelected || !params || !params.associatedToken || !tokenStreamingV2) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!',
@@ -1239,15 +1183,14 @@ export const StreamingAccountView = ({
     let transaction: VersionedTransaction | Transaction | null = null;
     let signature: string;
     let encodedTx: string;
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
     const treasuryWithdraw = async (data: TreasuryWithdrawParams) => {
-      if (!publicKey || !paymentStreaming) {
+      if (!publicKey || !tokenStreamingV2) {
         return null;
       }
 
@@ -1258,7 +1201,7 @@ export const StreamingAccountView = ({
           destination: new PublicKey(data.destination), // destination
           psAccount: new PublicKey(data.treasury), // psAccount
         };
-        const { transaction } = await paymentStreaming.buildWithdrawFromAccountTransaction(
+        const { transaction } = await tokenStreamingV2.buildWithdrawFromAccountTransaction(
           accounts, // accounts
           data.amount, // amount
           false, // autoWsol
@@ -1284,7 +1227,7 @@ export const StreamingAccountView = ({
         destination: new PublicKey(data.destination), // destination
         psAccount: new PublicKey(data.treasury), // psAccount
       };
-      const { transaction } = await paymentStreaming.buildWithdrawFromAccountTransaction(
+      const { transaction } = await tokenStreamingV2.buildWithdrawFromAccountTransaction(
         accounts, // accounts
         data.amount, // amount
         false, // autoWsol
@@ -1326,7 +1269,7 @@ export const StreamingAccountView = ({
         return false;
       }
 
-      if (!streamingAccountSelected || !paymentStreaming) {
+      if (!streamingAccountSelected || !tokenStreamingV2) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: 'Cannot start transaction! PaymentStreamingAccount details or MSP client not found!',
@@ -1557,8 +1500,7 @@ export const StreamingAccountView = ({
     let transaction: VersionedTransaction | Transaction | null = null;
     let signature: string;
     let encodedTx: string;
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
@@ -1624,7 +1566,7 @@ export const StreamingAccountView = ({
 
         consoleOut('Starting Close PaymentStreamingAccount using MSP V1...', '', 'blue');
         // Create a transaction
-        return await ms
+        return await tokenStreamingV1
           .closeTreasury(
             publicKey, // treasurer
             treasury, // treasury
@@ -1671,7 +1613,7 @@ export const StreamingAccountView = ({
 
     // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     const closeTreasury = async (data: any) => {
-      if (!publicKey || !paymentStreaming) {
+      if (!publicKey || !tokenStreamingV2) {
         return null;
       }
 
@@ -1681,7 +1623,7 @@ export const StreamingAccountView = ({
           destination: new PublicKey(data.treasurer), // destination
           psAccount: new PublicKey(data.treasury), // psAccount
         };
-        const { transaction } = await paymentStreaming.buildCloseAccountTransaction(
+        const { transaction } = await tokenStreamingV2.buildCloseAccountTransaction(
           accounts, // accounts
           false, // autoWSol
         );
@@ -1705,7 +1647,7 @@ export const StreamingAccountView = ({
         destination: multisig.authority, // destination
         psAccount: new PublicKey(data.treasury), // psAccount
       };
-      const { transaction } = await paymentStreaming.buildCloseAccountTransaction(
+      const { transaction } = await tokenStreamingV2.buildCloseAccountTransaction(
         accounts, // accounts
         false, // autoWSol
       );
@@ -1735,7 +1677,7 @@ export const StreamingAccountView = ({
     };
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (!publicKey || !streamingAccountSelected || !paymentStreaming) {
+      if (!publicKey || !streamingAccountSelected || !tokenStreamingV2) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!',
@@ -1918,8 +1860,7 @@ export const StreamingAccountView = ({
     let transaction: VersionedTransaction | Transaction | null = null;
     let signature: string;
     let encodedTx: string;
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     resetTransactionStatus();
     setTransactionCancelled(false);
@@ -1966,7 +1907,7 @@ export const StreamingAccountView = ({
 
     // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     const refreshTreasuryData = async (data: any) => {
-      if (!publicKey || !streamingAccountSelected || !paymentStreaming) {
+      if (!publicKey || !streamingAccountSelected || !tokenStreamingV2) {
         return null;
       }
 
@@ -1978,7 +1919,7 @@ export const StreamingAccountView = ({
         feePayer: publicKey, // feePayer
         psAccount: new PublicKey(data.treasury), // psAccount
       };
-      const { transaction } = await paymentStreaming.buildRefreshAccountDataTransaction(accounts);
+      const { transaction } = await tokenStreamingV2.buildRefreshAccountDataTransaction(accounts);
 
       return await composeTxWithPrioritizationFees(connection, publicKey, transaction.instructions);
     };
@@ -2150,7 +2091,7 @@ export const StreamingAccountView = ({
     connection,
     isNewTreasury,
     nativeBalance,
-    paymentStreaming,
+    tokenStreamingV2,
     isMultisigContext,
     transactionCancelled,
     multisigTransactionFees,
@@ -2284,14 +2225,14 @@ export const StreamingAccountView = ({
   useEffect(() => {
     if (
       publicKey &&
-      paymentStreaming &&
+      tokenStreamingV2 &&
       streamingAccountSelected &&
       searchParams.get('v') === 'activity' &&
       streamingAccountActivity.length < 5
     ) {
       getStreamingAccountActivity(streamingAccountSelected.id.toString());
     }
-  }, [searchParams, paymentStreaming, publicKey, streamingAccountSelected]);
+  }, [searchParams, tokenStreamingV2, publicKey, streamingAccountSelected]);
 
   // Get the effective balance of the treasury
   useEffect(() => {
@@ -2398,7 +2339,7 @@ export const StreamingAccountView = ({
   };
 
   const renderDropdownMenu = useCallback(() => {
-    const items: ItemType[] = [];
+    const items: ItemType<MenuItemType>[] = [];
     if (isXsDevice) {
       items.push({
         key: '00-create-stream',
@@ -2532,6 +2473,7 @@ export const StreamingAccountView = ({
 
               const title = stream ? getStreamTitle(stream, t) : 'Unknown outgoing stream';
               const subtitle = getStreamSubtitle(stream);
+              const status = t(getStreamStatusLabel(stream));
 
               return (
                 <div
@@ -2546,7 +2488,7 @@ export const StreamingAccountView = ({
                     title={title}
                     subtitle={subtitle || '0.00'}
                     resume={<StreamStatusSummary stream={stream} />}
-                    status={getStreamStatusLabel(stream)}
+                    status={status}
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className='mean-svg-icons' />}
                     isLink={true}
@@ -2725,7 +2667,7 @@ export const StreamingAccountView = ({
         <div className='flex-fixed-right cta-row mt-2 mb-2'>
           <Space className='left' size='middle' wrap>
             <Button
-              type='default'
+              type='primary'
               shape='round'
               size='small'
               className='thin-stroke btn-min-width'
@@ -2735,7 +2677,7 @@ export const StreamingAccountView = ({
               <div className='btn-content'>Add funds</div>
             </Button>
             <Button
-              type='default'
+              type='primary'
               shape='round'
               size='small'
               className='thin-stroke btn-min-width'
@@ -2750,7 +2692,7 @@ export const StreamingAccountView = ({
             </Button>
             {!isXsDevice && (
               <Button
-                type='default'
+                type='primary'
                 shape='round'
                 size='small'
                 className='thin-stroke btn-min-width'
@@ -2819,7 +2761,6 @@ export const StreamingAccountView = ({
           minRequiredBalance={minRequiredBalance}
           selectedMultisig={selectedMultisig}
           multisigClient={multisigClient}
-          userBalances={userBalances}
         />
       )}
 

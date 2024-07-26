@@ -192,7 +192,7 @@ export class AppConfigService {
     },
   };
 
-  constructor(private envName = '') {
+  constructor(envName = '') {
     if (envName) {
       environment = envName.replace('-', '_');
     } else if (!environment) {

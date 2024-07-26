@@ -1,42 +1,43 @@
 import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { IconThumbsDown, IconThumbsUp } from 'Icons';
 import { Button, Dropdown, type MenuProps } from 'antd';
+import type { CountdownRendererParams } from 'components/CountdownTimer/CountdownRenderer';
 import { AppStateContext } from 'contexts/appstate';
-import { useCallback, useContext, useState } from 'react';
+import { type ReactNode, useCallback, useContext, useState } from 'react';
 import Countdown from 'react-countdown';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
 
 export const ResumeItem = (props: {
-  id?: any;
+  id?: string | number;
   version?: number;
-  src?: any;
-  img?: any;
+  src?: string;
+  img?: ReactNode;
   title?: string;
-  extraTitle?: any;
+  extraTitle?: string[];
   classNameTitle?: string;
   classNameRightContent?: string;
   classNameIcon?: string;
-  subtitle?: any;
-  amount?: any;
-  expires?: any;
-  executedOn?: any;
-  approved?: any;
-  rejected?: any;
-  userSigned?: any;
+  subtitle?: ReactNode;
+  amount?: string | number;
+  expires?: string | Date;
+  executedOn?: string;
+  approved?: number;
+  rejected?: number;
+  userSigned?: boolean;
   status?: number | string;
   content?: string;
-  resume?: any;
+  resume?: ReactNode;
   isDetailsPanel?: boolean;
   isStream?: boolean;
   isStreamingAccount?: boolean;
-  rightIcon?: any;
+  rightIcon?: ReactNode;
   hasRightIcon?: boolean;
+  dropdownMenu?: MenuProps['items'];
   rightIconHasDropdown?: boolean;
-  dropdownMenu?: any;
   className?: string;
   isLink?: boolean;
-  onClick?: any;
+  onClick?: () => void;
   xs?: number;
   sm?: number;
   md?: number;
@@ -45,6 +46,7 @@ export const ResumeItem = (props: {
   const { theme } = useContext(AppStateContext);
 
   const {
+    id,
     src,
     img,
     version,
@@ -160,33 +162,37 @@ export const ResumeItem = (props: {
   );
 
   // Random component
-  const Completionist = () => <span>Expired on {expires.toDateString()}</span>;
+  const Completionist = () => (
+    <span>Expired on {!expires ? '-' : typeof expires === 'string' ? expires : expires.toDateString()}</span>
+  );
 
   // Renderer callback with condition
-  const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
+  const renderer = ({ days, hours, minutes, seconds, completed }: CountdownRendererParams) => {
     if (completed) {
       // Render a completed state
       return <Completionist />;
-    } else {
-      // Render a countdown
-      const daysSpace = days < 10 ? '0' : '';
-      const hoursSpace = hours < 10 ? '0' : '';
-      const minutesSpace = minutes < 10 ? '0' : '';
-      const secondsSpace = seconds < 10 ? '0' : '';
-
-      return (
-        <span>{`Expires in ${daysSpace}${days}:${hoursSpace}${hours}:${minutesSpace}${minutes}:${secondsSpace}${seconds}`}</span>
-      );
     }
+
+    // Render a countdown
+    const daysSpace = days < 10 ? '0' : '';
+    const hoursSpace = hours < 10 ? '0' : '';
+    const minutesSpace = minutes < 10 ? '0' : '';
+    const secondsSpace = seconds < 10 ? '0' : '';
+
+    return (
+      <span>{`Expires in ${daysSpace}${days}:${hoursSpace}${hours}:${minutesSpace}${minutes}:${secondsSpace}${seconds}`}</span>
+    );
   };
 
   const renderExecutedOnDisplay = () => {
-    if (status === 0 || status === 1) {
+    if (expires && (status === 0 || status === 1)) {
       return <Countdown className='align-middle' date={expires.toString()} renderer={renderer} />;
-    } else if (status === 4) {
+    }
+    if (status === 4) {
       return <span>Voided</span>;
-    } else if (status === 5) {
-      return <span>Expired on {expires.toDateString()}</span>;
+    }
+    if (expires && status === 5) {
+      return <span>Expired on {typeof expires === 'string' ? expires : expires.toDateString()}</span>;
     }
 
     return null;
@@ -215,10 +221,10 @@ export const ResumeItem = (props: {
   };
 
   return (
-    <div className='d-flex'>
+    <div key={`resume-item-${id ?? counterKey}`} className='d-flex'>
       <div
-        key={`resume-item-${counterKey}`}
         onClick={onClick}
+        onKeyDown={() => {}}
         className={`resume-item-container mr-0 ml-0 ${className} ${isLink ? '' : 'align-items-end'} ${
           isDetailsPanel ? 'pl-1 pr-2' : ''
         }`}
@@ -235,18 +241,18 @@ export const ResumeItem = (props: {
           <div className={`resume-left-text ${isDetailsPanel ? 'pb-1' : ''}`}>
             <div className={`resume-title ${isDetailsPanel ? 'big-title' : ''} ${classNameTitle}`}>
               {title}
-              {extraTitle &&
-                extraTitle.map((badge: any, index: number) => (
-                  <span key={`badge-${index}`} className='ml-1 badge darken small text-uppercase'>
-                    {badge}
-                  </span>
-                ))}
+              {/* biome-ignore lint/suspicious/noExplicitAny: Worthy to analyze */}
+              {extraTitle?.map((badge: any, index: number) => (
+                <span key={`badge-${index}`} className='ml-1 badge darken small text-uppercase'>
+                  {badge}
+                </span>
+              ))}
             </div>
             {version !== 0 &&
               (subtitle ? (
                 subtitle === 'null' ? (
                   <div className='info-label'>
-                    <span className='subtitle'></span>
+                    <span className='subtitle' />
                   </div>
                 ) : (
                   <div className='info-label'>
@@ -267,19 +273,19 @@ export const ResumeItem = (props: {
         <div className={`resume-right-container ${isDetailsPanel ? 'mr-2' : 'mr-1'} ${classNameRightContent}`}>
           <div className='resume-right-text'>
             <>
-              <div className={`resume-right-text-up`}>
-                {approved > 0 && (
+              <div className={'resume-right-text-up'}>
+                {approved ? (
                   <div className='thumbs-up' title={userSigned === true ? 'You approved this proposal' : ''}>
                     <span>{approved}</span>
                     <IconThumbsUp className='mean-svg-icons' />
                   </div>
-                )}
-                {rejected > 0 && version !== 0 && (
+                ) : null}
+                {rejected && version !== 0 ? (
                   <div className='thumbs-down' title={userSigned === false ? 'You rejected this proposal' : ''}>
                     <IconThumbsDown className='mean-svg-icons' />
                     <span>{rejected}</span>
                   </div>
-                )}
+                ) : null}
                 {status !== undefined &&
                   (!isStream ? (
                     <div className={`badge-container ${getTransactionStatusBackgroundColor(status as number)}`}>

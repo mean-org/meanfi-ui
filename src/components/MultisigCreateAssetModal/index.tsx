@@ -2,8 +2,8 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { IconCheckedBox } from 'Icons';
 import { Button, Divider, Input, Modal, Select, Spin } from 'antd';
-import { CUSTOM_TOKEN_NAME } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
+import { CUSTOM_TOKEN_NAME } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -21,15 +21,23 @@ import { TokenDisplay } from '../TokenDisplay';
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const MultisigCreateAssetModal = (props: {
-  handleClose: any;
-  handleOk: any;
+interface MultisigCreateAssetModalProps {
+  handleClose: () => void;
+  handleOk: (token: TokenInfo) => void;
   isBusy: boolean;
   isVisible: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-}) => {
-  const { handleClose, handleOk, isBusy, isVisible, nativeBalance, transactionFees } = props;
+}
+
+export const MultisigCreateAssetModal = ({
+  handleClose,
+  handleOk,
+  isBusy,
+  isVisible,
+  nativeBalance,
+  transactionFees,
+}: MultisigCreateAssetModalProps) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
@@ -97,7 +105,10 @@ export const MultisigCreateAssetModal = (props: {
   ////////////////
 
   const onAcceptModal = () => {
-    handleOk({ token });
+    if (!token) {
+      return;
+    }
+    handleOk(token);
   };
 
   const onCloseModal = () => {
@@ -110,8 +121,8 @@ export const MultisigCreateAssetModal = (props: {
     }, 50);
 
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -140,11 +151,11 @@ export const MultisigCreateAssetModal = (props: {
         });
       }
     },
-    [setToken, t],
+    [t],
   );
 
   const onTokenChange = useCallback(
-    (e: any) => {
+    (e: string) => {
       consoleOut('token selected:', e, 'blue');
       const token = getTokenByMintAddress(e);
       if (token) {
@@ -154,8 +165,8 @@ export const MultisigCreateAssetModal = (props: {
     [getTokenByMintAddress],
   );
 
-  const onCustomTokenChange = useCallback((e: any) => {
-    setCustomToken(e.target.value);
+  const onCustomTokenChange = useCallback((e: string) => {
+    setCustomToken(e);
   }, []);
 
   //////////////////
@@ -163,11 +174,11 @@ export const MultisigCreateAssetModal = (props: {
   //////////////////
 
   const isValidInput = (): boolean => {
-    return token ? true : false;
+    return !!token;
   };
 
   const isCreateVaultFormValid = () => {
-    return publicKey && isValidInput() ? true : false;
+    return !!(publicKey && isValidInput());
   };
 
   /////////////////
@@ -177,11 +188,12 @@ export const MultisigCreateAssetModal = (props: {
   const getMainCtaLabel = () => {
     if (isBusy) {
       return t('multisig.create-asset.main-cta-busy');
-    } else if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-      return getTransactionStartButtonLabel();
-    } else {
-      return t('general.refresh');
     }
+    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
+      return getTransactionStartButtonLabel();
+    }
+
+    return t('general.refresh');
   };
 
   return (
@@ -194,11 +206,11 @@ export const MultisigCreateAssetModal = (props: {
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       {/* sdsssd */}
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle && (
+        {transactionStatus.currentOperation === TransactionStatus.Idle && (
           <>
             {/* Token mint */}
             <div className='mb-3'>
@@ -209,11 +221,11 @@ export const MultisigCreateAssetModal = (props: {
                     <span className='add-on'>
                       {token && tokenList && (
                         <Select
-                          className={`token-selector-dropdown`}
+                          className={'token-selector-dropdown'}
                           value={token.address}
                           onChange={onTokenChange}
-                          bordered={false}
-                          showArrow={false}
+                          variant='borderless'
+                          suffixIcon={null}
                           dropdownRender={menu => (
                             <div>
                               {menu}
@@ -229,11 +241,12 @@ export const MultisigCreateAssetModal = (props: {
                                   placeholder='Enter token address'
                                   style={{ flex: 'auto' }}
                                   value={customToken}
-                                  onChange={onCustomTokenChange}
+                                  onChange={e => onCustomTokenChange(e.target.value)}
                                 />
                                 <div style={{ flex: '0 0 auto' }} className='flex-row align-items-center'>
                                   <span
                                     className='flat-button icon-button ml-1'
+                                    onKeyDown={() => {}}
                                     onClick={() => onSetCustomToken(customToken)}
                                   >
                                     <IconCheckedBox className='normal' />
@@ -277,7 +290,7 @@ export const MultisigCreateAssetModal = (props: {
             </div>
           </>
         )}
-        {transactionStatus.currentOperation !== TransactionStatus.Iddle &&
+        {transactionStatus.currentOperation !== TransactionStatus.Idle &&
           transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
             <>
               <div className='transaction-progress p-0'>
@@ -304,10 +317,10 @@ export const MultisigCreateAssetModal = (props: {
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -350,7 +363,7 @@ export const MultisigCreateAssetModal = (props: {
                 size='middle'
                 disabled={!isCreateVaultFormValid()}
                 onClick={() => {
-                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                  if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                     onAcceptModal();
                   } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                     onCloseModal();

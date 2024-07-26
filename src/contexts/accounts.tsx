@@ -1,7 +1,7 @@
 import { type MintInfo, MintLayout, u64 } from '@solana/spl-token';
 import { type AccountInfo, PublicKey } from '@solana/web3.js';
 import React, { useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { HALF_MINUTE_REFRESH_TIMEOUT } from '../constants';
+import { HALF_MINUTE_REFRESH_TIMEOUT } from '../app-constants';
 import { useConnection } from './connection';
 import { useWallet } from './wallet';
 
@@ -135,8 +135,6 @@ export const deserializeMint = (data: Buffer) => {
 export function useMintInfo(address: PublicKey | undefined) {
   const connection = useConnection();
   const [mint, setMint] = useState<MintInfo>();
-
-  const id = typeof address === 'string' ? address : address?.toBase58();
 
   useEffect(() => {
     if (!address) return;

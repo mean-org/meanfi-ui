@@ -2,8 +2,8 @@ import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Modal } from 'antd';
 import { QRCodeSVG } from 'qrcode.react';
 import { IconLoading } from '../../Icons';
-import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
-import { NATIVE_SOL } from '../../constants/tokens';
+import { MIN_SOL_BALANCE_REQUIRED, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../app-constants';
+import { NATIVE_SOL } from '../../app-constants/tokens';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 import {
   displayAmountWithSymbol,

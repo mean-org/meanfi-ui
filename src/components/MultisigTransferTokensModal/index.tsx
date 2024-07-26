@@ -2,20 +2,21 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import type { MultisigInfo, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { type AccountInfo, LAMPORTS_PER_SOL, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Button, Drawer, Modal, Spin } from 'antd';
-import ValidationStatusDisplay from 'components/ValidationStatusDisplay';
 import {
   INPUT_DEBOUNCE_TIME,
   MAX_TOKEN_LIST_ITEMS,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   MIN_SOL_BALANCE_REQUIRED,
-} from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
+} from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
+import ValidationStatusDisplay from 'components/ValidationStatusDisplay';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
 import { useDebounce } from 'hooks/useDebounce';
 import useRecipientAddressValidation from 'hooks/useRecipientAddressValidation';
+import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 import { fetchAccountTokens } from 'middleware/accounts';
 import { SOL_MINT } from 'middleware/ids';
 import { isError } from 'middleware/transactions';
@@ -25,7 +26,7 @@ import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { UserTokenAccount } from 'models/accounts';
 import { TransactionStatus } from 'models/enums';
 import type { TransferTokensTxParams } from 'models/multisig';
-import React, { type ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
+import { type ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LooseObject } from 'types/LooseObject';
 import { InputMean } from '../InputMean';
@@ -33,7 +34,6 @@ import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TokenListItem } from '../TokenListItem';
 import './style.scss';
-import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -173,9 +173,9 @@ export const MultisigTransferTokensModal = ({
     autoFocusInput();
   };
 
-  const hideDrawer = () => {
+  const hideDrawer = useCallback(() => {
     setIsTokenSelectorVisible(false);
-  };
+  }, []);
 
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
@@ -530,7 +530,7 @@ export const MultisigTransferTokensModal = ({
     if (isBusy) {
       return t('multisig.transfer-tokens.main-cta-busy');
     }
-    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
       return getTransactionStartButtonLabel();
     }
     if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
@@ -595,10 +595,10 @@ export const MultisigTransferTokensModal = ({
       open={isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Proposal title */}
             <div className='mb-3'>
@@ -746,7 +746,7 @@ export const MultisigTransferTokensModal = ({
                   size='large'
                   disabled={!isValidForm() || isTransferDisabled}
                   onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                       onAcceptModal();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
@@ -767,10 +767,10 @@ export const MultisigTransferTokensModal = ({
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -791,7 +791,6 @@ export const MultisigTransferTokensModal = ({
           onClose={onCloseTokenSelector}
           open={isTokenSelectorVisible}
           getContainer={false}
-          style={{ position: 'absolute' }}
         >
           {renderTokenSelectorInner}
         </Drawer>

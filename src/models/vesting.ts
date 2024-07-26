@@ -160,7 +160,7 @@ export interface VestingContractCloseStreamOptions {
 
 export interface VestingContractTopupParams {
   amount: string;
-  tokenAmount: any;
+  tokenAmount: BN;
   streamId: string;
   associatedToken: TokenInfo | undefined;
   proposalTitle: string;

@@ -7,21 +7,23 @@ import { useLocation } from 'react-router-dom';
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const OtherAssetsList = (props: {
+interface OtherAssetsListProps {
   loadingPrograms: boolean;
-  onProgramSelected?: any;
+  onProgramSelected?: (program: ProgramAccounts) => void;
   programs?: ProgramAccounts[];
   selectedProgram: ProgramAccounts | undefined;
-}) => {
-  const { loadingPrograms, onProgramSelected, programs, selectedProgram } = props;
+}
+
+export const OtherAssetsList = ({
+  loadingPrograms,
+  onProgramSelected,
+  programs,
+  selectedProgram,
+}: OtherAssetsListProps) => {
   const location = useLocation();
 
   const getActiveClass = (program: ProgramAccounts) => {
-    if (
-      selectedProgram &&
-      selectedProgram.pubkey.equals(program.pubkey) &&
-      location.pathname.startsWith('/programs/')
-    ) {
+    if (selectedProgram?.pubkey.equals(program.pubkey) && location.pathname.startsWith('/programs/')) {
       return 'selected';
     }
     return '';
@@ -33,7 +35,8 @@ export const OtherAssetsList = (props: {
         <Spin indicator={loadIndicator} />
       </div>
     );
-  } else if (!loadingPrograms && (!programs || programs.length === 0)) {
+  }
+  if (!loadingPrograms && (!programs || programs.length === 0)) {
     return (
       <div key='asset-category-other-assets-items' className='asset-category flex-column flex-center h-75'>
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<span>No programs found</span>} />
@@ -50,7 +53,8 @@ export const OtherAssetsList = (props: {
               return (
                 <div
                   key={`${address}`}
-                  onClick={() => onProgramSelected(program)}
+                  onClick={() => onProgramSelected?.(program)}
+                  onKeyDown={() => {}}
                   id={address}
                   className={`transaction-list-row ${getActiveClass(program)}`}
                 >

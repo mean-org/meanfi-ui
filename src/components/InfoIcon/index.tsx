@@ -1,13 +1,13 @@
-import { Button, Popover } from 'antd';
+import { Button, Popover, type PopoverProps } from 'antd';
 import type { TooltipPlacement } from 'antd/lib/tooltip';
 import type React from 'react';
 
 export const InfoIcon = (props: {
   children: React.ReactElement;
-  content: React.ReactElement | null;
+  content: React.ReactNode;
   title?: React.ReactElement;
   style?: React.CSSProperties;
-  trigger?: string;
+  trigger?: PopoverProps['trigger'];
   placement?: TooltipPlacement | undefined;
   className?: string;
 }) => {

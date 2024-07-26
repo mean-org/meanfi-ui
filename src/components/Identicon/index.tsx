@@ -1,28 +1,28 @@
-import Jazzicon from '@metamask/jazzicon';
 import type { PublicKey } from '@solana/web3.js';
-import bs58 from 'bs58';
 import type React from 'react';
-import { useEffect, useRef } from 'react';
+import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import { isValidAddress } from '../../middleware/ui';
-import './style.scss';
 
-export const Identicon = (props: { address?: string | PublicKey; style?: React.CSSProperties; className?: string }) => {
-  const { style, className } = props;
-  const address = typeof props.address === 'string' ? props.address : props.address?.toBase58();
-  const ref = useRef<HTMLDivElement>();
+interface IdenticonProps {
+  address?: string | PublicKey;
+  style?: React.CSSProperties;
+  className?: string;
+}
 
-  useEffect(() => {
-    if (address && isValidAddress(address) && ref.current) {
-      ref.current.innerHTML = '';
-      ref.current.className = className || '';
-      ref.current.appendChild(
-        Jazzicon(style?.width || 16, Number.parseInt(bs58.decode(address).toString('hex').slice(5, 15), 16)),
-      );
-    }
-  }, [address, style, className]);
+export const Identicon = ({ address, style, className }: IdenticonProps) => {
+  const addrString = typeof address === 'string' ? address : address?.toBase58();
 
-  if (isValidAddress(address)) {
-    return <div className='identicon-wrapper' ref={ref as any} style={props.style} />;
+  if (addrString && isValidAddress(addrString)) {
+    return (
+      <div className={className} style={{ display: 'inline-flex' }}>
+        <Jazzicon
+          diameter={style?.width ? +style.width : 16}
+          seed={jsNumberForAddress(addrString)}
+          svgStyles={style}
+        />
+      </div>
+    );
   }
+
   return null;
 };

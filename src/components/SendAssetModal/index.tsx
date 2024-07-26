@@ -1,9 +1,9 @@
-import { PublicKey, type AccountInfo, type ParsedAccountData } from '@solana/web3.js';
+import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Drawer, Modal, Tabs } from 'antd';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import { TextInput } from 'components/TextInput';
 import { TokenListItem } from 'components/TokenListItem';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
@@ -18,7 +18,8 @@ import type { UserTokenAccount } from 'models/accounts';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LooseObject } from 'types/LooseObject';
-import { OneTimePayment, RepeatingPayment } from 'views';
+import { OneTimePayment } from 'views/OneTimePayment';
+import { RepeatingPayment } from 'views/RepeatingPayment';
 
 type TransfersTabOption = 'one-time' | 'recurring';
 
@@ -38,7 +39,7 @@ export const SendAssetModal = ({ selected, isVisible, handleClose, selectedToken
   const { t } = useTranslation('common');
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [userBalances, setUserBalances] = useState<LooseObject>();
+  const [userBalances, setUserBalances] = useState<LooseObject>({});
   const [token, setToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenFilter, setTokenFilter] = useState('');
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
@@ -358,7 +359,6 @@ export const SendAssetModal = ({ selected, isVisible, handleClose, selectedToken
         onClose={onCloseTokenSelector}
         open={isTokenSelectorVisible}
         getContainer={false}
-        style={{ position: 'absolute' }}
       >
         {renderTokenSelectorInner()}
       </Drawer>

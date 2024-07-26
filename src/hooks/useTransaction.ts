@@ -1,12 +1,12 @@
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import type { Transaction, VersionedTransaction } from '@solana/web3.js';
+import { MIN_SOL_BALANCE_REQUIRED } from 'app-constants/common';
 import { openNotification } from 'components/Notifications';
-import { MIN_SOL_BALANCE_REQUIRED } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnection, useConnectionConfig } from 'contexts/connection';
+import { useConnection } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
-import { appConfig, customLogger } from 'index';
+import { customLogger } from 'main';
 import { SOL_MINT } from 'middleware/ids';
 import {
   type ComputeBudgetConfig,
@@ -19,9 +19,9 @@ import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
 import { getAmountWithSymbol, getUniversalTxIxResume } from 'middleware/utils';
 import { type OperationType, TransactionStatus } from 'models/enums';
 import type { MultisigTxParams } from 'models/multisig';
+import useMultisigClient from 'query-hooks/multisigClient';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { failsafeConnectionConfig } from 'services/connections-hq';
 import type { LooseObject } from 'types/LooseObject';
 import useLocalStorage from './useLocalStorage';
 
@@ -89,7 +89,6 @@ type Args<T extends LooseObject | undefined> = MultisigArgs<T> | SinglesigArgs<T
 const useTransaction = () => {
   const { publicKey, wallet } = useWallet();
   const connection = useConnection();
-  const connectionConfig = useConnectionConfig();
 
   const { selectedAccount, multisigAccounts, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
@@ -103,22 +102,13 @@ const useTransaction = () => {
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-
-  const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !connectionConfig.endpoint) {
-      return null;
-    }
-
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
-  }, [connection, publicKey, multisigAddressPK, connectionConfig.endpoint]);
-
   const { t } = useTranslation('common');
+  const { multisigClient } = useMultisigClient();
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -148,7 +138,7 @@ const useTransaction = () => {
 
     let transaction: Transaction | VersionedTransaction | undefined = undefined;
     let encodedTx: string;
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
     setIsBusy(true);
 
     const wrappedGenerateTransaction = async ({ data }: { data: NonNullable<T> }) => {

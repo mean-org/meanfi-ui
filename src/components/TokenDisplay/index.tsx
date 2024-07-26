@@ -41,13 +41,19 @@ export const TokenDisplay = ({
 
   return (
     <div className='d-flex flex-column'>
-      <div title={mintAddress} key={mintAddress} className={`token-selector ${className || ''}`} onClick={onClick}>
+      <div
+        title={mintAddress}
+        key={mintAddress}
+        className={`token-selector ${className || ''}`}
+        onKeyDown={() => {}}
+        onClick={onClick}
+      >
         {mintAddress ? (
           <>
             <div className={`token-icon ${iconSize} mr-1`}>
               {fullTokenInfo ? (
                 <>
-                  {fullTokenInfo && fullTokenInfo.logoURI ? (
+                  {fullTokenInfo?.logoURI ? (
                     <img alt={`${fullTokenInfo.name}`} width={size} height={size} src={fullTokenInfo.logoURI} />
                   ) : (
                     <Identicon address={mintAddress} style={{ width: size, display: 'inline-flex' }} />
@@ -57,7 +63,7 @@ export const TokenDisplay = ({
                 icon
               ) : (
                 <>
-                  {token && token.logoURI ? (
+                  {token?.logoURI ? (
                     <img alt={`${token.name}`} width={size} height={size} src={token.logoURI} />
                   ) : (
                     <Identicon address={mintAddress} style={{ width: size, display: 'inline-flex' }} />
@@ -74,7 +80,7 @@ export const TokenDisplay = ({
               <div className='token-symbol mr-1'>{fullTokenInfo.symbol}</div>
             ) : symbol ? (
               <div className='token-symbol mr-1'>{symbol}</div>
-            ) : token && token.symbol ? (
+            ) : token?.symbol ? (
               <div className='token-symbol mr-1'>{token.symbol}</div>
             ) : (
               <div className='token-symbol mr-1'>{shortenAddress(mintAddress)}</div>

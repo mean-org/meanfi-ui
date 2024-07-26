@@ -1,17 +1,18 @@
 import { CheckOutlined, CopyOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { type TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
+import type { TransactionFees } from '@mean-dao/money-streaming';
+import { AccountType } from '@mean-dao/payment-streaming';
 import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Button, Drawer, Modal, Spin } from 'antd';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
+import { TREASURY_TYPE_OPTIONS } from 'app-constants/treasury-type-options';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
 import { openNotification } from 'components/Notifications';
 import { TextInput } from 'components/TextInput';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { TokenListItem } from 'components/TokenListItem';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
-import { TREASURY_TYPE_OPTIONS } from 'constants/treasury-type-options';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -69,7 +70,7 @@ export const TreasuryCreateModal = ({
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig );
   }, [publicKey, selectedAccount]);
 
   const autoFocusInput = useCallback(() => {
@@ -220,9 +221,9 @@ export const TreasuryCreateModal = ({
   const onAcceptModal = () => {
     const options: TreasuryCreateOptions = {
       treasuryTitle: proposalTitle,
-      treasuryName: treasuryName,
+      treasuryName,
       token: workingToken as TokenInfo,
-      treasuryType: treasuryOption ? treasuryOption.type : TreasuryType.Open,
+      treasuryType: treasuryOption ? treasuryOption.type : AccountType.Open,
       multisigId: enableMultisigTreasuryOption && localSelectedMultisig ? localSelectedMultisig.id.toBase58() : '',
     };
     handleOk(options);
@@ -238,8 +239,8 @@ export const TreasuryCreateModal = ({
       setTreasuryName('');
     }, 50);
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -249,13 +250,11 @@ export const TreasuryCreateModal = ({
   };
 
   // Validation
-  const isValidForm = (): boolean => {
-    return treasuryName ? true : false;
-  };
+  const isValidForm = (): boolean => !!treasuryName;
 
   // Validation if multisig
   const isValidFormMultisig = (): boolean => {
-    return treasuryName && proposalTitle ? true : false;
+    return !!(treasuryName && proposalTitle );
   };
 
   const getTransactionStartButtonLabel = () => {
@@ -432,10 +431,10 @@ export const TreasuryCreateModal = ({
         onOk={onAcceptModal}
         onCancel={onCloseModal}
         afterClose={onAfterClose}
-        width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+        width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
       >
         <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-          {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+          {transactionStatus.currentOperation === TransactionStatus.Idle ? (
             <>
               {/* Proposal title */}
               {isMultisigContext && (
@@ -591,10 +590,10 @@ export const TreasuryCreateModal = ({
 
         <div
           className={
-            isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+            isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
           }
         >
-          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+          {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
             <div className='transaction-progress'>
               <Spin indicator={bigLoadingIcon} className='icon mt-0' />
               <h4 className='font-bold mb-1'>
@@ -607,7 +606,7 @@ export const TreasuryCreateModal = ({
           )}
         </div>
 
-        {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+        {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) && (
           <div className='row two-col-ctas mt-3 transaction-progress p-0'>
             {isError(transactionStatus.currentOperation) ? (
               <div className='col-12'>
@@ -632,7 +631,7 @@ export const TreasuryCreateModal = ({
                   size='large'
                   disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                       onAcceptModal();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
@@ -643,7 +642,7 @@ export const TreasuryCreateModal = ({
                 >
                   {isBusy
                     ? t('treasuries.create-treasury.main-cta-busy')
-                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    : transactionStatus.currentOperation === TransactionStatus.Idle
                       ? isMultisigContext
                         ? getTransactionStartButtonLabelMultisig()
                         : getTransactionStartButtonLabel()
@@ -663,7 +662,6 @@ export const TreasuryCreateModal = ({
           onClose={onCloseTokenSelector}
           open={isTokenSelectorVisible}
           getContainer={false}
-          style={{ position: 'absolute' }}
         >
           {renderTokenSelectorInner()}
         </Drawer>

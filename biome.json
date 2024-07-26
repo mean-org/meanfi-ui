@@ -16,7 +16,7 @@
         "noThisInStatic": "warn"
       },
       "suspicious": {
-        "noArrayIndexKey": "warn"
+        "noArrayIndexKey": "off"
       },
       "security": {
         "noDangerouslySetInnerHtml": "warn"

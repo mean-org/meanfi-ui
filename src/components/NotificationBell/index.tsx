@@ -1,9 +1,9 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { IconNotification } from '../../Icons';
 import { useWallet } from '../../contexts/wallet';
 import useWindowSize from '../../hooks/useWindowResize';
 
-export const NotificationBell = (props: { onOpenDrawer: any }) => {
+export const NotificationBell = ({ onOpenDrawer }: { onOpenDrawer: () => void }) => {
   const { publicKey } = useWallet();
   const { width } = useWindowSize();
 
@@ -15,18 +15,18 @@ export const NotificationBell = (props: { onOpenDrawer: any }) => {
     return (
       <>
         {!isLargeScreen() && (
-          <div className='events-drawer-trigger lower' onClick={props.onOpenDrawer}>
+          <div className='events-drawer-trigger lower' onKeyDown={() => {}} onClick={onOpenDrawer}>
             <IconNotification className='mean-svg-icons' />
           </div>
         )}
         {isLargeScreen() && (
-          <div className='events-drawer-trigger upper' onClick={props.onOpenDrawer}>
+          <div className='events-drawer-trigger upper' onKeyDown={() => {}} onClick={onOpenDrawer}>
             <IconNotification className='mean-svg-icons' />
           </div>
         )}
       </>
     );
-  } else {
-    return null;
   }
+
+  return null;
 };

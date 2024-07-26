@@ -109,6 +109,7 @@
   .dropdown-trigger {
     &.no-decoration .ant-select.auto-height {
       font-size: 14px;
+      height: auto;
 
       .ant-select-selector {
         height: auto;
@@ -118,6 +119,7 @@
         .ant-select-selection-item {
           height: 26px;
           line-height: 1.3;
+          color: inherit;
         }
       }
     }
@@ -166,5 +168,9 @@
     content: '|';
     margin-left: 6px;
     margin-right: 6px;
+  }
+
+  .token-selector-wrapper {
+    padding: 0;
   }
 }

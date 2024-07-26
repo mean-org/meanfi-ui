@@ -3,9 +3,9 @@ import { PublicKey } from '@solana/web3.js';
 import { IconLoading } from 'Icons';
 import { IconHelpCircle } from 'Icons/IconHelpCircle';
 import { Col, Row } from 'antd';
+import { ONE_MINUTE_REFRESH_TIMEOUT } from 'app-constants/common';
+import { MEAN_TOKEN_LIST } from 'app-constants/tokens';
 import { InfoIcon } from 'components/InfoIcon';
-import { ONE_MINUTE_REFRESH_TIMEOUT } from 'constants/common';
-import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from 'contexts/connection';
@@ -13,14 +13,14 @@ import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
 import { saveAppData } from 'middleware/appPersistedData';
-import { consoleOut, isProd } from 'middleware/ui';
+import { consoleOut } from 'middleware/ui';
 import { findATokenAddress, formatThousands, getAmountFromLamports } from 'middleware/utils';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
+import { failsafeConnectionConfig, getDefaultRpc } from 'services/connections-hq';
 import { StakeTabView } from 'views/StakeTabView';
 import { UnstakeTabView } from 'views/UnstakeTabView';
 import './style.scss';
@@ -73,13 +73,12 @@ const StakingView = () => {
   const stakeClient = useMemo(
     () =>
       new StakingClient(
-        getFallBackRpcEndpoint().cluster,
-        getFallBackRpcEndpoint().httpProvider,
+        getDefaultRpc().cluster,
+        connection.rpcEndpoint,
         publicKey,
         failsafeConnectionConfig,
-        isProd() ? false : true,
       ),
-    [publicKey],
+    [connection.rpcEndpoint, publicKey],
   );
 
   /////////////////
@@ -227,24 +226,26 @@ const StakingView = () => {
       return;
     }
 
-    if (!pageInitialized) {
-      setPageInitialized(true);
-      const meanAddress = stakeClient.getMintAddresses();
-
-      setMeanAddresses(meanAddress);
-
-      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster));
-      const unstakedToken = tokenList.find(t => t.address === meanAddress.mean.toBase58());
-      const stakedToken = tokenList.find(t => t.address === meanAddress.sMean.toBase58());
-
-      consoleOut('unstakedToken', unstakedToken, 'blue');
-      consoleOut('stakedToken', stakedToken, 'blue');
-
-      setStakingPair({
-        unstakedToken,
-        stakedToken,
-      });
+    if (pageInitialized) {
+      return;
     }
+
+    setPageInitialized(true);
+    const meanAddress = stakeClient.getMintAddresses();
+
+    setMeanAddresses(meanAddress);
+
+    const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster));
+    const unstakedToken = tokenList.find(t => t.address === meanAddress.mean.toBase58());
+    const stakedToken = tokenList.find(t => t.address === meanAddress.sMean.toBase58());
+
+    consoleOut('unstakedToken', unstakedToken, 'blue');
+    consoleOut('stakedToken', stakedToken, 'blue');
+
+    setStakingPair({
+      unstakedToken,
+      stakedToken,
+    });
   }, [publicKey, stakeClient, pageInitialized, connectionConfig.cluster]);
 
   // Keep account balance updated
@@ -259,13 +260,15 @@ const StakingView = () => {
 
   // Keep MEAN price updated
   useEffect(() => {
-    if (priceList && stakingPair && stakingPair.unstakedToken) {
-      consoleOut('unstakedToken:', stakingPair.unstakedToken, 'blue');
-      const price = getTokenPriceByAddress(stakingPair.unstakedToken.address, stakingPair.unstakedToken.symbol);
-      consoleOut('meanPrice:', price, 'crimson');
-      setMeanPrice(price);
+    if (!(priceList && stakingPair && stakingPair.unstakedToken)) {
+      return;
     }
-  }, [getTokenPriceByAddress, priceList, stakingPair, account?.lamports]);
+
+    consoleOut('unstakedToken:', stakingPair.unstakedToken, 'blue');
+    const price = getTokenPriceByAddress(stakingPair.unstakedToken.address, stakingPair.unstakedToken.symbol);
+    consoleOut('meanPrice:', price, 'crimson');
+    setMeanPrice(price);
+  }, [getTokenPriceByAddress, priceList, stakingPair]);
 
   // Keep MEAN balance updated
   useEffect(() => {
@@ -277,7 +280,7 @@ const StakingView = () => {
     if (stakingPair?.unstakedToken) {
       refreshMeanBalance();
     }
-  }, [tokenAccounts, publicKey, stakingPair, refreshMeanBalance, account?.lamports]);
+  }, [tokenAccounts, publicKey, stakingPair, refreshMeanBalance]);
 
   // Keep sMEAN balance updated
   useEffect(() => {
@@ -288,7 +291,7 @@ const StakingView = () => {
     if (stakingPair?.stakedToken) {
       refreshStakedMeanBalance();
     }
-  }, [tokenAccounts, publicKey, stakingPair, refreshStakedMeanBalance, account?.lamports]);
+  }, [tokenAccounts, publicKey, stakingPair, refreshStakedMeanBalance]);
 
   // Stake quote - For input amount
   useEffect(() => {
@@ -308,7 +311,7 @@ const StakingView = () => {
           );
           setSMeanToMeanRate(value.sMeanToMeanRateUiAmount);
         })
-        .catch((error: any) => {
+        .catch(error => {
           console.error(error);
         });
     }
@@ -353,7 +356,7 @@ const StakingView = () => {
 
   return (
     <>
-      <div id='refresh-stake-pool-info' onClick={() => refreshStakePoolInfo(meanPrice)}></div>
+      <div id='refresh-stake-pool-info' onKeyDown={() => {}} onClick={() => refreshStakePoolInfo(meanPrice)} />
       {meanAddresses && (
         <div className='scroll-wrapper vertical-scroll'>
           {/* Staking paragraphs */}
@@ -414,12 +417,14 @@ const StakingView = () => {
                 <div className='button-tabset-container'>
                   <div
                     className={`tab-button ${currentTab === 'stake' ? 'active' : ''}`}
+                    onKeyDown={() => {}}
                     onClick={() => onTabChange('stake')}
                   >
                     {t('staking.panel-right.tabset.stake.name')}
                   </div>
                   <div
                     className={`tab-button ${currentTab === 'unstake' ? 'active' : ''}`}
+                    onKeyDown={() => {}}
                     onClick={() => onTabChange('unstake')}
                   >
                     {t('staking.panel-right.tabset.unstake.name')}

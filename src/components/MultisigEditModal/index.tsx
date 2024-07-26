@@ -4,7 +4,7 @@ import { Button, Modal, Spin } from 'antd';
 import type { EditMultisigParams } from 'models/multisig';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
+import { MAX_MULTISIG_PARTICIPANTS } from '../../app-constants';
 import { AppStateContext } from '../../contexts/appstate';
 import { SOL_MINT } from '../../middleware/ids';
 import { isError } from '../../middleware/transactions';
@@ -113,8 +113,8 @@ export const MultisigEditModal = ({
     }, 50);
 
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -192,10 +192,10 @@ export const MultisigEditModal = ({
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Proposal title */}
             <div className='mb-3'>
@@ -290,7 +290,7 @@ export const MultisigEditModal = ({
                   size='large'
                   disabled={!isFormValid()}
                   onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                       onAcceptModal();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
@@ -301,7 +301,7 @@ export const MultisigEditModal = ({
                 >
                   {isBusy
                     ? t('multisig.update-multisig.main-cta-busy')
-                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    : transactionStatus.currentOperation === TransactionStatus.Idle
                       ? getTransactionStartButtonLabel()
                       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                         ? t('general.cta-finish')
@@ -362,10 +362,10 @@ export const MultisigEditModal = ({
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>

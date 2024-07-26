@@ -1,13 +1,12 @@
 import { STREAM_STATE, type StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Category, STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
-import type { TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { LooseObject } from 'types/LooseObject';
 import { getShortDate } from './ui';
 import { shortenAddress } from './utils';
 
 // Stream title
 export const getStreamTitle = (item: Stream | StreamInfo, trans: TFunction): string => {
-  let title = '';
   if (item) {
     const v1 = item as StreamInfo;
     const v2 = item as Stream;
@@ -16,46 +15,48 @@ export const getStreamTitle = (item: Stream | StreamInfo, trans: TFunction): str
       if (v1.streamName) {
         return `${v1.streamName}`;
       }
-
       if (v1.isUpdatePending) {
-        title = `${
+        return `${
           trans ? trans('streams.stream-list.title-pending-from') : 'Pending execution from'
         } (${shortenAddress(`${v1.treasurerAddress}`)})`;
-      } else if (v1.state === STREAM_STATE.Schedule) {
-        title = `${
+      }
+      if (v1.state === STREAM_STATE.Schedule) {
+        return `${
           trans ? trans('streams.stream-list.title-scheduled-from') : 'Scheduled stream from'
         } (${shortenAddress(`${v1.treasurerAddress}`)})`;
-      } else if (v1.state === STREAM_STATE.Paused) {
-        title = `${trans ? trans('streams.stream-list.title-paused-from') : 'Paused stream from'} (${shortenAddress(
-          `${v1.treasurerAddress}`,
-        )})`;
-      } else {
-        title = `${trans ? trans('streams.stream-list.title-receiving-from') : 'Receiving from'} (${shortenAddress(
-          `${v1.treasurerAddress}`,
-        )})`;
       }
-    } else {
-      if (v2.name) {
-        return `${v2.name}`;
+      if (v1.state === STREAM_STATE.Paused) {
+        return `${trans ? trans('streams.stream-list.title-paused-from') : 'Paused stream from'} (${shortenAddress(
+          `${v1.treasurerAddress}`,
+        )})`;
       }
 
-      if (v2.statusCode === STREAM_STATUS_CODE.Scheduled) {
-        title = `${
-          trans ? trans('streams.stream-list.title-scheduled-from') : 'Scheduled stream from'
-        } (${shortenAddress(`${v2.psAccountOwner}`)})`;
-      } else if (v2.statusCode === STREAM_STATUS_CODE.Paused) {
-        title = `${trans ? trans('streams.stream-list.title-paused-from') : 'Paused stream from'} (${shortenAddress(
-          `${v2.psAccountOwner}`,
-        )})`;
-      } else {
-        title = `${trans ? trans('streams.stream-list.title-receiving-from') : 'Receiving from'} (${shortenAddress(
-          `${v2.psAccountOwner}`,
-        )})`;
-      }
+      return `${trans ? trans('streams.stream-list.title-receiving-from') : 'Receiving from'} (${shortenAddress(
+        `${v1.treasurerAddress}`,
+      )})`;
     }
+
+    if (v2.name) {
+      return `${v2.name}`;
+    }
+
+    if (v2.statusCode === STREAM_STATUS_CODE.Scheduled) {
+      return `${
+        trans ? trans('streams.stream-list.title-scheduled-from') : 'Scheduled stream from'
+      } (${shortenAddress(`${v2.psAccountOwner}`)})`;
+    }
+    if (v2.statusCode === STREAM_STATUS_CODE.Paused) {
+      return `${trans ? trans('streams.stream-list.title-paused-from') : 'Paused stream from'} (${shortenAddress(
+        `${v2.psAccountOwner}`,
+      )})`;
+    }
+
+    return `${trans ? trans('streams.stream-list.title-receiving-from') : 'Receiving from'} (${shortenAddress(
+      `${v2.psAccountOwner}`,
+    )})`;
   }
 
-  return title;
+  return '';
 };
 
 export const getStreamStatusResume = (item: Stream | StreamInfo, trans: TFunction) => {
@@ -96,7 +97,7 @@ export const getStreamCategory = (stream: Stream | StreamInfo): Category =>
   stream.version >= 2 ? (stream as Stream).category : Category.default;
 
 export const getReadableStream = (item: Stream | StreamInfo) => {
-  const isNew = item.version >= 2 ? true : false;
+  const isNew = item.version >= 2;
   const v1 = item as StreamInfo;
   const v2 = item as Stream;
 

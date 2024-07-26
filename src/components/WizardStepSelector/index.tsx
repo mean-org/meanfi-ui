@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
 
@@ -6,7 +6,7 @@ export const WizardStepSelector = (props: {
   steps: number;
   step: number;
   extraClass?: string;
-  onValueSelected: any;
+  onValueSelected: (value: number) => void;
   showLabel?: boolean;
   position?: 'left' | 'right';
 }) => {
@@ -23,10 +23,15 @@ export const WizardStepSelector = (props: {
   const renderHandles = useCallback(() => {
     return (
       <span className='wizard-stepper-handles'>
-        {[...Array(steps)].map((item: number, index: number) => {
+        {[...Array(steps)].map((_current, index) => {
           return (
-            <div key={`${index + 1}`} className='handle-wrapper' onClick={() => onChangeValue(index)}>
-              <span className={index <= step ? 'step-handle active' : 'step-handle'}></span>
+            <div
+              key={`${index + 1}`}
+              className='handle-wrapper'
+              onKeyDown={() => {}}
+              onClick={() => onChangeValue(index)}
+            >
+              <span className={`step-handle${index === step ? ' active' : ''}`} />
             </div>
           );
         })}

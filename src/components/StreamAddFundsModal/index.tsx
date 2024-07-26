@@ -12,8 +12,8 @@ import {
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Modal } from 'antd';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
 import { InputMean } from 'components/InputMean';
-import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
@@ -112,12 +112,11 @@ export const StreamAddFundsModal = (props: {
       const treasuryPk = new PublicKey(treasuryId);
 
       try {
-        let details: PaymentStreamingAccount | TreasuryInfo | undefined = undefined;
-        if (streamVersion < 2) {
-          details = await (mspClient as MoneyStreaming).getTreasury(treasuryPk);
-        } else {
-          details = await (mspClient as PaymentStreaming).getAccount(treasuryPk);
-        }
+        let details: PaymentStreamingAccount | TreasuryInfo | null = null;
+        details =
+          streamVersion < 2
+            ? await (mspClient as MoneyStreaming).getTreasury(treasuryPk)
+            : await (mspClient as PaymentStreaming).getAccount(treasuryPk);
         if (details) {
           setTreasuryDetails(details);
           consoleOut('treasuryDetails:', details, 'blue');

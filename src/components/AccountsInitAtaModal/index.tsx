@@ -9,19 +9,19 @@ import {
   type VersionedTransaction,
 } from '@solana/web3.js';
 import { Button, Drawer, Modal } from 'antd';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import { openNotification } from 'components/Notifications';
 import { TextInput } from 'components/TextInput';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { TokenListItem } from 'components/TokenListItem';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
-import { customLogger } from 'index';
+import { customLogger } from 'main';
 import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
 import { createV0InitAtaAccountTx } from 'middleware/createV0InitAtaAccountTx';
 import { sendTx, signTx } from 'middleware/transactions';
@@ -32,6 +32,7 @@ import type { AccountTokenParsedInfo } from 'models/accounts';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 
 export const AccountsInitAtaModal = (props: {
   connection: Connection;
@@ -194,8 +195,8 @@ export const AccountsInitAtaModal = (props: {
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -216,8 +217,7 @@ export const AccountsInitAtaModal = (props: {
     let transaction: VersionedTransaction | null = null;
     let signature: string;
     let encodedTx: string;
-    // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     const createTx = async (): Promise<boolean> => {
       if (publicKey && selectedToken) {
@@ -347,14 +347,14 @@ export const AccountsInitAtaModal = (props: {
   // Validation
 
   const isOperationValid = (): boolean => {
-    return publicKey &&
+    return !!(
+      publicKey &&
       nativeBalance &&
       nativeBalance > feeAmount &&
       selectedToken &&
       selectedToken.decimals >= 0 &&
       !isTokenAlreadyOwned()
-      ? true
-      : false;
+    );
   };
 
   const getCtaLabel = () => {
@@ -497,7 +497,7 @@ export const AccountsInitAtaModal = (props: {
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showCaretDown={true}
-                    showName={selectedToken.name === CUSTOM_TOKEN_NAME ? true : false}
+                    showName={selectedToken.name === CUSTOM_TOKEN_NAME}
                     fullTokenInfo={selectedToken}
                   />
                 ) : (
@@ -546,7 +546,6 @@ export const AccountsInitAtaModal = (props: {
         onClose={onCloseTokenSelector}
         open={isTokenSelectorVisible}
         getContainer={false}
-        style={{ position: 'absolute' }}
       >
         {renderTokenSelectorInner}
       </Drawer>

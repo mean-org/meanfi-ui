@@ -1,10 +1,11 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { Button, Modal, Spin, Tooltip } from 'antd';
+import type { EditMultisigParams } from 'models/multisig';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconInfoCircle, IconKey, IconLock } from '../../Icons';
-import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
+import { MAX_MULTISIG_PARTICIPANTS } from '../../app-constants';
 import { AppStateContext } from '../../contexts/appstate';
 import { SOL_MINT } from '../../middleware/ids';
 import { isError } from '../../middleware/transactions';
@@ -13,7 +14,6 @@ import { getAmountWithSymbol } from '../../middleware/utils';
 import { TransactionStatus } from '../../models/enums';
 import { InputMean } from '../InputMean';
 import { MultisigSafeOwners } from '../MultisigSafeOwners';
-import type { EditMultisigParams } from 'models/multisig';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -107,8 +107,8 @@ export const MultisigEditSafeModal = (props: {
     }, 50);
 
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -162,10 +162,10 @@ export const MultisigEditSafeModal = (props: {
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!props.isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Proposal title */}
             <div className='mb-3'>
@@ -267,7 +267,7 @@ export const MultisigEditSafeModal = (props: {
                   size='large'
                   disabled={!isFormValid()}
                   onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                       onAcceptModal();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
@@ -278,7 +278,7 @@ export const MultisigEditSafeModal = (props: {
                 >
                   {props.isBusy
                     ? t('multisig.update-multisig.main-cta-busy')
-                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    : transactionStatus.currentOperation === TransactionStatus.Idle
                       ? getTransactionStartButtonLabel()
                       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                         ? t('general.cta-finish')
@@ -322,10 +322,10 @@ export const MultisigEditSafeModal = (props: {
 
       <div
         className={
-          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -338,7 +338,7 @@ export const MultisigEditSafeModal = (props: {
         )}
       </div>
 
-      {!(props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+      {!(props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) && (
         <div className='row two-col-ctas mt-3 transaction-progress p-2'>
           <div className='col-12'>
             <Button

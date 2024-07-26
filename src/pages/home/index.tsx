@@ -16,14 +16,12 @@ import * as credixMainnet from '@mean-dao/mean-multisig-apps/lib/apps/credix/fun
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   MULTISIG_ACTIONS,
-  MeanMultisig,
   type MultisigTransactionFees,
   getFees,
 } from '@mean-dao/mean-multisig-sdk';
-import { MoneyStreaming, STREAM_STATE, type StreamInfo, type TreasuryInfo } from '@mean-dao/money-streaming';
+import { STREAM_STATE, type StreamInfo, type TreasuryInfo } from '@mean-dao/money-streaming';
 import {
   Category,
-  PaymentStreaming,
   type PaymentStreamingAccount,
   STREAM_STATUS_CODE,
   type Stream,
@@ -43,9 +41,21 @@ import {
 import { segmentAnalytics } from 'App';
 import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'Icons';
 import { Alert, Button, Col, Divider, Dropdown, Empty, Row, Segmented, Space, Spin, Tooltip } from 'antd';
-import type { ItemType } from 'antd/lib/menu/hooks/useItems';
+import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 import notification from 'antd/lib/notification';
 import type { SegmentedLabeledOption } from 'antd/lib/segmented';
+import {
+  ACCOUNTS_LOW_BALANCE_LIMIT,
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  MIN_SOL_BALANCE_REQUIRED,
+  MULTISIG_ROUTE_BASE_PATH,
+  NO_FEES,
+  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
+  STAKING_ROUTE_BASE_PATH,
+  TRANSACTIONS_PER_PAGE,
+  WRAPPED_SOL_MINT_ADDRESS,
+} from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import BigNumber from 'bignumber.js';
 import { AccountsCloseAssetModal } from 'components/AccountsCloseAssetModal';
 import { AccountsInitAtaModal } from 'components/AccountsInitAtaModal';
@@ -63,19 +73,6 @@ import { ReceiveSplOrSolModal } from 'components/ReceiveSplOrSolModal';
 import { SendAssetModal } from 'components/SendAssetModal';
 import { SolBalanceModal } from 'components/SolBalanceModal';
 import { WrapSolModal } from 'components/WrapSolModal';
-import {
-  ACCOUNTS_LOW_BALANCE_LIMIT,
-  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
-  MIN_SOL_BALANCE_REQUIRED,
-  MULTISIG_ROUTE_BASE_PATH,
-  NO_FEES,
-  ONE_MINUTE_REFRESH_TIMEOUT,
-  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
-  STAKING_ROUTE_BASE_PATH,
-  TRANSACTIONS_PER_PAGE,
-  WRAPPED_SOL_MINT_ADDRESS,
-} from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext, type TransactionStatusInfo } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
@@ -84,7 +81,7 @@ import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
 import useTransaction from 'hooks/useTransaction';
 import useWindowSize from 'hooks/useWindowResize';
-import { appConfig, customLogger } from 'index';
+import { customLogger } from 'main';
 import { resolveParsedAccountInfo } from 'middleware/accounts';
 import { type CreateSafeAssetTxParams, createAddSafeAssetTx } from 'middleware/createAddSafeAssetTx';
 import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
@@ -108,7 +105,6 @@ import {
   formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
-  getSdkValue,
   getTxIxResume,
   shortenAddress,
   toUiAmount,
@@ -140,15 +136,21 @@ import {
 import { type StreamsSummary, initialSummary } from 'models/streams';
 import { FetchStatus } from 'models/transactions';
 import { INITIAL_TREASURIES_SUMMARY, type UserTreasuriesSummary } from 'models/treasuries';
+import useGetAccountPrograms from 'query-hooks/accountPrograms';
+import useMultisigClient from 'query-hooks/multisigClient';
+import useStreamingClient from 'query-hooks/streamingClient';
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { failsafeConnectionConfig, getFallBackRpcEndpoint } from 'services/connections-hq';
 import type { LooseObject } from 'types/LooseObject';
-import { AppsList, AssetActivity, NftDetails, NftPaginatedList, OtherAssetsList } from 'views';
+import { AppsList } from 'views/AppsList';
+import { AssetActivity } from 'views/AssetActivity';
 import AssetList from 'views/AssetList';
+import { NftDetails } from 'views/NftDetails';
+import { NftPaginatedList } from 'views/NftPaginatedList';
+import { OtherAssetsList } from 'views/OtherAssetsList';
 import { getBuyOptionsCta } from './asset-ctas/buyOptionsCta';
 import { getCloseAccountCta } from './asset-ctas/closeAccountCta';
 import { getDepositOptionsCta } from './asset-ctas/depositOptionsCta';
@@ -159,15 +161,17 @@ import { getUnwrapSolCta } from './asset-ctas/unwrapSolCta';
 import { getWrapSolCta } from './asset-ctas/wrapSolCta';
 import getNftMint from './getNftMint';
 import './style.scss';
-import useAccountPrograms from './useAccountPrograms';
+import { isV2Stream } from 'middleware/streamHelpers';
+import { useGetStreamList } from 'query-hooks/streamList';
+import { useGetStreamingAccounts } from 'query-hooks/streamingAccount';
 import useAppNavigation from './useAppNavigation';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
-const PaymentStreamingComponent = React.lazy(() => import('../payment-streaming/index'));
+const PaymentStreamingView = React.lazy(() => import('../payment-streaming/index'));
 const StakingComponent = React.lazy(() => import('../staking/index'));
 const VestingComponent = React.lazy(() => import('../vesting/index'));
-const ProgramDetailsComponent = React.lazy(() => import('../../views/ProgramDetails/index'));
-const PersonalAccountSummary = React.lazy(() => import('../../views/WalletAccountSummary/index'));
+const ProgramDetailsComponent = React.lazy(() => import('views/ProgramDetails/index'));
+const PersonalAccountSummary = React.lazy(() => import('views/WalletAccountSummary/index'));
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let isWorkflowLocked = false;
@@ -180,19 +184,14 @@ export const HomeView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
-    programs,
-    streamList,
     accountNfts,
     tokensLoaded,
-    streamListv1,
-    streamListv2,
     streamDetail,
     transactions,
     splTokenList,
     isWhitelisted,
     selectedAsset,
     previousRoute,
-    loadingStreams,
     selectedAccount,
     lastTxSignature,
     selectedMultisig,
@@ -200,8 +199,6 @@ export const HomeView = () => {
     transactionStatus,
     userTokensResponse,
     loadingTokenAccounts,
-    streamProgramAddress,
-    streamV2ProgramAddress,
     previousWalletConnectState,
     setPendingMultisigTxCount,
     setPaymentStreamingStats,
@@ -215,19 +212,18 @@ export const HomeView = () => {
     setSelectedMultisig,
     resetContractValues,
     appendHistoryItems,
-    refreshStreamList,
     setStreamsSummary,
     refreshMultisigs,
     setPreviousRoute,
     setSelectedToken,
     setSelectedAsset,
     setStreamDetail,
-    clearStreams,
   } = useContext(AppStateContext);
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
+  const { programs, loadingPrograms } = useGetAccountPrograms();
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
@@ -250,8 +246,6 @@ export const HomeView = () => {
   const [transactionAssetFees, setTransactionAssetFees] = useState<TransactionFees>(NO_FEES);
   const [isBusy, setIsBusy] = useState(false);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  const [loadingTreasuries, setLoadingTreasuries] = useState(false);
-  const [treasuryList, setTreasuryList] = useState<(PaymentStreamingAccount | TreasuryInfo)[]>([]);
 
   const {
     selectedCategory,
@@ -286,7 +280,6 @@ export const HomeView = () => {
   // Multisig Apps
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
-  const { loadingPrograms } = useAccountPrograms();
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
 
   // SOL Balance Modal
@@ -299,28 +292,26 @@ export const HomeView = () => {
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-
   /////////////////
   //  Init code  //
   /////////////////
 
-  const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !connectionConfig.endpoint) {
-      return null;
-    }
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
-  }, [publicKey, connection, multisigAddressPK, connectionConfig.endpoint]);
+  const { multisigClient } = useMultisigClient();
 
-  // Use a fallback RPC for Money Streaming Program (v1) instance
-  const ms = useMemo(
-    () => new MoneyStreaming(getFallBackRpcEndpoint().httpProvider, streamProgramAddress, 'confirmed'),
-    [streamProgramAddress],
-  );
+  const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
 
-  const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
-  }, [connection, streamV2ProgramAddress]);
+  const {
+    streamList,
+    isFetching: loadingStreams,
+    refetch: refreshStreamList,
+  } = useGetStreamList({
+    srcAccountPk: new PublicKey(selectedAccount.address),
+    tokenStreamingV1,
+    tokenStreamingV2,
+  });
+
+  const streamListv1 = useMemo(() => streamList.filter(stream => !isV2Stream(stream)) as StreamInfo[], [streamList]);
+  const streamListv2 = useMemo(() => streamList.filter(stream => isV2Stream(stream)) as Stream[], [streamList]);
 
   const isCustomAsset = useMemo(() => !!(selectedAsset && selectedAsset.name === 'Custom account'), [selectedAsset]);
 
@@ -337,6 +328,13 @@ export const HomeView = () => {
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
+
+  const { streamingAccounts, loadingStreamingAccounts, refetch: refreshStreamingAccounts } = useGetStreamingAccounts({
+    srcAccountPk: new PublicKey(selectedAccount.address),
+    tokenStreamingV1,
+    tokenStreamingV2,
+    isMultisigContext
+  });
 
   ////////////////////////////
   //   Events and actions   //
@@ -386,8 +384,8 @@ export const HomeView = () => {
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -522,7 +520,7 @@ export const HomeView = () => {
   }, [selectedAsset]);
 
   const goToExchangeWithPresetAsset = useCallback(() => {
-    const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
+    const queryParams = selectedAsset ? `?from=${selectedAsset.symbol}` : '';
     if (queryParams) {
       navigate(`/exchange${queryParams}`);
     } else {
@@ -902,12 +900,12 @@ export const HomeView = () => {
     }
   }, []);
 
-  const accountRefresh = () => {
+  const accountRefresh = useCallback(() => {
     const fullRefreshCta = document.getElementById('account-refresh-cta');
     if (fullRefreshCta) {
       fullRefreshCta.click();
     }
-  };
+  }, []);
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(
@@ -941,7 +939,7 @@ export const HomeView = () => {
                 onClick={() => {
                   const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
                   navigate(url);
-                  notification.close(myNotifyKey);
+                  notification.destroy(myNotifyKey);
                 }}
               >
                 Review proposal
@@ -1113,7 +1111,7 @@ export const HomeView = () => {
         setIsBusy,
         nativeBalance,
         minRequired,
-        generateTransaction: async ({ multisig, data }) => {
+        generateTransaction: async ({ data }) => {
           if (!publicKey || !data.token) return;
 
           if (isMultisigContext) {
@@ -1278,8 +1276,7 @@ export const HomeView = () => {
       let transaction: VersionedTransaction | Transaction | null = null;
       let signature: string;
       let encodedTx: string;
-      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-      let transactionLog: any[] = [];
+      let transactionLog: LooseObject[] = [];
 
       resetTransactionStatus();
       setIsBusy(true);
@@ -1493,8 +1490,7 @@ export const HomeView = () => {
       let signature: string;
       let encodedTx: string;
       let multisigAuth = '';
-      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-      let transactionLog: any[] = [];
+      let transactionLog: LooseObject[] = [];
 
       resetTransactionStatus();
       setIsBusy(true);
@@ -1704,85 +1700,6 @@ export const HomeView = () => {
     ],
   );
 
-  const getAllUserV2Treasuries = useCallback(
-    async (addr?: string) => {
-      if (!paymentStreaming) {
-        return [];
-      }
-
-      if (addr || selectedAccount.address) {
-        const pk = new PublicKey(addr ?? selectedAccount.address);
-
-        consoleOut('Fetching treasuries for:', addr ?? selectedAccount.address, 'orange');
-        const allTreasuries = await paymentStreaming.listAccounts(pk, true);
-
-        const treasuries = allTreasuries.filter(t => t.category === Category.default);
-        consoleOut('getAllUserV2Treasuries -> Category.default:', treasuries, 'orange');
-
-        return treasuries;
-      }
-
-      return [];
-    },
-    [paymentStreaming, selectedAccount.address],
-  );
-
-  const refreshTreasuries = useCallback(
-    (reset = false) => {
-      if (!publicKey || !selectedAccount.address || !ms || !paymentStreaming) {
-        return;
-      }
-
-      const pk = new PublicKey(selectedAccount.address);
-
-      setTimeout(() => {
-        setLoadingTreasuries(true);
-      });
-
-      const treasuryAccumulator: (PaymentStreamingAccount | TreasuryInfo)[] = [];
-      let treasuriesv1: TreasuryInfo[] = [];
-      getAllUserV2Treasuries()
-        .then(async treasuriesv2 => {
-          treasuryAccumulator.push(...treasuriesv2);
-          if (!isMultisigContext) {
-            try {
-              treasuriesv1 = await ms.listTreasuries(pk);
-            } catch (error) {
-              console.error(error);
-            }
-            treasuryAccumulator.push(...treasuriesv1);
-          }
-
-          const streamingAccounts = treasuryAccumulator.filter(t => !t.autoClose);
-
-          const sortedStreamingAccountList = streamingAccounts
-            .map(streaming => streaming)
-            .sort((a, b) => {
-              const vA1 = a as TreasuryInfo;
-              const vA2 = a as PaymentStreamingAccount;
-              const vB1 = b as TreasuryInfo;
-              const vB2 = b as PaymentStreamingAccount;
-
-              const isNewTreasury = !!(vA2.version && vA2.version >= 2 && vB2.version && vB2.version >= 2);
-
-              if (isNewTreasury) {
-                return +getSdkValue(vB2.totalStreams) - +getSdkValue(vA2.totalStreams);
-              }
-              return vB1.streamsAmount - vA1.streamsAmount;
-            });
-
-          setTreasuryList(sortedStreamingAccountList);
-
-          consoleOut('treasuryList:', sortedStreamingAccountList, 'blue');
-        })
-        .catch(error => {
-          console.error(error);
-        })
-        .finally(() => setLoadingTreasuries(false));
-    },
-    [ms, paymentStreaming, publicKey, selectedAccount.address, isMultisigContext, getAllUserV2Treasuries],
-  );
-
   const getTreasuryUnallocatedBalance = useCallback(
     (tsry: PaymentStreamingAccount | TreasuryInfo, assToken: TokenInfo | undefined) => {
       const getUnallocatedBalance = (details: PaymentStreamingAccount | TreasuryInfo) => {
@@ -1808,7 +1725,7 @@ export const HomeView = () => {
   );
 
   const refreshTreasuriesSummary = useCallback(async () => {
-    if (!treasuryList) {
+    if (!streamingAccounts) {
       return;
     }
 
@@ -1819,7 +1736,7 @@ export const HomeView = () => {
       totalNet: 0,
     };
 
-    for (const treasury of treasuryList) {
+    for (const treasury of streamingAccounts) {
       const isNew = !!(
         (treasury as PaymentStreamingAccount).version && (treasury as PaymentStreamingAccount).version >= 2
       );
@@ -1851,22 +1768,22 @@ export const HomeView = () => {
       resume.totalNet += amountChange;
     }
 
-    resume.totalAmount += treasuryList.length;
+    resume.totalAmount += streamingAccounts.length;
 
     // Update state
     setStreamingAccountsSummary(resume);
-  }, [treasuryList, getTreasuryUnallocatedBalance, getTokenPriceByAddress, getTokenByMintAddress]);
+  }, [streamingAccounts, getTreasuryUnallocatedBalance, getTokenPriceByAddress, getTokenByMintAddress]);
 
   const getV1VestedValue = useCallback(
     async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
-      if (!ms) return 0;
+      if (!tokenStreamingV1) return 0;
 
       let vestedValue = 0;
       for await (const stream of updatedStreamsv1) {
         const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
 
         // Get refreshed data
-        const freshStream = await ms.refreshStream(stream);
+        const freshStream = await tokenStreamingV1.refreshStream(stream);
         if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
           continue;
         }
@@ -1883,19 +1800,19 @@ export const HomeView = () => {
       }
       return vestedValue;
     },
-    [getTokenByMintAddress, getTokenPriceByAddress, ms],
+    [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
   );
 
   const getV1UnvestedValue = useCallback(
     async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
-      if (!ms) return 0;
+      if (!tokenStreamingV1) return 0;
 
       let unvestedValue = 0;
       for await (const stream of updatedStreamsv1) {
         const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
 
         // Get refreshed data
-        const freshStream = await ms.refreshStream(stream, undefined, false);
+        const freshStream = await tokenStreamingV1.refreshStream(stream, undefined, false);
         if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
           continue;
         }
@@ -1912,19 +1829,19 @@ export const HomeView = () => {
       }
       return unvestedValue;
     },
-    [getTokenByMintAddress, getTokenPriceByAddress, ms],
+    [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
   );
 
   const getV2FundsLeftValue = useCallback(
     async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
-      if (!paymentStreaming) return 0;
+      if (!tokenStreamingV2) return 0;
 
       let fundsLeftValue = 0;
       for await (const stream of updatedStreamsv2) {
         const isIncoming = !!stream.beneficiary?.equals(treasurer);
 
         // Get refreshed data
-        const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
+        const freshStream = (await tokenStreamingV2.refreshStream(stream)) as Stream;
         if (!freshStream || freshStream.statusCode !== STREAM_STATUS_CODE.Running) {
           continue;
         }
@@ -1945,19 +1862,19 @@ export const HomeView = () => {
       }
       return fundsLeftValue;
     },
-    [getTokenByMintAddress, getTokenPriceByAddress, paymentStreaming],
+    [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV2],
   );
 
   const getV2WithdrawableValue = useCallback(
     async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
-      if (!paymentStreaming) return 0;
+      if (!tokenStreamingV2) return 0;
 
       let withdrawableValue = 0;
       for await (const stream of updatedStreamsv2) {
         const isIncoming = !!stream.beneficiary?.equals(treasurer);
 
         // Get refreshed data
-        const freshStream = (await paymentStreaming.refreshStream(stream)) as Stream;
+        const freshStream = (await tokenStreamingV2.refreshStream(stream)) as Stream;
         if (!freshStream || freshStream.statusCode !== STREAM_STATUS_CODE.Running) {
           continue;
         }
@@ -1978,11 +1895,11 @@ export const HomeView = () => {
       }
       return withdrawableValue;
     },
-    [getTokenByMintAddress, getTokenPriceByAddress, paymentStreaming],
+    [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV2],
   );
 
   const refreshIncomingStreamSummary = useCallback(async () => {
-    if (!ms || !paymentStreaming || !publicKey || (!streamListv1 && !streamListv2)) {
+    if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
       return;
     }
 
@@ -1995,8 +1912,8 @@ export const HomeView = () => {
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 ?? [], treasurer);
-    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 ?? [], treasurer);
+    const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
+    const updatedStreamsv2 = await tokenStreamingV2.refreshStreams(streamListv2 ?? [], treasurer);
 
     const vested = await getV1VestedValue(updatedStreamsv1, treasurer);
     resume.totalNet = vested;
@@ -2009,8 +1926,8 @@ export const HomeView = () => {
     // Update state
     setIncomingStreamsSummary(resume);
   }, [
-    ms,
-    paymentStreaming,
+    tokenStreamingV1,
+    tokenStreamingV2,
     publicKey,
     streamListv1,
     streamListv2,
@@ -2020,7 +1937,7 @@ export const HomeView = () => {
   ]);
 
   const refreshOutgoingStreamSummary = useCallback(async () => {
-    if (!ms || !paymentStreaming || !publicKey || (!streamListv1 && !streamListv2)) {
+    if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
       return;
     }
 
@@ -2033,8 +1950,8 @@ export const HomeView = () => {
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 ?? [], treasurer);
-    const updatedStreamsv2 = await paymentStreaming.refreshStreams(streamListv2 ?? [], treasurer);
+    const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
+    const updatedStreamsv2 = await tokenStreamingV2.refreshStreams(streamListv2 ?? [], treasurer);
 
     const unvested = await getV1UnvestedValue(updatedStreamsv1, treasurer);
     resume.totalNet = unvested;
@@ -2047,8 +1964,8 @@ export const HomeView = () => {
     // Update state
     setOutgoingStreamsSummary(resume);
   }, [
-    ms,
-    paymentStreaming,
+    tokenStreamingV1,
+    tokenStreamingV2,
     publicKey,
     streamListv1,
     streamListv2,
@@ -2058,9 +1975,7 @@ export const HomeView = () => {
   ]);
 
   const clearStateData = useCallback(() => {
-    clearStreams();
     setAccountTokens([]);
-    setTreasuryList([]);
     setIncomingStreamList([]);
     setOutgoingStreamList([]);
     setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
@@ -2073,7 +1988,7 @@ export const HomeView = () => {
     setTotalTokenAccountsValue(0);
     setStreamsSummary(initialSummary);
     setCanShowStreamingAccountBalance(false);
-  }, [clearStreams, setStreamsSummary]);
+  }, [setStreamsSummary]);
 
   // New proposal
 
@@ -2247,8 +2162,7 @@ export const HomeView = () => {
       let transaction: Transaction | null = null;
       let signature: string;
       let encodedTx: string;
-      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-      let transactionLog: any[] = [];
+      let transactionLog: LooseObject[] = [];
 
       resetTransactionStatus();
       setIsBusy(true);
@@ -2575,30 +2489,6 @@ export const HomeView = () => {
     }
   }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
 
-  // Load treasuries when account address changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
-  useEffect(() => {
-    if (publicKey && selectedAccount.address) {
-      consoleOut('Loading treasuries...', 'selectedAccount changed!', 'purple');
-      refreshTreasuries(true);
-    }
-  }, [publicKey, selectedAccount.address]);
-
-  // PaymentStreamingAccount list refresh timeout
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-
-    if (publicKey) {
-      timer = setInterval(() => {
-        consoleOut(`Refreshing treasuries past ${ONE_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
-        refreshTreasuries(false);
-      }, ONE_MINUTE_REFRESH_TIMEOUT);
-    }
-
-    return () => clearInterval(timer);
-  }, [publicKey]);
-
   // Detect XS screen
   useEffect(() => {
     if (width < 576) {
@@ -2621,30 +2511,21 @@ export const HomeView = () => {
     }
   }, [location.pathname, selectedCategory]);
 
-  // Load streams on entering page
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
-  useEffect(() => {
-    if (!publicKey || !selectedAccount.address) {
-      return;
-    }
-
-    consoleOut('Loading streams...', '', 'orange');
-    refreshStreamList();
-  }, [selectedAccount.address, publicKey]);
-
   // Process userTokensResponse from AppState to get a renderable list of tokens
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (userTokensResponse) {
-      consoleOut('Processing userTokensResponse:', userTokensResponse, 'blue');
-      setMultisigSolBalance(userTokensResponse.nativeBalance);
-      setWsolBalance(userTokensResponse.wSolBalance);
-      setAccountTokens(userTokensResponse.accountTokens);
-      setUserOwnedTokenAccounts(userTokensResponse.userTokenAccouns);
-      setTokenAccountGroups(userTokensResponse.tokenAccountGroups);
-      if (userTokensResponse.selectedAsset) {
-        selectAsset(userTokensResponse.selectedAsset);
-      }
+    if (!userTokensResponse) {
+      return;
+    }
+
+    consoleOut('Processing userTokensResponse:', userTokensResponse, 'blue');
+    setMultisigSolBalance(userTokensResponse.nativeBalance);
+    setWsolBalance(userTokensResponse.wSolBalance);
+    setAccountTokens(userTokensResponse.accountTokens);
+    setUserOwnedTokenAccounts(userTokensResponse.userTokenAccounts);
+    setTokenAccountGroups(userTokensResponse.tokenAccountGroups);
+    if (userTokensResponse.selectedAsset) {
+      selectAsset(userTokensResponse.selectedAsset);
     }
   }, [userTokensResponse, setAccountTokens]);
 
@@ -2655,50 +2536,52 @@ export const HomeView = () => {
       return;
     }
 
-    if (selectedAccount.address) {
-      setShouldLoadTransactions(value => !value);
-      setLoadingTransactions(value => !value);
-
-      // Get the address to scan and ensure there is one
-      const pk = getScanAddress(selectedAsset);
-      consoleOut('Load transactions for pk:', pk ? pk.toBase58() : 'NONE', 'blue');
-      if (!pk) {
-        consoleOut('Asset has no public address, aborting...', '', 'goldenrod');
-        appendHistoryItems(undefined);
-        setStatus(FetchStatus.Fetched);
-        return;
-      }
-
-      let options = {
-        limit: TRANSACTIONS_PER_PAGE,
-      };
-
-      if (lastTxSignature) {
-        options = Object.assign(options, {
-          before: lastTxSignature,
-        });
-      }
-
-      fetchAccountHistory(connection, pk, options, true)
-        .then(history => {
-          appendHistoryItems(history.transactionMap, true);
-          setStatus(FetchStatus.Fetched);
-          if (
-            history.transactionMap &&
-            history.transactionMap.length > 0 &&
-            pk.toBase58() === selectedAccount.address
-          ) {
-            const validItems = getSolAccountItems(history.transactionMap);
-            const nativeAccountTxItems = solAccountItems + validItems;
-            setSolAccountItems(nativeAccountTxItems);
-          }
-        })
-        .catch(error => {
-          console.error(error);
-          setStatus(FetchStatus.FetchFailed);
-        })
-        .finally(() => setLoadingTransactions(false));
+    if (!selectedAccount.address) {
+      return;
     }
+
+    setShouldLoadTransactions(value => !value);
+    setLoadingTransactions(value => !value);
+
+    // Get the address to scan and ensure there is one
+    const pk = getScanAddress(selectedAsset);
+    consoleOut('Load transactions for pk:', pk ? pk.toBase58() : 'NONE', 'blue');
+    if (!pk) {
+      consoleOut('Asset has no public address, aborting...', '', 'goldenrod');
+      appendHistoryItems(undefined);
+      setStatus(FetchStatus.Fetched);
+      return;
+    }
+
+    let options = {
+      limit: TRANSACTIONS_PER_PAGE,
+    };
+
+    if (lastTxSignature) {
+      options = Object.assign(options, {
+        before: lastTxSignature,
+      });
+    }
+
+    fetchAccountHistory(connection, pk, options, true)
+    .then(history => {
+      appendHistoryItems(history.transactionMap, true);
+      setStatus(FetchStatus.Fetched);
+      if (
+        history.transactionMap &&
+        history.transactionMap.length > 0 &&
+        pk.toBase58() === selectedAccount.address
+      ) {
+        const validItems = getSolAccountItems(history.transactionMap);
+        const nativeAccountTxItems = solAccountItems + validItems;
+        setSolAccountItems(nativeAccountTxItems);
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      setStatus(FetchStatus.FetchFailed);
+    })
+    .finally(() => setLoadingTransactions(false));
   }, [
     publicKey,
     connection,
@@ -3060,7 +2943,7 @@ export const HomeView = () => {
   // Get treasuries summary
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (!publicKey || !treasuryList) {
+    if (!publicKey || !streamingAccounts) {
       return;
     }
 
@@ -3071,7 +2954,7 @@ export const HomeView = () => {
     return () => {
       clearTimeout(timeout);
     };
-  }, [publicKey, treasuryList]);
+  }, [publicKey, streamingAccounts]);
 
   // Having the treasuriesSummary and stream stats, lets publish combined stats
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
@@ -3187,7 +3070,8 @@ export const HomeView = () => {
       setIsBusy,
       nativeBalance,
       minRequired,
-      generateTransaction: async ({ multisig, data }) => {
+      // biome-ignore lint/correctness/noEmptyPattern:
+      generateTransaction: async ({}) => {
         if (!publicKey) return;
 
         return await createCloseTokenAccountTx(connection, wSolPubKey, publicKey);
@@ -3210,14 +3094,9 @@ export const HomeView = () => {
   //  Events  //
   //////////////
 
-  const onRefreshStreamsNoReset = () => {
-    refreshStreamList(false);
-    refreshTreasuries(false);
-  };
-
-  const onRefreshStreamsReset = () => {
-    refreshStreamList(true);
-    refreshTreasuries(false);
+  const onRefreshStreams = () => {
+    refreshStreamList();
+    refreshStreamingAccounts();
   };
 
   const getReturnPathForStreaming = () => {
@@ -3306,7 +3185,7 @@ export const HomeView = () => {
   };
 
   const getLeftPanelOptions = () => {
-    const items: ItemType[] = [];
+    const items: ItemType<MenuItemType>[] = [];
     if (isMultisigContext) {
       items.push({
         key: '01-create-asset',
@@ -3394,12 +3273,12 @@ export const HomeView = () => {
     return (
       <>
         <div className='left'>
-          <div className='font-bold font-size-110 line-height-110'>{selectedAccount.name}</div>
+          <div className='font-bold font-size-110 line-height-110 fg-secondary-70'>{selectedAccount.name}</div>
           <div className='font-regular font-size-80 line-height-110 fg-secondary-50'>
             {shortenAddress(selectedAccount.address, 8)}
           </div>
         </div>
-        <div className='font-bold font-size-110 right'>
+        <div className='font-bold font-size-110 right fg-secondary-80'>
           {loadingStreams || !canShowStreamingAccountBalance ? (
             <IconLoading className='mean-svg-icons' style={{ height: '12px', lineHeight: '12px' }} />
           ) : (
@@ -3485,7 +3364,7 @@ export const HomeView = () => {
                     onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
-                      refreshStreamList(false);
+                      refreshStreamList();
                     }}
                   >
                     <span className='font-size-75 font-bold text-shadow'>
@@ -3613,7 +3492,6 @@ export const HomeView = () => {
 
     return (
       <NftPaginatedList
-        connection={connection}
         loadingTokenAccounts={loadingTokenAccounts}
         nftList={accountNfts}
         onNftItemClick={(nft: MeanNft) => onNftItemClick(nft)}
@@ -3664,7 +3542,7 @@ export const HomeView = () => {
     return (
       <OtherAssetsList
         loadingPrograms={loadingPrograms}
-        onProgramSelected={(item: ProgramAccounts) => onProgramSelected(item)}
+        onProgramSelected={item => onProgramSelected(item)}
         programs={programs}
         selectedProgram={selectedProgram}
       />
@@ -3704,7 +3582,7 @@ export const HomeView = () => {
 
   const renderUserAccountAssetMenu = () => {
     const ctas = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
-    const items: ItemType[] = ctas.map((item: MetaInfoCta, index: number) => {
+    const items: ItemType<MenuItemType>[] = ctas.map((item: MetaInfoCta, index: number) => {
       return {
         key: `${index + 44}-${item.uiComponentId}`,
         label: (
@@ -3725,12 +3603,12 @@ export const HomeView = () => {
     const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'button');
 
     return (
-      <div className='flex-fixed-right cta-row'>
+      <div className='flex-fixed-right cta-row mb-3'>
         <Space className='left' size='middle' wrap>
           {isMultisigContext ? (
             <>
               <Button
-                type='default'
+                type='primary'
                 shape='round'
                 size='small'
                 className='thin-stroke asset-btn'
@@ -3739,7 +3617,7 @@ export const HomeView = () => {
                 <div className='btn-content'>{t('multisig.multisig-assets.cta-deposit')}</div>
               </Button>
               <Button
-                type='default'
+                type='primary'
                 shape='round'
                 size='small'
                 className='thin-stroke asset-btn'
@@ -3749,7 +3627,7 @@ export const HomeView = () => {
                 <div className='btn-content'>{t('multisig.multisig-assets.cta-transfer')}</div>
               </Button>
               <Button
-                type='default'
+                type='primary'
                 shape='round'
                 size='small'
                 className='thin-stroke asset-btn'
@@ -3766,7 +3644,7 @@ export const HomeView = () => {
                 return (
                   <Tooltip placement='bottom' title={item.tooltip} key={item.uiComponentId}>
                     <Button
-                      type='default'
+                      type='primary'
                       shape='round'
                       size='small'
                       className='thin-stroke'
@@ -3781,7 +3659,7 @@ export const HomeView = () => {
 
               return (
                 <Button
-                  type='default'
+                  type='primary'
                   shape='round'
                   size='small'
                   key={item.uiComponentId}
@@ -3901,8 +3779,8 @@ export const HomeView = () => {
               <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
                 {/* Left / top panel */}
                 <div className='meanfi-two-panel-left'>
-                  <div id='streams-refresh-noreset-cta' onKeyDown={() => {}} onClick={onRefreshStreamsNoReset} />
-                  <div id='streams-refresh-reset-cta' onKeyDown={() => {}} onClick={onRefreshStreamsReset} />
+                  <div id='streams-refresh-noreset-cta' onKeyDown={() => {}} onClick={onRefreshStreams} />
+                  <div id='streams-refresh-reset-cta' onKeyDown={() => {}} onClick={onRefreshStreams} />
 
                   <div className='inner-container'>
                     {/* Account summary (sticky) */}
@@ -4000,16 +3878,16 @@ export const HomeView = () => {
                                 icon={<ReloadOutlined className='mean-svg-icons' />}
                                 onClick={() => {
                                   reloadTokensAndActivity();
-                                  onRefreshStreamsNoReset();
+                                  onRefreshStreams();
                                 }}
                               />
                             </Tooltip>
                           </span>
                         </div>
                         <Suspense fallback={renderSpinner()}>
-                          <PaymentStreamingComponent
-                            loadingTreasuries={loadingTreasuries}
-                            treasuryList={treasuryList}
+                          <PaymentStreamingView
+                            loadingTreasuries={loadingStreamingAccounts}
+                            treasuryList={streamingAccounts}
                             onBackButtonClicked={onBackButtonClicked}
                           />
                         </Suspense>
@@ -4025,7 +3903,7 @@ export const HomeView = () => {
                           onNewProposalClicked={onNewProposalClicked}
                           onProposalExecuted={() => {
                             consoleOut('Triggering onRefreshStreamsReset...');
-                            onRefreshStreamsReset();
+                            onRefreshStreams();
                           }}
                         />
                       </Suspense>
@@ -4049,7 +3927,7 @@ export const HomeView = () => {
                       <div className='safe-details-component scroll-wrapper vertical-scroll'>
                         {selectedProgram ? (
                           <Suspense fallback={renderSpinner()}>
-                            <ProgramDetailsComponent programSelected={selectedProgram} />
+                            <ProgramDetailsComponent program={selectedProgram} />
                           </Suspense>
                         ) : (
                           renderSpinner()

@@ -5,10 +5,10 @@ import { AccountType, type PaymentStreamingAccount } from '@mean-dao/payment-str
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox, { type CheckboxChangeEvent } from 'antd/lib/checkbox/Checkbox';
+import { FALLBACK_COIN_IMAGE } from 'app-constants/common';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
 import { TokenDisplay } from 'components/TokenDisplay';
-import { FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
@@ -166,8 +166,8 @@ export const TreasuryTransferFundsModal = (props: {
       setIsVerifiedRecipient(false);
     });
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -436,10 +436,10 @@ export const TreasuryTransferFundsModal = (props: {
         setTokenAmount(new BN(0));
         setIsVerifiedRecipient(false);
       }}
-      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Proposal title */}
             {isMultisigContext && (
@@ -623,7 +623,7 @@ export const TreasuryTransferFundsModal = (props: {
                   size='large'
                   disabled={isMultisigContext ? !isValidFormMultisig() : !isValidForm()}
                   onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                       onAcceptWithdrawTreasuryFunds();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
@@ -634,7 +634,7 @@ export const TreasuryTransferFundsModal = (props: {
                 >
                   {isBusy
                     ? 'multisig.transfer-tokens.main-cta-busy'
-                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    : transactionStatus.currentOperation === TransactionStatus.Idle
                       ? isMultisigContext
                         ? getTransactionStartButtonLabelMultisig()
                         : getTransactionStartButtonLabel()
@@ -671,10 +671,10 @@ export const TreasuryTransferFundsModal = (props: {
 
       <div
         className={
-          isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -687,7 +687,7 @@ export const TreasuryTransferFundsModal = (props: {
         )}
       </div>
 
-      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+      {!(isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) && (
         <div className='row two-col-ctas mt-3 transaction-progress p-2'>
           <div className='col-12'>
             <Button

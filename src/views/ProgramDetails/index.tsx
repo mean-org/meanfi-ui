@@ -1,9 +1,10 @@
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS } from '@mean-dao/mean-multisig-sdk';
 import type { TransactionFees } from '@mean-dao/payment-streaming';
-import { AnchorProvider, Program } from '@project-serum/anchor';
+import { AnchorProvider, type Idl, Program, type Wallet } from '@project-serum/anchor';
 import {
   type ConfirmOptions,
   LAMPORTS_PER_SOL,
+  type ParsedTransactionWithMeta,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -13,20 +14,20 @@ import {
 } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
 import { Button, Col, Row, Tooltip, notification } from 'antd';
+import { MAX_SUPPORTED_TRANSACTION_VERSION, MULTISIG_ROUTE_BASE_PATH, NO_FEES } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import { MultisigSetProgramAuthModal } from 'components/MultisigSetProgramAuthModal';
 import { MultisigUpgradeProgramModal } from 'components/MultisigUpgradeProgramModal';
 import { openNotification } from 'components/Notifications';
 import { TabsMean } from 'components/TabsMean';
-import { MAX_SUPPORTED_TRANSACTION_VERSION, MULTISIG_ROUTE_BASE_PATH, NO_FEES } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
-import { useConnection, useConnectionConfig } from 'contexts/connection';
+import { useConnection } from 'contexts/connection';
 import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import useLocalStorage from 'hooks/useLocalStorage';
-import { appConfig, customLogger } from 'index';
+import { customLogger } from 'main';
 import { resolveParsedAccountInfo } from 'middleware/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
@@ -45,26 +46,30 @@ import {
   getTxIxResume,
   shortenAddress,
 } from 'middleware/utils';
+import type { ProgramAccounts } from 'models/accounts';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import type { SetProgramAuthPayload } from 'models/multisig';
 import type { ProgramUpgradeParams } from 'models/programs';
+import useMultisigClient from 'query-hooks/multisigClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { failsafeConnectionConfig } from 'services/connections-hq';
+import type { LooseObject } from 'types/LooseObject';
 import IdlTree from './IdlTree';
 import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutableModal';
 import Transactions from './Transactions';
 import './style.scss';
 
 let isWorkflowLocked = false;
+interface Props {
+  program: ProgramAccounts;
+}
 
-const ProgramDetailsView = (props: { programSelected: any }) => {
+const ProgramDetailsView = ({ program }: Props) => {
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const connection = useConnection();
-  const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const {
     selectedAccount,
@@ -75,17 +80,14 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     refreshMultisigs,
   } = useContext(AppStateContext);
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
-
-  const { programSelected } = props;
-
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [selectedProgramIdl, setSelectedProgramIdl] = useState<any>(null);
+  const [selectedProgramIdl, setSelectedProgramIdl] = useState<Idl | null>(null);
   const [loadingTxs, setLoadingTxs] = useState(true);
-  const [programTransactions, setProgramTransactions] = useState<any>();
+  const [programTransactions, setProgramTransactions] = useState<ParsedTransactionWithMeta[]>([]);
   const [upgradeAuthority, setUpgradeAuthority] = useState<string | null>(null);
   const [canSubscribe, setCanSubscribe] = useState(true);
 
@@ -98,23 +100,16 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const multisigProgramAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-
-  const multisigClient = useMemo(() => {
-    if (!connection || !publicKey || !connectionConfig.endpoint) {
-      return null;
-    }
-    return new MeanMultisig(connectionConfig.endpoint, publicKey, failsafeConnectionConfig, multisigProgramAddressPK);
-  }, [publicKey, connection, multisigProgramAddressPK, connectionConfig.endpoint]);
+  const { multisigClient, multisigProgramAddressPK } = useMultisigClient();
 
   const isTxInProgress = useCallback(
     (operation?: OperationType) => {
       if (confirmationHistory && confirmationHistory.length > 0) {
         if (operation !== undefined) {
           return confirmationHistory.some(h => h.operationType === operation && h.txInfoFetchStatus === 'fetching');
-        } else {
-          return confirmationHistory.some(h => h.txInfoFetchStatus === 'fetching');
         }
+
+        return confirmationHistory.some(h => h.txInfoFetchStatus === 'fetching');
       }
       return false;
     },
@@ -128,8 +123,8 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   const resetTransactionStatus = useCallback(() => {
     setIsBusy(false);
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -173,7 +168,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   }, []);
 
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
-    let event: any = undefined;
+    let event: AppUsageEvent | undefined = undefined;
 
     if (item) {
       switch (item.operationType) {
@@ -229,7 +224,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                 size='small'
                 className='extra-small d-flex align-items-center pb-1'
                 onClick={() => {
-                  notification.close(myNotifyKey);
+                  notification.destroy(myNotifyKey);
                   const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
                   navigate(url);
                 }}
@@ -319,9 +314,9 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   const onExecuteUpgradeProgramsTx = useCallback(
     async (params: ProgramUpgradeParams) => {
       let transaction: VersionedTransaction | Transaction | null = null;
-      let signature: any;
+      let signature: string;
       let encodedTx: string;
-      let transactionLog: any[] = [];
+      let transactionLog: LooseObject[] = [];
 
       resetTransactionStatus();
       setTransactionCancelled(false);
@@ -431,9 +426,9 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       const upgradeProgram = async (data: ProgramUpgradeParams) => {
         if (isMultisigContext) {
           return updateProgramMultiSigner(data);
-        } else {
-          return updateProgramSingleSigner(data);
         }
+
+        return updateProgramSingleSigner(data);
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -525,16 +520,16 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
               });
               return false;
             });
-        } else {
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-            result: 'Cannot start transaction! Wallet not found!',
-          });
-          customLogger.logError('Upgrade Program transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
         }
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!',
+        });
+        customLogger.logError('Upgrade Program transaction failed', {
+          transcript: transactionLog,
+        });
+        return false;
       };
 
       if (wallet && publicKey) {
@@ -664,9 +659,9 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   const onExecuteSetProgramAuthTx = useCallback(
     async (params: SetProgramAuthPayload) => {
       let transaction: VersionedTransaction | Transaction | null = null;
-      let signature: any;
+      let signature: string;
       let encodedTx: string;
-      let transactionLog: any[] = [];
+      let transactionLog: LooseObject[] = [];
 
       resetTransactionStatus();
       setTransactionCancelled(false);
@@ -770,9 +765,9 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
       const setProgramAuth = async (data: SetProgramAuthPayload) => {
         if (isMultisigContext) {
           return setProgramAuthMultiSigner(data);
-        } else {
-          return setProgramAuthSingleSigner(data);
         }
+
+        return setProgramAuthSingleSigner(data);
       };
 
       const createTx = async (): Promise<boolean> => {
@@ -852,16 +847,16 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
               customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
               return false;
             });
-        } else {
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-            result: 'Cannot start transaction! Wallet not found!',
-          });
-          customLogger.logError('Set program authority transaction failed', {
-            transcript: transactionLog,
-          });
-          return false;
         }
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!',
+        });
+        customLogger.logError('Set program authority transaction failed', {
+          transcript: transactionLog,
+        });
+        return false;
       };
 
       if (wallet && publicKey) {
@@ -888,7 +883,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                 ? `Create proposal to set program authority to ${shortenAddress(params.newAuthAddress)}`
                 : `Set program authority to ${shortenAddress(params.newAuthAddress)}`;
               const authChangeCompleted = multisigAuth
-                ? `Set program authority proposal has been submitted for approval.`
+                ? 'Set program authority proposal has been submitted for approval.'
                 : `Program authority set to ${shortenAddress(params.newAuthAddress)}`;
               const makeImmutableLoadingMessage = multisigAuth
                 ? `Create proposal to make program ${shortenAddress(params.programAddress)} non-upgradable`
@@ -965,26 +960,26 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
   // Program Address
   const renderProgramAddress = () => {
-    if (!programSelected) {
+    if (!program) {
       return '--';
     }
-    return <CopyExtLinkGroup content={programSelected.pubkey.toBase58()} number={4} externalLink={true} />;
+    return <CopyExtLinkGroup content={program.pubkey.toBase58()} number={4} externalLink={true} />;
   };
 
   // Get the upgrade authority of a program
   useEffect(() => {
-    if (!programSelected) {
+    if (!program) {
       return;
     }
 
-    const programData = programSelected.executable.toBase58() as string;
+    const programData = program.executable.toBase58() as string;
     resolveParsedAccountInfo(connection, programData)
       .then(accountInfo => {
         const authority = accountInfo.data.parsed.info.authority as string | null;
         setUpgradeAuthority(authority);
       })
-      .catch(error => setUpgradeAuthority(null));
-  }, [connection, programSelected]);
+      .catch(() => setUpgradeAuthority(null));
+  }, [connection, program]);
 
   // Upgrade Authority
   const renderUpgradeAuthority = () => {
@@ -998,28 +993,28 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
   // // Executable
   // const [isExecutable, setIsExecutable] = useState<boolean>();
   // useEffect(() => {
-  //   programSelected && programSelected.executable.toBase58() ? (
+  //   program && program.executable.toBase58() ? (
   //     setIsExecutable(true)
   //   ) : (
   //     setIsExecutable(false)
   //   )
-  // }, [programSelected]);
+  // }, [program]);
 
   // Balance SOL
-  const [balanceSol, setBalanceSol] = useState<any>();
+  const [balanceSol, setBalanceSol] = useState<string>();
 
   useEffect(() => {
-    if (!connection || !programSelected || !programSelected.pubkey) {
+    if (!connection || !program || !program.pubkey) {
       return;
     }
 
     connection
-      .getBalance(programSelected.pubkey)
+      .getBalance(program.pubkey)
       .then(balance => {
         setBalanceSol(formatThousands(balance / LAMPORTS_PER_SOL, NATIVE_SOL.decimals, NATIVE_SOL.decimals));
       })
       .catch(error => console.error(error));
-  }, [connection, programSelected]);
+  }, [connection, program]);
 
   const infoProgramData = [
     {
@@ -1050,11 +1045,11 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
   // Get transactions
   const getProgramTxs = useCallback(async () => {
-    if (!connection || !programSelected) {
+    if (!connection || !program) {
       return null;
     }
 
-    const signaturesInfo = await connection.getConfirmedSignaturesForAddress2(programSelected.pubkey, { limit: 50 });
+    const signaturesInfo = await connection.getConfirmedSignaturesForAddress2(program.pubkey, { limit: 50 });
 
     if (signaturesInfo.length === 0) {
       return null;
@@ -1070,27 +1065,33 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     }
 
     return txs.filter(tx => tx !== null);
-  }, [connection, programSelected]);
+  }, [connection, program]);
 
   useEffect(() => {
-    if (!connection || !programSelected || !loadingTxs) {
+    if (!connection || !program || !loadingTxs) {
       return;
     }
 
     const timeout = setTimeout(() => {
       getProgramTxs()
-        .then(txs => setProgramTransactions(txs))
-        .catch((err: any) => console.error(err))
+        .then(txs => {
+          if (!txs) {
+            return [];
+          }
+          const filtered = txs.filter(Boolean) as ParsedTransactionWithMeta[];
+          setProgramTransactions(filtered)
+        })
+        .catch(err => console.error(err))
         .finally(() => setLoadingTxs(false));
     });
 
     return () => {
       clearTimeout(timeout);
     };
-  }, [connection, programSelected, loadingTxs, getProgramTxs]);
+  }, [connection, program, loadingTxs, getProgramTxs]);
 
   const getProgramIDL = useCallback(async () => {
-    if (!connection || !publicKey || !programSelected) {
+    if (!connection || !publicKey || !program) {
       return null;
     }
 
@@ -1104,9 +1105,9 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
       const anchorWallet = {
         publicKey: publicKey,
-        signAllTransactions: async (txs: any) => txs,
-        signTransaction: async (tx: any) => tx,
-      };
+        signAllTransactions: async (txs: (Transaction | VersionedTransaction)[]) => txs,
+        signTransaction: async (tx: Transaction | VersionedTransaction) => tx
+      } as Wallet;
 
       const provider = new AnchorProvider(connection, anchorWallet, opts);
 
@@ -1115,25 +1116,25 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
     const provider = createAnchorProvider();
 
-    return Program.fetchIdl(programSelected.pubkey, provider);
-  }, [connection, programSelected, publicKey]);
+    return Program.fetchIdl(program.pubkey, provider);
+  }, [connection, program, publicKey]);
 
   // Get Anchor IDL
   useEffect(() => {
-    if (!connection || !publicKey || !programSelected) {
+    if (!connection || !publicKey || !program) {
       return;
     }
 
     const timeout = setTimeout(() => {
       getProgramIDL()
-        .then((idl: any) => {
+        .then(idl => {
           if (!idl) {
             return;
           }
           console.log('IDL', idl);
           setSelectedProgramIdl(idl);
         })
-        .catch((err: any) => {
+        .catch(err => {
           setSelectedProgramIdl(null);
           console.error(err);
         });
@@ -1142,7 +1143,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
     return () => {
       clearTimeout(timeout);
     };
-  }, [connection, getProgramIDL, programSelected, publicKey]);
+  }, [connection, getProgramIDL, program, publicKey]);
 
   // Setup event listeners
   useEffect(() => {
@@ -1185,7 +1186,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
 
   return (
     <>
-      <span id='multisig-refresh-cta' onClick={() => getMultisigList()}></span>
+      <span id='multisig-refresh-cta' onKeyDown={() => {}} onClick={() => getMultisigList()} />
       <div className='program-details-container'>
         <Row gutter={[8, 8]} className='safe-info-container mr-0 ml-0'>
           {infoProgramData.map(info => (
@@ -1232,7 +1233,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                 <div className='btn-content'>Set authority</div>
               </Button>
             </Tooltip>
-            {programSelected && (
+            {program && (
               <Tooltip
                 title={upgradeAuthority ? 'This makes the program non-upgradable' : 'This program is non-upgradeable'}
               >
@@ -1247,7 +1248,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
                       setIsMultisigMakeProgramImmutableModalVisible(true);
                     } else {
                       setImmutableProgram({
-                        programId: programSelected.pubkey.toBase58(),
+                        programId: program.pubkey.toBase58(),
                       });
                     }
                   }}
@@ -1269,9 +1270,9 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           transactionFees={transactionFees}
           handleOk={(params: ProgramUpgradeParams) => onAcceptUpgradeProgram(params)}
           handleClose={closeUpgradeProgramModal}
-          programId={programSelected?.pubkey.toBase58()}
+          programId={program?.pubkey.toBase58()}
           isBusy={isBusy}
-          programAddress={programSelected.pubkey.toBase58()}
+          programAddress={program?.pubkey.toBase58()}
           isMultisigTreasury={isMultisigContext}
         />
       )}
@@ -1283,7 +1284,7 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
           transactionFees={transactionFees}
           handleOk={(params: SetProgramAuthPayload) => onAcceptSetProgramAuth(params)}
           handleClose={closeSetProgramAuthModal}
-          programId={programSelected?.pubkey.toBase58()}
+          programId={program?.pubkey.toBase58()}
           isBusy={isBusy}
           isMultisigTreasury={isMultisigContext}
         />
@@ -1292,9 +1293,12 @@ const ProgramDetailsView = (props: { programSelected: any }) => {
         <MultisigMakeProgramImmutableModal
           handleOk={({ proposalTitle }) => {
             setIsMultisigMakeProgramImmutableModalVisible(false);
+            if (!program) {
+              return;
+            }
             setImmutableProgram({
               proposalTitle,
-              programId: programSelected.pubkey.toBase58(),
+              programId: program.pubkey.toBase58(),
             });
           }}
           handleClose={() => setIsMultisigMakeProgramImmutableModalVisible(false)}

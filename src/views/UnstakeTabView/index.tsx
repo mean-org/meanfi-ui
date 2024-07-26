@@ -3,20 +3,15 @@ import type { StakingClient, UnstakeQuote } from '@mean-dao/staking';
 import type { Transaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
 import { Button, Col, Row } from 'antd';
+import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'app-constants/common';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
-import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'constants/common';
 import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
-import {
-  Listener,
-  TxConfirmationContext,
-  type TxConfirmationInfo,
-  confirmationEvents,
-} from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
-import { customLogger } from 'index';
+import { customLogger } from 'main';
 import { AppUsageEvent, type SegmentUnstakeMeanData } from 'middleware/segment-service';
 import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
@@ -62,8 +57,8 @@ export const UnstakeTabView = (props: {
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -332,14 +327,14 @@ export const UnstakeTabView = (props: {
     }
   }, []);
 
-  const reloadStakePools = () => {
+  const reloadStakePools = useCallback(() => {
     const stakePoolsRefreshCta = document.getElementById('refresh-stake-pool-info');
     if (stakePoolsRefreshCta) {
       stakePoolsRefreshCta.click();
     } else {
       console.log('element not found:', '#refresh-stake-pool-info', 'red');
     }
-  };
+  }, []);
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback(

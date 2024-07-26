@@ -26,8 +26,6 @@ const getUiErrorString = (errorResponse: DlnErrorResponse) => {
     case 'UNABLE_TO_ESTIMATE_EXTERNAL_CALL_WITHOUT_GAS':
       errorString = 'Estimation failed, try different amount';
       break;
-    case 'INTERNAL_SDK_ERROR':
-    case 'INTERNAL_SERVER_ERROR':
     default:
       errorString = 'There is not enough liquidity in the destination';
       break;

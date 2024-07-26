@@ -1,22 +1,20 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
-
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
-import type { ItemType } from 'antd/lib/menu/hooks/useItems';
-
+import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+import { MEAN_DAO_DOCS_URL } from 'app-constants/common';
 import { AccountDetails } from 'components/AccountDetails';
 import { AppContextMenu } from 'components/AppContextMenu';
 import { ConnectButton } from 'components/ConnectButton';
 import { DepositOptions } from 'components/DepositOptions';
 import { NotificationBell } from 'components/NotificationBell';
 import PrioritizationFeesConfigPopover from 'components/PrioritizationFeesConfigPopover';
-import { MEAN_DAO_DOCS_URL } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';
 import type { CustomCSSProps } from 'middleware/css-custom-props';
 import { isProd } from 'middleware/ui';
 import type { RoutingInfo } from 'models/common-types';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -142,7 +140,7 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
 
   // Prebuild the menu options
   const mainNav = () => {
-    const items: ItemType[] = [];
+    const items: ItemType<MenuItemType>[] = [];
     items.push({
       key: 'accounts',
       label: <Link to='/'>{t('ui-menus.main-menu.accounts')}</Link>,
@@ -201,57 +199,55 @@ export const AppBar = ({ menuType, topNavVisible, onOpenDrawer }: AppBarProps) =
         ) : null}
       </>
     );
-  } else {
-    return (
-      <>
-        <div className='mobile-menu'>
-          <input type='checkbox' id='overlay-input' />
-          <label htmlFor='overlay-input' id='overlay-button'>
-            <span></span>
-          </label>
-          <div id='overlay'>
-            <div className='h-100 w-100 flex-column flex-center vertical-scroll'>
-              <ul onClick={dismissMenu}>
-                <li
-                  key='accounts'
-                  className={selectedItems.includes('accounts') ? 'mobile-menu-item active' : 'mobile-menu-item'}
-                  style={{ '--animation-order': 1 } as CustomCSSProps}
-                >
-                  <Link to='/'>{t('ui-menus.main-menu.accounts')}</Link>
-                </li>
-                <li
-                  key='exchange'
-                  className={selectedItems.includes('exchange') ? 'mobile-menu-item active' : 'mobile-menu-item'}
-                  style={{ '--animation-order': 2 } as CustomCSSProps}
-                >
-                  <Link to='/exchange'>{t('ui-menus.main-menu.exchange')}</Link>
-                </li>
-                <li
-                  key='staking'
-                  className={selectedItems.includes('staking') ? 'mobile-menu-item active' : 'mobile-menu-item'}
-                  style={{ '--animation-order': 3 } as CustomCSSProps}
-                >
-                  <Link to='/staking'>{t('ui-menus.main-menu.staking')}</Link>
-                </li>
-                <li
-                  key='docs'
-                  className={selectedItems.includes('docs') ? 'mobile-menu-item active' : 'mobile-menu-item'}
-                  style={{ '--animation-order': 4 } as CustomCSSProps}
-                >
-                  <Link to={MEAN_DAO_DOCS_URL} target='_blank' rel='noopener noreferrer'>
-                    {t('ui-menus.app-context-menu.how-to-use')}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <DepositOptions
-            isVisible={isDepositOptionsModalVisible && menuType !== 'desktop'}
-            key='deposit-modal2'
-            handleClose={hideDepositOptionsModal}
-          />
-        </div>
-      </>
-    );
   }
+
+  return (
+    <div className='mobile-menu'>
+      <input type='checkbox' id='overlay-input' />
+      <label htmlFor='overlay-input' id='overlay-button'>
+        <span />
+      </label>
+      <div id='overlay'>
+        <div className='h-100 w-100 flex-column flex-center vertical-scroll'>
+          <ul onClick={dismissMenu} onKeyDown={dismissMenu}>
+            <li
+              key='accounts'
+              className={selectedItems.includes('accounts') ? 'mobile-menu-item active' : 'mobile-menu-item'}
+              style={{ '--animation-order': 1 } as CustomCSSProps}
+            >
+              <Link to='/'>{t('ui-menus.main-menu.accounts')}</Link>
+            </li>
+            <li
+              key='exchange'
+              className={selectedItems.includes('exchange') ? 'mobile-menu-item active' : 'mobile-menu-item'}
+              style={{ '--animation-order': 2 } as CustomCSSProps}
+            >
+              <Link to='/exchange'>{t('ui-menus.main-menu.exchange')}</Link>
+            </li>
+            <li
+              key='staking'
+              className={selectedItems.includes('staking') ? 'mobile-menu-item active' : 'mobile-menu-item'}
+              style={{ '--animation-order': 3 } as CustomCSSProps}
+            >
+              <Link to='/staking'>{t('ui-menus.main-menu.staking')}</Link>
+            </li>
+            <li
+              key='docs'
+              className={selectedItems.includes('docs') ? 'mobile-menu-item active' : 'mobile-menu-item'}
+              style={{ '--animation-order': 4 } as CustomCSSProps}
+            >
+              <Link to={MEAN_DAO_DOCS_URL} target='_blank' rel='noopener noreferrer'>
+                {t('ui-menus.app-context-menu.how-to-use')}
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <DepositOptions
+        isVisible={isDepositOptionsModalVisible && menuType !== 'desktop'}
+        key='deposit-modal2'
+        handleClose={hideDepositOptionsModal}
+      />
+    </div>
+  );
 };

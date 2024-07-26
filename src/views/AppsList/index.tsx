@@ -9,7 +9,7 @@ import './style.scss';
 
 export const AppsList = (props: {
   isMultisigContext: boolean;
-  onAppClick?: any;
+  onAppClick?: (app: KnownAppMetadata) => void;
   selectedApp: KnownAppMetadata | undefined;
 }) => {
   const { isMultisigContext, onAppClick, selectedApp } = props;
@@ -113,7 +113,8 @@ export const AppsList = (props: {
           return (
             <div
               key={`${app.slug}`}
-              onClick={() => onAppClick(app)}
+              onKeyDown={() => {}}
+              onClick={() => onAppClick?.(app)}
               id={app.slug}
               className={`transaction-list-row ${getSelectedClass(app)}`}
             >

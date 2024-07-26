@@ -8,7 +8,7 @@ import {
   SystemProgram,
   type TransactionInstruction,
 } from '@solana/web3.js';
-import { appConfig } from 'index';
+import { appConfig } from 'main';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
 

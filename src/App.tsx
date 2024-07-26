@@ -1,33 +1,29 @@
+import '@rainbow-me/rainbowkit/styles.css';
 import { AnalyticsBrowser } from '@segment/analytics-next';
-import { SentreWalletAdapter } from '@sentre/connector';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { WalletProvider } from '@solana/wallet-adapter-react';
 import {
-  BitKeepWalletAdapter,
-  BraveWalletAdapter,
   Coin98WalletAdapter,
   CoinbaseWalletAdapter,
-  ExodusWalletAdapter,
   LedgerWalletAdapter,
   MathWalletAdapter,
   PhantomWalletAdapter,
-  SlopeWalletAdapter,
   SolflareWalletAdapter,
   SolongWalletAdapter,
+  TorusWalletAdapter,
   TrustWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { Layout } from 'antd';
-import { sentreAppId } from 'constants/common';
 import { MeanFiWalletProvider } from 'contexts/wallet';
 import { WalletAccountProvider } from 'contexts/walletAccount';
 import { environment } from 'environments/environment';
 import useLocalStorage from 'hooks/useLocalStorage';
-import { XnftWalletAdapter } from 'integrations/xnft/xnft-wallet-adapter';
+import { appConfig } from 'main';
 import { useEffect, useMemo, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { BrowserRouter } from 'react-router-dom';
-import { PageLoadingView } from 'views';
-import { appConfig } from '.';
+import { AppRoutes } from 'routes';
+import { PageLoadingView } from 'views/PageLoading';
 import './App.scss';
 import { AccountsProvider } from './contexts/accounts';
 import AppStateProvider from './contexts/appstate';
@@ -35,7 +31,6 @@ import { ConnectionProvider } from './contexts/connection';
 import TxConfirmationProvider from './contexts/transaction-status';
 import { SegmentAnalyticsService } from './middleware/segment-service';
 import { isLocal } from './middleware/ui';
-import { AppRoutes } from './routes';
 import { refreshCachedRpc } from './services/connections-hq';
 
 const { Content } = Layout;
@@ -47,11 +42,13 @@ function App() {
   const [writeKey, setWriteKey] = useState('');
 
   useEffect(() => {
-    if (!isDesktop) {
-      window.localStorage.removeItem('walletName');
-      window.localStorage.removeItem('lastUsedAccount');
-      window.localStorage.removeItem('cachedRpc');
+    if (isDesktop) {
+      return;
     }
+
+    window.localStorage.removeItem('walletName');
+    window.localStorage.removeItem('lastUsedAccount');
+    window.localStorage.removeItem('cachedRpc');
   }, []);
 
   useEffect(() => {
@@ -93,35 +90,26 @@ function App() {
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
-      new BraveWalletAdapter(),
-      new ExodusWalletAdapter(),
       new SolflareWalletAdapter({ network }),
-      new BitKeepWalletAdapter(),
       new CoinbaseWalletAdapter(),
-      new SlopeWalletAdapter(),
+      new TrustWalletAdapter(),
+      new TorusWalletAdapter(),
+      new MathWalletAdapter(),
       new Coin98WalletAdapter(),
       new SolongWalletAdapter(),
-      new TrustWalletAdapter(),
-      new MathWalletAdapter(),
       new LedgerWalletAdapter(),
-      new SentreWalletAdapter({ appId: sentreAppId }),
-      new XnftWalletAdapter(),
     ],
     [network],
   );
 
-  const loader = (
-    <>
+  if (loadingStatus === 'loading') {
+    return (
       <Layout>
         <Content className='flex-center'>
           <PageLoadingView addWrapper={false} />
         </Content>
       </Layout>
-    </>
-  );
-
-  if (loadingStatus === 'loading') {
-    return loader;
+    );
   }
 
   return (

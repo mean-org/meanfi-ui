@@ -1,11 +1,11 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import type { TransactionFees } from '@mean-dao/payment-streaming';
-import { PublicKey, type Connection } from '@solana/web3.js';
+import { type Connection, PublicKey } from '@solana/web3.js';
 import { Button, Checkbox, Modal } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
 import { InputMean } from 'components/InputMean';
 import { TokenListItem } from 'components/TokenListItem';
-import { WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
 import { useConnection } from 'contexts/connection';
 import { useWallet } from 'contexts/wallet';

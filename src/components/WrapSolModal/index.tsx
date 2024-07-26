@@ -3,15 +3,15 @@ import { MSP_ACTIONS, type TransactionFees } from '@mean-dao/money-streaming/lib
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import type { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
+import { MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
 import { openNotification } from 'components/Notifications';
 import { TokenDisplay } from 'components/TokenDisplay';
-import { MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
-import { customLogger } from 'index';
+import { customLogger } from 'main';
 import { sendTx, signTx } from 'middleware/transactions';
 import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from 'middleware/ui';
 import {
@@ -25,9 +25,15 @@ import { wrapSol } from 'middleware/wrapSol';
 import { OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LooseObject } from 'types/LooseObject';
 
-export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible: boolean }) => {
-  const { isVisible, handleClose, handleOk } = props;
+interface WrapSolModalProps {
+  handleOk: () => void;
+  handleClose: () => void;
+  isVisible: boolean;
+}
+
+export const WrapSolModal = ({ isVisible, handleClose, handleOk }: WrapSolModalProps) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
@@ -96,8 +102,8 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -114,9 +120,9 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
 
   const onStartTransaction = async () => {
     let transaction: Transaction | null = null;
-    let signature = '';
+    let signature: string;
     let encodedTx: string;
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -201,16 +207,16 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Wrap transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('Wrap transaction failed', {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
     if (wallet && publicKey && wSol) {
@@ -274,8 +280,8 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
     }
   };
 
-  const handleAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleAmountChange = (e: string) => {
+    let newValue = e;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
 
@@ -285,7 +291,7 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -302,23 +308,23 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
   // Validation
 
   const isValidInput = (): boolean => {
-    return wrapAmount &&
+    return !!(
+      wrapAmount &&
       Number.parseFloat(wrapAmount) > 0 &&
       Number.parseFloat(wrapAmount) > MIN_SOL_BALANCE_REQUIRED &&
       Number.parseFloat(wrapAmount) <= getMaxPossibleAmount()
-      ? true
-      : false;
+    );
   };
 
   const isWrapValid = () => {
-    return publicKey &&
+    return !!(
+      publicKey &&
       nativeBalance > 0 &&
       nativeBalance > MIN_SOL_BALANCE_REQUIRED &&
       wrapAmount &&
       Number.parseFloat(wrapAmount) > 0 &&
       Number.parseFloat(wrapAmount) <= getMaxPossibleAmount()
-      ? true
-      : false;
+    );
   };
 
   const getCtaLabel = () => {
@@ -378,6 +384,7 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
                 {nativeBalance > 0 && (
                   <div
                     className='token-max simplelink'
+                    onKeyDown={() => {}}
                     onClick={() => {
                       setWrapAmount(getMaxPossibleAmount().toFixed(wSol?.decimals));
                     }}
@@ -394,7 +401,7 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
                 autoComplete='off'
                 autoCorrect='off'
                 type='text'
-                onChange={handleAmountChange}
+                onChange={e => handleAmountChange(e.target.value)}
                 pattern='^[0-9]*[.,]?[0-9]*$'
                 placeholder='0.0'
                 minLength={1}
@@ -412,6 +419,7 @@ export const WrapSolModal = (props: { handleOk: any; handleClose: any; isVisible
             <div className='right inner-label'>
               <span
                 className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                onKeyDown={() => {}}
                 onClick={() => refreshPrices()}
               >
                 ~

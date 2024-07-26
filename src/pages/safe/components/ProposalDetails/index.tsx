@@ -1,6 +1,7 @@
-import type { App, AppConfig } from '@mean-dao/mean-multisig-apps';
+import type { App, AppConfig, AppsProvider } from '@mean-dao/mean-multisig-apps';
 import {
   type MeanMultisig,
+  type MultisigInfo,
   type MultisigParticipant,
   type MultisigTransaction,
   type MultisigTransactionActivityItem,
@@ -31,27 +32,27 @@ import { useWallet } from 'contexts/wallet';
 import { consoleOut, copyText } from 'middleware/ui';
 import { shortenAddress } from 'middleware/utils';
 import { OperationType, TransactionStatus } from 'models/enums';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ActivityRow from './ActivityRow';
 import { RenderInstructions } from './RenderInstructions';
 import './style.scss';
 
 export const ProposalDetailsView = (props: {
-  appsProvider?: any;
+  appsProvider?: AppsProvider;
   connection: Connection;
   hasMultisigPendingProposal?: boolean;
   isBusy: boolean;
   loadingData: boolean;
   multisigClient?: MeanMultisig;
-  onDataToSafeView: any;
-  onProposalApprove?: any;
-  onProposalCancel?: any;
+  onDataToSafeView: () => void;
+  onProposalApprove?: (proposal: MultisigTransaction) => void;
+  onProposalCancel?: (proposal: MultisigTransaction) => void;
   onProposalExecute: (proposal: MultisigTransaction) => void;
-  onProposalReject?: any;
-  proposalSelected?: any;
-  selectedMultisig?: any;
-  solanaApps?: any;
+  onProposalReject?: (proposal: MultisigTransaction) => void;
+  proposal: MultisigTransaction | null;
+  selectedMultisig?: MultisigInfo;
+  solanaApps?: App[];
   isCancelRejectModalVisible: boolean;
   setIsCancelRejectModalVisible: (value: boolean) => void;
 }) => {
@@ -70,7 +71,7 @@ export const ProposalDetailsView = (props: {
     onProposalCancel,
     onProposalExecute,
     onProposalReject,
-    proposalSelected,
+    proposal,
     selectedMultisig,
     solanaApps,
     isCancelRejectModalVisible,
@@ -78,7 +79,7 @@ export const ProposalDetailsView = (props: {
   } = props;
   const { confirmationHistory } = useContext(TxConfirmationContext);
 
-  const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
+  const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction | null>(proposal);
   const [proposalIxInfo, setProposalIxInfo] = useState<MultisigTransactionInstructionInfo | null>(null);
   const [proposalActivity, setProposalActivity] = useState<MultisigTransactionActivityItem[]>([]);
   const [needReloadActivity, setNeedReloadActivity] = useState<boolean>(false);
@@ -86,15 +87,16 @@ export const ProposalDetailsView = (props: {
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
   const onAcceptCancelRejectProposalModal = () => {
     consoleOut('cancel reject proposal');
-    const operation = { transaction: selectedProposal };
-    onProposalCancel(operation);
+    if (selectedProposal && onProposalCancel) {
+      onProposalCancel(selectedProposal);
+    }
   };
 
   // Determine if the ExecuteTransaction operation is in progress by searching
@@ -194,61 +196,68 @@ export const ProposalDetailsView = (props: {
   );
 
   const getAppFromProposal = useCallback(
-    () => solanaApps.find((app: App) => app.id === selectedProposal.programId.toBase58()) as App,
-    [selectedProposal.programId, solanaApps],
+    () =>
+      selectedProposal && solanaApps
+        ? (solanaApps.find((app: App) => app.id === selectedProposal.programId.toBase58()) as App)
+        : undefined,
+    [selectedProposal, solanaApps],
   );
 
   const settleProposalIxInfo = useCallback(
     (config: AppConfig, proposalApp: App) => {
-      if (!multisigClient) {
+      if (!multisigClient || !selectedProposal) {
         return null;
       }
       const idl = config ? config.definition : undefined;
       const program = idl ? createAnchorProgram(connection, new PublicKey(proposalApp.id), idl) : undefined;
-      const ixInfo = parseMultisigProposalIx(proposalSelected, multisigClient.program.programId, program);
+      const ixInfo = parseMultisigProposalIx(selectedProposal, multisigClient.program.programId, program);
       consoleOut('ixInfo:', ixInfo, 'purple');
       setProposalIxInfo(ixInfo);
     },
-    [connection, multisigClient, proposalSelected],
+    [connection, multisigClient, selectedProposal],
   );
 
   useEffect(() => {
-    if (!selectedMultisig || !proposalSelected) {
+    if (!selectedMultisig || !selectedProposal) {
       return;
     }
-    const timeout = setTimeout(() => setSelectedProposal(proposalSelected));
+    const timeout = setTimeout(() => setSelectedProposal(selectedProposal));
     return () => clearTimeout(timeout);
-  }, [selectedMultisig, proposalSelected]);
+  }, [selectedMultisig, selectedProposal]);
 
   useEffect(() => {
-    if (!multisigClient || !appsProvider || !proposalSelected) {
+    if (!multisigClient || !appsProvider || !selectedProposal) {
       return;
     }
 
     const timeout = setTimeout(() => {
       if (
-        proposalSelected.programId.equals(SystemProgram.programId) ||
-        proposalSelected.programId.equals(TOKEN_PROGRAM_ID)
+        selectedProposal.programId.equals(SystemProgram.programId) ||
+        selectedProposal.programId.equals(TOKEN_PROGRAM_ID)
       ) {
-        const ixInfo = multisigClient.decodeProposalInstruction(proposalSelected);
+        const ixInfo = multisigClient.decodeProposalInstruction(selectedProposal);
         setProposalIxInfo(ixInfo);
       } else {
         const proposalApp = getAppFromProposal();
         console.log('proposalApp:', proposalApp);
         if (proposalApp) {
-          appsProvider.getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl).then((config: AppConfig) => {
-            console.log('config:', config);
+          appsProvider.getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl).then(config => {
+            if (!config) {
+              consoleOut('config:', config, 'red');
+              return;
+            }
+            consoleOut('config:', config, 'blue');
             settleProposalIxInfo(config, proposalApp);
           });
         } else {
-          const ixInfo = parseMultisigProposalIx(proposalSelected, multisigClient.program.programId);
+          const ixInfo = parseMultisigProposalIx(selectedProposal, multisigClient.program.programId);
           setProposalIxInfo(ixInfo);
         }
       }
     });
 
     return () => clearTimeout(timeout);
-  }, [appsProvider, getAppFromProposal, multisigClient, proposalSelected, settleProposalIxInfo]);
+  }, [appsProvider, getAppFromProposal, multisigClient, selectedProposal, settleProposalIxInfo]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -277,7 +286,7 @@ export const ProposalDetailsView = (props: {
           consoleOut('activity', activity, 'blue');
           setProposalActivity(activity);
         })
-        .catch((err: any) => console.error(err))
+        .catch(err => console.error(err))
         .finally(() => setLoadingActivity(false));
     });
 
@@ -293,6 +302,7 @@ export const ProposalDetailsView = (props: {
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: Anything can be copied
     (address: any) => {
       if (copyText(address.toString())) {
         openNotification({
@@ -354,22 +364,27 @@ export const ProposalDetailsView = (props: {
   const title = selectedProposal.details.title ? selectedProposal.details.title : 'Unknown proposal';
 
   // Number of participants who have already approved the Tx
-  const approvedSigners = selectedProposal.signers.filter((s: any) => s === true).length;
-  const rejectedSigners = selectedProposal.signers.filter((s: any) => s === false).length;
+  const approvedSigners = selectedProposal.signers.filter(s => s === true).length;
+  const rejectedSigners = selectedProposal.signers.filter(s => s === false).length;
   const expirationDate = selectedProposal.details.expirationDate
     ? new Date(selectedProposal.details.expirationDate)
     : '';
   const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : '';
-  const proposedBy = (selectedMultisig.owners as MultisigParticipant[]).find(
-    (owner: MultisigParticipant) => owner.address === selectedProposal.proposer?.toBase58(),
+  const proposedBy = selectedMultisig
+    ? (selectedMultisig.owners as MultisigParticipant[]).find(
+        (owner: MultisigParticipant) => owner.address === selectedProposal.proposer?.toBase58(),
+      )
+    : undefined;
+
+  const neededSigners = useMemo(
+    () => (selectedMultisig ? selectedMultisig.threshold - approvedSigners : 0),
+    [approvedSigners, selectedMultisig],
   );
-  const neededSigners = () => {
-    return selectedMultisig.threshold - approvedSigners;
-  };
+
   const resume =
-    selectedProposal.status === 0 &&
-    neededSigners() > 0 &&
-    `Needs ${neededSigners()} ${neededSigners() > 1 ? 'approvals' : 'approval'} to pass`;
+    selectedProposal.status === 0 && neededSigners > 0
+      ? `Needs ${neededSigners} ${neededSigners > 1 ? 'approvals' : 'approval'} to pass`
+      : '-';
 
   const renderProposedBy = () => {
     if (selectedProposal.status === MultisigTransactionStatus.Passed) {
@@ -382,7 +397,8 @@ export const ProposalDetailsView = (props: {
           </div>
         </Col>
       );
-    } else if (selectedProposal.status === MultisigTransactionStatus.Executed) {
+    }
+    if (selectedProposal.status === MultisigTransactionStatus.Executed) {
       return (
         <Col className='safe-details-left-container'>
           <IconLightning className='user-image mean-svg-icons bg-green' />
@@ -392,38 +408,37 @@ export const ProposalDetailsView = (props: {
           </div>
         </Col>
       );
-    } else {
-      return (
-        <Col className='safe-details-left-container'>
-          <IconUser className='user-image mean-svg-icons' />
-          <div className='proposal-resume-left-text'>
-            <div className='info-label'>Proposed by</div>
-            <span>{proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
-          </div>
-        </Col>
-      );
     }
+
+    return (
+      <Col className='safe-details-left-container'>
+        <IconUser className='user-image mean-svg-icons' />
+        <div className='proposal-resume-left-text'>
+          <div className='info-label'>Proposed by</div>
+          <span>{proposedBy?.name ?? shortenAddress(selectedProposal?.proposer ?? '', 4)}</span>
+        </div>
+      </Col>
+    );
   };
 
   return (
     <>
       <div className='safe-details-container'>
         <Row gutter={[8, 8]} className='safe-details-resume mr-0 ml-0'>
-          <div onClick={hideProposalDetailsHandler} className='back-button icon-button-container'>
+          <div onClick={hideProposalDetailsHandler} onKeyDown={() => {}} className='back-button icon-button-container'>
             <IconArrowBack className='mean-svg-icons' />
             <span className='ml-1'>Back</span>
           </div>
         </Row>
 
         <ResumeItem
-          id={selectedProposal.id}
-          // src={selectedProposal.src}
+          id={selectedProposal.id.toBase58()}
           title={title}
           expires={expirationDate}
           executedOn={executedOnDate}
           approved={approvedSigners}
           rejected={rejectedSigners}
-          userSigned={selectedProposal.didSigned}
+          userSigned={selectedProposal.didSigned ?? false}
           status={selectedProposal.status}
           resume={resume}
           isDetailsPanel={true}
@@ -477,8 +492,7 @@ export const ProposalDetailsView = (props: {
                       loadingData
                     }
                     onClick={() => {
-                      const operation = { transaction: selectedProposal };
-                      onProposalApprove(operation);
+                      onProposalApprove?.(selectedProposal);
                     }}
                   >
                     {selectedProposal.didSigned !== true ? (
@@ -509,8 +523,7 @@ export const ProposalDetailsView = (props: {
                       loadingData
                     }
                     onClick={() => {
-                      const operation = { transaction: selectedProposal };
-                      onProposalReject(operation);
+                      onProposalReject?.(selectedProposal);
                     }}
                   >
                     {selectedProposal.didSigned !== false ? (

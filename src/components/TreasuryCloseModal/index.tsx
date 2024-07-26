@@ -3,9 +3,9 @@ import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import type { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { AccountType, type PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 import { Button, Modal, Spin } from 'antd';
+import { FALLBACK_COIN_IMAGE } from 'app-constants/common';
 import { Identicon } from 'components/Identicon';
 import { InputMean } from 'components/InputMean';
-import { FALLBACK_COIN_IMAGE } from 'constants/common';
 import { AppStateContext } from 'contexts/appstate';
 import { useWallet } from 'contexts/wallet';
 import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
@@ -15,7 +15,7 @@ import { isError } from 'middleware/transactions';
 import { getTransactionOperationDescription } from 'middleware/ui';
 import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
 import { TransactionStatus } from 'models/enums';
-import { useContext, useEffect, useMemo, useState, type ReactNode, type SyntheticEvent } from 'react';
+import { type ReactNode, type SyntheticEvent, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -40,7 +40,7 @@ export const TreasuryCloseModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig );
   }, [publicKey, selectedAccount]);
 
   const imageOnErrorHandler = (event: SyntheticEvent<HTMLImageElement, Event>) => {
@@ -78,7 +78,7 @@ export const TreasuryCloseModal = (props: {
       return null;
     }
     const treasuryType = getStreamingAccountType(item);
-    const isV2Treasury = item && item.version >= 2 ? true : false;
+    const isV2Treasury = !!(item && item.version >= 2 );
     const v1 = item as TreasuryInfo;
     const v2 = item as PaymentStreamingAccount;
     const name = isV2Treasury ? v2.name : v1.label;
@@ -101,9 +101,7 @@ export const TreasuryCloseModal = (props: {
     );
   };
 
-  const isValidForm = (): boolean => {
-    return proposalTitle ? true : false;
-  };
+  const isValidForm = (): boolean => !!proposalTitle;
 
   const getTransactionStartButtonLabel = () => {
     if (props.isBusy) {
@@ -170,7 +168,7 @@ export const TreasuryCloseModal = (props: {
 
   const v1 = props.treasuryDetails as TreasuryInfo;
   const v2 = props.treasuryDetails as PaymentStreamingAccount;
-  const isNewTreasury = props.treasuryDetails && props.treasuryDetails.version >= 2 ? true : false;
+  const isNewTreasury = !!(props.treasuryDetails && props.treasuryDetails.version >= 2 );
 
   const getMultisigProposalTitleField = () => {
     if (!isMultisigContext) {
@@ -209,7 +207,7 @@ export const TreasuryCloseModal = (props: {
   };
 
   const getNonBusyOptions = () => {
-    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
       return (
         <>
           <div className='mb-3 text-center'>
@@ -263,7 +261,7 @@ export const TreasuryCloseModal = (props: {
 
   const renderConditionalContent = () => {
     switch (transactionStatus.currentOperation) {
-      case TransactionStatus.Iddle:
+      case TransactionStatus.Idle:
         return getNonBusyOptions();
       case TransactionStatus.TransactionFinished:
         return (
@@ -314,10 +312,10 @@ export const TreasuryCloseModal = (props: {
 
       <div
         className={
-          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>
@@ -330,7 +328,7 @@ export const TreasuryCloseModal = (props: {
         )}
       </div>
 
-      {!(props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle) && (
+      {!(props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle) && (
         <div className='row two-col-ctas mt-3 transaction-progress p-2'>
           <div className='col-12'>
             <Button

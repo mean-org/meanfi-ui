@@ -7,7 +7,7 @@ import type { SetAssetAuthPayload } from 'models/multisig';
 import type React from 'react';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../constants';
+import { CUSTOM_TOKEN_NAME, FALLBACK_COIN_IMAGE } from '../../app-constants';
 import { AppStateContext } from '../../contexts/appstate';
 import { SOL_MINT } from '../../middleware/ids';
 import { isError } from '../../middleware/transactions';
@@ -63,8 +63,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     });
 
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   };
 
@@ -73,13 +73,13 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   };
 
   const isValidForm = (): boolean => {
-    return proposalTitle &&
+    return !!(
+      proposalTitle &&
       selectedAuthority &&
       isValidAddress(selectedAuthority) &&
       (!props.selectedMultisig ||
         (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
-      ? true
-      : false;
+    );
   };
 
   const getTransactionStartButtonLabel = () => {
@@ -177,7 +177,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   });
 
   const renderMultisigSelectOptions = () => {
-    const options = props.multisigAccounts.map((multisig: MultisigInfo, index: number) => {
+    const options = props.multisigAccounts.map(multisig => {
       return renderMultisigSelectItem(multisig);
     });
     return options;
@@ -197,10 +197,10 @@ export const MultisigVaultTransferAuthorityModal = (props: {
       onOk={onAcceptModal}
       onCancel={onCloseModal}
       afterClose={onAfterClose}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}
+      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
       <div className={!props.isBusy ? 'panel1 show' : 'panel1 hide'}>
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+        {transactionStatus.currentOperation === TransactionStatus.Idle ? (
           <>
             {/* Proposal title */}
             <div className='mb-3'>
@@ -228,17 +228,17 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                 <div className='dropdown-trigger no-decoration flex-fixed-right align-items-center'>
                   <div className='left mr-0'>
                     <AutoComplete
-                      bordered={false}
+                      variant='borderless'
                       style={{ width: '100%' }}
                       popupClassName='stream-select-dropdown'
                       options={renderMultisigSelectOptions()}
                       placeholder={t('multisig.transfer-authority.multisig-selector-placeholder')}
-                      onChange={(inputValue, option) => {
+                      onChange={inputValue => {
                         setSelectedAuthority(inputValue);
                       }}
                       filterOption={(inputValue, option) => {
                         const originalItem = props.multisigAccounts.find(i => {
-                          return option && i.authority.toBase58() === option.key ? true : false;
+                          return !!(option && i.authority.toBase58() === option.key);
                         });
                         return (
                           (option && option.value.indexOf(inputValue) !== -1) ||
@@ -278,7 +278,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                   size='large'
                   disabled={!isValidForm() || !destinationAddressDisclaimerAccepted}
                   onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    if (transactionStatus.currentOperation === TransactionStatus.Idle) {
                       onAcceptModal();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
@@ -289,7 +289,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                 >
                   {props.isBusy
                     ? t('multisig.transfer-authority.main-cta-busy')
-                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    : transactionStatus.currentOperation === TransactionStatus.Idle
                       ? getTransactionStartButtonLabel()
                       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                         ? t('general.cta-finish')
@@ -350,10 +350,10 @@ export const MultisigVaultTransferAuthorityModal = (props: {
 
       <div
         className={
-          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? 'panel2 show' : 'panel2 hide'
+          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle ? 'panel2 show' : 'panel2 hide'
         }
       >
-        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+        {props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Idle && (
           <div className='transaction-progress'>
             <Spin indicator={bigLoadingIcon} className='icon mt-0' />
             <h4 className='font-bold mb-1'>

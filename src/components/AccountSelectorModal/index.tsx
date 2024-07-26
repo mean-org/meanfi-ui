@@ -1,6 +1,5 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Modal, Tooltip } from 'antd';
-import { isInXnftWallet } from 'integrations/xnft/xnft-wallet-adapter';
 import { AccountSelector } from '../AccountSelector';
 
 export const AccountSelectorModal = (props: {
@@ -20,7 +19,7 @@ export const AccountSelectorModal = (props: {
       className='mean-modal simple-modal unpadded-content multi-step'
       title={
         <>
-          {!isInXnftWallet() && isFullWorkflowEnabled && (
+          {isFullWorkflowEnabled && (
             <div className='back-button ant-modal-close'>
               <Tooltip placement='bottom' title='Back to wallet selection'>
                 <Button type='default' shape='circle' icon={<ArrowLeftOutlined />} onClick={onGotoSelectWallet} />
@@ -32,8 +31,8 @@ export const AccountSelectorModal = (props: {
       }
       footer={null}
       open={isVisible}
-      maskClosable={isFullWorkflowEnabled ? false : true}
-      closable={isFullWorkflowEnabled ? false : true}
+      maskClosable={!isFullWorkflowEnabled}
+      closable={!isFullWorkflowEnabled}
       onCancel={onHandleClose}
       width={450}
     >

@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import type { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
 import { Tooltip } from 'antd';
-import { useCallback, useEffect, useState, type FocusEvent } from 'react';
+import { type FocusEvent, useCallback, useEffect, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { IconInfoCircle, IconTrash } from '../../Icons';

@@ -2,37 +2,38 @@ import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
   ACTION_CODES,
   NATIVE_SOL_MINT,
-  PaymentStreaming,
   type StreamPaymentTransactionAccounts,
   type TransactionFees,
   calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { PublicKey, type Transaction } from '@solana/web3.js';
+import { type AccountInfo, type ParsedAccountData, PublicKey, type Transaction } from '@solana/web3.js';
 import { segmentAnalytics } from 'App';
 import { IconCaretDown, IconEdit } from 'Icons';
-import { Button, Checkbox, DatePicker, Dropdown } from 'antd';
-import type { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { Button, Checkbox, DatePicker, type DatePickerProps, Dropdown } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT } from 'app-constants/common';
+import { NATIVE_SOL } from 'app-constants/tokens';
 import { Identicon } from 'components/Identicon';
 import { InfoIcon } from 'components/InfoIcon';
 import { openNotification } from 'components/Notifications';
 import { StepSelector } from 'components/StepSelector';
 import { TokenDisplay } from 'components/TokenDisplay';
-import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT } from 'constants/common';
-import { NATIVE_SOL } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnection } from 'contexts/connection';
 import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
+import dayjs from 'dayjs';
 import useWindowSize from 'hooks/useWindowResize';
+import { customLogger } from 'main';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent, type SegmentStreamRPTransferData } from 'middleware/segment-service';
 import { sendTx, signTx } from 'middleware/transactions';
 import {
   consoleOut,
-  disabledDate,
   getIntervalFromSeconds,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
@@ -40,6 +41,7 @@ import {
   isToday,
   isValidAddress,
   toUsCurrency,
+  todayAndPriorDatesDisabled,
 } from 'middleware/ui';
 import {
   cutNumber,
@@ -58,18 +60,19 @@ import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { RecipientAddressInfo } from 'models/common-types';
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
-import moment from 'moment';
+import useStreamingClient from 'query-hooks/streamingClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { customLogger } from '../..';
+import type { LooseObject } from 'types/LooseObject';
 
-export const RepeatingPayment = (props: {
-  onOpenTokenSelector: any;
+interface RepeatingPaymentProps {
+  onOpenTokenSelector: () => void;
   selectedToken?: TokenInfo;
-  transferCompleted?: any;
-  userBalances: any;
-}) => {
-  const { onOpenTokenSelector, selectedToken, transferCompleted, userBalances } = props;
+  transferCompleted?: () => void;
+  userBalances: LooseObject;
+}
+
+export const RepeatingPayment = ({onOpenTokenSelector, selectedToken, transferCompleted, userBalances}: RepeatingPaymentProps) => {
   const connection = useConnection();
   const { connected, publicKey, wallet } = useWallet();
   const {
@@ -83,7 +86,6 @@ export const RepeatingPayment = (props: {
     transactionStatus,
     isVerifiedRecipient,
     paymentRateFrequency,
-    streamV2ProgramAddress,
     setPaymentRateFrequency,
     setIsVerifiedRecipient,
     getTokenPriceByAddress,
@@ -116,10 +118,7 @@ export const RepeatingPayment = (props: {
   });
   const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>(NO_FEES);
 
-  // Create and cache Payment Streaming instance
-  const paymentStreaming = useMemo(() => {
-    return new PaymentStreaming(connection, new PublicKey(streamV2ProgramAddress), connection.commitment);
-  }, [connection, streamV2ProgramAddress]);
+  const { tokenStreamingV2 } = useStreamingClient();
 
   const isNative = useMemo(() => !!(selectedToken && selectedToken.address === NATIVE_SOL.address), [selectedToken]);
 
@@ -159,8 +158,8 @@ export const RepeatingPayment = (props: {
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
+      lastOperation: TransactionStatus.Idle,
+      currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
 
@@ -209,8 +208,8 @@ export const RepeatingPayment = (props: {
     [recordTxConfirmation, resetTransactionStatus],
   );
 
-  const handleFromCoinAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handleFromCoinAmountChange = (e: string) => {
+    let newValue = e;
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -222,7 +221,7 @@ export const RepeatingPayment = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -244,12 +243,12 @@ export const RepeatingPayment = (props: {
     window.dispatchEvent(new Event('resize'));
   };
 
-  const handleRecipientNoteChange = (e: any) => {
-    setRecipientNote(e.target.value);
+  const handleRecipientNoteChange = (e: string) => {
+    setRecipientNote(e);
   };
 
-  const handleRecipientAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
+  const handleRecipientAddressChange = (e: string) => {
+    const inputValue = e;
     // Set the input value
     const trimmedValue = inputValue.trim();
     setRecipientAddress(trimmedValue);
@@ -261,8 +260,8 @@ export const RepeatingPayment = (props: {
     }, 10);
   };
 
-  const handlePaymentRateAmountChange = (e: any) => {
-    let newValue = e.target.value;
+  const handlePaymentRateAmountChange = (e: string) => {
+    let newValue = e;
 
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
@@ -274,7 +273,7 @@ export const RepeatingPayment = (props: {
         newValue = splitted.join('.');
       }
     } else if (left.length > 1) {
-      const number = splitted[0] - 0;
+      const number = +splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
@@ -336,7 +335,7 @@ export const RepeatingPayment = (props: {
       setRepeatingPaymentFees(value);
       consoleOut('repeatingPaymentFees:', value, 'orange');
     });
-  }, [repeatingPaymentFees.mspFlatFee, getTransactionFees]);
+  }, [getTransactionFees]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -390,23 +389,24 @@ export const RepeatingPayment = (props: {
       let owner = '';
       getInfo(recipientAddress).then(info => {
         if (info) {
+          const asParsedAccountInfo = info as AccountInfo<ParsedAccountData>;
           if (
-            (info as any).data['program'] &&
-            (info as any).data['program'] === 'spl-token' &&
-            (info as any).data['parsed'] &&
-            (info as any).data['parsed']['type']
+            asParsedAccountInfo.data.program &&
+            asParsedAccountInfo.data.program === 'spl-token' &&
+            asParsedAccountInfo.data.parsed &&
+            asParsedAccountInfo.data.parsed.type
           ) {
-            type = (info as any).data['parsed']['type'];
+            type = asParsedAccountInfo.data.parsed.type;
           }
           if (
-            (info as any).data['program'] &&
-            (info as any).data['program'] === 'spl-token' &&
-            (info as any).data['parsed'] &&
-            (info as any).data['parsed']['type'] &&
-            (info as any).data['parsed']['type'] === 'account'
+            asParsedAccountInfo.data.program &&
+            asParsedAccountInfo.data.program === 'spl-token' &&
+            asParsedAccountInfo.data.parsed &&
+            asParsedAccountInfo.data.parsed.type &&
+            asParsedAccountInfo.data.parsed.type === 'account'
           ) {
-            mint = (info as any).data['parsed']['info']['mint'];
-            owner = (info as any).data['parsed']['info']['owner'];
+            mint = asParsedAccountInfo.data.parsed.info.mint;
+            owner = asParsedAccountInfo.data.parsed.info.owner;
           }
         }
         setRecipientAddressInfo({
@@ -485,7 +485,8 @@ export const RepeatingPayment = (props: {
   const getRecipientAddressValidation = () => {
     if (recipientAddressInfo.type === 'mint') {
       return 'Recipient cannot be a mint address';
-    } else if (
+    }
+    if (
       recipientAddressInfo.type === 'account' &&
       recipientAddressInfo.mint &&
       recipientAddressInfo.mint === selectedToken?.address &&
@@ -493,6 +494,7 @@ export const RepeatingPayment = (props: {
     ) {
       return 'Recipient cannot be the selected token mint';
     }
+
     return '';
   };
 
@@ -526,14 +528,14 @@ export const RepeatingPayment = (props: {
 
     const inputAmount = getInputAmountBn();
 
-    return connected &&
+    return !!(
+      connected &&
       inputAmount.gtn(0) &&
       tokenBalanceBn.gtn(0) &&
       nativeBalance >= getMinSolBlanceRequired() &&
       ((selectedToken.address === NATIVE_SOL.address && Number.parseFloat(fromCoinAmount) <= getMaxAmount()) ||
         (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
-      ? true
-      : false;
+    );
   };
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -541,16 +543,15 @@ export const RepeatingPayment = (props: {
   };
 
   const arePaymentSettingsValid = (): boolean => {
-    let result = true;
     if (!paymentStartDate) {
       return false;
     }
     const rateAmount = Number.parseFloat(paymentRateAmount || '0');
     if (!rateAmount) {
-      result = false;
+      return false;
     }
 
-    return result;
+    return true;
   };
 
   // Ui helpers
@@ -558,73 +559,90 @@ export const RepeatingPayment = (props: {
     const rateAmount = Number.parseFloat(paymentRateAmount || '0');
     if (!rateAmount) {
       return t('transactions.validation.no-payment-rate');
-    } else if (tokenBalanceBn.ltn(rateAmount)) {
-      return t('transactions.validation.payment-rate-high');
-    } else {
-      return 'Invalid payment rate';
     }
+    if (tokenBalanceBn.ltn(rateAmount)) {
+      return t('transactions.validation.payment-rate-high');
+    }
+
+    return 'Invalid payment rate';
   };
 
   const getStepOneContinueButtonLabel = (): string => {
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (!recipientAddress || isAddressOwnAccount()) {
-      return t('transactions.validation.select-recipient');
-    } else if (!isRecipientAddressValid() || !isValidAddress(recipientAddress)) {
-      return 'Invalid recipient address';
-    } else if (!selectedToken || tokenBalanceBn.isZero()) {
-      return t('transactions.validation.no-balance');
-    } else if (!paymentStartDate) {
-      return t('transactions.validation.no-valid-date');
-    } else if (!recipientNote) {
-      return t('transactions.validation.memo-empty');
-    } else if (!arePaymentSettingsValid()) {
-      return getPaymentSettingsButtonLabel();
-    } else {
-      return t('transactions.validation.valid-continue');
     }
+    if (!recipientAddress || isAddressOwnAccount()) {
+      return t('transactions.validation.select-recipient');
+    }
+    if (!isRecipientAddressValid() || !isValidAddress(recipientAddress)) {
+      return 'Invalid recipient address';
+    }
+    if (!selectedToken || tokenBalanceBn.isZero()) {
+      return t('transactions.validation.no-balance');
+    }
+    if (!paymentStartDate) {
+      return t('transactions.validation.no-valid-date');
+    }
+    if (!recipientNote) {
+      return t('transactions.validation.memo-empty');
+    }
+    if (!arePaymentSettingsValid()) {
+      return getPaymentSettingsButtonLabel();
+    }
+
+    return t('transactions.validation.valid-continue');
   };
 
   const getTransactionStartButtonLabel = (): string => {
     const inputAmount = getInputAmountBn();
     if (!publicKey) {
       return t('transactions.validation.not-connected');
-    } else if (!recipientAddress || isAddressOwnAccount()) {
+    }
+    if (!recipientAddress || isAddressOwnAccount()) {
       return t('transactions.validation.select-recipient');
-    } else if (!isRecipientAddressValid() || !isValidAddress(recipientAddress)) {
+    }
+    if (!isRecipientAddressValid() || !isValidAddress(recipientAddress)) {
       return 'Invalid recipient address';
-    } else if (!selectedToken || tokenBalanceBn.isZero()) {
+    }
+    if (!selectedToken || tokenBalanceBn.isZero()) {
       return t('transactions.validation.no-balance');
-    } else if (!fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()) {
+    }
+    if (!fromCoinAmount || !isValidNumber(fromCoinAmount) || inputAmount.isZero()) {
       return t('transactions.validation.no-amount');
-    } else if (
+    }
+    if (
       (isNative && Number.parseFloat(fromCoinAmount) > getMaxAmount()) ||
       (!isNative && tokenBalanceBn.lt(inputAmount))
     ) {
       return t('transactions.validation.amount-high');
-    } else if (!paymentStartDate) {
+    }
+    if (!paymentStartDate) {
       return t('transactions.validation.no-valid-date');
-    } else if (!recipientNote) {
+    }
+    if (!recipientNote) {
       return t('transactions.validation.memo-empty');
-    } else if (!arePaymentSettingsValid()) {
+    }
+    if (!arePaymentSettingsValid()) {
       return getPaymentSettingsButtonLabel();
-    } else if (!isVerifiedRecipient) {
+    }
+    if (!isVerifiedRecipient) {
       return t('transactions.validation.verified-recipient-unchecked');
-    } else if (nativeBalance < getMinSolBlanceRequired()) {
+    }
+    if (nativeBalance < getMinSolBlanceRequired()) {
       return t('transactions.validation.insufficient-balance-needed', {
         balance: formatThousands(getMinSolBlanceRequired(), 4),
       });
-    } else {
-      return t('transactions.validation.valid-approve');
     }
+
+    return t('transactions.validation.valid-approve');
   };
 
-  const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
+  const getOptionsFromEnum = (value: typeof PaymentRateType): PaymentRateTypeOption[] => {
     let index = 0;
     const options: PaymentRateTypeOption[] = [];
     for (const enumMember in value) {
       const mappedValue = Number.parseInt(enumMember, 10);
-      if (!isNaN(mappedValue)) {
+      if (!Number.isNaN(mappedValue)) {
         const item = new PaymentRateTypeOption(index, mappedValue, getPaymentRateOptionLabel(mappedValue, t));
         options.push(item);
       }
@@ -633,9 +651,9 @@ export const RepeatingPayment = (props: {
     return options;
   };
 
-  const onStepperChange = (value: number) => {
+  const onStepperChange = useCallback((value: number) => {
     setCurrentStep(value);
-  };
+  }, []);
 
   const onContinueButtonClick = () => {
     setCurrentStep(1); // Go to step 2
@@ -645,9 +663,9 @@ export const RepeatingPayment = (props: {
 
   const onStartTransaction = useCallback(async () => {
     let createdTransaction: Transaction | null = null;
-    let signature: any;
+    let signature: string;
     let encodedTx: string;
-    let transactionLog: any[] = [];
+    let transactionLog: LooseObject[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -735,7 +753,7 @@ export const RepeatingPayment = (props: {
             beneficiary: beneficiary, // beneficiary
             mint: associatedToken, // mint
           };
-          const { transaction } = await paymentStreaming.buildStreamPaymentTransaction(
+          const { transaction } = await tokenStreamingV2.buildStreamPaymentTransaction(
             accounts, // accounts
             recipientNote, // streamName
             rateAmount, // rateAmount
@@ -778,19 +796,20 @@ export const RepeatingPayment = (props: {
           segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
           return false;
         }
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Repeating Payment transaction failed', {
-          transcript: transactionLog,
-        });
-        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, {
-          transcript: transactionLog,
-        });
-        return false;
       }
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('Repeating Payment transaction failed', {
+        transcript: transactionLog,
+      });
+      segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, {
+        transcript: transactionLog,
+      });
+
+      return false;
     };
 
     if (wallet && publicKey) {
@@ -828,7 +847,7 @@ export const RepeatingPayment = (props: {
             resetTransactionStatus();
             resetContractValues();
             setIsVerifiedRecipient(false);
-            transferCompleted();
+            transferCompleted?.();
           } else {
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -866,7 +885,7 @@ export const RepeatingPayment = (props: {
     selectedToken,
     fromCoinAmount,
     recipientAddress,
-    paymentStreaming,
+    tokenStreamingV2,
     paymentStartDate,
     paymentRateAmount,
     transferCompleted,
@@ -884,8 +903,12 @@ export const RepeatingPayment = (props: {
     t,
   ]);
 
-  const onIsVerifiedRecipientChange = (e: any) => {
+  const onIsVerifiedRecipientChange = (e: CheckboxChangeEvent) => {
     setIsVerifiedRecipient(e.target.checked);
+  };
+
+  const onDateChange: DatePickerProps['onChange'] = (_date, dateString) => {
+    handleDateChange(dateString as string);
   };
 
   ///////////////////
@@ -893,10 +916,14 @@ export const RepeatingPayment = (props: {
   ///////////////////
 
   const paymentRateOptionsMenu = () => {
-    const items: ItemType[] = getOptionsFromEnum(PaymentRateType).map((item, index) => {
+    const items: ItemType<MenuItemType>[] = getOptionsFromEnum(PaymentRateType).map((item, index) => {
       return {
         key: `option-${index}`,
-        label: <span onClick={() => handlePaymentRateOptionChange(item.value)}>{item.text}</span>,
+        label: (
+          <span onKeyDown={() => {}} onClick={() => handlePaymentRateOptionChange(item.value)}>
+            {item.text}
+          </span>
+        ),
       };
     });
 
@@ -907,7 +934,7 @@ export const RepeatingPayment = (props: {
     <>
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
-      <div className={currentStep === 0 ? 'contract-wrapper panel1 show' : 'contract-wrapper panel1 hide'}>
+      <div className={`contract-wrapper panel1 ${currentStep === 0 ? 'show' : 'hide'}`}>
         {/* Memo */}
         <div className='form-label'>{t('transactions.memo2.label')}</div>
         <div className='well'>
@@ -920,7 +947,7 @@ export const RepeatingPayment = (props: {
                 autoCorrect='off'
                 type='text'
                 maxLength={32}
-                onChange={handleRecipientNoteChange}
+                onChange={e => handleRecipientNoteChange(e.target.value)}
                 placeholder={t('transactions.memo2.placeholder')}
                 spellCheck='false'
                 value={recipientNote}
@@ -942,7 +969,7 @@ export const RepeatingPayment = (props: {
                   autoCorrect='off'
                   type='text'
                   onFocus={handleRecipientAddressFocusInOut}
-                  onChange={handleRecipientAddressChange}
+                  onChange={e => handleRecipientAddressChange(e.target.value)}
                   onBlur={handleRecipientAddressFocusInOut}
                   placeholder={t('transactions.recipient.placeholder')}
                   required={true}
@@ -999,7 +1026,7 @@ export const RepeatingPayment = (props: {
                     autoComplete='off'
                     autoCorrect='off'
                     type='text'
-                    onChange={handlePaymentRateAmountChange}
+                    onChange={e => handlePaymentRateAmountChange(e.target.value)}
                     pattern='^[0-9]*[.,]?[0-9]*$'
                     placeholder='0.0'
                     minLength={1}
@@ -1046,14 +1073,15 @@ export const RepeatingPayment = (props: {
               <div className='add-on simplelink'>
                 <DatePicker
                   size='middle'
-                  bordered={false}
+                  variant='borderless'
                   className='addon-date-picker'
                   aria-required={true}
                   allowClear={false}
-                  disabledDate={disabledDate}
+                  showNow={false}
+                  disabledDate={todayAndPriorDatesDisabled}
                   placeholder={t('transactions.send-date.placeholder')}
-                  onChange={(value, date) => handleDateChange(date)}
-                  defaultValue={moment(paymentStartDate, DATEPICKER_FORMAT)}
+                  onChange={onDateChange}
+                  defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
                   format={DATEPICKER_FORMAT}
                 />
               </div>
@@ -1081,7 +1109,7 @@ export const RepeatingPayment = (props: {
         </Button>
       </div>
 
-      <div className={currentStep === 1 ? 'contract-wrapper panel2 show' : 'contract-wrapper panel2 hide'}>
+      <div className={`contract-wrapper panel2 ${currentStep === 1 ? 'show' : 'hide'}`}>
         {/* Summary */}
         {publicKey && recipientAddress && (
           <>
@@ -1090,7 +1118,7 @@ export const RepeatingPayment = (props: {
                 <div className='form-label'>{t('transactions.resume')}</div>
               </div>
               <div className='right'>
-                <span className='flat-button change-button' onClick={() => setCurrentStep(0)}>
+                <span className='flat-button change-button' onKeyDown={() => {}} onClick={() => setCurrentStep(0)}>
                   <IconEdit className='mean-svg-icons' />
                   <span>{t('general.cta-change')}</span>
                 </span>
@@ -1117,7 +1145,7 @@ export const RepeatingPayment = (props: {
                   </div>
                 </div>
                 <div className='middle flex-center'>
-                  <div className='vertical-bar'></div>
+                  <div className='vertical-bar' />
                 </div>
                 <div className='right flex-column'>
                   <div className='rate'>{getPaymentRateAmount()}</div>
@@ -1170,6 +1198,7 @@ export const RepeatingPayment = (props: {
                 {selectedToken && tokenBalanceBn.gtn(getMinSolBlanceRequired()) ? (
                   <div
                     className='token-max simplelink'
+                    onKeyDown={() => {}}
                     onClick={() => {
                       if (selectedToken.address === NATIVE_SOL.address) {
                         const amount = nativeBalance - getMinSolBlanceRequired();
@@ -1191,7 +1220,7 @@ export const RepeatingPayment = (props: {
                 autoComplete='off'
                 autoCorrect='off'
                 type='text'
-                onChange={handleFromCoinAmountChange}
+                onChange={e => handleFromCoinAmountChange(e.target.value)}
                 pattern='^[0-9]*[.,]?[0-9]*$'
                 placeholder='0.0'
                 minLength={1}
@@ -1209,6 +1238,7 @@ export const RepeatingPayment = (props: {
             <div className='right inner-label'>
               <span
                 className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}
+                onKeyDown={() => {}}
                 onClick={() => refreshPrices()}
               >
                 ~{fromCoinAmount ? toUsCurrency(getTokenPrice()) : '$0.00'}
