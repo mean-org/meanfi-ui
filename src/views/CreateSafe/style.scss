@@ -47,7 +47,6 @@
         > .left {
           flex: 1 1 180px;
         }
-
         > .right {
           flex: 1 1 410px;
         }
@@ -55,20 +54,12 @@
     }
     @media (min-width: 576px) {
       flex-direction: row;
-
       > .left {
         padding-right: 8px;
-      }
-
-      > .right {
-        padding-left: 8px;
-      }
-
-      > .left {
         flex: 1 1 50%;
       }
-
       > .right {
+        padding-left: 8px;
         flex: 1 1 50%;
       }
     }

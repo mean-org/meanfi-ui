@@ -1439,7 +1439,7 @@ footer.ant-layout-footer {
 }
 
 .ant-drawer .ant-drawer-content .ant-drawer-close {
-  color: var(--color-secondary-alpha-50);;
+  color: var(--color-secondary-alpha-50);
 }
 
 // Number inputs
@@ -3954,12 +3954,10 @@ main section {
     }
   }
 }
+
 .ant-select {
   font-size: 16px;
   color: inherit;
-}
-
-.ant-select {
   &:not(.ant-select-borderless) {
     .ant-select-selector {
       color: inherit !important;

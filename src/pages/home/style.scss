@@ -146,14 +146,10 @@
       flex-direction: row;
       > .left {
         padding-right: 8px;
-      }
-      > .right {
-        padding-left: 8px;
-      }
-      > .left {
         flex: 1 1 30%;
       }
       > .right {
+        padding-left: 8px;
         flex: 1 1 70%;
       }
     }
