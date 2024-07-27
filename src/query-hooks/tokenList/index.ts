@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { getSolFlareTokenList } from 'middleware/api';
-import { consoleOut } from 'middleware/ui';
 import type { UserTokenAccount } from 'models/accounts';
 import { useCallback, useMemo } from 'react';
 
@@ -11,7 +10,7 @@ const useGetTokenList = () => {
     queryKey: getTokenListKey(),
     queryFn: () => getSolFlareTokenList(),
     select: useCallback((data: UserTokenAccount[]) => {
-      consoleOut('useGetTokenList -> Token list loaded:', data, 'blue');
+      console.log('useGetTokenList -> Token list loaded:', data);
 
       return data;
     }, []),

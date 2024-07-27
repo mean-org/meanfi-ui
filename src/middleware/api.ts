@@ -1,8 +1,6 @@
 import { appConfig } from 'main';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
 import type { TokenPrice } from 'models/TokenPrice';
-import { readFromCache, removeFromCache, writeToCache } from '../cache/persistentCache';
-import type { SimpleTokenInfo, UserTokenAccount } from '../models/accounts';
+import type { UserTokenAccount } from '../models/accounts';
 import type { MeanFiStatsModel } from '../models/meanfi-stats';
 import type { PriceGraphModel } from '../models/price-graph';
 import { getDefaultRpc } from '../services/connections-hq';
@@ -15,77 +13,22 @@ export const meanfiRequestOptions: RequestInit = {
   headers: meanFiHeaders,
 };
 
-export const getSolanaTokenListKeyNameByCluster = (chainId: number) => {
-  return `solana-tokens-${chainId}`;
-};
-
-export const getSplTokens = async (chainId: number, honorCache = true): Promise<SimpleTokenInfo[]> => {
+export const getPrices = async (addressOrSymbolCsv?: string): Promise<TokenPrice[]> => {
   const options: RequestInit = {
     method: 'GET',
     headers: meanFiHeaders,
   };
 
-  const url = appConfig.getConfig().apiUrl + `/solana-tokens?networkId=${chainId}`;
-
-  if (honorCache) {
-    const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
-    if (cachedTokens) {
-      return Promise.resolve(cachedTokens.data as SimpleTokenInfo[]);
-    }
+  let url = `${appConfig.getConfig().apiUrl}/token-prices?includeLPTokens=false`;
+  if (addressOrSymbolCsv) {
+    url += `&addressOrSymbolCsv=${addressOrSymbolCsv}`;
   }
 
   return fetch(url, options)
     .then(response => response.json())
-    .then(response => {
-      // Filter out items with no decimals value
-      const filtered = (response as SimpleTokenInfo[]).filter(t => t.decimals !== null && t.priceUsd);
-      writeToCache(getSolanaTokenListKeyNameByCluster(chainId), filtered);
-      return response;
-    })
+    .then(response => response)
     .catch(err => {
       console.error(err);
-      const cachedTokens = readFromCache(getSolanaTokenListKeyNameByCluster(chainId));
-      if (cachedTokens) {
-        console.warn('Using cached data...');
-        return cachedTokens.data;
-      }
-      return [];
-    });
-};
-
-export const getPrices = async (honorCache = true): Promise<TokenPrice[]> => {
-  const options: RequestInit = {
-    method: 'GET',
-    headers: meanFiHeaders,
-  };
-  const url = appConfig.getConfig().apiUrl + '/token-prices';
-  const cacheEntryKey = 'token-prices';
-
-  // First clear cache of old entry
-  removeFromCache('coin-prices');
-
-  if (honorCache) {
-    const cachedPrices = readFromCache(cacheEntryKey);
-    if (cachedPrices) {
-      console.log('%cprices from cache:', 'color: purple', cachedPrices.data);
-      return Promise.resolve(cachedPrices.data as TokenPrice[]);
-    }
-  }
-
-  return fetch(url, options)
-    .then(response => response.json())
-    .then(response => {
-      writeToCache(cacheEntryKey, response);
-      console.log('%cprices from api:', 'color: purple', response);
-      return response;
-    })
-    .catch(err => {
-      console.error(err);
-      const cachedPrices = readFromCache(cacheEntryKey);
-      if (cachedPrices) {
-        console.log('%cprices from cache:', 'color: purple', cachedPrices.data);
-        return Promise.resolve(cachedPrices.data);
-      }
       return [];
     });
 };
@@ -103,49 +46,6 @@ export const getSolFlareTokenList = async (): Promise<UserTokenAccount[]> => {
     .catch(err => {
       console.error(err);
       return [];
-    });
-};
-
-export const getJupiterTokenList = async (path: string): Promise<TokenInfo[]> => {
-  return fetch(path, {
-    method: 'GET',
-  })
-    .then(response => response.json())
-    .then(response => {
-      return response;
-    })
-    .catch(err => {
-      console.error(err);
-    });
-};
-
-// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-export const getRaydiumLiquidityPools = async (): Promise<any> => {
-  const path = 'https://api.raydium.io/v2/sdk/liquidity/mainnet.json';
-  return fetch(path, {
-    method: 'GET',
-  })
-    .then(response => response.json())
-    .then(response => {
-      return response;
-    })
-    .catch(err => {
-      console.error(err);
-    });
-};
-
-// biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-export const getRaydiumLpPairs = async (): Promise<any> => {
-  const path = 'https://api.raydium.io/v2/main/pairs';
-  return fetch(path, {
-    method: 'GET',
-  })
-    .then(response => response.json())
-    .then(response => {
-      return response;
-    })
-    .catch(err => {
-      console.error(err);
     });
 };
 
