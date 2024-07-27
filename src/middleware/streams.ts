@@ -1,5 +1,5 @@
 import { STREAM_STATE, type StreamInfo } from '@mean-dao/money-streaming/lib/types';
-import { Category, STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
+import { STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
 import type { TFunction } from 'i18next';
 import type { LooseObject } from 'types/LooseObject';
 import { getShortDate } from './ui';
@@ -92,9 +92,6 @@ export const getStreamStatusResume = (item: Stream | StreamInfo, trans: TFunctio
       return `streaming since ${getShortDate(v2.startUtc)}`;
   }
 };
-
-export const getStreamCategory = (stream: Stream | StreamInfo): Category =>
-  stream.version >= 2 ? (stream as Stream).category : Category.default;
 
 export const getReadableStream = (item: Stream | StreamInfo) => {
   const isNew = item.version >= 2;

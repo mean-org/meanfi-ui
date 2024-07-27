@@ -12,21 +12,19 @@ const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const pageSize = 4;
 
 interface Props {
-  loadingTokenAccounts: boolean;
+  loadingUserAssets: boolean;
   nftList: FindNftsByOwnerOutput | undefined;
   onNftItemClick?: (item: MeanNft) => void;
   presetNftMint: string | undefined;
   selectedNft: MeanNft | undefined;
-  tokensLoaded: boolean;
 }
 
 export const NftPaginatedList = ({
-  loadingTokenAccounts,
+  loadingUserAssets,
   nftList,
   onNftItemClick,
   presetNftMint,
   selectedNft,
-  tokensLoaded,
 }: Props) => {
   const [loading, setLoading] = useState(false);
   const [shouldPresetItem, setShouldPresetItem] = useState<boolean>(true);
@@ -129,36 +127,33 @@ export const NftPaginatedList = ({
   };
 
   const renderLoadingOrNoNftsMessage = () => {
-    if (loadingTokenAccounts) {
+    if (loadingUserAssets) {
       return (
         <div className='flex flex-center'>
           <Spin indicator={loadIndicator} />
         </div>
       );
     }
-    if (tokensLoaded) {
-      return (
-        <div className='flex-column flex-center justify-content-center h-100'>
-          <IconNoItems className='mean-svg-icons fg-secondary-50' style={{ width: 50, height: 50 }} />
-          <div className='font-size-120 font-bold fg-secondary-75 mt-2 mb-2'>No NFTs</div>
-          <div className='font-size-110 fg-secondary-50 mb-3'>Get started with your first NFT</div>
-          <div className='text-center'>
-            <Button
-              type='default'
-              shape='round'
-              size='small'
-              className='thin-stroke'
-              onClick={() => openLinkInNewTab('https://magiceden.io/')}
-            >
-              <span className='mr-1'>Browse Magic Eden</span>
-              <IconExternalLink className='mean-svg-icons fg-secondary-70' style={{ width: 22, height: 22 }} />
-            </Button>
-          </div>
-        </div>
-      );
-    }
 
-    return null;
+    return (
+      <div className='flex-column flex-center justify-content-center h-100'>
+        <IconNoItems className='mean-svg-icons fg-secondary-50' style={{ width: 50, height: 50 }} />
+        <div className='font-size-120 font-bold fg-secondary-75 mt-2 mb-2'>No NFTs</div>
+        <div className='font-size-110 fg-secondary-50 mb-3'>Get started with your first NFT</div>
+        <div className='text-center'>
+          <Button
+            type='default'
+            shape='round'
+            size='small'
+            className='thin-stroke'
+            onClick={() => openLinkInNewTab('https://magiceden.io/')}
+          >
+            <span className='mr-1'>Browse Magic Eden</span>
+            <IconExternalLink className='mean-svg-icons fg-secondary-70' style={{ width: 22, height: 22 }} />
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   if (!nftList || nftList.length === 0) {

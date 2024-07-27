@@ -54,7 +54,7 @@ import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
 import { getStreamingAccountOwner } from 'middleware/getStreamingAccountOwner';
 import { SOL_MINT } from 'middleware/ids';
-import { getStreamCategory, getStreamTitle } from 'middleware/streams';
+import { getStreamTitle } from 'middleware/streams';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -99,7 +99,7 @@ import { useNavigate } from 'react-router-dom';
 import Wave from 'react-wavify';
 import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
-import { getStreamStatusLabel, isV2Stream } from 'middleware/streamHelpers';
+import { getStreamCategory, getStreamStatusLabel, isV2Stream } from 'middleware/streamHelpers';
 
 interface MoneyStreamsInfoViewProps {
   loadingStreams: boolean;

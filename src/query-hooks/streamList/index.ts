@@ -77,6 +77,7 @@ export const useGetStreamList = ({
     enabled: !!(srcAccountPk && tokenStreamingV1 && tokenStreamingV2),
     refetchInterval: isDowngradedPerformance ? false : refreshInterval, // Turned OFF if network is congested
     refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
   return {

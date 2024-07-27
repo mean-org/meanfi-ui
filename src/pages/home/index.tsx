@@ -4,15 +4,12 @@ import {
   type AppConfig,
   AppsProvider,
   type Arg,
-  NETWORK,
   type UiElement,
   type UiInstruction,
 } from '@mean-dao/mean-multisig-apps';
-
+import { NETWORK } from '@mean-dao/mean-multisig-apps';
 import * as credixDevnet from '@mean-dao/mean-multisig-apps/lib/apps/credix-devnet/func';
-// Credix imports
 import * as credixMainnet from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
-
 import {
   DEFAULT_EXPIRATION_TIME_SECONDS,
   MULTISIG_ACTIONS,
@@ -82,7 +79,6 @@ import useLocalStorage from 'hooks/useLocalStorage';
 import useTransaction from 'hooks/useTransaction';
 import useWindowSize from 'hooks/useWindowResize';
 import { customLogger } from 'main';
-import { resolveParsedAccountInfo } from 'middleware/accounts';
 import { type CreateSafeAssetTxParams, createAddSafeAssetTx } from 'middleware/createAddSafeAssetTx';
 import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
 import createTokenTransferTx from 'middleware/createTokenTransferTx';
@@ -91,7 +87,6 @@ import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { type MappedTransaction, fetchAccountHistory } from 'middleware/history';
 import { SOL_MINT } from 'middleware/ids';
 import { AppUsageEvent } from 'middleware/segment-service';
-import { getStreamCategory } from 'middleware/streams';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -161,7 +156,10 @@ import { getUnwrapSolCta } from './asset-ctas/unwrapSolCta';
 import { getWrapSolCta } from './asset-ctas/wrapSolCta';
 import getNftMint from './getNftMint';
 import './style.scss';
-import { isV2Stream } from 'middleware/streamHelpers';
+import WalletNotConnectedMessage from 'components/WalletNotConnectedMessage';
+import { resolveParsedAccountInfo } from 'middleware/accounts';
+import { getStreamCategory, isInboundStream, isV2Stream } from 'middleware/streamHelpers';
+import useAccountAssets from 'query-hooks/accountTokens';
 import { useGetStreamList } from 'query-hooks/streamList';
 import { useGetStreamingAccounts } from 'query-hooks/streamingAccount';
 import useAppNavigation from './useAppNavigation';
@@ -182,11 +180,9 @@ export const HomeView = () => {
   const { asset, streamingItemId, programId } = useParams();
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, wallet } = useWallet();
   const {
     accountNfts,
-    tokensLoaded,
-    streamDetail,
     transactions,
     splTokenList,
     isWhitelisted,
@@ -197,9 +193,6 @@ export const HomeView = () => {
     selectedMultisig,
     multisigAccounts,
     transactionStatus,
-    userTokensResponse,
-    loadingTokenAccounts,
-    previousWalletConnectState,
     setPendingMultisigTxCount,
     setPaymentStreamingStats,
     showDepositOptionsModal,
@@ -208,7 +201,6 @@ export const HomeView = () => {
     getTokenByMintAddress,
     setTransactionStatus,
     refreshTokenBalance,
-    setShouldLoadTokens,
     setSelectedMultisig,
     resetContractValues,
     appendHistoryItems,
@@ -217,18 +209,12 @@ export const HomeView = () => {
     setPreviousRoute,
     setSelectedToken,
     setSelectedAsset,
-    setStreamDetail,
   } = useContext(AppStateContext);
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
   const { programs, loadingPrograms } = useGetAccountPrograms();
-  const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
-  const [solAccountItems, setSolAccountItems] = useState(0);
-  const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
-  const [userOwnedTokenAccounts, setUserOwnedTokenAccounts] = useState<AccountTokenParsedInfo[]>();
-  const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
   const [wSolBalance, setWsolBalance] = useState(0);
   const [refreshingBalance, setRefreshingBalance] = useState(false);
   const { onExecute } = useTransaction();
@@ -246,21 +232,6 @@ export const HomeView = () => {
   const [transactionAssetFees, setTransactionAssetFees] = useState<TransactionFees>(NO_FEES);
   const [isBusy, setIsBusy] = useState(false);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-
-  const {
-    selectedCategory,
-    selectedAssetsGroup,
-    setSelectedAssetsGroup,
-    detailsPanelOpen,
-    turnOffRightPanel,
-    turnOnRightPanel,
-  } = useAppNavigation({
-    asset,
-    selectedAccount,
-  });
-
-  const [incomingStreamList, setIncomingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
-  const [outgoingStreamList, setOutgoingStreamList] = useState<Array<Stream | StreamInfo> | undefined>();
   // Balances and USD values
   const [totalAccountBalance, setTotalAccountBalance] = useState(0);
   const [incomingStreamsSummary, setIncomingStreamsSummary] = useState<StreamsSummary>(initialSummary);
@@ -292,6 +263,29 @@ export const HomeView = () => {
     DEFAULT_BUDGET_CONFIG,
   );
 
+  const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
+  const [solAccountItems, setSolAccountItems] = useState(0);
+  const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
+  const [userOwnedTokenAccounts, setUserOwnedTokenAccounts] = useState<AccountTokenParsedInfo[]>();
+  const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
+  const {
+    userAssets: userTokensResponse,
+    loadingUserAssets,
+    refreshAccountAssets,
+  } = useAccountAssets(selectedAccount.address);
+
+  const {
+    selectedCategory,
+    selectedAssetsGroup,
+    setSelectedAssetsGroup,
+    detailsPanelOpen,
+    turnOffRightPanel,
+    turnOnRightPanel,
+  } = useAppNavigation({
+    asset,
+    selectedAccount,
+  });
+
   /////////////////
   //  Init code  //
   /////////////////
@@ -312,6 +306,17 @@ export const HomeView = () => {
 
   const streamListv1 = useMemo(() => streamList.filter(stream => !isV2Stream(stream)) as StreamInfo[], [streamList]);
   const streamListv2 = useMemo(() => streamList.filter(stream => isV2Stream(stream)) as Stream[], [streamList]);
+  const incomingStreamList = useMemo(
+    () => streamList.filter(stream => isInboundStream(stream, selectedAccount.address)),
+    [streamList, selectedAccount.address],
+  );
+  const outgoingStreamList = useMemo(
+    () =>
+      streamList.filter(
+        stream => !isInboundStream(stream, selectedAccount.address) && getStreamCategory(stream) === Category.default,
+      ),
+    [streamList, selectedAccount.address],
+  );
 
   const isCustomAsset = useMemo(() => !!(selectedAsset && selectedAsset.name === 'Custom account'), [selectedAsset]);
 
@@ -329,11 +334,15 @@ export const HomeView = () => {
     return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
-  const { streamingAccounts, loadingStreamingAccounts, refetch: refreshStreamingAccounts } = useGetStreamingAccounts({
+  const {
+    streamingAccounts,
+    loadingStreamingAccounts,
+    refetch: refreshStreamingAccounts,
+  } = useGetStreamingAccounts({
     srcAccountPk: new PublicKey(selectedAccount.address),
     tokenStreamingV1,
     tokenStreamingV2,
-    isMultisigContext
+    isMultisigContext,
   });
 
   ////////////////////////////
@@ -360,27 +369,6 @@ export const HomeView = () => {
     }
     return isAnyTxPendingConfirmation(OperationType.Unwrap);
   }, [isAnyTxPendingConfirmation, isBusy]);
-
-  const isInboundStream = useCallback(
-    (item: Stream | StreamInfo): boolean => {
-      if (item && publicKey && selectedAccount.address) {
-        const v1 = item as StreamInfo;
-        const v2 = item as Stream;
-        let beneficiary = '';
-        if (item.version < 2) {
-          beneficiary =
-            typeof v1.beneficiaryAddress === 'string'
-              ? v1.beneficiaryAddress
-              : (v1.beneficiaryAddress as PublicKey).toBase58();
-        } else {
-          beneficiary = typeof v2.beneficiary === 'string' ? v2.beneficiary : v2.beneficiary.toBase58();
-        }
-        return beneficiary === selectedAccount.address;
-      }
-      return false;
-    },
-    [selectedAccount.address, publicKey],
-  );
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -419,8 +407,8 @@ export const HomeView = () => {
   const onFinishedTokenMerge = useCallback(() => {
     hideTokenMergerModal();
     resetTransactionStatus();
-    setShouldLoadTokens(true);
-  }, [setShouldLoadTokens, hideTokenMergerModal, resetTransactionStatus]);
+    refreshAccountAssets();
+  }, [refreshAccountAssets, hideTokenMergerModal, resetTransactionStatus]);
 
   const getMultisigTxProposalFees = useCallback(() => {
     if (!multisigClient) {
@@ -569,12 +557,9 @@ export const HomeView = () => {
       return;
     }
 
-    let token: TokenInfo | undefined;
-    if (isSelectedAssetNativeAccount()) {
-      token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
-    } else {
-      token = getTokenByMintAddress(selectedAsset.address);
-    }
+    const token: TokenInfo | undefined = isSelectedAssetNativeAccount()
+      ? getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS)
+      : getTokenByMintAddress(selectedAsset.address);
     if (token) {
       setSelectedToken(token);
     }
@@ -750,9 +735,9 @@ export const HomeView = () => {
 
   const reloadTokensAndActivity = useCallback(() => {
     consoleOut('Calling reloadTokensAndActivity...', '', 'orangered');
-    setShouldLoadTokens(true);
+    refreshAccountAssets();
     reloadSwitch();
-  }, [reloadSwitch, setShouldLoadTokens]);
+  }, [reloadSwitch, refreshAccountAssets]);
 
   const navigateToSafe = useCallback(() => {
     consoleOut('calling navigateToSafe()', '...', 'crimson');
@@ -1081,10 +1066,10 @@ export const HomeView = () => {
       setIsBusy(false);
       setIsCreateAssetModalVisible(false);
       if (refresh) {
-        setShouldLoadTokens(true);
+        refreshAccountAssets();
       }
     },
-    [resetTransactionStatus, setShouldLoadTokens],
+    [resetTransactionStatus, refreshAccountAssets],
   );
 
   const onExecuteCreateAssetTx = useCallback(
@@ -1976,8 +1961,6 @@ export const HomeView = () => {
 
   const clearStateData = useCallback(() => {
     setAccountTokens([]);
-    setIncomingStreamList([]);
-    setOutgoingStreamList([]);
     setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
     setIncomingAmount(0);
     setOutgoingAmount(0);
@@ -2479,15 +2462,18 @@ export const HomeView = () => {
   /////////////////////
 
   // Keep account balance updated
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
+    if (!(account?.lamports !== previousBalance || !nativeBalance)) {
+      return;
     }
-  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
+
+    // Refresh token balance
+    refreshTokenBalance();
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+    // Update previous balance
+    setPreviousBalance(account?.lamports);
+  }, [account?.lamports, nativeBalance, previousBalance]);
 
   // Detect XS screen
   useEffect(() => {
@@ -2501,14 +2487,15 @@ export const HomeView = () => {
   // Set an App based of current category and asset group
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (selectedCategory === 'apps' || selectedCategory === 'account-summary') {
-      const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.slug}`));
-      setSelectedApp(app);
-      setSelectedNft(undefined);
-      setSelectedAsset(undefined);
-    } else {
+    if (!(selectedCategory === 'apps' || selectedCategory === 'account-summary')) {
       setSelectedApp(undefined);
+      return;
     }
+
+    const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.slug}`));
+    setSelectedApp(app);
+    setSelectedNft(undefined);
+    setSelectedAsset(undefined);
   }, [location.pathname, selectedCategory]);
 
   // Process userTokensResponse from AppState to get a renderable list of tokens
@@ -2527,7 +2514,7 @@ export const HomeView = () => {
     if (userTokensResponse.selectedAsset) {
       selectAsset(userTokensResponse.selectedAsset);
     }
-  }, [userTokensResponse, setAccountTokens]);
+  }, [userTokensResponse]);
 
   // Load asset transactions when signaled
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
@@ -2550,6 +2537,7 @@ export const HomeView = () => {
       consoleOut('Asset has no public address, aborting...', '', 'goldenrod');
       appendHistoryItems(undefined);
       setStatus(FetchStatus.Fetched);
+
       return;
     }
 
@@ -2564,24 +2552,24 @@ export const HomeView = () => {
     }
 
     fetchAccountHistory(connection, pk, options, true)
-    .then(history => {
-      appendHistoryItems(history.transactionMap, true);
-      setStatus(FetchStatus.Fetched);
-      if (
-        history.transactionMap &&
-        history.transactionMap.length > 0 &&
-        pk.toBase58() === selectedAccount.address
-      ) {
+      .then(history => {
+        appendHistoryItems(history.transactionMap, true);
+        setStatus(FetchStatus.Fetched);
+        if (
+          !(history.transactionMap && history.transactionMap.length > 0 && pk.toBase58() === selectedAccount.address)
+        ) {
+          return;
+        }
+
         const validItems = getSolAccountItems(history.transactionMap);
         const nativeAccountTxItems = solAccountItems + validItems;
         setSolAccountItems(nativeAccountTxItems);
-      }
-    })
-    .catch(error => {
-      console.error(error);
-      setStatus(FetchStatus.FetchFailed);
-    })
-    .finally(() => setLoadingTransactions(false));
+      })
+      .catch(error => {
+        console.error(error);
+        setStatus(FetchStatus.FetchFailed);
+      })
+      .finally(() => setLoadingTransactions(false));
   }, [
     publicKey,
     connection,
@@ -2600,29 +2588,17 @@ export const HomeView = () => {
     }
 
     const item = multisigAccounts.find(m => m.authority.toBase58() === selectedAccount.address);
-    if (item) {
-      setSelectedMultisig(item);
-      setPendingMultisigTxCount(item.pendingTxsAmount);
-      consoleOut('selectedMultisig:', item, 'blue');
-      consoleOut('pendingMultisigTxCount:', item.pendingTxsAmount, 'blue');
-    } else {
+    if (!item) {
       setSelectedMultisig(undefined);
-    }
-  }, [selectedAccount.address, isMultisigContext, multisigAccounts, setPendingMultisigTxCount, setSelectedMultisig]);
 
-  // Hook on the wallet connect/disconnect
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      // User is connecting
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('Connecting while in accounts...', publicKey.toBase58(), 'green');
-      } else if (previousWalletConnectState && !connected) {
-        if (streamDetail) {
-          setStreamDetail(undefined);
-        }
-      }
+      return;
     }
-  }, [publicKey, connected, streamDetail, previousWalletConnectState, setStreamDetail]);
+
+    setSelectedMultisig(item);
+    setPendingMultisigTxCount(item.pendingTxsAmount);
+    consoleOut('selectedMultisig:', item, 'blue');
+    consoleOut('pendingMultisigTxCount:', item.pendingTxsAmount, 'blue');
+  }, [selectedAccount.address, isMultisigContext, multisigAccounts, setSelectedMultisig, setPendingMultisigTxCount]);
 
   // Get Multisig Apps
   useEffect(() => {
@@ -2700,7 +2676,11 @@ export const HomeView = () => {
   // Preset token based on url param asset
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (asset && accountTokens && accountTokens.length > 0) {
+    if (!accountTokens || accountTokens.length === 0) {
+      return;
+    }
+
+    if (asset) {
       consoleOut('Presetting token based on url...', asset, 'crimson');
       const inferredAsset = accountTokens.find(t => t.publicAddress === asset);
       if (inferredAsset) {
@@ -2710,21 +2690,25 @@ export const HomeView = () => {
         selectAsset(accountTokens[0]);
         consoleOut('selected:', accountTokens[0].symbol, 'crimson');
       }
-    } else if (!asset && accountTokens && accountTokens.length > 0) {
-      if (location.pathname.startsWith('/assets')) {
-        consoleOut('No token in url, try selecting native account...', '', 'crimson');
-        const inferredAsset = accountTokens.find(t => t.publicAddress === selectedAccount.address);
-        if (inferredAsset) {
-          consoleOut('selected:', inferredAsset.symbol, 'crimson');
-          selectAsset(inferredAsset);
-        } else {
-          consoleOut('WTF 1 ?', '', 'crimson');
-        }
-      }
+
+      return;
+    }
+
+    if (!location.pathname.startsWith('/assets')) {
+      return;
+    }
+
+    consoleOut('No token in url, try selecting native account...', '', 'crimson');
+    const inferredAsset = accountTokens.find(t => t.publicAddress === selectedAccount.address);
+    if (inferredAsset) {
+      consoleOut('selected:', inferredAsset.symbol, 'crimson');
+      selectAsset(inferredAsset);
+    } else {
+      consoleOut('WTF 1 ?', '', 'crimson');
     }
   }, [accountTokens, location.pathname, asset, selectedAccount.address]);
 
-  // Build CTAs
+  // Build CTAs TODO: Move to a dedicated hook since it triggers many changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!selectedAsset) {
@@ -2880,25 +2864,7 @@ export const HomeView = () => {
     selectedAsset,
     isCustomAsset,
     isMultisigContext,
-    isInspectedAccountTheConnectedWallet,
-    isSelectedAssetNativeAccount,
-    isSelectedAssetWsol,
-    investButtonEnabled,
   ]);
-
-  // Set the list of incoming and outgoing streams
-  useEffect(() => {
-    if (!connection || !publicKey || !streamList) {
-      setIncomingStreamList(undefined);
-      setOutgoingStreamList(undefined);
-      return;
-    }
-
-    setIncomingStreamList(streamList.filter((stream: Stream | StreamInfo) => isInboundStream(stream)));
-
-    const onlyOuts = streamList.filter(item => !isInboundStream(item) && getStreamCategory(item) === Category.default);
-    setOutgoingStreamList(onlyOuts);
-  }, [publicKey, streamList, connection, isInboundStream]);
 
   // Incoming amount
   useEffect(() => {
@@ -2989,20 +2955,22 @@ export const HomeView = () => {
   // Live data calculation - NetWorth
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (tokensLoaded && accountTokens) {
-      // Total USD value
-      const totalTokensValue = accountTokens.reduce((accumulator, item) => {
-        const tokenPrice = getTokenPriceByAddress(item.address, item.symbol);
-        const value = tokenPrice * (item.balance ?? 0);
-        return accumulator + value;
-      }, 0);
-      setTotalTokenAccountsValue(totalTokensValue);
-
-      // Net Worth
-      const total = totalTokensValue + totalAccountBalance;
-      setNetWorth(total);
+    if (!accountTokens) {
+      return;
     }
-  }, [accountTokens, tokensLoaded, totalAccountBalance]);
+
+    // Total USD value
+    const totalTokensValue = accountTokens.reduce((accumulator, item) => {
+      const tokenPrice = getTokenPriceByAddress(item.address, item.symbol);
+      const value = tokenPrice * (item.balance ?? 0);
+      return accumulator + value;
+    }, 0);
+    setTotalTokenAccountsValue(totalTokensValue);
+
+    // Net Worth
+    const total = totalTokensValue + totalAccountBalance;
+    setNetWorth(total);
+  }, [accountTokens, totalAccountBalance]);
 
   // Setup event listeners
   useEffect(() => {
@@ -3409,22 +3377,19 @@ export const HomeView = () => {
   };
 
   const renderLoadingOrNoTokensMessage = () => {
-    if (loadingTokenAccounts) {
+    if (loadingUserAssets) {
       return (
         <div className='flex flex-center'>
           <Spin indicator={loadIndicator} />
         </div>
       );
     }
-    if (tokensLoaded) {
-      return (
-        <div className='flex flex-center'>
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-        </div>
-      );
-    }
 
-    return null;
+    return (
+      <div className='flex flex-center'>
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      </div>
+    );
   };
 
   const renderAssetsList = () => {
@@ -3492,12 +3457,11 @@ export const HomeView = () => {
 
     return (
       <NftPaginatedList
-        loadingTokenAccounts={loadingTokenAccounts}
+        loadingUserAssets={loadingUserAssets}
         nftList={accountNfts}
         onNftItemClick={(nft: MeanNft) => onNftItemClick(nft)}
         presetNftMint={selectedNft ? undefined : nftMint}
         selectedNft={selectedNft}
-        tokensLoaded={tokensLoaded}
       />
     );
   };
@@ -3749,6 +3713,37 @@ export const HomeView = () => {
     );
   };
 
+  const renderBottomCtas = () => {
+    return (
+      <div className='bottom-ctas'>
+        <div className='primary-action'>
+          {isMultisigContext ? (
+            <Button block className='flex-center' type='primary' shape='round' onClick={onNewProposalClicked}>
+              <IconSafe className='mean-svg-icons' style={{ width: 24, height: 24 }} />
+              <span className='ml-1'>New proposal</span>
+            </Button>
+          ) : (
+            <Button block className='flex-center' type='primary' shape='round' onClick={showInitAtaModal}>
+              <IconAdd className='mean-svg-icons' />
+              <span className='ml-1'>Add asset</span>
+            </Button>
+          )}
+        </div>
+        <Dropdown className='options-dropdown' menu={getLeftPanelOptions()} placement='bottomRight' trigger={['click']}>
+          <span className='icon-button-container'>
+            <Button
+              type='default'
+              shape='circle'
+              size='middle'
+              icon={<IconVerticalEllipsis className='mean-svg-icons' />}
+              onClick={e => e.preventDefault()}
+            />
+          </span>
+        </Dropdown>
+      </div>
+    );
+  };
+
   return (
     <>
       {detailsPanelOpen && (
@@ -3773,254 +3768,214 @@ export const HomeView = () => {
         {/* This is a SEO mandatory h1 but it is not visible */}
         <h1 className='mandatory-h1'>Keep track of your assets and transactions</h1>
 
-        {publicKey && (
-          <div className='interaction-area'>
-            {selectedAccount.address && (
-              <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
-                {/* Left / top panel */}
-                <div className='meanfi-two-panel-left'>
-                  <div id='streams-refresh-noreset-cta' onKeyDown={() => {}} onClick={onRefreshStreams} />
-                  <div id='streams-refresh-reset-cta' onKeyDown={() => {}} onClick={onRefreshStreams} />
+        <div className='interaction-area'>
+          {publicKey && selectedAccount.address ? (
+            <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+              {/* Left / top panel */}
+              <div className='meanfi-two-panel-left'>
+                <div id='streams-refresh-noreset-cta' onKeyDown={() => {}} onClick={onRefreshStreams} />
+                <div id='streams-refresh-reset-cta' onKeyDown={() => {}} onClick={onRefreshStreams} />
 
-                  <div className='inner-container'>
-                    {/* Account summary (sticky) */}
-                    {isMultisigContext
-                      ? renderSelectedAccountSummary('super-safe')
-                      : renderSelectedAccountSummary('my-account')}
+                <div className='inner-container overflow-hidden'>
+                  {isMultisigContext
+                    ? renderSelectedAccountSummary('super-safe')
+                    : renderSelectedAccountSummary('my-account')}
 
-                    {/* Middle area (vertically flexible block of items) */}
-                    <div className={`item-block${!isXsDevice ? ' vertical-scroll vertical-scroll-always' : ''}`}>
-                      {/* Pinned Apps or Favorites */}
-                      <div key='payment-streams-summary' className='asset-category'>
-                        {renderMoneyStreamsSummary()}
-                      </div>
-
-                      {/* Assets tabset */}
-                      <div key='asset-category-title' className='asset-category-title text-center pt-1 pb-1'>
-                        <Segmented
-                          size='small'
-                          defaultValue={AssetGroups.Tokens}
-                          value={selectedAssetsGroup}
-                          options={getAssetsGroupOptions()}
-                          onChange={value => setSelectedAssetsGroup(value as AssetGroups)}
-                        />
-                        <div className='asset-category-estimated'>{renderEstimatedValueByCategory()}</div>
-                      </div>
-
-                      {selectedAssetsGroup === AssetGroups.Tokens ? renderAssetsList() : null}
-
-                      {selectedAssetsGroup === AssetGroups.Nfts ? renderNftList() : null}
-
-                      {selectedAssetsGroup === AssetGroups.Apps ? renderAppsList() : null}
-
-                      {selectedAssetsGroup === AssetGroups.OtherAssets ? renderOtherAssetsList() : null}
+                  <div className={isXsDevice ? 'item-block' : 'item-block vertical-scroll vertical-scroll-always'}>
+                    <div key='payment-streams-summary' className='asset-category'>
+                      {renderMoneyStreamsSummary()}
                     </div>
 
-                    {/* Bottom CTAs */}
-                    <div className='bottom-ctas'>
-                      <div className='primary-action'>
-                        {isMultisigContext ? (
-                          <Button
-                            block
-                            className='flex-center'
-                            type='primary'
-                            shape='round'
-                            onClick={onNewProposalClicked}
-                          >
-                            <IconSafe className='mean-svg-icons' style={{ width: 24, height: 24 }} />
-                            <span className='ml-1'>New proposal</span>
-                          </Button>
-                        ) : (
-                          <Button block className='flex-center' type='primary' shape='round' onClick={showInitAtaModal}>
-                            <IconAdd className='mean-svg-icons' />
-                            <span className='ml-1'>Add asset</span>
-                          </Button>
-                        )}
-                      </div>
-                      <Dropdown
-                        className='options-dropdown'
-                        menu={getLeftPanelOptions()}
-                        placement='bottomRight'
-                        trigger={['click']}
-                      >
-                        <span className='icon-button-container'>
-                          <Button
-                            type='default'
-                            shape='circle'
-                            size='middle'
-                            icon={<IconVerticalEllipsis className='mean-svg-icons' />}
-                            onClick={e => e.preventDefault()}
-                          />
-                        </span>
-                      </Dropdown>
+                    <div key='asset-category-title' className='asset-category-title text-center pt-1 pb-1'>
+                      <Segmented
+                        size='small'
+                        defaultValue={AssetGroups.Tokens}
+                        value={selectedAssetsGroup}
+                        options={getAssetsGroupOptions()}
+                        onChange={value => setSelectedAssetsGroup(value as AssetGroups)}
+                      />
+                      <div className='asset-category-estimated'>{renderEstimatedValueByCategory()}</div>
                     </div>
+
+                    {selectedAssetsGroup === AssetGroups.Tokens ? renderAssetsList() : null}
+
+                    {selectedAssetsGroup === AssetGroups.Nfts ? renderNftList() : null}
+
+                    {selectedAssetsGroup === AssetGroups.Apps ? renderAppsList() : null}
+
+                    {selectedAssetsGroup === AssetGroups.OtherAssets ? renderOtherAssetsList() : null}
                   </div>
+
+                  {/* Bottom CTAs */}
+                  {renderBottomCtas()}
+                </div>
+              </div>
+
+              {/* Right / down panel */}
+              <div className='meanfi-two-panel-right'>
+                <div className='meanfi-panel-heading'>
+                  <span className='title'>{t('assets.history-panel-title')}</span>
                 </div>
 
-                {/* Right / down panel */}
-                <div className='meanfi-two-panel-right'>
-                  <div className='meanfi-panel-heading'>
-                    <span className='title'>{t('assets.history-panel-title')}</span>
-                  </div>
-
-                  <div className='inner-container'>
-                    {selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? (
-                      <>
-                        {/* Refresh cta */}
-                        <div className='float-top-right mr-1 mt-1'>
-                          <span className='icon-button-container secondary-button'>
-                            <Tooltip placement='bottom' title='Refresh payment streams'>
-                              <Button
-                                id='account-refresh-cta'
-                                type='default'
-                                shape='circle'
-                                size='middle'
-                                icon={<ReloadOutlined className='mean-svg-icons' />}
-                                onClick={() => {
-                                  reloadTokensAndActivity();
-                                  onRefreshStreams();
-                                }}
-                              />
-                            </Tooltip>
-                          </span>
-                        </div>
-                        <Suspense fallback={renderSpinner()}>
-                          <PaymentStreamingView
-                            loadingTreasuries={loadingStreamingAccounts}
-                            treasuryList={streamingAccounts}
-                            onBackButtonClicked={onBackButtonClicked}
-                          />
-                        </Suspense>
-                      </>
-                    ) : null}
-
-                    {selectedApp?.slug === RegisteredAppPaths.SuperSafe ? (
+                <div className='inner-container'>
+                  {selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? (
+                    <>
+                      {/* Refresh cta */}
+                      <div className='float-top-right mr-1 mt-1'>
+                        <span className='icon-button-container secondary-button'>
+                          <Tooltip placement='bottom' title='Refresh payment streams'>
+                            <Button
+                              id='account-refresh-cta'
+                              type='default'
+                              shape='circle'
+                              size='middle'
+                              icon={<ReloadOutlined className='mean-svg-icons' />}
+                              onClick={() => {
+                                reloadTokensAndActivity();
+                                onRefreshStreams();
+                              }}
+                            />
+                          </Tooltip>
+                        </span>
+                      </div>
                       <Suspense fallback={renderSpinner()}>
-                        <SafeDetails
-                          appsProvider={appsProvider}
-                          safeBalance={netWorth}
-                          solanaApps={solanaApps}
-                          onNewProposalClicked={onNewProposalClicked}
-                          onProposalExecuted={() => {
-                            consoleOut('Triggering onRefreshStreamsReset...');
-                            onRefreshStreams();
-                          }}
+                        <PaymentStreamingView
+                          loadingTreasuries={loadingStreamingAccounts}
+                          treasuryList={streamingAccounts}
+                          onBackButtonClicked={onBackButtonClicked}
                         />
                       </Suspense>
-                    ) : null}
+                    </>
+                  ) : null}
 
-                    {selectedApp?.slug === RegisteredAppPaths.Staking &&
-                    location.pathname.startsWith(`/${RegisteredAppPaths.Staking}`) ? (
-                      <Suspense fallback={renderSpinner()}>
-                        <StakingComponent />
-                      </Suspense>
-                    ) : null}
+                  {selectedApp?.slug === RegisteredAppPaths.SuperSafe ? (
+                    <Suspense fallback={renderSpinner()}>
+                      <SafeDetails
+                        appsProvider={appsProvider}
+                        safeBalance={netWorth}
+                        solanaApps={solanaApps}
+                        onNewProposalClicked={onNewProposalClicked}
+                        onProposalExecuted={() => {
+                          consoleOut('Triggering onRefreshStreamsReset...');
+                          onRefreshStreams();
+                        }}
+                      />
+                    </Suspense>
+                  ) : null}
 
-                    {selectedApp?.slug === RegisteredAppPaths.Vesting &&
-                    location.pathname.startsWith(`/${RegisteredAppPaths.Vesting}`) ? (
-                      <Suspense fallback={renderSpinner()}>
-                        <VestingComponent appSocialLinks={selectedApp.socials} />
-                      </Suspense>
-                    ) : null}
+                  {selectedApp?.slug === RegisteredAppPaths.Staking &&
+                  location.pathname.startsWith(`/${RegisteredAppPaths.Staking}`) ? (
+                    <Suspense fallback={renderSpinner()}>
+                      <StakingComponent />
+                    </Suspense>
+                  ) : null}
 
-                    {location.pathname.startsWith('/programs/') ? (
-                      <div className='safe-details-component scroll-wrapper vertical-scroll'>
-                        {selectedProgram ? (
-                          <Suspense fallback={renderSpinner()}>
-                            <ProgramDetailsComponent program={selectedProgram} />
-                          </Suspense>
-                        ) : (
-                          renderSpinner()
-                        )}
+                  {selectedApp?.slug === RegisteredAppPaths.Vesting &&
+                  location.pathname.startsWith(`/${RegisteredAppPaths.Vesting}`) ? (
+                    <Suspense fallback={renderSpinner()}>
+                      <VestingComponent appSocialLinks={selectedApp.socials} />
+                    </Suspense>
+                  ) : null}
+
+                  {location.pathname.startsWith('/programs/') ? (
+                    <div className='safe-details-component scroll-wrapper vertical-scroll'>
+                      {selectedProgram ? (
+                        <Suspense fallback={renderSpinner()}>
+                          <ProgramDetailsComponent program={selectedProgram} />
+                        </Suspense>
+                      ) : (
+                        renderSpinner()
+                      )}
+                    </div>
+                  ) : null}
+
+                  {selectedCategory === 'account-summary' && location.pathname === '/my-account' ? (
+                    <Suspense fallback={renderSpinner()}>
+                      <PersonalAccountSummary accountBalance={netWorth} />
+                    </Suspense>
+                  ) : null}
+
+                  {location.pathname.startsWith('/assets') ? (
+                    <>
+                      {/* Refresh cta */}
+                      <div className='float-top-right mr-1 mt-1'>
+                        <span className='icon-button-container secondary-button'>
+                          <Tooltip placement='bottom' title='Refresh assets and activity'>
+                            <Button
+                              id='account-refresh-cta'
+                              type='default'
+                              shape='circle'
+                              size='middle'
+                              icon={<ReloadOutlined className='mean-svg-icons' />}
+                              onClick={reloadTokensAndActivity}
+                            />
+                          </Tooltip>
+                        </span>
                       </div>
-                    ) : null}
-
-                    {selectedCategory === 'account-summary' && location.pathname === '/my-account' ? (
-                      <Suspense fallback={renderSpinner()}>
-                        <PersonalAccountSummary accountBalance={netWorth} />
-                      </Suspense>
-                    ) : null}
-
-                    {location.pathname.startsWith('/assets') ? (
-                      <>
-                        {/* Refresh cta */}
-                        <div className='float-top-right mr-1 mt-1'>
-                          <span className='icon-button-container secondary-button'>
-                            <Tooltip placement='bottom' title='Refresh assets and activity'>
-                              <Button
-                                id='account-refresh-cta'
-                                type='default'
-                                shape='circle'
-                                size='middle'
-                                icon={<ReloadOutlined className='mean-svg-icons' />}
-                                onClick={reloadTokensAndActivity}
-                              />
-                            </Tooltip>
-                          </span>
+                      <div className='flexible-column-bottom'>
+                        <div className='top'>
+                          {renderUserAccountAssetMeta()}
+                          {renderUserAccountAssetCtaRow()}
                         </div>
-                        <div className='flexible-column-bottom'>
-                          <div className='top'>
-                            {renderUserAccountAssetMeta()}
-                            {renderUserAccountAssetCtaRow()}
-                          </div>
-                          {!isInspectedAccountTheConnectedWallet() &&
-                            isMultisigContext &&
-                            selectedMultisig &&
-                            (multisigSolBalance !== undefined && multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED ? (
-                              <Row gutter={[8, 8]}>
-                                <Col
-                                  span={24}
-                                  className={`alert-info-message pr-2 ${
-                                    selectedMultisig ? 'simplelink' : 'disable-pointer'
-                                  }`}
-                                  onClick={showSolBalanceModal}
-                                >
-                                  <Alert
-                                    message='SOL account balance is very low in the safe. Click here to add more SOL.'
-                                    type='info'
-                                    showIcon
-                                  />
-                                </Col>
-                              </Row>
-                            ) : null)}
-                          <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
-                            {/* Activity table heading */}
-                            {hasItemsToRender() && (
-                              <div className='stats-row'>
-                                <div className='item-list-header compact'>
-                                  <div className='header-row'>
-                                    <div className='std-table-cell first-cell'>&nbsp;</div>
-                                    <div className='std-table-cell responsive-cell'>
-                                      {t('assets.history-table-activity')}
-                                    </div>
-                                    <div className='std-table-cell responsive-cell pr-2 text-right'>
-                                      {t('assets.history-table-amount')}
-                                    </div>
-                                    <div className='std-table-cell responsive-cell pr-2 text-right'>
-                                      {t('assets.history-table-postbalance')}
-                                    </div>
-                                    <div className='std-table-cell responsive-cell pl-2'>
-                                      {t('assets.history-table-date')}
-                                    </div>
+                        {!isInspectedAccountTheConnectedWallet() &&
+                          isMultisigContext &&
+                          selectedMultisig &&
+                          (multisigSolBalance !== undefined && multisigSolBalance <= MIN_SOL_BALANCE_REQUIRED ? (
+                            <Row gutter={[8, 8]}>
+                              <Col
+                                span={24}
+                                className={`alert-info-message pr-2 ${
+                                  selectedMultisig ? 'simplelink' : 'disable-pointer'
+                                }`}
+                                onClick={showSolBalanceModal}
+                              >
+                                <Alert
+                                  message='SOL account balance is very low in the safe. Click here to add more SOL.'
+                                  type='info'
+                                  showIcon
+                                />
+                              </Col>
+                            </Row>
+                          ) : null)}
+                        <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
+                          {/* Activity table heading */}
+                          {hasItemsToRender() && (
+                            <div className='stats-row'>
+                              <div className='item-list-header compact'>
+                                <div className='header-row'>
+                                  <div className='std-table-cell first-cell'>&nbsp;</div>
+                                  <div className='std-table-cell responsive-cell'>
+                                    {t('assets.history-table-activity')}
+                                  </div>
+                                  <div className='std-table-cell responsive-cell pr-2 text-right'>
+                                    {t('assets.history-table-amount')}
+                                  </div>
+                                  <div className='std-table-cell responsive-cell pr-2 text-right'>
+                                    {t('assets.history-table-postbalance')}
+                                  </div>
+                                  <div className='std-table-cell responsive-cell pl-2'>
+                                    {t('assets.history-table-date')}
                                   </div>
                                 </div>
                               </div>
-                            )}
-                            {/* Activity table content */}
-                            {renderActivityList()}
-                          </div>
+                            </div>
+                          )}
+                          {/* Activity table content */}
+                          {renderActivityList()}
                         </div>
-                      </>
-                    ) : null}
-                    {location.pathname.startsWith('/nfts') && selectedNft ? (
-                      <NftDetails selectedNft={selectedNft} />
-                    ) : null}
-                  </div>
+                      </div>
+                    </>
+                  ) : null}
+                  {location.pathname.startsWith('/nfts') && selectedNft ? (
+                    <NftDetails selectedNft={selectedNft} />
+                  ) : null}
                 </div>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          ) : (
+            <WalletNotConnectedMessage />
+          )}
+        </div>
       </div>
 
       {connection && selectedTokenMergeGroup && isTokenMergerModalVisible && (
