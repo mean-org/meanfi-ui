@@ -9,9 +9,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "start:local": "NODE_ENV=local yarn run dev --mode local",
+    "debug": "NODE_ENV=local yarn run dev --mode development --debug hmr",
     "start:local-validator": "NODE_ENV=local-validator yarn run dev --mode local-validator",
-    "start:local:win": "set 'NODE_ENV=local' && yarn run dev --mode local",
     "start:dev": "NODE_ENV=development yarn run dev --mode development",
     "start:dev:win": "set 'NODE_ENV=development' && yarn run dev --mode development",
     "start:prod": "NODE_ENV=production yarn run dev --mode production",

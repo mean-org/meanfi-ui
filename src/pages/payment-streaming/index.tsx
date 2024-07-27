@@ -5,7 +5,6 @@ import { segmentAnalytics } from 'App';
 import { Button, notification } from 'antd';
 import { MULTISIG_ROUTE_BASE_PATH } from 'app-constants/common';
 import { openNotification } from 'components/Notifications';
-import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
@@ -41,7 +40,6 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
     useContext(AppStateContext);
   const { publicKey } = useWallet();
   const { selectedAccount } = useWalletAccount();
-  const { refreshAccount } = useAccountsContext();
   // Local state
   const [pathParamStreamId, setPathParamStreamId] = useState('');
   const [pathParamTreasuryId, setPathParamTreasuryId] = useState('');
@@ -60,12 +58,6 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
   ///////////////
   // Callbacks //
   ///////////////
-
-  const clearStateData = useCallback(() => {
-    setPathParamStreamId('');
-    setPathParamTreasuryId('');
-    setPathParamStreamingTab('');
-  }, []);
 
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
     let event: AppUsageEvent | undefined = undefined;
@@ -207,7 +199,6 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
               notifyMultisigActionFollowup(item);
             } else {
               accountRefresh();
-              softReloadStreams();
             }
             break;
           case OperationType.StreamClose:
@@ -254,15 +245,6 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
   /////////////////////
   // Data management //
   /////////////////////
-
-  // Refresh native account upon entering view
-  useEffect(() => {
-    if (!publicKey) {
-      return;
-    }
-    consoleOut('Refreshing native account...', '', 'blue');
-    refreshAccount();
-  }, [publicKey, refreshAccount]);
 
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
@@ -339,13 +321,13 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
 
   // Setup event listeners
   useEffect(() => {
-    if (canSubscribe) {
-      setCanSubscribe(false);
-      consoleOut('Setup event subscriptions -> PaymentStreamingView', '', 'brown');
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
-      hardReloadStreams();
+    if (!canSubscribe) {
+      return;
     }
+    setCanSubscribe(false);
+    consoleOut('Setup event subscriptions -> PaymentStreamingView', '', 'brown');
+    confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+    consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
   }, [canSubscribe, onTxConfirmed]);
 
   // Unsubscribe from events
@@ -356,7 +338,6 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
       confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut('Unsubscribed from event txConfirmed!', '', 'brown');
       consoleOut('Clearing local component state...', '', 'purple');
-      clearStateData();
       setCanSubscribe(true);
       isWorkflowLocked = false;
     };

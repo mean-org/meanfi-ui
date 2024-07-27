@@ -54,10 +54,6 @@ const useAppNavigation = ({ asset, selectedAccount }: Args) => {
   const isKnownApp = KNOWN_APPS.some(a => pathname.startsWith(`/${a.slug}`));
 
   const selectedCategory: AccountsPageCategory = useMemo(() => {
-    if (asset) {
-      consoleOut('Route param asset:', asset, 'crimson');
-    }
-
     // The category is inferred from the route path
     if (pathname.startsWith('/programs/')) {
       return 'other-assets';
@@ -81,7 +77,7 @@ const useAppNavigation = ({ asset, selectedAccount }: Args) => {
       consoleOut('Setting category:', 'apps', 'crimson');
       return 'apps';
     }
-  }, [asset, pathname, isAccountSummary, isKnownApp]);
+  }, [pathname, isAccountSummary, isKnownApp]);
 
   // Details Panel
   // ---------------------------------------------------------------------------

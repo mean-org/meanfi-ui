@@ -3818,7 +3818,7 @@ export const HomeView = () => {
                 </div>
 
                 <div className='inner-container'>
-                  {selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? (
+                  {location.pathname.startsWith('/streaming') && selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? (
                     <>
                       {/* Refresh cta */}
                       <div className='float-top-right mr-1 mt-1'>
