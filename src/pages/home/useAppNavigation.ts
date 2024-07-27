@@ -37,16 +37,12 @@ const categoryToAssetsGroup = ({ selectedCategory, pathname }: CategoryToAssetsG
 // Main
 // ---------------------------------------------------------------------------
 interface Args {
-  asset?: string;
   selectedAccount: AccountContext;
 }
 
-const useAppNavigation = ({ asset, selectedAccount }: Args) => {
+const useAppNavigation = ({ selectedAccount }: Args) => {
   const location = useLocation();
   const { pathname } = location;
-
-  // Category
-  // ---------------------------------------------------------------------------
 
   const isAccountSummary =
     pathname.startsWith('/my-account') || pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`);

@@ -282,7 +282,6 @@ export const HomeView = () => {
     turnOffRightPanel,
     turnOnRightPanel,
   } = useAppNavigation({
-    asset,
     selectedAccount,
   });
 
@@ -2858,13 +2857,7 @@ export const HomeView = () => {
     actions.push(...closeAccountCta);
 
     setAssetCtas(actions);
-  }, [
-    isXsDevice,
-    wSolBalance,
-    selectedAsset,
-    isCustomAsset,
-    isMultisigContext,
-  ]);
+  }, [isXsDevice, wSolBalance, selectedAsset, isCustomAsset, isMultisigContext]);
 
   // Incoming amount
   useEffect(() => {
@@ -3818,7 +3811,8 @@ export const HomeView = () => {
                 </div>
 
                 <div className='inner-container'>
-                  {location.pathname.startsWith('/streaming') && selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? (
+                  {location.pathname.startsWith('/streaming') &&
+                  selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? (
                     <>
                       {/* Refresh cta */}
                       <div className='float-top-right mr-1 mt-1'>

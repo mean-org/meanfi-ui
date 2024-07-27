@@ -10,7 +10,7 @@ import {
   PERFORMANCE_THRESHOLD,
   SEVENTY_SECONDS_REFRESH_TIMEOUT,
 } from 'app-constants/common';
-import { consoleOut, isProd } from 'middleware/ui';
+import { isProd } from 'middleware/ui';
 import { useCallback, useMemo, useState } from 'react';
 import useGetPerformanceSamples from '../performanceSamples';
 import getStreamList from './getStreamList';
