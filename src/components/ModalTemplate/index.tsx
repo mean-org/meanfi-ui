@@ -2,16 +2,16 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
 import type { ReactNode } from 'react';
 
-export const ModalTemplate = (props: {
+interface ModalTemplateProps {
   centered?: boolean;
   content?: ReactNode;
-  handleClose: any;
+  handleClose: () => void;
   heading?: string;
   isVisible: boolean;
   title: string;
-}) => {
-  const { centered, content, handleClose, heading, isVisible, title } = props;
+}
 
+export const ModalTemplate = ({ centered, content, handleClose, heading, isVisible, title }: ModalTemplateProps) => {
   return (
     <Modal
       className='mean-modal simple-modal'

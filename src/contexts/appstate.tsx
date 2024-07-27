@@ -14,7 +14,7 @@ import { openNotification } from 'components/Notifications';
 import dayjs from 'dayjs';
 import useLocalStorage from 'hooks/useLocalStorage';
 import { customLogger } from 'main';
-import { getAccountNFTs, getUserAccountTokens } from 'middleware/accounts';
+import { getAccountNFTs } from 'middleware/accounts';
 import getPriceByAddressOrSymbol from 'middleware/getPriceByAddressOrSymbol';
 import type { MappedTransaction } from 'middleware/history';
 import { consoleOut, isProd } from 'middleware/ui';
@@ -26,19 +26,18 @@ import type {
   AccountTokenParsedInfo,
   RuntimeAppDetails,
   UserTokenAccount,
-  UserTokensResponse,
 } from 'models/accounts';
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from 'models/enums';
 import type { MultisigVault } from 'models/multisig';
 import { type PaymentStreamingStats, type StreamsSummary, initialStats, initialSummary } from 'models/streams';
 import type { TreasuryTypeOption } from 'models/treasuries';
+import useAccountAssets from 'query-hooks/accountTokens';
 import useMultisigClient from 'query-hooks/multisigClient';
 import useStreamingClient from 'query-hooks/streamingClient';
 import useGetTokenList from 'query-hooks/tokenList';
 import useGetAssetPrices from 'query-hooks/tokenPrices/useGetAssetPrices';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNativeAccount } from './accounts';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from './connection';
 import { useWallet } from './wallet';
 import { emptyAccount, useWalletAccount } from './walletAccount';
@@ -97,12 +96,10 @@ interface AppStateConfig {
   customStreamDocked: boolean;
   diagnosisInfo: RuntimeAppDetails | undefined;
   // Accounts page
-  shouldLoadTokens: boolean;
-  loadingTokenAccounts: boolean;
+  loadingUserAssets: boolean;
   tokenAccounts: AccountTokenParsedInfo[] | undefined;
-  userTokensResponse: UserTokensResponse | null;
-  tokensLoaded: boolean;
   splTokenList: UserTokenAccount[];
+  accountTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
   lastTxSignature: string;
@@ -130,8 +127,6 @@ interface AppStateConfig {
   stakingMultiplier: number;
   // Routes
   previousRoute: string;
-  // Account selection
-  getAssetsByAccount: (address: string) => Promise<UserTokensResponse | null> | null;
   // General
   setTheme: (name: string) => void;
   showDepositOptionsModal: () => void;
@@ -176,7 +171,6 @@ interface AppStateConfig {
   setCustomStreamDocked: (state: boolean) => void;
   setDiagnosisInfo: (info: RuntimeAppDetails | undefined) => void;
   // Accounts page
-  setShouldLoadTokens: (state: boolean) => void;
   appendHistoryItems: (transactionsChunk: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setStreamsSummary: (summary: StreamsSummary) => void;
@@ -251,12 +245,10 @@ const contextDefaultValues: AppStateConfig = {
   customStreamDocked: false,
   diagnosisInfo: undefined,
   // Accounts page
-  shouldLoadTokens: false,
-  loadingTokenAccounts: true,
+  loadingUserAssets: true,
   tokenAccounts: undefined,
-  userTokensResponse: null,
-  tokensLoaded: false,
   splTokenList: [],
+  accountTokens: [],
   selectedAsset: undefined,
   transactions: undefined,
   lastTxSignature: '',
@@ -284,8 +276,6 @@ const contextDefaultValues: AppStateConfig = {
   stakingMultiplier: 1,
   // Routes
   previousRoute: '',
-  // Account selection
-  getAssetsByAccount: () => null,
   // General
   setTheme: () => {},
   showDepositOptionsModal: () => {},
@@ -330,7 +320,6 @@ const contextDefaultValues: AppStateConfig = {
   setCustomStreamDocked: () => {},
   setDiagnosisInfo: () => {},
   // Accounts page
-  setShouldLoadTokens: () => {},
   appendHistoryItems: () => {},
   setSelectedAsset: () => {},
   setStreamsSummary: () => {},
@@ -370,7 +359,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   const { publicKey, connected } = useWallet();
   const { selectedAccount } = useWalletAccount();
   const connectionConfig = useConnectionConfig();
-  const { account } = useNativeAccount();
   // Account selection
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const today = new Date().toLocaleDateString('en-US');
@@ -454,17 +442,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   );
   const [accountNfts, setAccountNfts] = useState<FindNftsByOwnerOutput | undefined>(contextDefaultValues.accountNfts);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
-  const [tokensLoaded, setTokensLoaded] = useState(contextDefaultValues.tokensLoaded);
-  const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
-  const [loadingTokenAccounts, setLoadingTokenAccounts] = useState(contextDefaultValues.loadingTokenAccounts);
-  const [userTokensResponse, setUserTokensResponse] = useState<UserTokensResponse | null>(
-    contextDefaultValues.userTokensResponse,
-  );
-  const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
-
-  const [tokenAccounts, updateTokenAccounts] = useState<AccountTokenParsedInfo[] | undefined>(
-    contextDefaultValues.tokenAccounts,
-  );
 
   const setTheme = useCallback(
     (name: string) => {
@@ -489,15 +466,23 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   const { multisigClient } = useMultisigClient();
   const { tokenList: meanTokenList } = useGetTokenList();
   const { prices: priceList, loadingPrices, refetchPrices } = useGetAssetPrices();
+  const { userAssets, loadingUserAssets } = useAccountAssets(selectedAccount.address);
 
-  const setShouldLoadTokens = (state: boolean) => {
-    updateShouldLoadTokens(state);
-  };
+  const accountTokens = useMemo(() => {
+    if (loadingUserAssets || !userAssets) return [];
+
+    return userAssets.accountTokens;
+  }, [loadingUserAssets, userAssets]);
+
+  const tokenAccounts = useMemo(() => {
+    if (loadingUserAssets || !userAssets) return [];
+
+    return userAssets.userTokenAccounts ?? [];
+  }, [loadingUserAssets, userAssets]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     setTransactions([]);
-    setShouldLoadTokens(true);
   }, [selectedAccount]);
 
   // Update isWhitelisted
@@ -1014,51 +999,9 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     return () => {};
   }, [connectionConfig.cluster, meanTokenList]);
 
-  // Keep track of current balance
-  useEffect(() => {
-    if (publicKey && account?.lamports && selectedAccount.address) {
-      consoleOut('--------------------------------', '', 'darkorange');
-      consoleOut('Native account lamports changed.', 'Reloading tokens...', 'darkorange');
-      consoleOut('--------------------------------', '', 'darkorange');
-      updateShouldLoadTokens(true);
-    }
-  }, [account?.lamports, publicKey, selectedAccount.address]);
-
-  // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
-  // Also, do this after any Tx is completed in places where token balances were indeed changed)
-  useEffect(() => {
-    if (!connection || !publicKey || !selectedAccount.address || !shouldLoadTokens || !splTokenList) {
-      return;
-    }
-
-    setLoadingTokenAccounts(true);
-    updateShouldLoadTokens(false);
-    setTokensLoaded(false);
-    consoleOut('calling getUserAccountTokens from:', 'AppState', 'darkgreen');
-
-    getUserAccountTokens(connection, selectedAccount.address, priceList, splTokenList)
-      .then(response => {
-        if (response) {
-          setUserTokensResponse(response);
-          setAccountTokens(response.accountTokens);
-          updateTokenAccounts(response.userTokenAccounts);
-        } else {
-          setUserTokensResponse(null);
-          setAccountTokens([]);
-          updateTokenAccounts(undefined);
-        }
-      })
-      .finally(() => {
-        setTokensLoaded(true);
-        setLoadingTokenAccounts(false);
-      });
-
-    return () => {};
-  }, [selectedAccount.address, connection, priceList, publicKey, shouldLoadTokens, splTokenList]);
-
   // Get and populate the list of NFTs that the user holds
   useEffect(() => {
-    if (!connection || !publicKey || !selectedAccount.address || !shouldLoadTokens) {
+    if (!connection || !publicKey || !selectedAccount.address) {
       return;
     }
 
@@ -1066,34 +1009,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       consoleOut('getAccountNFTs() response:', response, 'blue');
       setAccountNfts(response);
     });
-  }, [selectedAccount.address, connection, publicKey, shouldLoadTokens]);
-
-  // Same as above but on demand
-  const getAssetsByAccount = useCallback(
-    (account: string) => {
-      if (!connection || !publicKey || !account || !priceList) {
-        return null;
-      }
-
-      setLoadingTokenAccounts(true);
-      setTokensLoaded(false);
-      consoleOut('calling getUserAccountTokens from:', 'getAssetsByAccount', 'darkgreen');
-
-      return getUserAccountTokens(connection, account, priceList, splTokenList)
-        .then(response => {
-          if (response) {
-            return response;
-          }
-          return null;
-        })
-        .finally(() => {
-          setLoadingTokenAccounts(false);
-          setTokensLoaded(true);
-          return null;
-        });
-    },
-    [connection, priceList, publicKey, splTokenList],
-  );
+  }, [selectedAccount.address, connection, publicKey]);
 
   ///////////////////////
   // Multisig accounts //
@@ -1249,7 +1165,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       loadingPrices,
       loadingRecurringBuys,
       loadingStreamActivity,
-      loadingTokenAccounts,
+      loadingUserAssets,
       lockPeriodAmount,
       lockPeriodFrequency,
       multisigAccounts,
@@ -1276,7 +1192,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       selectedStream,
       selectedTab,
       selectedToken,
-      shouldLoadTokens,
       splTokenList,
       stakedAmount,
       stakingMultiplier,
@@ -1288,16 +1203,14 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       tokenAccounts,
       tokenBalance,
       tokenList,
-      tokensLoaded,
       totalSafeBalance,
       transactions,
       transactionStatus,
       treasuryOption,
       unstakedAmount,
       unstakeStartDate,
-      userTokensResponse,
+      accountTokens,
       appendHistoryItems,
-      getAssetsByAccount,
       getStreamActivity,
       getTokenByMintAddress,
       getTokenPriceByAddress,
@@ -1347,7 +1260,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       setSelectedTab,
       setSelectedToken,
       setSelectedTokenBalance,
-      setShouldLoadTokens,
       setStakedAmount,
       setStakingMultiplier,
       setStreamDetail,
@@ -1385,7 +1297,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     loadingPrices,
     loadingRecurringBuys,
     loadingStreamActivity,
-    loadingTokenAccounts,
+    loadingUserAssets,
     lockPeriodAmount,
     lockPeriodFrequency,
     multisigAccounts,
@@ -1412,7 +1324,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     selectedStream,
     selectedTab,
     selectedToken,
-    shouldLoadTokens,
     splTokenList,
     stakedAmount,
     stakingMultiplier,
@@ -1424,16 +1335,14 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     tokenAccounts,
     tokenBalance,
     tokenList,
-    tokensLoaded,
     totalSafeBalance,
     transactions,
     transactionStatus,
     treasuryOption,
     unstakedAmount,
     unstakeStartDate,
-    userTokensResponse,
+    accountTokens,
     appendHistoryItems,
-    getAssetsByAccount,
     getStreamActivity,
     getTokenByMintAddress,
     getTokenPriceByAddress,
@@ -1470,7 +1379,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     // setSelectedTab,
     // setSelectedToken,
     // setSelectedTokenBalance,
-    // setShouldLoadTokens,
     // setStakedAmount,
     // setStakingMultiplier,
     setStreamDetail,

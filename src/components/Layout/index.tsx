@@ -52,15 +52,7 @@ interface LayoutProps {
 export const AppLayout = React.memo(({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    theme,
-    previousWalletConnectState,
-    setPreviousWalletConnectState,
-    setNeedReloadMultisigAccounts,
-    refreshTokenBalance,
-    setDiagnosisInfo,
-    selectedAccount,
-  } = useContext(AppStateContext);
+  const { theme, setNeedReloadMultisigAccounts, setDiagnosisInfo, selectedAccount } = useContext(AppStateContext);
   const { tpsAvg } = useGetPerformanceSamples();
   const { confirmationHistory, clearConfirmationHistory } = useContext(TxConfirmationContext);
   const { t, i18n } = useTranslation('common');
@@ -138,79 +130,58 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
     setLanguage(item || LANGUAGES[0].isoName);
   }, [i18n.language]);
 
-  // Hook on the wallet connect/disconnect
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      // User is connecting
-      if (!previousWalletConnectState && connected) {
-        setNeedReloadMultisigAccounts(true);
-        if (publicKey) {
-          const walletAddress = publicKey.toBase58();
-          refreshAccount();
+    if (publicKey) {
+      setNeedReloadMultisigAccounts(true);
+      const walletAddress = publicKey.toBase58();
+      refreshAccount();
 
-          // Record user login in Segment Analytics
-          segmentAnalytics.recordIdentity(walletAddress, {
-            connected: true,
-            platform: getPlatform(),
-            browser: browserName,
-            walletProvider: provider?.name || 'Other',
-            theme,
-            language,
-          });
+      // Record user login in Segment Analytics
+      segmentAnalytics.recordIdentity(walletAddress, {
+        connected: true,
+        platform: getPlatform(),
+        browser: browserName,
+        walletProvider: provider?.name || 'Other',
+        theme,
+        language,
+      });
 
-          setNeedRefresh(true);
-
-          // Record pending referral, get referrals count and clear referralAddress from localStorage
-          // Only record if referral address is valid and different from wallet address
-          if (referralAddress && isValidAddress(referralAddress) && referralAddress !== walletAddress) {
-            reportConnectedAccount(walletAddress, referralAddress)
-              .then(() => {
-                setReferralAddress('');
-              })
-              .catch(error => console.error(error));
-          } else {
-            reportConnectedAccount(walletAddress)
-              .then(() => consoleOut('reportConnectedAccount hit'))
-              .catch(error => console.error(error));
-          }
-        }
-        refreshTokenBalance();
-        setPreviousWalletConnectState(true);
-      } else if (previousWalletConnectState && !connected) {
-        setPreviousWalletConnectState(false);
-        setNeedRefresh(true);
-        clearConfirmationHistory();
-        refreshTokenBalance();
-        // Send identity to Segment if no wallew connection
-        if (!publicKey) {
-          segmentAnalytics.recordIdentity(
-            '',
-            {
-              connected: false,
-              platform: getPlatform(),
-              browser: browserName,
-            },
-            () => {
-              segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnected);
-            },
-          );
-        }
+      // Record pending referral, get referrals count and clear referralAddress from localStorage
+      // Only record if referral address is valid and different from wallet address
+      if (referralAddress && isValidAddress(referralAddress) && referralAddress !== walletAddress) {
+        reportConnectedAccount(walletAddress, referralAddress)
+          .then(() => {
+            setReferralAddress('');
+          })
+          .catch(error => console.error(error));
+      } else {
+        reportConnectedAccount(walletAddress)
+          .then(() => consoleOut('reportConnectedAccount hit'))
+          .catch(error => console.error(error));
       }
+    } else {
+      segmentAnalytics.recordIdentity(
+        '',
+        {
+          connected: false,
+          platform: getPlatform(),
+          browser: browserName,
+        },
+        () => {
+          segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnected);
+        },
+      );
+      clearConfirmationHistory();
     }
+
+    setNeedRefresh(true);
   }, [
     theme,
     language,
     publicKey,
-    connected,
     provider?.name,
     referralAddress,
-    previousWalletConnectState,
-    setPreviousWalletConnectState,
-    setNeedReloadMultisigAccounts,
-    clearConfirmationHistory,
-    refreshTokenBalance,
-    setReferralAddress,
-    refreshAccount,
     getPlatform,
   ]);
 

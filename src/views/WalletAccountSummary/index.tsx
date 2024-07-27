@@ -3,7 +3,7 @@ import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
 import { AddressDisplay } from 'components/AddressDisplay';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { consoleOut, toUsCurrency } from 'middleware/ui';
+import { toUsCurrency } from 'middleware/ui';
 import { getAmountWithSymbol } from 'middleware/utils';
 import type { UserTokenAccount } from 'models/accounts';
 import { useContext, useEffect, useState } from 'react';
@@ -11,16 +11,16 @@ import { useContext, useEffect, useState } from 'react';
 const WalletAccountSummary = (props: { accountBalance?: number }) => {
   const { accountBalance } = props;
 
-  const { splTokenList, selectedAccount, userTokensResponse, getTokenPriceByAddress } = useContext(AppStateContext);
+  const { splTokenList, selectedAccount, accountTokens, getTokenPriceByAddress } = useContext(AppStateContext);
 
   const [selectedAsset, setSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
 
   const renderNetworth = () => {
     if (accountBalance) {
       return toUsCurrency(accountBalance);
-    } else {
-      return '$0.00';
     }
+
+    return '$0.00';
   };
 
   const renderBalance = () => {
@@ -32,19 +32,20 @@ const WalletAccountSummary = (props: { accountBalance?: number }) => {
 
     if (tokenPrice > 0) {
       return selectedAsset.balance ? toUsCurrency((selectedAsset.balance || 0) * tokenPrice) : '$0.00';
-    } else {
-      return '$0.00';
     }
+
+    return '$0.00';
   };
 
-  // Process userTokensResponse from AppState to get a renderable list of tokens
+  // Process accountTokens from AppState to get a renderable list of tokens
   useEffect(() => {
-    if (userTokensResponse) {
-      const nativeAsset = userTokensResponse.accountTokens.find(t => t.publicAddress === selectedAccount.address);
-      consoleOut('WalletAccountSummary nativeAsset:', nativeAsset, 'blue');
-      setSelectedAsset(nativeAsset);
+    if (!accountTokens) {
+      return;
     }
-  }, [selectedAccount.address, userTokensResponse]);
+
+    const nativeAsset = accountTokens.find(t => t.publicAddress === selectedAccount.address);
+    setSelectedAsset(nativeAsset);
+  }, [selectedAccount.address, accountTokens]);
 
   return (
     <div className='accounts-category-meta'>
@@ -58,9 +59,8 @@ const WalletAccountSummary = (props: { accountBalance?: number }) => {
                   <AddressDisplay
                     address={selectedAsset.publicAddress as string}
                     iconStyles={{ width: '16', height: '16' }}
-                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-                      selectedAsset.publicAddress
-                    }${getSolanaExplorerClusterParam()}`}
+                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedAsset.publicAddress
+                      }${getSolanaExplorerClusterParam()}`}
                   />
                 </div>
               </div>

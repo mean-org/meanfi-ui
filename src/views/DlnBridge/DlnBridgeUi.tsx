@@ -1,12 +1,12 @@
 import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
-// wagmi & viem
 import { estimateFeesPerGas } from '@wagmi/core';
 import { Button, Modal, Select, Tooltip } from 'antd';
 import { INPUT_DEBOUNCE_TIME, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'app-constants/common';
 import { NATIVE_SOL } from 'app-constants/tokens';
 import { Identicon } from 'components/Identicon';
+import ProductionOnlyNotice from 'components/ProductionOnlyNotice';
 import { TokenDisplay } from 'components/TokenDisplay';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
@@ -16,7 +16,7 @@ import { useWallet } from 'contexts/wallet';
 import { useDebounce } from 'hooks/useDebounce';
 import useTransaction from 'hooks/useTransaction';
 import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
-import { consoleOut, isEvmValidAddress, isValidAddress, percentageBn, toUsCurrency } from 'middleware/ui';
+import { consoleOut, isEvmValidAddress, isProd, isValidAddress, percentageBn, toUsCurrency } from 'middleware/ui';
 import {
   findATokenAddress,
   formatThousands,
@@ -894,8 +894,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
   };
 
   return (
-    <>
-      <div className='place-transaction-box debridge-wrapper'>
+    <div className='position-relative'>
+      <div className={`place-transaction-box debridge-wrapper${isProd() ? '' : ' blurry-1x'}`}>
         <div className='debridge-container'>
           <div className={getPanel1Classes()}>
             {/* Source chain, token & amount */}
@@ -1282,7 +1282,9 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
           </div>
         </div>
       ) : null}
-    </>
+
+      <ProductionOnlyNotice />
+    </div>
   );
 };
 

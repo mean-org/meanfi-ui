@@ -1,5 +1,5 @@
 import { STREAM_STATE, type StreamInfo } from '@mean-dao/money-streaming';
-import { STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
+import { Category, STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
 
 export const isV2Stream = (stream?: Stream | StreamInfo) => {
   if (stream?.version) {
@@ -109,4 +109,10 @@ export const isInboundStream = (
     return beneficiary === accountAddress;
   }
   return false;
+};
+
+export const getStreamCategory = (stream: Stream | StreamInfo | undefined): Category => {
+  if (!stream) return Category.default;
+
+  return stream.version >= 2 ? (stream as Stream).category : Category.default;
 };
