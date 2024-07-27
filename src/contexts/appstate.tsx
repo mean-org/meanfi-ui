@@ -36,7 +36,7 @@ import useAccountAssets from 'query-hooks/accountTokens';
 import useMultisigClient from 'query-hooks/multisigClient';
 import useStreamingClient from 'query-hooks/streamingClient';
 import useGetTokenList from 'query-hooks/tokenList';
-import useGetAssetPrices from 'query-hooks/tokenPrices/useGetAssetPrices';
+import useGetAssetPrices from 'query-hooks/tokenPrices';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from './connection';
