@@ -98,22 +98,22 @@ export const AccountsCloseAssetModal = (props: {
 
   // Validation
   const isEnterYesWordValid = (): boolean => {
-    return enterYesWord && enterYesWord.toLocaleLowerCase() === 'yes' ? true : false;
+    return !!(enterYesWord && enterYesWord.toLocaleLowerCase() === 'yes');
   };
 
   const isOperationValidIfWrapSol = (): boolean => {
-    return publicKey &&
+    return !!(
+      publicKey &&
       nativeBalance &&
       nativeBalance > feeAmount &&
       asset &&
       isEnterYesWordValid() &&
       isDisclaimerAccepted
-      ? true
-      : false;
+    );
   };
 
   const isOperationValid = (): boolean => {
-    return publicKey && nativeBalance && nativeBalance > feeAmount && asset && isDisclaimerAccepted ? true : false;
+    return !!(publicKey && nativeBalance && nativeBalance > feeAmount && asset && isDisclaimerAccepted);
   };
 
   const getCtaLabelIfWrapSol = () => {
@@ -178,7 +178,7 @@ export const AccountsCloseAssetModal = (props: {
 
   const renderMainCtaLabel = () => {
     const isWrappedSol = () => {
-      return asset.balance && asset.balance > 0 && asset.address === WRAPPED_SOL_MINT_ADDRESS ? true : false;
+      return !!(asset.balance && asset.balance > 0 && asset.address === WRAPPED_SOL_MINT_ADDRESS);
     };
 
     if (isBusy) {

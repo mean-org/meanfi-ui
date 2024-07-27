@@ -27,7 +27,7 @@ export const StreamPauseModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig );
   }, [publicKey, selectedAccount]);
 
   const amITreasurer = useCallback((): boolean => {
@@ -127,7 +127,7 @@ export const StreamPauseModal = (props: {
   }, [feeAmount, props.transactionFees, getFeeAmount]);
 
   const isValidForm = (): boolean => {
-    return proposalTitle ? true : false;
+    return !!proposalTitle;
   };
 
   const getTransactionStartButtonLabel = () => {

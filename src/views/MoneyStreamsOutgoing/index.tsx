@@ -880,7 +880,7 @@ export const MoneyStreamsOutgoingView = ({
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sign = await signTx('Add Funds', wallet, publicKey, createdTransaction);
+        const sign = await signTx('Add Funds', wallet.adapter, publicKey, createdTransaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -1261,7 +1261,7 @@ export const MoneyStreamsOutgoingView = ({
         }
         consoleOut('created:', created, 'blue');
         if (created && !transactionCancelled) {
-          const sign = await signTx('Pause Stream', wallet, publicKey, transaction);
+          const sign = await signTx('Pause Stream', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -1701,7 +1701,7 @@ export const MoneyStreamsOutgoingView = ({
         }
         consoleOut('created:', created, 'blue');
         if (created && !transactionCancelled) {
-          const sign = await signTx('Resume Stream', wallet, publicKey, transaction);
+          const sign = await signTx('Resume Stream', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -2204,7 +2204,7 @@ export const MoneyStreamsOutgoingView = ({
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sign = await signTx('Close Stream', wallet, publicKey, transaction);
+        const sign = await signTx('Close Stream', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

@@ -4,7 +4,6 @@ import { Button, Dropdown, type MenuProps, Spin, Tooltip } from 'antd';
 import { Identicon } from 'components/Identicon';
 import { openNotification } from 'components/Notifications';
 import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
 import { useWalletAccount } from 'contexts/walletAccount';
 import { SYSTEM_PROGRAM_ID } from 'middleware/ids';
 import { consoleOut, copyText, kFormatter, toUsCurrency } from 'middleware/ui';
@@ -14,6 +13,7 @@ import useAccountAssets from 'query-hooks/accountTokens';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './style.scss';
+import { useWallet } from 'contexts/wallet';
 
 export const AccountSelector = (props: {
   isFullWorkflowEnabled?: boolean;
@@ -30,7 +30,7 @@ export const AccountSelector = (props: {
   } = useContext(AppStateContext);
   const { selectedAccount, setSelectedAccount } = useWalletAccount();
   const { t } = useTranslation('common');
-  const { publicKey, provider } = useWallet();
+  const { publicKey, wallet } = useWallet();
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
 
   const { userAssets, loadingUserAssets, refreshAccountAssets } = useAccountAssets(publicKey?.toBase58() ?? '');
@@ -265,7 +265,7 @@ export const AccountSelector = (props: {
           </div>
           <div className='icon-cell' onKeyDown={onNativeAccountSelected} onClick={onNativeAccountSelected}>
             <span>
-              {provider && <img src={provider.icon} alt={provider.name} width='30' className='wallet-provider-icon' />}
+              {wallet && <img src={wallet.adapter.icon} alt={wallet.adapter.name} width='30' className='wallet-provider-icon' />}
             </span>
           </div>
           <div className='description-cell' onKeyDown={onNativeAccountSelected} onClick={onNativeAccountSelected}>

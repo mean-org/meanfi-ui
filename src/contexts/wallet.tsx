@@ -6,7 +6,7 @@ import {
   type WalletAdapterProps,
   WalletReadyState,
 } from '@solana/wallet-adapter-base';
-import { useWallet as useBaseWallet } from '@solana/wallet-adapter-react';
+import { type Wallet, useWallet as useBaseWallet } from '@solana/wallet-adapter-react';
 import {
   Coin98WalletAdapter,
   Coin98WalletName,
@@ -205,7 +205,7 @@ const isProviderHidden = (item: WalletProviderEntry, { isDesktop }: { isDesktop:
   (item.hideIfUnavailable && !getIsProviderInstalled(item));
 
 interface MeanFiWalletContextState {
-  wallet: Adapter | undefined;
+  wallet: Wallet | null;
   connected: boolean;
   connecting: boolean;
   disconnecting: boolean;
@@ -220,7 +220,7 @@ interface MeanFiWalletContextState {
 }
 
 const defaultCtxValues: MeanFiWalletContextState = {
-  wallet: undefined,
+  wallet: null,
   connected: false,
   connecting: true,
   disconnecting: false,
@@ -305,8 +305,12 @@ export function MeanFiWalletProvider({ children }: Props) {
       if (adapter.connected && !adapter.connecting) {
         setConnected(false);
         resetWalletProvider();
+        disconnect();
         window.location.reload();
-      } else if (adapter.publicKey) {
+        return;
+      }
+
+      if (pk) {
         setConnected(true);
         close();
       }
@@ -390,7 +394,7 @@ export function MeanFiWalletProvider({ children }: Props) {
   const providerValues = useMemo(() => {
     return {
       provider,
-      wallet: wallet?.adapter,
+      wallet,
       connected,
       connecting,
       disconnecting,
@@ -414,7 +418,7 @@ export function MeanFiWalletProvider({ children }: Props) {
     signAllTransactions,
     signMessage,
     signTransaction,
-    wallet?.adapter,
+    wallet,
   ]);
 
   return (
@@ -453,24 +457,26 @@ export function MeanFiWalletProvider({ children }: Props) {
                   await disconnect();
                 }
 
-                // Record user event in Segment Analytics
-                segmentAnalytics.recordEvent(AppUsageEvent.WalletSelected, {
-                  walletProvider: item.name,
-                  isWebWallet: item.isWebWallet,
-                });
-
                 // If not installed take the user to its extension url
                 if (!isInstalled) {
                   window.open(item.url, '_blank');
                   return;
                 }
 
+                const selected = wallets.find(w => w.adapter.name === item.name)?.adapter.name;
+
+                if (!selected) {
+                  return;
+                }
+
+                select(selected);
                 consoleOut('Selected wallet:', item.name, 'blue');
                 setWalletName(item.name);
-                const selected = wallets.find(w => w.adapter.name === item.name);
-                if (selected) {
-                  select(selected.adapter.name);
-                }
+                // Record user event in Segment Analytics
+                segmentAnalytics.recordEvent(AppUsageEvent.WalletSelected, {
+                  walletProvider: item.name,
+                  isWebWallet: item.isWebWallet,
+                });
               };
 
               return (
@@ -526,7 +532,8 @@ export function useWallet() {
     isSelectingWallet,
   } = useContext(MeanFiWalletContext);
 
-  const publicKey = connected && !disconnecting && !connecting ? wallet?.publicKey : null;
+  const publicKey = connected && !disconnecting && !connecting ? wallet?.adapter.publicKey : null;
+
   return {
     wallet,
     provider,
@@ -538,7 +545,7 @@ export function useWallet() {
     publicKey,
     connect() {
       if (wallet) {
-        wallet.connect();
+        wallet.adapter.connect();
       } else {
         selectWalletProvider();
       }
@@ -546,7 +553,7 @@ export function useWallet() {
     disconnect() {
       consoleOut('Disconnecting provider...', '', 'blue');
       if (wallet) {
-        wallet.disconnect();
+        wallet.adapter.disconnect();
         isDisconnecting = true;
       }
     },

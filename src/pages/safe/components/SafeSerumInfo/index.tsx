@@ -13,7 +13,7 @@ import { SafeInfo } from '../SafeInfo';
 export const SafeSerumInfoView = (props: {
   connection: Connection;
   isProposalDetails: boolean;
-  multisigClient: Program<Idl>;
+  multisigClient: Program<Idl> | null;
   multisigTxs: MultisigTransaction[];
   onDataToProgramView: (program: ProgramAccounts) => void;
   onDataToSafeView: (proposal: MultisigTransaction) => void;

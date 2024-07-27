@@ -4,7 +4,6 @@ import { IconCopy, IconInfoTriangle, IconSolana } from 'Icons';
 import { Button, Col, Modal, Row, Tooltip } from 'antd';
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from 'app-constants/common';
 import { openNotification } from 'components/Notifications';
-import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
 import { appConfig } from 'main';
 import { consoleOut, copyText } from 'middleware/ui';
@@ -13,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
+import { useWallet } from 'contexts/wallet';
 
 interface DepositOptionsProps {
   handleClose: () => void;

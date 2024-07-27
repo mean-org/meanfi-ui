@@ -662,7 +662,7 @@ export const VestingContractStreamList = (props: {
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sign = await signTx('Close Vesting Stream', wallet, publicKey, transaction);
+        const sign = await signTx('Close Vesting Stream', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

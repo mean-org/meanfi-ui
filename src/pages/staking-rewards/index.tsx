@@ -391,7 +391,7 @@ export const StakingRewardsView = () => {
     const created = await createTx();
     consoleOut('created:', created, 'blue');
     if (created) {
-      const sign = await signTx('Deposit Staking Rewards', wallet, publicKey, transaction);
+      const sign = await signTx('Deposit Staking Rewards', wallet.adapter, publicKey, transaction);
       if (sign.encodedTransaction) {
         encodedTx = sign.encodedTransaction;
         transactionLog = transactionLog.concat(sign.log);

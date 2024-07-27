@@ -122,6 +122,10 @@ const SafeView = (props: {
   const { multisigClient, multisigProgramAddressPK } = useMultisigClient();
 
   const multisigSerumClient = useMemo(() => {
+    if (!connection || !wallet) {
+      return null;
+    }
+
     const opts: ConfirmOptions = {
       preflightCommitment: 'confirmed',
       commitment: 'confirmed',
@@ -130,7 +134,7 @@ const SafeView = (props: {
     };
 
     // biome-ignore lint/suspicious/noExplicitAny: No complicated type mappings Solana wallet to Anchor wallet
-    const provider = new AnchorProvider(connection, wallet as any, opts);
+    const provider = new AnchorProvider(connection, wallet.adapter as any, opts);
 
     return new Program(SerumIDL, 'msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt', provider);
   }, [connection, wallet]);
@@ -565,7 +569,7 @@ const SafeView = (props: {
         const created = await createTx();
         consoleOut('created:', created);
         if (created && !transactionCancelled) {
-          const sign = await signTx('Edit Multisig', wallet, publicKey, transaction);
+          const sign = await signTx('Edit Multisig', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -758,7 +762,7 @@ const SafeView = (props: {
         const created = await createTx();
         consoleOut('created:', created);
         if (created && !transactionCancelled) {
-          const sign = await signTx('Approve Multisig Proposal', wallet, publicKey, transaction);
+          const sign = await signTx('Approve Multisig Proposal', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -941,7 +945,7 @@ const SafeView = (props: {
         const created = await createTx();
         consoleOut('created:', created);
         if (created && !transactionCancelled) {
-          const sign = await signTx('Reject Multisig Proposal', wallet, publicKey, transaction);
+          const sign = await signTx('Reject Multisig Proposal', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -1155,7 +1159,7 @@ const SafeView = (props: {
         const created = await createTx();
         consoleOut('created:', created);
         if (created && !transactionCancelled) {
-          const sign = await signTx('Execute Multisig Proposal', wallet, publicKey, transaction);
+          const sign = await signTx('Execute Multisig Proposal', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -1343,7 +1347,7 @@ const SafeView = (props: {
         const created = await createTx();
         consoleOut('created:', created);
         if (created && !transactionCancelled) {
-          const sign = await signTx('Cancel Multisig Proposal', wallet, publicKey, transaction);
+          const sign = await signTx('Cancel Multisig Proposal', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);

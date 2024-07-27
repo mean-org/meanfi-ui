@@ -317,7 +317,7 @@ const useTransaction = () => {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && transaction) {
-        const sign = await signTx(name, wallet, publicKey, transaction);
+        const sign = await signTx(name, wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

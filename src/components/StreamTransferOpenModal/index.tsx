@@ -31,7 +31,7 @@ export const StreamTransferOpenModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    return publicKey && selectedAccount.isMultisig ? true : false;
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const isAddressTreasurer = useCallback(
@@ -60,30 +60,30 @@ export const StreamTransferOpenModal = (props: {
   };
 
   const isAddressOwnAccount = (): boolean => {
-    return address && publicKey && address === publicKey.toBase58() ? true : false;
+    return !!(address && publicKey && address === publicKey.toBase58());
   };
 
   // Validation
   const isValidForm = (): boolean => {
-    return address &&
-      isValidAddress(address) &&
-      !isAddressOwnAccount() &&
-      !isAddressTreasurer(address) &&
-      isVerifiedRecipient
-      ? true
-      : false;
-  };
-
-  // Validation if multisig
-  const isValidFormMultisig = (): boolean => {
-    return proposalTitle &&
+    return !!(
       address &&
       isValidAddress(address) &&
       !isAddressOwnAccount() &&
       !isAddressTreasurer(address) &&
       isVerifiedRecipient
-      ? true
-      : false;
+    );
+  };
+
+  // Validation if multisig
+  const isValidFormMultisig = (): boolean => {
+    return !!(
+      proposalTitle &&
+      address &&
+      isValidAddress(address) &&
+      !isAddressOwnAccount() &&
+      !isAddressTreasurer(address) &&
+      isVerifiedRecipient
+    );
   };
 
   const getTransactionStartButtonLabel = () => {

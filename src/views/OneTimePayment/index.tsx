@@ -582,7 +582,7 @@ export const OneTimePayment = ({
         return false;
       }
 
-      consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
+      consoleOut('Wallet address:', publicKey?.toBase58());
 
       setTransactionStatus({
         lastOperation: TransactionStatus.TransactionStart,
@@ -713,7 +713,7 @@ export const OneTimePayment = ({
       consoleOut('created:', created);
       if (created && !transactionCancelled && transaction) {
         const txTitle = isScheduledPayment() ? 'Scheduled Transfer' : 'One Time Transfer';
-        const sign = await signTx(txTitle, wallet, publicKey, transaction as Transaction);
+        const sign = await signTx(txTitle, wallet.adapter, publicKey, transaction as Transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

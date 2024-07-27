@@ -29,7 +29,6 @@ import getV1Beneficiary from 'components/common/getV1Beneficiary';
 import getV2Beneficiary from 'components/common/getV2Beneficiary';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
 import useWindowSize from 'hooks/useWindowResize';
 import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
@@ -53,6 +52,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import type { LooseObject } from 'types/LooseObject';
 import './style.scss';
+import { useWallet } from 'contexts/wallet';
 
 export const MoneyStreamDetails = (props: {
   accountAddress: string;

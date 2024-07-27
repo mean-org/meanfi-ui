@@ -1394,7 +1394,7 @@ export const HomeView = () => {
         const created = await createTx();
         consoleOut('created:', created);
         if (created) {
-          const sign = await signTx('Transfer Token Ownership', wallet, publicKey, transaction);
+          const sign = await signTx('Transfer Token Ownership', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -1624,7 +1624,7 @@ export const HomeView = () => {
         const created = await createTx();
         consoleOut('created:', created);
         if (created) {
-          const sign = await signTx('Close Token Account', wallet, publicKey, transaction);
+          const sign = await signTx('Close Token Account', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -2390,7 +2390,7 @@ export const HomeView = () => {
         const created = await createTx();
         consoleOut('created:', created);
         if (created) {
-          const sign = await signTx('Create Multisig Proposal', wallet, publicKey, transaction);
+          const sign = await signTx('Create Multisig Proposal', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);

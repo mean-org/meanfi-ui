@@ -1,11 +1,11 @@
 import PrioritizationFeesConfigPopover from 'components/PrioritizationFeesConfigPopover';
-import { useWallet } from '../../contexts/wallet';
+import { useWallet } from 'contexts/wallet';
 import { AccountDetails } from '../AccountDetails';
 import { AppContextMenu } from '../AppContextMenu';
 import { ConnectButton } from '../ConnectButton';
 import { NotificationBell } from '../NotificationBell';
 
-export const FooterBar = (props: { onOpenDrawer?: any }) => {
+export const FooterBar = (props: { onOpenDrawer: () => void }) => {
   const { connected } = useWallet();
 
   return (

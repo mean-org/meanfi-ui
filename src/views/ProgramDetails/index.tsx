@@ -536,7 +536,7 @@ const ProgramDetailsView = ({ program }: Props) => {
         const created = await createTx();
         consoleOut('created:', created);
         if (created && !transactionCancelled) {
-          const sign = await signTx('Upgrade Program', wallet, publicKey, transaction);
+          const sign = await signTx('Upgrade Program', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -863,7 +863,7 @@ const ProgramDetailsView = ({ program }: Props) => {
         const create = await createTx();
         consoleOut('created:', create);
         if (create && !transactionCancelled) {
-          const sign = await signTx('Set Program Authority', wallet, publicKey, transaction);
+          const sign = await signTx('Set Program Authority', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);

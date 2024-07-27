@@ -129,7 +129,7 @@ export const StreamResumeModal = (props: {
   }, [feeAmount, props.transactionFees, getFeeAmount]);
 
   const isValidForm = (): boolean => {
-    return proposalTitle ? true : false;
+    return !!proposalTitle;
   };
 
   const getTransactionStartButtonLabel = () => {

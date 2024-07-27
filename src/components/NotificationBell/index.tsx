@@ -1,6 +1,6 @@
+import { useWallet } from 'contexts/wallet';
 import { useCallback } from 'react';
 import { IconNotification } from '../../Icons';
-import { useWallet } from '../../contexts/wallet';
 import useWindowSize from '../../hooks/useWindowResize';
 
 export const NotificationBell = ({ onOpenDrawer }: { onOpenDrawer: () => void }) => {

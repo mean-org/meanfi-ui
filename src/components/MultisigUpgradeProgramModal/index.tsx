@@ -118,13 +118,13 @@ export const MultisigUpgradeProgramModal = ({
   };
 
   const isValidForm = (): boolean => {
-    return programId &&
+    return !!(
+      programId &&
       (proposalTitle || !isMultisigTreasury) &&
       bufferAddress &&
       programDataAddress &&
       isValidAddress(bufferAddress)
-      ? true
-      : false;
+    );
   };
 
   const refreshPage = () => {
