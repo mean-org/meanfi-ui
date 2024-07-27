@@ -260,7 +260,7 @@ export const UnstakeTabView = (props: {
       const created = await createTx();
       consoleOut('created:', created);
       if (created) {
-        const sign = await signTx('Unstake MEAN', wallet, publicKey, transaction);
+        const sign = await signTx('Unstake MEAN', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

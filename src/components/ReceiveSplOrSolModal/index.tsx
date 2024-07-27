@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { AddressDisplay } from '../AddressDisplay';
 
 export const ReceiveSplOrSolModal = (props: {
-  handleClose: any;
+  handleClose: () => void;
   isVisible: boolean;
   address: string;
   accountAddress: string;
@@ -21,13 +21,11 @@ export const ReceiveSplOrSolModal = (props: {
   const [overrideWithWallet] = useState(false);
 
   const isWalletAddress = () => {
-    return publicKey &&
+    return !!(publicKey &&
       address &&
       accountAddress &&
       address === publicKey.toBase58() &&
-      accountAddress === publicKey.toBase58()
-      ? true
-      : false;
+      accountAddress === publicKey.toBase58());
   };
 
   return (

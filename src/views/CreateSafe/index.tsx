@@ -399,7 +399,7 @@ const CreateSafeView = () => {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sign = await signTx('Create Safe', wallet, publicKey, transaction);
+        const sign = await signTx('Create Safe', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

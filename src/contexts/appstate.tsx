@@ -11,6 +11,7 @@ import {
 import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from 'app-constants/tokens';
 import { TREASURY_TYPE_OPTIONS } from 'app-constants/treasury-type-options';
 import { openNotification } from 'components/Notifications';
+import { useWallet } from 'contexts/wallet';
 import dayjs from 'dayjs';
 import useLocalStorage from 'hooks/useLocalStorage';
 import { customLogger } from 'main';
@@ -39,7 +40,6 @@ import useGetAssetPrices from 'query-hooks/tokenPrices/useGetAssetPrices';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from './connection';
-import { useWallet } from './wallet';
 import { emptyAccount, useWalletAccount } from './walletAccount';
 
 export type StreamValues = Stream | StreamInfo | undefined;

@@ -1,5 +1,6 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Button } from 'antd';
+import { useWallet } from 'contexts/wallet';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,6 @@ import { openNotification } from '../../components/Notifications';
 import { useNativeAccount } from '../../contexts/accounts';
 import { AppStateContext } from '../../contexts/appstate';
 import { useConnection } from '../../contexts/connection';
-import { useWallet } from '../../contexts/wallet';
 import { environment } from '../../environments/environment';
 import { getAmountFromLamports, getAmountWithSymbol } from '../../middleware/utils';
 

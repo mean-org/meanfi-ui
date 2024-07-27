@@ -16,7 +16,6 @@ import { useAccountsContext } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { useConnectionConfig } from 'contexts/connection';
 import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
 import useLocalStorage from 'hooks/useLocalStorage';
 import { reportConnectedAccount } from 'middleware/api';
@@ -40,6 +39,7 @@ import ReactGA from 'react-ga';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './style.scss';
+import { useWallet } from 'contexts/wallet';
 
 export const PERFORMANCE_SAMPLE_INTERVAL = 60 * 60 * 1000;
 
@@ -58,7 +58,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
   const { t, i18n } = useTranslation('common');
   const { refreshAccount } = useAccountsContext();
   const connectionConfig = useConnectionConfig();
-  const { provider, connected, publicKey, disconnect } = useWallet();
+  const { wallet, connected, publicKey, disconnect } = useWallet();
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
   const [language, setLanguage] = useState('');
@@ -142,7 +142,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
         connected: true,
         platform: getPlatform(),
         browser: browserName,
-        walletProvider: provider?.name || 'Other',
+        walletProvider: wallet?.adapter.name || 'Other',
         theme,
         language,
       });
@@ -180,7 +180,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
     theme,
     language,
     publicKey,
-    provider?.name,
+    wallet?.adapter.name,
     referralAddress,
     getPlatform,
   ]);
@@ -248,7 +248,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
     const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
     const networkInfo = `Cluster: ${connectionConfig.cluster}`;
     // const networkInfo = `Cluster: ${connectionConfig.cluster} | TPS: ${tpsAvg || '-'}`;
-    const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
+    const accountInfo = publicKey && wallet ? `Address: ${publicKey.toBase58()} (${wallet.adapter.name})` : '';
     const debugInfo: RuntimeAppDetails = {
       dateTime,
       clientInfo,
@@ -256,7 +256,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
       accountInfo,
     };
     setDiagnosisInfo(debugInfo);
-  }, [provider, publicKey, needRefresh, connectionConfig, setDiagnosisInfo, getPlatform]);
+  }, [wallet, wallet?.adapter.name, publicKey, needRefresh, connectionConfig, setDiagnosisInfo, getPlatform]);
 
   ////////////////////
   // Event handlers //

@@ -93,7 +93,7 @@ export const ExchangeDcasView = () => {
   // Set and cache the DDCA client
   const ddcaClient = useMemo(() => {
     if (connection && wallet && publicKey && connectionConfig.endpoint) {
-      return new DdcaClient(connectionConfig.endpoint, wallet, { commitment: 'confirmed' }, !!isLocal());
+      return new DdcaClient(connectionConfig.endpoint, wallet.adapter, { commitment: 'confirmed' }, !!isLocal());
     }
 
     return undefined;
@@ -352,7 +352,7 @@ export const ExchangeDcasView = () => {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sign = await signTx('Close DDCA', wallet, publicKey, transaction);
+        const sign = await signTx('Close DDCA', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction && sign.signedTransaction) {
           transactionLog = transactionLog.concat(sign.log);
           encodedTx = sign.encodedTransaction;
@@ -597,7 +597,7 @@ export const ExchangeDcasView = () => {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sign = await signTx('DDCA Withdraw', wallet, publicKey, transaction);
+        const sign = await signTx('DDCA Withdraw', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

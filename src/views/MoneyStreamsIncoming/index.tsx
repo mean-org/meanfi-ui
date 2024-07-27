@@ -466,7 +466,7 @@ export const MoneyStreamsIncomingView = (props: {
         const created = await createTx();
         consoleOut('created:', created, 'blue');
         if (created && !transactionCancelled) {
-          const sign = await signTx('Stream Transfer Beneficiary', wallet, publicKey, transaction);
+          const sign = await signTx('Stream Transfer Beneficiary', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -924,7 +924,7 @@ export const MoneyStreamsIncomingView = (props: {
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sign = await signTx('Stream Withdraw', wallet, publicKey, transaction);
+        const sign = await signTx('Stream Withdraw', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

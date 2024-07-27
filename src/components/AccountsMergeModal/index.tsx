@@ -140,7 +140,7 @@ export const AccountsMergeModal = ({
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled && transaction) {
-        const sign = await signTx('Merge Token Accounts', wallet, publicKey, transaction);
+        const sign = await signTx('Merge Token Accounts', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

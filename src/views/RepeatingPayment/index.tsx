@@ -672,7 +672,7 @@ export const RepeatingPayment = ({onOpenTokenSelector, selectedToken, transferCo
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && publicKey && selectedToken) {
-        consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
+        consoleOut('Wallet address:', publicKey?.toBase58());
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
@@ -816,7 +816,7 @@ export const RepeatingPayment = ({onOpenTokenSelector, selectedToken, transferCo
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled && createdTransaction) {
-        const sign = await signTx('Recurring Payment', wallet, publicKey, createdTransaction as Transaction);
+        const sign = await signTx('Recurring Payment', wallet.adapter, publicKey, createdTransaction as Transaction);
         if (sign.encodedTransaction && !transactionCancelled) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

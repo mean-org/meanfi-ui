@@ -1311,7 +1311,7 @@ export const TreasuryStreamCreateModal = ({
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sign = await signTx('Create Stream', wallet, publicKey, transaction);
+        const sign = await signTx('Create Stream', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

@@ -3,7 +3,6 @@ import { IconSafe } from 'Icons';
 import { Popover } from 'antd';
 import { CREATE_SAFE_ROUTE_PATH } from 'app-constants/common';
 import { AccountSelector } from 'components/AccountSelector';
-import { useWallet } from 'contexts/wallet';
 import { useWalletAccount } from 'contexts/walletAccount';
 import useWindowSize from 'hooks/useWindowResize';
 import { AppUsageEvent } from 'middleware/segment-service';
@@ -11,12 +10,13 @@ import { shortenAddress } from 'middleware/utils';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './style.scss';
+import { useWallet } from 'contexts/wallet';
 
 export const AccountDetails = () => {
   const { selectedAccount } = useWalletAccount();
   const navigate = useNavigate();
   const { width } = useWindowSize();
-  const { publicKey, provider, disconnect } = useWallet();
+  const { publicKey, wallet, disconnect } = useWallet();
   const [popoverVisible, setPopoverVisible] = useState(false);
 
   const onCompleteAccountSelection = useCallback(() => {
@@ -38,7 +38,7 @@ export const AccountDetails = () => {
   const renderPersonalAccount = () => {
     return (
       <>
-        {provider && <img src={provider.icon} alt={provider.name} width='24' className='wallet-provider-icon' />}
+        {wallet && <img src={wallet.adapter.icon} alt={wallet.adapter.name} width='24' className='wallet-provider-icon' />}
         <div className='account-descriptor'>
           <div className='account-name'>Personal Account</div>
           <div className='account-id'>{shortenAddress(selectedAccount.address, 6)}</div>

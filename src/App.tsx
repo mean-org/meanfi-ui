@@ -20,7 +20,6 @@ import { environment } from 'environments/environment';
 import useLocalStorage from 'hooks/useLocalStorage';
 import { appConfig } from 'main';
 import { useEffect, useMemo, useState } from 'react';
-import { isDesktop } from 'react-device-detect';
 import { BrowserRouter } from 'react-router-dom';
 import { AppRoutes } from 'routes';
 import { PageLoadingView } from 'views/PageLoading';
@@ -40,16 +39,6 @@ function App() {
   const [theme, updateTheme] = useLocalStorage('theme', 'dark');
   const [loadingStatus, setLoadingStatus] = useState<string>('loading');
   const [writeKey, setWriteKey] = useState('');
-
-  useEffect(() => {
-    if (isDesktop) {
-      return;
-    }
-
-    window.localStorage.removeItem('walletName');
-    window.localStorage.removeItem('lastUsedAccount');
-    window.localStorage.removeItem('cachedRpc');
-  }, []);
 
   useEffect(() => {
     if (!writeKey) {

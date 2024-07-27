@@ -1101,7 +1101,7 @@ export const StreamingAccountView = ({
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sign = await signTx('Fund Account', wallet, publicKey, transaction);
+        const sign = await signTx('Fund Account', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -1391,7 +1391,7 @@ export const StreamingAccountView = ({
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx('Streaming Account Withdraw', wallet, publicKey, transaction);
+        const sign = await signTx('Streaming Account Withdraw', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -1795,7 +1795,7 @@ export const StreamingAccountView = ({
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sign = await signTx('Close Account', wallet, publicKey, transaction);
+        const sign = await signTx('Close Account', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -2033,7 +2033,7 @@ export const StreamingAccountView = ({
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sign = await signTx('Refresh Account Balance', wallet, publicKey, transaction);
+        const sign = await signTx('Refresh Account Balance', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

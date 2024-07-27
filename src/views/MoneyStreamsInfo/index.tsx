@@ -965,7 +965,7 @@ export const MoneyStreamsInfoView = ({
       }
       consoleOut('created:', created, 'blue');
       if (created && !transactionCancelled) {
-        const sign = await signTx('Fund Account', wallet, publicKey, transaction);
+        const sign = await signTx('Fund Account', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -1302,7 +1302,7 @@ export const MoneyStreamsInfoView = ({
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sign = await signTx('Create Streaming Account', wallet, publicKey, transaction);
+        const sign = await signTx('Create Streaming Account', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

@@ -1,4 +1,5 @@
 import { Modal } from 'antd';
+import { useWallet } from 'contexts/wallet';
 import { appConfig } from 'main';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +11,6 @@ import {
   WhatsappShareButton,
 } from 'react-share';
 import { IconCopy, IconFacebook, IconLinkedin, IconTelegram, IconTwitter, IconWhatsapp } from '../../Icons';
-import { useWallet } from '../../contexts/wallet';
 import { copyText } from '../../middleware/ui';
 import { openNotification } from '../Notifications';
 import './style.scss';

@@ -29,7 +29,7 @@ export const StreamWithdrawModal = (props: {
 }) => {
   const { handleClose, handleOk, isVisible, selectedToken, startUpData, transactionFees } = props;
   const { t } = useTranslation('common');
-  const { wallet, publicKey } = useWallet();
+  const { publicKey } = useWallet();
   const { splTokenList, selectedAccount, setTransactionStatus } = useContext(AppStateContext);
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>('');
   const [withdrawAmountBn, setWithdrawAmountBn] = useState(new BN(0));
@@ -112,7 +112,7 @@ export const StreamWithdrawModal = (props: {
   }, [maxAmountBn, selectedToken, withdrawAmountInput]);
 
   useEffect(() => {
-    if (!wallet || !publicKey || !selectedToken || !startUpData) {
+    if (!publicKey || !selectedToken || !startUpData) {
       return;
     }
 
@@ -187,7 +187,7 @@ export const StreamWithdrawModal = (props: {
         setMaxAmountBn(max);
       }
     }
-  }, [wallet, publicKey, startUpData, selectedToken, tokenStreamingV2, tokenStreamingV1, isV2Stream, t]);
+  }, [publicKey, startUpData, selectedToken, tokenStreamingV2, tokenStreamingV1, isV2Stream, t]);
 
   useEffect(() => {
     if (!feeAmount && transactionFees) {

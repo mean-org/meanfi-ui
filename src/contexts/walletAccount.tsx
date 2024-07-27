@@ -1,7 +1,7 @@
+import { useWallet } from 'contexts/wallet';
 import { useLocalStorageState } from 'middleware/utils';
 import type { AccountContext } from 'models/accounts';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
-import { useWallet } from './wallet';
 
 export const emptyAccount: AccountContext = {
   address: '',

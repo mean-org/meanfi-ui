@@ -223,7 +223,7 @@ export const WrapSolModal = ({ isVisible, handleClose, handleOk }: WrapSolModalP
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
-        const sign = await signTx('Wrap SOL', wallet, publicKey, transaction);
+        const sign = await signTx('Wrap SOL', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

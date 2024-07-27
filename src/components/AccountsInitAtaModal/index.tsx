@@ -295,7 +295,7 @@ export const AccountsInitAtaModal = (props: {
       const created = await createTx();
       consoleOut('created:', created);
       if (created && transaction) {
-        const sign = await signTx('Create Asset', wallet, publicKey, transaction as VersionedTransaction);
+        const sign = await signTx('Create Asset', wallet.adapter, publicKey, transaction as VersionedTransaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);

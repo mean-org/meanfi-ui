@@ -1119,7 +1119,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         const created = await createTx();
         consoleOut('created:', created, 'blue');
         if (created) {
-          const sign = await signTx('Create Vesting Contract', wallet, publicKey, transaction);
+          const sign = await signTx('Create Vesting Contract', wallet.adapter, publicKey, transaction);
           if (sign.encodedTransaction) {
             encodedTx = sign.encodedTransaction;
             transactionLog = transactionLog.concat(sign.log);
@@ -1430,7 +1430,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created) {
-        const sign = await signTx('Close Vesting Contract', wallet, publicKey, transaction);
+        const sign = await signTx('Close Vesting Contract', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -1767,7 +1767,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created) {
-        const sign = await signTx('PaymentStreamingAccount Add Funds', wallet, publicKey, transaction);
+        const sign = await signTx('PaymentStreamingAccount Add Funds', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -2094,7 +2094,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created) {
-        const sign = await signTx('Create Stream', wallet, publicKey, transaction);
+        const sign = await signTx('Create Stream', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -2383,7 +2383,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const created = await createTx();
       consoleOut('created:', created, 'blue');
       if (created) {
-        const sign = await signTx('Vesting Contract withdraw', wallet, publicKey, transaction);
+        const sign = await signTx('Vesting Contract withdraw', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
@@ -2565,7 +2565,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
       const created = await createTx();
       consoleOut('created:', created);
       if (created) {
-        const sign = await signTx('Refresh Account Balance', wallet, publicKey, transaction);
+        const sign = await signTx('Refresh Account Balance', wallet.adapter, publicKey, transaction);
         if (sign.encodedTransaction) {
           encodedTx = sign.encodedTransaction;
           transactionLog = transactionLog.concat(sign.log);
