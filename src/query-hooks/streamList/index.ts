@@ -70,7 +70,6 @@ export const useGetStreamList = ({
       }),
     select: useCallback((data: (Stream | StreamInfo)[]) => {
       setLastStreamsAmount(data.length);
-      consoleOut('useGetStreamList -> items returned:', data.length, 'blue');
 
       return data;
     }, []),
