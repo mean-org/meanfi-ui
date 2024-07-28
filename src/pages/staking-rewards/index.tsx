@@ -24,6 +24,7 @@ import {
 } from 'middleware/utils';
 import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { EventType, OperationType, TransactionStatus } from 'models/enums';
+import useAccountAssets from 'query-hooks/accountTokens';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { failsafeConnectionConfig, getDefaultRpc } from 'services/connections-hq';
@@ -33,7 +34,7 @@ import './style.scss';
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
 export const StakingRewardsView = () => {
-  const { tokenAccounts, isWhitelisted, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
+  const { isWhitelisted, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
@@ -53,6 +54,14 @@ export const StakingRewardsView = () => {
   const [meanBalance, setMeanBalance] = useState<number | undefined>(undefined);
   const [meanStakingVaultBalance, setMeanStakingVaultBalance] = useState<number>(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
+
+  const { userAssets, loadingUserAssets } = useAccountAssets(publicKey?.toBase58() ?? '');
+
+  const tokenAccounts = useMemo(() => {
+    if (loadingUserAssets || !userAssets) return [];
+
+    return userAssets.userTokenAccounts ?? [];
+  }, [loadingUserAssets, userAssets]);
 
   // MEAN Staking Vault address
   const meanStakingVault = useMemo(() => {
@@ -87,13 +96,7 @@ export const StakingRewardsView = () => {
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(
-    () =>
-      new StakingClient(
-        getDefaultRpc().cluster,
-        connection.rpcEndpoint,
-        publicKey,
-        failsafeConnectionConfig,
-      ),
+    () => new StakingClient(getDefaultRpc().cluster, connection.rpcEndpoint, publicKey, failsafeConnectionConfig),
     [connection.rpcEndpoint, publicKey],
   );
 
@@ -102,7 +105,7 @@ export const StakingRewardsView = () => {
   /////////////////
 
   const refreshMeanBalance = useCallback(async () => {
-    if (!connection || !publicKey || !tokenAccounts || !tokenAccounts.length) {
+    if (!publicKey || !tokenAccounts || !tokenAccounts.length) {
       return;
     }
 
@@ -113,13 +116,18 @@ export const StakingRewardsView = () => {
       return;
     }
 
-    const meanTokenPk = new PublicKey(meanToken.address);
-    const meanTokenAddress = findATokenAddress(publicKey, meanTokenPk);
-    const result = await getTokenAccountBalanceByAddress(connection, meanTokenAddress);
-    if (result) {
-      balance = result.uiAmount || 0;
+    try {
+      const meanTokenPk = new PublicKey(meanToken.address);
+      const meanTokenAddress = findATokenAddress(publicKey, meanTokenPk);
+      const result = await getTokenAccountBalanceByAddress(connection, meanTokenAddress);
+      if (result) {
+        balance = result.uiAmount || 0;
+      }
+      consoleOut('MEAN balance:', balance, 'blue');
+      setMeanBalance(balance);
+    } catch (error) {
+      setMeanBalance(balance);
     }
-    setMeanBalance(balance);
   }, [tokenAccounts, meanToken, publicKey, connection]);
 
   const refreshMeanStakingVaultBalance = useCallback(async () => {
@@ -155,7 +163,6 @@ export const StakingRewardsView = () => {
     // biome-ignore lint/suspicious/noExplicitAny: event can be any type
     (value: any) => {
       consoleOut('onDepositTxConfirmed event executed:', value, 'crimson');
-      setIsBusy(false);
       resetTransactionStatus();
       setTimeout(() => {
         refreshMeanStakingVaultBalance();
@@ -199,18 +206,12 @@ export const StakingRewardsView = () => {
       return;
     }
 
-    if (pageInitialized) {
-      return;
-    }
-
-    const tokenList = MEAN_TOKEN_LIST.filter(
-      t => t.chainId === getNetworkIdByCluster(getDefaultRpc().cluster),
-    );
+    const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(getDefaultRpc().cluster));
     const token = tokenList.find(t => t.symbol === 'MEAN');
 
     consoleOut('MEAN token', token, 'blue');
     setMeanToken(token);
-  }, [connection, pageInitialized]);
+  }, [connection]);
 
   // Keep native account balance updated
   useEffect(() => {
@@ -225,14 +226,12 @@ export const StakingRewardsView = () => {
 
   // Keep MEAN balance updated
   useEffect(() => {
-    if (!publicKey || !tokenAccounts || !tokenAccounts.length) {
-      return;
-    }
+    refreshMeanBalance();
+  }, [refreshMeanBalance]);
 
-    if (meanToken) {
-      refreshMeanBalance();
-    }
-  }, [tokenAccounts, publicKey, meanToken, refreshMeanBalance]);
+  useEffect(() => {
+    consoleOut('tokenAccounts:', tokenAccounts, 'brown');
+  }, [tokenAccounts]);
 
   // Refresh deposits info
   useEffect(() => {
@@ -299,7 +298,6 @@ export const StakingRewardsView = () => {
     let transactionLog: LooseObject[] = [];
 
     resetTransactionStatus();
-    setIsBusy(true);
 
     const stakingVaultDepositTx = async ({
       stakeClient,
@@ -406,12 +404,12 @@ export const StakingRewardsView = () => {
           setLastDepositSignature(signature);
           consoleOut('Send Tx to confirmation queue:', signature);
           const depositionMessage = `Depositing ${formatThousands(getTotalMeanAdded(), meanToken.decimals)} ${
-              meanToken.symbol
-            } into the staking vault`;
+            meanToken.symbol
+          } into the staking vault`;
           const depositSuccessMessage = `Successfully deposited ${formatThousands(
-              getTotalMeanAdded(),
-              meanToken.decimals,
-            )} ${meanToken.symbol} into the staking vault`;
+            getTotalMeanAdded(),
+            meanToken.decimals,
+          )} ${meanToken.symbol} into the staking vault`;
           enqueueTransactionConfirmation({
             signature,
             operationType: OperationType.Deposit,
@@ -607,7 +605,7 @@ export const StakingRewardsView = () => {
         <div className='right'>&nbsp;</div>
       </div>
       <span className='form-field-hint'>
-        User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 9) : '0'}
+        User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 6) : '0'}
       </span>
     </div>
   );
