@@ -90,13 +90,13 @@ export const isSuccess = (operation: TransactionStatus | undefined): boolean => 
 };
 
 export const isError = (operation: TransactionStatus | undefined): boolean => {
-  return operation === TransactionStatus.TransactionStartFailure ||
+  return (
+    operation === TransactionStatus.TransactionStartFailure ||
     operation === TransactionStatus.InitTransactionFailure ||
     operation === TransactionStatus.SignTransactionFailure ||
     operation === TransactionStatus.SendTransactionFailure ||
     operation === TransactionStatus.ConfirmTransactionFailure
-    ? true
-    : false;
+  );
 };
 
 export const getChange = (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
@@ -215,7 +215,7 @@ export const sendTx = async (title: string, connection: Connection, encodedTx: s
 
 export const serializeTx = (signed: Transaction | VersionedTransaction) => {
   let base64Tx = '';
-  const isVersioned = 'version' in signed ? true : false;
+  const isVersioned = 'version' in signed;
 
   if (isVersioned) {
     const encodedTx = signed.serialize();
