@@ -28,7 +28,6 @@ import { EventType, OperationType, TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LooseObject } from 'types/LooseObject';
-import './style.scss';
 import useRealmsDeposit from './useRealmsDeposit';
 import useUnstakeQuote from './useUnstakeQuote';
 
