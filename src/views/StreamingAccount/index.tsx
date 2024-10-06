@@ -38,42 +38,46 @@ import {
   type TransactionInstruction,
   type VersionedTransaction,
 } from '@solana/web3.js';
-import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from 'Icons';
 import { Alert, Button, Dropdown, Row, Space, Spin, Tabs } from 'antd';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { isMobile } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from 'src/Icons'
 import {
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   WRAPPED_SOL_MINT_ADDRESS,
-} from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
-import { Identicon } from 'components/Identicon';
-import { openNotification } from 'components/Notifications';
-import { ResumeItem } from 'components/ResumeItem';
-import { SolBalanceModal } from 'components/SolBalanceModal';
-import { StreamStatusSummary } from 'components/StreamStatusSummary';
-import { TreasuryAddFundsModal } from 'components/TreasuryAddFundsModal';
-import { TreasuryCloseModal } from 'components/TreasuryCloseModal';
-import { TreasuryStreamCreateModal } from 'components/TreasuryStreamCreateModal';
-import { TreasuryTransferFundsModal } from 'components/TreasuryTransferFundsModal';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import useLocalStorage from 'hooks/useLocalStorage';
-import useWindowSize from 'hooks/useWindowResize';
-import { customLogger } from 'main';
-import { fetchAccountTokens, getTokenAccountBalanceByAddress } from 'middleware/accounts';
-import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
-import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
-import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
-import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { SOL_MINT } from 'middleware/ids';
-import { getStreamStatusLabel } from 'middleware/streamHelpers';
-import { getStreamTitle } from 'middleware/streams';
+} from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { CopyExtLinkGroup } from 'src/components/CopyExtLinkGroup';
+import { Identicon } from 'src/components/Identicon';
+import { openNotification } from 'src/components/Notifications';
+import { ResumeItem } from 'src/components/ResumeItem';
+import { SolBalanceModal } from 'src/components/SolBalanceModal';
+import { StreamStatusSummary } from 'src/components/StreamStatusSummary';
+import { TreasuryAddFundsModal } from 'src/components/TreasuryAddFundsModal';
+import { TreasuryCloseModal } from 'src/components/TreasuryCloseModal';
+import { TreasuryStreamCreateModal } from 'src/components/TreasuryStreamCreateModal';
+import { TreasuryTransferFundsModal } from 'src/components/TreasuryTransferFundsModal';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { customLogger } from 'src/main';
+import { fetchAccountTokens, getTokenAccountBalanceByAddress } from 'src/middleware/accounts';
+import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
+import { getStreamingAccountId } from 'src/middleware/getStreamingAccountId';
+import { getStreamingAccountMint } from 'src/middleware/getStreamingAccountMint';
+import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
+import { SOL_MINT } from 'src/middleware/ids';
+import { getStreamStatusLabel } from 'src/middleware/streamHelpers';
+import { getStreamTitle } from 'src/middleware/streams';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -81,8 +85,8 @@ import {
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
-} from 'middleware/transactions';
-import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isProd } from 'middleware/ui';
+} from 'src/middleware/transactions';
+import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isProd } from 'src/middleware/ui';
 import {
   displayAmountWithSymbol,
   findATokenAddress,
@@ -95,20 +99,16 @@ import {
   openLinkInNewTab,
   shortenAddress,
   toTokenAmountBn,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { TreasuryTopupParams } from 'models/common-types';
-import { OperationType, TransactionStatus } from 'models/enums';
-import { ZERO_FEES } from 'models/multisig';
-import type { TreasuryWithdrawParams } from 'models/treasuries';
-import type { AddFundsParams } from 'models/vesting';
-import useMultisigClient from 'query-hooks/multisigClient';
-import useStreamingClient from 'query-hooks/streamingClient';
-import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { isMobile } from 'react-device-detect';
-import { useTranslation } from 'react-i18next';
-import { useParams, useSearchParams } from 'react-router-dom';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { TreasuryTopupParams } from 'src/models/common-types';
+import { OperationType, TransactionStatus } from 'src/models/enums';
+import { ZERO_FEES } from 'src/models/multisig';
+import type { TreasuryWithdrawParams } from 'src/models/treasuries';
+import type { AddFundsParams } from 'src/models/vesting';
+import useMultisigClient from 'src/query-hooks/multisigClient';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import type { LooseObject } from 'src/types/LooseObject';
 
 interface StreamingAccountViewProps {
   multisigAccounts: MultisigInfo[] | undefined;

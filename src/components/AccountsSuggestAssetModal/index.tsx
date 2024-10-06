@@ -1,5 +1,5 @@
 import { Modal } from 'antd';
-import { HELLO_NEXT_BOARD_URL } from 'app-constants/common';
+import { HELLO_NEXT_BOARD_URL } from 'src/app-constants/common';
 import { IconLightBulb } from '../../Icons';
 
 interface IProps {

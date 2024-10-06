@@ -6,9 +6,9 @@ import bs58 from 'bs58';
 import dateFormat from 'dateformat';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime'
-import getRuntimeEnv from 'environments/getRuntimeEnv';
 import type { TFunction } from 'i18next';
-import { customLogger } from 'main';
+import getRuntimeEnv from 'src/environments/getRuntimeEnv';
+import { customLogger } from 'src/main';
 import {
   BIGNUMBER_FORMAT,
   SIMPLE_DATE_FORMAT,

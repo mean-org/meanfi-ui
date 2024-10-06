@@ -1,10 +1,10 @@
-import { IconExchange } from 'Icons';
-import { PreFooter } from 'components/PreFooter';
-import { consoleOut } from 'middleware/ui';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import DlnBridge from 'views/DlnBridge';
+import { IconExchange } from 'src/Icons'
+import { PreFooter } from 'src/components/PreFooter';
+import { consoleOut } from 'src/middleware/ui';
+import DlnBridge from 'src/views/DlnBridge';
 
 const Bridge = () => {
   const location = useLocation();

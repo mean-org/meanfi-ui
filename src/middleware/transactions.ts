@@ -14,9 +14,9 @@ import {
   VersionedTransaction,
   type VersionedTransactionResponse,
 } from '@solana/web3.js';
-import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'app-constants/common';
-import { customLogger } from 'main';
-import type { SendTxResult, SignTxResult } from 'models/CreateTxResult';
+import { MAX_SUPPORTED_TRANSACTION_VERSION } from 'src/app-constants/common';
+import { customLogger } from 'src/main';
+import type { SendTxResult, SignTxResult } from 'src/models/CreateTxResult';
 import { TransactionStatus } from '../models/enums';
 import { consoleOut, getTransactionStatusForLogs } from './ui';
 import { formatThousands, getAmountFromLamports, readLocalStorageKey, toBuffer } from './utils';

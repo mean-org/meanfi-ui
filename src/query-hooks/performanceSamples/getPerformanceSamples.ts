@@ -1,5 +1,5 @@
 import type { Connection } from '@solana/web3.js';
-import { consoleOut } from 'middleware/ui';
+import { consoleOut } from 'src/middleware/ui';
 
 const getPerformanceSamples = async (connection: Connection) => {
   if (!connection) {

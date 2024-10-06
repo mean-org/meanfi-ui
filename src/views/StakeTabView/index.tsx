@@ -1,20 +1,22 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import type { StakeQuote, StakingClient } from '@mean-dao/staking';
 import type { Transaction } from '@solana/web3.js';
-import { segmentAnalytics } from 'App';
 import { Button, Col, Row } from 'antd';
-import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'app-constants/common';
-import { openNotification } from 'components/Notifications';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { useAccountsContext } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import { customLogger } from 'main';
-import { AppUsageEvent, type SegmentStakeMeanData } from 'middleware/segment-service';
-import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
-import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { segmentAnalytics } from 'src/App';
+import { INPUT_DEBOUNCE_TIME, STAKING_ROUTE_BASE_PATH } from 'src/app-constants/common';
+import { openNotification } from 'src/components/Notifications';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { useAccountsContext } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import { customLogger } from 'src/main';
+import { AppUsageEvent, type SegmentStakeMeanData } from 'src/middleware/segment-service';
+import { composeTxWithPrioritizationFees, sendTx, signTx } from 'src/middleware/transactions';
+import { consoleOut, getTransactionStatusForLogs } from 'src/middleware/ui';
 import {
   cutNumber,
   formatAmount,
@@ -22,12 +24,10 @@ import {
   getAmountWithSymbol,
   getTxIxResume,
   isValidNumber,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
+import type { LooseObject } from 'src/types/LooseObject';
 import useRealmsDeposit from './useRealmsDeposit';
 import useUnstakeQuote from './useUnstakeQuote';
 

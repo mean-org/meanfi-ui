@@ -2,12 +2,12 @@ import type { StreamInfo } from '@mean-dao/money-streaming';
 import type { Stream } from '@mean-dao/payment-streaming';
 import { Button, Modal } from 'antd';
 import Checkbox, { type CheckboxChangeEvent } from 'antd/lib/checkbox/Checkbox';
-import { InputMean } from 'components/InputMean';
-import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
-import { isValidAddress } from 'middleware/ui';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { InputMean } from 'src/components/InputMean';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWallet } from 'src/contexts/wallet';
+import { isValidAddress } from 'src/middleware/ui';
 
 export type StreamTransferPayload = {
   title: string;

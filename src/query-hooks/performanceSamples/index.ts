@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { FIVE_MINUTES_REFRESH_TIMEOUT } from 'app-constants/common';
-import { useConnection } from 'contexts/connection';
+import { FIVE_MINUTES_REFRESH_TIMEOUT } from 'src/app-constants/common';
+import { useConnection } from 'src/contexts/connection';
 import getPerformanceSamples from './getPerformanceSamples';
 
 export const getPerformanceSamplesKey = () => ['/performance-samples'];

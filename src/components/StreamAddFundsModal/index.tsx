@@ -12,14 +12,15 @@ import {
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Modal } from 'antd';
-import { WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
-import { InputMean } from 'components/InputMean';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { SOL_MINT } from 'middleware/ids';
-import { consoleOut, toUsCurrency } from 'middleware/ui';
+import { useTranslation } from 'react-i18next';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'src/app-constants/common';
+import { InputMean } from 'src/components/InputMean';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
+import { SOL_MINT } from 'src/middleware/ids';
+import { consoleOut, toUsCurrency } from 'src/middleware/ui';
 import {
   cutNumber,
   displayAmountWithSymbol,
@@ -28,12 +29,11 @@ import {
   toTokenAmount,
   toTokenAmountBn,
   toUiAmount,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { StreamTopupParams } from 'models/common-types';
-import type { StreamTreasuryType } from 'models/treasuries';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { StreamTopupParams } from 'src/models/common-types';
+import type { StreamTreasuryType } from 'src/models/treasuries';
+import type { LooseObject } from 'src/types/LooseObject';
 import { TokenDisplay } from '../TokenDisplay';
 
 export const StreamAddFundsModal = (props: {

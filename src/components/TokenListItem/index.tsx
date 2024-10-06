@@ -1,9 +1,9 @@
-import { Identicon } from 'components/Identicon';
-import { AppStateContext } from 'contexts/appstate';
-import { toUsCurrency } from 'middleware/ui';
-import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { type ReactNode, useContext, useMemo } from 'react';
+import { Identicon } from 'src/components/Identicon';
+import { AppStateContext } from 'src/contexts/appstate';
+import { toUsCurrency } from 'src/middleware/ui';
+import { getAmountWithSymbol, shortenAddress } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 
 export const TokenListItem = (props: {
   mintAddress: string;

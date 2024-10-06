@@ -1,8 +1,8 @@
 import { type Cluster, type ConnectionConfig, clusterApiUrl } from '@solana/web3.js';
-import { TRANSACTION_STATUS_RETRY_TIMEOUT } from 'app-constants/common';
-import { environment } from 'environments/environment';
-import getRuntimeEnv from 'environments/getRuntimeEnv';
-import { ChainID } from 'models/enums';
+import { TRANSACTION_STATUS_RETRY_TIMEOUT } from 'src/app-constants/common';
+import { environment } from 'src/environments/environment';
+import getRuntimeEnv from 'src/environments/getRuntimeEnv';
+import { ChainID } from 'src/models/enums';
 
 export interface RpcConfig {
   cluster: Cluster | 'local-validator';
@@ -15,14 +15,17 @@ export interface RpcConfig {
 const ironForgeApiUrl = getRuntimeEnv().VITE_IRONFORGE_API_URL ?? '';
 const ironForgeApiKey = getRuntimeEnv().VITE_IRONFORGE_API_KEY ?? '';
 const ironForgeApiAccessToken = getRuntimeEnv().VITE_IRONFORGE_API_ACCESS_TOKEN ?? '';
+const ironForgeHeader = ironForgeApiAccessToken
+  ? {
+      'x-ironforge-auth-token': ironForgeApiAccessToken,
+    }
+  : undefined;
 
 export const failsafeConnectionConfig: ConnectionConfig = {
   commitment: 'confirmed',
   confirmTransactionInitialTimeout: TRANSACTION_STATUS_RETRY_TIMEOUT,
   disableRetryOnRateLimit: true,
-  httpHeaders: {
-    'x-ironforge-auth-token': ironForgeApiAccessToken,
-  },
+  httpHeaders: ironForgeHeader,
 };
 
 export const DEFAULT_RPCS: RpcConfig[] = [

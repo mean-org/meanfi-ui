@@ -1,10 +1,10 @@
-import { IconMoneyTransfer, IconNoItems, IconSafe, IconStats } from 'Icons';
-import { IconPaymentStreaming } from 'Icons/IconPaymentStreaming';
-import { readFromCache } from 'cache/persistentCache';
-import { AppStateContext } from 'contexts/appstate';
-import { toUsCurrency } from 'middleware/ui';
-import { KNOWN_APPS, type KnownAppMetadata, RegisteredAppPaths } from 'models/accounts';
 import { useCallback, useContext } from 'react';
+import { IconMoneyTransfer, IconNoItems, IconSafe, IconStats } from 'src/Icons'
+import { IconPaymentStreaming } from 'src/Icons/IconPaymentStreaming';
+import { readFromCache } from 'src/cache/persistentCache';
+import { AppStateContext } from 'src/contexts/appstate';
+import { toUsCurrency } from 'src/middleware/ui';
+import { KNOWN_APPS, type KnownAppMetadata, RegisteredAppPaths } from 'src/models/accounts';
 import './style.scss';
 
 export const AppsList = (props: {

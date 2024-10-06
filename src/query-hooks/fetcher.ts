@@ -1,4 +1,4 @@
-import getRuntimeEnv from 'environments/getRuntimeEnv';
+import getRuntimeEnv from 'src/environments/getRuntimeEnv';
 import { ApiError } from './ApiError';
 
 export type ErrorType<ErrorData> = ErrorData;

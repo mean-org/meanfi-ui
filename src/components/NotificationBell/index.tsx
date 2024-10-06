@@ -1,5 +1,5 @@
-import { useWallet } from 'contexts/wallet';
 import { useCallback } from 'react';
+import { useWallet } from 'src/contexts/wallet';
 import { IconNotification } from '../../Icons';
 import useWindowSize from '../../hooks/useWindowResize';
 

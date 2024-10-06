@@ -7,12 +7,12 @@ import {
   type Transaction,
   type VersionedTransaction,
 } from '@solana/web3.js';
-import { MEAN_TOKEN_LIST, NATIVE_SOL } from 'app-constants/tokens';
 import { BigNumber } from 'bignumber.js';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useState } from 'react';
 import { isMobile } from 'react-device-detect';
-import type { LooseObject } from 'types/LooseObject';
+import { MEAN_TOKEN_LIST, NATIVE_SOL } from 'src/app-constants/tokens';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { LooseObject } from 'src/types/LooseObject';
 import {
   BIGNUMBER_FORMAT,
   CUSTOM_TOKEN_NAME,

@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { THIRTY_MINUTES_REFRESH_TIMEOUT } from 'app-constants';
-import { getPrices } from 'middleware/api';
-import type { TokenPrice } from 'models/TokenPrice';
 import { useCallback } from 'react';
+import { THIRTY_MINUTES_REFRESH_TIMEOUT } from 'src/app-constants';
+import { getPrices } from 'src/middleware/api';
+import type { TokenPrice } from 'src/models/TokenPrice';
 
 export const getAssetPricesKey = () => ['/token-prices'];
 

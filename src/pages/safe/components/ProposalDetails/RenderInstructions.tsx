@@ -1,20 +1,20 @@
 import type { InstructionDataInfo, OwnerMeta } from '@mean-dao/mean-multisig-sdk';
 import { BN } from '@project-serum/anchor';
 import { type Connection, PublicKey } from '@solana/web3.js';
-import { IconExternalLink } from 'Icons';
 import { Col, Row, Tooltip } from 'antd';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
-import { openNotification } from 'components/Notifications';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
 import dayjs from 'dayjs';
-import { appConfig } from 'main';
-import { consoleOut, copyText, getDurationUnitFromSeconds } from 'middleware/ui';
-import { displayAmountWithSymbol, formatThousands, getTokenOrCustomToken, makeDecimal } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { MultisigTransactionInstructionInfo } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IconExternalLink } from 'src/Icons'
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
+import { openNotification } from 'src/components/Notifications';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import { appConfig } from 'src/main';
+import { consoleOut, copyText, getDurationUnitFromSeconds } from 'src/middleware/ui';
+import { displayAmountWithSymbol, formatThousands, getTokenOrCustomToken, makeDecimal } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { MultisigTransactionInstructionInfo } from 'src/models/multisig';
 
 export const RenderInstructions = (props: {
   connection: Connection;

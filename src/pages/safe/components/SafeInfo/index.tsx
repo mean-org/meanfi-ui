@@ -1,22 +1,22 @@
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { IconLoading, IconVerticalEllipsis } from 'Icons';
 import { Alert, Button, Col, Dropdown, Row, Space, Tabs, type TabsProps, Tooltip } from 'antd';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
-import { MIN_SOL_BALANCE_REQUIRED } from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
-import CopyMultisigIdModal from 'components/CopyMultisigIdModal';
-import { MultisigOwnersView } from 'components/MultisigOwnersView';
-import { RightInfoDetails } from 'components/RightInfoDetails';
-import { SolBalanceModal } from 'components/SolBalanceModal';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { consoleOut, toUsCurrency } from 'middleware/ui';
-import { getAmountFromLamports, shortenAddress } from 'middleware/utils';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { IconLoading, IconVerticalEllipsis } from 'src/Icons'
+import { MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { CopyExtLinkGroup } from 'src/components/CopyExtLinkGroup';
+import CopyMultisigIdModal from 'src/components/CopyMultisigIdModal';
+import { MultisigOwnersView } from 'src/components/MultisigOwnersView';
+import { RightInfoDetails } from 'src/components/RightInfoDetails';
+import { SolBalanceModal } from 'src/components/SolBalanceModal';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { consoleOut, toUsCurrency } from 'src/middleware/ui';
+import { getAmountFromLamports, shortenAddress } from 'src/middleware/utils';
 
 export const SafeInfo = (props: {
   onEditMultisigClick?: () => void;

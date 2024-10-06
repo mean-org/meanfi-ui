@@ -1,13 +1,13 @@
 import type { MultisigInfo, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import type { Idl, Program } from '@project-serum/anchor';
 import type { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
-import { IconArrowForward } from 'Icons';
 import { Button, Col, Row, type TabsProps } from 'antd';
-import { ResumeItem } from 'components/ResumeItem';
-import { BPF_LOADER_UPGRADEABLE_PID } from 'middleware/ids';
-import { consoleOut } from 'middleware/ui';
-import type { ProgramAccounts } from 'models/accounts';
 import { useCallback, useEffect, useState } from 'react';
+import { IconArrowForward } from 'src/Icons'
+import { ResumeItem } from 'src/components/ResumeItem';
+import { BPF_LOADER_UPGRADEABLE_PID } from 'src/middleware/ids';
+import { consoleOut } from 'src/middleware/ui';
+import type { ProgramAccounts } from 'src/models/accounts';
 import { SafeInfo } from '../SafeInfo';
 
 export const SafeSerumInfoView = (props: {

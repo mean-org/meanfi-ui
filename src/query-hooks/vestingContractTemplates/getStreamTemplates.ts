@@ -1,7 +1,7 @@
 import type { PaymentStreaming, PaymentStreamingAccount } from '@mean-dao/payment-streaming';
-import { PerformanceCounter } from 'middleware/perf-counter';
-import { consoleOut, delay, isProd } from 'middleware/ui';
-import type { LooseObject } from 'types/LooseObject';
+import { PerformanceCounter } from 'src/middleware/perf-counter';
+import { consoleOut, delay, isProd } from 'src/middleware/ui';
+import type { LooseObject } from 'src/types/LooseObject';
 
 const streamTemplatesPerformanceCounter = new PerformanceCounter();
 

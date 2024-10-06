@@ -1,10 +1,10 @@
 import { Modal } from 'antd';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
 import { AddressDisplay } from '../AddressDisplay';
 
 export const ReceiveSplOrSolModal = (props: {

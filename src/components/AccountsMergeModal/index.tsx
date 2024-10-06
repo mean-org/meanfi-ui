@@ -1,26 +1,26 @@
 import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { type Connection, PublicKey, type VersionedTransaction } from '@solana/web3.js';
 import { Button, Modal, Spin } from 'antd';
-import { openNotification } from 'components/Notifications';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { AppStateContext } from 'contexts/appstate';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import { customLogger } from 'main';
-import { createV0TokenMergeTx } from 'middleware/createV0TokenMergeTx';
-import { sendTx, signTx } from 'middleware/transactions';
+import { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { openNotification } from 'src/components/Notifications';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { AppStateContext } from 'src/contexts/appstate';
+import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import { customLogger } from 'src/main';
+import { createV0TokenMergeTx } from 'src/middleware/createV0TokenMergeTx';
+import { sendTx, signTx } from 'src/middleware/transactions';
 import {
   consoleOut,
   friendlyDisplayDecimalPlaces,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-} from 'middleware/ui';
-import { formatThousands, getVersionedTxIxResume, shortenAddress } from 'middleware/utils';
-import type { AccountTokenParsedInfo, UserTokenAccount } from 'models/accounts';
-import { OperationType, TransactionStatus } from 'models/enums';
-import { useContext, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/ui';
+import { formatThousands, getVersionedTxIxResume, shortenAddress } from 'src/middleware/utils';
+import type { AccountTokenParsedInfo, UserTokenAccount } from 'src/models/accounts';
+import { OperationType, TransactionStatus } from 'src/models/enums';
+import type { LooseObject } from 'src/types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

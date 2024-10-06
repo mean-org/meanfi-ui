@@ -1,5 +1,5 @@
 import type { AccountType } from '@mean-dao/payment-streaming';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 
 export interface TreasuryTypeOption {
   name: string;

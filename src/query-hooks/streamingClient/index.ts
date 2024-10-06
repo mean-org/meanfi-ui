@@ -1,10 +1,10 @@
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PaymentStreaming } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
-import { useConnection } from 'contexts/connection';
-import { appConfig } from 'main';
 import { useMemo } from 'react';
-import { failsafeConnectionConfig } from 'services/connections-hq';
+import { useConnection } from 'src/contexts/connection';
+import { appConfig } from 'src/main';
+import { failsafeConnectionConfig } from 'src/services/connections-hq';
 
 /**
  * Initializes both Token Streaming clients, V1 and V2

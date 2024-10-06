@@ -1,6 +1,6 @@
 import { LogglyTracker } from 'loggly-jslogger';
-import { appConfig } from 'main';
 import { browserName, browserVersion, isBrowser, osName } from 'react-device-detect';
+import { appConfig } from 'src/main';
 import { WALLET_PROVIDERS } from '../contexts/wallet';
 import { environment } from '../environments/environment';
 import { isLocal, isProd } from '../middleware/ui';

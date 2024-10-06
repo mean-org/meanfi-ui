@@ -1,5 +1,5 @@
 import type { FindNftsByOwnerOutput, Metadata, Nft, Sft } from '@metaplex-foundation/js';
-import type { UserTokenAccount } from 'models/accounts';
+import type { UserTokenAccount } from 'src/models/accounts';
 
 /**
  * Given the assetId passed in the url, gets the NFT mint address from available data

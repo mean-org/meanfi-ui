@@ -3,9 +3,9 @@ import { type Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { useEffect, useState } from 'react';
 
-import { useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { appConfig } from 'main';
+import { useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { appConfig } from 'src/main';
 
 const getTokenOwnerRecordsForRealmMintMapByOwner = async (connection: Connection) => {
   const governingTokenMintPk = new PublicKey(appConfig.getConfig().realmsGoverningTokenMintPk);

@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { IconCross, IconGasStation } from 'Icons';
 import { Button, Popover, Segmented } from 'antd';
 import type { SegmentedValue } from 'antd/lib/segmented';
-import useLocalStorage from 'hooks/useLocalStorage';
-import useWindowSize from 'hooks/useWindowResize';
+import { useTranslation } from 'react-i18next';
+import { IconCross, IconGasStation } from 'src/Icons'
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import useWindowSize from 'src/hooks/useWindowResize';
 import {
   COMPUTE_UNIT_PRICE,
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   type PriorityOption,
-} from 'middleware/transactions';
-import { consoleOut } from 'middleware/ui';
-import { formatThousands } from 'middleware/utils';
-import { useTranslation } from 'react-i18next';
+} from 'src/middleware/transactions';
+import { consoleOut } from 'src/middleware/ui';
+import { formatThousands } from 'src/middleware/utils';
 
 interface PopoverContentProps {
   transactionPriorityOptions: ComputeBudgetConfig;

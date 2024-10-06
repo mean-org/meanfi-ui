@@ -7,17 +7,19 @@ import {
   type TransactionFees,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { IconEdit, IconWarning } from 'Icons';
 import { Button, Checkbox, Col, Modal, Row } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import { MIN_SOL_BALANCE_REQUIRED } from 'app-constants/common';
-import { InfoIcon } from 'components/InfoIcon';
-import { InputMean } from 'components/InputMean';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { WizardStepSelector } from 'components/WizardStepSelector';
-import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
-import { isError } from 'middleware/transactions';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { IconEdit, IconWarning } from 'src/Icons'
+import { MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
+import { InfoIcon } from 'src/components/InfoIcon';
+import { InputMean } from 'src/components/InputMean';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { WizardStepSelector } from 'src/components/WizardStepSelector';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWallet } from 'src/contexts/wallet';
+import { isError } from 'src/middleware/transactions';
 import {
   consoleOut,
   getLockPeriodOptionLabel,
@@ -27,7 +29,7 @@ import {
   isValidAddress,
   stringNumberFormat,
   toUsCurrency,
-} from 'middleware/ui';
+} from 'src/middleware/ui';
 import {
   displayAmountWithSymbol,
   formatPercent,
@@ -36,12 +38,10 @@ import {
   makeDecimal,
   toTokenAmount,
   toUiAmount,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { PaymentRateType } from 'models/enums';
-import type { VestingContractStreamCreateOptions } from 'models/vesting';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { PaymentRateType } from 'src/models/enums';
+import type { VestingContractStreamCreateOptions } from 'src/models/vesting';
 
 export const VestingContractCreateStreamModal = (props: {
   handleClose: () => void;

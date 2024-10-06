@@ -1,6 +1,6 @@
 import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
-import { AppStateContext } from 'contexts/appstate';
 import { type ReactElement, useContext } from 'react';
+import { AppStateContext } from 'src/contexts/appstate';
 import { WagmiProvider } from 'wagmi';
 import { wagmiConfig } from './wagmiConfig';
 

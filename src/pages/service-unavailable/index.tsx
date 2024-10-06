@@ -1,8 +1,8 @@
 import { Button } from 'antd';
-import useLocalStorage from 'hooks/useLocalStorage';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import useLocalStorage from 'src/hooks/useLocalStorage';
 import { IconDiscord, IconSolana } from '../../Icons';
 import { CountdownTimer } from '../../components/CountdownTimer';
 

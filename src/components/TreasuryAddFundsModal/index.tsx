@@ -3,26 +3,30 @@ import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import type { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { AccountType, type PaymentStreamingAccount, type Stream } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { IconHelpCircle } from 'Icons';
 import { Button, Modal, Select, Spin, Tooltip } from 'antd';
+import { QRCodeSVG } from 'qrcode.react';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { IconHelpCircle } from 'src/Icons'
 import {
   FALLBACK_COIN_IMAGE,
   MIN_SOL_BALANCE_REQUIRED,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   WRAPPED_SOL_MINT_ADDRESS,
-} from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { Identicon } from 'components/Identicon';
-import { InputMean } from 'components/InputMean';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
-import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
-import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { SOL_MINT } from 'middleware/ids';
-import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
+} from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { AddressDisplay } from 'src/components/AddressDisplay';
+import { Identicon } from 'src/components/Identicon';
+import { InputMean } from 'src/components/InputMean';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { getStreamingAccountId } from 'src/middleware/getStreamingAccountId';
+import { getStreamingAccountMint } from 'src/middleware/getStreamingAccountMint';
+import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
+import { SOL_MINT } from 'src/middleware/ids';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'src/middleware/ui';
 import {
   displayAmountWithSymbol,
   formatThousands,
@@ -32,15 +36,11 @@ import {
   shortenAddress,
   toTokenAmount,
   toUiAmount,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { TreasuryTopupParams } from 'models/common-types';
-import { TransactionStatus } from 'models/enums';
-import { QRCodeSVG } from 'qrcode.react';
-import type React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { TreasuryTopupParams } from 'src/models/common-types';
+import { TransactionStatus } from 'src/models/enums';
+import type { LooseObject } from 'src/types/LooseObject';
 import { TokenDisplay } from '../TokenDisplay';
 
 const { Option } = Select;

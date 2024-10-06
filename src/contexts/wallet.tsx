@@ -27,15 +27,15 @@ import {
   TrustWalletAdapter,
   TrustWalletName,
 } from '@solana/wallet-adapter-wallets';
-import { segmentAnalytics } from 'App';
 import { Button, Modal } from 'antd';
-import { openNotification } from 'components/Notifications';
-import { AppUsageEvent } from 'middleware/segment-service';
 import React, { useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getDefaultRpc } from 'services/connections-hq';
+import { segmentAnalytics } from 'src/App';
+import { openNotification } from 'src/components/Notifications';
+import { AppUsageEvent } from 'src/middleware/segment-service';
+import { getDefaultRpc } from 'src/services/connections-hq';
 import { consoleOut, isProd } from '../middleware/ui';
 import { isUnauthenticatedRoute, useLocalStorageState } from '../middleware/utils';
 

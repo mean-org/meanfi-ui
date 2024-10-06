@@ -7,15 +7,15 @@ import {
   PublicKey,
   type TokenAmount,
 } from '@solana/web3.js';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { TokenPrice } from 'models/TokenPrice';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { TokenPrice } from 'src/models/TokenPrice';
 import type {
   AccountTokenParsedInfo,
   TokenAccountInfo,
   TokenSelectorListWithBalances,
   UserTokenAccount,
   UserTokensResponse,
-} from 'models/accounts';
+} from 'src/models/accounts';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../app-constants';
 import { MEAN_TOKEN_LIST, NATIVE_SOL } from '../app-constants/tokens';
 import getPriceByAddressOrSymbol from './getPriceByAddressOrSymbol';

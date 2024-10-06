@@ -3,20 +3,22 @@ import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { estimateFeesPerGas } from '@wagmi/core';
 import { Button, Modal, Select, Tooltip } from 'antd';
-import { INPUT_DEBOUNCE_TIME, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { Identicon } from 'components/Identicon';
-import ProductionOnlyNotice from 'components/ProductionOnlyNotice';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import { useDebounce } from 'hooks/useDebounce';
-import useTransaction from 'hooks/useTransaction';
-import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
-import { consoleOut, isEvmValidAddress, isProd, isValidAddress, percentageBn, toUsCurrency } from 'middleware/ui';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { INPUT_DEBOUNCE_TIME, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { Identicon } from 'src/components/Identicon';
+import ProductionOnlyNotice from 'src/components/ProductionOnlyNotice';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import { useDebounce } from 'src/hooks/useDebounce';
+import useTransaction from 'src/hooks/useTransaction';
+import { getTokenAccountBalanceByAddress } from 'src/middleware/accounts';
+import { consoleOut, isEvmValidAddress, isProd, isValidAddress, percentageBn, toUsCurrency } from 'src/middleware/ui';
 import {
   findATokenAddress,
   formatThousands,
@@ -24,11 +26,9 @@ import {
   isValidNumber,
   toTokenAmount,
   toUiAmount,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { OperationType } from 'models/enums';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { OperationType } from 'src/models/enums';
 import {
   type UseEstimateGasParameters,
   useAccount,

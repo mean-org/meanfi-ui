@@ -1,16 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
-import { getSolFlareTokenList } from 'middleware/api';
-import type { UserTokenAccount } from 'models/accounts';
 import { useCallback, useMemo } from 'react';
+import { consoleOut } from 'src/middleware/ui';
+import type { UserTokenAccount } from 'src/models/accounts/UserTokenAccount';
+
+const tokenListUrl = 'https://tokens.jup.ag/tokens?tags=verified';
 
 export const getTokenListKey = () => ['/token-list'];
 
 const useGetTokenList = () => {
   const { data, isFetching: loadingTokenList } = useQuery({
     queryKey: getTokenListKey(),
-    queryFn: () => getSolFlareTokenList(),
+    queryFn: async () => {
+      consoleOut('useGetTokenList -> Fetching token list...', '', 'blue');
+      consoleOut('tokenListUrl:', tokenListUrl, 'blue');
+      return await fetch(tokenListUrl,{
+        method: 'post',
+        redirect: 'follow',
+      }).then(response => response.json());
+    },
     select: useCallback((data: UserTokenAccount[]) => {
-      console.log('useGetTokenList -> Token list loaded:', data);
+      consoleOut('useGetTokenList -> Token list loaded:', data, 'blue');
 
       return data;
     }, []),

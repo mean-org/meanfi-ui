@@ -1,7 +1,0 @@
-export { CustodyView } from './custody';
-export { FaucetView } from './faucet';
-export { HomeView } from './home';
-export { NotFoundView } from './404';
-export { PlaygroundView } from './playground';
-export { StakingRewardsView } from './staking-rewards';
-export { StatsView } from './stats';

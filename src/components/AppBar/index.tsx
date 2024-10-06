@@ -1,22 +1,22 @@
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
-import { MEAN_DAO_DOCS_URL } from 'app-constants/common';
-import { AccountDetails } from 'components/AccountDetails';
-import { AppContextMenu } from 'components/AppContextMenu';
-import { ConnectButton } from 'components/ConnectButton';
-import { DepositOptions } from 'components/DepositOptions';
-import { NotificationBell } from 'components/NotificationBell';
-import PrioritizationFeesConfigPopover from 'components/PrioritizationFeesConfigPopover';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import type { CustomCSSProps } from 'middleware/css-custom-props';
-import { isProd } from 'middleware/ui';
-import type { RoutingInfo } from 'models/common-types';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
+import { MEAN_DAO_DOCS_URL } from 'src/app-constants/common';
+import { AccountDetails } from 'src/components/AccountDetails';
+import { AppContextMenu } from 'src/components/AppContextMenu';
+import { ConnectButton } from 'src/components/ConnectButton';
+import { DepositOptions } from 'src/components/DepositOptions';
+import { NotificationBell } from 'src/components/NotificationBell';
+import PrioritizationFeesConfigPopover from 'src/components/PrioritizationFeesConfigPopover';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnectionConfig } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import type { CustomCSSProps } from 'src/middleware/css-custom-props';
+import { isProd } from 'src/middleware/ui';
+import type { RoutingInfo } from 'src/models/common-types';
 
 const MENU_ITEMS_ROUTE_INFO: RoutingInfo[] = [
   {

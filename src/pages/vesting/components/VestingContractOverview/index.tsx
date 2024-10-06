@@ -1,11 +1,13 @@
 import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons';
 import type { PaymentStreamingAccount, StreamTemplate } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { IconInfoCircle } from 'Icons';
 import { Alert, Progress } from 'antd';
 import BigNumber from 'bignumber.js';
-import { TokenIcon } from 'components/TokenIcon';
-import { AppStateContext } from 'contexts/appstate';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { IconInfoCircle } from 'src/Icons'
+import { TokenIcon } from 'src/components/TokenIcon';
+import { AppStateContext } from 'src/contexts/appstate';
 import {
   consoleOut,
   getLockPeriodOptionLabelByAmount,
@@ -17,14 +19,12 @@ import {
   percentageBn,
   percentualBn,
   relativeTimeFromDates,
-} from 'middleware/ui';
-import { displayAmountWithSymbol, makeDecimal } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { TimeData } from 'models/common-types';
-import { PaymentRateType } from 'models/enums';
-import type { VestingFlowRateInfo } from 'models/vesting';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+} from 'src/middleware/ui';
+import { displayAmountWithSymbol, makeDecimal } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { TimeData } from 'src/models/common-types';
+import { PaymentRateType } from 'src/models/enums';
+import type { VestingFlowRateInfo } from 'src/models/vesting';
 
 export const VestingContractOverview = (props: {
   availableStreamingBalance: number | BN;

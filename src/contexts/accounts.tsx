@@ -1,7 +1,7 @@
 import { type MintInfo, MintLayout, u64 } from '@solana/spl-token';
 import { type AccountInfo, PublicKey } from '@solana/web3.js';
-import { useWallet } from 'contexts/wallet';
 import React, { useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useWallet } from 'src/contexts/wallet';
 import { HALF_MINUTE_REFRESH_TIMEOUT } from '../app-constants';
 import { useConnection } from './connection';
 

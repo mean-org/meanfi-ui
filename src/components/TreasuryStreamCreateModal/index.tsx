@@ -10,7 +10,6 @@ import {
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { type Connection, PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
-import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'Icons';
 import {
   Button,
   Checkbox,
@@ -26,21 +25,24 @@ import {
   Tooltip,
 } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'app-constants/common';
-import { Identicon } from 'components/Identicon';
-import { InfoIcon } from 'components/InfoIcon';
-import { InputMean } from 'components/InputMean';
-import { StepSelector } from 'components/StepSelector';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { AppStateContext } from 'contexts/appstate';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
 import dayjs from 'dayjs';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { appConfig, customLogger } from 'main';
-import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
-import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { SOL_MINT } from 'middleware/ids';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'src/Icons'
+import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'src/app-constants/common';
+import { Identicon } from 'src/components/Identicon';
+import { InfoIcon } from 'src/components/InfoIcon';
+import { InputMean } from 'src/components/InputMean';
+import { StepSelector } from 'src/components/StepSelector';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { AppStateContext } from 'src/contexts/appstate';
+import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import { appConfig, customLogger } from 'src/main';
+import { getStreamingAccountMint } from 'src/middleware/getStreamingAccountMint';
+import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
+import { SOL_MINT } from 'src/middleware/ids';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -48,7 +50,7 @@ import {
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
-} from 'middleware/transactions';
+} from 'src/middleware/transactions';
 import {
   consoleOut,
   friendlyDisplayDecimalPlaces,
@@ -62,7 +64,7 @@ import {
   stringNumberFormat,
   toUsCurrency,
   todayAndPriorDatesDisabled,
-} from 'middleware/ui';
+} from 'src/middleware/ui';
 import {
   displayAmountWithSymbol,
   formatThousands,
@@ -74,16 +76,14 @@ import {
   toTokenAmount,
   toTokenAmountBn,
   toUiAmount,
-} from 'middleware/utils';
-import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { StreamRecipient } from 'models/common-types';
-import { OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
-import type { CreateStreamParams } from 'models/streams';
-import useStreamingClient from 'query-hooks/streamingClient';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import { PaymentRateTypeOption } from 'src/models/PaymentRateTypeOption';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { StreamRecipient } from 'src/models/common-types';
+import { OperationType, PaymentRateType, TransactionStatus } from 'src/models/enums';
+import type { CreateStreamParams } from 'src/models/streams';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import type { LooseObject } from 'src/types/LooseObject';
 
 const { Option } = Select;
 type TreasuryValues = PaymentStreamingAccount | TreasuryInfo | undefined;

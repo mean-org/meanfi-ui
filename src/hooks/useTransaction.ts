@@ -1,28 +1,28 @@
 import { DEFAULT_EXPIRATION_TIME_SECONDS, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import type { Transaction, VersionedTransaction } from '@solana/web3.js';
-import { MIN_SOL_BALANCE_REQUIRED } from 'app-constants/common';
-import { openNotification } from 'components/Notifications';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import { customLogger } from 'main';
-import { SOL_MINT } from 'middleware/ids';
+import { useCallback, useContext, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
+import { openNotification } from 'src/components/Notifications';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import { customLogger } from 'src/main';
+import { SOL_MINT } from 'src/middleware/ids';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
-} from 'middleware/transactions';
-import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
-import { getAmountWithSymbol, getUniversalTxIxResume } from 'middleware/utils';
-import { type OperationType, TransactionStatus } from 'models/enums';
-import type { MultisigTxParams } from 'models/multisig';
-import useMultisigClient from 'query-hooks/multisigClient';
-import { useCallback, useContext, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/transactions';
+import { consoleOut, getTransactionStatusForLogs } from 'src/middleware/ui';
+import { getAmountWithSymbol, getUniversalTxIxResume } from 'src/middleware/utils';
+import { type OperationType, TransactionStatus } from 'src/models/enums';
+import type { MultisigTxParams } from 'src/models/multisig';
+import useMultisigClient from 'src/query-hooks/multisigClient';
+import type { LooseObject } from 'src/types/LooseObject';
 import useLocalStorage from './useLocalStorage';
 
 type BaseArgs<T extends LooseObject | undefined> = {

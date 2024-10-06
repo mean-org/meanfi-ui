@@ -2,11 +2,11 @@ import { useCallback, useEffect } from 'react';
 
 import type { App, UiElement } from '@mean-dao/mean-multisig-apps';
 import { Col, Radio, Row } from 'antd';
-import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
-import { InputMean } from 'components/InputMean';
-import { InputTextAreaMean } from 'components/InputTextAreaMean';
-import { SelectMean } from 'components/SelectMean';
 import { useTranslation } from 'react-i18next';
+import { FormLabelWithIconInfo } from 'src/components/FormLabelWithIconInfo';
+import { InputMean } from 'src/components/InputMean';
+import { InputTextAreaMean } from 'src/components/InputTextAreaMean';
+import { SelectMean } from 'src/components/SelectMean';
 
 interface Props {
   element: UiElement;

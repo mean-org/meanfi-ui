@@ -3,33 +3,33 @@ import type { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@me
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { BN } from '@project-serum/anchor';
 import type { TransactionInstruction } from '@solana/web3.js';
-import { IconExternalLink } from 'Icons';
 import { Alert, Button, Col, Divider, Modal, Row, Spin } from 'antd';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VESTING_ROUTE_BASE_PATH } from 'app-constants/common';
-import { InputMean } from 'components/InputMean';
-import { InputTextAreaMean } from 'components/InputTextAreaMean';
-import { openNotification } from 'components/Notifications';
-import { SelectMean } from 'components/SelectMean';
-import { StepSelector } from 'components/StepSelector';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { isError } from 'middleware/transactions';
-import { consoleOut, copyText, getTransactionOperationDescription } from 'middleware/ui';
-import { RegisteredAppPaths } from 'models/accounts';
-import type { LabelOption, SelectOption } from 'models/common-types';
-import { TransactionStatus } from 'models/enums';
+import { Fragment, useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { IconExternalLink } from 'src/Icons'
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VESTING_ROUTE_BASE_PATH } from 'src/app-constants/common';
+import { InputMean } from 'src/components/InputMean';
+import { InputTextAreaMean } from 'src/components/InputTextAreaMean';
+import { openNotification } from 'src/components/Notifications';
+import { SelectMean } from 'src/components/SelectMean';
+import { StepSelector } from 'src/components/StepSelector';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { isError } from 'src/middleware/transactions';
+import { consoleOut, copyText, getTransactionOperationDescription } from 'src/middleware/ui';
+import { RegisteredAppPaths } from 'src/models/accounts';
+import type { LabelOption, SelectOption } from 'src/models/common-types';
+import { TransactionStatus } from 'src/models/enums';
 import {
   type CreateNewProposalParams,
   NATIVE_LOADER,
   getMultisigInstructionSummary,
   isCredixFinance,
   parseSerializedTx,
-} from 'models/multisig';
-import { Fragment, useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/models/multisig';
+import type { LooseObject } from 'src/types/LooseObject';
 import RenderUiElement from './RenderUiElement';
 import './style.scss';
 

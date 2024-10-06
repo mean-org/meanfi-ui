@@ -13,20 +13,22 @@ import {
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
-import { segmentAnalytics } from 'App';
-import { IconVerticalEllipsis } from 'Icons';
 import { Button, Dropdown, Modal, Spin } from 'antd';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
-import { openNotification } from 'components/Notifications';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { customLogger } from 'main';
-import { SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent, type SegmentStreamCloseData } from 'middleware/segment-service';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { segmentAnalytics } from 'src/App';
+import { IconVerticalEllipsis } from 'src/Icons'
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
+import { openNotification } from 'src/components/Notifications';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import { customLogger } from 'src/main';
+import { SOL_MINT } from 'src/middleware/ids';
+import { AppUsageEvent, type SegmentStreamCloseData } from 'src/middleware/segment-service';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -35,7 +37,7 @@ import {
   isSuccess,
   sendTx,
   signTx,
-} from 'middleware/transactions';
+} from 'src/middleware/transactions';
 import {
   consoleOut,
   copyText,
@@ -46,15 +48,13 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
   toTimestamp,
-} from 'middleware/ui';
-import { displayAmountWithSymbol, getAmountWithSymbol, getTxIxResume, shortenAddress } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { OperationType, TransactionStatus } from 'models/enums';
-import type { VestingContractCloseStreamOptions } from 'models/vesting';
-import useStreamingClient from 'query-hooks/streamingClient';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/ui';
+import { displayAmountWithSymbol, getAmountWithSymbol, getTxIxResume, shortenAddress } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { OperationType, TransactionStatus } from 'src/models/enums';
+import type { VestingContractCloseStreamOptions } from 'src/models/vesting';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import type { LooseObject } from 'src/types/LooseObject';
 import { StreamCloseModal } from '../StreamCloseModal';
 import { VestingContractStreamDetailModal } from '../VestingContractStreamDetailModal';
 

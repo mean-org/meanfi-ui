@@ -1,6 +1,6 @@
 import { CheckCircleFilled, CloseCircleFilled, ExclamationCircleFilled, InfoCircleFilled } from '@ant-design/icons';
-import { type ValidationStatus, ValidationStatusCode } from 'models/ValidationStatus';
 import { type ReactNode, useMemo } from 'react';
+import { type ValidationStatus, ValidationStatusCode } from 'src/models/ValidationStatus';
 
 interface Props {
   validationStatus: ValidationStatus;

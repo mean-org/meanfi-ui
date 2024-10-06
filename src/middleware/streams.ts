@@ -1,7 +1,7 @@
 import { STREAM_STATE, type StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
 import type { TFunction } from 'i18next';
-import type { LooseObject } from 'types/LooseObject';
+import type { LooseObject } from 'src/types/LooseObject';
 import { getShortDate } from './ui';
 import { shortenAddress } from './utils';
 

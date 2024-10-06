@@ -26,10 +26,15 @@ import {
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
-import { segmentAnalytics } from 'App';
-import { IconArrowBack, IconLoading, IconVerticalEllipsis } from 'Icons';
 import { Alert, Button, Dropdown, Space, Tabs, Tooltip, notification } from 'antd';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+import BigNumber from 'bignumber.js';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { isMobile } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { segmentAnalytics } from 'src/App';
+import { IconArrowBack, IconLoading, IconVerticalEllipsis } from 'src/Icons'
 import {
   HALF_MINUTE_REFRESH_TIMEOUT,
   MEANFI_DOCS_URL,
@@ -39,24 +44,23 @@ import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   VESTING_ROUTE_BASE_PATH,
   WRAPPED_SOL_MINT_ADDRESS,
-} from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import BigNumber from 'bignumber.js';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { AppSocialLinks } from 'components/AppSocialLinks';
-import { openNotification } from 'components/Notifications';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
-import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import useLocalStorage from 'hooks/useLocalStorage';
-import useTransaction from 'hooks/useTransaction';
-import useWindowSize from 'hooks/useWindowResize';
-import { customLogger } from 'main';
-import { getTokenAccountBalanceByAddress, getTokensWithBalances } from 'middleware/accounts';
-import { saveAppData } from 'middleware/appPersistedData';
-import { SOL_MINT } from 'middleware/ids';
+} from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { AddressDisplay } from 'src/components/AddressDisplay';
+import { AppSocialLinks } from 'src/components/AppSocialLinks';
+import { openNotification } from 'src/components/Notifications';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import useTransaction from 'src/hooks/useTransaction';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { customLogger } from 'src/main';
+import { getTokenAccountBalanceByAddress, getTokensWithBalances } from 'src/middleware/accounts';
+import { saveAppData } from 'src/middleware/appPersistedData';
+import { SOL_MINT } from 'src/middleware/ids';
 import {
   AppUsageEvent,
   type SegmentRefreshAccountBalanceData,
@@ -65,7 +69,7 @@ import {
   type SegmentVestingContractCloseData,
   type SegmentVestingContractCreateData,
   type SegmentVestingContractWithdrawData,
-} from 'middleware/segment-service';
+} from 'src/middleware/segment-service';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -73,7 +77,7 @@ import {
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
-} from 'middleware/transactions';
+} from 'src/middleware/transactions';
 import {
   consoleOut,
   delay,
@@ -83,7 +87,7 @@ import {
   isValidAddress,
   toTimestamp,
   toUsCurrency,
-} from 'middleware/ui';
+} from 'src/middleware/ui';
 import {
   findATokenAddress,
   formatThousands,
@@ -92,13 +96,13 @@ import {
   getTokenOrCustomToken,
   getTxIxResume,
   toUiAmount,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { MetaInfoCtaAction, type SocialMediaEntry } from 'models/accounts/AccountsPageUi';
-import type { MetaInfoCta } from 'models/common-types';
-import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
-import { ZERO_FEES } from 'models/multisig';
-import type { TreasuryWithdrawParams, UserTreasuriesSummary } from 'models/treasuries';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { MetaInfoCtaAction, type SocialMediaEntry } from 'src/models/accounts/AccountsPageUi';
+import type { MetaInfoCta } from 'src/models/common-types';
+import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'src/models/enums';
+import { ZERO_FEES } from 'src/models/multisig';
+import type { TreasuryWithdrawParams, UserTreasuriesSummary } from 'src/models/treasuries';
 import {
   type AddFundsParams,
   type CreateVestingStreamParams,
@@ -112,16 +116,12 @@ import {
   type VestingFlowRateInfo,
   getCategoryLabelByValue,
   vestingFlowRatesCache,
-} from 'models/vesting';
-import useMultisigClient from 'query-hooks/multisigClient';
-import useStreamingClient from 'query-hooks/streamingClient';
-import { useGetVestingContracts } from 'query-hooks/vestingContract';
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { isMobile } from 'react-device-detect';
-import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { objectToJson } from 'services/logger';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/models/vesting';
+import useMultisigClient from 'src/query-hooks/multisigClient';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import { useGetVestingContracts } from 'src/query-hooks/vestingContract';
+import { objectToJson } from 'src/services/logger';
+import type { LooseObject } from 'src/types/LooseObject';
 import { VestingContractActivity } from './components/VestingContractActivity';
 import { VestingContractAddFundsModal } from './components/VestingContractAddFundsModal';
 import { VestingContractCloseModal } from './components/VestingContractCloseModal';

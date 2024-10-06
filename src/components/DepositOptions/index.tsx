@@ -1,18 +1,18 @@
 import { ArrowLeftOutlined, LoadingOutlined } from '@ant-design/icons';
 import { initOnRamp } from '@coinbase/cbpay-js';
-import { IconCopy, IconInfoTriangle, IconSolana } from 'Icons';
 import { Button, Col, Modal, Row, Tooltip } from 'antd';
-import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from 'app-constants/common';
-import { openNotification } from 'components/Notifications';
-import { environment } from 'environments/environment';
-import { appConfig } from 'main';
-import { consoleOut, copyText } from 'middleware/ui';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+import { IconCopy, IconInfoTriangle, IconSolana } from 'src/Icons'
+import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from 'src/app-constants/common';
+import { openNotification } from 'src/components/Notifications';
+import { environment } from 'src/environments/environment';
+import { appConfig } from 'src/main';
+import { consoleOut, copyText } from 'src/middleware/ui';
+import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
-import { useWallet } from 'contexts/wallet';
+import { useWallet } from 'src/contexts/wallet';
 
 interface DepositOptionsProps {
   handleClose: () => void;

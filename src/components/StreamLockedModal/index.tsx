@@ -9,13 +9,13 @@ import {
 } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Modal } from 'antd';
-import { useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { consoleOut } from 'middleware/ui';
-import type { StreamTreasuryType } from 'models/treasuries';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
+import { consoleOut } from 'src/middleware/ui';
+import type { StreamTreasuryType } from 'src/models/treasuries';
 
 export const StreamLockedModal = (props: {
   handleClose: () => void;

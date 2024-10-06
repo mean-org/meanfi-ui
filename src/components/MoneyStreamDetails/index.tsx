@@ -13,46 +13,46 @@ import {
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
-import { IconArrowBack, IconExternalLink } from 'Icons';
 import { Col, Row, Spin, Tabs } from 'antd';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'app-constants/common';
-import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
-import type { CountdownRendererParams } from 'components/CountdownTimer/CountdownRenderer';
-import { Identicon } from 'components/Identicon';
-import { ResumeItem } from 'components/ResumeItem';
-import { RightInfoDetails } from 'components/RightInfoDetails';
-import getIsV2Stream from 'components/common/getIsV2Stream';
-import getIsV2Treasury from 'components/common/getIsV2Treasury';
-import getRateAmountBn from 'components/common/getRateAmountBn';
-import getStreamStartDate from 'components/common/getStreamStartDate';
-import getV1Beneficiary from 'components/common/getV1Beneficiary';
-import getV2Beneficiary from 'components/common/getV2Beneficiary';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import useWindowSize from 'hooks/useWindowResize';
-import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
-import { getStreamingAccountId } from 'middleware/getStreamingAccountId';
-import { getStreamStatus, getStreamStatusLabel } from 'middleware/streamHelpers';
-import { getStreamStatusResume, getStreamTitle } from 'middleware/streams';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import Countdown from 'react-countdown';
+import { isMobile } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
+import { IconArrowBack, IconExternalLink } from 'src/Icons'
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'src/app-constants/common';
+import { CopyExtLinkGroup } from 'src/components/CopyExtLinkGroup';
+import type { CountdownRendererParams } from 'src/components/CountdownTimer/CountdownRenderer';
+import { Identicon } from 'src/components/Identicon';
+import { ResumeItem } from 'src/components/ResumeItem';
+import { RightInfoDetails } from 'src/components/RightInfoDetails';
+import getIsV2Stream from 'src/components/common/getIsV2Stream';
+import getIsV2Treasury from 'src/components/common/getIsV2Treasury';
+import getRateAmountBn from 'src/components/common/getRateAmountBn';
+import getStreamStartDate from 'src/components/common/getStreamStartDate';
+import getV1Beneficiary from 'src/components/common/getV1Beneficiary';
+import getV2Beneficiary from 'src/components/common/getV2Beneficiary';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
+import { getStreamingAccountId } from 'src/middleware/getStreamingAccountId';
+import { getStreamStatus, getStreamStatusLabel } from 'src/middleware/streamHelpers';
+import { getStreamStatusResume, getStreamTitle } from 'src/middleware/streams';
 import {
   consoleOut,
   getIntervalFromSeconds,
   getReadableDate,
   getShortDate,
   relativeTimeFromDates,
-} from 'middleware/ui';
-import { displayAmountWithSymbol, getAmountWithSymbol, shortenAddress } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { getCategoryLabelByValue } from 'models/vesting';
-import useStreamingClient from 'query-hooks/streamingClient';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import Countdown from 'react-countdown';
-import { isMobile } from 'react-device-detect';
-import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/ui';
+import { displayAmountWithSymbol, getAmountWithSymbol, shortenAddress } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { getCategoryLabelByValue } from 'src/models/vesting';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
-import { useWallet } from 'contexts/wallet';
+import { useWallet } from 'src/contexts/wallet';
 
 export const MoneyStreamDetails = (props: {
   accountAddress: string;

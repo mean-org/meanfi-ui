@@ -1,13 +1,16 @@
 import type { PaymentStreamingAccount, StreamTemplate } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { IconLoading } from 'Icons';
 import { Progress } from 'antd';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
 import BigNumber from 'bignumber.js';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { Identicon } from 'components/Identicon';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { IconLoading } from 'src/Icons'
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
+import { AddressDisplay } from 'src/components/AddressDisplay';
+import { Identicon } from 'src/components/Identicon';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
 import {
   consoleOut,
   getIntervalFromSeconds,
@@ -17,14 +20,11 @@ import {
   getTimeEllapsed,
   percentageBn,
   percentualBn,
-} from 'middleware/ui';
-import { displayAmountWithSymbol, makeDecimal, shortenAddress } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { PaymentRateType } from 'models/enums';
-import { type VestingFlowRateInfo, getCategoryLabelByValue } from 'models/vesting';
-import type React from 'react';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+} from 'src/middleware/ui';
+import { displayAmountWithSymbol, makeDecimal, shortenAddress } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { PaymentRateType } from 'src/models/enums';
+import { type VestingFlowRateInfo, getCategoryLabelByValue } from 'src/models/vesting';
 
 export const VestingContractDetails = (props: {
   isXsDevice: boolean;

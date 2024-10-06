@@ -1,4 +1,4 @@
-import { type AssetCta, MetaInfoCtaAction } from 'models/accounts';
+import { type AssetCta, MetaInfoCtaAction } from 'src/models/accounts';
 
 export const getBuyOptionsCta = (
   caption: string,

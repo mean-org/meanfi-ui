@@ -1,6 +1,6 @@
-import { appConfig } from 'main';
-import { isProd } from 'middleware/ui';
 import { useTranslation } from 'react-i18next';
+import { appConfig } from 'src/main';
+import { isProd } from 'src/middleware/ui';
 import './style.scss';
 import { Alert } from 'antd';
 

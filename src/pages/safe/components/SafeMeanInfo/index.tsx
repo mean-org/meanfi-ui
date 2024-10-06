@@ -2,19 +2,19 @@ import type { MeanMultisig, MultisigInfo, MultisigTransaction } from '@mean-dao/
 import { BN } from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { type Connection, PublicKey } from '@solana/web3.js';
-import { IconArrowForward } from 'Icons';
-import { ResumeItem } from 'components/ResumeItem';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { appConfig } from 'main';
-import { SOL_MINT } from 'middleware/ids';
-import { ACCOUNT_LAYOUT } from 'middleware/layouts';
-import { consoleOut } from 'middleware/ui';
-import { getAmountFromLamports } from 'middleware/utils';
-import type { ProgramAccounts } from 'models/accounts';
-import type { MultisigVault } from 'models/multisig';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { IconArrowForward } from 'src/Icons'
+import { ResumeItem } from 'src/components/ResumeItem';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { appConfig } from 'src/main';
+import { SOL_MINT } from 'src/middleware/ids';
+import { ACCOUNT_LAYOUT } from 'src/middleware/layouts';
+import { consoleOut } from 'src/middleware/ui';
+import { getAmountFromLamports } from 'src/middleware/utils';
+import type { ProgramAccounts } from 'src/models/accounts';
+import type { MultisigVault } from 'src/models/multisig';
 import { SafeInfo } from '../SafeInfo';
 
 export const SafeMeanInfo = (props: {

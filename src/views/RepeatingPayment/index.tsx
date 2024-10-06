@@ -8,30 +8,32 @@ import {
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { type AccountInfo, type ParsedAccountData, PublicKey, type Transaction } from '@solana/web3.js';
-import { segmentAnalytics } from 'App';
-import { IconCaretDown, IconEdit } from 'Icons';
 import { Button, Checkbox, DatePicker, type DatePickerProps, Dropdown } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
-import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT } from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { Identicon } from 'components/Identicon';
-import { InfoIcon } from 'components/InfoIcon';
-import { openNotification } from 'components/Notifications';
-import { StepSelector } from 'components/StepSelector';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
 import dayjs from 'dayjs';
-import useWindowSize from 'hooks/useWindowResize';
-import { customLogger } from 'main';
-import { SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent, type SegmentStreamRPTransferData } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { segmentAnalytics } from 'src/App';
+import { IconCaretDown, IconEdit } from 'src/Icons'
+import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT } from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { Identicon } from 'src/components/Identicon';
+import { InfoIcon } from 'src/components/InfoIcon';
+import { openNotification } from 'src/components/Notifications';
+import { StepSelector } from 'src/components/StepSelector';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { customLogger } from 'src/main';
+import { SOL_MINT } from 'src/middleware/ids';
+import { AppUsageEvent, type SegmentStreamRPTransferData } from 'src/middleware/segment-service';
+import { sendTx, signTx } from 'src/middleware/transactions';
 import {
   consoleOut,
   getIntervalFromSeconds,
@@ -42,7 +44,7 @@ import {
   isValidAddress,
   toUsCurrency,
   todayAndPriorDatesDisabled,
-} from 'middleware/ui';
+} from 'src/middleware/ui';
 import {
   cutNumber,
   displayAmountWithSymbol,
@@ -55,15 +57,13 @@ import {
   toTokenAmount,
   toTokenAmountBn,
   toUiAmount,
-} from 'middleware/utils';
-import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { RecipientAddressInfo } from 'models/common-types';
-import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'models/enums';
-import useStreamingClient from 'query-hooks/streamingClient';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import { PaymentRateTypeOption } from 'src/models/PaymentRateTypeOption';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { RecipientAddressInfo } from 'src/models/common-types';
+import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'src/models/enums';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import type { LooseObject } from 'src/types/LooseObject';
 
 interface RepeatingPaymentProps {
   onOpenTokenSelector: () => void;

@@ -1,19 +1,19 @@
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { IconCheck, IconCopy, IconLoading, IconVerticalEllipsis } from 'Icons';
 import { Button, Dropdown, type MenuProps, Spin, Tooltip } from 'antd';
-import { Identicon } from 'components/Identicon';
-import { openNotification } from 'components/Notifications';
-import { AppStateContext } from 'contexts/appstate';
-import { useWalletAccount } from 'contexts/walletAccount';
-import { SYSTEM_PROGRAM_ID } from 'middleware/ids';
-import { consoleOut, copyText, kFormatter, toUsCurrency } from 'middleware/ui';
-import { shortenAddress } from 'middleware/utils';
-import type { AccountContext } from 'models/accounts';
-import useAccountAssets from 'query-hooks/accountTokens';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IconCheck, IconCopy, IconLoading, IconVerticalEllipsis } from 'src/Icons'
+import { Identicon } from 'src/components/Identicon';
+import { openNotification } from 'src/components/Notifications';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWalletAccount } from 'src/contexts/walletAccount';
+import { SYSTEM_PROGRAM_ID } from 'src/middleware/ids';
+import { consoleOut, copyText, kFormatter, toUsCurrency } from 'src/middleware/ui';
+import { shortenAddress } from 'src/middleware/utils';
+import type { AccountContext } from 'src/models/accounts';
+import useAccountAssets from 'src/query-hooks/accountTokens';
 import './style.scss';
-import { useWallet } from 'contexts/wallet';
+import { useWallet } from 'src/contexts/wallet';
 
 export const AccountSelector = (props: {
   isFullWorkflowEnabled?: boolean;

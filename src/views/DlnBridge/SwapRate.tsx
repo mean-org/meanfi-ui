@@ -1,5 +1,5 @@
 import { SwapOutlined } from '@ant-design/icons';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 
 interface SwapRateProps {
   swapRate: boolean;

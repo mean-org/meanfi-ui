@@ -12,6 +12,9 @@ import {
 } from '@mean-dao/mean-multisig-sdk';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { type Connection, PublicKey, SystemProgram } from '@solana/web3.js';
+import { Button, Col, Row } from 'antd';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   IconApprove,
   IconArrowBack,
@@ -20,20 +23,17 @@ import {
   IconThumbsUp,
   IconUser,
   IconUserClock,
-} from 'Icons';
-import { Button, Col, Row } from 'antd';
-import { openNotification } from 'components/Notifications';
-import { RejectCancelModal } from 'components/RejectCancelModal';
-import { ResumeItem } from 'components/ResumeItem';
-import { TabsMean } from 'components/TabsMean';
-import { AppStateContext } from 'contexts/appstate';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import { consoleOut, copyText } from 'middleware/ui';
-import { shortenAddress } from 'middleware/utils';
-import { OperationType, TransactionStatus } from 'models/enums';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+} from 'src/Icons'
+import { openNotification } from 'src/components/Notifications';
+import { RejectCancelModal } from 'src/components/RejectCancelModal';
+import { ResumeItem } from 'src/components/ResumeItem';
+import { TabsMean } from 'src/components/TabsMean';
+import { AppStateContext } from 'src/contexts/appstate';
+import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import { consoleOut, copyText } from 'src/middleware/ui';
+import { shortenAddress } from 'src/middleware/utils';
+import { OperationType, TransactionStatus } from 'src/models/enums';
 import ActivityRow from './ActivityRow';
 import { RenderInstructions } from './RenderInstructions';
 import './style.scss';

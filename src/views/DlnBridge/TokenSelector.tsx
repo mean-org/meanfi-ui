@@ -1,16 +1,16 @@
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'app-constants/common';
-import { TextInput } from 'components/TextInput';
-import { TokenListItem } from 'components/TokenListItem';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { getTokensWithBalances } from 'middleware/accounts';
-import { consoleOut } from 'middleware/ui';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { UserTokenAccount } from 'models/accounts/UserTokenAccount';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'src/app-constants/common';
+import { TextInput } from 'src/components/TextInput';
+import { TokenListItem } from 'src/components/TokenListItem';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { getTokensWithBalances } from 'src/middleware/accounts';
+import { consoleOut } from 'src/middleware/ui';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { UserTokenAccount } from 'src/models/accounts/UserTokenAccount';
+import type { LooseObject } from 'src/types/LooseObject';
 
 interface TokenSelectorProps {
   tokens: TokenInfo[] | undefined;

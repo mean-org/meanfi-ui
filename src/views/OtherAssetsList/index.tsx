@@ -1,9 +1,9 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Empty, Spin } from 'antd';
-import { Identicon } from 'components/Identicon';
-import { formatThousands, shortenAddress } from 'middleware/utils';
-import type { ProgramAccounts } from 'models/accounts';
 import { useLocation } from 'react-router-dom';
+import { Identicon } from 'src/components/Identicon';
+import { formatThousands, shortenAddress } from 'src/middleware/utils';
+import type { ProgramAccounts } from 'src/models/accounts';
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

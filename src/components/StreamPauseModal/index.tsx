@@ -2,14 +2,14 @@ import { WarningFilled, WarningOutlined } from '@ant-design/icons';
 import type { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import type { Stream } from '@mean-dao/payment-streaming';
 import { Button, Col, Modal, Row } from 'antd';
-import { InputMean } from 'components/InputMean';
-import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
-import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
-import { percentage, percentageBn } from 'middleware/ui';
-import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
 import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { InputMean } from 'src/components/InputMean';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWallet } from 'src/contexts/wallet';
+import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
+import { percentage, percentageBn } from 'src/middleware/ui';
+import { getAmountWithSymbol, toUiAmount } from 'src/middleware/utils';
 
 export const StreamPauseModal = (props: {
   handleClose: () => void;

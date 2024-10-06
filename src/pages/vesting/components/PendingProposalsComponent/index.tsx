@@ -1,9 +1,9 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
-import { MULTISIG_ROUTE_BASE_PATH } from 'app-constants/common';
-import { AppStateContext } from 'contexts/appstate';
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { MULTISIG_ROUTE_BASE_PATH } from 'src/app-constants/common';
+import { AppStateContext } from 'src/contexts/appstate';
 
 export const PendingProposalsComponent = (props: {
   extraClasses?: string;

@@ -1,10 +1,10 @@
 import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
 import { PublicKey } from '@solana/web3.js';
-import { useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { appConfig } from 'main';
 import { useEffect, useMemo, useState } from 'react';
-import { failsafeConnectionConfig } from 'services/connections-hq';
+import { useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { appConfig } from 'src/main';
+import { failsafeConnectionConfig } from 'src/services/connections-hq';
 
 /**
  * Initializes a Mean Multisig client

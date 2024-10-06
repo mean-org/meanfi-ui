@@ -1,34 +1,34 @@
 import { WarningFilled } from '@ant-design/icons';
 import { type DepositRecord, type DepositsInfo, StakingClient } from '@mean-dao/staking';
 import { PublicKey, type Transaction } from '@solana/web3.js';
-import { IconStats } from 'Icons';
 import { Button, Spin } from 'antd';
-import { MEAN_TOKEN_LIST } from 'app-constants/tokens';
-import { openNotification } from 'components/Notifications';
-import { PreFooter } from 'components/PreFooter';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { getNetworkIdByCluster, useConnection } from 'contexts/connection';
-import { TxConfirmationContext, confirmationEvents } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import { appConfig, customLogger } from 'main';
-import { getTokenAccountBalanceByAddress } from 'middleware/accounts';
-import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
-import { consoleOut, getTransactionStatusForLogs, relativeTimeFromDates } from 'middleware/ui';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { IconStats } from 'src/Icons'
+import { MEAN_TOKEN_LIST } from 'src/app-constants/tokens';
+import { openNotification } from 'src/components/Notifications';
+import { PreFooter } from 'src/components/PreFooter';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getNetworkIdByCluster, useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext, confirmationEvents } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import { appConfig, customLogger } from 'src/main';
+import { getTokenAccountBalanceByAddress } from 'src/middleware/accounts';
+import { composeTxWithPrioritizationFees, sendTx, signTx } from 'src/middleware/transactions';
+import { consoleOut, getTransactionStatusForLogs, relativeTimeFromDates } from 'src/middleware/ui';
 import {
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
   getTxIxResume,
   isValidNumber,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import useAccountAssets from 'query-hooks/accountTokens';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { failsafeConnectionConfig, getDefaultRpc } from 'services/connections-hq';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
+import useAccountAssets from 'src/query-hooks/accountTokens';
+import { failsafeConnectionConfig, getDefaultRpc } from 'src/services/connections-hq';
+import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
 
 const DEFAULT_APR_PERCENT_GOAL = '21';

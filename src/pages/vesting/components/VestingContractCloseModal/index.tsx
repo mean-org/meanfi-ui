@@ -4,17 +4,17 @@ import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import type { PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
-import { WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
-import { InputMean } from 'components/InputMean';
-import { AppStateContext } from 'contexts/appstate';
-import { SOL_MINT } from 'middleware/ids';
-import { isError } from 'middleware/transactions';
-import { getTransactionOperationDescription } from 'middleware/ui';
-import { displayAmountWithSymbol, getAmountWithSymbol } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'src/app-constants/common';
+import { InputMean } from 'src/components/InputMean';
+import { AppStateContext } from 'src/contexts/appstate';
+import { SOL_MINT } from 'src/middleware/ids';
+import { isError } from 'src/middleware/transactions';
+import { getTransactionOperationDescription } from 'src/middleware/ui';
+import { displayAmountWithSymbol, getAmountWithSymbol } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { TransactionStatus } from 'src/models/enums';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

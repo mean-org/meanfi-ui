@@ -1,33 +1,33 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { STREAM_STATUS_CODE, type Stream, type StreamActivity } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { IconExternalLink } from 'Icons';
 import { Col, Row, Spin, Tabs } from 'antd';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { IconExternalLink } from 'src/Icons'
 import {
   FALLBACK_COIN_IMAGE,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-} from 'app-constants/common';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { Identicon } from 'components/Identicon';
-import getStreamStartDate from 'components/common/getStreamStartDate';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
+} from 'src/app-constants/common';
+import { AddressDisplay } from 'src/components/AddressDisplay';
+import { Identicon } from 'src/components/Identicon';
+import getStreamStartDate from 'src/components/common/getStreamStartDate';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
 import {
   getIntervalFromSeconds,
   getReadableDate,
   getShortDate,
   getTimeToNow,
   relativeTimeFromDates,
-} from 'middleware/ui';
-import { displayAmountWithSymbol, shortenAddress } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/ui';
+import { displayAmountWithSymbol, shortenAddress } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
 
 export type StreamDetailTab = 'details' | 'activity';

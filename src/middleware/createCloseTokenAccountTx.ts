@@ -6,9 +6,9 @@ import {
   PublicKey,
   type TransactionInstruction,
 } from '@solana/web3.js';
-import { WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import type { TokenAccountInfo } from 'models/accounts';
+import { WRAPPED_SOL_MINT_ADDRESS } from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import type { TokenAccountInfo } from 'src/models/accounts';
 import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
 
 export async function hasTokenBalance(connection: Connection, tokenPubkey: PublicKey) {

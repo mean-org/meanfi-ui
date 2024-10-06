@@ -1,15 +1,15 @@
 import { type AccountInfo, type Connection, type ParsedAccountData, SystemProgram } from '@solana/web3.js';
+import { useCallback, useState } from 'react';
 import {
   getMintAddress,
   isProgramAccount,
   isProgramDataAccount,
   isTokenAccount,
   isTokenMint,
-} from 'middleware/accountInfoGetters';
-import getAccountInfoByAddress from 'middleware/getAccountInfoByAddress';
-import { isValidAddress as isValidSolanaAddress } from 'middleware/ui';
-import { type ValidationStatus, ValidationStatusCode } from 'models/ValidationStatus';
-import { useCallback, useState } from 'react';
+} from 'src/middleware/accountInfoGetters';
+import getAccountInfoByAddress from 'src/middleware/getAccountInfoByAddress';
+import { isValidAddress as isValidSolanaAddress } from 'src/middleware/ui';
+import { type ValidationStatus, ValidationStatusCode } from 'src/models/ValidationStatus';
 
 const DEFAULT_VALIDATION_STATUS: ValidationStatus = {
   code: ValidationStatusCode.PRISTINE,

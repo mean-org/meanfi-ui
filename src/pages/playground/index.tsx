@@ -10,6 +10,14 @@ import {
   type ParsedAccountData,
   PublicKey,
 } from '@solana/web3.js';
+import { Button, Divider, Modal, Space, Tooltip } from 'antd';
+import notification from 'antd/lib/notification';
+import type { IconType } from 'antd/lib/notification/interface';
+import BigNumber from 'bignumber.js';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import ReactJson from 'react-json-view';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   IconCodeBlock,
   IconCoin,
@@ -19,35 +27,31 @@ import {
   IconLoading,
   IconTrash,
   IconWallet,
-} from 'Icons';
-import { Button, Divider, Modal, Space, Tooltip } from 'antd';
-import notification from 'antd/lib/notification';
-import type { IconType } from 'antd/lib/notification/interface';
-import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS, MULTISIG_ROUTE_BASE_PATH } from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import BigNumber from 'bignumber.js';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
-import { MultisigOwnersView } from 'components/MultisigOwnersView';
-import { openNotification } from 'components/Notifications';
-import { PreFooter } from 'components/PreFooter';
-import { TextInput } from 'components/TextInput';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { TokenListItem } from 'components/TokenListItem';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { useWalletAccount } from 'contexts/walletAccount';
-import { environment } from 'environments/environment';
-import useWindowSize from 'hooks/useWindowResize';
-import { getDecimalsFromAccountInfo, isSystemOwnedAccount } from 'middleware/accountInfoGetters';
-import { getTokensWithBalances } from 'middleware/accounts';
-import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
-import { SOL_MINT, SYSTEM_PROGRAM_ID } from 'middleware/ids';
-import { ACCOUNT_LAYOUT } from 'middleware/layouts';
-import { getStreamForDebug } from 'middleware/stream-debug-middleware';
-import { getReadableStream } from 'middleware/streams';
+} from 'src/Icons'
+import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS, MULTISIG_ROUTE_BASE_PATH } from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { AddressDisplay } from 'src/components/AddressDisplay';
+import { CopyExtLinkGroup } from 'src/components/CopyExtLinkGroup';
+import { MultisigOwnersView } from 'src/components/MultisigOwnersView';
+import { openNotification } from 'src/components/Notifications';
+import { PreFooter } from 'src/components/PreFooter';
+import { TextInput } from 'src/components/TextInput';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { TokenListItem } from 'src/components/TokenListItem';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getNetworkIdByEnvironment, useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { useWalletAccount } from 'src/contexts/walletAccount';
+import { environment } from 'src/environments/environment';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { getDecimalsFromAccountInfo, isSystemOwnedAccount } from 'src/middleware/accountInfoGetters';
+import { getTokensWithBalances } from 'src/middleware/accounts';
+import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
+import { SOL_MINT, SYSTEM_PROGRAM_ID } from 'src/middleware/ids';
+import { ACCOUNT_LAYOUT } from 'src/middleware/layouts';
+import { getStreamForDebug } from 'src/middleware/stream-debug-middleware';
+import { getReadableStream } from 'src/middleware/streams';
 import {
   consoleOut,
   delay,
@@ -55,7 +59,7 @@ import {
   isValidAddress,
   kFormatter,
   toUsCurrency,
-} from 'middleware/ui';
+} from 'src/middleware/ui';
 import {
   formatAmount,
   formatThousands,
@@ -64,17 +68,13 @@ import {
   getTokenOrCustomToken,
   shortenAddress,
   toUiAmount,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { AccountContext } from 'models/accounts/AccountContext';
-import { type MultisigAsset, NATIVE_LOADER } from 'models/multisig';
-import useMultisigClient from 'query-hooks/multisigClient';
-import useStreamingClient from 'query-hooks/streamingClient';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import ReactJson from 'react-json-view';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { AccountContext } from 'src/models/accounts/AccountContext';
+import { type MultisigAsset, NATIVE_LOADER } from 'src/models/multisig';
+import useMultisigClient from 'src/query-hooks/multisigClient';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import type { LooseObject } from 'src/types/LooseObject';
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
 import './style.scss';
 

@@ -1,12 +1,12 @@
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { FindNftsByOwnerOutput, JsonMetadata, Metadata } from '@metaplex-foundation/js';
 import { PublicKey } from '@solana/web3.js';
-import { IconArrowBack, IconArrowForward, IconExternalLink, IconNoItems } from 'Icons';
 import { Button, Spin } from 'antd';
-import { fallbackImgSrc } from 'app-constants/common';
-import { openLinkInNewTab } from 'middleware/utils';
-import type { MeanNft } from 'models/accounts/NftTypes';
 import { useCallback, useEffect, useState } from 'react';
+import { IconArrowBack, IconArrowForward, IconExternalLink, IconNoItems } from 'src/Icons'
+import { fallbackImgSrc } from 'src/app-constants/common';
+import { openLinkInNewTab } from 'src/middleware/utils';
+import type { MeanNft } from 'src/models/accounts/NftTypes';
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const pageSize = 4;

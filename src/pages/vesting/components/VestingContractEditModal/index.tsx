@@ -2,33 +2,33 @@ import { LoadingOutlined } from '@ant-design/icons';
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import type { PaymentStreamingAccount, StreamTemplate, TransactionFees } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { IconCaretDown } from 'Icons';
 import { Button, Checkbox, DatePicker, type DatePickerProps, Dropdown, Modal, Spin, TimePicker, type TimePickerProps } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
-import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from 'app-constants/common';
-import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
-import { Identicon } from 'components/Identicon';
-import { InputMean } from 'components/InputMean';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
 import dayjs from 'dayjs';
-import { isError } from 'middleware/transactions';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { IconCaretDown } from 'src/Icons'
+import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
+import { FormLabelWithIconInfo } from 'src/components/FormLabelWithIconInfo';
+import { Identicon } from 'src/components/Identicon';
+import { InputMean } from 'src/components/InputMean';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWallet } from 'src/contexts/wallet';
+import { isError } from 'src/middleware/transactions';
 import {
   consoleOut,
   getLockPeriodOptionLabel,
   getPaymentIntervalFromSeconds,
   getRateIntervalInSeconds,
   todayAndPriorDatesDisabled,
-} from 'middleware/ui';
-import { isValidInteger, isValidNumber, makeDecimal, shortenAddress } from 'middleware/utils';
-import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
-import type { UserTokenAccount } from 'models/accounts';
-import { PaymentRateType } from 'models/enums';
-import type { VestingContractEditOptions } from 'models/vesting';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+} from 'src/middleware/ui';
+import { isValidInteger, isValidNumber, makeDecimal, shortenAddress } from 'src/middleware/utils';
+import { PaymentRateTypeOption } from 'src/models/PaymentRateTypeOption';
+import type { UserTokenAccount } from 'src/models/accounts';
+import { PaymentRateType } from 'src/models/enums';
+import type { VestingContractEditOptions } from 'src/models/vesting';
 
 const timeFormat = 'h:mm a';
 

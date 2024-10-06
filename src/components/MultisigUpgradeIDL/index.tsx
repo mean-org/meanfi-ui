@@ -2,9 +2,9 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import type { TransactionFees } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Modal, Spin } from 'antd';
-import { useWallet } from 'contexts/wallet';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useWallet } from 'src/contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { useConnection } from '../../contexts/connection';
 import { SOL_MINT } from '../../middleware/ids';
