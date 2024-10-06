@@ -1,29 +1,4 @@
-import { segmentAnalytics } from 'App';
 import { Drawer, Empty, Layout } from 'antd';
-import {
-  CREATE_SAFE_ROUTE_PATH,
-  GOOGLE_ANALYTICS_PROD_TAG_ID,
-  LANGUAGES,
-  PERFORMANCE_THRESHOLD,
-  SOLANA_STATUS_PAGE,
-} from 'app-constants/common';
-import { AccountSelectorModal } from 'components/AccountSelectorModal';
-import { AppBar } from 'components/AppBar';
-import { FooterBar } from 'components/FooterBar';
-import { openNotification } from 'components/Notifications';
-import { TransactionConfirmationHistory } from 'components/TransactionConfirmationHistory';
-import { useAccountsContext } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnectionConfig } from 'contexts/connection';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { environment } from 'environments/environment';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { reportConnectedAccount } from 'middleware/api';
-import { AppUsageEvent } from 'middleware/segment-service';
-import { consoleOut, isProd, isValidAddress } from 'middleware/ui';
-import { isUnauthenticatedRoute } from 'middleware/utils';
-import type { RuntimeAppDetails } from 'models/accounts';
-import useGetPerformanceSamples from 'query-hooks/performanceSamples';
 import React, { type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import {
   browserName,
@@ -38,8 +13,33 @@ import {
 import ReactGA from 'react-ga';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { segmentAnalytics } from 'src/App';
+import {
+  CREATE_SAFE_ROUTE_PATH,
+  GOOGLE_ANALYTICS_PROD_TAG_ID,
+  LANGUAGES,
+  PERFORMANCE_THRESHOLD,
+  SOLANA_STATUS_PAGE,
+} from 'src/app-constants/common';
+import { AccountSelectorModal } from 'src/components/AccountSelectorModal';
+import { AppBar } from 'src/components/AppBar';
+import { FooterBar } from 'src/components/FooterBar';
+import { openNotification } from 'src/components/Notifications';
+import { TransactionConfirmationHistory } from 'src/components/TransactionConfirmationHistory';
+import { useAccountsContext } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnectionConfig } from 'src/contexts/connection';
+import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { environment } from 'src/environments/environment';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import { reportConnectedAccount } from 'src/middleware/api';
+import { AppUsageEvent } from 'src/middleware/segment-service';
+import { consoleOut, isProd, isValidAddress } from 'src/middleware/ui';
+import { isUnauthenticatedRoute } from 'src/middleware/utils';
+import type { RuntimeAppDetails } from 'src/models/accounts';
+import useGetPerformanceSamples from 'src/query-hooks/performanceSamples';
 import './style.scss';
-import { useWallet } from 'contexts/wallet';
+import { useWallet } from 'src/contexts/wallet';
 
 export const PERFORMANCE_SAMPLE_INTERVAL = 60 * 60 * 1000;
 

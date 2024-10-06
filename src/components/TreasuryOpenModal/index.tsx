@@ -1,8 +1,8 @@
 import { Button, Modal } from 'antd';
-import { useWallet } from 'contexts/wallet';
-import { isValidAddress } from 'middleware/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useWallet } from 'src/contexts/wallet';
+import { isValidAddress } from 'src/middleware/ui';
 
 interface Props {
   handleClose: () => void;

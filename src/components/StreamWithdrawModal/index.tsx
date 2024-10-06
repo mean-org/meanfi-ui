@@ -3,20 +3,20 @@ import { type PaymentStreaming, STREAM_STATUS_CODE, type Stream } from '@mean-da
 import { BN } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
-import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
 import BigNumber from 'bignumber.js';
-import { InputMean } from 'components/InputMean';
-import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
-import { getStreamId } from 'middleware/streamHelpers';
-import { consoleOut, percentageBn } from 'middleware/ui';
-import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { TransactionStatus } from 'models/enums';
-import type { StreamWithdrawData } from 'models/streams';
-import useStreamingClient from 'query-hooks/streamingClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CUSTOM_TOKEN_NAME, WRAPPED_SOL_MINT_ADDRESS } from 'src/app-constants/common';
+import { InputMean } from 'src/components/InputMean';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWallet } from 'src/contexts/wallet';
+import { getStreamId } from 'src/middleware/streamHelpers';
+import { consoleOut, percentageBn } from 'src/middleware/ui';
+import { getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmountBn, toUiAmount } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { TransactionStatus } from 'src/models/enums';
+import type { StreamWithdrawData } from 'src/models/streams';
+import useStreamingClient from 'src/query-hooks/streamingClient';
 import { openNotification } from '../Notifications';
 
 export const StreamWithdrawModal = (props: {

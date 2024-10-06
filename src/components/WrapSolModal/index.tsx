@@ -3,29 +3,29 @@ import { MSP_ACTIONS, type TransactionFees } from '@mean-dao/money-streaming/lib
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import type { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Button, Col, Modal, Row } from 'antd';
-import { MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
-import { openNotification } from 'components/Notifications';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import { customLogger } from 'main';
-import { sendTx, signTx } from 'middleware/transactions';
-import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from 'middleware/ui';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'src/app-constants/common';
+import { openNotification } from 'src/components/Notifications';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import { customLogger } from 'src/main';
+import { sendTx, signTx } from 'src/middleware/transactions';
+import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from 'src/middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
   getTxIxResume,
   isValidNumber,
-} from 'middleware/utils';
-import { wrapSol } from 'middleware/wrapSol';
-import { OperationType, TransactionStatus } from 'models/enums';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import { wrapSol } from 'src/middleware/wrapSol';
+import { OperationType, TransactionStatus } from 'src/models/enums';
+import type { LooseObject } from 'src/types/LooseObject';
 
 interface WrapSolModalProps {
   handleOk: () => void;

@@ -1,21 +1,19 @@
-import { ExchangeDcasView } from 'pages/exchange-dcas';
-import Bridge from 'pages/swap';
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { PageLoadingView } from 'views/PageLoading';
+import { NotFoundView } from 'src/pages/404';
+import { CustodyView } from 'src/pages/custody';
+import { ExchangeDcasView } from 'src/pages/exchange-dcas';
+import { FaucetView } from 'src/pages/faucet';
+import { HomeView } from 'src/pages/home';
+import { PlaygroundView } from 'src/pages/playground';
+import { ServiceUnavailableView } from 'src/pages/service-unavailable';
+import { StakingRewardsView } from 'src/pages/staking-rewards';
+import { StatsView } from 'src/pages/stats';
+import Bridge from 'src/pages/swap';
+import { PageLoadingView } from 'src/views/PageLoading';
 import { AppLayout } from './components/Layout';
-import {
-  CustodyView,
-  FaucetView,
-  HomeView,
-  NotFoundView,
-  PlaygroundView,
-  StakingRewardsView,
-  StatsView,
-} from './pages';
-import { ServiceUnavailableView } from './pages/service-unavailable';
 
-const CreateSafeView = React.lazy(() => import('views/CreateSafe'));
+const CreateSafeView = React.lazy(() => import('src/views/CreateSafe'));
 
 export function AppRoutes() {
   return (

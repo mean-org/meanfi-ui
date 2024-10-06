@@ -1,10 +1,10 @@
 export const getAccountAssetsQueryKey = (accountAddress: string) => ['/user-account-assets', accountAddress];
 
 import { useQuery } from '@tanstack/react-query';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { getUserAccountTokens } from 'middleware/accounts';
 import { useContext } from 'react';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { getUserAccountTokens } from 'src/middleware/accounts';
 
 const useAccountAssets = (accountAddress: string) => {
   const connection = useConnection();

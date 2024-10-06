@@ -1,8 +1,8 @@
 import type { StreamInfo } from '@mean-dao/money-streaming';
 import { STREAM_STATUS_CODE, type Stream } from '@mean-dao/payment-streaming';
-import { getStreamStatusResume } from 'middleware/streams';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getStreamStatusResume } from 'src/middleware/streams';
 
 export const StreamStatusSummary = (props: { stream: Stream | StreamInfo }) => {
   const { stream } = props;

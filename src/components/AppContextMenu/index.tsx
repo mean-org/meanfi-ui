@@ -1,4 +1,9 @@
 import { SettingOutlined } from '@ant-design/icons';
+import { Button, Dropdown, type MenuProps, Modal } from 'antd';
+import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import {
   IconBookOpen,
   IconChat,
@@ -10,25 +15,20 @@ import {
   IconSettings,
   IconShareBox,
   IconStats,
-} from 'Icons';
-import { Button, Dropdown, type MenuProps, Modal } from 'antd';
-import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
+} from 'src/Icons'
 import {
   LANGUAGES,
   MEANFI_SUPPORT_URL,
   MEAN_DAO_DOCS_URL,
   MEAN_DAO_GITHUB_ORG_URL,
   MEAN_FINANCE_DISCORD_URL,
-} from 'app-constants/common';
-import { LanguageSelector } from 'components/LanguageSelector';
-import { openNotification } from 'components/Notifications';
-import { ReferFriendModal } from 'components/ReferFriendModal';
-import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
-import { copyText, isProd } from 'middleware/ui';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+} from 'src/app-constants/common';
+import { LanguageSelector } from 'src/components/LanguageSelector';
+import { openNotification } from 'src/components/Notifications';
+import { ReferFriendModal } from 'src/components/ReferFriendModal';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWallet } from 'src/contexts/wallet';
+import { copyText, isProd } from 'src/middleware/ui';
 
 export const AppContextMenu = () => {
   const { connected } = useWallet();

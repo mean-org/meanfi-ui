@@ -1,12 +1,12 @@
 import { CopyOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { Button, Modal, Spin } from 'antd';
-import { AppStateContext } from 'contexts/appstate';
-import { consoleOut, copyText, getTransactionOperationDescription } from 'middleware/ui';
-import { shortenAddress } from 'middleware/utils';
-import { TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AppStateContext } from 'src/contexts/appstate';
+import { consoleOut, copyText, getTransactionOperationDescription } from 'src/middleware/ui';
+import { shortenAddress } from 'src/middleware/utils';
+import { TransactionStatus } from 'src/models/enums';
 import { openNotification } from '../Notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

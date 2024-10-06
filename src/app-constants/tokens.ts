@@ -1,6 +1,6 @@
-import getRuntimeEnv from 'environments/getRuntimeEnv';
-import { SOL_MINT } from 'middleware/ids';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
+import getRuntimeEnv from 'src/environments/getRuntimeEnv';
+import { SOL_MINT } from 'src/middleware/ids';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 
 const env = getRuntimeEnv().MODE;
 const isProd = env === 'production';

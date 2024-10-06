@@ -9,9 +9,13 @@ import {
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { type AccountInfo, type ParsedAccountData, PublicKey, type Transaction } from '@solana/web3.js';
-import { segmentAnalytics } from 'App';
 import { Button, Checkbox, DatePicker, type DatePickerProps, Select } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import dateFormat from 'dateformat';
+import dayjs from 'dayjs';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { segmentAnalytics } from 'src/App';
 import {
   CUSTOM_TOKEN_NAME,
   DATEPICKER_FORMAT,
@@ -19,21 +23,19 @@ import {
   NO_FEES,
   SIMPLE_DATE_TIME_FORMAT,
   WRAPPED_SOL_MINT_ADDRESS,
-} from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { openNotification } from 'components/Notifications';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection, useConnectionConfig } from 'contexts/connection';
-import { TxConfirmationContext, confirmationEvents } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import dateFormat from 'dateformat';
-import dayjs from 'dayjs';
-import { customLogger } from 'main';
-import { SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent, type SegmentStreamOTPTransferData } from 'middleware/segment-service';
-import { composeTxWithPrioritizationFees, sendTx, signTx } from 'middleware/transactions';
+} from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { openNotification } from 'src/components/Notifications';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection, useConnectionConfig } from 'src/contexts/connection';
+import { TxConfirmationContext, confirmationEvents } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import { customLogger } from 'src/main';
+import { SOL_MINT } from 'src/middleware/ids';
+import { AppUsageEvent, type SegmentStreamOTPTransferData } from 'src/middleware/segment-service';
+import { composeTxWithPrioritizationFees, sendTx, signTx } from 'src/middleware/transactions';
 import {
   addMinutes,
   consoleOut,
@@ -41,7 +43,7 @@ import {
   isToday,
   isValidAddress,
   todayAndPriorDatesDisabled,
-} from 'middleware/ui';
+} from 'src/middleware/ui';
 import {
   cutNumber,
   formatAmount,
@@ -53,15 +55,13 @@ import {
   toTokenAmount,
   toTokenAmountBn,
   toUiAmount,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { RecipientAddressInfo } from 'models/common-types';
-import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import type { OtpTxParams } from 'models/transfers';
-import useStreamingClient from 'query-hooks/streamingClient';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { RecipientAddressInfo } from 'src/models/common-types';
+import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
+import type { OtpTxParams } from 'src/models/transfers';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import type { LooseObject } from 'src/types/LooseObject';
 
 const { Option } = Select;
 

@@ -1,16 +1,16 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { IconNoItems } from 'Icons';
 import { Image, Space, Tabs, Tooltip } from 'antd';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, fallbackImgSrc } from 'app-constants/common';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { InfoIcon } from 'components/InfoIcon';
-import { useMintInfo } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import useWindowSize from 'hooks/useWindowResize';
-import type { MeanNft } from 'models/accounts/NftTypes';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { IconNoItems } from 'src/Icons'
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, fallbackImgSrc } from 'src/app-constants/common';
+import { AddressDisplay } from 'src/components/AddressDisplay';
+import { InfoIcon } from 'src/components/InfoIcon';
+import { useMintInfo } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import useWindowSize from 'src/hooks/useWindowResize';
+import type { MeanNft } from 'src/models/accounts/NftTypes';
 import { NftCreators } from './NftCreators';
 import './style.scss';
 

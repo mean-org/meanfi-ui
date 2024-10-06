@@ -4,29 +4,29 @@ import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import type { PaymentStreamingAccount, Stream, StreamTemplate } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
+import { QRCodeSVG } from 'qrcode.react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   MIN_SOL_BALANCE_REQUIRED,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   WRAPPED_SOL_MINT_ADDRESS,
-} from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { InputMean } from 'components/InputMean';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { SOL_MINT } from 'middleware/ids';
-import { isError } from 'middleware/transactions';
-import { consoleOut, getTransactionOperationDescription, toUsCurrency } from 'middleware/ui';
-import { cutNumber, getAmountWithSymbol, isValidNumber, toTokenAmount, toUiAmount } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { TransactionStatus } from 'models/enums';
-import type { VestingContractTopupParams } from 'models/vesting';
-import { QRCodeSVG } from 'qrcode.react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { AddressDisplay } from 'src/components/AddressDisplay';
+import { InputMean } from 'src/components/InputMean';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { SOL_MINT } from 'src/middleware/ids';
+import { isError } from 'src/middleware/transactions';
+import { consoleOut, getTransactionOperationDescription, toUsCurrency } from 'src/middleware/ui';
+import { cutNumber, getAmountWithSymbol, isValidNumber, toTokenAmount, toUiAmount } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { TransactionStatus } from 'src/models/enums';
+import type { VestingContractTopupParams } from 'src/models/vesting';
+import type { LooseObject } from 'src/types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

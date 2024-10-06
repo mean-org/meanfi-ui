@@ -1,11 +1,11 @@
 import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
-import { IconThumbsDown, IconThumbsUp } from 'Icons';
 import { Button, Dropdown, type MenuProps } from 'antd';
-import type { CountdownRendererParams } from 'components/CountdownTimer/CountdownRenderer';
-import { AppStateContext } from 'contexts/appstate';
 import { type ReactNode, useCallback, useContext, useState } from 'react';
 import Countdown from 'react-countdown';
 import { useTranslation } from 'react-i18next';
+import { IconThumbsDown, IconThumbsUp } from 'src/Icons'
+import type { CountdownRendererParams } from 'src/components/CountdownTimer/CountdownRenderer';
+import { AppStateContext } from 'src/contexts/appstate';
 import './style.scss';
 
 export const ResumeItem = (props: {

@@ -1,8 +1,8 @@
 import type { StreamInfo } from '@mean-dao/money-streaming';
 import type { Stream } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { toTokenAmountBn } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
+import { toTokenAmountBn } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import getIsV2Stream from './getIsV2Stream';
 
 const getRateAmountBn = (stream: Stream | StreamInfo, selectedToken: TokenInfo | undefined) => {

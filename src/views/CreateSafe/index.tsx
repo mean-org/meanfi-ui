@@ -6,33 +6,33 @@ import {
   getFees
 } from '@mean-dao/mean-multisig-sdk';
 import { LAMPORTS_PER_SOL, type Transaction } from '@solana/web3.js';
-import { segmentAnalytics } from 'App';
-import { IconHelpCircle, IconSafe } from 'Icons';
 import { Button, Col, Row, Slider, Tooltip } from 'antd';
 import type { SliderMarks } from 'antd/lib/slider';
-import { MAX_MULTISIG_PARTICIPANTS, MEAN_MULTISIG_ACCOUNT_LAMPORTS } from 'app-constants/common';
-import { MultisigParticipants } from 'components/MultisigParticipants';
-import { openNotification } from 'components/Notifications';
-import { PreFooter } from 'components/PreFooter';
-import { useAccountsContext } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import useWindowSize from 'hooks/useWindowResize';
-import { customLogger } from 'main';
-import { SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent } from 'middleware/segment-service';
-import { sendTx, signTx } from 'middleware/transactions';
-import { consoleOut, getTransactionStatusForLogs, isValidAddress } from 'middleware/ui';
-import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
-import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { type CreateMultisigTxParams, type CreateNewSafeParams, ZERO_FEES } from 'models/multisig';
-import useMultisigClient from 'query-hooks/multisigClient';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import type { LooseObject } from 'types/LooseObject';
+import { segmentAnalytics } from 'src/App';
+import { IconHelpCircle, IconSafe } from 'src/Icons'
+import { MAX_MULTISIG_PARTICIPANTS, MEAN_MULTISIG_ACCOUNT_LAMPORTS } from 'src/app-constants/common';
+import { MultisigParticipants } from 'src/components/MultisigParticipants';
+import { openNotification } from 'src/components/Notifications';
+import { PreFooter } from 'src/components/PreFooter';
+import { useAccountsContext } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { customLogger } from 'src/main';
+import { SOL_MINT } from 'src/middleware/ids';
+import { AppUsageEvent } from 'src/middleware/segment-service';
+import { sendTx, signTx } from 'src/middleware/transactions';
+import { consoleOut, getTransactionStatusForLogs, isValidAddress } from 'src/middleware/ui';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'src/middleware/utils';
+import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
+import { type CreateMultisigTxParams, type CreateNewSafeParams, ZERO_FEES } from 'src/models/multisig';
+import useMultisigClient from 'src/query-hooks/multisigClient';
+import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
 
 const CreateSafeView = () => {

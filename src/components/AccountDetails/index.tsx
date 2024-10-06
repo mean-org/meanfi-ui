@@ -1,16 +1,16 @@
-import { segmentAnalytics } from 'App';
-import { IconSafe } from 'Icons';
 import { Popover } from 'antd';
-import { CREATE_SAFE_ROUTE_PATH } from 'app-constants/common';
-import { AccountSelector } from 'components/AccountSelector';
-import { useWalletAccount } from 'contexts/walletAccount';
-import useWindowSize from 'hooks/useWindowResize';
-import { AppUsageEvent } from 'middleware/segment-service';
-import { shortenAddress } from 'middleware/utils';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { segmentAnalytics } from 'src/App';
+import { IconSafe } from 'src/Icons'
+import { CREATE_SAFE_ROUTE_PATH } from 'src/app-constants/common';
+import { AccountSelector } from 'src/components/AccountSelector';
+import { useWalletAccount } from 'src/contexts/walletAccount';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { AppUsageEvent } from 'src/middleware/segment-service';
+import { shortenAddress } from 'src/middleware/utils';
 import './style.scss';
-import { useWallet } from 'contexts/wallet';
+import { useWallet } from 'src/contexts/wallet';
 
 export const AccountDetails = () => {
   const { selectedAccount } = useWalletAccount();

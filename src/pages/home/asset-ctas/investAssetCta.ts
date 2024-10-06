@@ -1,4 +1,4 @@
-import { type AssetCta, MetaInfoCtaAction, type UserTokenAccount } from 'models/accounts';
+import { type AssetCta, MetaInfoCtaAction, type UserTokenAccount } from 'src/models/accounts';
 
 export const getInvestAssetCta = (
   ctaItems: number,

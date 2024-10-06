@@ -6,10 +6,10 @@ import {
 } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Modal, Switch } from 'antd';
-import { AppStateContext } from 'contexts/appstate';
-import { consoleOut } from 'middleware/ui';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
+import { AppStateContext } from 'src/contexts/appstate';
+import { consoleOut } from 'src/middleware/ui';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { MoneyStreamDetails } from '../MoneyStreamDetails';
 
 export const VestingContractStreamDetailModal = (props: {

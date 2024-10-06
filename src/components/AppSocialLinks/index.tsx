@@ -8,9 +8,9 @@ import {
   IconTelegram,
   IconTwitter,
   IconWhatsapp,
-} from 'Icons';
-import type { SocialMediaEntry } from 'models/accounts';
-import { SocialNetwork } from 'models/enums';
+} from 'src/Icons'
+import type { SocialMediaEntry } from 'src/models/accounts';
+import { SocialNetwork } from 'src/models/enums';
 
 export const AppSocialLinks = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const { appSocialLinks } = props;

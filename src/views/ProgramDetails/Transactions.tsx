@@ -1,8 +1,8 @@
 import type { ParsedTransactionWithMeta } from '@solana/web3.js';
 import { Col, Row } from 'antd';
-import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
 import dayjs from 'dayjs';
-import { formatThousands } from 'middleware/utils';
+import { CopyExtLinkGroup } from 'src/components/CopyExtLinkGroup';
+import { formatThousands } from 'src/middleware/utils';
 import './style.scss';
 
 interface Props {

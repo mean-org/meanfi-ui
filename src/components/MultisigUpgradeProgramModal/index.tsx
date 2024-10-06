@@ -3,18 +3,18 @@ import type { TransactionFees } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Modal, Spin } from 'antd';
 
-import { InputMean } from 'components/InputMean';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { SOL_MINT } from 'middleware/ids';
-import { isError } from 'middleware/transactions';
-import { getTransactionOperationDescription, isValidAddress } from 'middleware/ui';
-import { getAmountWithSymbol } from 'middleware/utils';
-import { TransactionStatus } from 'models/enums';
-import type { ProgramUpgradeParams } from 'models/programs';
 import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { InputMean } from 'src/components/InputMean';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { SOL_MINT } from 'src/middleware/ids';
+import { isError } from 'src/middleware/transactions';
+import { getTransactionOperationDescription, isValidAddress } from 'src/middleware/ui';
+import { getAmountWithSymbol } from 'src/middleware/utils';
+import { TransactionStatus } from 'src/models/enums';
+import type { ProgramUpgradeParams } from 'src/models/programs';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

@@ -1,9 +1,9 @@
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import type { TransactionFees } from '@mean-dao/payment-streaming';
 import { Modal } from 'antd';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { UserTokenAccount } from 'models/accounts';
 import { useEffect, useState } from 'react';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { UserTokenAccount } from 'src/models/accounts';
 import { VestingContractCreateForm } from '../VestingContractCreateForm';
 
 export const VestingContractCreateModal = (props: {

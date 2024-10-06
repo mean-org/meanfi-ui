@@ -2,6 +2,7 @@ import type { MoneyStreaming, StreamInfo } from '@mean-dao/money-streaming';
 import type { PaymentStreaming, Stream } from '@mean-dao/payment-streaming';
 import type { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
 import {
   FIFTY_SECONDS_REFRESH_TIMEOUT,
   FIVE_MINUTES_REFRESH_TIMEOUT,
@@ -9,9 +10,8 @@ import {
   ONE_MINUTE_REFRESH_TIMEOUT,
   PERFORMANCE_THRESHOLD,
   SEVENTY_SECONDS_REFRESH_TIMEOUT,
-} from 'app-constants/common';
-import { isProd } from 'middleware/ui';
-import { useCallback, useMemo, useState } from 'react';
+} from 'src/app-constants/common';
+import { isProd } from 'src/middleware/ui';
 import useGetPerformanceSamples from '../performanceSamples';
 import getStreamList from './getStreamList';
 

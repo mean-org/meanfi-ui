@@ -1,10 +1,10 @@
 import { CloseOutlined } from '@ant-design/icons';
 import type { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
-import { IconDocument } from 'Icons';
 import { Button, Popover } from 'antd';
-import { shortenAddress } from 'middleware/utils';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IconDocument } from 'src/Icons'
+import { shortenAddress } from 'src/middleware/utils';
 
 export const MultisigOwnersSigned = (props: { participants: MultisigParticipant[]; className?: string }) => {
   const { t } = useTranslation('common');

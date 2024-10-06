@@ -1,21 +1,21 @@
 import type { PaymentStreamingAccount, StreamTemplate } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
-import { IconLoading, IconNoItems } from 'Icons';
 import { Progress } from 'antd';
-import { FALLBACK_COIN_IMAGE } from 'app-constants/common';
 import BN from 'bn.js';
-import { Identicon } from 'components/Identicon';
-import { AppStateContext } from 'contexts/appstate';
-import { useWalletAccount } from 'contexts/walletAccount';
-import { getReadableDate, getTodayPercentualBetweenTwoDates } from 'middleware/ui';
-import { formatThousands, getSdkValue, makeDecimal } from 'middleware/utils';
-import useStreamingClient from 'query-hooks/streamingClient';
-import { useGetVestingContracts } from 'query-hooks/vestingContract';
-import { useGetStreamTemplates } from 'query-hooks/vestingContractTemplates';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+import { IconLoading, IconNoItems } from 'src/Icons'
+import { FALLBACK_COIN_IMAGE } from 'src/app-constants/common';
+import { Identicon } from 'src/components/Identicon';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWalletAccount } from 'src/contexts/walletAccount';
+import { getReadableDate, getTodayPercentualBetweenTwoDates } from 'src/middleware/ui';
+import { formatThousands, getSdkValue, makeDecimal } from 'src/middleware/utils';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import { useGetVestingContracts } from 'src/query-hooks/vestingContract';
+import { useGetStreamTemplates } from 'src/query-hooks/vestingContractTemplates';
+import type { LooseObject } from 'src/types/LooseObject';
 
 interface VestingContractListProps {
   onAccountSelected: (item: PaymentStreamingAccount) => void;

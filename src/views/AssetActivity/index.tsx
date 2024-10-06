@@ -1,12 +1,12 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Empty, Spin } from 'antd';
-import { TransactionItemView } from 'components/TransactionItemView';
-import type { MappedTransaction } from 'middleware/history';
-import { getChange } from 'middleware/transactions';
-import type { UserTokenAccount } from 'models/accounts';
-import { FetchStatus } from 'models/transactions';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TransactionItemView } from 'src/components/TransactionItemView';
+import type { MappedTransaction } from 'src/middleware/history';
+import { getChange } from 'src/middleware/transactions';
+import type { UserTokenAccount } from 'src/models/accounts';
+import { FetchStatus } from 'src/models/transactions';
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

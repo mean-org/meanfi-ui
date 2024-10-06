@@ -19,33 +19,35 @@ import {
 } from '@mean-dao/payment-streaming';
 import type { BN } from '@project-serum/anchor';
 import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
-import { segmentAnalytics } from 'App';
-import { IconEllipsisVertical } from 'Icons';
 import { Button, Dropdown, Modal, Space, Spin } from 'antd';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
-import { MoneyStreamDetails } from 'components/MoneyStreamDetails';
-import { openNotification } from 'components/Notifications';
-import { StreamTransferOpenModal, type StreamTransferPayload } from 'components/StreamTransferOpenModal';
-import { StreamWithdrawModal } from 'components/StreamWithdrawModal';
-import getStreamWithdrawableAmount from 'components/common/getStreamWithdrawableAmount';
-import getV1Beneficiary from 'components/common/getV1Beneficiary';
-import getV2Beneficiary from 'components/common/getV2Beneficiary';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection } from 'contexts/connection';
-import { TxConfirmationContext } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { customLogger } from 'main';
-import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
-import { SOL_MINT } from 'middleware/ids';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { segmentAnalytics } from 'src/App';
+import { IconEllipsisVertical } from 'src/Icons'
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
+import { MoneyStreamDetails } from 'src/components/MoneyStreamDetails';
+import { openNotification } from 'src/components/Notifications';
+import { StreamTransferOpenModal, type StreamTransferPayload } from 'src/components/StreamTransferOpenModal';
+import { StreamWithdrawModal } from 'src/components/StreamWithdrawModal';
+import getStreamWithdrawableAmount from 'src/components/common/getStreamWithdrawableAmount';
+import getV1Beneficiary from 'src/components/common/getV1Beneficiary';
+import getV2Beneficiary from 'src/components/common/getV2Beneficiary';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import { customLogger } from 'src/main';
+import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
+import { SOL_MINT } from 'src/middleware/ids';
 import {
   AppUsageEvent,
   type SegmentStreamTransferOwnershipData,
   type SegmentStreamWithdrawData,
-} from 'middleware/segment-service';
-import { getStreamStatus } from 'middleware/streamHelpers';
+} from 'src/middleware/segment-service';
+import { getStreamStatus } from 'src/middleware/streamHelpers';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -53,13 +55,13 @@ import {
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
-} from 'middleware/transactions';
+} from 'src/middleware/transactions';
 import {
   consoleOut,
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-} from 'middleware/ui';
+} from 'src/middleware/ui';
 import {
   displayAmountWithSymbol,
   getAmountFromLamports,
@@ -67,15 +69,13 @@ import {
   getTokenOrCustomToken,
   getTxIxResume,
   shortenAddress,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { OperationType, TransactionStatus } from 'models/enums';
-import type { StreamWithdrawData, WithdrawFromStreamParams } from 'models/streams';
-import useMultisigClient from 'query-hooks/multisigClient';
-import useStreamingClient from 'query-hooks/streamingClient';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { OperationType, TransactionStatus } from 'src/models/enums';
+import type { StreamWithdrawData, WithdrawFromStreamParams } from 'src/models/streams';
+import useMultisigClient from 'src/query-hooks/multisigClient';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import type { LooseObject } from 'src/types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

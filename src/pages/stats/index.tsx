@@ -1,16 +1,16 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { IconStats } from 'Icons';
 import { Col, Row } from 'antd';
-import { MEAN_TOKEN } from 'app-constants/tokens';
-import { PreFooter } from 'components/PreFooter';
-import { useConnection } from 'contexts/connection';
-import { appConfig } from 'main';
-import { getCoingeckoMarketChart, getMeanStats } from 'middleware/api';
-import { consoleOut } from 'middleware/ui';
-import type { MeanFiStatsModel } from 'models/meanfi-stats';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IconStats } from 'src/Icons'
+import { MEAN_TOKEN } from 'src/app-constants/tokens';
+import { PreFooter } from 'src/components/PreFooter';
+import { useConnection } from 'src/contexts/connection';
+import { appConfig } from 'src/main';
+import { getCoingeckoMarketChart, getMeanStats } from 'src/middleware/api';
+import { consoleOut } from 'src/middleware/ui';
+import type { MeanFiStatsModel } from 'src/models/meanfi-stats';
 import { TokenStats } from './TokenStats';
 import type { PromoCards } from './types';
 import './style.scss';

@@ -8,8 +8,8 @@ import {
   SystemProgram,
   type TransactionInstruction,
 } from '@solana/web3.js';
-import { appConfig } from 'main';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
+import { appConfig } from 'src/main';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
 
 export type CreateSafeAssetTxParams = {

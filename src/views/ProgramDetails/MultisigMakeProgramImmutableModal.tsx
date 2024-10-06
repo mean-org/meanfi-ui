@@ -1,8 +1,8 @@
 import { Button, Modal } from 'antd';
 
-import { InputMean } from 'components/InputMean';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { InputMean } from 'src/components/InputMean';
 
 interface Props {
   handleClose: () => void;

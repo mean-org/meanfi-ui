@@ -1,6 +1,6 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { IconCaretDown, IconWallet } from 'Icons';
 import { Button } from 'antd';
+import { IconCaretDown, IconWallet } from 'src/Icons'
 
 const CustomConnectButton = () => {
   return (

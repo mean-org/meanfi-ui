@@ -1,5 +1,5 @@
-import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { type ReactNode, useContext } from 'react';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { IconCaretDown } from '../../Icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { shortenAddress } from '../../middleware/utils';

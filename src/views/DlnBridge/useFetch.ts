@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { type FetchOptions, fetcher } from 'views/DlnBridge/fetchInstance';
+import { type FetchOptions, fetcher } from 'src/views/DlnBridge/fetchInstance';
 
 interface State<T> {
   data?: T;

@@ -1,10 +1,10 @@
 import type { Creator } from '@metaplex-foundation/js';
-import { IconCheck, IconInfoCircle } from 'Icons';
 import { Tooltip } from 'antd';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import useWindowSize from 'hooks/useWindowResize';
+import { IconCheck, IconInfoCircle } from 'src/Icons'
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
+import { AddressDisplay } from 'src/components/AddressDisplay';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import useWindowSize from 'src/hooks/useWindowResize';
 
 export const NftCreators = (props: { creators: Creator[] }) => {
   const { creators } = props;

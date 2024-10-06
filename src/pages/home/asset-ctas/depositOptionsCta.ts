@@ -1,4 +1,4 @@
-import { type AssetCta, MetaInfoCtaAction } from 'models/accounts';
+import { type AssetCta, MetaInfoCtaAction } from 'src/models/accounts';
 
 export const getDepositOptionsCta = (caption: string, ctaItems: number, numMaxCtas: number, callBack: any) => {
   return {

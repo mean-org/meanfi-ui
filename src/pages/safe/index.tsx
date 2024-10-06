@@ -11,22 +11,26 @@ import {
 } from '@mean-dao/mean-multisig-sdk';
 import { AnchorProvider, BN, Program } from '@project-serum/anchor';
 import { type ConfirmOptions, PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
-import { segmentAnalytics } from 'App';
 import { Button, Empty, Spin, Tooltip } from 'antd';
-import { MULTISIG_ROUTE_BASE_PATH } from 'app-constants/common';
-import { ErrorReportModal } from 'components/ErrorReportModal';
-import { MultisigEditModal } from 'components/MultisigEditModal';
-import { openNotification } from 'components/Notifications';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext, type TransactionStatusInfo } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import useLocalStorage from 'hooks/useLocalStorage';
-import useWindowSize from 'hooks/useWindowResize';
-import { customLogger } from 'main';
-import { SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent } from 'middleware/segment-service';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { isDesktop } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { segmentAnalytics } from 'src/App';
+import { MULTISIG_ROUTE_BASE_PATH } from 'src/app-constants/common';
+import { ErrorReportModal } from 'src/components/ErrorReportModal';
+import { MultisigEditModal } from 'src/components/MultisigEditModal';
+import { openNotification } from 'src/components/Notifications';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext, type TransactionStatusInfo } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { customLogger } from 'src/main';
+import { SOL_MINT } from 'src/middleware/ids';
+import { AppUsageEvent } from 'src/middleware/segment-service';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -34,19 +38,15 @@ import {
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
-} from 'middleware/transactions';
-import { consoleOut, delay, getTransactionStatusForLogs } from 'middleware/ui';
-import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
-import type { ProgramAccounts } from 'models/accounts';
-import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { type EditMultisigParams, type MultisigProposalsWithAuthority, ZERO_FEES } from 'models/multisig';
-import SerumIDL from 'models/serum-multisig-idl';
-import useMultisigClient from 'query-hooks/multisigClient';
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { isDesktop } from 'react-device-detect';
-import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/transactions';
+import { consoleOut, delay, getTransactionStatusForLogs } from 'src/middleware/ui';
+import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'src/middleware/utils';
+import type { ProgramAccounts } from 'src/models/accounts';
+import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
+import { type EditMultisigParams, type MultisigProposalsWithAuthority, ZERO_FEES } from 'src/models/multisig';
+import SerumIDL from 'src/models/serum-multisig-idl';
+import useMultisigClient from 'src/query-hooks/multisigClient';
+import type { LooseObject } from 'src/types/LooseObject';
 import { ProposalDetailsView } from './components/ProposalDetails';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';

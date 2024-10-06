@@ -35,12 +35,18 @@ import {
   type TransactionInstruction,
   type VersionedTransaction,
 } from '@solana/web3.js';
-import { segmentAnalytics } from 'App';
-import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'Icons';
 import { Alert, Button, Col, Divider, Dropdown, Empty, Row, Segmented, Space, Spin, Tooltip } from 'antd';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 import notification from 'antd/lib/notification';
 import type { SegmentedLabeledOption } from 'antd/lib/segmented';
+import BigNumber from 'bignumber.js';
+import React, { Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { isMobile } from 'react-device-detect';
+import { Helmet } from 'react-helmet';
+import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { segmentAnalytics } from 'src/App';
+import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'src/Icons'
 import {
   ACCOUNTS_LOW_BALANCE_LIMIT,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
@@ -51,42 +57,41 @@ import {
   STAKING_ROUTE_BASE_PATH,
   TRANSACTIONS_PER_PAGE,
   WRAPPED_SOL_MINT_ADDRESS,
-} from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import BigNumber from 'bignumber.js';
-import { AccountsCloseAssetModal } from 'components/AccountsCloseAssetModal';
-import { AccountsInitAtaModal } from 'components/AccountsInitAtaModal';
-import { AccountsMergeModal } from 'components/AccountsMergeModal';
-import { AccountsSuggestAssetModal } from 'components/AccountsSuggestAssetModal';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { MultisigAddAssetModal } from 'components/MultisigAddAssetModal';
-import { MultisigProposalModal } from 'components/MultisigProposalModal';
-import { MultisigTransferTokensModal } from 'components/MultisigTransferTokensModal';
-import { MultisigVaultDeleteModal } from 'components/MultisigVaultDeleteModal';
-import { MultisigVaultTransferAuthorityModal } from 'components/MultisigVaultTransferAuthorityModal';
-import { openNotification } from 'components/Notifications';
-import { PreFooter } from 'components/PreFooter';
-import { ReceiveSplOrSolModal } from 'components/ReceiveSplOrSolModal';
-import { SendAssetModal } from 'components/SendAssetModal';
-import { SolBalanceModal } from 'components/SolBalanceModal';
-import { WrapSolModal } from 'components/WrapSolModal';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext, type TransactionStatusInfo } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
-import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import useLocalStorage from 'hooks/useLocalStorage';
-import useTransaction from 'hooks/useTransaction';
-import useWindowSize from 'hooks/useWindowResize';
-import { customLogger } from 'main';
-import { type CreateSafeAssetTxParams, createAddSafeAssetTx } from 'middleware/createAddSafeAssetTx';
-import { createCloseTokenAccountTx } from 'middleware/createCloseTokenAccountTx';
-import createTokenTransferTx from 'middleware/createTokenTransferTx';
-import { createV0InitAtaAccountTx } from 'middleware/createV0InitAtaAccountTx';
-import { getStreamAssociatedMint } from 'middleware/getStreamAssociatedMint';
-import { type MappedTransaction, fetchAccountHistory } from 'middleware/history';
-import { SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent } from 'middleware/segment-service';
+} from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { AccountsCloseAssetModal } from 'src/components/AccountsCloseAssetModal';
+import { AccountsInitAtaModal } from 'src/components/AccountsInitAtaModal';
+import { AccountsMergeModal } from 'src/components/AccountsMergeModal';
+import { AccountsSuggestAssetModal } from 'src/components/AccountsSuggestAssetModal';
+import { AddressDisplay } from 'src/components/AddressDisplay';
+import { MultisigAddAssetModal } from 'src/components/MultisigAddAssetModal';
+import { MultisigProposalModal } from 'src/components/MultisigProposalModal';
+import { MultisigTransferTokensModal } from 'src/components/MultisigTransferTokensModal';
+import { MultisigVaultDeleteModal } from 'src/components/MultisigVaultDeleteModal';
+import { MultisigVaultTransferAuthorityModal } from 'src/components/MultisigVaultTransferAuthorityModal';
+import { openNotification } from 'src/components/Notifications';
+import { PreFooter } from 'src/components/PreFooter';
+import { ReceiveSplOrSolModal } from 'src/components/ReceiveSplOrSolModal';
+import { SendAssetModal } from 'src/components/SendAssetModal';
+import { SolBalanceModal } from 'src/components/SolBalanceModal';
+import { WrapSolModal } from 'src/components/WrapSolModal';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext, type TransactionStatusInfo } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'src/contexts/connection';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import useTransaction from 'src/hooks/useTransaction';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { customLogger } from 'src/main';
+import { type CreateSafeAssetTxParams, createAddSafeAssetTx } from 'src/middleware/createAddSafeAssetTx';
+import { createCloseTokenAccountTx } from 'src/middleware/createCloseTokenAccountTx';
+import createTokenTransferTx from 'src/middleware/createTokenTransferTx';
+import { createV0InitAtaAccountTx } from 'src/middleware/createV0InitAtaAccountTx';
+import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
+import { type MappedTransaction, fetchAccountHistory } from 'src/middleware/history';
+import { SOL_MINT } from 'src/middleware/ids';
+import { AppUsageEvent } from 'src/middleware/segment-service';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -94,8 +99,8 @@ import {
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
-} from 'middleware/transactions';
-import { consoleOut, copyText, getTransactionStatusForLogs, isDev, kFormatter, toUsCurrency } from 'middleware/ui';
+} from 'src/middleware/transactions';
+import { consoleOut, copyText, getTransactionStatusForLogs, isDev, kFormatter, toUsCurrency } from 'src/middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports,
@@ -103,8 +108,8 @@ import {
   getTxIxResume,
   shortenAddress,
   toUiAmount,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import {
   type AccountTokenParsedInfo,
   type AssetCta,
@@ -115,10 +120,10 @@ import {
   type ProgramAccounts,
   RegisteredAppPaths,
   type UserTokenAccount,
-} from 'models/accounts';
-import type { MeanNft } from 'models/accounts/NftTypes';
-import type { MetaInfoCta } from 'models/common-types';
-import { EventType, OperationType, TransactionStatus } from 'models/enums';
+} from 'src/models/accounts';
+import type { MeanNft } from 'src/models/accounts/NftTypes';
+import type { MetaInfoCta } from 'src/models/common-types';
+import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import {
   type CreateNewProposalParams,
   NATIVE_LOADER,
@@ -127,25 +132,20 @@ import {
   ZERO_FEES,
   isCredixFinance,
   parseSerializedTx,
-} from 'models/multisig';
-import { type StreamsSummary, initialSummary } from 'models/streams';
-import { FetchStatus } from 'models/transactions';
-import { INITIAL_TREASURIES_SUMMARY, type UserTreasuriesSummary } from 'models/treasuries';
-import useGetAccountPrograms from 'query-hooks/accountPrograms';
-import useMultisigClient from 'query-hooks/multisigClient';
-import useStreamingClient from 'query-hooks/streamingClient';
-import React, { Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { isMobile } from 'react-device-detect';
-import { Helmet } from 'react-helmet';
-import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import type { LooseObject } from 'types/LooseObject';
-import { AppsList } from 'views/AppsList';
-import { AssetActivity } from 'views/AssetActivity';
-import AssetList from 'views/AssetList';
-import { NftDetails } from 'views/NftDetails';
-import { NftPaginatedList } from 'views/NftPaginatedList';
-import { OtherAssetsList } from 'views/OtherAssetsList';
+} from 'src/models/multisig';
+import { type StreamsSummary, initialSummary } from 'src/models/streams';
+import { FetchStatus } from 'src/models/transactions';
+import { INITIAL_TREASURIES_SUMMARY, type UserTreasuriesSummary } from 'src/models/treasuries';
+import useGetAccountPrograms from 'src/query-hooks/accountPrograms';
+import useMultisigClient from 'src/query-hooks/multisigClient';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import type { LooseObject } from 'src/types/LooseObject';
+import { AppsList } from 'src/views/AppsList';
+import { AssetActivity } from 'src/views/AssetActivity';
+import AssetList from 'src/views/AssetList';
+import { NftDetails } from 'src/views/NftDetails';
+import { NftPaginatedList } from 'src/views/NftPaginatedList';
+import { OtherAssetsList } from 'src/views/OtherAssetsList';
 import { getBuyOptionsCta } from './asset-ctas/buyOptionsCta';
 import { getCloseAccountCta } from './asset-ctas/closeAccountCta';
 import { getDepositOptionsCta } from './asset-ctas/depositOptionsCta';
@@ -156,20 +156,20 @@ import { getUnwrapSolCta } from './asset-ctas/unwrapSolCta';
 import { getWrapSolCta } from './asset-ctas/wrapSolCta';
 import getNftMint from './getNftMint';
 import './style.scss';
-import WalletNotConnectedMessage from 'components/WalletNotConnectedMessage';
-import { resolveParsedAccountInfo } from 'middleware/accounts';
-import { getStreamCategory, isInboundStream, isV2Stream } from 'middleware/streamHelpers';
-import useAccountAssets from 'query-hooks/accountTokens';
-import { useGetStreamList } from 'query-hooks/streamList';
-import { useGetStreamingAccounts } from 'query-hooks/streamingAccount';
+import WalletNotConnectedMessage from 'src/components/WalletNotConnectedMessage';
+import { resolveParsedAccountInfo } from 'src/middleware/accounts';
+import { getStreamCategory, isInboundStream, isV2Stream } from 'src/middleware/streamHelpers';
+import useAccountAssets from 'src/query-hooks/accountTokens';
+import { useGetStreamList } from 'src/query-hooks/streamList';
+import { useGetStreamingAccounts } from 'src/query-hooks/streamingAccount';
 import useAppNavigation from './useAppNavigation';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
 const PaymentStreamingView = React.lazy(() => import('../payment-streaming/index'));
 const StakingComponent = React.lazy(() => import('../staking/index'));
 const VestingComponent = React.lazy(() => import('../vesting/index'));
-const ProgramDetailsComponent = React.lazy(() => import('views/ProgramDetails/index'));
-const PersonalAccountSummary = React.lazy(() => import('views/WalletAccountSummary/index'));
+const ProgramDetailsComponent = React.lazy(() => import('src/views/ProgramDetails/index'));
+const PersonalAccountSummary = React.lazy(() => import('src/views/WalletAccountSummary/index'));
 
 const loadIndicator = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let isWorkflowLocked = false;

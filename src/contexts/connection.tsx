@@ -1,6 +1,6 @@
 import { type Cluster, Connection } from '@solana/web3.js';
-import { ChainID } from 'models/enums';
 import React, { useContext, useMemo, type ReactNode } from 'react';
+import { ChainID } from 'src/models/enums';
 import { environment } from '../environments/environment';
 import { useLocalStorageState } from '../middleware/utils';
 import { DEFAULT_RPCS, type RpcConfig, failsafeConnectionConfig } from '../services/connections-hq';

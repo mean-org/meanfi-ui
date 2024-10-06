@@ -1,10 +1,10 @@
-import { ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
-import { Identicon } from 'components/Identicon';
-import { AppStateContext } from 'contexts/appstate';
-import { toUsCurrency } from 'middleware/ui';
-import { formatThousands } from 'middleware/utils';
-import type { AccountsPageCategory, UserTokenAccount } from 'models/accounts';
 import { useCallback, useContext } from 'react';
+import { ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE, WRAPPED_SOL_MINT_ADDRESS } from 'src/app-constants/common';
+import { Identicon } from 'src/components/Identicon';
+import { AppStateContext } from 'src/contexts/appstate';
+import { toUsCurrency } from 'src/middleware/ui';
+import { formatThousands } from 'src/middleware/utils';
+import type { AccountsPageCategory, UserTokenAccount } from 'src/models/accounts';
 
 interface AssetListProps {
   accountTokens: UserTokenAccount[];

@@ -5,17 +5,20 @@ import { AccountType, type PaymentStreamingAccount } from '@mean-dao/payment-str
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox, { type CheckboxChangeEvent } from 'antd/lib/checkbox/Checkbox';
-import { FALLBACK_COIN_IMAGE } from 'app-constants/common';
-import { Identicon } from 'components/Identicon';
-import { InputMean } from 'components/InputMean';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
-import { getStreamingAccountMint } from 'middleware/getStreamingAccountMint';
-import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { SOL_MINT } from 'middleware/ids';
-import { isError } from 'middleware/transactions';
-import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
+import type React from 'react';
+import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { FALLBACK_COIN_IMAGE } from 'src/app-constants/common';
+import { Identicon } from 'src/components/Identicon';
+import { InputMean } from 'src/components/InputMean';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWallet } from 'src/contexts/wallet';
+import { getStreamingAccountMint } from 'src/middleware/getStreamingAccountMint';
+import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
+import { SOL_MINT } from 'src/middleware/ids';
+import { isError } from 'src/middleware/transactions';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'src/middleware/ui';
 import {
   displayAmountWithSymbol,
   formatThousands,
@@ -27,13 +30,10 @@ import {
   toTokenAmount,
   toTokenAmountBn,
   toUiAmount,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { TransactionStatus } from 'models/enums';
-import type { TreasuryWithdrawParams } from 'models/treasuries';
-import type React from 'react';
-import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { TransactionStatus } from 'src/models/enums';
+import type { TreasuryWithdrawParams } from 'src/models/treasuries';
 import './style.scss';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

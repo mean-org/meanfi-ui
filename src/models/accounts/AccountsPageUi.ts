@@ -1,4 +1,4 @@
-import { SocialNetwork } from 'models/enums';
+import { SocialNetwork } from 'src/models/enums';
 
 export type AccountsPageCategory = 'account-summary' | 'assets' | 'nfts' | 'apps' | 'other-assets' | undefined;
 

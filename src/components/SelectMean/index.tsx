@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import type { SelectOption } from 'models/common-types';
+import type { SelectOption } from 'src/models/common-types';
 
 interface Props {
   onChange?: (value: string) => void;

@@ -1,6 +1,6 @@
 import { Button } from 'antd';
-import { useWallet } from 'contexts/wallet';
 import { useTranslation } from 'react-i18next';
+import { useWallet } from 'src/contexts/wallet';
 import { segmentAnalytics } from '../../App';
 import { AppUsageEvent } from '../../middleware/segment-service';
 

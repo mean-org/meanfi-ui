@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 
 import type { StakingClient } from '@mean-dao/staking';
-import { consoleOut } from 'middleware/ui';
-import { formatThousands } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
+import { consoleOut } from 'src/middleware/ui';
+import { formatThousands } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 
 type Args = {
   stakeClient: StakingClient;

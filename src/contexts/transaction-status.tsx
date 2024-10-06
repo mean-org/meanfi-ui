@@ -1,7 +1,7 @@
 import type { TransactionConfirmationStatus } from '@solana/web3.js';
-import confirmOrRetryTx from 'middleware/txConfirmation';
 import React, { useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import confirmOrRetryTx from 'src/middleware/txConfirmation';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../app-constants';
 import { openNotification } from '../components/Notifications';
 import { consoleOut } from '../middleware/ui';

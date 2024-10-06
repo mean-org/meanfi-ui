@@ -2,33 +2,33 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import type { MultisigInfo, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { type AccountInfo, LAMPORTS_PER_SOL, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Button, Drawer, Modal, Spin } from 'antd';
+import { type ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   INPUT_DEBOUNCE_TIME,
   MAX_TOKEN_LIST_ITEMS,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
   MIN_SOL_BALANCE_REQUIRED,
-} from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import ValidationStatusDisplay from 'components/ValidationStatusDisplay';
-import { AppStateContext } from 'contexts/appstate';
-import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { environment } from 'environments/environment';
-import { useDebounce } from 'hooks/useDebounce';
-import useRecipientAddressValidation from 'hooks/useRecipientAddressValidation';
-import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
-import { fetchAccountTokens } from 'middleware/accounts';
-import { SOL_MINT } from 'middleware/ids';
-import { isError } from 'middleware/transactions';
-import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
-import { cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmount } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { UserTokenAccount } from 'models/accounts';
-import { TransactionStatus } from 'models/enums';
-import type { TransferTokensTxParams } from 'models/multisig';
-import { type ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import ValidationStatusDisplay from 'src/components/ValidationStatusDisplay';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getNetworkIdByEnvironment, useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { environment } from 'src/environments/environment';
+import { useDebounce } from 'src/hooks/useDebounce';
+import useRecipientAddressValidation from 'src/hooks/useRecipientAddressValidation';
+import { getDecimalsFromAccountInfo } from 'src/middleware/accountInfoGetters';
+import { fetchAccountTokens } from 'src/middleware/accounts';
+import { SOL_MINT } from 'src/middleware/ids';
+import { isError } from 'src/middleware/transactions';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'src/middleware/ui';
+import { cutNumber, getAmountWithSymbol, isValidNumber, shortenAddress, toTokenAmount } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { UserTokenAccount } from 'src/models/accounts';
+import { TransactionStatus } from 'src/models/enums';
+import type { TransferTokensTxParams } from 'src/models/multisig';
+import type { LooseObject } from 'src/types/LooseObject';
 import { InputMean } from '../InputMean';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';

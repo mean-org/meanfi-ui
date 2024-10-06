@@ -1,9 +1,9 @@
 import type { PaymentStreaming } from '@mean-dao/payment-streaming';
 import type { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
-import { ONE_MINUTE_REFRESH_TIMEOUT, PERFORMANCE_THRESHOLD } from 'app-constants';
-import { isProd } from 'middleware/ui';
 import { useMemo } from 'react';
+import { ONE_MINUTE_REFRESH_TIMEOUT, PERFORMANCE_THRESHOLD } from 'src/app-constants';
+import { isProd } from 'src/middleware/ui';
 import useGetPerformanceSamples from '../performanceSamples';
 import getVestingContract from './getVestingContract';
 import getVestingContracts from './getVestingContracts';

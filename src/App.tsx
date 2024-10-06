@@ -14,15 +14,15 @@ import {
   TrustWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { Layout } from 'antd';
-import { MeanFiWalletProvider } from 'contexts/wallet';
-import { WalletAccountProvider } from 'contexts/walletAccount';
-import { environment } from 'environments/environment';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { appConfig } from 'main';
 import { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { AppRoutes } from 'routes';
-import { PageLoadingView } from 'views/PageLoading';
+import { MeanFiWalletProvider } from 'src/contexts/wallet';
+import { WalletAccountProvider } from 'src/contexts/walletAccount';
+import { environment } from 'src/environments/environment';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import { appConfig } from 'src/main';
+import { AppRoutes } from 'src/routes';
+import { PageLoadingView } from 'src/views/PageLoading';
 import './App.scss';
 import { AccountsProvider } from './contexts/accounts';
 import AppStateProvider from './contexts/appstate';

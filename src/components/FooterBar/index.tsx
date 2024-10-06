@@ -1,5 +1,5 @@
-import PrioritizationFeesConfigPopover from 'components/PrioritizationFeesConfigPopover';
-import { useWallet } from 'contexts/wallet';
+import PrioritizationFeesConfigPopover from 'src/components/PrioritizationFeesConfigPopover';
+import { useWallet } from 'src/contexts/wallet';
 import { AccountDetails } from '../AccountDetails';
 import { AppContextMenu } from '../AppContextMenu';
 import { ConnectButton } from '../ConnectButton';

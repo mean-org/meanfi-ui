@@ -1,12 +1,12 @@
 import { Col, Row } from 'antd';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'app-constants/common';
-import { AddressDisplay } from 'components/AddressDisplay';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { toUsCurrency } from 'middleware/ui';
-import { getAmountWithSymbol } from 'middleware/utils';
-import type { UserTokenAccount } from 'models/accounts';
 import { useContext, useEffect, useState } from 'react';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
+import { AddressDisplay } from 'src/components/AddressDisplay';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import { toUsCurrency } from 'src/middleware/ui';
+import { getAmountWithSymbol } from 'src/middleware/utils';
+import type { UserTokenAccount } from 'src/models/accounts';
 
 const WalletAccountSummary = (props: { accountBalance?: number }) => {
   const { accountBalance } = props;

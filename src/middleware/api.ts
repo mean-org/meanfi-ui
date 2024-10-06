@@ -1,6 +1,5 @@
-import { appConfig } from 'main';
-import type { TokenPrice } from 'models/TokenPrice';
-import type { UserTokenAccount } from '../models/accounts';
+import { appConfig } from 'src/main';
+import type { TokenPrice } from 'src/models/TokenPrice';
 import type { MeanFiStatsModel } from '../models/meanfi-stats';
 import type { PriceGraphModel } from '../models/price-graph';
 import { getDefaultRpc } from '../services/connections-hq';
@@ -27,22 +26,6 @@ export const getPrices = async (addressOrSymbolCsv?: string): Promise<TokenPrice
   return fetch(url, options)
     .then(response => response.json())
     .then(response => response)
-    .catch(err => {
-      console.error(err);
-      return [];
-    });
-};
-
-export const getSolFlareTokenList = async (): Promise<UserTokenAccount[]> => {
-  const path = 'https://cdn.jsdelivr.net/gh/solflare-wallet/token-list/solana-tokenlist.json';
-
-  return fetch(path, {
-    method: 'GET',
-  })
-    .then(response => response.json())
-    .then(response => {
-      return response.tokens as UserTokenAccount[];
-    })
     .catch(err => {
       console.error(err);
       return [];

@@ -1,13 +1,13 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import type { TokenBalance } from '@solana/web3.js';
 import { Tooltip } from 'antd';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import type { MappedTransaction } from 'middleware/history';
-import { getRelativeDate } from 'middleware/ui';
-import { getAmountFromLamports, getAmountWithSymbol, shortenAddress } from 'middleware/utils';
-import type { UserTokenAccount } from 'models/accounts';
 import { useEffect, useState } from 'react';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import type { MappedTransaction } from 'src/middleware/history';
+import { getRelativeDate } from 'src/middleware/ui';
+import { getAmountFromLamports, getAmountWithSymbol, shortenAddress } from 'src/middleware/utils';
+import type { UserTokenAccount } from 'src/models/accounts';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../app-constants';
 
 export const TransactionItemView = (props: {

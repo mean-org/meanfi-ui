@@ -1,4 +1,4 @@
-import type { TokenPrice } from 'models/TokenPrice';
+import type { TokenPrice } from 'src/models/TokenPrice';
 
 /**
  * Gets the price of a token given its mint address if the price is available or the first match by symbol.

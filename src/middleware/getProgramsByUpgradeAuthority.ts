@@ -1,5 +1,5 @@
 import { type Connection, type MemcmpFilter, PublicKey } from '@solana/web3.js';
-import type { ProgramAccounts } from 'models/accounts';
+import type { ProgramAccounts } from 'src/models/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID } from './ids';
 import { consoleOut } from './ui';
 

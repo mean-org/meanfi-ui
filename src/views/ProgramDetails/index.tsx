@@ -12,49 +12,49 @@ import {
   type TransactionInstructionCtorFields,
   type VersionedTransaction,
 } from '@solana/web3.js';
-import { segmentAnalytics } from 'App';
 import { Button, Col, Row, Tooltip, notification } from 'antd';
-import { MAX_SUPPORTED_TRANSACTION_VERSION, MULTISIG_ROUTE_BASE_PATH, NO_FEES } from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { CopyExtLinkGroup } from 'components/CopyExtLinkGroup';
-import { MultisigSetProgramAuthModal } from 'components/MultisigSetProgramAuthModal';
-import { MultisigUpgradeProgramModal } from 'components/MultisigUpgradeProgramModal';
-import { openNotification } from 'components/Notifications';
-import { TabsMean } from 'components/TabsMean';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { customLogger } from 'main';
-import { resolveParsedAccountInfo } from 'middleware/accounts';
-import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'middleware/ids';
-import { AppUsageEvent } from 'middleware/segment-service';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { segmentAnalytics } from 'src/App';
+import { MAX_SUPPORTED_TRANSACTION_VERSION, MULTISIG_ROUTE_BASE_PATH, NO_FEES } from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { CopyExtLinkGroup } from 'src/components/CopyExtLinkGroup';
+import { MultisigSetProgramAuthModal } from 'src/components/MultisigSetProgramAuthModal';
+import { MultisigUpgradeProgramModal } from 'src/components/MultisigUpgradeProgramModal';
+import { openNotification } from 'src/components/Notifications';
+import { TabsMean } from 'src/components/TabsMean';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import { customLogger } from 'src/main';
+import { resolveParsedAccountInfo } from 'src/middleware/accounts';
+import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'src/middleware/ids';
+import { AppUsageEvent } from 'src/middleware/segment-service';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   getProposalWithPrioritizationFees,
   sendTx,
   signTx,
-} from 'middleware/transactions';
-import { consoleOut, getTransactionStatusForLogs } from 'middleware/ui';
+} from 'src/middleware/transactions';
+import { consoleOut, getTransactionStatusForLogs } from 'src/middleware/ui';
 import {
   formatThousands,
   getAmountFromLamports,
   getAmountWithSymbol,
   getTxIxResume,
   shortenAddress,
-} from 'middleware/utils';
-import type { ProgramAccounts } from 'models/accounts';
-import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import type { SetProgramAuthPayload } from 'models/multisig';
-import type { ProgramUpgradeParams } from 'models/programs';
-import useMultisigClient from 'query-hooks/multisigClient';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import type { ProgramAccounts } from 'src/models/accounts';
+import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
+import type { SetProgramAuthPayload } from 'src/models/multisig';
+import type { ProgramUpgradeParams } from 'src/models/programs';
+import useMultisigClient from 'src/query-hooks/multisigClient';
+import type { LooseObject } from 'src/types/LooseObject';
 import IdlTree from './IdlTree';
 import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutableModal';
 import Transactions from './Transactions';

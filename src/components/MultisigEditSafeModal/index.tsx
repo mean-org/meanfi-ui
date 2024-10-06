@@ -1,9 +1,9 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { MultisigInfo, MultisigParticipant, MultisigTransactionFees } from '@mean-dao/mean-multisig-sdk';
 import { Button, Modal, Spin, Tooltip } from 'antd';
-import type { EditMultisigParams } from 'models/multisig';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { EditMultisigParams } from 'src/models/multisig';
 import { IconInfoCircle, IconKey, IconLock } from '../../Icons';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../app-constants';
 import { AppStateContext } from '../../contexts/appstate';

@@ -1,9 +1,9 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Button } from 'antd';
-import { useWallet } from 'contexts/wallet';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useWallet } from 'src/contexts/wallet';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../app-constants';
 import { openNotification } from '../../components/Notifications';
 import { useNativeAccount } from '../../contexts/accounts';

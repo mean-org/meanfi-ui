@@ -3,7 +3,6 @@ import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { AccountType, SubCategory, type TransactionFees } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { IconCaretDown } from 'Icons';
 import {
   Button,
   Checkbox,
@@ -18,25 +17,29 @@ import {
 } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { VESTING_ACCOUNT_TYPE_OPTIONS } from 'app-constants/treasury-type-options';
 import BigNumber from 'bignumber.js';
-import { FormLabelWithIconInfo } from 'components/FormLabelWithIconInfo';
-import { Identicon } from 'components/Identicon';
-import { InputMean } from 'components/InputMean';
-import { TextInput } from 'components/TextInput';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { TokenListItem } from 'components/TokenListItem';
-import { WizardStepSelector } from 'components/WizardStepSelector';
-import { AppStateContext } from 'contexts/appstate';
-import { getNetworkIdByEnvironment, useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
 import dayjs from 'dayjs';
-import { environment } from 'environments/environment';
-import useWindowSize from 'hooks/useWindowResize';
-import { getDecimalsFromAccountInfo } from 'middleware/accountInfoGetters';
-import { isError } from 'middleware/transactions';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { isMobile } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { IconCaretDown } from 'src/Icons'
+import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { VESTING_ACCOUNT_TYPE_OPTIONS } from 'src/app-constants/treasury-type-options';
+import { FormLabelWithIconInfo } from 'src/components/FormLabelWithIconInfo';
+import { Identicon } from 'src/components/Identicon';
+import { InputMean } from 'src/components/InputMean';
+import { TextInput } from 'src/components/TextInput';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { TokenListItem } from 'src/components/TokenListItem';
+import { WizardStepSelector } from 'src/components/WizardStepSelector';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getNetworkIdByEnvironment, useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { environment } from 'src/environments/environment';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { getDecimalsFromAccountInfo } from 'src/middleware/accountInfoGetters';
+import { isError } from 'src/middleware/transactions';
 import {
   consoleOut,
   getLockPeriodOptionLabel,
@@ -45,7 +48,7 @@ import {
   isValidAddress,
   toUsCurrency,
   todayAndPriorDatesDisabled,
-} from 'middleware/ui';
+} from 'src/middleware/ui';
 import {
   addDays,
   cutNumber,
@@ -57,16 +60,13 @@ import {
   toTokenAmount,
   toTokenAmountBn,
   toUiAmount,
-} from 'middleware/utils';
-import { PaymentRateTypeOption } from 'models/PaymentRateTypeOption';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { PaymentRateType } from 'models/enums';
-import type { TreasuryTypeOption } from 'models/treasuries';
-import { VESTING_CATEGORIES, type VestingContractCategory, type VestingContractCreateOptions } from 'models/vesting';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { isMobile } from 'react-device-detect';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/utils';
+import { PaymentRateTypeOption } from 'src/models/PaymentRateTypeOption';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { PaymentRateType } from 'src/models/enums';
+import type { TreasuryTypeOption } from 'src/models/treasuries';
+import { VESTING_CATEGORIES, type VestingContractCategory, type VestingContractCreateOptions } from 'src/models/vesting';
+import type { LooseObject } from 'src/types/LooseObject';
 import { PendingProposalsComponent } from '../PendingProposalsComponent';
 
 const timeFormat = 'hh:mm A';

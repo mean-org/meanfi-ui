@@ -1,10 +1,10 @@
 import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { IconLoading } from 'Icons';
 import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
-import { MEANFI_DOCS_URL } from 'app-constants/common';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { IconLoading } from 'src/Icons'
+import { MEANFI_DOCS_URL } from 'src/app-constants/common';
 import { MEAN_TOKEN } from '../../app-constants/tokens';
 import { InfoIcon } from '../../components/InfoIcon';
 import { openNotification } from '../../components/Notifications';

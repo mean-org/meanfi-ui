@@ -5,14 +5,17 @@ import { AccountType, type PaymentStreamingAccount } from '@mean-dao/payment-str
 import { BN } from '@project-serum/anchor';
 import { Button, Modal, Spin } from 'antd';
 import Checkbox, { type CheckboxChangeEvent } from 'antd/lib/checkbox/Checkbox';
-import { FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'app-constants/common';
-import { Identicon } from 'components/Identicon';
-import { InputMean } from 'components/InputMean';
-import { TokenDisplay } from 'components/TokenDisplay';
-import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
-import { SOL_MINT } from 'middleware/ids';
-import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'middleware/ui';
+import type React from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { FALLBACK_COIN_IMAGE, MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from 'src/app-constants/common';
+import { Identicon } from 'src/components/Identicon';
+import { InputMean } from 'src/components/InputMean';
+import { TokenDisplay } from 'src/components/TokenDisplay';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWallet } from 'src/contexts/wallet';
+import { SOL_MINT } from 'src/middleware/ids';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'src/middleware/ui';
 import {
   formatThousands,
   getAmountWithSymbol,
@@ -21,13 +24,10 @@ import {
   shortenAddress,
   toTokenAmountBn,
   toUiAmount,
-} from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { TransactionStatus } from 'models/enums';
-import type { VestingContractWithdrawOptions } from 'models/vesting';
-import type React from 'react';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+} from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { TransactionStatus } from 'src/models/enums';
+import type { VestingContractWithdrawOptions } from 'src/models/vesting';
 import './style.scss';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

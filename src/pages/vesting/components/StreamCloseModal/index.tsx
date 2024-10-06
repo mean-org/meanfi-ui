@@ -6,16 +6,16 @@ import {
   type TransactionFees,
 } from '@mean-dao/payment-streaming';
 import { Button, Col, Modal, Radio, type RadioChangeEvent, Row } from 'antd';
-import { InputMean } from 'components/InputMean';
-import { AppStateContext } from 'contexts/appstate';
-import { useWallet } from 'contexts/wallet';
-import { percentageBn } from 'middleware/ui';
-import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { VestingContractCloseStreamOptions } from 'models/vesting';
-import { useGetVestingContract } from 'query-hooks/vestingContract';
 import { type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { InputMean } from 'src/components/InputMean';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useWallet } from 'src/contexts/wallet';
+import { percentageBn } from 'src/middleware/ui';
+import { getAmountWithSymbol, toUiAmount } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { VestingContractCloseStreamOptions } from 'src/models/vesting';
+import { useGetVestingContract } from 'src/query-hooks/vestingContract';
 
 export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;

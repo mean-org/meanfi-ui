@@ -1,20 +1,20 @@
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { IconCheckedBox } from 'Icons';
 import { Button, Divider, Input, Modal, Select, Spin } from 'antd';
-import { CUSTOM_TOKEN_NAME } from 'app-constants/common';
-import { NATIVE_SOL } from 'app-constants/tokens';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { SOL_MINT } from 'middleware/ids';
-import { isError } from 'middleware/transactions';
-import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress } from 'middleware/ui';
-import { getAmountWithSymbol, shortenAddress } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { TransactionStatus } from 'models/enums';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IconCheckedBox } from 'src/Icons'
+import { CUSTOM_TOKEN_NAME } from 'src/app-constants/common';
+import { NATIVE_SOL } from 'src/app-constants/tokens';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { SOL_MINT } from 'src/middleware/ids';
+import { isError } from 'src/middleware/transactions';
+import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress } from 'src/middleware/ui';
+import { getAmountWithSymbol, shortenAddress } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { TransactionStatus } from 'src/models/enums';
 import { openNotification } from '../Notifications';
 import { TokenDisplay } from '../TokenDisplay';
 

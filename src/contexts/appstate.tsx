@@ -4,41 +4,41 @@ import type { StreamActivity as StreamActivityV1, StreamInfo } from '@mean-dao/m
 import type { Stream, StreamActivity } from '@mean-dao/payment-streaming';
 import type { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
 import { PublicKey } from '@solana/web3.js';
+import dayjs from 'dayjs';
+import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   DAO_CORE_TEAM_WHITELIST,
   TRANSACTIONS_PER_PAGE
-} from 'app-constants/common';
-import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from 'app-constants/tokens';
-import { TREASURY_TYPE_OPTIONS } from 'app-constants/treasury-type-options';
-import { openNotification } from 'components/Notifications';
-import { useWallet } from 'contexts/wallet';
-import dayjs from 'dayjs';
-import useLocalStorage from 'hooks/useLocalStorage';
-import { customLogger } from 'main';
-import { getAccountNFTs } from 'middleware/accounts';
-import getPriceByAddressOrSymbol from 'middleware/getPriceByAddressOrSymbol';
-import type { MappedTransaction } from 'middleware/history';
-import { consoleOut, isProd } from 'middleware/ui';
-import { findATokenAddress, getAmountFromLamports, shortenAddress } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import type { TokenPrice } from 'models/TokenPrice';
+} from 'src/app-constants/common';
+import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from 'src/app-constants/tokens';
+import { TREASURY_TYPE_OPTIONS } from 'src/app-constants/treasury-type-options';
+import { openNotification } from 'src/components/Notifications';
+import { useWallet } from 'src/contexts/wallet';
+import useLocalStorage from 'src/hooks/useLocalStorage';
+import { customLogger } from 'src/main';
+import { getAccountNFTs } from 'src/middleware/accounts';
+import getPriceByAddressOrSymbol from 'src/middleware/getPriceByAddressOrSymbol';
+import type { MappedTransaction } from 'src/middleware/history';
+import { consoleOut, isProd } from 'src/middleware/ui';
+import { findATokenAddress, getAmountFromLamports, shortenAddress } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import type { TokenPrice } from 'src/models/TokenPrice';
 import type {
   AccountContext,
   AccountTokenParsedInfo,
   RuntimeAppDetails,
   UserTokenAccount,
-} from 'models/accounts';
-import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from 'models/enums';
-import type { MultisigVault } from 'models/multisig';
-import { type PaymentStreamingStats, type StreamsSummary, initialStats, initialSummary } from 'models/streams';
-import type { TreasuryTypeOption } from 'models/treasuries';
-import useAccountAssets from 'query-hooks/accountTokens';
-import useMultisigClient from 'query-hooks/multisigClient';
-import useStreamingClient from 'query-hooks/streamingClient';
-import useGetTokenList from 'query-hooks/tokenList';
-import useGetAssetPrices from 'query-hooks/tokenPrices';
-import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+} from 'src/models/accounts';
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from 'src/models/enums';
+import type { MultisigVault } from 'src/models/multisig';
+import { type PaymentStreamingStats, type StreamsSummary, initialStats, initialSummary } from 'src/models/streams';
+import type { TreasuryTypeOption } from 'src/models/treasuries';
+import useAccountAssets from 'src/query-hooks/accountTokens';
+import useMultisigClient from 'src/query-hooks/multisigClient';
+import useStreamingClient from 'src/query-hooks/streamingClient';
+import useGetTokenList from 'src/query-hooks/tokenList';
+import useGetAssetPrices from 'src/query-hooks/tokenPrices';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from './connection';
 import { emptyAccount, useWalletAccount } from './walletAccount';
 

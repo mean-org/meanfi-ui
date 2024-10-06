@@ -10,19 +10,19 @@ import {
 } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, Col, Modal, Radio, type RadioChangeEvent, Row } from 'antd';
-import { InputMean } from 'components/InputMean';
-import { AppStateContext } from 'contexts/appstate';
-import { useConnection } from 'contexts/connection';
-import { useWallet } from 'contexts/wallet';
-import { getStreamingAccountType } from 'middleware/getStreamingAccountType';
-import { consoleOut, percentage, percentageBn } from 'middleware/ui';
-import { getAmountWithSymbol, toUiAmount } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
-import { TransactionStatus } from 'models/enums';
-import type { CloseStreamParams } from 'models/streams';
-import type { StreamTreasuryType } from 'models/treasuries';
 import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { InputMean } from 'src/components/InputMean';
+import { AppStateContext } from 'src/contexts/appstate';
+import { useConnection } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
+import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
+import { consoleOut, percentage, percentageBn } from 'src/middleware/ui';
+import { getAmountWithSymbol, toUiAmount } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { TransactionStatus } from 'src/models/enums';
+import type { CloseStreamParams } from 'src/models/streams';
+import type { StreamTreasuryType } from 'src/models/treasuries';
 
 export const StreamCloseModal = (props: {
   canCloseTreasury?: boolean;

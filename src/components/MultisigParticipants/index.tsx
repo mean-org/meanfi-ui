@@ -1,10 +1,10 @@
 import { PlusOutlined } from '@ant-design/icons';
 import type { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
-import { ModalTemplate } from 'components/ModalTemplate';
-import { TextInput } from 'components/TextInput';
-import { isValidAddress, scrollToBottom } from 'middleware/ui';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ModalTemplate } from 'src/components/ModalTemplate';
+import { TextInput } from 'src/components/TextInput';
+import { isValidAddress, scrollToBottom } from 'src/middleware/ui';
 
 interface Props {
   participants: MultisigParticipant[];

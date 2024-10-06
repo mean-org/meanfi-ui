@@ -17,30 +17,33 @@ import {
   calculateActionFees,
 } from '@mean-dao/ddca';
 import { LAMPORTS_PER_SOL, PublicKey, type Transaction } from '@solana/web3.js';
-import { IconClock, IconExchange, IconExternalLink } from 'Icons';
 import { Button, Col, Empty, Modal, Row, Spin, Tooltip } from 'antd';
+import dateFormat from 'dateformat';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { isDesktop } from 'react-device-detect';
+import { useTranslation } from 'react-i18next';
+import { IconClock, IconExchange, IconExternalLink } from 'src/Icons'
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   VERBOSE_DATE_FORMAT,
   VERBOSE_DATE_TIME_FORMAT,
-} from 'app-constants/common';
-import { MEAN_TOKEN_LIST } from 'app-constants/tokens';
-import { DdcaCloseModal } from 'components/DdcaCloseModal';
-import { DdcaWithdrawModal } from 'components/DdcaWithdrawModal';
-import { Identicon } from 'components/Identicon';
-import { openNotification } from 'components/Notifications';
-import { PreFooter } from 'components/PreFooter';
-import { useNativeAccount } from 'contexts/accounts';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'contexts/connection';
-import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'contexts/transaction-status';
-import { useWallet } from 'contexts/wallet';
-import dateFormat from 'dateformat';
-import useWindowSize from 'hooks/useWindowResize';
-import { customLogger } from 'main';
-import { SOL_MINT } from 'middleware/ids';
-import { composeTxWithPrioritizationFees, sendTx, serializeTx, signTx } from 'middleware/transactions';
+} from 'src/app-constants/common';
+import { MEAN_TOKEN_LIST } from 'src/app-constants/tokens';
+import { DdcaCloseModal } from 'src/components/DdcaCloseModal';
+import { DdcaWithdrawModal } from 'src/components/DdcaWithdrawModal';
+import { Identicon } from 'src/components/Identicon';
+import { openNotification } from 'src/components/Notifications';
+import { PreFooter } from 'src/components/PreFooter';
+import { useNativeAccount } from 'src/contexts/accounts';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from 'src/contexts/connection';
+import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
+import useWindowSize from 'src/hooks/useWindowResize';
+import { customLogger } from 'src/main';
+import { SOL_MINT } from 'src/middleware/ids';
+import { composeTxWithPrioritizationFees, sendTx, serializeTx, signTx } from 'src/middleware/transactions';
 import {
   consoleOut,
   copyText,
@@ -49,13 +52,10 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
   isLocal,
-} from 'middleware/ui';
-import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'middleware/utils';
-import { EventType, OperationType, TransactionStatus } from 'models/enums';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { isDesktop } from 'react-device-detect';
-import { useTranslation } from 'react-i18next';
-import type { LooseObject } from 'types/LooseObject';
+} from 'src/middleware/ui';
+import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'src/middleware/utils';
+import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
+import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

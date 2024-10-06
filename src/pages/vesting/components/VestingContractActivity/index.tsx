@@ -1,15 +1,15 @@
 import { type AccountActivity, ActivityActionCode, type PaymentStreamingAccount } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { IconExternalLink } from 'Icons';
 import { Spin } from 'antd';
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'app-constants/common';
-import { AppStateContext } from 'contexts/appstate';
-import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { getShortDate } from 'middleware/ui';
-import { displayAmountWithSymbol, makeDecimal, shortenAddress } from 'middleware/utils';
-import type { TokenInfo } from 'models/SolanaTokenInfo';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IconExternalLink } from 'src/Icons'
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'src/app-constants/common';
+import { AppStateContext } from 'src/contexts/appstate';
+import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import { getShortDate } from 'src/middleware/ui';
+import { displayAmountWithSymbol, makeDecimal, shortenAddress } from 'src/middleware/utils';
+import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 
 export const VestingContractActivity = (props: {
   contractActivity: AccountActivity[];
