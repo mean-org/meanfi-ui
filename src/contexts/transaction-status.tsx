@@ -1,7 +1,7 @@
 import type { TransactionConfirmationStatus } from '@solana/web3.js';
 import React, { useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import confirmOrRetryTx from 'src/middleware/txConfirmation';
+import confirmTransaction from 'src/middleware/txConfirmation';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../app-constants';
 import { openNotification } from '../components/Notifications';
 import { consoleOut } from '../middleware/ui';
@@ -169,13 +169,56 @@ const TxConfirmationProvider = ({ children }: ProviderProps) => {
     rebuildHistoryFromCache();
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
+  const successNotificationContent = useCallback(
+    (data: TxConfirmationInfo) => {
+      return (
+        <>
+          <span className='mr-1'>
+            {data.completedMessage ? data.completedMessage : OperationType[data.operationType]}
+          </span>
+          <div>
+            <a
+              className='secondary-link'
+              href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              {t('notifications.check-transaction-in-explorer')} &gt;
+            </a>
+          </div>
+        </>
+      );
+    },
+    [t],
+  );
+
+  const failureNotificationContent = useCallback(
+    (data: TxConfirmationInfo) => {
+      return (
+        <>
+          <span className='mr-1'>
+            {data.loadingMessage
+              ? data.loadingMessage
+              : `${t('transactions.status.tx-confirmation-status-wait')} (${OperationType[data.operationType]})`}
+          </span>
+          <div>
+            <a
+              className='secondary-link'
+              href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              {t('notifications.check-transaction-in-explorer')} &gt;
+            </a>
+          </div>
+        </>
+      );
+    },
+    [t],
+  );
+
   const enqueueTransactionConfirmation = useCallback(
     async (data: TxConfirmationInfo) => {
-      // Get Latest Blockhash
-      const blockhashResponse = await connection.getLatestBlockhashAndContext('finalized');
-      const lastValidHeight = blockhashResponse.value.lastValidBlockHeight;
-
       const rebuildHistoryFromCache = () => {
         const history = Array.from(txStatusCache.values());
         setConfirmationHistory([...history].reverse());
@@ -184,6 +227,7 @@ const TxConfirmationProvider = ({ children }: ProviderProps) => {
 
       const now = new Date().getTime();
       txConfirmationCache.add(data.signature, data, now);
+
       openNotification({
         key: data.signature,
         type: 'info',
@@ -209,9 +253,17 @@ const TxConfirmationProvider = ({ children }: ProviderProps) => {
           </>
         ),
       });
+
       rebuildHistoryFromCache();
-      const isConfirmSuccess = await confirmOrRetryTx(connection, data.signature, data.finality, lastValidHeight);
-      if (isConfirmSuccess) {
+
+      try {
+        await confirmTransaction({
+          connection,
+          signature: data.signature,
+          desiredConfirmationStatus: data.finality,
+          pollInterval: 2000,
+          searchTransactionHistory: true,
+        });
         txConfirmationCache.update(
           data.signature,
           Object.assign({}, data, {
@@ -224,29 +276,14 @@ const TxConfirmationProvider = ({ children }: ProviderProps) => {
           type: 'success',
           title: data.completedTitle,
           duration: data.completedMessageTimeout || 5,
-          description: (
-            <>
-              <span className='mr-1'>
-                {data.completedMessage ? data.completedMessage : OperationType[data.operationType]}
-              </span>
-              <div>
-                <a
-                  className='secondary-link'
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  {t('notifications.check-transaction-in-explorer')} &gt;
-                </a>
-              </div>
-            </>
-          ),
+          description: successNotificationContent(data),
         });
         consoleOut('Emitting event:', EventType.TxConfirmSuccess, 'orange');
         confirmationEvents.emit(EventType.TxConfirmSuccess, data);
         rebuildHistoryFromCache();
         refreshAccount();
-      } else {
+      } catch (error) {
+        console.error('Error enqueuing transaction confirmation:', error);
         txConfirmationCache.update(
           data.signature,
           Object.assign({}, data, {
@@ -259,25 +296,7 @@ const TxConfirmationProvider = ({ children }: ProviderProps) => {
           type: 'info',
           title: t('transactions.status.tx-confirmation-status-timeout'),
           duration: 5,
-          description: (
-            <>
-              <span className='mr-1'>
-                {data.loadingMessage
-                  ? data.loadingMessage
-                  : `${t('transactions.status.tx-confirmation-status-wait')} (${OperationType[data.operationType]})`}
-              </span>
-              <div>
-                <a
-                  className='secondary-link'
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  {t('notifications.check-transaction-in-explorer')} &gt;
-                </a>
-              </div>
-            </>
-          ),
+          description: failureNotificationContent(data),
         });
         consoleOut('Emitting event:', EventType.TxConfirmTimeout, 'orange');
         confirmationEvents.emit(EventType.TxConfirmTimeout, data);
@@ -285,7 +304,7 @@ const TxConfirmationProvider = ({ children }: ProviderProps) => {
         refreshAccount();
       }
     },
-    [connection, t],
+    [connection, t, failureNotificationContent, successNotificationContent, refreshAccount],
   );
 
   return (
