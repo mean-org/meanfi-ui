@@ -25,6 +25,7 @@ export const failsafeConnectionConfig: ConnectionConfig = {
   commitment: 'confirmed',
   confirmTransactionInitialTimeout: TRANSACTION_STATUS_RETRY_TIMEOUT,
   disableRetryOnRateLimit: true,
+  httpHeaders: ironForgeHeader,
 };
 
 export const DEFAULT_RPCS: RpcConfig[] = [
@@ -89,7 +90,6 @@ export const refreshCachedRpc = async () => {
   const newRpc = getDefaultRpc();
   if (ironforgeEnvironment && ironForgeApiUrl) {
     newRpc.httpProvider = `${ironForgeApiUrl}${ironforgeEnvironment}?apiKey=${ironForgeApiKey}`;
-    failsafeConnectionConfig.httpHeaders = ironForgeHeader;
   }
 
   window.localStorage.setItem('cachedRpc', JSON.stringify(newRpc));
