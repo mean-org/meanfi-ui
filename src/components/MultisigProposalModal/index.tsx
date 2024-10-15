@@ -250,7 +250,7 @@ export const MultisigProposalModal = (props: {
       }
       setInputState({});
 
-      const uiIx = selectedAppConfig.ui.filter(ix => ix.id === value)[0];
+      const uiIx = selectedAppConfig.ui.find(ix => ix.id === value);
 
       console.log('uiIx', uiIx);
       setSelectedUiIx(uiIx);
