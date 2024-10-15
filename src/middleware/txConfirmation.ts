@@ -1,43 +1,54 @@
-import type { Commitment, Connection } from '@solana/web3.js';
-import { delay } from './ui';
+import type { Connection, SignatureStatus, TransactionConfirmationStatus, TransactionSignature } from '@solana/web3.js';
 
-const isBlockhashExpired = async (connection: Connection, lastValidBlockHeight: number) => {
-  const currentBlockHeight = await connection.getBlockHeight('confirmed');
+interface ConfirmTransactionOptions {
+  connection: Connection;
+  signature: TransactionSignature;
+  desiredConfirmationStatus: TransactionConfirmationStatus;
+  timeout?: number;
+  pollInterval?: number;
+  searchTransactionHistory?: boolean;
+}
 
-  return currentBlockHeight > lastValidBlockHeight - 150;
-};
+const confirmTransaction = async ({
+  connection,
+  signature,
+  desiredConfirmationStatus = 'confirmed',
+  timeout = 30_000,
+  pollInterval = 1000,
+  searchTransactionHistory = false,
+}: ConfirmTransactionOptions): Promise<SignatureStatus> => {
+  const start = Date.now();
 
-const confirmOrRetryTx = async (
-  connection: Connection,
-  txId: string,
-  commitment: Commitment,
-  lastValidHeight: number,
-) => {
-  let hashExpired = false;
-  let txSuccess = false;
-  while (!hashExpired && !txSuccess) {
-    const { value: status } = await connection.getSignatureStatus(txId);
+  while (Date.now() - start < timeout) {
+    const { value: statuses } = await connection.getSignatureStatuses([signature], { searchTransactionHistory });
 
-    // Break loop if transaction has succeeded
-    if (status && (status.confirmationStatus === commitment || status.confirmationStatus === 'finalized')) {
-      txSuccess = true;
-      break;
+    if (!statuses || statuses.length === 0) {
+      throw new Error('Failed to get signature status');
     }
 
-    hashExpired = await isBlockhashExpired(connection, lastValidHeight);
+    const status = statuses[0];
 
-    // Break loop if blockhash has expired
-    if (hashExpired) {
-      // (add your own logic to Fetch a new blockhash and resend the transaction or throw an error)
-      // For now is ok to break the loop and we return txSuccess = false
-      break;
+    if (status === null) {
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      continue;
     }
 
-    // Check again after 2.5 sec
-    await delay(2500);
+    if (status.err) {
+      throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`);
+    }
+
+    if (status.confirmationStatus && status.confirmationStatus === desiredConfirmationStatus) {
+      return status;
+    }
+
+    if (status.confirmationStatus === 'finalized') {
+      return status;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, pollInterval));
   }
 
-  return txSuccess;
+  throw new Error(`Transaction confirmation timeout after ${timeout}ms`);
 };
 
-export default confirmOrRetryTx;
+export default confirmTransaction;
