@@ -131,11 +131,6 @@ export const MultisigProposalModal = (props: {
           } else if (typeof uiElem.type === 'object' && 'from' in uiElem.type && state[uiElem.name]) {
             uiElem.value = state[uiElem.name];
           } else {
-            // Prioritize serializedTx since dataElement is not required
-            if (uiElem.name === 'serializedTx' && state[uiElem.name]) {
-              uiElem.value = state[uiElem.name];
-              continue;
-            }
             if (!state[uiElem.name] || !uiElem.dataElement) {
               continue;
             }
@@ -250,7 +245,7 @@ export const MultisigProposalModal = (props: {
       }
       setInputState({});
 
-      const uiIx = selectedAppConfig.ui.find(ix => ix.id === value);
+      const uiIx = selectedAppConfig.ui.filter(ix => ix.id === value)[0];
 
       console.log('uiIx', uiIx);
       setSelectedUiIx(uiIx);
