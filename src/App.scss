@@ -3957,7 +3957,7 @@ main section {
 
 .ant-select {
   font-size: 16px;
-  color: inherit;
+  color: inherit !important;
   &:not(.ant-select-borderless) {
     .ant-select-selector {
       color: inherit !important;
@@ -3970,6 +3970,7 @@ main section {
 
   &.ant-select-single.ant-select-show-arrow.ant-select-borderless,
   &.ant-select-auto-complete.ant-select-borderless {
+    color: inherit !important;
     &.ant-select-allow-clear {
       padding-right: 32px;
     }
@@ -3992,7 +3993,9 @@ main section {
       }
     }
 
+    &.ant-select-open .ant-select-selector,
     .ant-select-selector {
+      color: inherit;
       padding: 0;
 
       .ant-select-selection-search {
@@ -4053,6 +4056,7 @@ main section {
 
       .ant-select-selection-item {
         display: inline-block;
+        color: inherit !important;
         font-size: 20px;
         font-weight: 600;
         line-height: 1;
@@ -5006,6 +5010,8 @@ main section {
 
 .ant-modal-wrap {
   .ant-modal.mean-modal {
+    color: var(--text-color);
+
     &:not(.no-full-screen) {
       @media (max-width: 575.98px) {
         height: 100% !important;
@@ -5067,7 +5073,7 @@ main section {
       width: 100%;
       height: auto;
       overflow: hidden;
-      color: var(--text-color);
+      color: inherit;
       background-color: var(--color-panel-background);
       border-radius: var(--custom-border-radius);
 
