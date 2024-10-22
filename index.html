@@ -22,6 +22,152 @@
 
 <body>
   <div id="root">
+    <style>
+      html {
+        height: 100%;
+        overflow: hidden !important;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Lato', sans-serif !important;
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        height: 100%;
+      }
+
+      #root {
+        height: 100%;
+        position: relative;
+      }
+
+      #root>div {
+        height: 100%;
+      }
+
+      .ant-layout {
+        background-color: transparent;
+        height: 100%;
+      }
+
+      .ant-layout-content {
+        height: 100%;
+        flex-direction: column;
+      }
+
+      .flex-column {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .flex-center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .loading-screen-container {
+        position: relative;
+        width: 100%;
+        max-width: 640px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 0 1rem;
+        height: 100%;
+      }
+
+      .loading-screen-container .loader-container {
+        position: relative;
+        height: 100px;
+        width: 100px;
+      }
+
+      .loading-screen-container .loader-message {
+        color: var(--color-secondary-alpha-70);
+      }
+
+      .loading-screen-container .app-loading {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: wait;
+        height: 100%;
+      }
+
+      .loading-screen-container .app-loading .logo {
+        filter: alpha(opacity=100);
+        opacity: 1;
+        -webkit-transition: all 0.3s ease-in-out;
+        -moz-transition: all 0.3s ease-in-out;
+        -ms-transition: all 0.3s ease-in-out;
+        -o-transition: all 0.3s ease-in-out;
+        transition: all 0.3s ease-in-out;
+        text-align: center;
+        vertical-align: middle;
+        font-weight: 700;
+        font-size: 18px;
+        position: relative;
+        display: inline-block !important;
+        width: 64px;
+        height: 64px;
+        padding-top: 2px;
+        overflow: visible;
+      }
+
+      .loading-screen-container .app-loading .logo svg {
+        height: 64px;
+        width: auto;
+        max-width: 64px;
+        max-height: 64px;
+        overflow: visible;
+      }
+
+      .loading-screen-container .app-loading .logo .lettermark {
+        fill: #DF2F2F;
+      }
+
+      .loading-screen-container .app-loading .spinner {
+        height: 110px;
+        width: 110px;
+        animation: rotate 2s linear infinite;
+        transform-origin: center center;
+        position: absolute;
+        margin: auto;
+      }
+
+      .loading-screen-container .app-loading .spinner .path {
+        stroke-dasharray: 1, 200;
+        stroke-dashoffset: 0;
+        animation: dash 1.5s ease-in-out infinite;
+        stroke-linecap: round;
+        stroke: #DF2F2F;
+      }
+
+      .loading-screen-container .app-logo {
+        max-height: 50px;
+        margin-bottom: 3rem;
+      }
+
+      @keyframes dash {
+        0% {
+          stroke-dasharray: 1, 200;
+          stroke-dashoffset: 0;
+        }
+
+        50% {
+          stroke-dasharray: 89, 200;
+          stroke-dashoffset: -35px;
+        }
+
+        100% {
+          stroke-dasharray: 89, 200;
+          stroke-dashoffset: -124px;
+        }
+      }
+    </style>
     <div class="ant-layout">
       <main class="ant-layout-content flex-center">
         <div class="loading-screen-container flex-center">

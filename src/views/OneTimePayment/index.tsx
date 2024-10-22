@@ -42,7 +42,7 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
-  todayAndPriorDatesDisabled,
+  priorDatesDisabled,
 } from 'src/middleware/ui';
 import {
   cutNumber,
@@ -136,6 +136,11 @@ export const OneTimePayment = ({
   const isTestingScheduledOtp = useMemo(() => {
     return isWhitelisted && fixedScheduleValue > 0;
   }, [fixedScheduleValue, isWhitelisted]);
+
+  const dayjsDefautDate = useMemo(
+    () => (paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : dayjs()),
+    [paymentStartDate],
+  );
 
   const getFeeAmount = useCallback(() => {
     return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
@@ -336,14 +341,16 @@ export const OneTimePayment = ({
 
   // Setup event listeners
   useEffect(() => {
-    if (publicKey && canSubscribe) {
-      setCanSubscribe(false);
-      consoleOut('Setup event subscriptions -> OneTimePayment', '', 'brown');
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
-      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
+    if (!(publicKey && canSubscribe)) {
+      return;
     }
+
+    setCanSubscribe(false);
+    consoleOut('Setup event subscriptions -> OneTimePayment', '', 'brown');
+    confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+    consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
+    confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+    consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
   }, [publicKey, canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
@@ -445,12 +452,14 @@ export const OneTimePayment = ({
   };
 
   const isMemoValid = (): boolean => {
-    return !!(recipientNote && recipientNote.length <= 32);
+    if (isScheduledPayment() && !recipientNote) {
+      return false;
+    }
+
+    return recipientNote.length <= 32
   };
 
-  const isAddressOwnAccount = (): boolean => {
-    return !!(recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58());
-  };
+  const isAddressOwnAccount = (): boolean => publicKey?.toBase58() === recipientAddress;
 
   const isSendAmountValid = (): boolean => {
     if (!selectedToken) {
@@ -459,12 +468,14 @@ export const OneTimePayment = ({
 
     const inputAmount = getInputAmountBn();
 
-    return !!(connected &&
+    return !!(
+      connected &&
       inputAmount.gtn(0) &&
       tokenBalanceBn.gtn(0) &&
       nativeBalance >= getMinSolBlanceRequired() &&
       ((selectedToken.address === NATIVE_SOL.address && Number.parseFloat(fromCoinAmount) <= getMaxAmount()) ||
-        (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount))));
+        (selectedToken.address !== NATIVE_SOL.address && tokenBalanceBn.gte(inputAmount)))
+    );
   };
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -498,7 +509,7 @@ export const OneTimePayment = ({
     if (!paymentStartDate) {
       return t('transactions.validation.no-valid-date');
     }
-    if (!recipientNote) {
+    if (isScheduledPayment() && !recipientNote) {
       return t('transactions.validation.memo-empty');
     }
     if (!isVerifiedRecipient) {
@@ -894,8 +905,7 @@ export const OneTimePayment = ({
                   mintAddress={selectedToken.address}
                   showCaretDown={true}
                   showName={
-                    !!(
-                    selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS)
+                    selectedToken.name === CUSTOM_TOKEN_NAME || selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
                   }
                   fullTokenInfo={selectedToken}
                 />
@@ -997,10 +1007,10 @@ export const OneTimePayment = ({
                 aria-required={true}
                 allowClear={false}
                 showNow={false}
-                disabledDate={todayAndPriorDatesDisabled}
+                disabledDate={priorDatesDisabled}
                 placeholder={t('transactions.send-date.placeholder')}
                 onChange={onDateChange}
-                defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
+                value={dayjsDefautDate}
                 format={DATEPICKER_FORMAT}
               />
             </div>

@@ -5,7 +5,7 @@ import BigNumber from 'bignumber.js';
 import bs58 from 'bs58';
 import dateFormat from 'dateformat';
 import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime'
+import relativeTime from 'dayjs/plugin/relativeTime';
 import type { TFunction } from 'i18next';
 import getRuntimeEnv from 'src/environments/getRuntimeEnv';
 import { customLogger } from 'src/main';
@@ -678,10 +678,12 @@ export const getDayOfWeek = (date: Date, locale = 'en-US'): string => {
   return date.toLocaleDateString(locale, { weekday: 'long' });
 };
 
-export const todayAndPriorDatesDisabled: RangePickerProps['disabledDate'] = (current) => {
+export const todayAndPriorDatesDisabled: RangePickerProps['disabledDate'] = current => {
   // Can not select days before today and today
   return current && current < dayjs().endOf('day');
 };
+
+export const priorDatesDisabled: RangePickerProps['disabledDate'] = current => current.isBefore(dayjs().startOf('day'));
 
 export const isToday = (someDate: string): boolean => {
   if (!someDate) {

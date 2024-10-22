@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.29.3",
+  "version": "1.29.4",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
@@ -63,7 +63,7 @@
     "@solflare-wallet/sdk": "^1.4",
     "@tanstack/react-query": "^5.51",
     "@transak/transak-sdk": "^3.1.2",
-    "antd": "5.19.3",
+    "antd": "5.21.5",
     "bignumber.js": "^9.1.2",
     "bn.js": "^5.2.1",
     "bs58": "^6.0.0",
@@ -123,7 +123,8 @@
     "elliptic": "6.5.7",
     "js-sha256": "0.11.0",
     "micromatch": "4.0.8",
-    "rollup": "4.22.5",
+    "rollup": "4.24.0",
+    "secp256k1": "5.0.1",
     "vm-browserify": "1.1.2",
     "ws": "8.18.0"
   },
@@ -133,7 +134,8 @@
     "elliptic": "6.5.7",
     "js-sha256": "0.11.0",
     "micromatch": "4.0.8",
-    "rollup": "4.22.5",
+    "rollup": "4.24.0",
+    "secp256k1": "5.0.1",
     "vm-browserify": "1.1.2",
     "ws": "8.18.0"
   }

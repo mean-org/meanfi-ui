@@ -1025,7 +1025,7 @@
       "invalid-exchange": "选择代币",
       "invalid-solana-address": "无效的solana地址",
       "lock-period-no-empty": "",
-      "memo-empty": "Memo cannot be empty",
+      "memo-empty": "Memo is required to schedule a transaction",
       "minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
       "minimum-repeating-buy-amount": "您需要一个min{{fromTokenAmount}}来开始这个重复购买",
       "minimum-swap-amount": "交换{{mintAmount}}{{fromMint}}所需的最小金额",
