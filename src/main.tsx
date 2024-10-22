@@ -1,7 +1,13 @@
-import '@rainbow-me/rainbowkit/styles.css';
-import './index.css';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import '@rainbow-me/rainbowkit/styles.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import localeData from 'dayjs/plugin/localeData';
+import weekOfYear from 'dayjs/plugin/weekOfYear';
+import weekYear from 'dayjs/plugin/weekYear';
+import weekday from 'dayjs/plugin/weekday';
 import i18next from 'i18next';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -10,6 +16,7 @@ import { AppConfigService } from 'src/environments/environment';
 import getRuntimeEnv from 'src/environments/getRuntimeEnv';
 import { WagmiProvider } from 'wagmi';
 import App from './App';
+import './index.css';
 import { CustomLoggerService } from './services/logger';
 import common_en from './translations/en/common.json';
 import common_es from './translations/es/common.json';
@@ -21,6 +28,13 @@ import common_tr from './translations/tr/common.json';
 import common_vi from './translations/vi/common.json';
 import common_zh from './translations/zh/common.json';
 import { wagmiConfig } from './wagmiConfig';
+
+dayjs.extend(customParseFormat)
+dayjs.extend(advancedFormat)
+dayjs.extend(weekday)
+dayjs.extend(localeData)
+dayjs.extend(weekOfYear)
+dayjs.extend(weekYear)
 
 export const appConfig = new AppConfigService(getRuntimeEnv().MODE);
 console.log('%cApp version:', 'color:brown', getRuntimeEnv().VITE_VERSION);

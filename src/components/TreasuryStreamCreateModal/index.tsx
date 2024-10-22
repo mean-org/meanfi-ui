@@ -28,7 +28,7 @@ import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import dayjs from 'dayjs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'src/Icons'
+import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from 'src/Icons';
 import { DATEPICKER_FORMAT, FALLBACK_COIN_IMAGE } from 'src/app-constants/common';
 import { Identicon } from 'src/components/Identicon';
 import { InfoIcon } from 'src/components/InfoIcon';
@@ -61,9 +61,9 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
+  priorDatesDisabled,
   stringNumberFormat,
   toUsCurrency,
-  todayAndPriorDatesDisabled,
 } from 'src/middleware/ui';
 import {
   displayAmountWithSymbol,
@@ -190,6 +190,11 @@ export const TreasuryStreamCreateModal = ({
 
   const { tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
   const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);
+
+  const dayjsDefautDate = useMemo(
+    () => (paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : dayjs()),
+    [paymentStartDate],
+  );
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -771,11 +776,9 @@ export const TreasuryStreamCreateModal = ({
     let periodAmountValue = value.trim();
 
     if (periodAmountValue.length > 2) {
-      periodAmountValue = periodAmountValue.substr(0, 2);
-      setLockPeriodAmount(periodAmountValue);
-    } else {
-      setLockPeriodAmount(periodAmountValue);
+      periodAmountValue = periodAmountValue.slice(0, 2);
     }
+    setLockPeriodAmount(periodAmountValue);
   };
 
   const handleLockPeriodOptionChange = (val: PaymentRateType) => {
@@ -1269,104 +1272,106 @@ export const TreasuryStreamCreateModal = ({
       }
 
       return await createStream(data)
-      .then(value => {
-        if (!value) {
+        .then(value => {
+          if (!value) {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: 'Could not create transaction',
+            });
+            customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction,
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('createStreams error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure,
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: 'Could not create transaction',
+            result: `${error}`,
           });
           customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
           return false;
-        }
-        setTransactionStatus({
-          lastOperation: TransactionStatus.InitTransactionSuccess,
-          currentOperation: TransactionStatus.SignTransaction,
         });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-        });
-        transaction = value;
-        return true;
-      })
-      .catch(error => {
-        console.error('createStreams error:', error);
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.InitTransactionFailure,
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-          result: `${error}`,
-        });
-        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
-        return false;
-      });
     };
 
-    if (wallet && selectedToken && publicKey) {
-      const created = await createTx();
-      consoleOut('created:', created, 'blue');
-      if (created && !transactionCancelled) {
-        const sign = await signTx('Create Stream', wallet.adapter, publicKey, transaction);
-        if (sign.encodedTransaction) {
-          encodedTx = sign.encodedTransaction;
-          transactionLog = transactionLog.concat(sign.log);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.SignTransactionSuccess,
+    if (!(wallet && selectedToken && publicKey)) {
+      return;
+    }
+
+    const created = await createTx();
+    consoleOut('created:', created, 'blue');
+    if (created && !transactionCancelled) {
+      const sign = await signTx('Create Stream', wallet.adapter, publicKey, transaction);
+      if (sign.encodedTransaction) {
+        encodedTx = sign.encodedTransaction;
+        transactionLog = transactionLog.concat(sign.log);
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.SignTransactionSuccess,
+        });
+        const sent = await sendTx('Create Stream', connection, encodedTx);
+        consoleOut('sent:', sent);
+        if (sent.signature && !transactionCancelled) {
+          signature = sent.signature;
+          consoleOut('Send Tx to confirmation queue:', signature);
+          const isLockedTreasury = workingTreasuryType === AccountType.Lock;
+          const rateDisplay = isLockedTreasury ? getReleaseRate() : getPaymentRateAmount();
+          const messageLoading = multisigAuth
+            ? `Proposal to create stream to send ${rateDisplay}.`
+            : `Create stream to send ${rateDisplay}.`;
+          const messageCompleted = multisigAuth
+            ? `Proposal to create stream to send ${rateDisplay} sent for approval.`
+            : `Stream to send ${rateDisplay} created successfully.`;
+          consoleOut('pending confirm msg:', messageLoading, 'blue');
+          consoleOut('confirmed msg:', messageCompleted, 'blue');
+          enqueueTransactionConfirmation({
+            signature,
+            operationType: OperationType.TreasuryStreamCreate,
+            finality: 'confirmed',
+            txInfoFetchStatus: 'fetching',
+            loadingTitle: 'Confirming transaction',
+            loadingMessage: messageLoading,
+            completedTitle: 'Transaction confirmed',
+            completedMessage: messageCompleted,
+            extras: {
+              multisigAuthority: multisigAuth,
+            },
           });
-          const sent = await sendTx('Create Stream', connection, encodedTx);
-          consoleOut('sent:', sent);
-          if (sent.signature && !transactionCancelled) {
-            signature = sent.signature;
-            consoleOut('Send Tx to confirmation queue:', signature);
-            const isLockedTreasury = workingTreasuryType === AccountType.Lock;
-            const rateDisplay = isLockedTreasury ? getReleaseRate() : getPaymentRateAmount();
-            const messageLoading = multisigAuth
-              ? `Proposal to create stream to send ${rateDisplay}.`
-              : `Create stream to send ${rateDisplay}.`;
-            const messageCompleted = multisigAuth
-              ? `Proposal to create stream to send ${rateDisplay} sent for approval.`
-              : `Stream to send ${rateDisplay} created successfully.`;
-            consoleOut('pending confirm msg:', messageLoading, 'blue');
-            consoleOut('confirmed msg:', messageCompleted, 'blue');
-            enqueueTransactionConfirmation({
-              signature,
-              operationType: OperationType.TreasuryStreamCreate,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: messageLoading,
-              completedTitle: 'Transaction confirmed',
-              completedMessage: messageCompleted,
-              extras: {
-                multisigAuthority: multisigAuth,
-              },
-            });
-            setIsBusy(false);
-            resetTransactionStatus();
-            handleOk();
-          } else {
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-            setIsBusy(false);
-          }
+          setIsBusy(false);
+          resetTransactionStatus();
+          handleOk();
         } else {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.SignTransactionFailure,
+            currentOperation: TransactionStatus.SendTransactionFailure,
           });
           setIsBusy(false);
         }
       } else {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.SignTransactionFailure,
+        });
         setIsBusy(false);
       }
+    } else {
+      setIsBusy(false);
     }
   };
 
@@ -1917,10 +1922,10 @@ export const TreasuryStreamCreateModal = ({
                             aria-required={true}
                             allowClear={false}
                             showNow={false}
-                            disabledDate={todayAndPriorDatesDisabled}
+                            disabledDate={priorDatesDisabled}
                             placeholder={t('transactions.send-date.placeholder')}
                             onChange={onDateChange}
-                            defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
+                            value={dayjsDefautDate}
                             format={DATEPICKER_FORMAT}
                           />
                         </div>
@@ -2230,10 +2235,10 @@ export const TreasuryStreamCreateModal = ({
                             aria-required={true}
                             allowClear={false}
                             showNow={false}
-                            disabledDate={todayAndPriorDatesDisabled}
+                            disabledDate={priorDatesDisabled}
                             placeholder={t('transactions.send-date.placeholder')}
                             onChange={onDateChange}
-                            defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
+                            value={dayjsDefautDate}
                             format={DATEPICKER_FORMAT}
                           />
                         </div>

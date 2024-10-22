@@ -63,7 +63,7 @@
     "@solflare-wallet/sdk": "^1.4",
     "@tanstack/react-query": "^5.51",
     "@transak/transak-sdk": "^3.1.2",
-    "antd": "5.19.3",
+    "antd": "5.21.5",
     "bignumber.js": "^9.1.2",
     "bn.js": "^5.2.1",
     "bs58": "^6.0.0",

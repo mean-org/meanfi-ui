@@ -6,7 +6,7 @@ import { Button, Checkbox, DatePicker, type DatePickerProps, Dropdown, Modal, Sp
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 import dayjs from 'dayjs';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconCaretDown } from 'src/Icons'
 import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
@@ -78,6 +78,11 @@ export const VestingContractEditModal = (props: {
   /////////////////////
   // Data management //
   /////////////////////
+
+  const dayjsDefautDate = useMemo(
+    () => (paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : dayjs()),
+    [paymentStartDate],
+  );
 
   // Set template data
   useEffect(() => {
@@ -365,23 +370,19 @@ export const VestingContractEditModal = (props: {
                   <div className='left static-data-field'>{paymentStartDate}</div>
                   <div className='right'>
                     <div className='add-on simplelink'>
-                      <>
-                        {
-                          <DatePicker
-                            size='middle'
-                            variant='borderless'
-                            className='addon-date-picker'
-                            aria-required={true}
-                            allowClear={false}
-                            disabledDate={todayAndPriorDatesDisabled}
-                            placeholder='Pick a date'
-                            showNow={false}
-                            onChange={onDateChange}
-                            defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
-                            format={DATEPICKER_FORMAT}
-                          />
-                        }
-                      </>
+                      <DatePicker
+                        size='middle'
+                        variant='borderless'
+                        className='addon-date-picker'
+                        aria-required={true}
+                        allowClear={false}
+                        showNow={false}
+                        disabledDate={todayAndPriorDatesDisabled}
+                        placeholder='Pick a date'
+                        onChange={onDateChange}
+                        value={dayjsDefautDate}
+                        format={DATEPICKER_FORMAT}
+                      />
                     </div>
                   </div>
                 </div>

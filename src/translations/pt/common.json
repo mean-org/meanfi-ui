@@ -1025,7 +1025,7 @@
       "invalid-exchange": "Selecionar token",
       "invalid-solana-address": "Endereço de solana inválido",
       "lock-period-no-empty": "",
-      "memo-empty": "Memo cannot be empty",
+      "memo-empty": "Memo is required to schedule a transaction",
       "minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
       "minimum-repeating-buy-amount": "Você precisa de um mínimo de {{fromTokenAmount}} para iniciar esta compra repetida",
       "minimum-swap-amount": "Valor mínimo necessário para trocar {{mintAmount}} {{fromMint}}",

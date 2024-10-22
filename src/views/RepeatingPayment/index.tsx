@@ -42,8 +42,8 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
+  priorDatesDisabled,
   toUsCurrency,
-  todayAndPriorDatesDisabled,
 } from 'src/middleware/ui';
 import {
   cutNumber,
@@ -121,6 +121,11 @@ export const RepeatingPayment = ({onOpenTokenSelector, selectedToken, transferCo
   const { tokenStreamingV2 } = useStreamingClient();
 
   const isNative = useMemo(() => !!(selectedToken && selectedToken.address === NATIVE_SOL.address), [selectedToken]);
+
+  const dayjsDefautDate = useMemo(
+    () => (paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : dayjs()),
+    [paymentStartDate],
+  );
 
   const getTransactionFees = useCallback(async (action: ACTION_CODES): Promise<TransactionFees> => {
     return calculateFeesForAction(action);
@@ -1078,10 +1083,10 @@ export const RepeatingPayment = ({onOpenTokenSelector, selectedToken, transferCo
                   aria-required={true}
                   allowClear={false}
                   showNow={false}
-                  disabledDate={todayAndPriorDatesDisabled}
+                  disabledDate={priorDatesDisabled}
                   placeholder={t('transactions.send-date.placeholder')}
                   onChange={onDateChange}
-                  defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
+                  value={dayjsDefautDate}
                   format={DATEPICKER_FORMAT}
                 />
               </div>

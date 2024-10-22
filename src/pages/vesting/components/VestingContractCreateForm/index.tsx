@@ -19,7 +19,7 @@ import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 import BigNumber from 'bignumber.js';
 import dayjs from 'dayjs';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { IconCaretDown } from 'src/Icons'
@@ -136,6 +136,11 @@ export const VestingContractCreateForm = (props: {
   const [contractTime, setContractTime] = useState<string | undefined>(undefined);
   const [paymentStartDate, setPaymentStartDate] = useState<string | undefined>(undefined);
   const [proposalTitle, setProposalTitle] = useState('');
+
+  const dayjsDefautDate = useMemo(
+    () => (paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : dayjs()),
+    [paymentStartDate],
+  );
 
   const getFeeAmount = useCallback(() => {
     return transactionFees.blockchainFee + transactionFees.mspFlatFee;
@@ -1156,12 +1161,12 @@ export const VestingContractCreateForm = (props: {
                       className='addon-date-picker'
                       aria-required={true}
                       allowClear={false}
-                      placeholder='Pick a date'
-                      disabledDate={todayAndPriorDatesDisabled}
-                      onChange={onDateChange}
-                      defaultValue={paymentStartDate ? dayjs(paymentStartDate, DATEPICKER_FORMAT) : undefined}
-                      format={DATEPICKER_FORMAT}
                       showNow={false}
+                      disabledDate={todayAndPriorDatesDisabled}
+                      placeholder='Pick a date'
+                      onChange={onDateChange}
+                      value={dayjsDefautDate}
+                      format={DATEPICKER_FORMAT}
                     />
                   </div>
                 </div>
