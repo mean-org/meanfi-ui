@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.29.4",
+  "version": "1.29.5",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
@@ -96,8 +96,8 @@
     "recharts": "^2.12.7",
     "tslib": "2.7.0",
     "tweetnacl": "^1.0.3",
-    "viem": "2.21.7",
-    "wagmi": "2.12.11"
+    "viem": "2.21.54",
+    "wagmi": "2.13.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
@@ -112,29 +112,34 @@
     "fs-extra": "^11.2.0",
     "sass": "1.77.6",
     "typescript": "^5.2.2",
-    "vite": "5.4.8",
+    "vite": "6.0.3",
     "vite-plugin-node-polyfills": "^0.22.0"
   },
   "resolutions": {
     "@solana/web3.js": "1.95.1",
-    "axios": "1.7.7",
+    "axios": "1.7.9",
+    "cross-spawn": "7.0.6",
     "crypto-js": "4.2.0",
     "dset": "3.1.4",
-    "elliptic": "6.5.7",
+    "elliptic": "6.6.1",
     "js-sha256": "0.11.0",
     "micromatch": "4.0.8",
-    "rollup": "4.24.0",
+    "nanoid": "3.3.8",
+    "rollup": "4.28.1",
     "secp256k1": "5.0.1",
     "vm-browserify": "1.1.2",
     "ws": "8.18.0"
   },
   "overrides": {
-    "axios": "1.7.7",
+    "axios": "1.7.9",
+    "cross-spawn": "7.0.6",
+    "crypto-js": "4.2.0",
     "dset": "3.1.4",
-    "elliptic": "6.5.7",
+    "elliptic": "6.6.1",
     "js-sha256": "0.11.0",
     "micromatch": "4.0.8",
-    "rollup": "4.24.0",
+    "nanoid": "3.3.8",
+    "rollup": "4.28.1",
     "secp256k1": "5.0.1",
     "vm-browserify": "1.1.2",
     "ws": "8.18.0"

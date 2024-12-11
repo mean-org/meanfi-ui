@@ -65,26 +65,6 @@ const compactHeader = (n: number) => (n <= LOW_VALUE ? 1 : n <= HIGH_VALUE ? 2 :
  */
 const compactArraySize = (n: number, size: number) => compactHeader(n) + n * size;
 
-export async function getTransactions(
-  connection: Connection,
-  address: PublicKey,
-): Promise<Array<TransactionWithSignature>> {
-  const transSignatures = await connection.getConfirmedSignaturesForAddress2(address);
-
-  const transactions = new Array<TransactionWithSignature>();
-  for (const element of transSignatures) {
-    const signature = element.signature;
-    const confirmedTransaction = await connection.getTransaction(signature, {
-      maxSupportedTransactionVersion: MAX_SUPPORTED_TRANSACTION_VERSION,
-    });
-    if (confirmedTransaction) {
-      const transWithSignature = new TransactionWithSignature(signature, confirmedTransaction);
-      transactions.push(transWithSignature);
-    }
-  }
-  return transactions;
-}
-
 export const isSuccess = (operation: TransactionStatus | undefined): boolean => {
   return operation === TransactionStatus.TransactionFinished;
 };

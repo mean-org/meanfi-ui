@@ -1049,7 +1049,7 @@ const ProgramDetailsView = ({ program }: Props) => {
       return null;
     }
 
-    const signaturesInfo = await connection.getConfirmedSignaturesForAddress2(program.pubkey, { limit: 50 });
+    const signaturesInfo = await connection.getSignaturesForAddress(program.pubkey, { limit: 50 });
 
     if (signaturesInfo.length === 0) {
       return null;

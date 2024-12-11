@@ -3,7 +3,8 @@ import { useCallback, useMemo } from 'react';
 import { consoleOut } from 'src/middleware/ui';
 import type { UserTokenAccount } from 'src/models/accounts/UserTokenAccount';
 
-const tokenListUrl = 'https://tokens.jup.ag/tokens?tags=verified';
+// const tokenListUrl = 'https://tokens.jup.ag/tokens?tags=verified';
+const tokenListUrl = 'https://token-list-api.solana.cloud/v1/list';
 
 export const getTokenListKey = () => ['/token-list'];
 
@@ -13,15 +14,16 @@ const useGetTokenList = () => {
     queryFn: async () => {
       consoleOut('useGetTokenList -> Fetching token list...', '', 'blue');
       consoleOut('tokenListUrl:', tokenListUrl, 'blue');
-      return await fetch(tokenListUrl,{
-        method: 'post',
+      return await fetch(tokenListUrl, {
+        method: 'GET',
         redirect: 'follow',
       }).then(response => response.json());
     },
-    select: useCallback((data: UserTokenAccount[]) => {
-      consoleOut('useGetTokenList -> Token list loaded:', data, 'blue');
+    select: useCallback((data: { content: UserTokenAccount[] }) => {
+      const tokens: UserTokenAccount[] = data?.content ?? [];
+      consoleOut('useGetTokenList -> Token list loaded:', tokens, 'blue');
 
-      return data;
+      return tokens;
     }, []),
   });
 
