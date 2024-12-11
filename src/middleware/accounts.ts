@@ -16,6 +16,7 @@ import type {
   UserTokenAccount,
   UserTokensResponse,
 } from 'src/models/accounts';
+import type { LooseObject } from 'src/types/LooseObject';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../app-constants';
 import { MEAN_TOKEN_LIST, NATIVE_SOL } from '../app-constants/tokens';
 import getPriceByAddressOrSymbol from './getPriceByAddressOrSymbol';
@@ -214,6 +215,7 @@ export const getUserAccountTokens = async (
   accountAddress: string,
   coinPrices: TokenPrice[] | null,
   splTokenList: UserTokenAccount[],
+  accTks: AccountTokenParsedInfo[] | undefined,
 ): Promise<UserTokensResponse | null> => {
   const response: UserTokensResponse = {
     nativeBalance: 0,
@@ -246,7 +248,6 @@ export const getUserAccountTokens = async (
   };
 
   try {
-    const accTks = await fetchAccountTokens(connection, pk);
     if (!accTks) {
       for (const item of splTokensCopy) {
         item.valueInUsd = 0;
@@ -280,25 +281,26 @@ export const getUserAccountTokens = async (
     const custom: UserTokenAccount[] = [];
     // Build a list with all token accounts holded by the user not already in sortedList as custom tokens
     accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
-      if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
-        const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
-        const price = getPriceByAddressOrSymbol(coinPrices, item.parsedInfo.mint);
-        const valueInUsd = balance * price;
-        const customToken: UserTokenAccount = {
-          address: item.parsedInfo.mint,
-          balance,
-          chainId: 0,
-          displayIndex: sortedList.length + 1 + index,
-          decimals: item.parsedInfo.tokenAmount.decimals,
-          name: 'Custom account',
-          symbol: shortenAddress(item.parsedInfo.mint),
-          publicAddress: item.pubkey.toBase58(),
-          tags: undefined,
-          logoURI: undefined,
-          valueInUsd,
-        };
-        custom.push(customToken);
+      if (sortedList.some(t => t.address === item.parsedInfo.mint)) {
+        return;
       }
+      const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
+      const price = getPriceByAddressOrSymbol(coinPrices, item.parsedInfo.mint);
+      const valueInUsd = balance * price;
+      const customToken: UserTokenAccount = {
+        address: item.parsedInfo.mint,
+        balance,
+        chainId: 0,
+        displayIndex: sortedList.length + 1 + index,
+        decimals: item.parsedInfo.tokenAmount.decimals,
+        name: 'Custom account',
+        symbol: shortenAddress(item.parsedInfo.mint),
+        publicAddress: item.pubkey.toBase58(),
+        tags: undefined,
+        logoURI: undefined,
+        valueInUsd,
+      };
+      custom.push(customToken);
     });
 
     // Sort by valueInUsd and then by token balance
@@ -348,6 +350,7 @@ export const getTokensWithBalances = async (
   accountAddress: string,
   coinPrices: TokenPrice[] | null,
   splTokenList: UserTokenAccount[],
+  accTks: AccountTokenParsedInfo[] | undefined,
   onlyAccountAssets = true,
 ): Promise<TokenSelectorListWithBalances | null> => {
   const response: TokenSelectorListWithBalances = {
@@ -377,10 +380,8 @@ export const getTokensWithBalances = async (
   };
 
   try {
-    const accTks = await fetchAccountTokens(connection, pk);
     if (!accTks) {
-      // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
-      const emptyMap: any = {};
+      const emptyMap: LooseObject = {};
       for (const t of splTokenList) {
         emptyMap[t.address] = 0;
       }
@@ -394,10 +395,10 @@ export const getTokensWithBalances = async (
     const intersectedList = onlyAccountAssets ? getTokenListForOwnedTokenAccounts(accTks, splTokenList) : splTokensCopy;
 
     const solItemIndex = intersectedList.findIndex(l => l.address === sol.address);
-    if (solItemIndex !== -1) {
-      intersectedList[solItemIndex] = sol;
-    } else {
+    if (solItemIndex === -1) {
       intersectedList.push(sol);
+    } else {
+      intersectedList[solItemIndex] = sol;
     }
 
     // Update balances in the mean token list
@@ -408,25 +409,26 @@ export const getTokensWithBalances = async (
     const custom: UserTokenAccount[] = [];
     // Build a list with all token accounts holded by the user not already in sortedList as custom tokens
     accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
-      if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
-        const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
-        const price = getPriceByAddressOrSymbol(coinPrices, item.parsedInfo.mint);
-        const valueInUsd = balance * price;
-        const customToken: UserTokenAccount = {
-          address: item.parsedInfo.mint,
-          balance,
-          chainId: 0,
-          displayIndex: sortedList.length + 1 + index,
-          decimals: item.parsedInfo.tokenAmount.decimals,
-          name: 'Custom account',
-          symbol: shortenAddress(item.parsedInfo.mint),
-          publicAddress: item.pubkey.toBase58(),
-          tags: undefined,
-          logoURI: undefined,
-          valueInUsd,
-        };
-        custom.push(customToken);
+      if (sortedList.some(t => t.address === item.parsedInfo.mint)) {
+        return;
       }
+      const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
+      const price = getPriceByAddressOrSymbol(coinPrices, item.parsedInfo.mint);
+      const valueInUsd = balance * price;
+      const customToken: UserTokenAccount = {
+        address: item.parsedInfo.mint,
+        balance,
+        chainId: 0,
+        displayIndex: sortedList.length + 1 + index,
+        decimals: item.parsedInfo.tokenAmount.decimals,
+        name: 'Custom account',
+        symbol: shortenAddress(item.parsedInfo.mint),
+        publicAddress: item.pubkey.toBase58(),
+        tags: undefined,
+        logoURI: undefined,
+        valueInUsd,
+      };
+      custom.push(customToken);
     });
 
     // Sort by valueInUsd and then by token balance

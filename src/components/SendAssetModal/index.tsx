@@ -12,11 +12,11 @@ import { getNetworkIdByEnvironment, useConnection } from 'src/contexts/connectio
 import { useWallet } from 'src/contexts/wallet';
 import { environment } from 'src/environments/environment';
 import { getDecimalsFromAccountInfo } from 'src/middleware/accountInfoGetters';
-import { getTokensWithBalances } from 'src/middleware/accounts';
 import { consoleOut, isValidAddress } from 'src/middleware/ui';
 import { getAmountFromLamports, shortenAddress } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import type { UserTokenAccount } from 'src/models/accounts';
+import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
 import type { LooseObject } from 'src/types/LooseObject';
 import { OneTimePayment } from 'src/views/OneTimePayment';
 import { RepeatingPayment } from 'src/views/RepeatingPayment';
@@ -32,7 +32,7 @@ interface Props {
 }
 
 export const SendAssetModal = ({ selected, isVisible, handleClose, selectedToken, title }: Props) => {
-  const { priceList, splTokenList } = useContext(AppStateContext);
+  const { splTokenList } = useContext(AppStateContext);
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
   const { account } = useNativeAccount();
@@ -45,6 +45,8 @@ export const SendAssetModal = ({ selected, isVisible, handleClose, selectedToken
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
+
+  const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), true);
 
   const autoFocusInput = useCallback(() => {
     const input = document.getElementById('token-search-rp');
@@ -142,28 +144,13 @@ export const SendAssetModal = ({ selected, isVisible, handleClose, selectedToken
 
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
-    if (!connection) {
-      console.error('No connection');
+    if (!tokensWithBalances) {
       return;
     }
 
-    if (!publicKey || !splTokenList) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      getTokensWithBalances(connection, publicKey.toBase58(), priceList, splTokenList, true).then(response => {
-        if (response) {
-          setSelectedList(response.tokenList);
-          setUserBalances(response.balancesMap);
-        }
-      });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [publicKey, connection, priceList, splTokenList]);
+    setSelectedList(tokensWithBalances.tokenList);
+    setUserBalances(tokensWithBalances.balancesMap);
+  }, [tokensWithBalances]);
 
   // Reset results when the filter is cleared
   useEffect(() => {

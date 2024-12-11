@@ -159,7 +159,7 @@ import './style.scss';
 import WalletNotConnectedMessage from 'src/components/WalletNotConnectedMessage';
 import { resolveParsedAccountInfo } from 'src/middleware/accounts';
 import { getStreamCategory, isInboundStream, isV2Stream } from 'src/middleware/streamHelpers';
-import useAccountAssets from 'src/query-hooks/accountTokens';
+import { useAccountAssets } from 'src/query-hooks/accountTokens';
 import { useGetStreamList } from 'src/query-hooks/streamList';
 import { useGetStreamingAccounts } from 'src/query-hooks/streamingAccount';
 import useAppNavigation from './useAppNavigation';

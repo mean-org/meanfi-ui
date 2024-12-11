@@ -70,7 +70,7 @@ import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { customLogger } from 'src/main';
-import { fetchAccountTokens, getTokenAccountBalanceByAddress } from 'src/middleware/accounts';
+import { getTokenAccountBalanceByAddress } from 'src/middleware/accounts';
 import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'src/middleware/getStreamingAccountId';
 import { getStreamingAccountMint } from 'src/middleware/getStreamingAccountMint';
@@ -106,6 +106,7 @@ import { OperationType, TransactionStatus } from 'src/models/enums';
 import { ZERO_FEES } from 'src/models/multisig';
 import type { TreasuryWithdrawParams } from 'src/models/treasuries';
 import type { AddFundsParams } from 'src/models/vesting';
+import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
@@ -128,6 +129,7 @@ export const StreamingAccountView = ({
   treasuryList,
 }: StreamingAccountViewProps) => {
   const {
+    tokenList,
     splTokenList,
     selectedAccount,
     transactionStatus,
@@ -166,6 +168,9 @@ export const StreamingAccountView = ({
   const [associatedTokenBalance, setAssociatedTokenBalance] = useState(new BN(0));
   const [treasuryEffectiveBalance, setTreasuryEffectiveBalance] = useState(0);
 
+  const sourceAccount = selectedMultisig ? selectedMultisig.authority.toBase58() : publicKey?.toBase58();
+  const { data: sourceAccountTokens } = useFetchAccountTokens(sourceAccount);
+
   ////////////
   //  Init  //
   ////////////
@@ -201,48 +206,6 @@ export const StreamingAccountView = ({
       currentOperation: TransactionStatus.Idle,
     });
   }, [setTransactionStatus]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
-  const refreshUserBalances = useCallback(
-    (source?: PublicKey) => {
-      if (!connection || !publicKey || !splTokenList) {
-        return;
-      }
-
-      const balancesMap: LooseObject = {};
-      const pk = source ?? publicKey;
-      consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
-
-      connection.getBalance(pk).then(solBalance => {
-        const uiBalance = getAmountFromLamports(solBalance);
-        balancesMap[NATIVE_SOL.address] = uiBalance;
-        setNativeBalance(uiBalance);
-      });
-
-      fetchAccountTokens(connection, pk)
-        .then(accTks => {
-          if (accTks) {
-            for (const item of accTks) {
-              const address = item.parsedInfo.mint;
-              const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
-              balancesMap[address] = balance;
-            }
-          } else {
-            for (const t of splTokenList) {
-              balancesMap[t.address] = 0;
-            }
-          }
-        })
-        .catch(error => {
-          console.error(error);
-          for (const t of splTokenList) {
-            balancesMap[t.address] = 0;
-          }
-        })
-        .finally(() => setUserBalances(balancesMap));
-    },
-    [publicKey, connection],
-  );
 
   const getRateAmountBn = useCallback(
     (item: Stream | StreamInfo) => {
@@ -625,11 +588,6 @@ export const StreamingAccountView = ({
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
   const showCreateStreamModal = useCallback(() => {
     resetTransactionStatus();
-    if (isMultisigContext && selectedMultisig) {
-      refreshUserBalances(selectedMultisig.authority);
-    } else {
-      refreshUserBalances();
-    }
     getMultisigTxProposalFees();
     getTransactionFeesV2(ACTION_CODES.CreateStreamWithFunds).then(value => {
       setTransactionFees(value);
@@ -641,9 +599,6 @@ export const StreamingAccountView = ({
     });
     setIsCreateStreamModalVisibility(true);
   }, [
-    selectedMultisig,
-    isMultisigContext,
-    refreshUserBalances,
     getTransactionFeesV2,
     resetTransactionStatus,
     getMultisigTxProposalFees,
@@ -652,51 +607,39 @@ export const StreamingAccountView = ({
   const closeCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(false);
     resetContractValues();
-    if (isMultisigContext && selectedMultisig) {
-      refreshUserBalances(selectedMultisig.authority);
-    } else {
-      refreshUserBalances();
-    }
     resetTransactionStatus();
-  }, [isMultisigContext, refreshUserBalances, resetContractValues, resetTransactionStatus, selectedMultisig]);
+  }, [resetContractValues, resetTransactionStatus]);
 
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
     getMultisigTxProposalFees();
-    if (isMultisigContext && selectedMultisig) {
-      refreshUserBalances(selectedMultisig.authority);
+    if (!streamingAccountSelected) {
+      return;
+    }
+    const v2 = streamingAccountSelected as PaymentStreamingAccount;
+    if (v2.version && v2.version >= 2) {
+      getTransactionFeesV2(ACTION_CODES.AddFundsToAccount).then(value => {
+        setTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
+      getTransactionFeesV2(ACTION_CODES.WithdrawFromStream).then(value => {
+        setWithdrawTransactionFees(value);
+        consoleOut('withdrawTransactionFees:', value, 'orange');
+      });
     } else {
-      refreshUserBalances();
+      getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
+        setTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
     }
-    if (streamingAccountSelected) {
-      const v2 = streamingAccountSelected as PaymentStreamingAccount;
-      if (v2.version && v2.version >= 2) {
-        getTransactionFeesV2(ACTION_CODES.AddFundsToAccount).then(value => {
-          setTransactionFees(value);
-          consoleOut('transactionFees:', value, 'orange');
-        });
-        getTransactionFeesV2(ACTION_CODES.WithdrawFromStream).then(value => {
-          setWithdrawTransactionFees(value);
-          consoleOut('withdrawTransactionFees:', value, 'orange');
-        });
-      } else {
-        getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
-          setTransactionFees(value);
-          consoleOut('transactionFees:', value, 'orange');
-        });
-      }
-      setIsAddFundsModalVisibility(true);
-    }
+    setIsAddFundsModalVisibility(true);
   }, [
-    selectedMultisig,
-    isMultisigContext,
     streamingAccountSelected,
     getMultisigTxProposalFees,
     resetTransactionStatus,
     getTransactionFeesV2,
-    refreshUserBalances,
     getTransactionFees,
   ]);
 
@@ -709,11 +652,6 @@ export const StreamingAccountView = ({
 
   const onAddFundsTransactionFinished = () => {
     closeAddFundsModal();
-    if (isMultisigContext && selectedMultisig) {
-      refreshUserBalances(selectedMultisig.authority);
-    } else {
-      refreshUserBalances();
-    }
     resetTransactionStatus();
   };
 
@@ -1489,11 +1427,6 @@ export const StreamingAccountView = ({
 
   const onCloseTreasuryTransactionFinished = () => {
     hideCloseTreasuryModal();
-    if (isMultisigContext && selectedMultisig) {
-      refreshUserBalances(selectedMultisig.authority);
-    } else {
-      refreshUserBalances();
-    }
   };
 
   const onExecuteCloseTreasuryTransaction = async (title: string) => {
@@ -1848,13 +1781,8 @@ export const StreamingAccountView = ({
 
   // Refresh account data
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
-    if (isMultisigContext && selectedMultisig) {
-      refreshUserBalances(selectedMultisig.authority);
-    } else {
-      refreshUserBalances();
-    }
     resetTransactionStatus();
-  }, [isMultisigContext, refreshUserBalances, resetTransactionStatus, selectedMultisig]);
+  }, [resetTransactionStatus]);
 
   const onExecuteRefreshTreasuryBalance = useCallback(async () => {
     let transaction: VersionedTransaction | Transaction | null = null;
@@ -2166,23 +2094,36 @@ export const StreamingAccountView = ({
 
   // Automatically update all token balances (in token list)
   useEffect(() => {
-    if (!connection) {
-      console.error('No connection');
+    const balancesMap: LooseObject = {};
+
+    if (!publicKey) {
       return;
     }
 
-    if (!publicKey || !splTokenList) {
+    if (!sourceAccountTokens || sourceAccountTokens.length === 0) {
+      for (const t of tokenList) {
+        balancesMap[t.address] = 0;
+      }
+      setUserBalances(balancesMap);
       return;
     }
 
-    const timeout = setTimeout(() => {
-      refreshUserBalances();
+    // sourceAccount
+    consoleOut('Reading balances for:', publicKey.toBase58(), 'darkpurple');
+
+    connection.getBalance(publicKey).then(solBalance => {
+      const uiBalance = getAmountFromLamports(solBalance);
+      balancesMap[NATIVE_SOL.address] = uiBalance;
+      setNativeBalance(uiBalance);
     });
 
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [splTokenList, publicKey, connection, refreshUserBalances]);
+    for (const item of sourceAccountTokens) {
+      const address = item.parsedInfo.mint;
+      const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
+      balancesMap[address] = balance;
+    }
+    setUserBalances(balancesMap);
+  }, [connection, publicKey, sourceAccountTokens, tokenList]);
 
   // Set selected token with the streaming account associated token as soon as streamingAccountSelected is available
   useEffect(() => {

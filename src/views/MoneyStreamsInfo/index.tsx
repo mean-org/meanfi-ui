@@ -53,7 +53,6 @@ import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { customLogger } from 'src/main';
-import { fetchAccountTokens } from 'src/middleware/accounts';
 import { saveAppData } from 'src/middleware/appPersistedData';
 import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
 import { getStreamingAccountId } from 'src/middleware/getStreamingAccountId';
@@ -100,6 +99,7 @@ import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
 import { getStreamCategory, getStreamStatusLabel, isV2Stream } from 'src/middleware/streamHelpers';
+import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 
 interface MoneyStreamsInfoViewProps {
   loadingStreams: boolean;
@@ -127,6 +127,7 @@ export const MoneyStreamsInfoView = ({
   treasuryList,
 }: MoneyStreamsInfoViewProps) => {
   const {
+    tokenList,
     splTokenList,
     treasuryOption,
     selectedAccount,
@@ -181,6 +182,9 @@ export const MoneyStreamsInfoView = ({
   const [hasIncomingStreamsRunning, setHasIncomingStreamsRunning] = useState<number>();
   const [hasOutgoingStreamsRunning, setHasOutgoingStreamsRunning] = useState<number>();
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+
+  const sourceAccount = selectedMultisig ? selectedMultisig.authority.toBase58() : publicKey?.toBase58();
+  const { data: sourceAccountTokens } = useFetchAccountTokens(sourceAccount);
 
   ////////////
   //  Init  //
@@ -241,46 +245,38 @@ export const MoneyStreamsInfoView = ({
     resetTransactionStatus();
   }, [multisigClient, nativeBalance, resetTransactionStatus]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
-  const refreshUserBalances = useCallback(
-    (source?: PublicKey) => {
-      if (!connection || !publicKey || !splTokenList) {
-        return;
+  // Automatically update all token balances (in token list)
+  useEffect(() => {
+    const balancesMap: LooseObject = {};
+
+    if (!sourceAccount) {
+      return;
+    }
+
+    if (!sourceAccountTokens || sourceAccountTokens.length === 0) {
+      for (const t of tokenList) {
+        balancesMap[t.address] = 0;
       }
+      setUserBalances(balancesMap);
+      return;
+    }
 
-      const balancesMap: LooseObject = {};
-      const pk = source ?? publicKey;
-      consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
+    // sourceAccount
+    consoleOut('Reading balances for:', sourceAccount, 'darkpurple');
 
-      connection.getBalance(pk).then(solBalance => {
-        const uiBalance = getAmountFromLamports(solBalance);
-        balancesMap[NATIVE_SOL.address] = uiBalance;
-      });
+    connection.getBalance(new PublicKey(sourceAccount)).then(solBalance => {
+      const uiBalance = getAmountFromLamports(solBalance);
+      balancesMap[NATIVE_SOL.address] = uiBalance;
+      setNativeBalance(uiBalance);
+    });
 
-      fetchAccountTokens(connection, pk)
-        .then(accTks => {
-          if (accTks) {
-            for (const item of accTks) {
-              const address = item.parsedInfo.mint;
-              const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
-              balancesMap[address] = balance;
-            }
-          } else {
-            for (const t of splTokenList) {
-              balancesMap[t.address] = 0;
-            }
-          }
-        })
-        .catch(error => {
-          console.error(error);
-          for (const t of splTokenList) {
-            balancesMap[t.address] = 0;
-          }
-        })
-        .finally(() => setUserBalances(balancesMap));
-    },
-    [publicKey, connection],
-  );
+    for (const item of sourceAccountTokens) {
+      const address = item.parsedInfo.mint;
+      const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
+      balancesMap[address] = balance;
+    }
+    setUserBalances(balancesMap);
+  }, [sourceAccount, sourceAccountTokens, connection, tokenList]);
 
   const getRateAmountBn = useCallback((item: Stream | StreamInfo, decimals: number) => {
     if (item) {
@@ -572,11 +568,6 @@ export const MoneyStreamsInfoView = ({
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
     getMultisigTxProposalFees();
-    if (selectedMultisig) {
-      refreshUserBalances(selectedMultisig.authority);
-    } else {
-      refreshUserBalances();
-    }
     refreshTokenBalance();
     getTransactionFeesV2(ACTION_CODES.AddFundsToAccount).then(value => {
       setTransactionFees(value);
@@ -588,9 +579,7 @@ export const MoneyStreamsInfoView = ({
     });
     setIsAddFundsModalVisibility(true);
   }, [
-    selectedMultisig,
     refreshTokenBalance,
-    refreshUserBalances,
     getTransactionFeesV2,
     resetTransactionStatus,
     getMultisigTxProposalFees,
@@ -1031,7 +1020,6 @@ export const MoneyStreamsInfoView = ({
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
   const showCreateStreamModal = useCallback(() => {
     resetTransactionStatus();
-    refreshUserBalances();
     refreshTokenBalance();
     getMultisigTxProposalFees();
     setIsCreateStreamModalVisibility(true);
@@ -1044,7 +1032,6 @@ export const MoneyStreamsInfoView = ({
       consoleOut('withdrawTransactionFees:', value, 'orange');
     });
   }, [
-    refreshUserBalances,
     refreshTokenBalance,
     getTransactionFeesV2,
     resetTransactionStatus,
@@ -1490,13 +1477,14 @@ export const MoneyStreamsInfoView = ({
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
+    if (!(account?.lamports !== previousBalance || !nativeBalance)) {
+      return;
     }
+    // Refresh token balance
+    refreshTokenBalance();
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+    // Update previous balance
+    setPreviousBalance(account?.lamports);
   }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
 
   // Reset summaries and canDisplay flags when all dependencies start to load

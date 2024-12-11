@@ -46,7 +46,6 @@ import { useWalletAccount } from 'src/contexts/walletAccount';
 import { environment } from 'src/environments/environment';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { getDecimalsFromAccountInfo, isSystemOwnedAccount } from 'src/middleware/accountInfoGetters';
-import { getTokensWithBalances } from 'src/middleware/accounts';
 import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
 import { SOL_MINT, SYSTEM_PROGRAM_ID } from 'src/middleware/ids';
 import { ACCOUNT_LAYOUT } from 'src/middleware/layouts';
@@ -77,6 +76,7 @@ import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
 import './style.scss';
+import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
 
 type TabOption = 'first-tab' | 'test-stream' | 'account-info' | 'multisig-tab' | 'misc-tab' | undefined;
 type StreamViewerOption = 'treasurer' | 'beneficiary';
@@ -124,6 +124,8 @@ export const PlaygroundView = () => {
   const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
   const [totalSafeBalance, setTotalSafeBalance] = useState<number | undefined>(undefined);
   const [streamViewerAddress, setStreamViewerAddress] = useState('');
+
+  const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), false);
 
   const { multisigClient, multisigProgramAddressPK } = useMultisigClient();
 
@@ -655,31 +657,16 @@ export const PlaygroundView = () => {
 
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
-    if (!connection) {
-      console.error('No connection');
+    if (!tokensWithBalances) {
       return;
     }
 
-    if (!publicKey || !splTokenList) {
-      return;
+    setSelectedList(tokensWithBalances.tokenList);
+    setUserBalances(tokensWithBalances.balancesMap);
+    if (!selectedToken) {
+      setSelectedToken(tokensWithBalances.tokenList[0]);
     }
-
-    const timeout = setTimeout(() => {
-      getTokensWithBalances(connection, publicKey.toBase58(), priceList, splTokenList, false).then(response => {
-        if (response) {
-          setSelectedList(response.tokenList);
-          setUserBalances(response.balancesMap);
-          if (!selectedToken) {
-            setSelectedToken(response.tokenList[0]);
-          }
-        }
-      });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [priceList, publicKey, connection, splTokenList, selectedToken]);
+  }, [tokensWithBalances, selectedToken]);
 
   // Reset results when the filter is cleared
   useEffect(() => {

@@ -26,7 +26,7 @@ import {
 } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
-import useAccountAssets from 'src/query-hooks/accountTokens';
+import { useAccountAssets } from 'src/query-hooks/accountTokens';
 import { failsafeConnectionConfig, getDefaultRpc } from 'src/services/connections-hq';
 import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
