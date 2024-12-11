@@ -39,7 +39,7 @@ export async function fetchAccountHistory(
   try {
     let transactionMap: MappedTransaction[] = [];
 
-    const fetched = await connection.getConfirmedSignaturesForAddress2(pubkey, options, 'confirmed');
+    const fetched = await connection.getSignaturesForAddress(pubkey, options, 'confirmed');
 
     const history = {
       fetched,
