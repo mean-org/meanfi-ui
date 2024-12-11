@@ -9,10 +9,10 @@ import {
   type MultisigTransactionFees,
   getFees
 } from '@mean-dao/mean-multisig-sdk';
-import { AnchorProvider, BN, Program } from '@project-serum/anchor';
-import { type ConfirmOptions, PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
+import { BN } from '@project-serum/anchor';
+import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { Button, Empty, Spin, Tooltip } from 'antd';
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -44,12 +44,10 @@ import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'src/m
 import type { ProgramAccounts } from 'src/models/accounts';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import { type EditMultisigParams, type MultisigProposalsWithAuthority, ZERO_FEES } from 'src/models/multisig';
-import SerumIDL from 'src/models/serum-multisig-idl';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import type { LooseObject } from 'src/types/LooseObject';
 import { ProposalDetailsView } from './components/ProposalDetails';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
-import { SafeSerumInfoView } from './components/SafeSerumInfo';
 
 const proposalLoadStatusRegister = new Map<string, boolean>();
 
@@ -120,24 +118,6 @@ const SafeView = (props: {
   }, [searchParams]);
 
   const { multisigClient, multisigProgramAddressPK } = useMultisigClient();
-
-  const multisigSerumClient = useMemo(() => {
-    if (!connection || !wallet) {
-      return null;
-    }
-
-    const opts: ConfirmOptions = {
-      preflightCommitment: 'confirmed',
-      commitment: 'confirmed',
-      skipPreflight: true,
-      maxRetries: 3,
-    };
-
-    // biome-ignore lint/suspicious/noExplicitAny: No complicated type mappings Solana wallet to Anchor wallet
-    const provider = new AnchorProvider(connection, wallet.adapter as any, opts);
-
-    return new Program(SerumIDL, 'msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt', provider);
-  }, [connection, wallet]);
 
   // Live reference to the selected multisig
   const selectedMultisigRef = useRef(selectedMultisig);
@@ -1771,21 +1751,6 @@ const SafeView = (props: {
           loadingData={loadingMultisigAccounts || loadingProposals || loadingProposalDetails}
           isCancelRejectModalVisible={isCancelRejectModalVisible}
           setIsCancelRejectModalVisible={setIsCancelRejectModalVisible}
-        />
-      );
-    }
-    if (selectedMultisig.version === 0) {
-      return (
-        <SafeSerumInfoView
-          connection={connection}
-          isProposalDetails={isProposalDetails}
-          multisigClient={multisigSerumClient}
-          onNewProposalClicked={onNewProposalClicked}
-          multisigTxs={[]}
-          onDataToProgramView={goToProgramDetailsHandler}
-          onDataToSafeView={goToProposalDetailsHandler}
-          onEditMultisigClick={onEditMultisigClick}
-          selectedMultisig={selectedMultisig}
         />
       );
     }
