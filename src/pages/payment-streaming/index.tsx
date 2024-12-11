@@ -2,7 +2,7 @@ import type { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
 import type { PaymentStreamingAccount, Stream } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { Button, notification } from 'antd';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { segmentAnalytics } from 'src/App';
 import { MULTISIG_ROUTE_BASE_PATH } from 'src/app-constants/common';
@@ -49,11 +49,13 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
   const [canSubscribe, setCanSubscribe] = useState(true);
 
   const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
-  const { streamList, isFetching: loadingStreams } = useGetStreamList({
+  const { data, isFetching: loadingStreams } = useGetStreamList({
     srcAccountPk: new PublicKey(selectedAccount.address),
     tokenStreamingV1,
     tokenStreamingV2,
   });
+
+  const streamList = useMemo(() => data || [], [data]);
 
   ///////////////
   // Callbacks //

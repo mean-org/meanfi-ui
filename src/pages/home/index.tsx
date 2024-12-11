@@ -294,7 +294,7 @@ export const HomeView = () => {
   const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
 
   const {
-    streamList,
+    data,
     isFetching: loadingStreams,
     refetch: refreshStreamList,
   } = useGetStreamList({
@@ -302,6 +302,8 @@ export const HomeView = () => {
     tokenStreamingV1,
     tokenStreamingV2,
   });
+
+  const streamList = useMemo(() => data || [], [data]);
 
   const streamListv1 = useMemo(() => streamList.filter(stream => !isV2Stream(stream)) as StreamInfo[], [streamList]);
   const streamListv2 = useMemo(() => streamList.filter(stream => isV2Stream(stream)) as Stream[], [streamList]);

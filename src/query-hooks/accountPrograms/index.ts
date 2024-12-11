@@ -15,6 +15,7 @@ const useGetAccountPrograms = () => {
     queryKey: getAccountProgramsQueryKey(selectedAccount.address),
     queryFn: () => getProgramsByUpgradeAuthority(connection, selectedAccount.address),
     enabled: !!publicKey && !!selectedAccount.address,
+    retry: false,
   });
 
   return {

@@ -14,6 +14,7 @@ const useAccountAssets = (accountAddress: string) => {
     queryKey: getAccountAssetsQueryKey(accountAddress),
     queryFn: () => getUserAccountTokens(connection, accountAddress, priceList, splTokenList),
     enabled: !!accountAddress && splTokenList.length > 0 && !!priceList,
+    retry: false,
   });
 
   return {

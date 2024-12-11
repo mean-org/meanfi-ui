@@ -4,12 +4,9 @@ import type { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import {
-  FIFTY_SECONDS_REFRESH_TIMEOUT,
   FIVE_MINUTES_REFRESH_TIMEOUT,
-  FORTY_SECONDS_REFRESH_TIMEOUT,
-  ONE_MINUTE_REFRESH_TIMEOUT,
   PERFORMANCE_THRESHOLD,
-  SEVENTY_SECONDS_REFRESH_TIMEOUT,
+  THREE_MINUTES_REFRESH_TIMEOUT
 } from 'src/app-constants/common';
 import { isProd } from 'src/middleware/ui';
 import useGetPerformanceSamples from '../performanceSamples';
@@ -34,33 +31,18 @@ export const useGetStreamList = ({
 
   const [lastStreamsAmount, setLastStreamsAmount] = useState<number>(0);
 
-  /**
-   * Auto reload timeout breakdown
-   *
-   * #s <= 5 30s * 2
-   * #s > 5 & <= 25 40s * 2
-   * #s > 25 & <= 60 50s * 2
-   * #s > 60 & <= 100 70s * 2
-   * #s > 100 5min is ok
-   */
   const refreshInterval = useMemo(() => {
     if (lastStreamsAmount <= 5) {
-      return ONE_MINUTE_REFRESH_TIMEOUT;
+      return THREE_MINUTES_REFRESH_TIMEOUT;
     }
     if (lastStreamsAmount <= 25) {
-      return FORTY_SECONDS_REFRESH_TIMEOUT * 2;
-    }
-    if (lastStreamsAmount <= 60) {
-      return FIFTY_SECONDS_REFRESH_TIMEOUT * 2;
-    }
-    if (lastStreamsAmount <= 100) {
-      return SEVENTY_SECONDS_REFRESH_TIMEOUT * 2;
+      return FIVE_MINUTES_REFRESH_TIMEOUT;
     }
 
-    return FIVE_MINUTES_REFRESH_TIMEOUT;
+    return false;
   }, [lastStreamsAmount]);
 
-  const { data, isFetching, refetch } = useQuery({
+  return useQuery({
     queryKey: getStreamListQueryKey(srcAccountPk?.toBase58()),
     queryFn: () =>
       getStreamList({
@@ -78,10 +60,4 @@ export const useGetStreamList = ({
     refetchOnWindowFocus: false,
     refetchOnMount: false
   });
-
-  return {
-    streamList: data ?? [],
-    isFetching,
-    refetch,
-  };
 };
