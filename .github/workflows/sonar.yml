@@ -44,7 +44,7 @@ jobs:
         uses: sonarsource/sonarqube-quality-gate-action@master
         # Force to fail step after specific time.
         timeout-minutes: 5
-        continue-on-error: true # this should be removed in the future when the sonarqube is passing
+        continue-on-error: false # set to true only when needed
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
