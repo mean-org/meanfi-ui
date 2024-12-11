@@ -52,6 +52,7 @@ export const SafeMeanInfo = (props: {
   const [amountOfProposals, setAmountOfProposals] = useState<string>('');
   const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
+  // TODO: Do this better, this kills us
   const getMultisigVaults = useCallback(
     async (connection: Connection, multisig: PublicKey) => {
       const [multisigSigner] = PublicKey.findProgramAddressSync([multisig.toBuffer()], multisigAddressPK);
