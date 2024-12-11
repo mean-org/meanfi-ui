@@ -19,7 +19,6 @@ import { environment } from 'src/environments/environment';
 import { useDebounce } from 'src/hooks/useDebounce';
 import useRecipientAddressValidation from 'src/hooks/useRecipientAddressValidation';
 import { getDecimalsFromAccountInfo } from 'src/middleware/accountInfoGetters';
-import { fetchAccountTokens } from 'src/middleware/accounts';
 import { SOL_MINT } from 'src/middleware/ids';
 import { isError } from 'src/middleware/transactions';
 import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'src/middleware/ui';
@@ -28,6 +27,7 @@ import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import type { UserTokenAccount } from 'src/models/accounts';
 import { TransactionStatus } from 'src/models/enums';
 import type { TransferTokensTxParams } from 'src/models/multisig';
+import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 import type { LooseObject } from 'src/types/LooseObject';
 import { InputMean } from '../InputMean';
 import { TextInput } from '../TextInput';
@@ -66,7 +66,6 @@ export const MultisigTransferTokensModal = ({
   const {
     tokenList,
     splTokenList,
-    tokenAccounts,
     loadingPrices,
     transactionStatus,
     getTokenPriceByAddress,
@@ -89,6 +88,9 @@ export const MultisigTransferTokensModal = ({
   const [tokenBalance, setTokenBalance] = useState<number>(0);
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+
+  const sourceAccount = selectedMultisig ? selectedMultisig.authority.toBase58() : publicKey?.toBase58();
+  const { data: sourceAccountTokens } = useFetchAccountTokens(sourceAccount);
 
   // Process inputs
   useEffect(() => {
@@ -179,71 +181,114 @@ export const MultisigTransferTokensModal = ({
 
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
-    if (!connection) {
-      console.error('No connection');
+    const balancesMap: LooseObject = {};
+
+    if (!sourceAccountTokens || sourceAccountTokens.length === 0) {
+      for (const t of tokenList) {
+        balancesMap[t.address] = 0;
+      }
+      setUserBalances(balancesMap);
+      // set the list to the userTokens list
+      setSelectedList(tokenList);
       return;
     }
 
-    if (!publicKey || !tokenList || !tokenAccounts) {
-      return;
+    const intersectedList = new Array<TokenInfo>();
+    const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
+
+    intersectedList.push(splTokensCopy[0]);
+    balancesMap[NATIVE_SOL.address] = nativeBalance;
+    // Create a list containing tokens for the user owned token accounts
+    for (const item of sourceAccountTokens) {
+      balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount ?? 0;
+      const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+      const tokenFromSplTokensCopy = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
+      if (tokenFromSplTokensCopy && !isTokenAccountInTheList) {
+        intersectedList.push(tokenFromSplTokensCopy);
+      }
     }
 
-    const timeout = setTimeout(() => {
-      const balancesMap: LooseObject = {};
-      const pk = selectedMultisig ? selectedMultisig.authority : publicKey;
-
-      fetchAccountTokens(connection, pk)
-        .then(accTks => {
-          if (accTks) {
-            const intersectedList = new Array<TokenInfo>();
-            const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
-
-            intersectedList.push(splTokensCopy[0]);
-            balancesMap[NATIVE_SOL.address] = nativeBalance;
-            // Create a list containing tokens for the user owned token accounts
-            for (const item of accTks) {
-              balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount ?? 0;
-              const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
-              const tokenFromSplTokensCopy = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
-              if (tokenFromSplTokensCopy && !isTokenAccountInTheList) {
-                intersectedList.push(tokenFromSplTokensCopy);
-              }
-            }
-
-            intersectedList.sort((a, b) => {
-              if ((balancesMap[a.address] ?? 0) < (balancesMap[b.address] ?? 0)) {
-                return 1;
-              }
-              if ((balancesMap[a.address] ?? 0) > (balancesMap[b.address] ?? 0)) {
-                return -1;
-              }
-              return 0;
-            });
-
-            setSelectedList(intersectedList);
-            consoleOut('intersectedList:', intersectedList, 'orange');
-          } else {
-            for (const t of tokenList) {
-              balancesMap[t.address] = 0;
-            }
-            // set the list to the userTokens list
-            setSelectedList(tokenList);
-          }
-        })
-        .catch(error => {
-          console.error(error);
-          for (const t of tokenList) {
-            balancesMap[t.address] = 0;
-          }
-          setSelectedList(tokenList);
-        })
-        .finally(() => setUserBalances(balancesMap));
+    intersectedList.sort((a, b) => {
+      if ((balancesMap[a.address] ?? 0) < (balancesMap[b.address] ?? 0)) {
+        return 1;
+      }
+      if ((balancesMap[a.address] ?? 0) > (balancesMap[b.address] ?? 0)) {
+        return -1;
+      }
+      return 0;
     });
 
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [publicKey, tokenList, connection, splTokenList, tokenAccounts, nativeBalance, selectedMultisig]);
+    setUserBalances(balancesMap);
+    setSelectedList(intersectedList);
+    consoleOut('intersectedList:', intersectedList, 'orange');
+  }, [sourceAccountTokens, nativeBalance, tokenList, splTokenList]);
+
+  // useEffect(() => {
+  //   if (!connection) {
+  //     console.error('No connection');
+  //     return;
+  //   }
+
+  //   if (!publicKey || !tokenList || !tokenAccounts) {
+  //     return;
+  //   }
+
+  //   const timeout = setTimeout(() => {
+  //     const balancesMap: LooseObject = {};
+  //     const pk = selectedMultisig ? selectedMultisig.authority : publicKey;
+
+  //     fetchAccountTokens(connection, pk)
+  //       .then(accTks => {
+  //         if (accTks) {
+  //           const intersectedList = new Array<TokenInfo>();
+  //           const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as TokenInfo[];
+
+  //           intersectedList.push(splTokensCopy[0]);
+  //           balancesMap[NATIVE_SOL.address] = nativeBalance;
+  //           // Create a list containing tokens for the user owned token accounts
+  //           for (const item of accTks) {
+  //             balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount ?? 0;
+  //             const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+  //             const tokenFromSplTokensCopy = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
+  //             if (tokenFromSplTokensCopy && !isTokenAccountInTheList) {
+  //               intersectedList.push(tokenFromSplTokensCopy);
+  //             }
+  //           }
+
+  //           intersectedList.sort((a, b) => {
+  //             if ((balancesMap[a.address] ?? 0) < (balancesMap[b.address] ?? 0)) {
+  //               return 1;
+  //             }
+  //             if ((balancesMap[a.address] ?? 0) > (balancesMap[b.address] ?? 0)) {
+  //               return -1;
+  //             }
+  //             return 0;
+  //           });
+
+  //           setSelectedList(intersectedList);
+  //           consoleOut('intersectedList:', intersectedList, 'orange');
+  //         } else {
+  //           for (const t of tokenList) {
+  //             balancesMap[t.address] = 0;
+  //           }
+  //           // set the list to the userTokens list
+  //           setSelectedList(tokenList);
+  //         }
+  //       })
+  //       .catch(error => {
+  //         console.error(error);
+  //         for (const t of tokenList) {
+  //           balancesMap[t.address] = 0;
+  //         }
+  //         setSelectedList(tokenList);
+  //       })
+  //       .finally(() => setUserBalances(balancesMap));
+  //   });
+
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   };
+  // }, [publicKey, tokenList, connection, splTokenList, tokenAccounts, nativeBalance, selectedMultisig]);
 
   // Reset results when the filter is cleared
   useEffect(() => {

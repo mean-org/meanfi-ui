@@ -43,7 +43,6 @@ import { TxConfirmationContext } from 'src/contexts/transaction-status';
 import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import { customLogger } from 'src/main';
-import { fetchAccountTokens } from 'src/middleware/accounts';
 import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
 import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
 import { SOL_MINT } from 'src/middleware/ids';
@@ -77,6 +76,7 @@ import type { StreamTopupParams, StreamTopupTxCreateParams } from 'src/models/co
 import { OperationType, TransactionStatus } from 'src/models/enums';
 import type { CloseStreamParams } from 'src/models/streams';
 import type { CloseStreamTransactionParams, StreamTreasuryType } from 'src/models/treasuries';
+import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
@@ -99,6 +99,7 @@ export const MoneyStreamsOutgoingView = ({
   streamSelected,
 }: MoneyStreamsOutgoingViewProps) => {
   const {
+    tokenList,
     splTokenList,
     tokenBalance,
     deletedStreams,
@@ -122,6 +123,8 @@ export const MoneyStreamsOutgoingView = ({
   const [lastOperationPayload, setLastOperationPayload] = useState<string>('');
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
   const [treasuryDetails, setTreasuryDetails] = useState<PaymentStreamingAccount | TreasuryInfo | undefined>(undefined);
+
+  const { data: sourceAccountTokens } = useFetchAccountTokens(publicKey?.toBase58());
 
   ////////////
   //  Init  //
@@ -261,48 +264,6 @@ export const MoneyStreamsOutgoingView = ({
     [tokenStreamingV1, tokenStreamingV2, publicKey, connection],
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
-  const refreshUserBalances = useCallback(
-    (source?: PublicKey) => {
-      if (!connection || !publicKey || !splTokenList) {
-        return;
-      }
-
-      const balancesMap: LooseObject = {};
-      const pk = source ?? publicKey;
-      consoleOut('Reading balances for:', pk.toBase58(), 'darkpurple');
-
-      connection.getBalance(pk).then(solBalance => {
-        const uiBalance = getAmountFromLamports(solBalance);
-        balancesMap[NATIVE_SOL.address] = uiBalance;
-        setNativeBalance(uiBalance);
-      });
-
-      fetchAccountTokens(connection, pk)
-        .then(accTks => {
-          if (accTks) {
-            for (const item of accTks) {
-              const address = item.parsedInfo.mint;
-              const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
-              balancesMap[address] = balance;
-            }
-          } else {
-            for (const t of splTokenList) {
-              balancesMap[t.address] = 0;
-            }
-          }
-        })
-        .catch(error => {
-          console.error(error);
-          for (const t of splTokenList) {
-            balancesMap[t.address] = 0;
-          }
-        })
-        .finally(() => setUserBalances(balancesMap));
-    },
-    [publicKey, connection],
-  );
-
   // Transaction execution (Applies to all transactions)
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -362,7 +323,6 @@ export const MoneyStreamsOutgoingView = ({
   const showAddFundsModal = useCallback(() => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupButton);
-    refreshUserBalances();
 
     if (streamSelected) {
       if (streamSelected.version < 2) {
@@ -385,7 +345,7 @@ export const MoneyStreamsOutgoingView = ({
     setTimeout(() => {
       refreshTokenBalance();
     }, 100);
-  }, [streamSelected, getTransactionFeesV2, refreshUserBalances, refreshTokenBalance, getTransactionFees]);
+  }, [streamSelected, getTransactionFeesV2, refreshTokenBalance, getTransactionFees]);
 
   const closeAddFundsModal = useCallback(() => {
     setIsAddFundsModalVisibility(false);
@@ -2336,23 +2296,36 @@ export const MoneyStreamsOutgoingView = ({
 
   // Automatically update all token balances (in token list)
   useEffect(() => {
-    if (!connection) {
-      console.error('No connection');
+    const balancesMap: LooseObject = {};
+
+    if (!publicKey) {
       return;
     }
 
-    if (!publicKey || !splTokenList) {
+    if (!sourceAccountTokens || sourceAccountTokens.length === 0) {
+      for (const t of tokenList) {
+        balancesMap[t.address] = 0;
+      }
+      setUserBalances(balancesMap);
       return;
     }
 
-    const timeout = setTimeout(() => {
-      refreshUserBalances();
+    // sourceAccount
+    consoleOut('Reading balances for:', publicKey.toBase58(), 'darkpurple');
+
+    connection.getBalance(publicKey).then(solBalance => {
+      const uiBalance = getAmountFromLamports(solBalance);
+      balancesMap[NATIVE_SOL.address] = uiBalance;
+      setNativeBalance(uiBalance);
     });
 
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [splTokenList, publicKey, connection, refreshUserBalances]);
+    for (const item of sourceAccountTokens) {
+      const address = item.parsedInfo.mint;
+      const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
+      balancesMap[address] = balance;
+    }
+    setUserBalances(balancesMap);
+  }, [connection, publicKey, sourceAccountTokens, tokenList]);
 
   // Read treasury data
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually

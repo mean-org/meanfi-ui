@@ -34,7 +34,7 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from '
 import type { MultisigVault } from 'src/models/multisig';
 import { type PaymentStreamingStats, type StreamsSummary, initialStats, initialSummary } from 'src/models/streams';
 import type { TreasuryTypeOption } from 'src/models/treasuries';
-import useAccountAssets from 'src/query-hooks/accountTokens';
+import { useAccountAssets } from 'src/query-hooks/accountTokens';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import useGetTokenList from 'src/query-hooks/tokenList';

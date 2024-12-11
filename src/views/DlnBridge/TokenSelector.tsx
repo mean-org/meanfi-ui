@@ -1,15 +1,13 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'src/app-constants/common';
 import { TextInput } from 'src/components/TextInput';
 import { TokenListItem } from 'src/components/TokenListItem';
-import { AppStateContext } from 'src/contexts/appstate';
-import { useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
-import { getTokensWithBalances } from 'src/middleware/accounts';
 import { consoleOut } from 'src/middleware/ui';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import type { UserTokenAccount } from 'src/models/accounts/UserTokenAccount';
+import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
 import type { LooseObject } from 'src/types/LooseObject';
 
 interface TokenSelectorProps {
@@ -22,8 +20,6 @@ interface TokenSelectorProps {
 
 const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelected }: TokenSelectorProps) => {
   const { t } = useTranslation('common');
-  const { priceList } = useContext(AppStateContext);
-  const connection = useConnection();
   const { connected, publicKey } = useWallet();
 
   const [tokenFilter, setTokenFilter] = useState('');
@@ -32,6 +28,7 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
 
   const tokenList = useMemo(() => (tokens ? (tokens.slice() as UserTokenAccount[]) : []), [tokens]);
+  const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), false);
 
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback(
@@ -43,11 +40,9 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
       const timeout = setTimeout(() => {
         const filter = (t: TokenInfo) => {
           return t.name.toLowerCase().includes(searchString.toLowerCase());
-          // t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
-          // t.address.toLowerCase().includes(searchString.toLowerCase())
         };
 
-        const filteredList = !searchString ? selectedList : selectedList.filter(t => filter(t));
+        const filteredList = searchString ? selectedList.filter(t => filter(t)) : selectedList;
 
         setFilteredTokenList(filteredList);
       });
@@ -102,7 +97,7 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
 
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
-    if (!tokenList) {
+    if (!tokensWithBalances) {
       return;
     }
 
@@ -112,24 +107,9 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
       return;
     }
 
-    if (!connection || !publicKey) {
-      console.error('No connection');
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      getTokensWithBalances(connection, publicKey.toBase58(), priceList, tokenList, false).then(response => {
-        if (response) {
-          setSelectedList(response.tokenList);
-          setUserBalances(response.balancesMap);
-        }
-      });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [connection, isSolana, priceList, publicKey, tokenList]);
+    setSelectedList(tokensWithBalances.tokenList);
+    setUserBalances(tokensWithBalances.balancesMap);
+  }, [isSolana, tokenList, tokensWithBalances]);
 
   // Reset results when the filter is cleared
   useEffect(() => {

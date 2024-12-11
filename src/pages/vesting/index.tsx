@@ -34,7 +34,7 @@ import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { segmentAnalytics } from 'src/App';
-import { IconArrowBack, IconLoading, IconVerticalEllipsis } from 'src/Icons'
+import { IconArrowBack, IconLoading, IconVerticalEllipsis } from 'src/Icons';
 import {
   HALF_MINUTE_REFRESH_TIMEOUT,
   MEANFI_DOCS_URL,
@@ -58,7 +58,7 @@ import useLocalStorage from 'src/hooks/useLocalStorage';
 import useTransaction from 'src/hooks/useTransaction';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { customLogger } from 'src/main';
-import { getTokenAccountBalanceByAddress, getTokensWithBalances } from 'src/middleware/accounts';
+import { getTokenAccountBalanceByAddress } from 'src/middleware/accounts';
 import { saveAppData } from 'src/middleware/appPersistedData';
 import { SOL_MINT } from 'src/middleware/ids';
 import {
@@ -117,6 +117,7 @@ import {
   getCategoryLabelByValue,
   vestingFlowRatesCache,
 } from 'src/models/vesting';
+import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import { useGetVestingContracts } from 'src/query-hooks/vestingContract';
@@ -143,8 +144,6 @@ const notificationKey = 'updatable';
 const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const { appSocialLinks } = props;
   const {
-    priceList,
-    splTokenList,
     selectedAccount,
     selectedMultisig,
     multisigAccounts,
@@ -219,6 +218,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   );
   const [canDisplayMyTvl, setCanDisplayMyTvl] = useState(false);
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
+
+  const sourceAccount = balancesSource || selectedAccount.address;
+  const { data: sourceAccountTokens } = useGetTokensWithBalances(sourceAccount, false);
 
   /////////////////////////
   //  Setup & Init code  //
@@ -2801,32 +2803,14 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     }
   }, [selectedList, workingToken]);
 
-  // Automatically update all token balances and rebuild token list
   useEffect(() => {
-    if (!connection) {
-      console.error('No connection');
+    if (!sourceAccountTokens) {
       return;
     }
 
-    if (!selectedAccount.address || !splTokenList) {
-      return;
-    }
-
-    const pk = balancesSource || selectedAccount.address;
-
-    const timeout = setTimeout(() => {
-      getTokensWithBalances(connection, pk, priceList, splTokenList, false).then(response => {
-        if (response) {
-          setSelectedList(response.tokenList);
-          setUserBalances(response.balancesMap);
-        }
-      });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [priceList, connection, splTokenList, balancesSource, selectedAccount.address]);
+    setSelectedList(sourceAccountTokens.tokenList);
+    setUserBalances(sourceAccountTokens.balancesMap);
+  }, [sourceAccountTokens]);
 
   // Build CTAs
   useEffect(() => {

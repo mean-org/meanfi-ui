@@ -20,7 +20,6 @@ import { getNetworkIdByEnvironment, useConnection } from 'src/contexts/connectio
 import { useWallet } from 'src/contexts/wallet';
 import { environment } from 'src/environments/environment';
 import { getDecimalsFromAccountInfo } from 'src/middleware/accountInfoGetters';
-import { getTokensWithBalances } from 'src/middleware/accounts';
 import { SOL_MINT } from 'src/middleware/ids';
 import { isError } from 'src/middleware/transactions';
 import { consoleOut, copyText, getTransactionOperationDescription, isValidAddress } from 'src/middleware/ui';
@@ -28,6 +27,7 @@ import { getAmountWithSymbol, shortenAddress } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { TransactionStatus } from 'src/models/enums';
 import type { TreasuryCreateOptions, TreasuryTypeOption } from 'src/models/treasuries';
+import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
 import type { LooseObject } from 'src/types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -54,7 +54,7 @@ export const TreasuryCreateModal = ({
   transactionFees,
 }: Props) => {
   const { t } = useTranslation('common');
-  const { tokenList, splTokenList, selectedAccount, transactionStatus, setTransactionStatus, priceList } =
+  const { tokenList, selectedAccount, transactionStatus, setTransactionStatus } =
     useContext(AppStateContext);
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
@@ -68,6 +68,8 @@ export const TreasuryCreateModal = ({
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [userBalances, setUserBalances] = useState<LooseObject>();
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
+
+  const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), true);
 
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig );
@@ -175,28 +177,13 @@ export const TreasuryCreateModal = ({
 
   // Automatically update all token balances and rebuild token list
   useEffect(() => {
-    if (!connection) {
-      console.error('No connection');
+    if (!tokensWithBalances) {
       return;
     }
 
-    if (!publicKey || !splTokenList) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      getTokensWithBalances(connection, publicKey.toBase58(), priceList, splTokenList, true).then(response => {
-        if (response) {
-          setSelectedList(response.tokenList);
-          setUserBalances(response.balancesMap);
-        }
-      });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [publicKey, connection, priceList, splTokenList]);
+    setSelectedList(tokensWithBalances.tokenList);
+    setUserBalances(tokensWithBalances.balancesMap);
+  }, [tokensWithBalances]);
 
   // Pick a token if none selected
   useEffect(() => {
