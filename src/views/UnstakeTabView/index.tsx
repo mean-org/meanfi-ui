@@ -478,22 +478,22 @@ export const UnstakeTabView = (props: {
    */
   const getUsdAmountForSmeanInput = useCallback(() => {
     if (fromCoinAmount && Number.parseFloat(fromCoinAmount) > 0 && sMeanToMeanRate && meanPrice) {
-      const usdAmount = Number.parseFloat(fromCoinAmount) * sMeanToMeanRate * meanPrice;
-      return usdAmount;
+      return Number.parseFloat(fromCoinAmount) * sMeanToMeanRate * meanPrice;
     }
     return 0;
   }, [fromCoinAmount, meanPrice, sMeanToMeanRate]);
 
   // Setup event listeners
   useEffect(() => {
-    if (canSubscribe) {
-      setCanSubscribe(false);
-      consoleOut('Setup event subscriptions -> UnstakeTabView', '', 'brown');
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
-      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
+    if (!canSubscribe) {
+      return;
     }
+    setCanSubscribe(false);
+    consoleOut('Setup event subscriptions -> UnstakeTabView', '', 'brown');
+    confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+    consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
+    confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+    consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events

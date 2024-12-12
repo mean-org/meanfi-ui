@@ -74,7 +74,7 @@ export const MultisigParticipants = ({
 
   const checkIfDuplicateExists = (arr: MultisigParticipant[]): boolean => {
     const items = arr.map(i => i.address);
-    return new Set(items).size !== items.length ? true : false;
+    return new Set(items).size !== items.length;
   };
 
   const isInputMultisigAddress = (address: string) => {

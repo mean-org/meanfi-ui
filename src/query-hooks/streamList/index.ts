@@ -4,9 +4,9 @@ import type { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import {
-  FIVE_MINUTES_REFRESH_TIMEOUT,
   PERFORMANCE_THRESHOLD,
-  THREE_MINUTES_REFRESH_TIMEOUT
+  TEN_MINUTES_REFRESH_TIMEOUT,
+  THIRTY_MINUTES_REFRESH_TIMEOUT
 } from 'src/app-constants/common';
 import { isProd } from 'src/middleware/ui';
 import useGetPerformanceSamples from '../performanceSamples';
@@ -33,10 +33,10 @@ export const useGetStreamList = ({
 
   const refreshInterval = useMemo(() => {
     if (lastStreamsAmount <= 5) {
-      return THREE_MINUTES_REFRESH_TIMEOUT;
+      return TEN_MINUTES_REFRESH_TIMEOUT;
     }
     if (lastStreamsAmount <= 25) {
-      return FIVE_MINUTES_REFRESH_TIMEOUT;
+      return THIRTY_MINUTES_REFRESH_TIMEOUT;
     }
 
     return false;

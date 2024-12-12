@@ -36,11 +36,11 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { segmentAnalytics } from 'src/App';
 import { IconArrowBack, IconLoading, IconVerticalEllipsis } from 'src/Icons';
 import {
-  HALF_MINUTE_REFRESH_TIMEOUT,
   MEANFI_DOCS_URL,
   MIN_SOL_BALANCE_REQUIRED,
   MULTISIG_ROUTE_BASE_PATH,
   NO_FEES,
+  ONE_MINUTE_REFRESH_TIMEOUT,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   VESTING_ROUTE_BASE_PATH,
   WRAPPED_SOL_MINT_ADDRESS,
@@ -3300,7 +3300,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         }
         setCanDisplayMyTvl(true);
       });
-    }, HALF_MINUTE_REFRESH_TIMEOUT);
+    }, ONE_MINUTE_REFRESH_TIMEOUT);
 
     return () => {
       clearTimeout(timeout);
@@ -3309,14 +3309,15 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   // Setup event listeners
   useEffect(() => {
-    if (canSubscribe) {
-      setCanSubscribe(false);
-      consoleOut('Setup event subscriptions -> VestingView', '', 'brown');
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
-      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
+    if (!canSubscribe) {
+      return;
     }
+    setCanSubscribe(false);
+    consoleOut('Setup event subscriptions -> VestingView', '', 'brown');
+    confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+    consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
+    confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+    consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events

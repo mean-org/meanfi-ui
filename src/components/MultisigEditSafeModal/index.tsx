@@ -127,11 +127,11 @@ export const MultisigEditSafeModal = (props: {
 
   const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
     const items = arr.map(i => i.address);
-    return new Set(items).size === items.length ? true : false;
+    return new Set(items).size === items.length;
   };
 
   const isFormValid = () => {
-    return multisigTitle &&
+    return !!(multisigTitle &&
       multisigThreshold &&
       multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
       multisigLabel &&
@@ -139,9 +139,7 @@ export const MultisigEditSafeModal = (props: {
       multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
       isOwnersListValid() &&
       isFormDirty() &&
-      noDuplicateExists(multisigOwners)
-      ? true
-      : false;
+      noDuplicateExists(multisigOwners));
   };
 
   const getTransactionStartButtonLabel = () => {

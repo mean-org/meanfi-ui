@@ -65,13 +65,11 @@ export const SafeMeanInfo = (props: {
         return [];
       }
 
-      const results = accountInfos.map(t => {
+      return accountInfos.map(t => {
         const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
         tokenAccount.address = t.pubkey;
         return tokenAccount;
       });
-
-      return results;
     },
     [multisigAddressPK],
   );
@@ -105,44 +103,39 @@ export const SafeMeanInfo = (props: {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      if (address === selectedMultisig.authority.toBase58()) {
-        const solToken = getSolToken();
+    if (address === selectedMultisig.authority.toBase58()) {
+      const solToken = getSolToken();
 
-        getMultisigVaults(connection, selectedMultisig.id)
-          .then(result => {
-            const modifiedResults = new Array<MultisigVault>();
-            if (solToken) {
-              modifiedResults.push(solToken);
-            }
-            for (const item of result) {
-              modifiedResults.push(item);
-            }
-            setMultisigVaults(modifiedResults);
-            consoleOut('Multisig assets', modifiedResults, 'blue');
-          })
-          .catch(err => {
-            console.error(err);
-            if (solToken) {
-              setMultisigVaults([solToken]);
-            }
-          })
-          .finally(() => setLoadingAssets(false));
-      }
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+      getMultisigVaults(connection, selectedMultisig.id)
+        .then(result => {
+          const modifiedResults = new Array<MultisigVault>();
+          if (solToken) {
+            modifiedResults.push(solToken);
+          }
+          for (const item of result) {
+            modifiedResults.push(item);
+          }
+          setMultisigVaults(modifiedResults);
+          consoleOut('Multisig assets', modifiedResults, 'blue');
+        })
+        .catch(err => {
+          console.error(err);
+          if (solToken) {
+            setMultisigVaults([solToken]);
+          }
+        })
+        .finally(() => setLoadingAssets(false));
+    }
   }, [address, connection, loadingAssets, multisigClient, selectedMultisig]);
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      setPreviousBalance(account?.lamports);
+    if (!(account?.lamports !== previousBalance || !nativeBalance)) {
+      return;
     }
+    refreshTokenBalance();
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+    setPreviousBalance(account?.lamports);
   }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
 
   // Get multisig SOL balance
@@ -152,19 +145,15 @@ export const SafeMeanInfo = (props: {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      if (address === selectedMultisig.authority.toBase58()) {
-        connection
-          .getBalance(selectedMultisig.authority)
-          .then(balance => {
-            consoleOut('multisigSolBalance', balance, 'orange');
-            setMultisigSolBalance(balance);
-          })
-          .catch(err => console.error(err));
-      }
-    });
-
-    return () => clearTimeout(timeout);
+    if (address === selectedMultisig.authority.toBase58()) {
+      connection
+        .getBalance(selectedMultisig.authority)
+        .then(balance => {
+          consoleOut('multisigSolBalance', balance, 'orange');
+          setMultisigSolBalance(balance);
+        })
+        .catch(err => console.error(err));
+    }
   }, [address, connection, selectedMultisig]);
 
   useEffect(() => {

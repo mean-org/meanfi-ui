@@ -1960,7 +1960,7 @@ export const MoneyStreamsInfoView = ({
     setHeightRedWave(`${unallocatedScale}vh`);
   }, [unallocatedScale, withdrawalScale, setHeightGreenWave, setHeightRedWave]);
 
-  const [isPaused, setIsPaused] = useState(true);
+  const [isWavesPaused, setIsWavesPaused] = useState(true);
 
   useEffect(() => {
     if (!selectedAccount.address) {
@@ -1968,7 +1968,7 @@ export const MoneyStreamsInfoView = ({
     }
 
     const timeout = setTimeout(() => {
-      setIsPaused(false);
+      setIsWavesPaused(false);
     }, 5000);
 
     return () => {
@@ -2109,7 +2109,7 @@ export const MoneyStreamsInfoView = ({
           <div className='wave-container wave wave-green'>
             <Wave
               fill='url(#gradient1)'
-              paused={isPaused}
+              paused={isWavesPaused}
               className='svg-container'
               style={{
                 height: `${withdrawalScale}vh`,
@@ -2196,7 +2196,7 @@ export const MoneyStreamsInfoView = ({
           <div className='wave-container wave wave-red'>
             <Wave
               fill='url(#gradient2)'
-              paused={isPaused}
+              paused={isWavesPaused}
               className='svg-container'
               style={{
                 height: `${unallocatedScale}vh`,

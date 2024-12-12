@@ -2,15 +2,9 @@ import type { Language } from 'src/models/languages';
 
 // Intervals
 export const ONE_MINUTE_REFRESH_TIMEOUT = 60 * 1000;
-export const HALF_MINUTE_REFRESH_TIMEOUT = 30 * 1000;
-export const FORTY_SECONDS_REFRESH_TIMEOUT = 40 * 1000;
-export const FIFTY_SECONDS_REFRESH_TIMEOUT = 50 * 1000;
-export const SEVENTY_SECONDS_REFRESH_TIMEOUT = 70 * 1000;
-export const THREE_MINUTES_REFRESH_TIMEOUT = 3 * 60 * 1000;
 export const FIVE_MINUTES_REFRESH_TIMEOUT = 5 * 60 * 1000;
 export const TEN_MINUTES_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const THIRTY_MINUTES_REFRESH_TIMEOUT = 30 * 60 * 1000;
-export const TRANSACTION_STATUS_RETRY = 3 * 1000; // Retry fetch transaction status every 3 seconds
 export const TRANSACTION_STATUS_RETRY_TIMEOUT = 40 * 1000; // Max timeout for trying fetch
 export const PERFORMANCE_THRESHOLD = 1400; // Min TPS to show the top bar (1400 but can be changed)
 export const INPUT_DEBOUNCE_TIME = 400;
@@ -18,9 +12,6 @@ export const MIN_SOL_BALANCE_REQUIRED = 0.05;
 export const TRANSACTIONS_PER_PAGE = 15;
 export const MAX_SUPPORTED_TRANSACTION_VERSION = 0;
 export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.01; // Minimum balance to start showing user account tokens in accounts page
-export const MIN_SLIPPAGE_VALUE = 0.1;
-export const DEFAULT_SLIPPAGE_PERCENT = 1;
-export const MAX_SLIPPAGE_VALUE = 20;
 export const MAX_TOKEN_LIST_ITEMS = 100;
 export const MAX_MULTISIG_PARTICIPANTS = 10;
 export const MEAN_MULTISIG_ACCOUNT_LAMPORTS = 1_000_000;

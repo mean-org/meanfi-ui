@@ -1,4 +1,5 @@
 import type { Connection, SignatureStatus, TransactionConfirmationStatus, TransactionSignature } from '@solana/web3.js';
+import { delay } from './ui';
 
 interface ConfirmTransactionOptions {
   connection: Connection;
@@ -29,7 +30,7 @@ const confirmTransaction = async ({
     const status = statuses[0];
 
     if (status === null) {
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      await delay(pollInterval);
       continue;
     }
 
@@ -45,7 +46,7 @@ const confirmTransaction = async ({
       return status;
     }
 
-    await new Promise(resolve => setTimeout(resolve, pollInterval));
+    await delay(pollInterval);
   }
 
   throw new Error(`Transaction confirmation timeout after ${timeout}ms`);

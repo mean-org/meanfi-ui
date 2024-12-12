@@ -2330,25 +2330,19 @@ export const MoneyStreamsOutgoingView = ({
   // Read treasury data
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (!publicKey || !tokenStreamingV1 || !tokenStreamingV2 || !streamSelected) {
+    if (!streamSelected) {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      const v1 = streamSelected as StreamInfo;
-      const v2 = streamSelected as Stream;
-      const isNewStream = streamSelected.version >= 2;
-      const treasuryId = isNewStream ? v2.psAccount.toBase58() : (v1.treasuryAddress as string);
-      if (!treasuryDetails || treasuryDetails.id.toString() !== treasuryId) {
-        consoleOut('Reading treasury data...', '', 'blue');
-        getTreasuryByTreasuryId(treasuryId, streamSelected.version);
-      }
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [tokenStreamingV1, tokenStreamingV2, publicKey, streamSelected]);
+    const v1 = streamSelected as StreamInfo;
+    const v2 = streamSelected as Stream;
+    const isNewStream = streamSelected.version >= 2;
+    const treasuryId = isNewStream ? v2.psAccount.toBase58() : (v1.treasuryAddress as string);
+    if (!treasuryDetails || treasuryDetails.id.toString() !== treasuryId) {
+      consoleOut('Reading treasury data...', '', 'blue');
+      getTreasuryByTreasuryId(treasuryId, streamSelected.version);
+    }
+  }, [streamSelected, treasuryDetails]);
 
   // Refresh stream data
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
@@ -2380,6 +2374,7 @@ export const MoneyStreamsOutgoingView = ({
   }, [tokenStreamingV1, tokenStreamingV2, streamSelected]);
 
   // Set selected token to the stream associated token as soon as the stream is available or changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!publicKey || !streamSelected) {
       return;
@@ -2392,7 +2387,7 @@ export const MoneyStreamsOutgoingView = ({
         setWorkingToken(token);
       });
     }
-  }, [connection, getTokenByMintAddress, publicKey, streamSelected, workingToken]);
+  }, [connection, publicKey, streamSelected, workingToken]);
 
   ///////////////
   // Rendering //

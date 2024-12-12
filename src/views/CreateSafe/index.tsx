@@ -212,14 +212,15 @@ const CreateSafeView = () => {
 
   // Setup event listeners
   useEffect(() => {
-    if (canSubscribe) {
-      setCanSubscribe(false);
-      consoleOut('Setup event subscriptions -> CreateSafeView', '', 'brown');
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
-      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
+    if (!canSubscribe) {
+      return;
     }
+    setCanSubscribe(false);
+    consoleOut('Setup event subscriptions -> CreateSafeView', '', 'brown');
+    confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+    consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
+    confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+    consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events

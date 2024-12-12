@@ -249,16 +249,10 @@ export const OneTimePayment = ({
       return;
     }
 
-    const timeout = setTimeout(() => {
-      const balance = userBalances[selectedToken.address] as number;
-      setSelectedTokenBalance(balance);
-      const balanceBn = toTokenAmount(balance, selectedToken.decimals);
-      setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    const balance = userBalances[selectedToken.address] as number;
+    setSelectedTokenBalance(balance);
+    const balanceBn = toTokenAmount(balance, selectedToken.decimals);
+    setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
   }, [connection, publicKey, selectedToken, userBalances]);
 
   // Fetch and store information about the destination address

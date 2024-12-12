@@ -102,12 +102,13 @@ export const MultisigTransferTokensModal = ({
   }, [isVisible, selectedVault]);
 
   useEffect(() => {
-    if (isVisible && transactionFees) {
-      const totalMultisigFee = transactionFees.multisigFee + MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL;
-      const minRequired = totalMultisigFee + transactionFees.rentExempt + transactionFees.networkFee;
-      consoleOut('Min required balance:', minRequired, 'blue');
-      setMinRequiredBalance(minRequired);
+    if (!(isVisible && transactionFees)) {
+      return;
     }
+    const totalMultisigFee = transactionFees.multisigFee + MEAN_MULTISIG_ACCOUNT_LAMPORTS / LAMPORTS_PER_SOL;
+    const minRequired = totalMultisigFee + transactionFees.rentExempt + transactionFees.networkFee;
+    consoleOut('Min required balance:', minRequired, 'blue');
+    setMinRequiredBalance(minRequired);
   }, [isVisible, transactionFees]);
 
   // Updates the token list everytime is filtered
@@ -117,23 +118,17 @@ export const MultisigTransferTokensModal = ({
         return;
       }
 
-      const timeout = setTimeout(() => {
-        const filter = (t: TokenInfo) => {
-          return (
-            t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
-            t.name.toLowerCase().includes(searchString.toLowerCase()) ||
-            t.address.toLowerCase().includes(searchString.toLowerCase())
-          );
-        };
-
-        const showFromList = !searchString ? selectedList : selectedList.filter(t => filter(t));
-
-        setFilteredTokenList(showFromList);
-      });
-
-      return () => {
-        clearTimeout(timeout);
+      const filter = (t: TokenInfo) => {
+        return (
+          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.address.toLowerCase().includes(searchString.toLowerCase())
+        );
       };
+
+      const showFromList = searchString ? selectedList.filter(t => filter(t)) : selectedList;
+
+      setFilteredTokenList(showFromList);
     },
     [selectedList],
   );
@@ -237,13 +232,7 @@ export const MultisigTransferTokensModal = ({
       return;
     }
 
-    const timeout = setTimeout(() => {
-      setTokenBalance(userBalances[selectedToken.address]);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    setTokenBalance(userBalances[selectedToken.address]);
   }, [connection, publicKey, selectedToken, userBalances]);
 
   // Resolves fromVault
@@ -252,26 +241,23 @@ export const MultisigTransferTokensModal = ({
       return;
     }
 
-    const timeout = setTimeout(() => {
-      const asset = selectedVault ?? assets[0];
-      consoleOut('From asset:', asset, 'blue');
-      setFromVault(asset);
-      setFromAddress(asset.publicAddress ?? '');
-    });
-
-    return () => clearTimeout(timeout);
+    const asset = selectedVault ?? assets[0];
+    consoleOut('From asset:', asset, 'blue');
+    setFromVault(asset);
+    setFromAddress(asset.publicAddress ?? '');
   }, [assets, isVisible, selectedVault]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
+    if (!fromVault) {
+      return;
+    }
     // We need to debounce the recipient address input value to avoid numerous calls
     // Triggers when "debouncedToAddress" changes
     // Do validation of the recipient address here
-    if (fromVault) {
-      console.log('debouncedToAddress:', debouncedToAddress);
-      console.log('fromMint:', fromVault.address);
-      validateAddress(debouncedToAddress, fromVault.address);
-    }
+    consoleOut('debouncedToAddress:', debouncedToAddress);
+    consoleOut('fromMint:', fromVault.address);
+    validateAddress(debouncedToAddress, fromVault.address);
   }, [debouncedToAddress, fromVault]);
 
   const onAcceptModal = () => {
@@ -283,7 +269,7 @@ export const MultisigTransferTokensModal = ({
       fromMint: fromVault.address,
       amount: +amount,
       tokenAmount: toTokenAmount(amount, fromVault.decimals, true) as string,
-      to: to,
+      to,
     };
     handleOk(params);
   };

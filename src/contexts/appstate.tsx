@@ -7,10 +7,7 @@ import { PublicKey } from '@solana/web3.js';
 import dayjs from 'dayjs';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  DAO_CORE_TEAM_WHITELIST,
-  TRANSACTIONS_PER_PAGE
-} from 'src/app-constants/common';
+import { DAO_CORE_TEAM_WHITELIST, TRANSACTIONS_PER_PAGE } from 'src/app-constants/common';
 import { BANNED_TOKENS, MEAN_TOKEN_LIST, NATIVE_SOL } from 'src/app-constants/tokens';
 import { TREASURY_TYPE_OPTIONS } from 'src/app-constants/treasury-type-options';
 import { openNotification } from 'src/components/Notifications';
@@ -24,17 +21,13 @@ import { consoleOut, isProd } from 'src/middleware/ui';
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import type { TokenPrice } from 'src/models/TokenPrice';
-import type {
-  AccountContext,
-  AccountTokenParsedInfo,
-  RuntimeAppDetails,
-  UserTokenAccount,
-} from 'src/models/accounts';
+import type { AccountContext, AccountTokenParsedInfo, RuntimeAppDetails, UserTokenAccount } from 'src/models/accounts';
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from 'src/models/enums';
 import type { MultisigVault } from 'src/models/multisig';
 import { type PaymentStreamingStats, type StreamsSummary, initialStats, initialSummary } from 'src/models/streams';
 import type { TreasuryTypeOption } from 'src/models/treasuries';
 import { useAccountAssets } from 'src/query-hooks/accountTokens';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import useGetTokenList from 'src/query-hooks/tokenList';
@@ -181,7 +174,8 @@ interface AppStateConfig {
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
   setNeedReloadMultisigAccounts: (reload: boolean) => void;
-  refreshMultisigs: () => Promise<boolean>;
+  // biome-ignore lint/suspicious/noExplicitAny: Promise<QueryObserverResult<MultisigInfo[] | undefined, Error>>
+  refreshMultisigs: () => Promise<any>;
   setMultisigAccounts: (accounts: MultisigInfo[]) => void;
   setSelectedMultisig: (multisig: MultisigInfo | undefined) => void;
   setMultisigSolBalance: (balance: number | undefined) => void;
@@ -330,7 +324,7 @@ const contextDefaultValues: AppStateConfig = {
   setLoadingRecurringBuys: () => {},
   // Multisig
   setNeedReloadMultisigAccounts: () => {},
-  refreshMultisigs: async () => false,
+  refreshMultisigs: async () => {},
   setMultisigAccounts: () => {},
   setSelectedMultisig: () => {},
   setMultisigSolBalance: () => {},
@@ -467,6 +461,11 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   const { tokenList: meanTokenList } = useGetTokenList();
   const { prices: priceList, loadingPrices, refetchPrices } = useGetAssetPrices();
   const { userAssets, loadingUserAssets } = useAccountAssets(selectedAccount.address);
+  const {
+    data: walletMultisigs,
+    isFetching: loadingMultisigAccounts,
+    refetch: refreshMultisigs,
+  } = useGetMultisigAccounts(publicKey?.toBase58());
 
   const accountTokens = useMemo(() => {
     if (loadingUserAssets || !userAssets) return [];
@@ -1018,7 +1017,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   const [needReloadMultisigAccounts, setNeedReloadMultisigAccounts] = useState(
     contextDefaultValues.needReloadMultisigAccounts,
   );
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(contextDefaultValues.loadingMultisigAccounts);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>(contextDefaultValues.multisigAccounts);
   const [patchedMultisigAccounts, setPatchedMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(
@@ -1028,42 +1026,19 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     contextDefaultValues.loadingMultisigTxPendingCount,
   );
 
-  // Refresh the list of multisigs and return a selection
-  const refreshMultisigs = useCallback(async () => {
-    if (!publicKey || !multisigClient) {
-      return false;
-    }
-
-    setLoadingMultisigAccounts(true);
-
-    try {
-      const allInfo = await multisigClient.getMultisigs(publicKey);
-      allInfo.sort(
-        (a: MultisigInfo, b: MultisigInfo) => new Date(b.createdOnUtc).getTime() - new Date(a.createdOnUtc).getTime(),
-      );
-      setMultisigAccounts(allInfo);
-      consoleOut('multisigAccounts:', allInfo, 'darkorange');
-      return true;
-    } catch (error) {
-      console.error('refreshMultisigs ->', error);
-      return false;
-    } finally {
-      setLoadingMultisigAccounts(false);
-    }
-  }, [multisigClient, publicKey]);
-
-  // Automatically get a list of multisigs for the connected wallet
+  // Update multisigAccounts from the walletMultisigs
   useEffect(() => {
-    if (!publicKey || !multisigClient || !needReloadMultisigAccounts) {
+    if (!walletMultisigs) {
       return;
     }
 
     setNeedReloadMultisigAccounts(false);
     setPatchedMultisigAccounts(undefined);
 
-    refreshMultisigs();
-  }, [multisigClient, needReloadMultisigAccounts, publicKey, refreshMultisigs]);
+    setMultisigAccounts(walletMultisigs);
+  }, [walletMultisigs]);
 
+  // Patches the multisigAccounts with the pending txs count
   useEffect(() => {
     if (
       !publicKey ||
@@ -1082,7 +1057,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       return;
     }
 
-    (async () => {
+    const findPendingTxs = async () => {
       consoleOut('Searching for pending Txs across multisigs...', '', 'crimson');
       setLoadingMultisigTxPendingCount(true);
 
@@ -1113,7 +1088,9 @@ const AppStateProvider = ({ children }: ProviderProps) => {
         setPatchedMultisigAccounts(multisigAccountsCopy);
       }
       setLoadingMultisigTxPendingCount(false);
-    })();
+    };
+
+    findPendingTxs();
   }, [loadingMultisigTxPendingCount, multisigAccounts, multisigClient, patchedMultisigAccounts, publicKey]);
 
   useEffect(() => {

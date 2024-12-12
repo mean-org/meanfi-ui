@@ -1677,18 +1677,12 @@ const SafeView = (props: {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      setCanSubscribe(false);
-      consoleOut('Setup event subscriptions -> SafeView', '', 'brown');
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
-      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    setCanSubscribe(false);
+    consoleOut('Setup event subscriptions -> SafeView', '', 'brown');
+    confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+    consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
+    confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+    consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events
