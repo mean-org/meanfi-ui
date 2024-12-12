@@ -1105,6 +1105,7 @@ export const MoneyStreamsIncomingView = (props: {
   }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
 
   // Set selected token to the stream associated token as soon as the stream is available or changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!publicKey || !streamSelected) {
       return;
@@ -1118,7 +1119,7 @@ export const MoneyStreamsIncomingView = (props: {
         setWorkingToken(token);
       });
     }
-  }, [connection, getTokenByMintAddress, publicKey, streamSelected, workingToken]);
+  }, [connection, publicKey, streamSelected, workingToken]);
 
   ///////////////
   // Rendering //

@@ -1072,22 +1072,16 @@ const ProgramDetailsView = ({ program }: Props) => {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      getProgramTxs()
-        .then(txs => {
-          if (!txs) {
-            return [];
-          }
-          const filtered = txs.filter(Boolean) as ParsedTransactionWithMeta[];
-          setProgramTransactions(filtered)
-        })
-        .catch(err => console.error(err))
-        .finally(() => setLoadingTxs(false));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    getProgramTxs()
+      .then(txs => {
+        if (!txs) {
+          return [];
+        }
+        const filtered = txs.filter(Boolean) as ParsedTransactionWithMeta[];
+        setProgramTransactions(filtered)
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoadingTxs(false));
   }, [connection, program, loadingTxs, getProgramTxs]);
 
   const getProgramIDL = useCallback(async () => {
@@ -1125,36 +1119,31 @@ const ProgramDetailsView = ({ program }: Props) => {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      getProgramIDL()
-        .then(idl => {
-          if (!idl) {
-            return;
-          }
-          console.log('IDL', idl);
-          setSelectedProgramIdl(idl);
-        })
-        .catch(err => {
-          setSelectedProgramIdl(null);
-          console.error(err);
-        });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    getProgramIDL()
+      .then(idl => {
+        if (!idl) {
+          return;
+        }
+        console.log('IDL', idl);
+        setSelectedProgramIdl(idl);
+      })
+      .catch(err => {
+        setSelectedProgramIdl(null);
+        console.error(err);
+      });
   }, [connection, getProgramIDL, program, publicKey]);
 
   // Setup event listeners
   useEffect(() => {
-    if (canSubscribe) {
-      setCanSubscribe(false);
-      consoleOut('Setup event subscriptions -> ProgramDetailsView', '', 'brown');
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
-      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
+    if (!canSubscribe) {
+      return;
     }
+    setCanSubscribe(false);
+    consoleOut('Setup event subscriptions -> ProgramDetailsView', '', 'brown');
+    confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+    consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
+    confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+    consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
   }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events

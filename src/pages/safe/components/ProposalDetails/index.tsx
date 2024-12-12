@@ -221,8 +221,7 @@ export const ProposalDetailsView = (props: {
     if (!selectedMultisig || !selectedProposal) {
       return;
     }
-    const timeout = setTimeout(() => setSelectedProposal(selectedProposal));
-    return () => clearTimeout(timeout);
+    setSelectedProposal(selectedProposal);
   }, [selectedMultisig, selectedProposal]);
 
   useEffect(() => {
@@ -230,45 +229,40 @@ export const ProposalDetailsView = (props: {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      if (
-        selectedProposal.programId.equals(SystemProgram.programId) ||
-        selectedProposal.programId.equals(TOKEN_PROGRAM_ID)
-      ) {
-        const ixInfo = multisigClient.decodeProposalInstruction(selectedProposal);
-        setProposalIxInfo(ixInfo);
-      } else {
-        const proposalApp = getAppFromProposal();
-        console.log('proposalApp:', proposalApp);
-        if (proposalApp) {
-          appsProvider.getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl).then(config => {
-            if (!config) {
-              consoleOut('config:', config, 'red');
-              return;
-            }
-            consoleOut('config:', config, 'blue');
-            settleProposalIxInfo(config, proposalApp);
-          });
-        } else {
-          const ixInfo = parseMultisigProposalIx(selectedProposal, multisigClient.program.programId);
-          setProposalIxInfo(ixInfo);
-        }
-      }
-    });
+    // If the proposal is a system or token program, decode the instruction
+    if (
+      selectedProposal.programId.equals(SystemProgram.programId) ||
+      selectedProposal.programId.equals(TOKEN_PROGRAM_ID)
+    ) {
+      const ixInfo = multisigClient.decodeProposalInstruction(selectedProposal);
+      setProposalIxInfo(ixInfo);
+      return;
+    }
 
-    return () => clearTimeout(timeout);
+    // If the proposal is a multisig app, get the app config and decode the instruction
+    const proposalApp = getAppFromProposal();
+    consoleOut('proposalApp:', proposalApp);
+    if (proposalApp) {
+      appsProvider.getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl).then(config => {
+        if (!config) {
+          consoleOut('config:', config, 'red');
+          return;
+        }
+        consoleOut('config:', config, 'blue');
+        settleProposalIxInfo(config, proposalApp);
+      });
+      return;
+    }
+
+    // Parse the multisig proposal instruction
+    const ixInfo = parseMultisigProposalIx(selectedProposal, multisigClient.program.programId);
+    setProposalIxInfo(ixInfo);
   }, [appsProvider, getAppFromProposal, multisigClient, selectedProposal, settleProposalIxInfo]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (selectedProposal) {
-        setNeedReloadActivity(true);
-      }
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    if (selectedProposal) {
+      setNeedReloadActivity(true);
+    }
   }, [selectedProposal]);
 
   // Get transaction proposal activity
@@ -277,22 +271,16 @@ export const ProposalDetailsView = (props: {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      setNeedReloadActivity(false);
-      setLoadingActivity(true);
-      multisigClient
-        .getMultisigTransactionActivity(selectedProposal.id)
-        .then((activity: MultisigTransactionActivityItem[]) => {
-          consoleOut('activity', activity, 'blue');
-          setProposalActivity(activity);
-        })
-        .catch(err => console.error(err))
-        .finally(() => setLoadingActivity(false));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    setNeedReloadActivity(false);
+    setLoadingActivity(true);
+    multisigClient
+      .getMultisigTransactionActivity(selectedProposal.id)
+      .then((activity: MultisigTransactionActivityItem[]) => {
+        consoleOut('activity', activity, 'blue');
+        setProposalActivity(activity);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoadingActivity(false));
   }, [multisigClient, selectedProposal, needReloadActivity]);
 
   // When back button is clicked, goes to Safe Info

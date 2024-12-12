@@ -2,7 +2,7 @@ import type { PaymentStreaming } from '@mean-dao/payment-streaming';
 import type { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { ONE_MINUTE_REFRESH_TIMEOUT, PERFORMANCE_THRESHOLD } from 'src/app-constants';
+import { FIVE_MINUTES_REFRESH_TIMEOUT, PERFORMANCE_THRESHOLD } from 'src/app-constants';
 import { isProd } from 'src/middleware/ui';
 import useGetPerformanceSamples from '../performanceSamples';
 import getVestingContract from './getVestingContract';
@@ -31,7 +31,7 @@ export const useGetVestingContracts = ({
         tokenStreamingV2,
       }),
     enabled: !!(srcAccountPk && tokenStreamingV2),
-    refetchInterval: isDowngradedPerformance ? false : ONE_MINUTE_REFRESH_TIMEOUT, // Turned OFF if network is congested
+    refetchInterval: isDowngradedPerformance ? false : FIVE_MINUTES_REFRESH_TIMEOUT, // Turned OFF if network is congested
     refetchOnWindowFocus: false,
   });
 

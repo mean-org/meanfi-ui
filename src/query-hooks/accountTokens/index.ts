@@ -5,7 +5,7 @@ import { AppStateContext } from 'src/contexts/appstate';
 import { useConnection } from 'src/contexts/connection';
 import { fetchAccountTokens, getTokensWithBalances, getUserAccountTokens } from 'src/middleware/accounts';
 
-export const getAccountAssetsQueryKey = (accountAddress: string | undefined) => ['/user-account-assets', accountAddress];
+export const getUseAccountAssetsQueryKey = (accountAddress: string | undefined) => ['/user-account-assets', accountAddress];
 
 export const getUseFetchAccountTokensQueryKey = (accountAddress: string | undefined) => [
   '/fetch-account-tokens',
@@ -27,7 +27,7 @@ export const useAccountAssets = (accountAddress: string | undefined) => {
     isFetching: loadingUserAssets,
     refetch: refreshAccountAssets,
   } = useQuery({
-    queryKey: getAccountAssetsQueryKey(accountAddress),
+    queryKey: getUseAccountAssetsQueryKey(accountAddress),
     queryFn: () => {
       if (!accountAddress || !parsedTokens) return;
       return getUserAccountTokens(connection, accountAddress, priceList, splTokenList, parsedTokens);

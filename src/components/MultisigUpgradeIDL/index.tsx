@@ -69,16 +69,10 @@ export const MultisigUpgradeIDLModal = ({
       return;
     }
 
-    const timeout = setTimeout(() => {
-      const programAddress = new PublicKey(programId);
-      idlAddress(programAddress)
-        .then(programIDLAddress => setProgramIDLAddress(programIDLAddress.toBase58()))
-        .catch(err => console.error(err));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    const programAddress = new PublicKey(programId);
+    idlAddress(programAddress)
+      .then(programIDLAddress => setProgramIDLAddress(programIDLAddress.toBase58()))
+      .catch(err => console.error(err));
   }, [connection, programId, isVisible, publicKey, idlAddress]);
 
   const onAcceptModal = () => {

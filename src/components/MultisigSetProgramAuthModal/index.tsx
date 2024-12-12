@@ -49,10 +49,8 @@ export const MultisigSetProgramAuthModal = ({
 
   // Get propgram ID from inputs
   useEffect(() => {
-    if (isVisible && baseProgramId) {
-      if (isValidAddress(baseProgramId)) {
-        setProgramId(baseProgramId);
-      }
+    if (isVisible && baseProgramId && isValidAddress(baseProgramId)) {
+      setProgramId(baseProgramId);
     }
   }, [baseProgramId, isVisible]);
 
@@ -62,7 +60,7 @@ export const MultisigSetProgramAuthModal = ({
       return;
     }
 
-    const timeout = setTimeout(() => {
+    const establishedProgramDataAddress = async () => {
       try {
         const programAddress = new PublicKey(programId);
         const [programDataAddress] = PublicKey.findProgramAddressSync(
@@ -73,19 +71,17 @@ export const MultisigSetProgramAuthModal = ({
       } catch (error) {
         console.error(error);
       }
-    });
-
-    return () => {
-      clearTimeout(timeout);
     };
-  }, [programId, publicKey, connection, isVisible]);
+
+    establishedProgramDataAddress();
+  }, [connection, isVisible, programId, publicKey]);
 
   const onAcceptModal = () => {
     const params: SetProgramAuthPayload = {
       proposalTitle,
       programAddress: programId,
-      programDataAddress: programDataAddress,
-      newAuthAddress: newAuthAddress,
+      programDataAddress,
+      newAuthAddress,
     };
     handleOk(params);
   };

@@ -1,7 +1,7 @@
 import { type Connection, type MemcmpFilter, PublicKey } from '@solana/web3.js';
 import type { ProgramAccounts } from 'src/models/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID } from './ids';
-import { consoleOut } from './ui';
+import { delay } from './ui';
 
 export const getProgramsByUpgradeAuthority = async (
   connection: Connection,
@@ -31,13 +31,6 @@ export const getProgramsByUpgradeAuthority = async (
       result.push(data.slice(i, i + size));
     }
     return result;
-  };
-
-  const sleep = (ms: number, log = true) => {
-    if (log) {
-      consoleOut('Sleeping for', ms / 1000, 'seconds');
-    }
-    return new Promise(resolve => setTimeout(resolve, ms));
   };
 
   // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
@@ -79,7 +72,7 @@ export const getProgramsByUpgradeAuthority = async (
       promises.push(getProgramAccountsPromise(dataAcc));
     }
     await Promise.all(promises);
-    sleep(500, true);
+    await delay(500);
   }
 
   return programs;

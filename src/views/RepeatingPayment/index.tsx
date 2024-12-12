@@ -359,16 +359,10 @@ export const RepeatingPayment = ({onOpenTokenSelector, selectedToken, transferCo
       return;
     }
 
-    const timeout = setTimeout(() => {
-      const balance = userBalances[selectedToken.address] as number;
-      setSelectedTokenBalance(balance);
-      const balanceBn = toTokenAmount(balance, selectedToken.decimals);
-      setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    const balance = userBalances[selectedToken.address] as number;
+    setSelectedTokenBalance(balance);
+    const balanceBn = toTokenAmount(balance, selectedToken.decimals);
+    setSelectedTokenBalanceBn(new BN(balanceBn.toString()));
   }, [connection, publicKey, selectedToken, userBalances]);
 
   // Fetch and store information about the destination address
@@ -460,14 +454,15 @@ export const RepeatingPayment = ({onOpenTokenSelector, selectedToken, transferCo
 
   // Setup event listeners
   useEffect(() => {
-    if (publicKey && canSubscribe) {
-      setCanSubscribe(false);
-      consoleOut('Setup event subscriptions -> RepeatingPayment', '', 'brown');
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
-      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
+    if (!(publicKey && canSubscribe)) {
+      return;
     }
+    setCanSubscribe(false);
+    consoleOut('Setup event subscriptions -> RepeatingPayment', '', 'brown');
+    confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+    consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'brown');
+    confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+    consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'brown');
   }, [publicKey, canSubscribe, onTxConfirmed, onTxTimedout]);
 
   // Unsubscribe from events

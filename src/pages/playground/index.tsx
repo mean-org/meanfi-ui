@@ -77,6 +77,7 @@ import type { LooseObject } from 'src/types/LooseObject';
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
 import './style.scss';
 import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 
 type TabOption = 'first-tab' | 'test-stream' | 'account-info' | 'multisig-tab' | 'misc-tab' | undefined;
 type StreamViewerOption = 'treasurer' | 'beneficiary';
@@ -127,7 +128,8 @@ export const PlaygroundView = () => {
 
   const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), false);
 
-  const { multisigClient, multisigProgramAddressPK } = useMultisigClient();
+  const { multisigProgramAddressPK } = useMultisigClient();
+  const { data: multisigAccounts } = useGetMultisigAccounts(publicKey?.toBase58());
 
   const { tokenStreamingV2 } = useStreamingClient();
 
@@ -233,7 +235,7 @@ export const PlaygroundView = () => {
 
   const getMultisigInfo = useCallback(
     async (filter: string) => {
-      if (!publicKey || !multisigClient || !filter) {
+      if (!publicKey || !multisigAccounts || !filter) {
         return undefined;
       }
 
@@ -242,9 +244,7 @@ export const PlaygroundView = () => {
       }
 
       try {
-        const allInfo = await multisigClient.getMultisigs(publicKey);
-        consoleOut('All multisigs:', allInfo, 'green');
-        const selectedMultisig = allInfo.find(m => m.authority.toBase58() === filter);
+        const selectedMultisig = multisigAccounts.find(m => m.authority.toBase58() === filter);
         consoleOut('selectedMultisig:', selectedMultisig, 'green');
         if (selectedMultisig) {
           setSelectedMultisig(selectedMultisig);
@@ -255,7 +255,7 @@ export const PlaygroundView = () => {
         console.error('getMultisigInfo ->', error);
       }
     },
-    [multisigClient, publicKey],
+    [multisigAccounts, publicKey],
   );
 
   const triggerWindowResize = () => {
@@ -372,23 +372,17 @@ export const PlaygroundView = () => {
         return;
       }
 
-      const timeout = setTimeout(() => {
-        const filter = (t: TokenInfo) => {
-          return (
-            t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
-            t.name.toLowerCase().includes(searchString.toLowerCase()) ||
-            t.address.toLowerCase().includes(searchString.toLowerCase())
-          );
-        };
-
-        const showFromList = !searchString ? selectedList : selectedList.filter(t => filter(t));
-
-        setFilteredTokenList(showFromList);
-      });
-
-      return () => {
-        clearTimeout(timeout);
+      const filter = (t: TokenInfo) => {
+        return (
+          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.address.toLowerCase().includes(searchString.toLowerCase())
+        );
       };
+
+      const showFromList = !searchString ? selectedList : selectedList.filter(t => filter(t));
+
+      setFilteredTokenList(showFromList);
     },
     [selectedList],
   );
@@ -406,40 +400,6 @@ export const PlaygroundView = () => {
     },
     [updateTokenListByFilter],
   );
-
-  // const getTopJupiterTokensByVolume = useCallback(() => {
-  //   fetch('https://cache.jup.ag/stats/month')
-  //     .then(res => {
-  //       if (res.status >= 400) {
-  //         throw new Error("Bad response from server");
-  //       }
-  //       return res.json();
-  //     })
-  //     .then(data => {
-  //       // Only get tokens with volume for more than 1000 USD a month
-  //       const tokens = data.lastXTopTokens.filter((s: any) => s.amount >= 1000);
-  //       const topTokens = Array<any>();
-  //       if (tokens && tokens.length > 0) {
-  //         tokens.forEach((element: any) => {
-  //           const token = splTokenList.find(t => t.symbol === element.symbol);
-  //           if (token) {
-  //             topTokens.push({
-  //               name: token.name,
-  //               symbol: token.symbol,
-  //               address: token.address,
-  //               decimals: token.decimals
-  //             });
-  //           }
-  //         });
-  //         consoleOut('Tokens with volume over 1000 USD:', tokens.length, 'crimson');
-  //         consoleOut('Added to list of top tokens:', topTokens.length, 'crimson');
-  //         consoleOut('topTokens:', topTokens, 'crimson');
-  //       }
-  //     })
-  //     .catch(err => {
-  //       console.error(err);
-  //     });
-  // }, [splTokenList]);
 
   const notificationTwo = () => {
     consoleOut('Notification is closing...');
@@ -564,13 +524,11 @@ export const PlaygroundView = () => {
         return [];
       }
 
-      const results = accountInfos.map(t => {
+      return accountInfos.map(t => {
         const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
         tokenAccount.address = t.pubkey;
         return tokenAccount;
       });
-
-      return results;
     },
     [multisigProgramAddressPK],
   );
@@ -699,36 +657,29 @@ export const PlaygroundView = () => {
   }, [connection, selectedMultisig]);
 
   // Get Multisig assets
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (!connection || !multisigClient || !selectedMultisig || !loadingAssets) {
+    if (!connection || !selectedMultisig || !loadingAssets) {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      getMultisigAssets(connection, selectedMultisig.id)
-        .then(result => {
-          const modifiedResults = new Array<MultisigAsset>();
-          if (solToken) {
-            modifiedResults.push(solToken);
-          }
-          for (const item of result) {
-            modifiedResults.push(item);
-          }
-          setMultisigAssets(modifiedResults);
-          consoleOut('Multisig assets', modifiedResults, 'blue');
-        })
-        .catch(err => {
-          console.error(err);
-          setMultisigAssets([solToken as MultisigAsset]);
-        })
-        .finally(() => setLoadingAssets(false));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [connection, loadingAssets, multisigClient, selectedMultisig, solToken]);
+    getMultisigAssets(connection, selectedMultisig.id)
+      .then(result => {
+        const modifiedResults = new Array<MultisigAsset>();
+        if (solToken) {
+          modifiedResults.push(solToken);
+        }
+        for (const item of result) {
+          modifiedResults.push(item);
+        }
+        setMultisigAssets(modifiedResults);
+        consoleOut('Multisig assets', modifiedResults, 'blue');
+      })
+      .catch(err => {
+        console.error(err);
+        setMultisigAssets([solToken as MultisigAsset]);
+      })
+      .finally(() => setLoadingAssets(false));
+  }, [connection, getMultisigAssets, loadingAssets, selectedMultisig, solToken]);
 
   // Show amount of assets
   useEffect(() => {

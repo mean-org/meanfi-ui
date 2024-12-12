@@ -210,9 +210,9 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
               notifyMultisigActionFollowup(item);
             }
             setTimeout(() => {
-              console.log('generating backButtonClick()...');
+              consoleOut('generating backButtonClick()...');
               backButtonClick();
-              console.log('calling onBackButtonClicked()...');
+              consoleOut('calling onBackButtonClicked()...');
               onBackButtonClicked?.();
               hardReloadStreams();
             }, 20);

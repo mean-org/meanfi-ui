@@ -2,7 +2,7 @@ import { type MintInfo, MintLayout, u64 } from '@solana/spl-token';
 import { type AccountInfo, PublicKey } from '@solana/web3.js';
 import React, { useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useWallet } from 'src/contexts/wallet';
-import { HALF_MINUTE_REFRESH_TIMEOUT } from '../app-constants';
+import { ONE_MINUTE_REFRESH_TIMEOUT } from '../app-constants';
 import { useConnection } from './connection';
 
 interface AccountsContextConfig {
@@ -75,7 +75,7 @@ const useNativeAccountInfo = () => {
 
     const timeout = setTimeout(() => {
       refreshAccount();
-    }, HALF_MINUTE_REFRESH_TIMEOUT);
+    }, ONE_MINUTE_REFRESH_TIMEOUT);
 
     return () => {
       clearTimeout(timeout);

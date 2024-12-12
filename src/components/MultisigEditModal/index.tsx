@@ -133,20 +133,18 @@ export const MultisigEditModal = ({
 
   const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
     const items = arr.map(i => i.address);
-    return new Set(items).size === items.length ? true : false;
+    return new Set(items).size === items.length;
   };
 
   const isFormValid = () => {
-    return multisigTitle &&
+    return !!(multisigTitle &&
       localMultisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
       multisigLabel &&
       multisigOwners.length >= localMultisigThreshold &&
       multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
       isOwnersListValid() &&
       isFormDirty() &&
-      noDuplicateExists(multisigOwners)
-      ? true
-      : false;
+      noDuplicateExists(multisigOwners));
   };
 
   const getTransactionStartButtonLabel = () => {

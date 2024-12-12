@@ -45,20 +45,20 @@ export const AssetList = ({
   const shouldHideAsset = useCallback(
     (asset: UserTokenAccount) => {
       const tokenPrice = getTokenPriceByAddress(asset.address, asset.symbol);
-      return !!(tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT));
+      return tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT);
     },
     [getTokenPriceByAddress],
   );
 
   const getRowSelectionClass = (asset: UserTokenAccount): string => {
-    let assetClass = '';
     if (isSelectedToken(asset) && selectedCategory === 'assets') {
-      assetClass = 'selected';
-    } else if (hideLowBalances && (shouldHideAsset(asset) || !asset.balance)) {
-      assetClass = 'hidden';
+      return 'selected';
+    }
+    if (hideLowBalances && (shouldHideAsset(asset) || !asset.balance)) {
+      return 'hidden';
     }
 
-    return assetClass;
+    return '';
   };
 
   const getNonAtaLabel = (asset: UserTokenAccount) => {
