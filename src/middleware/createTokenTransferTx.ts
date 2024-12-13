@@ -33,7 +33,7 @@ const createTokenTransferTx = async (
 
     try {
       const selectedTokenAccountInfo = await tokenClient.getAccountInfo(selectedToken);
-      console.log('selectedTokenAccountInfo:', selectedTokenAccountInfo);
+      console.info('selectedTokenAccountInfo:', selectedTokenAccountInfo);
       if (!selectedTokenAccountInfo) throw Error('Sender is not a token account');
     } catch (error) {
       throw Error('Sender is not a token account');

@@ -818,7 +818,8 @@ const DlnBridgeUi = ({ fromAssetSymbol }: DlnBridgeUiProps) => {
             const balanceBn = toTokenAmount(balance, srcChainTokenIn.decimals);
             setTokenBalanceBn(new BN(balanceBn.toString()));
           })
-          .catch(() => {
+          .catch(error => {
+            console.error(error);
             setTokenBalanceBn(new BN(0));
           });
       }

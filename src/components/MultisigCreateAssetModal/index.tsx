@@ -84,20 +84,15 @@ export const MultisigCreateAssetModal = ({
     };
   }, []);
 
+  // Set the first token in the list as the default token
   useEffect(() => {
     if (!connection || !publicKey || !tokenList.length || !splTokenList.length) {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      const token = isProd() ? splTokenList[0] : tokenList[0];
-      consoleOut('token:', token, 'blue');
-      setToken(token);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    const token = isProd() ? splTokenList[0] : tokenList[0];
+    consoleOut('token:', token, 'blue');
+    setToken(token);
   }, [tokenList, publicKey, connection, splTokenList]);
 
   ////////////////
@@ -208,8 +203,7 @@ export const MultisigCreateAssetModal = ({
       afterClose={onAfterClose}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Idle ? 380 : 480}
     >
-      {/* sdsssd */}
-      <div className={!isBusy ? 'panel1 show' : 'panel1 hide'}>
+      <div className={isBusy ? 'panel1 hide' : 'panel1 show'}>
         {transactionStatus.currentOperation === TransactionStatus.Idle && (
           <>
             {/* Token mint */}
@@ -256,7 +250,7 @@ export const MultisigCreateAssetModal = ({
                             </div>
                           )}
                         >
-                          {tokenList.map((option: TokenInfo) => {
+                          {(isProd() ? splTokenList : tokenList).map((option: TokenInfo) => {
                             if (option.address === NATIVE_SOL.address) {
                               return null;
                             }
@@ -283,35 +277,31 @@ export const MultisigCreateAssetModal = ({
           </>
         )}
         {transactionStatus.currentOperation === TransactionStatus.TransactionFinished && (
-          <>
-            <div className='transaction-progress'>
-              <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
-              <h4 className='font-bold'>{t('multisig.create-asset.success-message')}</h4>
-            </div>
-          </>
+          <div className='transaction-progress'>
+            <CheckOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+            <h4 className='font-bold'>{t('multisig.create-asset.success-message')}</h4>
+          </div>
         )}
         {transactionStatus.currentOperation !== TransactionStatus.Idle &&
           transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
-            <>
-              <div className='transaction-progress p-0'>
-                <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
-                {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                  <h4 className='mb-4'>
-                    {t('transactions.status.tx-start-failure', {
-                      accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
-                      feeAmount: getAmountWithSymbol(
-                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                        SOL_MINT.toBase58(),
-                      ),
-                    })}
-                  </h4>
-                ) : (
-                  <h4 className='font-bold mb-3'>
-                    {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-                  </h4>
-                )}
-              </div>
-            </>
+            <div className='transaction-progress p-0'>
+              <InfoCircleOutlined style={{ fontSize: 48 }} className='icon mt-0' />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className='mb-4'>
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: getAmountWithSymbol(nativeBalance, SOL_MINT.toBase58()),
+                    feeAmount: getAmountWithSymbol(
+                      transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                      SOL_MINT.toBase58(),
+                    ),
+                  })}
+                </h4>
+              ) : (
+                <h4 className='font-bold mb-3'>
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                </h4>
+              )}
+            </div>
           )}
       </div>
 

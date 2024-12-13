@@ -126,6 +126,7 @@ export const StakingRewardsView = () => {
       consoleOut('MEAN balance:', balance, 'blue');
       setMeanBalance(balance);
     } catch (error) {
+      console.error(error);
       setMeanBalance(balance);
     }
   }, [tokenAccounts, meanToken, publicKey, connection]);
@@ -142,6 +143,7 @@ export const StakingRewardsView = () => {
       }
     } catch (error) {
       consoleOut('Could not find account:', meanStakingVault, 'red');
+      console.error(error);
     }
     setMeanStakingVaultBalance(balance);
   }, [connection, meanStakingVault]);

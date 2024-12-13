@@ -329,6 +329,7 @@ export const ExchangeDcasView = () => {
         });
         return true;
       } catch (error) {
+        console.error(error);
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure,

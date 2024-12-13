@@ -98,31 +98,32 @@ export const AccountsInitAtaModal = (props: {
 
   // Build the token list when the modal becomes visible
   useEffect(() => {
-    if (isVisible && ownedTokenAccounts) {
-      const finalList = new Array<TokenInfo>();
-
-      // Make a copy of the MeanFi favorite tokens
-      const meanTokensCopy = JSON.parse(JSON.stringify(tokenList)) as TokenInfo[];
-
-      // Add all other items but excluding those in meanTokensCopy (only in mainnet)
-      if (isProd()) {
-        for (const item of splTokenList) {
-          if (!meanTokensCopy.some(t => t.address === item.address)) {
-            meanTokensCopy.push(item);
-          }
-        }
-      }
-
-      // Build a token list excluding already owned token accounts
-      for (const item of meanTokensCopy) {
-        if (!ownedTokenAccounts.some(t => t.parsedInfo.mint === item.address)) {
-          finalList.push(item);
-        }
-      }
-
-      setSelectedList(finalList);
-      consoleOut('token list:', finalList, 'blue');
+    if (!(isVisible && ownedTokenAccounts)) {
+      return;
     }
+    const finalList = new Array<TokenInfo>();
+
+    // Make a copy of the MeanFi favorite tokens
+    const meanTokensCopy = JSON.parse(JSON.stringify(tokenList)) as TokenInfo[];
+
+    // Add all other items but excluding those in meanTokensCopy (only in mainnet)
+    if (isProd()) {
+      for (const item of splTokenList) {
+        if (!meanTokensCopy.some(t => t.address === item.address)) {
+          meanTokensCopy.push(item);
+        }
+      }
+    }
+
+    // Build a token list excluding already owned token accounts
+    for (const item of meanTokensCopy) {
+      if (!ownedTokenAccounts.some(t => t.parsedInfo.mint === item.address)) {
+        finalList.push(item);
+      }
+    }
+
+    setSelectedList(finalList);
+    consoleOut('token list:', finalList, 'blue');
   }, [isVisible, ownedTokenAccounts, splTokenList, tokenList]);
 
   // Keep account balance updated

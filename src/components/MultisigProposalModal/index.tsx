@@ -303,7 +303,7 @@ export const MultisigProposalModal = (props: {
         setSelectedAppConfig(config ?? undefined);
       })
       .catch(err => {
-        consoleOut('Error: ', err, 'red');
+        console.error(err);
       });
   }, [appsProvider, selectedApp]);
 

@@ -14,7 +14,7 @@ import { MoneyStreamDetails } from '../MoneyStreamDetails';
 
 export const VestingContractStreamDetailModal = (props: {
   accountAddress: string;
-  handleClose: any;
+  handleClose: () => void;
   highlightedStream: Stream | undefined;
   isDebugging?: boolean;
   isVisible: boolean;
@@ -32,9 +32,7 @@ export const VestingContractStreamDetailModal = (props: {
   const [isToggledShowLastReadData, setIsToggledShowLastReadData] = useState<boolean>(false);
 
   const isInboundStream = useCallback((): boolean => {
-    return streamDetail && accountAddress && (streamDetail.beneficiary as PublicKey).toBase58() === accountAddress
-      ? true
-      : false;
+    return !!(streamDetail && accountAddress && (streamDetail.beneficiary as PublicKey).toBase58() === accountAddress);
   }, [accountAddress, streamDetail]);
 
   const getStreamActivity = useCallback(

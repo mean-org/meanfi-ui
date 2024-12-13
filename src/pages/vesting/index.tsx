@@ -3043,7 +3043,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
             consoleOut('flowRate:', freshFlowRate, 'darkgreen');
           }
         })
-        .catch(error => console.error('', error))
+        .catch(error => console.error(error))
         .finally(() => setLoadingVestingContractFlowRate(false));
     }
   }, [associatedTokenDecimals, tokenStreamingV2, publicKey, selectedVestingContract, vestingContract]);
@@ -3074,6 +3074,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
         consoleOut('VC ATA balance (BN):', balance.toString(), 'blue');
         return balance;
       } catch (error) {
+        console.error(error);
         return balance;
       }
     };

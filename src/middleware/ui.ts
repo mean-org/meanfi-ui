@@ -105,6 +105,7 @@ export function isValidAddress(value: unknown): boolean {
         return true;
       }
     } catch (error) {
+      console.error(error);
       return false;
     }
   }
@@ -188,7 +189,10 @@ export const copyText = (val: any): boolean => {
   }
   return !!copyToClipboard(val)
     .then(result => result)
-    .catch(() => false);
+    .catch(error => {
+      console.error(error);
+      return false;
+    });
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: Anything can go here

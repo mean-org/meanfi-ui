@@ -539,37 +539,37 @@ export const StreamingAccountView = ({
 
       consoleOut('Executing getStreamingAccountStreams...', '', 'blue');
 
-      if (isNewAccount) {
-        if (tokenStreamingV2) {
-          tokenStreamingV2
-            .listStreams({ psAccount: treasuryPk })
-            .then(streams => {
-              consoleOut('treasuryStreams:', streams, 'blue');
-              setStreamingAccountStreams(streams);
-            })
-            .catch(err => {
-              console.error(err);
-              setStreamingAccountStreams([]);
-            })
-            .finally(() => {
-              setLoadingStreamingAccountStreams(false);
-            });
-        }
-      } else {
-        if (tokenStreamingV1) {
-          tokenStreamingV1.listStreams({ treasury: treasuryPk })
-            .then(streams => {
-              consoleOut('treasuryStreams:', streams, 'blue');
-              setStreamingAccountStreams(streams);
-            })
-            .catch(err => {
-              console.error(err);
-              setStreamingAccountStreams([]);
-            })
-            .finally(() => {
-              setLoadingStreamingAccountStreams(false);
-            });
-        }
+      if (isNewAccount && tokenStreamingV2) {
+        tokenStreamingV2
+          .listStreams({ psAccount: treasuryPk })
+          .then(streams => {
+            consoleOut('treasuryStreams:', streams, 'blue');
+            setStreamingAccountStreams(streams);
+          })
+          .catch(err => {
+            console.error(err);
+            setStreamingAccountStreams([]);
+          })
+          .finally(() => {
+            setLoadingStreamingAccountStreams(false);
+          });
+
+        return;
+      }
+
+      if (tokenStreamingV1) {
+        tokenStreamingV1.listStreams({ treasury: treasuryPk })
+          .then(streams => {
+            consoleOut('treasuryStreams:', streams, 'blue');
+            setStreamingAccountStreams(streams);
+          })
+          .catch(err => {
+            console.error(err);
+            setStreamingAccountStreams([]);
+          })
+          .finally(() => {
+            setLoadingStreamingAccountStreams(false);
+          });
       }
     },
     [tokenStreamingV1, tokenStreamingV2, publicKey],
@@ -2072,6 +2072,7 @@ export const StreamingAccountView = ({
         consoleOut('getTokenAccountBalanceByAddress ->', ta, 'blue');
         return ta;
       } catch (error) {
+        console.error(error);
         return null;
       }
     };

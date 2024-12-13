@@ -107,6 +107,7 @@ const StakingView = () => {
       consoleOut('MEAN balance:', balance, 'blue');
       setMeanBalance(balance);
     } catch (error) {
+      console.error(error);
       setMeanBalance(balance);
     }
   }, [connection, tokenAccounts, publicKey, stakingPair]);
