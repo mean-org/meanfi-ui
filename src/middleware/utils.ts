@@ -1,5 +1,5 @@
 import { BN } from '@project-serum/anchor';
-import { ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   type Connection,
   LAMPORTS_PER_SOL,
@@ -23,7 +23,6 @@ import {
 import { getNetworkIdByEnvironment } from '../contexts/connection';
 import { environment } from '../environments/environment';
 import { resolveParsedAccountInfo } from './accounts';
-import { TOKEN_PROGRAM_ID } from './ids';
 import { friendlyDisplayDecimalPlaces, isProd } from './ui';
 
 export type KnownTokenMap = Map<string, TokenInfo>;

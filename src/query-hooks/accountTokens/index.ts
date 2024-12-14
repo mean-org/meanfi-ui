@@ -64,9 +64,9 @@ export const useFetchAccountTokens = (accountAddress: string | undefined) => {
 
   return useQuery({
     queryKey: getUseFetchAccountTokensQueryKey(accountAddress),
-    queryFn: () => {
+    queryFn: async () => {
       if (!accountAddress) return;
-      return fetchAccountTokens(connection, new PublicKey(accountAddress));
+      return await fetchAccountTokens(connection, new PublicKey(accountAddress));
     },
     enabled: !!accountAddress,
     retry: false,
