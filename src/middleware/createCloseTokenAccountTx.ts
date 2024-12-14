@@ -28,10 +28,8 @@ export async function hasTokenBalance(connection: Connection, tokenPubkey: Publi
   const info = (accountInfo as any).data.parsed.info as TokenAccountInfo;
 
   return info.mint !== NATIVE_SOL.address &&
-    info.mint !== WRAPPED_SOL_MINT_ADDRESS &&
-    (info.tokenAmount.uiAmount || 0) > 0
-    ? true
-    : false;
+  info.mint !== WRAPPED_SOL_MINT_ADDRESS &&
+  (info.tokenAmount.uiAmount || 0) > 0;
 }
 
 export async function createCloseTokenAccountTx(connection: Connection, tokenPubkey: PublicKey, owner: PublicKey) {

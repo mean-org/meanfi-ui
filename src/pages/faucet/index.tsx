@@ -23,13 +23,17 @@ export const FaucetView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
 
   useEffect(() => {
-    if (tokenList && selectedToken) {
-      const myToken = tokenList.filter(t => t.address === WRAPPED_SOL_MINT_ADDRESS)[0];
-      if (selectedToken.address === WRAPPED_SOL_MINT_ADDRESS) {
-        refreshTokenBalance();
-      } else {
-        setSelectedToken(myToken as TokenInfo);
-      }
+    if (!(tokenList && selectedToken)) {
+      return;
+    }
+
+    const myToken = tokenList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
+    if (selectedToken.address === WRAPPED_SOL_MINT_ADDRESS) {
+      refreshTokenBalance();
+      return;
+    }
+    if (myToken) {
+      setSelectedToken(myToken as TokenInfo);
     }
   }, [tokenList, selectedToken, setSelectedToken, refreshTokenBalance]);
 

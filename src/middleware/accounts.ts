@@ -63,10 +63,10 @@ export const getTokenAccountBalanceByAddress = async (
 ): Promise<TokenAmount | null> => {
   if (!connection || !tokenAddress) return null;
   try {
-    const tokenAmount = (await connection.getTokenAccountBalance(tokenAddress)).value;
-    return tokenAmount;
+    return (await connection.getTokenAccountBalance(tokenAddress)).value;
   } catch (error) {
     consoleOut('getTokenAccountBalance failed for:', tokenAddress.toBase58(), 'red');
+    console.error(error);
     return null;
   }
 };

@@ -407,6 +407,7 @@ export const parseSerializedTx = async (connection: Connection, base64Str: strin
       tx = Transaction.from(buffer);
     } catch (error) {
       // Errors above indicate that the bytes do not encode a transaction.
+      console.error(error);
     }
 
     if (!tx) {

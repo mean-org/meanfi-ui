@@ -49,7 +49,7 @@ export class CustomLoggerService {
       subdomain: 'intelerit.com',
       useDomainProxy: false,
     });
-    console.log('%cLogger initialized!', 'color:brown');
+    console.info('%cLogger initialized!', 'color:brown');
   }
 
   public set canLogToConsole(setting: boolean) {
@@ -84,13 +84,11 @@ export class CustomLoggerService {
 
   // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   public print(msg: any, value?: any, color = 'black') {
-    if (this._canLogToConsole || isLocal()) {
-      if (msg) {
-        if (value === undefined) {
-          console.log(`%c${msg}`, `color: ${color}`);
-        } else {
-          console.log(`%c${msg}`, `color: ${color}`, value);
-        }
+    if ((this._canLogToConsole || isLocal()) && msg) {
+      if (value === undefined) {
+        console.info(`%c${msg}`, `color: ${color}`);
+      } else {
+        console.info(`%c${msg}`, `color: ${color}`, value);
       }
     }
   }

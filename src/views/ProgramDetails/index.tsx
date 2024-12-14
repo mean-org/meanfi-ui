@@ -978,7 +978,10 @@ const ProgramDetailsView = ({ program }: Props) => {
         const authority = accountInfo.data.parsed.info.authority as string | null;
         setUpgradeAuthority(authority);
       })
-      .catch(() => setUpgradeAuthority(null));
+      .catch(error => {
+        console.error(error);
+        setUpgradeAuthority(null);
+      });
   }, [connection, program]);
 
   // Upgrade Authority

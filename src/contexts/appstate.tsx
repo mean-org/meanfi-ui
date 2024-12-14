@@ -445,16 +445,17 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   );
 
   // Set theme option to html tag
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Ommiting updateTheme
   useEffect(() => {
     const applyTheme = (name?: string) => {
-      const theme = name ?? 'dark';
-      document.documentElement.setAttribute('data-theme', theme);
-      updateTheme(theme);
+      const value = name ?? 'dark';
+      document.documentElement.setAttribute('data-theme', value);
+      updateTheme(value);
     };
 
     applyTheme(theme);
     return () => {};
-  }, [theme, updateTheme]);
+  }, [theme]);
 
   const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
   const { multisigClient } = useMultisigClient();
@@ -500,10 +501,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     updateIsWhitelisted();
     return () => {};
   }, [publicKey]);
-
-  useEffect(() => {
-    consoleOut('isWhitelisted:', isWhitelisted, 'blue');
-  }, [isWhitelisted]);
 
   const setTreasuryOption = (option: TreasuryTypeOption | undefined) => {
     updateTreasuryOption(option);
@@ -682,6 +679,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
           });
         }
       } catch (error) {
+        console.error(error);
         openNotification({
           title: t('notifications.error-title'),
           description: t('notifications.invalid-publickey-message'),
@@ -946,61 +944,62 @@ const AppStateProvider = ({ children }: ProviderProps) => {
 
   // Load the supported tokens
   useEffect(() => {
-    (async () => {
-      const list = new Array<UserTokenAccount>();
-      const sol: UserTokenAccount = {
-        address: NATIVE_SOL.address,
-        balance: 0,
-        chainId: 0,
-        decimals: NATIVE_SOL.decimals,
-        name: NATIVE_SOL.name,
-        symbol: NATIVE_SOL.symbol,
-        publicAddress: '',
-        tags: NATIVE_SOL.tags,
-        logoURI: NATIVE_SOL.logoURI,
-      };
-      // First add Native SOL as a token
-      list.push(sol);
-      // Add items from the MeanFi list
-      const chainFiltered = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster));
-      for (const item of chainFiltered) {
-        list.push(item);
-      }
-      // Save the MeanFi list
-      updateTokenlist(list.filter(t => t.address !== NATIVE_SOL.address) as TokenInfo[]);
-      // Update the list
-      const userTokenList = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
-      // Add the items from the API
-      if (meanTokenList && meanTokenList.length > 0) {
-        for (const item of meanTokenList) {
-          if (!userTokenList.some(i => i.address === item.address)) {
-            userTokenList.push(item);
-          }
-        }
-      }
-      // Filter out the banned tokens
-      const filteredTokens = userTokenList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
-      // Sort the big list
-      const sortedMainnetList = [...filteredTokens].sort((a, b) => {
-        const nameA = a.symbol.toUpperCase();
-        const nameB = b.symbol.toUpperCase();
-        if (nameA < nameB) {
-          return -1;
-        }
-        if (nameA > nameB) {
-          return 1;
-        }
-        return 0;
-      });
-      updateSplTokenList(sortedMainnetList);
-    })();
+    const list = new Array<UserTokenAccount>();
+    // First add Native SOL as a token
+    list.push({
+      address: NATIVE_SOL.address,
+      balance: 0,
+      chainId: 0,
+      decimals: NATIVE_SOL.decimals,
+      name: NATIVE_SOL.name,
+      symbol: NATIVE_SOL.symbol,
+      publicAddress: '',
+      tags: NATIVE_SOL.tags,
+      logoURI: NATIVE_SOL.logoURI,
+    });
+    // Add items from the MeanFi list
+    const chainFiltered = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster));
+    for (const item of chainFiltered) {
+      if (item.address === NATIVE_SOL.address) continue;
+      list.push(item);
+    }
+    // Save the MeanFi list
+    updateTokenlist(list);
+  }, [connectionConfig.cluster]);
 
-    return () => {};
-  }, [connectionConfig.cluster, meanTokenList]);
+  // Enrich the list of tokens with the API resolved tokens
+  useEffect(() => {
+    if (!tokenList || tokenList.length === 0 || !meanTokenList || meanTokenList.length === 0) {
+      return;
+    }
+
+    const userTokenList = JSON.parse(JSON.stringify(tokenList)) as UserTokenAccount[];
+    // Add the items from the API
+    for (const item of meanTokenList) {
+      if (!userTokenList.some(i => i.address === item.address)) {
+        userTokenList.push(item);
+      }
+    }
+    // Filter out the banned tokens
+    const filteredTokens = userTokenList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
+    // Sort the big list
+    const sortedList = [...filteredTokens].sort((a, b) => {
+      const nameA = a.symbol.toUpperCase();
+      const nameB = b.symbol.toUpperCase();
+      if (nameA < nameB) {
+        return -1;
+      }
+      if (nameA > nameB) {
+        return 1;
+      }
+      return 0;
+    });
+    updateSplTokenList(sortedList);
+  }, [meanTokenList, tokenList]);
 
   // Get and populate the list of NFTs that the user holds
   useEffect(() => {
-    if (!connection || !publicKey || !selectedAccount.address) {
+    if (!selectedAccount.address) {
       return;
     }
 
@@ -1008,7 +1007,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       consoleOut('getAccountNFTs() response:', response, 'blue');
       setAccountNfts(response);
     });
-  }, [selectedAccount.address, connection, publicKey]);
+  }, [selectedAccount.address, connection]);
 
   ///////////////////////
   // Multisig accounts //
@@ -1080,7 +1079,8 @@ const AppStateProvider = ({ children }: ProviderProps) => {
             anythingChanged = true;
           }
         } catch (error) {
-          consoleOut(`Failed pulling tx for multisig ${multisig.id.toBase58()}`, error, 'red');
+          consoleOut(`Failed pulling tx for multisig ${multisig.id.toBase58()}`, '', 'red');
+          console.error(error);
         }
       }
       if (anythingChanged) {

@@ -1,5 +1,4 @@
 import type { Connection } from '@solana/web3.js';
-import { consoleOut } from 'src/middleware/ui';
 
 const getPerformanceSamples = async (connection: Connection) => {
   if (!connection) {
@@ -32,7 +31,7 @@ const getPerformanceSamples = async (connection: Connection) => {
     }
     return Math.round(tpsValues[0]);
   } catch (error) {
-    consoleOut('getRecentPerformanceSamples', '', 'darkred');
+    console.error(error);
     return null;
   }
 };
