@@ -128,9 +128,7 @@ export const SafeInfo = (props: {
 
   const renderSafeBalance =
     totalSafeBalance === undefined ? (
-      <>
-        <IconLoading className='mean-svg-icons' style={{ height: '15px', lineHeight: '15px' }} />
-      </>
+      <IconLoading className='mean-svg-icons' style={{ height: '15px', lineHeight: '15px' }} />
     ) : totalSafeBalance === 0 ? (
       <>$0.00</>
     ) : (

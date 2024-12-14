@@ -22,7 +22,7 @@ export const SafeMeanInfo = (props: {
   loadingProposals: boolean;
   multisigClient: MeanMultisig | undefined;
   onDataToProgramView: (program: ProgramAccounts) => void;
-  onDataToSafeView: (proposal: MultisigTransaction) => void;
+  onProposalSelected: (proposal: MultisigTransaction) => void;
   onEditMultisigClick: () => void;
   onNewProposalClicked?: () => void;
   safeBalanceInUsd: number | undefined;
@@ -33,7 +33,7 @@ export const SafeMeanInfo = (props: {
     connection,
     loadingProposals,
     multisigClient,
-    onDataToSafeView,
+    onProposalSelected,
     onEditMultisigClick,
     onNewProposalClicked,
     safeBalanceInUsd,
@@ -186,7 +186,7 @@ export const SafeMeanInfo = (props: {
         {multisigTxs && multisigTxs.length > 0 ? (
           multisigTxs.map((proposal, index) => {
             const onSelectProposal = () => {
-              onDataToSafeView(proposal);
+              onProposalSelected(proposal);
             };
             const title = proposal.details.title ? proposal.details.title : 'Unknown proposal';
             // Number of participants who have already approved the Tx
@@ -224,7 +224,7 @@ export const SafeMeanInfo = (props: {
         )}
       </>
     );
-  }, [loadingProposals, multisigTxs, onDataToSafeView]);
+  }, [loadingProposals, multisigTxs, onProposalSelected]);
 
   // Tabs
   const proposalsTabContent = useCallback(() => {
@@ -236,15 +236,13 @@ export const SafeMeanInfo = (props: {
   }, [amountOfProposals, renderListOfProposals]);
 
   return (
-    <>
-      <SafeInfo
-        onEditMultisigClick={onEditMultisigClick}
-        onNewProposalClicked={onNewProposalClicked}
-        selectedMultisig={selectedMultisig}
-        selectedTab={selectedTab}
-        totalSafeBalance={safeBalanceInUsd}
-        proposalsTabContent={proposalsTabContent()}
-      />
-    </>
+    <SafeInfo
+      onEditMultisigClick={onEditMultisigClick}
+      onNewProposalClicked={onNewProposalClicked}
+      selectedMultisig={selectedMultisig}
+      selectedTab={selectedTab}
+      totalSafeBalance={safeBalanceInUsd}
+      proposalsTabContent={proposalsTabContent()}
+    />
   );
 };
