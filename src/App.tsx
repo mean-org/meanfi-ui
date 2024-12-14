@@ -24,6 +24,7 @@ import { appConfig } from 'src/main';
 import { AppRoutes } from 'src/routes';
 import { PageLoadingView } from 'src/views/PageLoading';
 import './App.scss';
+import ErrorBoundary from './contexts/ErrorBoundary';
 import { AccountsProvider } from './contexts/accounts';
 import AppStateProvider from './contexts/appstate';
 import { ConnectionProvider } from './contexts/connection';
@@ -103,21 +104,23 @@ function App() {
 
   return (
     <BrowserRouter basename={'/'}>
-      <ConnectionProvider>
-        <WalletProvider wallets={wallets} autoConnect>
-          <MeanFiWalletProvider>
-            <WalletAccountProvider>
-              <AccountsProvider>
-                <TxConfirmationProvider>
-                  <AppStateProvider>
-                    <AppRoutes />
-                  </AppStateProvider>
-                </TxConfirmationProvider>
-              </AccountsProvider>
-            </WalletAccountProvider>
-          </MeanFiWalletProvider>
-        </WalletProvider>
-      </ConnectionProvider>
+      <ErrorBoundary>
+        <ConnectionProvider>
+          <WalletProvider wallets={wallets} autoConnect>
+            <MeanFiWalletProvider>
+              <WalletAccountProvider>
+                <AccountsProvider>
+                  <TxConfirmationProvider>
+                    <AppStateProvider>
+                      <AppRoutes />
+                    </AppStateProvider>
+                  </TxConfirmationProvider>
+                </AccountsProvider>
+              </WalletAccountProvider>
+            </MeanFiWalletProvider>
+          </WalletProvider>
+        </ConnectionProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }
