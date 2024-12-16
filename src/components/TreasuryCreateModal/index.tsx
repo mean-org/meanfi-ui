@@ -54,8 +54,7 @@ export const TreasuryCreateModal = ({
   transactionFees,
 }: Props) => {
   const { t } = useTranslation('common');
-  const { tokenList, selectedAccount, transactionStatus, setTransactionStatus } =
-    useContext(AppStateContext);
+  const { tokenList, selectedAccount, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
   const [proposalTitle, setProposalTitle] = useState('');
@@ -72,7 +71,7 @@ export const TreasuryCreateModal = ({
   const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), true);
 
   const isMultisigContext = useMemo(() => {
-    return !!(publicKey && selectedAccount.isMultisig );
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const autoFocusInput = useCallback(() => {
@@ -241,7 +240,7 @@ export const TreasuryCreateModal = ({
 
   // Validation if multisig
   const isValidFormMultisig = (): boolean => {
-    return !!(treasuryName && proposalTitle );
+    return !!(treasuryName && proposalTitle);
   };
 
   const getTransactionStartButtonLabel = () => {

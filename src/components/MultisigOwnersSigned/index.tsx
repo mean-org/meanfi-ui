@@ -3,7 +3,7 @@ import type { MultisigParticipant } from '@mean-dao/mean-multisig-sdk';
 import { Button, Popover } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconDocument } from 'src/Icons'
+import { IconDocument } from 'src/Icons';
 import { shortenAddress } from 'src/middleware/utils';
 
 export const MultisigOwnersSigned = (props: { participants: MultisigParticipant[]; className?: string }) => {

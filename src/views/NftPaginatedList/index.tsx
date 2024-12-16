@@ -3,7 +3,7 @@ import type { FindNftsByOwnerOutput, JsonMetadata, Metadata } from '@metaplex-fo
 import { PublicKey } from '@solana/web3.js';
 import { Button, Spin } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
-import { IconArrowBack, IconArrowForward, IconExternalLink, IconNoItems } from 'src/Icons'
+import { IconArrowBack, IconArrowForward, IconExternalLink, IconNoItems } from 'src/Icons';
 import { fallbackImgSrc } from 'src/app-constants/common';
 import { openLinkInNewTab } from 'src/middleware/utils';
 import type { MeanNft } from 'src/models/accounts/NftTypes';
@@ -19,13 +19,7 @@ interface Props {
   selectedNft: MeanNft | undefined;
 }
 
-export const NftPaginatedList = ({
-  loadingUserAssets,
-  nftList,
-  onNftItemClick,
-  presetNftMint,
-  selectedNft,
-}: Props) => {
+export const NftPaginatedList = ({ loadingUserAssets, nftList, onNftItemClick, presetNftMint, selectedNft }: Props) => {
   const [loading, setLoading] = useState(false);
   const [shouldPresetItem, setShouldPresetItem] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number | undefined>(undefined);
@@ -40,10 +34,10 @@ export const NftPaginatedList = ({
       const nftsToLoad = nftList.filter((_, index) => index >= startIndex && index < endIndex);
 
       return await Promise.all(
-        nftsToLoad.map(async (nft) => {
+        nftsToLoad.map(async nft => {
           try {
             const fetchResult = await fetch(nft.uri);
-            const metadata = await fetchResult.json() as JsonMetadata;
+            const metadata = (await fetchResult.json()) as JsonMetadata;
             const serialized = JSON.stringify(nft);
             const refueled = JSON.parse(serialized);
             refueled.json = metadata;
@@ -51,13 +45,13 @@ export const NftPaginatedList = ({
             refueled.mint = new PublicKey((nft as Metadata).mintAddress);
             refueled.mintAddress = new PublicKey((nft as Metadata).mintAddress);
             refueled.updateAuthorityAddress = new PublicKey((nft as Metadata).updateAuthorityAddress);
-            refueled.creators = nft.creators
+            refueled.creators = nft.creators;
             return refueled as MeanNft;
           } catch (error) {
             console.error('Error fetching NFT metadata:', error);
             return nft as MeanNft;
           }
-        })
+        }),
       );
     },
     [nftList],

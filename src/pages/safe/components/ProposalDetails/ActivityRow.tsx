@@ -1,6 +1,6 @@
 import type { MultisigTransactionActivityItem } from '@mean-dao/mean-multisig-sdk';
 import dayjs from 'dayjs';
-import { IconExternalLink } from 'src/Icons'
+import { IconExternalLink } from 'src/Icons';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'src/app-constants/common';
 import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
 import { shortenAddress } from 'src/middleware/utils';

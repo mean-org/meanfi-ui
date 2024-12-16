@@ -7,7 +7,7 @@ import {
   type MultisigParticipant,
   type MultisigTransaction,
   type MultisigTransactionFees,
-  getFees
+  getFees,
 } from '@mean-dao/mean-multisig-sdk';
 import { BN } from '@project-serum/anchor';
 import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
@@ -389,7 +389,10 @@ const SafeView = (props: {
           throw new Error('No selected multisig');
         }
 
-        const [multisigSigner] = PublicKey.findProgramAddressSync([selectedMultisig.id.toBuffer()], multisigProgramAddressPK);
+        const [multisigSigner] = PublicKey.findProgramAddressSync(
+          [selectedMultisig.id.toBuffer()],
+          multisigProgramAddressPK,
+        );
 
         const owners = data.owners.map((p: MultisigParticipant) => {
           return {

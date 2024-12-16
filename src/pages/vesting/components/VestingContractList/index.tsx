@@ -5,7 +5,7 @@ import BN from 'bn.js';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconLoading, IconNoItems } from 'src/Icons'
+import { IconLoading, IconNoItems } from 'src/Icons';
 import { FALLBACK_COIN_IMAGE } from 'src/app-constants/common';
 import { Identicon } from 'src/components/Identicon';
 import { AppStateContext } from 'src/contexts/appstate';

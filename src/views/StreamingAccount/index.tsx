@@ -44,7 +44,7 @@ import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState }
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from 'src/Icons'
+import { IconArrowBack, IconArrowForward, IconEllipsisVertical, IconExternalLink } from 'src/Icons';
 import {
   FALLBACK_COIN_IMAGE,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,
@@ -86,7 +86,13 @@ import {
   sendTx,
   signTx,
 } from 'src/middleware/transactions';
-import { consoleOut, getIntervalFromSeconds, getShortDate, getTransactionStatusForLogs, isProd } from 'src/middleware/ui';
+import {
+  consoleOut,
+  getIntervalFromSeconds,
+  getShortDate,
+  getTransactionStatusForLogs,
+  isProd,
+} from 'src/middleware/ui';
 import {
   displayAmountWithSymbol,
   findATokenAddress,
@@ -558,7 +564,8 @@ export const StreamingAccountView = ({
       }
 
       if (tokenStreamingV1) {
-        tokenStreamingV1.listStreams({ treasury: treasuryPk })
+        tokenStreamingV1
+          .listStreams({ treasury: treasuryPk })
           .then(streams => {
             consoleOut('treasuryStreams:', streams, 'blue');
             setStreamingAccountStreams(streams);
@@ -598,11 +605,7 @@ export const StreamingAccountView = ({
       consoleOut('withdrawTransactionFees:', value, 'orange');
     });
     setIsCreateStreamModalVisibility(true);
-  }, [
-    getTransactionFeesV2,
-    resetTransactionStatus,
-    getMultisigTxProposalFees,
-  ]);
+  }, [getTransactionFeesV2, resetTransactionStatus, getMultisigTxProposalFees]);
 
   const closeCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(false);

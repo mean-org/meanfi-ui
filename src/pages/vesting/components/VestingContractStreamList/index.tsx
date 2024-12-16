@@ -18,7 +18,7 @@ import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { segmentAnalytics } from 'src/App';
-import { IconVerticalEllipsis } from 'src/Icons'
+import { IconVerticalEllipsis } from 'src/Icons';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
 import { openNotification } from 'src/components/Notifications';
 import { AppStateContext } from 'src/contexts/appstate';
@@ -409,25 +409,22 @@ export const VestingContractStreamList = (props: {
 
   // Close stream modal
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
-  const showCloseStreamModal = useCallback(
-    () => {
-      if (!vestingContract) {
-        consoleOut('showCloseStreamModal: vestingContract is undefined', '', 'red');
-        return;
-      }
+  const showCloseStreamModal = useCallback(() => {
+    if (!vestingContract) {
+      consoleOut('showCloseStreamModal: vestingContract is undefined', '', 'red');
+      return;
+    }
 
-      resetTransactionStatus();
+    resetTransactionStatus();
 
-      if (vestingContract) {
-        getTransactionFees(ACTION_CODES.CloseStream).then(value => {
-          setTransactionFees(value);
-          consoleOut('transactionFees:', value, 'orange');
-        });
-        setIsCloseStreamModalVisibility(true);
-      }
-    },
-    [getTransactionFees, resetTransactionStatus, vestingContract],
-  );
+    if (vestingContract) {
+      getTransactionFees(ACTION_CODES.CloseStream).then(value => {
+        setTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
+      setIsCloseStreamModalVisibility(true);
+    }
+  }, [getTransactionFees, resetTransactionStatus, vestingContract]);
 
   const hideCloseStreamModal = useCallback(() => {
     setIsCloseStreamModalVisibility(false);

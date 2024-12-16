@@ -4,7 +4,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { type Connection, PublicKey } from '@solana/web3.js';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { IconArrowForward } from 'src/Icons'
+import { IconArrowForward } from 'src/Icons';
 import { ResumeItem } from 'src/components/ResumeItem';
 import { useNativeAccount } from 'src/contexts/accounts';
 import { AppStateContext } from 'src/contexts/appstate';

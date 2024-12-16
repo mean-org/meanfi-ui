@@ -37,7 +37,7 @@ const getStreamingAccountList = async ({
     );
     const namesTrimmed = v2Accounts.map(vc => {
       return { ...vc, name: vc.name.trim() };
-    })
+    });
     treasuryAccumulator.push(...namesTrimmed);
 
     if (cat !== Category.vesting && !isMultisigContext) {

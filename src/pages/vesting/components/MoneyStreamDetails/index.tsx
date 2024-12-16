@@ -5,7 +5,7 @@ import { Col, Row, Spin, Tabs } from 'antd';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconExternalLink } from 'src/Icons'
+import { IconExternalLink } from 'src/Icons';
 import {
   FALLBACK_COIN_IMAGE,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,

@@ -22,7 +22,7 @@ import dateFormat from 'dateformat';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
-import { IconClock, IconExchange, IconExternalLink } from 'src/Icons'
+import { IconClock, IconExchange, IconExternalLink } from 'src/Icons';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,

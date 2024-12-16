@@ -162,7 +162,8 @@ export const VestingContractWithdrawFundsModal = (props: {
   // Validation
   const isValidForm = (): boolean => {
     const br = getMinBalanceRequired();
-    return !!(publicKey &&
+    return !!(
+      publicKey &&
       to &&
       (proposalTitle || !isMultisigTreasury) &&
       isValidAddress(to) &&
@@ -171,7 +172,8 @@ export const VestingContractWithdrawFundsModal = (props: {
       tokenAmount &&
       tokenAmount.gtn(0) &&
       unallocatedBalance.gte(tokenAmount) &&
-      nativeBalance >= br);
+      nativeBalance >= br
+    );
   };
 
   const getButtonLabel = () => {

@@ -26,10 +26,7 @@ export const TransactionItemView = (props: {
 
   useEffect(() => {
     if (props.transaction) {
-      const meta =
-        props.transaction.parsedTransaction?.meta
-          ? props.transaction.parsedTransaction.meta
-          : null;
+      const meta = props.transaction.parsedTransaction?.meta ? props.transaction.parsedTransaction.meta : null;
 
       if (!meta) {
         setIsTxRenderable(false);
@@ -42,7 +39,7 @@ export const TransactionItemView = (props: {
       const accounts = props.transaction.parsedTransaction.transaction.message.accountKeys;
 
       // Are we scanning a user token account or the user wallet?
-      const isNativeAccountSelected = props.accountAddress  === props.selectedAsset?.publicAddress;
+      const isNativeAccountSelected = props.accountAddress === props.selectedAsset?.publicAddress;
       setIsNativeAccountSelected(isNativeAccountSelected);
 
       if (isNativeAccountSelected) {
@@ -58,15 +55,13 @@ export const TransactionItemView = (props: {
           setIsTxRenderable(false);
           return;
         }
-        const preTokenBalanceAmount =
-          meta.preTokenBalances?.length
-            ? meta.preTokenBalances.find(tk => tk.accountIndex === selectedTokenAccountIndex)?.uiTokenAmount
-                ?.uiAmount || 0
-            : 0;
-        const postTokenBalance =
-          meta.postTokenBalances?.length
-            ? meta.postTokenBalances.find(tk => tk.accountIndex === selectedTokenAccountIndex)
-            : null;
+        const preTokenBalanceAmount = meta.preTokenBalances?.length
+          ? meta.preTokenBalances.find(tk => tk.accountIndex === selectedTokenAccountIndex)?.uiTokenAmount?.uiAmount ||
+            0
+          : 0;
+        const postTokenBalance = meta.postTokenBalances?.length
+          ? meta.postTokenBalances.find(tk => tk.accountIndex === selectedTokenAccountIndex)
+          : null;
         balanceChange = (postTokenBalance?.uiTokenAmount.uiAmount || 0) - preTokenBalanceAmount;
         if (balanceChange === 0) {
           setIsTxRenderable(false);

@@ -1,6 +1,6 @@
 import type { Creator } from '@metaplex-foundation/js';
 import { Tooltip } from 'antd';
-import { IconCheck, IconInfoCircle } from 'src/Icons'
+import { IconCheck, IconInfoCircle } from 'src/Icons';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
 import { AddressDisplay } from 'src/components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
@@ -46,7 +46,7 @@ export const NftCreators = (props: { creators: Creator[] }) => {
                   <AddressDisplay
                     address={item.address.toBase58()}
                     maxChars={width < 400 ? 12 : undefined}
-                    showFullAddress={width  >= 400}
+                    showFullAddress={width >= 400}
                     className='align-middle simplelink underline-on-hover ml-1'
                     iconStyles={{ width: '15', height: '15' }}
                     newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.address.toBase58()}${getSolanaExplorerClusterParam()}`}

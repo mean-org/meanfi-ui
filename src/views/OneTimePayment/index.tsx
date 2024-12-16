@@ -450,7 +450,7 @@ export const OneTimePayment = ({
       return false;
     }
 
-    return recipientNote.length <= 32
+    return recipientNote.length <= 32;
   };
 
   const isAddressOwnAccount = (): boolean => publicKey?.toBase58() === recipientAddress;

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, Popover, Segmented } from 'antd';
 import type { SegmentedValue } from 'antd/lib/segmented';
 import { useTranslation } from 'react-i18next';
-import { IconCross, IconGasStation } from 'src/Icons'
+import { IconCross, IconGasStation } from 'src/Icons';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import useWindowSize from 'src/hooks/useWindowResize';
 import {

@@ -3,7 +3,7 @@ import { BN } from '@project-serum/anchor';
 import { Spin } from 'antd';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconExternalLink } from 'src/Icons'
+import { IconExternalLink } from 'src/Icons';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'src/app-constants/common';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'src/contexts/connection';

@@ -36,7 +36,7 @@ export const AssetActivity = (props: {
   const { t } = useTranslation('common');
 
   const hasTransactions = useMemo(() => {
-    return !!(transactions && transactions.length > 0 );
+    return !!(transactions && transactions.length > 0);
   }, [transactions]);
 
   const renderTransactions = () => {
@@ -55,7 +55,7 @@ export const AssetActivity = (props: {
           }
           // Get amount change for each tx
           const change = getChange(accIdx, meta);
-          return !!(isAssetNativeAccount && change !== 0 );
+          return !!(isAssetNativeAccount && change !== 0);
         });
         return filtered?.map((trans: MappedTransaction) => {
           return (

@@ -2,7 +2,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Image, Space, Tabs, Tooltip } from 'antd';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { IconNoItems } from 'src/Icons'
+import { IconNoItems } from 'src/Icons';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, fallbackImgSrc } from 'src/app-constants/common';
 import { AddressDisplay } from 'src/components/AddressDisplay';
 import { InfoIcon } from 'src/components/InfoIcon';
@@ -169,58 +169,59 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
         )}
         {selectedNft.mint.mintAuthorityAddress
           ? infoRow(
-            <>
-              <span className='align-text-bottom'>Mint Authority</span>
-              <InfoIcon placement='top' content={<span>Account permitted to mint this token.</span>}>
-                <InfoCircleOutlined />
-              </InfoIcon>
-            </>,
-            <AddressDisplay
-              address={selectedNft.mint.mintAuthorityAddress.toBase58()}
-              maxChars={shouldShortedAddresses ? 12 : undefined}
-              showFullAddress={shouldShortedAddresses}
-              iconStyles={{ width: '15', height: '15' }}
-              newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.mint.mintAuthorityAddress.toBase58()}${getSolanaExplorerClusterParam()}`}
-            />,
-          )
+              <>
+                <span className='align-text-bottom'>Mint Authority</span>
+                <InfoIcon placement='top' content={<span>Account permitted to mint this token.</span>}>
+                  <InfoCircleOutlined />
+                </InfoIcon>
+              </>,
+              <AddressDisplay
+                address={selectedNft.mint.mintAuthorityAddress.toBase58()}
+                maxChars={shouldShortedAddresses ? 12 : undefined}
+                showFullAddress={shouldShortedAddresses}
+                iconStyles={{ width: '15', height: '15' }}
+                newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.mint.mintAuthorityAddress.toBase58()}${getSolanaExplorerClusterParam()}`}
+              />,
+            )
           : null}
         {selectedNft.updateAuthorityAddress
           ? infoRow(
-            <>
-              <span className='align-text-bottom'>Update Authority</span>
-              <InfoIcon
-                placement='top'
-                content={<span>Account permitted to issue update requests for this token's information.</span>}
-              >
-                <InfoCircleOutlined />
-              </InfoIcon>
-            </>,
-            <AddressDisplay
-              address={selectedNft.updateAuthorityAddress.toBase58()}
-              maxChars={shouldShortedAddresses ? 12 : undefined}
-              showFullAddress={shouldShortedAddresses}
-              iconStyles={{ width: '15', height: '15' }}
-              newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.updateAuthorityAddress.toBase58()}${getSolanaExplorerClusterParam()}`}
-            />,
-          )
+              <>
+                <span className='align-text-bottom'>Update Authority</span>
+                <InfoIcon
+                  placement='top'
+                  content={<span>Account permitted to issue update requests for this token's information.</span>}
+                >
+                  <InfoCircleOutlined />
+                </InfoIcon>
+              </>,
+              <AddressDisplay
+                address={selectedNft.updateAuthorityAddress.toBase58()}
+                maxChars={shouldShortedAddresses ? 12 : undefined}
+                showFullAddress={shouldShortedAddresses}
+                iconStyles={{ width: '15', height: '15' }}
+                newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedNft.updateAuthorityAddress.toBase58()}${getSolanaExplorerClusterParam()}`}
+              />,
+            )
           : null}
         {selectedAccount
           ? infoRow(
-            <>
-              <span className='align-text-bottom'>Current Owner</span>
-              <InfoIcon placement='top' content={<span>The owner of this token!</span>}>
-                <InfoCircleOutlined />
-              </InfoIcon>
-            </>,
-            <AddressDisplay
-              address={selectedAccount.address}
-              maxChars={shouldShortedAddresses ? 12 : undefined}
-              showFullAddress={shouldShortedAddresses}
-              iconStyles={{ width: '15', height: '15' }}
-              newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedAccount.address
+              <>
+                <span className='align-text-bottom'>Current Owner</span>
+                <InfoIcon placement='top' content={<span>The owner of this token!</span>}>
+                  <InfoCircleOutlined />
+                </InfoIcon>
+              </>,
+              <AddressDisplay
+                address={selectedAccount.address}
+                maxChars={shouldShortedAddresses ? 12 : undefined}
+                showFullAddress={shouldShortedAddresses}
+                iconStyles={{ width: '15', height: '15' }}
+                newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
+                  selectedAccount.address
                 }${getSolanaExplorerClusterParam()}`}
-            />,
-          )
+              />,
+            )
           : null}
       </>
     );
@@ -276,7 +277,11 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
                         alt={selectedNft.json.name}
                       />
                     ) : (
-                      <Image className='nft-image' src={fallbackImgSrc} alt='No image description. Metadata not loaded' />
+                      <Image
+                        className='nft-image'
+                        src={fallbackImgSrc}
+                        alt='No image description. Metadata not loaded'
+                      />
                     )}
                   </div>
                 </div>
@@ -313,8 +318,11 @@ export const NftDetails = (props: { selectedNft?: MeanNft }) => {
           <div className='flex-column flex-center justify-content-center h-100'>
             <IconNoItems className='mean-svg-icons fg-secondary-50' style={{ width: 50, height: 50 }} />
             <div className='font-size-120 font-bold fg-secondary-75 mt-2 mb-2'>No NFT metadata found</div>
-            <div className='font-size-110 fg-secondary-50 mb-3'>There was a problem loading the metadata for this NFT.</div>
-          </div>)}
+            <div className='font-size-110 fg-secondary-50 mb-3'>
+              There was a problem loading the metadata for this NFT.
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

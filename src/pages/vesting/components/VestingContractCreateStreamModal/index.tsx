@@ -11,7 +11,7 @@ import { Button, Checkbox, Col, Modal, Row } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconEdit, IconWarning } from 'src/Icons'
+import { IconEdit, IconWarning } from 'src/Icons';
 import { MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
 import { InfoIcon } from 'src/components/InfoIcon';
 import { InputMean } from 'src/components/InputMean';

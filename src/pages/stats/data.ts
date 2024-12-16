@@ -1,4 +1,4 @@
-import type { Tokenomics } from "./types";
+import type { Tokenomics } from './types';
 
 export const data: Tokenomics = {
   id: 'meanfi',

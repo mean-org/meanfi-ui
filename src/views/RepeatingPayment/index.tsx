@@ -16,8 +16,13 @@ import dayjs from 'dayjs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { segmentAnalytics } from 'src/App';
-import { IconCaretDown, IconEdit } from 'src/Icons'
-import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED, NO_FEES, SIMPLE_DATE_TIME_FORMAT } from 'src/app-constants/common';
+import { IconCaretDown, IconEdit } from 'src/Icons';
+import {
+  DATEPICKER_FORMAT,
+  MIN_SOL_BALANCE_REQUIRED,
+  NO_FEES,
+  SIMPLE_DATE_TIME_FORMAT,
+} from 'src/app-constants/common';
 import { NATIVE_SOL } from 'src/app-constants/tokens';
 import { Identicon } from 'src/components/Identicon';
 import { InfoIcon } from 'src/components/InfoIcon';
@@ -72,7 +77,12 @@ interface RepeatingPaymentProps {
   userBalances: LooseObject;
 }
 
-export const RepeatingPayment = ({onOpenTokenSelector, selectedToken, transferCompleted, userBalances}: RepeatingPaymentProps) => {
+export const RepeatingPayment = ({
+  onOpenTokenSelector,
+  selectedToken,
+  transferCompleted,
+  userBalances,
+}: RepeatingPaymentProps) => {
   const connection = useConnection();
   const { connected, publicKey, wallet } = useWallet();
   const {

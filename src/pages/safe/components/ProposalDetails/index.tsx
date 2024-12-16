@@ -23,7 +23,7 @@ import {
   IconThumbsUp,
   IconUser,
   IconUserClock,
-} from 'src/Icons'
+} from 'src/Icons';
 import { openNotification } from 'src/components/Notifications';
 import { RejectCancelModal } from 'src/components/RejectCancelModal';
 import { ResumeItem } from 'src/components/ResumeItem';

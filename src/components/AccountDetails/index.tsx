@@ -2,7 +2,7 @@ import { Popover } from 'antd';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { segmentAnalytics } from 'src/App';
-import { IconSafe } from 'src/Icons'
+import { IconSafe } from 'src/Icons';
 import { CREATE_SAFE_ROUTE_PATH } from 'src/app-constants/common';
 import { AccountSelector } from 'src/components/AccountSelector';
 import { useWalletAccount } from 'src/contexts/walletAccount';
@@ -38,7 +38,9 @@ export const AccountDetails = () => {
   const renderPersonalAccount = () => {
     return (
       <>
-        {wallet && <img src={wallet.adapter.icon} alt={wallet.adapter.name} width='24' className='wallet-provider-icon' />}
+        {wallet && (
+          <img src={wallet.adapter.icon} alt={wallet.adapter.name} width='24' className='wallet-provider-icon' />
+        )}
         <div className='account-descriptor'>
           <div className='account-name'>Personal Account</div>
           <div className='account-id'>{shortenAddress(selectedAccount.address, 6)}</div>

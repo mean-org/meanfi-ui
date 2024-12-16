@@ -71,7 +71,7 @@ export const isCacheItemExpired = (key: string, maxAge = MAX_CACHE_TTL) => {
   if (item) {
     const now = Date.now();
     const itemMaxAge = item.timestamp + maxAge * 1000;
-    const isExpired = now  > itemMaxAge;
+    const isExpired = now > itemMaxAge;
     return isExpired;
   }
   return true;

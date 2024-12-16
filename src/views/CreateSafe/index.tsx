@@ -3,7 +3,7 @@ import {
   MULTISIG_ACTIONS,
   type MultisigParticipant,
   type MultisigTransactionFees,
-  getFees
+  getFees,
 } from '@mean-dao/mean-multisig-sdk';
 import { LAMPORTS_PER_SOL, type Transaction } from '@solana/web3.js';
 import { Button, Col, Row, Slider, Tooltip } from 'antd';
@@ -12,7 +12,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { segmentAnalytics } from 'src/App';
-import { IconHelpCircle, IconSafe } from 'src/Icons'
+import { IconHelpCircle, IconSafe } from 'src/Icons';
 import { MAX_MULTISIG_PARTICIPANTS, MEAN_MULTISIG_ACCOUNT_LAMPORTS } from 'src/app-constants/common';
 import { MultisigParticipants } from 'src/components/MultisigParticipants';
 import { openNotification } from 'src/components/Notifications';
@@ -82,7 +82,9 @@ const CreateSafeView = () => {
 
   const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
     if (operation === OperationType.CreateMultisig) {
-      const event = success ? AppUsageEvent.CreateSuperSafeAccountCompleted : AppUsageEvent.CreateSuperSafeAccountFailed;
+      const event = success
+        ? AppUsageEvent.CreateSuperSafeAccountCompleted
+        : AppUsageEvent.CreateSuperSafeAccountFailed;
       segmentAnalytics.recordEvent(event, { signature: signature });
     }
   }, []);

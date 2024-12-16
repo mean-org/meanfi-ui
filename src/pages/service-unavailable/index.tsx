@@ -31,7 +31,7 @@ export const ServiceUnavailableView = () => {
     };
 
     applyTheme(theme);
-    return () => { };
+    return () => {};
   }, [theme, updateTheme]);
 
   return (

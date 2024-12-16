@@ -27,7 +27,7 @@ const getVestingContracts = async ({
     );
     const contracts = v2Accounts.map(vc => {
       return { ...vc, name: vc.name.trim() };
-    })
+    });
 
     // This is because listTreasuries method cannot filter out the autoClose accounts by itself
     // const streamingAccounts = treasuryAccumulator.filter(t => !t.autoClose);

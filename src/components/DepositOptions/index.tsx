@@ -4,7 +4,7 @@ import { Button, Col, Modal, Row, Tooltip } from 'antd';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconCopy, IconInfoTriangle, IconSolana } from 'src/Icons'
+import { IconCopy, IconInfoTriangle, IconSolana } from 'src/Icons';
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from 'src/app-constants/common';
 import { openNotification } from 'src/components/Notifications';
 import { environment } from 'src/environments/environment';

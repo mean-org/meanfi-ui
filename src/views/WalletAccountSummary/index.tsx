@@ -59,8 +59,9 @@ const WalletAccountSummary = (props: { accountBalance?: number }) => {
                   <AddressDisplay
                     address={selectedAsset.publicAddress as string}
                     iconStyles={{ width: '16', height: '16' }}
-                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedAsset.publicAddress
-                      }${getSolanaExplorerClusterParam()}`}
+                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
+                      selectedAsset.publicAddress
+                    }${getSolanaExplorerClusterParam()}`}
                   />
                 </div>
               </div>

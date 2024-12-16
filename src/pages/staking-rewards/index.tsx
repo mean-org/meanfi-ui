@@ -4,7 +4,7 @@ import { PublicKey, type Transaction } from '@solana/web3.js';
 import { Button, Spin } from 'antd';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconStats } from 'src/Icons'
+import { IconStats } from 'src/Icons';
 import { MEAN_TOKEN_LIST } from 'src/app-constants/tokens';
 import { openNotification } from 'src/components/Notifications';
 import { PreFooter } from 'src/components/PreFooter';

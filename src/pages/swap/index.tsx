@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import { IconExchange } from 'src/Icons'
+import { IconExchange } from 'src/Icons';
 import { PreFooter } from 'src/components/PreFooter';
 import { consoleOut } from 'src/middleware/ui';
 import DlnBridge from 'src/views/DlnBridge';

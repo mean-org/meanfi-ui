@@ -137,14 +137,16 @@ export const MultisigEditModal = ({
   };
 
   const isFormValid = () => {
-    return !!(multisigTitle &&
+    return !!(
+      multisigTitle &&
       localMultisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
       multisigLabel &&
       multisigOwners.length >= localMultisigThreshold &&
       multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
       isOwnersListValid() &&
       isFormDirty() &&
-      noDuplicateExists(multisigOwners));
+      noDuplicateExists(multisigOwners)
+    );
   };
 
   const getTransactionStartButtonLabel = () => {

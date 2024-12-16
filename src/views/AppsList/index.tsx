@@ -1,5 +1,5 @@
 import { useCallback, useContext } from 'react';
-import { IconMoneyTransfer, IconNoItems, IconSafe, IconStats } from 'src/Icons'
+import { IconMoneyTransfer, IconNoItems, IconSafe, IconStats } from 'src/Icons';
 import { IconPaymentStreaming } from 'src/Icons/IconPaymentStreaming';
 import { readFromCache } from 'src/cache/persistentCache';
 import { AppStateContext } from 'src/contexts/appstate';

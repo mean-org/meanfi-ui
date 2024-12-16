@@ -19,7 +19,7 @@ import Countdown from 'react-countdown';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { IconArrowBack, IconExternalLink } from 'src/Icons'
+import { IconArrowBack, IconExternalLink } from 'src/Icons';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from 'src/app-constants/common';
 import { CopyExtLinkGroup } from 'src/components/CopyExtLinkGroup';
 import type { CountdownRendererParams } from 'src/components/CountdownTimer/CountdownRenderer';
@@ -77,13 +77,8 @@ export const MoneyStreamDetails = (props: {
     buttons,
     selectedToken,
   } = props;
-  const {
-    splTokenList,
-    streamActivity,
-    hasMoreStreamActivity,
-    loadingStreamActivity,
-    getStreamActivity,
-  } = useContext(AppStateContext);
+  const { splTokenList, streamActivity, hasMoreStreamActivity, loadingStreamActivity, getStreamActivity } =
+    useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { publicKey } = useWallet();
