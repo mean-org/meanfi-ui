@@ -13,7 +13,7 @@ import './style.scss';
 import { useWallet } from 'src/contexts/wallet';
 
 export const AccountDetails = () => {
-  const { selectedAccount } = useWalletAccount();
+  const { selectedAccount, setSelectedAccount } = useWalletAccount();
   const navigate = useNavigate();
   const { width } = useWindowSize();
   const { publicKey, wallet, disconnect } = useWallet();
@@ -32,8 +32,9 @@ export const AccountDetails = () => {
   const onDisconnectWallet = useCallback(() => {
     segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
     navigate('/');
+    setSelectedAccount(undefined, true);
     disconnect();
-  }, [disconnect, navigate]);
+  }, [navigate, setSelectedAccount, disconnect]);
 
   const renderPersonalAccount = () => {
     return (
