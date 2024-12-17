@@ -54,7 +54,7 @@ export const TreasuryCreateModal = ({
   transactionFees,
 }: Props) => {
   const { t } = useTranslation('common');
-  const { tokenList, selectedAccount, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
+  const { splTokenList, selectedAccount, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
   const [proposalTitle, setProposalTitle] = useState('');
@@ -199,10 +199,10 @@ export const TreasuryCreateModal = ({
 
   // Reset results when the filter is cleared
   useEffect(() => {
-    if (tokenList?.length && filteredTokenList.length === 0 && !tokenFilter) {
+    if (splTokenList?.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
     }
-  }, [tokenList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
+  }, [splTokenList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
 
   const onAcceptModal = () => {
     const options: TreasuryCreateOptions = {

@@ -10,7 +10,6 @@ import { IconHelpCircle } from 'src/Icons/IconHelpCircle';
 import { ONE_MINUTE_REFRESH_TIMEOUT } from 'src/app-constants/common';
 import { MEAN_TOKEN_LIST } from 'src/app-constants/tokens';
 import { InfoIcon } from 'src/components/InfoIcon';
-import { useNativeAccount } from 'src/contexts/accounts';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
@@ -18,7 +17,7 @@ import useWindowSize from 'src/hooks/useWindowResize';
 import { getTokenAccountBalanceByAddress } from 'src/middleware/accounts';
 import { saveAppData } from 'src/middleware/appPersistedData';
 import { consoleOut } from 'src/middleware/ui';
-import { findATokenAddress, formatThousands, getAmountFromLamports } from 'src/middleware/utils';
+import { findATokenAddress, formatThousands } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { failsafeConnectionConfig, getDefaultRpc } from 'src/services/connections-hq';
 import { StakeTabView } from 'src/views/StakeTabView';
@@ -45,13 +44,10 @@ const StakingView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey } = useWallet();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { account } = useNativeAccount();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-  const [nativeBalance, setNativeBalance] = useState(0);
   const [meanPrice, setMeanPrice] = useState<number>(0);
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [currentTab, setCurrentTab] = useState<StakeOption>(undefined);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
@@ -242,16 +238,6 @@ const StakingView = () => {
       stakedToken,
     });
   }, [publicKey, stakeClient, pageInitialized, connectionConfig.cluster]);
-
-  // Keep account balance updated
-  useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balances
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance]);
 
   // Keep MEAN price updated
   useEffect(() => {

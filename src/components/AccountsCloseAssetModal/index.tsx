@@ -30,7 +30,6 @@ export const AccountsCloseAssetModal = (props: {
   const { publicKey } = useWallet();
   const [isBusy, setIsBusy] = useState(false);
   const { account } = useNativeAccount();
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [transactionFees] = useState<TransactionFees>({
     blockchainFee: 0.015,
@@ -47,12 +46,8 @@ export const AccountsCloseAssetModal = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+  }, [account]);
 
   // Events and actions
 

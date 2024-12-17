@@ -85,7 +85,6 @@ const SafeView = (props: {
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   // Balance and fees
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [transactionFees, setTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   // Active Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(true);
@@ -1569,14 +1568,10 @@ const SafeView = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+    // Refresh token balance
+    refreshTokenBalance();
+  }, [account, refreshTokenBalance]);
 
   // Get MultisigTxs (proposals)
   useEffect(() => {

@@ -6,14 +6,13 @@ import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS } from 'src/app-constants/commo
 import { NATIVE_SOL } from 'src/app-constants/tokens';
 import { TextInput } from 'src/components/TextInput';
 import { TokenListItem } from 'src/components/TokenListItem';
-import { useNativeAccount } from 'src/contexts/accounts';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
 import { environment } from 'src/environments/environment';
 import { getDecimalsFromAccountInfo } from 'src/middleware/accountInfoGetters';
 import { consoleOut, isValidAddress } from 'src/middleware/ui';
-import { getAmountFromLamports, shortenAddress } from 'src/middleware/utils';
+import { shortenAddress } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import type { UserTokenAccount } from 'src/models/accounts';
 import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
@@ -35,10 +34,7 @@ export const SendAssetModal = ({ selected, isVisible, handleClose, selectedToken
   const { splTokenList } = useContext(AppStateContext);
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
-  const { account } = useNativeAccount();
   const { t } = useTranslation('common');
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  const [nativeBalance, setNativeBalance] = useState(0);
   const [userBalances, setUserBalances] = useState<LooseObject>({});
   const [token, setToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenFilter, setTokenFilter] = useState('');
@@ -130,15 +126,6 @@ export const SendAssetModal = ({ selected, isVisible, handleClose, selectedToken
       }
     }
   }, [isVisible, selectedList, selectedToken]);
-
-  // Keep account balance updated
-  useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance]);
 
   //#region Token selector - data management
 

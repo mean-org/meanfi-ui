@@ -38,7 +38,7 @@ export const WrapSolModal = ({ isVisible, handleClose, handleOk }: WrapSolModalP
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
   const {
-    tokenList,
+    splTokenList,
     loadingPrices,
     transactionStatus,
     getTokenPriceByAddress,
@@ -57,24 +57,19 @@ export const WrapSolModal = ({ isVisible, handleClose, handleOk }: WrapSolModalP
   });
 
   const { account } = useNativeAccount();
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
 
   // Get wSOL token info
   const wSol = useMemo(() => {
-    return tokenList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
-  }, [tokenList]);
+    return splTokenList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
+  }, [splTokenList]);
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+    // Refresh token balance
+    refreshTokenBalance();
+  }, [account, refreshTokenBalance]);
 
   // Get fees
   useEffect(() => {

@@ -64,7 +64,6 @@ export const MultisigTransferTokensModal = ({
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
   const {
-    tokenList,
     splTokenList,
     loadingPrices,
     transactionStatus,
@@ -179,12 +178,12 @@ export const MultisigTransferTokensModal = ({
     const balancesMap: LooseObject = {};
 
     if (!sourceAccountTokens || sourceAccountTokens.length === 0) {
-      for (const t of tokenList) {
+      for (const t of splTokenList) {
         balancesMap[t.address] = 0;
       }
       setUserBalances(balancesMap);
       // set the list to the userTokens list
-      setSelectedList(tokenList);
+      setSelectedList(splTokenList);
       return;
     }
 
@@ -216,7 +215,7 @@ export const MultisigTransferTokensModal = ({
     setUserBalances(balancesMap);
     setSelectedList(intersectedList);
     consoleOut('intersectedList:', intersectedList, 'orange');
-  }, [sourceAccountTokens, nativeBalance, tokenList, splTokenList]);
+  }, [sourceAccountTokens, nativeBalance, splTokenList]);
 
   // Reset results when the filter is cleared
   useEffect(() => {

@@ -15,19 +15,18 @@ import { getAmountFromLamports, getAmountWithSymbol } from '../../middleware/uti
 export const FaucetView = () => {
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const { tokenList, selectedToken, setSelectedToken, refreshTokenBalance } = useContext(AppStateContext);
+  const { splTokenList, selectedToken, setSelectedToken, refreshTokenBalance } = useContext(AppStateContext);
   const { t } = useTranslation('common');
 
   const { account } = useNativeAccount();
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
 
   useEffect(() => {
-    if (!(tokenList && selectedToken)) {
+    if (!(splTokenList && selectedToken)) {
       return;
     }
 
-    const myToken = tokenList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
+    const myToken = splTokenList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
     if (selectedToken.address === WRAPPED_SOL_MINT_ADDRESS) {
       refreshTokenBalance();
       return;
@@ -35,17 +34,14 @@ export const FaucetView = () => {
     if (myToken) {
       setSelectedToken(myToken as TokenInfo);
     }
-  }, [tokenList, selectedToken, setSelectedToken, refreshTokenBalance]);
+  }, [splTokenList, selectedToken, setSelectedToken, refreshTokenBalance]);
 
+  // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+    // Refresh token balance
+    refreshTokenBalance();
+  }, [account, refreshTokenBalance]);
 
   const getFaucetAmount = useCallback((): number => {
     return 1 * LAMPORTS_PER_SOL;

@@ -7,7 +7,6 @@ import { IconCheckedBox } from 'src/Icons';
 import { CUSTOM_TOKEN_NAME } from 'src/app-constants/common';
 import { NATIVE_SOL } from 'src/app-constants/tokens';
 import { AppStateContext } from 'src/contexts/appstate';
-import { useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
 import { SOL_MINT } from 'src/middleware/ids';
 import { isError } from 'src/middleware/transactions';
@@ -39,9 +38,8 @@ export const MultisigCreateAssetModal = ({
   transactionFees,
 }: MultisigCreateAssetModalProps) => {
   const { t } = useTranslation('common');
-  const connection = useConnection();
   const { publicKey } = useWallet();
-  const { tokenList, splTokenList, transactionStatus, setTransactionStatus, getTokenByMintAddress } =
+  const { splTokenList, transactionStatus, setTransactionStatus, getTokenByMintAddress } =
     useContext(AppStateContext);
   const [token, setToken] = useState<TokenInfo>();
   const [customToken, setCustomToken] = useState('');
@@ -51,7 +49,7 @@ export const MultisigCreateAssetModal = ({
   /////////////////
 
   const getTransactionStartButtonLabel = (): string => {
-    return !token ? t('multisig.create-asset.no-token') : t('multisig.create-asset.main-cta');
+    return token ? t('multisig.create-asset.main-cta') : t('multisig.create-asset.no-token');
   };
 
   /////////////////////
@@ -86,14 +84,14 @@ export const MultisigCreateAssetModal = ({
 
   // Set the first token in the list as the default token
   useEffect(() => {
-    if (!connection || !publicKey || !tokenList.length || !splTokenList.length) {
+    if (!splTokenList.length) {
       return;
     }
 
-    const token = isProd() ? splTokenList[0] : tokenList[0];
+    const token = splTokenList[0];
     consoleOut('token:', token, 'blue');
     setToken(token);
-  }, [tokenList, publicKey, connection, splTokenList]);
+  }, [splTokenList]);
 
   ////////////////
   //   Events   //
@@ -112,7 +110,7 @@ export const MultisigCreateAssetModal = ({
 
   const onAfterClose = () => {
     setTimeout(() => {
-      setToken(tokenList[0]);
+      setToken(splTokenList[0]);
     }, 50);
 
     setTransactionStatus({
@@ -213,7 +211,7 @@ export const MultisigCreateAssetModal = ({
                 <div className='flex-fixed-left'>
                   <div className='left'>
                     <span className='add-on'>
-                      {token && tokenList && (
+                      {token && splTokenList && (
                         <Select
                           className={'token-selector-dropdown'}
                           value={token.address}
@@ -250,7 +248,7 @@ export const MultisigCreateAssetModal = ({
                             </div>
                           )}
                         >
-                          {(isProd() ? splTokenList : tokenList).map((option: TokenInfo) => {
+                          {(isProd() ? splTokenList : splTokenList).map((option: TokenInfo) => {
                             if (option.address === NATIVE_SOL.address) {
                               return null;
                             }

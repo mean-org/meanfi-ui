@@ -41,7 +41,6 @@ export const StakingRewardsView = () => {
   const { account } = useNativeAccount();
   const { t } = useTranslation('common');
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [isBusy, setIsBusy] = useState(false);
   const [aprPercentGoal, setAprPercentGoal] = useState(DEFAULT_APR_PERCENT_GOAL);
@@ -217,14 +216,10 @@ export const StakingRewardsView = () => {
 
   // Keep native account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balances
-      refreshMeanStakingVaultBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance, refreshMeanStakingVaultBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+    // Refresh token balances
+    refreshMeanStakingVaultBalance();
+  }, [account, refreshMeanStakingVaultBalance]);
 
   // Keep MEAN balance updated
   useEffect(() => {

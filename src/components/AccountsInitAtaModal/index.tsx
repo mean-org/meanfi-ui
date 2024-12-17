@@ -27,7 +27,7 @@ import { customLogger } from 'src/main';
 import { getDecimalsFromAccountInfo } from 'src/middleware/accountInfoGetters';
 import { createV0InitAtaAccountTx } from 'src/middleware/createV0InitAtaAccountTx';
 import { sendTx, signTx } from 'src/middleware/transactions';
-import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from 'src/middleware/ui';
+import { consoleOut, getTransactionStatusForLogs, isValidAddress } from 'src/middleware/ui';
 import { getAmountFromLamports, getVersionedTxIxResume, shortenAddress } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import type { AccountTokenParsedInfo } from 'src/models/accounts';
@@ -45,11 +45,10 @@ export const AccountsInitAtaModal = (props: {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
-  const { tokenList, splTokenList, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
+  const { splTokenList, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isBusy, setIsBusy] = useState(false);
   const { account } = useNativeAccount();
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [tokenFilter, setTokenFilter] = useState('');
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
@@ -103,20 +102,8 @@ export const AccountsInitAtaModal = (props: {
     }
     const finalList = new Array<TokenInfo>();
 
-    // Make a copy of the MeanFi favorite tokens
-    const meanTokensCopy = JSON.parse(JSON.stringify(tokenList)) as TokenInfo[];
-
-    // Add all other items but excluding those in meanTokensCopy (only in mainnet)
-    if (isProd()) {
-      for (const item of splTokenList) {
-        if (!meanTokensCopy.some(t => t.address === item.address)) {
-          meanTokensCopy.push(item);
-        }
-      }
-    }
-
     // Build a token list excluding already owned token accounts
-    for (const item of meanTokensCopy) {
+    for (const item of splTokenList) {
       if (!ownedTokenAccounts.some(t => t.parsedInfo.mint === item.address)) {
         finalList.push(item);
       }
@@ -124,16 +111,12 @@ export const AccountsInitAtaModal = (props: {
 
     setSelectedList(finalList);
     consoleOut('token list:', finalList, 'blue');
-  }, [isVisible, ownedTokenAccounts, splTokenList, tokenList]);
+  }, [isVisible, ownedTokenAccounts, splTokenList]);
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+  }, [account]);
 
   // First time token list
   useEffect(() => {

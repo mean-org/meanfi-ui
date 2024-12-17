@@ -36,7 +36,6 @@ import { PreFooter } from 'src/components/PreFooter';
 import { TextInput } from 'src/components/TextInput';
 import { TokenDisplay } from 'src/components/TokenDisplay';
 import { TokenListItem } from 'src/components/TokenListItem';
-import { useNativeAccount } from 'src/contexts/accounts';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
@@ -95,11 +94,8 @@ export const PlaygroundView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { priceList, splTokenList, isWhitelisted, getTokenPriceByAddress, getTokenByMintAddress } =
     useContext(AppStateContext);
-  const { account } = useNativeAccount();
   const { width } = useWindowSize();
   const [userBalances, setUserBalances] = useState<LooseObject>();
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  const [nativeBalance, setNativeBalance] = useState(0);
   const [currentTab, setCurrentTab] = useState<TabOption>(undefined);
   const [parsedAccountInfo, setParsedAccountInfo] = useState<AccountInfo<ParsedAccountData> | null>(null);
   const [accountInfo, setAccountInfo] = useState<AccountInfo<Buffer> | null>(null);
@@ -607,15 +603,6 @@ export const PlaygroundView = () => {
   }, [splTokenList, tokenFilter, filteredTokenList, updateTokenListByFilter]);
 
   //#endregion
-
-  // Keep account balance updated
-  useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance]);
 
   // Get multisig SOL balance
   useEffect(() => {

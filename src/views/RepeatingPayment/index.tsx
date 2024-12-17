@@ -115,7 +115,6 @@ export const RepeatingPayment = ({
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
@@ -354,12 +353,8 @@ export const RepeatingPayment = ({
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+  }, [account]);
 
   // Keep token balance updated
   useEffect(() => {

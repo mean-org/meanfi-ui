@@ -50,7 +50,7 @@ interface AppStateConfig {
   theme: string | undefined;
   isWhitelisted: boolean;
   isDepositOptionsModalVisible: boolean;
-  tokenList: TokenInfo[];
+  offlineTokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number;
   totalSafeBalance: number | undefined;
@@ -195,7 +195,7 @@ const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   isWhitelisted: false,
   isDepositOptionsModalVisible: false,
-  tokenList: [],
+  offlineTokenList: [],
   selectedToken: undefined,
   tokenBalance: 0,
   totalSafeBalance: undefined,
@@ -379,7 +379,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     contextDefaultValues.transactionStatus,
   );
   const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(connected);
-  const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
+  const [offlineTokenList, setOfflineTokenList] = useState<TokenInfo[]>([]);
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
   const [streamActivity, setStreamActivity] = useState<StreamActivityV1[] | StreamActivity[] | undefined>(undefined);
   const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(
@@ -453,7 +453,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
 
   const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
   const { multisigClient } = useMultisigClient();
-  const { data: meanTokenList } = useGetTokenList();
+  const { data: apiTokenList } = useGetTokenList();
   const { prices: priceList, loadingPrices, refetchPrices } = useGetAssetPrices();
   const { userAssets, loadingUserAssets } = useAccountAssets(selectedAccount.address);
   const {
@@ -612,16 +612,13 @@ const AppStateProvider = ({ children }: ProviderProps) => {
 
   const getTokenByMintAddress = useCallback(
     (address: string): TokenInfo | undefined => {
-      let token = splTokenList && isProd() ? tokenList.find(t => t.address === address) : undefined;
+      const token = splTokenList && isProd() ? splTokenList.find(t => t.address === address) : offlineTokenList.find(t => t.address === address);
       if (!token) {
-        token = MEAN_TOKEN_LIST.find(t => t.address === address);
-      }
-      if (!token) {
-        token = accountTokens.find(t => t.address === address);
+        return MEAN_TOKEN_LIST.find(t => t.address === address);
       }
       return token;
     },
-    [accountTokens, splTokenList, tokenList],
+    [splTokenList, offlineTokenList],
   );
 
   const openStreamById = useCallback(
@@ -951,31 +948,39 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       tags: NATIVE_SOL.tags,
       logoURI: NATIVE_SOL.logoURI,
     });
-    // Add items from the MeanFi list
+    // Add items from the internal token list
     const chainFiltered = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster));
     for (const item of chainFiltered) {
       if (item.address === NATIVE_SOL.address) continue;
       list.push(item);
     }
-    // Save the MeanFi list
-    updateTokenlist(list);
+    // Save the modified internal token list
+    setOfflineTokenList(list);
   }, [connectionConfig.cluster]);
 
-  // Enrich the list of tokens with the API resolved tokens
+  // Enrich the internal token list with items from the API list
   useEffect(() => {
-    if (!tokenList || tokenList.length === 0 || !meanTokenList || meanTokenList.length === 0) {
+    if (!offlineTokenList || offlineTokenList.length === 0) {
       return;
     }
 
-    const userTokenList = JSON.parse(JSON.stringify(tokenList)) as UserTokenAccount[];
+    const userTokenList = JSON.parse(JSON.stringify(offlineTokenList)) as UserTokenAccount[];
+
+    if (!apiTokenList || apiTokenList.length === 0) {
+      updateSplTokenList(userTokenList);
+      return;
+    }
+
     // Add the items from the API
-    for (const item of meanTokenList) {
+    for (const item of apiTokenList) {
       if (!userTokenList.some(i => i.address === item.address)) {
         userTokenList.push(item);
       }
     }
+
     // Filter out the banned tokens
     const filteredTokens = userTokenList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
+
     // Sort the big list
     const sortedList = [...filteredTokens].sort((a, b) => {
       const nameA = a.symbol.toUpperCase();
@@ -988,8 +993,9 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       }
       return 0;
     });
+
     updateSplTokenList(sortedList);
-  }, [meanTokenList, tokenList]);
+  }, [apiTokenList, offlineTokenList]);
 
   // Get and populate the list of NFTs that the user holds
   useEffect(() => {
@@ -1172,7 +1178,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       timeSheetRequirement,
       tokenAccounts,
       tokenBalance,
-      tokenList,
+      offlineTokenList,
       totalSafeBalance,
       transactions,
       transactionStatus,
@@ -1302,7 +1308,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     timeSheetRequirement,
     tokenAccounts,
     tokenBalance,
-    tokenList,
+    offlineTokenList,
     totalSafeBalance,
     transactions,
     transactionStatus,
