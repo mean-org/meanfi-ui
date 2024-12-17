@@ -7,7 +7,6 @@ export const emptyAccount: AccountContext = {
   address: '',
   name: '',
   isMultisig: false,
-  owner: '',
 };
 
 interface WalletAccountContextState {
@@ -37,11 +36,7 @@ export function WalletAccountProvider({ children = null }: WalletAccountProvider
   const setSelectedAccount = useCallback(
     (account?: AccountContext, override?: boolean) => {
       setLastUsedAccount(account ?? null);
-      if (override) {
-        setIsOverride(true);
-      } else {
-        setIsOverride(false);
-      }
+      setIsOverride(override ?? false);
     },
     [setLastUsedAccount],
   );
@@ -49,12 +44,9 @@ export function WalletAccountProvider({ children = null }: WalletAccountProvider
   const selectedAccount = useMemo(() => {
     if (!publicKey) return emptyAccount;
     if (!lastUsedAccount?.address) return emptyAccount;
-    if (isOverride) {
-      return lastUsedAccount;
-    }
+    if (isOverride) return lastUsedAccount;
 
-    if (lastUsedAccount.owner !== publicKey.toBase58() && lastUsedAccount.address !== publicKey.toBase58())
-      return emptyAccount;
+    if (lastUsedAccount.address !== publicKey.toBase58() && !lastUsedAccount.isMultisig) return emptyAccount;
 
     return lastUsedAccount;
   }, [isOverride, lastUsedAccount, publicKey]);

@@ -291,9 +291,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
     );
   };
 
-  if (isUnauthenticatedRoute(location.pathname) || selectedAccount.address) {
-    // Launch the Account selector modal
-
+  if (selectedAccount.address || isUnauthenticatedRoute(location.pathname)) {
     // Render layout
     return (
       <>

@@ -322,7 +322,6 @@ export const PlaygroundView = () => {
           name: isExternal ? 'External account' : 'Personal account',
           address,
           isMultisig: false,
-          owner: SYSTEM_PROGRAM_ID.toBase58(),
         };
         consoleOut('Setting selectedAccount onImpersonateAccount:', account, 'crimson');
         setSelectedAccount(account, override);

@@ -101,6 +101,9 @@ export const QueryClientStatsProvider: React.FC<ProviderProps> = ({ queryClient,
   }, [lastMinute, historicalStats]);
 
   React.useEffect(() => {
+    if (historicalStats.length === 0) {
+      return;
+    }
     doReport('Top most requested queries in the last 10 minute window', historicalStats);
   }, [historicalStats, doReport]);
 

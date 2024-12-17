@@ -15,6 +15,7 @@ export const useGetMultisigAccounts = (accountAddress: string | undefined) => {
 
   return useQuery({
     queryKey: getUseGetMultisigAccountsQueryKey(accountAddress),
+    retry: 3,
     queryFn: async () => {
       if (!accountAddress || !multisigClient) return;
       const allInfo = await multisigClient.getMultisigs(new PublicKey(accountAddress));

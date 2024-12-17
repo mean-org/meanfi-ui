@@ -21,8 +21,7 @@ export const AccountDetails = () => {
 
   const onCompleteAccountSelection = useCallback(() => {
     setPopoverVisible(false);
-    navigate('/');
-  }, [navigate]);
+  }, []);
 
   const onCreateSafe = useCallback(() => {
     setPopoverVisible(false);
@@ -31,8 +30,8 @@ export const AccountDetails = () => {
 
   const onDisconnectWallet = useCallback(() => {
     segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
-    navigate('/');
     setSelectedAccount(undefined, true);
+    navigate('/');
     disconnect();
   }, [navigate, setSelectedAccount, disconnect]);
 
@@ -71,15 +70,13 @@ export const AccountDetails = () => {
   };
 
   const bodyContent = (
-    <>
-      <div className='account-selector-popover-content vertical-scroll'>
-        <AccountSelector
-          onAccountSelected={onCompleteAccountSelection}
-          onCreateSafeClick={onCreateSafe}
-          onDisconnectWallet={onDisconnectWallet}
-        />
-      </div>
-    </>
+    <div className='account-selector-popover-content vertical-scroll'>
+      <AccountSelector
+        onAccountSelected={onCompleteAccountSelection}
+        onCreateSafeClick={onCreateSafe}
+        onDisconnectWallet={onDisconnectWallet}
+      />
+    </div>
   );
 
   if (!publicKey) {
@@ -87,21 +84,19 @@ export const AccountDetails = () => {
   }
 
   return (
-    <>
-      <Popover
-        placement={isSmScreen() ? 'topLeft' : 'bottomRight'}
-        content={bodyContent}
-        open={popoverVisible}
-        onOpenChange={handlePopoverVisibleChange}
-        className='account-selector-max-width'
-        trigger='click'
-      >
-        <div className='wallet-wrapper'>
-          <span className='wallet-key'>
-            {selectedAccount.isMultisig ? renderSupersafeAccount() : renderPersonalAccount()}
-          </span>
-        </div>
-      </Popover>
-    </>
+    <Popover
+      placement={isSmScreen() ? 'topLeft' : 'bottomRight'}
+      content={bodyContent}
+      open={popoverVisible}
+      onOpenChange={handlePopoverVisibleChange}
+      className='account-selector-max-width'
+      trigger='click'
+    >
+      <div className='wallet-wrapper'>
+        <span className='wallet-key'>
+          {selectedAccount.isMultisig ? renderSupersafeAccount() : renderPersonalAccount()}
+        </span>
+      </div>
+    </Popover>
   );
 };
