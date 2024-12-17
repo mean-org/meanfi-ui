@@ -23,7 +23,6 @@ import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import type { TokenPrice } from 'src/models/TokenPrice';
 import type { AccountContext, AccountTokenParsedInfo, RuntimeAppDetails, UserTokenAccount } from 'src/models/accounts';
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from 'src/models/enums';
-import type { MultisigVault } from 'src/models/multisig';
 import { type PaymentStreamingStats, type StreamsSummary, initialStats, initialSummary } from 'src/models/streams';
 import type { TreasuryTypeOption } from 'src/models/treasuries';
 import { useAccountAssets } from 'src/query-hooks/accountTokens';
@@ -110,7 +109,6 @@ interface AppStateConfig {
   needReloadMultisigAccounts: boolean;
   selectedMultisig: MultisigInfo | undefined;
   multisigSolBalance: number | undefined;
-  multisigVaults: MultisigVault[];
   highLightableMultisigId: string | undefined;
   pendingMultisigTxCount: number | undefined;
   // Staking
@@ -179,7 +177,6 @@ interface AppStateConfig {
   setMultisigAccounts: (accounts: MultisigInfo[]) => void;
   setSelectedMultisig: (multisig: MultisigInfo | undefined) => void;
   setMultisigSolBalance: (balance: number | undefined) => void;
-  setMultisigVaults: (list: Array<MultisigVault>) => void;
   setHighLightableMultisigId: (id: string | undefined) => void;
   setPendingMultisigTxCount: (id: number | undefined) => void;
   // Staking
@@ -260,7 +257,6 @@ const contextDefaultValues: AppStateConfig = {
   needReloadMultisigAccounts: true,
   selectedMultisig: undefined,
   multisigSolBalance: undefined,
-  multisigVaults: [],
   highLightableMultisigId: undefined,
   pendingMultisigTxCount: undefined,
   // Staking
@@ -328,7 +324,6 @@ const contextDefaultValues: AppStateConfig = {
   setMultisigAccounts: () => {},
   setSelectedMultisig: () => {},
   setMultisigSolBalance: () => {},
-  setMultisigVaults: () => {},
   setHighLightableMultisigId: () => {},
   setPendingMultisigTxCount: () => {},
   // Staking
@@ -400,7 +395,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(
     contextDefaultValues.highLightableStreamId,
   );
-  const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(
     contextDefaultValues.highLightableMultisigId,
   );
@@ -459,7 +453,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
 
   const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
   const { multisigClient } = useMultisigClient();
-  const { tokenList: meanTokenList } = useGetTokenList();
+  const { data: meanTokenList } = useGetTokenList();
   const { prices: priceList, loadingPrices, refetchPrices } = useGetAssetPrices();
   const { userAssets, loadingUserAssets } = useAccountAssets(selectedAccount.address);
   const {
@@ -1148,7 +1142,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       multisigAccounts,
       multisigSolBalance,
       multisigTxs,
-      multisigVaults,
       needReloadMultisigAccounts,
       paymentRateAmount,
       paymentRateFrequency,
@@ -1217,7 +1210,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       setMultisigAccounts,
       setMultisigSolBalance,
       setMultisigTxs,
-      setMultisigVaults,
       setNeedReloadMultisigAccounts,
       setPaymentRateAmount,
       setPaymentRateFrequency,
@@ -1280,7 +1272,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     multisigAccounts,
     multisigSolBalance,
     multisigTxs,
-    multisigVaults,
     needReloadMultisigAccounts,
     paymentRateAmount,
     paymentRateFrequency,

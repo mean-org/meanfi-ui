@@ -1,26 +1,16 @@
-import type { MeanMultisig, MultisigInfo, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
-import { BN } from '@project-serum/anchor';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { type Connection, PublicKey } from '@solana/web3.js';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import type { MultisigInfo, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import type { Connection } from '@solana/web3.js';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { IconArrowForward } from 'src/Icons';
 import { ResumeItem } from 'src/components/ResumeItem';
-import { useNativeAccount } from 'src/contexts/accounts';
 import { AppStateContext } from 'src/contexts/appstate';
-import { appConfig } from 'src/main';
-import { SOL_MINT } from 'src/middleware/ids';
-import { ACCOUNT_LAYOUT } from 'src/middleware/layouts';
 import { consoleOut } from 'src/middleware/ui';
-import { getAmountFromLamports } from 'src/middleware/utils';
 import type { ProgramAccounts } from 'src/models/accounts';
-import type { MultisigVault } from 'src/models/multisig';
 import { SafeInfo } from '../SafeInfo';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
   loadingProposals: boolean;
-  multisigClient: MeanMultisig | undefined;
   onDataToProgramView: (program: ProgramAccounts) => void;
   onProposalSelected: (proposal: MultisigTransaction) => void;
   onEditMultisigClick: () => void;
@@ -32,7 +22,6 @@ export const SafeMeanInfo = (props: {
   const {
     connection,
     loadingProposals,
-    multisigClient,
     onProposalSelected,
     onEditMultisigClick,
     onNewProposalClicked,
@@ -40,121 +29,26 @@ export const SafeMeanInfo = (props: {
     selectedMultisig,
     selectedTab,
   } = props;
-  const { multisigTxs, multisigSolBalance, setMultisigSolBalance, refreshTokenBalance, setMultisigVaults } =
-    useContext(AppStateContext);
-  const { address } = useParams();
-  const { account } = useNativeAccount();
-  const [loadingAssets, setLoadingAssets] = useState(true);
-  const [nativeBalance, setNativeBalance] = useState(0);
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const { multisigTxs, setMultisigSolBalance } = useContext(AppStateContext);
 
   // Tabs
   const [amountOfProposals, setAmountOfProposals] = useState<string>('');
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
-
-  // TODO: Do this better, this kills us
-  const getMultisigVaults = useCallback(
-    async (connection: Connection, multisig: PublicKey) => {
-      const [multisigSigner] = PublicKey.findProgramAddressSync([multisig.toBuffer()], multisigAddressPK);
-
-      const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-        filters: [{ memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, { dataSize: ACCOUNT_LAYOUT.span }],
-      });
-
-      if (!accountInfos?.length) {
-        return [];
-      }
-
-      return accountInfos.map(t => {
-        const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
-        tokenAccount.address = t.pubkey;
-        return tokenAccount;
-      });
-    },
-    [multisigAddressPK],
-  );
-
-  const getSolToken = useCallback(() => {
-    if (!selectedMultisig) {
-      return null;
-    }
-
-    return {
-      mint: SOL_MINT,
-      owner: selectedMultisig.authority,
-      amount: multisigSolBalance && new BN(multisigSolBalance),
-      delegateOption: 0,
-      delegate: undefined,
-      state: 1,
-      isNativeOption: 0,
-      isNative: true,
-      delegatedAmount: 0,
-      closeAuthorityOption: 0,
-      closeAuthority: undefined,
-      address: selectedMultisig.id,
-      decimals: 9,
-    } as unknown as MultisigVault;
-  }, [selectedMultisig, multisigSolBalance]);
-
-  // Get Multisig Vaults
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
-  useEffect(() => {
-    if (!connection || !multisigClient || !address || !selectedMultisig || !loadingAssets) {
-      return;
-    }
-
-    if (address === selectedMultisig.authority.toBase58()) {
-      const solToken = getSolToken();
-
-      getMultisigVaults(connection, selectedMultisig.id)
-        .then(result => {
-          const modifiedResults = new Array<MultisigVault>();
-          if (solToken) {
-            modifiedResults.push(solToken);
-          }
-          for (const item of result) {
-            modifiedResults.push(item);
-          }
-          setMultisigVaults(modifiedResults);
-          consoleOut('Multisig assets', modifiedResults, 'blue');
-        })
-        .catch(err => {
-          console.error(err);
-          if (solToken) {
-            setMultisigVaults([solToken]);
-          }
-        })
-        .finally(() => setLoadingAssets(false));
-    }
-  }, [address, connection, loadingAssets, multisigClient, selectedMultisig]);
-
-  // Keep account balance updated
-  useEffect(() => {
-    if (!(account?.lamports !== previousBalance || !nativeBalance)) {
-      return;
-    }
-    refreshTokenBalance();
-    setNativeBalance(getAmountFromLamports(account?.lamports));
-    setPreviousBalance(account?.lamports);
-  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
 
   // Get multisig SOL balance
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (!connection || !address || !selectedMultisig) {
+    if (!connection || !selectedMultisig) {
       return;
     }
 
-    if (address === selectedMultisig.authority.toBase58()) {
-      connection
-        .getBalance(selectedMultisig.authority)
-        .then(balance => {
-          consoleOut('multisigSolBalance', balance, 'orange');
-          setMultisigSolBalance(balance);
-        })
-        .catch(err => console.error(err));
-    }
-  }, [address, connection, selectedMultisig]);
+    connection
+      .getBalance(selectedMultisig.authority)
+      .then(balance => {
+        consoleOut('multisigSolBalance', balance, 'orange');
+        setMultisigSolBalance(balance);
+      })
+      .catch(err => console.error(err));
+  }, [connection, selectedMultisig]);
 
   useEffect(() => {
     if (multisigTxs && multisigTxs.length > 0) {
@@ -163,17 +57,6 @@ export const SafeMeanInfo = (props: {
       setAmountOfProposals('');
     }
   }, [multisigTxs]);
-
-  useEffect(() => {
-    const loading = !!selectedMultisig;
-    const timeout = setTimeout(() => {
-      setLoadingAssets(loading);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [selectedMultisig]);
 
   // Proposals list
   const renderListOfProposals = useCallback(() => {

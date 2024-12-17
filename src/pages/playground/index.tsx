@@ -2,13 +2,11 @@ import { ArrowRightOutlined, WarningFilled } from '@ant-design/icons';
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import type { Stream, StreamEventData } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   type AccountInfo,
-  type Connection,
   LAMPORTS_PER_SOL,
   type ParsedAccountData,
-  PublicKey,
+  PublicKey
 } from '@solana/web3.js';
 import { Button, Divider, Modal, Space, Tooltip } from 'antd';
 import notification from 'antd/lib/notification';
@@ -47,7 +45,6 @@ import { environment } from 'src/environments/environment';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { getDecimalsFromAccountInfo, isSystemOwnedAccount } from 'src/middleware/accountInfoGetters';
 import { SOL_MINT, SYSTEM_PROGRAM_ID } from 'src/middleware/ids';
-import { ACCOUNT_LAYOUT } from 'src/middleware/layouts';
 import { getReadableStream } from 'src/middleware/token-streaming-utils/get-readable-stream';
 import { getStreamForDebug } from 'src/middleware/token-streaming-utils/get-stream-for-debug';
 import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
@@ -73,7 +70,7 @@ import type { AccountContext } from 'src/models/accounts/AccountContext';
 import { type MultisigAsset, NATIVE_LOADER } from 'src/models/multisig';
 import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
 import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import useMultisigVaults from 'src/query-hooks/multisigVaults';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
@@ -120,16 +117,14 @@ export const PlaygroundView = () => {
   // Multisig
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [assetsAmout, setAssetsAmount] = useState<string>();
-  const [loadingAssets, setLoadingAssets] = useState(true);
   const [multisigAssets, setMultisigAssets] = useState<MultisigAsset[]>([]);
   const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
   const [totalSafeBalance, setTotalSafeBalance] = useState<number | undefined>(undefined);
   const [streamViewerAddress, setStreamViewerAddress] = useState('');
 
   const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), false);
-
-  const { multisigProgramAddressPK } = useMultisigClient();
   const { data: multisigAccounts } = useGetMultisigAccounts(publicKey?.toBase58());
+  const { data: rawMultisigVaults, isPending: loadingAssets, isError } = useMultisigVaults(selectedMultisig?.id);
 
   const { tokenStreamingV2 } = useStreamingClient();
 
@@ -511,27 +506,6 @@ export const PlaygroundView = () => {
     [getTokenPriceByAddress, priceList],
   );
 
-  const getMultisigAssets = useCallback(
-    async (connection: Connection, multisig: PublicKey) => {
-      const [multisigSigner] = PublicKey.findProgramAddressSync([multisig.toBuffer()], multisigProgramAddressPK);
-
-      const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-        filters: [{ memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, { dataSize: ACCOUNT_LAYOUT.span }],
-      });
-
-      if (!accountInfos?.length) {
-        return [];
-      }
-
-      return accountInfos.map(t => {
-        const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
-        tokenAccount.address = t.pubkey;
-        return tokenAccount;
-      });
-    },
-    [multisigProgramAddressPK],
-  );
-
   const solToken = useMemo(() => {
     if (!selectedMultisig) {
       return null;
@@ -657,28 +631,33 @@ export const PlaygroundView = () => {
 
   // Get Multisig assets
   useEffect(() => {
-    if (!connection || !selectedMultisig || !loadingAssets) {
+    if (!selectedMultisig || loadingAssets) {
       return;
     }
 
-    getMultisigAssets(connection, selectedMultisig.id)
-      .then(result => {
-        const modifiedResults = new Array<MultisigAsset>();
-        if (solToken) {
-          modifiedResults.push(solToken);
-        }
-        for (const item of result) {
-          modifiedResults.push(item);
-        }
-        setMultisigAssets(modifiedResults);
-        consoleOut('Multisig assets', modifiedResults, 'blue');
-      })
-      .catch(err => {
-        console.error(err);
-        setMultisigAssets([solToken as MultisigAsset]);
-      })
-      .finally(() => setLoadingAssets(false));
-  }, [connection, getMultisigAssets, loadingAssets, selectedMultisig, solToken]);
+    const modifiedResults = new Array<MultisigAsset>();
+    if (solToken) {
+      modifiedResults.push(solToken);
+    }
+
+    if (isError) {
+      console.error('Error getting multisig vaults');
+      setMultisigAssets(modifiedResults);
+      return;
+    }
+
+    if (!rawMultisigVaults) {
+      setMultisigAssets(modifiedResults);
+      return;
+    }
+
+    for (const item of rawMultisigVaults) {
+      modifiedResults.push(item);
+    }
+
+    setMultisigAssets(modifiedResults);
+    consoleOut('Multisig assets', modifiedResults, 'blue');
+  }, [loadingAssets, rawMultisigVaults, selectedMultisig, solToken, isError]);
 
   // Show amount of assets
   useEffect(() => {

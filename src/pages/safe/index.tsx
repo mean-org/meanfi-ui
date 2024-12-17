@@ -1756,7 +1756,6 @@ const SafeView = (props: {
       <SafeMeanInfo
         connection={connection}
         loadingProposals={loadingProposals}
-        multisigClient={multisigClient}
         onDataToProgramView={goToProgramDetailsHandler}
         onProposalSelected={goToProposalDetailsHandler}
         onEditMultisigClick={onEditMultisigClick}

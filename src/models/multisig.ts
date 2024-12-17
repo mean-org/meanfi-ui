@@ -116,22 +116,6 @@ export type MultisigAsset = {
   state: number;
 };
 
-export type MultisigVault = {
-  address: PublicKey;
-  amount: number;
-  closeAuthority: PublicKey;
-  closeAuthorityOption: number;
-  decimals: number;
-  delegate: PublicKey;
-  delegateOption: number;
-  delegatedAmount: number;
-  isNative: boolean;
-  isNativeOption: number;
-  mint: PublicKey;
-  owner: PublicKey;
-  state: number;
-};
-
 export type MultisigParticipant = {
   address: string;
   name: string;

@@ -17,6 +17,7 @@ import { useNativeAccount } from 'src/contexts/accounts';
 import { AppStateContext } from 'src/contexts/appstate';
 import { consoleOut, toUsCurrency } from 'src/middleware/ui';
 import { getAmountFromLamports, shortenAddress } from 'src/middleware/utils';
+import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 
 export const SafeInfo = (props: {
   onEditMultisigClick?: () => void;
@@ -45,14 +46,16 @@ export const SafeInfo = (props: {
     tabs,
   } = props;
   const { t } = useTranslation('common');
-  const { multisigVaults, selectedAccount, multisigSolBalance, refreshTokenBalance, setActiveTab } =
-    useContext(AppStateContext);
+  const { selectedAccount, multisigSolBalance, setActiveTab } = useContext(AppStateContext);
   const { address } = useParams();
   const { account } = useNativeAccount();
   const [, setSearchParams] = useSearchParams();
   const [selectedLabelName, setSelectedLabelName] = useState('');
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
+  const { data: sourceAccountTokens } = useFetchAccountTokens(selectedAccount.address);
+
+  // Safe Balance
+  const [assetsAmout, setAssetsAmount] = useState<string>();
 
   ////////////////
   ///  MODALS  ///
@@ -70,14 +73,8 @@ export const SafeInfo = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+  }, [account]);
 
   // Safe Name
   useEffect(() => {
@@ -89,6 +86,16 @@ export const SafeInfo = (props: {
       }
     }
   }, [selectedMultisig]);
+
+  useEffect(() => {
+    if (!sourceAccountTokens) return;
+    const assetsCount = sourceAccountTokens.length + 1;
+    if (assetsCount > 1) {
+      setAssetsAmount(`(${assetsCount} assets)`);
+    } else {
+      setAssetsAmount(`(${assetsCount} asset)`);
+    }
+  }, [sourceAccountTokens]);
 
   const renderSafeName = (
     <Row className='d-flex align-items-center'>
@@ -112,19 +119,6 @@ export const SafeInfo = (props: {
       />
     </>
   );
-
-  // Safe Balance
-  const [assetsAmout, setAssetsAmount] = useState<string>();
-
-  // Show amount of assets
-  useEffect(() => {
-    selectedMultisig &&
-      (multisigVaults && multisigVaults.length > 0
-        ? multisigVaults.length > 1
-          ? setAssetsAmount(`(${multisigVaults.length} assets)`)
-          : setAssetsAmount(`(${multisigVaults.length} asset)`)
-        : setAssetsAmount('(0 assets)'));
-  }, [multisigVaults, selectedMultisig]);
 
   const renderSafeBalance =
     totalSafeBalance === undefined ? (
