@@ -34,8 +34,8 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { segmentAnalytics } from 'src/App';
 import { openNotification } from 'src/components/Notifications';
-import { AppUsageEvent } from 'src/middleware/segment-service';
 import { getDefaultRpc } from 'src/services/connections-hq';
+import { AppUsageEvent } from 'src/services/segment-service';
 import { consoleOut, isProd } from '../middleware/ui';
 import { isUnauthenticatedRoute, useLocalStorageState } from '../middleware/utils';
 

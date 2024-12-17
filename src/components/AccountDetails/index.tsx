@@ -7,8 +7,8 @@ import { CREATE_SAFE_ROUTE_PATH } from 'src/app-constants/common';
 import { AccountSelector } from 'src/components/AccountSelector';
 import { useWalletAccount } from 'src/contexts/walletAccount';
 import useWindowSize from 'src/hooks/useWindowResize';
-import { AppUsageEvent } from 'src/middleware/segment-service';
 import { shortenAddress } from 'src/middleware/utils';
+import { AppUsageEvent } from 'src/services/segment-service';
 import './style.scss';
 import { useWallet } from 'src/contexts/wallet';
 

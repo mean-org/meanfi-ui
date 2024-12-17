@@ -28,7 +28,6 @@ import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import { customLogger } from 'src/main';
 import { SOL_MINT } from 'src/middleware/ids';
-import { AppUsageEvent, type SegmentStreamCloseData } from 'src/middleware/segment-service';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -54,6 +53,7 @@ import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { OperationType, TransactionStatus } from 'src/models/enums';
 import type { VestingContractCloseStreamOptions } from 'src/models/vesting';
 import useStreamingClient from 'src/query-hooks/streamingClient';
+import { AppUsageEvent, type SegmentStreamCloseData } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import { StreamCloseModal } from '../StreamCloseModal';
 import { VestingContractStreamDetailModal } from '../VestingContractStreamDetailModal';

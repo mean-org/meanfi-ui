@@ -25,13 +25,13 @@ import { useWallet } from 'src/contexts/wallet';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { customLogger } from 'src/main';
 import { SOL_MINT } from 'src/middleware/ids';
-import { AppUsageEvent } from 'src/middleware/segment-service';
 import { sendTx, signTx } from 'src/middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs, isValidAddress } from 'src/middleware/ui';
 import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'src/middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import { type CreateMultisigTxParams, type CreateNewSafeParams, ZERO_FEES } from 'src/models/multisig';
 import useMultisigClient from 'src/query-hooks/multisigClient';
+import { AppUsageEvent } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
 

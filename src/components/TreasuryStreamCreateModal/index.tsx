@@ -40,9 +40,9 @@ import { TxConfirmationContext } from 'src/contexts/transaction-status';
 import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import { appConfig, customLogger } from 'src/main';
-import { getStreamingAccountMint } from 'src/middleware/getStreamingAccountMint';
-import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
 import { SOL_MINT } from 'src/middleware/ids';
+import { getStreamingAccountMint } from 'src/middleware/token-streaming-utils/getStreamingAccountMint';
+import { getStreamingAccountType } from 'src/middleware/token-streaming-utils/getStreamingAccountType';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,

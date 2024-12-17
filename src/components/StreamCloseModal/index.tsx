@@ -16,7 +16,7 @@ import { InputMean } from 'src/components/InputMean';
 import { AppStateContext } from 'src/contexts/appstate';
 import { useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
-import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
+import { getStreamingAccountType } from 'src/middleware/token-streaming-utils/getStreamingAccountType';
 import { consoleOut, percentage, percentageBn } from 'src/middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';

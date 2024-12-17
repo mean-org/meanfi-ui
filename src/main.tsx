@@ -16,6 +16,7 @@ import { AppConfigService } from 'src/environments/environment';
 import getRuntimeEnv from 'src/environments/getRuntimeEnv';
 import { WagmiProvider } from 'wagmi';
 import App from './App';
+import { QueryClientStatsProvider } from './contexts/queryClientStats';
 import './index.css';
 import { CustomLoggerService } from './services/logger';
 import common_en from './translations/en/common.json';
@@ -29,17 +30,17 @@ import common_vi from './translations/vi/common.json';
 import common_zh from './translations/zh/common.json';
 import { wagmiConfig } from './wagmiConfig';
 
-dayjs.extend(customParseFormat)
-dayjs.extend(advancedFormat)
-dayjs.extend(weekday)
-dayjs.extend(localeData)
-dayjs.extend(weekOfYear)
-dayjs.extend(weekYear)
+dayjs.extend(customParseFormat);
+dayjs.extend(advancedFormat);
+dayjs.extend(weekday);
+dayjs.extend(localeData);
+dayjs.extend(weekOfYear);
+dayjs.extend(weekYear);
 
 export const appConfig = new AppConfigService(getRuntimeEnv().MODE);
-console.log('%cApp version:', 'color:brown', getRuntimeEnv().VITE_VERSION);
-console.log('%cEnvironment:', 'color:brown', getRuntimeEnv().MODE ?? getRuntimeEnv().NODE_ENV);
-console.log('%cProgramId:', 'color:brown', appConfig.getConfig().streamProgramAddress);
+console.info('%cApp version:', 'color:brown', getRuntimeEnv().VITE_VERSION);
+console.info('%cEnvironment:', 'color:brown', getRuntimeEnv().MODE ?? getRuntimeEnv().NODE_ENV);
+console.info('%cProgramId:', 'color:brown', appConfig.getConfig().streamProgramAddress);
 
 export const customLogger = new CustomLoggerService();
 
@@ -86,9 +87,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <I18nextProvider i18n={i18next}>
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider>
-            <App />
-          </RainbowKitProvider>
+          <QueryClientStatsProvider queryClient={queryClient}>
+            <RainbowKitProvider>
+              <App />
+            </RainbowKitProvider>
+          </QueryClientStatsProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </I18nextProvider>

@@ -2,7 +2,7 @@ import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from 'src/contexts/wallet';
 import { segmentAnalytics } from '../../App';
-import { AppUsageEvent } from '../../middleware/segment-service';
+import { AppUsageEvent } from '../../services/segment-service';
 
 export const ConnectButton = () => {
   const { connected, connect } = useWallet();

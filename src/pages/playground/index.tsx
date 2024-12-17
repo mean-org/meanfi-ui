@@ -46,11 +46,11 @@ import { useWalletAccount } from 'src/contexts/walletAccount';
 import { environment } from 'src/environments/environment';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { getDecimalsFromAccountInfo, isSystemOwnedAccount } from 'src/middleware/accountInfoGetters';
-import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
 import { SOL_MINT, SYSTEM_PROGRAM_ID } from 'src/middleware/ids';
 import { ACCOUNT_LAYOUT } from 'src/middleware/layouts';
-import { getStreamForDebug } from 'src/middleware/stream-debug-middleware';
-import { getReadableStream } from 'src/middleware/streams';
+import { getReadableStream } from 'src/middleware/token-streaming-utils/get-readable-stream';
+import { getStreamForDebug } from 'src/middleware/token-streaming-utils/get-stream-for-debug';
+import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
 import {
   consoleOut,
   delay,
@@ -71,13 +71,13 @@ import {
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import type { AccountContext } from 'src/models/accounts/AccountContext';
 import { type MultisigAsset, NATIVE_LOADER } from 'src/models/multisig';
+import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
 import { VestingContractStreamDetailModal } from '../vesting/components/VestingContractStreamDetailModal';
 import './style.scss';
-import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
-import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 
 type TabOption = 'first-tab' | 'test-stream' | 'account-info' | 'multisig-tab' | 'misc-tab' | undefined;
 type StreamViewerOption = 'treasurer' | 'beneficiary';

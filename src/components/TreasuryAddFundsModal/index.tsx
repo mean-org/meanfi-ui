@@ -22,10 +22,10 @@ import { InputMean } from 'src/components/InputMean';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
-import { getStreamingAccountId } from 'src/middleware/getStreamingAccountId';
-import { getStreamingAccountMint } from 'src/middleware/getStreamingAccountMint';
-import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
 import { SOL_MINT } from 'src/middleware/ids';
+import { getStreamingAccountId } from 'src/middleware/token-streaming-utils/getStreamingAccountId';
+import { getStreamingAccountMint } from 'src/middleware/token-streaming-utils/getStreamingAccountMint';
+import { getStreamingAccountType } from 'src/middleware/token-streaming-utils/getStreamingAccountType';
 import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'src/middleware/ui';
 import {
   displayAmountWithSymbol,

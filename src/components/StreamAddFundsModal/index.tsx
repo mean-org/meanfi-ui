@@ -18,8 +18,8 @@ import { InputMean } from 'src/components/InputMean';
 import { AppStateContext } from 'src/contexts/appstate';
 import { useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
-import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
 import { SOL_MINT } from 'src/middleware/ids';
+import { getStreamingAccountType } from 'src/middleware/token-streaming-utils/getStreamingAccountType';
 import { consoleOut, toUsCurrency } from 'src/middleware/ui';
 import {
   cutNumber,

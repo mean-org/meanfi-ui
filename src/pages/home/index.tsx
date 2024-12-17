@@ -88,10 +88,9 @@ import { type CreateSafeAssetTxParams, createAddSafeAssetTx } from 'src/middlewa
 import { createCloseTokenAccountTx } from 'src/middleware/createCloseTokenAccountTx';
 import createTokenTransferTx from 'src/middleware/createTokenTransferTx';
 import { createV0InitAtaAccountTx } from 'src/middleware/createV0InitAtaAccountTx';
-import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
 import { type MappedTransaction, fetchAccountHistory } from 'src/middleware/history';
 import { SOL_MINT } from 'src/middleware/ids';
-import { AppUsageEvent } from 'src/middleware/segment-service';
+import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -139,6 +138,7 @@ import { INITIAL_TREASURIES_SUMMARY, type UserTreasuriesSummary } from 'src/mode
 import useGetAccountPrograms from 'src/query-hooks/accountPrograms';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
+import { AppUsageEvent } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import { AppsList } from 'src/views/AppsList';
 import { AssetActivity } from 'src/views/AssetActivity';
@@ -898,6 +898,8 @@ export const HomeView = () => {
     // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
     (param: any) => {
       const item = param as TxConfirmationInfo;
+      if (!item) return;
+
       const turnOffLockWorkflow = () => {
         isWorkflowLocked = false;
       };
@@ -936,48 +938,46 @@ export const HomeView = () => {
         });
       };
 
-      if (item) {
-        if (isWorkflowLocked) {
-          return;
-        }
+      if (isWorkflowLocked) {
+        return;
+      }
 
-        // Lock the workflow
-        if (item?.extras?.multisigAuthority) {
-          isWorkflowLocked = true;
-        }
+      // Lock the workflow
+      if (item?.extras?.multisigAuthority) {
+        isWorkflowLocked = true;
+      }
 
-        recordTxConfirmationSuccess(item);
-        switch (item.operationType) {
-          case OperationType.CreateMultisig:
-          case OperationType.CreateTransaction:
-            logEventHandling(item);
+      recordTxConfirmationSuccess(item);
+      switch (item.operationType) {
+        case OperationType.CreateMultisig:
+        case OperationType.CreateTransaction:
+          logEventHandling(item);
+          refreshMultisigs();
+          break;
+        case OperationType.Wrap:
+        case OperationType.Unwrap:
+        case OperationType.Transfer:
+          logEventHandling(item);
+          setIsBusy(false);
+          accountRefresh();
+          break;
+        case OperationType.CreateAsset:
+        case OperationType.StreamCreate:
+        case OperationType.CloseTokenAccount:
+          logEventHandling(item);
+          accountRefresh();
+          break;
+        case OperationType.DeleteAsset:
+        case OperationType.SetAssetAuthority:
+        case OperationType.TransferTokens:
+          logEventHandling(item);
+          if (item?.extras?.multisigAuthority) {
             refreshMultisigs();
-            break;
-          case OperationType.Wrap:
-          case OperationType.Unwrap:
-          case OperationType.Transfer:
-            logEventHandling(item);
-            setIsBusy(false);
-            accountRefresh();
-            break;
-          case OperationType.CreateAsset:
-          case OperationType.StreamCreate:
-          case OperationType.CloseTokenAccount:
-            logEventHandling(item);
-            accountRefresh();
-            break;
-          case OperationType.DeleteAsset:
-          case OperationType.SetAssetAuthority:
-          case OperationType.TransferTokens:
-            logEventHandling(item);
-            if (item?.extras?.multisigAuthority) {
-              refreshMultisigs();
-              notifyMultisigActionFollowup(item);
-            }
-            break;
-          default:
-            break;
-        }
+            notifyMultisigActionFollowup(item);
+          }
+          break;
+        default:
+          break;
       }
     },
     [logEventHandling, navigate, recordTxConfirmationSuccess, refreshMultisigs, accountRefresh],
@@ -994,11 +994,10 @@ export const HomeView = () => {
         if (item.operationType === OperationType.Unwrap || item.operationType === OperationType.TransferTokens) {
           setIsBusy(false);
         }
-        accountRefresh();
       }
       resetTransactionStatus();
     },
-    [recordTxConfirmationFailure, resetTransactionStatus, accountRefresh],
+    [recordTxConfirmationFailure, resetTransactionStatus],
   );
 
   // Filter only useful Txs for the SOL account and return count

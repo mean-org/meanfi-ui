@@ -14,7 +14,6 @@ import { useConnection } from 'src/contexts/connection';
 import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'src/contexts/transaction-status';
 import { useWallet } from 'src/contexts/wallet';
 import { customLogger } from 'src/main';
-import { AppUsageEvent, type SegmentStakeMeanData } from 'src/middleware/segment-service';
 import { composeTxWithPrioritizationFees, sendTx, signTx } from 'src/middleware/transactions';
 import { consoleOut, getTransactionStatusForLogs } from 'src/middleware/ui';
 import {
@@ -27,6 +26,7 @@ import {
 } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
+import { AppUsageEvent, type SegmentStakeMeanData } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import useRealmsDeposit from './useRealmsDeposit';
 import useUnstakeQuote from './useUnstakeQuote';

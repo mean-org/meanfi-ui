@@ -8,10 +8,9 @@ import getIsV2Stream from './getIsV2Stream';
 const getRateAmountBn = (stream: Stream | StreamInfo, selectedToken: TokenInfo | undefined) => {
   if (stream && selectedToken) {
     const isV2Stream = getIsV2Stream(stream);
-    const rateAmount = isV2Stream
+    return isV2Stream
       ? (stream.rateAmount as BN)
       : toTokenAmountBn(stream.rateAmount as number, selectedToken.decimals);
-    return rateAmount;
   }
 
   return new BN(0);

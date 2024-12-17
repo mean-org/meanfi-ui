@@ -13,11 +13,11 @@ import {
 } from 'src/app-constants/common';
 import { AddressDisplay } from 'src/components/AddressDisplay';
 import { Identicon } from 'src/components/Identicon';
-import getStreamStartDate from 'src/components/common/getStreamStartDate';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
-import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
+import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
+import getStreamStartDate from 'src/middleware/token-streaming-utils/getStreamStartDate';
 import {
   getIntervalFromSeconds,
   getReadableDate,

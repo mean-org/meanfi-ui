@@ -30,9 +30,6 @@ import { MoneyStreamDetails } from 'src/components/MoneyStreamDetails';
 import { openNotification } from 'src/components/Notifications';
 import { StreamTransferOpenModal, type StreamTransferPayload } from 'src/components/StreamTransferOpenModal';
 import { StreamWithdrawModal } from 'src/components/StreamWithdrawModal';
-import getStreamWithdrawableAmount from 'src/components/common/getStreamWithdrawableAmount';
-import getV1Beneficiary from 'src/components/common/getV1Beneficiary';
-import getV2Beneficiary from 'src/components/common/getV2Beneficiary';
 import { useNativeAccount } from 'src/contexts/accounts';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getSolanaExplorerClusterParam, useConnection } from 'src/contexts/connection';
@@ -40,14 +37,12 @@ import { TxConfirmationContext } from 'src/contexts/transaction-status';
 import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import { customLogger } from 'src/main';
-import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
 import { SOL_MINT } from 'src/middleware/ids';
-import {
-  AppUsageEvent,
-  type SegmentStreamTransferOwnershipData,
-  type SegmentStreamWithdrawData,
-} from 'src/middleware/segment-service';
 import { getStreamStatus } from 'src/middleware/streamHelpers';
+import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
+import getStreamWithdrawableAmount from 'src/middleware/token-streaming-utils/getStreamWithdrawableAmount';
+import getV1Beneficiary from 'src/middleware/token-streaming-utils/getV1Beneficiary';
+import getV2Beneficiary from 'src/middleware/token-streaming-utils/getV2Beneficiary';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -75,6 +70,11 @@ import { OperationType, TransactionStatus } from 'src/models/enums';
 import type { StreamWithdrawData, WithdrawFromStreamParams } from 'src/models/streams';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
+import {
+  AppUsageEvent,
+  type SegmentStreamTransferOwnershipData,
+  type SegmentStreamWithdrawData,
+} from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

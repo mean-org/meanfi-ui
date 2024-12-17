@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { InputMean } from 'src/components/InputMean';
 import { AppStateContext } from 'src/contexts/appstate';
 import { useWallet } from 'src/contexts/wallet';
-import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
+import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
 import { percentage, percentageBn } from 'src/middleware/ui';
 import { getAmountWithSymbol, toUiAmount } from 'src/middleware/utils';
 

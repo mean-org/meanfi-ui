@@ -71,13 +71,13 @@ import useLocalStorage from 'src/hooks/useLocalStorage';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { customLogger } from 'src/main';
 import { getTokenAccountBalanceByAddress } from 'src/middleware/accounts';
-import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
-import { getStreamingAccountId } from 'src/middleware/getStreamingAccountId';
-import { getStreamingAccountMint } from 'src/middleware/getStreamingAccountMint';
-import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
 import { SOL_MINT } from 'src/middleware/ids';
 import { getStreamStatusLabel } from 'src/middleware/streamHelpers';
-import { getStreamTitle } from 'src/middleware/streams';
+import { getStreamTitle } from 'src/middleware/token-streaming-utils/get-stream-title';
+import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
+import { getStreamingAccountId } from 'src/middleware/token-streaming-utils/getStreamingAccountId';
+import { getStreamingAccountMint } from 'src/middleware/token-streaming-utils/getStreamingAccountMint';
+import { getStreamingAccountType } from 'src/middleware/token-streaming-utils/getStreamingAccountType';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,

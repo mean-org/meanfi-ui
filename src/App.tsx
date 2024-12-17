@@ -29,9 +29,9 @@ import { AccountsProvider } from './contexts/accounts';
 import AppStateProvider from './contexts/appstate';
 import { ConnectionProvider } from './contexts/connection';
 import TxConfirmationProvider from './contexts/transaction-status';
-import { SegmentAnalyticsService } from './middleware/segment-service';
 import { isLocal } from './middleware/ui';
 import { refreshCachedRpc } from './services/connections-hq';
+import { SegmentAnalyticsService } from './services/segment-service';
 
 const { Content } = Layout;
 export const segmentAnalytics = new SegmentAnalyticsService();
