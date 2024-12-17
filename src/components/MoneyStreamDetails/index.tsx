@@ -26,19 +26,21 @@ import type { CountdownRendererParams } from 'src/components/CountdownTimer/Coun
 import { Identicon } from 'src/components/Identicon';
 import { ResumeItem } from 'src/components/ResumeItem';
 import { RightInfoDetails } from 'src/components/RightInfoDetails';
-import getIsV2Stream from 'src/components/common/getIsV2Stream';
-import getIsV2Treasury from 'src/components/common/getIsV2Treasury';
-import getRateAmountBn from 'src/components/common/getRateAmountBn';
-import getStreamStartDate from 'src/components/common/getStreamStartDate';
-import getV1Beneficiary from 'src/components/common/getV1Beneficiary';
-import getV2Beneficiary from 'src/components/common/getV2Beneficiary';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
+import { useWallet } from 'src/contexts/wallet';
 import useWindowSize from 'src/hooks/useWindowResize';
-import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
-import { getStreamingAccountId } from 'src/middleware/getStreamingAccountId';
 import { getStreamStatus, getStreamStatusLabel } from 'src/middleware/streamHelpers';
-import { getStreamStatusResume, getStreamTitle } from 'src/middleware/streams';
+import { getStreamStatusResume } from 'src/middleware/token-streaming-utils/get-stream-status-resume';
+import { getStreamTitle } from 'src/middleware/token-streaming-utils/get-stream-title';
+import getIsV2Stream from 'src/middleware/token-streaming-utils/getIsV2Stream';
+import getIsV2Treasury from 'src/middleware/token-streaming-utils/getIsV2Treasury';
+import getRateAmountBn from 'src/middleware/token-streaming-utils/getRateAmountBn';
+import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
+import getStreamStartDate from 'src/middleware/token-streaming-utils/getStreamStartDate';
+import { getStreamingAccountId } from 'src/middleware/token-streaming-utils/getStreamingAccountId';
+import getV1Beneficiary from 'src/middleware/token-streaming-utils/getV1Beneficiary';
+import getV2Beneficiary from 'src/middleware/token-streaming-utils/getV2Beneficiary';
 import {
   consoleOut,
   getIntervalFromSeconds,
@@ -52,7 +54,6 @@ import { getCategoryLabelByValue } from 'src/models/vesting';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
-import { useWallet } from 'src/contexts/wallet';
 
 export const MoneyStreamDetails = (props: {
   accountAddress: string;

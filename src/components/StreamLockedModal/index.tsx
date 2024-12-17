@@ -13,7 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
-import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
+import { getStreamingAccountType } from 'src/middleware/token-streaming-utils/getStreamingAccountType';
 import { consoleOut } from 'src/middleware/ui';
 import type { StreamTreasuryType } from 'src/models/treasuries';
 

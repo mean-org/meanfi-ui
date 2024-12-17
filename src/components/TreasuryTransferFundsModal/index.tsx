@@ -14,9 +14,9 @@ import { InputMean } from 'src/components/InputMean';
 import { TokenDisplay } from 'src/components/TokenDisplay';
 import { AppStateContext } from 'src/contexts/appstate';
 import { useWallet } from 'src/contexts/wallet';
-import { getStreamingAccountMint } from 'src/middleware/getStreamingAccountMint';
-import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
 import { SOL_MINT } from 'src/middleware/ids';
+import { getStreamingAccountMint } from 'src/middleware/token-streaming-utils/getStreamingAccountMint';
+import { getStreamingAccountType } from 'src/middleware/token-streaming-utils/getStreamingAccountType';
 import { isError } from 'src/middleware/transactions';
 import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from 'src/middleware/ui';
 import {

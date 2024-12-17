@@ -62,15 +62,6 @@ import { getTokenAccountBalanceByAddress } from 'src/middleware/accounts';
 import { saveAppData } from 'src/middleware/appPersistedData';
 import { SOL_MINT } from 'src/middleware/ids';
 import {
-  AppUsageEvent,
-  type SegmentRefreshAccountBalanceData,
-  type SegmentStreamAddFundsData,
-  type SegmentStreamCreateData,
-  type SegmentVestingContractCloseData,
-  type SegmentVestingContractCreateData,
-  type SegmentVestingContractWithdrawData,
-} from 'src/middleware/segment-service';
-import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
   composeTxWithPrioritizationFees,
@@ -122,6 +113,15 @@ import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import { useGetVestingContracts } from 'src/query-hooks/vestingContract';
 import { objectToJson } from 'src/services/logger';
+import {
+  AppUsageEvent,
+  type SegmentRefreshAccountBalanceData,
+  type SegmentStreamAddFundsData,
+  type SegmentStreamCreateData,
+  type SegmentVestingContractCloseData,
+  type SegmentVestingContractCreateData,
+  type SegmentVestingContractWithdrawData,
+} from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import { VestingContractActivity } from './components/VestingContractActivity';
 import { VestingContractAddFundsModal } from './components/VestingContractAddFundsModal';

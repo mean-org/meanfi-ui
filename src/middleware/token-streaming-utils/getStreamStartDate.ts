@@ -1,7 +1,7 @@
 import type { StreamInfo } from '@mean-dao/money-streaming';
 import type { Stream } from '@mean-dao/payment-streaming';
+import isStartDateFuture from 'src/middleware/token-streaming-utils/isStartDateFuture';
 import { getReadableDate } from 'src/middleware/ui';
-import isStartDateFuture from './isStartDateFuture';
 
 const getStreamStartDate = (stream: Stream | StreamInfo | undefined) => {
   if (!stream) {

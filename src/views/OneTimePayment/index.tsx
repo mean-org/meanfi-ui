@@ -34,7 +34,6 @@ import { TxConfirmationContext, confirmationEvents } from 'src/contexts/transact
 import { useWallet } from 'src/contexts/wallet';
 import { customLogger } from 'src/main';
 import { SOL_MINT } from 'src/middleware/ids';
-import { AppUsageEvent, type SegmentStreamOTPTransferData } from 'src/middleware/segment-service';
 import { composeTxWithPrioritizationFees, sendTx, signTx } from 'src/middleware/transactions';
 import {
   addMinutes,
@@ -61,6 +60,7 @@ import type { RecipientAddressInfo } from 'src/models/common-types';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import type { OtpTxParams } from 'src/models/transfers';
 import useStreamingClient from 'src/query-hooks/streamingClient';
+import { AppUsageEvent, type SegmentStreamOTPTransferData } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 
 const { Option } = Select;

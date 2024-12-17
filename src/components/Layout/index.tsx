@@ -33,11 +33,11 @@ import { TxConfirmationContext } from 'src/contexts/transaction-status';
 import { environment } from 'src/environments/environment';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import { reportConnectedAccount } from 'src/middleware/api';
-import { AppUsageEvent } from 'src/middleware/segment-service';
 import { consoleOut, isProd, isValidAddress } from 'src/middleware/ui';
 import { isUnauthenticatedRoute } from 'src/middleware/utils';
 import type { RuntimeAppDetails } from 'src/models/accounts';
 import useGetPerformanceSamples from 'src/query-hooks/performanceSamples';
+import { AppUsageEvent } from 'src/services/segment-service';
 import './style.scss';
 import { useWallet } from 'src/contexts/wallet';
 
@@ -291,9 +291,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
     );
   };
 
-  if (isUnauthenticatedRoute(location.pathname) || selectedAccount.address) {
-    // Launch the Account selector modal
-
+  if (selectedAccount.address || isUnauthenticatedRoute(location.pathname)) {
     // Render layout
     return (
       <>

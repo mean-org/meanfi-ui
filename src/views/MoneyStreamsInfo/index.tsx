@@ -59,11 +59,12 @@ import useLocalStorage from 'src/hooks/useLocalStorage';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { customLogger } from 'src/main';
 import { saveAppData } from 'src/middleware/appPersistedData';
-import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
-import { getStreamingAccountId } from 'src/middleware/getStreamingAccountId';
-import { getStreamingAccountOwner } from 'src/middleware/getStreamingAccountOwner';
 import { SOL_MINT } from 'src/middleware/ids';
-import { getStreamTitle } from 'src/middleware/streams';
+import { getStreamCategory, getStreamStatusLabel, isV2Stream } from 'src/middleware/streamHelpers';
+import { getStreamTitle } from 'src/middleware/token-streaming-utils/get-stream-title';
+import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
+import { getStreamingAccountId } from 'src/middleware/token-streaming-utils/getStreamingAccountId';
+import { getStreamingAccountOwner } from 'src/middleware/token-streaming-utils/getStreamingAccountOwner';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -99,12 +100,11 @@ import { ZERO_FEES } from 'src/models/multisig';
 import type { StreamsSummary } from 'src/models/streams';
 import type { TreasuryCreateOptions, UserTreasuriesSummary } from 'src/models/treasuries';
 import type { AddFundsParams } from 'src/models/vesting';
+import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
-import { getStreamCategory, getStreamStatusLabel, isV2Stream } from 'src/middleware/streamHelpers';
-import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 
 interface MoneyStreamsInfoViewProps {
   loadingStreams: boolean;

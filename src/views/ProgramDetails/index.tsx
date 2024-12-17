@@ -33,7 +33,6 @@ import useLocalStorage from 'src/hooks/useLocalStorage';
 import { customLogger } from 'src/main';
 import { resolveParsedAccountInfo } from 'src/middleware/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'src/middleware/ids';
-import { AppUsageEvent } from 'src/middleware/segment-service';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -54,6 +53,7 @@ import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import type { SetProgramAuthPayload } from 'src/models/multisig';
 import type { ProgramUpgradeParams } from 'src/models/programs';
 import useMultisigClient from 'src/query-hooks/multisigClient';
+import { AppUsageEvent } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import IdlTree from './IdlTree';
 import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutableModal';

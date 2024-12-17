@@ -1,5 +1,5 @@
 import type { Analytics } from '@segment/analytics-next';
-import { consoleOut } from './ui';
+import { consoleOut } from '../middleware/ui';
 
 export enum AppUsageEvent {
   // Sitewide Actions

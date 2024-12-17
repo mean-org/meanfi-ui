@@ -37,7 +37,6 @@ import { useWallet } from 'src/contexts/wallet';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { customLogger } from 'src/main';
 import { SOL_MINT } from 'src/middleware/ids';
-import { AppUsageEvent, type SegmentStreamRPTransferData } from 'src/middleware/segment-service';
 import { sendTx, signTx } from 'src/middleware/transactions';
 import {
   consoleOut,
@@ -68,6 +67,7 @@ import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import type { RecipientAddressInfo } from 'src/models/common-types';
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from 'src/models/enums';
 import useStreamingClient from 'src/query-hooks/streamingClient';
+import { AppUsageEvent, type SegmentStreamRPTransferData } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 
 interface RepeatingPaymentProps {

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { openNotification } from 'src/components/Notifications';
 import { consoleOut } from 'src/middleware/ui';
 import {
   type AccountContext,
@@ -123,12 +122,6 @@ const useAppNavigation = ({ selectedAccount }: Args) => {
 
     // if opening safe from personal account go to personal account, show error
     if (!selectedAccount.isMultisig && pathname.startsWith(`/${RegisteredAppPaths.SuperSafe}`)) {
-      openNotification({
-        title: 'Access forbidden',
-        description:
-          'You are trying to access the SuperSafe App from your personal account. To use the SuperSafe feature please connect with a signer account and try again.',
-        type: 'warning',
-      });
       navigate('/my-account');
       return;
     }
@@ -152,12 +145,7 @@ const useAppNavigation = ({ selectedAccount }: Args) => {
     // Go to account if route is root
 
     if (pathname === '/') {
-      let url = '';
-      if (selectedAccount.isMultisig) {
-        url = `/${RegisteredAppPaths.SuperSafe}?v=proposals`;
-      } else {
-        url = '/my-account';
-      }
+      const url = selectedAccount.isMultisig ? `/${RegisteredAppPaths.SuperSafe}?v=proposals` : '/my-account';
 
       consoleOut('Root route, redirecting to:', url, 'crimson');
 

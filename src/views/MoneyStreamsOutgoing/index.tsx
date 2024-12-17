@@ -43,15 +43,10 @@ import { TxConfirmationContext } from 'src/contexts/transaction-status';
 import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import { customLogger } from 'src/main';
-import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
-import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
 import { SOL_MINT } from 'src/middleware/ids';
-import {
-  AppUsageEvent,
-  type SegmentStreamAddFundsData,
-  type SegmentStreamCloseData,
-} from 'src/middleware/segment-service';
 import { getStreamStatus } from 'src/middleware/streamHelpers';
+import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
+import { getStreamingAccountType } from 'src/middleware/token-streaming-utils/getStreamingAccountType';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -83,6 +78,11 @@ import type { CloseStreamTransactionParams, StreamTreasuryType } from 'src/model
 import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 import useMultisigClient from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
+import {
+  AppUsageEvent,
+  type SegmentStreamAddFundsData,
+  type SegmentStreamCloseData,
+} from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

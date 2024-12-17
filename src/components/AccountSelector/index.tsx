@@ -3,12 +3,10 @@ import { Button, Dropdown, type MenuProps, Spin, Tooltip } from 'antd';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconCheck, IconCopy, IconLoading, IconVerticalEllipsis } from 'src/Icons';
-import { Identicon } from 'src/components/Identicon';
 import { openNotification } from 'src/components/Notifications';
 import { AppStateContext } from 'src/contexts/appstate';
 import { useWallet } from 'src/contexts/wallet';
 import { useWalletAccount } from 'src/contexts/walletAccount';
-import { SYSTEM_PROGRAM_ID } from 'src/middleware/ids';
 import { consoleOut, copyText, kFormatter, toUsCurrency } from 'src/middleware/ui';
 import { shortenAddress } from 'src/middleware/utils';
 import type { AccountContext } from 'src/models/accounts';
@@ -51,11 +49,11 @@ export const AccountSelector = (props: {
       return;
     }
 
-    let sumMeanTokens = 0;
+    let sumTokenValues = 0;
     for (const asset of accountTokens) {
-      sumMeanTokens += asset.valueInUsd || 0;
+      sumTokenValues += asset.valueInUsd || 0;
     }
-    setTotalTokenAccountsValue(sumMeanTokens);
+    setTotalTokenAccountsValue(sumTokenValues);
   }, [accountTokens]);
 
   const onCopyAddress = (address: string) => {
@@ -78,7 +76,6 @@ export const AccountSelector = (props: {
         name: 'Personal account',
         address: publicKey.toBase58(),
         isMultisig: false,
-        owner: SYSTEM_PROGRAM_ID.toBase58(),
       };
       consoleOut('Setting selectedAccount onNativeAccountSelected:', account, 'crimson');
       setSelectedAccount(account);
@@ -94,7 +91,6 @@ export const AccountSelector = (props: {
         name: item.label,
         address: item.authority.toBase58(),
         isMultisig: true,
-        owner: publicKey.toBase58(),
       };
       consoleOut('Setting selectedAccount onMultisigAccountSelected:', account, 'crimson');
       setSelectedAccount(account);
@@ -110,7 +106,6 @@ export const AccountSelector = (props: {
         name: 'Personal account',
         address: publicKey.toBase58(),
         isMultisig: false,
-        owner: SYSTEM_PROGRAM_ID.toBase58(),
       };
       consoleOut('Setting native account onCreateSafe:', account, 'crimson');
       setSelectedAccount(account);
@@ -128,35 +123,6 @@ export const AccountSelector = (props: {
     }
 
     return <span className='dimmed'>{kFormatter(item.pendingTxsAmount)} queued</span>;
-  };
-
-  const renderMultisigIcon = (item: MultisigInfo) => {
-    if (item.version === 0) {
-      return (
-        <Tooltip placement='rightTop' title='Serum Multisig'>
-          <img
-            src='https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png'
-            alt='Serum'
-            width={30}
-            height={30}
-          />
-        </Tooltip>
-      );
-    }
-    if (item.version === 2) {
-      return (
-        <Tooltip placement='rightTop' title='Meanfi Multisig'>
-          <img
-            src='https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg'
-            alt='Meanfi Multisig'
-            width={30}
-            height={30}
-          />
-        </Tooltip>
-      );
-    }
-
-    return <Identicon address={item.id} style={{ width: '30', height: '30', display: 'inline-flex' }} />;
   };
 
   const renderNativeAccountOptions = () => {
@@ -337,7 +303,14 @@ export const AccountSelector = (props: {
                     )}
                   </div>
                   <div className='icon-cell' onKeyDown={() => {}} onClick={() => onMultisigAccountSelected(item)}>
-                    {renderMultisigIcon(item)}
+                    <Tooltip placement='rightTop' title='Meanfi Multisig'>
+                      <img
+                        src='https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg'
+                        alt='Meanfi Multisig'
+                        width={30}
+                        height={30}
+                      />
+                    </Tooltip>
                     {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
                       <span className='status warning bottom-right' />
                     ) : null}
