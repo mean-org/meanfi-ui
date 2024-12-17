@@ -5,7 +5,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { IconLoading } from 'src/Icons'
+import { IconLoading } from 'src/Icons';
 import { IconHelpCircle } from 'src/Icons/IconHelpCircle';
 import { ONE_MINUTE_REFRESH_TIMEOUT } from 'src/app-constants/common';
 import { MEAN_TOKEN_LIST } from 'src/app-constants/tokens';
@@ -71,13 +71,7 @@ const StakingView = () => {
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(
-    () =>
-      new StakingClient(
-        getDefaultRpc().cluster,
-        connection.rpcEndpoint,
-        publicKey,
-        failsafeConnectionConfig,
-      ),
+    () => new StakingClient(getDefaultRpc().cluster, connection.rpcEndpoint, publicKey, failsafeConnectionConfig),
     [connection.rpcEndpoint, publicKey],
   );
 

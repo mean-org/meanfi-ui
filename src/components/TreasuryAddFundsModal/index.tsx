@@ -8,7 +8,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconHelpCircle } from 'src/Icons'
+import { IconHelpCircle } from 'src/Icons';
 import {
   FALLBACK_COIN_IMAGE,
   MIN_SOL_BALANCE_REQUIRED,

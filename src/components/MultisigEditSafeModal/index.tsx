@@ -131,7 +131,8 @@ export const MultisigEditSafeModal = (props: {
   };
 
   const isFormValid = () => {
-    return !!(multisigTitle &&
+    return !!(
+      multisigTitle &&
       multisigThreshold &&
       multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
       multisigLabel &&
@@ -139,7 +140,8 @@ export const MultisigEditSafeModal = (props: {
       multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
       isOwnersListValid() &&
       isFormDirty() &&
-      noDuplicateExists(multisigOwners));
+      noDuplicateExists(multisigOwners)
+    );
   };
 
   const getTransactionStartButtonLabel = () => {

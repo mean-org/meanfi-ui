@@ -5,7 +5,7 @@ import BigNumber from 'bignumber.js';
 import type React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconLoading } from 'src/Icons'
+import { IconLoading } from 'src/Icons';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
 import { AddressDisplay } from 'src/components/AddressDisplay';
 import { Identicon } from 'src/components/Identicon';

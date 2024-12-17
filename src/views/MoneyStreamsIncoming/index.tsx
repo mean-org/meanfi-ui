@@ -24,7 +24,7 @@ import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { segmentAnalytics } from 'src/App';
-import { IconEllipsisVertical } from 'src/Icons'
+import { IconEllipsisVertical } from 'src/Icons';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
 import { MoneyStreamDetails } from 'src/components/MoneyStreamDetails';
 import { openNotification } from 'src/components/Notifications';

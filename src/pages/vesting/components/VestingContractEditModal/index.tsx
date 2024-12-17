@@ -2,13 +2,23 @@ import { LoadingOutlined } from '@ant-design/icons';
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import type { PaymentStreamingAccount, StreamTemplate, TransactionFees } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import { Button, Checkbox, DatePicker, type DatePickerProps, Dropdown, Modal, Spin, TimePicker, type TimePickerProps } from 'antd';
+import {
+  Button,
+  Checkbox,
+  DatePicker,
+  type DatePickerProps,
+  Dropdown,
+  Modal,
+  Spin,
+  TimePicker,
+  type TimePickerProps,
+} from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 import dayjs from 'dayjs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconCaretDown } from 'src/Icons'
+import { IconCaretDown } from 'src/Icons';
 import { DATEPICKER_FORMAT, MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
 import { FormLabelWithIconInfo } from 'src/components/FormLabelWithIconInfo';
 import { Identicon } from 'src/components/Identicon';
@@ -229,11 +239,13 @@ export const VestingContractEditModal = (props: {
   };
 
   const isFormValid = (): boolean => {
-    return !!(publicKey &&
+    return !!(
+      publicKey &&
       (proposalTitle || !isMultisigContext) &&
       lockPeriodAmount &&
       Number.parseFloat(lockPeriodAmount) > 0 &&
-      lockPeriodFrequency);
+      lockPeriodFrequency
+    );
   };
 
   ///////////////

@@ -28,7 +28,7 @@ import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { segmentAnalytics } from 'src/App';
-import { IconEllipsisVertical } from 'src/Icons'
+import { IconEllipsisVertical } from 'src/Icons';
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
 import { NATIVE_SOL } from 'src/app-constants/tokens';
 import { MoneyStreamDetails } from 'src/components/MoneyStreamDetails';
@@ -46,7 +46,11 @@ import { customLogger } from 'src/main';
 import { getStreamAssociatedMint } from 'src/middleware/getStreamAssociatedMint';
 import { getStreamingAccountType } from 'src/middleware/getStreamingAccountType';
 import { SOL_MINT } from 'src/middleware/ids';
-import { AppUsageEvent, type SegmentStreamAddFundsData, type SegmentStreamCloseData } from 'src/middleware/segment-service';
+import {
+  AppUsageEvent,
+  type SegmentStreamAddFundsData,
+  type SegmentStreamCloseData,
+} from 'src/middleware/segment-service';
 import { getStreamStatus } from 'src/middleware/streamHelpers';
 import {
   type ComputeBudgetConfig,

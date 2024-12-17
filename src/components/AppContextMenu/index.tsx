@@ -15,7 +15,7 @@ import {
   IconSettings,
   IconShareBox,
   IconStats,
-} from 'src/Icons'
+} from 'src/Icons';
 import {
   LANGUAGES,
   MEANFI_SUPPORT_URL,

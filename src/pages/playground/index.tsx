@@ -27,7 +27,7 @@ import {
   IconLoading,
   IconTrash,
   IconWallet,
-} from 'src/Icons'
+} from 'src/Icons';
 import { CUSTOM_TOKEN_NAME, MAX_TOKEN_LIST_ITEMS, MULTISIG_ROUTE_BASE_PATH } from 'src/app-constants/common';
 import { NATIVE_SOL } from 'src/app-constants/tokens';
 import { AddressDisplay } from 'src/components/AddressDisplay';
@@ -1063,7 +1063,14 @@ export const PlaygroundView = () => {
                 </Button>
               </div>
               <div className='right'>
-                <Button type='primary' shape='round' size='large' className='thin-stroke' disabled={streamId === ''} onClick={onClearStreamId}>
+                <Button
+                  type='primary'
+                  shape='round'
+                  size='large'
+                  className='thin-stroke'
+                  disabled={streamId === ''}
+                  onClick={onClearStreamId}
+                >
                   Clear
                 </Button>
               </div>
@@ -1542,7 +1549,7 @@ export const PlaygroundView = () => {
         key: notificationKey,
         duration: null,
         placement: 'topRight',
-        style: { top: 110 }
+        style: { top: 110 },
       });
     };
 

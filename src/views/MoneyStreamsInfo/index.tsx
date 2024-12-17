@@ -31,8 +31,13 @@ import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Wave from 'react-wavify';
-import { IconArrowForward, IconEllipsisVertical, IconLoading } from 'src/Icons'
-import { FALLBACK_COIN_IMAGE, MEANFI_DOCS_URL, MEAN_MULTISIG_ACCOUNT_LAMPORTS, NO_FEES } from 'src/app-constants/common';
+import { IconArrowForward, IconEllipsisVertical, IconLoading } from 'src/Icons';
+import {
+  FALLBACK_COIN_IMAGE,
+  MEANFI_DOCS_URL,
+  MEAN_MULTISIG_ACCOUNT_LAMPORTS,
+  NO_FEES,
+} from 'src/app-constants/common';
 import { NATIVE_SOL } from 'src/app-constants/tokens';
 import { CopyExtLinkGroup } from 'src/components/CopyExtLinkGroup';
 import { Identicon } from 'src/components/Identicon';
@@ -578,12 +583,7 @@ export const MoneyStreamsInfoView = ({
       consoleOut('withdrawTransactionFees:', value, 'orange');
     });
     setIsAddFundsModalVisibility(true);
-  }, [
-    refreshTokenBalance,
-    getTransactionFeesV2,
-    resetTransactionStatus,
-    getMultisigTxProposalFees,
-  ]);
+  }, [refreshTokenBalance, getTransactionFeesV2, resetTransactionStatus, getMultisigTxProposalFees]);
 
   const closeAddFundsModal = useCallback(() => {
     setIsBusy(false);
@@ -1031,12 +1031,7 @@ export const MoneyStreamsInfoView = ({
       setWithdrawTransactionFees(value);
       consoleOut('withdrawTransactionFees:', value, 'orange');
     });
-  }, [
-    refreshTokenBalance,
-    getTransactionFeesV2,
-    resetTransactionStatus,
-    getMultisigTxProposalFees,
-  ]);
+  }, [refreshTokenBalance, getTransactionFeesV2, resetTransactionStatus, getMultisigTxProposalFees]);
 
   const closeCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(false);

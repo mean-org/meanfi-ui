@@ -3,7 +3,7 @@ import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { IconLoading } from 'src/Icons'
+import { IconLoading } from 'src/Icons';
 import { MEANFI_DOCS_URL } from 'src/app-constants/common';
 import { MEAN_TOKEN } from '../../app-constants/tokens';
 import { InfoIcon } from '../../components/InfoIcon';
@@ -88,7 +88,7 @@ export const FirstCardsLayout = () => {
 
   // Returns an information or error notification each time the copy icon is clicked
   // biome-ignore lint/suspicious/noExplicitAny: Practically anything can be copied
-    const onCopyText = (event: any) => {
+  const onCopyText = (event: any) => {
     if (event.currentTarget.name && copyText(event.currentTarget.name)) {
       openNotification({
         description: t('notifications.account-address-copied-message'),

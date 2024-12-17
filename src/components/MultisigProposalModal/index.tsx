@@ -7,7 +7,7 @@ import { Alert, Button, Col, Divider, Modal, Row, Spin } from 'antd';
 import { Fragment, useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { IconExternalLink } from 'src/Icons'
+import { IconExternalLink } from 'src/Icons';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VESTING_ROUTE_BASE_PATH } from 'src/app-constants/common';
 import { InputMean } from 'src/components/InputMean';
 import { InputTextAreaMean } from 'src/components/InputTextAreaMean';

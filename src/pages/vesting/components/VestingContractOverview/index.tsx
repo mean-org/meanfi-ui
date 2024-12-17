@@ -5,7 +5,7 @@ import { Alert, Progress } from 'antd';
 import BigNumber from 'bignumber.js';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconInfoCircle } from 'src/Icons'
+import { IconInfoCircle } from 'src/Icons';
 import { TokenIcon } from 'src/components/TokenIcon';
 import { AppStateContext } from 'src/contexts/appstate';
 import {
@@ -250,7 +250,7 @@ export const VestingContractOverview = (props: {
         setCompletedVestingPercentage(0);
         return;
       }
-      
+
       if (isContractFinished()) {
         const streamableAmountBn = vestingContractFlowRate.streamableAmountBn.toString();
         setCurrentVestingAmount(new BigNumber(streamableAmountBn.toString()));

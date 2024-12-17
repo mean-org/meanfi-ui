@@ -6,7 +6,5 @@ interface IProps {
 }
 
 export const BackButton = ({ handleClose }: IProps) => {
-  return (
-    <Button id='back-button' type='default' shape='circle' icon={<ArrowLeftOutlined />} onClick={handleClose} />
-  );
+  return <Button id='back-button' type='default' shape='circle' icon={<ArrowLeftOutlined />} onClick={handleClose} />;
 };

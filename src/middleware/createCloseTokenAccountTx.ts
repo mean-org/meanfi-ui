@@ -27,9 +27,9 @@ export async function hasTokenBalance(connection: Connection, tokenPubkey: Publi
   // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const info = (accountInfo as any).data.parsed.info as TokenAccountInfo;
 
-  return info.mint !== NATIVE_SOL.address &&
-  info.mint !== WRAPPED_SOL_MINT_ADDRESS &&
-  (info.tokenAmount.uiAmount || 0) > 0;
+  return (
+    info.mint !== NATIVE_SOL.address && info.mint !== WRAPPED_SOL_MINT_ADDRESS && (info.tokenAmount.uiAmount || 0) > 0
+  );
 }
 
 export async function createCloseTokenAccountTx(connection: Connection, tokenPubkey: PublicKey, owner: PublicKey) {

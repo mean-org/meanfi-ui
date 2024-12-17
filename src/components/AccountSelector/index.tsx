@@ -22,12 +22,8 @@ export const AccountSelector = (props: {
   onDisconnectWallet?: () => void;
 }) => {
   const { isFullWorkflowEnabled, onAccountSelected, onCreateSafeClick, onDisconnectWallet } = props;
-  const {
-    multisigAccounts,
-    loadingMultisigAccounts,
-    loadingMultisigTxPendingCount,
-    setNeedReloadMultisigAccounts,
-  } = useContext(AppStateContext);
+  const { multisigAccounts, loadingMultisigAccounts, loadingMultisigTxPendingCount, setNeedReloadMultisigAccounts } =
+    useContext(AppStateContext);
   const { selectedAccount, setSelectedAccount } = useWalletAccount();
   const { t } = useTranslation('common');
   const { publicKey, wallet } = useWallet();
@@ -192,7 +188,7 @@ export const AccountSelector = (props: {
             shape='circle'
             size='middle'
             icon={<IconVerticalEllipsis className='mean-svg-icons fg-secondary-50' />}
-            onClick={() => { }}
+            onClick={() => {}}
           />
         </span>
       </Dropdown>
@@ -228,7 +224,7 @@ export const AccountSelector = (props: {
             shape='circle'
             size='middle'
             icon={<IconVerticalEllipsis className='mean-svg-icons fg-secondary-50' />}
-            onClick={() => { }}
+            onClick={() => {}}
           />
         </span>
       </Dropdown>
@@ -253,8 +249,9 @@ export const AccountSelector = (props: {
       </div>
       <div className='accounts-list'>
         <div
-          className={`transaction-list-row${publicKey && selectedAccount.address === publicKey.toBase58() ? ' selected' : ''
-            }`}
+          className={`transaction-list-row${
+            publicKey && selectedAccount.address === publicKey.toBase58() ? ' selected' : ''
+          }`}
         >
           <div className='check-cell' onKeyDown={onNativeAccountSelected} onClick={onNativeAccountSelected}>
             {publicKey && selectedAccount.address === publicKey.toBase58() ? (
@@ -265,7 +262,9 @@ export const AccountSelector = (props: {
           </div>
           <div className='icon-cell' onKeyDown={onNativeAccountSelected} onClick={onNativeAccountSelected}>
             <span>
-              {wallet && <img src={wallet.adapter.icon} alt={wallet.adapter.name} width='30' className='wallet-provider-icon' />}
+              {wallet && (
+                <img src={wallet.adapter.icon} alt={wallet.adapter.name} width='30' className='wallet-provider-icon' />
+              )}
             </span>
           </div>
           <div className='description-cell' onKeyDown={onNativeAccountSelected} onClick={onNativeAccountSelected}>
@@ -286,7 +285,7 @@ export const AccountSelector = (props: {
               <Tooltip placement='bottom' title={t('assets.account-address-copy-cta')}>
                 <span
                   className='icon-button-container simplelink'
-                  onKeyDown={() => { }}
+                  onKeyDown={() => {}}
                   onClick={e => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -298,7 +297,7 @@ export const AccountSelector = (props: {
                     shape='circle'
                     size='small'
                     icon={<IconCopy className='mean-svg-icons fg-secondary-50' />}
-                    onClick={() => { }}
+                    onClick={() => {}}
                   />
                 </span>
               </Tooltip>
@@ -313,7 +312,7 @@ export const AccountSelector = (props: {
             <span className='text-uppercase'>Super Safes</span>
           </div>
           <div className='right'>
-            <span className='secondary-link underlined' onKeyDown={() => { }} onClick={onCreateSafe}>
+            <span className='secondary-link underlined' onKeyDown={() => {}} onClick={onCreateSafe}>
               Create new safe
             </span>
           </div>
@@ -326,17 +325,18 @@ export const AccountSelector = (props: {
               return (
                 <div
                   key={item.authority.toBase58()}
-                  className={`transaction-list-row${selectedAccount.address === item.authority.toBase58() ? ' selected' : ''
-                    }`}
+                  className={`transaction-list-row${
+                    selectedAccount.address === item.authority.toBase58() ? ' selected' : ''
+                  }`}
                 >
-                  <div className='check-cell' onKeyDown={() => { }} onClick={() => onMultisigAccountSelected(item)}>
+                  <div className='check-cell' onKeyDown={() => {}} onClick={() => onMultisigAccountSelected(item)}>
                     {selectedAccount.address === item.authority.toBase58() ? (
                       <IconCheck className='mean-svg-icons' />
                     ) : (
                       <span>&nbsp;</span>
                     )}
                   </div>
-                  <div className='icon-cell' onKeyDown={() => { }} onClick={() => onMultisigAccountSelected(item)}>
+                  <div className='icon-cell' onKeyDown={() => {}} onClick={() => onMultisigAccountSelected(item)}>
                     {renderMultisigIcon(item)}
                     {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
                       <span className='status warning bottom-right' />
@@ -344,7 +344,7 @@ export const AccountSelector = (props: {
                   </div>
                   <div
                     className='description-cell'
-                    onKeyDown={() => { }}
+                    onKeyDown={() => {}}
                     onClick={() => onMultisigAccountSelected(item)}
                   >
                     <div className='title'>
@@ -363,7 +363,7 @@ export const AccountSelector = (props: {
                     <Tooltip placement='bottom' title={t('assets.account-address-copy-cta')}>
                       <span
                         className='icon-button-container simplelink'
-                        onKeyDown={() => { }}
+                        onKeyDown={() => {}}
                         onClick={e => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -375,7 +375,7 @@ export const AccountSelector = (props: {
                           shape='circle'
                           size='small'
                           icon={<IconCopy className='mean-svg-icons fg-secondary-50' />}
-                          onClick={() => { }}
+                          onClick={() => {}}
                         />
                       </span>
                     </Tooltip>
@@ -385,13 +385,7 @@ export const AccountSelector = (props: {
               );
             })
           ) : (
-            <>
-              {loadingMultisigAccounts ? (
-                <p>Loading safes</p>
-              ) : (
-                <p>No safes detected</p>
-              )}
-            </>
+            <>{loadingMultisigAccounts ? <p>Loading safes</p> : <p>No safes detected</p>}</>
           )}
         </Spin>
       </div>

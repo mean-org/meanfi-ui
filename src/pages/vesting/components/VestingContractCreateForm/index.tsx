@@ -22,8 +22,13 @@ import dayjs from 'dayjs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
-import { IconCaretDown } from 'src/Icons'
-import { CUSTOM_TOKEN_NAME, DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
+import { IconCaretDown } from 'src/Icons';
+import {
+  CUSTOM_TOKEN_NAME,
+  DATEPICKER_FORMAT,
+  MAX_TOKEN_LIST_ITEMS,
+  MIN_SOL_BALANCE_REQUIRED,
+} from 'src/app-constants/common';
 import { NATIVE_SOL } from 'src/app-constants/tokens';
 import { VESTING_ACCOUNT_TYPE_OPTIONS } from 'src/app-constants/treasury-type-options';
 import { FormLabelWithIconInfo } from 'src/components/FormLabelWithIconInfo';
@@ -65,7 +70,11 @@ import { PaymentRateTypeOption } from 'src/models/PaymentRateTypeOption';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { PaymentRateType } from 'src/models/enums';
 import type { TreasuryTypeOption } from 'src/models/treasuries';
-import { VESTING_CATEGORIES, type VestingContractCategory, type VestingContractCreateOptions } from 'src/models/vesting';
+import {
+  VESTING_CATEGORIES,
+  type VestingContractCategory,
+  type VestingContractCreateOptions,
+} from 'src/models/vesting';
 import type { LooseObject } from 'src/types/LooseObject';
 import { PendingProposalsComponent } from '../PendingProposalsComponent';
 

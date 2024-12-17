@@ -3,7 +3,7 @@ import { type AccountInfo, type ParsedAccountData, PublicKey } from '@solana/web
 import { Col, Row } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconStats } from 'src/Icons'
+import { IconStats } from 'src/Icons';
 import { MEAN_TOKEN } from 'src/app-constants/tokens';
 import { PreFooter } from 'src/components/PreFooter';
 import { useConnection } from 'src/contexts/connection';
@@ -61,7 +61,9 @@ export const StatsView = () => {
           },
         ],
       });
-      const results = accountInfos.filter(i => (i.account as AccountInfo<ParsedAccountData>).data.parsed.info.tokenAmount.uiAmount > 0);
+      const results = accountInfos.filter(
+        i => (i.account as AccountInfo<ParsedAccountData>).data.parsed.info.tokenAmount.uiAmount > 0,
+      );
       return results.length;
     };
 
@@ -116,7 +118,11 @@ export const StatsView = () => {
             <div className='subtitle'>{t('stats.subtitle')}</div>
           </div>
 
-          <TokenStats meanStats={meanfiStats} sMeanTotalSupply={sMeanTotalSupply ?? 0} totalVolume24h={totalVolume24h} />
+          <TokenStats
+            meanStats={meanfiStats}
+            sMeanTotalSupply={sMeanTotalSupply ?? 0}
+            totalVolume24h={totalVolume24h}
+          />
         </div>
       </div>
       <PreFooter />

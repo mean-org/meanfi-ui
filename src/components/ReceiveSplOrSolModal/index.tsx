@@ -21,11 +21,13 @@ export const ReceiveSplOrSolModal = (props: {
   const [overrideWithWallet] = useState(false);
 
   const isWalletAddress = () => {
-    return !!(publicKey &&
+    return !!(
+      publicKey &&
       address &&
       accountAddress &&
       address === publicKey.toBase58() &&
-      accountAddress === publicKey.toBase58());
+      accountAddress === publicKey.toBase58()
+    );
   };
 
   return (

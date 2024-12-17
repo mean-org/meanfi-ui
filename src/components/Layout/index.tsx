@@ -176,14 +176,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
     }
 
     setNeedRefresh(true);
-  }, [
-    theme,
-    language,
-    publicKey,
-    wallet?.adapter.name,
-    referralAddress,
-    getPlatform,
-  ]);
+  }, [theme, language, publicKey, wallet?.adapter.name, referralAddress, getPlatform]);
 
   // Get referral address from query string params and save it to localStorage
   useEffect(() => {

@@ -1081,7 +1081,7 @@ const ProgramDetailsView = ({ program }: Props) => {
           return [];
         }
         const filtered = txs.filter(Boolean) as ParsedTransactionWithMeta[];
-        setProgramTransactions(filtered)
+        setProgramTransactions(filtered);
       })
       .catch(err => console.error(err))
       .finally(() => setLoadingTxs(false));
@@ -1103,7 +1103,7 @@ const ProgramDetailsView = ({ program }: Props) => {
       const anchorWallet = {
         publicKey: publicKey,
         signAllTransactions: async (txs: (Transaction | VersionedTransaction)[]) => txs,
-        signTransaction: async (tx: Transaction | VersionedTransaction) => tx
+        signTransaction: async (tx: Transaction | VersionedTransaction) => tx,
       } as Wallet;
 
       const provider = new AnchorProvider(connection, anchorWallet, opts);

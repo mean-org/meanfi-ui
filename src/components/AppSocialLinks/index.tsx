@@ -8,7 +8,7 @@ import {
   IconTelegram,
   IconTwitter,
   IconWhatsapp,
-} from 'src/Icons'
+} from 'src/Icons';
 import type { SocialMediaEntry } from 'src/models/accounts';
 import { SocialNetwork } from 'src/models/enums';
 

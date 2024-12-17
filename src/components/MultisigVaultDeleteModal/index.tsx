@@ -69,7 +69,7 @@ export const MultisigVaultDeleteModal = (props: {
   };
 
   const isValidForm = (): boolean => {
-    return !!(proposalTitle && props.selectedVault && (props.selectedVault.balance as number) === 0 );
+    return !!(proposalTitle && props.selectedVault && (props.selectedVault.balance as number) === 0);
   };
 
   const getTransactionStartButtonLabel = () => {

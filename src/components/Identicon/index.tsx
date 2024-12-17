@@ -15,11 +15,7 @@ export const Identicon = ({ address, style, className }: IdenticonProps) => {
   if (addrString && isValidAddress(addrString)) {
     return (
       <div className={className} style={{ display: 'inline-flex' }}>
-        <Jazzicon
-          diameter={style?.width ? +style.width : 16}
-          seed={jsNumberForAddress(addrString)}
-          svgStyles={style}
-        />
+        <Jazzicon diameter={style?.width ? +style.width : 16} seed={jsNumberForAddress(addrString)} svgStyles={style} />
       </div>
     );
   }

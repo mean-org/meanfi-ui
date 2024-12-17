@@ -22,7 +22,7 @@ import {
   type TransactionFees,
   type UpdateVestingTemplateTransactionAccounts,
   type WithdrawFromAccountTransactionAccounts,
-  calculateFeesForAction
+  calculateFeesForAction,
 } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
 import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';

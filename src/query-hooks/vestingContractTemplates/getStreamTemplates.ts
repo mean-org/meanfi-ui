@@ -52,7 +52,11 @@ const getStreamTemplates = async ({
   }
 
   streamTemplatesPerformanceCounter.stop();
-  consoleOut(`getStreamTemplates took ${streamTemplatesPerformanceCounter.elapsedTime.toLocaleString()} ms`, '', 'crimson');
+  consoleOut(
+    `getStreamTemplates took ${streamTemplatesPerformanceCounter.elapsedTime.toLocaleString()} ms`,
+    '',
+    'crimson',
+  );
 
   return compiledTemplates;
 };

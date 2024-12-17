@@ -5,7 +5,7 @@ import type { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { IconLoading, IconVerticalEllipsis } from 'src/Icons'
+import { IconLoading, IconVerticalEllipsis } from 'src/Icons';
 import { MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
 import { NATIVE_SOL } from 'src/app-constants/tokens';
 import { CopyExtLinkGroup } from 'src/components/CopyExtLinkGroup';

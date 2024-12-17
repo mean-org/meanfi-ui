@@ -16,7 +16,7 @@ export const TreasuryOpenModal = ({ isVisible, handleOk, handleClose }: Props) =
   const [treasuryId, setTreasuryId] = useState('');
 
   const isAddressOwnAccount = useCallback((): boolean => {
-    return !!(treasuryId && publicKey && treasuryId === publicKey.toBase58() );
+    return !!(treasuryId && publicKey && treasuryId === publicKey.toBase58());
   }, [publicKey, treasuryId]);
 
   const triggerWindowResize = () => {

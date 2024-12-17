@@ -3,7 +3,7 @@ import type { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Button, Divider, Input, Modal, Select, Spin } from 'antd';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconCheckedBox } from 'src/Icons'
+import { IconCheckedBox } from 'src/Icons';
 import { CUSTOM_TOKEN_NAME } from 'src/app-constants/common';
 import { NATIVE_SOL } from 'src/app-constants/tokens';
 import { AppStateContext } from 'src/contexts/appstate';

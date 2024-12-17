@@ -46,7 +46,7 @@ import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { segmentAnalytics } from 'src/App';
-import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'src/Icons'
+import { IconAdd, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconSafe, IconVerticalEllipsis } from 'src/Icons';
 import {
   ACCOUNTS_LOW_BALANCE_LIMIT,
   MEAN_MULTISIG_ACCOUNT_LAMPORTS,

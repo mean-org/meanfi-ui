@@ -6,7 +6,7 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   PERFORMANCE_THRESHOLD,
   TEN_MINUTES_REFRESH_TIMEOUT,
-  THIRTY_MINUTES_REFRESH_TIMEOUT
+  THIRTY_MINUTES_REFRESH_TIMEOUT,
 } from 'src/app-constants/common';
 import { isProd } from 'src/middleware/ui';
 import useGetPerformanceSamples from '../performanceSamples';
@@ -58,6 +58,6 @@ export const useGetStreamList = ({
     enabled: !!(srcAccountPk && tokenStreamingV1 && tokenStreamingV2),
     refetchInterval: isDowngradedPerformance ? false : refreshInterval, // Turned OFF if network is congested
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: false,
   });
 };

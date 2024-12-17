@@ -27,7 +27,7 @@ export const StreamPauseModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    return !!(publicKey && selectedAccount.isMultisig );
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const amITreasurer = useCallback((): boolean => {

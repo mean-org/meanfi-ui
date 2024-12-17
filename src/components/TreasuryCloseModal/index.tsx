@@ -40,7 +40,7 @@ export const TreasuryCloseModal = (props: {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const isMultisigContext = useMemo(() => {
-    return !!(publicKey && selectedAccount.isMultisig );
+    return !!(publicKey && selectedAccount.isMultisig);
   }, [publicKey, selectedAccount]);
 
   const imageOnErrorHandler = (event: SyntheticEvent<HTMLImageElement, Event>) => {
@@ -78,7 +78,7 @@ export const TreasuryCloseModal = (props: {
       return null;
     }
     const treasuryType = getStreamingAccountType(item);
-    const isV2Treasury = !!(item && item.version >= 2 );
+    const isV2Treasury = !!(item && item.version >= 2);
     const v1 = item as TreasuryInfo;
     const v2 = item as PaymentStreamingAccount;
     const name = isV2Treasury ? v2.name : v1.label;
@@ -168,7 +168,7 @@ export const TreasuryCloseModal = (props: {
 
   const v1 = props.treasuryDetails as TreasuryInfo;
   const v2 = props.treasuryDetails as PaymentStreamingAccount;
-  const isNewTreasury = !!(props.treasuryDetails && props.treasuryDetails.version >= 2 );
+  const isNewTreasury = !!(props.treasuryDetails && props.treasuryDetails.version >= 2);
 
   const getMultisigProposalTitleField = () => {
     if (!isMultisigContext) {
