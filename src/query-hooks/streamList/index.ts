@@ -12,7 +12,7 @@ import { isProd } from 'src/middleware/ui';
 import useGetPerformanceSamples from '../performanceSamples';
 import getStreamList from './getStreamList';
 
-export const getStreamListQueryKey = (accountAddress: string | undefined) => ['/streams', accountAddress];
+export const getUseGetStreamListQueryKey = (accountAddress: string | undefined) => ['/streams', accountAddress];
 
 export const useGetStreamList = ({
   srcAccountPk,
@@ -43,7 +43,7 @@ export const useGetStreamList = ({
   }, [lastStreamsAmount]);
 
   return useQuery({
-    queryKey: getStreamListQueryKey(srcAccountPk?.toBase58()),
+    queryKey: getUseGetStreamListQueryKey(srcAccountPk?.toBase58()),
     queryFn: () =>
       getStreamList({
         srcAccountPk,

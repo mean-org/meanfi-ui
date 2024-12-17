@@ -11,6 +11,8 @@ export const getTokenListKey = () => ['/token-list'];
 const useGetTokenList = () => {
   return useQuery({
     queryKey: getTokenListKey(),
+    retry: 3,
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours stale time
     queryFn: async () => {
       consoleOut('useGetTokenList -> Fetching token list...', '', 'blue');
       consoleOut('tokenListUrl:', tokenListUrl, 'blue');
