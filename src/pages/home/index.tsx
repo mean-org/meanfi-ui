@@ -329,8 +329,8 @@ export const HomeView = () => {
   }, [publicKey, selectedAccount]);
 
   const {
-    streamingAccounts,
-    loadingStreamingAccounts,
+    data: streamingAccounts,
+    isPending: loadingStreamingAccounts,
     refetch: refreshStreamingAccounts,
   } = useGetStreamingAccounts({
     srcAccountPk: new PublicKey(selectedAccount.address),
@@ -3766,7 +3766,7 @@ export const HomeView = () => {
                       <Suspense fallback={renderSpinner()}>
                         <PaymentStreamingView
                           loadingTreasuries={loadingStreamingAccounts}
-                          treasuryList={streamingAccounts}
+                          treasuryList={streamingAccounts || []}
                           onBackButtonClicked={onBackButtonClicked}
                         />
                       </Suspense>
