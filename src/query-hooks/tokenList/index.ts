@@ -6,7 +6,7 @@ import type { UserTokenAccount } from 'src/models/accounts/UserTokenAccount';
 // const tokenListUrl = 'https://tokens.jup.ag/tokens?tags=verified';
 const tokenListUrl = 'https://token-list-api.solana.cloud/v1/list';
 
-export const getTokenListKey = () => ['/token-list'];
+export const getTokenListKey = () => ['token-list'];
 
 const useGetTokenList = () => {
   return useQuery({

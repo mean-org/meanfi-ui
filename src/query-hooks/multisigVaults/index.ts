@@ -4,7 +4,7 @@ import { useConnection } from 'src/contexts/connection';
 import useMultisigClient from '../multisigClient';
 import { getMultisigVaults } from './getMultisigVaults';
 
-export const getUseMultisigVaultsQueryKey = () => ['/multisig-vaults'];
+export const getUseMultisigVaultsQueryKey = () => ['multisig-vaults'];
 
 const useMultisigVaults = (multisigId: PublicKey | undefined) => {
   const connection = useConnection();

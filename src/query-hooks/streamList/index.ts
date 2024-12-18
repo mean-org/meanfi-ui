@@ -12,7 +12,7 @@ import { isProd } from 'src/middleware/ui';
 import useGetPerformanceSamples from '../performanceSamples';
 import getStreamList from './getStreamList';
 
-export const getUseGetStreamListQueryKey = (accountAddress: string | undefined) => ['/streams', accountAddress];
+export const getUseGetStreamListQueryKey = (accountAddress: string | undefined) => ['streams', accountAddress];
 
 export const useGetStreamList = ({
   srcAccountPk,

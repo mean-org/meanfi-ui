@@ -1,24 +1,23 @@
 import { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
 import { useContext } from 'react';
-import { ONE_MINUTE_REFRESH_TIMEOUT } from 'src/app-constants';
 import { AppStateContext } from 'src/contexts/appstate';
 import { useConnection } from 'src/contexts/connection';
 import { fetchAccountTokens, getTokensWithBalances, getUserAccountTokens } from 'src/middleware/accounts';
 import { useGetAccountBalance } from '../accountBalance';
 
 export const getUseAccountAssetsQueryKey = (accountAddress: string | undefined) => [
-  '/user-account-assets',
+  'user-account-assets',
   accountAddress,
 ];
 
 export const getUseFetchAccountTokensQueryKey = (accountAddress: string | undefined) => [
-  '/fetch-account-tokens',
+  'fetch-account-tokens',
   accountAddress,
 ];
 
 export const getUseGetTokensWithBalancesQueryKey = (accountAddress: string | undefined) => [
-  '/tokens-with-balances',
+  'tokens-with-balances',
   accountAddress,
 ];
 
@@ -82,7 +81,6 @@ export const useFetchAccountTokens = (accountAddress: string | undefined) => {
 
   return useQuery({
     queryKey: getUseFetchAccountTokensQueryKey(accountAddress),
-    staleTime: ONE_MINUTE_REFRESH_TIMEOUT,
     queryFn: async () => {
       if (!accountAddress) return;
       return await fetchAccountTokens(connection, new PublicKey(accountAddress));

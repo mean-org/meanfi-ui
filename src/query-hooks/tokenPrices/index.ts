@@ -4,7 +4,7 @@ import { THIRTY_MINUTES_REFRESH_TIMEOUT } from 'src/app-constants';
 import { getPrices } from 'src/middleware/api';
 import type { TokenPrice } from 'src/models/TokenPrice';
 
-export const getAssetPricesKey = () => ['/token-prices'];
+export const getAssetPricesKey = () => ['token-prices'];
 
 const useGetAssetPrices = (addressOrSymbolCsv?: string) => {
   const {

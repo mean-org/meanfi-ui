@@ -4,7 +4,7 @@ import type { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
 import getStreamingAccountList from './getStreamingAccountList';
 
-const getStreamingAccountListQueryKey = (accountAddress?: string) => ['/streaming-accounts', accountAddress];
+const getStreamingAccountListQueryKey = (accountAddress?: string) => ['streaming-accounts', accountAddress];
 
 export const useGetStreamingAccounts = ({
   srcAccountPk,

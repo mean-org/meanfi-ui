@@ -5,7 +5,7 @@ import { useConnection } from 'src/contexts/connection';
 import useMultisigClient from '../multisigClient';
 
 export const getUseGetMultisigAccountsQueryKey = (accountAddress: string | undefined) => [
-  '/multisig-accounts',
+  'multisig-accounts',
   accountAddress,
 ];
 

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import getStreamTemplates from './getStreamTemplates';
 
 const getStreamTemplatesQueryKey = (accountAddress?: string) => [
-  `/vesting-contracts/${accountAddress}/stream-templates`,
+  `vesting-contracts/${accountAddress}/stream-templates`,
 ];
 
 export const useGetStreamTemplates = ({
