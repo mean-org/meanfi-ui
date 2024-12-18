@@ -120,7 +120,6 @@ import {
   RegisteredAppPaths,
   type UserTokenAccount,
 } from 'src/models/accounts';
-import type { MeanNft } from 'src/models/accounts/NftTypes';
 import type { MetaInfoCta } from 'src/models/common-types';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import {
@@ -143,8 +142,6 @@ import type { LooseObject } from 'src/types/LooseObject';
 import { AppsList } from 'src/views/AppsList';
 import { AssetActivity } from 'src/views/AssetActivity';
 import AssetList from 'src/views/AssetList';
-import { NftDetails } from 'src/views/NftDetails';
-import { NftPaginatedList } from 'src/views/NftPaginatedList';
 import { OtherAssetsList } from 'src/views/OtherAssetsList';
 import { getBuyOptionsCta } from './asset-ctas/buyOptionsCta';
 import { getCloseAccountCta } from './asset-ctas/closeAccountCta';
@@ -154,7 +151,6 @@ import { getInvestAssetCta } from './asset-ctas/investAssetCta';
 import { getMergeAccountsCta } from './asset-ctas/mergeAccountsCta';
 import { getUnwrapSolCta } from './asset-ctas/unwrapSolCta';
 import { getWrapSolCta } from './asset-ctas/wrapSolCta';
-import getNftMint from './getNftMint';
 import './style.scss';
 import WalletNotConnectedMessage from 'src/components/WalletNotConnectedMessage';
 import { resolveParsedAccountInfo } from 'src/middleware/accounts';
@@ -182,7 +178,6 @@ export const HomeView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const {
-    accountNfts,
     transactions,
     splTokenList,
     isWhitelisted,
@@ -246,7 +241,6 @@ export const HomeView = () => {
   const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
   const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [, setMinRequiredBalance] = useState(0);
-  const [selectedNft, setSelectedNft] = useState<MeanNft | undefined>(undefined);
   // Multisig Apps
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
@@ -713,13 +707,7 @@ export const HomeView = () => {
   const getAssetPath = useCallback(
     (asset: UserTokenAccount) => {
       const isAccountNative = isSelectedAssetNativeAccount(asset);
-      let url = '';
-      if (isAccountNative) {
-        url = '/assets';
-      } else {
-        url = `/assets/${asset.publicAddress}`;
-      }
-      return url;
+      return isAccountNative ? '/assets' : `/assets/${asset.publicAddress}`;
     },
     [isSelectedAssetNativeAccount],
   );
@@ -744,15 +732,6 @@ export const HomeView = () => {
     const url = `/${RegisteredAppPaths.SuperSafe}?v=proposals`;
     navigate(url);
   }, [navigate]);
-
-  const navigateToNft = useCallback(
-    (address: string) => {
-      consoleOut('calling navigateToNft()', '...', 'crimson');
-      const url = `/nfts/${address}`;
-      navigate(url);
-    },
-    [navigate],
-  );
 
   const navigateToStreaming = useCallback(() => {
     const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
@@ -1917,13 +1896,7 @@ export const HomeView = () => {
 
     // Update state
     setIncomingStreamsSummary(resume);
-  }, [
-    tokenStreamingV2,
-    publicKey,
-    streamListv2,
-    selectedAccount.address,
-    getV2WithdrawableValue,
-  ]);
+  }, [tokenStreamingV2, publicKey, streamListv2, selectedAccount.address, getV2WithdrawableValue]);
 
   const refreshOutgoingStreamSummary = useCallback(async () => {
     if (!tokenStreamingV2 || !publicKey || !streamListv2) {
@@ -1955,13 +1928,7 @@ export const HomeView = () => {
 
     // Update state
     setOutgoingStreamsSummary(resume);
-  }, [
-    tokenStreamingV2,
-    publicKey,
-    streamListv2,
-    selectedAccount.address,
-    getV2FundsLeftValue,
-  ]);
+  }, [tokenStreamingV2, publicKey, streamListv2, selectedAccount.address, getV2FundsLeftValue]);
 
   const clearStateData = useCallback(() => {
     setAccountTokens([]);
@@ -2497,7 +2464,6 @@ export const HomeView = () => {
 
     const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.slug}`));
     setSelectedApp(app);
-    setSelectedNft(undefined);
     setSelectedAsset(undefined);
   }, [location.pathname, selectedCategory]);
 
@@ -3195,17 +3161,11 @@ export const HomeView = () => {
   };
 
   const getAssetsGroupOptions = () => {
-    const nftCount = accountNfts ? accountNfts.length : 0;
     const visibleApps = KNOWN_APPS.filter(a => a.visible).length;
     const options: SegmentedLabeledOption[] = [
       {
         label: `Tokens (${accountTokens.length})`,
         value: AssetGroups.Tokens,
-      },
-      {
-        // Learn how to differentiate NFTs from token accounts and apply knowledge here
-        label: `NFTs (${nftCount > 99 ? '99+' : nftCount})`,
-        value: AssetGroups.Nfts,
       },
       {
         label: `Apps (${visibleApps})`,
@@ -3258,7 +3218,6 @@ export const HomeView = () => {
           onKeyDown={() => {}}
           onClick={() => {
             turnOnRightPanel();
-            setSelectedNft(undefined);
             setSelectedAsset(undefined);
             if (type === 'my-account') {
               navigate('/my-account');
@@ -3295,7 +3254,6 @@ export const HomeView = () => {
             key='streams-category'
             onKeyDown={() => {}}
             onClick={() => {
-              setSelectedNft(undefined);
               navigateToStreaming();
             }}
             className={`transaction-list-row ${
@@ -3424,7 +3382,6 @@ export const HomeView = () => {
               onTokenAccountClick={(asset: UserTokenAccount) => {
                 consoleOut('clicked on asset:', asset.publicAddress, 'blue');
                 navigateToAsset(asset);
-                setSelectedNft(undefined);
               }}
               selectedAsset={selectedAsset}
               selectedCategory={selectedCategory}
@@ -3434,29 +3391,6 @@ export const HomeView = () => {
           renderLoadingOrNoTokensMessage()
         )}
       </div>
-    );
-  };
-
-  const renderNftList = () => {
-    const onNftItemClick = (item: MeanNft) => {
-      consoleOut('clicked on NFT item:', item, 'blue');
-      setSelectedNft(item);
-      setSelectedApp(undefined);
-      setTimeout(() => {
-        navigateToNft(item.address.toBase58());
-      }, 50);
-    };
-
-    const nftMint = asset ? getNftMint(asset, accountTokens, accountNfts) : undefined;
-
-    return (
-      <NftPaginatedList
-        loadingUserAssets={loadingUserAssets}
-        nftList={accountNfts}
-        onNftItemClick={(nft: MeanNft) => onNftItemClick(nft)}
-        presetNftMint={selectedNft ? undefined : nftMint}
-        selectedNft={selectedNft}
-      />
     );
   };
 
@@ -3511,8 +3445,6 @@ export const HomeView = () => {
     switch (selectedAssetsGroup) {
       case AssetGroups.Tokens:
         return <span>Estimated value of tokens: {toUsCurrency(totalTokenAccountsValue)}</span>;
-      case AssetGroups.Nfts:
-        return <span>Enjoy your collections of NFTs</span>;
       case AssetGroups.Apps:
         return <span>Explore supported Apps</span>;
       case AssetGroups.OtherAssets:
@@ -3793,8 +3725,6 @@ export const HomeView = () => {
 
                     {selectedAssetsGroup === AssetGroups.Tokens ? renderAssetsList() : null}
 
-                    {selectedAssetsGroup === AssetGroups.Nfts ? renderNftList() : null}
-
                     {selectedAssetsGroup === AssetGroups.Apps ? renderAppsList() : null}
 
                     {selectedAssetsGroup === AssetGroups.OtherAssets ? renderOtherAssetsList() : null}
@@ -3960,9 +3890,6 @@ export const HomeView = () => {
                         </div>
                       </div>
                     </>
-                  ) : null}
-                  {location.pathname.startsWith('/nfts') && selectedNft ? (
-                    <NftDetails selectedNft={selectedNft} />
                   ) : null}
                 </div>
               </div>

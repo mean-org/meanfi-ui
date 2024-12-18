@@ -63,14 +63,8 @@ export const MultisigTransferTokensModal = ({
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
-  const {
-    splTokenList,
-    loadingPrices,
-    transactionStatus,
-    getTokenPriceByAddress,
-    setEffectiveRate,
-    refreshPrices,
-  } = useContext(AppStateContext);
+  const { splTokenList, loadingPrices, transactionStatus, getTokenPriceByAddress, setEffectiveRate, refreshPrices } =
+    useContext(AppStateContext);
   const { validationStatus, isTransferDisabled, validateAddress } = useRecipientAddressValidation({ connection });
 
   const [proposalTitle, setProposalTitle] = useState('');

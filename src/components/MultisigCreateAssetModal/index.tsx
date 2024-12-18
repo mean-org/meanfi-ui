@@ -39,8 +39,7 @@ export const MultisigCreateAssetModal = ({
 }: MultisigCreateAssetModalProps) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const { splTokenList, transactionStatus, setTransactionStatus, getTokenByMintAddress } =
-    useContext(AppStateContext);
+  const { splTokenList, transactionStatus, setTransactionStatus, getTokenByMintAddress } = useContext(AppStateContext);
   const [token, setToken] = useState<TokenInfo>();
   const [customToken, setCustomToken] = useState('');
 

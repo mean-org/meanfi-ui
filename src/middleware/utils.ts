@@ -165,13 +165,15 @@ export const isSmallNumber = (val: number) => {
 };
 
 export const formatThousands = (val: number, maxDecimals?: number, minDecimals = 0) => {
-  const convertedVlue = maxDecimals ? new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: minDecimals,
-    maximumFractionDigits: maxDecimals,
-  }) : new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: minDecimals,
-    maximumFractionDigits: 0,
-  });
+  const convertedVlue = maxDecimals
+    ? new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: minDecimals,
+        maximumFractionDigits: maxDecimals,
+      })
+    : new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: minDecimals,
+        maximumFractionDigits: 0,
+      });
 
   return convertedVlue.format(val);
 };

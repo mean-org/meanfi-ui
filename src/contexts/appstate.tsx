@@ -2,7 +2,6 @@ import type { DdcaAccount } from '@mean-dao/ddca';
 import { type MultisigInfo, type MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import type { StreamActivity as StreamActivityV1, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import type { Stream, StreamActivity } from '@mean-dao/payment-streaming';
-import type { FindNftsByOwnerOutput } from '@metaplex-foundation/js';
 import { PublicKey } from '@solana/web3.js';
 import dayjs from 'dayjs';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
@@ -14,7 +13,6 @@ import { openNotification } from 'src/components/Notifications';
 import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import { customLogger } from 'src/main';
-import { getAccountNFTs } from 'src/middleware/accounts';
 import getPriceByAddressOrSymbol from 'src/middleware/getPriceByAddressOrSymbol';
 import type { MappedTransaction } from 'src/middleware/history';
 import { consoleOut, isProd } from 'src/middleware/ui';
@@ -97,7 +95,6 @@ interface AppStateConfig {
   lastTxSignature: string;
   lastStreamsSummary: StreamsSummary;
   paymentStreamingStats: PaymentStreamingStats;
-  accountNfts: FindNftsByOwnerOutput | undefined;
   // DDCAs
   recurringBuys: DdcaAccount[];
   loadingRecurringBuys: boolean;
@@ -243,7 +240,6 @@ const contextDefaultValues: AppStateConfig = {
   lastTxSignature: '',
   lastStreamsSummary: initialSummary,
   paymentStreamingStats: initialStats,
-  accountNfts: undefined,
   // DDCAs
   recurringBuys: [],
   loadingRecurringBuys: false,
@@ -423,7 +419,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   const [paymentStreamingStats, setPaymentStreamingStats] = useState<PaymentStreamingStats>(
     contextDefaultValues.paymentStreamingStats,
   );
-  const [accountNfts, setAccountNfts] = useState<FindNftsByOwnerOutput | undefined>(contextDefaultValues.accountNfts);
   const [previousRoute, setPreviousRoute] = useState<string>(contextDefaultValues.previousRoute);
 
   const setTheme = useCallback(
@@ -607,7 +602,10 @@ const AppStateProvider = ({ children }: ProviderProps) => {
 
   const getTokenByMintAddress = useCallback(
     (address: string): TokenInfo | undefined => {
-      const token = splTokenList && isProd() ? splTokenList.find(t => t.address === address) : offlineTokenList.find(t => t.address === address);
+      const token =
+        splTokenList && isProd()
+          ? splTokenList.find(t => t.address === address)
+          : offlineTokenList.find(t => t.address === address);
       if (!token) {
         return MEAN_TOKEN_LIST.find(t => t.address === address);
       }
@@ -992,18 +990,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     updateSplTokenList(sortedList);
   }, [apiTokenList, offlineTokenList]);
 
-  // Get and populate the list of NFTs that the user holds
-  useEffect(() => {
-    if (!selectedAccount.address) {
-      return;
-    }
-
-    getAccountNFTs(connection, selectedAccount.address).then(response => {
-      consoleOut('getAccountNFTs() response:', response, 'blue');
-      setAccountNfts(response);
-    });
-  }, [selectedAccount.address, connection]);
-
   ///////////////////////
   // Multisig accounts //
   ///////////////////////
@@ -1114,7 +1100,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const values = useMemo(() => {
     return {
-      accountNfts,
       activeStream,
       activeTab,
       coolOffPeriodFrequency,
@@ -1242,7 +1227,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       showDepositOptionsModal,
     };
   }, [
-    accountNfts,
     activeStream,
     activeTab,
     coolOffPeriodFrequency,
