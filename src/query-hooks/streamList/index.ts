@@ -9,6 +9,7 @@ import {
   THIRTY_MINUTES_REFRESH_TIMEOUT,
 } from 'src/app-constants/common';
 import { isProd } from 'src/middleware/ui';
+import { useEnableFetchingOldStreams } from '../enableFetchingOldStreams';
 import useGetPerformanceSamples from '../performanceSamples';
 import getStreamList from './getStreamList';
 
@@ -24,6 +25,7 @@ export const useGetStreamList = ({
   tokenStreamingV2: PaymentStreaming | undefined;
 }) => {
   const { tpsAvg } = useGetPerformanceSamples();
+  const shouldLoadV1Streams = useEnableFetchingOldStreams();
 
   const isDowngradedPerformance = useMemo(() => {
     return !!(isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD));
@@ -49,6 +51,7 @@ export const useGetStreamList = ({
         srcAccountPk,
         tokenStreamingV1,
         tokenStreamingV2,
+        shouldLoadV1Streams,
       }),
     select: useCallback((data: (Stream | StreamInfo)[]) => {
       setLastStreamsAmount(data.length);

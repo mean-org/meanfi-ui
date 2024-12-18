@@ -9,15 +9,19 @@ import { shortenAddress } from 'src/middleware/utils';
 
 const listStreamsPerformanceCounter = new PerformanceCounter();
 
-const getStreamList = async ({
-  tokenStreamingV1,
-  tokenStreamingV2,
-  srcAccountPk,
-}: {
+interface StreamListParams {
+  srcAccountPk: PublicKey | undefined;
   tokenStreamingV1: MoneyStreaming | undefined;
   tokenStreamingV2: PaymentStreaming | undefined;
-  srcAccountPk: PublicKey | undefined;
-}) => {
+  shouldLoadV1Streams: boolean;
+}
+
+const getStreamList = async ({
+  srcAccountPk,
+  tokenStreamingV2,
+  tokenStreamingV1,
+  shouldLoadV1Streams,
+}: StreamListParams) => {
   if (!srcAccountPk) {
     throw new Error('Missing source account public key');
   }
@@ -34,24 +38,18 @@ const getStreamList = async ({
   listStreamsPerformanceCounter.reset();
   listStreamsPerformanceCounter.start();
 
-  try {
-    const rawStreamsv2 = await tokenStreamingV2.listStreams({
-      psAccountOwner: srcAccountPk,
-      beneficiary: srcAccountPk,
-    });
-    streamAccumulator.push(...rawStreamsv2);
-  } catch (error) {
-    console.error(error);
-  }
+  const rawStreamsv2 = await tokenStreamingV2.listStreams({
+    psAccountOwner: srcAccountPk,
+    beneficiary: srcAccountPk,
+  });
+  streamAccumulator.push(...rawStreamsv2);
 
-  try {
+  if (shouldLoadV1Streams) {
     const rawStreamsv1 = await tokenStreamingV1.listStreams({
       treasurer: srcAccountPk,
       beneficiary: srcAccountPk,
     });
     streamAccumulator.push(...rawStreamsv1);
-  } catch (error) {
-    console.error(error);
   }
 
   streamAccumulator.sort((a, b) => (new BN(a.createdBlockTime).lt(new BN(b.createdBlockTime)) ? 1 : -1));
