@@ -381,8 +381,8 @@ export function MeanFiWalletProvider({ children }: Props) {
     setConnected(false);
     setWalletName(null);
     disconnect();
-    selectWalletProvider();
-  }, [wallet, walletName, setWalletName, disconnect, selectWalletProvider]);
+    // selectWalletProvider();
+  }, [wallet, walletName, setWalletName, disconnect]);
 
   useEffect(() => {
     if (isUnauthenticatedRoute(location.pathname)) return;

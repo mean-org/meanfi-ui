@@ -103,7 +103,6 @@ export const MoneyStreamsOutgoingView = ({
   streamSelected,
 }: MoneyStreamsOutgoingViewProps) => {
   const {
-    tokenList,
     splTokenList,
     tokenBalance,
     deletedStreams,
@@ -2307,7 +2306,7 @@ export const MoneyStreamsOutgoingView = ({
     }
 
     if (!sourceAccountTokens || sourceAccountTokens.length === 0) {
-      for (const t of tokenList) {
+      for (const t of splTokenList) {
         balancesMap[t.address] = 0;
       }
       setUserBalances(balancesMap);
@@ -2329,7 +2328,7 @@ export const MoneyStreamsOutgoingView = ({
       balancesMap[address] = balance;
     }
     setUserBalances(balancesMap);
-  }, [connection, publicKey, sourceAccountTokens, tokenList]);
+  }, [connection, publicKey, sourceAccountTokens, splTokenList]);
 
   // Read treasury data
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually

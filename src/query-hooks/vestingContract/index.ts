@@ -8,7 +8,7 @@ import useGetPerformanceSamples from '../performanceSamples';
 import getVestingContract from './getVestingContract';
 import getVestingContracts from './getVestingContracts';
 
-const getVestingContractsQueryKey = (accountAddress?: string) => ['/vesting-contracts', accountAddress];
+const getVestingContractsQueryKey = (accountAddress?: string) => ['vesting-contracts', accountAddress];
 
 export const useGetVestingContracts = ({
   srcAccountPk,
@@ -42,7 +42,7 @@ export const useGetVestingContracts = ({
   };
 };
 
-const getVestingContractQueryKey = (treasuryId?: string) => ['/vesting-contract', treasuryId];
+const getVestingContractQueryKey = (treasuryId?: string) => ['vesting-contract', treasuryId];
 
 export const useGetVestingContract = ({
   vestingAccountId,

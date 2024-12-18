@@ -82,7 +82,6 @@ const ProgramDetailsView = ({ program }: Props) => {
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [selectedProgramIdl, setSelectedProgramIdl] = useState<Idl | null>(null);
@@ -944,12 +943,10 @@ const ProgramDetailsView = ({ program }: Props) => {
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+    // Refresh token balance
+    refreshTokenBalance();
+  }, [account, refreshTokenBalance]);
 
   const renderProgramLabel = useCallback(() => {
     if (!selectedProgramIdl) {

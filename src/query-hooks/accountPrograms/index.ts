@@ -1,10 +1,10 @@
-export const getAccountProgramsQueryKey = (accountAddress: string) => ['/programs', accountAddress];
-
 import { useQuery } from '@tanstack/react-query';
 import { useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
 import { useWalletAccount } from 'src/contexts/walletAccount';
 import { getProgramsByUpgradeAuthority } from 'src/middleware/getProgramsByUpgradeAuthority';
+
+export const getAccountProgramsQueryKey = (accountAddress: string) => ['programs', accountAddress];
 
 const useGetAccountPrograms = () => {
   const connection = useConnection();

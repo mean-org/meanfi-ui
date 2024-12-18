@@ -135,7 +135,6 @@ export const StreamingAccountView = ({
   treasuryList,
 }: StreamingAccountViewProps) => {
   const {
-    tokenList,
     splTokenList,
     selectedAccount,
     transactionStatus,
@@ -2105,7 +2104,7 @@ export const StreamingAccountView = ({
     }
 
     if (!sourceAccountTokens || sourceAccountTokens.length === 0) {
-      for (const t of tokenList) {
+      for (const t of splTokenList) {
         balancesMap[t.address] = 0;
       }
       setUserBalances(balancesMap);
@@ -2127,7 +2126,7 @@ export const StreamingAccountView = ({
       balancesMap[address] = balance;
     }
     setUserBalances(balancesMap);
-  }, [connection, publicKey, sourceAccountTokens, tokenList]);
+  }, [connection, publicKey, sourceAccountTokens, splTokenList]);
 
   // Set selected token with the streaming account associated token as soon as streamingAccountSelected is available
   useEffect(() => {

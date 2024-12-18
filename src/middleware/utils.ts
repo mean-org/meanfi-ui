@@ -165,19 +165,13 @@ export const isSmallNumber = (val: number) => {
 };
 
 export const formatThousands = (val: number, maxDecimals?: number, minDecimals = 0) => {
-  let convertedVlue: Intl.NumberFormat;
-
-  if (maxDecimals) {
-    convertedVlue = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: minDecimals,
-      maximumFractionDigits: maxDecimals,
-    });
-  } else {
-    convertedVlue = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: minDecimals,
-      maximumFractionDigits: 0,
-    });
-  }
+  const convertedVlue = maxDecimals ? new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: minDecimals,
+    maximumFractionDigits: maxDecimals,
+  }) : new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: minDecimals,
+    maximumFractionDigits: 0,
+  });
 
   return convertedVlue.format(val);
 };
@@ -268,7 +262,7 @@ export const getAmountWithSymbol = (
 
   if (tokenDecimals && !token) {
     const unknownToken: TokenInfo = {
-      address: address,
+      address,
       name: CUSTOM_TOKEN_NAME,
       chainId: 101,
       decimals: tokenDecimals,
@@ -294,7 +288,7 @@ export const getAmountWithSymbol = (
       return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
     }
 
-    return `${formatThousands(inputAmount, 5, 5)}`;
+    return formatThousands(inputAmount, 5, 5);
   }
 
   let inputAmount = '';
@@ -359,7 +353,7 @@ export const displayAmountWithSymbol = (
 
   if (tokenDecimals && !token) {
     const unknownToken: TokenInfo = {
-      address: address,
+      address,
       name: CUSTOM_TOKEN_NAME,
       chainId: 101,
       decimals: tokenDecimals,
@@ -385,7 +379,7 @@ export const displayAmountWithSymbol = (
       return `${formatted} [${shortenAddress(address, 4)}]`;
     }
 
-    return `${formatThousands(inputAmount, 5, 5)}`;
+    return formatThousands(inputAmount, 5, 5);
   }
 
   let inputAmount = '';
@@ -611,7 +605,7 @@ export const getTokenOrCustomToken = async (
   const token = tokenFilterCallback(address);
 
   const unkToken = {
-    address: address,
+    address,
     name: CUSTOM_TOKEN_NAME,
     chainId: 101,
     decimals: 6,

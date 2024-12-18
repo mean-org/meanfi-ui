@@ -77,7 +77,6 @@ export const ExchangeDcasView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet, connected } = useWallet();
   const { account } = useNativeAccount();
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
@@ -101,12 +100,8 @@ export const ExchangeDcasView = () => {
 
   // Keep track of current balance
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+  }, [account]);
 
   // Transaction execution (Applies to all transactions)
   const [transactionCancelled, setTransactionCancelled] = useState(false);

@@ -106,7 +106,6 @@ export const MoneyStreamsIncomingView = (props: {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [lastStreamTransferAddress, setLastStreamTransferAddress] = useState('');
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
   ////////////
   //  Init  //
@@ -1095,14 +1094,10 @@ export const MoneyStreamsIncomingView = (props: {
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+    // Refresh token balance
+    refreshTokenBalance();
+  }, [account, refreshTokenBalance]);
 
   // Set selected token to the stream associated token as soon as the stream is available or changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually

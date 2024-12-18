@@ -4,25 +4,26 @@ import { useContext } from 'react';
 import { AppStateContext } from 'src/contexts/appstate';
 import { useConnection } from 'src/contexts/connection';
 import { fetchAccountTokens, getTokensWithBalances, getUserAccountTokens } from 'src/middleware/accounts';
+import { useGetAccountBalance } from '../accountBalance';
 
 export const getUseAccountAssetsQueryKey = (accountAddress: string | undefined) => [
-  '/user-account-assets',
+  'user-account-assets',
   accountAddress,
 ];
 
 export const getUseFetchAccountTokensQueryKey = (accountAddress: string | undefined) => [
-  '/fetch-account-tokens',
+  'fetch-account-tokens',
   accountAddress,
 ];
 
 export const getUseGetTokensWithBalancesQueryKey = (accountAddress: string | undefined) => [
-  '/tokens-with-balances',
+  'tokens-with-balances',
   accountAddress,
 ];
 
 export const useAccountAssets = (accountAddress: string | undefined) => {
-  const connection = useConnection();
   const { priceList, splTokenList } = useContext(AppStateContext);
+  const { data: balance } = useGetAccountBalance(accountAddress);
   const { data: parsedTokens } = useFetchAccountTokens(accountAddress);
 
   const {
@@ -33,9 +34,15 @@ export const useAccountAssets = (accountAddress: string | undefined) => {
     queryKey: getUseAccountAssetsQueryKey(accountAddress),
     queryFn: () => {
       if (!accountAddress || !parsedTokens) return;
-      return getUserAccountTokens(connection, accountAddress, priceList, splTokenList, parsedTokens);
+      return getUserAccountTokens({
+        accountAddress,
+        accTks: parsedTokens,
+        accountBalance: balance ?? 0,
+        coinPrices: priceList,
+        splTokenList,
+      });
     },
-    enabled: !!accountAddress && !!parsedTokens, // && splTokenList.length > 0 && !!priceList,
+    enabled: !!accountAddress && !!parsedTokens,
     retry: false,
   });
 
@@ -47,22 +54,22 @@ export const useAccountAssets = (accountAddress: string | undefined) => {
 };
 
 export const useGetTokensWithBalances = (accountAddress: string | undefined, onlyAccountAssets?: boolean) => {
-  const connection = useConnection();
   const { priceList, splTokenList } = useContext(AppStateContext);
+  const { data: balance } = useGetAccountBalance(accountAddress);
   const { data: parsedTokens } = useFetchAccountTokens(accountAddress);
 
   return useQuery({
     queryKey: getUseGetTokensWithBalancesQueryKey(accountAddress),
     queryFn: () => {
       if (!accountAddress || !parsedTokens) return;
-      return getTokensWithBalances(
-        connection,
+      return getTokensWithBalances({
         accountAddress,
-        priceList,
+        accTks: parsedTokens,
+        accountBalance: balance ?? 0,
+        coinPrices: priceList,
         splTokenList,
-        parsedTokens,
-        onlyAccountAssets,
-      );
+        onlyAccountAssets: onlyAccountAssets ?? true,
+      });
     },
     enabled: !!accountAddress && !!parsedTokens,
     retry: false,

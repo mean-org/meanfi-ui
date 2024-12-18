@@ -132,7 +132,6 @@ export const MoneyStreamsInfoView = ({
   treasuryList,
 }: MoneyStreamsInfoViewProps) => {
   const {
-    tokenList,
     splTokenList,
     treasuryOption,
     selectedAccount,
@@ -259,7 +258,7 @@ export const MoneyStreamsInfoView = ({
     }
 
     if (!sourceAccountTokens || sourceAccountTokens.length === 0) {
-      for (const t of tokenList) {
+      for (const t of splTokenList) {
         balancesMap[t.address] = 0;
       }
       setUserBalances(balancesMap);
@@ -281,7 +280,7 @@ export const MoneyStreamsInfoView = ({
       balancesMap[address] = balance;
     }
     setUserBalances(balancesMap);
-  }, [sourceAccount, sourceAccountTokens, connection, tokenList]);
+  }, [sourceAccount, sourceAccountTokens, connection, splTokenList]);
 
   const getRateAmountBn = useCallback((item: Stream | StreamInfo, decimals: number) => {
     if (item) {

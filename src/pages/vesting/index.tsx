@@ -192,7 +192,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   // Balances
   const [nativeBalance, setNativeBalance] = useState(0);
   const [userBalances, setUserBalances] = useState<LooseObject>({});
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [treasuryEffectiveBalance, setTreasuryEffectiveBalance] = useState(0);
   const [balancesSource, setBalancesSource] = useState<string>('');
   // Transactions
@@ -2776,14 +2775,10 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   // Keep account balance updated
   useEffect(() => {
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAmountFromLamports(account?.lamports));
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
+    setNativeBalance(getAmountFromLamports(account?.lamports));
+    // Refresh token balance
+    refreshTokenBalance();
+  }, [account, refreshTokenBalance]);
 
   // Create Vesting contract fees
   useEffect(() => {
