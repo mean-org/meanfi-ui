@@ -210,13 +210,21 @@ const updateTokenAccountBalancesInTokenList = (
 };
 
 // Fetch all the token accounts that the user hold, also build duplicated token groups for later merge
-export const getUserAccountTokens = async (
-  connection: Connection,
-  accountAddress: string,
-  coinPrices: TokenPrice[] | null,
-  splTokenList: UserTokenAccount[],
-  accTks: AccountTokenParsedInfo[] | undefined,
-): Promise<UserTokensResponse | null> => {
+interface GetUserAccountTokensArgs {
+  accountAddress: string;
+  accTks: AccountTokenParsedInfo[] | undefined;
+  accountBalance: number;
+  coinPrices: TokenPrice[] | null;
+  splTokenList: UserTokenAccount[];
+}
+
+export const getUserAccountTokens = async ({
+  accountAddress,
+  accTks,
+  accountBalance,
+  coinPrices,
+  splTokenList,
+}: GetUserAccountTokensArgs): Promise<UserTokensResponse | null> => {
   const response: UserTokensResponse = {
     nativeBalance: 0,
     wSolBalance: 0,
@@ -227,16 +235,13 @@ export const getUserAccountTokens = async (
   };
 
   const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
-  const pk = new PublicKey(accountAddress);
 
   consoleOut('calling getUserAccountTokens() for:', accountAddress, 'blue');
 
-  // Fetch SOL balance.
-  const solBalance = await connection.getBalance(pk);
-  response.nativeBalance = getAmountFromLamports(solBalance);
+  response.nativeBalance = getAmountFromLamports(accountBalance);
   const sol: UserTokenAccount = {
     address: NATIVE_SOL.address,
-    balance: getAmountFromLamports(solBalance),
+    balance: getAmountFromLamports(accountBalance),
     chainId: 0,
     decimals: NATIVE_SOL.decimals,
     name: NATIVE_SOL.name,
@@ -244,7 +249,7 @@ export const getUserAccountTokens = async (
     publicAddress: accountAddress,
     tags: NATIVE_SOL.tags,
     logoURI: NATIVE_SOL.logoURI,
-    valueInUsd: getAmountFromLamports(solBalance) * getPriceByAddressOrSymbol(coinPrices, NATIVE_SOL.address, 'SOL'),
+    valueInUsd: getAmountFromLamports(accountBalance) * getPriceByAddressOrSymbol(coinPrices, NATIVE_SOL.address, 'SOL'),
   };
 
   try {
@@ -345,27 +350,33 @@ export const getUserAccountTokens = async (
 };
 
 // Get a list of tokens along with a balance map optionally including only the tokens that the user holds
-export const getTokensWithBalances = async (
-  connection: Connection,
-  accountAddress: string,
-  coinPrices: TokenPrice[] | null,
-  splTokenList: UserTokenAccount[],
-  accTks: AccountTokenParsedInfo[] | undefined,
+interface GetTokensWithBalancesArgs {
+  accountAddress: string;
+  accTks: AccountTokenParsedInfo[] | undefined;
+  accountBalance: number;
+  coinPrices: TokenPrice[] | null;
+  splTokenList: UserTokenAccount[];
+  onlyAccountAssets: boolean;
+}
+
+export const getTokensWithBalances = ({
+  accountAddress,
+  accTks,
+  accountBalance,
+  coinPrices,
+  splTokenList,
   onlyAccountAssets = true,
-): Promise<TokenSelectorListWithBalances | null> => {
+}: GetTokensWithBalancesArgs): TokenSelectorListWithBalances | null => {
   const response: TokenSelectorListWithBalances = {
     balancesMap: {},
     tokenList: [],
   };
 
   const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
-  const pk = new PublicKey(accountAddress);
 
   consoleOut('calling getTokensWithBalances() for:', accountAddress, 'blue');
 
-  // Fetch SOL balance.
-  const solBalance = await connection.getBalance(pk);
-  const nativeBalance = getAmountFromLamports(solBalance);
+  const nativeBalance = getAmountFromLamports(accountBalance);
   const sol: UserTokenAccount = {
     address: NATIVE_SOL.address,
     balance: nativeBalance,
