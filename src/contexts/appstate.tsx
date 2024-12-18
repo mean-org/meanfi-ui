@@ -95,7 +95,6 @@ interface AppStateConfig {
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
   lastTxSignature: string;
-  streamsSummary: StreamsSummary;
   lastStreamsSummary: StreamsSummary;
   paymentStreamingStats: PaymentStreamingStats;
   accountNfts: FindNftsByOwnerOutput | undefined;
@@ -164,7 +163,6 @@ interface AppStateConfig {
   // Accounts page
   appendHistoryItems: (transactionsChunk: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
-  setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
   setPaymentStreamingStats: (summary: PaymentStreamingStats) => void;
   // DDCAs
@@ -243,7 +241,6 @@ const contextDefaultValues: AppStateConfig = {
   selectedAsset: undefined,
   transactions: undefined,
   lastTxSignature: '',
-  streamsSummary: initialSummary,
   lastStreamsSummary: initialSummary,
   paymentStreamingStats: initialStats,
   accountNfts: undefined,
@@ -312,7 +309,6 @@ const contextDefaultValues: AppStateConfig = {
   // Accounts page
   appendHistoryItems: () => {},
   setSelectedAsset: () => {},
-  setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
   setPaymentStreamingStats: () => {},
   // DDCAs
@@ -423,7 +419,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     contextDefaultValues.selectedAsset,
   );
   const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
-  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
   const [paymentStreamingStats, setPaymentStreamingStats] = useState<PaymentStreamingStats>(
     contextDefaultValues.paymentStreamingStats,
@@ -1173,7 +1168,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       stakingMultiplier,
       streamActivity,
       streamDetail,
-      streamsSummary,
       theme,
       timeSheetRequirement,
       tokenAccounts,
@@ -1238,7 +1232,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       setStakedAmount,
       setStakingMultiplier,
       setStreamDetail,
-      setStreamsSummary,
       setTheme,
       setTimeSheetRequirement,
       setTotalSafeBalance,
@@ -1303,7 +1296,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     stakingMultiplier,
     streamActivity,
     streamDetail,
-    streamsSummary,
     theme,
     timeSheetRequirement,
     tokenAccounts,

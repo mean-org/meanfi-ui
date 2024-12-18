@@ -16,7 +16,7 @@ import {
   type MultisigTransactionFees,
   getFees,
 } from '@mean-dao/mean-multisig-sdk';
-import { STREAM_STATE, type StreamInfo, type TreasuryInfo } from '@mean-dao/money-streaming';
+import type { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
 import {
   Category,
   type PaymentStreamingAccount,
@@ -204,7 +204,6 @@ export const HomeView = () => {
     setSelectedMultisig,
     resetContractValues,
     appendHistoryItems,
-    setStreamsSummary,
     refreshMultisigs,
     setPreviousRoute,
     setSelectedToken,
@@ -1620,48 +1619,49 @@ export const HomeView = () => {
         return result;
       };
 
-      if (wallet && publicKey && data) {
-        const created = await createTx();
-        consoleOut('created:', created);
-        if (created) {
-          const sign = await signTx('Close Token Account', wallet.adapter, publicKey, transaction);
-          if (sign.encodedTransaction) {
-            encodedTx = sign.encodedTransaction;
-            transactionLog = transactionLog.concat(sign.log);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SignTransactionSuccess,
+      if (!(wallet && publicKey && data)) {
+        return;
+      }
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created) {
+        const sign = await signTx('Close Token Account', wallet.adapter, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
+          });
+          const sent = await sendTx('Close Token Account', connection, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature,
+              operationType: OperationType.DeleteAsset,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: 'Closing Token Account',
+              completedTitle: 'Transaction confirmed',
+              completedMessage: 'Token Account successfully closed',
+              completedMessageTimeout: isMultisigContext ? 8 : 5,
+              extras: {
+                multisigAuthority: multisigAuth,
+              },
             });
-            const sent = await sendTx('Close Token Account', connection, encodedTx);
-            consoleOut('sent:', sent);
-            if (sent.signature) {
-              signature = sent.signature;
-              consoleOut('Send Tx to confirmation queue:', signature);
-              enqueueTransactionConfirmation({
-                signature,
-                operationType: OperationType.DeleteAsset,
-                finality: 'confirmed',
-                txInfoFetchStatus: 'fetching',
-                loadingTitle: 'Confirming transaction',
-                loadingMessage: 'Closing Token Account',
-                completedTitle: 'Transaction confirmed',
-                completedMessage: 'Token Account successfully closed',
-                completedMessageTimeout: isMultisigContext ? 8 : 5,
-                extras: {
-                  multisigAuthority: multisigAuth,
-                },
-              });
-              setSuccessStatus();
-              setIsDeleteVaultModalVisible(false);
-            } else {
-              setFailureStatusAndNotify('send');
-            }
+            setSuccessStatus();
+            setIsDeleteVaultModalVisible(false);
           } else {
-            setFailureStatusAndNotify('sign');
+            setFailureStatusAndNotify('send');
           }
         } else {
-          setIsBusy(false);
+          setFailureStatusAndNotify('sign');
         }
+      } else {
+        setIsBusy(false);
       }
     },
     [
@@ -1726,6 +1726,11 @@ export const HomeView = () => {
         (treasury as PaymentStreamingAccount).version && (treasury as PaymentStreamingAccount).version >= 2
       );
 
+      // Ignore old streaming accounts
+      if (!isNew) {
+        continue;
+      }
+
       const treasuryType = isNew
         ? +(treasury as PaymentStreamingAccount).accountType
         : +(treasury as TreasuryInfo).type;
@@ -1751,71 +1756,70 @@ export const HomeView = () => {
       }
 
       resume.totalNet += amountChange;
+      resume.totalAmount += 1;
     }
-
-    resume.totalAmount += streamingAccounts.length;
 
     // Update state
     setStreamingAccountsSummary(resume);
   }, [streamingAccounts, getTreasuryUnallocatedBalance, getTokenPriceByAddress, getTokenByMintAddress]);
 
-  const getV1VestedValue = useCallback(
-    async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
-      if (!tokenStreamingV1) return 0;
+  // const getV1VestedValue = useCallback(
+  //   async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
+  //     if (!tokenStreamingV1) return 0;
 
-      let vestedValue = 0;
-      for await (const stream of updatedStreamsv1) {
-        const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
+  //     let vestedValue = 0;
+  //     for await (const stream of updatedStreamsv1) {
+  //       const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
 
-        // Get refreshed data
-        const freshStream = await tokenStreamingV1.refreshStream(stream);
-        if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
-          continue;
-        }
+  //       // Get refreshed data
+  //       const freshStream = await tokenStreamingV1.refreshStream(stream);
+  //       if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
+  //         continue;
+  //       }
 
-        const token = getTokenByMintAddress(freshStream.associatedToken as string);
+  //       const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
-        if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
+  //       if (token) {
+  //         const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
 
-          if (isIncoming) {
-            vestedValue = vestedValue + (freshStream.escrowVestedAmount || 0) * tokenPrice;
-          }
-        }
-      }
-      return vestedValue;
-    },
-    [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
-  );
+  //         if (isIncoming) {
+  //           vestedValue = vestedValue + (freshStream.escrowVestedAmount || 0) * tokenPrice;
+  //         }
+  //       }
+  //     }
+  //     return vestedValue;
+  //   },
+  //   [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
+  // );
 
-  const getV1UnvestedValue = useCallback(
-    async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
-      if (!tokenStreamingV1) return 0;
+  // const getV1UnvestedValue = useCallback(
+  //   async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
+  //     if (!tokenStreamingV1) return 0;
 
-      let unvestedValue = 0;
-      for await (const stream of updatedStreamsv1) {
-        const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
+  //     let unvestedValue = 0;
+  //     for await (const stream of updatedStreamsv1) {
+  //       const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
 
-        // Get refreshed data
-        const freshStream = await tokenStreamingV1.refreshStream(stream, undefined, false);
-        if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
-          continue;
-        }
+  //       // Get refreshed data
+  //       const freshStream = await tokenStreamingV1.refreshStream(stream, undefined, false);
+  //       if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
+  //         continue;
+  //       }
 
-        const token = getTokenByMintAddress(freshStream.associatedToken as string);
+  //       const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
-        if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
+  //       if (token) {
+  //         const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
 
-          if (!isIncoming) {
-            unvestedValue = unvestedValue + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
-          }
-        }
-      }
-      return unvestedValue;
-    },
-    [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
-  );
+  //         if (!isIncoming) {
+  //           unvestedValue = unvestedValue + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
+  //         }
+  //       }
+  //     }
+  //     return unvestedValue;
+  //   },
+  //   [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
+  // );
 
   const getV2FundsLeftValue = useCallback(
     async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
@@ -1884,9 +1888,13 @@ export const HomeView = () => {
   );
 
   const refreshIncomingStreamSummary = useCallback(async () => {
-    if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
+    if (!tokenStreamingV2 || !publicKey || !streamListv2) {
       return;
     }
+
+    // if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
+    //   return;
+    // }
 
     const resume: StreamsSummary = {
       totalNet: 0,
@@ -1897,13 +1905,12 @@ export const HomeView = () => {
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
-    const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
+    // const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
+    // const vested = await getV1VestedValue(updatedStreamsv1, treasurer);
+    // resume.totalNet = vested;
+    // resume.totalAmount = updatedStreamsv1.length;
+
     const updatedStreamsv2 = await tokenStreamingV2.refreshStreams(streamListv2 ?? [], treasurer);
-
-    const vested = await getV1VestedValue(updatedStreamsv1, treasurer);
-    resume.totalNet = vested;
-    resume.totalAmount = updatedStreamsv1.length;
-
     const withdrawableValue = await getV2WithdrawableValue(updatedStreamsv2, treasurer);
     resume.totalNet += withdrawableValue;
     resume.totalAmount += updatedStreamsv2.length;
@@ -1911,20 +1918,21 @@ export const HomeView = () => {
     // Update state
     setIncomingStreamsSummary(resume);
   }, [
-    tokenStreamingV1,
     tokenStreamingV2,
     publicKey,
-    streamListv1,
     streamListv2,
     selectedAccount.address,
     getV2WithdrawableValue,
-    getV1VestedValue,
   ]);
 
   const refreshOutgoingStreamSummary = useCallback(async () => {
-    if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
+    if (!tokenStreamingV2 || !publicKey || !streamListv2) {
       return;
     }
+
+    // if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
+    //   return;
+    // }
 
     const resume: StreamsSummary = {
       totalNet: 0,
@@ -1935,13 +1943,12 @@ export const HomeView = () => {
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
-    const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
+    // const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
+    // const unvested = await getV1UnvestedValue(updatedStreamsv1, treasurer);
+    // resume.totalNet = unvested;
+    // resume.totalAmount = updatedStreamsv1.length;
+
     const updatedStreamsv2 = await tokenStreamingV2.refreshStreams(streamListv2 ?? [], treasurer);
-
-    const unvested = await getV1UnvestedValue(updatedStreamsv1, treasurer);
-    resume.totalNet = unvested;
-    resume.totalAmount = updatedStreamsv1.length;
-
     const fundsLeft = await getV2FundsLeftValue(updatedStreamsv2, treasurer);
     resume.totalNet += fundsLeft;
     resume.totalAmount += updatedStreamsv2.length;
@@ -1949,14 +1956,11 @@ export const HomeView = () => {
     // Update state
     setOutgoingStreamsSummary(resume);
   }, [
-    tokenStreamingV1,
     tokenStreamingV2,
     publicKey,
-    streamListv1,
     streamListv2,
     selectedAccount.address,
     getV2FundsLeftValue,
-    getV1UnvestedValue,
   ]);
 
   const clearStateData = useCallback(() => {
@@ -1969,9 +1973,8 @@ export const HomeView = () => {
     setIncomingStreamsSummary(initialSummary);
     setOutgoingStreamsSummary(initialSummary);
     setTotalTokenAccountsValue(0);
-    setStreamsSummary(initialSummary);
     setCanShowStreamingAccountBalance(false);
-  }, [setStreamsSummary]);
+  }, []);
 
   // New proposal
 
@@ -2918,10 +2921,7 @@ export const HomeView = () => {
   // Having the treasuriesSummary and stream stats, lets publish combined stats
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    let totalStreamingAccounts = 0;
-    if (streamingAccountsSummary) {
-      totalStreamingAccounts = streamingAccountsSummary.totalAmount;
-    }
+    const totalStreamingAccounts = streamingAccountsSummary ? streamingAccountsSummary.totalAmount : 0;
     const paymentStreamingResume = {
       totalStreamingAccounts,
       incomingAmount,
