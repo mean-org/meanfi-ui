@@ -98,16 +98,16 @@ const defaultProvider: Value = {
   singlChainQuote: undefined,
   isFetchingQuote: false,
   lastQuoteError: undefined,
-  setSourceChain: () => void 0,
-  setDestinationChain: () => void 0,
-  setSrcChainTokenIn: () => void 0,
-  setDstChainTokenOut: () => void 0,
-  setDstChainTokenOutRecipient: () => void 0,
-  setSenderAddress: () => void 0,
-  setAmountIn: () => void 0,
-  flipNetworks: () => void 0,
-  forceRefresh: () => void 0,
-  resetQuote: () => void 0,
+  setSourceChain: () => undefined,
+  setDestinationChain: () => undefined,
+  setSrcChainTokenIn: () => undefined,
+  setDstChainTokenOut: () => undefined,
+  setDstChainTokenOutRecipient: () => undefined,
+  setSenderAddress: () => undefined,
+  setAmountIn: () => undefined,
+  flipNetworks: () => undefined,
+  forceRefresh: () => undefined,
+  resetQuote: () => undefined,
 };
 
 const DlnBridgeContext = createContext(defaultProvider);
@@ -244,80 +244,82 @@ const DlnBridgeProvider = ({ children }: Props) => {
       return;
     }
 
-    if (srcChainTokenIn.address !== dstChainTokenOut.address) {
-      const tokenAmount = toTokenAmount(amountIn, srcChainTokenIn.decimals, true) as string;
-      setSrcChainTokenInAmount(tokenAmount);
+    if (srcChainTokenIn.address === dstChainTokenOut.address) {
+      return;
+    }
 
-      setIsFetchingQuote(true);
-      if (dstChainTokenOutRecipient) {
-        // If recipient is available then call /v1.0/dln/order/create-tx
-        fetchInstance<DlnOrderCreateTxResponse | DlnErrorResponse>({
-          url: '/v1.0/dln/order/create-tx',
-          method: 'get',
-          params: {
-            srcChainId: sourceChain,
-            srcChainTokenIn: srcChainTokenIn.address,
-            srcChainTokenInAmount: tokenAmount,
-            dstChainId: destinationChain,
-            dstChainTokenOut: dstChainTokenOut.address,
-            dstChainTokenOutAmount: 'auto',
-            dstChainTokenOutRecipient,
-            dstChainOrderAuthorityAddress: dstChainTokenOutRecipient,
-            senderAddress,
-            srcChainOrderAuthorityAddress: senderAddress,
-            referralCode: DLN_REFERRAL_CODE,
-            affiliateFeePercent: affiliateFeeRecipient ? FEE_PERCENT : 0,
-            ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
-            prependOperatingExpenses: true,
-            enableEstimate: false,
-            deBridgeApp: 'DLN',
-          },
+    const tokenAmount = toTokenAmount(amountIn, srcChainTokenIn.decimals, true) as string;
+    setSrcChainTokenInAmount(tokenAmount);
+
+    setIsFetchingQuote(true);
+    if (dstChainTokenOutRecipient) {
+      // If recipient is available then call /v1.0/dln/order/create-tx
+      fetchInstance<DlnOrderCreateTxResponse | DlnErrorResponse>({
+        url: '/v1.0/dln/order/create-tx',
+        method: 'get',
+        params: {
+          srcChainId: sourceChain,
+          srcChainTokenIn: srcChainTokenIn.address,
+          srcChainTokenInAmount: tokenAmount,
+          dstChainId: destinationChain,
+          dstChainTokenOut: dstChainTokenOut.address,
+          dstChainTokenOutAmount: 'auto',
+          dstChainTokenOutRecipient,
+          dstChainOrderAuthorityAddress: dstChainTokenOutRecipient,
+          senderAddress,
+          srcChainOrderAuthorityAddress: senderAddress,
+          referralCode: DLN_REFERRAL_CODE,
+          affiliateFeePercent: affiliateFeeRecipient ? FEE_PERCENT : 0,
+          ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
+          prependOperatingExpenses: true,
+          enableEstimate: false,
+          deBridgeApp: 'DLN',
+        },
+      })
+        .then(quoteResponse => {
+          if ('errorId' in quoteResponse) {
+            setLastQuoteError(quoteResponse);
+
+            return;
+          }
+          console.info('quoteResponse:', quoteResponse);
+          setLastQuoteError(undefined);
+          setQuote(quoteResponse);
+          setDstChainTokenOutAmount(quoteResponse.estimation.dstChainTokenOut.amount);
         })
-          .then(quoteResponse => {
-            if ('errorId' in quoteResponse) {
-              setLastQuoteError(quoteResponse);
-
-              return;
-            }
-            console.log('quoteResponse:', quoteResponse);
-            setLastQuoteError(undefined);
-            setQuote(quoteResponse);
-            setDstChainTokenOutAmount(quoteResponse.estimation.dstChainTokenOut.amount);
-          })
-          .catch(rejection => {
-            console.error('/create-tx rejection:', rejection);
-          })
-          .finally(() => setIsFetchingQuote(false));
-      } else {
-        fetchInstance<DlnOrderQuoteResponse | DlnErrorResponse>({
-          url: '/v1.0/dln/order/quote',
-          method: 'get',
-          params: {
-            srcChainId: sourceChain,
-            srcChainTokenIn: srcChainTokenIn.address,
-            srcChainTokenInAmount: tokenAmount,
-            dstChainId: destinationChain,
-            dstChainTokenOut: dstChainTokenOut.address,
-            dstChainTokenOutAmount: 'auto',
-            prependOperatingExpenses: true,
-          },
+        .catch(rejection => {
+          console.error('/create-tx rejection:', rejection);
         })
-          .then(quoteResponse => {
-            if ('errorId' in quoteResponse) {
-              setLastQuoteError(quoteResponse);
+        .finally(() => setIsFetchingQuote(false));
+    } else {
+      fetchInstance<DlnOrderQuoteResponse | DlnErrorResponse>({
+        url: '/v1.0/dln/order/quote',
+        method: 'get',
+        params: {
+          srcChainId: sourceChain,
+          srcChainTokenIn: srcChainTokenIn.address,
+          srcChainTokenInAmount: tokenAmount,
+          dstChainId: destinationChain,
+          dstChainTokenOut: dstChainTokenOut.address,
+          dstChainTokenOutAmount: 'auto',
+          prependOperatingExpenses: true,
+        },
+      })
+        .then(quoteResponse => {
+          if ('errorId' in quoteResponse) {
+            setLastQuoteError(quoteResponse);
 
-              return;
-            }
-            console.log('quoteResponse:', quoteResponse);
-            setLastQuoteError(undefined);
-            setQuote(quoteResponse);
-            setDstChainTokenOutAmount(quoteResponse.estimation.dstChainTokenOut.amount);
-          })
-          .catch(rejection => {
-            console.error('/quote rejection:', rejection);
-          })
-          .finally(() => setIsFetchingQuote(false));
-      }
+            return;
+          }
+          console.info('quoteResponse:', quoteResponse);
+          setLastQuoteError(undefined);
+          setQuote(quoteResponse);
+          setDstChainTokenOutAmount(quoteResponse.estimation.dstChainTokenOut.amount);
+        })
+        .catch(rejection => {
+          console.error('/quote rejection:', rejection);
+        })
+        .finally(() => setIsFetchingQuote(false));
     }
   }, [
     forceRenderRef,
@@ -345,74 +347,76 @@ const DlnBridgeProvider = ({ children }: Props) => {
       return;
     }
 
-    if (srcChainTokenIn.address !== dstChainTokenOut.address) {
-      const tokenAmount = toTokenAmount(amountIn, srcChainTokenIn.decimals, true) as string;
-      setSrcChainTokenInAmount(tokenAmount);
-      const destination = dstChainTokenOutRecipient ?? senderAddress;
+    if (srcChainTokenIn.address === dstChainTokenOut.address) {
+      return;
+    }
 
-      setIsFetchingQuote(true);
-      if (destination) {
-        // If sender is known then call /v1.0/chain/transaction
-        fetchInstance<SwapCreateTxResponse | DlnErrorResponse>({
-          url: '/v1.0/chain/transaction',
-          method: 'get',
-          params: {
-            chainId: sourceChain,
-            tokenIn: srcChainTokenIn.address,
-            tokenInAmount: tokenAmount,
-            tokenOutRecipient: destination,
-            slippage: 1,
-            tokenOut: dstChainTokenOut.address,
-            referralCode: DLN_REFERRAL_CODE,
-            affiliateFeePercent: affiliateFeeRecipient ? FEE_PERCENT : 0,
-            ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
-          },
+    const tokenAmount = toTokenAmount(amountIn, srcChainTokenIn.decimals, true) as string;
+    setSrcChainTokenInAmount(tokenAmount);
+    const destination = dstChainTokenOutRecipient ?? senderAddress;
+
+    setIsFetchingQuote(true);
+    if (destination) {
+      // If sender is known then call /v1.0/chain/transaction
+      fetchInstance<SwapCreateTxResponse | DlnErrorResponse>({
+        url: '/v1.0/chain/transaction',
+        method: 'get',
+        params: {
+          chainId: sourceChain,
+          tokenIn: srcChainTokenIn.address,
+          tokenInAmount: tokenAmount,
+          tokenOutRecipient: destination,
+          slippage: 1,
+          tokenOut: dstChainTokenOut.address,
+          referralCode: DLN_REFERRAL_CODE,
+          affiliateFeePercent: affiliateFeeRecipient ? FEE_PERCENT : 0,
+          ...(affiliateFeeRecipient ? { affiliateFeeRecipient } : {}),
+        },
+      })
+        .then(createTxResponse => {
+          if ('errorId' in createTxResponse) {
+            setLastQuoteError(createTxResponse);
+
+            return;
+          }
+          console.info('createTxResponse:', createTxResponse);
+          setLastQuoteError(undefined);
+          setSinglChainQuote(createTxResponse);
+          setDstChainTokenOutAmount(createTxResponse.tokenOut.amount);
         })
-          .then(createTxResponse => {
-            if ('errorId' in createTxResponse) {
-              setLastQuoteError(createTxResponse);
-
-              return;
-            }
-            console.log('createTxResponse:', createTxResponse);
-            setLastQuoteError(undefined);
-            setSinglChainQuote(createTxResponse);
-            setDstChainTokenOutAmount(createTxResponse.tokenOut.amount);
-          })
-          .catch(rejection => {
-            console.error('/transaction rejection:', rejection);
-          })
-          .finally(() => setIsFetchingQuote(false));
-      } else {
-        // Otherwise go with estimation /v1.0/chain/estimation
-        fetchInstance<SwapEstimationResponse | DlnErrorResponse>({
-          url: '/v1.0/chain/estimation',
-          method: 'get',
-          params: {
-            chainId: sourceChain,
-            tokenIn: srcChainTokenIn.address,
-            tokenInAmount: tokenAmount,
-            slippage: 1,
-            tokenOut: dstChainTokenOut.address,
-          },
+        .catch(rejection => {
+          console.error('/transaction rejection:', rejection);
         })
-          .then(estimationResponse => {
-            if ('errorId' in estimationResponse) {
-              setLastQuoteError(estimationResponse);
+        .finally(() => setIsFetchingQuote(false));
+    } else {
+      // Otherwise go with estimation /v1.0/chain/estimation
+      fetchInstance<SwapEstimationResponse | DlnErrorResponse>({
+        url: '/v1.0/chain/estimation',
+        method: 'get',
+        params: {
+          chainId: sourceChain,
+          tokenIn: srcChainTokenIn.address,
+          tokenInAmount: tokenAmount,
+          slippage: 1,
+          tokenOut: dstChainTokenOut.address,
+        },
+      })
+        .then(estimationResponse => {
+          if ('errorId' in estimationResponse) {
+            setLastQuoteError(estimationResponse);
 
-              return;
-            }
-            console.log('estimationResponse:', estimationResponse);
-            setLastQuoteError(undefined);
-            console.log('estimationResponse:', estimationResponse);
-            setSinglChainQuote(estimationResponse);
-            setDstChainTokenOutAmount(estimationResponse.estimation.tokenOut.amount);
-          })
-          .catch(rejection => {
-            console.error('/estimation rejection:', rejection);
-          })
-          .finally(() => setIsFetchingQuote(false));
-      }
+            return;
+          }
+          console.info('estimationResponse:', estimationResponse);
+          setLastQuoteError(undefined);
+          console.info('estimationResponse:', estimationResponse);
+          setSinglChainQuote(estimationResponse);
+          setDstChainTokenOutAmount(estimationResponse.estimation.tokenOut.amount);
+        })
+        .catch(rejection => {
+          console.error('/estimation rejection:', rejection);
+        })
+        .finally(() => setIsFetchingQuote(false));
     }
   }, [
     amountIn,
