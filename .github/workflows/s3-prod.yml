@@ -16,6 +16,7 @@ env:
   IRONFORGE_API_URL: ${{ vars.IRONFORGE_API_URL }}
   IRONFORGE_API_KEY: ${{ secrets.IRONFORGE_API_KEY }}
   IRONFORGE_API_ACCESS_TOKEN: ${{ secrets.IRONFORGE_API_ACCESS_TOKEN }}
+  DEBRIDGE_DLN_API_ACCESS_TOKEN: ${{ secrets.DEBRIDGE_DLN_API_ACCESS_TOKEN }}
 
 jobs:
   approval:
@@ -58,6 +59,7 @@ jobs:
           VITE_IRONFORGE_API_URL: ${{ env.IRONFORGE_API_URL }}
           VITE_IRONFORGE_API_KEY: ${{ env.IRONFORGE_API_KEY }}
           VITE_IRONFORGE_API_ACCESS_TOKEN: ${{ env.IRONFORGE_API_ACCESS_TOKEN }}
+          VITE_DEBRIDGE_DLN_API_ACCESS_TOKEN: ${{ env.DEBRIDGE_DLN_API_ACCESS_TOKEN }}
 
       # Share artifact inside workflow
       - name: Share artifact inside workflow

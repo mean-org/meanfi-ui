@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.29.10",
+  "version": "1.29.11",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
@@ -39,7 +39,7 @@
     "@ledgerhq/hw-transport": "^6.31",
     "@ledgerhq/hw-transport-webhid": "^6.29",
     "@mean-dao/ddca": "^1.2.35",
-    "@mean-dao/mean-multisig-apps": "1.3.24",
+    "@mean-dao/mean-multisig-apps": "1.3.25",
     "@mean-dao/mean-multisig-sdk": "1.19.2",
     "@mean-dao/money-streaming": "1.8.0",
     "@mean-dao/payment-streaming": "4.0.3",
