@@ -1418,21 +1418,20 @@
     "@project-serum/anchor" "^0.20.1"
     "@solana/spl-token" "^0.1.8"
 
-"@mean-dao/mean-multisig-apps@1.3.24":
-  version "1.3.24"
-  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-apps/-/mean-multisig-apps-1.3.24.tgz#5ca1a48061ddba8a736babd458b4c90452e08ca1"
-  integrity sha512-UYlORKO+/MykBFJkjt0bXUhz81nxMrX4o2CPCC2IcENAFvhnqC5fHCXvvEfR0V8AjNB7UvHqEd8Vf46bI1VcyQ==
+"@mean-dao/mean-multisig-apps@1.3.25":
+  version "1.3.25"
+  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-apps/-/mean-multisig-apps-1.3.25.tgz#7c1c27f8ddf016de19f3f0439a7f7cc3934c5b12"
+  integrity sha512-4FjgOfavEh4SMuP+xU77/r5xuKiO52vQE1XHuohJrZr701euSIrIraEAfZJ8ltfLkLz8aOKPFBQpDrOsWXkECw==
   dependencies:
     "@coral-xyz/anchor" "^0.26.0"
     "@coral-xyz/anchor-cli" "^0.26.0"
     "@solana/spl-token" "0.1.8"
     "@solana/web3.js" "1.95.2"
-    cross-fetch "^3.1.5"
 
-"@mean-dao/mean-multisig-sdk@1.19.2":
-  version "1.19.2"
-  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-sdk/-/mean-multisig-sdk-1.19.2.tgz#7b3e5e2a514d3f2036dc786bb3d9dc3ba8a9fa02"
-  integrity sha512-YR9QNX8LbA6OfADscHstfZa0HLp3xQH3lFqo2vqhuKY0ntpReZt76wsQZhNwoyPC1Rb0f5gR7F3mxZC7EsSOPw==
+"@mean-dao/mean-multisig-sdk@1.19.3":
+  version "1.19.3"
+  resolved "https://registry.yarnpkg.com/@mean-dao/mean-multisig-sdk/-/mean-multisig-sdk-1.19.3.tgz#04dac4e9db97b29b9377677c19870f8a014c9566"
+  integrity sha512-nZyeV9DTIhhT3BPmsFUE8KClJQrXs5NUk/Ax3CBL1RVwj5XjtjBD70eUo97rt+poKEaTiCgoxpe4+pFRkCLS+Q==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@project-serum/anchor-cli" "^0.24.2"
