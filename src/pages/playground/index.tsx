@@ -2,12 +2,7 @@ import { ArrowRightOutlined, WarningFilled } from '@ant-design/icons';
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import type { Stream, StreamEventData } from '@mean-dao/payment-streaming';
 import { BN } from '@project-serum/anchor';
-import {
-  type AccountInfo,
-  LAMPORTS_PER_SOL,
-  type ParsedAccountData,
-  PublicKey
-} from '@solana/web3.js';
+import { type AccountInfo, LAMPORTS_PER_SOL, type ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { Button, Divider, Modal, Space, Tooltip } from 'antd';
 import notification from 'antd/lib/notification';
 import type { IconType } from 'antd/lib/notification/interface';

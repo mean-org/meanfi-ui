@@ -38,7 +38,6 @@ export function AppRoutes() {
         <Route path='/staking-rewards' element={<StakingRewardsView />} />
         <Route path='/assets' element={<HomeView />} />
         <Route path='/assets/:asset' element={<HomeView />} />
-        <Route path='/nfts/:asset' element={<HomeView />} />
         <Route path='/vesting' element={<Navigate replace to='/vesting/summary' />} />
         <Route path='/vesting/summary' element={<HomeView />} />
         <Route path='/vesting/contracts' element={<HomeView />} />

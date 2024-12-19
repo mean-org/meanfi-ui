@@ -1,10 +1,14 @@
-import { BN } from "@project-serum/anchor";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { type Connection, PublicKey } from "@solana/web3.js";
-import { ACCOUNT_LAYOUT } from "src/middleware/layouts";
-import type { MultisigAsset } from "src/models/multisig";
+import { BN } from '@project-serum/anchor';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { type Connection, PublicKey } from '@solana/web3.js';
+import { ACCOUNT_LAYOUT } from 'src/middleware/layouts';
+import type { MultisigAsset } from 'src/models/multisig';
 
-export const getMultisigVaults = async (connection: Connection, multisigId: PublicKey, multisigAddressPK: PublicKey) => {
+export const getMultisigVaults = async (
+  connection: Connection,
+  multisigId: PublicKey,
+  multisigAddressPK: PublicKey,
+) => {
   const [multisigSigner] = PublicKey.findProgramAddressSync([multisigId.toBuffer()], multisigAddressPK);
 
   // TODO: Do this better, this kills us

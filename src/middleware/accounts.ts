@@ -1,4 +1,3 @@
-import { Metaplex } from '@metaplex-foundation/js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   type AccountInfo,
@@ -249,7 +248,8 @@ export const getUserAccountTokens = async ({
     publicAddress: accountAddress,
     tags: NATIVE_SOL.tags,
     logoURI: NATIVE_SOL.logoURI,
-    valueInUsd: getAmountFromLamports(accountBalance) * getPriceByAddressOrSymbol(coinPrices, NATIVE_SOL.address, 'SOL'),
+    valueInUsd:
+      getAmountFromLamports(accountBalance) * getPriceByAddressOrSymbol(coinPrices, NATIVE_SOL.address, 'SOL'),
   };
 
   try {
@@ -471,15 +471,4 @@ export const getTokensWithBalances = ({
   }
 
   return response;
-};
-
-export const getAccountNFTs = async (connection: Connection, accountAddress: string) => {
-  const owner = new PublicKey(accountAddress);
-  const metaplex = new Metaplex(connection);
-
-  consoleOut('reading NFTs for:', accountAddress, 'blue');
-
-  return await metaplex.nfts().findAllByOwner({
-    owner,
-  });
 };

@@ -1,4 +1,7 @@
+import getRuntimeEnv from "src/environments/getRuntimeEnv";
+
 const dlnApiBaseUrl = 'https://api.dln.trade';
+const dlnApiAccessToken = getRuntimeEnv().VITE_DEBRIDGE_DLN_API_ACCESS_TOKEN;
 
 type ErrorType<ErrorData> = ErrorData;
 
@@ -39,6 +42,7 @@ export const fetcher = async (options: FetchOptions): Promise<Response> => {
   const url = new URL(options.url, dlnApiBaseUrl);
   if (options.params) {
     url.search = new URLSearchParams(options.params).toString();
+    url.searchParams.append('accesstoken', dlnApiAccessToken);
   }
   const fetchOptions: RequestInit = {
     signal: controller.signal,

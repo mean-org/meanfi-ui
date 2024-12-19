@@ -1,6 +1,6 @@
 import { SocialNetwork } from 'src/models/enums';
 
-export type AccountsPageCategory = 'account-summary' | 'assets' | 'nfts' | 'apps' | 'other-assets' | undefined;
+export type AccountsPageCategory = 'account-summary' | 'assets' | 'apps' | 'other-assets' | undefined;
 
 export enum MetaInfoCtaAction {
   Send = 0,
@@ -30,7 +30,6 @@ export enum MetaInfoCtaAction {
 
 export enum AssetGroups {
   Tokens = 'tokens',
-  Nfts = 'nfts',
   Apps = 'apps',
   OtherAssets = 'other-assets',
 }
@@ -53,6 +52,7 @@ export interface AssetCta {
   uiComponentType: 'button' | 'menuitem';
   uiComponentId: string;
   tooltip: string;
+  // biome-ignore lint/suspicious/noExplicitAny: A function that can be called with any arguments
   callBack?: any;
 }
 

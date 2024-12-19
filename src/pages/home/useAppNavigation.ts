@@ -20,8 +20,6 @@ interface CategoryToAssetsGroupArgs {
 
 const categoryToAssetsGroup = ({ selectedCategory, pathname }: CategoryToAssetsGroupArgs) => {
   switch (selectedCategory) {
-    case 'nfts':
-      return AssetGroups.Nfts;
     case 'apps': {
       if (pathname.startsWith(`/${RegisteredAppPaths.PaymentStreaming}`)) return AssetGroups.Tokens;
       return AssetGroups.Apps;
@@ -62,11 +60,6 @@ const useAppNavigation = ({ selectedAccount }: Args) => {
       // 2.- If the route starts with assets, set category to "assets"
       consoleOut('Setting category:', 'assets', 'crimson');
       return 'assets';
-    }
-    if (pathname.startsWith('/nfts')) {
-      // 3.- If the route starts with nfts, set category to "nfts"
-      consoleOut('Setting category:', 'nfts', 'crimson');
-      return 'nfts';
     }
     if (isKnownApp && !isAccountSummary) {
       consoleOut('Setting category:', 'apps', 'crimson');
@@ -135,7 +128,6 @@ const useAppNavigation = ({ selectedAccount }: Args) => {
     if (
       pathname.startsWith('/programs') ||
       pathname.startsWith('/assets') ||
-      pathname.startsWith('/nfts') ||
       pathname.startsWith('/my-account') ||
       isKnownApp
     ) {

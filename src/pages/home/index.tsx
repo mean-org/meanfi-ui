@@ -16,7 +16,7 @@ import {
   type MultisigTransactionFees,
   getFees,
 } from '@mean-dao/mean-multisig-sdk';
-import { STREAM_STATE, type StreamInfo, type TreasuryInfo } from '@mean-dao/money-streaming';
+import type { StreamInfo, TreasuryInfo } from '@mean-dao/money-streaming';
 import {
   Category,
   type PaymentStreamingAccount,
@@ -120,7 +120,6 @@ import {
   RegisteredAppPaths,
   type UserTokenAccount,
 } from 'src/models/accounts';
-import type { MeanNft } from 'src/models/accounts/NftTypes';
 import type { MetaInfoCta } from 'src/models/common-types';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import {
@@ -143,8 +142,6 @@ import type { LooseObject } from 'src/types/LooseObject';
 import { AppsList } from 'src/views/AppsList';
 import { AssetActivity } from 'src/views/AssetActivity';
 import AssetList from 'src/views/AssetList';
-import { NftDetails } from 'src/views/NftDetails';
-import { NftPaginatedList } from 'src/views/NftPaginatedList';
 import { OtherAssetsList } from 'src/views/OtherAssetsList';
 import { getBuyOptionsCta } from './asset-ctas/buyOptionsCta';
 import { getCloseAccountCta } from './asset-ctas/closeAccountCta';
@@ -154,7 +151,6 @@ import { getInvestAssetCta } from './asset-ctas/investAssetCta';
 import { getMergeAccountsCta } from './asset-ctas/mergeAccountsCta';
 import { getUnwrapSolCta } from './asset-ctas/unwrapSolCta';
 import { getWrapSolCta } from './asset-ctas/wrapSolCta';
-import getNftMint from './getNftMint';
 import './style.scss';
 import WalletNotConnectedMessage from 'src/components/WalletNotConnectedMessage';
 import { resolveParsedAccountInfo } from 'src/middleware/accounts';
@@ -182,7 +178,6 @@ export const HomeView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const {
-    accountNfts,
     transactions,
     splTokenList,
     isWhitelisted,
@@ -204,7 +199,6 @@ export const HomeView = () => {
     setSelectedMultisig,
     resetContractValues,
     appendHistoryItems,
-    setStreamsSummary,
     refreshMultisigs,
     setPreviousRoute,
     setSelectedToken,
@@ -247,7 +241,6 @@ export const HomeView = () => {
   const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
   const [multisigTransactionFees, setMultisigTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [, setMinRequiredBalance] = useState(0);
-  const [selectedNft, setSelectedNft] = useState<MeanNft | undefined>(undefined);
   // Multisig Apps
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
@@ -336,8 +329,8 @@ export const HomeView = () => {
   }, [publicKey, selectedAccount]);
 
   const {
-    streamingAccounts,
-    loadingStreamingAccounts,
+    data: streamingAccounts,
+    isPending: loadingStreamingAccounts,
     refetch: refreshStreamingAccounts,
   } = useGetStreamingAccounts({
     srcAccountPk: new PublicKey(selectedAccount.address),
@@ -714,13 +707,7 @@ export const HomeView = () => {
   const getAssetPath = useCallback(
     (asset: UserTokenAccount) => {
       const isAccountNative = isSelectedAssetNativeAccount(asset);
-      let url = '';
-      if (isAccountNative) {
-        url = '/assets';
-      } else {
-        url = `/assets/${asset.publicAddress}`;
-      }
-      return url;
+      return isAccountNative ? '/assets' : `/assets/${asset.publicAddress}`;
     },
     [isSelectedAssetNativeAccount],
   );
@@ -745,15 +732,6 @@ export const HomeView = () => {
     const url = `/${RegisteredAppPaths.SuperSafe}?v=proposals`;
     navigate(url);
   }, [navigate]);
-
-  const navigateToNft = useCallback(
-    (address: string) => {
-      consoleOut('calling navigateToNft()', '...', 'crimson');
-      const url = `/nfts/${address}`;
-      navigate(url);
-    },
-    [navigate],
-  );
 
   const navigateToStreaming = useCallback(() => {
     const url = `/${RegisteredAppPaths.PaymentStreaming}/summary`;
@@ -1620,48 +1598,49 @@ export const HomeView = () => {
         return result;
       };
 
-      if (wallet && publicKey && data) {
-        const created = await createTx();
-        consoleOut('created:', created);
-        if (created) {
-          const sign = await signTx('Close Token Account', wallet.adapter, publicKey, transaction);
-          if (sign.encodedTransaction) {
-            encodedTx = sign.encodedTransaction;
-            transactionLog = transactionLog.concat(sign.log);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SignTransactionSuccess,
+      if (!(wallet && publicKey && data)) {
+        return;
+      }
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created) {
+        const sign = await signTx('Close Token Account', wallet.adapter, publicKey, transaction);
+        if (sign.encodedTransaction) {
+          encodedTx = sign.encodedTransaction;
+          transactionLog = transactionLog.concat(sign.log);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionSuccess,
+          });
+          const sent = await sendTx('Close Token Account', connection, encodedTx);
+          consoleOut('sent:', sent);
+          if (sent.signature) {
+            signature = sent.signature;
+            consoleOut('Send Tx to confirmation queue:', signature);
+            enqueueTransactionConfirmation({
+              signature,
+              operationType: OperationType.DeleteAsset,
+              finality: 'confirmed',
+              txInfoFetchStatus: 'fetching',
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: 'Closing Token Account',
+              completedTitle: 'Transaction confirmed',
+              completedMessage: 'Token Account successfully closed',
+              completedMessageTimeout: isMultisigContext ? 8 : 5,
+              extras: {
+                multisigAuthority: multisigAuth,
+              },
             });
-            const sent = await sendTx('Close Token Account', connection, encodedTx);
-            consoleOut('sent:', sent);
-            if (sent.signature) {
-              signature = sent.signature;
-              consoleOut('Send Tx to confirmation queue:', signature);
-              enqueueTransactionConfirmation({
-                signature,
-                operationType: OperationType.DeleteAsset,
-                finality: 'confirmed',
-                txInfoFetchStatus: 'fetching',
-                loadingTitle: 'Confirming transaction',
-                loadingMessage: 'Closing Token Account',
-                completedTitle: 'Transaction confirmed',
-                completedMessage: 'Token Account successfully closed',
-                completedMessageTimeout: isMultisigContext ? 8 : 5,
-                extras: {
-                  multisigAuthority: multisigAuth,
-                },
-              });
-              setSuccessStatus();
-              setIsDeleteVaultModalVisible(false);
-            } else {
-              setFailureStatusAndNotify('send');
-            }
+            setSuccessStatus();
+            setIsDeleteVaultModalVisible(false);
           } else {
-            setFailureStatusAndNotify('sign');
+            setFailureStatusAndNotify('send');
           }
         } else {
-          setIsBusy(false);
+          setFailureStatusAndNotify('sign');
         }
+      } else {
+        setIsBusy(false);
       }
     },
     [
@@ -1726,6 +1705,11 @@ export const HomeView = () => {
         (treasury as PaymentStreamingAccount).version && (treasury as PaymentStreamingAccount).version >= 2
       );
 
+      // Ignore old streaming accounts
+      if (!isNew) {
+        continue;
+      }
+
       const treasuryType = isNew
         ? +(treasury as PaymentStreamingAccount).accountType
         : +(treasury as TreasuryInfo).type;
@@ -1751,71 +1735,70 @@ export const HomeView = () => {
       }
 
       resume.totalNet += amountChange;
+      resume.totalAmount += 1;
     }
-
-    resume.totalAmount += streamingAccounts.length;
 
     // Update state
     setStreamingAccountsSummary(resume);
   }, [streamingAccounts, getTreasuryUnallocatedBalance, getTokenPriceByAddress, getTokenByMintAddress]);
 
-  const getV1VestedValue = useCallback(
-    async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
-      if (!tokenStreamingV1) return 0;
+  // const getV1VestedValue = useCallback(
+  //   async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
+  //     if (!tokenStreamingV1) return 0;
 
-      let vestedValue = 0;
-      for await (const stream of updatedStreamsv1) {
-        const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
+  //     let vestedValue = 0;
+  //     for await (const stream of updatedStreamsv1) {
+  //       const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
 
-        // Get refreshed data
-        const freshStream = await tokenStreamingV1.refreshStream(stream);
-        if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
-          continue;
-        }
+  //       // Get refreshed data
+  //       const freshStream = await tokenStreamingV1.refreshStream(stream);
+  //       if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
+  //         continue;
+  //       }
 
-        const token = getTokenByMintAddress(freshStream.associatedToken as string);
+  //       const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
-        if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
+  //       if (token) {
+  //         const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
 
-          if (isIncoming) {
-            vestedValue = vestedValue + (freshStream.escrowVestedAmount || 0) * tokenPrice;
-          }
-        }
-      }
-      return vestedValue;
-    },
-    [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
-  );
+  //         if (isIncoming) {
+  //           vestedValue = vestedValue + (freshStream.escrowVestedAmount || 0) * tokenPrice;
+  //         }
+  //       }
+  //     }
+  //     return vestedValue;
+  //   },
+  //   [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
+  // );
 
-  const getV1UnvestedValue = useCallback(
-    async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
-      if (!tokenStreamingV1) return 0;
+  // const getV1UnvestedValue = useCallback(
+  //   async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
+  //     if (!tokenStreamingV1) return 0;
 
-      let unvestedValue = 0;
-      for await (const stream of updatedStreamsv1) {
-        const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
+  //     let unvestedValue = 0;
+  //     for await (const stream of updatedStreamsv1) {
+  //       const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
 
-        // Get refreshed data
-        const freshStream = await tokenStreamingV1.refreshStream(stream, undefined, false);
-        if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
-          continue;
-        }
+  //       // Get refreshed data
+  //       const freshStream = await tokenStreamingV1.refreshStream(stream, undefined, false);
+  //       if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
+  //         continue;
+  //       }
 
-        const token = getTokenByMintAddress(freshStream.associatedToken as string);
+  //       const token = getTokenByMintAddress(freshStream.associatedToken as string);
 
-        if (token) {
-          const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
+  //       if (token) {
+  //         const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
 
-          if (!isIncoming) {
-            unvestedValue = unvestedValue + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
-          }
-        }
-      }
-      return unvestedValue;
-    },
-    [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
-  );
+  //         if (!isIncoming) {
+  //           unvestedValue = unvestedValue + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
+  //         }
+  //       }
+  //     }
+  //     return unvestedValue;
+  //   },
+  //   [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
+  // );
 
   const getV2FundsLeftValue = useCallback(
     async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
@@ -1884,9 +1867,13 @@ export const HomeView = () => {
   );
 
   const refreshIncomingStreamSummary = useCallback(async () => {
-    if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
+    if (!tokenStreamingV2 || !publicKey || !streamListv2) {
       return;
     }
+
+    // if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
+    //   return;
+    // }
 
     const resume: StreamsSummary = {
       totalNet: 0,
@@ -1897,34 +1884,28 @@ export const HomeView = () => {
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
-    const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
+    // const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
+    // const vested = await getV1VestedValue(updatedStreamsv1, treasurer);
+    // resume.totalNet = vested;
+    // resume.totalAmount = updatedStreamsv1.length;
+
     const updatedStreamsv2 = await tokenStreamingV2.refreshStreams(streamListv2 ?? [], treasurer);
-
-    const vested = await getV1VestedValue(updatedStreamsv1, treasurer);
-    resume.totalNet = vested;
-    resume.totalAmount = updatedStreamsv1.length;
-
     const withdrawableValue = await getV2WithdrawableValue(updatedStreamsv2, treasurer);
     resume.totalNet += withdrawableValue;
     resume.totalAmount += updatedStreamsv2.length;
 
     // Update state
     setIncomingStreamsSummary(resume);
-  }, [
-    tokenStreamingV1,
-    tokenStreamingV2,
-    publicKey,
-    streamListv1,
-    streamListv2,
-    selectedAccount.address,
-    getV2WithdrawableValue,
-    getV1VestedValue,
-  ]);
+  }, [tokenStreamingV2, publicKey, streamListv2, selectedAccount.address, getV2WithdrawableValue]);
 
   const refreshOutgoingStreamSummary = useCallback(async () => {
-    if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
+    if (!tokenStreamingV2 || !publicKey || !streamListv2) {
       return;
     }
+
+    // if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
+    //   return;
+    // }
 
     const resume: StreamsSummary = {
       totalNet: 0,
@@ -1935,29 +1916,19 @@ export const HomeView = () => {
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
 
-    const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
+    // const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
+    // const unvested = await getV1UnvestedValue(updatedStreamsv1, treasurer);
+    // resume.totalNet = unvested;
+    // resume.totalAmount = updatedStreamsv1.length;
+
     const updatedStreamsv2 = await tokenStreamingV2.refreshStreams(streamListv2 ?? [], treasurer);
-
-    const unvested = await getV1UnvestedValue(updatedStreamsv1, treasurer);
-    resume.totalNet = unvested;
-    resume.totalAmount = updatedStreamsv1.length;
-
     const fundsLeft = await getV2FundsLeftValue(updatedStreamsv2, treasurer);
     resume.totalNet += fundsLeft;
     resume.totalAmount += updatedStreamsv2.length;
 
     // Update state
     setOutgoingStreamsSummary(resume);
-  }, [
-    tokenStreamingV1,
-    tokenStreamingV2,
-    publicKey,
-    streamListv1,
-    streamListv2,
-    selectedAccount.address,
-    getV2FundsLeftValue,
-    getV1UnvestedValue,
-  ]);
+  }, [tokenStreamingV2, publicKey, streamListv2, selectedAccount.address, getV2FundsLeftValue]);
 
   const clearStateData = useCallback(() => {
     setAccountTokens([]);
@@ -1969,9 +1940,8 @@ export const HomeView = () => {
     setIncomingStreamsSummary(initialSummary);
     setOutgoingStreamsSummary(initialSummary);
     setTotalTokenAccountsValue(0);
-    setStreamsSummary(initialSummary);
     setCanShowStreamingAccountBalance(false);
-  }, [setStreamsSummary]);
+  }, []);
 
   // New proposal
 
@@ -2494,7 +2464,6 @@ export const HomeView = () => {
 
     const app = KNOWN_APPS.find(a => location.pathname.startsWith(`/${a.slug}`));
     setSelectedApp(app);
-    setSelectedNft(undefined);
     setSelectedAsset(undefined);
   }, [location.pathname, selectedCategory]);
 
@@ -2918,10 +2887,7 @@ export const HomeView = () => {
   // Having the treasuriesSummary and stream stats, lets publish combined stats
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    let totalStreamingAccounts = 0;
-    if (streamingAccountsSummary) {
-      totalStreamingAccounts = streamingAccountsSummary.totalAmount;
-    }
+    const totalStreamingAccounts = streamingAccountsSummary ? streamingAccountsSummary.totalAmount : 0;
     const paymentStreamingResume = {
       totalStreamingAccounts,
       incomingAmount,
@@ -3195,17 +3161,11 @@ export const HomeView = () => {
   };
 
   const getAssetsGroupOptions = () => {
-    const nftCount = accountNfts ? accountNfts.length : 0;
     const visibleApps = KNOWN_APPS.filter(a => a.visible).length;
     const options: SegmentedLabeledOption[] = [
       {
         label: `Tokens (${accountTokens.length})`,
         value: AssetGroups.Tokens,
-      },
-      {
-        // Learn how to differentiate NFTs from token accounts and apply knowledge here
-        label: `NFTs (${nftCount > 99 ? '99+' : nftCount})`,
-        value: AssetGroups.Nfts,
       },
       {
         label: `Apps (${visibleApps})`,
@@ -3258,7 +3218,6 @@ export const HomeView = () => {
           onKeyDown={() => {}}
           onClick={() => {
             turnOnRightPanel();
-            setSelectedNft(undefined);
             setSelectedAsset(undefined);
             if (type === 'my-account') {
               navigate('/my-account');
@@ -3295,7 +3254,6 @@ export const HomeView = () => {
             key='streams-category'
             onKeyDown={() => {}}
             onClick={() => {
-              setSelectedNft(undefined);
               navigateToStreaming();
             }}
             className={`transaction-list-row ${
@@ -3424,7 +3382,6 @@ export const HomeView = () => {
               onTokenAccountClick={(asset: UserTokenAccount) => {
                 consoleOut('clicked on asset:', asset.publicAddress, 'blue');
                 navigateToAsset(asset);
-                setSelectedNft(undefined);
               }}
               selectedAsset={selectedAsset}
               selectedCategory={selectedCategory}
@@ -3434,29 +3391,6 @@ export const HomeView = () => {
           renderLoadingOrNoTokensMessage()
         )}
       </div>
-    );
-  };
-
-  const renderNftList = () => {
-    const onNftItemClick = (item: MeanNft) => {
-      consoleOut('clicked on NFT item:', item, 'blue');
-      setSelectedNft(item);
-      setSelectedApp(undefined);
-      setTimeout(() => {
-        navigateToNft(item.address.toBase58());
-      }, 50);
-    };
-
-    const nftMint = asset ? getNftMint(asset, accountTokens, accountNfts) : undefined;
-
-    return (
-      <NftPaginatedList
-        loadingUserAssets={loadingUserAssets}
-        nftList={accountNfts}
-        onNftItemClick={(nft: MeanNft) => onNftItemClick(nft)}
-        presetNftMint={selectedNft ? undefined : nftMint}
-        selectedNft={selectedNft}
-      />
     );
   };
 
@@ -3511,8 +3445,6 @@ export const HomeView = () => {
     switch (selectedAssetsGroup) {
       case AssetGroups.Tokens:
         return <span>Estimated value of tokens: {toUsCurrency(totalTokenAccountsValue)}</span>;
-      case AssetGroups.Nfts:
-        return <span>Enjoy your collections of NFTs</span>;
       case AssetGroups.Apps:
         return <span>Explore supported Apps</span>;
       case AssetGroups.OtherAssets:
@@ -3793,8 +3725,6 @@ export const HomeView = () => {
 
                     {selectedAssetsGroup === AssetGroups.Tokens ? renderAssetsList() : null}
 
-                    {selectedAssetsGroup === AssetGroups.Nfts ? renderNftList() : null}
-
                     {selectedAssetsGroup === AssetGroups.Apps ? renderAppsList() : null}
 
                     {selectedAssetsGroup === AssetGroups.OtherAssets ? renderOtherAssetsList() : null}
@@ -3836,7 +3766,7 @@ export const HomeView = () => {
                       <Suspense fallback={renderSpinner()}>
                         <PaymentStreamingView
                           loadingTreasuries={loadingStreamingAccounts}
-                          treasuryList={streamingAccounts}
+                          treasuryList={streamingAccounts || []}
                           onBackButtonClicked={onBackButtonClicked}
                         />
                       </Suspense>
@@ -3960,9 +3890,6 @@ export const HomeView = () => {
                         </div>
                       </div>
                     </>
-                  ) : null}
-                  {location.pathname.startsWith('/nfts') && selectedNft ? (
-                    <NftDetails selectedNft={selectedNft} />
                   ) : null}
                 </div>
               </div>
