@@ -1614,7 +1614,6 @@ const SafeView = (props: {
   ]);
 
   // Actually selects a multisig base on currently selected account
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (multisigAccounts && selectedAccount && selectedAccount.address && selectedAccount.isMultisig) {
       let item: MultisigInfo | undefined = undefined;
@@ -1635,7 +1634,7 @@ const SafeView = (props: {
     } else {
       setSelectedMultisig(undefined);
     }
-  }, [multisigAccounts, selectedAccount]);
+  }, [multisigAccounts, selectedAccount, setSelectedMultisig]);
 
   // Process route params and set item (proposal) specified in the url by id
   useEffect(() => {
@@ -1644,29 +1643,26 @@ const SafeView = (props: {
       return;
     }
 
-    const isProposalsFork = !!(
-      queryParamV === 'proposals' ||
-      queryParamV === 'instruction' ||
-      queryParamV === 'activity'
-    );
-    if (isProposalsFork) {
-      consoleOut('id:', id, 'purple');
-      consoleOut('queryParamV:', queryParamV, 'purple');
-      consoleOut('selectedMultisig:', selectedMultisig.authority.toBase58(), 'purple');
-      const filteredMultisigTx = multisigTxs.find(tx => tx.id.toBase58() === id);
-      if (filteredMultisigTx) {
-        setSelectedProposal(filteredMultisigTx);
-        setIsProposalDetails(true);
-        consoleOut('filteredMultisigTx:', filteredMultisigTx, 'orange');
-      } else {
-        openNotification({
-          title: 'Access forbidden',
-          description: `You are trying to access a proposal on a SuperSafe you don't have permission to see. Please connect with a signer account and try again.`,
-          type: 'warning',
-        });
-        goToListOfProposals();
-      }
+    const isProposalsFork = ['proposals', 'instruction', 'activity'].includes(queryParamV ?? '');
+    if (!isProposalsFork) {
+      return;
     }
+    consoleOut('id:', id, 'purple');
+    consoleOut('queryParamV:', queryParamV, 'purple');
+    consoleOut('selectedMultisig:', selectedMultisig.authority.toBase58(), 'purple');
+    const filteredMultisigTx = multisigTxs.find(tx => tx.id.toBase58() === id);
+    if (filteredMultisigTx) {
+      setSelectedProposal(filteredMultisigTx);
+      setIsProposalDetails(true);
+      consoleOut('filteredMultisigTx:', filteredMultisigTx, 'orange');
+      return;
+    }
+    openNotification({
+      title: 'Access forbidden',
+      description: `You are trying to access a proposal on a SuperSafe you don't have permission to see. Please connect with a signer account and try again.`,
+      type: 'warning',
+    });
+    goToListOfProposals();
   }, [id, selectedMultisig, publicKey, queryParamV, multisigTxs, goToListOfProposals]);
 
   // Setup event listeners
@@ -1801,9 +1797,7 @@ const SafeView = (props: {
 
       <div className='safe-details-component scroll-wrapper vertical-scroll'>
         {connected && multisigClient && selectedMultisig ? (
-          <>
-            <Spin spinning={loadingMultisigAccounts}>{renderRightPanelInner()}</Spin>
-          </>
+          <Spin spinning={loadingMultisigAccounts}>{renderRightPanelInner()}</Spin>
         ) : (
           <div className='h-100 flex-center'>
             <Spin spinning={loadingMultisigAccounts}>

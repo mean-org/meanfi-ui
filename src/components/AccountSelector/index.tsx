@@ -15,7 +15,7 @@ import './style.scss';
 
 export const AccountSelector = (props: {
   isFullWorkflowEnabled?: boolean;
-  onAccountSelected?: () => void;
+  onAccountSelected: (account: string) => void;
   onCreateSafeClick: () => void;
   onDisconnectWallet?: () => void;
 }) => {
@@ -71,33 +71,11 @@ export const AccountSelector = (props: {
   };
 
   const onNativeAccountSelected = () => {
-    if (publicKey) {
-      const account: AccountContext = {
-        name: 'Personal account',
-        address: publicKey.toBase58(),
-        isMultisig: false,
-      };
-      consoleOut('Setting selectedAccount onNativeAccountSelected:', account, 'crimson');
-      setSelectedAccount(account);
-    }
-    if (onAccountSelected) {
-      onAccountSelected();
-    }
+    onAccountSelected('personal');
   };
 
   const onMultisigAccountSelected = (item: MultisigInfo) => {
-    if (publicKey) {
-      const account: AccountContext = {
-        name: item.label,
-        address: item.authority.toBase58(),
-        isMultisig: true,
-      };
-      consoleOut('Setting selectedAccount onMultisigAccountSelected:', account, 'crimson');
-      setSelectedAccount(account);
-    }
-    if (onAccountSelected) {
-      onAccountSelected();
-    }
+    onAccountSelected(item.authority.toBase58());
   };
 
   const onCreateSafe = () => {
