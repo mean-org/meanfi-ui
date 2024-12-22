@@ -14,11 +14,13 @@ import { PageLoadingView } from 'src/views/PageLoading';
 import { AppLayout } from './components/Layout';
 
 const CreateSafeView = React.lazy(() => import('src/views/CreateSafe'));
+const AccountRedirect = React.lazy(() => import('src/views/AccountRedirect'));
 
 export function AppRoutes() {
   return (
     <AppLayout>
       <Routes>
+        <Route path='/redirect-account/:accountValue' element={<AccountRedirect />} />
         <Route index path='/' element={<HomeView />} />
         <Route
           path='/create-safe'

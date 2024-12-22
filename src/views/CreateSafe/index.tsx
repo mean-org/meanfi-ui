@@ -577,38 +577,36 @@ const CreateSafeView = () => {
 
   const renderMultisigThresholdSlider = () => {
     return (
-      <>
-        <div className={`two-column-layout address-fixed ${isXsDevice ? 'mt-2' : 'mt-4'}`}>
-          <div className={isXsDevice ? 'left' : 'left pt-1'}>
-            <div className={`form-label icon-label ${isXsDevice ? 'mb-3' : 'mt-2'}`}>
-              {t('multisig.create-multisig.multisig-threshold-input-label')}
-              <Tooltip
-                placement='bottom'
-                title={t('multisig.create-multisig.multisig-threshold-question-mark-tooltip')}
-              >
-                <span>
-                  <IconHelpCircle className='mean-svg-icons' />
-                </span>
-              </Tooltip>
-            </div>
-          </div>
-          <div className='right'>
-            <div className='slider-container'>
-              <Slider
-                marks={marks}
-                min={rangeMin}
-                max={rangeMax}
-                included={false}
-                disabled={isSliderDisabled()}
-                tooltip={{ formatter: sliderTooltipFormatter, open: true }}
-                value={multisigThreshold}
-                onChange={onSliderChange}
-                dots={true}
-              />
-            </div>
+      <div className={`two-column-layout address-fixed ${isXsDevice ? 'mt-2' : 'mt-4'}`}>
+        <div className={isXsDevice ? 'left' : 'left pt-1'}>
+          <div className={`form-label icon-label ${isXsDevice ? 'mb-3' : 'mt-2'}`}>
+            {t('multisig.create-multisig.multisig-threshold-input-label')}
+            <Tooltip
+              placement='bottom'
+              title={t('multisig.create-multisig.multisig-threshold-question-mark-tooltip')}
+            >
+              <span>
+                <IconHelpCircle className='mean-svg-icons' />
+              </span>
+            </Tooltip>
           </div>
         </div>
-      </>
+        <div className='right'>
+          <div className='slider-container'>
+            <Slider
+              marks={marks}
+              min={rangeMin}
+              max={rangeMax}
+              included={false}
+              disabled={isSliderDisabled()}
+              tooltip={{ formatter: sliderTooltipFormatter, open: true }}
+              value={multisigThreshold}
+              onChange={onSliderChange}
+              dots={true}
+            />
+          </div>
+        </div>
+      </div>
     );
   };
 

@@ -19,9 +19,13 @@ export const AccountDetails = () => {
   const { publicKey, wallet, disconnect } = useWallet();
   const [popoverVisible, setPopoverVisible] = useState(false);
 
-  const onCompleteAccountSelection = useCallback(() => {
-    setPopoverVisible(false);
-  }, []);
+  const onCompleteAccountSelection = useCallback(
+    (account: string) => {
+      setPopoverVisible(false);
+      navigate(`/redirect-account/${account}`);
+    },
+    [navigate],
+  );
 
   const onCreateSafe = useCallback(() => {
     setPopoverVisible(false);

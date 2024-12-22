@@ -1,4 +1,5 @@
-import { Drawer, Empty, Layout } from 'antd';
+import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Drawer, Empty, Layout, Tooltip } from 'antd';
 import React, { type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import {
   browserName,
@@ -14,6 +15,7 @@ import ReactGA from 'react-ga';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { segmentAnalytics } from 'src/App';
+import { IconWallet } from 'src/Icons';
 import {
   CREATE_SAFE_ROUTE_PATH,
   GOOGLE_ANALYTICS_PROD_TAG_ID,
@@ -21,7 +23,6 @@ import {
   PERFORMANCE_THRESHOLD,
   SOLANA_STATUS_PAGE,
 } from 'src/app-constants/common';
-import { AccountSelectorModal } from 'src/components/AccountSelectorModal';
 import { AppBar } from 'src/components/AppBar';
 import { FooterBar } from 'src/components/FooterBar';
 import { openNotification } from 'src/components/Notifications';
@@ -30,6 +31,7 @@ import { useAccountsContext } from 'src/contexts/accounts';
 import { AppStateContext } from 'src/contexts/appstate';
 import { useConnectionConfig } from 'src/contexts/connection';
 import { TxConfirmationContext } from 'src/contexts/transaction-status';
+import { useWallet } from 'src/contexts/wallet';
 import { environment } from 'src/environments/environment';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import { reportConnectedAccount } from 'src/middleware/api';
@@ -38,8 +40,9 @@ import { isUnauthenticatedRoute } from 'src/middleware/utils';
 import type { RuntimeAppDetails } from 'src/models/accounts';
 import useGetPerformanceSamples from 'src/query-hooks/performanceSamples';
 import { AppUsageEvent } from 'src/services/segment-service';
+import AccountRedirect from 'src/views/AccountRedirect';
+import { AccountSelector } from '../AccountSelector';
 import './style.scss';
-import { useWallet } from 'src/contexts/wallet';
 
 export const PERFORMANCE_SAMPLE_INTERVAL = 60 * 60 * 1000;
 
@@ -81,6 +84,13 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
     }
     return 'Other';
   }, []);
+
+  const onCompleteAccountSelection = useCallback(
+    (account: string) => {
+      navigate(`/redirect-account/${account}`);
+    },
+    [navigate],
+  );
 
   ////////////////
   // UseEffects //
@@ -276,20 +286,67 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
   ///////////////
 
   const renderAccountSelector = () => {
-    return (
-      !selectedAccount.address &&
-      publicKey && (
-        <AccountSelectorModal
-          isVisible={true}
-          isFullWorkflowEnabled={true}
-          onCreateSafe={onCreateSafe}
-          onGotoSelectWallet={() => {
-            disconnect();
-          }}
-        />
-      )
-    );
+    return !selectedAccount.address && publicKey ? (
+      <div className='container main-container'>
+        <div className='interaction-area'>
+          <div className='title-and-subtitle mb-2'>
+            <div className='title'>
+              <IconWallet className='mean-svg-icons' />
+              <div>Select account</div>
+            </div>
+          </div>
+          <div className='place-transaction-box container-max-width-720 flat mb-0'>
+            <div className='flexible-left mb-3'>
+              <div className='left'>
+                <span className='icon-button-container secondary-button'>
+                  <Tooltip placement='bottom' title='Back to wallet selection'>
+                    <Button
+                      type='default'
+                      shape='circle'
+                      icon={<ArrowLeftOutlined />}
+                      onClick={() => {
+                        disconnect();
+                      }}
+                    />
+                  </Tooltip>
+                </span>
+              </div>
+              <div className='right'>
+                <span className='icon-button-container secondary-button'>
+                  <Tooltip placement='bottom' title='Refresh the list of accounts'>
+                    <Button
+                      id='account-refresh-cta'
+                      type='default'
+                      shape='circle'
+                      size='middle'
+                      icon={<ReloadOutlined className='mean-svg-icons' />}
+                      onClick={() => {
+                        setNeedReloadMultisigAccounts(true);
+                        refreshAccount();
+                      }}
+                    />
+                  </Tooltip>
+                </span>
+              </div>
+            </div>
+            <div className='account-selector-popover-content vertical-scroll'>
+              <AccountSelector
+                onAccountSelected={onCompleteAccountSelection}
+                onCreateSafeClick={onCreateSafe}
+                onDisconnectWallet={() => {
+                  disconnect();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    ) : null;
   };
+
+  if (location.pathname.startsWith('/redirect-account')) {
+    return <AccountRedirect />;
+  }
 
   if (selectedAccount.address || isUnauthenticatedRoute(location.pathname)) {
     // Render layout
