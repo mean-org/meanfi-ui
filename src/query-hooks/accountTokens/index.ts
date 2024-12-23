@@ -29,7 +29,6 @@ export const useAccountAssets = (accountAddress: string | undefined) => {
   const {
     data,
     isFetching: loadingUserAssets,
-    refetch: refreshAccountAssets,
   } = useQuery({
     queryKey: getUseAccountAssetsQueryKey(accountAddress),
     queryFn: () => {
@@ -49,7 +48,6 @@ export const useAccountAssets = (accountAddress: string | undefined) => {
   return {
     userAssets: data ? data : undefined,
     loadingUserAssets,
-    refreshAccountAssets,
   };
 };
 

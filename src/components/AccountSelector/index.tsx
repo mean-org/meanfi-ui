@@ -10,7 +10,7 @@ import { useWalletAccount } from 'src/contexts/walletAccount';
 import { consoleOut, copyText, kFormatter, toUsCurrency } from 'src/middleware/ui';
 import { shortenAddress } from 'src/middleware/utils';
 import type { AccountContext } from 'src/models/accounts';
-import { useAccountAssets } from 'src/query-hooks/accountTokens';
+import { useAccountAssets, useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 import './style.scss';
 
 export const AccountSelector = (props: {
@@ -27,7 +27,8 @@ export const AccountSelector = (props: {
   const { publicKey, wallet } = useWallet();
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
 
-  const { userAssets, loadingUserAssets, refreshAccountAssets } = useAccountAssets(publicKey?.toBase58() ?? '');
+  const { refetch: refreshAccountAssets } = useFetchAccountTokens(publicKey?.toBase58() ?? '');
+  const { userAssets, loadingUserAssets } = useAccountAssets(publicKey?.toBase58() ?? '');
 
   const accountTokens = useMemo(() => {
     if (loadingUserAssets || !userAssets) return undefined;
