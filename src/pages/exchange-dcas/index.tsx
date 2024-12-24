@@ -9,16 +9,17 @@ import {
   WarningOutlined,
 } from '@ant-design/icons';
 import {
-  calculateActionFees,
-  DdcaAccount,
-  DdcaActivity,
-  DdcaClient,
-  DdcaDetails,
   DDCA_ACTIONS,
-  TransactionFees,
+  type DdcaAccount,
+  type DdcaActivity,
+  DdcaClient,
+  type DdcaDetails,
+  type TransactionFees,
+  calculateActionFees,
 } from '@mean-dao/ddca';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { Button, Col, Dropdown, Empty, MenuProps, Modal, Row, Spin, Tooltip } from 'antd';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, type Transaction } from '@solana/web3.js';
+import { IconClock, IconExchange, IconExternalLink } from 'Icons';
+import { Button, Col, Dropdown, Empty, type MenuProps, Modal, Row, Spin, Tooltip } from 'antd';
 import { DdcaAddFundsModal } from 'components/DdcaAddFundsModal';
 import { DdcaCloseModal } from 'components/DdcaCloseModal';
 import { DdcaWithdrawModal } from 'components/DdcaWithdrawModal';
@@ -36,12 +37,11 @@ import { MEAN_TOKEN_LIST } from 'constants/tokens';
 import { useNativeAccount } from 'contexts/accounts';
 import { AppStateContext } from 'contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'contexts/connection';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo, TxStatus } from 'contexts/transaction-status';
+import { TxConfirmationContext, type TxConfirmationInfo, type TxStatus, confirmationEvents } from 'contexts/transaction-status';
 import { useWallet } from 'contexts/wallet';
 import dateFormat from 'dateformat';
 import { environment } from 'environments/environment';
 import useWindowSize from 'hooks/useWindowResize';
-import { IconClock, IconExchange, IconExternalLink } from 'Icons';
 import { customLogger } from 'index';
 import { SOL_MINT } from 'middleware/ids';
 import { sendTx, serializeTx, signTx } from 'middleware/transactions';
@@ -66,7 +66,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { getLiveRpc, RpcConfig } from 'services/connections-hq';
+import { type RpcConfig, refreshCachedRpc } from 'services/connections-hq';
 import './style.scss';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -82,8 +82,7 @@ export const ExchangeDcasView = () => {
     setTransactionStatus,
     setLoadingRecurringBuys,
   } = useContext(AppStateContext);
-  const { confirmationHistory, lastVaultCreated, setLastVaultCreated, enqueueTransactionConfirmation } =
-    useContext(TxConfirmationContext);
+  const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { publicKey, wallet, connected } = useWallet();
@@ -112,7 +111,7 @@ export const ExchangeDcasView = () => {
     (async () => {
       if (cachedRpc.networkId !== 101) {
         let debugRpc: RpcConfig | null = null;
-        const mainnetRpc = await getLiveRpc(101);
+        const mainnetRpc = await refreshCachedRpc();
         if (!mainnetRpc) {
           navigate('/service-unavailable');
         }
@@ -139,11 +138,7 @@ export const ExchangeDcasView = () => {
 
   // Set and cache the DDCA client
   const ddcaClient = useMemo(() => {
-    if (connection && wallet && publicKey && endpoint) {
-      return new DdcaClient(endpoint, wallet, { commitment: 'confirmed' }, isLocal() ? true : false);
-    } else {
-      return undefined;
-    }
+    return connection && wallet && publicKey && endpoint ? new DdcaClient(endpoint, wallet, { commitment: 'confirmed' }, isLocal()) : undefined;
   }, [wallet, endpoint, publicKey, connection]);
 
   // Keep track of current balance
@@ -186,12 +181,10 @@ export const ExchangeDcasView = () => {
 
   const isError = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-      transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-      transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-      transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-      transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-      ? true
-      : false;
+    transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+    transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+    transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+    transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure;
   };
 
   //////////////////////
@@ -322,16 +315,15 @@ export const ExchangeDcasView = () => {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('Close DDCA transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
       }
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('Close DDCA transaction failed', {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
     const updateCloseDdcaTx = async (signed: Transaction): Promise<boolean> => {
@@ -412,7 +404,7 @@ export const ExchangeDcasView = () => {
               loadingTitle: 'Confirming transaction',
               loadingMessage: 'Close DDCA',
               completedTitle: 'Transaction confirmed',
-              completedMessage: `DDCA has been closed!`,
+              completedMessage: "DDCA has been closed!",
               completedMessageTimeout: 6,
             });
             setTransactionStatus({
@@ -456,7 +448,7 @@ export const ExchangeDcasView = () => {
   const hideWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
   const onAcceptWithdraw = (amount: any) => {
     hideWithdrawModal();
-    consoleOut('Withdraw amount:', parseFloat(amount));
+    consoleOut('Withdraw amount:', Number.parseFloat(amount));
     onExecuteWithdrawTransaction(amount);
   };
 
@@ -498,7 +490,7 @@ export const ExchangeDcasView = () => {
         });
 
         const ddcaAccountPda = new PublicKey(ddcaDetails.ddcaAccountAddress);
-        const amount = parseFloat(withdrawAmount);
+        const amount = Number.parseFloat(withdrawAmount);
         setWithdrawFundsAmount(amount);
 
         const data = {
@@ -577,16 +569,15 @@ export const ExchangeDcasView = () => {
             });
             return false;
           });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!',
-        });
-        customLogger.logError('DDCA withdraw transaction failed', {
-          transcript: transactionLog,
-        });
-        return false;
       }
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+        result: 'Cannot start transaction! Wallet not found!',
+      });
+      customLogger.logError('DDCA withdraw transaction failed', {
+        transcript: transactionLog,
+      });
+      return false;
     };
 
     if (wallet && publicKey) {
@@ -615,7 +606,7 @@ export const ExchangeDcasView = () => {
               loadingTitle: 'Confirming transaction',
               loadingMessage: 'Withdraw DDCA funds',
               completedTitle: 'Transaction confirmed',
-              completedMessage: `DDCA funds successfully withdrawn`,
+              completedMessage: "DDCA funds successfully withdrawn",
               completedMessageTimeout: 6,
             });
             setTransactionStatus({
@@ -720,7 +711,7 @@ export const ExchangeDcasView = () => {
       setDetailsPanelOpen(true);
       reloadDdcaDetail(item.ddcaAccountAddress);
     },
-    [reloadDdcaDetail, setDetailsPanelOpen],
+    [reloadDdcaDetail],
   );
 
   // Gets the recurring buys on demmand
@@ -739,29 +730,18 @@ export const ExchangeDcasView = () => {
         ddcaClient
           .listDdcas()
           .then(dcas => {
-            consoleOut('lastVaultCreated:', lastVaultCreated, 'blue');
             consoleOut('Recurring buys:', dcas, 'blue');
             let item: DdcaAccount | undefined;
             if (dcas.length) {
-              if (reset) {
-                if (lastVaultCreated) {
-                  item = dcas.find(d => d.ddcaAccountAddress === lastVaultCreated);
-                }
-              } else {
-                // Try to get current item by its ddcaAccountAddress
-                if (lastVaultCreated) {
-                  item = dcas.find(i => i.ddcaAccountAddress === lastVaultCreated);
-                } else if (selectedDdca) {
-                  const itemFromServer = dcas.find(i => i.ddcaAccountAddress === selectedDdca.ddcaAccountAddress);
-                  item = itemFromServer || selectedDdca;
-                }
+              if (selectedDdca) {
+                const itemFromServer = dcas.find(i => i.ddcaAccountAddress === selectedDdca.ddcaAccountAddress);
+                item = itemFromServer || selectedDdca;
               }
               if (!item) {
                 item = Object.assign({}, dcas[0]);
               }
               if (item) {
                 setSelectedDdca(item);
-                setLastVaultCreated('');
                 consoleOut('Calling ddcaClient.getDdca...', '', 'blue');
                 reloadDdcaDetail(item.ddcaAccountAddress);
               }
@@ -782,8 +762,6 @@ export const ExchangeDcasView = () => {
       ddcaClient,
       selectedDdca,
       loadingRecurringBuys,
-      lastVaultCreated,
-      setLastVaultCreated,
       setLoadingRecurringBuys,
       reloadDdcaDetail,
       setRecurringBuys,
@@ -800,10 +778,8 @@ export const ExchangeDcasView = () => {
           'crimson',
         );
         reloadRecurringBuys();
-      } else {
-        if (ddcaDetails) {
-          reloadDdcaDetail(ddcaDetails.ddcaAccountAddress);
-        }
+      } else if (ddcaDetails) {
+        reloadDdcaDetail(ddcaDetails.ddcaAccountAddress);
       }
     },
     [ddcaDetails, reloadDdcaDetail, reloadRecurringBuys],
@@ -983,14 +959,14 @@ export const ExchangeDcasView = () => {
       <>
         <div className="overlapped-tokens">
           <div className="token-icon from">
-            {fromToken && fromToken.logoURI ? (
+            {fromToken?.logoURI ? (
               <img alt={`${fromToken.name}`} width={30} height={30} src={fromToken.logoURI} />
             ) : (
               <Identicon address={item.fromMint} style={{ width: '30', display: 'inline-flex' }} />
             )}
           </div>
           <div className="token-icon to">
-            {toToken && toToken.logoURI ? (
+            {toToken?.logoURI ? (
               <img alt={`${toToken.name}`} width={30} height={30} src={toToken.logoURI} />
             ) : (
               <Identicon address={item.toMint} style={{ width: '30', display: 'inline-flex' }} />
@@ -1148,7 +1124,7 @@ export const ExchangeDcasView = () => {
       items.push({
         key: '01-withdraw',
         label: (
-          <div onClick={showWithdrawModal}>
+          <div onClick={showWithdrawModal} onKeyDown={() => {}}>
             <span className="menu-item-text">{t('ddcas.exchange-dcas.withdraw')}</span>
           </div>
         ),
@@ -1157,7 +1133,7 @@ export const ExchangeDcasView = () => {
     items.push({
       key: '02-cancel-withdraw',
       label: (
-        <div onClick={showCloseDdcaModal}>
+        <div onClick={showCloseDdcaModal} onKeyDown={() => {}}>
           <span className="menu-item-text">{t('ddcas.exchange-dcas.cancel-withdraw-everything')}</span>
         </div>
       ),
@@ -1169,15 +1145,18 @@ export const ExchangeDcasView = () => {
   const getAddFundsCtaLabel = () => {
     if (isCreating()) {
       return t('ddcas.add-funds-cta-disabled-executing-swap');
-    } else if (isClosing()) {
-      return t('ddcas.add-funds-cta-disabled-closing');
-    } else if (isAddingFunds()) {
-      return t('ddcas.add-funds-cta-disabled-funding');
-    } else if (isWithdrawing()) {
-      return t('ddcas.add-funds-cta-disabled-withdrawing');
-    } else {
-      return t('streams.stream-detail.add-funds-cta');
     }
+    if (isClosing()) {
+      return t('ddcas.add-funds-cta-disabled-closing');
+    }
+    if (isAddingFunds()) {
+      return t('ddcas.add-funds-cta-disabled-funding');
+    }
+    if (isWithdrawing()) {
+      return t('ddcas.add-funds-cta-disabled-withdrawing');
+    }
+
+    return t('streams.stream-detail.add-funds-cta');
   };
 
   const renderRecurringBuy = (
@@ -1273,14 +1252,12 @@ export const ExchangeDcasView = () => {
               </Button>
               {ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && !isAddingFunds() ? (
                 <Dropdown menu={getMenuOptions()} trigger={['click']}>
-                  <Button
-                    shape="round"
-                    type="text"
-                    size="small"
-                    className="ant-btn-shaded"
-                    onClick={e => e.preventDefault()}
-                    icon={<EllipsisOutlined />}
-                  ></Button>
+                  <Button shape="round"
+                  type="text"
+                  size="small"
+                  className="ant-btn-shaded"
+                  onClick={e => e.preventDefault()}
+                  icon={<EllipsisOutlined />} />
                 </Dropdown>
               ) : null}
             </div>
@@ -1377,7 +1354,7 @@ export const ExchangeDcasView = () => {
       </div>
       {selectedDdca && (
         <div className="stream-share-ctas">
-          <span className="copy-cta" onClick={() => onCopyRecurringBuyAddress(selectedDdca.ddcaAccountAddress)}>
+          <span className="copy-cta" onClick={() => onCopyRecurringBuyAddress(selectedDdca.ddcaAccountAddress)} onKeyDown={() => {}}>
             {selectedDdca.ddcaAccountAddress}
           </span>
           <a
@@ -1407,6 +1384,7 @@ export const ExchangeDcasView = () => {
             <div
               key={`${index + 50}`}
               onClick={onBuyClick}
+              onKeyDown={() => {}}
               className={`transaction-list-row ${
                 ddcaDetails && ddcaDetails.ddcaAccountAddress === item.ddcaAccountAddress ? 'selected' : ''
               }`}
@@ -1445,7 +1423,8 @@ export const ExchangeDcasView = () => {
           )}
         </>
       );
-    } else if (isSuccess()) {
+    }
+    if (isSuccess()) {
       return (
         <>
           <CheckOutlined style={{ fontSize: 48 }} className="icon" />
@@ -1458,7 +1437,8 @@ export const ExchangeDcasView = () => {
           </Button>
         </>
       );
-    } else if (isError()) {
+    }
+    if (isError()) {
       return (
         <>
           <WarningOutlined style={{ fontSize: 48 }} className="icon" />
@@ -1479,14 +1459,14 @@ export const ExchangeDcasView = () => {
           </Button>
         </>
       );
-    } else {
-      return (
-        <>
-          <Spin indicator={bigLoadingIcon} className="icon" />
-          <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-        </>
-      );
     }
+
+    return (
+      <>
+        <Spin indicator={bigLoadingIcon} className="icon" />
+        <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+      </>
+    );
   };
 
   const getWithdrawFundsTxModalContent = () => {
@@ -1506,7 +1486,8 @@ export const ExchangeDcasView = () => {
           )}
         </>
       );
-    } else if (isSuccess()) {
+    }
+    if (isSuccess()) {
       return (
         <>
           <CheckOutlined style={{ fontSize: 48 }} className="icon" />
@@ -1519,7 +1500,8 @@ export const ExchangeDcasView = () => {
           </Button>
         </>
       );
-    } else if (isError()) {
+    }
+    if (isError()) {
       return (
         <>
           <WarningOutlined style={{ fontSize: 48 }} className="icon" />
@@ -1540,14 +1522,14 @@ export const ExchangeDcasView = () => {
           </Button>
         </>
       );
-    } else {
-      return (
-        <>
-          <Spin indicator={bigLoadingIcon} className="icon" />
-          <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-        </>
-      );
     }
+
+    return (
+      <>
+        <Spin indicator={bigLoadingIcon} className="icon" />
+        <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+      </>
+    );
   };
 
   return (
@@ -1572,6 +1554,7 @@ export const ExchangeDcasView = () => {
                   <div
                     className={`user-address ${loadingRecurringBuys ? 'click-disabled' : 'simplelink'}`}
                     onClick={() => reloadRecurringBuys(true)}
+                    onKeyDown={() => {}}
                   >
                     <Spin size="small" />
                     <span className="transaction-legend">

@@ -1,32 +1,26 @@
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { SentreWalletAdapter, SentreWalletName } from '@sentre/connector';
 import {
-  Adapter,
-  MessageSignerWalletAdapterProps,
-  SignerWalletAdapterProps,
-  WalletAdapterProps,
+  type Adapter,
+  type MessageSignerWalletAdapterProps,
+  type SignerWalletAdapterProps,
+  type WalletAdapterProps,
   WalletReadyState,
 } from '@solana/wallet-adapter-base';
 import { useWallet as useBaseWallet } from '@solana/wallet-adapter-react';
 import {
   BitKeepWalletAdapter,
   BitKeepWalletName,
-  BraveWalletAdapter,
-  BraveWalletName,
   Coin98WalletAdapter,
   Coin98WalletName,
   CoinbaseWalletAdapter,
   CoinbaseWalletName,
-  ExodusWalletAdapter,
-  ExodusWalletName,
   LedgerWalletAdapter,
   LedgerWalletName,
   MathWalletAdapter,
   MathWalletName,
   PhantomWalletAdapter,
   PhantomWalletName,
-  SlopeWalletAdapter,
-  SlopeWalletName,
   SolflareWalletAdapter,
   SolflareWalletName,
   SolongWalletAdapter,
@@ -43,10 +37,10 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getDefaultRpc } from 'services/connections-hq';
 import { segmentAnalytics } from '../App';
+import { XnftWalletAdapter, XnftWalletName, isInXnftWallet } from '../integrations/xnft/xnft-wallet-adapter';
 import { AppUsageEvent } from '../middleware/segment-service';
 import { consoleOut, isProd } from '../middleware/ui';
 import { isUnauthenticatedRoute, useLocalStorageState } from '../middleware/utils';
-import { XnftWalletAdapter, XnftWalletName, isInXnftWallet } from '../integrations/xnft/xnft-wallet-adapter';
 
 // Flag to block processing of events when triggered multiple times
 let isDisconnecting = false;
@@ -78,36 +72,12 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     hideIfUnavailable: false,
   },
   {
-    name: BraveWalletName,
-    url: '',
-    icon: '',
-    adapter: BraveWalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: false,
-    hideOnMobile: false,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: true,
-  },
-  {
-    name: ExodusWalletName,
-    url: '',
-    icon: '',
-    adapter: ExodusWalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: false,
-    hideOnMobile: true,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: false,
-  },
-  {
     name: SolflareWalletName,
     url: '',
     icon: '',
     adapter: SolflareWalletAdapter,
     adapterParams: { network: getDefaultRpc().cluster },
-    hideOnDesktop: isDesktop && !isSafari ? false : true,
+    hideOnDesktop: !(isDesktop && !isSafari ),
     hideOnMobile: false,
     isWebWallet: false,
     underDevelopment: false,
@@ -137,18 +107,6 @@ export const WALLET_PROVIDERS: WalletProviderEntry[] = [
     isWebWallet: false,
     underDevelopment: false,
     hideIfUnavailable: false,
-  },
-  {
-    name: SlopeWalletName,
-    url: '',
-    icon: '',
-    adapter: SlopeWalletAdapter,
-    adapterParams: undefined,
-    hideOnDesktop: false,
-    hideOnMobile: false,
-    isWebWallet: false,
-    underDevelopment: false,
-    hideIfUnavailable: true,
   },
   {
     name: Coin98WalletName,
@@ -243,10 +201,6 @@ const getIsProviderInstalled = (provider: any): boolean => {
         return true;
       case PhantomWalletName:
         return !!(window as any).solana?.isPhantom;
-      case ExodusWalletName:
-        return !!(window as any).exodus?.solana;
-      case SlopeWalletName:
-        return typeof (window as any).Slope === 'function' || (window as any).slopeApp ? true : false;
       case SolongWalletName:
         return !!(window as any).solong;
       case MathWalletName:
@@ -263,8 +217,6 @@ const getIsProviderInstalled = (provider: any): boolean => {
         return !!(window as any).trustwallet?.isTrustWallet || !!(window as any).trustwallet?.solana?.isTrust;
       case LedgerWalletName:
         return true;
-      case BraveWalletName:
-        return !!(window as any).braveSolana?.isBraveWallet;
       case XnftWalletName:
         return isInXnftWallet();
       default:
@@ -337,7 +289,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
   const close = useCallback(() => {
     setIsModalVisible(false);
   }, []);
-  const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
+  const [walletListExpanded, setWalletListExpanded] = useState(!isDesktop);
 
   const resetWalletProvider = useCallback(() => {
     setWalletName(null);
@@ -517,7 +469,7 @@ export function MeanFiWalletProvider({ children = null as any }) {
                 return null;
               }
 
-              const onClick = function () {
+              const onClick = () => {
                 if (wallet) {
                   disconnect();
                 }

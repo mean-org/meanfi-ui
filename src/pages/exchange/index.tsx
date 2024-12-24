@@ -1,19 +1,19 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { PreFooter } from 'components/PreFooter';
-import { consoleOut, isLocal, isProd } from 'middleware/ui';
-import { useWallet } from 'contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
-import { AppStateContext } from 'contexts/appstate';
-import { getTokenBySymbol, useLocalStorageState } from 'middleware/utils';
-import { getLiveRpc, RpcConfig } from 'services/connections-hq';
 import { Connection } from '@solana/web3.js';
-import { useTranslation } from 'react-i18next';
 import { IconExchange } from 'Icons';
-import { RecurringExchange } from 'views';
+import { PreFooter } from 'components/PreFooter';
 import { TRITON_ONE_DEBUG_RPC, WRAPPED_SOL_MINT_ADDRESS } from 'constants/common';
 import { MEAN_TOKEN_LIST } from 'constants/tokens';
+import { AppStateContext } from 'contexts/appstate';
+import { useWallet } from 'contexts/wallet';
 import { environment } from 'environments/environment';
+import { consoleOut, isLocal, isProd } from 'middleware/ui';
+import { getTokenBySymbol, useLocalStorageState } from 'middleware/utils';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { type RpcConfig, refreshCachedRpc } from 'services/connections-hq';
+import { RecurringExchange } from 'views';
 import JupiterExchangeV4 from 'views/JupiterExchangeV4';
 
 type SwapOption = 'one-time' | 'recurring';
@@ -39,7 +39,7 @@ export const SwapView = () => {
     (async () => {
       if (cachedRpc.networkId !== 101) {
         let debugRpc: RpcConfig | null = null;
-        const mainnetRpc = await getLiveRpc(101);
+        const mainnetRpc = await refreshCachedRpc();
         if (!mainnetRpc) {
           navigate('/service-unavailable');
         }
@@ -98,7 +98,6 @@ export const SwapView = () => {
     loadingRecurringBuys,
     cachedRpc.httpProvider,
     connection.commitment,
-    setLoadingRecurringBuys,
     setRecurringBuys,
   ]);
 
@@ -110,7 +109,7 @@ export const SwapView = () => {
   useEffect(() => {
     (async () => {
       if (cachedRpc && cachedRpc.networkId !== 101) {
-        const mainnetRpc = await getLiveRpc(101);
+        const mainnetRpc = await refreshCachedRpc();
         if (!mainnetRpc) {
           navigate('/service-unavailable');
         }
@@ -141,9 +140,9 @@ export const SwapView = () => {
           return getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
         }
         return getTokenBySymbol(symbol, splTokenList);
-      } else {
-        return MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'USDC');
       }
+
+      return MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'USDC');
     },
     [getTokenByMintAddress, splTokenList],
   );
@@ -154,9 +153,9 @@ export const SwapView = () => {
       const symbol = params.get('to');
       if (!symbol) return undefined;
       return getTokenBySymbol(symbol);
-    } else {
-      return MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'MEAN');
     }
+
+    return MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'MEAN');
   }, []);
 
   // Parse query params
@@ -208,12 +207,14 @@ export const SwapView = () => {
               <div
                 className={`tab-button ${currentTab === 'one-time' ? 'active' : ''}`}
                 onClick={() => onTabChange('one-time')}
+                onKeyDown={() => {}}
               >
                 {t('swap.tabset.one-time')}
               </div>
               <div
                 className={`tab-button ${currentTab === 'recurring' ? 'active' : ''}`}
                 onClick={() => onTabChange('recurring')}
+                onKeyDown={() => {}}
               >
                 {t('swap.tabset.recurring')}
               </div>

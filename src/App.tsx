@@ -9,6 +9,23 @@ import { BrowserRouter } from 'react-router-dom';
 import { PageLoadingView } from 'views';
 import { appConfig } from '.';
 import './App.scss';
+import { SentreWalletAdapter } from '@sentre/connector';
+import { WalletProvider } from '@solana/wallet-adapter-react';
+import {
+  BitKeepWalletAdapter,
+  Coin98WalletAdapter,
+  CoinbaseWalletAdapter,
+  LedgerWalletAdapter,
+  MathWalletAdapter,
+  PhantomWalletAdapter,
+  SolflareWalletAdapter,
+  SolongWalletAdapter,
+  TrustWalletAdapter,
+} from '@solana/wallet-adapter-wallets';
+import { sentreAppId } from 'constants/common';
+import useLocalStorage from 'hooks/useLocalStorage';
+import { XnftWalletAdapter } from 'integrations/xnft/xnft-wallet-adapter';
+import { isDesktop } from 'react-device-detect';
 import { AccountsProvider } from './contexts/accounts';
 import AppStateProvider from './contexts/appstate';
 import { ConnectionProvider } from './contexts/connection';
@@ -18,26 +35,6 @@ import { SegmentAnalyticsService } from './middleware/segment-service';
 import { isLocal } from './middleware/ui';
 import { AppRoutes } from './routes';
 import { refreshCachedRpc } from './services/connections-hq';
-import { sentreAppId } from 'constants/common';
-import { WalletProvider } from '@solana/wallet-adapter-react';
-import {
-  BitKeepWalletAdapter,
-  BraveWalletAdapter,
-  Coin98WalletAdapter,
-  CoinbaseWalletAdapter,
-  ExodusWalletAdapter,
-  LedgerWalletAdapter,
-  MathWalletAdapter,
-  PhantomWalletAdapter,
-  SlopeWalletAdapter,
-  SolflareWalletAdapter,
-  SolongWalletAdapter,
-  TrustWalletAdapter,
-} from '@solana/wallet-adapter-wallets';
-import { SentreWalletAdapter } from '@sentre/connector';
-import { XnftWalletAdapter } from 'integrations/xnft/xnft-wallet-adapter';
-import { isDesktop } from 'react-device-detect';
-import useLocalStorage from 'hooks/useLocalStorage';
 
 const { Content } = Layout;
 export const segmentAnalytics = new SegmentAnalyticsService();
@@ -94,12 +91,9 @@ function App() {
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
-      new BraveWalletAdapter(),
-      new ExodusWalletAdapter(),
       new SolflareWalletAdapter({ network }),
       new BitKeepWalletAdapter(),
       new CoinbaseWalletAdapter(),
-      new SlopeWalletAdapter(),
       new Coin98WalletAdapter(),
       new SolongWalletAdapter(),
       new TrustWalletAdapter(),
@@ -121,31 +115,27 @@ function App() {
     </>
   );
 
-  if (loadingStatus === 'loading') {
-    return loader;
-  } else {
-    return (
-      <OnlineStatusProvider>
-        <BrowserRouter basename={'/'}>
-          <ConnectionProvider>
-            <WalletProvider wallets={wallets} autoConnect>
-              <MeanFiWalletProvider>
-                <WalletAccountProvider>
-                  <AccountsProvider>
-                    <TxConfirmationProvider>
-                      <AppStateProvider>
-                        <AppRoutes />
-                      </AppStateProvider>
-                    </TxConfirmationProvider>
-                  </AccountsProvider>
-                </WalletAccountProvider>
-              </MeanFiWalletProvider>
-            </WalletProvider>
-          </ConnectionProvider>
-        </BrowserRouter>
-      </OnlineStatusProvider>
-    );
-  }
+  return loadingStatus === 'loading' ? loader : (
+    <OnlineStatusProvider>
+      <BrowserRouter basename={'/'}>
+        <ConnectionProvider>
+          <WalletProvider wallets={wallets} autoConnect>
+            <MeanFiWalletProvider>
+              <WalletAccountProvider>
+                <AccountsProvider>
+                  <TxConfirmationProvider>
+                    <AppStateProvider>
+                      <AppRoutes />
+                    </AppStateProvider>
+                  </TxConfirmationProvider>
+                </AccountsProvider>
+              </WalletAccountProvider>
+            </MeanFiWalletProvider>
+          </WalletProvider>
+        </ConnectionProvider>
+      </BrowserRouter>
+    </OnlineStatusProvider>
+  );
 }
 
 export default App;
