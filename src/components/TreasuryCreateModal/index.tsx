@@ -18,6 +18,7 @@ import { TokenListItem } from 'src/components/TokenListItem';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
+import { useWalletAccount } from 'src/contexts/walletAccount';
 import { environment } from 'src/environments/environment';
 import { getDecimalsFromAccountInfo } from 'src/middleware/accountInfoGetters';
 import { SOL_MINT } from 'src/middleware/ids';
@@ -54,12 +55,14 @@ export const TreasuryCreateModal = ({
   transactionFees,
 }: Props) => {
   const { t } = useTranslation('common');
-  const { splTokenList, selectedAccount, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
+  const { splTokenList, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
   const connection = useConnection();
   const { connected, publicKey } = useWallet();
   const [proposalTitle, setProposalTitle] = useState('');
   const [treasuryName, setTreasuryName] = useState('');
   const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
+  const { selectedAccount } = useWalletAccount();
+
   const [localSelectedMultisig, setLocalSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [enableMultisigTreasuryOption, setEnableMultisigTreasuryOption] = useState(true);
   const [tokenFilter, setTokenFilter] = useState('');
@@ -68,7 +71,7 @@ export const TreasuryCreateModal = ({
   const [userBalances, setUserBalances] = useState<LooseObject>();
   const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
 
-  const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), true);
+  const { data: tokensWithBalances } = useGetTokensWithBalances(selectedAccount.address);
 
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);

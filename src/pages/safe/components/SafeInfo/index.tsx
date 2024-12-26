@@ -15,8 +15,10 @@ import { RightInfoDetails } from 'src/components/RightInfoDetails';
 import { SolBalanceModal } from 'src/components/SolBalanceModal';
 import { useNativeAccount } from 'src/contexts/accounts';
 import { AppStateContext } from 'src/contexts/appstate';
+import { useWalletAccount } from 'src/contexts/walletAccount';
 import { consoleOut, toUsCurrency } from 'src/middleware/ui';
 import { getAmountFromLamports, shortenAddress } from 'src/middleware/utils';
+import { useGetAccountBalance } from 'src/query-hooks/accountBalance';
 import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 
 export const SafeInfo = (props: {
@@ -46,12 +48,15 @@ export const SafeInfo = (props: {
     tabs,
   } = props;
   const { t } = useTranslation('common');
-  const { selectedAccount, multisigSolBalance, setActiveTab } = useContext(AppStateContext);
+  const { setActiveTab } = useContext(AppStateContext);
+  const { selectedAccount } = useWalletAccount();
   const { address } = useParams();
   const { account } = useNativeAccount();
   const [, setSearchParams] = useSearchParams();
   const [selectedLabelName, setSelectedLabelName] = useState('');
   const [nativeBalance, setNativeBalance] = useState(0);
+
+  const { data: multisigSolBalance } = useGetAccountBalance(selectedAccount.address);
   const { data: sourceAccountTokens } = useFetchAccountTokens(selectedAccount.address);
 
   // Safe Balance

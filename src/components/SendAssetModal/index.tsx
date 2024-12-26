@@ -9,6 +9,7 @@ import { TokenListItem } from 'src/components/TokenListItem';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getNetworkIdByEnvironment, useConnection } from 'src/contexts/connection';
 import { useWallet } from 'src/contexts/wallet';
+import { useWalletAccount } from 'src/contexts/walletAccount';
 import { environment } from 'src/environments/environment';
 import { getDecimalsFromAccountInfo } from 'src/middleware/accountInfoGetters';
 import { consoleOut, isValidAddress } from 'src/middleware/ui';
@@ -33,7 +34,7 @@ interface Props {
 export const SendAssetModal = ({ selected, isVisible, handleClose, selectedToken, title }: Props) => {
   const { splTokenList } = useContext(AppStateContext);
   const connection = useConnection();
-  const { connected, publicKey } = useWallet();
+  const { connected } = useWallet();
   const { t } = useTranslation('common');
   const [userBalances, setUserBalances] = useState<LooseObject>({});
   const [token, setToken] = useState<TokenInfo | undefined>(undefined);
@@ -41,8 +42,9 @@ export const SendAssetModal = ({ selected, isVisible, handleClose, selectedToken
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
+  const { selectedAccount } = useWalletAccount();
 
-  const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), true);
+  const { data: tokensWithBalances } = useGetTokensWithBalances(selectedAccount.address);
 
   const autoFocusInput = useCallback(() => {
     const input = document.getElementById('token-search-rp');

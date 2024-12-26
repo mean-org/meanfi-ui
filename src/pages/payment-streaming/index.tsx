@@ -190,7 +190,7 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
               refreshMultisigs();
               notifyMultisigActionFollowup(item);
             } else {
-              softReloadStreams();
+              reloadStreams();
             }
             break;
           case OperationType.TreasuryCreate:
@@ -214,7 +214,7 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
               backButtonClick();
               consoleOut('calling onBackButtonClicked()...');
               onBackButtonClicked?.();
-              hardReloadStreams();
+              reloadStreams();
             }, 20);
             break;
           case OperationType.TreasuryClose:
@@ -224,7 +224,7 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
               notifyMultisigActionFollowup(item);
             }
             navigate(`/${RegisteredAppPaths.PaymentStreaming}/streaming-accounts`);
-            hardReloadStreams();
+            reloadStreams();
             break;
           case OperationType.StreamTransferBeneficiary:
             logEventHandling(item);
@@ -233,7 +233,7 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
               notifyMultisigActionFollowup(item);
             } else {
               navigate(`/${RegisteredAppPaths.PaymentStreaming}/incoming`);
-              hardReloadStreams();
+              reloadStreams();
             }
             break;
           default:
@@ -363,15 +363,8 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
     }
   };
 
-  const softReloadStreams = () => {
-    const streamsRefreshCta = document.getElementById('streams-refresh-noreset-cta');
-    if (streamsRefreshCta) {
-      streamsRefreshCta.click();
-    }
-  };
-
-  const hardReloadStreams = () => {
-    const streamsRefreshCta = document.getElementById('streams-refresh-reset-cta');
+  const reloadStreams = () => {
+    const streamsRefreshCta = document.getElementById('streams-refresh-cta');
     if (streamsRefreshCta) {
       streamsRefreshCta.click();
     }

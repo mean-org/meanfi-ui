@@ -1,25 +1,26 @@
 import type { Transaction, VersionedTransaction } from '@solana/web3.js';
+import type { LooseObject } from 'src/types/LooseObject';
 
 export interface CreateTxResult {
   transaction: Transaction | VersionedTransaction | null;
-  log: any[];
-  error?: any;
+  log: LooseObject[];
+  error?: unknown;
 }
 
 export interface SignTxResult {
   encodedTransaction: string | null;
   signedTransaction: Transaction | VersionedTransaction | null;
-  log: any[];
-  error?: any;
+  log: LooseObject[];
+  error?: unknown;
 }
 
 export interface SendTxResult {
   signature: string | null;
-  log: any[];
-  error?: any;
+  log: LooseObject[];
+  error?: unknown;
 }
 
 export interface ConfirmTxResult {
   confirmed: boolean;
-  log: any[];
+  log: LooseObject[];
 }

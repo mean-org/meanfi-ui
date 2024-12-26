@@ -113,7 +113,7 @@ export const PlaygroundView = () => {
   const [totalSafeBalance, setTotalSafeBalance] = useState<number | undefined>(undefined);
   const [streamViewerAddress, setStreamViewerAddress] = useState('');
 
-  const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), false);
+  const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58());
   const { data: multisigAccounts } = useGetMultisigAccounts(publicKey?.toBase58());
   const { data: rawMultisigVaults, isPending: loadingAssets, isError } = useMultisigVaults(selectedMultisig?.id);
 

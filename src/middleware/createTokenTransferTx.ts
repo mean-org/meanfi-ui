@@ -10,23 +10,27 @@ import {
 } from '@solana/web3.js';
 import { SOL_MINT } from './ids';
 
+export interface TransactionWithPreinstructions {
+  tx: Transaction
+  preInstructions: TransactionInstruction[]
+}
+
 const createTokenTransferTx = async (
   connection: Connection,
   selectedToken: PublicKey,
   { sender, feePayer, beneficiary, mint }: TransferTransactionAccounts,
   amount: string | number, // Allow both types for compatibility
-): Promise<Transaction> => {
-  const ixs: TransactionInstruction[] = [];
+): Promise<TransactionWithPreinstructions> => {
+  let transferIx: TransactionInstruction;
+  const preIxs: TransactionInstruction[] = [];
   const txFeePayer = feePayer || sender;
 
   if (mint.equals(SOL_MINT)) {
-    ixs.push(
-      SystemProgram.transfer({
-        fromPubkey: sender,
-        toPubkey: beneficiary,
-        lamports: BigInt(amount),
-      }),
-    );
+    transferIx = SystemProgram.transfer({
+      fromPubkey: sender,
+      toPubkey: beneficiary,
+      lamports: BigInt(amount),
+    });
   } else {
     // Create a Token program client
     const tokenClient: Token = new Token(connection, mint, TOKEN_PROGRAM_ID, Keypair.generate());
@@ -55,7 +59,7 @@ const createTokenTransferTx = async (
       const beneficiaryTokenAccountInfo = await connection.getAccountInfo(beneficiaryToken);
 
       if (!beneficiaryTokenAccountInfo) {
-        ixs.push(
+        preIxs.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
@@ -77,18 +81,16 @@ const createTokenTransferTx = async (
       }
     }
 
-    ixs.push(
-      Token.createTransferInstruction(TOKEN_PROGRAM_ID, senderToken, beneficiaryToken, sender, [], new u64(amount)),
-    );
+    transferIx = Token.createTransferInstruction(TOKEN_PROGRAM_ID, senderToken, beneficiaryToken, sender, [], new u64(amount))
   }
 
-  const transaction = new Transaction().add(...ixs);
+  const transaction = new Transaction().add(transferIx);
   transaction.feePayer = txFeePayer;
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
   transaction.recentBlockhash = blockhash;
   transaction.lastValidBlockHeight = lastValidBlockHeight;
 
-  return transaction;
+  return { tx: transaction, preInstructions: preIxs} as TransactionWithPreinstructions;
 };
 
 export default createTokenTransferTx;
