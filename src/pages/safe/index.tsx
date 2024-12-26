@@ -1168,7 +1168,7 @@ const SafeView = (props: {
                 },
               });
               setSuccessStatus();
-            } else {
+            } else if (sent.error) {
               parseErrorFromExecuteProposal(sent.error, proposal);
               setTimeout(() => {
                 onExecuteFinishTxCancelled();

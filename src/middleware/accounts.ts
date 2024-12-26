@@ -225,7 +225,6 @@ export const getUserAccountTokens = async ({
   splTokenList,
 }: GetUserAccountTokensArgs): Promise<UserTokensResponse | null> => {
   const response: UserTokensResponse = {
-    nativeBalance: 0,
     wSolBalance: 0,
     accountTokens: [],
     selectedAsset: undefined,
@@ -237,7 +236,7 @@ export const getUserAccountTokens = async ({
 
   consoleOut('calling getUserAccountTokens() for:', accountAddress, 'blue');
 
-  response.nativeBalance = getAmountFromLamports(accountBalance);
+  // response.nativeBalance = getAmountFromLamports(accountBalance);
   const sol: UserTokenAccount = {
     address: NATIVE_SOL.address,
     balance: getAmountFromLamports(accountBalance),
@@ -356,7 +355,6 @@ interface GetTokensWithBalancesArgs {
   accountBalance: number;
   coinPrices: TokenPrice[] | null;
   splTokenList: UserTokenAccount[];
-  onlyAccountAssets: boolean;
 }
 
 export const getTokensWithBalances = ({
@@ -365,7 +363,6 @@ export const getTokensWithBalances = ({
   accountBalance,
   coinPrices,
   splTokenList,
-  onlyAccountAssets = true,
 }: GetTokensWithBalancesArgs): TokenSelectorListWithBalances | null => {
   const response: TokenSelectorListWithBalances = {
     balancesMap: {},
@@ -403,26 +400,25 @@ export const getTokensWithBalances = ({
       return response;
     }
 
-    const intersectedList = onlyAccountAssets ? getTokenListForOwnedTokenAccounts(accTks, splTokenList) : splTokensCopy;
-
-    const solItemIndex = intersectedList.findIndex(l => l.address === sol.address);
+    const solItemIndex = splTokensCopy.findIndex(l => l.address === sol.address);
     if (solItemIndex === -1) {
-      intersectedList.push(sol);
+      splTokensCopy.push(sol);
     } else {
-      intersectedList[solItemIndex] = sol;
+      splTokensCopy[solItemIndex] = sol;
     }
 
     // Update balances in the mean token list
-    const balancesUpdated = updateTokenAccountBalancesInTokenList(accTks, intersectedList, coinPrices);
+    const balancesUpdated = updateTokenAccountBalancesInTokenList(accTks, splTokensCopy, coinPrices);
 
     const sortedList = sortTokenAccountsByUsdValue(balancesUpdated);
 
     const custom: UserTokenAccount[] = [];
     // Build a list with all token accounts holded by the user not already in sortedList as custom tokens
-    accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
+    for (const item of accTks) {
       if (sortedList.some(t => t.address === item.parsedInfo.mint)) {
-        return;
+        continue;
       }
+      const index = accTks.indexOf(item);
       const balance = item.parsedInfo.tokenAmount.uiAmount ?? 0;
       const price = getPriceByAddressOrSymbol(coinPrices, item.parsedInfo.mint);
       const valueInUsd = balance * price;
@@ -440,7 +436,7 @@ export const getTokensWithBalances = ({
         valueInUsd,
       };
       custom.push(customToken);
-    });
+    }
 
     // Sort by valueInUsd and then by token balance
     const sortedCustomTokenList = sortTokenAccountsByBalance(custom);

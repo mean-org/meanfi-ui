@@ -1,5 +1,5 @@
 import { DEFAULT_EXPIRATION_TIME_SECONDS, type MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import type { Transaction, VersionedTransaction } from '@solana/web3.js';
+import type { SendTransactionError, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MIN_SOL_BALANCE_REQUIRED } from 'src/app-constants/common';
@@ -308,9 +308,14 @@ const useTransaction = () => {
       return result;
     };
 
-    const onError = () => {
+    const onError = async (error?: unknown) => {
       setIsBusy(false);
-      throw new Error('Transaction error');
+      if (!error) {
+        throw new Error('Transaction error');
+      }
+      const solanaError = error as SendTransactionError;
+      const logs = await solanaError.getLogs(connection);
+      console.error('Logs:', logs.toString());
     };
 
     if (wallet && publicKey) {
@@ -346,7 +351,7 @@ const useTransaction = () => {
             setIsBusy(false);
             resetTransactionStatus();
             onTxSent?.(signature);
-          } else {
+          } else if (sent.error) {
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.SendTransactionFailure,
@@ -357,7 +362,7 @@ const useTransaction = () => {
               description: t('notifications.error-sending-transaction'),
               type: 'error',
             });
-            onError();
+            onError(sent.error);
           }
         } else {
           setTransactionStatus({

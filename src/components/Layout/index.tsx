@@ -295,7 +295,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
               <div>Select account</div>
             </div>
           </div>
-          <div className='place-transaction-box container-max-width-720 flat mb-0'>
+          <div className='place-transaction-box container-max-width-640 flat mb-0'>
             <div className='flexible-left mb-3'>
               <div className='left'>
                 <span className='icon-button-container secondary-button'>

@@ -219,7 +219,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
 
   const sourceAccount = balancesSource || selectedAccount.address;
-  const { data: sourceAccountTokens } = useGetTokensWithBalances(sourceAccount, false);
+  const { data: sourceAccountTokens } = useGetTokensWithBalances(sourceAccount);
 
   /////////////////////////
   //  Setup & Init code  //
@@ -3251,18 +3251,12 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
 
   // Hook on wallet connect/disconnect
   useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('User is connecting...', '', 'green');
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'green');
-        // Cleanup state
-        clearFormValues();
-        setSelectedVestingContract(undefined);
-        setStreamTemplate(undefined);
-      }
+    if (previousWalletConnectState && !connected) {
+      clearFormValues();
+      setSelectedVestingContract(undefined);
+      setStreamTemplate(undefined);
     }
-  }, [connected, publicKey, previousWalletConnectState, clearFormValues]);
+  }, [connected, clearFormValues, previousWalletConnectState]);
 
   // Live data calculation
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually

@@ -4,10 +4,10 @@ import {
   type AppConfig,
   AppsProvider,
   type Arg,
+  NETWORK,
   type UiElement,
   type UiInstruction,
 } from '@mean-dao/mean-multisig-apps';
-import { NETWORK } from '@mean-dao/mean-multisig-apps';
 import * as credixDevnet from '@mean-dao/mean-multisig-apps/lib/apps/credix-devnet/func';
 import * as credixMainnet from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import {
@@ -74,6 +74,7 @@ import { PreFooter } from 'src/components/PreFooter';
 import { ReceiveSplOrSolModal } from 'src/components/ReceiveSplOrSolModal';
 import { SendAssetModal } from 'src/components/SendAssetModal';
 import { SolBalanceModal } from 'src/components/SolBalanceModal';
+import WalletNotConnectedMessage from 'src/components/WalletNotConnectedMessage';
 import { WrapSolModal } from 'src/components/WrapSolModal';
 import { useNativeAccount } from 'src/contexts/accounts';
 import { AppStateContext, type TransactionStatusInfo } from 'src/contexts/appstate';
@@ -84,12 +85,14 @@ import useLocalStorage from 'src/hooks/useLocalStorage';
 import useTransaction from 'src/hooks/useTransaction';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { customLogger } from 'src/main';
+import { resolveParsedAccountInfo } from 'src/middleware/accounts';
 import { type CreateSafeAssetTxParams, createAddSafeAssetTx } from 'src/middleware/createAddSafeAssetTx';
 import { createCloseTokenAccountTx } from 'src/middleware/createCloseTokenAccountTx';
 import createTokenTransferTx from 'src/middleware/createTokenTransferTx';
 import { createV0InitAtaAccountTx } from 'src/middleware/createV0InitAtaAccountTx';
 import { type MappedTransaction, fetchAccountHistory } from 'src/middleware/history';
 import { SOL_MINT } from 'src/middleware/ids';
+import { getStreamCategory, isInboundStream, isV2Stream } from 'src/middleware/streamHelpers';
 import { getStreamAssociatedMint } from 'src/middleware/token-streaming-utils/getStreamAssociatedMint';
 import {
   type ComputeBudgetConfig,
@@ -135,7 +138,10 @@ import { type StreamsSummary, initialSummary } from 'src/models/streams';
 import { FetchStatus } from 'src/models/transactions';
 import { INITIAL_TREASURIES_SUMMARY, type UserTreasuriesSummary } from 'src/models/treasuries';
 import useGetAccountPrograms from 'src/query-hooks/accountPrograms';
+import { useAccountAssets, useFetchAccountTokens } from 'src/query-hooks/accountTokens';
 import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useGetStreamList } from 'src/query-hooks/streamList';
+import { useGetStreamingAccounts } from 'src/query-hooks/streamingAccount';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import { AppUsageEvent } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
@@ -152,12 +158,7 @@ import { getMergeAccountsCta } from './asset-ctas/mergeAccountsCta';
 import { getUnwrapSolCta } from './asset-ctas/unwrapSolCta';
 import { getWrapSolCta } from './asset-ctas/wrapSolCta';
 import './style.scss';
-import WalletNotConnectedMessage from 'src/components/WalletNotConnectedMessage';
-import { resolveParsedAccountInfo } from 'src/middleware/accounts';
-import { getStreamCategory, isInboundStream, isV2Stream } from 'src/middleware/streamHelpers';
-import { useAccountAssets } from 'src/query-hooks/accountTokens';
-import { useGetStreamList } from 'src/query-hooks/streamList';
-import { useGetStreamingAccounts } from 'src/query-hooks/streamingAccount';
+import { useGetAccountBalance } from 'src/query-hooks/accountBalance';
 import useAppNavigation from './useAppNavigation';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
@@ -204,6 +205,19 @@ export const HomeView = () => {
     setSelectedToken,
     setSelectedAsset,
   } = useContext(AppStateContext);
+
+  const {
+    selectedCategory,
+    selectedAssetsGroup,
+    setSelectedAssetsGroup,
+    detailsPanelOpen,
+    turnOffRightPanel,
+    turnOnRightPanel,
+  } = useAppNavigation({
+    asset,
+    selectedAccount,
+  });
+
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
@@ -225,7 +239,6 @@ export const HomeView = () => {
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [transactionAssetFees, setTransactionAssetFees] = useState<TransactionFees>(NO_FEES);
   const [isBusy, setIsBusy] = useState(false);
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   // Balances and USD values
   const [totalAccountBalance, setTotalAccountBalance] = useState(0);
   const [incomingStreamsSummary, setIncomingStreamsSummary] = useState<StreamsSummary>(initialSummary);
@@ -235,7 +248,6 @@ export const HomeView = () => {
   const [totalStreamsAmount, setTotalStreamsAmount] = useState<number | undefined>(undefined);
   const [streamingAccountsSummary, setStreamingAccountsSummary] =
     useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
-  const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
   const [canShowStreamingAccountBalance, setCanShowStreamingAccountBalance] = useState(false);
@@ -261,22 +273,10 @@ export const HomeView = () => {
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
   const [userOwnedTokenAccounts, setUserOwnedTokenAccounts] = useState<AccountTokenParsedInfo[]>();
   const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
-  const {
-    userAssets: userTokensResponse,
-    loadingUserAssets,
-    refreshAccountAssets,
-  } = useAccountAssets(selectedAccount.address);
 
-  const {
-    selectedCategory,
-    selectedAssetsGroup,
-    setSelectedAssetsGroup,
-    detailsPanelOpen,
-    turnOffRightPanel,
-    turnOnRightPanel,
-  } = useAppNavigation({
-    selectedAccount,
-  });
+  const { data: multisigSolBalance } = useGetAccountBalance(selectedAccount.address);
+  const { refetch: refreshAccountAssets } = useFetchAccountTokens(selectedAccount.address);
+  const { userAssets: userTokensResponse, loadingUserAssets } = useAccountAssets(selectedAccount.address);
 
   /////////////////
   //  Init code  //
@@ -943,6 +943,7 @@ export const HomeView = () => {
         case OperationType.StreamCreate:
         case OperationType.CloseTokenAccount:
           logEventHandling(item);
+          navigate('/assets');
           accountRefresh();
           break;
         case OperationType.DeleteAsset:
@@ -1163,7 +1164,7 @@ export const HomeView = () => {
         completedMessage,
         setIsBusy,
         extras: () => ({
-          multisigAuthority: multisigAuthority,
+          multisigAuthority,
         }),
         proposalTitle: params.proposalTitle,
         multisig: multisigAuthority,
@@ -1181,14 +1182,14 @@ export const HomeView = () => {
             mint: new PublicKey(data.fromMint),
           };
 
-          const transaction = await createTokenTransferTx(
+          const { tx, preInstructions } = await createTokenTransferTx(
             connection,
             new PublicKey(data.from),
             accounts,
             data.tokenAmount,
           );
 
-          const ix = transaction.instructions[0];
+          const ix = tx.instructions[0];
           const programId = ix.programId;
           const ixData = Buffer.from(ix.data);
           const ixAccounts = ix.keys;
@@ -1197,6 +1198,7 @@ export const HomeView = () => {
             programId, // program
             ixAccounts, // keys o accounts of the Ix
             ixData, // data of the Ix
+            ixs: preInstructions, // preInstructions
           };
         },
       });
@@ -1742,64 +1744,6 @@ export const HomeView = () => {
     setStreamingAccountsSummary(resume);
   }, [streamingAccounts, getTreasuryUnallocatedBalance, getTokenPriceByAddress, getTokenByMintAddress]);
 
-  // const getV1VestedValue = useCallback(
-  //   async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
-  //     if (!tokenStreamingV1) return 0;
-
-  //     let vestedValue = 0;
-  //     for await (const stream of updatedStreamsv1) {
-  //       const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
-
-  //       // Get refreshed data
-  //       const freshStream = await tokenStreamingV1.refreshStream(stream);
-  //       if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
-  //         continue;
-  //       }
-
-  //       const token = getTokenByMintAddress(freshStream.associatedToken as string);
-
-  //       if (token) {
-  //         const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
-
-  //         if (isIncoming) {
-  //           vestedValue = vestedValue + (freshStream.escrowVestedAmount || 0) * tokenPrice;
-  //         }
-  //       }
-  //     }
-  //     return vestedValue;
-  //   },
-  //   [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
-  // );
-
-  // const getV1UnvestedValue = useCallback(
-  //   async (updatedStreamsv1: StreamInfo[], treasurer: PublicKey) => {
-  //     if (!tokenStreamingV1) return 0;
-
-  //     let unvestedValue = 0;
-  //     for await (const stream of updatedStreamsv1) {
-  //       const isIncoming = !!(stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58());
-
-  //       // Get refreshed data
-  //       const freshStream = await tokenStreamingV1.refreshStream(stream, undefined, false);
-  //       if (!freshStream || freshStream.state !== STREAM_STATE.Running) {
-  //         continue;
-  //       }
-
-  //       const token = getTokenByMintAddress(freshStream.associatedToken as string);
-
-  //       if (token) {
-  //         const tokenPrice = getTokenPriceByAddress(token.address, token.symbol);
-
-  //         if (!isIncoming) {
-  //           unvestedValue = unvestedValue + (freshStream.escrowUnvestedAmount || 0) * tokenPrice;
-  //         }
-  //       }
-  //     }
-  //     return unvestedValue;
-  //   },
-  //   [getTokenByMintAddress, getTokenPriceByAddress, tokenStreamingV1],
-  // );
-
   const getV2FundsLeftValue = useCallback(
     async (updatedStreamsv2: Stream[], treasurer: PublicKey) => {
       if (!tokenStreamingV2) return 0;
@@ -1871,10 +1815,6 @@ export const HomeView = () => {
       return;
     }
 
-    // if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
-    //   return;
-    // }
-
     const resume: StreamsSummary = {
       totalNet: 0,
       incomingAmount: 0,
@@ -1883,12 +1823,6 @@ export const HomeView = () => {
     };
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
-
-    // const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
-    // const vested = await getV1VestedValue(updatedStreamsv1, treasurer);
-    // resume.totalNet = vested;
-    // resume.totalAmount = updatedStreamsv1.length;
-
     const updatedStreamsv2 = await tokenStreamingV2.refreshStreams(streamListv2 ?? [], treasurer);
     const withdrawableValue = await getV2WithdrawableValue(updatedStreamsv2, treasurer);
     resume.totalNet += withdrawableValue;
@@ -1903,10 +1837,6 @@ export const HomeView = () => {
       return;
     }
 
-    // if (!tokenStreamingV1 || !tokenStreamingV2 || !publicKey || (!streamListv1 && !streamListv2)) {
-    //   return;
-    // }
-
     const resume: StreamsSummary = {
       totalNet: 0,
       incomingAmount: 0,
@@ -1915,12 +1845,6 @@ export const HomeView = () => {
     };
 
     const treasurer = selectedAccount.address ? new PublicKey(selectedAccount.address) : publicKey;
-
-    // const updatedStreamsv1 = await tokenStreamingV1.refreshStreams(streamListv1 ?? [], treasurer);
-    // const unvested = await getV1UnvestedValue(updatedStreamsv1, treasurer);
-    // resume.totalNet = unvested;
-    // resume.totalAmount = updatedStreamsv1.length;
-
     const updatedStreamsv2 = await tokenStreamingV2.refreshStreams(streamListv2 ?? [], treasurer);
     const fundsLeft = await getV2FundsLeftValue(updatedStreamsv2, treasurer);
     resume.totalNet += fundsLeft;
@@ -1931,7 +1855,6 @@ export const HomeView = () => {
   }, [tokenStreamingV2, publicKey, streamListv2, selectedAccount.address, getV2FundsLeftValue]);
 
   const clearStateData = useCallback(() => {
-    setAccountTokens([]);
     setStreamingAccountsSummary(INITIAL_TREASURIES_SUMMARY);
     setIncomingAmount(0);
     setOutgoingAmount(0);
@@ -2432,18 +2355,11 @@ export const HomeView = () => {
   /////////////////////
 
   // Keep account balance updated
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
-    if (!(account?.lamports !== previousBalance || !nativeBalance)) {
-      return;
-    }
-
     // Refresh token balance
     refreshTokenBalance();
     setNativeBalance(getAmountFromLamports(account?.lamports));
-    // Update previous balance
-    setPreviousBalance(account?.lamports);
-  }, [account?.lamports, nativeBalance, previousBalance]);
+  }, [account, refreshTokenBalance]);
 
   // Detect XS screen
   useEffect(() => {
@@ -2467,14 +2383,13 @@ export const HomeView = () => {
     setSelectedAsset(undefined);
   }, [location.pathname, selectedCategory]);
 
-  // Process userTokensResponse from AppState to get a renderable list of tokens
+  // Process userTokensResponse to get a renderable list of tokens
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (!userTokensResponse) {
       return;
     }
 
-    setMultisigSolBalance(userTokensResponse.nativeBalance);
     setWsolBalance(userTokensResponse.wSolBalance);
     setAccountTokens(userTokensResponse.accountTokens);
     setUserOwnedTokenAccounts(userTokensResponse.userTokenAccounts);
@@ -3699,8 +3614,7 @@ export const HomeView = () => {
             <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
               {/* Left / top panel */}
               <div className='meanfi-two-panel-left'>
-                <div id='streams-refresh-noreset-cta' onKeyDown={() => {}} onClick={onRefreshStreams} />
-                <div id='streams-refresh-reset-cta' onKeyDown={() => {}} onClick={onRefreshStreams} />
+                <div id='streams-refresh-cta' onKeyDown={() => {}} onClick={onRefreshStreams} />
 
                 <div className='inner-container overflow-hidden'>
                   {isMultisigContext
@@ -3742,10 +3656,15 @@ export const HomeView = () => {
                 </div>
 
                 <div className='inner-container'>
+                  {selectedCategory === 'account-summary' && location.pathname === '/my-account' ? (
+                    <Suspense fallback={renderSpinner()}>
+                      <PersonalAccountSummary accountBalance={netWorth} />
+                    </Suspense>
+                  ) : null}
+
                   {location.pathname.startsWith('/streaming') &&
                   selectedApp?.slug === RegisteredAppPaths.PaymentStreaming ? (
                     <>
-                      {/* Refresh cta */}
                       <div className='float-top-right mr-1 mt-1'>
                         <span className='icon-button-container secondary-button'>
                           <Tooltip placement='bottom' title='Refresh payment streams'>
@@ -3755,10 +3674,7 @@ export const HomeView = () => {
                               shape='circle'
                               size='middle'
                               icon={<ReloadOutlined className='mean-svg-icons' />}
-                              onClick={() => {
-                                reloadTokensAndActivity();
-                                onRefreshStreams();
-                              }}
+                              onClick={() => reloadTokensAndActivity()}
                             />
                           </Tooltip>
                         </span>
@@ -3814,15 +3730,8 @@ export const HomeView = () => {
                     </div>
                   ) : null}
 
-                  {selectedCategory === 'account-summary' && location.pathname === '/my-account' ? (
-                    <Suspense fallback={renderSpinner()}>
-                      <PersonalAccountSummary accountBalance={netWorth} />
-                    </Suspense>
-                  ) : null}
-
                   {location.pathname.startsWith('/assets') ? (
                     <>
-                      {/* Refresh cta */}
                       <div className='float-top-right mr-1 mt-1'>
                         <span className='icon-button-container secondary-button'>
                           <Tooltip placement='bottom' title='Refresh assets and activity'>
@@ -3863,7 +3772,6 @@ export const HomeView = () => {
                             </Row>
                           ) : null)}
                         <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
-                          {/* Activity table heading */}
                           {hasItemsToRender() && (
                             <div className='stats-row'>
                               <div className='item-list-header compact'>
@@ -3885,7 +3793,6 @@ export const HomeView = () => {
                               </div>
                             </div>
                           )}
-                          {/* Activity table content */}
                           {renderActivityList()}
                         </div>
                       </div>
@@ -3900,7 +3807,7 @@ export const HomeView = () => {
         </div>
       </div>
 
-      {connection && selectedTokenMergeGroup && isTokenMergerModalVisible && (
+      {selectedTokenMergeGroup && isTokenMergerModalVisible && (
         <AccountsMergeModal
           connection={connection}
           isVisible={isTokenMergerModalVisible}

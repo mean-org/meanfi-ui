@@ -34,10 +34,11 @@ const categoryToAssetsGroup = ({ selectedCategory, pathname }: CategoryToAssetsG
 // Main
 // ---------------------------------------------------------------------------
 interface Args {
+  asset?: string;
   selectedAccount: AccountContext;
 }
 
-const useAppNavigation = ({ selectedAccount }: Args) => {
+const useAppNavigation = ({ asset, selectedAccount }: Args) => {
   const location = useLocation();
   const { pathname } = location;
 
@@ -47,6 +48,10 @@ const useAppNavigation = ({ selectedAccount }: Args) => {
   const isKnownApp = KNOWN_APPS.some(a => pathname.startsWith(`/${a.slug}`));
 
   const selectedCategory: AccountsPageCategory = useMemo(() => {
+    if (asset) {
+      consoleOut('Route param asset:', asset, 'crimson');
+    }
+
     // The category is inferred from the route path
     if (pathname.startsWith('/programs/')) {
       return 'other-assets';
@@ -65,7 +70,7 @@ const useAppNavigation = ({ selectedAccount }: Args) => {
       consoleOut('Setting category:', 'apps', 'crimson');
       return 'apps';
     }
-  }, [pathname, isAccountSummary, isKnownApp]);
+  }, [asset, isAccountSummary, isKnownApp, pathname]);
 
   // Details Panel
   // ---------------------------------------------------------------------------

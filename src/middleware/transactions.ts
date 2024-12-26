@@ -144,13 +144,13 @@ export const signTx = async (
   };
 };
 
-export const sendTx = async (title: string, connection: Connection, encodedTx: string): Promise<SendTxResult> => {
+export const sendTx = async (title: string, connection: Connection, encodedTx: string, skipPreflight?: boolean): Promise<SendTxResult> => {
   // biome-ignore lint/suspicious/noExplicitAny: Anything can go here
   const txLog: any[] = [];
 
   if (connection && encodedTx) {
     return connection
-      .sendEncodedTransaction(encodedTx, { preflightCommitment: 'confirmed' })
+      .sendEncodedTransaction(encodedTx, { preflightCommitment: 'confirmed', skipPreflight })
       .then(sig => {
         consoleOut('sendEncodedTransaction returned a signature:', sig);
         txLog.push({

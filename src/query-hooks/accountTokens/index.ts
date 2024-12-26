@@ -51,7 +51,7 @@ export const useAccountAssets = (accountAddress: string | undefined) => {
   };
 };
 
-export const useGetTokensWithBalances = (accountAddress: string | undefined, onlyAccountAssets?: boolean) => {
+export const useGetTokensWithBalances = (accountAddress: string | undefined) => {
   const { priceList, splTokenList } = useContext(AppStateContext);
   const { data: balance } = useGetAccountBalance(accountAddress);
   const { data: parsedTokens } = useFetchAccountTokens(accountAddress);
@@ -66,10 +66,9 @@ export const useGetTokensWithBalances = (accountAddress: string | undefined, onl
         accountBalance: balance ?? 0,
         coinPrices: priceList,
         splTokenList,
-        onlyAccountAssets: onlyAccountAssets ?? true,
       });
     },
-    enabled: !!accountAddress && !!parsedTokens,
+    enabled: !!accountAddress && parsedTokens !== undefined,
     retry: false,
   });
 };

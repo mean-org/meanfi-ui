@@ -28,7 +28,7 @@ const TokenSelector = ({ tokens, selectedToken, isSolana, onClose, onTokenSelect
   const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
 
   const tokenList = useMemo(() => (tokens ? (tokens.slice() as UserTokenAccount[]) : []), [tokens]);
-  const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58(), false);
+  const { data: tokensWithBalances } = useGetTokensWithBalances(publicKey?.toBase58());
 
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback(
