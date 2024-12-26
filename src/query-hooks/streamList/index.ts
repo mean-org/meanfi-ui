@@ -13,7 +13,7 @@ import { useEnableFetchingOldStreams } from '../enableFetchingOldStreams';
 import useGetPerformanceSamples from '../performanceSamples';
 import getStreamList from './getStreamList';
 
-export const getUseGetStreamListQueryKey = (accountAddress: string | undefined) => ['streams', accountAddress];
+export const getUseGetStreamListQueryKey = (accountAddress: string | undefined, shouldLoadV1Streams: boolean) => ['streams', accountAddress, shouldLoadV1Streams ? 'all' : 'v2-only'];
 
 export const useGetStreamList = ({
   srcAccountPk,
@@ -24,7 +24,7 @@ export const useGetStreamList = ({
   tokenStreamingV1: MoneyStreaming | undefined;
   tokenStreamingV2: PaymentStreaming | undefined;
 }) => {
-  const { tpsAvg } = useGetPerformanceSamples();
+  const { data: tpsAvg } = useGetPerformanceSamples();
   const shouldLoadV1Streams = useEnableFetchingOldStreams();
 
   const isDowngradedPerformance = useMemo(() => {
@@ -45,7 +45,7 @@ export const useGetStreamList = ({
   }, [lastStreamsAmount]);
 
   return useQuery({
-    queryKey: getUseGetStreamListQueryKey(srcAccountPk?.toBase58()),
+    queryKey: getUseGetStreamListQueryKey(srcAccountPk?.toBase58(), shouldLoadV1Streams),
     queryFn: () =>
       getStreamList({
         srcAccountPk,
