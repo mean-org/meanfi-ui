@@ -56,7 +56,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, setNeedReloadMultisigAccounts, setDiagnosisInfo, selectedAccount } = useContext(AppStateContext);
-  const { tpsAvg } = useGetPerformanceSamples();
+  const { data: tpsAvg } = useGetPerformanceSamples();
   const { confirmationHistory, clearConfirmationHistory } = useContext(TxConfirmationContext);
   const { t, i18n } = useTranslation('common');
   const { refreshAccount } = useAccountsContext();

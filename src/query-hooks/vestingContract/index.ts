@@ -17,7 +17,7 @@ export const useGetVestingContracts = ({
   srcAccountPk: PublicKey | undefined;
   tokenStreamingV2: PaymentStreaming | undefined;
 }) => {
-  const { tpsAvg } = useGetPerformanceSamples();
+  const { data: tpsAvg } = useGetPerformanceSamples();
 
   const isDowngradedPerformance = useMemo(() => {
     return !!(isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD));
