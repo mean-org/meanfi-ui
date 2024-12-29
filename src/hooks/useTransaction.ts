@@ -252,7 +252,7 @@ const useTransaction = () => {
             SOL_MINT.toBase58(),
           )}) to pay for network fees (${getAmountWithSymbol(minBalanceRequired, SOL_MINT.toBase58())})`,
         });
-        customLogger.logWarning(`${name} transaction failed`, {
+        customLogger.logError(`${name} transaction failed`, {
           transcript: transactionLog,
         });
         return false;
@@ -313,67 +313,82 @@ const useTransaction = () => {
       if (!error) {
         throw new Error('Transaction error');
       }
+
       const solanaError = error as SendTransactionError;
-      const logs = await solanaError.getLogs(connection);
-      console.error('Logs:', logs.toString());
+      if ('transactionError' in solanaError) {
+        const messageList: string[] = [];
+        messageList.push(solanaError.message);
+        const logs = await solanaError.getLogs(connection);
+        messageList.push(...logs);
+        console.error('Logs:', messageList);
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+          result: messageList,
+        });
+        customLogger.logError(`${name} transaction failed`, {
+          transcript: transactionLog,
+        });
+      }
     };
 
-    if (wallet && publicKey) {
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && transaction) {
-        const sign = await signTx(name, wallet.adapter, publicKey, transaction);
-        if (sign.encodedTransaction) {
-          encodedTx = sign.encodedTransaction;
-          transactionLog = transactionLog.concat(sign.log);
+    if (!(wallet && publicKey)) {
+      return;
+    }
+
+    const create = await createTx();
+    consoleOut('created:', create);
+    if (create && transaction) {
+      const sign = await signTx(name, wallet.adapter, publicKey, transaction);
+      if (sign.encodedTransaction) {
+        encodedTx = sign.encodedTransaction;
+        transactionLog = transactionLog.concat(sign.log);
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.SignTransactionSuccess,
+        });
+        const sent = await sendTx(name, connection, encodedTx);
+        consoleOut('sent:', sent);
+        if (sent.signature) {
+          const signature = sent.signature;
+          consoleOut('Send Tx to confirmation queue:', signature);
+          enqueueTransactionConfirmation({
+            signature,
+            operationType,
+            finality: 'confirmed',
+            txInfoFetchStatus: 'fetching',
+            loadingTitle: 'Confirming transaction',
+            loadingMessage: loadingMessage(),
+            completedTitle: 'Transaction confirmed',
+            completedMessage: completedMessage(),
+            completedMessageTimeout: isMultisigContext ? 8 : 5, // May be configurable
+            extras: extras(),
+          });
+
+          setIsBusy(false);
+          resetTransactionStatus();
+          onTxSent?.(signature);
+        } else if (sent.error) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransactionFailure,
           });
-          const sent = await sendTx(name, connection, encodedTx);
-          consoleOut('sent:', sent);
-          if (sent.signature) {
-            const signature = sent.signature;
-            consoleOut('Send Tx to confirmation queue:', signature);
-            enqueueTransactionConfirmation({
-              signature,
-              operationType,
-              finality: 'confirmed',
-              txInfoFetchStatus: 'fetching',
-              loadingTitle: 'Confirming transaction',
-              loadingMessage: loadingMessage(),
-              completedTitle: 'Transaction confirmed',
-              completedMessage: completedMessage(),
-              completedMessageTimeout: isMultisigContext ? 8 : 5, // May be configurable
-              extras: extras(),
-            });
 
-            setIsBusy(false);
-            resetTransactionStatus();
-            onTxSent?.(signature);
-          } else if (sent.error) {
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SendTransactionFailure,
-            });
-
-            openNotification({
-              title: t('notifications.error-title'),
-              description: t('notifications.error-sending-transaction'),
-              type: 'error',
-            });
-            onError(sent.error);
-          }
-        } else {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.SignTransactionFailure,
+          openNotification({
+            title: t('notifications.error-title'),
+            description: t('notifications.error-sending-transaction'),
+            type: 'error',
           });
-          onError();
+          onError(sent.error);
         }
       } else {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.SignTransactionFailure,
+        });
         onError();
       }
+    } else {
+      onError();
     }
   };
 

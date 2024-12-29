@@ -534,7 +534,7 @@ export const MoneyStreamsInfoView = ({
         action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
         result: notifContent,
       });
-      customLogger.logWarning(title, {
+      customLogger.logError(title, {
         transcript: txLog,
       });
       openNotification({

@@ -1330,7 +1330,7 @@ export const HomeView = () => {
               SOL_MINT.toBase58(),
             )})`,
           });
-          customLogger.logWarning('Transfer tokens transaction failed', {
+          customLogger.logError('Transfer tokens transaction failed', {
             transcript: transactionLog,
           });
           return false;
@@ -1558,7 +1558,7 @@ export const HomeView = () => {
               SOL_MINT.toBase58(),
             )})`,
           });
-          customLogger.logWarning('Transfer tokens transaction failed', {
+          customLogger.logError('Transfer tokens transaction failed', {
             transcript: transactionLog,
           });
           return false;
@@ -2240,7 +2240,7 @@ export const HomeView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: txStatusMsg,
           });
-          customLogger.logWarning('Create Transaction Proposal failed', {
+          customLogger.logError('Create Transaction Proposal failed', {
             transcript: transactionLog,
           });
           return false;

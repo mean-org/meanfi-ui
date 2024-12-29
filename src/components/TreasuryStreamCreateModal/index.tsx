@@ -1267,7 +1267,7 @@ export const TreasuryStreamCreateModal = ({
             SOL_MINT.toBase58(),
           )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
-        customLogger.logWarning('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
         return false;
       }
 

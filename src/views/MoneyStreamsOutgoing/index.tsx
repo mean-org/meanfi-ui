@@ -657,7 +657,7 @@ export const MoneyStreamsOutgoingView = ({
               SOL_MINT.toBase58(),
             )})`,
           });
-          customLogger.logWarning('Add funds transaction failed', {
+          customLogger.logError('Add funds transaction failed', {
             transcript: transactionLog,
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, {
@@ -801,7 +801,7 @@ export const MoneyStreamsOutgoingView = ({
             SOL_MINT.toBase58(),
           )})`,
         });
-        customLogger.logWarning('Add funds transaction failed', {
+        customLogger.logError('Add funds transaction failed', {
           transcript: transactionLog,
         });
         segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, {
@@ -989,7 +989,7 @@ export const MoneyStreamsOutgoingView = ({
                 SOL_MINT.toBase58(),
               )})`,
             });
-            customLogger.logWarning('Pause stream transaction failed', {
+            customLogger.logError('Pause stream transaction failed', {
               transcript: transactionLog,
             });
             return false;
@@ -1167,7 +1167,7 @@ export const MoneyStreamsOutgoingView = ({
               splTokenList,
             )})`,
           });
-          customLogger.logWarning('Pause stream transaction failed', {
+          customLogger.logError('Pause stream transaction failed', {
             transcript: transactionLog,
           });
           return false;
@@ -1434,7 +1434,7 @@ export const MoneyStreamsOutgoingView = ({
                 SOL_MINT.toBase58(),
               )})`,
             });
-            customLogger.logWarning('Resume stream transaction failed', {
+            customLogger.logError('Resume stream transaction failed', {
               transcript: transactionLog,
             });
             return false;
@@ -1607,7 +1607,7 @@ export const MoneyStreamsOutgoingView = ({
               SOL_MINT.toBase58(),
             )})`,
           });
-          customLogger.logWarning('Resume stream transaction failed', {
+          customLogger.logError('Resume stream transaction failed', {
             transcript: transactionLog,
           });
           return false;

@@ -410,7 +410,7 @@ export const MoneyStreamsIncomingView = (props: {
               SOL_MINT.toBase58(),
             )})`,
           });
-          customLogger.logWarning('Transfer stream transaction failed', {
+          customLogger.logError('Transfer stream transaction failed', {
             transcript: transactionLog,
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, {
@@ -654,7 +654,7 @@ export const MoneyStreamsIncomingView = (props: {
               SOL_MINT.toBase58(),
             )})`,
           });
-          customLogger.logWarning('Withdraw transaction failed', {
+          customLogger.logError('Withdraw transaction failed', {
             transcript: transactionLog,
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
@@ -862,7 +862,7 @@ export const MoneyStreamsIncomingView = (props: {
             SOL_MINT.toBase58(),
           )})`,
         });
-        customLogger.logWarning('Withdraw transaction failed', {
+        customLogger.logError('Withdraw transaction failed', {
           transcript: transactionLog,
         });
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {

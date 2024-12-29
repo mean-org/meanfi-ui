@@ -348,7 +348,7 @@ const CreateSafeView = () => {
               SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
           });
-          customLogger.logWarning('Create multisig transaction failed', {
+          customLogger.logError('Create multisig transaction failed', {
             transcript: transactionLog,
           });
           return false;

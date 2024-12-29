@@ -497,7 +497,7 @@ const SafeView = (props: {
                 SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
             });
-            customLogger.logWarning('Edit multisig transaction failed', {
+            customLogger.logError('Edit multisig transaction failed', {
               transcript: transactionLog,
             });
             return false;
@@ -683,7 +683,7 @@ const SafeView = (props: {
                 SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
             });
-            customLogger.logWarning('Approve Multisig Proposal transaction failed', {
+            customLogger.logError('Approve Multisig Proposal transaction failed', {
               transcript: transactionLog,
             });
             openNotification({
@@ -866,7 +866,7 @@ const SafeView = (props: {
                 SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
             });
-            customLogger.logWarning('Multisig Reject transaction failed', {
+            customLogger.logError('Multisig Reject transaction failed', {
               transcript: transactionLog,
             });
             openNotification({
@@ -1067,7 +1067,7 @@ const SafeView = (props: {
                 SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
             });
-            customLogger.logWarning('Finish Approoved transaction failed', {
+            customLogger.logError('Finish Approoved transaction failed', {
               transcript: transactionLog,
             });
             const notifContent = t('transactions.status.tx-start-failure', {
@@ -1275,7 +1275,7 @@ const SafeView = (props: {
                 SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
             });
-            customLogger.logWarning('Cancel Multisig Proposal transaction failed', {
+            customLogger.logError('Cancel Multisig Proposal transaction failed', {
               transcript: transactionLog,
             });
             return false;

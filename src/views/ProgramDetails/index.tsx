@@ -481,7 +481,7 @@ const ProgramDetailsView = ({ program }: Props) => {
                 SOL_MINT.toBase58(),
               )})`,
             });
-            customLogger.logWarning('Upgrade Program transaction failed', {
+            customLogger.logError('Upgrade Program transaction failed', {
               transcript: transactionLog,
             });
             return false;
@@ -812,7 +812,7 @@ const ProgramDetailsView = ({ program }: Props) => {
                 SOL_MINT.toBase58(),
               )})`,
             });
-            customLogger.logWarning('Set program authority transaction failed', { transcript: transactionLog });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
             return false;
           }
 

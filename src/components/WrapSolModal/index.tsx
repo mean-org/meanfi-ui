@@ -162,7 +162,7 @@ export const WrapSolModal = ({ isVisible, handleClose, handleOk }: WrapSolModalP
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: '',
           });
-          customLogger.logWarning('Wrap transaction failed', {
+          customLogger.logError('Wrap transaction failed', {
             transcript: transactionLog,
           });
           return false;
