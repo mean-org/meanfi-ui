@@ -4,7 +4,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { type Connection, PublicKey, SystemProgram } from '@solana/web3.js';
 import { Col, Row, Tooltip } from 'antd';
 import dayjs from 'dayjs';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconExternalLink } from 'src/Icons';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
@@ -148,8 +148,8 @@ export const RenderInstructions = (props: {
           {/* Instruction accounts */}
           {proposalIxInfo.accounts.map(account => {
             return (
-              <>
-                <Row gutter={[8, 8]} className='mb-2' key={`item-${account.index}-${account.label}`}>
+              <Fragment key={`account-${account.index}-${account.label}`}>
+                <Row gutter={[8, 8]} className='mb-2'>
                   <Col xs={6} sm={6} md={4} lg={4} className='pr-1'>
                     <span className='info-label'>
                       {account.label || t('multisig.proposal-modal.instruction-account')}
@@ -203,7 +203,7 @@ export const RenderInstructions = (props: {
                     </Col>
                   </Row>
                 ) : null}
-              </>
+              </Fragment>
             );
           })}
 
@@ -270,24 +270,24 @@ export const RenderInstructions = (props: {
                 );
               })
             : proposalIxInfo.data.map(item => {
+                if (!item.label || !item.value) {
+                  return null;
+                }
                 return (
-                  item.label &&
-                  item.value && (
-                    <Row gutter={[8, 8]} className='mb-2' key={`data-${item.index}`}>
-                      <Col xs={6} sm={6} md={4} lg={4} className='pr-1 text-truncate'>
-                        <Tooltip placement='right' title={item.label || ''}>
-                          <span className='info-label'>
-                            {item.label || t('multisig.proposal-modal.instruction-data')}
-                          </span>
-                        </Tooltip>
-                      </Col>
-                      <Col xs={17} sm={17} md={19} lg={19} className='pl-1 pr-3'>
-                        <span className='d-block info-data text-truncate' style={{ cursor: 'pointer' }}>
-                          {getTokenAmountValue(item)}
+                  <Row gutter={[8, 8]} className='mb-2' key={`data-${item.index}`}>
+                    <Col xs={6} sm={6} md={4} lg={4} className='pr-1 text-truncate'>
+                      <Tooltip placement='right' title={item.label || ''}>
+                        <span className='info-label'>
+                          {item.label || t('multisig.proposal-modal.instruction-data')}
                         </span>
-                      </Col>
-                    </Row>
-                  )
+                      </Tooltip>
+                    </Col>
+                    <Col xs={17} sm={17} md={19} lg={19} className='pl-1 pr-3'>
+                      <span className='d-block info-data text-truncate' style={{ cursor: 'pointer' }}>
+                        {getTokenAmountValue(item)}
+                      </span>
+                    </Col>
+                  </Row>
                 );
               })}
         </div>
