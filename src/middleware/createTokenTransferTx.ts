@@ -66,7 +66,7 @@ const createTokenTransferTx = async (
             mint,
             beneficiaryToken,
             beneficiary,
-            sender,
+            txFeePayer,
           ),
         );
       }
