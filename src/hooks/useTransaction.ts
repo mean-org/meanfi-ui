@@ -21,7 +21,7 @@ import { consoleOut, getTransactionStatusForLogs } from 'src/middleware/ui';
 import { getAmountWithSymbol, getUniversalTxIxResume } from 'src/middleware/utils';
 import { type OperationType, TransactionStatus } from 'src/models/enums';
 import type { MultisigTxParams } from 'src/models/multisig';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import type { LooseObject } from 'src/types/LooseObject';
 import useLocalStorage from './useLocalStorage';
 
@@ -103,7 +103,7 @@ const useTransaction = () => {
   );
 
   const { t } = useTranslation('common');
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({

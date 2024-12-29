@@ -30,7 +30,7 @@ import { useConnection } from 'src/contexts/connection';
 import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } from 'src/contexts/transaction-status';
 import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
-import { customLogger } from 'src/main';
+import { appConfig, customLogger } from 'src/main';
 import { resolveParsedAccountInfo } from 'src/middleware/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'src/middleware/ids';
 import {
@@ -52,13 +52,13 @@ import type { ProgramAccounts } from 'src/models/accounts';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import type { SetProgramAuthPayload } from 'src/models/multisig';
 import type { ProgramUpgradeParams } from 'src/models/programs';
-import useMultisigClient from 'src/query-hooks/multisigClient';
 import { AppUsageEvent } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import IdlTree from './IdlTree';
 import { MultisigMakeProgramImmutableModal } from './MultisigMakeProgramImmutableModal';
 import Transactions from './Transactions';
 import './style.scss';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 
 let isWorkflowLocked = false;
 interface Props {
@@ -94,12 +94,14 @@ const ProgramDetailsView = ({ program }: Props) => {
   //  Init code  //
   /////////////////
 
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+
   const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
     'transactionPriority',
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const { multisigClient, multisigProgramAddressPK } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const isTxInProgress = useCallback(
     (operation?: OperationType) => {
@@ -716,7 +718,7 @@ const ProgramDetailsView = ({ program }: Props) => {
 
         const [multisigSigner] = PublicKey.findProgramAddressSync(
           [selectedMultisig.id.toBuffer()],
-          multisigProgramAddressPK,
+          multisigAddressPK,
         );
 
         const ixData = Buffer.from([4, 0, 0, 0]);
@@ -927,7 +929,7 @@ const ProgramDetailsView = ({ program }: Props) => {
       selectedMultisig,
       isMultisigContext,
       transactionCancelled,
-      multisigProgramAddressPK,
+      multisigAddressPK,
       transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,

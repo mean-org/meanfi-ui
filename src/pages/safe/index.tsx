@@ -12,7 +12,7 @@ import {
 import { BN } from '@project-serum/anchor';
 import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { Button, Empty, Spin, Tooltip } from 'antd';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -28,7 +28,7 @@ import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } fr
 import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import useWindowSize from 'src/hooks/useWindowResize';
-import { customLogger } from 'src/main';
+import { appConfig, customLogger } from 'src/main';
 import { SOL_MINT } from 'src/middleware/ids';
 import {
   type ComputeBudgetConfig,
@@ -43,7 +43,7 @@ import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'src/m
 import type { ProgramAccounts } from 'src/models/accounts';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import { type EditMultisigParams, type MultisigProposalsWithAuthority, ZERO_FEES } from 'src/models/multisig';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import { AppUsageEvent } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import { ProposalDetailsView } from './components/ProposalDetails';
@@ -106,6 +106,8 @@ const SafeView = (props: {
   //  Init code  //
   /////////////////
 
+  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+
   const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
     'transactionPriority',
     DEFAULT_BUDGET_CONFIG,
@@ -116,7 +118,7 @@ const SafeView = (props: {
     setQueryParamV(optionInQuery);
   }, [searchParams]);
 
-  const { multisigClient, multisigProgramAddressPK } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   // Live reference to the selected multisig
   const selectedMultisigRef = useRef(selectedMultisig);
@@ -390,7 +392,7 @@ const SafeView = (props: {
 
         const [multisigSigner] = PublicKey.findProgramAddressSync(
           [selectedMultisig.id.toBuffer()],
-          multisigProgramAddressPK,
+          multisigAddressPK,
         );
 
         const owners = data.owners.map((p: MultisigParticipant) => {
@@ -599,7 +601,7 @@ const SafeView = (props: {
       multisigClient,
       transactionFees,
       selectedMultisig,
-      multisigProgramAddressPK,
+      multisigAddressPK,
       transactionCancelled,
       transactionPriorityOptions,
       transactionStatus.currentOperation,

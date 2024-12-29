@@ -139,7 +139,7 @@ import { FetchStatus } from 'src/models/transactions';
 import { INITIAL_TREASURIES_SUMMARY, type UserTreasuriesSummary } from 'src/models/treasuries';
 import useGetAccountPrograms from 'src/query-hooks/accountPrograms';
 import { useAccountAssets, useFetchAccountTokens } from 'src/query-hooks/accountTokens';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import { useGetStreamList } from 'src/query-hooks/streamList';
 import { useGetStreamingAccounts } from 'src/query-hooks/streamingAccount';
 import useStreamingClient from 'src/query-hooks/streamingClient';
@@ -282,7 +282,7 @@ export const HomeView = () => {
   //  Init code  //
   /////////////////
 
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
 

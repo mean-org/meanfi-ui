@@ -1,8 +1,8 @@
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
-import { useConnection } from 'src/contexts/connection';
-import useMultisigClient from '../multisigClient';
+import { useMultisigClient } from '../multisigClient';
 
 export const getUseGetMultisigAccountsQueryKey = (accountAddress: string | undefined) => [
   'multisig-accounts',
@@ -10,8 +10,8 @@ export const getUseGetMultisigAccountsQueryKey = (accountAddress: string | undef
 ];
 
 export const useGetMultisigAccounts = (accountAddress: string | undefined) => {
-  const connection = useConnection();
-  const { multisigClient } = useMultisigClient();
+  const { connection } = useConnection();
+  const { data: multisigClient } = useMultisigClient();
 
   return useQuery({
     queryKey: getUseGetMultisigAccountsQueryKey(accountAddress),

@@ -25,7 +25,7 @@ import { type PaymentStreamingStats, type StreamsSummary, initialStats, initialS
 import type { TreasuryTypeOption } from 'src/models/treasuries';
 import { useAccountAssets } from 'src/query-hooks/accountTokens';
 import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import useGetTokenList from 'src/query-hooks/tokenList';
 import useGetAssetPrices from 'src/query-hooks/tokenPrices';
@@ -48,7 +48,6 @@ interface AppStateConfig {
   theme: string | undefined;
   isWhitelisted: boolean;
   isDepositOptionsModalVisible: boolean;
-  offlineTokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number;
   totalSafeBalance: number | undefined;
@@ -190,7 +189,6 @@ const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   isWhitelisted: false,
   isDepositOptionsModalVisible: false,
-  offlineTokenList: [],
   selectedToken: undefined,
   tokenBalance: 0,
   totalSafeBalance: undefined,
@@ -442,7 +440,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   }, [theme]);
 
   const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
   const { data: apiTokenList } = useGetTokenList();
   const { prices: priceList, loadingPrices, refetchPrices } = useGetAssetPrices();
   const { userAssets, loadingUserAssets } = useAccountAssets(selectedAccount.address);
@@ -1157,7 +1155,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       timeSheetRequirement,
       tokenAccounts,
       tokenBalance,
-      offlineTokenList,
       totalSafeBalance,
       transactions,
       transactionStatus,
@@ -1284,7 +1281,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     timeSheetRequirement,
     tokenAccounts,
     tokenBalance,
-    offlineTokenList,
     totalSafeBalance,
     transactions,
     transactionStatus,
