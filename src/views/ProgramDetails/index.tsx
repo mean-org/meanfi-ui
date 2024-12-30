@@ -33,6 +33,7 @@ import useLocalStorage from 'src/hooks/useLocalStorage';
 import { customLogger } from 'src/main';
 import { resolveParsedAccountInfo } from 'src/middleware/accounts';
 import { BPF_LOADER_UPGRADEABLE_PID, SOL_MINT } from 'src/middleware/ids';
+import { getMultisigProgramId } from 'src/middleware/multisig-helpers';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -52,7 +53,8 @@ import type { ProgramAccounts } from 'src/models/accounts';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import type { SetProgramAuthPayload } from 'src/models/multisig';
 import type { ProgramUpgradeParams } from 'src/models/programs';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import { AppUsageEvent } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import IdlTree from './IdlTree';
@@ -71,14 +73,9 @@ const ProgramDetailsView = ({ program }: Props) => {
   const { account } = useNativeAccount();
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
-  const {
-    selectedAccount,
-    selectedMultisig,
-    transactionStatus,
-    setTransactionStatus,
-    refreshTokenBalance,
-    refreshMultisigs,
-  } = useContext(AppStateContext);
+  const { selectedAccount, selectedMultisig, transactionStatus, setTransactionStatus, refreshTokenBalance } =
+    useContext(AppStateContext);
+  const { refetch: refreshMulisigs } = useGetMultisigAccounts(publicKey?.toBase58());
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -94,12 +91,14 @@ const ProgramDetailsView = ({ program }: Props) => {
   //  Init code  //
   /////////////////
 
+  const multisigAddressPK = useMemo(() => getMultisigProgramId(), []);
+
   const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
     'transactionPriority',
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const { multisigClient, multisigProgramAddressPK } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const isTxInProgress = useCallback(
     (operation?: OperationType) => {
@@ -149,14 +148,6 @@ const ProgramDetailsView = ({ program }: Props) => {
     setIsBusy(false);
     resetTransactionStatus();
   }, [resetTransactionStatus]);
-
-  const getMultisigList = useCallback(() => {
-    if (!publicKey) {
-      return;
-    }
-
-    refreshMultisigs();
-  }, [publicKey, refreshMultisigs]);
 
   const logEventHandling = useCallback((item: TxConfirmationInfo) => {
     consoleOut(
@@ -481,7 +472,7 @@ const ProgramDetailsView = ({ program }: Props) => {
                 SOL_MINT.toBase58(),
               )})`,
             });
-            customLogger.logWarning('Upgrade Program transaction failed', {
+            customLogger.logError('Upgrade Program transaction failed', {
               transcript: transactionLog,
             });
             return false;
@@ -714,10 +705,7 @@ const ProgramDetailsView = ({ program }: Props) => {
           return null;
         }
 
-        const [multisigSigner] = PublicKey.findProgramAddressSync(
-          [selectedMultisig.id.toBuffer()],
-          multisigProgramAddressPK,
-        );
+        const [multisigSigner] = PublicKey.findProgramAddressSync([selectedMultisig.id.toBuffer()], multisigAddressPK);
 
         const ixData = Buffer.from([4, 0, 0, 0]);
         const ixAccounts = [
@@ -812,7 +800,7 @@ const ProgramDetailsView = ({ program }: Props) => {
                 SOL_MINT.toBase58(),
               )})`,
             });
-            customLogger.logWarning('Set program authority transaction failed', { transcript: transactionLog });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
             return false;
           }
 
@@ -927,7 +915,7 @@ const ProgramDetailsView = ({ program }: Props) => {
       selectedMultisig,
       isMultisigContext,
       transactionCancelled,
-      multisigProgramAddressPK,
+      multisigAddressPK,
       transactionPriorityOptions,
       transactionFees.mspFlatFee,
       transactionFees.blockchainFee,
@@ -1175,7 +1163,7 @@ const ProgramDetailsView = ({ program }: Props) => {
 
   return (
     <>
-      <span id='multisig-refresh-cta' onKeyDown={() => {}} onClick={() => getMultisigList()} />
+      <span id='multisig-refresh-cta' onKeyDown={() => {}} onClick={() => refreshMulisigs()} />
       <div className='program-details-container'>
         <Row gutter={[8, 8]} className='safe-info-container mr-0 ml-0'>
           {infoProgramData.map(info => (

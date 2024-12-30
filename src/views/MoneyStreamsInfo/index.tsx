@@ -101,7 +101,7 @@ import type { StreamsSummary } from 'src/models/streams';
 import type { TreasuryCreateOptions, UserTreasuriesSummary } from 'src/models/treasuries';
 import type { AddFundsParams } from 'src/models/vesting';
 import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
@@ -199,7 +199,7 @@ export const MoneyStreamsInfoView = ({
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const { tokenStreamingV1, tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
   const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);
@@ -534,7 +534,7 @@ export const MoneyStreamsInfoView = ({
         action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
         result: notifContent,
       });
-      customLogger.logWarning(title, {
+      customLogger.logError(title, {
         transcript: txLog,
       });
       openNotification({

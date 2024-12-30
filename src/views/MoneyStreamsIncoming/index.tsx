@@ -68,7 +68,7 @@ import {
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { OperationType, TransactionStatus } from 'src/models/enums';
 import type { StreamWithdrawData, WithdrawFromStreamParams } from 'src/models/streams';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import {
   AppUsageEvent,
@@ -116,7 +116,7 @@ export const MoneyStreamsIncomingView = (props: {
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const { tokenStreamingV1, tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
   const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);
@@ -410,7 +410,7 @@ export const MoneyStreamsIncomingView = (props: {
               SOL_MINT.toBase58(),
             )})`,
           });
-          customLogger.logWarning('Transfer stream transaction failed', {
+          customLogger.logError('Transfer stream transaction failed', {
             transcript: transactionLog,
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, {
@@ -654,7 +654,7 @@ export const MoneyStreamsIncomingView = (props: {
               SOL_MINT.toBase58(),
             )})`,
           });
-          customLogger.logWarning('Withdraw transaction failed', {
+          customLogger.logError('Withdraw transaction failed', {
             transcript: transactionLog,
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {
@@ -862,7 +862,7 @@ export const MoneyStreamsIncomingView = (props: {
             SOL_MINT.toBase58(),
           )})`,
         });
-        customLogger.logWarning('Withdraw transaction failed', {
+        customLogger.logError('Withdraw transaction failed', {
           transcript: transactionLog,
         });
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, {

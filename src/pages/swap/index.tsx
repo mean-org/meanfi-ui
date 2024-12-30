@@ -1,3 +1,4 @@
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
@@ -5,6 +6,8 @@ import { IconExchange } from 'src/Icons';
 import { PreFooter } from 'src/components/PreFooter';
 import { consoleOut } from 'src/middleware/ui';
 import DlnBridge from 'src/views/DlnBridge';
+import { wagmiConfig } from 'src/wagmiConfig';
+import { WagmiProvider } from 'wagmi';
 
 const Bridge = () => {
   const location = useLocation();
@@ -28,19 +31,23 @@ const Bridge = () => {
 
   return (
     <>
-      <div className='container main-container'>
-        <div className='interaction-area'>
-          <div className='title-and-subtitle'>
-            <div className='title'>
-              <IconExchange className='mean-svg-icons' />
-              <div>{t('bridge.screen-title')}</div>
+      <WagmiProvider config={wagmiConfig}>
+        <RainbowKitProvider>
+          <div className='container main-container'>
+            <div className='interaction-area'>
+              <div className='title-and-subtitle'>
+                <div className='title'>
+                  <IconExchange className='mean-svg-icons' />
+                  <div>{t('bridge.screen-title')}</div>
+                </div>
+                <div className='subtitle'>{t('bridge.screen-subtitle')}</div>
+                <div className='subtitle'>{t('bridge.screen-subtitle2')}</div>
+              </div>
+              <DlnBridge fromAssetSymbol={fromAssetSymbol} />
             </div>
-            <div className='subtitle'>{t('bridge.screen-subtitle')}</div>
-            <div className='subtitle'>{t('bridge.screen-subtitle2')}</div>
           </div>
-          <DlnBridge fromAssetSymbol={fromAssetSymbol} />
-        </div>
-      </div>
+        </RainbowKitProvider>
+      </WagmiProvider>
       <PreFooter />
     </>
   );

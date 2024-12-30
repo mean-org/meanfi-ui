@@ -1,5 +1,5 @@
 import type { DdcaAccount } from '@mean-dao/ddca';
-import { type MultisigInfo, type MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+import type { MultisigInfo, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import type { StreamActivity as StreamActivityV1, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import type { Stream, StreamActivity } from '@mean-dao/payment-streaming';
 import { PublicKey } from '@solana/web3.js';
@@ -15,7 +15,7 @@ import useLocalStorage from 'src/hooks/useLocalStorage';
 import { customLogger } from 'src/main';
 import getPriceByAddressOrSymbol from 'src/middleware/getPriceByAddressOrSymbol';
 import type { MappedTransaction } from 'src/middleware/history';
-import { consoleOut, isProd } from 'src/middleware/ui';
+import { consoleOut } from 'src/middleware/ui';
 import { findATokenAddress, getAmountFromLamports, shortenAddress } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import type { TokenPrice } from 'src/models/TokenPrice';
@@ -24,8 +24,8 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from '
 import { type PaymentStreamingStats, type StreamsSummary, initialStats, initialSummary } from 'src/models/streams';
 import type { TreasuryTypeOption } from 'src/models/treasuries';
 import { useAccountAssets } from 'src/query-hooks/accountTokens';
-import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+// import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
+// import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import useGetTokenList from 'src/query-hooks/tokenList';
 import useGetAssetPrices from 'src/query-hooks/tokenPrices';
@@ -48,7 +48,6 @@ interface AppStateConfig {
   theme: string | undefined;
   isWhitelisted: boolean;
   isDepositOptionsModalVisible: boolean;
-  offlineTokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number;
   totalSafeBalance: number | undefined;
@@ -99,9 +98,9 @@ interface AppStateConfig {
   recurringBuys: DdcaAccount[];
   loadingRecurringBuys: boolean;
   // Multisig
-  multisigAccounts: MultisigInfo[];
-  loadingMultisigAccounts: boolean;
-  loadingMultisigTxPendingCount: boolean;
+  // multisigAccounts: MultisigInfo[] | undefined;
+  // loadingMultisigAccounts: boolean;
+  // loadingMultisigTxPendingCount: boolean;
   needReloadMultisigAccounts: boolean;
   selectedMultisig: MultisigInfo | undefined;
   multisigSolBalance: number | undefined;
@@ -167,9 +166,9 @@ interface AppStateConfig {
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
   setNeedReloadMultisigAccounts: (reload: boolean) => void;
-  // biome-ignore lint/suspicious/noExplicitAny: Promise<QueryObserverResult<MultisigInfo[] | undefined, Error>>
-  refreshMultisigs: () => Promise<any>;
-  setMultisigAccounts: (accounts: MultisigInfo[]) => void;
+  // // biome-ignore lint/suspicious/noExplicitAny: Promise<QueryObserverResult<MultisigInfo[] | undefined, Error>>
+  // refreshMultisigs: () => Promise<any>;
+  // setMultisigAccounts: (accounts: MultisigInfo[]) => void;
   setSelectedMultisig: (multisig: MultisigInfo | undefined) => void;
   setMultisigSolBalance: (balance: number | undefined) => void;
   setHighLightableMultisigId: (id: string | undefined) => void;
@@ -190,7 +189,6 @@ const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   isWhitelisted: false,
   isDepositOptionsModalVisible: false,
-  offlineTokenList: [],
   selectedToken: undefined,
   tokenBalance: 0,
   totalSafeBalance: undefined,
@@ -244,9 +242,9 @@ const contextDefaultValues: AppStateConfig = {
   recurringBuys: [],
   loadingRecurringBuys: false,
   // Multisig
-  multisigAccounts: [],
-  loadingMultisigAccounts: false,
-  loadingMultisigTxPendingCount: false,
+  // multisigAccounts: undefined,
+  // loadingMultisigAccounts: false,
+  // loadingMultisigTxPendingCount: false,
   needReloadMultisigAccounts: true,
   selectedMultisig: undefined,
   multisigSolBalance: undefined,
@@ -312,8 +310,8 @@ const contextDefaultValues: AppStateConfig = {
   setLoadingRecurringBuys: () => {},
   // Multisig
   setNeedReloadMultisigAccounts: () => {},
-  refreshMultisigs: async () => {},
-  setMultisigAccounts: () => {},
+  // refreshMultisigs: async () => {},
+  // setMultisigAccounts: () => {},
   setSelectedMultisig: () => {},
   setMultisigSolBalance: () => {},
   setHighLightableMultisigId: () => {},
@@ -371,7 +369,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     contextDefaultValues.transactionStatus,
   );
   const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(connected);
-  const [offlineTokenList, setOfflineTokenList] = useState<TokenInfo[]>([]);
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
   const [streamActivity, setStreamActivity] = useState<StreamActivityV1[] | StreamActivity[] | undefined>(undefined);
   const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(
@@ -442,15 +439,15 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   }, [theme]);
 
   const { tokenStreamingV1, tokenStreamingV2 } = useStreamingClient();
-  const { multisigClient } = useMultisigClient();
+  // const { data: multisigClient } = useMultisigClient();
   const { data: apiTokenList } = useGetTokenList();
   const { prices: priceList, loadingPrices, refetchPrices } = useGetAssetPrices();
   const { userAssets, loadingUserAssets } = useAccountAssets(selectedAccount.address);
-  const {
-    data: walletMultisigs,
-    isFetching: loadingMultisigAccounts,
-    refetch: refreshMultisigs,
-  } = useGetMultisigAccounts(publicKey?.toBase58());
+  // const {
+  //   data: multisigAccounts,
+  //   isFetching: loadingMultisigAccounts,
+  //   refetch: refreshMultisigs,
+  // } = useGetMultisigAccounts(publicKey?.toBase58());
 
   const accountTokens = useMemo(() => {
     if (loadingUserAssets || !userAssets) return [];
@@ -602,16 +599,13 @@ const AppStateProvider = ({ children }: ProviderProps) => {
 
   const getTokenByMintAddress = useCallback(
     (address: string): TokenInfo | undefined => {
-      const token =
-        splTokenList && isProd()
-          ? splTokenList.find(t => t.address === address)
-          : offlineTokenList.find(t => t.address === address);
+      const token = splTokenList.find(t => t.address === address);
       if (!token) {
         return MEAN_TOKEN_LIST.find(t => t.address === address);
       }
       return token;
     },
-    [splTokenList, offlineTokenList],
+    [splTokenList],
   );
 
   const openStreamById = useCallback(
@@ -928,6 +922,9 @@ const AppStateProvider = ({ children }: ProviderProps) => {
 
   // Load the supported tokens
   useEffect(() => {
+    if (!apiTokenList || apiTokenList.length === 0) {
+      return;
+    }
     const list = new Array<UserTokenAccount>();
     // First add Native SOL as a token
     list.push({
@@ -942,53 +939,23 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       logoURI: NATIVE_SOL.logoURI,
     });
     // Add items from the internal token list
-    const chainFiltered = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster));
+    const chainId = getNetworkIdByCluster(connectionConfig.cluster);
+    consoleOut('filtering internal tokens by chainId:', chainId, 'crimson');
+    const chainFiltered = MEAN_TOKEN_LIST.filter(t => t.chainId === chainId);
     for (const item of chainFiltered) {
       if (item.address === NATIVE_SOL.address) continue;
       list.push(item);
     }
-    // Save the modified internal token list
-    setOfflineTokenList(list);
-  }, [connectionConfig.cluster]);
-
-  // Enrich the internal token list with items from the API list
-  useEffect(() => {
-    if (!offlineTokenList || offlineTokenList.length === 0) {
-      return;
-    }
-
-    const userTokenList = JSON.parse(JSON.stringify(offlineTokenList)) as UserTokenAccount[];
-
-    if (!apiTokenList || apiTokenList.length === 0) {
-      updateSplTokenList(userTokenList);
-      return;
-    }
-
     // Add the items from the API
     for (const item of apiTokenList) {
-      if (!userTokenList.some(i => i.address === item.address)) {
-        userTokenList.push(item);
+      if (!list.some(i => i.address === item.address)) {
+        list.push(item);
       }
     }
-
     // Filter out the banned tokens
-    const filteredTokens = userTokenList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
-
-    // Sort the big list
-    const sortedList = [...filteredTokens].sort((a, b) => {
-      const nameA = a.symbol.toUpperCase();
-      const nameB = b.symbol.toUpperCase();
-      if (nameA < nameB) {
-        return -1;
-      }
-      if (nameA > nameB) {
-        return 1;
-      }
-      return 0;
-    });
-
-    updateSplTokenList(sortedList);
-  }, [apiTokenList, offlineTokenList]);
+    const filteredTokens = list.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
+    updateSplTokenList(filteredTokens);
+  }, [apiTokenList, connectionConfig.cluster]);
 
   ///////////////////////
   // Multisig accounts //
@@ -997,89 +964,89 @@ const AppStateProvider = ({ children }: ProviderProps) => {
   const [needReloadMultisigAccounts, setNeedReloadMultisigAccounts] = useState(
     contextDefaultValues.needReloadMultisigAccounts,
   );
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>(contextDefaultValues.multisigAccounts);
-  const [patchedMultisigAccounts, setPatchedMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
+  // const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>(contextDefaultValues.multisigAccounts);
+  // const [patchedMultisigAccounts, setPatchedMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(
     contextDefaultValues.selectedMultisig,
   );
-  const [loadingMultisigTxPendingCount, setLoadingMultisigTxPendingCount] = useState(
-    contextDefaultValues.loadingMultisigTxPendingCount,
-  );
+  // const [loadingMultisigTxPendingCount, setLoadingMultisigTxPendingCount] = useState(
+  //   contextDefaultValues.loadingMultisigTxPendingCount,
+  // );
 
   // Update multisigAccounts from the walletMultisigs
-  useEffect(() => {
-    if (!walletMultisigs) {
-      return;
-    }
+  // useEffect(() => {
+  //   if (!walletMultisigs) {
+  //     return;
+  //   }
 
-    setNeedReloadMultisigAccounts(false);
-    setPatchedMultisigAccounts(undefined);
+  //   setNeedReloadMultisigAccounts(false);
+  //   setPatchedMultisigAccounts(undefined);
 
-    setMultisigAccounts(walletMultisigs);
-  }, [walletMultisigs]);
+  //   setMultisigAccounts(walletMultisigs);
+  // }, [walletMultisigs]);
 
   // Patches the multisigAccounts with the pending txs count
-  useEffect(() => {
-    if (
-      !publicKey ||
-      !multisigClient ||
-      patchedMultisigAccounts !== undefined ||
-      loadingMultisigTxPendingCount ||
-      !multisigAccounts ||
-      multisigAccounts.length === 0
-    ) {
-      return;
-    }
+  // useEffect(() => {
+  //   if (
+  //     !publicKey ||
+  //     !multisigClient ||
+  //     patchedMultisigAccounts !== undefined ||
+  //     loadingMultisigTxPendingCount ||
+  //     !multisigAccounts ||
+  //     multisigAccounts.length === 0
+  //   ) {
+  //     return;
+  //   }
 
-    const multisigWithPendingTxs = multisigAccounts.filter(x => x.pendingTxsAmount > 0);
-    if (!multisigWithPendingTxs || multisigWithPendingTxs.length === 0) {
-      consoleOut('No safes found with pending Txs to work on!', 'moving on...', 'crimson');
-      return;
-    }
+  //   const multisigWithPendingTxs = multisigAccounts.filter(x => x.pendingTxsAmount > 0);
+  //   if (!multisigWithPendingTxs || multisigWithPendingTxs.length === 0) {
+  //     consoleOut('No safes found with pending Txs to work on!', 'moving on...', 'crimson');
+  //     return;
+  //   }
 
-    const findPendingTxs = async () => {
-      consoleOut('Searching for pending Txs across multisigs...', '', 'crimson');
-      setLoadingMultisigTxPendingCount(true);
+  //   const findPendingTxs = async () => {
+  //     consoleOut('Searching for pending Txs across multisigs...', '', 'crimson');
+  //     setLoadingMultisigTxPendingCount(true);
 
-      const multisigAccountsCopy = [...multisigAccounts];
-      const multisigPendingStatus = [
-        MultisigTransactionStatus.Active,
-        MultisigTransactionStatus.Queued,
-        MultisigTransactionStatus.Passed,
-      ];
-      let anythingChanged = false;
-      for await (const multisig of multisigWithPendingTxs) {
-        try {
-          const multisigTransactions = await multisigClient.getMultisigTransactions(multisig.id, publicKey);
-          const realPendingTxsAmount = multisigTransactions.filter(tx =>
-            multisigPendingStatus.includes(tx.status),
-          ).length;
-          const itemIndex = multisigAccountsCopy.findIndex(x => x.id.equals(multisig.id));
-          if (itemIndex > -1) {
-            multisigAccountsCopy[itemIndex].pendingTxsAmount = realPendingTxsAmount;
-            anythingChanged = true;
-          }
-        } catch (error) {
-          consoleOut(`Failed pulling tx for multisig ${multisig.id.toBase58()}`, '', 'red');
-          console.error(error);
-        }
-      }
-      if (anythingChanged) {
-        consoleOut('setting patchedMultisigAccounts...', '', 'crimson');
-        setPatchedMultisigAccounts(multisigAccountsCopy);
-      }
-      setLoadingMultisigTxPendingCount(false);
-    };
+  //     const multisigAccountsCopy = [...multisigAccounts];
+  //     const multisigPendingStatus = [
+  //       MultisigTransactionStatus.Active,
+  //       MultisigTransactionStatus.Queued,
+  //       MultisigTransactionStatus.Passed,
+  //     ];
+  //     let anythingChanged = false;
+  //     for await (const multisig of multisigWithPendingTxs) {
+  //       try {
+  //         const multisigTransactions = await multisigClient.getMultisigTransactions(multisig.id, publicKey);
+  //         const realPendingTxsAmount = multisigTransactions.filter(tx =>
+  //           multisigPendingStatus.includes(tx.status),
+  //         ).length;
+  //         const itemIndex = multisigAccountsCopy.findIndex(x => x.id.equals(multisig.id));
+  //         if (itemIndex > -1) {
+  //           multisigAccountsCopy[itemIndex].pendingTxsAmount = realPendingTxsAmount;
+  //           anythingChanged = true;
+  //         }
+  //       } catch (error) {
+  //         consoleOut(`Failed pulling tx for multisig ${multisig.id.toBase58()}`, '', 'red');
+  //         console.error(error);
+  //       }
+  //     }
+  //     if (anythingChanged) {
+  //       consoleOut('setting patchedMultisigAccounts...', '', 'crimson');
+  //       setPatchedMultisigAccounts(multisigAccountsCopy);
+  //     }
+  //     setLoadingMultisigTxPendingCount(false);
+  //   };
 
-    findPendingTxs();
-  }, [loadingMultisigTxPendingCount, multisigAccounts, multisigClient, patchedMultisigAccounts, publicKey]);
+  //   findPendingTxs();
+  // }, [loadingMultisigTxPendingCount, multisigAccounts, multisigClient, patchedMultisigAccounts, publicKey]);
 
-  useEffect(() => {
-    if (patchedMultisigAccounts !== undefined) {
-      setMultisigAccounts(patchedMultisigAccounts);
-      consoleOut('setting multisigAccounts...', '', 'crimson');
-    }
-  }, [patchedMultisigAccounts]);
+  // useEffect(() => {
+  //   if (patchedMultisigAccounts !== undefined) {
+  //     setMultisigAccounts(patchedMultisigAccounts);
+  //     consoleOut('setting multisigAccounts...', '', 'crimson');
+  //   }
+  // }, [patchedMultisigAccounts]);
 
   //////////////////////////////////
   // Added to support /ddcas page //
@@ -1117,15 +1084,15 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       isWhitelisted,
       lastStreamsSummary,
       lastTxSignature,
-      loadingMultisigAccounts,
-      loadingMultisigTxPendingCount,
+      // loadingMultisigAccounts,
+      // loadingMultisigTxPendingCount,
       loadingPrices,
       loadingRecurringBuys,
       loadingStreamActivity,
       loadingUserAssets,
       lockPeriodAmount,
       lockPeriodFrequency,
-      multisigAccounts,
+      // multisigAccounts,
       multisigSolBalance,
       multisigTxs,
       needReloadMultisigAccounts,
@@ -1157,7 +1124,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       timeSheetRequirement,
       tokenAccounts,
       tokenBalance,
-      offlineTokenList,
       totalSafeBalance,
       transactions,
       transactionStatus,
@@ -1171,7 +1137,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       getTokenPriceByAddress,
       hideDepositOptionsModal,
       openStreamById,
-      refreshMultisigs,
+      // refreshMultisigs,
       refreshPrices,
       refreshTokenBalance,
       resetContractValues,
@@ -1192,7 +1158,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
       setLoadingRecurringBuys,
       setLockPeriodAmount,
       setLockPeriodFrequency,
-      setMultisigAccounts,
+      // setMultisigAccounts,
       setMultisigSolBalance,
       setMultisigTxs,
       setNeedReloadMultisigAccounts,
@@ -1244,15 +1210,15 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     isWhitelisted,
     lastStreamsSummary,
     lastTxSignature,
-    loadingMultisigAccounts,
-    loadingMultisigTxPendingCount,
+    // loadingMultisigAccounts,
+    // loadingMultisigTxPendingCount,
     loadingPrices,
     loadingRecurringBuys,
     loadingStreamActivity,
     loadingUserAssets,
     lockPeriodAmount,
     lockPeriodFrequency,
-    multisigAccounts,
+    // multisigAccounts,
     multisigSolBalance,
     multisigTxs,
     needReloadMultisigAccounts,
@@ -1284,7 +1250,6 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     timeSheetRequirement,
     tokenAccounts,
     tokenBalance,
-    offlineTokenList,
     totalSafeBalance,
     transactions,
     transactionStatus,
@@ -1298,7 +1263,7 @@ const AppStateProvider = ({ children }: ProviderProps) => {
     getTokenPriceByAddress,
     hideDepositOptionsModal,
     openStreamById,
-    refreshMultisigs,
+    // refreshMultisigs,
     refreshPrices,
     refreshTokenBalance,
     resetContractValues,

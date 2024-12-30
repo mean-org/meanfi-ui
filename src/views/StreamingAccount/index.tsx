@@ -113,7 +113,7 @@ import { ZERO_FEES } from 'src/models/multisig';
 import type { TreasuryWithdrawParams } from 'src/models/treasuries';
 import type { AddFundsParams } from 'src/models/vesting';
 import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
 
@@ -187,7 +187,7 @@ export const StreamingAccountView = ({
 
   const { tokenStreamingV1, tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
   const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);
@@ -733,7 +733,7 @@ export const StreamingAccountView = ({
               SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
           });
-          customLogger.logWarning('PaymentStreamingAccount Add funds transaction failed', {
+          customLogger.logError('PaymentStreamingAccount Add funds transaction failed', {
             transcript: transactionLog,
           });
           return false;
@@ -970,7 +970,7 @@ export const StreamingAccountView = ({
             SOL_MINT.toBase58(),
           )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
-        customLogger.logWarning('PaymentStreamingAccount Add funds transaction failed', {
+        customLogger.logError('PaymentStreamingAccount Add funds transaction failed', {
           transcript: transactionLog,
         });
         return false;
@@ -1283,7 +1283,7 @@ export const StreamingAccountView = ({
             SOL_MINT.toBase58(),
           )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
-        customLogger.logWarning('PaymentStreamingAccount withdraw transaction failed', {
+        customLogger.logError('PaymentStreamingAccount withdraw transaction failed', {
           transcript: transactionLog,
         });
         return false;
@@ -1493,7 +1493,7 @@ export const StreamingAccountView = ({
               SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
           });
-          customLogger.logWarning('Close PaymentStreamingAccount transaction failed', {
+          customLogger.logError('Close PaymentStreamingAccount transaction failed', {
             transcript: transactionLog,
           });
           return false;
@@ -1674,7 +1674,7 @@ export const StreamingAccountView = ({
             SOL_MINT.toBase58(),
           )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
-        customLogger.logWarning('Close PaymentStreamingAccount transaction failed', {
+        customLogger.logError('Close PaymentStreamingAccount transaction failed', {
           transcript: transactionLog,
         });
         return false;
@@ -1916,7 +1916,7 @@ export const StreamingAccountView = ({
             SOL_MINT.toBase58(),
           )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
-        customLogger.logWarning('Refresh PaymentStreamingAccount data transaction failed', {
+        customLogger.logError('Refresh PaymentStreamingAccount data transaction failed', {
           transcript: transactionLog,
         });
         return false;

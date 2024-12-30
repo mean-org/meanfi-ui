@@ -1,12 +1,12 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Empty, Spin } from 'antd';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PreFooter } from 'src/components/PreFooter';
-import { AppStateContext } from 'src/contexts/appstate';
 import { useWalletAccount } from 'src/contexts/walletAccount';
 import { consoleOut } from 'src/middleware/ui';
 import type { AccountContext } from 'src/models/accounts';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 import './style.scss';
 
 const AccountRedirect = () => {
@@ -14,7 +14,8 @@ const AccountRedirect = () => {
   const navigate = useNavigate();
   const { publicKey } = useWallet();
   const { selectedAccount, setSelectedAccount } = useWalletAccount();
-  const { multisigAccounts, loadingMultisigAccounts } = useContext(AppStateContext);
+
+  const { data: multisigAccounts, isPending: loadingMultisigAccounts } = useGetMultisigAccounts(publicKey?.toBase58());
 
   const [canRedirect, setCanRedirect] = useState(false);
 
@@ -27,13 +28,11 @@ const AccountRedirect = () => {
   useEffect(() => {
     // We are not ready to redirect if we are still loading multisig accounts
     if (loadingMultisigAccounts) {
-      console.info('loadingMultisigAccounts:', loadingMultisigAccounts);
       return;
     }
 
     // Go to root if there is no wallet connected
     if (!publicKey) {
-      console.info('no wallet connected');
       return;
     }
 

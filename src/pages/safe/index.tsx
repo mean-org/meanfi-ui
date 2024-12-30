@@ -12,7 +12,7 @@ import {
 import { BN } from '@project-serum/anchor';
 import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
 import { Button, Empty, Spin, Tooltip } from 'antd';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -30,6 +30,7 @@ import useLocalStorage from 'src/hooks/useLocalStorage';
 import useWindowSize from 'src/hooks/useWindowResize';
 import { customLogger } from 'src/main';
 import { SOL_MINT } from 'src/middleware/ids';
+import { getMultisigProgramId } from 'src/middleware/multisig-helpers';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -43,7 +44,8 @@ import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'src/m
 import type { ProgramAccounts } from 'src/models/accounts';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import { type EditMultisigParams, type MultisigProposalsWithAuthority, ZERO_FEES } from 'src/models/multisig';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import { AppUsageEvent } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import { ProposalDetailsView } from './components/ProposalDetails';
@@ -59,22 +61,27 @@ const SafeView = (props: {
   solanaApps: App[];
 }) => {
   const { appsProvider, onNewProposalClicked, onProposalExecuted, safeBalance, solanaApps } = props;
+  const { publicKey, connected, wallet } = useWallet();
+
   const {
     multisigTxs,
-    multisigAccounts,
     selectedAccount,
     selectedMultisig,
     transactionStatus,
-    loadingMultisigAccounts,
     setTransactionStatus,
     refreshTokenBalance,
     setSelectedMultisig,
-    refreshMultisigs,
     setMultisigTxs,
   } = useContext(AppStateContext);
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const connection = useConnection();
-  const { publicKey, connected, wallet } = useWallet();
+
+  const {
+    data: multisigAccounts,
+    isFetching: loadingMultisigAccounts,
+    refetch: refreshMultisigs,
+  } = useGetMultisigAccounts(publicKey?.toBase58());
+
   const [searchParams] = useSearchParams();
   const { id } = useParams();
   const { t } = useTranslation('common');
@@ -106,6 +113,8 @@ const SafeView = (props: {
   //  Init code  //
   /////////////////
 
+  const multisigAddressPK = useMemo(() => getMultisigProgramId(), []);
+
   const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
     'transactionPriority',
     DEFAULT_BUDGET_CONFIG,
@@ -116,7 +125,7 @@ const SafeView = (props: {
     setQueryParamV(optionInQuery);
   }, [searchParams]);
 
-  const { multisigClient, multisigProgramAddressPK } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   // Live reference to the selected multisig
   const selectedMultisigRef = useRef(selectedMultisig);
@@ -388,10 +397,7 @@ const SafeView = (props: {
           throw new Error('No selected multisig');
         }
 
-        const [multisigSigner] = PublicKey.findProgramAddressSync(
-          [selectedMultisig.id.toBuffer()],
-          multisigProgramAddressPK,
-        );
+        const [multisigSigner] = PublicKey.findProgramAddressSync([selectedMultisig.id.toBuffer()], multisigAddressPK);
 
         const owners = data.owners.map((p: MultisigParticipant) => {
           return {
@@ -497,7 +503,7 @@ const SafeView = (props: {
                 SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
             });
-            customLogger.logWarning('Edit multisig transaction failed', {
+            customLogger.logError('Edit multisig transaction failed', {
               transcript: transactionLog,
             });
             return false;
@@ -599,7 +605,7 @@ const SafeView = (props: {
       multisigClient,
       transactionFees,
       selectedMultisig,
-      multisigProgramAddressPK,
+      multisigAddressPK,
       transactionCancelled,
       transactionPriorityOptions,
       transactionStatus.currentOperation,
@@ -683,7 +689,7 @@ const SafeView = (props: {
                 SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
             });
-            customLogger.logWarning('Approve Multisig Proposal transaction failed', {
+            customLogger.logError('Approve Multisig Proposal transaction failed', {
               transcript: transactionLog,
             });
             openNotification({
@@ -866,7 +872,7 @@ const SafeView = (props: {
                 SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
             });
-            customLogger.logWarning('Multisig Reject transaction failed', {
+            customLogger.logError('Multisig Reject transaction failed', {
               transcript: transactionLog,
             });
             openNotification({
@@ -1067,7 +1073,7 @@ const SafeView = (props: {
                 SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
             });
-            customLogger.logWarning('Finish Approoved transaction failed', {
+            customLogger.logError('Finish Approoved transaction failed', {
               transcript: transactionLog,
             });
             const notifContent = t('transactions.status.tx-start-failure', {
@@ -1275,7 +1281,7 @@ const SafeView = (props: {
                 SOL_MINT.toBase58(),
               )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
             });
-            customLogger.logWarning('Cancel Multisig Proposal transaction failed', {
+            customLogger.logError('Cancel Multisig Proposal transaction failed', {
               transcript: transactionLog,
             });
             return false;
@@ -1816,7 +1822,7 @@ const SafeView = (props: {
           multisigName={selectedMultisig.label}
           inputMultisigThreshold={selectedMultisig.threshold}
           multisigParticipants={selectedMultisig.owners}
-          multisigAccounts={multisigAccounts}
+          multisigAccounts={multisigAccounts ?? []}
           multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}
           handleClose={() => setIsEditMultisigModalVisible(false)}
           isBusy={isBusy}

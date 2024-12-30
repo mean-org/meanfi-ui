@@ -248,7 +248,7 @@ export const ExchangeDcasView = () => {
               SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, SOL_MINT.toBase58())})`,
           });
-          customLogger.logWarning('Close DDCA transaction failed', {
+          customLogger.logError('Close DDCA transaction failed', {
             transcript: transactionLog,
           });
           return false;
@@ -537,7 +537,7 @@ export const ExchangeDcasView = () => {
               SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(ddcaTxFees.maxBlockchainFee, SOL_MINT.toBase58())})`,
           });
-          customLogger.logWarning('DDCA withdraw transaction failed', {
+          customLogger.logError('DDCA withdraw transaction failed', {
             transcript: transactionLog,
           });
           return false;

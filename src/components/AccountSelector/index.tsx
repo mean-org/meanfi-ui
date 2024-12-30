@@ -1,16 +1,16 @@
 import type { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { Button, Dropdown, type MenuProps, Spin, Tooltip } from 'antd';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconCheck, IconCopy, IconLoading, IconVerticalEllipsis } from 'src/Icons';
 import { openNotification } from 'src/components/Notifications';
-import { AppStateContext } from 'src/contexts/appstate';
 import { useWallet } from 'src/contexts/wallet';
 import { useWalletAccount } from 'src/contexts/walletAccount';
 import { consoleOut, copyText, kFormatter, toUsCurrency } from 'src/middleware/ui';
 import { shortenAddress } from 'src/middleware/utils';
 import type { AccountContext } from 'src/models/accounts';
 import { useAccountAssets, useFetchAccountTokens } from 'src/query-hooks/accountTokens';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 import './style.scss';
 
 export const AccountSelector = (props: {
@@ -20,11 +20,14 @@ export const AccountSelector = (props: {
   onDisconnectWallet?: () => void;
 }) => {
   const { isFullWorkflowEnabled, onAccountSelected, onCreateSafeClick, onDisconnectWallet } = props;
-  const { multisigAccounts, loadingMultisigAccounts, loadingMultisigTxPendingCount, setNeedReloadMultisigAccounts } =
-    useContext(AppStateContext);
   const { selectedAccount, setSelectedAccount } = useWalletAccount();
   const { t } = useTranslation('common');
   const { publicKey, wallet } = useWallet();
+  const {
+    data: multisigAccounts,
+    isFetching: loadingMultisigAccounts,
+    refetch: refreshMultisigs,
+  } = useGetMultisigAccounts(publicKey?.toBase58());
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
 
   const { refetch: refreshAccountAssets } = useFetchAccountTokens(publicKey?.toBase58() ?? '');
@@ -35,14 +38,6 @@ export const AccountSelector = (props: {
 
     return userAssets.accountTokens;
   }, [loadingUserAssets, userAssets]);
-
-  const refreshPendingTxs = useCallback(() => {
-    if (!publicKey) {
-      return;
-    }
-
-    setNeedReloadMultisigAccounts(true);
-  }, [publicKey, setNeedReloadMultisigAccounts]);
 
   // Calculates total value of assets
   useEffect(() => {
@@ -148,11 +143,11 @@ export const AccountSelector = (props: {
           <div
             onKeyDown={e => {
               e.preventDefault();
-              refreshPendingTxs();
+              refreshMultisigs();
             }}
             onClick={e => {
               e.preventDefault();
-              refreshPendingTxs();
+              refreshMultisigs();
             }}
           >
             <span className='menu-item-text'>Refresh pending Txs</span>
@@ -290,9 +285,6 @@ export const AccountSelector = (props: {
                         height={30}
                       />
                     </Tooltip>
-                    {!loadingMultisigTxPendingCount && item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
-                      <span className='status warning bottom-right' />
-                    ) : null}
                   </div>
                   <div
                     className='description-cell'
@@ -303,13 +295,7 @@ export const AccountSelector = (props: {
                       <span className='chunk1'>{item.label}</span>
                       <span className='chunk2'>({shortenAddress(item.authority, 4)})</span>
                     </div>
-                    <div className='subtitle'>
-                      {loadingMultisigTxPendingCount ? (
-                        <IconLoading className='mean-svg-icons' style={{ height: '15px', lineHeight: '15px' }} />
-                      ) : (
-                        renderPendingTxCount(item)
-                      )}
-                    </div>
+                    <div className='subtitle'>{renderPendingTxCount(item)}</div>
                   </div>
                   <div className='rate-cell'>
                     <Tooltip placement='bottom' title={t('assets.account-address-copy-cta')}>

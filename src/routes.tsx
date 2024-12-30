@@ -12,9 +12,8 @@ import { StatsView } from 'src/pages/stats';
 import Bridge from 'src/pages/swap';
 import { PageLoadingView } from 'src/views/PageLoading';
 import { AppLayout } from './components/Layout';
-
-const CreateSafeView = React.lazy(() => import('src/views/CreateSafe'));
-const AccountRedirect = React.lazy(() => import('src/views/AccountRedirect'));
+import AccountRedirect from './views/AccountRedirect';
+import CreateSafeView from './views/CreateSafe';
 
 export function AppRoutes() {
   return (

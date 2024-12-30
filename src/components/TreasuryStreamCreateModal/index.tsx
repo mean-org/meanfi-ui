@@ -39,8 +39,9 @@ import { AppStateContext } from 'src/contexts/appstate';
 import { TxConfirmationContext } from 'src/contexts/transaction-status';
 import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
-import { appConfig, customLogger } from 'src/main';
+import { customLogger } from 'src/main';
 import { SOL_MINT } from 'src/middleware/ids';
+import { getMultisigProgramId } from 'src/middleware/multisig-helpers';
 import { getStreamingAccountMint } from 'src/middleware/token-streaming-utils/getStreamingAccountMint';
 import { getStreamingAccountType } from 'src/middleware/token-streaming-utils/getStreamingAccountType';
 import {
@@ -182,7 +183,7 @@ export const TreasuryStreamCreateModal = ({
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+  const multisigAddressPK = useMemo(() => getMultisigProgramId(), []);
 
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);
@@ -1267,7 +1268,7 @@ export const TreasuryStreamCreateModal = ({
             SOL_MINT.toBase58(),
           )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
         });
-        customLogger.logWarning('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
         return false;
       }
 

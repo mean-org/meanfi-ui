@@ -21,7 +21,6 @@ export interface AppConfig {
   exchangeFlatFee: number;
   stakingRewardsAcl: string[];
   meanStakingVault: string;
-  multisigProgramAddress: string;
   realmsGoverningTokenMintPk: string;
   realmsProgramId: string;
   realmId: string;
@@ -56,7 +55,6 @@ export class AppConfigService {
         'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw',
       ],
       meanStakingVault: 'GMG74Wi8Mj4KpS6qxUgcofBSNMa8qkqtVgtUc3g5sPpF',
-      multisigProgramAddress: 'FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j',
       realmsGoverningTokenMintPk: 'sMEANebFMnd9uTYpyntGzBmTmzEukRFwCjEcnXT2E8z',
       realmsProgramId: 'MGovW65tDhMMcpEmsegpsdgvzb6zUwGsNjhXFxRAnjd',
       realmId: '5o6gEoeJBpuXT1H1ijFTq3KcSGx7ayabdG2hji7cB3FG',
@@ -88,7 +86,6 @@ export class AppConfigService {
         'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw',
       ],
       meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD',
-      multisigProgramAddress: 'MMSdTDhtwBs2w4MxGCbqfWLgerMQNbXazizghoh7uMJ',
       realmsGoverningTokenMintPk: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
       realmsProgramId: 'MGovW65tDhMMcpEmsegpsdgvzb6zUwGsNjhXFxRAnjd',
       realmId: 'GkR6JMPU1b2bFj7j9Db8VAmQdisCCqoTQFfzWi2siwcB',
@@ -120,7 +117,6 @@ export class AppConfigService {
         'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw',
       ],
       meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD',
-      multisigProgramAddress: 'MMSdTDhtwBs2w4MxGCbqfWLgerMQNbXazizghoh7uMJ',
       realmsGoverningTokenMintPk: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
       realmsProgramId: 'MGovW65tDhMMcpEmsegpsdgvzb6zUwGsNjhXFxRAnjd',
       realmId: 'GkR6JMPU1b2bFj7j9Db8VAmQdisCCqoTQFfzWi2siwcB',
@@ -152,7 +148,6 @@ export class AppConfigService {
         'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw',
       ],
       meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD',
-      multisigProgramAddress: 'MMSdTDhtwBs2w4MxGCbqfWLgerMQNbXazizghoh7uMJ',
       realmsGoverningTokenMintPk: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
       realmsProgramId: 'MGovW65tDhMMcpEmsegpsdgvzb6zUwGsNjhXFxRAnjd',
       realmId: 'GkR6JMPU1b2bFj7j9Db8VAmQdisCCqoTQFfzWi2siwcB',
@@ -184,7 +179,6 @@ export class AppConfigService {
         'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw',
       ],
       meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD',
-      multisigProgramAddress: 'MMSdTDhtwBs2w4MxGCbqfWLgerMQNbXazizghoh7uMJ',
       realmsGoverningTokenMintPk: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
       realmsProgramId: 'MGovW65tDhMMcpEmsegpsdgvzb6zUwGsNjhXFxRAnjd',
       realmId: 'GkR6JMPU1b2bFj7j9Db8VAmQdisCCqoTQFfzWi2siwcB',

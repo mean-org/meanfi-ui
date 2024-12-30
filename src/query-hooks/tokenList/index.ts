@@ -3,8 +3,8 @@ import { useCallback } from 'react';
 import { consoleOut } from 'src/middleware/ui';
 import type { UserTokenAccount } from 'src/models/accounts/UserTokenAccount';
 
-// const tokenListUrl = 'https://tokens.jup.ag/tokens?tags=verified';
-const tokenListUrl = 'https://token-list-api.solana.cloud/v1/list';
+// const tokenListUrl = 'https://token-list-api.solana.cloud/v1/list';
+const tokenListUrl = '/assets/token-list/tokens.json';
 
 export const getTokenListKey = () => ['token-list'];
 
@@ -21,8 +21,8 @@ const useGetTokenList = () => {
         redirect: 'follow',
       }).then(response => response.json());
     },
-    select: useCallback((data: { content: UserTokenAccount[] }) => {
-      const tokens: UserTokenAccount[] = data?.content ?? [];
+    select: useCallback((data: UserTokenAccount[]) => {
+      const tokens: UserTokenAccount[] = data ?? [];
       consoleOut('useGetTokenList -> Token list loaded:', tokens, 'blue');
 
       return tokens.filter(token => token.decimals > 0);

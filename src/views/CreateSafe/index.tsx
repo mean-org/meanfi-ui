@@ -30,7 +30,8 @@ import { consoleOut, getTransactionStatusForLogs, isValidAddress } from 'src/mid
 import { formatThousands, getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'src/middleware/utils';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import { type CreateMultisigTxParams, type CreateNewSafeParams, ZERO_FEES } from 'src/models/multisig';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import { AppUsageEvent } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
 import './style.scss';
@@ -41,7 +42,10 @@ const CreateSafeView = () => {
   const connection = useConnection();
   const account = useAccountsContext();
   const navigate = useNavigate();
-  const { multisigAccounts, transactionStatus, setTransactionStatus, refreshMultisigs } = useContext(AppStateContext);
+  const { transactionStatus, setTransactionStatus } = useContext(AppStateContext);
+
+  const { data: multisigAccounts, refetch: refreshMultisigs } = useGetMultisigAccounts(publicKey?.toBase58());
+
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { width } = useWindowSize();
   const [isXsDevice, setIsXsDevice] = useState<boolean>(false);
@@ -63,7 +67,7 @@ const CreateSafeView = () => {
   //  Init code  //
   /////////////////
 
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const nativeBalance = useMemo(() => {
     return account?.nativeAccount ? getAmountFromLamports(account.nativeAccount.lamports) : 0;
@@ -348,7 +352,7 @@ const CreateSafeView = () => {
               SOL_MINT.toBase58(),
             )}) to pay for network fees (${getAmountWithSymbol(minRequired, SOL_MINT.toBase58())})`,
           });
-          customLogger.logWarning('Create multisig transaction failed', {
+          customLogger.logError('Create multisig transaction failed', {
             transcript: transactionLog,
           });
           return false;
@@ -581,10 +585,7 @@ const CreateSafeView = () => {
         <div className={isXsDevice ? 'left' : 'left pt-1'}>
           <div className={`form-label icon-label ${isXsDevice ? 'mb-3' : 'mt-2'}`}>
             {t('multisig.create-multisig.multisig-threshold-input-label')}
-            <Tooltip
-              placement='bottom'
-              title={t('multisig.create-multisig.multisig-threshold-question-mark-tooltip')}
-            >
+            <Tooltip placement='bottom' title={t('multisig.create-multisig.multisig-threshold-question-mark-tooltip')}>
               <span>
                 <IconHelpCircle className='mean-svg-icons' />
               </span>
