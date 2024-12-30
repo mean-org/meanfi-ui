@@ -68,7 +68,7 @@ import {
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
 import { OperationType, TransactionStatus } from 'src/models/enums';
 import type { StreamWithdrawData, WithdrawFromStreamParams } from 'src/models/streams';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import {
   AppUsageEvent,
@@ -116,7 +116,7 @@ export const MoneyStreamsIncomingView = (props: {
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const { tokenStreamingV1, tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
   const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);

@@ -76,7 +76,7 @@ import { OperationType, TransactionStatus } from 'src/models/enums';
 import type { CloseStreamParams } from 'src/models/streams';
 import type { CloseStreamTransactionParams, StreamTreasuryType } from 'src/models/treasuries';
 import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import {
   AppUsageEvent,
@@ -138,7 +138,7 @@ export const MoneyStreamsOutgoingView = ({
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const { tokenStreamingV1, tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
   const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);

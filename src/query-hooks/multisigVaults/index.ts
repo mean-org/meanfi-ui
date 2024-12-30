@@ -1,15 +1,15 @@
-import { PublicKey } from '@solana/web3.js';
+import type { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useConnection } from 'src/contexts/connection';
-import { appConfig } from 'src/main';
+import { getMultisigProgramId } from 'src/middleware/multisig-helpers';
 import { getMultisigVaults } from './getMultisigVaults';
 
 export const getUseMultisigVaultsQueryKey = () => ['multisig-vaults'];
 
 const useMultisigVaults = (multisigId: PublicKey | undefined) => {
   const connection = useConnection();
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+  const multisigAddressPK = useMemo(() => getMultisigProgramId(), []);
 
   return useQuery({
     queryKey: getUseMultisigVaultsQueryKey(),

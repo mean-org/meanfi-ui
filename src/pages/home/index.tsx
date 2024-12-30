@@ -137,8 +137,10 @@ import {
 import { type StreamsSummary, initialSummary } from 'src/models/streams';
 import { FetchStatus } from 'src/models/transactions';
 import { INITIAL_TREASURIES_SUMMARY, type UserTreasuriesSummary } from 'src/models/treasuries';
+import { useGetAccountBalance } from 'src/query-hooks/accountBalance';
 import useGetAccountPrograms from 'src/query-hooks/accountPrograms';
 import { useAccountAssets, useFetchAccountTokens } from 'src/query-hooks/accountTokens';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import { useGetStreamList } from 'src/query-hooks/streamList';
 import { useGetStreamingAccounts } from 'src/query-hooks/streamingAccount';
@@ -158,7 +160,6 @@ import { getMergeAccountsCta } from './asset-ctas/mergeAccountsCta';
 import { getUnwrapSolCta } from './asset-ctas/unwrapSolCta';
 import { getWrapSolCta } from './asset-ctas/wrapSolCta';
 import './style.scss';
-import { useGetAccountBalance } from 'src/query-hooks/accountBalance';
 import useAppNavigation from './useAppNavigation';
 
 const SafeDetails = React.lazy(() => import('../safe/index'));
@@ -187,7 +188,6 @@ export const HomeView = () => {
     selectedAccount,
     lastTxSignature,
     selectedMultisig,
-    multisigAccounts,
     transactionStatus,
     setPendingMultisigTxCount,
     setPaymentStreamingStats,
@@ -200,11 +200,12 @@ export const HomeView = () => {
     setSelectedMultisig,
     resetContractValues,
     appendHistoryItems,
-    refreshMultisigs,
     setPreviousRoute,
     setSelectedToken,
     setSelectedAsset,
   } = useContext(AppStateContext);
+
+  const { data: multisigAccounts, refetch: refreshMultisigs } = useGetMultisigAccounts(publicKey?.toBase58());
 
   const {
     selectedCategory,
@@ -3900,7 +3901,7 @@ export const HomeView = () => {
           }}
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
-          multisigAccounts={multisigAccounts}
+          multisigAccounts={multisigAccounts ?? []}
           selectedVault={selectedAsset}
           assets={accountTokens}
         />

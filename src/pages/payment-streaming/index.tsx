@@ -16,6 +16,7 @@ import { getStreamingAccountId } from 'src/middleware/token-streaming-utils/getS
 import { consoleOut } from 'src/middleware/ui';
 import { RegisteredAppPaths } from 'src/models/accounts';
 import { EventType, OperationType } from 'src/models/enums';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 import { useGetStreamList } from 'src/query-hooks/streamList';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import { AppUsageEvent } from 'src/services/segment-service';
@@ -36,9 +37,9 @@ const PaymentStreamingView = ({ treasuryList, loadingTreasuries, onBackButtonCli
   const location = useLocation();
   const navigate = useNavigate();
   const { streamingTab, streamingItemId } = useParams();
-  const { streamDetail, selectedMultisig, multisigAccounts, refreshMultisigs, setPreviousRoute, setStreamDetail } =
-    useContext(AppStateContext);
+  const { streamDetail, selectedMultisig, setPreviousRoute, setStreamDetail } = useContext(AppStateContext);
   const { publicKey } = useWallet();
+  const { data: multisigAccounts, refetch: refreshMultisigs } = useGetMultisigAccounts(publicKey?.toBase58());
   const { selectedAccount } = useWalletAccount();
   // Local state
   const [pathParamStreamId, setPathParamStreamId] = useState('');

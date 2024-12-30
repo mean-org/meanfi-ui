@@ -28,8 +28,9 @@ import { TxConfirmationContext, type TxConfirmationInfo, confirmationEvents } fr
 import { useWallet } from 'src/contexts/wallet';
 import useLocalStorage from 'src/hooks/useLocalStorage';
 import useWindowSize from 'src/hooks/useWindowResize';
-import { appConfig, customLogger } from 'src/main';
+import { customLogger } from 'src/main';
 import { SOL_MINT } from 'src/middleware/ids';
+import { getMultisigProgramId } from 'src/middleware/multisig-helpers';
 import {
   type ComputeBudgetConfig,
   DEFAULT_BUDGET_CONFIG,
@@ -43,6 +44,7 @@ import { getAmountFromLamports, getAmountWithSymbol, getTxIxResume } from 'src/m
 import type { ProgramAccounts } from 'src/models/accounts';
 import { EventType, OperationType, TransactionStatus } from 'src/models/enums';
 import { type EditMultisigParams, type MultisigProposalsWithAuthority, ZERO_FEES } from 'src/models/multisig';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import { AppUsageEvent } from 'src/services/segment-service';
 import type { LooseObject } from 'src/types/LooseObject';
@@ -59,22 +61,27 @@ const SafeView = (props: {
   solanaApps: App[];
 }) => {
   const { appsProvider, onNewProposalClicked, onProposalExecuted, safeBalance, solanaApps } = props;
+  const { publicKey, connected, wallet } = useWallet();
+
   const {
     multisigTxs,
-    multisigAccounts,
     selectedAccount,
     selectedMultisig,
     transactionStatus,
-    loadingMultisigAccounts,
     setTransactionStatus,
     refreshTokenBalance,
     setSelectedMultisig,
-    refreshMultisigs,
     setMultisigTxs,
   } = useContext(AppStateContext);
   const { confirmationHistory, enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const connection = useConnection();
-  const { publicKey, connected, wallet } = useWallet();
+
+  const {
+    data: multisigAccounts,
+    isFetching: loadingMultisigAccounts,
+    refetch: refreshMultisigs,
+  } = useGetMultisigAccounts(publicKey?.toBase58());
+
   const [searchParams] = useSearchParams();
   const { id } = useParams();
   const { t } = useTranslation('common');
@@ -106,7 +113,7 @@ const SafeView = (props: {
   //  Init code  //
   /////////////////
 
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+  const multisigAddressPK = useMemo(() => getMultisigProgramId(), []);
 
   const [transactionPriorityOptions] = useLocalStorage<ComputeBudgetConfig>(
     'transactionPriority',
@@ -390,10 +397,7 @@ const SafeView = (props: {
           throw new Error('No selected multisig');
         }
 
-        const [multisigSigner] = PublicKey.findProgramAddressSync(
-          [selectedMultisig.id.toBuffer()],
-          multisigAddressPK,
-        );
+        const [multisigSigner] = PublicKey.findProgramAddressSync([selectedMultisig.id.toBuffer()], multisigAddressPK);
 
         const owners = data.owners.map((p: MultisigParticipant) => {
           return {
@@ -1818,7 +1822,7 @@ const SafeView = (props: {
           multisigName={selectedMultisig.label}
           inputMultisigThreshold={selectedMultisig.threshold}
           multisigParticipants={selectedMultisig.owners}
-          multisigAccounts={multisigAccounts}
+          multisigAccounts={multisigAccounts ?? []}
           multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}
           handleClose={() => setIsEditMultisigModalVisible(false)}
           isBusy={isBusy}

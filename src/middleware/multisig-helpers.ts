@@ -1,4 +1,6 @@
+import { PublicKey } from '@solana/web3.js';
 import { OperationType } from '../models/enums';
+import { isProd } from './ui';
 
 export function getOperationName(op: OperationType) {
   switch (op) {
@@ -44,3 +46,10 @@ export function getOperationName(op: OperationType) {
       return '';
   }
 }
+
+export const getMultisigProgramId = () => {
+  if (isProd()) {
+    return new PublicKey('FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j');
+  }
+  return new PublicKey('MMSdTDhtwBs2w4MxGCbqfWLgerMQNbXazizghoh7uMJ');
+};

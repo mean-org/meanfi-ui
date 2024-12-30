@@ -1,47 +1,46 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
-import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MULTISIG_ROUTE_BASE_PATH } from 'src/app-constants/common';
-import { AppStateContext } from 'src/contexts/appstate';
+import { useWallet } from 'src/contexts/wallet';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 
 export const PendingProposalsComponent = (props: {
   extraClasses?: string;
   pendingMultisigTxCount: number | undefined;
 }) => {
   const { extraClasses, pendingMultisigTxCount } = props;
-  const { loadingMultisigTxPendingCount } = useContext(AppStateContext);
+  const { publicKey } = useWallet();
+  const { isPending: loadingMultisigAccounts } = useGetMultisigAccounts(publicKey?.toBase58());
   const navigate = useNavigate();
 
-  if (loadingMultisigTxPendingCount || !pendingMultisigTxCount || pendingMultisigTxCount === 0) {
+  if (loadingMultisigAccounts || !pendingMultisigTxCount || pendingMultisigTxCount === 0) {
     return null;
   }
 
   return (
-    <>
-      <div key='pending-proposals' className={`transaction-list-row${extraClasses ? ' ' + extraClasses : ''}`}>
-        <div
-          className='flex-row align-items-center fg-warning simplelink underline-on-hover'
-          onKeyDown={() => {}}
-          onClick={() => {
-            const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
-            navigate(url);
-          }}
-        >
-          <div className='font-bold'>There are pending proposals on this account</div>
-          <span className='icon-button-container ml-1'>
-            <Tooltip placement='bottom' title='Go to safe account'>
-              <Button
-                type='default'
-                shape='circle'
-                size='middle'
-                icon={<ArrowRightOutlined />}
-                className='fg-warning'
-              />
-            </Tooltip>
-          </span>
-        </div>
+    <div key='pending-proposals' className={`transaction-list-row${extraClasses ? ' ' + extraClasses : ''}`}>
+      <div
+        className='flex-row align-items-center fg-warning simplelink underline-on-hover'
+        onKeyDown={() => {}}
+        onClick={() => {
+          const url = `${MULTISIG_ROUTE_BASE_PATH}?v=proposals`;
+          navigate(url);
+        }}
+      >
+        <div className='font-bold'>There are pending proposals on this account</div>
+        <span className='icon-button-container ml-1'>
+          <Tooltip placement='bottom' title='Go to safe account'>
+            <Button
+              type='default'
+              shape='circle'
+              size='middle'
+              icon={<ArrowRightOutlined />}
+              className='fg-warning'
+            />
+          </Tooltip>
+        </span>
       </div>
-    </>
+    </div>
   );
 };

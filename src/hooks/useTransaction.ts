@@ -21,6 +21,7 @@ import { consoleOut, getTransactionStatusForLogs } from 'src/middleware/ui';
 import { getAmountWithSymbol, getUniversalTxIxResume } from 'src/middleware/utils';
 import { type OperationType, TransactionStatus } from 'src/models/enums';
 import type { MultisigTxParams } from 'src/models/multisig';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import type { LooseObject } from 'src/types/LooseObject';
 import useLocalStorage from './useLocalStorage';
@@ -90,7 +91,11 @@ const useTransaction = () => {
   const { publicKey, wallet } = useWallet();
   const connection = useConnection();
 
-  const { selectedAccount, multisigAccounts, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
+  const { selectedAccount, transactionStatus, setTransactionStatus } = useContext(AppStateContext);
+  const { data: msAccounts } = useGetMultisigAccounts(publicKey?.toBase58());
+
+  const multisigAccounts = msAccounts ?? [];
+
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
 
   const isMultisigContext = useMemo(() => {

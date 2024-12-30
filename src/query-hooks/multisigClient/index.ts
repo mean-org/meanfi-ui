@@ -1,9 +1,8 @@
 import { MeanMultisig } from '@mean-dao/mean-multisig-sdk';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import { appConfig } from 'src/main';
+import { useConnection } from 'src/contexts/connection';
+import { getMultisigProgramId } from 'src/middleware/multisig-helpers';
 import { failsafeConnectionConfig } from 'src/services/connections-hq';
 
 export const getUseMultisigClientQueryKey = (accountAddress: string | undefined, programAddress: string) => [
@@ -17,20 +16,19 @@ export const getUseMultisigClientQueryKey = (accountAddress: string | undefined,
  * @returns multisigClient
  */
 export const useMultisigClient = () => {
-  const { connection } = useConnection();
+  const connection = useConnection();
   const { publicKey } = useWallet();
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
 
   return useQuery({
-    queryKey: getUseMultisigClientQueryKey(publicKey?.toBase58(), multisigAddressPK.toBase58()),
+    queryKey: getUseMultisigClientQueryKey(publicKey?.toBase58(), getMultisigProgramId().toBase58()),
     retry: 1,
     queryFn: () => {
-      if (!connection || !publicKey) {
-        throw new Error('Connection or public key is missing');
+      if (!publicKey) {
+        throw new Error('Wallet not connected');
       }
 
-      return new MeanMultisig(connection.rpcEndpoint, publicKey, failsafeConnectionConfig, multisigAddressPK);
+      return new MeanMultisig(connection.rpcEndpoint, publicKey, failsafeConnectionConfig, getMultisigProgramId());
     },
-    enabled: !!connection && !!publicKey,
+    enabled: !!publicKey,
   });
 };

@@ -38,6 +38,7 @@ import { reportConnectedAccount } from 'src/middleware/api';
 import { consoleOut, isProd, isValidAddress } from 'src/middleware/ui';
 import { isUnauthenticatedRoute } from 'src/middleware/utils';
 import type { RuntimeAppDetails } from 'src/models/accounts';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
 import useGetPerformanceSamples from 'src/query-hooks/performanceSamples';
 import { AppUsageEvent } from 'src/services/segment-service';
 import AccountRedirect from 'src/views/AccountRedirect';
@@ -55,15 +56,16 @@ interface LayoutProps {
 export const AppLayout = React.memo(({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { theme, setNeedReloadMultisigAccounts, setDiagnosisInfo, selectedAccount } = useContext(AppStateContext);
+  const { theme, setDiagnosisInfo, selectedAccount } = useContext(AppStateContext);
   const { data: tpsAvg } = useGetPerformanceSamples();
   const { confirmationHistory, clearConfirmationHistory } = useContext(TxConfirmationContext);
   const { t, i18n } = useTranslation('common');
   const { refreshAccount } = useAccountsContext();
   const connectionConfig = useConnectionConfig();
   const { wallet, connected, publicKey, disconnect } = useWallet();
-  const [gaInitialized, setGaInitialized] = useState(false);
+  const { refetch: refreshMultisigs } = useGetMultisigAccounts(publicKey?.toBase58());
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
+  const [gaInitialized, setGaInitialized] = useState(false);
   const [language, setLanguage] = useState('');
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [needRefresh, setNeedRefresh] = useState(true);
@@ -143,7 +145,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
   // biome-ignore lint/correctness/useExhaustiveDependencies: Deps managed manually
   useEffect(() => {
     if (publicKey) {
-      setNeedReloadMultisigAccounts(true);
+      refreshMultisigs();
       const walletAddress = publicKey.toBase58();
       refreshAccount();
 
@@ -321,7 +323,7 @@ export const AppLayout = React.memo(({ children }: LayoutProps) => {
                       size='middle'
                       icon={<ReloadOutlined className='mean-svg-icons' />}
                       onClick={() => {
-                        setNeedReloadMultisigAccounts(true);
+                        refreshMultisigs();
                         refreshAccount();
                       }}
                     />

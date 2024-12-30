@@ -113,7 +113,7 @@ import { ZERO_FEES } from 'src/models/multisig';
 import type { TreasuryWithdrawParams } from 'src/models/treasuries';
 import type { AddFundsParams } from 'src/models/vesting';
 import { useFetchAccountTokens } from 'src/query-hooks/accountTokens';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import type { LooseObject } from 'src/types/LooseObject';
 
@@ -187,7 +187,7 @@ export const StreamingAccountView = ({
 
   const { tokenStreamingV1, tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
   const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const isMultisigContext = useMemo(() => {
     return !!(publicKey && selectedAccount.isMultisig);

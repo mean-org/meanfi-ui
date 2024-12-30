@@ -1,7 +1,7 @@
 import type { InstructionDataInfo, OwnerMeta } from '@mean-dao/mean-multisig-sdk';
 import { BN } from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { type Connection, PublicKey, SystemProgram } from '@solana/web3.js';
+import { type Connection, SystemProgram } from '@solana/web3.js';
 import { Col, Row, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import { Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -11,8 +11,8 @@ import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from 'src/app-constants/common';
 import { openNotification } from 'src/components/Notifications';
 import { AppStateContext } from 'src/contexts/appstate';
 import { getSolanaExplorerClusterParam } from 'src/contexts/connection';
-import { appConfig } from 'src/main';
 import getWalletOwnerOfTokenAccount from 'src/middleware/getWalletOwnerOfTokenAccount';
+import { getMultisigProgramId } from 'src/middleware/multisig-helpers';
 import { consoleOut, copyText, getDurationUnitFromSeconds } from 'src/middleware/ui';
 import { displayAmountWithSymbol, formatThousands, getTokenOrCustomToken, makeDecimal } from 'src/middleware/utils';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
@@ -30,7 +30,7 @@ export const RenderInstructions = (props: {
   const [proposalIxAssociatedToken, setProposalIxAssociatedToken] = useState<TokenInfo | undefined>(undefined);
   const [transferDestinationOwner, setTransferDestinationOwner] = useState<string>();
 
-  const multisigAddressPK = useMemo(() => new PublicKey(appConfig.getConfig().multisigProgramAddress), []);
+  const multisigAddressPK = useMemo(() => getMultisigProgramId(), []);
 
   const copyAddressToClipboard = useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: Anything can go here

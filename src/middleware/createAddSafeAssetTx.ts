@@ -8,8 +8,8 @@ import {
   SystemProgram,
   type TransactionInstruction,
 } from '@solana/web3.js';
-import { appConfig } from 'src/main';
 import type { TokenInfo } from 'src/models/SolanaTokenInfo';
+import { getMultisigProgramId } from './multisig-helpers';
 import { composeTxWithPrioritizationFees, serializeTx } from './transactions';
 
 export type CreateSafeAssetTxParams = {
@@ -27,7 +27,7 @@ export const createAddSafeAssetTx = async (
     return null;
   }
 
-  const multisigAddressPK = new PublicKey(appConfig.getConfig().multisigProgramAddress);
+  const multisigAddressPK = getMultisigProgramId();
 
   const [multisigSigner] = PublicKey.findProgramAddressSync([selectedMultisig.id.toBuffer()], multisigAddressPK);
 

@@ -109,7 +109,8 @@ import {
   vestingFlowRatesCache,
 } from 'src/models/vesting';
 import { useGetTokensWithBalances } from 'src/query-hooks/accountTokens';
-import useMultisigClient from 'src/query-hooks/multisigClient';
+import { useGetMultisigAccounts } from 'src/query-hooks/multisigAccounts/index.ts';
+import { useMultisigClient } from 'src/query-hooks/multisigClient';
 import useStreamingClient from 'src/query-hooks/streamingClient';
 import { useGetVestingContracts } from 'src/query-hooks/vestingContract';
 import { objectToJson } from 'src/services/logger';
@@ -143,12 +144,12 @@ const notificationKey = 'updatable';
 
 const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const { appSocialLinks } = props;
+  const { publicKey, wallet, connected } = useWallet();
+
   const {
     selectedAccount,
     selectedMultisig,
-    multisigAccounts,
     transactionStatus,
-    loadingMultisigAccounts,
     previousWalletConnectState,
     setPendingMultisigTxCount,
     setHighLightableStreamId,
@@ -165,6 +166,9 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     setFromCoinAmount,
     setSelectedToken,
   } = useContext(AppStateContext);
+
+  const { data: multisigAccounts, isFetching: loadingMultisigAccounts } = useGetMultisigAccounts(publicKey?.toBase58());
+
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const location = useLocation();
   const navigate = useNavigate();
@@ -172,7 +176,6 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
   const { vestingContract, activeTab } = useParams();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
-  const { publicKey, wallet, connected } = useWallet();
   const { account } = useNativeAccount();
   const [mainFeatureTab, setMainFeatureTab] = useState('summary');
   const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
@@ -230,7 +233,7 @@ const VestingView = (props: { appSocialLinks?: SocialMediaEntry[] }) => {
     DEFAULT_BUDGET_CONFIG,
   );
 
-  const { multisigClient } = useMultisigClient();
+  const { data: multisigClient } = useMultisigClient();
 
   const { tokenStreamingV2, streamV2ProgramAddress } = useStreamingClient();
   const mspV2AddressPK = useMemo(() => new PublicKey(streamV2ProgramAddress), [streamV2ProgramAddress]);
