@@ -131,21 +131,7 @@ export const LANGUAGES: Language[] = [
   // },
 ];
 
-export const DAO_CORE_TEAM_WHITELIST = [
-  '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi', // ERR
-  'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
-  'FkRtTexEwLtYerHRKUku7ZZJx1VuTqxwGF636nAuer3B', // YAF
-  'DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ', // YAF
-  'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
-  '746bzDBsHjjTG6UByDhj8z3ozdqV1sfujH9pAKMdeyuU', // MT
-  '9gB9rcJiaKq6iXcJn8AqD5xoxTr3ZLPHpFGWRaVx99jH', // TAB trader
-  '468Z5p52439dAqjLzBm2FCNxvDSnpbMsNx85b7Kmz3TQ', // Ayaz
-  '4gCGAWB4bVva2tsEsjmK8iVEKobs3ZsZB7n9HShGnN4o', // Ayaz
-  'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL', // Maxim Credix
-  '63cUbJ3yecyduEPPYbPERPSJzAy6ZnRWvjE6u4qkkAVd', // Maxim Credix 2
-  'DBtKF3rRXB59AXMWFx6XzgB3SDmgtK87VvrQQF6KbLQ8', // vitalikda
-  '45qD3ei7rT63UumstCEJhehgDJAVzaciLDPacRfMz8QD', // Hugo
-];
+export const DAO_CORE_TEAM_WHITELIST = [];
 
 export const BIGNUMBER_FORMAT = {
   prefix: '',
