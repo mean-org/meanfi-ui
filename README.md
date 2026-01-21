@@ -2,8 +2,6 @@
 
 If you want run the Meanfi UI, feel free to clone or fork this repo.
 
-See Agave, the Solana validator implementation from Anza: https://github.com/anza-xyz/agave
-
 ---
 
 # MeanFi UI - Front end for Mean Finance
